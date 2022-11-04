@@ -108,6 +108,7 @@ type Interface interface {
 	WorkersStarted(ctx context.Context) ([]string, error)
 	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
+	CDSClientV2() cdsclient.HatcheryServiceClient
 	Configuration() service.HatcheryCommonConfiguration
 	Serve(ctx context.Context) error
 	GetPrivateKey() *rsa.PrivateKey

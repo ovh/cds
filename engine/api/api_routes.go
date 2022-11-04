@@ -465,9 +465,11 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/regen", nil, r.POSTv2(api.postRepositoryHookRegenKeyHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/template", nil, r.GETv2(api.getWorkerModelTemplatesHandler))
-	r.Handle("/v2/user/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeyHandler))
-	r.Handle("/v2/user/{user}/gpgkey", Scope(sdk.AuthConsumerScopeUser), r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
-	r.Handle("/v2/user/{user}/gpgkey/{gpgKeyID}", Scope(sdk.AuthConsumerScopeUser), r.DELETEv2(api.deleteUserGPGKey))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
+	r.Handle("/v2/user/gpgkey/{gpgKeyID}", nil, r.GETv2(api.getUserGPGKeyHandler))
+	r.Handle("/v2/user/{user}/gpgkey", nil, r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
+	r.Handle("/v2/user/{user}/gpgkey/{gpgKeyID}", nil, r.DELETEv2(api.deleteUserGPGKey))
+
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 

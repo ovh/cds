@@ -496,7 +496,7 @@ jobLoop:
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, wm, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -534,9 +534,7 @@ jobLoop:
 			Header:          nr.Header,
 			ContainsService: containsService,
 		}
-		if wm != nil {
-			wjob.ModelType = wm.Type
-		}
+		wjob.ModelType = modelType
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 
 		// Set region from requirement on job run if exists
@@ -762,7 +760,7 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 	return params, nil
 }
 
-//NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
+// NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 	runContext := nodeRunContext{
 		WorkflowProjectIntegrations: wf.Integrations,

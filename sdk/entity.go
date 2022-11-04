@@ -2,12 +2,15 @@ package sdk
 
 import (
 	"github.com/rockbears/yaml"
+	"regexp"
 	"time"
 )
 
 const (
 	EntityTypeWorkerModelTemplate = "WorkerModelTemplate"
 	EntityTypeWorkerModel         = "WorkerModel"
+
+	EntityNamePattern = "^[a-zA-Z0-9.-_-]{1,}$"
 )
 
 type Entity struct {
@@ -28,6 +31,11 @@ type Lintable interface {
 }
 
 func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, MultiError) {
+	namePattern, err := regexp.Compile(EntityNamePattern)
+	if err != nil {
+		return nil, []error{WrapError(err, "unable to compile regexp %s", namePattern)}
+	}
+
 	if err := yaml.UnmarshalMultipleDocuments(content, out); err != nil {
 		return nil, []error{WrapError(err, "unable to read %s%s", directory, fileName)}
 	}
@@ -45,6 +53,9 @@ func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out 
 			ProjectRepositoryID: analysis.ProjectRepositoryID,
 			Type:                t,
 		})
+		if !namePattern.MatchString(o.GetName()) {
+			return nil, []error{WrapError(ErrInvalidData, "name %s doesn't match %s", o.GetName(), EntityNamePattern)}
+		}
 	}
 	return entities, nil
 }

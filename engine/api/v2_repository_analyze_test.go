@@ -737,7 +737,7 @@ spec:
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, analysisUpdated.Status)
 
-	es, err := entity.LoadByType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel)
+	es, err := entity.LoadByRepositoryAndType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel)
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(es))
@@ -748,7 +748,7 @@ spec:
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 
-	esTempalte, err := entity.LoadByType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModelTemplate)
+	esTempalte, err := entity.LoadByRepositoryAndType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModelTemplate)
 	require.NoError(t, err)
 	t.Logf("%+v", es[0])
 	require.Equal(t, 1, len(esTempalte))

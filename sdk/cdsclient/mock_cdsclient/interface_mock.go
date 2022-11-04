@@ -2622,6 +2622,40 @@ func (m *MockHatcheryServiceClient) EXPECT() *MockHatcheryServiceClientMockRecor
 	return m.recorder
 }
 
+// GetWorkerModel mocks base method.
+func (m *MockHatcheryServiceClient) GetWorkerModel(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, workerModelName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkerModel, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, workerModelName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetWorkerModel", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkerModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkerModel indicates an expected call of GetWorkerModel.
+func (mr *MockHatcheryServiceClientMockRecorder) GetWorkerModel(ctx, projKey, vcsIdentifier, repoIdentifier, workerModelName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, workerModelName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkerModel", reflect.TypeOf((*MockHatcheryServiceClient)(nil).GetWorkerModel), varargs...)
+}
+
+// Heartbeat mocks base method.
+func (m *MockHatcheryServiceClient) Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Heartbeat", ctx, mon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Heartbeat indicates an expected call of Heartbeat.
+func (mr *MockHatcheryServiceClientMockRecorder) Heartbeat(ctx, mon interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heartbeat", reflect.TypeOf((*MockHatcheryServiceClient)(nil).Heartbeat), ctx, mon)
+}
+
 // MockProjectClient is a mock of ProjectClient interface.
 type MockProjectClient struct {
 	ctrl     *gomock.Controller

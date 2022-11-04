@@ -64,12 +64,17 @@ func (c client) PluginGetBinary(name, os, arch string, w io.Writer) error {
 	path := fmt.Sprintf("/download/plugin/%s/binary/%s/%s?accept-redirect=true", name, os, arch)
 	var reader io.ReadCloser
 	var err error
+	var httpCode int
 
-	reader, _, _, err = c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", path, nil)
+	reader, _, httpCode, err = c.Stream(context.Background(), c.HTTPNoTimeoutClient(), "GET", path, nil)
 	if err != nil {
 		return err
 	}
 	defer reader.Close()
+
+	if httpCode >= 400 {
+		return newAPIError(fmt.Errorf("HTTP %d", httpCode))
+	}
 
 	_, err = io.Copy(w, reader)
 	return err

@@ -7,8 +7,12 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/repository"
+	vcs2 "github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -16,17 +20,20 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig) (sdk.RequirementList, bool, *sdk.Model, *sdk.MultiError) {
+func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig) (sdk.RequirementList, bool, string, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
 	var model string
+	var modelV2 string
+	var modelType string
+	var wm *sdk.Model
 	var tmp = sdk.ParametersToMap(run.BuildParameters)
 
 	if defaultOS != "" && defaultArch != "" {
 		var modelFound, osArchFound bool
 		for _, req := range j.Action.Requirements {
-			if req.Type == sdk.ModelRequirement {
+			if req.Type == sdk.ModelRequirement || req.Type == sdk.ModelV2Requirement {
 				modelFound = true
 			}
 			if req.Type == sdk.OSArchRequirement {
@@ -74,24 +81,46 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 		if v.Type == sdk.ServiceRequirement {
 			containsService = true
 		}
-		if v.Type == sdk.ModelRequirement {
+		if v.Type == sdk.ModelRequirement || v.Type == sdk.ModelV2Requirement {
 			// It is forbidden to have more than one model requirement.
 			if j.Action.Enabled && model != "" {
 				errm.Append(sdk.ErrInvalidJobRequirementDuplicateModel)
 				break
 			}
-			model = value
-		}
+			if v.Type == sdk.ModelRequirement {
+				model = value
+			}
+			if v.Type == sdk.ModelV2Requirement {
+				modelV2 = value
+			}
 
+		}
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
 
-	wm, err := processNodeJobRunRequirementsGetModel(ctx, db, model, execsGroupIDs)
-	if err != nil {
-		log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
-		errm.Append(err)
+	if model != "" {
+		var err error
+		wm, err = processNodeJobRunRequirementsGetModel(ctx, db, model, execsGroupIDs)
+		if err != nil {
+			log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
+			errm.Append(err)
+		}
 	}
+	if modelV2 != "" {
+		workerModelV2, err := processNodeJobRunRequirementsGetModelV2(ctx, db, modelV2)
+		if err != nil {
+			log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model v2 %s: %v", model, err)
+			errm.Append(err)
+		}
+		if workerModelV2 != nil {
+			modelType = workerModelV2.Type
+		}
+
+	}
+
 	if wm != nil {
+		modelType = wm.Type
+
 		// Check that the worker model has the binaries capabilitites
 		// only if the worker model doesn't need registration
 		if !wm.NeedRegistration && !wm.CheckRegistration {
@@ -167,9 +196,9 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	}
 
 	if errm.IsEmpty() {
-		return requirements, containsService, wm, nil
+		return requirements, containsService, modelType, nil
 	}
-	return requirements, containsService, wm, &errm
+	return requirements, containsService, modelType, &errm
 }
 
 func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {
@@ -187,6 +216,35 @@ func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.P
 		sdk.AddParameter(&params, k, sdk.StringParameter, r.Value)
 	}
 	return params
+}
+
+func processNodeJobRunRequirementsGetModelV2(ctx context.Context, db gorp.SqlExecutor, requirementValue string) (*sdk.V2WorkerModel, error) {
+	modelPath := strings.Split(requirementValue, "/")
+	if len(modelPath) < 4 {
+		return nil, sdk.WrapError(sdk.ErrInvalidData, "wrong model value %v", modelPath)
+	}
+	projKey := modelPath[0]
+	vcsName := modelPath[1]
+	modelName := modelPath[len(modelPath)-1]
+	repoName := strings.Join(modelPath[2:len(modelPath)-1], "/")
+
+	vcs, err := vcs2.LoadVCSByName(ctx, db, projKey, vcsName)
+	if err != nil {
+		return nil, err
+	}
+	repo, err := repository.LoadRepositoryByName(ctx, db, vcs.ID, repoName)
+	if err != nil {
+		return nil, err
+	}
+	workerModelEntity, err := entity.LoadByBranchTypeName(ctx, db, repo.ID, "master", sdk.EntityTypeWorkerModel, modelName)
+	if err != nil {
+		return nil, err
+	}
+	var model sdk.V2WorkerModel
+	if err := yaml.Unmarshal([]byte(workerModelEntity.Data), &model); err != nil {
+		return nil, err
+	}
+	return &model, nil
 }
 
 func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecutor, model string, execsGroupIDs []int64) (*sdk.Model, error) {

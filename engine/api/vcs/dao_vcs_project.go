@@ -39,6 +39,33 @@ func Delete(db gorpmapper.SqlExecutorWithTx, projectID int64, name string) error
 	return sdk.WrapError(err, "cannot delete vcs_project %d/%s", projectID, name)
 }
 
+func getVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.VCSProject, error) {
+	var res dbVCSProject
+
+	found, err := gorpmapping.Get(ctx, db, q, &res)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(res, res.Signature)
+	if err != nil {
+		return nil, sdk.WrapError(err, "error when checking signature for vcs_project %s", res.ID)
+	}
+	if !isValid {
+		log.Error(ctx, "vcs_project %d data corrupted", res.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+
+	}
+	return &res.VCSProject, nil
+}
+
+func LoadVCSByName(ctx context.Context, db gorp.SqlExecutor, projectKey, vcsName string) (*sdk.VCSProject, error) {
+	q := gorpmapping.NewQuery("SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2").Args(projectKey, vcsName)
+	return getVCSProject(ctx, db, q)
+}
+
 func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
 	var res []dbVCSProject
 

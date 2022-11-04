@@ -13,7 +13,7 @@ func NewConsumerHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h
 		AuthConsumer: sdk.AuthConsumer{
 			Name:            h.Name,
 			Type:            sdk.ConsumerHatchery,
-			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 365*24*time.Hour),
 			Description:     "Consumer for hatchery " + h.Name,
 		},
 		AuthConsumerHatchery: sdk.AuthConsumerHatcheryData{
