@@ -14,7 +14,6 @@ import (
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
 	hatchery "github.com/ovh/cds/sdk/hatchery"
-	logrus "github.com/sirupsen/logrus"
 )
 
 // MockInterface is a mock of Interface interface.
@@ -52,6 +51,20 @@ func (m *MockInterface) CDSClient() cdsclient.Interface {
 func (mr *MockInterfaceMockRecorder) CDSClient() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClient", reflect.TypeOf((*MockInterface)(nil).CDSClient))
+}
+
+// CDSClientV2 mocks base method.
+func (m *MockInterface) CDSClientV2() cdsclient.HatcheryServiceClient {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CDSClientV2")
+	ret0, _ := ret[0].(cdsclient.HatcheryServiceClient)
+	return ret0
+}
+
+// CDSClientV2 indicates an expected call of CDSClientV2.
+func (mr *MockInterfaceMockRecorder) CDSClientV2() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClientV2", reflect.TypeOf((*MockInterface)(nil).CDSClientV2))
 }
 
 // CanSpawn mocks base method.
@@ -94,20 +107,6 @@ func (m *MockInterface) GetGoRoutines() *sdk.GoRoutines {
 func (mr *MockInterfaceMockRecorder) GetGoRoutines() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterface)(nil).GetGoRoutines))
-}
-
-// GetLogger mocks base method.
-func (m *MockInterface) GetLogger() *logrus.Logger {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLogger")
-	ret0, _ := ret[0].(*logrus.Logger)
-	return ret0
-}
-
-// GetLogger indicates an expected call of GetLogger.
-func (mr *MockInterfaceMockRecorder) GetLogger() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogger", reflect.TypeOf((*MockInterface)(nil).GetLogger))
 }
 
 // GetPrivateKey mocks base method.
@@ -260,6 +259,20 @@ func (mr *MockInterfaceWithModelsMockRecorder) CDSClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClient", reflect.TypeOf((*MockInterfaceWithModels)(nil).CDSClient))
 }
 
+// CDSClientV2 mocks base method.
+func (m *MockInterfaceWithModels) CDSClientV2() cdsclient.HatcheryServiceClient {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CDSClientV2")
+	ret0, _ := ret[0].(cdsclient.HatcheryServiceClient)
+	return ret0
+}
+
+// CDSClientV2 indicates an expected call of CDSClientV2.
+func (mr *MockInterfaceWithModelsMockRecorder) CDSClientV2() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CDSClientV2", reflect.TypeOf((*MockInterfaceWithModels)(nil).CDSClientV2))
+}
+
 // CanSpawn mocks base method.
 func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	m.ctrl.T.Helper()
@@ -300,20 +313,6 @@ func (m *MockInterfaceWithModels) GetGoRoutines() *sdk.GoRoutines {
 func (mr *MockInterfaceWithModelsMockRecorder) GetGoRoutines() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetGoRoutines))
-}
-
-// GetLogger mocks base method.
-func (m *MockInterfaceWithModels) GetLogger() *logrus.Logger {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLogger")
-	ret0, _ := ret[0].(*logrus.Logger)
-	return ret0
-}
-
-// GetLogger indicates an expected call of GetLogger.
-func (mr *MockInterfaceWithModelsMockRecorder) GetLogger() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogger", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetLogger))
 }
 
 // GetPrivateKey mocks base method.

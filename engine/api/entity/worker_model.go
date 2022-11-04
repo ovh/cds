@@ -2,10 +2,10 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
-	"github.com/rockbears/yaml"
 )
 
 func WorkerModelDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, projectID int64, wm *sdk.V2WorkerModel, decryptFunc keys.DecryptFunc) error {
@@ -15,7 +15,7 @@ func WorkerModelDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, project
 	switch wm.Type {
 	case sdk.WorkerModelTypeDocker:
 		var spec sdk.V2WorkerModelDockerSpec
-		if err := yaml.Unmarshal(wm.Spec, &spec); err != nil {
+		if err := json.Unmarshal(wm.Spec, &spec); err != nil {
 			return sdk.WithStack(err)
 		}
 		if spec.Password == "" {
@@ -26,10 +26,10 @@ func WorkerModelDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, project
 			return err
 		}
 		spec.Password = secret
-		wm.Spec, _ = yaml.Marshal(spec)
+		wm.Spec, _ = json.Marshal(spec)
 	case sdk.WorkerModelTypeVSphere:
 		var spec sdk.V2WorkerModelVSphereSpec
-		if err := yaml.Unmarshal(wm.Spec, &spec); err != nil {
+		if err := json.Unmarshal(wm.Spec, &spec); err != nil {
 			return sdk.WithStack(err)
 		}
 		if spec.Password == "" {
@@ -40,7 +40,7 @@ func WorkerModelDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, project
 			return err
 		}
 		spec.Password = secret
-		wm.Spec, _ = yaml.Marshal(spec)
+		wm.Spec, _ = json.Marshal(spec)
 	}
 	return nil
 }
