@@ -23,9 +23,9 @@ export class ScopeDetailComponent {
     @Output() onChange = new EventEmitter<AuthConsumerScopeDetail>();
 
     advancedOpen: boolean;
-    allReadRoutesSelected: boolean;
-    allWriteRoutesSelected: boolean;
-    allRoutesSelected: boolean;
+    allReadRoutesSelected: boolean = false;
+    allWriteRoutesSelected: boolean = false;
+    allRoutesSelected: boolean = false;
     selectedRouteMethods: any;
 
     constructor(private _cd: ChangeDetectorRef) { }
@@ -88,10 +88,8 @@ export class ScopeDetailComponent {
 
             this.syncRouteAllCheckbox(routes[i]);
         }
-
-        this._cd.markForCheck();
-
         this.sendChangeEvent();
+        this._cd.markForCheck();
     }
 
     clickSelectAllRoutesWrite() {
@@ -113,10 +111,8 @@ export class ScopeDetailComponent {
 
             this.syncRouteAllCheckbox(routes[i]);
         }
-
-        this._cd.markForCheck();
-
         this.sendChangeEvent();
+        this._cd.markForCheck();
     }
 
     clickSelectAllRoutes() {
@@ -132,10 +128,8 @@ export class ScopeDetailComponent {
                 this.selectedRouteMethods[routes[i]][method] = this.allRoutesSelected;
             });
         }
-
-        this._cd.markForCheck();
-
         this.sendChangeEvent();
+        this._cd.markForCheck();
     }
 
     clickMethod(route: string, method: string) {
