@@ -7,13 +7,13 @@
         <div class="content">
             <div class="wrapper loading">
                 <app-scrollview class="scrollview">
-                    <div class="ui padded centered grid">
-                        <div class="column">
+                    <nz-row nzJustify="center">
+                        <nz-col>
                             <img class="logo ui centered image grayscale" src="assets/images/cds.png" alt="CDS Logo">
                             <p *ngIf="!isAPIAvailable">{{ 'cdsapi_loading' | translate }}</p>
                             <p *ngIf="isAPIAvailable">{{ 'maintenance_title' | translate }}</p>
-                        </div>
-                    </div>
+                        </nz-col>
+                    </nz-row>
                 </app-scrollview>
             </div>
         </div>
@@ -34,8 +34,7 @@
                 <div class="page" [class.connected]="isConnected && !hideNavBar">
                     <div class="content inner-content" [class.connected]="isConnected && !hideNavBar">
                             <router-outlet></router-outlet>
-                        <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}
-                        </div>
+                        <nz-spin nzTip="Loading..." *ngIf="displayResolver"></nz-spin>
                     </div>
                 </div>
                 <app-node-edit-modal></app-node-edit-modal>
