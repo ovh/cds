@@ -1,0 +1,17 @@
+name: hatchery initialization
+
+testcases:
+  - name: prepareTest
+    steps:
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery remove {{.hatchery.name}} --force
+
+  - name: addHatchery
+    steps:
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery add {{.hatchery.name}} --format json
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemoutjson.token ShouldNotBeEmpty
+        vars:
+          hatcheryToken:
+            from: result.systemoutjson.token
+      - script: echo "{{.hatcheryToken}}" > tmp.hatcheryv2.token

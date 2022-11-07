@@ -7,14 +7,12 @@ testcases:
   - script: curl -X DELETE "{{.git.host}}/api/v1/repos/{{.git.user}}/myrepo" -u "{{.git.user}}:{{.git.password}}"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPRJVCS --force
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg rm E027B500E97E52E7 --force || true
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIPRJVCS "Test Project" ITCLIPRJVCS
   - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true}" -H "Content-Type: application/json"'
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --pub-key-file ./fixtures/gpg/key.pub
-  - script: gpg --import ./fixtures/gpg/key.priv
-  - script: gpg --import ./fixtures/gpg/key.pub
-  - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg/key.pub.json'
+  - script: gpg --import ./fixtures/gpg-ADMIN/key.priv
+  - script: gpg --import ./fixtures/gpg-ADMIN/key.pub
+  - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg-ADMIN/key.pub.json'
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_admin.yml --force
 
 - name: import / export vcs server

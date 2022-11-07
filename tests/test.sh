@@ -37,6 +37,8 @@ CDS_HOOKS_URL="${CDS_HOOKS_URL:-http://localhost:8083}"
 CDSCTL="${CDSCTL:-`which cdsctl`}"
 CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 CDS_ENGINE_CTL="${CDS_ENGINE_CTL:-`which cds-engine`}"
+CDS_ENGINE_CONFIG="${CDS_ENGINE_CONFIG:-cds-engine.toml}"
+CDS_HATCHERY_NAME="${CDS_HATCHERY_NAME:-hatchery-swarm}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
 INIT_TOKEN="${INIT_TOKEN:-}"
 GITEA_USER="${GITEA_USER:-gituser}"
@@ -111,7 +113,6 @@ initialization_tests() {
     CMD="${VENOM} run ${VENOM_OPTS} 01_signup.yml --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_user --var api.url=${CDS_API_URL} --var username=cds.integration.tests.ro --var email=it-user-ro@localhost.local --var fullname=IT_User_RO --var smtpmock.url=${SMTP_MOCK_URL} --var ring=USER"
     echo -e "  ${YELLOW}01_signup.yml (user) ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_signup_user.yml.output 2>&1
-
     check_failure $? 01_signup_user.yml.output
     mv_results ${f}
 
@@ -119,6 +120,12 @@ initialization_tests() {
     echo -e "  ${YELLOW}01_queue_stopall.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_queue_stopall.yml.output 2>&1
     check_failure $? 01_queue_stopall.yml.output
+    mv_results ${f}
+
+    CMD="${VENOM} run ${VENOM_OPTS} 01_init_hatchery.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL} --var engine.config=${CDS_ENGINE_CONFIG} --var hatchery.name=${CDS_HATCHERY_NAME}"
+    echo -e "  ${YELLOW}01_init_hatchery.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_init_hatchery.yml.output 2>&1
+    check_failure $? 01_init_hatchery.yml.output
     mv_results ${f}
 }
 

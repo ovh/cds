@@ -53,3 +53,9 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} -c test user me --fields ring --format json"
     assertions:
     - result.systemoutjson.ring ShouldEqual {{.ring}}
+
+- name: init-user-gpg-key
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --pub-key-file ./fixtures/gpg-{{.ring}}/key.pub
+
+
