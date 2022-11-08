@@ -9,17 +9,18 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -362,18 +363,10 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 	log.Debug(ctx, "found %d results to delete", len(runResults))
 
 	lowMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-	highMaturity := artifactManagerInteg.ProjectIntegration.Config[sdk.ArtifactoryConfigPromotionHighMaturity].Value
 
-	toDeleteProperties := []sdk.KeyValues{
-		{
-			Key:    "ovh.to_delete",
-			Values: []string{"true"},
-		},
-		{
-			Key:    "ovh.to_delete_timestamp",
-			Values: []string{strconv.FormatInt(time.Now().Unix(), 10)},
-		},
-	}
+	props := utils.NewProperties()
+	props.AddProperty("ovh.to_delete", "true")
+	props.AddProperty("ovh.to_delete_timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
 	for i := range runResults {
 		res := &runResults[i]
@@ -384,14 +377,8 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 				log.Error(ctx, "unable to get artifact from run result %d: %v", res.ID, err)
 				continue
 			}
-			if err := artifactClient.SetProperties(art.RepoName+"-"+lowMaturity, art.Path, toDeleteProperties...); err != nil {
+			if err := artifactClient.SetProperties(art.RepoName+"-"+lowMaturity, art.Path, props); err != nil {
 				log.Info(ctx, "unable to mark artifact %q %q (run result %d) to delete: %v", art.RepoName+"-"+lowMaturity, art.Path, res.ID, err)
-			} else {
-				continue // if snaphot is a success, don't try to delete on release
-			}
-			if err := artifactClient.SetProperties(art.RepoName+"-"+highMaturity, art.Path, toDeleteProperties...); err != nil {
-				log.Error(ctx, "unable to mark artifact %q %q (run result %d) to delete: %v", art.RepoName+"-"+highMaturity, art.Path, res.ID, err)
-				continue
 			}
 		}
 	}

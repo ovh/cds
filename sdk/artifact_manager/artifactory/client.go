@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path"
 	"strconv"
 	"strings"
 
+	buildinfo "github.com/jfrog/build-info-go/entities"
 	"github.com/jfrog/jfrog-client-go/artifactory"
-	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -21,17 +21,20 @@ type Client struct {
 	Asm artifactory.ArtifactoryServicesManager
 }
 
+func (c *Client) GetFolderInfo(repoName string, folderPath string) (*utils.FolderInfo, error) {
+	return c.Asm.FolderInfo(repoName + "/" + folderPath)
+}
+
+func (c *Client) GetRepository(repoName string) (*services.RepositoryDetails, error) {
+	var repoDetails services.RepositoryDetails
+	if err := c.Asm.GetRepository(repoName, &repoDetails); err != nil {
+		return nil, err
+	}
+	return &repoDetails, nil
+}
+
 func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, error) {
 	fi := sdk.FileInfo{}
-	repoDetails := services.RepositoryDetails{}
-	if err := c.Asm.GetRepository(repoName, &repoDetails); err != nil {
-		return fi, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to get repository %s: %v", repoName, err)
-	}
-
-	// To get FileInfo for a docker image, we have to check the manifest file
-	if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
-		filePath = path.Join(filePath, "manifest.json")
-	}
 
 	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath)
 	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
@@ -55,30 +58,32 @@ func (c *Client) GetFileInfo(repoName string, filePath string) (sdk.FileInfo, er
 		}
 		fi.Size = s
 	}
-	fi.Type = repoDetails.PackageType
 
 	return fi, nil
 }
 
-func (c *Client) SetProperties(repoName string, filePath string, values ...sdk.KeyValues) error {
-	var properties string
-	for i, kv := range values {
-		if i > 0 {
-			properties += ";" // https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-SetItemProperties
-		}
-		properties += url.QueryEscape(kv.Key) + "=" + url.QueryEscape(strings.Join(kv.Values, ","))
+func (c *Client) SetProperties(repoName string, filePath string, props *utils.Properties) error {
+	if props == nil {
+		return nil
 	}
-	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s?properties=%s&recursive=1", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath, properties)
+	var properties []string
+	for key, values := range props.ToMap() {
+		properties = append(properties, url.QueryEscape(key)+"="+url.QueryEscape(strings.Join(values, ",")))
+	}
+	// https://www.jfrog.com/confluence/display/JFROG/Artifactory+REST+API#ArtifactoryRESTAPI-SetItemProperties
+	propertiesString := strings.Join(properties, ";")
+	if !strings.HasPrefix(filePath, "/") {
+		filePath = "/" + filePath
+	}
+	fileInfoURL := fmt.Sprintf("%sapi/storage/%s%s?properties=%s&recursive=1", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath, propertiesString)
 	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
 	re, _, err := c.Asm.Client().SendPut(fileInfoURL, nil, &httpDetails)
 	if err != nil {
 		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory: %v", err)
 	}
-
 	if re.StatusCode >= 400 {
 		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s", re.StatusCode, fileInfoURL)
 	}
-
 	return nil
 }
 
@@ -130,4 +135,62 @@ func (c *Client) XrayScanBuild(params services.XrayScanParams) ([]byte, error) {
 
 func (c *Client) GetURL() string {
 	return c.Asm.GetConfig().GetServiceDetails().GetUrl()
+}
+
+func (c *Client) CheckArtifactExists(repoName string, artiName string) (bool, error) {
+	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	fileInfoURL := fmt.Sprintf("%sapi/storage/%s/%s", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, artiName)
+	re, body, _, err := c.Asm.Client().SendGet(fileInfoURL, true, &httpDetails)
+	if err != nil {
+		return false, fmt.Errorf("unable to get file info %s/%s: %v", repoName, artiName, err)
+	}
+	if re.StatusCode == 404 {
+		return false, nil
+	}
+	if re.StatusCode >= 400 {
+		return false, fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, fileInfoURL, string(body))
+	}
+	return true, nil
+}
+
+func (c *Client) PromoteDocker(params services.DockerPromoteParams) error {
+	return c.Asm.PromoteDocker(params)
+}
+
+func (c *Client) Move(params services.MoveCopyParams) (successCount, failedCount int, err error) {
+	return c.Asm.Move(params)
+}
+
+func (c *Client) Copy(params services.MoveCopyParams) (successCount, failedCount int, err error) {
+	return c.Asm.Copy(params)
+}
+
+type PropertiesResponse struct {
+	Properties map[string][]string
+}
+
+func (c *Client) GetRepositoryMaturity(repoName string) (string, error) {
+	httpDetails := c.Asm.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	uri := fmt.Sprintf(c.Asm.GetConfig().GetServiceDetails().GetUrl()+"api/storage/%s?properties", repoName)
+	re, body, _, err := c.Asm.Client().SendGet(uri, true, &httpDetails)
+	if err != nil {
+		return "", errors.Errorf("unable to get properties %s: %v", repoName, err)
+	}
+	if re.StatusCode == 404 {
+		return "", errors.Errorf("repository %s properties not foud", repoName)
+	}
+	if re.StatusCode >= 400 {
+		return "", errors.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, uri, string(body))
+	}
+	var props PropertiesResponse
+	if err := json.Unmarshal(body, &props); err != nil {
+		return "", errors.WithStack(err)
+	}
+	fmt.Printf("Repository %q has properties: %+v\n", repoName, props.Properties)
+	for k, p := range props.Properties {
+		if k == "ovh.maturity" {
+			return p[0], nil
+		}
+	}
+	return "", nil
 }

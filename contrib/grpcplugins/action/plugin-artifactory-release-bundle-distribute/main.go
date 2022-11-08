@@ -94,7 +94,7 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 		})
 	}
 
-	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10); err != nil {
+	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10, false); err != nil {
 		return actionplugin.Fail("unable to distribute version: %v", err)
 	}
 

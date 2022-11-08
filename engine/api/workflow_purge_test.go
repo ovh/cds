@@ -8,13 +8,14 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager/mock_artifact_manager"
 	"github.com/ovh/cds/engine/api/purge"
+	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/artifact_manager/mock_artifact_manager"
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/stretchr/testify/assert"
@@ -249,14 +250,17 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 
 	mockArtifactory := mock_artifact_manager.NewMockArtifactManager(ctrl)
 
-	mockArtifactory.EXPECT().GetFileInfo("repository", "path/to/foo").Return(
+	mockArtifactory.EXPECT().GetRepository("repository").Return(&services.RepositoryDetails{
+		PackageType: "docker",
+	}, nil)
+
+	mockArtifactory.EXPECT().GetFileInfo("repository", "path/to/foo/manifest.json").Return(
 		sdk.FileInfo{
-			Type:      "generic",
 			Checksums: &sdk.FileInfoChecksum{},
 		},
 		nil)
 
-	mockArtifactory.EXPECT().SetProperties("repository-snapshot", "path/to/foo", gomock.Any(), gomock.Any()).Return(nil)
+	mockArtifactory.EXPECT().SetProperties("repository-snapshot", "path/to/foo", gomock.Any()).Return(nil)
 
 	artifact_manager.DefaultClientFactory = func(_, _, _ string) (artifact_manager.ArtifactManager, error) {
 		return mockArtifactory, nil

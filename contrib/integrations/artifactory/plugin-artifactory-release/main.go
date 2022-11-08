@@ -18,6 +18,7 @@ import (
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/contrib/integrations/artifactory/plugin-artifactory-release/edge"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
@@ -76,6 +77,16 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		destMaturity = DefaultHighMaturity
 	}
 
+	var props *utils.Properties
+	var err error
+	setProperties := opts.GetOptions()["setProperties"]
+	if setProperties != "" {
+		props, err = utils.ParseProperties(setProperties)
+		if err != nil {
+			return fail("unable to parse given properties: %v", err)
+		}
+	}
+
 	runResult, err := grpcplugins.GetRunResults(e.HTTPPort)
 	if err != nil {
 		return fail("unable to list run results: %v", err)
@@ -101,10 +112,9 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		return fail("unable to create distribution client: %v", err)
 	}
 
-	// Promotion
-	artiClient, err := art.CreateArtifactoryClient(ctx, artifactoryURL, token)
+	artifactClient, err := artifact_manager.NewClient("artifactory", artifactoryURL, token)
 	if err != nil {
-		return fail("unable to create artifactory client: %v", err)
+		return fail("Failed to create artifactory client: %s", err)
 	}
 
 	artSplit := strings.Split(artifactList, ",")
@@ -153,12 +163,12 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		}
 		switch rData.RepoType {
 		case "docker":
-			if err := art.PromoteDockerImage(artiClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity); err != nil {
+			if err := art.PromoteDockerImage(ctx, artifactClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props); err != nil {
 				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+latestPromotion.ToMaturity, err)
 			}
 			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s/manifest.json", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
 		default:
-			if err := art.PromoteFile(artiClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity); err != nil {
+			if err := art.PromoteFile(artifactClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
 			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
@@ -193,7 +203,7 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 			CountryCodes: []string{e.City.CountryCode},
 		})
 	}
-	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10); err != nil {
+	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 1, false); err != nil {
 		return fail("unable to distribute version: %v", err)
 	}
 

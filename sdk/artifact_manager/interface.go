@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jfrog/jfrog-client-go/artifactory/buildinfo"
+	buildinfo "github.com/jfrog/build-info-go/entities"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
-	arti "github.com/ovh/cds/engine/api/integration/artifact_manager/artifactory"
+	arti "github.com/ovh/cds/sdk/artifact_manager/artifactory"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -15,11 +16,18 @@ import (
 // mockgen -source=interface.go -package mock_artifact_manager -destination=mock_artifact_manager/interface_mock.go ArtifactManager
 type ArtifactManager interface {
 	GetFileInfo(repoName string, filePath string) (sdk.FileInfo, error)
-	SetProperties(repoName string, filePath string, values ...sdk.KeyValues) error
+	GetRepository(repoName string) (*services.RepositoryDetails, error)
+	GetFolderInfo(repoName string, folderPath string) (*utils.FolderInfo, error)
+	SetProperties(repoName string, filePath string, values *utils.Properties) error
 	DeleteBuild(project string, buildName string, buildVersion string) error
 	PublishBuildInfo(project string, request *buildinfo.BuildInfo) error
 	XrayScanBuild(params services.XrayScanParams) ([]byte, error)
 	GetURL() string
+	CheckArtifactExists(repoName string, artiName string) (bool, error)
+	PromoteDocker(params services.DockerPromoteParams) error
+	Copy(params services.MoveCopyParams) (successCount, failedCount int, err error)
+	Move(params services.MoveCopyParams) (successCount, failedCount int, err error)
+	GetRepositoryMaturity(repoName string) (string, error)
 }
 
 type ClientFactoryFunc func(string, string, string) (ArtifactManager, error)
