@@ -13,9 +13,9 @@ import (
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager/mock_artifact_manager"
 	"github.com/ovh/cds/engine/api/purge"
+	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/artifact_manager/mock_artifact_manager"
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/stretchr/testify/assert"

@@ -8,7 +8,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
-	arti "github.com/ovh/cds/engine/api/integration/artifact_manager/artifactory"
+	arti "github.com/ovh/cds/sdk/artifact_manager/artifactory"
 
 	"github.com/ovh/cds/sdk"
 )

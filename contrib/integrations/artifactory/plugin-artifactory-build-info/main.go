@@ -11,8 +11,8 @@ import (
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 

@@ -19,8 +19,8 @@ import (
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
 )
 
 type DistribClient struct {
@@ -90,7 +90,7 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowR
 			// Get the properties of the source reposiytory
 			maturity, err := artiClient.GetRepositoryMaturity(srcRepo)
 			if err != nil {
-				fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
+				return fmt.Errorf("unable to get repository maturity: %v\n", err)
 			}
 
 			if maturity == "release" {

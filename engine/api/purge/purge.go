@@ -14,13 +14,13 @@ import (
 	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 

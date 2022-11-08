@@ -15,10 +15,10 @@ import (
 
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/integration/artifact_manager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
