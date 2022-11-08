@@ -10,28 +10,13 @@ var Coverage = Manifest{
 	Action: sdk.Action{
 		Name: sdk.CoverageAction,
 		Description: `CDS Builtin Action.
-Parse given file to extract coverage results for lcov, cobertura and clover format.
-Then the coverage report is uploaded in CDN.
-Coverage report will be linked to the application from the pipeline context for lcov, cobertura and clover format.
-You will be able to see the coverage history in the application home page for lcov, cobertura and clover format.
+Upload you coverage file to CDS as a coverage run result.
 `,
 		Parameters: []sdk.Parameter{
-			{
-				Name:        "format",
-				Description: `Coverage report format.`,
-				Type:        sdk.ListParameter,
-				Value:       "lcov;cobertura;clover;other",
-			},
 			{
 				Name:        "path",
 				Description: `Path of the coverage report file.`,
 				Type:        sdk.StringParameter,
-			},
-			{
-				Name:        "minimum",
-				Description: `Minimum percentage of coverage required (-1 means no minimum).`,
-				Type:        sdk.NumberParameter,
-				Advanced:    true,
 			},
 		},
 	},
@@ -45,9 +30,7 @@ You will be able to see the coverage history in the application home page for lc
 			Steps: []exportentities.Step{
 				{
 					Coverage: &exportentities.StepCoverage{
-						Format:  "cobertura",
-						Minimum: "60",
-						Path:    "./coverage.xml",
+						Path: "./coverage.xml",
 					},
 				},
 			},

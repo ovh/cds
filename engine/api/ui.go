@@ -79,15 +79,6 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 				Type:  sdk.MetricKeyUnitTest,
 				Datas: mTest,
 			})
-
-			mCoverage, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyCoverage)
-			if err != nil {
-				return sdk.WrapError(err, "cannot list coverage metrics")
-			}
-			appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
-				Type:  sdk.MetricKeyCoverage,
-				Datas: mCoverage,
-			})
 		}
 
 		if app.VCSServer != "" {

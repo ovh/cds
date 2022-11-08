@@ -12,9 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rockbears/log"
-	"github.com/sguiheux/go-coverage"
-
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/event"
@@ -32,6 +29,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 func (api *API) postTakeWorkflowJobHandler() service.Handler {
@@ -924,71 +922,6 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 
 	return since, until, limit
-}
-
-func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if isWorker := isWorker(ctx); !isWorker {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		// Load and lock Existing workflow Run Job
-		id, err := requestVarInt(r, "permJobID")
-		if err != nil {
-			return err
-		}
-
-		var report coverage.Report
-		if err := service.UnmarshalBody(r, &report); err != nil {
-			return err
-		}
-
-		wnr, err := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{})
-		if err != nil {
-			return sdk.WrapError(err, "unable to load node run")
-		}
-
-		existingReport, errLoad := workflow.LoadCoverageReport(api.mustDB(), wnr.ID)
-		if errLoad != nil && !sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
-			return sdk.WrapError(errLoad, "unable to load coverage report")
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		p, err := project.LoadProjectByNodeJobRunID(ctx, tx, api.Cache, id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load project by nodeJobRunID:%d", id)
-		}
-		if sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
-			if err := workflow.ComputeNewReport(ctx, tx, api.Cache, report, wnr, *p); err != nil {
-				return sdk.WrapError(err, "cannot compute new coverage report")
-			}
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
-			}
-			return nil
-		}
-
-		// update
-		existingReport.Report = report
-		if err := workflow.ComputeLatestDefaultBranchReport(ctx, tx, api.Cache, *p, wnr, &existingReport); err != nil {
-			return sdk.WrapError(err, "cannot compute default branch coverage report")
-		}
-
-		if err := workflow.UpdateCoverage(tx, existingReport); err != nil {
-			return sdk.WrapError(err, "unable to update code coverage")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
-	}
 }
 
 func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {

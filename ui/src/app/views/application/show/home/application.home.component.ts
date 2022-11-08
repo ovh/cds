@@ -58,9 +58,6 @@ export class ApplicationHomeComponent implements OnInit, OnDestroy {
                         case 'UnitTest':
                             this.createUnitTestDashboard(g.datas);
                             break;
-                        case 'Coverage':
-                            this.createCoverageDashboard(g.datas);
-                            break;
                     }
                 }
             });
@@ -142,37 +139,6 @@ export class ApplicationHomeComponent implements OnInit, OnDestroy {
                 cc.colorScheme['domain'].push(Severity.getColors(s));
             }
         });
-        this.dashboards.push(cc);
-    }
-
-    createCoverageDashboard(metrics: Array<Metric>): void {
-        let cc = new GraphConfiguration(GraphType.AREA_STACKED);
-        cc.title = this._translate.instant('graph_coverage_title');
-        cc.colorScheme = { domain: [] };
-        cc.gradient = false;
-        cc.showXAxis = true;
-        cc.showYAxis = true;
-        cc.showLegend = false;
-        cc.showXAxisLabel = true;
-        cc.showYAxisLabel = true;
-        cc.xAxisLabel = this._translate.instant('graph_vulnerability_x');
-        cc.yAxisLabel = this._translate.instant('graph_coverage_y');
-        cc.datas = new Array<ChartData>();
-
-        let cd = new ChartData();
-        cd.name = this._translate.instant('graph_coverage_y');
-        cd.series = new Array<ChartSeries>();
-        metrics.forEach(m => {
-            let v = m.value['percent'];
-            if (v) {
-                let cs = new ChartSeries();
-                cs.name = m.run.toString();
-                cs.value = v;
-                cd.series.push(cs);
-            }
-        });
-        cc.datas.push(cd);
-        cc.colorScheme['domain'].push('#4286f4');
         this.dashboards.push(cc);
     }
 }

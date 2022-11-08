@@ -20,30 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRunCoverageWrongFormat(t *testing.T) {
-	wk, ctx := SetupTest(t)
-	res, err := RunParseCoverageResultAction(ctx, wk,
-		sdk.Action{
-			Parameters: []sdk.Parameter{
-				{
-					Name:  "path",
-					Value: ".",
-				},
-				{
-					Name:  "format",
-					Value: "FOOBAR",
-				},
-				{
-					Name:  "minimum",
-					Value: "10",
-				},
-			},
-		}, nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "coverage parser: unknown format")
-	assert.Equal(t, sdk.StatusFail, res.Status)
-}
-
 func TestRunCoverage_Absolute(t *testing.T) {
 	defer gock.Off()
 
@@ -56,7 +32,6 @@ func TestRunCoverage_Absolute(t *testing.T) {
 	fiPath, err := filepath.Abs(fi.Name())
 	require.NoError(t, err)
 
-	gock.New("http://cds-api.local").Post("/queue/workflows/666/coverage").Reply(200)
 	gock.New("http://cds-cdn.local").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
@@ -88,14 +63,6 @@ func TestRunCoverage_Absolute(t *testing.T) {
 				{
 					Name:  "path",
 					Value: fiPath,
-				},
-				{
-					Name:  "format",
-					Value: "cobertura",
-				},
-				{
-					Name:  "minimum",
-					Value: "10",
 				},
 			},
 		}, nil)
@@ -110,7 +77,6 @@ func TestRunCoverage_Relative(t *testing.T) {
 	fname := filepath.Join(wk.workingDirectory.Name(), "results.xml")
 	require.NoError(t, afero.WriteFile(wk.BaseDir(), fname, []byte(cobertura_result), os.ModePerm))
 
-	gock.New("http://cds-api.local").Post("/queue/workflows/666/coverage").Reply(200)
 	gock.New("http://cds-cdn.local").Post("/item/upload").Reply(200)
 
 	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
@@ -119,16 +85,6 @@ func TestRunCoverage_Relative(t *testing.T) {
 		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
 		if mock != nil {
 			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
-			switch mock.Request().URLStruct.String() {
-			case "http://cds-api.local/queue/workflows/666/coverage":
-				var report coverage.Report
-				err := json.Unmarshal(bodyContent, &report)
-				assert.NoError(t, err)
-				require.Equal(t, 8, report.TotalLines)
-				require.Equal(t, 6, report.CoveredLines)
-				require.Equal(t, 4, report.TotalBranches)
-				require.Equal(t, 2, report.CoveredBranches)
-			}
 		}
 	}
 
@@ -143,78 +99,10 @@ func TestRunCoverage_Relative(t *testing.T) {
 					Name:  "path",
 					Value: "results.xml",
 				},
-				{
-					Name:  "format",
-					Value: "cobertura",
-				},
-				{
-					Name:  "minimum",
-					Value: "10",
-				},
 			},
 		}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, sdk.StatusSuccess, res.Status)
-}
-
-func TestRunCoverageMinimumFail(t *testing.T) {
-	defer gock.Off()
-
-	wk, ctx := SetupTest(t)
-	assert.NoError(t, os.WriteFile("results.xml", []byte(cobertura_result), os.ModePerm))
-	defer os.RemoveAll("results.xml")
-
-	fi, err := os.Open("results.xml")
-	require.NoError(t, err)
-	fiPath, err := filepath.Abs(fi.Name())
-	require.NoError(t, err)
-
-	gock.New("http://cds-api.local").Post("/queue/workflows/666/coverage").Reply(200)
-	gock.New("http://cds-cdn.local").Post("/item/upload").Reply(200)
-
-	var checkRequest gock.ObserverFunc = func(request *http.Request, mock gock.Mock) {
-		bodyContent, err := io.ReadAll(request.Body)
-		assert.NoError(t, err)
-		request.Body = io.NopCloser(bytes.NewReader(bodyContent))
-		if mock != nil {
-			t.Logf("%s %s - Body: %s", mock.Request().Method, mock.Request().URLStruct.String(), string(bodyContent))
-			switch mock.Request().URLStruct.String() {
-			case "http://cds-api.local/queue/workflows/666/coverage":
-				var report coverage.Report
-				err := json.Unmarshal(bodyContent, &report)
-				assert.NoError(t, err)
-				require.Equal(t, 8, report.TotalLines)
-				require.Equal(t, 6, report.CoveredLines)
-				require.Equal(t, 4, report.TotalBranches)
-				require.Equal(t, 2, report.CoveredBranches)
-			}
-		}
-	}
-
-	gock.Observe(checkRequest)
-
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPClient())
-	gock.InterceptClient(wk.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
-	res, err := RunParseCoverageResultAction(ctx, wk,
-		sdk.Action{
-			Parameters: []sdk.Parameter{
-				{
-					Name:  "path",
-					Value: fiPath,
-				},
-				{
-					Name:  "format",
-					Value: "cobertura",
-				},
-				{
-					Name:  "minimum",
-					Value: "100",
-				},
-			},
-		}, nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "coverage: minimum coverage failed")
-	assert.Equal(t, sdk.StatusFail, res.Status)
 }
 
 const cobertura_result = `<?xml version="1.0" ?>

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/sguiheux/go-coverage"
 )
 
 // shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
@@ -226,12 +225,6 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 		return newError(fmt.Errorf("unable to send job result. HTTP code error : %d", code))
 	}
 	return nil
-}
-
-func (c *client) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	path := fmt.Sprintf("/queue/workflows/%d/coverage", id)
-	_, err := c.PostJSON(ctx, path, report, nil)
-	return err
 }
 
 func (c *client) QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error {

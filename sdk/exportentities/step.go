@@ -41,14 +41,6 @@ func NewStep(act sdk.Action) Step {
 			if path != nil {
 				s.Coverage.Path = path.Value
 			}
-			format := sdk.ParameterFind(act.Parameters, "format")
-			if format != nil {
-				s.Coverage.Format = format.Value
-			}
-			minimum := sdk.ParameterFind(act.Parameters, "minimum")
-			if minimum != nil {
-				s.Coverage.Minimum = minimum.Value
-			}
 		case sdk.ArtifactDownload:
 			s.ArtifactDownload = &StepArtifactDownload{}
 			path := sdk.ParameterFind(act.Parameters, "path")
@@ -270,9 +262,7 @@ type StepPushBuildInfo string
 
 // StepCoverage represents exported coverage step.
 type StepCoverage struct {
-	Format  string `json:"format,omitempty" yaml:"format,omitempty"`
-	Minimum string `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	Path    string `json:"path,omitempty" yaml:"path,omitempty"`
+	Path string `json:"path,omitempty" yaml:"path,omitempty"`
 }
 
 // StepArtifactDownload represents exported artifact download step.
