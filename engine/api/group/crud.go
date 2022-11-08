@@ -93,7 +93,7 @@ func EnsureOrganization(ctx context.Context, db gorpmapper.SqlExecutorWithTx, g 
 
 	newOrganizationName, err := g.Members.ComputeOrganization()
 	if err != nil {
-		return sdk.WrapError(err, "unable to validate group %s", g.Name)
+		return err
 	}
 	if exitingGroupOrganization != nil {
 		currentOrganization, err := organization.LoadOrganizationByID(ctx, db, exitingGroupOrganization.OrganizationID)
