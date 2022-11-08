@@ -157,6 +157,8 @@ func NewRequirements(req []sdk.Requirement) []Requirement {
 			res = append(res, Requirement{Memory: r.Value})
 		case sdk.SecretRequirement:
 			res = append(res, Requirement{SecretRequirement: r.Value})
+		case sdk.ModelV2Requirement:
+			res = append(res, Requirement{Modelv2: r.Value})
 		}
 	}
 	return res
