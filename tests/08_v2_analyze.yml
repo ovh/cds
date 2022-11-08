@@ -9,7 +9,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPRJVCS --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIPRJVCS "Test Project" ITCLIPRJVCS
-  - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true}" -H "Content-Type: application/json"'
+  - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true, \"default_branch\": \"master\"}" -H "Content-Type: application/json"'
   - script: gpg --import ./fixtures/gpg-ADMIN/key.priv
   - script: gpg --import ./fixtures/gpg-ADMIN/key.pub
   - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg-ADMIN/key.pub.json'
@@ -45,7 +45,7 @@ testcases:
     - script: cat ./fixtures/worker-model-template/tmpl-docker.yml > /tmp/myrepo/.cds/worker-model-templates/tmpl-docker.yml
     - script: cat ./fixtures/worker-model/docker-debian9.yml > /tmp/myrepo/.cds/worker-models/docker-debian9.yml
     - script: cd /tmp/myrepo && git config user.email "{{.git.user}}@gitea.eu" && git config user.name "{{.git.user}}"
-    - script: cd /tmp/myrepo && git checkout -b master && git add /tmp/myrepo/.cds/* && git commit . --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push origin master
+    - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/* && git commit . --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository hook-regen ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
       vars:
         hookSecret:
