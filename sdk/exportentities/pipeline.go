@@ -54,6 +54,7 @@ type Job struct {
 type Requirement struct {
 	Binary            string             `json:"binary,omitempty" yaml:"binary,omitempty"`
 	Model             string             `json:"model,omitempty" yaml:"model,omitempty"`
+	Modelv2           string             `json:"modelv2,omitempty" yaml:"modelv2,omitempty"`
 	Hostname          string             `json:"hostname,omitempty" yaml:"hostname,omitempty"`
 	Plugin            string             `json:"plugin,omitempty" yaml:"plugin,omitempty"`
 	Service           ServiceRequirement `json:"service,omitempty" yaml:"service,omitempty"`
@@ -237,6 +238,10 @@ func computeJobRequirements(req []Requirement) []sdk.Requirement {
 			name = "secret"
 			val = r.SecretRequirement
 			tpe = sdk.SecretRequirement
+		} else if r.Modelv2 != "" {
+			name = "modelv2"
+			val = r.Modelv2
+			tpe = sdk.ModelV2Requirement
 		}
 		res[i] = sdk.Requirement{
 			Name:  name,

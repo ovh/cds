@@ -109,8 +109,8 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 	if modelV2 != "" {
 		workerModelV2, err := processNodeJobRunRequirementsGetModelV2(ctx, db, modelV2)
 		if err != nil {
-			log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model v2 %s: %v", model, err)
-			errm.Append(err)
+			log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model v2 %s: %v", modelV2, err)
+			errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidJobRequirement, "unable to get worker model %s", modelV2))
 		}
 		if workerModelV2 != nil {
 			modelType = workerModelV2.Type

@@ -83,6 +83,21 @@ testcases:
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.systemoutjson0.name ShouldEqual docker-debian
+
+- name: Push workflow and run it
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workfow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/*.yml --skip-update-files
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW
+      assertions:
+        - result.code ShouldEqual 0
+        - "result.systemout ShouldContainSubstring Workflow ITCLIPRJVCSWRKFLW1-WORKFLOW #1 has been launched"
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW 1 --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.status ShouldEqual Success
+      retry: 30
+      delay: 10
+
 - name: delete repository on project
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --force
