@@ -16,17 +16,17 @@
                 </nz-tab>
             </nz-tabset>
         </nz-col>
-        <nz-col nzOffset="1" nzSpan="6">
+        <nz-col nzOffset="1" nzSpan="6" class="link">
             <div>
-                <a class="fluid ui blue basic button link" href="https://ovh.github.io/cds" target="_blank"
-                   rel="noopener noreferrer">
+                <button nz-button nzBlock nzType="primary" href="https://ovh.github.io/cds" target="_blank" rel="noopener noreferrer">
                     <i class="book icon"></i>Guide
-                </a>
+                </button>
+                <button nz-button nzBlock nzType="primary" [routerLink]="['/favorite']">
+                    <i class="book icon"></i>Bookmarks
+                </button>
             </div>
             <div>
-                <a class="fluid ui blue basic button link mt5" href="" [routerLink]="['/favorite']">
-                    <i class="book icon"></i>{{'navbar_favorites' | translate}}
-                </a>
+
             </div>
             <app-home-favorite [bookmarks]="favorites"></app-home-favorite>
         </nz-col>

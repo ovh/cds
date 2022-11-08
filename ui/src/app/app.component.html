@@ -8,8 +8,8 @@
             <div class="wrapper loading">
                 <app-scrollview class="scrollview">
                     <nz-row nzJustify="center">
-                        <nz-col>
-                            <img class="logo ui centered image grayscale" src="assets/images/cds.png" alt="CDS Logo">
+                        <nz-col class="center">
+                            <img class="logo image grayscale" src="assets/images/cds.png" alt="CDS Logo">
                             <p *ngIf="!isAPIAvailable">{{ 'cdsapi_loading' | translate }}</p>
                             <p *ngIf="isAPIAvailable">{{ 'maintenance_title' | translate }}</p>
                         </nz-col>
