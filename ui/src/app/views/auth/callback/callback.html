@@ -1,63 +1,55 @@
-<div class="ui centered grid callback">
-    <div class="row">
-        <div class="column">
+<nz-row>
+        <nz-col [nzSpan]="24">
             <div *ngIf="loading;then load;else loaded"></div>
             <ng-template #load>
-                <div class="loading">
-                    <div class="ui active small inline loader"></div>
-                    <div>{{ 'common_loading' | translate }}</div>
-                </div>
+                <nz-spin nzTip="Loading..."></nz-spin>
             </ng-template>
             <ng-template #loaded>
-                <div *ngIf="showCTL" class="ui bottom attached segment">
-                    <div class="ui info message">
-                        <p>{{ 'auth_message_copy' | translate }}</p>
-                    </div>
-                    <form class="ui form">
-                        <div class="field">
-                            <label>{{ 'auth_message_command' | translate }}</label>
-                  f          <div class="ui fluid action input">
-                                <input type="text" value="{{cmd}}" [readonly]="true">
-                                <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate"
-                                    ngxClipboard [cbContent]="cmd" (click)="confirmCopy()">
-                                    <i class="copy icon"></i>
-                                </button>
-                            </div>
-                        </div>
+                <div *ngIf="showCTL">
+                    <nz-alert nzType="info" nzMessage="You can now copy this command to your terminal to finish login then close this tab."></nz-alert>
+                    <form nz-form>
+                        <nz-form-item class="field">
+                            <nz-form-label>Command</nz-form-label>
+                            <nz-form-control>
+                                <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+                                    <input nz-input type="text" value="{{cmd}}" [readonly]="true" />
+                                </nz-input-group>
+                                <ng-template #suffixIconButton>
+                                    <button nz-button nzSearch [title]="'common_copy_clipboard' | translate"
+                                            ngxClipboard [cbContent]="cmd" (click)="confirmCopy()">
+                                        <span nz-icon nzType="copy"></span></button>
+                                </ng-template>
+                            </nz-form-control>
+                        </nz-form-item>
                     </form>
                 </div>
-                <div *ngIf="showInitTokenForm" class="ui bottom attached segment">
-                    <div class="ui info message">
-                        <p>{{ 'auth_message_init_token' | translate }}</p>
-                    </div>
-                    <form class="ui form" (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
-                        <div class="field">
-                            <label>{{ 'account_signup_init_token' | translate }}</label>
-                            <input type="password" name="init_token" ngModel required>
-                        </div>
-                        <div class="field right aligned">
-                            <button class="ui green button"
-                                type="submit">{{ 'account_login_btn_connect' | translate }}</button>
-                        </div>
+                <div *ngIf="showInitTokenForm">
+                    <nz-alert nzType="info" nzMessage="If you just generated the CDS configuration you can give an optional init token."></nz-alert>
+                    <form nz-form (ngSubmit)="signin(signinForm)" #signinForm="ngForm">
+                        <nz-form-item>
+                            <nz-form-label>Initialization token</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="password" name="init_token" ngModel required>
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item nzJustify="end">
+                            <button nz-button nzType="primary"
+                                    type="submit">Sign in</button>
+                        </nz-form-item>
                     </form>
                 </div>
-                <div *ngIf="missingParams || showErrorMessage" class="ui bottom attached segment">
-                    <div *ngIf="missingParams" class="ui red message">
-                        <p>{{ 'auth_callback_missing_param' | translate }}</p>
-                    </div>
-                    <div *ngIf="showErrorMessage" class="ui red message">
-                        <p>{{ 'auth_callback_error' | translate }}</p>
-                    </div>
-                    <form class="ui form">
-                        <div class="field">
-                            <button class="fluid ui button primary" [class.loading]="loadingSignin"
-                                (click)="navigateToSignin()">
-                                {{ 'account_btn_signin' | translate }}
+                <div *ngIf="missingParams || showErrorMessage">
+                    <nz-alert *ngIf="missingParams" nzType="error" nzMessage="One or more params are missing to continue. You can try to sign in again."></nz-alert>
+                    <nz-alert *ngIf="showErrorMessage" nzType="error" nzMessage="A error occurred. You can try to sign in again."></nz-alert>
+                    <form nz-form>
+                        <nz-form-item>
+                            <button nz-button nzBlock nzType="primary" [nzLoading]="loadingSignin"
+                                    (click)="navigateToSignin()">
+                               Sign in
                             </button>
-                        </div>
+                        </nz-form-item>
                     </form>
                 </div>
             </ng-template>
-        </div>
-    </div>
-</div>
+        </nz-col>
+    </nz-row>

@@ -36,13 +36,13 @@
 
     .tile {
       display: inline-block;
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
       margin: 2px;
       text-overflow: ellipsis;
       text-align: center;
       vertical-align: bottom;
-      line-height: 60px;
+      line-height: 50px;
       border-radius: 5px;
       position: relative;
 
@@ -53,7 +53,7 @@
         right: 0;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 60px;
+        max-width: 50px;
         line-height: normal;
 
         .tag {
@@ -68,18 +68,10 @@
 
       .detail {
         line-height: 10px;
-        display: none;
         position: absolute;
         background-color: white;
-        border-top-right-radius: 5px;
-        border-bottom-left-radius: 5px;
-        border-bottom-right-radius: 5px;
-        border-top-left-radius: 5px;
-        border: 1px solid rgba(180,180,180,0.5);
-        box-shadow: 0px -2px 5px rgba(180,180,180,0.5);
         white-space: nowrap;
         bottom: calc(100% + 10px);
-        border: 6px solid transparent;
         text-align: left;
 
         td {
@@ -163,4 +155,9 @@
 
     }
   }
+}
+
+
+nz-alert {
+  margin-top: 10px;
 }

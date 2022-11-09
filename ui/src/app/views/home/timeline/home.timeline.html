@@ -1,6 +1,6 @@
 
 <ng-container *ngIf="!loading && events.length > 0">
-    <div class="ui relaxed divided list"
+    <div
             infiniteScroll
             [infiniteScrollDistance]="2"
             [infiniteScrollThrottle]="50"
@@ -10,14 +10,11 @@
             <div class="content">
                 <div class="header">
                     <div class="right floated content">
-                        <div class="ui label"
-                                [class.green]="e.status === pipelineStatus.SUCCESS"
-                                [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING"
-                                [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
-                                [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT"
-                        >
-                            {{ e.status }}
-                        </div>
+                        <nz-tag [class.green]="e.status === pipelineStatus.SUCCESS"
+                                 [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING"
+                                 [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
+                                 [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT">
+                            {{ e.status }}</nz-tag>
                     </div>
                     <span [hidden]="!e.bell">
                         <i class="bell slash icon" title="{{ 'timeline_filter_mute' | translate }}" (click)="addFilter(e)"></i>
@@ -33,8 +30,6 @@
         </div>
     </div>
 </ng-container>
-<div class="ui info message" *ngIf="!loading && events.length === 0">
-    {{ 'timeline_no' | translate }}
-</div>
+<nz-alert nzType="info" nzMessage="Timeline is empty" *ngIf="!loading && events.length === 0"></nz-alert>
+<nz-spin *ngIf="loading" nzTip="Loading..."></nz-spin>
 
-<div class="ui text active loader" *ngIf="loading">{{ 'timeline_loading' | translate }}</div>

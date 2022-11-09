@@ -28,7 +28,7 @@
                         <i class="right floated move icon"></i>
                         <ul>
                             <li *ngFor="let j of stage.jobs; let i = index" id="Job{{i}}">
-                                <div class="job ui segment pointing" [class.inactive]="!j.enabled"
+                                <div class="job nzSegment pointing" [class.inactive]="!j.enabled"
                                      (click)="selectJob(j, stage)" [class.active]="selectedJob &&
                                         (!j.ref && j.pipeline_action_id === selectedJob?.pipeline_action_id) ||
                                         (j.ref && j.ref === selectedJob?.ref)">
@@ -36,7 +36,7 @@
                                 </div>
                             </li>
                             <li *ngIf="!readOnly" class="new job">
-                                <div class="new job ui segment pointing" (click)="addJob(stage)">
+                                <div class="new job nzSegment pointing" (click)="addJob(stage)">
                                         <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
                                             {{ 'step_add_job' | translate }}
                                         </span>
@@ -52,7 +52,7 @@
                     <div class="new stageItem">
                         <ul>
                             <li class="job">
-                                <div id="AddStageAndJob" class="new job ui segment pointing"
+                                <div id="AddStageAndJob" class="new job nzSegment pointing"
                                      (click)="addStageAndJob()">
                                         <span class="ellipsis" title="{{ 'step_add_job' | translate }}">
                                             {{ 'step_add_job' | translate }}

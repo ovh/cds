@@ -1,76 +1,49 @@
-<div class="ui grid detail" *ngIf="scopeDetail">
-    <div class="ui row scope">
-        <div class="ui four wide column">
+<div class="detail" *ngIf="scopeDetail">
+    <nz-row class="scope">
+        <nz-col [nzSpan]="6">
             {{scopeDetail.scope}}
-        </div>
-        <div class="ui twelve wide column right aligned">
+        </nz-col>
+        <nz-col [nzSpan]="10" [nzOffset]="8">
             <a class="pointing advanced" (click)="clickAdvanced()">Advanced</a>
-            <div class="ui checkbox">
-                <input type="checkbox" [ngModel]="allReadRoutesSelected" (click)="clickSelectAllRoutesRead()">
-                <label>{{'common_read' | translate}}</label>
-            </div>
-            <div class="ui checkbox">
-                <input type="checkbox" [ngModel]="allWriteRoutesSelected" (click)="clickSelectAllRoutesWrite()">
-                <label>{{'common_write' | translate}}</label>
-            </div>
-            <div class="ui checkbox">
-                <input type="checkbox" [ngModel]="allRoutesSelected" (click)="clickSelectAllRoutes()">
-                <label>{{'common_all' | translate}}</label>
-            </div>
-        </div>
-    </div>
+            <label nz-checkbox [ngModel]="allReadRoutesSelected" (nzCheckedChange)="clickSelectAllRoutesRead()">Read</label>
+            <label nz-checkbox [ngModel]="allWriteRoutesSelected" (nzCheckedChange)="clickSelectAllRoutesWrite()">Write</label>
+            <label nz-checkbox [ngModel]="allRoutesSelected" (nzCheckedChange)="clickSelectAllRoutes()">All</label>
+        </nz-col>
+    </nz-row>
     <ng-container *ngIf="advancedOpen">
-        <div *ngFor="let endpoint of scopeDetail.endpoints" class="ui row route">
-            <div class="ui eight wide column">
+        <nz-row *ngFor="let endpoint of scopeDetail.endpoints" class="route">
+            <nz-col [nzSpan]="12">
                 {{endpoint.route}}
-            </div>
-            <div class="ui eight wide column">
-                <div class="ui form">
-                    <div class="ui fields methods">
-                        <div class="ui checkbox">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].GET != null" type="checkbox"
-                                [ngModel]="selectedRouteMethods[endpoint.route].GET"
-                                (click)="clickMethod(endpoint.route, 'GET')">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].GET == null" type="checkbox"
-                                [disabled]="true">
-                            <label>GET</label>
-                        </div>
+            </nz-col>
+            <nz-col [nzSpan]="12">
 
-                        <div class="ui checkbox">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].POST != null" type="checkbox"
-                                [ngModel]="selectedRouteMethods[endpoint.route].POST"
-                                (click)="clickMethod(endpoint.route, 'POST')">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].POST == null" type="checkbox"
-                                [disabled]="true">
-                            <label>POST</label>
-                        </div>
 
-                        <div class="ui checkbox">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].PUT != null" type="checkbox"
-                                [ngModel]="selectedRouteMethods[endpoint.route].PUT"
-                                (click)="clickMethod(endpoint.route, 'PUT')">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].PUT == null" type="checkbox"
-                                [disabled]="true">
-                            <label>PUT</label>
-                        </div>
 
-                        <div class="ui checkbox">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].DELETE != null" type="checkbox"
-                                [ngModel]="selectedRouteMethods[endpoint.route].DELETE"
-                                (click)="clickMethod(endpoint.route, 'DELETE')">
-                            <input *ngIf="selectedRouteMethods[endpoint.route].DELETE == null" type="checkbox"
-                                [disabled]="true">
-                            <label>DELETE</label>
-                        </div>
+                            <label *ngIf="selectedRouteMethods[endpoint.route].GET != null" nz-checkbox [ngModel]="selectedRouteMethods[endpoint.route].GET"
+                                   (nzCheckedChange)="clickMethod(endpoint.route, 'GET')">GET</label>
+                            <label *ngIf="selectedRouteMethods[endpoint.route].GET == null"
+                                   nz-checkbox [nzDisabled]="true">GET</label>
 
-                        <div class="ui checkbox">
-                            <input type="checkbox" [ngModel]="selectedRouteMethods[endpoint.route].ALL"
-                                (click)="clickAllMethods(endpoint.route)">
-                            <label>{{'common_all' | translate}}</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <label *ngIf="selectedRouteMethods[endpoint.route].POST != null" nz-checkbox [ngModel]="selectedRouteMethods[endpoint.route].POST"
+                               (nzCheckedChange)="clickMethod(endpoint.route, 'POST')">POST</label>
+                        <label *ngIf="selectedRouteMethods[endpoint.route].POST == null"
+                               nz-checkbox [nzDisabled]="true">POST</label>
+
+                        <label *ngIf="selectedRouteMethods[endpoint.route].PUT != null" nz-checkbox [ngModel]="selectedRouteMethods[endpoint.route].PUT"
+                               (nzCheckedChange)="clickMethod(endpoint.route, 'PUT')">PUT</label>
+                        <label *ngIf="selectedRouteMethods[endpoint.route].PUT == null"
+                               nz-checkbox [nzDisabled]="true">PUT</label>
+
+                        <label *ngIf="selectedRouteMethods[endpoint.route].DELETE != null" nz-checkbox [ngModel]="selectedRouteMethods[endpoint.route].DELETE"
+                               (nzCheckedChange)="clickMethod(endpoint.route, 'DELETE')">DELETE</label>
+                        <label *ngIf="selectedRouteMethods[endpoint.route].DELETE == null"
+                               nz-checkbox [nzDisabled]="true">DELETE</label>
+
+                        <label nz-checkbox [ngModel]="selectedRouteMethods[endpoint.route].ALL"
+                               (nzCheckedChange)="clickAllMethods(endpoint.route)">All</label>
+
+
+            </nz-col>
+        </nz-row>
     </ng-container>
 </div>
