@@ -1,5 +1,5 @@
 <ng-container *ngIf="!tab.template">
-    <i *ngIf="tab.icon" [ngClass]="[tab.icon, 'icon']"></i>
+    <span *ngIf="tab.icon" nz-icon nzType="{{tab.icon}}" nzTheme="{{tab.iconTheme}}" class="{{tab.iconClassColor}}"></span>
     {{tab.title}}
 </ng-container>
 <span #templateSibling></span>

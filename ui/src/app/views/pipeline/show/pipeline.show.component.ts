@@ -228,27 +228,32 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             title: 'Pipeline',
             key: 'pipeline',
             default: true,
-            icon: 'sitemap'
+            icon: 'apartment',
+            iconTheme: 'outline'
         }, <Tab>{
             title: 'Parameters',
             key: 'parameters',
-            icon: 'font'
+            icon: 'font-colors',
+            iconTheme: 'outline'
         }, <Tab>{
             title: usageText,
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }]
         if (!this.pipeline?.from_repository) {
             this.tabs.push(<Tab>{
                 title: 'Audits',
                 icon: 'history',
+                iconTheme: 'outline',
                 key: 'audits'
             })
         }
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',
-                icon: 'graduation',
+                icon: 'setting',
+                iconTheme: 'fill',
                 key: 'advanced'
             })
         }

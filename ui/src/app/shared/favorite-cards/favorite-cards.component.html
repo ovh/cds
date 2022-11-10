@@ -42,11 +42,11 @@
             <ng-template #extraTmpl>
                 <ng-container [ngSwitch]="favorite.type">
                     <ng-container *ngSwitchCase="'workflow'">
-                        <i class="share alternate icon" *ngIf="!favorite.icon"></i>
+                        <span nz-icon nzType="share-alt" nzTheme="outline" *ngIf="!favorite.icon"></span>
                         <img width="32" [src]="favorite.icon" *ngIf="favorite.icon" alt="workflow logo">
                     </ng-container>
                     <ng-container *ngSwitchDefault>
-                        <i class="browser icon" *ngIf="!favorite.icon"></i>
+                        <span nz-icon nzType="profile" nzTheme="outline" *ngIf="!favorite.icon"></span>
                         <img  width="32" [src]="favorite.icon" *ngIf="favorite.icon" alt="project logo">
                     </ng-container>
                 </ng-container>

@@ -38,12 +38,14 @@ export class ActionShowComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.tabs = [<Tab>{
             title: 'Action',
-            icon: 'list',
+            icon: 'unordered-list',
+            iconTheme: 'outline',
             key: 'action',
             default: true
         }, <Tab>{
             title: 'Usage',
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }];
 

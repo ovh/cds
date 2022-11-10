@@ -6,6 +6,8 @@ import { Subscription } from 'rxjs/Subscription';
 export class Tab {
     title: string;
     icon: string;
+    iconTheme: string;
+    iconClassColor: string;
     key: string;
     default: boolean;
     template: TemplateRef<any>;

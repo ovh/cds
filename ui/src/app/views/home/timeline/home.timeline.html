@@ -17,7 +17,7 @@
                             {{ e.status }}</nz-tag>
                     </div>
                     <span [hidden]="!e.bell">
-                        <i class="bell slash icon" title="{{ 'timeline_filter_mute' | translate }}" (click)="addFilter(e)"></i>
+                        <i nz-icon nzType="audio-muted" nzTheme="outline" title="{{ 'timeline_filter_mute' | translate }}" (click)="addFilter(e)"></i>
                     </span>
                     [<a [routerLink]="['/project', e.project_key]">{{ e.project_key  }}</a>]
                     <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_name }}</a>

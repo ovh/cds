@@ -167,7 +167,8 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         let graphTab = <Tab>{
             title: 'Workflows',
             key: 'workflows',
-            icon: 'share alternate',
+            icon: 'share-alt',
+            iconTheme: 'outline',
             default: true
         }
         if (this.previewWorkflow) {
@@ -176,12 +177,14 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         let notificationTab = <Tab>{
             title: 'Notifications',
             key: 'notifications',
-            icon: 'alarm'
+            icon: 'bell',
+            iconTheme: 'outline',
         };
         let permissionTab = <Tab>{
             title: 'Permissions',
             key: 'permissions',
-            icon: 'users'
+            icon: 'user-switch',
+            iconTheme: 'outline',
         }
         if (this.groupsOutsideOrganization && this.groupsOutsideOrganization.length > 0) {
             permissionTab.warningTemplate = this.warnPermission
@@ -194,18 +197,21 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             this.tabs.push(<Tab>{
                 title: 'Audit',
                 icon: 'history',
+                iconTheme: 'outline',
                 key: 'audits',
             });
         }
         this.tabs.push(<Tab>{
             title: 'Usage',
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         });
         if (this.detailedWorkflow.permissions.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',
-                icon: 'graduation',
+                icon: 'setting',
+                iconTheme: 'fill',
                 key: 'advanced'
             });
         }

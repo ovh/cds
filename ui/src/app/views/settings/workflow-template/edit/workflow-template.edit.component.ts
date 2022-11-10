@@ -74,20 +74,24 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.tabs = [<Tab>{
             title: 'Workflow template',
-            icon: 'paste',
+            icon: 'copy',
+            iconTheme: 'outline',
             key: 'workflow_template',
             default: true
         }, <Tab>{
             title: 'Instances',
-            icon: 'file outline',
+            icon: 'file',
+            iconTheme: 'outline',
             key: 'instances'
         }, <Tab>{
             title: 'Audit',
             icon: 'history',
+            iconTheme: 'outline',
             key: 'audits'
         }, <Tab>{
             title: 'Usage',
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }];
 

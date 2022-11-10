@@ -164,27 +164,35 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         this.tabs = [<Tab>{
             title: 'Overview',
             key: 'home',
+            icon: 'home',
+            iconTheme: 'outline',
             default: true,
         }, <Tab>{
             title: 'Variables',
             key: 'variables',
-            icon: 'font'
+            icon: 'font-colors',
+            iconTheme: 'outline'
         }, <Tab>{
             title: 'Vulnerabilities',
+            icon: 'bug',
+            iconTheme: 'outline',
             key: 'vuln'
         }, <Tab>{
             title: usageText,
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }, <Tab>{
             title: 'Keys',
-            icon: 'privacy',
+            icon: 'lock',
+            iconTheme: 'outline',
             key: 'keys'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',
-                icon: 'graduation',
+                icon: 'setting',
+                iconTheme: 'fill',
                 key: 'advanced'
             })
         }

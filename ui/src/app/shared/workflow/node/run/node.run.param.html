@@ -43,10 +43,10 @@
         <nz-dropdown-menu #menu="nzDropdownMenu">
             <ul nz-menu>
                 <li nz-menu-item [nzDisabled]="workflow?.from_repository" (click)="run(true, false)" nz-tooltip nzTooltipTitle="When you resync this run, it will update the pipelines linked to this run with your last editions. It won't resync your project variables.">
-                    <i class="sync icon"></i>{{'workflow_resync' | translate }}
+                    <i nz-icon nzType="sync" nzTheme="outline"></i>{{'workflow_resync' | translate }}
                 </li>
                 <li nz-menu-item [nzDisabled]="currentNodeRun?.status !== 'Fail'" (click)="run(false, true)">
-                    <i class="bug icon"></i>{{'workflow_run_only_failed' | translate }}
+                    <i nz-icon nzType="bug" nzTheme="outline"></i>{{'workflow_run_only_failed' | translate }}
                 </li>
             </ul>
         </nz-dropdown-menu>

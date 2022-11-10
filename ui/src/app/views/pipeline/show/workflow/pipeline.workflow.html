@@ -25,7 +25,7 @@
                     <div class="stageItem">
                         <a class="pointing" (click)="openEditModal(stage)"><i
                                 class="setting icon"></i>{{stage.name}}</a>
-                        <i class="right floated move icon"></i>
+                        <span class="move floatRight pointing">&harr;</span>
                         <ul>
                             <li *ngFor="let j of stage.jobs; let i = index" id="Job{{i}}">
                                 <div class="job nzSegment pointing" [class.inactive]="!j.enabled"

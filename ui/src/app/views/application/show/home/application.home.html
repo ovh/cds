@@ -76,8 +76,8 @@
                     <a class="header" [routerLink]="['/project', project.key, 'workflow', k]">{{k}}</a>
                 </div>
                 <div class="description">
-                    <div *ngFor="let h of overview.history[k]">
-                        <i class="icon ribbon-state success"></i>
+                    <div *ngFor="let h of overview.history[k]" class="description-item">
+                        <span class="status" [class.green]="h.status === 'Success'">{{' '}}</span>
                         <a class="info" [routerLink]="['/project', project.key, 'workflow', k, 'run', h.num]">
                             {{'#' + h.num + ' - '}}
                             {{ h.last_modified | amTimeAgo}}

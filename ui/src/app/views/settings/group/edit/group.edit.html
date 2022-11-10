@@ -73,8 +73,7 @@
                             <tbody>
                                 <tr *ngFor="let m of members.data">
                                     <td>
-                                        <i class="fa fa-user-circle-o" *ngIf="m.admin"
-                                           title="{{ 'group_user_is_admin' | translate }}"></i>
+                                        <span nz-icon nzType="crown" nzTheme="outline" *ngIf="m.admin" title="{{ 'group_user_is_admin' | translate }}"></span>
                                         {{m?.username}}
                                     </td>
                                     <td>
@@ -93,7 +92,7 @@
                                             </button>
                                             <button nz-button *ngIf="m.admin"
                                                     [nzLoading]="loading" (click)="clickUnsetAdmin(m.username)">
-                                                <i class="minus icon"></i>Admin
+                                                <span nz-icon nzType="minus" nzTheme="outline"></span>Admin
                                             </button>
                                         </ng-container>
                                     </td>
