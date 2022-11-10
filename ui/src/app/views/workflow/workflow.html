@@ -3,8 +3,8 @@
         <div class="floatRight" [title]="'favorite_add_btn' | translate">
             <nz-spin nzSimple *ngIf="loadingFav"></nz-spin>
             <ng-container *ngIf="!loadingFav">
-                <i nz-icon nzType="star" nzTheme="outline" class="star unfavorite" *ngIf="!workflow?.favorite" (click)="updateFav()"></i>
-                <i nz-icon nzType="star" nzTheme="fill" class="star favorite" *ngIf="workflow?.favorite" (click)="updateFav()"></i>
+                <i nz-icon nzType="star" nzTheme="outline" class="star" *ngIf="!workflow?.favorite" (click)="updateFav()"></i>
+                <i nz-icon nzType="star" nzTheme="fill" class="star" *ngIf="workflow?.favorite" (click)="updateFav()"></i>
             </ng-container>
         </div>
         <div class="floatRight labelFeature" [title]="'workflow_from_repository_btn' | translate">

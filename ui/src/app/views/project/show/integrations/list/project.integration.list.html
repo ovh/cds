@@ -12,7 +12,9 @@
         <tr *ngFor="let p of integList.data">
             <td>
                 {{ p.name }}
-                <span *ngIf="p.model.public" nz-tooltip nzTooltipTitle="Public integration" nzTooltipPlacement="top"> <i class="check circle outline icon large green"></i> </span>
+                <span *ngIf="p.model.public" nz-tooltip nzTooltipTitle="Public integration" nzTooltipPlacement="top">
+                    <i nz-icon nzType="check-circle" nzTheme="outline" class="green"></i>
+                </span>
             </td>
             <td>
                 {{ p.model.name}}

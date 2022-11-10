@@ -58,12 +58,15 @@ export class SigninComponent implements OnInit {
                     .map(d => {
                         switch (d.type) {
                             case 'corporate-sso': {
-                                d.icon = 'shield alternate';
+                                d.icon = 'safety-certificate';
                                 break;
                             }
                             case 'openid-connect': {
-                                d.icon = 'openid';
+                                d.icon = 'lock';
                                 break;
+                            }
+                            case 'ldap': {
+                                d.icon = 'book';
                             }
                             default: {
                                 d.icon = d.type;

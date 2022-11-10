@@ -5,7 +5,7 @@
             <nz-form-control>
                 <nz-select nzShowSearch name="model" [(ngModel)]="newIntegration.model" (ngModelChange)="updateConfig()">
                     <nz-option *ngFor="let m of models" [nzLabel]="m.name" nzCustomContent [nzValue]="m">
-                        <div><i class="option.icon icon" *ngIf="m.icon"></i>{{ m.name }}</div>
+                        <div>{{ m.name }}</div>
                             <ng-container *ngIf="m.storage">
                                 <nz-tag nzColor="success">storage</nz-tag>
                             </ng-container>
