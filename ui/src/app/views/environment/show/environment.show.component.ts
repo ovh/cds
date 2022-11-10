@@ -155,20 +155,24 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
             title: 'Variables',
             key: 'variables',
             default: true,
-            icon: 'font'
+            icon: 'font-colors',
+            iconTheme: 'outline'
         }, <Tab>{
             title: 'Keys',
             key: 'keys',
-            icon: 'privacy'
+            icon: 'lock',
+            iconTheme: 'outline',
         }, <Tab>{
             title: usageText,
-            icon: 'map signs',
+            icon: 'global',
+            iconTheme: 'outline',
             key: 'usage'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',
-                icon: 'graduation',
+                icon: 'setting',
+                iconTheme: 'fill',
                 key: 'advanced'
             })
         }

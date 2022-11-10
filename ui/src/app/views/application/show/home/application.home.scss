@@ -36,3 +36,17 @@ i {
 nz-col {
   margin-bottom: 15px;
 }
+.entity-card {
+  height: auto;
+}
+.description-item {
+  display: flex;
+
+  .status {
+    width: 5px;
+    background-color: $cds_color_green;
+    margin-right: 10px;
+    margin-bottom: 3px;
+  }
+}
+

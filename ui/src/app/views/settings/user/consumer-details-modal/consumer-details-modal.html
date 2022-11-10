@@ -27,8 +27,7 @@
                     <nz-form-control>
                         {{groups}}
                         <span *ngIf="consumer.warnings" nz-tooltip [nzTooltipTitle]="warningText">
-                                {{' '}}<i class="info exclamation triangle icon yellow link"
-                                          title="{{warningText}}"></i>
+                                {{' '}}<i nz-icon nzType="warning" nzTheme="fill" class="orange" nz-tooltip nzTooltipTitle="{{warningText}}"></i>
                             </span>
                     </nz-form-control>
                 </nz-form-item>

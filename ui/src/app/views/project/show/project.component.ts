@@ -132,42 +132,50 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     initTabs(): void {
         this.tabs = [<Tab>{
             title: 'Workflows',
-            icon: 'share alternate',
+            icon: 'share-alt',
+            iconTheme: 'outline',
             key: 'workflows',
             default: true,
         }, <Tab>{
             title: 'Applications',
             icon: 'rocket',
+            iconTheme: 'outline',
             key: 'applications'
         }, <Tab>{
             title: 'Pipelines',
-            icon: 'sitemap',
+            icon: 'apartment',
             key: 'pipelines'
         }, <Tab>{
             title: 'Environments',
-            icon: 'tree',
+            icon: 'environment',
+            iconTheme: 'outline',
             key: 'environments'
         }, <Tab>{
             title: 'Variables',
-            icon: 'font',
+            icon: 'font-colors',
+            iconTheme: 'outline',
             key: 'variables'
         }, <Tab>{
             title: 'Permissions',
             key: 'permissions',
-            icon: 'users',
+            iconTheme: 'outline',
+            icon: 'user-switch',
         }, <Tab>{
             title: 'Keys',
-            icon: 'privacy',
-            key: 'keys'
+            icon: 'lock',
+            iconTheme: 'outline',
+            key: 'key'
         }, <Tab>{
             title: 'Integrations',
-            icon: 'plug',
+            icon: 'usb',
+            iconTheme: 'outline',
             key: 'integrations'
         }]
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',
-                icon: 'graduation',
+                icon: 'setting',
+                iconTheme: 'fill',
                 key: 'advanced'
             })
         }

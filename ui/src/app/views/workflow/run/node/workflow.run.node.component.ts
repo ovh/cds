@@ -174,13 +174,16 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
 
         let testTitle = this.nodeRunTests?.total > 1? 'Tests' : 'Test';
         let testIcon: string
+        let iconColor: string
         if (this.nodeRunTests?.total > 0) {
-            testIcon = 'green check no-mrr';
+            testIcon = 'check';
+            iconColor = 'green';
             testTitle = this.nodeRunTests?.total + ' ' + testTitle;
         }
         if (this.nodeRunTests?.ko > 0) {
             testTitle += ` (${this.nodeRunTests.ko} ko)`
-            testIcon = 'red remove status';
+            iconColor = 'red';
+            testIcon = 'close';
         }
 
         let artifactTitle = this.artifactLength > 1 ? 'Artifacts' : 'Artifact';
@@ -194,7 +197,8 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
             title: 'Pipeline',
             key: 'pipeline',
             default: true,
-            icon: 'sitemap'
+            icon: 'apartment',
+            iconTheme: 'outline'
         }, <Tab>{
             title: commitTitle,
             key: 'commit',
@@ -203,6 +207,8 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
             title: testTitle,
             key: 'test',
             icon: testIcon,
+            iconTheme: 'outline',
+            iconClassColor: iconColor,
             disabled: !this.nodeRunTests || this.nodeRunTests?.total === 0
         }, <Tab>{
             title: artifactTitle,
@@ -210,7 +216,9 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
             disabled: this.artifactLength === 0
         }, <Tab>{
             title: historyTitle,
-            key: 'history'
+            key: 'history',
+            icon: 'history',
+            iconTheme: 'outline'
         }]
     }
 

@@ -29,12 +29,10 @@ export class ActionListComponent {
     ) {
         this.tabs = [<Tab>{
             title: 'Custom',
-            icon: '',
             key: 'custom',
             default: true
         }, <Tab>{
             title: 'Builtin',
-            icon: '',
             key: 'builtin'
         }];
 

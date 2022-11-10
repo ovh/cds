@@ -2,7 +2,7 @@
     <nz-breadcrumb>
         <nz-breadcrumb-item>
             <!-- PROJECT -->
-            <i class="browser icon"></i>
+            <span nz-icon nzType="profile" nzTheme="outline"></span>
             <a class="section" *ngIf="application || pipeline || action || workflow || environment"
                [routerLink]="['/project', project.key]" [queryParams]="getProjectQueryParams()">
                 {{ project?.name}}
@@ -12,14 +12,14 @@
         </span>
         </nz-breadcrumb-item>
         <nz-breadcrumb-item *ngIf="environment">
-            <i class="tree icon"></i>
+            <span nz-icon nzType="environment" nzTheme="outline"></span>
             <a class="section" [class.active]="true"
                [routerLink]="['/project', project.key, 'environment', environment?.name]">
                 {{ environment?.name}}
             </a>
         </nz-breadcrumb-item>
         <nz-breadcrumb-item *ngIf="application">
-            <i class="rocket icon"></i>
+            <span nz-icon nzType="rocket" nzTheme="outline"></span>
             <a class="section" [class.active]="application && !pipeline && !action"
                [routerLink]="['/project', project.key, 'application', application?.name]"
                [queryParams]="getApplicationQueryParams()">
@@ -27,11 +27,11 @@
             </a>
         </nz-breadcrumb-item>
         <nz-breadcrumb-item *ngIf="workflow">
-            <i class="share alternate icon"></i>
+            <span nz-icon nzType="share-alt" nzTheme="outline"></span>
             <a class="section" [routerLink]="['/project', project.key, 'workflow', workflow]">{{ workflow }}</a>
         </nz-breadcrumb-item>
         <nz-breadcrumb-item *ngIf="pipeline">
-            <i class="sitemap icon"></i>
+            <span nz-icon nzType="apartment" nzTheme="outline"></span>
             <a class="section" [class.active]="pipeline && !action && !version"
                [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
                [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
@@ -41,7 +41,7 @@
                [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun]">{{ '#' + workflowRun}}</a>
         </nz-breadcrumb-item>
         <nz-breadcrumb-item *ngIf="workflowRunNode && wPipeline">
-            <i class="sitemap icon"></i>
+            <span nz-icon nzType="apartment" nzTheme="outline"></span>
             <a class="section"
                [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun, 'node', workflowRunNode]"
                [queryParams]="{ name: wPipeline}">{{ wPipeline}}</a>

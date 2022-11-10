@@ -59,16 +59,19 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     ) {
         this.tabs = [<Tab>{
             title: 'Problems',
-            icon: 'exclamation triangle',
+            icon: 'warning',
+            iconTheme: 'fill',
             key: 'problems',
             default: true
         }, <Tab>{
             title: 'Infos',
-            icon: 'exclamation circle',
+            icon: 'info-circle',
+            iconTheme: 'outline',
             key: 'infos'
         }, <Tab>{
             title: 'Results',
-            icon: 'list',
+            icon: 'unordered-list',
+            iconTheme: 'outline',
             key: 'results'
         }];
     }

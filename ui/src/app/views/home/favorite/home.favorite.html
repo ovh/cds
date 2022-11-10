@@ -1,8 +1,8 @@
 <div *ngIf="bookmarks && bookmarks.length">
     <div class="item" *ngFor="let b of bookmarks">
         <div class="icon">
-            <i class="large browser middle aligned icon" *ngIf="b.type === 'project'"></i>
-            <i class="large share alternate middle aligned icon" *ngIf="b.type === 'workflow'"></i>
+            <i nz-icon nzType="profile" nzTheme="outline" *ngIf="b.type === 'project'" class="large"></i>
+            <i nz-icon nzType="share-alt" nzTheme="outline" *ngIf="b.type === 'workflow'" class="large"></i>
         </div>
         <div class="content">
             <ng-container *ngIf="b.type === 'project'">
