@@ -39,10 +39,9 @@ func Delete(db gorpmapper.SqlExecutorWithTx, projectID int64, name string) error
 	return sdk.WrapError(err, "cannot delete vcs_project %d/%s", projectID, name)
 }
 
-func getVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.VCSProject, error) {
+func getVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
 	var res dbVCSProject
-
-	found, err := gorpmapping.Get(ctx, db, q, &res)
+	found, err := gorpmapping.Get(ctx, db, q, &res, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,46 +91,14 @@ func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey st
 
 func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsName string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2`).Args(projectKey, vcsName)
-	var res dbVCSProject
-	found, err := gorpmapping.Get(ctx, db, query, &res, opts...)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, sdk.WrapError(sdk.ErrNotFound, "vcsName:%s", vcsName)
-	}
-	isValid, err := gorpmapping.CheckSignature(res, res.Signature)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		log.Error(ctx, "vcs_project %d data corrupted", res.ID)
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-	return &res.VCSProject, nil
+	return getVCSProject(ctx, db, query, opts...)
 }
 
 func LoadVCSByID(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsID string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
 	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByID")
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.id = $2`).Args(projectKey, vcsID)
-	var res dbVCSProject
-	found, err := gorpmapping.Get(ctx, db, query, &res, opts...)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, sdk.WrapError(sdk.ErrNotFound, "vcsIdentifier:%s", vcsID)
-	}
-	isValid, err := gorpmapping.CheckSignature(res, res.Signature)
-	if err != nil {
-		return nil, err
-	}
-	if !isValid {
-		log.Error(ctx, "vcs_project %d data corrupted", res.ID)
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-	return &res.VCSProject, nil
+	return getVCSProject(ctx, db, query, opts...)
 }
 
 func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
