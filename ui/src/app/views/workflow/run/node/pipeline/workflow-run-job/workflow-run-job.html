@@ -19,8 +19,8 @@
         <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
             <div class="line info" (click)="clickOpen(step)">
                 <div class="number">
-                    <i *ngIf="step.totalLinesCount > 0 && !step.loading" class="caret icon" [class.down]="step.open"
-                        [class.right]="!step.open"></i>
+                    <span *ngIf="step.totalLinesCount > 0 && !step.loading && !step.open" nz-icon nzType="caret-right" nzTheme="fill"></span>
+                    <span *ngIf="step.totalLinesCount > 0 && !step.loading && step.open" nz-icon nzType="caret-down" nzTheme="fill"></span>
                     <span nz-icon [nzType]="'loading'" *ngIf="step.lines.length === 0 && step.loading"></span>
                     {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
                 </div>
@@ -38,7 +38,7 @@
                     <a *ngIf="step?.link"
                         [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
                         target="_blank" rel="noopener noreferrer" title="Share/download the step"
-                        (click)="$event.stopPropagation()"><i class="external alternate icon"></i></a>
+                        (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
                 </div>
             </div>
             <ng-container *ngIf="step.open">
@@ -56,7 +56,9 @@
                 </div>
                 <div class="line expand" *ngIf="step.lines.length + step.endLines.length < step.totalLinesCount"
                     (click)="clickExpandStepDown(i)">
-                    <div class="number"><i class="caret icon down"></i>{{step.firstDisplayedLineNumber +
+                    <div class="number">
+                        <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+                        {{step.firstDisplayedLineNumber +
                         step.lines.length + 1}}
                     </div>
                     <div class="value">…</div>
@@ -64,7 +66,7 @@
                 <div class="line expand"
                     *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
                     (click)="clickExpandStepUp(i)">
-                    <div class="number"><i class="caret icon up"></i>{{(step.firstDisplayedLineNumber +
+                    <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(step.firstDisplayedLineNumber +
                         step.totalLinesCount) - step.endLines.length}}
                     </div>
                     <div class="value">…</div>
@@ -97,14 +99,14 @@
         <div class="line expand"
             *ngIf="services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < services[currentTabIndex-1].totalLinesCount"
             (click)="clickExpandServiceDown(currentTabIndex-1)">
-            <div class="number"><i class="caret icon down"></i>{{services[currentTabIndex-1].lines.length + 1}}
+            <div class="number"><i nz-icon nzType="caret-down" nzTheme="fill"></i>{{services[currentTabIndex-1].lines.length + 1}}
             </div>
             <div class="value">…</div>
         </div>
         <div class="line expand"
             *ngIf="services[currentTabIndex-1].lines.length + services[currentTabIndex-1].endLines.length < (services[currentTabIndex-1].totalLinesCount - expandLoadLinesCount) - 1"
             (click)="clickExpandServiceUp(currentTabIndex-1)">
-            <div class="number"><i class="caret icon up"></i>{{(services[currentTabIndex-1].totalLinesCount) -
+            <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(services[currentTabIndex-1].totalLinesCount) -
                 services[currentTabIndex-1].endLines.length}}
             </div>
             <div class="value">…</div>
@@ -121,7 +123,7 @@
         </div>
     </div>
     <div class="footer">
-        <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i class="caret icon down"></i></div>
-        <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i class="caret icon up"></i></div>
+        <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down" nzTheme="fill"></i></div>
+        <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i></div>
     </div>
 </div>

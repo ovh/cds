@@ -36,7 +36,7 @@
                         <nz-list-item *ngFor="let label of filteredLabels">
                             <div class="content">
                                 <span class="pointing" (click)="!workflowLabelsMap[wf.name][label.name] && linkLabelToWorkflow(wf.name, label)">
-                                    <i class="circle icon" [style.color]="label.color"></i>
+                                    <div class="round" [style.background-color]="label.color"></div>
                                     {{label.name}}
                                 </span>
 

@@ -108,7 +108,7 @@
                     <button nz-button *ngFor="let driver of externalDrivers" nzBlock nzType="primary"
                            [routerLink]="'/auth/ask-signin/'+driver.type"
                            [queryParams]="{redirect_uri: redirect, require_mfa: mfa}">
-                            <i class="{{driver.icon}} icon"></i>
+                            <i nz-icon nzType="{{driver.icon}}" nzTheme="outline"></i>
                             {{ 'auth_button_signin_with' | translate: {consumer: driver.type} }}
                     </button>
 

@@ -143,7 +143,7 @@
                                 </ng-container>
                                 <ng-container *ngSwitchCase="'openid-connect'">
                                     <div class="image">
-                                        <i class="ui openid icon huge"></i>
+                                        <span nz-icon nzType="lock" nzTheme="outline"></span>
                                     </div>
                                     <div class="content">
                                         OpenID Connect
@@ -216,7 +216,7 @@
                 </nz-row>
                 <nz-row>
                     <nz-col [nzSpan]="24">
-                        <h2> <i class="alternate ticket icon small"></i> Sessions</h2>
+                        <h2>Sessions</h2>
                         <app-data-table [withFilter]="filterSessions" [withPagination]="10" [columns]="columnsSessions"
                                         [data]="sessions" [loading]="loadingAuthData"></app-data-table>
                     </nz-col>

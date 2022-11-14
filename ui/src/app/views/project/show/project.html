@@ -8,19 +8,18 @@
             ({{gp.group.organization}}){{ i < groupsOutsideOrganization.length - 1 ? ', ' : '' }}</span>
                 .
     </ng-template>
-    <i *ngIf="project && groupsOutsideOrganization && groupsOutsideOrganization.length > 0"
-        class="exclamation triangle orange icon" nz-popover [nzPopoverContent]="warnPermission" nzPopoverPlacement="bottomLeft"></i>
+    <i *ngIf="project && groupsOutsideOrganization && groupsOutsideOrganization.length > 0" nz-icon
+       nzType="warning" class="orange" nzTheme="fill" nz-popover [nzPopoverContent]="warnPermission" nzPopoverPlacement="bottomLeft"></i>
 </ng-template>
 <div id="ProjectShow">
 <div *ngIf="project; then projectPart;else loadingPart"></div>
 <ng-template #projectPart>
-
         <app-project-breadcrumb [project]="project" [workflow]="workflowName" [workflowRun]="workflowNum"
             [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
             <div class="right floated" [title]="'favorite_add_btn' | translate">
                 <span nz-icon [nzType]="'loading'" *ngIf="loadingFav"></span>
-                <i class="pointing star icon" *ngIf="!loadingFav" [class.favorite]="project.favorite"
-                    [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
+                <i nz-icon nzType="star" nzTheme="outline" class="star unfavorite" *ngIf="!project?.favorite" (click)="updateFav()"></i>
+                <i nz-icon nzType="star" nzTheme="fill" class="star favorite" *ngIf="project?.favorite" (click)="updateFav()"></i>
             </div>
         </app-project-breadcrumb>
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>

@@ -17,19 +17,18 @@
                                         [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
                                         *ngIf="node"
                                         [queryParams]="{ workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
-                                        <i class="sitemap icon"></i>
+                                        <span nz-icon nzType="apartment" nzTheme="outline"></span>
                                         {{workflow.pipelines[node.context.pipeline_id].name + ' ' + nodeRunNum + '.' + nodeRunSubNum}}
                                     </a>
                                 </nz-col>
                                 <nz-col [nzSpan]="8" class="center"
                                     title="{{ 'common_pipeline_start_title' | translate }}">
-                                    <i
-                                        class="calendar icon"></i>{{nodeRunStart | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
+                                    <i nz-icon nzType="calendar" nzTheme="outline"></i>{{nodeRunStart | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
                                 </nz-col>
                                 <nz-col [nzSpan]="8" title="{{ 'common_duration_title' | translate }}">
                                     <div class="right floated"
                                         *ngIf="nodeRunStatus !== pipelineStatusEnum.BUILDING && nodeRunStatus !== pipelineStatusEnum.WAITING">
-                                        <i class="clock outline icon"></i>{{duration}}
+                                        <i nz-icon nzType="clock-circle" nzTheme="outline"></i>{{duration}}
                                     </div>
                                 </nz-col>
                             </nz-row>
@@ -39,7 +38,7 @@
                                         <a href="#"
                                             [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
                                             [queryParams]="{ workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
-                                            <i class="rocket icon"></i>
+                                            <i nz-icon nzType="rocket" nzTheme="outline"></i>
                                             {{workflow.applications[node.context.application_id].name}}
                                         </a>
                                     </ng-container>
@@ -48,7 +47,7 @@
                                     <ng-container *ngIf="node.context.environment_id">
                                         <a href="#" [routerLink]="['/project', project.key]"
                                             [queryParams]="{ tab: 'environments', envName: workflow.environments[node.context.environment_id].name,workflow: workflow.name, run: nodeRunNum, node: nodeRunID, wpipeline: workflow.pipelines[node.context.pipeline_id].name }">
-                                            <i class="tree icon"></i>
+                                            <i nz-icon nzType="environment" nzTheme="outline"></i>
                                             {{workflow.environments[node.context.environment_id].name}}
                                         </a>
                                     </ng-container>
