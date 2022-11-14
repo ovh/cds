@@ -472,7 +472,7 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughOperation")
 	defer next()
 	if analysis.Data.OperationUUID == "" {
-		proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey)
+		proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return keyId, analyzeError, err
 		}

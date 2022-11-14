@@ -224,6 +224,7 @@ type HatcheryClient interface {
 
 type HatcheryServiceClient interface {
 	Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error
+	GetWorkerModel(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, workerModelName string, mods ...RequestModifier) (*sdk.V2WorkerModel, error)
 }
 
 // ProjectClient exposes project related functions

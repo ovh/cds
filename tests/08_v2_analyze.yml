@@ -7,14 +7,12 @@ testcases:
   - script: curl -X DELETE "{{.git.host}}/api/v1/repos/{{.git.user}}/myrepo" -u "{{.git.user}}:{{.git.password}}"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPRJVCS --force
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg rm E027B500E97E52E7 --force || true
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIPRJVCS "Test Project" ITCLIPRJVCS
-  - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true}" -H "Content-Type: application/json"'
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} user gpg import --pub-key-file ./fixtures/gpg/key.pub
-  - script: gpg --import ./fixtures/gpg/key.priv
-  - script: gpg --import ./fixtures/gpg/key.pub
-  - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg/key.pub.json'
+  - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true, \"default_branch\": \"master\"}" -H "Content-Type: application/json"'
+  - script: gpg --import ./fixtures/gpg-ADMIN/key.priv
+  - script: gpg --import ./fixtures/gpg-ADMIN/key.pub
+  - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg-ADMIN/key.pub.json'
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_admin.yml --force
 
 - name: import / export vcs server
@@ -85,6 +83,21 @@ testcases:
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.systemoutjson0.name ShouldEqual docker-debian
+
+- name: Push workflow and run it
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/*.yml --skip-update-files
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW
+      assertions:
+        - result.code ShouldEqual 0
+        - "result.systemout ShouldContainSubstring Workflow ITCLIPRJVCSWRKFLW1-WORKFLOW #1 has been launched"
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW 1 --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.status ShouldEqual Success
+      retry: 30
+      delay: 10
+
 - name: delete repository on project
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --force

@@ -42,7 +42,7 @@ func (api *API) getWorkerModelTemplatesHandler() ([]service.RbacChecker, service
 
 			var entities []sdk.Entity
 			if branch == "" {
-				entities, err = entity.LoadByType(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModelTemplate)
+				entities, err = entity.LoadByRepositoryAndType(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModelTemplate)
 			} else {
 				entities, err = entity.LoadByTypeAndBranch(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModelTemplate, branch)
 			}

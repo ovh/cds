@@ -20,6 +20,7 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.BinaryRequirement:   checkBinaryRequirement,
 	sdk.HostnameRequirement: checkHostnameRequirement,
 	sdk.ModelRequirement:    checkModelRequirement,
+	sdk.ModelV2Requirement:  checkModelRequirementV2,
 	sdk.PluginRequirement:   checkPluginRequirement,
 	sdk.ServiceRequirement:  checkServiceRequirement,
 	sdk.MemoryRequirement:   checkMemoryRequirement,
@@ -104,6 +105,10 @@ func checkBinaryRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
 		// Return nil because the error contains 'Executable file not found', that's what we wanted
 		return false, nil
 	}
+	return true, nil
+}
+
+func checkModelRequirementV2(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
@@ -199,9 +204,9 @@ func checkSecretRequirement(_ *CurrentWorker, _ sdk.Requirement) (bool, error) {
 }
 
 // checkPlugins returns true if current job:
-//  - is not linked to a deployment integration
-//  - is linked to a deployement integration, plugin well downloaded (in this func) and
-//    requirements on the plugins are OK too
+//   - is not linked to a deployment integration
+//   - is linked to a deployement integration, plugin well downloaded (in this func) and
+//     requirements on the plugins are OK too
 func checkPlugins(ctx context.Context, w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
 
 	if len(job.IntegrationPlugins) == 0 {
@@ -261,7 +266,7 @@ func checkPluginBinary(ctx context.Context, w *CurrentWorker, p sdk.GRPCPlugin) 
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to download plugin %q, %q , %q: %v", binary.PluginName, currentOS, currentARCH, err)
 			_ = fi.Close()
-			return err
+			return sdk.NewErrorFrom(sdk.ErrPluginInvalid, "unable to download plugin %q %q %q: %v", binary.PluginName, currentOS, currentARCH, err)
 		}
 		//It's downloaded. Close the file
 		_ = fi.Close()

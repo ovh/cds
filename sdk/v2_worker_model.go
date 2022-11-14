@@ -6,6 +6,12 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+const (
+	WorkerModelTypeOpenstack = "openstack"
+	WorkerModelTypeDocker    = "docker"
+	WorkerModelTypeVSphere   = "vsphere"
+)
+
 type V2WorkerModel struct {
 	Name        string          `json:"name" cli:"name" jsonschema:"required,minLength=1"`
 	From        string          `json:"from"`

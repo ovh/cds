@@ -76,8 +76,8 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 	return nil
 }
 
-// LoadByType loads an entity by his repository, type
-func LoadByType(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, t string, opts ...gorpmapping.GetOptionFunc) ([]sdk.Entity, error) {
+// LoadByRepositoryAndType loads an entity by his repository, type
+func LoadByRepositoryAndType(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, t string, opts ...gorpmapping.GetOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND type = $2`).Args(projectRepositoryID, t)

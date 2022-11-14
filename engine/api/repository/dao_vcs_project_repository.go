@@ -71,7 +71,7 @@ func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, repoName)
 	repo, err := getRepository(ctx, db, query, opts...)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to get repository %s/%s", vcsProjectID, repoName)
+		return nil, sdk.WrapError(err, "unable to get repository %s from vcs %s", repoName, vcsProjectID)
 	}
 	return repo, nil
 }

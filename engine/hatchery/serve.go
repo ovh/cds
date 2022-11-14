@@ -51,6 +51,10 @@ func (c *Common) CDSClient() cdsclient.Interface {
 	return c.Client
 }
 
+func (c *Common) CDSClientV2() cdsclient.HatcheryServiceClient {
+	return c.Clientv2
+}
+
 // GetGoRoutines returns the goRoutines manager
 func (c *Common) GetGoRoutines() *sdk.GoRoutines {
 	return c.GoRoutines
@@ -456,7 +460,5 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 	if err := c.Common.Heartbeat(ctx, status); err != nil {
 		return err
 	}
-
-	// Double heart here
 	return nil
 }

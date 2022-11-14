@@ -1,0 +1,9 @@
+version: v1.0
+name: ITCLIPRJVCSWRKFLW1-PIPELINE
+jobs:
+- job: test
+  steps:
+  - script:
+    - env
+  requirements:
+  - modelv2: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian

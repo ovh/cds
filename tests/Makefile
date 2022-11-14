@@ -73,6 +73,7 @@ test-docker-compose:
 	TOKEN_CMD=`docker logs cds_cds-prepare_1|grep TOKEN` && \
 	$$TOKEN_CMD && \
 	./test.sh smoke_api initialization && \
+	CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.api.tokenV2=$(cat tmp.hatcheryv2.token)" docker-compose up cds-edit-config && \
 	docker-compose up -d cds-cdn cds-ui cds-hooks cds-vcs cds-hatchery-local cds-elasticsearch && \
 	echo "waiting 5s to let services start.." && sleep 5 && \
 	./test.sh smoke_services cli;

@@ -10,6 +10,7 @@ import (
 
 	cache "github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/trace"
 
@@ -239,12 +240,13 @@ func Create(ctx context.Context, h Interface) error {
 				var canTakeJob bool
 
 				var containsRegionRequirement bool
-			loopRequirements:
+				var workerModelV2 string
 				for _, r := range workerRequest.requirements {
 					switch r.Type {
 					case sdk.RegionRequirement:
 						containsRegionRequirement = true
-						break loopRequirements
+					case sdk.ModelV2Requirement:
+						workerModelV2 = r.Value
 					}
 				}
 
@@ -252,11 +254,18 @@ func Create(ctx context.Context, h Interface) error {
 					log.Debug(currentCtx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
 					canTakeJob = false
 				} else if isWithModels {
-					for i := range models {
-						if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
-							chosenModel = &models[i]
-							canTakeJob = true
-							break
+					if workerModelV2 != "" {
+						chosenModel, err = canRunJobWithModelV2(currentCtx, hWithModels, workerModelV2)
+						if err != nil {
+							log.Error(currentCtx, "%v", err)
+							continue
+						}
+					} else {
+						for i := range models {
+							if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
+								chosenModel = &models[i]
+								break
+							}
 						}
 					}
 
@@ -266,6 +275,7 @@ func Create(ctx context.Context, h Interface) error {
 						endTrace("no model")
 						continue
 					}
+					canTakeJob = true
 				} else {
 					if canRunJob(currentCtx, h, workerRequest) {
 						log.Debug(currentCtx, "hatchery %s can try to spawn a worker for job %d", h.Name(), j.ID)
@@ -357,6 +367,81 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 // a docker container for register a worker model. 128 Mo
 const MemoryRegisterContainer int64 = 128
 
+func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, workerModelV2 string) (*sdk.Model, error) {
+	ctx, end := telemetry.Span(ctx, "hatchery.canRunJobWithModelV2", telemetry.Tag(telemetry.TagWorker, workerModelV2))
+	defer end()
+
+	modelPath := strings.Split(workerModelV2, "/")
+	if len(modelPath) < 4 {
+		return nil, sdk.WrapError(sdk.ErrInvalidData, "wrong model value %v", modelPath)
+	}
+	projKey := modelPath[0]
+	vcsName := modelPath[1]
+	modelName := modelPath[len(modelPath)-1]
+	repoName := strings.Join(modelPath[2:len(modelPath)-1], "/")
+
+	model, err := h.CDSClientV2().GetWorkerModel(ctx, projKey, vcsName, repoName, modelName)
+	if err != nil {
+		return nil, err
+	}
+	if model.Type != h.ModelType() {
+		return nil, nil
+	}
+
+	oldModel := sdk.Model{
+		ID:          0,
+		Type:        model.Type,
+		Name:        workerModelV2,
+		Description: model.Description,
+		// Fake group for naming
+		Group: &sdk.Group{
+			Name: "",
+		},
+	}
+	switch model.Type {
+	case sdk.WorkerModelTypeDocker:
+		var dockerSpec sdk.V2WorkerModelDockerSpec
+		if err := yaml.Unmarshal(model.Spec, &dockerSpec); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		oldModel.ModelDocker = sdk.ModelDocker{
+			Image:    dockerSpec.Image,
+			Registry: dockerSpec.Registry,
+			Username: dockerSpec.Username,
+			Password: dockerSpec.Password,
+			Envs:     dockerSpec.Envs,
+			Cmd:      dockerSpec.Cmd,
+			Shell:    dockerSpec.Shell,
+		}
+	case sdk.WorkerModelTypeVSphere:
+		var vsphereSpec sdk.V2WorkerModelVSphereSpec
+		if err := yaml.Unmarshal(model.Spec, &vsphereSpec); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		oldModel.ModelVirtualMachine = sdk.ModelVirtualMachine{
+			Cmd:      vsphereSpec.Cmd,
+			PreCmd:   vsphereSpec.PreCmd,
+			PostCmd:  vsphereSpec.PostCmd,
+			User:     vsphereSpec.Username,
+			Password: vsphereSpec.Password,
+			Image:    vsphereSpec.Image,
+		}
+	case sdk.WorkerModelTypeOpenstack:
+		var openstackSpec sdk.V2WorkerModelOpenstackSpec
+		if err := yaml.Unmarshal(model.Spec, &openstackSpec); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		oldModel.ModelVirtualMachine = sdk.ModelVirtualMachine{
+			Cmd:     openstackSpec.Cmd,
+			PreCmd:  openstackSpec.PreCmd,
+			PostCmd: openstackSpec.PostCmd,
+			Image:   openstackSpec.Image,
+			Flavor:  openstackSpec.Flavor,
+		}
+	}
+	return &oldModel, nil
+}
+
 func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
 	ctx, end := telemetry.Span(ctx, "hatchery.canRunJobWithModel", telemetry.Tag(telemetry.TagWorker, model.Name))
 	defer end()
@@ -401,6 +486,7 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			containsModelRequirement = true
 		case sdk.HostnameRequirement:
 			containsHostnameRequirement = true
+
 		}
 	}
 
