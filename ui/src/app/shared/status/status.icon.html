@@ -3,15 +3,15 @@
         <ng-container *ngSwitchCase="pipelineStatusEnum.BUILDING">
             <img id="gifloader" height="24" width="24" src="./assets/images/loader.gif">
         </ng-container>
-        <i class="check green icon" *ngSwitchCase="pipelineStatusEnum.SUCCESS"></i>
+        <i *ngSwitchCase="pipelineStatusEnum.SUCCESS" nz-icon nzType="check" nzTheme="outline" class="green"></i>
         <ng-container *ngSwitchCase="pipelineStatusEnum.FAIL">
-            <i class="remove red icon" *ngIf="!optional"></i>
-            <i class="warning sign icon orange" *ngIf="optional"></i>
+            <i nz-icon nzType="close" nzTheme="outline" class="red" *ngIf="!optional"></i>
+            <i nz-icon nzType="warning" nzTheme="outline" class="orange" *ngIf="optional"></i>
         </ng-container>
-        <i class="remove red icon" *ngSwitchCase="pipelineStatusEnum.STOPPED"></i>
-        <i class="ban grey icon" *ngSwitchCase="pipelineStatusEnum.DISABLED"></i>
-        <i class="ban grey icon" *ngSwitchCase="pipelineStatusEnum.SKIPPED"></i>
-        <i class="wait blue icon" *ngSwitchCase="pipelineStatusEnum.WAITING"></i>
-        <i class="stop grey icon" *ngSwitchDefault></i>
+        <i *ngSwitchCase="pipelineStatusEnum.STOPPED" nz-icon nzType="stop" nzTheme="outline" class="red"></i>
+        <i *ngSwitchCase="pipelineStatusEnum.DISABLED" nz-icon nzType="stop" nzTheme="outline"></i>
+        <i *ngSwitchCase="pipelineStatusEnum.SKIPPED" nz-icon nzType="stop" nzTheme="outline"></i>
+        <i *ngSwitchCase="pipelineStatusEnum.WAITING" nz-icon nzType="field-time" nzTheme="outline" class="blue"></i>
+        <i *ngSwitchDefault nz-icon nzType="field-time" nzTheme="outline"></i>
     </div>
 </div>

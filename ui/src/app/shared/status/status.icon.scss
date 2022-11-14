@@ -13,9 +13,27 @@
     flex-direction: row;
     align-items: center;
 
-    .icon {
+    i {
       margin: 0;
       font-size: 20px; 
     }
   }
+}
+.green {
+  color: $cds_color_green;
+}
+.red {
+  color: $cds_color_red;
+}
+.orange {
+  color: $cds_color_orange;
+}
+.grey {
+  color: $polar_grey_2
+}
+.grey.fill {
+  background-color: $polar_grey_2;
+}
+.blue {
+  color: $cds_color_teal;
 }

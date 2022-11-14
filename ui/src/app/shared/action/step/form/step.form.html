@@ -17,7 +17,7 @@
                         <nz-option nzCustomContent [nzValue]="a" [nzLabel]="a.name" [nzDisabled]="a.deprecated">
                             {{a.group ? a.group.name + '/' + a.name : a.name}}
                             <span class="right floated" *ngIf="a.deprecated">
-                        <i class="warning orange sign icon"></i>
+                        <i nz-icon nzType="warning" nzTheme="outline" class="orange"></i>
                                 {{'common_deprecated' | translate}}
                         </span>
                         </nz-option>

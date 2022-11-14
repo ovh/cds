@@ -564,9 +564,16 @@ jobLoop:
 				})
 			}
 		} else {
-			wjob.SpawnInfos = []sdk.SpawnInfo{{
-				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
-			}}
+			if wjob.Status == sdk.StatusDisabled {
+				wjob.SpawnInfos = []sdk.SpawnInfo{{
+					Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobDisabled.ID},
+				}}
+			} else {
+				wjob.SpawnInfos = []sdk.SpawnInfo{{
+					Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
+				}}
+			}
+
 		}
 
 		// insert in database

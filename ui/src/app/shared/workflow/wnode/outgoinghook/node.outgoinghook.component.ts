@@ -38,10 +38,10 @@ export class WorkflowWNodeOutGoingHookComponent implements OnInit, OnDestroy {
         } else {
             this.model = this.node.outgoing_hook.model;
         }
-        if (this.node && this.node.outgoing_hook.config['hookIcon'] && this.node.outgoing_hook.config['hookIcon'].value) {
-            this.icon = (<WorkflowNodeHookConfigValue>this.node.outgoing_hook.config['hookIcon']).value.toLowerCase();
+        if (this.model.name === 'Workflow') {
+            this.icon = 'share-alt';
         } else {
-            this.icon = this.model.icon.toLowerCase();
+            this.icon = 'link';
         }
     }
 }

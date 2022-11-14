@@ -12,13 +12,13 @@ type (
 	trad map[lang]string
 )
 
-//Supported API language
+// Supported API language
 var (
 	FR = lang(language.French)
 	EN = lang(language.AmericanEnglish)
 )
 
-//Message list
+// Message list
 var (
 	MsgAppCreated                           = &Message{"MsgAppCreated", trad{FR: "L'application %s a été créée avec succès", EN: "Application %s successfully created"}, nil, RunInfoTypInfo}
 	MsgAppUpdated                           = &Message{"MsgAppUpdated", trad{FR: "L'application %s a été mise à jour avec succès", EN: "Application %s successfully updated"}, nil, RunInfoTypInfo}
@@ -65,6 +65,7 @@ var (
 	MsgSpawnInfoHatcheryEndDockerPullErr    = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "⚠ La Hatchery %s a terminé le docker pull de l'image %s en erreur: %s", EN: "⚠ Hatchery %s - docker pull %s done with error: %v"}, nil, RunInfoTypeError}
 	MsgSpawnInfoDeprecatedModel             = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "⚠ Attention vous utilisez un worker model (%s) déprécié", EN: "⚠ Pay attention you are using a deprecated worker model (%s)"}, nil, RunInfoTypeWarning}
 	MsgSpawnInfoWorkerEnd                   = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "✓ Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "✓ Worker %s finished working on this job"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoJobDisabled                 = &Message{"MsgSpawnInfoJobDisabled", trad{FR: "✓ Le job a désactivé", EN: "✓ Job is disabled"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobInQueue                  = &Message{"MsgSpawnInfoJobInQueue", trad{FR: "✓ Le job a été mis en file d'attente", EN: "✓ Job has been queued"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobTaken                    = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job %s a été pris par le worker %s", EN: "Job %s has been taken by worker %s"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoJobTakenWorkerVersion       = &Message{"MsgSpawnInfoJobTakenWorkerVersion", trad{FR: "Worker %s version:%s os:%s arch:%s", EN: "Worker %s version:%s os:%s arch:%s"}, nil, RunInfoTypInfo}
@@ -149,6 +150,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoHatcheryEndDockerPullErr.ID:    MsgSpawnInfoHatcheryEndDockerPullErr,
 	MsgSpawnInfoDeprecatedModel.ID:             MsgSpawnInfoDeprecatedModel,
 	MsgSpawnInfoWorkerEnd.ID:                   MsgSpawnInfoWorkerEnd,
+	MsgSpawnInfoJobDisabled.ID:                 MsgSpawnInfoJobDisabled,
 	MsgSpawnInfoJobInQueue.ID:                  MsgSpawnInfoJobInQueue,
 	MsgSpawnInfoJobTaken.ID:                    MsgSpawnInfoJobTaken,
 	MsgSpawnInfoJobTakenWorkerVersion.ID:       MsgSpawnInfoJobTakenWorkerVersion,
@@ -186,7 +188,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoWorkerHookRunTeardown.ID:       MsgSpawnInfoWorkerHookRunTeardown,
 }
 
-//Message represent a struc format translated messages
+// Message represent a struc format translated messages
 type Message struct {
 	ID     string
 	Format trad
@@ -198,7 +200,7 @@ func (m Message) ToSpawnMsg() SpawnMsg {
 	return SpawnMsg{ID: m.ID, Args: m.Args, Type: m.Type}
 }
 
-//NewMessage instanciantes a new message
+// NewMessage instanciantes a new message
 func NewMessage(m *Message, args ...interface{}) Message {
 	return Message{
 		Format: m.Format,
@@ -216,7 +218,7 @@ var (
 	}
 )
 
-//String returns formated string for the specified language
+// String returns formated string for the specified language
 func (m *Message) String() string {
 	return fmt.Sprintf(m.Format[EN], m.Args...)
 }

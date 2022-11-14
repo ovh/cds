@@ -24,7 +24,7 @@
                                     ? r.version : r.num}}</span>
                             </div>
                             <a title="Copy version" ngxClipboard [cbContent]="r.version ? r.version : r.num"
-                                (click)="confirmCopy();$event.stopPropagation();"><i class="copy outline icon"></i></a>
+                                (click)="confirmCopy();$event.stopPropagation();"> <i nz-icon nzType="copy" nzTheme="outline"></i></a>
                         </div>
                         <ng-template #popupTemplate>
                             <ul>

@@ -63,7 +63,8 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
 
         if (this._project) {
             path.push(<PathItem>{
-                icon: 'browser',
+                icon: 'profile',
+                iconTheme: 'outline',
                 text: this._project.name,
                 routerLink: ['/project', this._project.key],
                 queryParams: { tab: 'workflows' }
@@ -71,7 +72,8 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
 
             if (this._workflow) {
                 path.push(<PathItem>{
-                    icon: 'share alternate',
+                    icon: 'share-alt',
+                    iconTheme: 'outline',
                     text: this._workflow.name,
                     active: this._workflow && !this.workflowRun,
                     routerLink: ['/project', this._project.key, 'workflow', this._workflow.name],
@@ -80,6 +82,7 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
                 if (this.workflowRun) {
                     path.push(<PathItem>{
                         icon: 'tag',
+                        iconTheme: 'outline',
                         text: '' + (this.workflowRun.version ? this.workflowRun.version : this.workflowRun.num),
                         active: !!this._workflow.name && !!this.workflowRun.num,
                         routerLink: ['/project', this._project.key, 'workflow', this._workflow.name, 'run', this.workflowRun.num]
