@@ -791,7 +791,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "workflow.ResyncWorkflowRunResultsRoutine", func(ctx context.Context) {
-		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, 5*time.Second)
+		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, a.Cache, 5*time.Second)
 	})
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {
