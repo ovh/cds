@@ -413,7 +413,7 @@ func LoadRunResultsByRunIDAndType(ctx context.Context, db gorp.SqlExecutor, runI
 	return getAll(ctx, db, query)
 }
 
-func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.DbMap, delay time.Duration) {
+func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, delay time.Duration) {
 	tick := time.NewTicker(delay)
 	defer tick.Stop()
 
@@ -433,21 +433,35 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 					continue
 				}
 				for _, id := range ids {
+					lockKey := cache.Key("api:resyncWorkflowRunResults", fmt.Sprintf("%d", id))
+					b, err := store.Lock(lockKey, 5*time.Minute, 0, 1)
+					if err != nil {
+						log.ErrorWithStackTrace(ctx, err)
+						continue
+					}
+					if !b {
+						log.Debug(ctx, "api.resyncWorkflowRunResults> workflow run %d is locked in cache", id)
+						continue
+					}
 					tx, err := DBFunc().Begin()
 					if err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
+						_ = store.Unlock(lockKey)
 						continue
 					}
 					if err := SyncRunResultArtifactManagerByRunID(ctx, tx, id); err != nil {
 						log.ErrorWithStackTrace(ctx, err)
 						tx.Rollback()
+						_ = store.Unlock(lockKey)
 						continue
 					}
 					if err := tx.Commit(); err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
 						tx.Rollback()
+						_ = store.Unlock(lockKey)
 						continue
 					}
+					_ = store.Unlock(lockKey)
 				}
 			}
 		}
