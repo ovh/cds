@@ -164,7 +164,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             title: 'Keys',
             icon: 'lock',
             iconTheme: 'outline',
-            key: 'key'
+            key: 'keys'
         }, <Tab>{
             title: 'Integrations',
             icon: 'usb',
