@@ -72,6 +72,34 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
         });
 
         if (this.hook) {
+            if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
+                let model = this.workflow.hook_models[this.hook.hook_model_id];
+                if (model.type === 'builtin') {
+                    switch (model.name) {
+                        case 'Workflow':
+                            this.icon = 'share-alt';
+                            break;
+                        case 'WebHook':
+                            this.icon = 'link';
+                            break;
+                        case 'Scheduler':
+                            this.icon = 'field-time';
+                            break;
+                        case 'RepositoryWebHook':
+                            if (this.hook.config['hookIcon']) {
+                                this.icon = (<WorkflowNodeHookConfigValue>this.hook.config['hookIcon']).value.toLowerCase();
+                            } else if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
+                                this.icon = 'link';
+                            }
+                            break;
+                    }
+                }
+            }
+
+            if (this.icon === '') {
+                this.icon = 'link';
+            }
+            /*
             if (this.hook.config['hookIcon']) {
                 this.icon = (<WorkflowNodeHookConfigValue>this.hook.config['hookIcon']).value.toLowerCase();
             } else if (this.workflow.hook_models && this.workflow.hook_models[this.hook.hook_model_id]) {
@@ -79,6 +107,8 @@ export class WorkflowNodeHookComponent implements OnInit, OnDestroy {
             } else {
                 this.icon = this.hook.model.icon;
             }
+
+             */
         }
     }
 

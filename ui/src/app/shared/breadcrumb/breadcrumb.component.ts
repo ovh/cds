@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 export class PathItem {
     icon: string;
+    iconTheme: string;
     translate: string;
     text: string;
     active: boolean;

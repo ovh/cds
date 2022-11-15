@@ -3,7 +3,7 @@
     [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED">
     <div class="title">
         <div class="decoration">
-            <i class="ui icon {{icon}}"></i>
+            <i nz-icon nzType="{{icon}}" nzTheme="outline"></i>
         </div>
         <div class="name ellipsis" title="{{node.name}}">
             {{node.name}}
