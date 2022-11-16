@@ -1,0 +1,27 @@
+<nz-tree-view [nzTreeControl]="treeControl" [nzDataSource]="dataSource">
+    <!-- Node without child -->
+    <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding>
+        <nz-tree-node-toggle>
+            <span nz-icon nzType="{{node.icon}}" nzTheme="outline"></span>
+        </nz-tree-node-toggle>
+        {{ node.name }}
+    </nz-tree-node>
+
+    <!-- Node with child -->
+    <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding>
+        <nz-tree-node-toggle>
+            <span nz-icon nzType="caret-down" nzTreeNodeToggleRotateIcon></span>
+        </nz-tree-node-toggle>
+        <div class="node">
+            {{ node.name }}
+            <ng-container *ngIf="node?.menu?.length > 0">
+                <i nz-icon nzType="more" nzTheme="outline" class="pointing" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"></i>
+                <nz-dropdown-menu #menu="nzDropdownMenu">
+                    <ul nz-menu>
+                        <li nz-menu-item *ngFor="let item of node.menu">{{item.name}}</li>
+                    </ul>
+                </nz-dropdown-menu>
+            </ng-container>
+        </div>
+    </nz-tree-node>
+</nz-tree-view>

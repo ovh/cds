@@ -1,0 +1,6 @@
+<div class="projectHeader">
+    <div class="label">Project</div>
+    <nz-select [ngModel]="selectedProjectKey" (ngModelChange)="selectProject($event)" name="projectKey">
+        <nz-option *ngFor="let p of projectList" [nzLabel]="p.name" [nzValue]="p.key"></nz-option>
+    </nz-select>
+</div>

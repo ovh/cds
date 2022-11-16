@@ -1,0 +1,22 @@
+<div class="sidebar">
+    <div class="filter">
+        <nz-select nzMode="multiple" nzPlaceHolder="Filters...">
+            <nz-option nzLabel="worker-model" nzValue="worker-model"></nz-option>
+        </nz-select>
+    </div>
+    <nz-collapse class="fullheight" >
+        <nz-collapse-panel nzHeader="Workspace" [nzActive]="panels[0]"
+                           (nzActiveChange)="togglePanel(0)"
+                           [appAutoHeightCollapsePanel]="panels" panelIndex="0">
+            <app-tree [tree]="currentWorkspace"></app-tree>
+        </nz-collapse-panel>
+        <nz-collapse-panel nzHeader="Integration" [nzActive]="panels[1]" (nzActiveChange)="togglePanel(1)"
+                           [appAutoHeightCollapsePanel]="panels" panelIndex="1">
+            <app-tree [tree]="currentIntegrations"></app-tree>
+        </nz-collapse-panel>
+        <nz-collapse-panel nzHeader="Others" [nzActive]="panels[2]" (nzActiveChange)="togglePanel(2)"
+                           [appAutoHeightCollapsePanel]="panels" panelIndex="2">
+            <app-tree [tree]="currentIntegrations"></app-tree>
+        </nz-collapse-panel>
+    </nz-collapse>
+</div>

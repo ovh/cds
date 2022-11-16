@@ -143,6 +143,9 @@ import { CardComponent } from 'app/shared/card/card.component';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { BitbucketIconComponent } from 'app/shared/icons/bitbucket.icon.component';
 import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.success.component';
+import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
+import { TreeComponent } from 'app/shared/tree/tree.component';
+import { AutoHeightCollapsePanelDirective } from 'app/shared/directives/auto-height-collapse-panel.directive';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -186,6 +189,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NzTableModule,
         NzTagModule,
         NzToolTipModule,
+        NzTreeViewModule,
         NzUploadModule,
         CommonModule,
         ClipboardModule,
@@ -202,6 +206,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NgxChartsModule
     ],
     declarations: [
+        AutoHeightCollapsePanelDirective,
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
@@ -250,6 +255,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         StatusIconComponent,
         TabsComponent,
         TabComponent,
+        TreeComponent,
         TruncatePipe,
         UploadButtonComponent,
         UsageApplicationsComponent,
@@ -316,6 +322,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         AsCodeSaveModalComponent,
         AuditListComponent,
         AutoFocusInputComponent,
+        AutoHeightCollapsePanelDirective,
         BitbucketIconComponent,
         BitbucketIconSuccessComponent,
         BreadcrumbComponent,
@@ -376,6 +383,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NzTagModule,
         NzTableModule,
         NzToolTipModule,
+        NzTreeViewModule,
         NzUploadModule,
         ParameterFormComponent,
         ParameterListComponent,
@@ -396,6 +404,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         StatusIconComponent,
         TabsComponent,
         TranslateModule,
+        TreeComponent,
         TruncatePipe,
         UploadButtonComponent,
         UsageApplicationsComponent,

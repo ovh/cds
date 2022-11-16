@@ -45,6 +45,12 @@ textarea:read-only {
   margin-top: -2px;
 }
 
+nz-collapse.fullheight {
+  .ant-collapse-content {
+    overflow-y: auto;
+  }
+}
+
 .nzSegment {
   display: flex;
   flex: auto;

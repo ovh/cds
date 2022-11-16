@@ -1,0 +1,14 @@
+.projectHeader {
+  display: flex;
+
+  .label {
+    width: 69px;
+    font-size: 1.3em;
+    align-self: center;
+  }
+
+  nz-select {
+    margin-left: 10px;
+    width: 300px;
+  }
+}
