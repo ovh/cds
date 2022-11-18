@@ -3,7 +3,6 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -104,7 +103,7 @@ func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
 	return sdk.WithStack(err)
 }
 
-//CheckJob validate a job
+// CheckJob validate a job
 func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 	t := time.Now()
 	log.Debug(ctx, "CheckJob> Begin")
@@ -124,24 +123,6 @@ func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 			return err
 		}
 		job.Action.Actions[i].ID = a.ID
-
-		// FIXME better check for params
-		for x := range step.Parameters {
-			sp := &step.Parameters[x]
-			log.Debug(ctx, "CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
-			var found bool
-			for y := range a.Parameters {
-				ap := a.Parameters[y]
-				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
-					found = true
-					break
-				}
-			}
-			if !found {
-				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
-			}
-		}
-
 		if len(errs) > 0 {
 			return sdk.MessagesToError(errs)
 		}
