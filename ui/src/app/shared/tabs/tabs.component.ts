@@ -14,6 +14,7 @@ export class Tab {
     warningText: string;
     warningTemplate: TemplateRef<any>;
     disabled: boolean;
+    link: string[];
 }
 
 @Component({
@@ -60,13 +61,22 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
             return;
         }
         if (!this.disableNavigation) {
+            if (tab.link?.length > 0) {
+                this._router.navigate(tab.link);
+                return;
+            }
             this._router.navigate([], {
                 relativeTo: this._route,
                 queryParams: { tab: tab.key },
                 queryParamsHandling: 'merge'
             });
         } else {
-            this.select(this.tabs.find(t => t.key === tab.key));
+            if (tab.link?.length > 0) {
+                this._router.navigate(tab.link);
+            } else {
+                this.select(this.tabs.find(t => t.key === tab.key));
+            }
+
         }
     }
 

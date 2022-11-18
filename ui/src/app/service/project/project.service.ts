@@ -106,8 +106,6 @@ export class ProjectService {
 
     getRepoEntities(key: string, vcsName: string, repo: string): Observable<Array<Entity>> {
         let encodedRepo = encodeURIComponent(repo);
-        let url = `/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`;
-        console.log(url);
-        return this._http.get<Array<Entity>>(url);
+        return this._http.get<Array<Entity>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`);
     }
 }

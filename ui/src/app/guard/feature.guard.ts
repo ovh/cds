@@ -12,6 +12,24 @@ export class FeatureGuard implements CanActivate {
         private _featureService: FeatureService
     ) { }
 
+    isAllAsCodeActive(projectKey: string): Observable<boolean> | boolean {
+        if (!projectKey) {
+            return false;
+        }
+        return this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: projectKey })
+            .pipe(
+                map((r: FeatureEnabledResponse): boolean => {
+                    if (!r.enabled) {
+                        this._router.navigate(['/']);
+                        return null;
+                    }
+                    return true;
+                }),
+                filter(active => active !== null),
+                first()
+            );
+    }
+
     isWorkflowV3Active(projectKey: string): Observable<boolean> | boolean {
         if (!projectKey) {
             return false;
@@ -37,6 +55,8 @@ export class FeatureGuard implements CanActivate {
         switch (route.data.feature) {
             case FeatureNames.WorkflowV3:
                 return this.isWorkflowV3Active(route.params.key);
+            case FeatureNames.AllAsCode:
+                return this.isAllAsCodeActive(route.params.key);
             default:
                 return false;
         }

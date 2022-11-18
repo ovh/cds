@@ -36,7 +36,7 @@ export class AutoHeightCollapsePanelDirective implements OnChanges {
         let parentHeight = this.element.nativeElement.parentElement.offsetHeight;
 
         let nbOpenedPanel = this.panels.filter( opened => opened).length
-        let percentHeight = 90 / nbOpenedPanel;
+        let percentHeight = 100 / nbOpenedPanel;
         percentHeight = percentHeight - 5*(this.panels.length - nbOpenedPanel);
 
         let height = parentHeight / 100 * percentHeight;

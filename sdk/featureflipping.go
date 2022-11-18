@@ -9,6 +9,7 @@ const (
 	FeatureTracing      FeatureName = "tracing"
 	FeatureWorkflowV3   FeatureName = "workflow-v3"
 	FeatureRegion       FeatureName = "region"
+	FeatureCDSAsCode    FeatureName = "all-as-code"
 )
 
 type Feature struct {

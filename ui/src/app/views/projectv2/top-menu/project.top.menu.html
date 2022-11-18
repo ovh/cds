@@ -3,4 +3,5 @@
     <nz-select [ngModel]="selectedProjectKey" (ngModelChange)="selectProject($event)" name="projectKey">
         <nz-option *ngFor="let p of projectList" [nzLabel]="p.name" [nzValue]="p.key"></nz-option>
     </nz-select>
+    <a [routerLink]="['/', 'project', selectedProjectKey]">Return to project view</a>
 </div>

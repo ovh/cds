@@ -94,7 +94,6 @@ export class ProjectV2SidebarComponent implements OnDestroy {
                     result.push(folderNode);
                 })
             }
-            console.log(result);
             return result;
         }));
     }
