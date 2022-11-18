@@ -5,7 +5,7 @@
     <div class="body">
         <ng-container *ngIf="project">
             <div class="sidebar">
-                <app-projectv2-sidebar></app-projectv2-sidebar>
+                <app-projectv2-sidebar [project]="project"></app-projectv2-sidebar>
             </div>
             <div class="content">
                 <nz-alert nzType="info" nzMessage="Not implemented yet"></nz-alert>

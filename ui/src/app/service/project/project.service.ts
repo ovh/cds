@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
-import { LoadOpts, Project } from 'app/model/project.model';
+import { Entity, LoadOpts, Project, Repository, VCSProject } from 'app/model/project.model';
 import { Observable } from 'rxjs';
 
 /**
@@ -90,5 +90,24 @@ export class ProjectService {
      */
     updateIntegration(key: string, integration: ProjectIntegration): Observable<ProjectIntegration> {
         return this._http.put<ProjectIntegration>('/project/' + key + '/integrations/' + integration.name, integration);
+    }
+
+    /**
+     * Get the list of VCS attached to the given project from the API
+     * @param key
+     */
+    getVCSProject(key: string): Observable<Array<VCSProject>> {
+        return this._http.get<Array<VCSProject>>(`/v2/project/${key}/vcs`);
+    }
+
+    getVCSRepositories(key: string, vcsName: string): Observable<Array<Repository>> {
+        return this._http.get<Array<Repository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
+    }
+
+    getRepoEntities(key: string, vcsName: string, repo: string): Observable<Array<Entity>> {
+        let encodedRepo = encodeURIComponent(repo);
+        let url = `/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`;
+        console.log(url);
+        return this._http.get<Array<Entity>>(url);
     }
 }

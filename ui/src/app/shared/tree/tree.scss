@@ -4,6 +4,10 @@ nz-tree-view {
   nz-tree-node {
     width: 100%;
 
+    .nocursor {
+      cursor: default;
+    }
+
     .node {
       width: 100%;
 
