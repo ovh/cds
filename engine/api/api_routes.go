@@ -461,6 +461,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}", nil, r.DELETEv2(api.deleteProjectRepositoryHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis", nil, r.GETv2(api.getProjectRepositoryAnalysesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis/{analysisID}", nil, r.GETv2(api.getProjectRepositoryAnalysisHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities", nil, r.GETv2(api.getEntitiesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/regen", nil, r.POSTv2(api.postRepositoryHookRegenKeyHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/template", nil, r.GETv2(api.getWorkerModelTemplatesHandler))

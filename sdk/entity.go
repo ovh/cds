@@ -13,6 +13,13 @@ const (
 	EntityNamePattern = "^[a-zA-Z0-9.-_-]{1,}$"
 )
 
+type ShortEntity struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Branch string `json:"branch"`
+}
+
 type Entity struct {
 	ID                  string    `json:"id" db:"id"`
 	ProjectKey          string    `json:"project_key" db:"project_key"`
