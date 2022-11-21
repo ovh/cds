@@ -1,0 +1,21 @@
+.project {
+  height: 100%;
+
+  .header {
+      height: 60px;
+      padding: 14px 10px;
+  }
+  .body {
+    display: flex;
+    height: 100%;
+
+    .content {
+      width: 100%;
+      padding: 0 10px;
+    }
+
+    .loading {
+      width: 100%;
+    }
+  }
+}

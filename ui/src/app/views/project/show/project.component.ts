@@ -14,6 +14,9 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
+import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
+import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
+import { FeatureState } from 'app/store/feature.state';
 
 @Component({
     selector: 'app-project-show',
@@ -28,6 +31,8 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
     project: Project;
     projectSubscriber: Subscription;
     groupsOutsideOrganization: Array<GroupPermission>;
+
+    ascodeEnabled: boolean = false;
 
     tabs: Array<Tab>;
     selectedTab: Tab;
@@ -48,6 +53,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _projectStore: ProjectStore,
+        private _featureService: FeatureService
     ) {
         this.projectSubscriber = this._store.select(ProjectState)
             .pipe(filter((projState: ProjectStateModel) => projState && projState.project &&
@@ -61,11 +67,24 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                         return lbl;
                     });
                 }
+                if (!this.project || this.project.key !== proj?.key) {
+                    let data = {'project_key': proj.key}
+                    this._featureService.isEnabled(FeatureNames.AllAsCode, data).subscribe(f => {
+                        this.ascodeEnabled = f.enabled;
+                        this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
+                            key: f.name,
+                            result: {
+                                paramString: JSON.stringify(data),
+                                enabled: f.enabled,
+                                exists: f.exists
+                            }
+                        }));
+                        this.initTabs();
+                    });
+                }
                 this.project = proj;
                 this._projectStore.updateRecentProject(this.project);
-
                 this.initTabs();
-
                 if (this.project.integrations) {
                     this.project.integrations.forEach(integ => {
                         if (!integ.model.default_config) {
@@ -90,6 +109,8 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                     this.groupsOutsideOrganization = this.project.groups.filter(gp =>
                         gp.group.organization && gp.group.organization !== this.project.organization);
                 }
+
+
 
                 this._cd.markForCheck();
             });
@@ -170,7 +191,16 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
             icon: 'usb',
             iconTheme: 'outline',
             key: 'integrations'
-        }]
+        }];
+        if (this.ascodeEnabled) {
+            this.tabs.push(<Tab>{
+                title: 'AsCode',
+                icon: 'code',
+                iconTheme: 'outline',
+                link: ['/', 'projectv2', this.project.key],
+                key: 'ascode',
+            })
+        }
         if (this.project?.permissions?.writable) {
             this.tabs.push(<Tab>{
                 title: 'Advanced',

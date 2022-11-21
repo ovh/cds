@@ -66,3 +66,20 @@ export class Label {
   // ui params
   font_color: string;
 }
+
+export class VCSProject {
+    id: string;
+    name: string;
+}
+
+export class Repository {
+    id: string;
+    name: string;
+}
+
+export class Entity {
+    id: string;
+    name: string;
+    type: string;
+    branch: string;
+}

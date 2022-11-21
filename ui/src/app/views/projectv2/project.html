@@ -1,0 +1,21 @@
+<div class="project">
+    <div class="header">
+        <app-projectv2-top-menu [project]="project"></app-projectv2-top-menu>
+    </div>
+    <div class="body">
+        <ng-container *ngIf="project">
+            <div class="sidebar">
+                <app-projectv2-sidebar [project]="project"></app-projectv2-sidebar>
+            </div>
+            <div class="content">
+                <nz-alert nzType="info" nzMessage="Not implemented yet"></nz-alert>
+            </div>
+        </ng-container>
+        <ng-container *ngIf="!project">
+            <div class="loading">
+                <nz-spin nzTip="Loading project...."></nz-spin>
+            </div>
+        </ng-container>
+    </div>
+</div>
+

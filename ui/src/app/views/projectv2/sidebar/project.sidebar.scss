@@ -1,0 +1,28 @@
+.sidebar {
+  width: 300px;
+  height: 100%;
+  border-right: 1px solid;
+  border-right-color: rgba(79, 79, 79, 0.2);
+
+  .filter {
+    padding-top: 10px;
+
+    nz-select {
+      width: 280px;
+      margin-left: 10px;
+      margin-bottom: 10px;
+    }
+  }
+
+  nz-collapse {
+    height: 100%;
+
+    nz-collapse-panel {
+      overflow: hidden;
+
+      .ant-collapse-content {
+        height: 100%;
+      }
+    }
+  }
+}

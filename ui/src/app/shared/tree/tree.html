@@ -1,0 +1,36 @@
+<nz-tree-view [nzTreeControl]="treeControl" [nzDataSource]="dataSource">
+    <!-- Node without child -->
+    <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding>
+        <nz-tree-node-toggle class="nocursor">
+            <span nz-icon nzType="{{node.icon}}" nzTheme="outline"></span>
+        </nz-tree-node-toggle>
+        <ng-container *ngIf="node.type === 'info'">
+            <nz-alert nzType="info" nzMessage="{{node.name}}"></nz-alert>
+        </ng-container>
+        <ng-container *ngIf="node.type !== 'info'">
+            {{ node.name }}
+        </ng-container>
+
+    </nz-tree-node>
+
+    <!-- Node with child -->
+    <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding>
+        <nz-tree-node-toggle *ngIf="node.expandable && !node.loading">
+            <span nz-icon nzType="caret-down" nzTreeNodeToggleRotateIcon></span>
+        </nz-tree-node-toggle>
+        <nz-tree-node-toggle *ngIf="node.expandable && node.loading" nzTreeNodeNoopToggle>
+            <span nz-icon nzType="loading" nzTreeNodeToggleActiveIcon></span>
+        </nz-tree-node-toggle>
+        <div class="node">
+            <span class="pointing" (click)="clickOnNode('select', node)">{{ node.name }}</span>
+            <ng-container *ngIf="node?.menu?.length > 0">
+                <i nz-icon nzType="more" nzTheme="outline" class="pointing" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"></i>
+                <nz-dropdown-menu #menu="nzDropdownMenu">
+                    <ul nz-menu>
+                        <li nz-menu-item *ngFor="let item of node.menu">{{item.name}}</li>
+                    </ul>
+                </nz-dropdown-menu>
+            </ng-container>
+        </div>
+    </nz-tree-node>
+</nz-tree-view>

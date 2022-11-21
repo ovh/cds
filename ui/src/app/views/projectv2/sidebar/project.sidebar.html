@@ -1,0 +1,14 @@
+<div class="sidebar">
+    <nz-collapse class="fullheight" *ngIf="!loading">
+        <nz-collapse-panel nzHeader="Workspace" [nzActive]="panels[0]"
+                           (nzActiveChange)="togglePanel(0)"
+                           [appAutoHeightCollapsePanel]="panels" panelIndex="0">
+            <app-tree [tree]="currentWorkspace" (nodeEvent)="handleWorkspaceEvent($event)"></app-tree>
+        </nz-collapse-panel>
+        <nz-collapse-panel nzHeader="Integration" [nzActive]="panels[1]" (nzActiveChange)="togglePanel(1)"
+                           [appAutoHeightCollapsePanel]="panels" panelIndex="1">
+            <nz-alert nzType="info" nzMessage="Not implemented yet"></nz-alert>
+            <!--app-tree [tree]="currentIntegrations"></app-tree-->
+        </nz-collapse-panel>
+    </nz-collapse>
+</div>
