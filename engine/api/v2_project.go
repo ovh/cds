@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -16,7 +15,7 @@ import (
 
 // getAllRepositoriesHandler Get all repositories
 func (api *API) getAllRepositoriesHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.IsHookService),
+	return service.RBAC(api.isHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			repos, err := repository.LoadAllRepositories(ctx, api.mustDB())
 			if err != nil {
@@ -27,7 +26,7 @@ func (api *API) getAllRepositoriesHandler() ([]service.RbacChecker, service.Hand
 }
 
 func (api *API) getRepositoryHookHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.IsHookService),
+	return service.RBAC(api.isHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			repoIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])

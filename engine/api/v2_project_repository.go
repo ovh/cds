@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
@@ -34,7 +33,7 @@ func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, rep
 
 // deleteProjectRepositoryHandler Delete a repository from a project
 func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -89,7 +88,7 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 
 // postProjectRepositoryHandler Attach a new repository to the given project
 func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -192,7 +191,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 
 // getVCSProjectRepositoryAllHandler returns the list of repositories linked to the given vcs/project
 func (api *API) getVCSProjectRepositoryAllHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
@@ -215,7 +214,7 @@ func (api *API) getVCSProjectRepositoryAllHandler() ([]service.RbacChecker, serv
 }
 
 func (api *API) postRepositoryHookRegenKeyHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
