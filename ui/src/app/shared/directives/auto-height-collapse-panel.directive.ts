@@ -50,12 +50,5 @@ export class AutoHeightCollapsePanelDirective implements OnChanges {
             return;
         }
         this.element.nativeElement.children[1].style.height = height + 'px';
-        /*
-        console.log(this.element.nativeElement.children.length);
-        console.log(this.element);
-        (<NodeList>this.element.nativeElement?.childNodes).forEach(n => {
-            console.log(n);
-        });
-         */
     }
 }
