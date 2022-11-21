@@ -62,39 +62,3 @@ regions:
 	require.Equal(t, org.ID, rbacRB.Regions[0].RBACOrganizationIDs[0])
 
 }
-
-func TestRbacRegionAllUsers(t *testing.T) {
-	db, cache := test.SetupPG(t)
-
-	_, err := db.Exec("DELETE FROM rbac")
-	require.NoError(t, err)
-	_, err = db.Exec("DELETE FROM region")
-	require.NoError(t, err)
-
-	user1, _ := assets.InsertLambdaUser(t, db)
-
-	reg := sdk.Region{Name: sdk.RandomString(10)}
-	require.NoError(t, region.Insert(context.TODO(), db, &reg))
-
-	rbacYaml := `name: perm-%s
-regions:
-- role: %s
-  region: %s
-  all_users: true
-  organizations: [default]`
-
-	rbacYaml = fmt.Sprintf(rbacYaml, reg.Name, sdk.RegionRoleList, reg.Name)
-	var r sdk.RBAC
-	require.NoError(t, yaml.Unmarshal([]byte(rbacYaml), &r))
-
-	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &r))
-	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
-
-	c := sdk.AuthUserConsumer{
-		AuthConsumerUser: sdk.AuthUserConsumerData{
-			AuthentifiedUserID: user1.ID,
-			AuthentifiedUser:   user1,
-		},
-	}
-	require.NoError(t, rbac.RegionRead(context.TODO(), &c, cache, db, map[string]string{"regionIdentifier": reg.Name}))
-}
