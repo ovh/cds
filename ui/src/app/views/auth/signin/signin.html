@@ -103,7 +103,7 @@
                 </nz-tabset>
             </ng-container>
             <div *ngIf="!loading && externalDrivers && externalDrivers.length > 0"
-                 class="nzSegment">
+                 class="nzSegment noborder">
                     <hr>
                     <button nz-button *ngFor="let driver of externalDrivers" nzBlock nzType="primary"
                            [routerLink]="'/auth/ask-signin/'+driver.type"

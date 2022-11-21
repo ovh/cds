@@ -1,6 +1,6 @@
 <div *ngIf="!loadingPatterns;then showPatterns;else loadPatterns"></div>
 <ng-template #showPatterns>
-    <form nz-form nzLayout="vertical">
+    <form nz-form nzLayout="vertical" *ngIf="pattern">
         <nz-row>
             <nz-col [nzSpan]="17">
                 <nz-row>

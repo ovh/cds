@@ -44,7 +44,6 @@
               "node_modules/animate.css/animate.min.css",
               "node_modules/prismjs/themes/prism-okaidia.css",
               "node_modules/spinkit/spinkit.min.css",
-              "semantic/dist/semantic.min.css",
               "src/styles.scss"
             ],
             "scripts": [
@@ -73,7 +72,6 @@
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/prismjs/prism.js",
-              "semantic/dist/semantic.min.js"
             ],
             "allowedCommonJsDependencies": [
                 "raven-js",
@@ -169,7 +167,6 @@
               "node_modules/codemirror/addon/display/autorefresh.js",
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
-              "semantic/dist/semantic.min.js"
             ],
             "styles": [
               "node_modules/dragula/dist/dragula.css",
@@ -177,7 +174,6 @@
               "node_modules/codemirror/addon/hint/show-hint.css",
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
-              "semantic/dist/semantic.min.css",
               "src/styles.scss"
             ],
             "assets": [

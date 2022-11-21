@@ -10,7 +10,6 @@
   "scripts": {
     "ng": "ng",
     "gulp": "gulp",
-    "build:semantic": "gulp -f ./semantic/gulpfile.js build",
     "start": "ng serve -c development",
     "test": "ng test --watch false --code-coverage",
     "e2e": "testcafe chromium:headless ./e2e/tests/* -S -s screenshots",
@@ -60,9 +59,9 @@
     "dragula": "3.7.2",
     "enhanced-resolve": "4.1.1",
     "fast-json-patch": "2.0.7",
-    "fomantic-ui": "2.8.8",
     "font-awesome": "4.7.0",
     "immutable": "4.0.0-rc.12",
+    "jquery": "3.6.1",
     "js-beautify": "1.8.9",
     "js-yaml": "3.13.1",
     "jsonschema": "1.2.5",
