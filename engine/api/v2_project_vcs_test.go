@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/project"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -52,6 +54,18 @@ func Test_crudVCSOnProjectLambdaUserOK(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	user1, pass := assets.InsertLambdaUser(t, db)
 
+	newKey, err := keys.GenerateKey("mykey", sdk.KeyTypeSSH)
+	require.NoError(t, err)
+	k := sdk.ProjectKey{
+		Private:   newKey.Private,
+		Public:    newKey.Public,
+		KeyID:     newKey.KeyID,
+		ProjectID: proj.ID,
+		Name:      "mykey",
+		Type:      sdk.KeyTypeSSH,
+	}
+	require.NoError(t, project.InsertKey(db, &k))
+
 	assets.InsertRBAcProject(t, db, "manage", proj.Key, *user1)
 	assets.InsertRBAcProject(t, db, "read", proj.Key, *user1)
 
@@ -92,8 +106,9 @@ type: bitbucketserver
 description: "it's the test vcs server on project"
 url: "http://my-vcs-server.localhost"
 auth:
-    user: the-username
-    password: the-password
+  username: the-username
+  token: the-password
+  sshKeyName: mykey
 `
 
 	// Here, we insert the vcs server as a CDS user (not administrator)
@@ -123,6 +138,18 @@ func Test_crudVCSOnProjectAdminOk(t *testing.T) {
 
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	newKey, err := keys.GenerateKey("mykey", sdk.KeyTypeSSH)
+	require.NoError(t, err)
+	k := sdk.ProjectKey{
+		Private:   newKey.Private,
+		Public:    newKey.Public,
+		KeyID:     newKey.KeyID,
+		ProjectID: proj.ID,
+		Name:      "mykey",
+		Type:      sdk.KeyTypeSSH,
+	}
+	require.NoError(t, project.InsertKey(db, &k))
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
@@ -161,8 +188,9 @@ type: bitbucketserver
 description: "it's the test vcs server on project"
 url: "http://my-vcs-server.localhost"
 auth:
-    user: the-username
-    password: the-password
+  username: the-username
+  token: the-password
+  sshKeyName: mykey
 `
 
 	// Here, we insert the vcs server as a CDS administrator

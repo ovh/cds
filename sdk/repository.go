@@ -15,21 +15,14 @@ const (
 )
 
 type ProjectRepository struct {
-	ID                string                `json:"id" db:"id"`
-	Name              string                `json:"name" db:"name" cli:"name,key"`
-	Created           time.Time             `json:"created" db:"created"`
-	CreatedBy         string                `json:"created_by" db:"created_by"`
-	VCSProjectID      string                `json:"-" db:"vcs_project_id"`
-	HookConfiguration HookConfiguration     `json:"hook_configuration" db:"hook_configuration"`
-	HookSignKey       string                `json:"hook_sign_key" db:"hook_sign_key" gorpmapping:"encrypted,ID,VCSProjectID"`
-	CloneURL          string                `json:"clone_url" db:"clone_url"`
-	Auth              ProjectRepositoryAuth `json:"auth" db:"auth" gorpmapping:"encrypted,ID,VCSProjectID"`
-}
-
-type ProjectRepositoryAuth struct {
-	Username   string `json:"username,omitempty" db:"-"`
-	Token      string `json:"token,omitempty" db:"-"`
-	SSHKeyName string `json:"sshPrivateKey,omitempty" db:"-"`
+	ID                string            `json:"id" db:"id"`
+	Name              string            `json:"name" db:"name" cli:"name,key"`
+	Created           time.Time         `json:"created" db:"created"`
+	CreatedBy         string            `json:"created_by" db:"created_by"`
+	VCSProjectID      string            `json:"-" db:"vcs_project_id"`
+	HookConfiguration HookConfiguration `json:"hook_configuration" db:"hook_configuration"`
+	HookSignKey       string            `json:"hook_sign_key" db:"hook_sign_key" gorpmapping:"encrypted,ID,VCSProjectID"`
+	CloneURL          string            `json:"clone_url" db:"clone_url"`
 }
 
 type ProjectRepositoryAnalysis struct {

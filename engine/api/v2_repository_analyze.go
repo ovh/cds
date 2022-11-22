@@ -293,9 +293,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		analysis.Data.Error = analysisError
 	}
 
-	// remove secret from repo
-	repoWithSecret.Auth = sdk.ProjectRepositoryAuth{}
-
 	var filesContent map[string][]byte
 	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 		var cdsUser *sdk.AuthentifiedUser
@@ -482,9 +479,9 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 			RepoFullName: repoWithSecret.Name,
 			URL:          repoWithSecret.CloneURL,
 			RepositoryStrategy: sdk.RepositoryStrategy{
-				SSHKey:   repoWithSecret.Auth.SSHKeyName,
-				User:     repoWithSecret.Auth.Username,
-				Password: repoWithSecret.Auth.Token,
+				SSHKey:   vcsProject.Auth.SSHKeyName,
+				User:     vcsProject.Auth.Username,
+				Password: vcsProject.Auth.Token,
 			},
 			Setup: sdk.OperationSetup{
 				Checkout: sdk.OperationCheckout{
@@ -494,7 +491,7 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 				},
 			},
 		}
-		if repoWithSecret.Auth.SSHKeyName != "" {
+		if vcsProject.Auth.SSHKeyName != "" {
 			ope.RepositoryStrategy.ConnectionType = "ssh"
 		} else {
 			ope.RepositoryStrategy.ConnectionType = "https"

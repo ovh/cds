@@ -213,8 +213,12 @@ type VCSProject struct {
 }
 
 type VCSAuthProject struct {
-	Username      string `json:"username,omitempty" db:"-"`
-	Token         string `json:"token,omitempty" db:"-"`
+	// VCS Authentication
+	Username   string `json:"username,omitempty" db:"-"`
+	Token      string `json:"token,omitempty" db:"-"`
+	SSHKeyName string `json:"sshKeyName,omitempty" db:"-"`
+
+	// Use for gerrit
 	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
 	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
 	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`
@@ -226,6 +230,35 @@ type VCSOptionsProject struct {
 	DisableStatusDetails bool   `json:"disableStatusDetails,omitempty" db:"-"`
 	DisablePolling       bool   `json:"disablePolling,omitempty" db:"-"`
 	URLAPI               string `json:"urlApi,omitempty" db:"-"` // optional
+}
+
+func (v VCSProject) Lint(prj Project) error {
+	// If it's not a gerrit vcs
+	if v.Auth.SSHUsername == "" {
+		if v.Auth.Username == "" {
+			return NewErrorFrom(ErrInvalidData, "missing auth username")
+		}
+		if v.Auth.Token == "" {
+			return NewErrorFrom(ErrInvalidData, "missing auth token")
+		}
+		if v.Auth.SSHKeyName == "" {
+			return NewErrorFrom(ErrInvalidData, "missing auth ssh key name")
+		}
+	}
+
+	found := false
+	if v.Auth.SSHKeyName != "" {
+		for _, k := range prj.Keys {
+			if k.Name == v.Auth.SSHKeyName {
+				found = true
+				break
+			}
+		}
+	}
+	if !found {
+		return NewErrorFrom(ErrNotFound, "unable to find ssh key %s on project", v.Auth.SSHKeyName)
+	}
+	return nil
 }
 
 func (v VCSOptionsProject) Value() (driver.Value, error) {
