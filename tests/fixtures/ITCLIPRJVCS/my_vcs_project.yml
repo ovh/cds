@@ -6,4 +6,5 @@ url: "${GITEA_HOST}"
 auth:
   username: gituser
   password: gitpwd
+  sshKeyName: proj-ssh-itcliprjvcs
 
