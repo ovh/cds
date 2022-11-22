@@ -40,11 +40,7 @@ func TestCleanAnalysis(t *testing.T) {
 	require.NotEmpty(t, vcsProject.ID)
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
@@ -79,11 +75,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
@@ -150,11 +142,7 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
@@ -230,11 +218,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
@@ -368,11 +352,7 @@ GDFkaTe3nUJdYV4=
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
@@ -440,11 +420,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
@@ -578,11 +554,7 @@ GDFkaTe3nUJdYV4=
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",

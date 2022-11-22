@@ -39,11 +39,7 @@ func TestGetWorkerModelV2Handler(t *testing.T) {
 	require.NotEmpty(t, vcsProject.ID)
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
@@ -135,11 +131,7 @@ func TestGetV2WorkerModelsHandler(t *testing.T) {
 	require.NotEmpty(t, vcsProject.ID)
 
 	repo := sdk.ProjectRepository{
-		Name: "myrepo",
-		Auth: sdk.ProjectRepositoryAuth{
-			Username: "myuser",
-			Token:    "mytoken",
-		},
+		Name:         "myrepo",
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
