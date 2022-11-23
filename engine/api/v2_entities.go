@@ -8,14 +8,13 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/entity"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 func (api *API) getEntitiesHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
