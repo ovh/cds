@@ -10,13 +10,12 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	hatch_auth "github.com/ovh/cds/engine/api/authentication/hatchery"
 	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 func (api *API) postHatcheryHeartbeatHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(IsHatchery),
+	return service.RBAC(api.isHatchery),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			hatcheryAuthConsumer := getHatcheryConsumer(ctx)
 			h, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), hatcheryAuthConsumer.AuthConsumerHatchery.HatcheryID)
@@ -85,7 +84,7 @@ func (api *API) getHatcheryByIdentifier(ctx context.Context, hatcheryIdentifier 
 }
 
 func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.GlobalHatcheryManage),
+	return service.RBAC(api.globalHatcheryManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 
 			var h sdk.Hatchery
@@ -146,7 +145,7 @@ func (api *API) getHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.GlobalHatcheryManage),
+	return service.RBAC(api.globalHatcheryManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			hatcheryIdentifier := vars["hatcheryIdentifier"]

@@ -22,7 +22,7 @@ func insertRBACRegionOrganization(ctx context.Context, db gorpmapper.SqlExecutor
 	return nil
 }
 
-func loadRBACRegionOrganizations(ctx context.Context, db gorp.SqlExecutor, rbacRegion *sdk.RBACRegion) error {
+func LoadRBACRegionOrganizations(ctx context.Context, db gorp.SqlExecutor, rbacRegion *sdk.RBACRegion) error {
 	q := gorpmapping.NewQuery("SELECT * FROM rbac_region_organizations WHERE rbac_region_id = $1").Args(rbacRegion.ID)
 	rbacOrganizationIDS, err := getAllRBACRegionOrganizations(ctx, db, q)
 	if err != nil {

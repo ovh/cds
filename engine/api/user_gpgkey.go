@@ -6,7 +6,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -50,7 +49,7 @@ func (api *API) getUserGPGKeyHandler() ([]service.RbacChecker, service.Handler) 
 
 // postUserGPGGKeyHandler Get the given user gpg key
 func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.IsCurrentUser),
+	return service.RBAC(api.isCurrentUser),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			username := vars["user"]
@@ -89,7 +88,7 @@ func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler
 
 // getUserGPGKeyHandler Get the given user gpg key
 func (api *API) deleteUserGPGKey() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.IsCurrentUser),
+	return service.RBAC(api.isCurrentUser),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			username := vars["user"]

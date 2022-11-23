@@ -27,7 +27,7 @@ func (api *API) getRegionByIdentifier(ctx context.Context, regionIdentifier stri
 }
 
 func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.GlobalRegionManage),
+	return service.RBAC(api.globalRegionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 
 			var reg sdk.Region
@@ -84,7 +84,7 @@ func (api *API) getRegionsHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) getRegionHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.RegionRead),
+	return service.RBAC(api.regionRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionIdentifier := vars["regionIdentifier"]
@@ -98,7 +98,7 @@ func (api *API) getRegionHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.GlobalRegionManage),
+	return service.RBAC(api.globalRegionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionIdentifier := vars["regionIdentifier"]
