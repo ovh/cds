@@ -368,7 +368,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrRepositoryUsedByHook.ID:                          "There is still a repository webhook on this repository",
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
 	ErrEnvironmentNotFound.ID:                           "Environment not found ",
-	ErrIntegrationtNotFound.ID:                          "Integration not found",
+	ErrIntegrationtNotFound.ID:                          "Integration %q not found",
 	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",
