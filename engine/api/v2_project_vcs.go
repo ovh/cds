@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -15,13 +16,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string) (*sdk.VCSProject, error) {
+func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
 	var vcsProject *sdk.VCSProject
 	var err error
 	if sdk.IsValidUUID(vcsIdentifier) {
-		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier)
+		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	} else {
-		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier)
+		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	}
 	if err != nil {
 		return nil, err
