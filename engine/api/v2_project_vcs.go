@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
@@ -31,7 +30,7 @@ func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsId
 }
 
 func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -81,7 +80,7 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 }
 
 func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -134,7 +133,7 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 }
 
 func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectManage),
+	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -174,7 +173,7 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 
 // getVCSProjectAllHandler returns list of vcs of one project key
 func (api *API) getVCSProjectAllHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]
@@ -189,7 +188,7 @@ func (api *API) getVCSProjectAllHandler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			pKey := vars["projectKey"]

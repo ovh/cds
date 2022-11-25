@@ -10,14 +10,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.WorkerModelRead),
+	return service.RBAC(api.workerModelRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -93,7 +92,7 @@ func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getWorkerModelsV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]

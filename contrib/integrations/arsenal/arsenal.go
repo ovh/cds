@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -135,7 +136,7 @@ func (ac *Client) UpsertAlternative(altConfig *Alternative) error {
 
 // DeleteAlternative deletes an existing alternative.
 func (ac *Client) DeleteAlternative(altName string) error {
-	req, err := ac.newRequest(http.MethodDelete, "/alternative/"+altName, nil)
+	req, err := ac.newRequest(http.MethodDelete, "/alternative/"+url.PathEscape(altName), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create delete alternative request: %w", err)
 	}

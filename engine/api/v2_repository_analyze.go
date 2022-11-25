@@ -80,7 +80,7 @@ func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration
 }
 
 func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -112,7 +112,7 @@ func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, se
 }
 
 func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.ProjectRead),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -146,7 +146,7 @@ func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, se
 
 // postRepositoryAnalysisHandler Trigger repository analysis
 func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(rbac.IsHookService),
+	return service.RBAC(api.isHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			var analysis sdk.AnalysisRequest
 			if err := service.UnmarshalBody(req, &analysis); err != nil {
