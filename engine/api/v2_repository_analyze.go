@@ -262,39 +262,36 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 
-	vcsProject, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID)
+	vcsProjectWithSecret, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, err)
 	}
 
-	repoWithSecret, err := repository.LoadRepositoryByID(ctx, api.mustDB(), analysis.ProjectRepositoryID, gorpmapping.GetOptions.WithDecryption)
+	repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), analysis.ProjectRepositoryID)
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, err)
 	}
 
 	var keyID, analysisError string
-	switch vcsProject.Type {
+	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab, sdk.VCSTypeGerrit:
-		keyID, analysisError, err = api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProject, *repoWithSecret)
+		keyID, analysisError, err = api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProjectWithSecret, *repo)
 		if err != nil {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
 	case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
-		keyID, analysisError, err = api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProject, *repoWithSecret)
+		keyID, analysisError, err = api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProjectWithSecret, *repo)
 		if err != nil {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
 	default:
-		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProject.Type))
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProjectWithSecret.Type))
 	}
 	analysis.Data.SignKeyID = keyID
 	if analysisError != "" {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 		analysis.Data.Error = analysisError
 	}
-
-	// remove secret from repo
-	repoWithSecret.Auth = sdk.ProjectRepositoryAuth{}
 
 	var filesContent map[string][]byte
 	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
@@ -334,13 +331,13 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			}
 
 			if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
-				switch vcsProject.Type {
+				switch vcsProjectWithSecret.Type {
 				case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud:
 					// get archive
-					filesContent, err = api.getCdsArchiveFileOnRepo(ctx, *repoWithSecret, analysis, vcsProject.Name)
+					filesContent, err = api.getCdsArchiveFileOnRepo(ctx, *repo, analysis, vcsProjectWithSecret.Name)
 				case sdk.VCSTypeGitlab, sdk.VCSTypeGithub, sdk.VCSTypeGitea:
 					analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-					filesContent, err = api.getCdsFilesOnVCSDirectory(ctx, analysis, vcsProject.Name, repoWithSecret.Name, analysis.Commit, ".cds")
+					filesContent, err = api.getCdsFilesOnVCSDirectory(ctx, analysis, vcsProjectWithSecret.Name, repo.Name, analysis.Commit, ".cds")
 				case sdk.VCSTypeGerrit:
 					return sdk.WithStack(sdk.ErrNotImplemented)
 				}
@@ -482,9 +479,9 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 			RepoFullName: repoWithSecret.Name,
 			URL:          repoWithSecret.CloneURL,
 			RepositoryStrategy: sdk.RepositoryStrategy{
-				SSHKey:   repoWithSecret.Auth.SSHKeyName,
-				User:     repoWithSecret.Auth.Username,
-				Password: repoWithSecret.Auth.Token,
+				SSHKey:   vcsProject.Auth.SSHKeyName,
+				User:     vcsProject.Auth.Username,
+				Password: vcsProject.Auth.Token,
 			},
 			Setup: sdk.OperationSetup{
 				Checkout: sdk.OperationCheckout{
@@ -494,7 +491,7 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 				},
 			},
 		}
-		if repoWithSecret.Auth.SSHKeyName != "" {
+		if vcsProject.Auth.SSHKeyName != "" {
 			ope.RepositoryStrategy.ConnectionType = "ssh"
 		} else {
 			ope.RepositoryStrategy.ConnectionType = "https"

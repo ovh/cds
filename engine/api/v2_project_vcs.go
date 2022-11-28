@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
@@ -14,13 +15,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string) (*sdk.VCSProject, error) {
+func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
 	var vcsProject *sdk.VCSProject
 	var err error
 	if sdk.IsValidUUID(vcsIdentifier) {
-		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier)
+		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	} else {
-		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier)
+		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	}
 	if err != nil {
 		return nil, err
@@ -40,13 +41,17 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 			}
 			defer tx.Rollback() // nolint
 
-			project, err := project.Load(ctx, tx, pKey)
+			project, err := project.Load(ctx, tx, pKey, project.LoadOptions.WithKeys)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
 
 			var vcsProject sdk.VCSProject
 			if err := service.UnmarshalRequest(ctx, req, &vcsProject); err != nil {
+				return err
+			}
+
+			if err := vcsProject.Lint(*project); err != nil {
 				return err
 			}
 
@@ -80,6 +85,11 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 
+			proj, err := project.Load(ctx, api.mustDB(), pKey, project.LoadOptions.WithKeys)
+			if err != nil {
+				return err
+			}
+
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
@@ -105,6 +115,10 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			vcsProject.Created = vcsOld.Created
 			vcsProject.CreatedBy = vcsOld.CreatedBy
 			vcsProject.ProjectID = vcsOld.ProjectID
+
+			if err := vcsProject.Lint(*proj); err != nil {
+				return err
+			}
 
 			if err := vcs.Update(ctx, tx, &vcsProject); err != nil {
 				return err

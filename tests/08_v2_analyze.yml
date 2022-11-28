@@ -17,8 +17,8 @@ testcases:
 
 - name: import / export vcs server
   steps:
-  - script: envsubst < ./fixtures/my_vcs_project.yml > ./fixtures/my_vcs_project_replaced.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs import ITCLIPRJVCS ./fixtures/my_vcs_project_replaced.yml
+  - script: export PROJECT_KEY=ITCLIPRJVCS && envsubst < ./fixtures/ITCLIPRJVCS/my_vcs_project.yml > ./fixtures/ITCLIPRJVCS/my_vcs_project_replaced.yml
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs import ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/my_vcs_project_replaced.yml
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs list ITCLIPRJVCS --format json
     assertions:
     - result.code ShouldEqual 0
@@ -86,7 +86,7 @@ testcases:
 
 - name: Push workflow and run it
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/*.yml --skip-update-files
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/workflow.yml ./fixtures/ITCLIPRJVCS/pipeline.pip.yml --skip-update-files
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW
       assertions:
         - result.code ShouldEqual 0

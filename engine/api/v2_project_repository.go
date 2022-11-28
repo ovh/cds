@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
@@ -93,16 +92,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 
-			proj, err := project.Load(ctx, api.mustDB(), pKey, project.LoadOptions.WithKeys)
-			if err != nil {
-				return err
-			}
-
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
-			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			vcsProjectWithSecret, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier, gorpmapper.GetOptions.WithDecryption)
 			if err != nil {
 				return err
 			}
@@ -112,13 +106,6 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
-			if repoBody.Auth.SSHKeyName != "" {
-				projKey := proj.GetSSHKey(repoBody.Auth.SSHKeyName)
-				if projKey == nil {
-					return sdk.NewErrorFrom(sdk.ErrNotFound, "ssh key %s not found", repoBody.Auth.SSHKeyName)
-				}
-			}
-
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
@@ -126,7 +113,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			defer tx.Rollback() // nolint
 
 			repoDB := repoBody
-			repoDB.VCSProjectID = vcsProject.ID
+			repoDB.VCSProjectID = vcsProjectWithSecret.ID
 			repoDB.CreatedBy = getUserConsumer(ctx).GetUsername()
 
 			// Insert Repository
@@ -135,7 +122,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			}
 
 			// Check if repo exist
-			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProjectWithSecret.Name)
 			if err != nil {
 				return err
 			}
@@ -152,7 +139,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if len(srvs) < 1 {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
 			}
-			repositoryHookRegister, err := sdk.NewEntitiesHook(repoDB.ID, pKey, vcsProject.Type, vcsProject.Name, repoDB.Name)
+			repositoryHookRegister, err := sdk.NewEntitiesHook(repoDB.ID, pKey, vcsProjectWithSecret.Type, vcsProjectWithSecret.Name, repoDB.Name)
 			if err != nil {
 				return err
 			}
@@ -162,7 +149,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return sdk.WrapError(errHooks, "unable to create hooks [HTTP: %d]", code)
 			}
 
-			if repoBody.Auth.SSHKeyName != "" {
+			if vcsProjectWithSecret.Auth.SSHKeyName != "" {
 				if vcsRepo.SSHCloneURL == "" {
 					return sdk.NewErrorFrom(sdk.ErrInvalidData, "this repo cannot be cloned using ssh.")
 				}
@@ -173,7 +160,6 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				}
 				repoDB.CloneURL = vcsRepo.HTTPCloneURL
 			}
-			repoDB.Auth = repoBody.Auth
 			repoDB.HookSignKey = repositoryHookRegister.HookSignKey
 
 			// Update repository with Hook configuration
@@ -185,7 +171,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
-			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
+			return service.WriteMarshal(w, req, repoDB, http.StatusCreated)
 		}
 }
 
