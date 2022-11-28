@@ -5,6 +5,7 @@ RUN apk update && apk update && \
     apk --no-cache add git && \
     apk --no-cache add tzdata && \
     apk --no-cache add openssh-client && \
+    apk --no-cache add gpg-agent && \
     apk --no-cache add ca-certificates && rm -rf /var/cache/apk/* 
 RUN update-ca-certificates
 RUN echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /etc/ssh/ssh_config
