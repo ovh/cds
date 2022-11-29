@@ -1,14 +1,28 @@
 <div class="sidebar">
-    <nz-collapse class="fullheight" *ngIf="!loading">
-        <nz-collapse-panel nzHeader="Workspace" [nzActive]="panels[0]"
-                           (nzActiveChange)="togglePanel(0)"
-                           [appAutoHeightCollapsePanel]="panels" panelIndex="0">
-            <app-tree [tree]="currentWorkspace" (nodeEvent)="handleWorkspaceEvent($event)"></app-tree>
-        </nz-collapse-panel>
-        <nz-collapse-panel nzHeader="Integration" [nzActive]="panels[1]" (nzActiveChange)="togglePanel(1)"
-                           [appAutoHeightCollapsePanel]="panels" panelIndex="1">
-            <nz-alert nzType="info" nzMessage="Not implemented yet"></nz-alert>
-            <!--app-tree [tree]="currentIntegrations"></app-tree-->
-        </nz-collapse-panel>
-    </nz-collapse>
+    <div class="collapse" [appAutoHeightCollapsePanel]="panels">
+        <div class="panel" [class.collapsed]="!panels[0]" [class.expanded]="panels[0]">
+            <div class="header">
+                <div class="pointing" (click)="togglePanel(0)">
+                    <i nz-icon nzType="right" nzTheme="outline" *ngIf="!panels[0]"></i>
+                    <i nz-icon nzType="down" nzTheme="outline" *ngIf="panels[0]"></i>
+                </div>
+                Workspace
+            </div>
+            <div class="content">
+                <app-tree [tree]="currentWorkspace" (nodeEvent)="handleWorkspaceEvent($event)"></app-tree>
+            </div>
+        </div>
+        <div class="panel" [class.collapsed]="!panels[1]" [class.expanded]="panels[1]">
+            <div class="header">
+                <div class="pointing" (click)="togglePanel(1)">
+                    <i nz-icon nzType="right" nzTheme="outline" *ngIf="!panels[1]"></i>
+                    <i nz-icon nzType="down" nzTheme="outline" *ngIf="panels[1]"></i>
+                </div>
+                Integrations
+            </div>
+            <div class="content">
+                <nz-alert nzMessage="Not implemented" nzType="info"></nz-alert>
+            </div>
+        </div>
+    </div>
 </div>

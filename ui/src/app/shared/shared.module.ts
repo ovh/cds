@@ -145,7 +145,7 @@ import { BitbucketIconComponent } from 'app/shared/icons/bitbucket.icon.componen
 import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.success.component';
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
 import { TreeComponent } from 'app/shared/tree/tree.component';
-import { AutoHeightCollapsePanelDirective } from 'app/shared/directives/auto-height-collapse-panel.directive';
+import { AutoHeightSidebarCollapseDirective } from 'app/shared/directives/auto-height-sidebar-collapse.directive';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -206,7 +206,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NgxChartsModule
     ],
     declarations: [
-        AutoHeightCollapsePanelDirective,
+        AutoHeightSidebarCollapseDirective,
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
@@ -322,7 +322,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         AsCodeSaveModalComponent,
         AuditListComponent,
         AutoFocusInputComponent,
-        AutoHeightCollapsePanelDirective,
+        AutoHeightSidebarCollapseDirective,
         BitbucketIconComponent,
         BitbucketIconSuccessComponent,
         BreadcrumbComponent,
