@@ -345,7 +345,8 @@ func DeleteArtifactsFromRepositoryManager(ctx context.Context, db gorp.SqlExecut
 		}
 	}
 	if rtToken == "" {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find artifact manager token")
+		log.Info(ctx, "unable to find artifact manager token for workflow run with id: %d", wr.ID)
+		return nil
 	}
 
 	// Instanciate artifactory client
