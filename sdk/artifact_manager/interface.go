@@ -1,7 +1,6 @@
 package artifact_manager
 
 import (
-	"fmt"
 	"os"
 
 	buildinfo "github.com/jfrog/build-info-go/entities"
@@ -48,5 +47,5 @@ func newClient(managerType, url, token string) (ArtifactManager, error) {
 		}
 		return &arti.Client{Asm: asm}, nil
 	}
-	return nil, fmt.Errorf("artifact Manager %s not implemented", managerType)
+	return nil, sdk.Errorf("artifact Manager %s not implemented", managerType)
 }

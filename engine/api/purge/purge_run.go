@@ -175,7 +175,7 @@ func getBranches(ctx context.Context, repo string, vcsClient sdk.VCSAuthorizedCl
 	branchesMap := make(map[string]struct{})
 	branches, err := vcsClient.Branches(ctx, repo, sdk.VCSBranchesFilter{})
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "cannot retrieve branches for repo %q", repo)
 	}
 	log.Info(ctx, "Purge getting branch for repo %s - count: %d", repo, len(branches))
 	defaultBranchFound := false
