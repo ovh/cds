@@ -1,5 +1,7 @@
 .project {
   height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .header {
       height: 60px;
@@ -11,7 +13,6 @@
 
     .content {
       width: 100%;
-      padding: 0 10px;
     }
 
     .loading {

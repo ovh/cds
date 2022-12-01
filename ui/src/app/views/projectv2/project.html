@@ -8,7 +8,7 @@
                 <app-projectv2-sidebar [project]="project"></app-projectv2-sidebar>
             </div>
             <div class="content">
-                <nz-alert nzType="info" nzMessage="Not implemented yet"></nz-alert>
+                <router-outlet></router-outlet>
             </div>
         </ng-container>
         <ng-container *ngIf="!project">

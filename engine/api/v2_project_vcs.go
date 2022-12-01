@@ -202,6 +202,15 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 			if err != nil {
 				return err
 			}
+
+			vcsClear, err := vcs.LoadVCSByID(ctx, api.mustDB(), pKey, vcsProject.ID, gorpmapping.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+			vcsProject.Auth.Username = vcsClear.Auth.Username
+			vcsProject.Auth.SSHKeyName = vcsClear.Auth.SSHKeyName
+			vcsProject.Auth.SSHUsername = vcsClear.Auth.SSHUsername
+			vcsProject.Auth.SSHPort = vcsClear.Auth.SSHPort
 			return service.WriteMarshal(w, r, vcsProject, http.StatusOK)
 		}
 }

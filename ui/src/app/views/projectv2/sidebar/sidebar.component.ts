@@ -43,7 +43,7 @@ export class ProjectV2SidebarComponent implements OnDestroy {
     init(): void {
         this.currentWorkspace = [];
         this.loading = true;
-        this._projectService.getVCSProject(this._currentProject.key).subscribe(vcsProjects => {
+        this._projectService.listVCSProject(this._currentProject.key).subscribe(vcsProjects => {
             if (vcsProjects) {
                 this.currentWorkspace = [];
                 vcsProjects.forEach(vcs => {
@@ -100,7 +100,7 @@ export class ProjectV2SidebarComponent implements OnDestroy {
 
     getVCSMenu(vcs: VCSProject): MenuItem[] {
         let menu = [];
-        menu.push(<MenuItem>{ name: 'Add a repository', route: ['/', 'projectv2', 'vcs', vcs.name]});
+        menu.push(<MenuItem>{ name: 'Add a repository', route: ['/', 'projectv2', this.project.key, 'vcs', vcs.name, 'repository']});
         return menu;
     }
 

@@ -9,6 +9,24 @@ import { Observable } from 'rxjs';
 import { flatMap, map } from 'rxjs/operators';
 
 @Injectable()
+export class Projectv2Resolver implements Resolve<Project> {
+    constructor(private store: Store, private routerService: RouterService) { }
+
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+        let params = this.routerService.getRouteSnapshotParams({}, state.root);
+        let opts = [];
+
+        return this.store.dispatch(new FetchProject({
+            projectKey: params['key'],
+            opts
+        })).pipe(
+            flatMap(() => this.store.selectOnce(ProjectState)),
+            map((projectState: ProjectStateModel) => projectState.project)
+        );
+    }
+}
+
+@Injectable()
 export class ProjectResolver implements Resolve<Project> {
 
     constructor(private store: Store, private routerService: RouterService) { }

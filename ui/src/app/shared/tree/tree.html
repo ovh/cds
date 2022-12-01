@@ -27,7 +27,7 @@
                 <i nz-icon nzType="more" nzTheme="outline" class="pointing" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"></i>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
-                        <li nz-menu-item *ngFor="let item of node.menu">{{item.name}}</li>
+                        <li nz-menu-item *ngFor="let item of node.menu" [routerLink]="item.route">{{item.name}}</li>
                     </ul>
                 </nz-dropdown-menu>
             </ng-container>

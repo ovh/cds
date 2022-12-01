@@ -70,9 +70,21 @@ export class Label {
 export class VCSProject {
     id: string;
     name: string;
+    auth: VCSProjectAuth;
 }
 
-export class Repository {
+export class VCSProjectAuth {
+    username: string;
+    token: string;
+    sshKeyName: string;
+
+    // Use for gerrit
+    sshUsername:   string;
+    sshPort:       number;
+    sshPrivateKey: string;
+}
+
+export class ProjectRepository {
     id: string;
     name: string;
 }

@@ -42,7 +42,7 @@ import { ProjectAuditService } from './project/project.audit.service';
 import {
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
-    ProjectResolver
+    ProjectResolver, Projectv2Resolver
 } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
 import { ProjectStore } from './project/project.store';
@@ -106,6 +106,7 @@ export class ServicesModule {
                 PipelineCoreService,
                 PipelineService,
                 IntegrationService,
+                Projectv2Resolver,
                 ProjectResolver,
                 ProjectForApplicationResolver,
                 ProjectForWorkflowResolver,
@@ -173,6 +174,7 @@ export {
     PipelineCoreService,
     IntegrationService,
     ProjectResolver,
+    Projectv2Resolver,
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,
     ProjectStore,

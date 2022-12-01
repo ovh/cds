@@ -5,6 +5,7 @@ import { Store } from '@ngxs/store';
 import { ActivatedRoute } from '@angular/router';
 import { Project } from 'app/model/project.model';
 import { ProjectStore } from 'app/service/project/project.store';
+import { ProjectService } from 'app/service/project/project.service';
 
 @Component({
     selector: 'app-projectv2-show',
@@ -22,7 +23,8 @@ export class ProjectV2ShowComponent implements OnDestroy {
     constructor(private _store: Store,
                 private _route: ActivatedRoute,
                 private _projectStore: ProjectStore,
-                private _cd: ChangeDetectorRef) {
+                private _cd: ChangeDetectorRef,
+                private _projectService: ProjectService) {
        this.routeSub = this._route.params.subscribe(r => {
            let projectKey = r['key'];
            if (this.projSub) {
