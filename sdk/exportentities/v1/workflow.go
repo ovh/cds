@@ -59,7 +59,7 @@ type ConditionEntry struct {
 	LuaScript       string                `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
-//WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type PlainConditionEntry struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Operator string `json:"operator" yaml:"operator"`
@@ -79,20 +79,23 @@ func (w Workflow) Entries() map[string]NodeEntry {
 		return w.Workflow
 	}
 
-	singleEntry := NodeEntry{
-		ApplicationName:        w.ApplicationName,
-		EnvironmentName:        w.EnvironmentName,
-		ProjectIntegrationName: w.ProjectIntegrationName,
-		PipelineName:           w.PipelineName,
-		Conditions:             w.Conditions,
-		When:                   w.When,
-		Payload:                w.Payload,
-		Parameters:             w.Parameters,
-		OneAtATime:             w.OneAtATime,
+	if w.PipelineName != "" {
+		singleEntry := NodeEntry{
+			ApplicationName:        w.ApplicationName,
+			EnvironmentName:        w.EnvironmentName,
+			ProjectIntegrationName: w.ProjectIntegrationName,
+			PipelineName:           w.PipelineName,
+			Conditions:             w.Conditions,
+			When:                   w.When,
+			Payload:                w.Payload,
+			Parameters:             w.Parameters,
+			OneAtATime:             w.OneAtATime,
+		}
+		return map[string]NodeEntry{
+			w.PipelineName: singleEntry,
+		}
 	}
-	return map[string]NodeEntry{
-		w.PipelineName: singleEntry,
-	}
+	return nil
 }
 
 func (w Workflow) CheckValidity() error {
@@ -209,6 +212,11 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 
 	rand.Seed(time.Now().Unix())
 	entries := w.Entries()
+
+	if len(entries) == 0 {
+		return nil, sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "a workflow must contains at least 1 pipeline")
+	}
+
 	var attempt int
 	fakeID := rand.Int63n(5000)
 	// attempt is there to avoid infinite loop, but it should not happened because we check validity and dependencies earlier

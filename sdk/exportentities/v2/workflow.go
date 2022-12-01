@@ -71,7 +71,7 @@ type ConditionEntry struct {
 	LuaScript       string                `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
-//WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type PlainConditionEntry struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Operator string `json:"operator" yaml:"operator"`
@@ -113,7 +113,7 @@ func (h HookEntry) IsDefault(model sdk.WorkflowHookModel) bool {
 
 type ExportOptions func(w sdk.Workflow, exportedWorkflow *Workflow) error
 
-//NewWorkflow creates a new exportable workflow
+// NewWorkflow creates a new exportable workflow
 func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...ExportOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
@@ -431,6 +431,10 @@ func (w Workflow) GetWorkflow(ctx context.Context) (*sdk.Workflow, error) {
 	}
 	if w.RetentionPolicy != nil && *w.RetentionPolicy != "" {
 		wf.RetentionPolicy = *w.RetentionPolicy
+	}
+
+	if len(w.Workflow) == 0 {
+		return nil, sdk.NewErrorFrom(sdk.ErrWorkflowInvalid, "a workflow must contains at least 1 pipeline")
 	}
 
 	r := rand.New(rand.NewSource(time.Now().Unix()))

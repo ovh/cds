@@ -223,7 +223,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Simple workflow with mutex should not raise an error",
 			fields: fields{
-				Version:      exportentities.ActionVersion1,
+				Version:      exportentities.WorkflowVersion1,
 				Name:         "myworkflow",
 				PipelineName: "pipeline",
 				OneAtATime:   &strue,
@@ -249,8 +249,8 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			fields: fields{
 				Version:      exportentities.ActionVersion1,
 				Name:         "myworkflow",
-				PipelineName: "pipeline",
 				Description:  "this is my description",
+				PipelineName: "pipeline",
 				PipelineHooks: []v1.HookEntry{
 					{
 						Model: "Scheduler",
@@ -790,6 +790,24 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "Workflow v2 with no nodes",
+			fields: fields{
+				Name:     "myworkflow",
+				Version:  exportentities.WorkflowVersion2,
+				Workflow: map[string]v1.NodeEntry{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Workflow v1 with no nodes",
+			fields: fields{
+				Name:     "myworkflow",
+				Version:  exportentities.WorkflowVersion1,
+				Workflow: map[string]v1.NodeEntry{},
+			},
+			wantErr: true,
 		},
 	}
 
