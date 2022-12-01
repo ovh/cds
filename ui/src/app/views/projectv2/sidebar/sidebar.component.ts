@@ -33,7 +33,7 @@ export class ProjectV2SidebarComponent implements OnDestroy {
     loading: boolean = true;
     currentWorkspace: FlatNodeItem[];
     currentIntegrations: FlatNodeItem[];
-    panels: boolean[] = [true, true, false]
+    panels: boolean[] = [true, false]
 
     ngOnDestroy(): void {
     }

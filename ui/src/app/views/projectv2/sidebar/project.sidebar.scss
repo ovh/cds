@@ -14,15 +14,75 @@
     }
   }
 
-  nz-collapse {
-    height: 100%;
+  .collapse {
+    display: flex;
+    width: 300px;
+    flex-direction: column;
+    background-color: #ffffff0a;
+    border: 1px solid #d9d9d9;
+    border-left: 0;
+    border-radius: 2px;
 
-    nz-collapse-panel {
-      overflow: hidden;
+    :host-context(.night) & {
+      border: 1px solid #434343;
 
-      .ant-collapse-content {
-        height: 100%;
+    }
+
+    .panel {
+      .header {
+        padding: 12px 16px;
+        height: 46px;
+        display: flex;
+        border-bottom: 1px solid #d9d9d9;
+        border-radius: 2px;
+        background-color: #fafafa;
+
+        :host-context(.night) & {
+          background-color: #202020;
+          border-bottom: 1px solid #434343;
+        }
+
+        i {
+          font-size: 12px;
+          margin-right: 10px;
+        }
+      }
+      .content {
+        padding: 16px;
+        background-color: #fff;
+        border-bottom: 1px solid #d9d9d9;
+        overflow-y: auto;
+
+        :host-context(.night) & {
+          background-color: #141414;
+          border-bottom: 1px solid #434343;
+        }
+      }
+    }
+    .panel.expanded {
+      margin-bottom: auto;
+      height: 100%;
+      border-radius: 2px;
+    }
+    .panel.collapsed {
+      height: 46px;
+      .content {
+        display: none;
+      }
+    }
+    .panel.collapsed:not(:first) {
+      .header {
+        border-top: 1px solid #d9d9d9;
+        border-bottom: 0;
+        border-radius: 2px;
+
+        :host-context(.night) & {
+          border-top: 1px solid #434343;
+        }
       }
     }
   }
 }
+
+
+
