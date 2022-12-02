@@ -104,12 +104,22 @@ export class ProjectService {
         return this._http.get<VCSProject>(`/v2/project/${key}/vcs/${vcsName}`);
     }
 
+    getVCSRepository(key: string, vcsName: string, repoName: string): Observable<ProjectRepository> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<ProjectRepository>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);
+    }
+
     getVCSRepositories(key: string, vcsName: string): Observable<Array<ProjectRepository>> {
         return this._http.get<Array<ProjectRepository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
     }
 
     addVCSRepository(key: string, vcsName: string, repo: ProjectRepository): Observable<ProjectRepository> {
         return this._http.post<ProjectRepository>(`/v2/project/${key}/vcs/${vcsName}/repository`, repo);
+    }
+    
+    deleteVCSRepository(key: string, vcsName: string, repoName: string): Observable<any> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.delete(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);
     }
 
     getRepoEntities(key: string, vcsName: string, repo: string): Observable<Array<Entity>> {

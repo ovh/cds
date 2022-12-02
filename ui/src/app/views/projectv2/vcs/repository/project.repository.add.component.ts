@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { filter, finalize } from 'rxjs/operators';
@@ -32,7 +32,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
     filteredRepos: Repository[];
 
     constructor(private _routeActivated: ActivatedRoute, private _store: Store, private _cd: ChangeDetectorRef, private _projectService: ProjectService,
-        private _repoManagerService: RepoManagerService, private _toastService: ToastService) {
+        private _repoManagerService: RepoManagerService, private _toastService: ToastService, private _router: Router) {
         // Get project and VCS, subscribe to react in case of project switch
         this.projectSubscriber = this._store.select(ProjectState)
             .pipe(filter((projState: ProjectStateModel) => {
@@ -80,7 +80,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
             this._cd.markForCheck();
         })).subscribe( r => {
             this._toastService.success('Repository added', '');
-            // TODO redirect to GetRepository view
+            this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', this.vcsProject.name, 'repository', r.name]).then()
         });
     }
 

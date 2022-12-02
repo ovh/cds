@@ -9,7 +9,8 @@ import { MenuItem, FlatNodeItem, TreeEvent } from 'app/shared/tree/tree.componen
 import { ProjectService } from 'app/service/project/project.service';
 import { Project, VCSProject } from 'app/model/project.model';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -26,24 +27,31 @@ export class ProjectV2SidebarComponent implements OnDestroy {
     @Input() set project(data: Project) {
         this._currentProject = data;
         if (data) {
-            this.init();
+            this.loadWorkspace();
         }
     }
 
     loading: boolean = true;
+    refreshWorkspace: boolean = false;
     currentWorkspace: FlatNodeItem[];
     currentIntegrations: FlatNodeItem[];
-    panels: boolean[] = [true, false]
+    panels: boolean[] = [true, false];
 
-    ngOnDestroy(): void {
-    }
+    ngOnDestroy(): void {}
 
-    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService) {}
+    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router) {}
 
-    init(): void {
+    loadWorkspace(): void {
         this.currentWorkspace = [];
+        this.refreshWorkspace = true;
         this.loading = true;
-        this._projectService.listVCSProject(this._currentProject.key).subscribe(vcsProjects => {
+        this._projectService.listVCSProject(this._currentProject.key)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this.refreshWorkspace = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(vcsProjects => {
             if (vcsProjects) {
                 this.currentWorkspace = [];
                 vcsProjects.forEach(vcs => {
@@ -54,7 +62,6 @@ export class ProjectV2SidebarComponent implements OnDestroy {
                     }
                     this.currentWorkspace.push(nodeItem);
                 });
-                this.loading = false;
                 this._cd.markForCheck();
             }
         });
@@ -64,7 +71,7 @@ export class ProjectV2SidebarComponent implements OnDestroy {
     loadRepositories(key: string, vcs: string): Observable<Array<FlatNodeItem>> {
         return this._projectService.getVCSRepositories(key, vcs).pipe(map((repos) => {
             return repos.map(r => {
-                return <FlatNodeItem>{name: r.name, id: r.id, type: 'repository', expandable: true, level: 1,
+                return <FlatNodeItem>{name: r.name, parentName: vcs, id: r.id, type: 'repository', expandable: true, level: 1,
                     loadChildren: () => {
                         return this.loadEntities(this._currentProject.key, vcs, r.name);
                     }}
@@ -82,7 +89,7 @@ export class ProjectV2SidebarComponent implements OnDestroy {
                     if (!existingEntities) {
                         existingEntities = [];
                     }
-                    existingEntities.push(<FlatNodeItem>{name: e.name, id: e.id, type: e.type, expandable: false, level: 3, icon: 'file', iconTheme: 'outline'})
+                    existingEntities.push(<FlatNodeItem>{name: e.name, parentName: repo, id: e.id, type: e.type, expandable: false, level: 3, icon: 'file', iconTheme: 'outline'})
                     m.set(e.type, existingEntities);
                 });
 
@@ -105,8 +112,16 @@ export class ProjectV2SidebarComponent implements OnDestroy {
     }
 
     handleWorkspaceEvent(e: TreeEvent): void {
-        // TODO manage click on node title
-        console.log(e);
+        switch (e.node.type) {
+            case 'vcs':
+                // TODO go to vcs view
+                break;
+            case 'repository':
+                if (e.eventType === 'select') {
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentName, 'repository', e.node.name]).then();
+                }
+                break;
+        }
     }
 
     togglePanel(i: number): void {

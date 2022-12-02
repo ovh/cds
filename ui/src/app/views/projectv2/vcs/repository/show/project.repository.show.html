@@ -1,0 +1,43 @@
+<div class="repoShow">
+    <div class="repoShow-container" *ngIf="repository && vcsProject">
+        <h3>Repository {{repository.name}}</h3>
+        <nz-alert nzType="info" [nzMessage]="infoMsg"></nz-alert>
+        <ng-template #infoMsg>
+            <div class="info">
+                <div class="title">
+                    <i nz-icon nzType="info-circle" class="info" nzTheme="outline"></i> CDS requires permission to read repository data
+                </div>
+                <div class="content">
+                    Make sure that user "{{vcsProject.auth.username}}" can read the target repository.
+                </div>
+            </div>
+        </ng-template>
+        <form nz-form>
+            <nz-form-item>
+                <nz-form-label nzSpan="3">ID</nz-form-label>
+                <nz-form-control>{{repository.id}}</nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label nzSpan="3">Clone URL</nz-form-label>
+                <nz-form-control>{{repository.clone_url}}</nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label nzSpan="3">Added</nz-form-label>
+                <nz-form-control>{{repository.created}} by {{repository.created_by}}</nz-form-control>
+            </nz-form-item>
+        </form>
+    </div>
+    <div class="footer">
+        <div class="buttons">
+            <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
+                    nzPopconfirmTitle="Are you sure you want to remove this repository ?" (nzOnConfirm)="removeRepositoryFromProject()"
+                    nzPopconfirmPlacement="topRight">
+                Remove
+            </button>
+        </div>
+    </div>
+    <ng-container *ngIf="!vcsProject">
+        <nz-spin nzTip="Loading..."></nz-spin>
+    </ng-container>
+</div>
+

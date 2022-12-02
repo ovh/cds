@@ -87,6 +87,9 @@ export class VCSProjectAuth {
 export class ProjectRepository {
     id: string;
     name: string;
+    clone_url: string;
+    created: Date;
+    created_by: string;
 }
 
 export class Entity {

@@ -17,6 +17,7 @@ export interface FlatNodeItem {
     expandable: boolean;
     id: string;
     name: string;
+    parentName: string;
     type: string;
     icon?: string;
     iconTheme?: string;

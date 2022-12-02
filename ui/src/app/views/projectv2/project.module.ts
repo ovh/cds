@@ -8,13 +8,17 @@ import { ProjectV2SidebarComponent } from 'app/views/projectv2/sidebar/sidebar.c
 import {
     ProjectV2RepositoryAddComponent
 } from 'app/views/projectv2/vcs/repository/project.repository.add.component';
+import {
+    ProjectV2RepositoryShowComponent
+} from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
 
 @NgModule({
     declarations: [
         ProjectV2TopMenuComponent,
         ProjectV2ShowComponent,
         ProjectV2SidebarComponent,
-        ProjectV2RepositoryAddComponent
+        ProjectV2RepositoryAddComponent,
+        ProjectV2RepositoryShowComponent
     ],
     imports: [
         SharedModule,

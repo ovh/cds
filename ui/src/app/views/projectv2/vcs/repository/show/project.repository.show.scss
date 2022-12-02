@@ -1,0 +1,38 @@
+.repoShow {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .repoShow-container {
+    padding: 10px 30px;
+
+    form {
+      margin-top: 20px;
+      padding: 0;
+      nz-form-label {
+        font-weight: bold;
+      }
+    }
+
+  }
+
+  .footer {
+    display: flex;
+    margin-top: auto;
+    height: 46px;
+    border-top: 1px solid #d9d9d9;
+    padding: 7px 30px;
+
+    :host-context(.night) & {
+      border-top: 1px solid #434343;
+    }
+
+    .buttons {
+      margin-left: auto;
+      button {
+        margin-left: 10px;
+      }
+    }
+  }
+}
+
