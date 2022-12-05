@@ -55,6 +55,9 @@ type HatcheryConfiguration struct {
 	// This count will prevent big flavor to take all the CPUs available for the hatchery and will keep some available for smaller flavors.
 	// Ex: if two flavors are available with 8 and 4 cpus and count to keep equals 2 the hatchery will need 8+4*2=16cpus available to start a 8cpus flavor.
 	CountSmallerFlavorToKeep int `mapstructure:"countSmallerFlavorToKeep" toml:"countSmallerFlavorToKeep" default:"" commented:"true" comment:"Count of smaller flavors that the hatchery should be able to boot when booting a larger flavor." json:"countSmallerFlavorToKeep"`
+
+	// DefaultFlavor, if set the hatchery will use a model with the default flavor in priority to start jobs without model requirement
+	DefaultFlavor string `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"If set the hatchery will use a model with the default flavor in priority to start jobs without model requirement" json:"defaultFlavor"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'

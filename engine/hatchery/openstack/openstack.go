@@ -202,6 +202,20 @@ func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
 	sort.Slice(filteredModels, func(i, j int) bool {
 		flavorI, _ := h.flavor(filteredModels[i].ModelVirtualMachine.Flavor)
 		flavorJ, _ := h.flavor(filteredModels[j].ModelVirtualMachine.Flavor)
+
+		// If same flavor sort by model name
+		if flavorI.Name == flavorJ.Name {
+			return filteredModels[i].Name < filteredModels[j].Name
+		}
+
+		// Models with the default flavor should be at the beginning of the list
+		if flavorI.Name == h.Config.DefaultFlavor {
+			return true
+		}
+		if flavorJ.Name == h.Config.DefaultFlavor {
+			return false
+		}
+
 		return flavorI.VCPUs < flavorJ.VCPUs
 	})
 
