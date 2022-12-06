@@ -63,6 +63,7 @@ import { WorkflowRunService } from './workflow/run/workflow.run.service';
 import { WorkflowCoreService } from './workflow/workflow.core.service';
 import { WorkflowService } from './workflow/workflow.service';
 import { WorkflowStore } from './workflow/workflow.store';
+import { SidebarService } from 'app/service/sidebar/sidebar.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -119,6 +120,7 @@ export class ServicesModule {
                 RequirementService,
                 RouterService,
                 ServiceService,
+                SidebarService,
                 TimelineService,
                 TimelineStore,
                 UserService,
@@ -184,6 +186,7 @@ export {
     RequirementStore,
     RouterService,
     ServiceService,
+    SidebarService,
     TimelineStore,
     UserService,
     VariableService,

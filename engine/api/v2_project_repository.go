@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
@@ -109,6 +110,8 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			event.PublishRemoveProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProject.ID, Name: vcsProject.Name}, *repo, getUserConsumer(ctx))
 			return service.WriteMarshal(w, req, vcsProject, http.StatusOK)
 		}
 }
@@ -199,6 +202,8 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			event.PublishAddProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProjectWithSecret.ID, Name: vcsProjectWithSecret.Name}, repoDB, getUserConsumer(ctx))
 			return service.WriteMarshal(w, req, repoDB, http.StatusCreated)
 		}
 }

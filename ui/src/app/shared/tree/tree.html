@@ -8,7 +8,10 @@
             <nz-alert nzType="info" nzMessage="{{node.name}}"></nz-alert>
         </ng-container>
         <ng-container *ngIf="node.type !== 'info'">
-            {{ node.name }}
+            <span class="name" [class.active]="node.active">
+                {{ node.name }}
+            </span>
+
         </ng-container>
 
     </nz-tree-node>
@@ -22,7 +25,7 @@
             <span nz-icon nzType="loading" nzTreeNodeToggleActiveIcon></span>
         </nz-tree-node-toggle>
         <div class="node">
-            <span class="pointing" (click)="clickOnNode('select', node)">{{ node.name }}</span>
+            <span class="pointing name" (click)="clickOnNode('select', node)" [class.active]="node.active">{{ node.name }}</span>
             <ng-container *ngIf="node?.menu?.length > 0">
                 <i nz-icon nzType="more" nzTheme="outline" class="pointing" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"></i>
                 <nz-dropdown-menu #menu="nzDropdownMenu">

@@ -12,7 +12,7 @@
                 </div>
             </div>
             <div class="content">
-                <app-tree [tree]="currentWorkspace" (nodeEvent)="handleWorkspaceEvent($event)"></app-tree>
+                <app-tree [tree]="currentWorkspace" (nodeEvent)="handleWorkspaceEvent($event)" #treeWorkspace></app-tree>
             </div>
         </div>
         <div class="panel" [class.collapsed]="!panels[1]" [class.expanded]="panels[1]">

@@ -2,15 +2,16 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component, Input,
-    OnDestroy,
+    OnDestroy, OnInit, ViewChild,
 } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { MenuItem, FlatNodeItem, TreeEvent } from 'app/shared/tree/tree.component';
+import { MenuItem, FlatNodeItem, TreeEvent, SelectedItem, TreeComponent } from 'app/shared/tree/tree.component';
 import { ProjectService } from 'app/service/project/project.service';
 import { Project, VCSProject } from 'app/model/project.model';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -19,7 +20,7 @@ import { Router } from '@angular/router';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2SidebarComponent implements OnDestroy {
+export class ProjectV2SidebarComponent implements OnDestroy, OnInit {
     _currentProject: Project;
     get project(): Project {
         return this._currentProject;
@@ -31,17 +32,55 @@ export class ProjectV2SidebarComponent implements OnDestroy {
         }
     }
 
+    @ViewChild('treeWorkspace') tree: TreeComponent
+
     loading: boolean = true;
     refreshWorkspace: boolean = false;
     currentWorkspace: FlatNodeItem[];
     currentIntegrations: FlatNodeItem[];
     panels: boolean[] = [true, false];
 
+    sidebarServiceSub: Subscription;
+
     ngOnDestroy(): void {}
 
-    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router) {}
+    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router, private _sidebarService: SidebarService,
+                private _activatedRoute: ActivatedRoute) {
+    }
 
-    loadWorkspace(): void {
+    ngOnInit(): void {
+        this.sidebarServiceSub = this._sidebarService.getObservable().subscribe(e => {
+            switch (e?.nodeType) {
+                case 'vcs':
+                    // TODO select vcs
+                    break;
+                case 'repository':
+                    switch (e.action) {
+                        case 'remove':
+                            this.removeRepository(e);
+                            break;
+                        case 'select':
+                            this.selectRepository(e);
+                            break;
+                    }
+                    break;
+            }
+            this._cd.markForCheck();
+        });
+    }
+
+    selectRepository(e: SidebarEvent): void {
+        let si = <SelectedItem>{id: e.parent.id, type: 'vcs', child: {id: e.nodeID, name: e.nodeName, action: 'select', type: 'repository'}}
+        this.tree.selectNode(si)
+    }
+
+    removeRepository(e: SidebarEvent): void {
+        if (this.tree) {
+            this.tree.removeNode(e.nodeID)
+        }
+    }
+
+    loadWorkspace(si?: SelectedItem): void {
         this.currentWorkspace = [];
         this.refreshWorkspace = true;
         this.loading = true;
@@ -49,6 +88,11 @@ export class ProjectV2SidebarComponent implements OnDestroy {
             .pipe(finalize(() => {
                 this.loading = false;
                 this.refreshWorkspace = false;
+                if (this.tree && si) {
+                    setTimeout(() => {
+                        this.tree.selectNode(si);
+                    }, 500);
+                }
                 this._cd.markForCheck();
             }))
             .subscribe(vcsProjects => {

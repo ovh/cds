@@ -71,6 +71,9 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
     trackRepo(idx: number, r: Repository): string { return r.name; }
 
     addRepositoryOnProject(): void {
+        if (!this.selectedRepo) {
+            return;
+        }
         let repo = new ProjectRepository();
         repo.name = this.selectedRepo.fullname;
         this.loading = true;

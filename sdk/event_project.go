@@ -87,3 +87,13 @@ type EventProjectIntegrationUpdate struct {
 type EventProjectIntegrationDelete struct {
 	Integration ProjectIntegration `json:"integration"`
 }
+
+type EventProjectRepositoryDelete struct {
+	Repository ProjectRepository `json:"repository"`
+	VCS        VCSProject        `json:"vcs"`
+}
+
+type EventProjectRepositoryAdd struct {
+	Repository ProjectRepository `json:"repository"`
+	VCS        VCSProject        `json:"vcs"`
+}
