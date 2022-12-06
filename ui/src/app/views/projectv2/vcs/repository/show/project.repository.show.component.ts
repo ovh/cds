@@ -45,7 +45,7 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy {
                 let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', <FlatNodeItem>{id: this.vcsProject.id, name: this.vcsProject.name, type: 'vcs'});
                 this._sidebarService.sendEvent(selectEvent);
                 this._cd.markForCheck();
-            })
+            });
         });
     }
 

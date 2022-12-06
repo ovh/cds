@@ -25,7 +25,7 @@
                     </nz-select>
                 </nz-col>
                 <nz-col [nzSpan]="2" [nzOffset]="1">
-                    <button nz-button nzType="primary">Resynchronize</button>
+                    <button nz-button nzType="primary" (click)="listRepositories(true)" [nzLoading]="loadingResync">Resynchronize</button>
                 </nz-col>
             </nz-row>
         </div>
