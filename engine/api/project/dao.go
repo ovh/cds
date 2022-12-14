@@ -320,6 +320,17 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 		return nil, err
 	}
 
+	for i := range vcsProjects {
+		// We are loading with decryption, but we don't keep sensitive data
+		decryptedVCSProject, err := vcs.LoadVCSByID(ctx, db, p.Key, vcsProjects[i].ID, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return nil, err
+		}
+		vcsProjects[i].Auth.Username = decryptedVCSProject.Auth.Username
+		vcsProjects[i].Auth.SSHKeyName = decryptedVCSProject.Auth.SSHKeyName
+		vcsProjects[i].Auth.SSHUsername = decryptedVCSProject.Auth.SSHUsername
+	}
+
 	proj.VCSServers = vcsProjects
 
 	// DEPRECATED VCS
