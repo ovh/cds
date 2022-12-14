@@ -11,9 +11,9 @@
             <td>
                 {{r.name}}
                 <span *ngIf="r.created_by !== ''"> -{{ 'project_repoman_created_by' | translate }}{{r.created_by}}</span>
-                <span *ngIf="r.auth && r.auth.username !== ''"> - User: {{r.auth.username}}</span>
-                <span *ngIf="r.auth && r.auth.sshUsername !== ''"> - SSH User: {{r.auth.sshUsername}}</span>
-                <span *ngIf="r.auth && r.auth.sshKeyName !== ''"> - SSH Key: {{r.auth.sshKeyName}}</span>
+                <span *ngIf="r.auth && r.auth.username && r.auth.username !== ''"> - User: {{r.auth.username}}</span>
+                <span *ngIf="r.auth && r.auth.sshUsername && r.auth.sshUsername !== ''"> - SSH User: {{r.auth.sshUsername}}</span>
+                <span *ngIf="r.auth && r.auth.sshKeyName && r.auth.sshKeyName !== ''"> - SSH Key: {{r.auth.sshKeyName}}</span>
             </td>
             <td class="rightAlign">
                 <button nz-button nzDanger nzType="primary" [nzLoading]="deleteLoading" *ngIf="r.type === ''" (click)="clickDeleteButton(r.name)">Remove</button>
