@@ -40,6 +40,7 @@ import { NgxsStoreModule } from './store/store.module';
 import { NavbarModule } from './views/navbar/navbar.module';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { SidebarService } from 'app/service/services.module';
+import {AnalysisService} from "./service/analysis/analysis.service";
 
 describe('App: CDS', () => {
 
@@ -51,6 +52,7 @@ describe('App: CDS', () => {
             providers: [
                 Store,
                 SidebarService,
+                AnalysisService,
                 WorkflowService,
                 WorkflowRunService,
                 UserService,
