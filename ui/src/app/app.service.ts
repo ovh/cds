@@ -12,7 +12,7 @@ import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
 import { TimelineFilter } from './model/timeline.model';
 import { NavbarService } from './service/navbar/navbar.service';
-import { RouterService, TimelineStore } from './service/services.module';
+import { RouterService, SidebarService, TimelineStore } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
 import {
@@ -37,6 +37,8 @@ import {
     UpdateWorkflowRunList
 } from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
+import { SidebarEvent } from 'app/service/sidebar/sidebar.service';
+import { FlatNodeItem } from 'app/shared/tree/tree.component';
 
 @Injectable()
 export class AppService {
@@ -56,6 +58,7 @@ export class AppService {
         private _workflowRunService: WorkflowRunService,
         private _store: Store,
         private _navbarService: NavbarService,
+        private _sidebarService: SidebarService
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
@@ -110,10 +113,17 @@ export class AppService {
             event.type_event === EventType.WORKFLOW_DELETE) {
             await this.updateProjectCache(event);
 
-            if (event.type_event === EventType.APPLICATION_UPDATE || event.type_event === EventType.WORKFLOW_UPDATE) {
-                this._navbarService.refreshData();
+            switch (event.type_event) {
+                case EventType.APPLICATION_UPDATE:
+                case EventType.WORKFLOW_UPDATE:
+                    this._navbarService.refreshData();
+                    break;
+                case EventType.PROJECT_REPOSITORY_REMOVE:
+                    let removeParent = <FlatNodeItem>{id: event?.payload['vcs']?.id, type: 'vcs'}
+                    let removeEvent = new SidebarEvent(event?.payload['repository']?.id, event?.payload['repository']?.name, 'repository', 'remove', removeParent);
+                   this._sidebarService.sendEvent(removeEvent);
+                    break;
             }
-
         }
         if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
             await this.updateApplicationCache(event);

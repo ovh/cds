@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
-import { Entity, LoadOpts, Project, Repository, VCSProject } from 'app/model/project.model';
+import { Entity, LoadOpts, Project, ProjectRepository, VCSProject } from 'app/model/project.model';
 import { Observable } from 'rxjs';
 
 /**
@@ -96,12 +96,30 @@ export class ProjectService {
      * Get the list of VCS attached to the given project from the API
      * @param key
      */
-    getVCSProject(key: string): Observable<Array<VCSProject>> {
+    listVCSProject(key: string): Observable<Array<VCSProject>> {
         return this._http.get<Array<VCSProject>>(`/v2/project/${key}/vcs`);
     }
 
-    getVCSRepositories(key: string, vcsName: string): Observable<Array<Repository>> {
-        return this._http.get<Array<Repository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
+    getVCSProject(key: string,  vcsName: string): Observable<VCSProject> {
+        return this._http.get<VCSProject>(`/v2/project/${key}/vcs/${vcsName}`);
+    }
+
+    getVCSRepository(key: string, vcsName: string, repoName: string): Observable<ProjectRepository> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<ProjectRepository>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);
+    }
+
+    getVCSRepositories(key: string, vcsName: string): Observable<Array<ProjectRepository>> {
+        return this._http.get<Array<ProjectRepository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
+    }
+
+    addVCSRepository(key: string, vcsName: string, repo: ProjectRepository): Observable<ProjectRepository> {
+        return this._http.post<ProjectRepository>(`/v2/project/${key}/vcs/${vcsName}/repository`, repo);
+    }
+    
+    deleteVCSRepository(key: string, vcsName: string, repoName: string): Observable<any> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.delete(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);
     }
 
     getRepoEntities(key: string, vcsName: string, repo: string): Observable<Array<Entity>> {

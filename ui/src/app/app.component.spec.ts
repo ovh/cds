@@ -39,6 +39,7 @@ import { FetchCurrentAuth } from './store/authentication.action';
 import { NgxsStoreModule } from './store/store.module';
 import { NavbarModule } from './views/navbar/navbar.module';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
+import { SidebarService } from 'app/service/services.module';
 
 describe('App: CDS', () => {
 
@@ -49,6 +50,7 @@ describe('App: CDS', () => {
             ],
             providers: [
                 Store,
+                SidebarService,
                 WorkflowService,
                 WorkflowRunService,
                 UserService,

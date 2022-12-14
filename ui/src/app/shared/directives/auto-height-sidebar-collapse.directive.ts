@@ -25,7 +25,7 @@ export class AutoHeightSidebarCollapseDirective implements OnChanges {
             return;
         }
         let parentHeight = this.element.nativeElement.parentElement.offsetHeight;
-        let collapseFullHeight = parentHeight - 60; // height of the header of the page ( area with the project list
+        let collapseFullHeight = parentHeight;
         this.element.nativeElement.style.height = collapseFullHeight + 'px';
 
         // Remove height from panel headers

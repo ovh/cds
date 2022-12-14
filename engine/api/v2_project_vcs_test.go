@@ -227,7 +227,8 @@ auth:
 	vcsProject := sdk.VCSProject{}
 	require.NoError(t, json.Unmarshal(w3.Body.Bytes(), &vcsProject))
 	require.Equal(t, "my_vcs_server", vcsProject.Name)
-	require.Empty(t, vcsProject.Auth)
+	require.Empty(t, vcsProject.Auth.SSHPrivateKey)
+	require.Empty(t, vcsProject.Auth.Token)
 
 	// delete the vcs project
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteVCSProjectHandler, vars)

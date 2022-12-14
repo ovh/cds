@@ -114,6 +114,19 @@ export class EventService {
                         break;
                 }
                 break;
+            case 'projectv2':
+                if (urlSplitted.length === 1) {
+                    break;
+                }
+                let projectV2Key = urlSplitted[1].split('?')[0];
+                if (urlSplitted.length >= 2) { // Project page
+                    fs.push(<WebsocketFilter>{
+                        type: WebsocketFilterType.PROJECT,
+                        project_key: projectV2Key
+                    });
+                    break;
+                }
+                break;
             case 'project':
                 if (urlSplitted.length === 1) { // Ignore project creation page
                     break;

@@ -11,6 +11,15 @@ nz-tree-view {
     .node {
       width: 100%;
 
+      .name.active {
+        padding-bottom: 3px;
+        border-bottom: 1px solid black;
+
+        :host-context(.night) & {
+          border-bottom: 1px solid white;
+        }
+      }
+
       i {
         float: right;
         margin-top: 5px;

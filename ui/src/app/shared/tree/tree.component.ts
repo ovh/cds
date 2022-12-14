@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { FlatTreeControl, TreeControl } from '@angular/cdk/tree';
 import { CollectionViewer, DataSource, SelectionChange } from '@angular/cdk/collections';
-import { BehaviorSubject, merge, Observable, of } from 'rxjs';
+import { BehaviorSubject, merge, Observable } from 'rxjs';
 import { first, map, tap } from 'rxjs/operators';
 
 
@@ -12,15 +12,25 @@ export interface MenuItem {
     route: string[];
 }
 
+export interface SelectedItem {
+    id: string;
+    name: string;
+    type: string;
+    child: SelectedItem;
+    action: string;
+}
+
 // Represent the data tree inside the ngZorro component
 export interface FlatNodeItem {
     expandable: boolean;
     id: string;
     name: string;
+    parentName: string;
     type: string;
     icon?: string;
     iconTheme?: string;
     level: number;
+    active: boolean;
     loading?: boolean
     menu: MenuItem[];
     loadChildren: () => Observable<FlatNodeItem[]>
@@ -38,6 +48,61 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
     constructor(private treeControl: TreeControl<FlatNodeItem>, initData: FlatNodeItem[]) {
         this.flattenedData = new BehaviorSubject<FlatNodeItem[]>(initData);
         treeControl.dataNodes = initData;
+    }
+
+    removeNode(id: string) {
+        let currentNodes = this.flattenedData.getValue();
+        let index = currentNodes.findIndex(n => n.id === id);
+        if (index !== -1) {
+            currentNodes.splice(index, 1);
+            this.flattenedData.next(currentNodes);
+        }
+    }
+
+    selectNode(node: SelectedItem) {
+        let currentNodes = this.flattenedData.getValue();
+        if (currentNodes) {
+            this.selectNodeRec(currentNodes, node, 0);
+        }
+    }
+
+    selectNodeRec(currentNodes: FlatNodeItem[], node: SelectedItem, level: number) {
+        for (let i=0; i<currentNodes.length; i++) {
+            let n = currentNodes[i];
+            if (n.level !== level) {
+                continue;
+            }
+            if (n.id === node.id && n.type === node.type) {
+                // Selected node found
+                if (!node.child) {
+                    currentNodes = currentNodes.map(no => {
+                        no.active = false;
+                        return no;
+                    })
+                    n.active = true;
+                    this.flattenedData.next(currentNodes);
+                    return;
+                } else {
+                    if (this.childrenLoadedSet.has(n)) {
+                        if (node.child.action === 'select') {
+                            let nodeIndex = currentNodes.findIndex(n => n.id === node.child.id)
+                            if (nodeIndex === -1) {
+                                currentNodes.splice(i + 1, 0, <FlatNodeItem>{id: node.child.id, name: node.child.name, parentName: n.name, level: level + 1, type: node.child.type, expandable: true});
+                                this.flattenedData.next(currentNodes);
+                            }
+                        }
+                        this.selectNodeRec(this.flattenedData.getValue(), node.child, level + 1);
+                        this.treeControl.expand(n);
+                    } else {
+                        this.loadChildren(n).pipe(first()).subscribe(() => {
+                            let nodes = this.flattenedData.getValue();
+                            this.treeControl.expand(n);
+                            this.selectNodeRec(nodes, node.child, level + 1);
+                        });
+                    }
+                }
+            }
+        }
     }
 
     connect(collectionViewer: CollectionViewer): Observable<FlatNodeItem[]> {
@@ -72,16 +137,16 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
 
     handleExpansionChange(change: SelectionChange<FlatNodeItem>): void {
         if (change.added) {
-            change.added.forEach(node => this.loadChildren(node));
+            change.added.forEach(node => this.loadChildren(node)?.pipe(first())?.subscribe());
         }
     }
 
-    loadChildren(node: FlatNodeItem): void {
+    loadChildren(node: FlatNodeItem): Observable<any> {
         if (this.childrenLoadedSet.has(node) || !node.expandable) {
             return;
         }
         node.loading = true;
-        node.loadChildren().pipe(first()).subscribe(children => {
+        return node.loadChildren().pipe(first(), map(children => {
             node.loading = false;
             const flattenedData = this.flattenedData.getValue();
             const index = flattenedData.indexOf(node);
@@ -103,7 +168,7 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
                 this.childrenLoadedSet.add(node);
             }
             this.flattenedData.next(flattenedData);
-        });
+        }));
     }
 
     disconnect(): void {
@@ -139,9 +204,23 @@ export class TreeComponent {
 
     @Output() nodeEvent = new EventEmitter<TreeEvent>();
 
+    constructor(private _cd: ChangeDetectorRef) {
+
+    }
+
     hasChild = (_: number, node: FlatNodeItem): boolean => node.expandable;
 
     clickOnNode(t: string, n: FlatNodeItem): void {
-        this.nodeEvent.next({node: n, eventType: t})
+        this.nodeEvent.next({node: n, eventType: t});
+    }
+
+    selectNode(s: SelectedItem): void {
+        this.dataSource.selectNode(s);
+        this._cd.markForCheck();
+    }
+
+    removeNode(id: string): void {
+        this.dataSource.removeNode(id);
+        this._cd.markForCheck();
     }
 }

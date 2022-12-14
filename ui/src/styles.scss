@@ -64,6 +64,10 @@ nz-breadcrumb-item {
   font-size: 1.2em;
 }
 
+i.info {
+  color: $cds_color_teal;
+}
+
 nz-card.redTitle {
   .ant-card-head {
     min-height: 44px;

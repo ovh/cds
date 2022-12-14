@@ -178,3 +178,19 @@ func PublishDeleteProjectIntegration(ctx context.Context, p *sdk.Project, pf sdk
 	}
 	PublishProjectEvent(ctx, e, p.Key, u)
 }
+
+func PublishRemoveProjectRepository(ctx context.Context, pKey string, vcs sdk.VCSProject, r sdk.ProjectRepository, u sdk.Identifiable) {
+	e := sdk.EventProjectRepositoryDelete{
+		Repository: r,
+		VCS:        vcs,
+	}
+	PublishProjectEvent(ctx, e, pKey, u)
+}
+
+func PublishAddProjectRepository(ctx context.Context, pKey string, vcs sdk.VCSProject, r sdk.ProjectRepository, u sdk.Identifiable) {
+	e := sdk.EventProjectRepositoryAdd{
+		Repository: r,
+		VCS:        vcs,
+	}
+	PublishProjectEvent(ctx, e, pKey, u)
+}
