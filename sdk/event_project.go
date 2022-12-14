@@ -97,3 +97,10 @@ type EventProjectRepositoryAdd struct {
 	Repository ProjectRepository `json:"repository"`
 	VCS        VCSProject        `json:"vcs"`
 }
+
+type EventProjectRepositoryAnalyze struct {
+	RepositoryID string `json:"repository_id"`
+	VCSID        string `json:"vcs_id"`
+	AnalysisID   string `json:"analysis_id"`
+	Status       string `json:"status"`
+}

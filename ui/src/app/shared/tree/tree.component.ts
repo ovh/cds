@@ -4,6 +4,12 @@ import { FlatTreeControl, TreeControl } from '@angular/cdk/tree';
 import { CollectionViewer, DataSource, SelectionChange } from '@angular/cdk/collections';
 import { BehaviorSubject, merge, Observable } from 'rxjs';
 import { first, map, tap } from 'rxjs/operators';
+import {AnalysisEvent} from "../../service/analysis/analysis.service";
+import {
+    StatusAnalyzeError,
+    StatusAnalyzeInProgress,
+    StatusAnalyzeSkipped, StatusAnalyzeSucceed
+} from "../../model/analysis.model";
 
 
 // Represent a menu for a node
@@ -44,6 +50,7 @@ export interface TreeEvent {
 class DynamicDatasource implements DataSource<FlatNodeItem> {
     private flattenedData: BehaviorSubject<FlatNodeItem[]>;
     private childrenLoadedSet = new Set<FlatNodeItem>();
+    private mapRepoAnalyzeEvent = new Map<String, string[]>();
 
     constructor(private treeControl: TreeControl<FlatNodeItem>, initData: FlatNodeItem[]) {
         this.flattenedData = new BehaviorSubject<FlatNodeItem[]>(initData);
@@ -57,6 +64,49 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
             currentNodes.splice(index, 1);
             this.flattenedData.next(currentNodes);
         }
+    }
+
+    handleAnalysisEvent(event: AnalysisEvent): void {
+        let nodes = this.flattenedData.getValue();
+        let repoIndex = nodes.findIndex(n => n.id === event.repoID && n.type === 'repository');
+        let repoNode = nodes[repoIndex];
+
+        switch (event.status) {
+            case StatusAnalyzeInProgress:
+                if (!this.mapRepoAnalyzeEvent.has(repoNode.id)) {
+                    this.mapRepoAnalyzeEvent.set(repoNode.id, []);
+                }
+                let analysesInProgress = this.mapRepoAnalyzeEvent.get(repoNode.id);
+                if (!analysesInProgress || analysesInProgress.length === 0) {
+                    analysesInProgress = [];
+                } else {
+                    let analyzeInProgressIndex = analysesInProgress.findIndex(id => id === event.analysisID);
+                    if (analyzeInProgressIndex !== -1) {
+                        return;
+                    }
+                }
+                analysesInProgress.push(event.analysisID);
+                this.mapRepoAnalyzeEvent.set(repoNode.id, analysesInProgress);
+                repoNode.loading = true;
+                break;
+            case StatusAnalyzeSkipped:
+            case StatusAnalyzeError:
+            case StatusAnalyzeSucceed:
+                if (!this.mapRepoAnalyzeEvent.has(repoNode.id)) {
+                    return;
+                }
+                let analyses = this.mapRepoAnalyzeEvent.get(repoNode.id);
+                let analyzeIndex = analyses.findIndex(id => id === event.analysisID);
+                if (analyzeIndex === -1) {
+                    return;
+                }
+                analyses.splice(analyzeIndex, 1);
+                if (analyses.length === 0) {
+                    repoNode.loading = false;
+                }
+                break;
+        }
+        this.flattenedData.next(nodes);
     }
 
     selectNode(node: SelectedItem) {
@@ -221,6 +271,11 @@ export class TreeComponent {
 
     removeNode(id: string): void {
         this.dataSource.removeNode(id);
+        this._cd.markForCheck();
+    }
+
+    handleAnalysisEvent(event: AnalysisEvent): void {
+        this.dataSource.handleAnalysisEvent(event);
         this._cd.markForCheck();
     }
 }

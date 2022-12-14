@@ -168,4 +168,5 @@ type AnalysisRequest struct {
 
 type AnalysisResponse struct {
 	AnalysisID string `json:"analysis_id"`
+	Status     string `json:"status"`
 }

@@ -64,6 +64,7 @@ import { WorkflowCoreService } from './workflow/workflow.core.service';
 import { WorkflowService } from './workflow/workflow.service';
 import { WorkflowStore } from './workflow/workflow.store';
 import { SidebarService } from 'app/service/sidebar/sidebar.service';
+import {AnalysisService} from "./analysis/analysis.service";
 
 @NgModule({})
 export class ServicesModule {
@@ -79,6 +80,7 @@ export class ServicesModule {
         return {
             ngModule: ServicesModule,
             providers: [
+                AnalysisService,
                 ApplicationAuditService,
                 ApplicationResolver,
                 ApplicationQueryParamResolver,

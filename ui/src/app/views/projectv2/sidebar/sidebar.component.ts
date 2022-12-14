@@ -1,4 +1,5 @@
 import {
+    AfterViewInit,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component, Input,
@@ -12,6 +13,7 @@ import { Observable, of, Subscription } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
+import {AnalysisService} from "../../../service/analysis/analysis.service";
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -20,7 +22,7 @@ import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.servic
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2SidebarComponent implements OnDestroy, OnInit {
+export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     _currentProject: Project;
     get project(): Project {
         return this._currentProject;
@@ -41,14 +43,15 @@ export class ProjectV2SidebarComponent implements OnDestroy, OnInit {
     panels: boolean[] = [true, false];
 
     sidebarServiceSub: Subscription;
+    analysisServiceSub: Subscription;
 
     ngOnDestroy(): void {}
 
-    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router, private _sidebarService: SidebarService,
-                private _activatedRoute: ActivatedRoute) {
+    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router,
+                private _sidebarService: SidebarService, private _analysisService: AnalysisService) {
     }
 
-    ngOnInit(): void {
+    ngAfterViewInit(): void {
         this.sidebarServiceSub = this._sidebarService.getObservable().subscribe(e => {
             switch (e?.nodeType) {
                 case 'vcs':
@@ -66,6 +69,12 @@ export class ProjectV2SidebarComponent implements OnDestroy, OnInit {
                     break;
             }
             this._cd.markForCheck();
+        });
+
+        this.analysisServiceSub = this._analysisService.getObservable().subscribe( e => {
+            if (e) {
+                this.tree.handleAnalysisEvent(e);
+            }
         });
     }
 

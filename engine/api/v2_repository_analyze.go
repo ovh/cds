@@ -20,6 +20,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -28,6 +29,7 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/gpg"
@@ -153,9 +155,6 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			ctx = context.WithValue(ctx, cdslog.VCSServer, analysis.VcsName)
-			ctx = context.WithValue(ctx, cdslog.Repository, analysis.RepoName)
-
 			proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey, project.LoadOptions.WithClearKeys)
 			if err != nil {
 				return err
@@ -166,41 +165,56 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			clearRepo, err := repository.LoadRepositoryByName(ctx, api.mustDB(), vcsProject.ID, analysis.RepoName, gorpmapping.GetOptions.WithDecryption)
+			repo, err := repository.LoadRepositoryByName(ctx, api.mustDB(), vcsProject.ID, analysis.RepoName)
 			if err != nil {
 				return err
 			}
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
-				return sdk.WrapError(err, "unable to start db transaction")
+				return sdk.WithStack(err)
 			}
-			defer tx.Rollback() // nolint
+			defer tx.Rollback()
 
-			// Save analyze
-			repoAnalysis := sdk.ProjectRepositoryAnalysis{
-				Status:              sdk.RepositoryAnalysisStatusInProgress,
-				ProjectRepositoryID: clearRepo.ID,
-				VCSProjectID:        vcsProject.ID,
-				ProjectKey:          proj.Key,
-				Branch:              analysis.Branch,
-				Commit:              analysis.Commit,
-				Data:                sdk.ProjectRepositoryData{},
-			}
-
-			if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
+			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit)
+			if err != nil {
 				return err
 			}
 
-			response := sdk.AnalysisResponse{
-				AnalysisID: repoAnalysis.ID,
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
 			}
 
-			if err := tx.Commit(); err != nil {
-				return sdk.WrapError(err, "unable to commit transaction")
-			}
-			return service.WriteJSON(w, &response, http.StatusCreated)
+			event.PublishProjectRepositoryAnalyze(ctx, proj.Key, vcsProject.ID, repo.ID, analyzeReponse.AnalysisID, analyzeReponse.Status)
+			return service.WriteJSON(w, analyzeReponse, http.StatusCreated)
 		}
+}
+
+func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit string) (*sdk.AnalysisResponse, error) {
+	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProject.Name)
+	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
+
+	// Save analyze
+	repoAnalysis := sdk.ProjectRepositoryAnalysis{
+		Status:              sdk.RepositoryAnalysisStatusInProgress,
+		ProjectRepositoryID: repo.ID,
+		VCSProjectID:        vcsProject.ID,
+		ProjectKey:          proj.Key,
+		Branch:              branch,
+		Commit:              commit,
+		Data:                sdk.ProjectRepositoryData{},
+	}
+
+	if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
+		return nil, err
+	}
+
+	response := sdk.AnalysisResponse{
+		AnalysisID: repoAnalysis.ID,
+		Status:     repoAnalysis.Status,
+	}
+
+	return &response, nil
 }
 
 func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration) error {
@@ -254,6 +268,10 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil
 	}
+	defer func() {
+		event.PublishProjectRepositoryAnalyze(ctx, analysis.ProjectKey, analysis.VCSProjectID, analysis.ProjectRepositoryID, analysis.ID, analysis.Status)
+	}()
+
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to load analyze %s", analysis.ID))
 	}
@@ -327,7 +345,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			}
 			if !b {
 				analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-				analysis.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.ID, analysis.ProjectKey)
+				analysis.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.Username, analysis.ProjectKey)
 			}
 
 			if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
@@ -367,7 +385,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return sdk.WithStack(tx.Commit())
 	}
 
-	entities, multiErr := api.handleEntitiesFiles(ctx, filesContent, *analysis)
+	entities, multiErr := api.handleEntitiesFiles(ctx, filesContent, analysis)
 	if multiErr != nil {
 		return api.stopAnalysis(ctx, analysis, multiErr...)
 	}
@@ -397,25 +415,32 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	return sdk.WithStack(tx.Commit())
 }
 
-func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis sdk.ProjectRepositoryAnalysis) ([]sdk.Entity, []error) {
+func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.Entity, []error) {
 	entities := make([]sdk.Entity, 0)
+	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 	for filePath, content := range filesContent {
 		dir, fileName := filepath.Split(filePath)
-		fileName = strings.TrimSuffix(fileName, ".yml")
+		fileNameWithoutSuffix := strings.TrimSuffix(fileName, ".yml")
 		var es []sdk.Entity
 		var err sdk.MultiError
 		switch {
 		case strings.HasPrefix(filePath, ".cds/worker-model-templates/"):
 			var tmpls []sdk.WorkerModelTemplate
-			es, err = sdk.ReadEntityFile(dir, fileName, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, analysis)
+			es, err = sdk.ReadEntityFile(dir, fileNameWithoutSuffix, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, *analysis)
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
-			es, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, analysis)
+			es, err = sdk.ReadEntityFile(dir, fileNameWithoutSuffix, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
+		default:
+			continue
 		}
 		if err != nil {
 			return nil, err
 		}
 		entities = append(entities, es...)
+		analysis.Data.Entities = append(analysis.Data.Entities, sdk.ProjectRepositoryDataEntity{
+			FileName: fileName,
+			Path:     dir,
+		})
 	}
 	return entities, nil
 
@@ -555,10 +580,6 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 	}
 	for _, c := range contents {
 		if c.IsFile && strings.HasSuffix(c.Name, ".yml") {
-			analysis.Data.Entities = append(analysis.Data.Entities, sdk.ProjectRepositoryDataEntity{
-				FileName: c.Name,
-				Path:     directory + "/",
-			})
 			filePath := directory + "/" + c.Name
 			vcsContent, err := client.GetContent(ctx, repoName, commit, filePath)
 			if err != nil {
@@ -602,7 +623,6 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 	}
 
 	filesContent := make(map[string][]byte)
-	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 	reader, _, err := client.GetArchive(ctx, repo.Name, ".cds", "tar.gz", analysis.Commit)
 	if err != nil {
 		return nil, err
@@ -624,14 +644,9 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 		}
 
 		dir, fileName := filepath.Split(hdr.Name)
-		if strings.HasSuffix(fileName, ".yml") {
-			e := sdk.ProjectRepositoryDataEntity{
-				FileName: fileName,
-				Path:     dir,
-			}
-			analysis.Data.Entities = append(analysis.Data.Entities, e)
+		if !strings.HasSuffix(fileName, ".yml") {
+			continue
 		}
-
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tarReader); err != nil {
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read tar file"))
