@@ -62,6 +62,8 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 		).MaxTimes(1)
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/task", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/cds/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
 	// Creation request
 	repo := sdk.ProjectRepository{
 		Name: "ovh/cds",
