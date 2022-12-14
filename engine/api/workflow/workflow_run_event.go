@@ -64,28 +64,27 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		return nil
 	}
 
-	var notif *sdk.WorkflowNotification
+	var notifs []sdk.WorkflowNotification
 	// browse notification to find vcs one
-loopNotif:
 	for _, n := range wr.Workflow.Notifications {
 		if n.Type != sdk.VCSUserNotification {
 			continue
 		}
 		// If list of node is nill, send notification to all of them
 		if len(n.NodeIDs) == 0 {
-			notif = &n
-			break
+			notifs = append(notifs, n)
+			continue
 		}
 		// browser source node id
 		for _, src := range n.NodeIDs {
 			if src == node.ID {
-				notif = &n
-				break loopNotif
+				notifs = append(notifs, n)
+				break
 			}
 		}
 	}
 
-	if notif == nil {
+	if len(notifs) == 0 {
 		return nil
 	}
 
@@ -134,8 +133,10 @@ loopNotif:
 	}
 
 	if statusFound == nil || statusFound.State == "" {
-		if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-			return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+		for i := range notifs {
+			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+			}
 		}
 	} else {
 		skipStatus := false
@@ -159,8 +160,10 @@ loopNotif:
 		}
 
 		if !skipStatus {
-			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notif, vcsServerName); err != nil {
-				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+			for i := range notifs {
+				if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+					return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
+				}
 			}
 		}
 	}
@@ -168,8 +171,10 @@ loopNotif:
 	if !sdk.StatusIsTerminated(nodeRun.Status) {
 		return nil
 	}
-	if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notif, vcsServerName); err != nil {
-		return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
+	for i := range notifs {
+		if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+			return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -180,8 +185,8 @@ loopNotif:
 }
 
 // sendVCSEventStatus send status
-func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string) error {
-	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
+func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string) error {
+	if notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
 		return nil
 	}
 
@@ -305,8 +310,8 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 	return nil
 }
 
-func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif *sdk.WorkflowNotification, vcsServerName string) error {
-	if notif == nil || notif.Settings.Template == nil || (notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment) {
+func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string) error {
+	if notif.Settings.Template == nil || (notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment) {
 		return nil
 	}
 

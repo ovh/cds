@@ -442,7 +442,7 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, filters sdk.VCS
 	branch := sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s&default=%v", c.name, fullname, url.QueryEscape(filters.BranchName), filters.Default)
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branch); err != nil {
-		return nil, sdk.NewErrorFrom(err, "unable to find branch %s/%v on repository %s from %s", filters.BranchName, filters.Default, fullname, c.name)
+		return nil, sdk.NewErrorFrom(err, "unable to find branch %q (default: %t) on repository %s from %s", filters.BranchName, filters.Default, fullname, c.name)
 	}
 	return &branch, nil
 }
