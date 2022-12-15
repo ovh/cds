@@ -2,8 +2,10 @@ package gitlab
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
+	"github.com/rockbears/log"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
@@ -41,13 +43,27 @@ func (c *gitlabClient) PullRequests(ctx context.Context, repo string, opts sdk.V
 	}
 	res := make([]sdk.VCSPullRequest, 0, len(mrs))
 	for i := range mrs {
-		res = append(res, toSDKPullRequest(repo, *mrs[i]))
+		mr, err := c.PullRequest(ctx, repo, fmt.Sprintf("%d", mrs[i].IID))
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		res = append(res, mr)
 	}
 	return res, nil
 }
 
 // PullRequestComment push a new comment on a pull request
-func (c *gitlabClient) PullRequestComment(context.Context, string, sdk.VCSPullRequestCommentRequest) error {
+func (c *gitlabClient) PullRequestComment(ctx context.Context, repo string, prReq sdk.VCSPullRequestCommentRequest) error {
+	if c.disableStatus {
+		log.Warn(ctx, "gitlab.PullRequestComment>  ⚠ Gitlab statuses are disabled")
+		return nil
+	}
+	_, _, err := c.client.Notes.CreateMergeRequestNote(repo, prReq.ID, &gitlab.CreateMergeRequestNoteOptions{
+		Body: gitlab.String(prReq.Message),
+	})
+	if err != nil {
+		return sdk.WithStack(err)
+	}
 	return nil
 }
 
@@ -93,5 +109,4 @@ func toSDKPullRequest(repo string, mr gitlab.MergeRequest) sdk.VCSPullRequest {
 		pr.Updated = *mr.UpdatedAt
 	}
 	return pr
-
 }
