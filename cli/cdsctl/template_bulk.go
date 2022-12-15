@@ -530,32 +530,44 @@ func templateBulkRun(v cli.Values) error {
 
 	if v.GetBool("track") {
 		var currentDisplay = new(cli.Display)
-		currentDisplay.Printf("Looking for bulk %d...\n", b.ID)
-		currentDisplay.Do(context.Background())
+		if v.GetBool("no-interactive") {
+			fmt.Printf("Looking for bulk %d...\n", b.ID)
+		} else {
+			currentDisplay.Printf("Looking for bulk %d...\n", b.ID)
+			currentDisplay.Do(context.Background())
+		}
 
+		lastOperations := make(map[string]sdk.WorkflowTemplateBulkOperation)
 		for {
+			var out string
+
 			res, err = client.TemplateGetBulk(wt.Group.Name, wt.Slug, res.ID)
 			if err != nil {
 				return err
 			}
 
-			var out string
+			operationStatusChanged := make(map[string]bool)
 			for _, o := range res.Operations {
-				var status string
-				switch o.Status {
-				case sdk.OperationStatusPending:
-					status = cli.Blue("pending")
-				case sdk.OperationStatusProcessing:
-					status = cli.Yellow("processing")
-				case sdk.OperationStatusDone:
-					status = cli.Green("done")
-				case sdk.OperationStatusError:
-					status = cli.Red("error")
+				opKey := o.Request.ProjectKey + "/" + o.Request.WorkflowName
+				if lastOperation, ok := lastOperations[opKey]; !ok || lastOperation.Status != o.Status {
+					lastOperations[opKey] = o
+					operationStatusChanged[opKey] = true
 				}
-				out += fmt.Sprintf("%s/%s -> %s %s\n", o.Request.ProjectKey, o.Request.WorkflowName, status, o.Error)
 			}
 
-			currentDisplay.Printf(out)
+			for opKey, changed := range operationStatusChanged {
+				if v.GetBool("no-interactive") {
+					if changed {
+						fmt.Printf("%s -> %s %s\n", opKey, OperationStatusToCLIString(lastOperations[opKey].Status), lastOperations[opKey].Error)
+					}
+				} else {
+					out += fmt.Sprintf("%s -> %s %s\n", opKey, OperationStatusToCLIString(lastOperations[opKey].Status), lastOperations[opKey].Error)
+				}
+			}
+
+			if !v.GetBool("no-interactive") {
+				currentDisplay.Printf(out)
+			}
 
 			time.Sleep(500 * time.Millisecond)
 			if res.IsDone() {
@@ -565,4 +577,19 @@ func templateBulkRun(v cli.Values) error {
 	}
 
 	return nil
+}
+
+func OperationStatusToCLIString(o sdk.OperationStatus) string {
+	var status string
+	switch o {
+	case sdk.OperationStatusPending:
+		status = cli.Blue("pending")
+	case sdk.OperationStatusProcessing:
+		status = cli.Yellow("processing")
+	case sdk.OperationStatusDone:
+		status = cli.Green("done")
+	case sdk.OperationStatusError:
+		status = cli.Red("error")
+	}
+	return status
 }
