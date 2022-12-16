@@ -53,6 +53,11 @@ var templateBulkCmd = cli.Command{
 			Name:  "track",
 			Usage: "Wait the bulk to be over",
 		},
+		{
+			Type:  cli.FlagBool,
+			Name:  "parallel",
+			Usage: "Apply template on workflow in parallel",
+		},
 	},
 }
 
@@ -514,7 +519,10 @@ func templateBulkRun(v cli.Values) error {
 	}
 
 	// send bulk request
-	b := sdk.WorkflowTemplateBulk{Operations: make([]sdk.WorkflowTemplateBulkOperation, len(moperations))}
+	b := sdk.WorkflowTemplateBulk{
+		Parallel:   v.GetBool("parallel"),
+		Operations: make([]sdk.WorkflowTemplateBulkOperation, len(moperations)),
+	}
 	i := 0
 	for _, o := range moperations {
 		b.Operations[i] = o
@@ -570,7 +578,7 @@ func templateBulkRun(v cli.Values) error {
 			}
 
 			time.Sleep(500 * time.Millisecond)
-			if res.IsDone() {
+			if res.Status == sdk.OperationStatusDone || res.Status == sdk.OperationStatusError {
 				break
 			}
 		}

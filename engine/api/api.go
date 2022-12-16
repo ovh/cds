@@ -215,9 +215,10 @@ type Configuration struct {
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 	Workflow struct {
-		MaxRuns                int64  `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
-		DefaultRetentionPolicy string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
-		DisablePurgeDeletion   bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
+		MaxRuns                 int64  `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		DefaultRetentionPolicy  string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
+		DisablePurgeDeletion    bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
+		TemplateBulkRunnerCount int64  `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
 }
@@ -798,6 +799,12 @@ func (a *API) Serve(ctx context.Context) error {
 			a.cleanWorkflowRunSecrets(ctx)
 		})
 	}
+	chanWorkflowTemplateBulkOperation := make(chan WorkflowTemplateBulkOperation)
+	defer close(chanWorkflowTemplateBulkOperation)
+	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowTemplateBulk", func(ctx context.Context) {
+		a.WorkflowTemplateBulk(ctx, 100*time.Millisecond, chanWorkflowTemplateBulkOperation)
+	})
+	a.WorkflowTemplateBulkOperation(ctx, a.Config.Workflow.MaxRuns, chanWorkflowTemplateBulkOperation)
 
 	log.Info(ctx, "Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{

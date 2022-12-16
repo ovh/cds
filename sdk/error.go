@@ -556,7 +556,11 @@ func NewErrorFrom(err error, from string, args ...interface{}) error {
 
 	switch e := err.(type) {
 	case errorWithStack:
-		e.httpError.From = fmt.Errorf(from, args...).Error()
+		from := fmt.Errorf(from, args...).Error()
+		if e.httpError.From != "" {
+			from += ", " + e.httpError.From
+		}
+		e.httpError.From = from
 		return e
 	case Error:
 		return NewError(e, fmt.Errorf(from, args...))

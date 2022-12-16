@@ -47,7 +47,6 @@ func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) error 
 			}
 		}
 	}
-
 }
 
 func (api *API) workflowRunCraft(ctx context.Context, id int64) error {

@@ -77,6 +77,15 @@ func TestNewError(t *testing.T) {
 	assert.Equal(t, "wrong request (from: this is an error generated from vendor)", httpErr.Error())
 }
 
+func TestNewErrorFrom(t *testing.T) {
+	err1 := NewErrorFrom(ErrWrongRequest, "my first details")
+	httpErr := ExtractHTTPError(err1)
+	assert.Equal(t, "wrong request (from: my first details)", httpErr.Error())
+	err2 := NewErrorFrom(err1, "my second details")
+	httpErr = ExtractHTTPError(err2)
+	assert.Equal(t, "wrong request (from: my second details, my first details)", httpErr.Error())
+}
+
 func TestWrapError(t *testing.T) {
 	err := fourForStackTest()
 	assert.Equal(t, "internal server error (caused by: four: five: this is an error generated from vendor)", err.Error())
