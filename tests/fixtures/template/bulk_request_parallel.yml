@@ -1,0 +1,22 @@
+template_path: shared.infra/example-simple-safe
+instances:
+- workflow_path: ITCLIPRJBULKPARA/one
+  parameters:
+  - withDeploy=true
+  - deployWhen=success
+- workflow_path: ITCLIPRJBULKPARA/two
+  parameters:
+  - withDeploy=true
+  - deployWhen=success
+- workflow_path: ITCLIPRJBULKPARA/three
+  parameters:
+  - withDeploy=true
+  - deployWhen=success
+- workflow_path: ITCLIPRJBULKPARA/four
+  parameters:
+  - withDeploy=true
+  - deployWhen=success
+- workflow_path: ITCLIPRJBULKPARA/five
+  parameters:
+  - withDeploy=true
+  - deployWhen=success

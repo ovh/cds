@@ -54,7 +54,7 @@ func requestModifyDefaultKeysfunc(proj sdk.Project) TemplateRequestModifierFunc 
 			req.Parameters = make(map[string]string)
 		}
 		for _, p := range wt.Parameters {
-			if _, ok := req.Parameters[p.Key]; ok || !p.Required {
+			if v, ok := req.Parameters[p.Key]; (ok && v != "") || !p.Required {
 				continue
 			}
 			if p.Type == sdk.ParameterTypeSSHKey && defaultSSHKeyFound {
@@ -100,7 +100,7 @@ func requestModifyDefaultNameAndRepositories(proj sdk.Project, repoURL string) T
 			req.Parameters = make(map[string]string)
 		}
 		for _, p := range wt.Parameters {
-			if _, ok := req.Parameters[p.Key]; ok || !p.Required {
+			if v, ok := req.Parameters[p.Key]; (ok && v != "") || !p.Required {
 				continue
 			}
 			if p.Type == sdk.ParameterTypeRepository {

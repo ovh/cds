@@ -164,7 +164,7 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Environment,
 	return envs, nil
 }
 
-//Exists checks if an environment already exists on the project
+// Exists checks if an environment already exists on the project
 func Exists(db gorp.SqlExecutor, projectKey, envName string) (bool, error) {
 	var n int
 	query := `SELECT count(1)

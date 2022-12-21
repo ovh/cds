@@ -10,14 +10,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Import import or reuser the provided environment
+// Import import or reuser the provided environment
 func Import(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	exists, err := Exists(db, proj.Key, env.Name)
 	if err != nil {
 		return err
 	}
 
-	//If environment exists, reload it
+	// If environment exists, reload it
 	if exists {
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentExists, env.Name)
@@ -37,7 +37,7 @@ func Import(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environm
 	env.ProjectID = proj.ID
 	env.ProjectKey = proj.Key
 	if err := InsertEnvironment(db, env); err != nil {
-		return sdk.WrapError(err, "Unable to create env %s on project %s(%d) ", env.Name, env.ProjectKey, env.ProjectID)
+		return sdk.WrapError(err, "unable to create env %q on project %q", env.Name, env.ProjectKey)
 	}
 
 	//Insert all variables
@@ -65,7 +65,7 @@ func Import(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environm
 	return nil
 }
 
-//ImportInto import variables and groups on an existing environment
+// ImportInto import variables and groups on an existing environment
 func ImportInto(ctx context.Context, db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
 	var updateVar = func(v *sdk.EnvironmentVariable) {
 		log.Debug(ctx, "ImportInto> Updating var %q with value %q", v.Name, v.Value)

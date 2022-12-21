@@ -476,9 +476,6 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			return err
 		}
 
-		branch := FormString(r, "branch")
-		message := FormString(r, "message")
-
 		// check all requests
 		var req sdk.WorkflowTemplateBulk
 		if err := service.UnmarshalBody(r, &req); err != nil {
@@ -512,198 +509,21 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 		// store the bulk request
 		bulk := sdk.WorkflowTemplateBulk{
+			Parallel:           req.Parallel,
 			UserID:             consumer.AuthConsumerUser.AuthentifiedUser.ID,
+			AuthConsumerID:     consumer.ID,
 			WorkflowTemplateID: wt.ID,
 			Operations:         make([]sdk.WorkflowTemplateBulkOperation, len(req.Operations)),
 		}
 		for i := range req.Operations {
 			bulk.Operations[i].Status = sdk.OperationStatusPending
 			bulk.Operations[i].Request = req.Operations[i].Request
+			bulk.Operations[i].Request.Branch = FormString(r, "branch")
+			bulk.Operations[i].Request.Message = FormString(r, "message")
 		}
 		if err := workflowtemplate.InsertBulk(api.mustDB(), &bulk); err != nil {
 			return err
 		}
-
-		// start async bulk tasks
-		api.GoRoutines.Exec(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
-			for i := range bulk.Operations {
-				if bulk.Operations[i].Status == sdk.OperationStatusPending {
-					bulk.Operations[i].Status = sdk.OperationStatusProcessing
-					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-						log.Error(ctx, "%v", err)
-						return
-					}
-
-					errorDefer := func(err error) error {
-						if err != nil {
-							err = sdk.WrapError(err, "error occurred in template bulk with id %d", bulk.ID)
-							ctx = sdk.ContextWithStacktrace(ctx, err)
-							log.Error(ctx, "%v", err)
-							bulk.Operations[i].Status = sdk.OperationStatusError
-							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
-							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-								return err
-							}
-						}
-
-						return nil
-					}
-
-					// load project with key
-					p, err := project.Load(ctx, api.mustDB(), bulk.Operations[i].Request.ProjectKey,
-						project.LoadOptions.WithGroups,
-						project.LoadOptions.WithApplications,
-						project.LoadOptions.WithEnvironments,
-						project.LoadOptions.WithPipelines,
-						project.LoadOptions.WithApplicationWithDeploymentStrategies,
-						project.LoadOptions.WithIntegrations,
-						project.LoadOptions.WithClearKeys,
-					)
-					if err != nil {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					// apply and import workflow
-					data := exportentities.WorkflowComponents{
-						Template: exportentities.TemplateInstance{
-							Name:       bulk.Operations[i].Request.WorkflowName,
-							From:       wt.PathWithVersion(),
-							Parameters: bulk.Operations[i].Request.Parameters,
-						},
-					}
-
-					// In case we want to update a workflow that is ascode, we want to create a PR instead of pushing directly the new workflow.
-					wti, err := workflowtemplate.LoadInstanceByTemplateIDAndProjectIDAndRequestWorkflowName(ctx, api.mustDB(), wt.ID, p.ID, data.Template.Name)
-					if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-					if wti != nil && wti.WorkflowID != nil {
-						existingWorkflow, err := workflow.LoadByID(ctx, api.mustDB(), api.Cache, *p, *wti.WorkflowID, workflow.LoadOptions{})
-						if err != nil {
-							if errD := errorDefer(err); errD != nil {
-								log.Error(ctx, "%v", errD)
-								return
-							}
-							continue
-						}
-						if existingWorkflow.FromRepository != "" {
-							var rootApp *sdk.Application
-							if existingWorkflow.WorkflowData.Node.Context != nil && existingWorkflow.WorkflowData.Node.Context.ApplicationID != 0 {
-								rootApp, err = application.LoadByIDWithClearVCSStrategyPassword(ctx, api.mustDB(), existingWorkflow.WorkflowData.Node.Context.ApplicationID)
-								if err != nil {
-									if errD := errorDefer(err); errD != nil {
-										log.Error(ctx, "%v", errD)
-										return
-									}
-									continue
-								}
-							}
-							if rootApp == nil {
-								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "cannot find the root application of the workflow")); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-
-							if branch == "" || message == "" {
-								if errD := errorDefer(sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing branch or message data")); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-
-							tx, err := api.mustDB().Begin()
-							if err != nil {
-								if errD := errorDefer(err); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-							ope, err := operation.PushOperationUpdate(ctx, tx, api.Cache, *p, data, rootApp.VCSServer, rootApp.RepositoryFullname, branch, message, rootApp.RepositoryStrategy, consumer)
-							if err != nil {
-								tx.Rollback() // nolint
-								if errD := errorDefer(err); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-							if err := tx.Commit(); err != nil {
-								tx.Rollback() // nolint
-								if errD := errorDefer(err); errD != nil {
-									log.Error(ctx, "%v", errD)
-									return
-								}
-								continue
-							}
-
-							ed := ascode.EntityData{
-								Name:          existingWorkflow.Name,
-								ID:            existingWorkflow.ID,
-								Type:          ascode.WorkflowEvent,
-								FromRepo:      existingWorkflow.FromRepository,
-								OperationUUID: ope.UUID,
-							}
-							ascode.UpdateAsCodeResult(ctx, api.mustDB(), api.Cache, api.GoRoutines, *p, *existingWorkflow, *rootApp, ed, consumer)
-
-							bulk.Operations[i].Status = sdk.OperationStatusDone
-							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-								log.Error(ctx, "%v", err)
-								return
-							}
-
-							continue
-						}
-					}
-
-					mods := []workflowtemplate.TemplateRequestModifierFunc{
-						workflowtemplate.TemplateRequestModifiers.DefaultKeys(*p),
-					}
-					_, wti, err = workflowtemplate.CheckAndExecuteTemplate(ctx, api.mustDB(), api.Cache, *consumer, *p, &data, mods...)
-					if err != nil {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					_, wkf, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
-					if err != nil {
-						if errD := errorDefer(sdk.WrapError(err, "cannot push generated workflow")); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					if err := workflowtemplate.UpdateTemplateInstanceWithWorkflow(ctx, api.mustDB(), *wkf, *consumer, wti); err != nil {
-						if errD := errorDefer(err); errD != nil {
-							log.Error(ctx, "%v", errD)
-							return
-						}
-						continue
-					}
-
-					bulk.Operations[i].Status = sdk.OperationStatusDone
-					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
-						log.Error(ctx, "%v", err)
-						return
-					}
-				}
-			}
-		})
 
 		// returns created bulk
 		return service.WriteJSON(w, bulk, http.StatusOK)
@@ -735,8 +555,8 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 			return err
 		}
 
-		b, err := workflowtemplate.GetBulkByIDAndTemplateID(api.mustDB(), id, wt.ID)
-		if err != nil {
+		b, err := workflowtemplate.GetBulkByIDAndTemplateID(ctx, api.mustDB(), id, wt.ID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
 		if b == nil || (b.UserID != getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.ID && !isMaintainer(ctx) && !isAdmin(ctx)) {
