@@ -30,7 +30,7 @@ func (api *API) WorkflowTemplateBulk(ctx context.Context, tick time.Duration, ch
 		case <-ticker.C:
 			bs, err := workflowtemplate.GetBulksPending(ctx, api.mustDBWithCtx(ctx))
 			if err != nil {
-				log.Error(ctx, "WorkflowTemplateBulk> unable to start tx: %v", err)
+				log.ErrorWithStackTrace(ctx, err)
 				continue
 			}
 			for _, b := range bs {
@@ -38,7 +38,7 @@ func (api *API) WorkflowTemplateBulk(ctx context.Context, tick time.Duration, ch
 					func(ctx context.Context) {
 						ctx = telemetry.New(ctx, api, "api.workflowTemplateBulk", nil, trace.SpanKindUnspecified)
 						if err := api.workflowTemplateBulk(ctx, b.ID, chanOperation); err != nil {
-							log.Error(ctx, "workflowTemplateBulk> error on workflow template bulk %d: %v", b.ID, err)
+							log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "error on workflow template bulk %d", b.ID))
 						}
 					},
 				)
