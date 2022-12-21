@@ -8,7 +8,7 @@ import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } f
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
-import { RepositoriesManager } from 'app/model/repositories.model';
+import { RepositoriesManager, RepositoriesManagerAuth } from 'app/model/repositories.model';
 import { ApplicationService } from 'app/service/application/application.service';
 import { ApplicationStore } from 'app/service/application/application.store';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
@@ -118,7 +118,7 @@ describe('CDS: Application Repo Component', () => {
         p.key = 'key1';
         p.name = 'proj1';
 
-        let repoMan: RepositoriesManager = { name: 'RepoManager', type: ''};
+        let repoMan: RepositoriesManager = { name: 'RepoManager', type: '', auth: new(RepositoriesManagerAuth), description: ''};
         p.vcs_servers = new Array<RepositoriesManager>();
         p.vcs_servers.push(repoMan);
 
