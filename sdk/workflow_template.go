@@ -433,12 +433,14 @@ func (w *WorkflowTemplateBulk) UpdateOperation(o WorkflowTemplateBulkOperation) 
 	for i := range w.Operations {
 		if w.Operations[i].Request.ProjectKey == o.Request.ProjectKey && w.Operations[i].Request.WorkflowName == o.Request.WorkflowName {
 			w.Operations[i] = o
+			break
 		}
 	}
 	done := true
 	for i := range w.Operations {
 		if w.Operations[i].Status != OperationStatusDone && w.Operations[i].Status != OperationStatusError {
 			done = false
+			break
 		}
 	}
 	if done {
