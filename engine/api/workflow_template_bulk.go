@@ -34,7 +34,7 @@ func (api *API) WorkflowTemplateBulk(ctx context.Context, tick time.Duration, ch
 				continue
 			}
 			for _, b := range bs {
-				api.GoRoutines.Exec(ctx, "workflowTemplateBulk-"+strconv.FormatInt(b.ID, 10),
+				api.GoRoutines.Exec(api.Router.Background, "workflowTemplateBulk-"+strconv.FormatInt(b.ID, 10),
 					func(ctx context.Context) {
 						ctx = telemetry.New(ctx, api, "api.workflowTemplateBulk", nil, trace.SpanKindUnspecified)
 						if err := api.workflowTemplateBulk(ctx, b.ID, chanOperation); err != nil {
@@ -98,7 +98,7 @@ func (api *API) workflowTemplateBulk(ctx context.Context, bulkID int64, chanOper
 
 	// Enqueue operations
 	for _, o := range b.Operations {
-		if o.Status != sdk.OperationStatusPending {
+		if o.Status != sdk.OperationStatusPending && o.Status != sdk.OperationStatusProcessing {
 			continue
 		}
 		operationTodo.Push(WorkflowTemplateBulkOperation{
@@ -127,12 +127,14 @@ func (api *API) workflowTemplateBulk(ctx context.Context, bulkID int64, chanOper
 	for {
 		select {
 		case res := <-chanResult:
+			log.Info(ctx, "workflowTemplateBulk> processing bulk with %d: operation result %s/%s with status %s", b.ID, res.Request.ProjectKey, res.Request.WorkflowName, res.Status)
 			b.UpdateOperation(res)
+			log.Info(ctx, "workflowTemplateBulk> processing bulk with %d: updating status to %s", b.ID, b.Status)
 			if err := workflowtemplate.UpdateBulk(api.mustDBWithCtx(ctx), b); err != nil {
 				return err
 			}
 			if b.Status == sdk.OperationStatusDone {
-				break
+				return nil
 			}
 			if (res.Status == sdk.OperationStatusDone || res.Status == sdk.OperationStatusError) && len(operationTodo) > 0 {
 				chanOperation <- operationTodo.Pop()
