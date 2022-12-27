@@ -334,6 +334,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 		}
 		mod.Artifacts = artifacts
 		modules = append(modules, mod)
+		endc()
 	}
 
 	return modules, nil
@@ -343,7 +344,7 @@ func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactM
 	ctx, end := telemetry.Span(ctx, "workflow.retrieveModulesFiles")
 	defer end()
 	log.Debug(ctx, "retrieve:ModulesFiles repoName:%s path:%s", repoName, path)
-	_, endc := telemetry.Span(ctx, "artifactoryClient.GetFileInfo", telemetry.Tag("path", path), telemetry.Tag("repoName", repoName))
+	_, endc := telemetry.Span(ctx, "artifactoryClient.GetFolderInfo", telemetry.Tag("path", path), telemetry.Tag("repoName", repoName))
 	folderInfo, err := client.GetFolderInfo(repoName, path)
 	endc()
 	if err != nil {
