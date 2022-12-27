@@ -151,7 +151,6 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			if err != nil {
 				log.Error(ctx, "error on run %v:%d err:%v", wf.Name, run.Number, err)
 				continue
-
 			}
 		}
 
@@ -291,11 +290,11 @@ func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run s
 	if has {
 		_, exist = branchesMap[b]
 	}
-	if has && vcsClient == nil {
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "vcsClient nil but git branch exists")
+	if vcsClient != nil {
+		// Only inject the "git_branch_exist" variable if a vcs client exists to make sure that its value is accurate
+		vars[RunGitBranchExist] = strconv.FormatBool(exist)
 	}
 	vars[RunHasGitBranch] = strconv.FormatBool(has)
-	vars[RunGitBranchExist] = strconv.FormatBool(exist)
 
 	vars[RunStatus] = run.Status
 
