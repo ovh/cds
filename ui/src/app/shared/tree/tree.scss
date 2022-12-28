@@ -7,18 +7,17 @@ nz-tree-view {
     .nocursor {
       cursor: default;
     }
+      .name.active {
+          padding-bottom: 3px;
+          border-bottom: 1px solid black;
+
+          :host-context(.night) & {
+              border-bottom: 1px solid white;
+          }
+      }
 
     .node {
       width: 100%;
-
-      .name.active {
-        padding-bottom: 3px;
-        border-bottom: 1px solid black;
-
-        :host-context(.night) & {
-          border-bottom: 1px solid white;
-        }
-      }
 
       i {
         float: right;

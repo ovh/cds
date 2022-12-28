@@ -8,13 +8,13 @@ export class SidebarEvent {
     nodeName: string
     nodeType: string
     action: string
-    parent: FlatNodeItem;
+    parentIDs: string[];
 
-    constructor(nodeID: string, nodeName: string, type: string, action: string, parent: FlatNodeItem) {
+    constructor(nodeID: string, nodeName: string, type: string, action: string, parents: string[]) {
         this.action = action;
         this.nodeID = nodeID;
         this.nodeType = type;
-        this.parent = parent;
+        this.parentIDs = parents;
         this.nodeName = nodeName;
     }
 }

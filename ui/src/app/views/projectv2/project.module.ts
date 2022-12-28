@@ -11,6 +11,7 @@ import {
 import {
     ProjectV2RepositoryShowComponent
 } from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
+import {ProjectV2WorkerModelShowComponent} from "./vcs/repository/workermodel/show/project.workermodel.show.component";
 
 @NgModule({
     declarations: [
@@ -18,7 +19,8 @@ import {
         ProjectV2ShowComponent,
         ProjectV2SidebarComponent,
         ProjectV2RepositoryAddComponent,
-        ProjectV2RepositoryShowComponent
+        ProjectV2RepositoryShowComponent,
+        ProjectV2WorkerModelShowComponent
     ],
     imports: [
         SharedModule,

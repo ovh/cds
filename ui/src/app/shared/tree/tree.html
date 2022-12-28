@@ -8,7 +8,7 @@
             <nz-alert nzType="info" nzMessage="{{node.name}}"></nz-alert>
         </ng-container>
         <ng-container *ngIf="node.type !== 'info'">
-            <span class="name" [class.active]="node.active">
+            <span class="name pointing" [class.active]="node.active" (click)="clickOnNode('select', node)">
                 {{ node.name }}
             </span>
 

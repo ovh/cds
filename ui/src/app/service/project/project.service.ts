@@ -132,4 +132,18 @@ export class ProjectService {
         let encodedRepo = encodeURIComponent(repo);
         return this._http.get<Array<Entity>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`);
     }
+
+    getRepoEntity(key: string, vcsName: string, repoName: string, entityType: string, entityName: string, branch?: string): Observable<Entity> {
+        let encodedRepo = encodeURIComponent(repoName);
+        let params = new HttpParams();
+        if (branch) {
+            params = params.append('branch', branch);
+        }
+        return this._http.get<Entity>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities/${entityType}/${entityName}`, { params });
+
+    }
+
+    getJSONSchema(type: string): Observable<Entity> {
+        return this._http.get<Entity>(`/v2/jsonschema/${type}`);
+    }
 }

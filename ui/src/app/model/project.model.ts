@@ -92,9 +92,12 @@ export class ProjectRepository {
     created_by: string;
 }
 
+export const EntityWorkerModel = "WorkerModel";
+
 export class Entity {
     id: string;
     name: string;
     type: string;
     branch: string;
+    data: string;
 }

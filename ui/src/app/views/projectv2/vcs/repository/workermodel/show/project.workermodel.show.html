@@ -1,0 +1,8 @@
+<div class="workerModelShow">
+    <ng-container *ngIf="workerModel">
+        <h3>Worker model {{workerModel.name}}</h3>
+        <div class="workerModel-container">
+            <app-entity [data]="workerModel.data" [jsonschema]="jsonSchema"></app-entity>
+        </div>
+    </ng-container>
+</div>
