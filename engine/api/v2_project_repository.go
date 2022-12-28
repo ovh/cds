@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
@@ -132,6 +133,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
 			var repoBody sdk.ProjectRepository
 			if err := service.UnmarshalRequest(ctx, req, &repoBody); err != nil {
 				return err
@@ -158,6 +164,10 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 			vcsRepo, err := vcsClient.RepoByFullname(ctx, repoDB.Name)
+			if err != nil {
+				return err
+			}
+			defaultBranch, err := vcsClient.Branch(ctx, repoDB.Name, sdk.VCSBranchFilters{Default: true})
 			if err != nil {
 				return err
 			}
@@ -199,11 +209,18 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
+			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProjectWithSecret, repoDB, defaultBranch.DisplayID, defaultBranch.LatestCommit)
+			if err != nil {
+				return err
+			}
+
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
 
 			event.PublishAddProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProjectWithSecret.ID, Name: vcsProjectWithSecret.Name}, repoDB, getUserConsumer(ctx))
+			event.PublishProjectRepositoryAnalyze(ctx, proj.Key, vcsProjectWithSecret.ID, repoDB.ID, analyzeReponse.AnalysisID, analyzeReponse.Status)
+
 			return service.WriteMarshal(w, req, repoDB, http.StatusCreated)
 		}
 }

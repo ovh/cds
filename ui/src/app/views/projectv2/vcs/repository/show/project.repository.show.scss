@@ -2,8 +2,15 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
+
+    h3 {
+        padding: 10px 30px;
+    }
 
   .repoShow-container {
+    flex: 1;
+    overflow-y: auto;
     padding: 10px 30px;
 
     form {
@@ -13,12 +20,25 @@
         font-weight: bold;
       }
     }
+    .analyses {
+        h3 {
+            margin-left: -30px;
+            i {
+                margin-left: 10px;
+            }
+        }
+        padding-top: 20px;
+
+        .error {
+            width: 400px;
+            word-break: break-word;
+        }
+    }
 
   }
 
   .footer {
     display: flex;
-    margin-top: auto;
     height: 46px;
     border-top: 1px solid #d9d9d9;
     padding: 7px 30px;
@@ -36,3 +56,7 @@
   }
 }
 
+ul.nopoint {
+    list-style-type: none;
+    padding: 0;
+}

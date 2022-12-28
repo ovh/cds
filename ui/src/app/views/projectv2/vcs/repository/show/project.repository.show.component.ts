@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Project, ProjectRepository, VCSProject } from 'app/model/project.model';
 import { ProjectState, ProjectStateModel } from 'app/store/project.state';
@@ -11,6 +11,8 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
 import { FlatNodeItem } from 'app/shared/tree/tree.component';
+import {RepositoryAnalysis} from "../../../../../model/analysis.model";
+import {AnalysisService} from "../../../../../service/analysis/analysis.service";
 
 @Component({
     selector: 'app-projectv2-repository-show',
@@ -19,16 +21,18 @@ import { FlatNodeItem } from 'app/shared/tree/tree.component';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2RepositoryShowComponent implements OnDestroy {
+export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
 
     loading: boolean;
+    loadingAnalysis: boolean;
     projectSubscriber: Subscription;
 
     project: Project;
     vcsProject: VCSProject;
     repository: ProjectRepository;
+    repoAnalyses: Array<RepositoryAnalysis>;
 
-    constructor(private _store: Store, private _routeActivated: ActivatedRoute, private _projectService: ProjectService,
+    constructor(private _store: Store, private _routeActivated: ActivatedRoute, private _projectService: ProjectService, private _analyzeService: AnalysisService,
                 private _cd: ChangeDetectorRef, private _toastService: ToastService, private _router: Router, private _sidebarService: SidebarService) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
@@ -44,9 +48,34 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy {
                 this.vcsProject = result[1];
                 let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', <FlatNodeItem>{id: this.vcsProject.id, name: this.vcsProject.name, type: 'vcs'});
                 this._sidebarService.sendEvent(selectEvent);
+                this.loadAnalyses();
                 this._cd.markForCheck();
             });
+
+
         });
+    }
+
+    ngOnInit() {
+        this._analyzeService.getObservable().subscribe(e => {
+            if (e && this.repository && this.vcsProject) {
+                this.loadAnalyses();
+            }
+        });
+    }
+
+    loadAnalyses(): void {
+        this.loadingAnalysis = true;
+        this._cd.markForCheck();
+        this._projectService.listVCSRepositoryAnalysis(this.project.key, this.vcsProject.name, this.repository.name)
+            .pipe(finalize( () => {
+                this.loadingAnalysis = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(analyses => {
+                this.repoAnalyses = analyses.reverse();
+                this._cd.markForCheck();
+            });
     }
 
     removeRepositoryFromProject(): void {

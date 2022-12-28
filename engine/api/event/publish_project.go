@@ -194,3 +194,13 @@ func PublishAddProjectRepository(ctx context.Context, pKey string, vcs sdk.VCSPr
 	}
 	PublishProjectEvent(ctx, e, pKey, u)
 }
+
+func PublishProjectRepositoryAnalyze(ctx context.Context, pKey string, vcsID string, repoID string, analysisID string, analysisStatus string) {
+	e := sdk.EventProjectRepositoryAnalyze{
+		RepositoryID: repoID,
+		VCSID:        vcsID,
+		AnalysisID:   analysisID,
+		Status:       analysisStatus,
+	}
+	PublishProjectEvent(ctx, e, pKey, nil)
+}

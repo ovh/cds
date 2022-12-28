@@ -5,6 +5,7 @@ import { ProjectIntegration } from 'app/model/integration.model';
 import { Key } from 'app/model/keys.model';
 import { Entity, LoadOpts, Project, ProjectRepository, VCSProject } from 'app/model/project.model';
 import { Observable } from 'rxjs';
+import {RepositoryAnalysis} from "../../model/analysis.model";
 
 /**
  * Service to access Project from API.
@@ -113,10 +114,15 @@ export class ProjectService {
         return this._http.get<Array<ProjectRepository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
     }
 
+    listVCSRepositoryAnalysis(key: string, vcsName: string, repoName: string): Observable<Array<RepositoryAnalysis>> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<Array<RepositoryAnalysis>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/analysis`)
+    }
+
     addVCSRepository(key: string, vcsName: string, repo: ProjectRepository): Observable<ProjectRepository> {
         return this._http.post<ProjectRepository>(`/v2/project/${key}/vcs/${vcsName}/repository`, repo);
     }
-    
+
     deleteVCSRepository(key: string, vcsName: string, repoName: string): Observable<any> {
         let encodedRepo = encodeURIComponent(repoName);
         return this._http.delete(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);

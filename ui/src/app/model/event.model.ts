@@ -33,6 +33,8 @@ export class EventType {
     static PROJECT_REPOSITORY_ADD = 'sdk.EventProjectRepositoryAdd';
     static PROJECT_REPOSITORY_REMOVE = 'sdk.EventProjectRepositoryDelete';
 
+    static PROJECT_REPOSITORY_ANALYSE = 'sdk.EventProjectRepositoryAnalyze';
+
     static ENVIRONMENT_PREFIX = 'sdk.EventEnvironment';
 
     static APPLICATION_PREFIX = 'sdk.EventApplication';

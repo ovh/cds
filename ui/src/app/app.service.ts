@@ -39,6 +39,7 @@ import {
 import { WorkflowState } from './store/workflow.state';
 import { SidebarEvent } from 'app/service/sidebar/sidebar.service';
 import { FlatNodeItem } from 'app/shared/tree/tree.component';
+import {AnalysisEvent, AnalysisService} from "./service/analysis/analysis.service";
 
 @Injectable()
 export class AppService {
@@ -58,7 +59,8 @@ export class AppService {
         private _workflowRunService: WorkflowRunService,
         private _store: Store,
         private _navbarService: NavbarService,
-        private _sidebarService: SidebarService
+        private _sidebarService: SidebarService,
+        private _analysisService: AnalysisService
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
     }
@@ -121,7 +123,11 @@ export class AppService {
                 case EventType.PROJECT_REPOSITORY_REMOVE:
                     let removeParent = <FlatNodeItem>{id: event?.payload['vcs']?.id, type: 'vcs'}
                     let removeEvent = new SidebarEvent(event?.payload['repository']?.id, event?.payload['repository']?.name, 'repository', 'remove', removeParent);
-                   this._sidebarService.sendEvent(removeEvent);
+                    this._sidebarService.sendEvent(removeEvent);
+                    break;
+                case EventType.PROJECT_REPOSITORY_ANALYSE:
+                    let aEvent = new AnalysisEvent(event?.payload['vcs_id'], event?.payload['repository_id'], event?.payload['analysis_id'], event?.payload['status']);
+                    this._analysisService.sendEvent(aEvent);
                     break;
             }
         }
