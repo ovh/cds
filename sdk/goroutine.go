@@ -143,7 +143,7 @@ func (m *GoRoutines) exec(g *GoRoutine) {
 		defer func() {
 			if r := recover(); r != nil {
 				buf := make([]byte, 1<<16)
-				runtime.Stack(buf, false)
+				buf = buf[:runtime.Stack(buf, false)]
 				ctx = context.WithValue(ctx, cdslog.Stacktrace, string(buf))
 				log.Error(ctx, "[PANIC][%s] %s failed", hostname, g.Name)
 			}
