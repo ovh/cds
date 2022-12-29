@@ -21,6 +21,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 type DistribClient struct {
@@ -201,6 +202,9 @@ type BuildInfoRequest struct {
 
 func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
+	ctx, end := telemetry.Span(ctx, "artifactory.PrepareBuildInfo", telemetry.Tag("buildInfoName", buildInfoName))
+	defer end()
+
 	log.Debug(ctx, "PrepareBuildInfo %q maturity:%q", buildInfoName, r.DefaultLowMaturitySuffix)
 
 	buildInfoRequest := &buildinfo.BuildInfo{
@@ -247,9 +251,13 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 }
 
 func computeBuildInfoModules(ctx context.Context, client artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.WorkflowRunResult) ([]buildinfo.Module, error) {
+	ctx, end := telemetry.Span(ctx, "artifactory.computeBuildInfoModules")
+	defer end()
 	modules := make([]buildinfo.Module, 0)
 	for _, r := range runResults {
+		ctx, endc := telemetry.Span(ctx, "artifactory.PrepareBuildInfo", telemetry.Tag("runResult.Type", r.Type))
 		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
+			endc()
 			continue
 		}
 
@@ -266,6 +274,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 
 		data, err := r.GetArtifactManager()
 		if err != nil {
+			endc()
 			return nil, err
 		}
 		var moduleExists bool
@@ -277,10 +286,12 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 		for _, m := range modules {
 			if m.Id == mod.Id {
 				moduleExists = true
+				endc()
 				break
 			}
 		}
 		if moduleExists {
+			endc()
 			continue
 		}
 		switch data.RepoType {
@@ -289,6 +300,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 			props := make(map[string]string)
 			parsedUrl, err := url.Parse(client.GetURL())
 			if err != nil {
+				endc()
 				return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]: %v", client.GetURL())
 			}
 			urlArtifactory := parsedUrl.Host
@@ -301,6 +313,7 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 
 		files, err := retrieveModulesFiles(ctx, client, data.RepoName, data.Path)
 		if err != nil {
+			endc()
 			return nil, err
 		}
 
@@ -310,23 +323,30 @@ func computeBuildInfoModules(ctx context.Context, client artifact_manager.Artifa
 		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
 		if err := SetPropertiesRecursive(ctx, client, data.RepoName, currentMaturity, files, props); err != nil {
+			endc()
 			return nil, err
 		}
 
 		artifacts, err := retrieveModulesArtifacts(ctx, client, files)
 		if err != nil {
+			endc()
 			return nil, err
 		}
 		mod.Artifacts = artifacts
 		modules = append(modules, mod)
+		endc()
 	}
 
 	return modules, nil
 }
 
 func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string) ([]sdk.FileInfo, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.retrieveModulesFiles")
+	defer end()
 	log.Debug(ctx, "retrieve:ModulesFiles repoName:%s path:%s", repoName, path)
+	_, endc := telemetry.Span(ctx, "artifactoryClient.GetFolderInfo", telemetry.Tag("path", path), telemetry.Tag("repoName", repoName))
 	folderInfo, err := client.GetFolderInfo(repoName, path)
+	endc()
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +361,9 @@ func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactM
 			}
 			files = append(files, childrenFiles...)
 		} else {
+			_, end := telemetry.Span(ctx, "artifactoryClient.GetFileInfo", telemetry.Tag("path", path), telemetry.Tag("uri", c.Uri))
 			fileInfo, err := client.GetFileInfo(repoName, fmt.Sprintf("%s%s", path, c.Uri))
+			end()
 			if err != nil {
 				return nil, err
 			}
@@ -353,6 +375,8 @@ func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactM
 }
 
 func SetPropertiesRecursive(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, maturity string, files []sdk.FileInfo, props *utils.Properties) error {
+	ctx, end := telemetry.Span(ctx, "artifactory.SetPropertiesRecursive")
+	defer end()
 	if props == nil {
 		return nil
 	}
@@ -360,9 +384,12 @@ func SetPropertiesRecursive(ctx context.Context, client artifact_manager.Artifac
 		repoSrc := repoName
 		repoSrc += "-" + maturity
 		log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, fileInfo.Path)
+		_, endc := telemetry.Span(ctx, "artifactory.SetProperties", telemetry.Tag("repoSrc", repoSrc))
 		if err := client.SetProperties(repoSrc, fileInfo.Path, props); err != nil {
+			endc()
 			return err
 		}
+		endc()
 	}
 	return nil
 }
