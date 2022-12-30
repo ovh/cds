@@ -1,0 +1,12 @@
+<div class="entityContainer">
+    <ng-container *ngIf="_jsonSchema && data">
+        <div class="form">
+
+        </div>
+        <div class="yaml">
+            <!-- " -->
+            <nz-code-editor class="editor" [(ngModel)]="data" [nzEditorOption]="{ language: 'yaml' }" (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+        </div>
+    </ng-container>
+</div>
+

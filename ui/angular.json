@@ -26,6 +26,11 @@
                 "glob": "*",
                 "input": "node_modules/@ant-design/icons-angular/src/inline-svg/",
                 "output": "/assets/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/monaco-editor/min/vs",
+                "output": "/assets/vs/"
               }
             ],
             "styles": [
@@ -71,7 +76,7 @@
               "node_modules/js-yaml/dist/js-yaml.js",
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
-              "node_modules/prismjs/prism.js",
+              "node_modules/prismjs/prism.js"
             ],
             "allowedCommonJsDependencies": [
                 "raven-js",
@@ -166,7 +171,7 @@
               "node_modules/codemirror/addon/edit/matchbrackets.js",
               "node_modules/codemirror/addon/display/autorefresh.js",
               "resources/cds-hint.js",
-              "node_modules/ansi_up/ansi_up.js",
+              "node_modules/ansi_up/ansi_up.js"
             ],
             "styles": [
               "node_modules/dragula/dist/dragula.css",

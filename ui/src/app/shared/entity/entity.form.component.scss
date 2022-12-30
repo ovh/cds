@@ -1,0 +1,15 @@
+@import "../../../../node_modules/ng-zorro-antd/code-editor/style/index.min.css";
+
+.entityContainer {
+    .form {
+        width: 50%;
+    }
+    .yaml {
+        width: 50%;
+
+        .editor {
+            height: 200px;
+        }
+    }
+}
+

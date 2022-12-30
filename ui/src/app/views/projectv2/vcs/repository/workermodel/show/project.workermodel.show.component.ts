@@ -9,6 +9,7 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import {SidebarEvent, SidebarService} from 'app/service/sidebar/sidebar.service';
 import {FlatNodeItem} from "../../../../../../shared/tree/tree.component";
+import {Schema} from "jsonschema";
 
 @Component({
     selector: 'app-projectv2-workermodel-show',
@@ -25,7 +26,7 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
     vcsProject: VCSProject;
     repository: ProjectRepository;
     workerModel: Entity;
-    jsonSchema: any;
+    jsonSchema: Schema;
 
     constructor(private _store: Store, private _routeActivated: ActivatedRoute, private _projectService: ProjectService,
                 private _cd: ChangeDetectorRef, private _toastService: ToastService, private _router: Router, private _sidebarService: SidebarService) {

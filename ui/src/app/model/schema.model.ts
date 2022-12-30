@@ -15,7 +15,7 @@ export class JSONSchema implements Schema {
         return flatSchema;
     }
 
-    static browse(schema: Schema, flatSchema: Array<FlatElement>, elt: string, tree: Array<string>): Schema[] {
+    static browse(schema: Schema, flatSchema: Array<FlatElement>, elt: string, tree: Array<string>, condition?: any): Schema[] {
         let currentType = elt.replace(JSONSchema.refPrefix, '');
         let defs = schema['$defs']
         let defElt = defs[currentType];
@@ -35,24 +35,35 @@ export class JSONSchema implements Schema {
                         let newElt = properties[k].items['$ref'].replace(JSONSchema.defPrefix, '');
                         currentOneOf = JSONSchema.browse(schema, flatSchema, newElt, [...tree, k]);
                     }
-                    JSONSchema.addElement(k, flatSchema, tree, [<string>properties[k].type], currentOneOf);
+                    JSONSchema.addElement(k, flatSchema, tree, [<string>properties[k].type], currentOneOf, condition);
                 } else if (properties[k].$ref) {
                     let newElt = properties[k].$ref.replace(JSONSchema.defPrefix, '');
                     let currentOneOf = JSONSchema.browse(schema, flatSchema, newElt, [...tree, k]);
-                    JSONSchema.addElement(k, flatSchema, tree, ['object'], currentOneOf);
+                    JSONSchema.addElement(k, flatSchema, tree, ['object'], currentOneOf, condition);
                 } else {
                     let types = new Array<any>();
                     if (properties[k].oneOf) {
                         types = properties[k].oneOf.map(o => o.type).filter( o => o);
                     }
-                    JSONSchema.addElement(k, flatSchema, tree, types, null);
+                    if (defElt.allOf) {
+                        defElt.allOf.forEach(ao => {
+                            if (ao?.then?.properties?.spec?.$ref) {
+                                let newElt = ao?.then?.properties?.spec?.$ref.replace(JSONSchema.refPrefix, '');
+                                JSONSchema.browse(schema, flatSchema, newElt, [...tree, k], ao?.if?.properties);
+                            }
+                        });
+                    }
+                    JSONSchema.addElement(k, flatSchema, tree, types, null, condition);
                 }
             });
+        } else if (defElt.$ref) {
+            let subRootElt = defElt.$ref.replace(JSONSchema.refPrefix, '');
+            JSONSchema.browse(defElt, flatSchema, subRootElt, [...tree], condition);
         }
         return oneOf;
     }
 
-    static addElement(k: string, flatSchema: Array<FlatElement>, tree: Array<string>, type: Array<string>, oneOf: Array<Schema>) {
+    static addElement(k: string, flatSchema: Array<FlatElement>, tree: Array<string>, type: Array<string>, oneOf: Array<Schema>, condition?: any) {
         let flatElement = flatSchema.find(f => f.name === k);
         if (!flatElement) {
             flatElement = new FlatElement();
@@ -79,6 +90,7 @@ export class JSONSchema implements Schema {
         let flatElementPosition = new FlatElementPosition();
         flatElementPosition.depth = tree.length;
         flatElementPosition.parent = tree;
+        flatElementPosition.condition = condition;
         flatElement.positions.push(flatElementPosition);
     }
 }
@@ -104,6 +116,7 @@ export class FlatElementPosition {
     depth: number;
     parent: Array<string>;
     children: Array<string>;
+    condition: any;
 }
 
 
