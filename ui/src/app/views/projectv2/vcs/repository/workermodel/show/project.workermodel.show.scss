@@ -13,4 +13,22 @@
         overflow-y: auto;
         padding: 10px 30px;
     }
+
+    .footer {
+        display: flex;
+        height: 46px;
+        border-top: 1px solid #d9d9d9;
+        padding: 7px 30px;
+
+        :host-context(.night) & {
+            border-top: 1px solid #434343;
+        }
+
+        .buttons {
+            margin-left: auto;
+            button {
+                margin-left: 10px;
+            }
+        }
+    }
 }

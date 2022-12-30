@@ -6,11 +6,10 @@ import {AutoUnsubscribe} from "../decorator/autoUnsubscribe";
 import {Subscription} from "rxjs/Subscription";
 import {
     editor,
-    Uri
 } from 'monaco-editor';
 import {JSONSchema} from "../../model/schema.model";
 import {Schema} from "jsonschema";
-import {Editor} from "../../model/editor.model";
+import {JoinedEditorOptions} from "ng-zorro-antd/code-editor/typings";
 
 declare const monaco: any;
 
@@ -36,7 +35,8 @@ export class EntityFormComponent implements OnDestroy {
     }
 
     themeSub: Subscription;
-    editor?: editor.ICodeEditor | editor.IEditor;
+    editorOption: JoinedEditorOptions;
+
 
     constructor(private _cd: ChangeDetectorRef, private _configService: NzConfigService, private _themeStore: ThemeStore) {
         this.themeSub = this._themeStore.get().subscribe(t => {
@@ -48,6 +48,10 @@ export class EntityFormComponent implements OnDestroy {
                 },
             });
         });
+        this.editorOption = {
+            language: 'yaml',
+            minimap: {enabled: false},
+        }
     }
 
     ngOnDestroy() {}

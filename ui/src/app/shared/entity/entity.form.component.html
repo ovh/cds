@@ -5,7 +5,7 @@
         </div>
         <div class="yaml">
             <!-- " -->
-            <nz-code-editor class="editor" [(ngModel)]="data" [nzEditorOption]="{ language: 'yaml' }" (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+            <nz-code-editor class="editor" [(ngModel)]="data" [nzEditorOption]="editorOption" (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
         </div>
     </ng-container>
 </div>

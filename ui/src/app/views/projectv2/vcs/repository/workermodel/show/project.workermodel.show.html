@@ -4,5 +4,12 @@
         <div class="workerModel-container">
             <app-entity [data]="workerModel.data" [jsonschema]="jsonSchema"></app-entity>
         </div>
+        <div class="footer">
+            <div class="buttons">
+                <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
+                    Save
+                </button>
+            </div>
+        </div>
     </ng-container>
 </div>

@@ -1,14 +1,24 @@
 @import "../../../../node_modules/ng-zorro-antd/code-editor/style/index.min.css";
 
 .entityContainer {
+    display: flex;
+    height: 100%;
+
     .form {
         width: 50%;
     }
     .yaml {
         width: 50%;
+        height: 100%;
+        border-left: 1px solid #d9d9d9;
+
+        :host-context(.night) & {
+            border-left-color: #434343;
+        }
+
 
         .editor {
-            height: 200px;
+            height: 100%;
         }
     }
 }
