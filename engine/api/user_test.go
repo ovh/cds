@@ -3,10 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ovh/cds/engine/api/organization"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -229,6 +230,7 @@ func Test_deleteUserHandler(t *testing.T) {
 
 	initial1, jwtInitial1Raw := assets.InsertLambdaUser(t, db)
 	initial2, _ := assets.InsertLambdaUser(t, db)
+	initial3, _ := assets.InsertLambdaUser(t, db, &sdk.Group{Name: sdk.RandomString(10)})
 	admin1, jwtAdmin1Raw := assets.InsertAdminUser(t, db)
 	admin2, _ := assets.InsertAdminUser(t, db)
 
@@ -260,6 +262,12 @@ func Test_deleteUserHandler(t *testing.T) {
 			Name:           "A admin can't remove himself if last admin",
 			JWT:            jwtAdmin1Raw,
 			TargetUsername: admin1.Username,
+			ExpectedStatus: http.StatusForbidden,
+		},
+		{
+			Name:           "A user can be removed if last admin of a group",
+			JWT:            jwtAdmin1Raw,
+			TargetUsername: initial3.Username,
 			ExpectedStatus: http.StatusForbidden,
 		},
 	}
