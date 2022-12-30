@@ -53,9 +53,7 @@ export class EntityFormComponent implements OnDestroy {
     ngOnDestroy() {}
 
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
-        console.log('On editor init');
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({schemas: [{uri: '', schema: JSONSchema.flat(this._jsonSchema)}]});
-        monaco.languages.registerCompletionItemProvider("yaml", Editor.completionProvider(monaco));
     }
 
 }
