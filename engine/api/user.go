@@ -2,8 +2,9 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
+
+	"github.com/ovh/cds/engine/api/organization"
 
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
@@ -234,7 +235,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		}
 		for i := range gus {
 			if gus[i].Admin {
-				adminGroupIDs = append(adminGroupIDs, gus[i].ID)
+				adminGroupIDs = append(adminGroupIDs, gus[i].GroupID)
 			}
 		}
 		if len(adminGroupIDs) > 0 {
