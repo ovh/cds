@@ -58,7 +58,7 @@
     "diff": "4.0.2",
     "dragula": "3.7.2",
     "enhanced-resolve": "4.1.1",
-    "fast-json-patch": "2.0.7",
+    "fast-json-patch": "3.1.1",
     "font-awesome": "4.7.0",
     "immutable": "4.0.0-rc.12",
     "jquery": "3.6.1",
