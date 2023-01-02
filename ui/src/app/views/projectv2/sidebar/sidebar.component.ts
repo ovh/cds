@@ -8,7 +8,7 @@ import {
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { MenuItem, FlatNodeItem, TreeEvent, SelectedItem, TreeComponent } from 'app/shared/tree/tree.component';
 import { ProjectService } from 'app/service/project/project.service';
-import { Project, VCSProject } from 'app/model/project.model';
+import {EntityWorkerModel, Project, VCSProject} from 'app/model/project.model';
 import { Observable, of, Subscription } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -67,6 +67,13 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                             break;
                     }
                     break;
+                case EntityWorkerModel:
+                    switch (e.action) {
+                        case 'select':
+                            this.selectEntity(e);
+                            break;
+                    }
+                    break;
             }
             this._cd.markForCheck();
         });
@@ -78,9 +85,14 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
         });
     }
 
+    selectEntity(e: SidebarEvent): void {
+        let si = <SelectedItem>{id: e.parentIDs[0], type: 'vcs', child: {id: e.parentIDs[1], type: 'repository', child: { id: EntityWorkerModel, type: 'folder', child: {id: e.nodeID, name: e.nodeName, action:'select', type: EntityWorkerModel }}}}
+        this.tree.selectNode(si);
+    }
+
     selectRepository(e: SidebarEvent): void {
-        let si = <SelectedItem>{id: e.parent.id, type: 'vcs', child: {id: e.nodeID, name: e.nodeName, action: 'select', type: 'repository'}}
-        this.tree.selectNode(si)
+        let si = <SelectedItem>{id: e.parentIDs[0], type: 'vcs', child: {id: e.nodeID, name: e.nodeName, action: 'select', type: 'repository'}}
+        this.tree.selectNode(si);
     }
 
     removeRepository(e: SidebarEvent): void {
@@ -124,7 +136,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     loadRepositories(key: string, vcs: string): Observable<Array<FlatNodeItem>> {
         return this._projectService.getVCSRepositories(key, vcs).pipe(map((repos) => {
             return repos.map(r => {
-                return <FlatNodeItem>{name: r.name, parentName: vcs, id: r.id, type: 'repository', expandable: true, level: 1,
+                return <FlatNodeItem>{name: r.name, parentNames: [vcs], id: r.id, type: 'repository', expandable: true, level: 1,
                     loadChildren: () => {
                         return this.loadEntities(this._currentProject.key, vcs, r.name);
                     }}
@@ -142,7 +154,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     if (!existingEntities) {
                         existingEntities = [];
                     }
-                    existingEntities.push(<FlatNodeItem>{name: e.name, parentName: repo, id: e.id, type: e.type, expandable: false, level: 3, icon: 'file', iconTheme: 'outline'})
+                    existingEntities.push(<FlatNodeItem>{name: e.name, parentNames: [vcs, repo], id: e.id, type: e.type, expandable: false, level: 3, icon: 'file', iconTheme: 'outline'})
                     m.set(e.type, existingEntities);
                 });
 
@@ -171,9 +183,13 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                 break;
             case 'repository':
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentName, 'repository', e.node.name]).then();
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.name]).then();
                 }
                 break;
+            case EntityWorkerModel:
+                if (e.eventType === 'select') {
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name]).then();
+                }
         }
     }
 

@@ -111,6 +111,10 @@ func CleanURLParameter(u string) string {
 		u = "hatchery-identifier"
 	case "workerModelName":
 		u = "worker-model-name"
+	case "entityName":
+		u = "entity-name"
+	case "entityType":
+		u = "entity-type"
 	}
 	return u
 }

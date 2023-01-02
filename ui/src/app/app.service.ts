@@ -121,8 +121,7 @@ export class AppService {
                     this._navbarService.refreshData();
                     break;
                 case EventType.PROJECT_REPOSITORY_REMOVE:
-                    let removeParent = <FlatNodeItem>{id: event?.payload['vcs']?.id, type: 'vcs'}
-                    let removeEvent = new SidebarEvent(event?.payload['repository']?.id, event?.payload['repository']?.name, 'repository', 'remove', removeParent);
+                    let removeEvent = new SidebarEvent(event?.payload['repository']?.id, event?.payload['repository']?.name, 'repository', 'remove', [event?.payload['vcs']?.id]);
                     this._sidebarService.sendEvent(removeEvent);
                     break;
                 case EventType.PROJECT_REPOSITORY_ANALYSE:

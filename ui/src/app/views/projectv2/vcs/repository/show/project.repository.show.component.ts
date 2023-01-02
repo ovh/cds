@@ -46,7 +46,7 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
-                let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', <FlatNodeItem>{id: this.vcsProject.id, name: this.vcsProject.name, type: 'vcs'});
+                let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', [this.vcsProject.id]);
                 this._sidebarService.sendEvent(selectEvent);
                 this.loadAnalyses();
                 this._cd.markForCheck();

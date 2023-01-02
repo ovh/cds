@@ -23,6 +23,11 @@ import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
 import { AddHelp } from './store/help.action';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import {Editor} from "./model/editor.model";
+import {NzConfigService} from "ng-zorro-antd/core/config";
+import {CodeEditorConfig} from "ng-zorro-antd/core/config/config";
+
+declare const monaco: any;
 
 @Component({
     selector: 'app-root',
@@ -72,6 +77,7 @@ export class AppComponent implements OnInit, OnDestroy {
         private _ngZone: NgZone,
         private _monitoringService: MonitoringService,
         private _nzNotificationService: NzNotificationService,
+        private _configService: NzConfigService,
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         _translate.addLangs(['en']);
@@ -119,6 +125,12 @@ export class AppComponent implements OnInit, OnDestroy {
             }
             this._nzNotificationService.template(this.toastTemplate, data)
         });
+        const config: CodeEditorConfig = this._configService.getConfigForComponent('codeEditor') || {};
+        config.onLoad = () => {
+            monaco.languages.registerCompletionItemProvider("yaml", Editor.completionProvider(monaco));
+        }
+        this._configService.set('codeEditor', {defaultEditorOption: {...config}});
+
     }
 
     load(): void {

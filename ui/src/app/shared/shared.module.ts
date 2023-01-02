@@ -146,10 +146,15 @@ import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.s
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
 import { TreeComponent } from 'app/shared/tree/tree.component';
 import { AutoHeightSidebarCollapseDirective } from 'app/shared/directives/auto-height-sidebar-collapse.directive';
+import {EntityFormComponent} from "./entity/entity.form.component";
+import {NzCodeEditorModule} from "ng-zorro-antd/code-editor";
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
-    icon: {nzTheme: "outline"}
+    icon: {nzTheme: "outline"},
+    codeEditor: {
+        monacoEnvironment: {globalAPI: true}
+    }
 };
 
 const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline ,CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, ExpandOutline, ExportOutline,
@@ -165,6 +170,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
+        NzCodeEditorModule,
         NzCollapseModule,
         NzDividerModule,
         NzDropDownModule,
@@ -229,6 +235,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
+        EntityFormComponent,
         FavoriteCardsComponent,
         ForMapPipe,
         KeysFormComponent,
@@ -307,7 +314,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NoAuthenticationGuard,
         FeatureGuard,
         { provide: NZ_CONFIG, useValue: ngZorroConfig },
-        { provide: NZ_I18N, useValue: en_US }
+        { provide: NZ_I18N, useValue: en_US },
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -340,6 +347,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         DiffListComponent,
         DragulaModule,
         DurationMsPipe,
+        EntityFormComponent,
         FavoriteCardsComponent,
         ForMapPipe,
         FormsModule,
@@ -359,6 +367,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NzButtonModule,
         NzCardModule,
         NzCheckboxModule,
+        NzCodeEditorModule,
         NzCollapseModule,
         NzDividerModule,
         NzDropDownModule,

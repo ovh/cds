@@ -31,7 +31,7 @@ export interface FlatNodeItem {
     expandable: boolean;
     id: string;
     name: string;
-    parentName: string;
+    parentNames: string[];
     type: string;
     icon?: string;
     iconTheme?: string;
@@ -112,11 +112,11 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
     selectNode(node: SelectedItem) {
         let currentNodes = this.flattenedData.getValue();
         if (currentNodes) {
-            this.selectNodeRec(currentNodes, node, 0);
+            this.selectNodeRec(currentNodes, node, 0, []);
         }
     }
 
-    selectNodeRec(currentNodes: FlatNodeItem[], node: SelectedItem, level: number) {
+    selectNodeRec(currentNodes: FlatNodeItem[], node: SelectedItem, level: number, parents: string[]) {
         for (let i=0; i<currentNodes.length; i++) {
             let n = currentNodes[i];
             if (n.level !== level) {
@@ -133,21 +133,22 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
                     this.flattenedData.next(currentNodes);
                     return;
                 } else {
+                    parents.push(n.name);
                     if (this.childrenLoadedSet.has(n)) {
                         if (node.child.action === 'select') {
                             let nodeIndex = currentNodes.findIndex(n => n.id === node.child.id)
                             if (nodeIndex === -1) {
-                                currentNodes.splice(i + 1, 0, <FlatNodeItem>{id: node.child.id, name: node.child.name, parentName: n.name, level: level + 1, type: node.child.type, expandable: true});
+                                currentNodes.splice(i + 1, 0, <FlatNodeItem>{id: node.child.id, name: node.child.name, parentNames: parents, level: level + 1, type: node.child.type, expandable: true});
                                 this.flattenedData.next(currentNodes);
                             }
                         }
-                        this.selectNodeRec(this.flattenedData.getValue(), node.child, level + 1);
+                        this.selectNodeRec(this.flattenedData.getValue(), node.child, level + 1, parents);
                         this.treeControl.expand(n);
                     } else {
                         this.loadChildren(n).pipe(first()).subscribe(() => {
                             let nodes = this.flattenedData.getValue();
                             this.treeControl.expand(n);
-                            this.selectNodeRec(nodes, node.child, level + 1);
+                            this.selectNodeRec(nodes, node.child, level + 1, parents);
                         });
                     }
                 }
