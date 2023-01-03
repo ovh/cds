@@ -138,9 +138,9 @@ Here is the list of git variables available only for Bitbucket server
 
 ## Pipeline parameters
 
-On a pipeline, you can add some parameters, this will let you to use `{{.cds.pip.varname}}` in your pipeline.
+On a pipeline, you can add some parameters, this will let you to use `{{.cds.pip.param_name}}` in your pipeline.
 
-~~~yaml
+```yaml
 version: v1.0
 name: build
 
@@ -151,24 +151,31 @@ parameters:
 
 stages:
   ...
-~~~
 
-This will let you to use `{{.cds.pip.varname}}` in your pipeline.
+This will let you to use `{{.cds.pip.param_name}}` in your pipeline.
 Then, in the workflow, you can set the value for pipeline parameter in the `pipeline context`.
 
 ~~~yaml
+name: test-workflow
+version: v2.0
 workflow:
-  parameters:
-    version: "{{.cds.version}}"
+  the-pipeline:
+    pipeline: build
+    parameters:
+      varname: the-value
 ...
 ~~~
 
-You can use a Git or Builtin varaible using "", eg:
-
+You can use a Git or Builtin variable. example:
 ~~~yaml
+name: test-workflow
+version: v2.0
 workflow:
-  parameters:
-    param_name: value
+  the-pipeline:
+    pipeline: build
+    parameters:
+      varname: {{.cds.version}}
+      varname2: {{cds.pip.param_name}}
 ...
 ~~~
 
