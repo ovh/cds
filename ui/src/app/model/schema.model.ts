@@ -86,6 +86,7 @@ export class JSONSchema implements Schema {
             itemType.name = k;
             itemType.enum = properties?.enum;
             itemType.formOrder = properties?.order;
+            itemType.disabled = properties?.disabled;
 
 
             if (condition) {
@@ -186,7 +187,7 @@ export class FlatTypeElement {
     type: Array<string>;
     condition: Array<FlatElementTypeCondition>;
     formOrder: number;
-    formPosition: string;
+    disabled: string;
     enum: string[];
 }
 

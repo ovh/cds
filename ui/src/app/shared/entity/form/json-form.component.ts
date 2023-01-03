@@ -61,21 +61,24 @@ export class JSONFormComponent implements OnInit {
            let currentModel = {};
            if (v) {
                v.forEach(value => {
-                  let item = new FormItem();
-                  item.name = value.name;
-                  item.type = value.type[0];
-                  if (item.type === 'object' && value.type.length === 2) {
-                      item.objectType = value.type[1];
-                  }
-                  item.enum = value.enum;
-                  item.formOrder = value.formOrder;
-                  item.condition = value.condition;
-                  items.push(item);
-                  if (item.type) {
-                      currentModel[item.name] = null;
-                  } else {
-                      currentModel[item.name] = {};
-                  }
+                   if (value.disabled) {
+                       return;
+                   }
+                   let item = new FormItem();
+                   item.name = value.name;
+                   item.type = value.type[0];
+                   if (item.type === 'object' && value.type.length === 2) {
+                       item.objectType = value.type[1];
+                   }
+                   item.enum = value.enum;
+                   item.formOrder = value.formOrder;
+                   item.condition = value.condition;
+                   items.push(item);
+                   if (item.type) {
+                       currentModel[item.name] = null;
+                   } else {
+                       currentModel[item.name] = {};
+                   }
                });
            }
            items.sort((i, j) => i.formOrder - j.formOrder);
