@@ -1,14 +1,14 @@
-<div id="navbar">
+<nz-header [class.not-dark]="!darkActive" class="navbar">
     <a href="#" [routerLink]="['/']">
-        <img src="assets/images/cds.png" class="item" alt="CDS logo"
-            title="{{'navbar_home' | translate}}" />
+        <img src="assets/images/cds.png" class="item" alt="CDS logo" title="{{'navbar_home' | translate}}" />
     </a>
     <ng-container *ngIf="currentAuthSummary">
         <a nz-button nzType="link" class="item link" href="#" [routerLink]="['project', 'list', 'all']">
             {{ 'navbar_projects' | translate }}
         </a>
 
-        <button nz-dropdown [nzDropdownMenu]="bookmarks" nz-button nzType="text" [nzClickHide]="true" class="dropdown title">
+        <button nz-dropdown [nzDropdownMenu]="bookmarks" nz-button nzType="text" [nzClickHide]="true"
+            class="dropdown title">
             Bookmarks <i nz-icon nzType="caret-down" nzTheme="fill"></i>
         </button>
         <nz-dropdown-menu #bookmarks="nzDropdownMenu">
@@ -18,7 +18,7 @@
                         <ng-container *ngSwitchCase="'workflow'">
                             <li nz-menu-item>
                                 <a class="item" href="#"
-                                   [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
+                                    [routerLink]="['project', prj.key, 'workflow', prj.workflow_name]">
                                     <div class="details">
                                         <div class="title">
                                             {{prj.workflow_name}}
@@ -33,7 +33,7 @@
                         <ng-container *ngSwitchCase="'application'">
                             <li nz-menu-item>
                                 <a class="item" href="#"
-                                   [routerLink]="['project', prj.key, 'application', prj.application_name]">
+                                    [routerLink]="['project', prj.key, 'application', prj.application_name]">
                                     <div class="details">
                                         <div class="title">
                                             {{prj.application_name}}}
@@ -68,31 +68,47 @@
                 </li>
             </ul>
         </nz-dropdown-menu>
-
     </ng-container>
-    <a class="item link" href="#" [routerLink]="['/project']" *ngIf="currentAuthSummary">
-        {{ 'navbar_project_create' | translate }}
-    </a>
+
+    <ng-container *ngIf="currentAuthSummary">
+        <ng-container *ngIf="currentAuthSummary.isAdmin() || (apiConfig && !apiConfig.project_creation_disabled)">
+            <button nz-button nzType="default" [routerLink]="['/project']">
+                <i nz-icon nzType="plus"></i>
+                {{ 'navbar_project_create' | translate }}
+            </button>
+        </ng-container>
+        <ng-container
+            *ngIf="!currentAuthSummary.isAdmin() && apiConfig && apiConfig.project_creation_disabled && apiConfig.project_info_creation_disabled">
+            <button nz-button nzType="default" [nzTooltipTitle]="createProjectTemplate" nz-tooltip>
+                <i nz-icon nzType="info-circle" nzTheme="outline"></i>
+                {{ 'navbar_project_create' | translate }}
+            </button>
+            <ng-template #createProjectTemplate>
+                <markdown [data]="apiConfig.project_info_creation_disabled"></markdown>
+            </ng-template>
+        </ng-container>
+    </ng-container>
+
     <div class="right menu details">
 
         <!-- RING -->
         <div class="ring" *ngIf="currentAuthSummary">
             <nz-tag *ngIf="currentAuthSummary.isMaintainer() && currentAuthSummary.user.ring !== 'ADMIN'"
-                nzColor="orange">Maintainer</nz-tag>
-            <nz-tag *ngIf="currentAuthSummary.user.ring === 'ADMIN' && !currentAuthSummary.isAdmin()"
-                    nzColor="orange">
+                nzColor="#f50">Maintainer</nz-tag>
+            <nz-tag *ngIf="currentAuthSummary.user.ring === 'ADMIN' && !currentAuthSummary.isAdmin()" nzColor="#f50">
                 Maintainer
-                <a class="detail" (click)="mfaLogin()" title="Elevate to admin"><i nz-icon nzType="unlock" nzTheme="fill"></i></a>
+                <a class="detail" (click)="mfaLogin()" title="Elevate to admin"><i nz-icon nzType="unlock"
+                        nzTheme="fill"></i></a>
             </nz-tag>
-            <nz-tag *ngIf="currentAuthSummary.isAdmin()" nzColor="red">Admin</nz-tag>
+            <nz-tag *ngIf="currentAuthSummary.isAdmin()" nzColor="#f00">Admin</nz-tag>
         </div>
 
         <!-- SEARCH AREA -->
         <div class="search" *ngIf="currentAuthSummary">
             <nz-input-group [nzSuffix]="suffixIconSearch" nz-popover [nzPopoverContent]="popupSearchTemplate"
-                            nzPopoverPlacement="bottom" nzPopoverTrigger="click">
-                <input type="text" nz-input placeholder="Search..."
-                       [(ngModel)]="searchValue" (blur)="search()" (click)="search()" (keyup)="search()" />
+                nzPopoverPlacement="bottom" nzPopoverTrigger="click">
+                <input type="text" nz-input placeholder="Search..." [(ngModel)]="searchValue" (blur)="search()"
+                    (click)="search()" (keyup)="search()" />
             </nz-input-group>
             <ng-template #suffixIconSearch>
                 <i nz-icon nzType="search"></i>
@@ -114,7 +130,7 @@
                     </div>
                     <div nz-col nzSpan="12">
                         <div nz-tooltip nzTooltipPlacement="left" class="right"
-                             [nzTooltipTitle]="'navbar_search_help_details' | translate">
+                            [nzTooltipTitle]="'navbar_search_help_details' | translate">
                             <i nz-icon nzType="question-circle" nzTheme="outline"></i>
                             {{ 'navbar_search_help' | translate }}
                         </div>
@@ -133,8 +149,8 @@
                             <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
                             <div class="content">
                                 <a class="header" (click)="$event.stopPropagation()"
-                                   [routerLink]="['/project', el.projectKey]"
-                                   title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                    [routerLink]="['/project', el.projectKey]"
+                                    title="{{ 'common_project_title' | translate }}{{el.title}}">
                                     {{el.title}}
                                 </a>
                             </div>
@@ -153,14 +169,13 @@
                             <i nz-icon nzType="star" nzTheme="outline" *ngIf="el.favorite"></i>
                             <div class="content">
                                 <a class="header" (click)="$event.stopPropagation()"
-                                   [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
-                                   title="{{ 'common_workflow_title' | translate }}{{el.title}}">
+                                    [routerLink]="['/project', el.projectKey, 'workflow', el.title]"
+                                    title="{{ 'common_workflow_title' | translate }}{{el.title}}">
                                     {{el.title}}
                                 </a>
                                 <div class="description">{{'navbar_in_project' | translate}}
-                                    <a (click)="$event.stopPropagation()"
-                                       [routerLink]="['/project', el.projectKey]"
-                                       title="{{ 'common_project_title' | translate }}{{el.title}}">
+                                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', el.projectKey]"
+                                        title="{{ 'common_project_title' | translate }}{{el.title}}">
                                         {{el.projectKey}}
                                     </a>
                                 </div>
@@ -211,10 +226,13 @@
                         <a href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
                     </li>
                     <li nz-menu-item>
-                        <a href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
+                        <a href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' |
+                            translate
+                            }}</a>
                     </li>
                     <li nz-menu-item>
-                        <a href="#" [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates' |
+                        <a href="#" [routerLink]="['settings', 'workflow-template']">{{ 'navbar_workflow_templates'
+                            |
                             translate }}</a>
                     </li>
                     <li nz-menu-divider></li>
@@ -224,7 +242,8 @@
 
                     <li nz-menu-divider></li>
                     <li nz-menu-item>
-                        <a href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
+                        <a href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate
+                            }}</a>
                     </li>
                     <li nz-menu-item>
                         <a href="#" [routerLink]="['docs', '']" target="_blank" rel="noopener noreferrer">{{
@@ -256,7 +275,8 @@
             <nz-dropdown-menu #adminMenu="nzDropdownMenu">
                 <ul nz-menu>
                     <li nz-menu-item>
-                        <a href="#" [routerLink]="['admin', 'worker-model-pattern']">Patterns of configuration scripts</a>
+                        <a href="#" [routerLink]="['admin', 'worker-model-pattern']">Patterns of configuration
+                            scripts</a>
                     </li>
                     <li nz-menu-item>
                         <a href="#" [routerLink]="['admin', 'hooks-tasks']">Hooks tasks summary</a>
@@ -268,4 +288,4 @@
             </nz-dropdown-menu>
         </ng-container>
     </div>
-</div>
+</nz-header>
