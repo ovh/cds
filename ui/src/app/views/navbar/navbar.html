@@ -72,14 +72,14 @@
 
     <ng-container *ngIf="currentAuthSummary">
         <ng-container *ngIf="currentAuthSummary.isAdmin() || (apiConfig && !apiConfig.project_creation_disabled)">
-            <button nz-button nzType="primary" [routerLink]="['/project']">
+            <button nz-button nzType="default" [routerLink]="['/project']">
                 <i nz-icon nzType="plus"></i>
                 {{ 'navbar_project_create' | translate }}
             </button>
         </ng-container>
         <ng-container
             *ngIf="!currentAuthSummary.isAdmin() && apiConfig && apiConfig.project_creation_disabled && apiConfig.project_info_creation_disabled">
-            <button nz-button nzType="primary" [nzTooltipTitle]="createProjectTemplate" nz-tooltip>
+            <button nz-button nzType="default" [nzTooltipTitle]="createProjectTemplate" nz-tooltip>
                 <i nz-icon nzType="info-circle" nzTheme="outline"></i>
                 {{ 'navbar_project_create' | translate }}
             </button>
