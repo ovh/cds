@@ -1,0 +1,7 @@
+<ng-container *ngFor="let c of field.condition">
+    <ng-container *ngIf="model[c.refProperty] === c.conditionValue">
+        <ng-container *ngFor="let f of jsonFormSchema.types[c.type].fields">
+            <app-json-form-field [jsonFormSchema]="jsonFormSchema" [field]="f" [(model)]="model[field.name]" (modelChange)="emitChange()"></app-json-form-field>
+        </ng-container>
+    </ng-container>
+</ng-container>

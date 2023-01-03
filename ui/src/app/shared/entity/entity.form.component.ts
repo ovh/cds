@@ -7,7 +7,7 @@ import {Subscription} from "rxjs/Subscription";
 import {
     editor,
 } from 'monaco-editor';
-import {JSONSchema} from "../../model/schema.model";
+import {FlatSchema, JSONSchema} from "../../model/schema.model";
 import {Schema} from "jsonschema";
 import {JoinedEditorOptions} from "ng-zorro-antd/code-editor/typings";
 
@@ -24,19 +24,13 @@ export class EntityFormComponent implements OnDestroy {
 
     @Input() data: string;
 
-    _jsonSchema: Schema;
-
+    _jsonSchema: FlatSchema;
     @Input() set jsonschema(schema: Schema) {
-        this._jsonSchema = schema;
-    }
-
-    get jsonschema(): Schema {
-        return this._jsonSchema;
+        this._jsonSchema = JSONSchema.flat(schema);
     }
 
     themeSub: Subscription;
     editorOption: JoinedEditorOptions;
-
 
     constructor(private _cd: ChangeDetectorRef, private _configService: NzConfigService, private _themeStore: ThemeStore) {
         this.themeSub = this._themeStore.get().subscribe(t => {
@@ -57,7 +51,7 @@ export class EntityFormComponent implements OnDestroy {
     ngOnDestroy() {}
 
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
-        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({schemas: [{uri: '', schema: JSONSchema.flat(this._jsonSchema)}]});
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({schemas: [{uri: '', schema: this._jsonSchema}]});
     }
 
 }
