@@ -12,9 +12,10 @@ type ConfigUser struct {
 }
 
 type APIConfig struct {
-	DefaultRunRetentionPolicy   string `json:"default_run_retention_policy"`
-	ProjectCreationDisabled     bool   `json:"project_creation_disabled"`
-	ProjectInfoCreationDisabled string `json:"project_info_creation_disabled,omitempty"`
+	DefaultRunRetentionPolicy    string `json:"default_run_retention_policy"`
+	ProjectCreationDisabled      bool   `json:"project_creation_disabled"`
+	ProjectInfoCreationDisabled  string `json:"project_info_creation_disabled,omitempty"`
+	ProjectVCSManagementDisabled bool   `json:"project_vcs_management_disabled,omitempty"`
 }
 
 type TCPServer struct {
