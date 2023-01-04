@@ -23,6 +23,8 @@ workflow:
     pipeline: deploy
     application: my-application
     environment: my-production
+    parameters:
+      name: value
     one_at_a_time: true
 hooks:
   build:
