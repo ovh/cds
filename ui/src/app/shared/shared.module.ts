@@ -148,6 +148,7 @@ import { TreeComponent } from 'app/shared/tree/tree.component';
 import { AutoHeightSidebarCollapseDirective } from 'app/shared/directives/auto-height-sidebar-collapse.directive';
 import {EntityFormComponent} from "./entity/entity.form.component";
 import {NzCodeEditorModule} from "ng-zorro-antd/code-editor";
+import { APIConfigGuard } from 'app/guard/api-config.guard';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -311,6 +312,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         SharedService,
         ToastService,
         AuthenticationGuard,
+        APIConfigGuard,
         NoAuthenticationGuard,
         FeatureGuard,
         { provide: NZ_CONFIG, useValue: ngZorroConfig },

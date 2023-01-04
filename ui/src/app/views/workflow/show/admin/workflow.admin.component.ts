@@ -143,11 +143,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _eventService: EventService,
         private _configService: ConfigService
     ) {
-        this._configService.getAPIConfig().subscribe(c => {
-            this.apiConfig = c;
-            this._cd.markForCheck();
-        });
-
         this._dragularService.createGroup('bag-tag', {
             accepts(el, target, source, sibling) {
                 return sibling !== null;

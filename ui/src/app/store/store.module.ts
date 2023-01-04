@@ -11,6 +11,7 @@ import { EnvironmentState } from 'app/store/environment.state';
 import { PipelinesState } from 'app/store/pipelines.state';
 import { environment as env } from '../../environments/environment';
 import { AuthenticationState } from './authentication.state';
+import { ConfigState } from './config.state';
 import { EventState } from './event.state';
 import { FeatureState } from './feature.state';
 import { HelpState } from './help.state';
@@ -26,17 +27,18 @@ import { WorkflowState } from './workflow.state';
         NgxsLoggerPluginModule.forRoot({ logger: console, collapsed: false, disabled: env.production }),
         NgxsReduxDevtoolsPluginModule.forRoot({ disabled: env.production }),
         NgxsModule.forRoot([
-            AuthenticationState,
             ApplicationsState,
+            AuthenticationState,
             CDSState,
+            ConfigState,
             EnvironmentState,
             EventState,
+            FeatureState,
             HelpState,
             PipelinesState,
             ProjectState,
             QueueState,
-            WorkflowState,
-            FeatureState
+            WorkflowState
         ], { developmentMode: !env.production })
     ],
     exports: [
