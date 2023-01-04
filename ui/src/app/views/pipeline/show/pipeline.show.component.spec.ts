@@ -32,6 +32,7 @@ import { SharedModule } from 'app/shared/shared.module';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { PipelineModule } from '../pipeline.module';
 import { PipelineShowComponent } from './pipeline.show.component';
+import { ConfigService } from 'app/service/services.module';
 
 describe('CDS: Pipeline Show', () => {
 
@@ -57,7 +58,8 @@ describe('CDS: Pipeline Show', () => {
                 WorkflowRunService,
                 UserService,
                 RouterService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 PipelineModule,

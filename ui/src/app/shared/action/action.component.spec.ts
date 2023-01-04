@@ -25,10 +25,7 @@ import { ActionComponent } from './action.component';
 import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { By } from '@angular/platform-browser';
-import { NzDropDownDirective } from 'ng-zorro-antd/dropdown';
-import { OverlayContainer } from '@angular/cdk/overlay';
-import { Inject } from '@angular/core';
+import { ConfigService } from 'app/service/services.module';
 
 describe('CDS: Action Component', () => {
 
@@ -49,7 +46,8 @@ describe('CDS: Action Component', () => {
                 { provide: APP_BASE_HREF, useValue: '/' },
                 ThemeStore,
                 UserService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 BrowserAnimationsModule,

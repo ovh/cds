@@ -9,6 +9,7 @@ import { ApplicationService } from 'app/service/application/application.service'
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { RouterService } from 'app/service/router/router.service';
+import { ConfigService } from 'app/service/services.module';
 import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -59,7 +60,8 @@ describe('CDS: Pipeline Add Component', () => {
                 WorkflowRunService,
                 UserService,
                 RouterService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 PipelineModule,
