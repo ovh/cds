@@ -322,6 +322,13 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		},
 	}
 
+	// Set custom annotation on pod if needed
+	for _, a := range h.Config.CustomAnnotations {
+		if a.Key != "" && a.Value != "" {
+			podSchema.Annotations[a.Key] = a.Value
+		}
+	}
+
 	// Check here to add secret if needed
 	if spawnArgs.Model.ModelDocker.Private {
 		secretRegistryName, err := h.createRegistrySecret(ctx, *spawnArgs.Model)

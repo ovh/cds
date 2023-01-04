@@ -516,6 +516,9 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			privateKey, _ := jws.NewRandomRSAKey()
 			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
 			h.Kubernetes.RSAPrivateKey = string(privateKeyPEM)
+			var a kubernetes.CustomAnnotation
+			defaults.SetDefaults(&a)
+			conf.Hatchery.Kubernetes.CustomAnnotations = append(conf.Hatchery.Kubernetes.CustomAnnotations, a)
 		}
 	}
 

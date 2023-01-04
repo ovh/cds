@@ -49,6 +49,13 @@ type HatcheryConfiguration struct {
 	KubernetesClientCertData string `mapstructure:"clientCertData" toml:"clientCertData" default:"" commented:"true" comment:"Client certificate data (content, not path and not base64 encoded) for tls kubernetes (optional if no tls needed)" json:"-"`
 	// KubernetesKeyData Client certificate data for tls kubernetes (optional if no tls needed)
 	KubernetesClientKeyData string `mapstructure:"clientKeyData" toml:"clientKeyData" default:"" commented:"true" comment:"Client certificate data (content, not path and not base64 encoded) for tls kubernetes (optional if no tls needed)" json:"-"`
+	// CustomAnnotations that will be added to pods spawned by the hatchery
+	CustomAnnotations []CustomAnnotation `mapstructure:"customAnnotations" toml:"customAnnotations" default:"" commented:"true" comment:"CustomAnnotations that will be added to pods spawned by the hatchery" json:"-"`
+}
+
+type CustomAnnotation struct {
+	Key   string `mapstructure:"key" toml:"key" default:"" commented:"true" json:"-"`
+	Value string `mapstructure:"value" toml:"value" default:"" commented:"true" json:"-"`
 }
 
 // HatcheryKubernetes implements HatcheryMode interface for local usage
