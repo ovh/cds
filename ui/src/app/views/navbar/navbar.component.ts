@@ -40,6 +40,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     listWorkflows: List<NavbarRecentData>;
     navbarSubscription: Subscription;
     authSubscription: Subscription;
+    configSubscription: Subscription;
     currentRoute: {};
     recentView = true;
     currentAuthSummary: AuthSummary;
@@ -71,7 +72,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-        this.authSubscription = this._store.select(ConfigState.api).subscribe(c => {
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
             this.apiConfig = c;
             this._cd.markForCheck();
         });
