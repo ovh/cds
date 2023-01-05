@@ -1,7 +1,6 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { MaintainerGuard } from 'app/guard/admin.guard';
-import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { AdminModule } from 'app/views/admin/admin.module';
 import { AdminComponent } from './admin.component';
 import { HookTaskListComponent } from './hook-task/list/hook-task.list.component';
@@ -16,8 +15,8 @@ const routes: Routes = [
     {
         path: '',
         component: AdminComponent,
-        canActivateChild: [AuthenticationGuard, MaintainerGuard],
-        canActivate: [AuthenticationGuard, MaintainerGuard],
+        canActivateChild: [MaintainerGuard],
+        canActivate: [MaintainerGuard],
         children: [
             {
                 path: 'worker-model-pattern',

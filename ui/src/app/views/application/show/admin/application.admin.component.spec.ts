@@ -22,6 +22,7 @@ import { ProjectService } from '../../../../service/project/project.service';
 import { ProjectStore } from '../../../../service/project/project.store';
 import { RepoManagerService } from '../../../../service/repomanager/project.repomanager.service';
 import {
+    ConfigService,
     MonitoringService, RouterService,
     ServicesModule,
     WorkflowRunService,
@@ -75,7 +76,8 @@ describe('CDS: Application Admin Component', () => {
                 Store,
                 UserService,
                 RouterService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 RouterTestingModule.withRoutes([

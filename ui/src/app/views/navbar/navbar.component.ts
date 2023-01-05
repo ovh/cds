@@ -14,6 +14,7 @@ import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { ConfigState } from 'app/store/config.state';
 import { HelpState } from 'app/store/help.state';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
@@ -39,6 +40,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     listWorkflows: List<NavbarRecentData>;
     navbarSubscription: Subscription;
     authSubscription: Subscription;
+    configSubscription: Subscription;
     currentRoute: {};
     recentView = true;
     currentAuthSummary: AuthSummary;
@@ -63,16 +65,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _theme: ThemeStore,
         private _routerService: RouterService,
-        private _cd: ChangeDetectorRef,
-        private _configService: ConfigService
+        private _cd: ChangeDetectorRef
     ) {
-        this._configService.getAPIConfig().subscribe(c => {
-            this.apiConfig = c;
+        this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
+            this.currentAuthSummary = s;
             this._cd.markForCheck();
         });
 
-        this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
-            this.currentAuthSummary = s;
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
+            this.apiConfig = c;
             this._cd.markForCheck();
         });
 

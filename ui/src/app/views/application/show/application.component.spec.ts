@@ -29,6 +29,7 @@ import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import {
+    ConfigService,
     MonitoringService,
     RouterService,
     ServicesModule,
@@ -76,7 +77,8 @@ describe('CDS: Application', () => {
                 Store,
                 UserService,
                 RouterService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 ApplicationModule,

@@ -1,6 +1,5 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { FeatureGuard } from 'app/guard/feature.guard';
 import { FeatureNames } from 'app/service/feature/feature.service';
 import { ProjectModule } from 'app/views/project/project.module';
@@ -11,8 +10,6 @@ import { ProjectShowComponent } from './show/project.component';
 const projectRoutes: Routes = [
     {
         path: '',
-        canActivate: [AuthenticationGuard],
-        canActivateChild: [AuthenticationGuard],
         children: [
             { path: '', component: ProjectAddComponent, data: { title: 'Add • Project' } },
             { path: 'list/all', component: ProjectListComponent, data: { title: 'List • Project' } },
