@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -301,5 +302,57 @@ func (api *API) postRepositoryHookRegenKeyHandler() ([]service.RbacChecker, serv
 				HookSignKey: newSecret,
 			}
 			return service.WriteJSON(w, hook, http.StatusOK)
+		}
+}
+
+func (api *API) getProjectRepositoryBranchesHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			limitS := QueryString(req, "limit")
+			limit, err := strconv.Atoi(limitS)
+			if limit == 0 || err != nil {
+				limit = 50
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return err
+			}
+			defer tx.Rollback()
+
+			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
+			if err != nil {
+				_ = tx.Rollback() // nolint
+				return err
+			}
+			branches, err := client.Branches(ctx, repo.Name, sdk.VCSBranchesFilter{Limit: int64(limit)})
+			if err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return err
+			}
+			return service.WriteJSON(w, branches, http.StatusOK)
 		}
 }

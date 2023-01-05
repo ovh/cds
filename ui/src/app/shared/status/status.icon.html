@@ -8,6 +8,10 @@
             <i nz-icon nzType="close" nzTheme="outline" class="red" *ngIf="!optional"></i>
             <i nz-icon nzType="warning" nzTheme="outline" class="orange" *ngIf="optional"></i>
         </ng-container>
+        <ng-container *ngSwitchCase="'Error'">
+            <i nz-icon nzType="close" nzTheme="outline" class="red" *ngIf="!optional"></i>
+            <i nz-icon nzType="warning" nzTheme="outline" class="orange" *ngIf="optional"></i>
+        </ng-container>
         <i *ngSwitchCase="pipelineStatusEnum.STOPPED" nz-icon nzType="stop" nzTheme="outline" class="red"></i>
         <i *ngSwitchCase="pipelineStatusEnum.DISABLED" nz-icon nzType="stop" nzTheme="outline"></i>
         <i *ngSwitchCase="pipelineStatusEnum.SKIPPED" nz-icon nzType="stop" nzTheme="outline"></i>

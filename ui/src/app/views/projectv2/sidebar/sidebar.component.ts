@@ -3,17 +3,25 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component, Input,
-    OnDestroy, OnInit, ViewChild,
+    OnDestroy, ViewChild,
 } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { MenuItem, FlatNodeItem, TreeEvent, SelectedItem, TreeComponent } from 'app/shared/tree/tree.component';
+import {
+    MenuItem,
+    FlatNodeItem,
+    TreeEvent,
+    SelectedItem,
+    TreeComponent,
+    FlatNodeItemSelect
+} from 'app/shared/tree/tree.component';
 import { ProjectService } from 'app/service/project/project.service';
 import {EntityWorkerModel, Project, VCSProject} from 'app/model/project.model';
 import { Observable, of, Subscription } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
 import {AnalysisService} from "../../../service/analysis/analysis.service";
+import {RouterService} from "../../../service/router/router.service";
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -39,7 +47,6 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     loading: boolean = true;
     refreshWorkspace: boolean = false;
     currentWorkspace: FlatNodeItem[];
-    currentIntegrations: FlatNodeItem[];
     panels: boolean[] = [true, false];
 
     sidebarServiceSub: Subscription;
@@ -47,7 +54,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
 
     ngOnDestroy(): void {}
 
-    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router,
+    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router, private _routerService: RouterService,
                 private _sidebarService: SidebarService, private _analysisService: AnalysisService) {
     }
 
@@ -136,16 +143,40 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     loadRepositories(key: string, vcs: string): Observable<Array<FlatNodeItem>> {
         return this._projectService.getVCSRepositories(key, vcs).pipe(map((repos) => {
             return repos.map(r => {
-                return <FlatNodeItem>{name: r.name, parentNames: [vcs], id: r.id, type: 'repository', expandable: true, level: 1,
-                    loadChildren: () => {
-                        return this.loadEntities(this._currentProject.key, vcs, r.name);
-                    }}
+                let nodeItem = <FlatNodeItem>{name: r.name, parentNames: [vcs], id: r.id, type: 'repository', expandable: true, level: 1};
+                let currentBranch = this._router?.routerState?.snapshot?.root?.queryParams['branch'];
+                nodeItem.loadChildren = () => {
+                    return this.loadEntities(this._currentProject.key, vcs, r.name, currentBranch);
+                };
+                nodeItem.onOpen = () => {
+                    return this._projectService.getVCSRepositoryBranches(key, vcs, r.name, 50).pipe(map(bs => {
+                        nodeItem.select = <FlatNodeItemSelect>{options: []};
+                        nodeItem.select.options = bs.map( b => {
+                            if (b.display_id === currentBranch) {
+                                nodeItem.select.selected = b.display_id;
+                            }
+                            if (b.default && !nodeItem.select.selected) {
+                                nodeItem.select.selected = b.display_id;
+                            }
+                            return {key: b.display_id, value: b.display_id}
+                        });
+                        nodeItem.select.onchange = () => {
+                            nodeItem.loadChildren = () => {
+                                return this.loadEntities(this._currentProject.key, vcs, r.name, nodeItem.select.selected);
+                            };
+                            this.tree.resetChildren(nodeItem);
+                            this._router.navigate([], {queryParams: {branch: nodeItem.select.selected}}).then();
+                        }
+                        this.tree.refresh();
+                    }));
+                }
+                return nodeItem;
             })
         }));
     }
 
-    loadEntities(key: string, vcs: string, repo: string): Observable<Array<FlatNodeItem>> {
-        return this._projectService.getRepoEntities(key, vcs, repo).pipe(map((entities) => {
+    loadEntities(key: string, vcs: string, repo: string, branch?: string): Observable<Array<FlatNodeItem>> {
+        return this._projectService.getRepoEntities(key, vcs, repo, branch).pipe(map((entities) => {
             let result = new Array<FlatNodeItem>();
             if (entities) {
                 let m = new Map<string, FlatNodeItem[]>();
@@ -188,7 +219,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                 break;
             case EntityWorkerModel:
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name]).then();
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], {queryParams: { branch: this._router?.routerState?.snapshot?.root?.queryParams['branch']}}).then();
                 }
         }
     }

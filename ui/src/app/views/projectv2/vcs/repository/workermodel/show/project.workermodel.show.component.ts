@@ -10,6 +10,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import {SidebarEvent, SidebarService} from 'app/service/sidebar/sidebar.service';
 import {FlatNodeItem} from "../../../../../../shared/tree/tree.component";
 import {Schema} from "jsonschema";
+import {finalize, first} from "rxjs/operators";
 
 @Component({
     selector: 'app-projectv2-workermodel-show',
@@ -27,6 +28,9 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
     repository: ProjectRepository;
     workerModel: Entity;
     jsonSchema: Schema;
+    currentWorkerModelName: string;
+    currentBranch: string;
+    errorNotFound: boolean;
 
     constructor(private _store: Store, private _routeActivated: ActivatedRoute, private _projectService: ProjectService,
                 private _cd: ChangeDetectorRef, private _toastService: ToastService, private _router: Router, private _sidebarService: SidebarService) {
@@ -35,24 +39,56 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
             if (this.vcsProject?.name === p['vcsName'] && this.repository?.name === p['repoName'] && this.workerModel?.name === p['workerModelName']) {
                 return;
             }
-
+            this.currentBranch = this._routeActivated?.queryParams['branch'];
+            this.currentWorkerModelName = p['workerModelName'];
+            this.loading = true;
             forkJoin( [
                 this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
                 this._projectService.getVCSProject(this.project.key, p['vcsName']),
-                this._projectService.getRepoEntity(this.project.key, p['vcsName'], p['repoName'], EntityWorkerModel, p['workerModelName']),
                 this._projectService.getJSONSchema(EntityWorkerModel)
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
-                this.workerModel = result[2]
-                this.jsonSchema = result[3];
+                this.jsonSchema = result[2];
+                this._cd.markForCheck();
+                this.loadWorkerModel(p['workerModelName'], this._routeActivated?.snapshot?.queryParams['branch']);
+            });
+            this._cd.markForCheck();
+        });
+        this._routeActivated.queryParams.subscribe(q => {
+            if (this.currentBranch === q['branch']) {
+                return;
+            }
+            if(this.repository && this.vcsProject) {
+                this.loadWorkerModel(this.currentWorkerModelName, q['branch']);
+            }
+            this.currentBranch = q['branch'];
+            this._cd.markForCheck();
+        });
+    }
+
+    loadWorkerModel(workerModelName: string, branch?: string): void {
+        this.loading = true;
+        this._projectService.getRepoEntity(this.project.key, this.vcsProject.name, this.repository.name, EntityWorkerModel, workerModelName, branch)
+            .pipe(finalize( () => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(wm => {
+                this.errorNotFound = false;
+                this.workerModel = wm;
                 let selectEvent = new SidebarEvent(this.workerModel.id, this.workerModel.name, EntityWorkerModel, 'select', [this.vcsProject.id, this.repository.id]);
                 this._sidebarService.sendEvent(selectEvent);
                 this._cd.markForCheck();
-            });
-
-
-        });
+            }, e => {
+                if (e?.status === 404) {
+                    let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', [this.vcsProject.id]);
+                    delete this.workerModel;
+                    this._sidebarService.sendEvent(selectEvent);
+                    this.errorNotFound = true;
+                    this._cd.markForCheck();
+                }
+            })
     }
 
     ngOnDestroy() {}

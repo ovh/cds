@@ -29,6 +29,7 @@ export interface SelectedItem {
 // Represent the data tree inside the ngZorro component
 export interface FlatNodeItem {
     expandable: boolean;
+    expanded: boolean;
     id: string;
     name: string;
     parentNames: string[];
@@ -39,7 +40,15 @@ export interface FlatNodeItem {
     active: boolean;
     loading?: boolean
     menu: MenuItem[];
+    select: FlatNodeItemSelect;
+    onOpen: () => Observable<any>;
     loadChildren: () => Observable<FlatNodeItem[]>
+}
+
+export interface FlatNodeItemSelect {
+    options: {key: string, value: string}[];
+    selected: string;
+    onchange: () => void;
 }
 
 export interface TreeEvent {
@@ -51,6 +60,7 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
     private flattenedData: BehaviorSubject<FlatNodeItem[]>;
     private childrenLoadedSet = new Set<FlatNodeItem>();
     private mapRepoAnalyzeEvent = new Map<String, string[]>();
+    private selectedNode: SelectedItem;
 
     constructor(private treeControl: TreeControl<FlatNodeItem>, initData: FlatNodeItem[]) {
         this.flattenedData = new BehaviorSubject<FlatNodeItem[]>(initData);
@@ -109,11 +119,35 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
         this.flattenedData.next(nodes);
     }
 
+    resetChildren(node: FlatNodeItem): void {
+        if (this.childrenLoadedSet.has(node)) {
+            this.childrenLoadedSet.delete(node);
+            let nodes = this.flattenedData.getValue();
+            let currentLevel = node.level;
+            let currentIndex = nodes.findIndex(n => n.id === node.id);
+            if (nodes.length > currentIndex + 1) {
+                for (let i = currentIndex+1; i<nodes.length; i++) {
+                    let childNode = nodes[i];
+                    if (childNode.level <= currentLevel) {
+                        break;
+                    }
+                    nodes.splice(i, 1);
+                    i--;
+                }
+                this.flattenedData.next(nodes);
+            }
+        }
+        this.loadChildren(node).pipe(first()).subscribe(() => {
+            this.selectNode(this.selectedNode);
+        });
+    }
+
     selectNode(node: SelectedItem) {
         let currentNodes = this.flattenedData.getValue();
         if (currentNodes) {
             this.selectNodeRec(currentNodes, node, 0, []);
         }
+        this.selectedNode = node;
     }
 
     selectNodeRec(currentNodes: FlatNodeItem[], node: SelectedItem, level: number, parents: string[]) {
@@ -182,6 +216,12 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
             if (treeControl.isExpandable(node)) {
                 currentExpand[treeControl.getLevel(node) + 1] = treeControl.isExpanded(node);
             }
+            if (!node.expanded && treeControl.isExpanded(node) && node.onOpen) {
+                node.onOpen().pipe(first()).subscribe(() => {
+                    this.flattenedData.next(nodes);
+                });
+            }
+            node.expanded = treeControl.isExpanded(node);
         });
         return results;
     }
@@ -277,6 +317,15 @@ export class TreeComponent {
 
     handleAnalysisEvent(event: AnalysisEvent): void {
         this.dataSource.handleAnalysisEvent(event);
+        this._cd.markForCheck();
+    }
+
+    refresh(): void {
+        this._cd.markForCheck();
+    }
+
+    resetChildren(n: FlatNodeItem): void {
+        this.dataSource.resetChildren(n);
         this._cd.markForCheck();
     }
 }

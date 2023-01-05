@@ -420,16 +420,15 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 	for filePath, content := range filesContent {
 		dir, fileName := filepath.Split(filePath)
-		fileNameWithoutSuffix := strings.TrimSuffix(fileName, ".yml")
 		var es []sdk.Entity
 		var err sdk.MultiError
 		switch {
 		case strings.HasPrefix(filePath, ".cds/worker-model-templates/"):
 			var tmpls []sdk.WorkerModelTemplate
-			es, err = sdk.ReadEntityFile(dir, fileNameWithoutSuffix, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, *analysis)
+			es, err = sdk.ReadEntityFile(dir, fileName, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, *analysis)
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
-			es, err = sdk.ReadEntityFile(dir, fileNameWithoutSuffix, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
+			es, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
 		default:
 			continue
 		}

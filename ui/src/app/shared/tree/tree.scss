@@ -7,24 +7,36 @@ nz-tree-view {
     .nocursor {
       cursor: default;
     }
-      .name.active {
-          padding-bottom: 3px;
-          border-bottom: 1px solid black;
 
-          :host-context(.night) & {
-              border-bottom: 1px solid white;
-          }
+    .name.active {
+      padding-bottom: 3px;
+      border-bottom: 1px solid black;
+
+      :host-context(.night) & {
+        border-bottom: 1px solid white;
       }
+    }
 
     .node {
       width: 100%;
+        display: flex;
+
+        .name {
+            width: 120px;
+            text-overflow: ellipsis;
+        }
+
+        nz-select {
+            margin-left: auto;
+            width: 120px;
+        }
+
 
       i {
-        float: right;
+        margin-left: auto;
         margin-top: 5px;
       }
 
     }
   }
 }
-

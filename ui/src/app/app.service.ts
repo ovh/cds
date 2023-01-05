@@ -104,6 +104,13 @@ export class AppService {
             }
             return;
         }
+        switch (event.type_event) {
+            case EventType.PROJECT_REPOSITORY_ANALYSE:
+                let aEvent = new AnalysisEvent(event?.payload['vcs_id'], event?.payload['repository_id'], event?.payload['analysis_id'], event?.payload['status']);
+                this._analysisService.sendEvent(aEvent);
+                return;
+        }
+
         if (event.type_event.indexOf(EventType.PROJECT_PREFIX) === 0 || event.type_event.indexOf(EventType.ENVIRONMENT_PREFIX) === 0 ||
             event.type_event === EventType.APPLICATION_ADD || event.type_event === EventType.APPLICATION_UPDATE ||
             event.type_event === EventType.APPLICATION_DELETE ||
@@ -123,10 +130,6 @@ export class AppService {
                 case EventType.PROJECT_REPOSITORY_REMOVE:
                     let removeEvent = new SidebarEvent(event?.payload['repository']?.id, event?.payload['repository']?.name, 'repository', 'remove', [event?.payload['vcs']?.id]);
                     this._sidebarService.sendEvent(removeEvent);
-                    break;
-                case EventType.PROJECT_REPOSITORY_ANALYSE:
-                    let aEvent = new AnalysisEvent(event?.payload['vcs_id'], event?.payload['repository_id'], event?.payload['analysis_id'], event?.payload['status']);
-                    this._analysisService.sendEvent(aEvent);
                     break;
             }
         }

@@ -100,4 +100,5 @@ export class Entity {
     type: string;
     branch: string;
     data: string;
+    file_path: string;
 }

@@ -25,6 +25,7 @@ type Entity struct {
 	ProjectKey          string    `json:"project_key" db:"project_key"`
 	ProjectRepositoryID string    `json:"project_repository_id" db:"project_repository_id"`
 	Type                string    `json:"type" db:"type"`
+	FilePath            string    `json:"file_path" db:"file_path"`
 	Name                string    `json:"name" db:"name"`
 	Branch              string    `json:"branch" db:"branch"`
 	Commit              string    `json:"commit" db:"commit"`
@@ -59,6 +60,7 @@ func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out 
 			ProjectKey:          analysis.ProjectKey,
 			ProjectRepositoryID: analysis.ProjectRepositoryID,
 			Type:                t,
+			FilePath:            directory + fileName,
 		})
 		if !namePattern.MatchString(o.GetName()) {
 			return nil, []error{WrapError(ErrInvalidData, "name %s doesn't match %s", o.GetName(), EntityNamePattern)}
