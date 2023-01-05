@@ -6,6 +6,7 @@ import { Key } from 'app/model/keys.model';
 import { Entity, LoadOpts, Project, ProjectRepository, VCSProject } from 'app/model/project.model';
 import { Observable } from 'rxjs';
 import {RepositoryAnalysis} from "../../model/analysis.model";
+import {Branch} from "../../model/repositories.model";
 
 /**
  * Service to access Project from API.
@@ -110,6 +111,13 @@ export class ProjectService {
         return this._http.get<ProjectRepository>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);
     }
 
+    getVCSRepositoryBranches(key: string, vcsName: string, repoName: string, limit: number): Observable<Array<Branch>> {
+        let encodedRepo = encodeURIComponent(repoName);
+        let params = new HttpParams();
+        params = params.append('limit', limit);
+        return this._http.get<Array<Branch>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/branches`);
+    }
+
     getVCSRepositories(key: string, vcsName: string): Observable<Array<ProjectRepository>> {
         return this._http.get<Array<ProjectRepository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
     }
@@ -128,9 +136,13 @@ export class ProjectService {
         return this._http.delete(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);
     }
 
-    getRepoEntities(key: string, vcsName: string, repo: string): Observable<Array<Entity>> {
+    getRepoEntities(key: string, vcsName: string, repo: string, branch?: string): Observable<Array<Entity>> {
         let encodedRepo = encodeURIComponent(repo);
-        return this._http.get<Array<Entity>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`);
+        let params = new HttpParams();
+        if (branch) {
+            params = params.append('branch', branch);
+        }
+        return this._http.get<Array<Entity>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`, { params });
     }
 
     getRepoEntity(key: string, vcsName: string, repoName: string, entityType: string, entityName: string, branch?: string): Observable<Entity> {

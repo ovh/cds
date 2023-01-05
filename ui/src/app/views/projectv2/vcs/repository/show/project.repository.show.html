@@ -2,16 +2,9 @@
     <ng-container *ngIf="repository">
         <h3>Repository {{repository.name}}</h3>
         <div class="repoShow-container" *ngIf="repository && vcsProject">
-            <nz-alert nzType="info" [nzMessage]="infoMsg"></nz-alert>
+            <nz-alert nzType="info" [nzDescription]="infoMsg" nzShowIcon></nz-alert>
             <ng-template #infoMsg>
-                <div class="info">
-                    <div class="title">
-                        <i nz-icon nzType="info-circle" class="info" nzTheme="outline"></i> CDS requires permission to read repository data
-                    </div>
-                    <div class="content">
-                        Make sure that user "{{vcsProject.auth.username}}" can read the target repository.
-                    </div>
-                </div>
+                Make sure that user "{{vcsProject.auth.username}}" can read the target repository.
             </ng-template>
             <form nz-form>
                 <nz-form-item>
@@ -75,9 +68,8 @@
             </div>
         </div>
     </ng-container>
-
     <ng-container *ngIf="!repository">
-        <nz-spin nzTip="Loading..."></nz-spin>
+        <nz-spin nzTip="Loading repository"></nz-spin>
     </ng-container>
 </div>
 

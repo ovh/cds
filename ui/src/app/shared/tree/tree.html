@@ -1,6 +1,6 @@
 <nz-tree-view [nzTreeControl]="treeControl" [nzDataSource]="dataSource">
     <!-- Node without child -->
-    <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding>
+    <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding nzTreeNodePaddingIndent="10">
         <nz-tree-node-toggle class="nocursor">
             <span nz-icon nzType="{{node.icon}}" nzTheme="outline"></span>
         </nz-tree-node-toggle>
@@ -11,13 +11,11 @@
             <span class="name pointing" [class.active]="node.active" (click)="clickOnNode('select', node)">
                 {{ node.name }}
             </span>
-
         </ng-container>
-
     </nz-tree-node>
 
     <!-- Node with child -->
-    <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding>
+    <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding nzTreeNodePaddingIndent="10">
         <nz-tree-node-toggle *ngIf="node.expandable && !node.loading">
             <span nz-icon nzType="caret-down" nzTreeNodeToggleRotateIcon></span>
         </nz-tree-node-toggle>
@@ -26,6 +24,15 @@
         </nz-tree-node-toggle>
         <div class="node">
             <span class="pointing name" (click)="clickOnNode('select', node)" [class.active]="node.active">{{ node.name }}</span>
+            <ng-container *ngIf="node.expanded && node.select?.options">
+                <nz-select nzSize="small" [nzCustomTemplate]="selectLabelTmpl" [(ngModel)]="node.select.selected" (ngModelChange)="node.select.onchange()">
+                    <nz-option *ngFor="let opt of node.select.options" [nzValue]="opt.value" [nzLabel]="opt.key"></nz-option>
+                </nz-select>
+                <ng-template #selectLabelTmpl let-selected>
+                    <span nz-icon nzType="branches" nzTheme="outline"></span>
+                    {{ selected.nzLabel }}
+                </ng-template>
+            </ng-container>
             <ng-container *ngIf="node?.menu?.length > 0">
                 <i nz-icon nzType="more" nzTheme="outline" class="pointing" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"></i>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
