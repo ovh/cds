@@ -13,38 +13,38 @@ const (
 )
 
 type V2WorkerModel struct {
-	Name        string          `json:"name" cli:"name" jsonschema:"required,minLength=1" jsonschema_extras:"order=1"`
-	From        string          `json:"from" jsonschema_extras:"order=3,disabled=true"`
-	Description string          `json:"description,omitempty" jsonschema_extras:"order=2"`
-	Type        string          `json:"type" cli:"type" jsonschema:"required,enum=docker,enum=openstack,enum=vsphere" jsonschema_extras:"order=4"`
-	Spec        json.RawMessage `json:"spec" jsonschema:"required" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec" jsonschema_extras:"order=5"`
+	Name        string          `json:"name" cli:"name" jsonschema:"minLength=1" jsonschema_extras:"order=1" jsonschema_description:"Name of the worker model"`
+	From        string          `json:"from,omitempty" jsonschema_extras:"order=3,disabled=true" jsonschema_description:"Name of the worker model template"`
+	Description string          `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the worker model"`
+	Type        string          `json:"type" cli:"type" jsonschema:"enum=docker,enum=openstack,enum=vsphere" jsonschema_extras:"order=4" jsonschema_description:"Type of worker model: docker, openstack, vsphere"`
+	Spec        json.RawMessage `json:"spec" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec" jsonschema_extras:"order=5" jsonschema_description:"Specification of the worker model"`
 }
 
 type V2WorkerModelDockerSpec struct {
-	Image    string            `json:"image" jsonschema:"required,minLength=1" jsonschema_extras:"order=1"`
-	Registry string            `json:"registry,omitempty" jsonschema:"required,minLength=1" jsonschema_extras:"order=2"`
-	Username string            `json:"username,omitempty" jsonschema_extras:"order=3"`
-	Password string            `json:"password,omitempty" jsonschema_extras:"order=4"`
-	Cmd      string            `json:"cmd,omitempty" jsonschema:"required,minLength=1" jsonschema_extras:"order=6"`
-	Shell    string            `json:"shell,omitempty" jsonschema:"required,minLength=1" jsonschema_extras:"order=5"`
-	Envs     map[string]string `json:"envs,omitempty" jsonschema_extras:"order=7"`
+	Image    string            `json:"image" jsonschema:"minLength=1" jsonschema_extras:"order=1" jsonschema_description:"Docker image name"`
+	Registry string            `json:"registry,omitempty" jsonschema:"minLength=1" jsonschema_extras:"order=2" jsonschema_description:"The docker image registry"`
+	Username string            `json:"username,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Username to login to the registry"`
+	Password string            `json:"password,omitempty" jsonschema_extras:"order=4" jsonschema_description:"User password to login to the registry"`
+	Cmd      string            `json:"cmd" jsonschema:"minLength=1" jsonschema_extras:"order=6" jsonschema_description:"Command used by CDS to run the worker"`
+	Shell    string            `json:"shell" jsonschema:"minLength=1" jsonschema_extras:"order=5" jsonschema_description:"Shell used to run the command"`
+	Envs     map[string]string `json:"envs,omitempty" jsonschema_extras:"order=7" jsonschema_description:"Additional environment variables to inject into the worker"`
 }
 
 type V2WorkerModelOpenstackSpec struct {
-	Image   string `json:"image" jsonschema:"required"`
-	Cmd     string `json:"cmd,omitempty" jsonschema:"required"`
-	Flavor  string `json:"flavor,omitempty" jsonschema:"required"`
-	PreCmd  string `json:"pre_cmd,omitempty"`
-	PostCmd string `json:"post_cmd,omitempty" jsonschema:"required"`
+	Image   string `json:"image" jsonschema_description:"Name of the openstack image"`
+	Cmd     string `json:"cmd" jsonschema_description:"Command used by CDS to run the worker"`
+	Flavor  string `json:"flavor" jsonschema_description:"Openstack flavor used by the worker model"`
+	PreCmd  string `json:"pre_cmd,omitempty" jsonschema_description:"Pre command to execute just before running the CDS worker"`
+	PostCmd string `json:"post_cmd" jsonschema_description:"Post command to shutdown the VM"`
 }
 
 type V2WorkerModelVSphereSpec struct {
-	Image    string `json:"image" jsonschema:"required"`
-	Username string `json:"username,omitempty" jsonschema:"required"`
-	Password string `json:"password,omitempty" jsonschema:"required"`
-	Cmd      string `json:"cmd,omitempty" jsonschema:"required"`
-	PreCmd   string `json:"pre_cmd,omitempty"`
-	PostCmd  string `json:"post_cmd,omitempty" jsonschema:"required"`
+	Image    string `json:"image" jsonschema_description:"Name of the vsphere template"`
+	Username string `json:"username,omitempty" jsonschema_description:"Username to connect to the VM"`
+	Password string `json:"password,omitempty" jsonschema_description:"Username password to connect to the VM"`
+	Cmd      string `json:"cmd" jsonschema_description:"Command used by CDD to run the worker"`
+	PreCmd   string `json:"pre_cmd,omitempty" jsonschema_description:"Pre command to execute run just before running the CDS worker"`
+	PostCmd  string `json:"post_cmd" jsonschema_description:"Post command to shutdown the VM"`
 }
 
 func (wm V2WorkerModel) GetName() string {

@@ -57,14 +57,18 @@ export class JSONFormFieldConditionalComponent {
                 if (this._model[c.refProperty] === c.conditionValue) {
                     if (this.currentType && this.currentType !== c.type) {
                         this._model[this.field.name] = Object.assign({}, this._jsonFormSchema.types[c.type].model);
-                        this.emitChange();
                     }
                     this.currentType = c.type;
                 }
             }
         }
         if (!this._model[this.field.name]) {
-            this._model[this.field.name] = Object.assign({}, this._jsonFormSchema.types[this.currentType].model);
+            let newModel = Object.assign({}, this._jsonFormSchema.types[this.currentType].model);
+            this._jsonFormSchema.types[this.currentType].required.forEach(r => {
+                newModel[r] = '';
+            })
+            this._model[this.field.name] = newModel;
         }
+        this.emitChange();
     }
 }

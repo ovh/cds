@@ -9,10 +9,12 @@ export class FormItem {
     enum?: string[];
     formOrder: number;
     condition: FlatElementTypeCondition[];
+    description: string;
 }
 @Component({
     selector: 'app-json-form-field',
     templateUrl: './json-form-field.html',
+    styleUrls: ['./json-form-field.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JSONFormFieldComponent {
@@ -36,10 +38,13 @@ export class JSONFormFieldComponent {
         return this._model;
     }
 
+    @Input() parentType: string;
+
     @Output() modelChange = new EventEmitter();
 
     emitChange(): void {
-        if (!this.model[this.field.name]) {
+        let required = <string[]>this.jsonFormSchema.types[this.parentType].required;
+        if (!this.model[this.field.name] && required.indexOf(this.field.name) === -1) {
             delete this.model[this.field.name];
         }
         this.modelChange.emit(this.model);
