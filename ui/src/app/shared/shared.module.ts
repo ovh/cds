@@ -148,6 +148,9 @@ import { TreeComponent } from 'app/shared/tree/tree.component';
 import { AutoHeightSidebarCollapseDirective } from 'app/shared/directives/auto-height-sidebar-collapse.directive';
 import {EntityFormComponent} from "./entity/entity.form.component";
 import {NzCodeEditorModule} from "ng-zorro-antd/code-editor";
+import {JSONFormComponent} from "./entity/form/json-form.component";
+import {JSONFormFieldComponent} from "./entity/form/form-item/json-form-field.component";
+import {JSONFormFieldConditionalComponent} from "./entity/form/form-item-conditional/json.form.item.conditional.component";
 import { APIConfigGuard } from 'app/guard/api-config.guard';
 
 const ngZorroConfig: NzConfig = {
@@ -239,6 +242,9 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         EntityFormComponent,
         FavoriteCardsComponent,
         ForMapPipe,
+        JSONFormComponent,
+        JSONFormFieldComponent,
+        JSONFormFieldConditionalComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
