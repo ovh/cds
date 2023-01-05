@@ -9,7 +9,7 @@ import { ApplicationService } from 'app/service/application/application.service'
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { RouterService } from 'app/service/router/router.service';
-import { HelpService } from 'app/service/services.module';
+import { ConfigService, HelpService } from 'app/service/services.module';
 import { UserService } from 'app/service/user/user.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -46,6 +46,7 @@ describe('CDS: Project Show Component', () => {
                 ProjectStore,
                 WorkflowRunService,
                 AuthenticationService,
+                ConfigService,
                 NavbarService,
                 ProjectService,
                 PipelineService,

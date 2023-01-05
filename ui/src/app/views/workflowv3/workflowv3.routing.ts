@@ -1,6 +1,5 @@
 import { ModuleWithProviders } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthenticationGuard } from 'app/guard/authentication.guard';
 import { ProjectForWorkflowResolver, ProjectResolver } from 'app/service/services.module';
 import { WorkflowV3RunComponent } from './run/workflowv3-run.component';
 import { WorkflowV3ShowComponent } from './show/workflowv3-show.component';
@@ -11,8 +10,6 @@ const workflowRoutes: Routes = [
     {
         path: ':workflowName',
         component: WorkflowV3Component,
-        canActivate: [AuthenticationGuard],
-        canActivateChild: [AuthenticationGuard],
         data: {
             title: '{workflowName} • Workflow V3'
         },

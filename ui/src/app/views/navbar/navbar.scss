@@ -1,119 +1,125 @@
 @import "../../../common";
 
-#navbar {
-  padding-left: 0;
-  padding-right: 0;
-  border-radius: 0;
-  height: 64px;
-  display: flex;
-  align-items: center;
+.not-dark {
+    background-color: #24292e !important;
+}
 
-  :host-context(.night) &, :host-context(.night){
-    box-shadow: none;
-  }
-
-  img {
-    height: 50px;
-    padding: 5px 10px;
-    margin-right: 30px;
-  }
-
-  .right.menu {
+.navbar {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    border-radius: 0;
+    height: 64px;
     display: flex;
     align-items: center;
-    margin-left: auto!important;
-  }
 
-  .icon.dropdown {
-    width: 55px;
-    display: flex;
-    height: 50px;
-    align-items: center;
-    justify-content: center;
-
-  }
-
-  .ml12 {
-    margin-left: 12px;
-
-    svg {
-      width: 12px;
-      height: 12px;
+    :host-context(.night) &,
+    :host-context(.night) {
+        box-shadow: none;
     }
-  }
 
-  .item {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .item.link {
-    color: white;
-  }
-
-  .icon.popover {
-    width: 55px;
-    display: flex;
-    justify-content: center;
-  }
-
-  .dropdown.title {
-    color: white;
-  }
-
-  nz-tag {
-    font-weight: bold;
-  }
-
-  .search {
-    width: 200px;
-    margin-right: 15px;
-  }
-
-  .details {
-    .ring {
-      height: 100%;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      margin: 0 20px;
+    img {
+        height: 50px;
+        padding: 5px 10px;
+        margin-right: 30px;
     }
-  }
+
+    .right.menu {
+        display: flex;
+        align-items: center;
+        margin-left: auto !important;
+    }
+
+    .icon.dropdown {
+        width: 55px;
+        display: flex;
+        height: 50px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ml12 {
+        margin-left: 12px;
+
+        svg {
+            width: 12px;
+            height: 12px;
+        }
+    }
+
+    .item {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .item.link {
+        color: white;
+    }
+
+    .icon.popover {
+        width: 55px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .dropdown.title {
+        color: white;
+    }
+
+    nz-tag {
+        font-weight: bold;
+    }
+
+    .search {
+        width: 200px;
+        margin-right: 15px;
+    }
+
+    .details {
+        .ring {
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin: 0 20px;
+        }
+    }
 }
 
 i {
-  color: rgba(255, 255, 255, 0.85);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 li {
-  a {
-    width: 100%;
-  }
+    a {
+        width: 100%;
+    }
 }
 
 .bookmark {
-  .details {
-    .title {
-      font-size: 1.1em;
+    .details {
+        .title {
+            font-size: 1.1em;
 
-      &.bold {
-        font-weight: bold;
-      }
+            &.bold {
+                font-weight: bold;
+            }
+        }
     }
-  }
-  .info {
-    font-size: 0.8em;
 
-    &.mt {
-      margin-top: 4px;
-      color: $polar_grey_3;
+    .info {
+        font-size: 0.8em;
+
+        &.mt {
+            margin-top: 4px;
+            color: $polar_grey_3;
+        }
     }
-  }
 }
 
 
 nz-switch {
-  margin-right: 10px;
+    margin-right: 10px;
 }
 
 .mt5 {
@@ -123,40 +129,41 @@ nz-switch {
 .searchpopup {
     width: 550px;
 
-  .header {
-    height: 30px;
-  }
-
-  .right {
-    float: right;
-  }
-
-  .title {
-    padding-left: 20px;
-    padding-bottom: 20px;
-  }
-
-  .item {
-    padding-left: 20px;
-    height: 65px;
-    display: flex;
-    align-items: center;
-    border-top: 1px solid grey;
-
-    .content {
-      .description {
-        padding-top: 2px;
-        padding-bottom: 5px;
-        a {
-          color: #1890ff !important;
-        }
-      }
+    .header {
+        height: 30px;
     }
-  }
 
-  i {
-    margin-right: 5px;
-  }
+    .right {
+        float: right;
+    }
+
+    .title {
+        padding-left: 20px;
+        padding-bottom: 20px;
+    }
+
+    .item {
+        padding-left: 20px;
+        height: 65px;
+        display: flex;
+        align-items: center;
+        border-top: 1px solid grey;
+
+        .content {
+            .description {
+                padding-top: 2px;
+                padding-bottom: 5px;
+
+                a {
+                    color: #1890ff !important;
+                }
+            }
+        }
+    }
+
+    i {
+        margin-right: 5px;
+    }
 }
 
 .helppopup {
@@ -164,5 +171,5 @@ nz-switch {
 }
 
 .borderRight {
-  border-right: 1px solid dimgrey;
+    border-right: 1px solid dimgrey;
 }

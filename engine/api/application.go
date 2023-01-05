@@ -442,7 +442,7 @@ func (api *API) updateAsCodeApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys)
+		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}

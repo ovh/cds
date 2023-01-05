@@ -37,10 +37,10 @@ import { DragulaService } from 'ng2-dragula-sgu';
 import { forkJoin, Observable, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { ProjectIntegration } from 'app/model/integration.model';
-import { ConfigService } from 'app/service/config/config.service';
 import { APIConfig } from 'app/model/config.service';
 import { WorkflowDeleteModalComponent } from './delete-modal/delete-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { ConfigState } from 'app/store/config.state';
 
 declare let CodeMirror: any;
 
@@ -128,9 +128,10 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     loading = false;
     fileTooLarge = false;
     dragulaSubscription: Subscription;
+    configSubscription: Subscription;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         public _translate: TranslateService,
         private _toast: ToastService,
         private _router: Router,
@@ -141,20 +142,14 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _theme: ThemeStore,
         private _nzModalService: NzModalService,
         private _eventService: EventService,
-        private _configService: ConfigService
     ) {
-        this._configService.getAPIConfig().subscribe(c => {
-            this.apiConfig = c;
-            this._cd.markForCheck();
-        });
-
         this._dragularService.createGroup('bag-tag', {
             accepts(el, target, source, sibling) {
                 return sibling !== null;
             }
         });
 
-        this.dragulaSubscription = this._dragularService.drop('bag-tag').subscribe(({}) => {
+        this.dragulaSubscription = this._dragularService.drop('bag-tag').subscribe(({ }) => {
             setTimeout(() => {
                 this.updateTagMetadata();
             });
@@ -198,6 +193,11 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
+            this.apiConfig = c;
+            this._cd.markForCheck();
+        });
+
         if (!this._workflow.metadata) {
             this._workflow.metadata = new Map<string, string>();
         }
@@ -209,7 +209,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         }
 
         if (!this.project.permissions.writable) {
-            this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'applications'}});
+            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
         this.oldName = this.workflow.name;
 
@@ -223,17 +223,17 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             });
         this._workflowRunService.getRunNumber(this.project.key, this.workflow)
             .pipe(first(), finalize(() => this._cd.markForCheck())).subscribe(n => {
-            this.originalRunNumber = n.num;
-            this.runnumber = n.num;
-        });
+                this.originalRunNumber = n.num;
+                this.runnumber = n.num;
+            });
 
         this.initDryRunSubscription();
 
-        let featRetentionRunsPolicyResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionPolicy,
-            JSON.stringify({project_key: this.project.key})));
+        let featRetentionRunsPolicyResult = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionPolicy,
+            JSON.stringify({ project_key: this.project.key })));
         this.retentionRunsPolicyEnabled = featRetentionRunsPolicyResult?.enabled;
-        let featMaxRunsResult = this.store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionMaxRuns,
-            JSON.stringify({project_key: this.project.key})));
+        let featMaxRunsResult = this._store.selectSnapshot(FeatureState.featureProject(FeatureNames.WorkflowRetentionMaxRuns,
+            JSON.stringify({ project_key: this.project.key })));
         this.maxRunsEnabled = featMaxRunsResult?.enabled;
 
         this._cd.markForCheck();
@@ -308,7 +308,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     deleteIcon(): void {
         this.loading = true;
-        this.store.dispatch(new DeleteWorkflowIcon({
+        this._store.dispatch(new DeleteWorkflowIcon({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
         })).pipe(finalize(() => this.loading = false))
@@ -317,7 +317,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     updateIcon(): void {
         this.loading = true;
-        this.store.dispatch(new UpdateWorkflowIcon({
+        this._store.dispatch(new UpdateWorkflowIcon({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             icon: this.workflow.icon
@@ -372,8 +372,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     }
 
     retentionPolicyDryRun(): void {
-
-        this.store.dispatch(new CleanRetentionDryRun());
+        this._store.dispatch(new CleanRetentionDryRun());
         this._eventService.subscribeToWorkflowPurgeDryRun(this.project.key, this.workflow.name);
         this.loading = true;
         this._workflowService.retentionPolicyDryRun(this.workflow)
@@ -402,7 +401,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             delete this._workflow.purge_tags;
         }
 
-        actions.push(this.store.dispatch(new UpdateWorkflow({
+        actions.push(this._store.dispatch(new UpdateWorkflow({
             projectKey: this.project.key,
             workflowName: this.oldName,
             changes: this.workflow
@@ -421,7 +420,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 }
                 this._router.navigate([
                     '/project', this.project.key, 'workflow', this.workflow.name
-                ], {queryParams: {tab: 'advanced'}});
+                ], { queryParams: { tab: 'advanced' } });
             });
     }
 
@@ -443,7 +442,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         if (this.workflow.integrations) {
             workflowIntegrations = [wi].concat(this.workflow.integrations);
         }
-        this.store.dispatch(new UpdateIntegrationsWorkflow({
+        this._store.dispatch(new UpdateIntegrationsWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             integrations: workflowIntegrations,
@@ -465,7 +464,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
 
     clickDeleteIntegration(integ: WorkflowProjectIntegration) {
         this.loading = true;
-        this.store.dispatch(new DeleteIntegrationWorkflow({
+        this._store.dispatch(new DeleteIntegrationWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             projectIntegrationID: integ.project_integration_id

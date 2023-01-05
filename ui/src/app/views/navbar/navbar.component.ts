@@ -1,18 +1,20 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
+import { APIConfig } from 'app/model/config.service';
 import { Help } from 'app/model/help.model';
 import { NavbarProjectData, NavbarRecentData, NavbarSearchItem } from 'app/model/navbar.model';
 import { Project } from 'app/model/project.model';
 import { AuthSummary } from 'app/model/user.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
-import { ProjectStore } from 'app/service/services.module';
+import { ConfigService, ProjectStore } from 'app/service/services.module';
 import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { ConfigState } from 'app/store/config.state';
 import { HelpState } from 'app/store/help.state';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
@@ -38,6 +40,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     listWorkflows: List<NavbarRecentData>;
     navbarSubscription: Subscription;
     authSubscription: Subscription;
+    configSubscription: Subscription;
     currentRoute: {};
     recentView = true;
     currentAuthSummary: AuthSummary;
@@ -51,9 +54,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     containsResult = false;
     projectsSubscription: Subscription;
     workflowsSubscription: Subscription;
-
-
     showNotif = false;
+    apiConfig: APIConfig;
 
     constructor(
         private _navbarService: NavbarService,
@@ -67,6 +69,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
         this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
+            this._cd.markForCheck();
+        });
+
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
+            this.apiConfig = c;
             this._cd.markForCheck();
         });
 

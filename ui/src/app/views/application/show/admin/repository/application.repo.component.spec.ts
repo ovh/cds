@@ -19,7 +19,7 @@ import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { MonitoringService, RouterService, ThemeStore, UserService } from 'app/service/services.module';
+import { ConfigService, MonitoringService, RouterService, ThemeStore, UserService } from 'app/service/services.module';
 import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -71,7 +71,8 @@ describe('CDS: Application Repo Component', () => {
                 WorkflowRunService,
                 WorkflowService,
                 UserService,
-                AuthenticationService
+                AuthenticationService,
+                ConfigService
             ],
             imports: [
                 RouterTestingModule.withRoutes([

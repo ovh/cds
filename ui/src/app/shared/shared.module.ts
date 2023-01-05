@@ -151,6 +151,7 @@ import {NzCodeEditorModule} from "ng-zorro-antd/code-editor";
 import {JSONFormComponent} from "./entity/form/json-form.component";
 import {JSONFormFieldComponent} from "./entity/form/form-item/json-form-field.component";
 import {JSONFormFieldConditionalComponent} from "./entity/form/form-item-conditional/json.form.item.conditional.component";
+import { APIConfigGuard } from 'app/guard/api-config.guard';
 
 const ngZorroConfig: NzConfig = {
     notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
@@ -317,6 +318,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         SharedService,
         ToastService,
         AuthenticationGuard,
+        APIConfigGuard,
         NoAuthenticationGuard,
         FeatureGuard,
         { provide: NZ_CONFIG, useValue: ngZorroConfig },

@@ -3,7 +3,6 @@ import { Action, Selector, State, StateContext } from '@ngxs/store';
 import { AuthCurrentConsumerResponse } from 'app/model/authentication.model';
 import { AuthentifiedUser, AuthSummary } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
-import { UserService } from 'app/service/user/user.service';
 import { throwError } from 'rxjs';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import * as ActionAuthentication from './authentication.action';
@@ -27,7 +26,6 @@ export function getInitialApplicationsState(): AuthenticationStateModel {
 export class AuthenticationState {
 
     constructor(
-        private _userService: UserService,
         private _authenticationService: AuthenticationService
     ) { }
 

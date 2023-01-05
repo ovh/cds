@@ -447,6 +447,10 @@ func (api *API) postProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getUserConsumer(ctx)
 
+		if api.Config.Project.CreationDisabled && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "project creation is disabled")
+		}
+
 		var p sdk.Project
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "unable to unmarshal body")
