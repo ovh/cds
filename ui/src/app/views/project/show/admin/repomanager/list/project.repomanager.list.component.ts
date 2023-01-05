@@ -1,11 +1,15 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
+import { APIConfig } from 'app/model/config.service';
 import { Project } from 'app/model/project.model';
 import { RepositoriesManager } from 'app/model/repositories.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { ConfigState } from 'app/store/config.state';
 import { DisconnectRepositoryManagerInProject } from 'app/store/project.action';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -14,7 +18,8 @@ import { finalize } from 'rxjs/operators';
     styleUrls: ['./project.repomanager.list.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectRepoManagerComponent {
+@AutoUnsubscribe()
+export class ProjectRepoManagerComponent implements OnInit {
 
     @Input() project: Project;
     @Input() reposmanagers: RepositoriesManager[];
@@ -24,14 +29,22 @@ export class ProjectRepoManagerComponent {
     repoNameToDelete: string;
     confirmationMessage: string;
     deleteModal: boolean;
+    apiConfig: APIConfig;
+    configSubscription: Subscription;
 
     constructor(
         private _toast: ToastService,
         public _translate: TranslateService,
         private repoManagerService: RepoManagerService,
-        private store: Store,
+        private _store: Store,
         private _cd: ChangeDetectorRef
-    ) {
+    ) { }
+
+    ngOnInit(): void {
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
+            this.apiConfig = c;
+            this._cd.markForCheck();
+        });
     }
 
     clickDeleteButton(repoName: string): void {
@@ -59,7 +72,7 @@ export class ProjectRepoManagerComponent {
             return;
         }
         this.deleteLoading = true;
-        this.store.dispatch(new DisconnectRepositoryManagerInProject({
+        this._store.dispatch(new DisconnectRepositoryManagerInProject({
             projectKey: this.project.key,
             repoManager: this.repoNameToDelete
         }))

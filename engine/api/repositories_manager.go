@@ -55,6 +55,10 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 		key := vars[permProjectKey]
 		rmName := vars["name"]
 
+		if api.Config.Project.VCSManagementDisabled && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "vcs management is disabled")
+		}
+
 		proj, err := project.Load(ctx, api.mustDB(), key)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load project")
@@ -206,6 +210,10 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		projectKey := vars["permProjectKey"]
 		rmName := vars["name"]
 
+		if api.Config.Project.VCSManagementDisabled && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "vcs management is disabled")
+		}
+
 		var tv map[string]interface{}
 		if err := service.UnmarshalBody(r, &tv); err != nil {
 			return err
@@ -271,6 +279,10 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
+
+		if api.Config.Project.VCSManagementDisabled && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "vcs management is disabled")
+		}
 
 		var tv map[string]interface{}
 		if err := service.UnmarshalBody(r, &tv); err != nil {
@@ -345,6 +357,10 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
+
+		if api.Config.Project.VCSManagementDisabled && !isAdmin(ctx) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "vcs management is disabled")
+		}
 
 		force := service.FormBool(r, "force")
 

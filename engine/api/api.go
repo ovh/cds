@@ -221,8 +221,9 @@ type Configuration struct {
 		TemplateBulkRunnerCount int64  `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	Project struct {
-		CreationDisabled     bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
-		InfoCreationDisabled string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
+		CreationDisabled      bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
+		InfoCreationDisabled  string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
+		VCSManagementDisabled bool   `toml:"vcsManagementDisabled" comment:"Disable VCS management on project for CDS non admin users." json:"vcsManagementDisabled" default:"false" commented:"true"`
 	} `toml:"project" comment:"######################\n 'Project' global configuration \n######################" json:"project"`
 	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
 }
