@@ -6,7 +6,7 @@
     </ng-container>
     <ng-template #tmplNoCondition>
         <ng-container *ngFor="let f of jsonFormSchema.types[field.objectType].fields">
-            <app-json-form-field [jsonFormSchema]="jsonFormSchema" [field]="f" [(model)]="model[field.name]" (modelChange)="updateParentModel(field.name, model[field.name])"></app-json-form-field>
+            <app-json-form-field [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f" [(model)]="model[field.name]" (modelChange)="updateParentModel(field.name, model[field.name])"></app-json-form-field>
         </ng-container>
     </ng-template>
 </ng-container>
@@ -14,7 +14,10 @@
 <!-- SIMPLE FIELD -->
 <nz-form-item *ngIf="field && model && jsonFormSchema && field.type !== 'object'">
     <!-- FORM LABEL -->
-    <nz-form-label nzSpan="4">{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</nz-form-label>
+    <nz-form-label nzSpan="4">
+        {{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}
+        <i *ngIf="field?.description" nz-icon nzType="info-circle" nzTheme="outline" nz-tooltip="{{field?.description}}"></i>
+    </nz-form-label>
 
     <!-- FORM VALUE -->
     <nz-form-control nzSpan="20">

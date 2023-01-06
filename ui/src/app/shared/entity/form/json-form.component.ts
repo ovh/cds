@@ -12,21 +12,21 @@ import {FormItem} from "./form-item/json-form-field.component";
 import {DumpOptions, dump, load, LoadOptions} from 'js-yaml'
 
 export class JSONFormSchema {
-    fields: FormItem[];
     types: {};
 }
 
 export class JSONFormSchemaTypeItem {
     fields: FormItem[];
     model: {};
+    required: string[];
 }
 
 @Component({
     selector: 'app-json-form',
     template: `
     <ng-container *ngIf="jsonFormSchema && model">
-        <ng-container *ngFor="let f of jsonFormSchema.fields">
-            <app-json-form-field [field]="f" [jsonFormSchema]="jsonFormSchema" [(model)]="model" (modelChange)="mergeModelAndData()"></app-json-form-field>
+        <ng-container *ngFor="let f of jsonFormSchema.types[parentType].fields">
+            <app-json-form-field [parentType]="parentType" [field]="f" [jsonFormSchema]="jsonFormSchema" [(model)]="model" (modelChange)="mergeModelAndData()"></app-json-form-field>
         </ng-container>
     </ng-container>`,
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,6 +34,7 @@ export class JSONFormSchemaTypeItem {
 export class JSONFormComponent implements OnInit {
 
     @Input() schema: FlatSchema;
+    @Input() parentType: string;
 
     _data: {};
     @Input() set data(d: any) {
@@ -73,6 +74,7 @@ export class JSONFormComponent implements OnInit {
                    item.enum = value.enum;
                    item.formOrder = value.formOrder;
                    item.condition = value.condition;
+                   item.description = value.description;
                    items.push(item);
                    if (item.type) {
                        currentModel[item.name] = null;
@@ -82,11 +84,16 @@ export class JSONFormComponent implements OnInit {
                });
            }
            items.sort((i, j) => i.formOrder - j.formOrder);
-           allTypes[k] = <JSONFormSchemaTypeItem>{fields: items, model: currentModel};
+           let schemaDefs = this.schema.schema['$defs'];
+           let required = [];
+           if (k === this.parentType) {
+               required = schemaDefs[k].required;
+           } else {
+               required = schemaDefs[k]['$defs'][k].required;
+           }
+           allTypes[k] = <JSONFormSchemaTypeItem>{fields: items, model: currentModel, required: required};
         });
-
-        let mainRef = this.schema.schema.$ref.replace('#/$defs/', '');
-        this.jsonFormSchema = {fields: allTypes[mainRef].fields, types: allTypes};
+        this.jsonFormSchema = {types: allTypes};
         this._cd.markForCheck();
     }
 

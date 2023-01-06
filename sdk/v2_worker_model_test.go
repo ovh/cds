@@ -57,7 +57,8 @@ description: "my debian worker model"
 type: docker
 spec:
   image: myimage'
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker`
+  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
+  shell: sh -c`
 
 	var dockerModel V2WorkerModel
 	require.NoError(t, yaml.Unmarshal([]byte(dockerWM), &dockerModel))

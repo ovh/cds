@@ -2,7 +2,7 @@
     <ng-container *ngIf="_jsonSchema && data">
         <div class="form">
             <form nz-form>
-                <app-json-form [schema]="_jsonSchema" [(data)]="data"></app-json-form>
+                <app-json-form parentType="V2WorkerModel" [schema]="_jsonSchema" [(data)]="data"></app-json-form>
             </form>
         </div>
         <div class="yaml">
