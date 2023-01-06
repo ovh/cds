@@ -33,7 +33,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, repo *sdk.Proj
 }
 
 func Delete(db gorpmapper.SqlExecutorWithTx, vcsProjectID string, name string) error {
-	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND name = $2", vcsProjectID, name)
+	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND name ~* $2", vcsProjectID, name)
 	return sdk.WrapError(err, "cannot delete project_repository %s / %s", vcsProjectID, name)
 }
 
@@ -68,7 +68,7 @@ func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProje
 }
 
 func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
-	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, repoName)
+	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name ~* $2`).Args(vcsProjectID, repoName)
 	repo, err := getRepository(ctx, db, query, opts...)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get repository %s from vcs %s", repoName, vcsProjectID)

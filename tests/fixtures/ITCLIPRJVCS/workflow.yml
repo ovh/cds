@@ -3,3 +3,4 @@ version: v2.0
 workflow:
   root:
     pipeline: ITCLIPRJVCSWRKFLW1-PIPELINE
+    application: ITCLIPRJVCS-APPLICATION

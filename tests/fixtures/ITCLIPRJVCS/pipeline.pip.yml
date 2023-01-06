@@ -6,4 +6,4 @@ jobs:
   - script:
     - env
   requirements:
-  - modelv2: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian
+  - modelv2: docker-debian
