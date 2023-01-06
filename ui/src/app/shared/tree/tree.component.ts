@@ -143,6 +143,9 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
     }
 
     selectNode(node: SelectedItem) {
+        if (!node) {
+            return;
+        }
         let currentNodes = this.flattenedData.getValue();
         if (currentNodes) {
             this.selectNodeRec(currentNodes, node, 0, []);
