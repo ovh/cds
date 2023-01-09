@@ -13,8 +13,9 @@ const (
 	GlobalRoleProjectCreate      = "create-project"
 
 	// Project Role
-	ProjectRoleRead   = "read"
-	ProjectRoleManage = "manage"
+	ProjectRoleRead              = "read"
+	ProjectRoleManage            = "manage"
+	ProjectRoleManageWorkerModel = "manage-worker-model"
 
 	// Hatchery Role
 	HatcheryRoleSpawn = "start-worker"

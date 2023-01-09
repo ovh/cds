@@ -78,7 +78,7 @@ func (wm V2WorkerModel) Lint() []error {
 		return nil
 	}
 	for _, e := range result.Errors() {
-		multipleError.Append(fmt.Errorf("%v", e))
+		multipleError.Append(fmt.Errorf("error on %s: %v", wm.Name, e))
 	}
 	return multipleError
 }

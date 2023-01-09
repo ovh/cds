@@ -312,8 +312,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}
 
 	var filesContent map[string][]byte
+	var cdsUser *sdk.AuthentifiedUser
 	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
-		var cdsUser *sdk.AuthentifiedUser
+
 		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, api.mustDB(), analysis.Data.SignKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -337,16 +338,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		if cdsUser != nil {
 			analysis.Data.CDSUserID = cdsUser.ID
 			analysis.Data.CDSUserName = cdsUser.Username
-
-			// Check user right
-			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), sdk.ProjectRoleManage, cdsUser.ID, analysis.ProjectKey)
-			if err != nil {
-				return api.stopAnalysis(ctx, analysis, err)
-			}
-			if !b {
-				analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-				analysis.Data.Error = fmt.Sprintf("user %s doesn't have enough right on project %s", cdsUser.Username, analysis.ProjectKey)
-			}
 
 			if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 				switch vcsProjectWithSecret.Type {
@@ -390,8 +381,39 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, multiErr...)
 	}
 
+	userRoles := make(map[string]bool)
+	skippedFiles := make([]string, 0)
 	for i := range entities {
 		e := &entities[i]
+
+		// Check user role
+		if _, has := userRoles[e.Type]; !has {
+
+			roleName, err := sdk.GetManageRoleByEntity(e.Type)
+			if err != nil {
+				return api.stopAnalysis(ctx, analysis, err)
+			}
+			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, cdsUser.ID, analysis.ProjectKey)
+			if err != nil {
+				return api.stopAnalysis(ctx, analysis, err)
+			}
+			userRoles[e.Type] = b
+
+		}
+
+		for i := range analysis.Data.Entities {
+			analysisEntity := &analysis.Data.Entities[i]
+			if analysisEntity.Path+analysisEntity.FileName == e.FilePath {
+				if userRoles[e.Type] {
+					analysisEntity.Status = sdk.RepositoryAnalysisStatusSucceed
+				} else {
+					skippedFiles = append(skippedFiles, "User doesn't have the permission to manage "+e.Type)
+					analysisEntity.Status = sdk.RepositoryAnalysisStatusSkipped
+				}
+				break
+			}
+		}
+
 		existingEntity, err := entity.LoadByBranchTypeName(ctx, tx, e.ProjectRepositoryID, e.Branch, e.Type, e.Name)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, err)
@@ -407,7 +429,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			}
 		}
 	}
-	analysis.Status = sdk.RepositoryAnalysisStatusSucceed
+	analysis.Data.Error = strings.Join(skippedFiles, "\n")
+	if len(skippedFiles) == len(analysis.Data.Entities) {
+		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+	} else {
+		analysis.Status = sdk.RepositoryAnalysisStatusSucceed
+	}
 
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return sdk.WrapError(err, "unable to update analysis")
@@ -673,7 +700,7 @@ func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositor
 
 	analysisErrors := make([]string, 0, len(originalErrors))
 	for _, e := range originalErrors {
-		analysisErrors = append(analysisErrors, e.Error())
+		analysisErrors = append(analysisErrors, sdk.Cause(e).Error())
 	}
 	analysis.Data.Error = fmt.Sprintf("%s", strings.Join(analysisErrors, ", "))
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {

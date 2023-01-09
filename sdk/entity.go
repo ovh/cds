@@ -33,6 +33,14 @@ type Entity struct {
 	Data                string    `json:"data" db:"data"`
 }
 
+func GetManageRoleByEntity(entityType string) (string, error) {
+	switch entityType {
+	case EntityTypeWorkerModel:
+		return ProjectRoleManageWorkerModel, nil
+	}
+	return "", WrapError(ErrInvalidData, "unknown entity of type %s", entityType)
+}
+
 type Lintable interface {
 	Lint() []error
 	GetName() string
