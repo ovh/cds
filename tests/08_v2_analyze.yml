@@ -73,7 +73,7 @@ testcases:
 
 - name: Push workflow and run it
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/workflow.yml ./fixtures/ITCLIPRJVCS/pipeline.pip.yml --skip-update-files
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/workflow.yml ./fixtures/ITCLIPRJVCS/pipeline.pip.yml ./fixtures/ITCLIPRJVCS/application.app.yml --skip-update-files
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW
       assertions:
         - result.code ShouldEqual 0

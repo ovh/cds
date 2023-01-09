@@ -371,7 +371,9 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, workerMode
 	ctx, end := telemetry.Span(ctx, "hatchery.canRunJobWithModelV2", telemetry.Tag(telemetry.TagWorker, workerModelV2))
 	defer end()
 
-	modelPath := strings.Split(workerModelV2, "/")
+	branchSplit := strings.Split(workerModelV2, "@")
+
+	modelPath := strings.Split(branchSplit[0], "/")
 	if len(modelPath) < 4 {
 		return nil, sdk.WrapError(sdk.ErrInvalidData, "wrong model value %v", modelPath)
 	}
@@ -379,8 +381,12 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, workerMode
 	vcsName := modelPath[1]
 	modelName := modelPath[len(modelPath)-1]
 	repoName := strings.Join(modelPath[2:len(modelPath)-1], "/")
+	var branch string
+	if len(branchSplit) == 2 {
+		branch = branchSplit[1]
+	}
 
-	model, err := h.CDSClientV2().GetWorkerModel(ctx, projKey, vcsName, repoName, modelName)
+	model, err := h.CDSClientV2().GetWorkerModel(ctx, projKey, vcsName, repoName, modelName, cdsclient.WithQueryParameter("branch", branch))
 	if err != nil {
 		return nil, err
 	}

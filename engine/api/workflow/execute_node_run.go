@@ -496,7 +496,7 @@ jobLoop:
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, db, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, db, proj.Key, *wr, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)

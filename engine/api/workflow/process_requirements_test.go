@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"context"
+	"github.com/stretchr/testify/require"
 	"reflect"
 	"testing"
 
@@ -38,4 +40,45 @@ func Test_prepareRequirementsToNodeJobRunParameters(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetWorkerModelv2Error(t *testing.T) {
+	wr := sdk.WorkflowRun{
+
+		Workflow: sdk.Workflow{
+			WorkflowData: sdk.WorkflowData{
+				Node: sdk.Node{
+					Context: &sdk.NodeContext{
+						ApplicationID: 2,
+					},
+				},
+			},
+			Applications: map[int64]sdk.Application{
+				1: {
+					ID:                 1,
+					VCSServer:          "",
+					RepositoryFullname: "ovh/cds",
+				},
+			},
+		},
+	}
+
+	_, _, err := processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, "PROJ", wr, "cds/mymodel")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unable to find repository for this worker model")
+
+	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, "PROJ", wr, "rien/proj/vcs/ovh/cds/mymodel")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unable to handle the worker model requirement")
+
+	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, "PROJ", wr, "mymodel")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unable to retrieve worker model data because the workflow root pipeline does not contain application in context")
+
+	wr.Workflow.WorkflowData.Node.Context.ApplicationID = 1
+	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, "PROJ", wr, "mymodel")
+	require.Error(t, err)
+	t.Logf("%+v", err)
+	require.Contains(t, err.Error(), "unable to retrieve worker model data because the workflow root pipeline does not contain any vcs configuration")
+
 }

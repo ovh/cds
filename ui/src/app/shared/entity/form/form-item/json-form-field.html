@@ -15,6 +15,7 @@
 <nz-form-item *ngIf="field && model && jsonFormSchema && field.type !== 'object'">
     <!-- FORM LABEL -->
     <nz-form-label nzSpan="4">
+        <span *ngIf="required" class="red">{{ '* '}}</span>
         {{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}
         <i *ngIf="field?.description" nz-icon nzType="info-circle" nzTheme="outline" nz-tooltip="{{field?.description}}"></i>
     </nz-form-label>

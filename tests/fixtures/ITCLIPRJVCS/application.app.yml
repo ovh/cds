@@ -1,0 +1,6 @@
+version: v1.0
+name: ITCLIPRJVCS-APPLICATION
+vcs_server: my_vcs_server
+repo: gituser/myrepo
+vcs_connection_type: ssh
+vcs_ssh_key: proj-ssh-itcliprjvcs

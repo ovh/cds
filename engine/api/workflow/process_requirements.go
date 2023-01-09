@@ -20,7 +20,7 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig) (sdk.RequirementList, bool, string, *sdk.MultiError) {
+func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, projectKey string, wr sdk.WorkflowRun, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig) (sdk.RequirementList, bool, string, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
@@ -92,6 +92,16 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 			}
 			if v.Type == sdk.ModelV2Requirement {
 				modelV2 = value
+
+				workerModelV2, workerModelFullPath, err := processNodeJobRunRequirementsGetModelV2(ctx, db, projectKey, wr, modelV2)
+				if err != nil {
+					log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model v2 %s: %v", modelV2, err)
+					errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidJobRequirement, "unable to get worker model %s", modelV2))
+				}
+				if workerModelV2 != nil {
+					modelType = workerModelV2.Type
+					value = workerModelFullPath
+				}
 			}
 
 		}
@@ -106,18 +116,6 @@ func processNodeJobRunRequirements(ctx context.Context, db gorp.SqlExecutor, j s
 			errm.Append(err)
 		}
 	}
-	if modelV2 != "" {
-		workerModelV2, err := processNodeJobRunRequirementsGetModelV2(ctx, db, modelV2)
-		if err != nil {
-			log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model v2 %s: %v", modelV2, err)
-			errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidJobRequirement, "unable to get worker model %s", modelV2))
-		}
-		if workerModelV2 != nil {
-			modelType = workerModelV2.Type
-		}
-
-	}
-
 	if wm != nil {
 		modelType = wm.Type
 
@@ -218,33 +216,86 @@ func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.P
 	return params
 }
 
-func processNodeJobRunRequirementsGetModelV2(ctx context.Context, db gorp.SqlExecutor, requirementValue string) (*sdk.V2WorkerModel, error) {
-	modelPath := strings.Split(requirementValue, "/")
-	if len(modelPath) < 4 {
-		return nil, sdk.WrapError(sdk.ErrInvalidData, "wrong model value %v", modelPath)
-	}
-	projKey := modelPath[0]
-	vcsName := modelPath[1]
-	modelName := modelPath[len(modelPath)-1]
-	repoName := strings.Join(modelPath[2:len(modelPath)-1], "/")
+func processNodeJobRunRequirementsGetModelV2(ctx context.Context, db gorp.SqlExecutor, projectKey string, wr sdk.WorkflowRun, requirementValue string) (*sdk.V2WorkerModel, string, error) {
+	var workerProjKey, vcsName, repoName, workerModelName, branch string
+	var app sdk.Application
 
-	vcs, err := vcs2.LoadVCSByName(ctx, db, projKey, vcsName)
+	// complete format <ProjKey>/<VCSServer>/<RepoSLUG/RepoName>/<WorkerModelName@Branch
+
+	// Get branch if present
+	splitBranch := strings.Split(requirementValue, "@")
+	if len(splitBranch) == 2 {
+		branch = splitBranch[1]
+	}
+	modelFullPath := splitBranch[0]
+
+	// Search application on root node
+	nodeContext := wr.Workflow.WorkflowData.Node.Context
+	if nodeContext.ApplicationID != 0 {
+		app = wr.Workflow.Applications[nodeContext.ApplicationID]
+	}
+
+	modelPathSplit := strings.Split(modelFullPath, "/")
+	switch len(modelPathSplit) {
+	case 1:
+		workerModelName = modelFullPath
+	case 2:
+		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to find repository for this worker model")
+	case 3:
+		repoName = fmt.Sprintf("%s/%s", modelPathSplit[0], modelPathSplit[1])
+		workerModelName = modelPathSplit[2]
+	case 4:
+		vcsName = modelPathSplit[0]
+		repoName = fmt.Sprintf("%s/%s", modelPathSplit[1], modelPathSplit[2])
+		workerModelName = modelPathSplit[3]
+	case 5:
+		workerProjKey = modelPathSplit[0]
+		vcsName = modelPathSplit[1]
+		repoName = fmt.Sprintf("%s/%s", modelPathSplit[2], modelPathSplit[3])
+		workerModelName = modelPathSplit[4]
+	default:
+		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to handle the worker model requirement")
+	}
+
+	if workerProjKey == "" {
+		workerProjKey = projectKey
+	}
+	if vcsName == "" {
+		vcsName = app.VCSServer
+	}
+	if repoName == "" {
+		repoName = app.RepositoryFullname
+	}
+
+	if app.ID == 0 {
+		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to retrieve worker model data because the workflow root pipeline does not contain application in context")
+	}
+	if vcsName == "" || repoName == "" {
+		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to retrieve worker model data because the workflow root pipeline does not contain any vcs configuration")
+	}
+
+	vcs, err := vcs2.LoadVCSByName(ctx, db, workerProjKey, vcsName)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	repo, err := repository.LoadRepositoryByName(ctx, db, vcs.ID, repoName)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	workerModelEntity, err := entity.LoadByBranchTypeName(ctx, db, repo.ID, "master", sdk.EntityTypeWorkerModel, modelName)
+	workerModelEntity, err := entity.LoadByBranchTypeName(ctx, db, repo.ID, "master", sdk.EntityTypeWorkerModel, workerModelName)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var model sdk.V2WorkerModel
 	if err := yaml.Unmarshal([]byte(workerModelEntity.Data), &model); err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return &model, nil
+
+	completePath := fmt.Sprintf("%s/%s/%s/%s", workerProjKey, vcsName, repoName, workerModelName)
+	if branch != "" {
+		completePath += "@" + branch
+	}
+	return &model, completePath, nil
 }
 
 func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecutor, model string, execsGroupIDs []int64) (*sdk.Model, error) {
