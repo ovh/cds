@@ -18,7 +18,16 @@ export class FormItem {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JSONFormFieldComponent {
-    @Input() field: FormItem;
+
+    _field: FormItem;
+    @Input() set field(data: FormItem) {
+        this._field = data;
+        this.initModel();
+    };
+
+    get field(): FormItem {
+        return this._field;
+    }
 
     _jsonFormSchema: JSONFormSchema
     @Input() set jsonFormSchema(data: JSONFormSchema) {
@@ -42,6 +51,8 @@ export class JSONFormFieldComponent {
 
     @Output() modelChange = new EventEmitter();
 
+    required: boolean;
+
     emitChange(): void {
         let required = <string[]>this.jsonFormSchema.types[this.parentType].required;
         if (!this.model[this.field.name] && required.indexOf(this.field.name) === -1) {
@@ -60,6 +71,10 @@ export class JSONFormFieldComponent {
             return;
         }
         if (this.field.type !== 'object') {
+            // check required
+            let required = <string[]>this.jsonFormSchema.types[this.parentType].required;
+            let index = required.indexOf(this._field.name);
+            this.required = index !== -1;
             return;
         }
         if (this.jsonFormSchema && this.field.objectType && !this._model[this.field.name]) {
