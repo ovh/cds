@@ -44,13 +44,13 @@ func workerRegister(ctx context.Context, h InterfaceWithModels, startWorkerChan 
 			modelIPriority++
 		}
 		if modelI.NeedRegistration {
-			modelIPriority++
+			modelIPriority += 2
 		}
 		if modelJ.CheckRegistration {
 			modelJPriority++
 		}
 		if modelJ.NeedRegistration {
-			modelJPriority++
+			modelJPriority += 2
 		}
 		if modelIPriority == modelJPriority {
 			return modelI.Name < modelJ.Name
