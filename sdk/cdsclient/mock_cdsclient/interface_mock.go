@@ -17,7 +17,6 @@ import (
 	websocket "github.com/gorilla/websocket"
 	sdk "github.com/ovh/cds/sdk"
 	cdsclient "github.com/ovh/cds/sdk/cdsclient"
-	coverage "github.com/sguiheux/go-coverage"
 	afero "github.com/spf13/afero"
 )
 
@@ -3275,9 +3274,9 @@ func (m *MockRBACClient) EXPECT() *MockRBACClientMockRecorder {
 }
 
 // RBACImport mocks base method.
-func (m *MockRBACClient) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+func (m *MockRBACClient) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, content}
+	varargs := []interface{}{ctx, rbacRule}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -3288,9 +3287,9 @@ func (m *MockRBACClient) RBACImport(ctx context.Context, content io.Reader, mods
 }
 
 // RBACImport indicates an expected call of RBACImport.
-func (mr *MockRBACClientMockRecorder) RBACImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockRBACClientMockRecorder) RBACImport(ctx, rbacRule interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, content}, mods...)
+	varargs := append([]interface{}{ctx, rbacRule}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRBACClient)(nil).RBACImport), varargs...)
 }
 
@@ -3640,20 +3639,6 @@ func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs,
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), varargs...)
-}
-
-// QueueSendCoverage mocks base method.
-func (m *MockQueueClient) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendCoverage indicates an expected call of QueueSendCoverage.
-func (mr *MockQueueClientMockRecorder) QueueSendCoverage(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockQueueClient)(nil).QueueSendCoverage), ctx, id, report)
 }
 
 // QueueSendResult mocks base method.
@@ -7979,20 +7964,6 @@ func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, d
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), varargs...)
 }
 
-// QueueSendCoverage mocks base method.
-func (m *MockInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendCoverage indicates an expected call of QueueSendCoverage.
-func (mr *MockInterfaceMockRecorder) QueueSendCoverage(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockInterface)(nil).QueueSendCoverage), ctx, id, report)
-}
-
 // QueueSendResult mocks base method.
 func (m *MockInterface) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
 	m.ctrl.T.Helper()
@@ -8156,9 +8127,9 @@ func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJob
 }
 
 // RBACImport mocks base method.
-func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
+func (m *MockInterface) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, content}
+	varargs := []interface{}{ctx, rbacRule}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -8169,9 +8140,9 @@ func (m *MockInterface) RBACImport(ctx context.Context, content io.Reader, mods 
 }
 
 // RBACImport indicates an expected call of RBACImport.
-func (mr *MockInterfaceMockRecorder) RBACImport(ctx, content interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) RBACImport(ctx, rbacRule interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, content}, mods...)
+	varargs := append([]interface{}{ctx, rbacRule}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
 }
 
@@ -10230,20 +10201,6 @@ func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, e
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), varargs...)
-}
-
-// QueueSendCoverage mocks base method.
-func (m *MockWorkerInterface) QueueSendCoverage(ctx context.Context, id int64, report coverage.Report) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendCoverage", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendCoverage indicates an expected call of QueueSendCoverage.
-func (mr *MockWorkerInterfaceMockRecorder) QueueSendCoverage(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendCoverage", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendCoverage), ctx, id, report)
 }
 
 // QueueSendResult mocks base method.

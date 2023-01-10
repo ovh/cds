@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"io"
 	"os"
 
+	"github.com/rockbears/yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
@@ -41,10 +44,19 @@ func rbacImportFunc(v cli.Values) error {
 	}
 	defer f.Close() // nolint
 
+	var rbacRule sdk.RBAC
+	body, err := io.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	if err := yaml.Unmarshal(body, &rbacRule); err != nil {
+		return err
+	}
+
 	var mods []cdsclient.RequestModifier
 	if v.GetBool("force") {
 		mods = append(mods, cdsclient.Force())
 	}
-	_, err = client.RBACImport(context.Background(), f, mods...)
+	_, err = client.RBACImport(context.Background(), rbacRule, mods...)
 	return err
 }
