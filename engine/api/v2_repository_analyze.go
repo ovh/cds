@@ -310,7 +310,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	analysis.Data.SignKeyID = keyID
 	if analysisError != "" {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-		analysis.Data.Error = analysisError
+		analysis.Data.Errors = []string{analysisError}
 	}
 
 	var filesContent map[string][]byte
@@ -323,7 +323,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable get gpg key: %s", analysis.Data.SignKeyID))
 			}
 			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-			analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
+			analysis.Data.Errors = []string{fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)}
 		}
 
 		if gpgKey != nil {
@@ -333,7 +333,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load user %s", gpgKey.AuthentifiedUserID))
 				}
 				analysis.Status = sdk.RepositoryAnalysisStatusError
-				analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
+				analysis.Data.Errors = []string{fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)}
 			}
 		}
 
@@ -368,7 +368,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	if len(filesContent) == 0 && analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-		analysis.Data.Error = "no cds files found"
+		analysis.Data.Errors = []string{"no cds files found"}
 	}
 
 	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
@@ -426,11 +426,11 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		} else {
 			e.ID = existingEntity.ID
 			if err := entity.Update(ctx, tx, e); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to update %s of type %S", e.ID, e.Name, e.Type))
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to update %s of type %s", e.Name, e.Type)))
 			}
 		}
 	}
-	analysis.Data.Error = strings.Join(skippedFiles, "\n")
+	analysis.Data.Errors = skippedFiles
 	if len(skippedFiles) == len(analysis.Data.Entities) {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 	} else {
@@ -700,10 +700,11 @@ func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositor
 	analysis.Status = sdk.RepositoryAnalysisStatusError
 
 	analysisErrors := make([]string, 0, len(originalErrors))
+	analysis.Data.Errors = make([]string, 0, len(originalErrors))
 	for _, e := range originalErrors {
-		analysisErrors = append(analysisErrors, e.Error())
+		analysisErrors = append(analysisErrors, sdk.ExtractHTTPError(e).From)
 	}
-	analysis.Data.Error = fmt.Sprintf("%s", strings.Join(analysisErrors, "\n"))
+	analysis.Data.Errors = analysisErrors
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return err
 	}

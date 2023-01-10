@@ -10,7 +10,7 @@ import (
 const (
 	RepositoryAnalysisStatusInProgress = "InProgress"
 	RepositoryAnalysisStatusSucceed    = "Success"
-	RepositoryAnalysisStatusError      = "Error"
+	RepositoryAnalysisStatusError      = "Errors"
 	RepositoryAnalysisStatusSkipped    = "Skipped"
 )
 
@@ -44,7 +44,7 @@ type ProjectRepositoryData struct {
 	SignKeyID     string                        `json:"sign_key_id"`
 	CDSUserName   string                        `json:"cds_username"`
 	CDSUserID     string                        `json:"cds_username_id"`
-	Error         string                        `json:"error"`
+	Errors        []string                      `json:"error"`
 	Entities      []ProjectRepositoryDataEntity `json:"entities"`
 }
 

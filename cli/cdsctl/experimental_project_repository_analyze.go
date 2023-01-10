@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -79,7 +80,7 @@ func projectRepositoryGetFunc(v cli.Values) error {
 	resp := AnalysisCli{
 		Branch:      analysis.Branch,
 		ID:          analysis.ID,
-		Error:       analysis.Data.Error,
+		Error:       strings.Join(analysis.Data.Errors, "\n"),
 		Commit:      analysis.Commit,
 		Created:     analysis.Created,
 		Status:      analysis.Status,

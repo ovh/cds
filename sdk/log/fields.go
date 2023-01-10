@@ -86,6 +86,7 @@ func init() {
 		VCSServer,
 		KafkaBroker,
 		KafkaTopic,
+		AnalyzeID,
 	)
 }
 
