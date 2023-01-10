@@ -46,7 +46,7 @@ type Lintable interface {
 	GetName() string
 }
 
-func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, MultiError) {
+func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, []error) {
 	namePattern, err := regexp.Compile(EntityNamePattern)
 	if err != nil {
 		return nil, []error{WrapError(err, "unable to compile regexp %s", namePattern)}

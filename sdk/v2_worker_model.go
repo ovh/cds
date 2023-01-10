@@ -2,7 +2,6 @@ package sdk
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -52,33 +51,30 @@ func (wm V2WorkerModel) GetName() string {
 }
 
 func (wm V2WorkerModel) Lint() []error {
-	multipleError := MultiError{}
-
 	workerModelSchema := GetWorkerModelJsonSchema()
 	workerModelSchemaS, err := workerModelSchema.MarshalJSON()
 	if err != nil {
-		multipleError.Append(WrapError(err, "unable to load worker model schema"))
-		return multipleError
+		return []error{NewErrorFrom(err, "unable to load worker model schema")}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(workerModelSchemaS))
 
 	modelJson, err := json.Marshal(wm)
 	if err != nil {
-		multipleError.Append(WithStack(err))
-		return multipleError
+		return []error{NewErrorFrom(err, "unable to marshal worker model")}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		multipleError.Append(WithStack(err))
-		return multipleError
+		return []error{NewErrorFrom(err, "unable to validate worker model")}
 	}
 	if result.Valid() {
 		return nil
 	}
+
+	errors := make([]error, 0, len(result.Errors()))
 	for _, e := range result.Errors() {
-		multipleError.Append(fmt.Errorf("error on %s: %v", wm.Name, e))
+		errors = append(errors, NewErrorFrom(ErrInvalidData, e.String()))
 	}
-	return multipleError
+	return errors
 }

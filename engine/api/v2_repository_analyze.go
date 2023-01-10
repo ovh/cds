@@ -275,7 +275,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}()
 
 	if err != nil {
-		return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to load analyze %s", analysis.ID))
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load analyze %s", analysis.ID))
 	}
 
 	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
@@ -284,12 +284,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	vcsProjectWithSecret, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
-		return api.stopAnalysis(ctx, analysis, err)
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load vcs %s", analysis.VCSProjectID))
 	}
 
 	repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), analysis.ProjectRepositoryID)
 	if err != nil {
-		return api.stopAnalysis(ctx, analysis, err)
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
 
 	var keyID, analysisError string
@@ -297,15 +297,15 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab, sdk.VCSTypeGerrit:
 		keyID, analysisError, err = api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProjectWithSecret, *repo)
 		if err != nil {
-			return api.stopAnalysis(ctx, analysis, err)
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
 		}
 	case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
 		keyID, analysisError, err = api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProjectWithSecret, *repo)
 		if err != nil {
-			return api.stopAnalysis(ctx, analysis, err)
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
 		}
 	default:
-		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs type: %s", vcsProjectWithSecret.Type))
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs of type: %s", vcsProjectWithSecret.Type))
 	}
 	analysis.Data.SignKeyID = keyID
 	if analysisError != "" {
@@ -320,7 +320,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, api.mustDB(), analysis.Data.SignKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to find gpg key: %s", analysis.Data.SignKeyID))
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable get gpg key: %s", analysis.Data.SignKeyID))
 			}
 			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 			analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
@@ -330,7 +330,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			cdsUser, err = user.LoadByID(ctx, api.mustDB(), gpgKey.AuthentifiedUserID)
 			if err != nil {
 				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to find user %s", gpgKey.AuthentifiedUserID))
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load user %s", gpgKey.AuthentifiedUserID))
 				}
 				analysis.Status = sdk.RepositoryAnalysisStatusError
 				analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
@@ -354,7 +354,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				}
 
 				if err != nil {
-					return api.stopAnalysis(ctx, analysis, err)
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve files"))
 				}
 			}
 		}
@@ -362,7 +362,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return api.stopAnalysis(ctx, analysis, err)
+		return sdk.WithStack(err)
 	}
 	defer tx.Rollback() // nolint
 
@@ -397,10 +397,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			}
 			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, cdsUser.ID, analysis.ProjectKey)
 			if err != nil {
-				return api.stopAnalysis(ctx, analysis, err)
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
 			}
 			userRoles[e.Type] = b
-
 		}
 
 		for i := range analysis.Data.Entities {
@@ -418,16 +417,16 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 		existingEntity, err := entity.LoadByBranchTypeName(ctx, tx, e.ProjectRepositoryID, e.Branch, e.Type, e.Name)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return api.stopAnalysis(ctx, analysis, err)
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on branch %s", e.Name, e.Type, e.Branch))
 		}
 		if existingEntity == nil {
 			if err := entity.Insert(ctx, tx, e); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to insert entity %s", e.Name))
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
 			}
 		} else {
 			e.ID = existingEntity.ID
 			if err := entity.Update(ctx, tx, e); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.WrapError(err, "unable to save entity %s/%s", e.ID, e.Name))
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to update %s of type %S", e.ID, e.Name, e.Type))
 			}
 		}
 	}
@@ -702,9 +701,9 @@ func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositor
 
 	analysisErrors := make([]string, 0, len(originalErrors))
 	for _, e := range originalErrors {
-		analysisErrors = append(analysisErrors, sdk.Cause(e).Error())
+		analysisErrors = append(analysisErrors, e.Error())
 	}
-	analysis.Data.Error = fmt.Sprintf("%s", strings.Join(analysisErrors, ", "))
+	analysis.Data.Error = fmt.Sprintf("%s", strings.Join(analysisErrors, "\n"))
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return err
 	}
