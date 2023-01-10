@@ -3273,6 +3273,20 @@ func (m *MockRBACClient) EXPECT() *MockRBACClientMockRecorder {
 	return m.recorder
 }
 
+// RBACDelete mocks base method.
+func (m *MockRBACClient) RBACDelete(ctx context.Context, permissionName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACDelete", ctx, permissionName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RBACDelete indicates an expected call of RBACDelete.
+func (mr *MockRBACClientMockRecorder) RBACDelete(ctx, permissionName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACDelete", reflect.TypeOf((*MockRBACClient)(nil).RBACDelete), ctx, permissionName)
+}
+
 // RBACImport mocks base method.
 func (m *MockRBACClient) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...cdsclient.RequestModifier) (sdk.RBAC, error) {
 	m.ctrl.T.Helper()
@@ -8124,6 +8138,20 @@ func (m *MockInterface) QueueWorkflowRunResultsRelease(ctx context.Context, perm
 func (mr *MockInterfaceMockRecorder) QueueWorkflowRunResultsRelease(ctx, permJobID, runResultIDs, to interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueWorkflowRunResultsRelease", reflect.TypeOf((*MockInterface)(nil).QueueWorkflowRunResultsRelease), ctx, permJobID, runResultIDs, to)
+}
+
+// RBACDelete mocks base method.
+func (m *MockInterface) RBACDelete(ctx context.Context, permissionName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACDelete", ctx, permissionName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RBACDelete indicates an expected call of RBACDelete.
+func (mr *MockInterfaceMockRecorder) RBACDelete(ctx, permissionName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACDelete", reflect.TypeOf((*MockInterface)(nil).RBACDelete), ctx, permissionName)
 }
 
 // RBACImport mocks base method.

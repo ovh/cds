@@ -85,6 +85,11 @@ testcases:
       retry: 30
       delay: 10
 
+- name: delete rbac on project
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac delete perm-test --force
+      assertions:
+        - result.code ShouldEqual 0
 - name: delete repository on project
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository delete ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --force

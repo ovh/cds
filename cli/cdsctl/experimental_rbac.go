@@ -21,6 +21,7 @@ var experimentalRbacCmd = cli.Command{
 func experimentalRbac() *cobra.Command {
 	return cli.NewCommand(experimentalRbacCmd, nil, []*cobra.Command{
 		cli.NewCommand(rbacImportCmd, rbacImportFunc, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(rbacDeleteCmd, rbacDeleteFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -59,4 +60,19 @@ func rbacImportFunc(v cli.Values) error {
 	}
 	_, err = client.RBACImport(context.Background(), rbacRule, mods...)
 	return err
+}
+
+var rbacDeleteCmd = cli.Command{
+	Name:    "delete",
+	Short:   "Delete a permission",
+	Aliases: []string{"remove", "rm"},
+	Example: "cdsctl rbac delete <permission_identifier>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "permission_identifier"},
+	},
+}
+
+func rbacDeleteFunc(v cli.Values) error {
+	return client.RBACDelete(context.Background(), v.GetString("permission_identifier"))
 }

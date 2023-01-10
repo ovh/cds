@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_postImportRbacHandler(t *testing.T) {
+func Test_postImportAndDeleteRbacHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	_, err := db.Exec("DELETE FROM rbac")
@@ -66,4 +66,17 @@ globals:
 	require.Equal(t, 1, len(rbacDB.Projects[0].RBACGroupsIDs))
 	require.Equal(t, u.ID, rbacDB.Projects[0].RBACUsersIDs[0])
 	require.Equal(t, g.ID, rbacDB.Projects[0].RBACGroupsIDs[0])
+
+	// Delete
+	varsDelete := map[string]string{"rbacIdentifier": rbacDB.ID}
+	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteRbacHandler, varsDelete)
+	test.NotEmpty(t, uriDelete)
+	reqDelete := assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uriDelete, nil)
+
+	wDelete := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wDelete, reqDelete)
+	require.Equal(t, 200, wDelete.Code)
+
+	_, err = rbac.LoadRBACByID(context.TODO(), db, rbacDB.ID)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 }
