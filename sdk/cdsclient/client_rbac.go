@@ -5,6 +5,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) RBACGet(ctx context.Context, permissionIdentifier string) (sdk.RBAC, error) {
+	path := "/v2/rbac/" + permissionIdentifier
+	var perm sdk.RBAC
+	_, err := c.GetJSON(ctx, path, &perm)
+	return perm, err
+}
+
 func (c *client) RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...RequestModifier) (sdk.RBAC, error) {
 	path := "/v2/rbac/import"
 	_, err := c.PostJSON(ctx, path, &rbacRule, &rbacRule, mods...)

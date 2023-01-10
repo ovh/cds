@@ -45,6 +45,7 @@ const (
 	VCSServer          = log.Field("vcs_server")
 	KafkaBroker        = log.Field("kafka_broker")
 	KafkaTopic         = log.Field("kafka_topic")
+	AnalyzeID          = log.Field("analyze_id")
 )
 
 func init() {

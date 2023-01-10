@@ -6,8 +6,8 @@ var (
 
 type RBACGlobal struct {
 	Role           string   `json:"role" db:"role"`
-	RBACUsersName  []string `json:"users" db:"-"`
-	RBACGroupsName []string `json:"groups" db:"-"`
+	RBACUsersName  []string `json:"users,omitempty" db:"-"`
+	RBACGroupsName []string `json:"groups,omitempty" db:"-"`
 	RBACUsersIDs   []string `json:"-" db:"-"`
 	RBACGroupsIDs  []int64  `json:"-" db:"-"`
 }

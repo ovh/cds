@@ -2,26 +2,45 @@ package api
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
-	"net/http"
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
 )
 
-func (api *API) getRbacByIdentifier(ctx context.Context, rbacIdentifier string) (*sdk.RBAC, error) {
+func (api *API) getRbacByIdentifier(ctx context.Context, rbacIdentifier string, opts ...rbac.LoadOptionFunc) (*sdk.RBAC, error) {
 	var repo *sdk.RBAC
 	var err error
 	if sdk.IsValidUUID(rbacIdentifier) {
-		repo, err = rbac.LoadRBACByID(ctx, api.mustDB(), rbacIdentifier)
+		repo, err = rbac.LoadRBACByID(ctx, api.mustDB(), rbacIdentifier, opts...)
 	} else {
-		repo, err = rbac.LoadRBACByName(ctx, api.mustDB(), rbacIdentifier)
+		repo, err = rbac.LoadRBACByName(ctx, api.mustDB(), rbacIdentifier, opts...)
 	}
 	if err != nil {
 		return nil, err
 	}
 	return repo, nil
+}
+
+func (api *API) getRbacHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.globalPermissionManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			rbacIdentifier := vars["rbacIdentifier"]
+
+			perm, err := api.getRbacByIdentifier(ctx, rbacIdentifier,
+				rbac.LoadOptions.LoadRBACGlobal,
+				rbac.LoadOptions.LoadRBACProject,
+				rbac.LoadOptions.LoadRBACHatchery,
+				rbac.LoadOptions.LoadRBACRegion)
+			if err != nil {
+				return err
+			}
+			return service.WriteMarshal(w, req, perm, http.StatusOK)
+		}
 }
 
 func (api *API) deleteRbacHandler() ([]service.RbacChecker, service.Handler) {

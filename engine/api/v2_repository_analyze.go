@@ -251,6 +251,8 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	ctx, next := telemetry.Span(ctx, "api.analyzeRepository.lock")
 	defer next()
 
+	ctx = context.WithValue(ctx, cdslog.AnalyzeID, analysisID)
+
 	lockKey := cache.Key("api:analyzeRepository", analysisID)
 	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
 	if err != nil {

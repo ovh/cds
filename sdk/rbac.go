@@ -31,10 +31,10 @@ type RBAC struct {
 	Name         string         `json:"name" db:"name"`
 	Created      time.Time      `json:"created" db:"created"`
 	LastModified time.Time      `json:"last_modified" db:"last_modified"`
-	Globals      []RBACGlobal   `json:"globals" db:"-"`
-	Projects     []RBACProject  `json:"projects" db:"-"`
-	Regions      []RBACRegion   `json:"regions" db:"-"`
-	Hatcheries   []RBACHatchery `json:"hatcheries" db:"-"`
+	Globals      []RBACGlobal   `json:"globals,omitempty" db:"-"`
+	Projects     []RBACProject  `json:"projects,omitempty" db:"-"`
+	Regions      []RBACRegion   `json:"regions,omitempty" db:"-"`
+	Hatcheries   []RBACHatchery `json:"hatcheries,omitempty" db:"-"`
 }
 
 func IsValidRBAC(rbac *RBAC) error {

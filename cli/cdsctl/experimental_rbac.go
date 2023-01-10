@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -22,7 +24,40 @@ func experimentalRbac() *cobra.Command {
 	return cli.NewCommand(experimentalRbacCmd, nil, []*cobra.Command{
 		cli.NewCommand(rbacImportCmd, rbacImportFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(rbacDeleteCmd, rbacDeleteFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(rbacGetCmd, rbacGetFunc, nil, withAllCommandModifiers()...),
 	})
+}
+
+var rbacGetCmd = cli.Command{
+	Name:    "show",
+	Aliases: []string{"get"},
+	Short:   "GET a CDS permission",
+	Example: "cdsctl rbac get <permission identifier>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "permissionIdentifier"},
+	},
+	Flags: []cli.Flag{
+		{
+			Name: "format",
+		},
+	},
+}
+
+func rbacGetFunc(v cli.Values) error {
+	perm, err := client.RBACGet(context.Background(), v.GetString("permissionIdentifier"))
+	if err != nil {
+		return err
+	}
+	format := v.GetString("format")
+	var result []byte
+	if format == "json" {
+		result, _ = json.Marshal(perm)
+	} else {
+		result, _ = yaml.Marshal(perm)
+	}
+	fmt.Printf("%s", string(result))
+	return nil
 }
 
 var rbacImportCmd = cli.Command{
@@ -74,5 +109,11 @@ var rbacDeleteCmd = cli.Command{
 }
 
 func rbacDeleteFunc(v cli.Values) error {
-	return client.RBACDelete(context.Background(), v.GetString("permission_identifier"))
+	if err := client.RBACDelete(context.Background(), v.GetString("permission_identifier")); err != nil {
+		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNotFound) {
+			fmt.Println(err.Error())
+			os.Exit(0)
+		}
+	}
+	return nil
 }

@@ -9,10 +9,10 @@ type RBACRegion struct {
 	RbacID            string   `json:"-"  db:"rbac_id"`
 	Role              string   `json:"role" db:"role"`
 	RegionID          string   `json:"region_id" db:"region_id"`
-	AllUsers          bool     `json:"all_users" db:"all_users"`
-	RBACOrganizations []string `json:"organizations" db:"-"`
-	RBACUsersName     []string `json:"users" db:"-"`
-	RBACGroupsName    []string `json:"groups" db:"-"`
+	AllUsers          bool     `json:"all_users,omitempty" db:"all_users"`
+	RBACOrganizations []string `json:"organizations,omitempty" db:"-"`
+	RBACUsersName     []string `json:"users,omitempty" db:"-"`
+	RBACGroupsName    []string `json:"groups,omitempty" db:"-"`
 	RegionName        string   `json:"region" db:"-"`
 
 	RBACUsersIDs        []string `json:"-" db:"-"`
