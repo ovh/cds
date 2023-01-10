@@ -35,7 +35,7 @@ type Entity struct {
 
 func GetManageRoleByEntity(entityType string) (string, error) {
 	switch entityType {
-	case EntityTypeWorkerModel:
+	case EntityTypeWorkerModel, EntityTypeWorkerModelTemplate:
 		return ProjectRoleManageWorkerModel, nil
 	}
 	return "", WrapError(ErrInvalidData, "unknown entity of type %s", entityType)

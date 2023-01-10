@@ -400,12 +400,67 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := []sdk.VCSContent{
+					{
+						IsDirectory: true,
+						Name:        "worker-models",
+					},
+				}
+				*(out.(*[]sdk.VCSContent)) = contents
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+
+	modelContent := `name: docker-debian
+description: my debian worker model
+type: docker
+spec:
+  image: myimage:1.1
+  registry: http://my-registry:9000
+  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
+  shell: sh -c
+  envs:
+    MYVAR: toto`
+	content64 := base64.StdEncoding.EncodeToString([]byte(modelContent))
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/content/.cds%2Fworker-models%2Fmymodel.yml?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				content := sdk.VCSContent{
+					IsFile:  true,
+					Name:    "mymodel.yml",
+					Content: content64,
+				}
+				*(out.(*sdk.VCSContent)) = content
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds%2Fworker-models?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := []sdk.VCSContent{
+					{
+						IsFile: true,
+						Name:   "mymodel.yml",
+					},
+				}
+				*(out.(*[]sdk.VCSContent)) = contents
+				return nil, 200, nil
+			},
+		).MaxTimes(1)
+
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Contains(t, analysisUpdated.Data.Error, "doesn't have enough right on project")
+	require.Contains(t, analysisUpdated.Data.Error, "User doesn't have the permission to manage WorkerModel")
 }
 
 func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
@@ -548,7 +603,7 @@ GDFkaTe3nUJdYV4=
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
 
-	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManage, proj1.Key, *u)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 
 	// Create VCS
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
