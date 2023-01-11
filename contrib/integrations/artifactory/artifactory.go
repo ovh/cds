@@ -69,7 +69,7 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 	return artifactory.New(serviceConfig)
 }
 
-func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties) error {
+func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
 	srcRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := services.NewMoveCopyParams()
@@ -81,12 +81,15 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowR
 		fmt.Printf("%s has been already promoted\n", data.Name)
 	} else {
 		// Check if artifact already exist on destination
-		exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
-		if err != nil {
-			return err
+		var skipArtifact bool
+		if skipExistingArtifacts {
+			exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
+			if err != nil {
+				return err
+			}
+			skipArtifact = exist
 		}
-
-		if !exist {
+		if !skipArtifact {
 			// If source repository is a release repository, we should not move but copy the artifact
 			// Get the properties of the source reposiytory
 			maturity, err := artiClient.GetRepositoryMaturity(srcRepo)
@@ -128,7 +131,7 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowR
 	return nil
 }
 
-func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties) error {
+func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
 	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
@@ -136,17 +139,21 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 	if lowMaturity == highMaturity {
 		fmt.Printf("%s has been already promoted\n", data.Name)
 	} else {
-		maturity, err := artiClient.GetRepositoryMaturity(sourceRepo)
-		if err != nil {
-			fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
-		}
-
 		// Check if artifact already exist on destination
-		exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
-		if err != nil {
-			return err
+		var skipArtifact bool
+		if skipExistingArtifacts {
+			exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
+			if err != nil {
+				return err
+			}
+			skipArtifact = exist
 		}
-		if !exist {
+		if !skipArtifact {
+			maturity, err := artiClient.GetRepositoryMaturity(sourceRepo)
+			if err != nil {
+				fmt.Printf("Warning: unable to get repository maturity: %v\n", err)
+			}
+
 			if maturity == "release" {
 				fmt.Printf("Copying docker image %s from %s to %s\n", data.Name, params.SourceRepo, params.TargetRepo)
 				params.Copy = true

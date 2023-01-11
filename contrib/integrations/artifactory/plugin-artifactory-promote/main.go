@@ -124,11 +124,11 @@ func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplu
 		}
 		switch rData.RepoType {
 		case "docker":
-			if err := art.PromoteDockerImage(ctx, artifactClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props); err != nil {
+			if err := art.PromoteDockerImage(ctx, artifactClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, false); err != nil {
 				return fail("unable to promote docker image: %s: %v", rData.Name+"-"+latestPromotion.ToMaturity, err)
 			}
 		default:
-			if err := art.PromoteFile(artifactClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props); err != nil {
+			if err := art.PromoteFile(artifactClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, false); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
 		}
