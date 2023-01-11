@@ -126,7 +126,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
-	require.Equal(t, "unable to check the commit signature", analysisUpdated.Data.Errors[0])
+	require.Equal(t, "unable to check the commit signature", analysisUpdated.Data.Error)
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
 }
 
@@ -195,7 +195,7 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
-	require.Contains(t, analysisUpdated.Data.Errors[0], "unable to check the commit signature")
+	require.Contains(t, analysisUpdated.Data.Error, "unable to check the commit signature")
 }
 
 func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
@@ -271,7 +271,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "gpgkey F344BDDCE15F17D7 not found", analysisUpdated.Data.Errors[0])
+	require.Equal(t, "gpgkey F344BDDCE15F17D7 not found", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubUserNotEnoughPerm(t *testing.T) {
@@ -460,7 +460,7 @@ spec:
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Contains(t, analysisUpdated.Data.Errors[0], "User doesn't have the permission to manage WorkerModel")
+	require.Contains(t, analysisUpdated.Data.Error, "User doesn't have the permission to manage WorkerModel")
 }
 
 func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
@@ -526,7 +526,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "commit abcdef is not signed", analysisUpdated.Data.Errors[0])
+	require.Equal(t, "commit abcdef is not signed", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubAddWorkerModel(t *testing.T) {

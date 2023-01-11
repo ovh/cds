@@ -310,7 +310,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	analysis.Data.SignKeyID = keyID
 	if analysisError != "" {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-		analysis.Data.Errors = []string{analysisError}
+		analysis.Data.Error = analysisError
 	}
 
 	var filesContent map[string][]byte
@@ -323,7 +323,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable get gpg key: %s", analysis.Data.SignKeyID))
 			}
 			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-			analysis.Data.Errors = []string{fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)}
+			analysis.Data.Error = fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID)
 		}
 
 		if gpgKey != nil {
@@ -333,7 +333,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load user %s", gpgKey.AuthentifiedUserID))
 				}
 				analysis.Status = sdk.RepositoryAnalysisStatusError
-				analysis.Data.Errors = []string{fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)}
+				analysis.Data.Error = fmt.Sprintf("user %s not found", gpgKey.AuthentifiedUserID)
 			}
 		}
 
@@ -368,7 +368,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	if len(filesContent) == 0 && analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
-		analysis.Data.Errors = []string{"no cds files found"}
+		analysis.Data.Error = "no cds files found"
 	}
 
 	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
@@ -430,7 +430,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			}
 		}
 	}
-	analysis.Data.Errors = skippedFiles
+	analysis.Data.Error = strings.Join(skippedFiles, "\n")
 	if len(skippedFiles) == len(analysis.Data.Entities) {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 	} else {
@@ -700,11 +700,10 @@ func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositor
 	analysis.Status = sdk.RepositoryAnalysisStatusError
 
 	analysisErrors := make([]string, 0, len(originalErrors))
-	analysis.Data.Errors = make([]string, 0, len(originalErrors))
 	for _, e := range originalErrors {
 		analysisErrors = append(analysisErrors, sdk.ExtractHTTPError(e).From)
 	}
-	analysis.Data.Errors = analysisErrors
+	analysis.Data.Error = strings.Join(analysisErrors, "\n")
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return err
 	}
