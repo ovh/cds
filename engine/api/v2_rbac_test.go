@@ -27,7 +27,7 @@ func Test_crudRbacHandler(t *testing.T) {
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 
 	vars := map[string]string{}
-	uri := api.Router.GetRouteV2("POST", api.postImportRbacHandler, vars)
+	uri := api.Router.GetRouteV2("POST", api.postImportRBACHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
 
@@ -53,7 +53,7 @@ globals:
 
 	// GET RBAC
 	varsGET := map[string]string{"rbacIdentifier": "perm-test"}
-	uriGET := api.Router.GetRouteV2("GET", api.getRbacHandler, varsGET)
+	uriGET := api.Router.GetRouteV2("GET", api.getRBACHandler, varsGET)
 	test.NotEmpty(t, uriGET)
 	reqGET := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriGET, nil)
 
@@ -79,7 +79,7 @@ globals:
 
 	// Delete
 	varsDelete := map[string]string{"rbacIdentifier": rbacGET.ID}
-	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteRbacHandler, varsDelete)
+	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteRBACHandler, varsDelete)
 	test.NotEmpty(t, uriDelete)
 	reqDelete := assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uriDelete, nil)
 

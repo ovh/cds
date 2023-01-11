@@ -37,7 +37,8 @@ regions:
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacYaml), &r))
 
-	require.NoError(t, api.FillRBACWithIDs(context.TODO(), &r))
+	rbacLoader := NewRBACLoader(api.mustDB())
+	require.NoError(t, rbacLoader.FillRBACWithIDs(context.TODO(), &r))
 	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
 	c := sdk.AuthUserConsumer{
