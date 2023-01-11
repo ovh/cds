@@ -45,7 +45,11 @@ regions:
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacYaml), &r))
 
-	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &r))
+	r.Regions[0].RBACUsersIDs = []string{user1.ID}
+	r.Regions[0].RBACGroupsIDs = []int64{group1.ID}
+	r.Regions[0].RBACOrganizationIDs = []string{org.ID}
+	r.Regions[0].RegionID = reg.ID
+
 	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
 	rbacRB, err := rbac.LoadRBACByName(context.TODO(), db, r.Name, rbac.LoadOptions.LoadRBACRegion)

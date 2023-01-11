@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/rockbears/yaml"
 	"net/http/httptest"
 	"testing"
@@ -43,6 +45,9 @@ globals:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
+	regDB, err := region.LoadRegionByName(context.TODO(), api.mustDB(), reg.Name)
+	require.NoError(t, err)
+
 	rbacReadRegion := `name: perm-%s
 regions:
 - role: %s
@@ -53,7 +58,14 @@ regions:
 	rbacReadRegion = fmt.Sprintf(rbacReadRegion, sdk.RandomString(10), sdk.RegionRoleList, reg.Name, u.Username)
 	var rbRead sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacReadRegion), &rbRead))
-	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &rbRead))
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), api.mustDB(), "default")
+	require.NoError(t, err)
+
+	rbRead.Regions[0].RegionID = regDB.ID
+	rbRead.Regions[0].RBACUsersIDs = []string{u.ID}
+	rbRead.Regions[0].RBACOrganizationIDs = []string{org.ID}
+
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rbRead))
 
 	// Then Get the region

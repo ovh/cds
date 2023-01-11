@@ -52,8 +52,10 @@ projects:
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
 
-	err = rbac.FillWithIDs(context.TODO(), db, &r)
-	require.NoError(t, err)
+	r.Projects[0].RBACUsersIDs = []string{user1.ID}
+	r.Projects[0].RBACGroupsIDs = []int64{group1.ID}
+	r.Projects[1].RBACGroupsIDs = []int64{group1.ID}
+	r.Projects[2].RBACGroupsIDs = []int64{group1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
@@ -102,8 +104,11 @@ globals:
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
-	err = rbac.FillWithIDs(context.TODO(), db, &r)
-	require.NoError(t, err)
+
+	r.Projects[0].RBACUsersIDs = []string{user1.ID}
+	r.Projects[0].RBACGroupsIDs = []int64{group1.ID}
+	r.Projects[1].RBACGroupsIDs = []int64{group1.ID}
+	r.Globals[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
@@ -169,8 +174,8 @@ projects:
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
-	err = rbac.FillWithIDs(context.TODO(), db, &r)
-	require.NoError(t, err)
+
+	r.Projects[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
@@ -190,8 +195,9 @@ projects:
 
 	var rUpdated sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(permUpdated), &rUpdated))
-	err = rbac.FillWithIDs(context.TODO(), db, &rUpdated)
-	require.NoError(t, err)
+
+	rUpdated.ID = rbacDB.ID
+	rUpdated.Projects[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Update(context.TODO(), db, &rUpdated))
 
