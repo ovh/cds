@@ -1,8 +1,9 @@
-<div class="CDSbreadcrumb">
+<div class="breadcrumb">
     <nz-breadcrumb>
-        <nz-breadcrumb-item  *ngFor="let v of path; let i = index">
+        <nz-breadcrumb-item *ngFor="let v of path; let i = index">
             <i *ngIf="v.icon" nz-icon nzType="{{v.icon}}" nzTheme="{{v.iconTheme}}"></i>
-            <a *ngIf="v.routerLink" class="section" [class.active]="v.active" [routerLink]="v.routerLink" [queryParams]="v.queryParams">
+            <a *ngIf="v.routerLink" class="section" [class.active]="v.active" [routerLink]="v.routerLink"
+                [queryParams]="v.queryParams">
                 <span *ngIf="v.translate">{{v.translate | translate}}</span>
                 <span *ngIf="v.text">{{v.text}}</span>
             </a>

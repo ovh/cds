@@ -22,8 +22,8 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
         this.updatePath();
     }
     get project() {
- return this._project;
-}
+        return this._project;
+    }
 
     _workflow: Workflow;
     @Input() set workflow(w: Workflow) {
@@ -31,8 +31,8 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
         this.updatePath();
     }
     get workflow() {
- return this._workflow;
-}
+        return this._workflow;
+    }
 
     @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;

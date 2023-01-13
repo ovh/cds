@@ -1,0 +1,19 @@
+@import '../../../common';
+
+:host {
+    display: block;
+    cursor: pointer;
+    height: 20px;
+}
+
+[nz-icon] {
+    font-size: 20px;
+
+    &.active {
+        color: $cds_favorite_color;
+    }
+
+    &:hover {
+        opacity: 0.4;
+    }
+}
