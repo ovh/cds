@@ -1,34 +1,20 @@
 @import "../../../../common";
 
 #ProjectShow {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
-  height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-content: stretch;
+    height: 100%;
 
-  i {
-    &.favorite {
-      &:hover {
-        opacity: 0.4;
-      }
+    i.orange {
+        color: $cds_color_orange;
     }
-    &.unfavorite {
-      &:hover {
-        color: $cds_favorite_color;
-      }
+
+    nz-spin {
+        margin-top: 30px;
     }
-  }
-  i.orange {
-    color: $cds_color_orange;
-  }
-  nz-spin {
-    margin-top: 30px;
-  }
 }
 
-.star {
-  cursor: pointer;
-  margin-left: 15px;
-  font-size: 1.3em;
+app-favorite-button {
+    margin-right: 10px;
 }
-

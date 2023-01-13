@@ -1,0 +1,3 @@
+<span *ngIf="loading" nz-icon nzType="loading"></span>
+<span *ngIf="!loading" nz-icon nzType="star" nzTheme="fill" [class.active]="active" (click)="click()"
+    [title]="'favorite_add_btn' | translate"></span>

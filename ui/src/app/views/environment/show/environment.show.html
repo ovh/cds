@@ -1,30 +1,31 @@
 <div id="EnvironmentShow">
-<div *ngIf="project && environment;then showEnv;else loadEnv"></div>
-<ng-template #showEnv>
-
+    <div *ngIf="project && environment;then showEnv;else loadEnv"></div>
+    <ng-template #showEnv>
         <app-project-breadcrumb [project]="project" [environment]="environment" [workflow]="workflowName"
             [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun" [wPipeline]="workflowPipeline">
-            <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
-                <nz-tag [nzColor]="environment?.from_repository?'green':''" nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromRepository"
-                        nzPopoverPlacement="leftBottom"><i nz-icon nzType="code" nzTheme="outline"></i>as code</nz-tag>
-                <ng-template #popupFromRepository>
-                    <div class="content infoPopup">
-                        <ng-container *ngIf="environment.from_repository">
-                            <p>
-                                {{ 'environment_from_repository' | translate: {repo: environment.from_repository} }}
-                            </p>
-                        </ng-container>
-                    </div>
-                </ng-template>
-            </div>
+            <nz-tag class="labelFeature" [title]="'workflow_from_repository_btn' | translate"
+                [nzColor]="environment?.from_repository?'green':''" nz-popover nzPopoverTrigger="click"
+                [nzPopoverContent]="popupFromRepository" nzPopoverPlacement="leftBottom"><i nz-icon nzType="code"
+                    nzTheme="outline"></i>as code</nz-tag>
+            <ng-template #popupFromRepository>
+                <div class="content infoPopup">
+                    <ng-container *ngIf="environment.from_repository">
+                        <p>
+                            {{ 'environment_from_repository' | translate: {repo: environment.from_repository} }}
+                        </p>
+                    </ng-container>
+                </div>
+            </ng-template>
         </app-project-breadcrumb>
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <ng-container *ngIf="editMode && !readonly">
             <nz-button-group class="ascodeButton">
                 <ng-container *ngIf="environment.editModeChanged">
-                    <button nz-button nzType="default" (click)="cancelEnvironment()">{{'common_cancel' | translate }}</button>
+                    <button nz-button nzType="default" (click)="cancelEnvironment()">{{'common_cancel' | translate
+                        }}</button>
                 </ng-container>
-                <button nz-button nzType="primary" [disabled]="!environment.editModeChanged" (click)="saveEditMode()">{{'btn_save_environment' | translate }}</button>
+                <button nz-button nzType="primary" [disabled]="!environment.editModeChanged"
+                    (click)="saveEditMode()">{{'btn_save_environment' | translate }}</button>
             </nz-button-group>
         </ng-container>
 
@@ -33,20 +34,19 @@
                 <div class="viewContent">
                     <div [ngSwitch]="selectedTab.key">
                         <div *ngSwitchCase="'variables'">
-                            <ng-container
-                                *ngIf="!readonly">
+                            <ng-container *ngIf="!readonly">
                                 <h3>{{ 'environment_variable_form_title' | translate}}</h3>
                                 <app-variable-form [loading]="varFormLoading"
                                     (createVariableEvent)="variableEvent($event)"></app-variable-form>
                             </ng-container>
                             <h3>{{ 'environment_variable_list_title' | translate}}</h3>
-                            <app-variable [variables]="environment.variables"
-                                [mode]="readonly?'ro':'edit'"
+                            <app-variable [variables]="environment.variables" [mode]="readonly?'ro':'edit'"
                                 (event)="variableEvent($event)" auditContext="environment" [project]="project"
                                 [environmentName]="environment.name"></app-variable>
                         </div>
                         <div *ngSwitchCase="'keys'">
-                            <app-environment-keys [project]="project" [environment]="environment" [readonly]="readonly" [editMode]="editMode"></app-environment-keys>
+                            <app-environment-keys [project]="project" [environment]="environment" [readonly]="readonly"
+                                [editMode]="editMode"></app-environment-keys>
                         </div>
                         <div *ngSwitchCase="'usage'">
                             <ng-container *ngIf="usageCount > 0">
@@ -64,8 +64,8 @@
                 </div>
             </div>
         </div>
-</ng-template>
-<ng-template #loadEnv>
-    <nz-spin nzTip="Loading environment..."></nz-spin>
-</ng-template>
+    </ng-template>
+    <ng-template #loadEnv>
+        <nz-spin nzTip="Loading environment..."></nz-spin>
+    </ng-template>
 </div>

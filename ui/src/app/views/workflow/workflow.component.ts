@@ -199,6 +199,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             return;
         }
         this.loadingFav = true;
+        this._cd.markForCheck();
         this._store.dispatch(new UpdateFavoriteWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name

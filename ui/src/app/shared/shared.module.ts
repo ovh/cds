@@ -114,9 +114,11 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
-import { AimOutline, ApartmentOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, EyeInvisibleOutline, ExpandOutline, ExportOutline, EyeOutline, FieldTimeOutline, FileOutline, FileTextOutline, FilterOutline, FolderOutline, FontColorsOutline, KeyOutline,
+import {
+    AimOutline, ApartmentOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, EyeInvisibleOutline, ExpandOutline, ExportOutline, EyeOutline, FieldTimeOutline, FileOutline, FileTextOutline, FilterOutline, FolderOutline, FontColorsOutline, KeyOutline,
     GithubOutline, GitlabOutline, GlobalOutline, HomeOutline, HighlightFill, HistoryOutline, HourglassOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, MinusOutline, MoreOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, ProfileOutline, QuestionOutline, QuestionCircleOutline, RestOutline, RocketOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
-    TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill } from '@ant-design/icons-angular/icons'
+    TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill
+} from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
@@ -146,24 +148,25 @@ import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.s
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
 import { TreeComponent } from 'app/shared/tree/tree.component';
 import { AutoHeightSidebarCollapseDirective } from 'app/shared/directives/auto-height-sidebar-collapse.directive';
-import {EntityFormComponent} from "./entity/entity.form.component";
-import {NzCodeEditorModule} from "ng-zorro-antd/code-editor";
-import {JSONFormComponent} from "./entity/form/json-form.component";
-import {JSONFormFieldComponent} from "./entity/form/form-item/json-form-field.component";
-import {JSONFormFieldConditionalComponent} from "./entity/form/form-item-conditional/json.form.item.conditional.component";
+import { EntityFormComponent } from "./entity/entity.form.component";
+import { NzCodeEditorModule } from "ng-zorro-antd/code-editor";
+import { JSONFormComponent } from "./entity/form/json-form.component";
+import { JSONFormFieldComponent } from "./entity/form/form-item/json-form-field.component";
+import { JSONFormFieldConditionalComponent } from "./entity/form/form-item-conditional/json.form.item.conditional.component";
 import { APIConfigGuard } from 'app/guard/api-config.guard';
+import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
 
 const ngZorroConfig: NzConfig = {
-    notification: {nzPauseOnHover: true, nzPlacement: "topRight"},
-    icon: {nzTheme: "outline"},
+    notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
+    icon: { nzTheme: "outline" },
     codeEditor: {
-        monacoEnvironment: {globalAPI: true}
+        monacoEnvironment: { globalAPI: true }
     }
 };
 
-const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline ,CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, ExpandOutline, ExportOutline,
+const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, ExpandOutline, ExportOutline,
     EyeInvisibleOutline, EyeOutline, FileOutline, FileTextOutline, FieldTimeOutline, FilterOutline, FolderOutline, FontColorsOutline, KeyOutline, GithubOutline, GitlabOutline, GlobalOutline, HomeOutline, HighlightFill, HistoryOutline, HourglassOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, MinusOutline, MoreOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, ProfileOutline, QuestionOutline, QuestionCircleOutline,
-    RestOutline, RocketOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill ];
+    RestOutline, RocketOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill];
 
 @NgModule({
     imports: [
@@ -216,7 +219,6 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NgxChartsModule
     ],
     declarations: [
-        AutoHeightSidebarCollapseDirective,
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
@@ -226,6 +228,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         AsCodeSaveModalComponent,
         AuditListComponent,
         AutoFocusInputComponent,
+        AutoHeightSidebarCollapseDirective,
         BitbucketIconComponent,
         BitbucketIconSuccessComponent,
         BreadcrumbComponent,
@@ -240,6 +243,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         DiffListComponent,
         DurationMsPipe,
         EntityFormComponent,
+        FavoriteButtonComponent,
         FavoriteCardsComponent,
         ForMapPipe,
         JSONFormComponent,
@@ -255,7 +259,6 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         ParameterListComponent,
         ParameterValueComponent,
         PermissionFormComponent,
-        WorkflowPermissionFormComponent,
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         RepoManagerFormComponent,
@@ -267,8 +270,8 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
-        TabsComponent,
         TabComponent,
+        TabsComponent,
         TreeComponent,
         TruncatePipe,
         UploadButtonComponent,
@@ -294,6 +297,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeRunParamComponent,
+        WorkflowPermissionFormComponent,
         WorkflowRunJobComponent,
         WorkflowRunJobVariableComponent,
         WorkflowSidebarRunListComponent,
@@ -311,7 +315,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         WorkflowWNodeJoinComponent,
         WorkflowWNodeMenuEditComponent,
         WorkflowWNodeOutGoingHookComponent,
-        WorkflowWNodePipelineComponent,
+        WorkflowWNodePipelineComponent
     ],
     providers: [
         PermissionService,
@@ -356,6 +360,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         DragulaModule,
         DurationMsPipe,
         EntityFormComponent,
+        FavoriteButtonComponent,
         FavoriteCardsComponent,
         ForMapPipe,
         FormsModule,
@@ -366,10 +371,10 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         LabelsEditComponent,
         MarkdownModule,
         MomentModule,
-        NzAutocompleteModule,
         NgForNumber,
         NgxAutoScrollDirective,
         NzAlertModule,
+        NzAutocompleteModule,
         NzBadgeModule,
         NzBreadCrumbModule,
         NzButtonModule,
@@ -385,8 +390,8 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NzInputModule,
         NzLayoutModule,
         NzListModule,
-        NzModalModule,
         NzMenuModule,
+        NzModalModule,
         NzNotificationModule,
         NzPopconfirmModule,
         NzPopoverModule,
@@ -396,9 +401,9 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         NzSpinModule,
         NzStepsModule,
         NzSwitchModule,
+        NzTableModule,
         NzTabsModule,
         NzTagModule,
-        NzTableModule,
         NzToolTipModule,
         NzTreeViewModule,
         NzUploadModule,
@@ -406,7 +411,6 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         ParameterListComponent,
         ParameterValueComponent,
         PermissionFormComponent,
-        WorkflowPermissionFormComponent,
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         ReactiveFormsModule,
@@ -442,6 +446,7 @@ const icons: IconDefinition[] = [ AimOutline, ApartmentOutline, ArrowDownOutline
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeRunParamComponent,
+        WorkflowPermissionFormComponent,
         WorkflowRunJobComponent,
         WorkflowRunJobVariableComponent,
         WorkflowSidebarRunListComponent,
