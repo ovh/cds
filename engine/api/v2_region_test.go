@@ -26,14 +26,14 @@ func Test_crudRegion(t *testing.T) {
 
 	// Insert rbac
 	perm := fmt.Sprintf(`name: perm-region-%s
-globals:
+global:
   - role: %s
     users: [%s]
 `, sdk.RandomString(10), sdk.GlobalRoleManageRegion, u.Username)
 
 	var rb sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
-	rb.Globals[0].RBACUsersIDs = []string{u.ID}
+	rb.Global[0].RBACUsersIDs = []string{u.ID}
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
 	reg := sdk.Region{Name: sdk.RandomString(10)}

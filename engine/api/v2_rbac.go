@@ -147,8 +147,8 @@ func (api *API) postImportRBACHandler() ([]service.RbacChecker, service.Handler)
 }
 
 func (rl *RBACLoader) FillRBACWithNames(ctx context.Context, r *sdk.RBAC) error {
-	for gID := range r.Globals {
-		rbacGbl := &r.Globals[gID]
+	for gID := range r.Global {
+		rbacGbl := &r.Global[gID]
 		if err := rl.fillRBACGlobalWithNames(ctx, rbacGbl); err != nil {
 			return err
 		}
@@ -186,8 +186,8 @@ func (rl *RBACLoader) FillRBACWithIDs(ctx context.Context, r *sdk.RBAC) error {
 		r.ID = rbacDB.ID
 	}
 
-	for gID := range r.Globals {
-		rbacGbl := &r.Globals[gID]
+	for gID := range r.Global {
+		rbacGbl := &r.Global[gID]
 		if err := rl.fillRBACGlobalWithID(ctx, rbacGbl); err != nil {
 			return err
 		}

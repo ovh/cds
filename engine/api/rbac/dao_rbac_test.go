@@ -97,7 +97,7 @@ projects:
   - role: manage
     groups: [%s]
     projects: [%s]
-globals:
+global:
   - role: create-project
     users: [%s]
 `, user1.Username, group1.Name, proj1.Key, group1.Name, proj2.Key, user1.Username)
@@ -108,7 +108,7 @@ globals:
 	r.Projects[0].RBACUsersIDs = []string{user1.ID}
 	r.Projects[0].RBACGroupsIDs = []int64{group1.ID}
 	r.Projects[1].RBACGroupsIDs = []int64{group1.ID}
-	r.Globals[0].RBACUsersIDs = []string{user1.ID}
+	r.Global[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
@@ -116,9 +116,9 @@ globals:
 	require.NoError(t, err)
 
 	// Global part
-	require.Equal(t, len(r.Globals), len(rbacDB.Globals))
-	require.Equal(t, r.Globals[0].Role, rbacDB.Globals[0].Role)
-	require.Equal(t, user1.ID, rbacDB.Globals[0].RBACUsersIDs[0])
+	require.Equal(t, len(r.Global), len(rbacDB.Global))
+	require.Equal(t, r.Global[0].Role, rbacDB.Global[0].Role)
+	require.Equal(t, user1.ID, rbacDB.Global[0].RBACUsersIDs[0])
 
 	// Project part
 	require.Equal(t, len(r.Projects), len(rbacDB.Projects))

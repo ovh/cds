@@ -37,7 +37,7 @@ projects:
     projects: [%s]
     users: [%s]
     groups: [%s]
-globals:
+global:
  - role: manage-permission
    users: [%s]
    groups: [%s]
@@ -63,12 +63,12 @@ globals:
 	var rbacGET sdk.RBAC
 	require.NoError(t, json.Unmarshal(wGET.Body.Bytes(), &rbacGET))
 
-	require.Equal(t, 1, len(rbacGET.Globals))
-	require.Equal(t, "manage-permission", rbacGET.Globals[0].Role)
-	require.Equal(t, 1, len(rbacGET.Globals[0].RBACUsersName))
-	require.Equal(t, 1, len(rbacGET.Globals[0].RBACGroupsName))
-	require.Equal(t, u.Username, rbacGET.Globals[0].RBACUsersName[0])
-	require.Equal(t, g.Name, rbacGET.Globals[0].RBACGroupsName[0])
+	require.Equal(t, 1, len(rbacGET.Global))
+	require.Equal(t, "manage-permission", rbacGET.Global[0].Role)
+	require.Equal(t, 1, len(rbacGET.Global[0].RBACUsersName))
+	require.Equal(t, 1, len(rbacGET.Global[0].RBACGroupsName))
+	require.Equal(t, u.Username, rbacGET.Global[0].RBACUsersName[0])
+	require.Equal(t, g.Name, rbacGET.Global[0].RBACGroupsName[0])
 
 	require.Equal(t, 1, len(rbacGET.Projects))
 	require.Equal(t, "read", rbacGET.Projects[0].Role)

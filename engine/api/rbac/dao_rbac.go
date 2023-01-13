@@ -39,10 +39,10 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 		return err
 	}
 
-	for i := range rb.Globals {
+	for i := range rb.Global {
 		dbRbGlobal := rbacGlobal{
 			RbacID:     dbRb.ID,
-			RBACGlobal: rb.Globals[i],
+			RBACGlobal: rb.Global[i],
 		}
 		if err := insertRBACGlobal(ctx, db, &dbRbGlobal); err != nil {
 			return err

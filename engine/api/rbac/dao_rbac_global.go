@@ -76,7 +76,7 @@ func HasGlobalRole(ctx context.Context, db gorp.SqlExecutor, role string, userID
 	}
 	rbacGlobalIDs.Unique()
 
-	rgs, err := loadRBACGlobalsByRoleAndIDs(ctx, db, role, rbacGlobalIDs)
+	rgs, err := loadRBACGlobalByRoleAndIDs(ctx, db, role, rbacGlobalIDs)
 	if err != nil {
 		return false, err
 	}
@@ -84,27 +84,27 @@ func HasGlobalRole(ctx context.Context, db gorp.SqlExecutor, role string, userID
 	return len(rgs) > 0, nil
 }
 
-func loadRBACGlobalsByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role string, rbacGlobalIDs []int64) ([]rbacGlobal, error) {
+func loadRBACGlobalByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role string, rbacGlobalIDs []int64) ([]rbacGlobal, error) {
 	q := gorpmapping.NewQuery(`SELECT * from rbac_global WHERE role = $1 AND id = ANY($2)`).Args(role, pq.Int64Array(rbacGlobalIDs))
-	return getAllRBACGlobals(ctx, db, q)
+	return getAllRBACGlobal(ctx, db, q)
 }
 
-func getAllRBACGlobals(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]rbacGlobal, error) {
-	var rbacGlobals []rbacGlobal
-	if err := gorpmapping.GetAll(ctx, db, q, &rbacGlobals); err != nil {
+func getAllRBACGlobal(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]rbacGlobal, error) {
+	var rbacGlobal []rbacGlobal
+	if err := gorpmapping.GetAll(ctx, db, q, &rbacGlobal); err != nil {
 		return nil, err
 	}
 
-	for _, rg := range rbacGlobals {
+	for _, rg := range rbacGlobal {
 		isValid, err := gorpmapping.CheckSignature(rg, rg.Signature)
 		if err != nil {
 			return nil, sdk.WrapError(err, "error when checking signature for rbac_global %d", rg.ID)
 		}
 		if !isValid {
-			log.Error(ctx, "rbac.getAllRBACGlobals> rbac_global %d data corrupted", rg.ID)
+			log.Error(ctx, "rbac.getAllRBACGlobal> rbac_global %d data corrupted", rg.ID)
 			continue
 		}
-		rbacGlobals = append(rbacGlobals, rg)
+		rbacGlobal = append(rbacGlobal, rg)
 	}
-	return rbacGlobals, nil
+	return rbacGlobal, nil
 }
