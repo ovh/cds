@@ -1,4 +1,4 @@
-@import '../../../../common';
+@import '../../../common';
 
 .panel {
     display: flex;
@@ -15,7 +15,7 @@
 
             i {
                 margin-left: -6px;
-                font-size:1.4em;
+                font-size: 1.4em;
             }
         }
 
@@ -37,7 +37,7 @@
 
             i {
                 margin-top: -5px;
-                font-size:1.4em;
+                font-size: 1.4em;
             }
         }
 
@@ -48,16 +48,24 @@
 
     .grabber {
         display: flex;
-        background-color: $darkBackground;
+        background-color: $greyBackground;
         align-items: center;
         z-index: 2;
         color: $darkTheme_grey_6;
+
+        :host-context(.night) & {
+            background-color: $darkBackground;
+        }
     }
 
     .content {
         overflow: hidden;
         z-index: 2;
-        background-color: #222222;
+        background-color: #ffffff;
+
+        :host-context(.night) & {
+            background-color: #222222;
+        }
 
         &.disableSelection {
             user-select: none;

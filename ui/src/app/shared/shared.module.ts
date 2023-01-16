@@ -155,6 +155,7 @@ import { JSONFormFieldComponent } from "./entity/form/form-item/json-form-field.
 import { JSONFormFieldConditionalComponent } from "./entity/form/form-item-conditional/json.form.item.conditional.component";
 import { APIConfigGuard } from 'app/guard/api-config.guard';
 import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
+import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
 
 const ngZorroConfig: NzConfig = {
     notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
@@ -265,6 +266,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         RequirementsFormComponent,
         RequirementsListComponent,
         RequirementsValueComponent,
+        ResizablePanelComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
         SelectorPipe,
@@ -418,6 +420,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         RequirementsFormComponent,
         RequirementsListComponent,
         RequirementsValueComponent,
+        ResizablePanelComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
         SelectorPipe,

@@ -1,21 +1,22 @@
 <nz-tree-view [nzTreeControl]="treeControl" [nzDataSource]="dataSource">
     <!-- Node without child -->
-    <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding nzTreeNodePaddingIndent="10">
-        <nz-tree-node-toggle class="nocursor">
+    <nz-tree-node *nzTreeNodeDef="let node" nzTreeNodePadding nzTreeNodePaddingIndent="5"
+        (click)="clickOnNode(node, $event)" [class.active]="node.active">
+        <nz-tree-node-toggle>
             <span nz-icon nzType="{{node.icon}}" nzTheme="outline"></span>
         </nz-tree-node-toggle>
-        <ng-container *ngIf="node.type === 'info'">
-            <nz-alert nzType="info" nzMessage="{{node.name}}"></nz-alert>
-        </ng-container>
-        <ng-container *ngIf="node.type !== 'info'">
-            <span class="name pointing" [class.active]="node.active" (click)="clickOnNode('select', node)">
-                {{ node.name }}
-            </span>
-        </ng-container>
+        <div class="node">
+            <nz-alert *ngIf="node.type === 'info'" nzType="info" nzMessage="{{node.name}}"></nz-alert>
+            <div *ngIf="node.type !== 'info'" class="name">
+                <span class="text" (click)="clickOnNodeLink(node, $event)">{{ node.name
+                    }}</span>
+            </div>
+        </div>
     </nz-tree-node>
 
     <!-- Node with child -->
-    <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding nzTreeNodePaddingIndent="10">
+    <nz-tree-node *nzTreeNodeDef="let node; when: hasChild" nzTreeNodePadding nzTreeNodePaddingIndent="5"
+        (click)="clickOnNode(node, $event)" [class.active]="node.active">
         <nz-tree-node-toggle *ngIf="node.expandable && !node.loading">
             <span nz-icon nzType="caret-down" nzTreeNodeToggleRotateIcon></span>
         </nz-tree-node-toggle>
@@ -23,10 +24,15 @@
             <span nz-icon nzType="loading" nzTreeNodeToggleActiveIcon></span>
         </nz-tree-node-toggle>
         <div class="node">
-            <span class="pointing name" (click)="clickOnNode('select', node)" [class.active]="node.active">{{ node.name }}</span>
+            <div class="name">
+                <span class="text" [class.clickable]="node.clickable && !node.active"
+                    (click)="clickOnNodeLink(node, $event)">{{ node.name }}</span>
+            </div>
             <ng-container *ngIf="node.expanded && node.select?.options">
-                <nz-select nzSize="small" [nzCustomTemplate]="selectLabelTmpl" [(ngModel)]="node.select.selected" (ngModelChange)="node.select.onchange()">
-                    <nz-option *ngFor="let opt of node.select.options" [nzValue]="opt.value" [nzLabel]="opt.key"></nz-option>
+                <nz-select nzSize="small" [nzCustomTemplate]="selectLabelTmpl" [(ngModel)]="node.select.selected"
+                    (ngModelChange)="node.select.onchange()" (click)="$event.stopPropagation()">
+                    <nz-option *ngFor="let opt of node.select.options" [nzValue]="opt.value"
+                        [nzLabel]="opt.key"></nz-option>
                 </nz-select>
                 <ng-template #selectLabelTmpl let-selected>
                     <span nz-icon nzType="branches" nzTheme="outline"></span>
@@ -34,7 +40,10 @@
                 </ng-template>
             </ng-container>
             <ng-container *ngIf="node?.menu?.length > 0">
-                <i nz-icon nzType="more" nzTheme="outline" class="pointing" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"></i>
+                <button nz-button nzType="text" nzSize="small">
+                    <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"
+                        (click)="$event.stopPropagation()"></i>
+                </button>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
                         <li nz-menu-item *ngFor="let item of node.menu" [routerLink]="item.route">{{item.name}}</li>

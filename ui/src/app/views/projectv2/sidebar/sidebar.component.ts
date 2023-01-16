@@ -15,13 +15,12 @@ import {
     FlatNodeItemSelect
 } from 'app/shared/tree/tree.component';
 import { ProjectService } from 'app/service/project/project.service';
-import {EntityWorkerModel, Project, VCSProject} from 'app/model/project.model';
+import { EntityWorkerModel, Project, VCSProject } from 'app/model/project.model';
 import { Observable, of, Subscription } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
-import {AnalysisService} from "../../../service/analysis/analysis.service";
-import {RouterService} from "../../../service/router/router.service";
+import { AnalysisService } from "../../../service/analysis/analysis.service";
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -52,11 +51,15 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     sidebarServiceSub: Subscription;
     analysisServiceSub: Subscription;
 
-    ngOnDestroy(): void {}
+    ngOnDestroy(): void { }
 
-    constructor(private _cd: ChangeDetectorRef, private _projectService: ProjectService, private _router: Router, private _routerService: RouterService,
-                private _sidebarService: SidebarService, private _analysisService: AnalysisService) {
-    }
+    constructor(
+        private _cd: ChangeDetectorRef,
+        private _projectService: ProjectService,
+        private _router: Router,
+        private _sidebarService: SidebarService,
+        private _analysisService: AnalysisService
+    ) { }
 
     ngAfterViewInit(): void {
         this.sidebarServiceSub = this._sidebarService.getObservable().subscribe(e => {
@@ -85,7 +88,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
             this._cd.markForCheck();
         });
 
-        this.analysisServiceSub = this._analysisService.getObservable().subscribe( e => {
+        this.analysisServiceSub = this._analysisService.getObservable().subscribe(e => {
             if (e) {
                 this.tree.handleAnalysisEvent(e);
             }
@@ -93,12 +96,24 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     }
 
     selectEntity(e: SidebarEvent): void {
-        let si = <SelectedItem>{id: e.parentIDs[0], type: 'vcs', child: {id: e.parentIDs[1], type: 'repository', child: { id: EntityWorkerModel, type: 'folder', child: {id: e.nodeID, name: e.nodeName, action:'select', type: EntityWorkerModel }}}}
+        let si = <SelectedItem>{
+            id: e.parentIDs[0],
+            type: 'vcs',
+            child: {
+                id: e.parentIDs[1],
+                type: 'repository',
+                child: { id: EntityWorkerModel, type: 'folder', child: { id: e.nodeID, name: e.nodeName, action: 'select', type: EntityWorkerModel } }
+            }
+        }
         this.tree.selectNode(si);
     }
 
     selectRepository(e: SidebarEvent): void {
-        let si = <SelectedItem>{id: e.parentIDs[0], type: 'vcs', child: {id: e.nodeID, name: e.nodeName, action: 'select', type: 'repository'}}
+        let si = <SelectedItem>{
+            id: e.parentIDs[0],
+            type: 'vcs',
+            child: { id: e.nodeID, name: e.nodeName, action: 'select', type: 'repository' }
+        }
         this.tree.selectNode(si);
     }
 
@@ -108,64 +123,69 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
         }
     }
 
-    loadWorkspace(si?: SelectedItem): void {
+    async loadWorkspace(si?: SelectedItem) {
         this.currentWorkspace = [];
         this.refreshWorkspace = true;
         this.loading = true;
-        this._projectService.listVCSProject(this._currentProject.key)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this.refreshWorkspace = false;
-                if (this.tree && si) {
-                    setTimeout(() => {
-                        this.tree.selectNode(si);
-                    }, 500);
-                }
-                this._cd.markForCheck();
-            }))
-            .subscribe(vcsProjects => {
-            if (vcsProjects) {
-                this.currentWorkspace = [];
-                vcsProjects.forEach(vcs => {
-                    let nodeItem = <FlatNodeItem>{name: vcs.name, id: vcs.id, type: 'vcs', expandable: true, level: 0, menu: this.getVCSMenu(vcs),
-                        loadChildren: () => {
-                            return this.loadRepositories(this._currentProject.key, vcs.name);
-                        }
-                    }
-                    this.currentWorkspace.push(nodeItem);
-                });
-                this._cd.markForCheck();
-            }
-        });
+        this._cd.markForCheck();
+
+        const vcsProjects = await this._projectService.listVCSProject(this._currentProject.key).toPromise();
+        if (vcsProjects) {
+            this.currentWorkspace = vcsProjects.map(vcs => (<FlatNodeItem>{
+                name: vcs.name,
+                id: vcs.id,
+                type: 'vcs',
+                expandable: true,
+                clickable: false,
+                level: 0,
+                menu: this.getVCSMenu(vcs),
+                loadChildren: () => this.loadRepositories(this._currentProject.key, vcs.name)
+            }));
+        }
+
+        this.loading = false;
+        this.refreshWorkspace = false;
+        if (this.tree && si) {
+            setTimeout(() => { this.tree.selectNode(si); }, 500);
+        }
+
         this._cd.markForCheck();
     }
 
     loadRepositories(key: string, vcs: string): Observable<Array<FlatNodeItem>> {
         return this._projectService.getVCSRepositories(key, vcs).pipe(map((repos) => {
             return repos.map(r => {
-                let nodeItem = <FlatNodeItem>{name: r.name, parentNames: [vcs], id: r.id, type: 'repository', expandable: true, level: 1};
+                let nodeItem = <FlatNodeItem>{
+                    name: r.name,
+                    parentNames: [vcs],
+                    id: r.id,
+                    type: 'repository',
+                    expandable: true,
+                    clickable: true,
+                    level: 1
+                };
                 let currentBranch = this._router?.routerState?.snapshot?.root?.queryParams['branch'];
                 nodeItem.loadChildren = () => {
                     return this.loadEntities(this._currentProject.key, vcs, r.name, currentBranch);
                 };
                 nodeItem.onOpen = () => {
                     return this._projectService.getVCSRepositoryBranches(key, vcs, r.name, 50).pipe(map(bs => {
-                        nodeItem.select = <FlatNodeItemSelect>{options: []};
-                        nodeItem.select.options = bs.map( b => {
+                        nodeItem.select = <FlatNodeItemSelect>{ options: [] };
+                        nodeItem.select.options = bs.map(b => {
                             if (b.display_id === currentBranch) {
                                 nodeItem.select.selected = b.display_id;
                             }
                             if (b.default && !nodeItem.select.selected) {
                                 nodeItem.select.selected = b.display_id;
                             }
-                            return {key: b.display_id, value: b.display_id}
+                            return { key: b.display_id, value: b.display_id }
                         });
                         nodeItem.select.onchange = () => {
                             nodeItem.loadChildren = () => {
                                 return this.loadEntities(this._currentProject.key, vcs, r.name, nodeItem.select.selected);
                             };
                             this.tree.resetChildren(nodeItem);
-                            this._router.navigate([], {queryParams: {branch: nodeItem.select.selected}}).then();
+                            this._router.navigate([], { queryParams: { branch: nodeItem.select.selected } }).then();
                         }
                         this.tree.refresh();
                     }));
@@ -185,16 +205,15 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     if (!existingEntities) {
                         existingEntities = [];
                     }
-                    existingEntities.push(<FlatNodeItem>{name: e.name, parentNames: [vcs, repo], id: e.id, type: e.type, expandable: false, level: 3, icon: 'file', iconTheme: 'outline'})
+                    existingEntities.push(<FlatNodeItem>{ name: e.name, parentNames: [vcs, repo], id: e.id, type: e.type, expandable: false, clickable: true, level: 3, icon: 'file', iconTheme: 'outline' })
                     m.set(e.type, existingEntities);
                 });
 
                 Array.from(m.keys()).forEach(k => {
-                    let folderNode = <FlatNodeItem>{name: k, type: 'folder', expandable: true, level: 2, id: k, loading: false,
-                        loadChildren: () => {
-                            return of(m.get(k));
-                        }}
-                    result.push(folderNode);
+                    result.push(<FlatNodeItem>{
+                        name: k, type: 'folder', expandable: true, clickable: false, level: 2, id: k, loading: false,
+                        loadChildren: () => of(m.get(k))
+                    });
                 })
             }
             return result;
@@ -202,9 +221,10 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     }
 
     getVCSMenu(vcs: VCSProject): MenuItem[] {
-        let menu = [];
-        menu.push(<MenuItem>{ name: 'Add a repository', route: ['/', 'projectv2', this.project.key, 'vcs', vcs.name, 'repository']});
-        return menu;
+        return [<MenuItem>{
+            name: 'Add a repository',
+            route: ['/', 'projectv2', this.project.key, 'vcs', vcs.name, 'repository']
+        }];
     }
 
     handleWorkspaceEvent(e: TreeEvent): void {
@@ -219,7 +239,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                 break;
             case EntityWorkerModel:
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], {queryParams: { branch: this._router?.routerState?.snapshot?.root?.queryParams['branch']}}).then();
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], { queryParams: { branch: this._router?.routerState?.snapshot?.root?.queryParams['branch'] } }).then();
                 }
         }
     }
