@@ -26,4 +26,7 @@ cards:
 - name: concept_authentication
   title: "Authentication"
   description: "Understand CDS authentication concepts."
+- name: concept_permission
+  description: "Understand the new permission system"
+  title: "Permission - RBAC"
 ---

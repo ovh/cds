@@ -10,7 +10,6 @@ var experimentalCmd = cli.Command{
 	Name:    "experimental",
 	Aliases: []string{"exp"},
 	Short:   "CDS Experimental commands",
-	Hidden:  true,
 }
 
 func experimentalCommands() []*cobra.Command {
