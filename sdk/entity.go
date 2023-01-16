@@ -33,12 +33,20 @@ type Entity struct {
 	Data                string    `json:"data" db:"data"`
 }
 
+func GetManageRoleByEntity(entityType string) (string, error) {
+	switch entityType {
+	case EntityTypeWorkerModel, EntityTypeWorkerModelTemplate:
+		return ProjectRoleManageWorkerModel, nil
+	}
+	return "", WrapError(ErrInvalidData, "unknown entity of type %s", entityType)
+}
+
 type Lintable interface {
 	Lint() []error
 	GetName() string
 }
 
-func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, MultiError) {
+func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, []error) {
 	namePattern, err := regexp.Compile(EntityNamePattern)
 	if err != nil {
 		return nil, []error{WrapError(err, "unable to compile regexp %s", namePattern)}

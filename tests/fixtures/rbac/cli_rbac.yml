@@ -1,0 +1,4 @@
+name: perm-global-test
+globals:
+  - role: manage-permission
+    users: [cds.integration.tests.rw]

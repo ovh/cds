@@ -32,6 +32,7 @@
         .error {
             width: 400px;
             word-break: break-word;
+            white-space: pre-line;
         }
     }
 
@@ -59,6 +60,16 @@
 ul.nopoint {
     list-style-type: none;
     padding: 0;
+    max-height: 500px;
+    overflow-y: auto;
+
+    .container {
+        display: flex;
+
+        .label {
+            align-self: center;
+        }
+    }
 }
 
 

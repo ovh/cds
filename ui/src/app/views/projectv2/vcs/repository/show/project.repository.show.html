@@ -47,7 +47,10 @@
                             <ng-template #fileTmpl>
                                 <ul class="nopoint">
                                     <li *ngFor="let f of a.data.entities">
-                                        {{f.path + f.file_name}}
+                                        <div class="container">
+                                            <app-status-icon [status]="f.status" ></app-status-icon>
+                                            <div class="label">{{f.path + f.file_name}}</div>
+                                        </div>
                                     </li>
                                 </ul>
                             </ng-template>

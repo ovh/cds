@@ -13,8 +13,9 @@ const (
 	GlobalRoleProjectCreate      = "create-project"
 
 	// Project Role
-	ProjectRoleRead   = "read"
-	ProjectRoleManage = "manage"
+	ProjectRoleRead              = "read"
+	ProjectRoleManage            = "manage"
+	ProjectRoleManageWorkerModel = "manage-worker-model"
 
 	// Hatchery Role
 	HatcheryRoleSpawn = "start-worker"
@@ -30,17 +31,17 @@ type RBAC struct {
 	Name         string         `json:"name" db:"name"`
 	Created      time.Time      `json:"created" db:"created"`
 	LastModified time.Time      `json:"last_modified" db:"last_modified"`
-	Globals      []RBACGlobal   `json:"globals" db:"-"`
-	Projects     []RBACProject  `json:"projects" db:"-"`
-	Regions      []RBACRegion   `json:"regions" db:"-"`
-	Hatcheries   []RBACHatchery `json:"hatcheries" db:"-"`
+	Global       []RBACGlobal   `json:"global,omitempty" db:"-"`
+	Projects     []RBACProject  `json:"projects,omitempty" db:"-"`
+	Regions      []RBACRegion   `json:"regions,omitempty" db:"-"`
+	Hatcheries   []RBACHatchery `json:"hatcheries,omitempty" db:"-"`
 }
 
 func IsValidRBAC(rbac *RBAC) error {
 	if rbac.Name == "" {
 		return WrapError(ErrInvalidData, "missing permission name")
 	}
-	for _, g := range rbac.Globals {
+	for _, g := range rbac.Global {
 		if err := isValidRBACGlobal(rbac.Name, g); err != nil {
 			return err
 		}

@@ -1,0 +1,22 @@
+name: RBAC Command Line TestSuite
+testcases:
+- name: prepare test
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region remove my-region --force
+
+- name: add new permission
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/cli_rbac.yml
+
+- name: get permission
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac show perm-global-test --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.name ShouldEqual "perm-global-test"
+
+- name: delete permission
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac delete perm-test --force
+      assertions:
+        - result.code ShouldEqual 0

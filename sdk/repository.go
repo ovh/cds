@@ -51,6 +51,7 @@ type ProjectRepositoryData struct {
 type ProjectRepositoryDataEntity struct {
 	FileName string `json:"file_name"`
 	Path     string `json:"path"`
+	Status   string `json:"status"`
 }
 
 func (prd ProjectRepositoryData) Value() (driver.Value, error) {

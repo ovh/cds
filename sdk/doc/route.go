@@ -115,6 +115,8 @@ func CleanURLParameter(u string) string {
 		u = "entity-name"
 	case "entityType":
 		u = "entity-type"
+	case "rbacIdentifier":
+		u = "rbac-identifier"
 	}
 	return u
 }

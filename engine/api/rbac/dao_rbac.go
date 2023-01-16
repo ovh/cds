@@ -17,6 +17,11 @@ func LoadRBACByName(ctx context.Context, db gorp.SqlExecutor, name string, opts 
 	return get(ctx, db, gorpmapping.NewQuery(query).Args(name), opts...)
 }
 
+func LoadRBACByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.RBAC, error) {
+	query := `SELECT * FROM rbac WHERE id = $1`
+	return get(ctx, db, gorpmapping.NewQuery(query).Args(id), opts...)
+}
+
 // Insert a RBAC permission in database
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) error {
 	if err := sdk.IsValidRBAC(rb); err != nil {
@@ -34,10 +39,10 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 		return err
 	}
 
-	for i := range rb.Globals {
+	for i := range rb.Global {
 		dbRbGlobal := rbacGlobal{
 			RbacID:     dbRb.ID,
-			RBACGlobal: rb.Globals[i],
+			RBACGlobal: rb.Global[i],
 		}
 		if err := insertRBACGlobal(ctx, db, &dbRbGlobal); err != nil {
 			return err

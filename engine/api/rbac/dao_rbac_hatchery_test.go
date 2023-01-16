@@ -40,8 +40,9 @@ hatcheries:
 	rbacYaml = fmt.Sprintf(rbacYaml, reg.Name, sdk.HatcheryRoleSpawn, reg.Name, hatch.Name)
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacYaml), &r))
+	r.Hatcheries[0].RegionID = reg.ID
+	r.Hatcheries[0].HatcheryID = hatch.ID
 
-	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &r))
 	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
 	rbacRB, err := rbac.LoadRBACByName(context.TODO(), db, r.Name, rbac.LoadOptions.LoadRBACHatchery)

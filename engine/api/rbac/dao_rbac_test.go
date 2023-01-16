@@ -52,8 +52,10 @@ projects:
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
 
-	err = rbac.FillWithIDs(context.TODO(), db, &r)
-	require.NoError(t, err)
+	r.Projects[0].RBACUsersIDs = []string{user1.ID}
+	r.Projects[0].RBACGroupsIDs = []int64{group1.ID}
+	r.Projects[1].RBACGroupsIDs = []int64{group1.ID}
+	r.Projects[2].RBACGroupsIDs = []int64{group1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
@@ -95,15 +97,18 @@ projects:
   - role: manage
     groups: [%s]
     projects: [%s]
-globals:
+global:
   - role: create-project
     users: [%s]
 `, user1.Username, group1.Name, proj1.Key, group1.Name, proj2.Key, user1.Username)
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
-	err = rbac.FillWithIDs(context.TODO(), db, &r)
-	require.NoError(t, err)
+
+	r.Projects[0].RBACUsersIDs = []string{user1.ID}
+	r.Projects[0].RBACGroupsIDs = []int64{group1.ID}
+	r.Projects[1].RBACGroupsIDs = []int64{group1.ID}
+	r.Global[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
@@ -111,9 +116,9 @@ globals:
 	require.NoError(t, err)
 
 	// Global part
-	require.Equal(t, len(r.Globals), len(rbacDB.Globals))
-	require.Equal(t, r.Globals[0].Role, rbacDB.Globals[0].Role)
-	require.Equal(t, user1.ID, rbacDB.Globals[0].RBACUsersIDs[0])
+	require.Equal(t, len(r.Global), len(rbacDB.Global))
+	require.Equal(t, r.Global[0].Role, rbacDB.Global[0].Role)
+	require.Equal(t, user1.ID, rbacDB.Global[0].RBACUsersIDs[0])
 
 	// Project part
 	require.Equal(t, len(r.Projects), len(rbacDB.Projects))
@@ -169,8 +174,8 @@ projects:
 
 	var r sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &r))
-	err = rbac.FillWithIDs(context.TODO(), db, &r)
-	require.NoError(t, err)
+
+	r.Projects[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
@@ -190,8 +195,9 @@ projects:
 
 	var rUpdated sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(permUpdated), &rUpdated))
-	err = rbac.FillWithIDs(context.TODO(), db, &rUpdated)
-	require.NoError(t, err)
+
+	rUpdated.ID = rbacDB.ID
+	rUpdated.Projects[0].RBACUsersIDs = []string{user1.ID}
 
 	require.NoError(t, rbac.Update(context.TODO(), db, &rUpdated))
 

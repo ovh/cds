@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/rockbears/yaml"
 	"net/http/httptest"
 	"testing"
@@ -24,14 +26,14 @@ func Test_crudRegion(t *testing.T) {
 
 	// Insert rbac
 	perm := fmt.Sprintf(`name: perm-region-%s
-globals:
+global:
   - role: %s
     users: [%s]
 `, sdk.RandomString(10), sdk.GlobalRoleManageRegion, u.Username)
 
 	var rb sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
-	rb.Globals[0].RBACUsersIDs = []string{u.ID}
+	rb.Global[0].RBACUsersIDs = []string{u.ID}
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
 	reg := sdk.Region{Name: sdk.RandomString(10)}
@@ -43,6 +45,9 @@ globals:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
+	regDB, err := region.LoadRegionByName(context.TODO(), api.mustDB(), reg.Name)
+	require.NoError(t, err)
+
 	rbacReadRegion := `name: perm-%s
 regions:
 - role: %s
@@ -53,7 +58,14 @@ regions:
 	rbacReadRegion = fmt.Sprintf(rbacReadRegion, sdk.RandomString(10), sdk.RegionRoleList, reg.Name, u.Username)
 	var rbRead sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacReadRegion), &rbRead))
-	require.NoError(t, rbac.FillWithIDs(context.TODO(), db, &rbRead))
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), api.mustDB(), "default")
+	require.NoError(t, err)
+
+	rbRead.Regions[0].RegionID = regDB.ID
+	rbRead.Regions[0].RBACUsersIDs = []string{u.ID}
+	rbRead.Regions[0].RBACOrganizationIDs = []string{org.ID}
+
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rbRead))
 
 	// Then Get the region
