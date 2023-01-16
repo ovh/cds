@@ -79,6 +79,9 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 				if code == http.StatusConflict {
 					return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice: %s", runResultApiRef.ToFilename())
 				}
+				if code == http.StatusForbidden {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, err.Error())
+				}
 				return err
 			}
 		}

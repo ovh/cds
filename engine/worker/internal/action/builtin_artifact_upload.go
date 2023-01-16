@@ -21,6 +21,7 @@ import (
 )
 
 func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
+	log.Info(ctx, "runningRunArtifactUpload")
 	res := sdk.Result{Status: sdk.StatusSuccess}
 
 	jobID, err := workerruntime.JobID(ctx)
@@ -84,7 +85,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {
 		go func(path string) {
-			log.Debug(ctx, "uploading %s projectKey:%v job:%d", path, projectKey, jobID)
+			log.Info(ctx, "uploading %s projectKey:%v job:%d", path, projectKey, jobID)
 			defer wg.Done()
 
 			// Priority:
@@ -206,6 +207,8 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 }
 
 func uploadArtifactIntoCDN(path string, ctx context.Context, wk workerruntime.Runtime) error {
+	log.Info(ctx, "uploadArtifactIntoCDN - begin")
+	defer log.Info(ctx, "uploadArtifactIntoCDN - end")
 	_, name := filepath.Split(path)
 
 	fileMode, err := os.Stat(path)
