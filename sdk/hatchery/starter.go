@@ -106,7 +106,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 }
 
 func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
-	ctx, end := telemetry.Span(ctx, "hatchery.spawnWorkerForJob")
+	ctx, end := telemetry.Span(ctx, "hatchery.spawnWorkerForJob", telemetry.Tag(telemetry.TagWorkflowNodeJobRun, j.id))
 	defer end()
 
 	ctx = telemetry.ContextWithTag(ctx,
