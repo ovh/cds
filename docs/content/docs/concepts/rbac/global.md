@@ -1,5 +1,5 @@
 ---
-title: "Global role"
+title: "Global roles"
 weight: 1
 ---
 

@@ -5,11 +5,11 @@ card:
   name: concept_organization
 ---
 
-Organization represents an organisational group that contains a set of people.
+Organization represents an organizational group that contains a set of people.
 
 * a project belongs to only one organization, its value is computed based on the groups that have R/W/E permissions on the project.
   * you'll be able to add a group from another organization only with R permission.
-* a group belongs to only one organization. You cannot have users from different organizations in the same group
+* a group belongs to only one organization. You cannot have users from different organizations in the same group.
 
 # Configuration
 

@@ -1,5 +1,5 @@
 ---
-title: "Project role"
+title: "Project roles"
 weight: 2
 ---
 
