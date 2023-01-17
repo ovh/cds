@@ -15,31 +15,42 @@ import { ProjectService } from 'app/service/project/project.service';
 })
 @AutoUnsubscribe()
 export class ProjectV2ShowComponent implements OnDestroy {
-
     private routeSub: Subscription;
     private projSub: Subscription;
     public project: Project;
+    resizing: boolean;
 
-    constructor(private _store: Store,
-                private _route: ActivatedRoute,
-                private _projectStore: ProjectStore,
-                private _cd: ChangeDetectorRef,
-                private _projectService: ProjectService) {
-       this.routeSub = this._route.params.subscribe(r => {
-           let projectKey = r['key'];
-           if (this.projSub) {
-               this.projSub.unsubscribe();
-           }
-           this.projSub = this._projectStore.getProjects(projectKey).subscribe((projCache) => {
-               let proj = projCache.get(projectKey);
-               if (proj) {
-                   this.project = proj;
-                   this._cd.markForCheck();
-               }
-           });
+    constructor(
+        private _store: Store,
+        private _route: ActivatedRoute,
+        private _projectStore: ProjectStore,
+        private _cd: ChangeDetectorRef,
+        private _projectService: ProjectService
+    ) {
+        this.routeSub = this._route.params.subscribe(r => {
+            let projectKey = r['key'];
+            if (this.projSub) {
+                this.projSub.unsubscribe();
+            }
+            this.projSub = this._projectStore.getProjects(projectKey).subscribe((projCache) => {
+                let proj = projCache.get(projectKey);
+                if (proj) {
+                    this.project = proj;
+                    this._cd.markForCheck();
+                }
+            });
         });
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
+    panelStartResize(): void {
+        this.resizing = true;
+        this._cd.markForCheck();
+    }
+
+    panelEndResize(): void {
+        this.resizing = false;
+        this._cd.markForCheck();
+    }
 }

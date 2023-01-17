@@ -5,7 +5,6 @@ import { WorkflowV3ForkJoinNodeComponent } from './graph/workflowv3-fork-join-no
 import { WorkflowV3JobNodeComponent } from './graph/workflowv3-job-node.component';
 import { WorkflowV3JobsGraphComponent } from './graph/workflowv3-jobs-graph.component';
 import { WorkflowV3StagesGraphComponent } from './graph/workflowv3-stages-graph.component';
-import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
 import { WorkflowV3RunJobComponent } from './run/workflowv3-run-job.component';
 import { WorkflowV3RunComponent } from './run/workflowv3-run.component';
 import { WorkflowV3ShowComponent } from './show/workflowv3-show.component';
@@ -15,7 +14,6 @@ import { WorkflowV3RunService } from './workflowv3.run.service';
 
 @NgModule({
     declarations: [
-        ResizablePanelComponent,
         WorkflowV3Component,
         WorkflowV3EditComponent,
         WorkflowV3ForkJoinNodeComponent,

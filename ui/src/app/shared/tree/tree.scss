@@ -1,42 +1,70 @@
 nz-tree-view {
-  width: 100%;
-
-  nz-tree-node {
     width: 100%;
 
-    .nocursor {
-      cursor: default;
-    }
+    nz-tree-node {
+        width: 100%;
+        padding: 0;
+        cursor: pointer;
 
-    .name.active {
-      padding-bottom: 3px;
-      border-bottom: 1px solid black;
+        &.active {
+            background-color: #bae7ff;
 
-      :host-context(.night) & {
-        border-bottom: 1px solid white;
-      }
-    }
-
-    .node {
-      width: 100%;
-        display: flex;
-
-        .name {
-            width: 120px;
-            text-overflow: ellipsis;
+            :host-context(.night) & {
+                background-color: #11263c;
+            }
         }
 
-        nz-select {
-            margin-left: auto;
-            width: 120px;
+        &:hover {
+            background-color: #f5f5f5;
+
+            :host-context(.night) & {
+                background-color: rgba(255, 255, 255, 0.08);
+            }
         }
 
+        nz-tree-node-toggle {
+            height: 24px;
+            align-self: center;
+        }
 
-      i {
-        margin-left: auto;
-        margin-top: 5px;
-      }
+        .node {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            overflow: hidden;
+            height: 28px;
 
+            .name {
+                flex: 1;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                margin-right: 5px;
+                vertical-align: middle;
+
+                .text {
+                    padding: 0 2px;
+
+                    &.clickable {
+                        &:hover {
+                            text-decoration: underline;
+                        }
+                    }
+                }
+            }
+
+            nz-select {
+                margin-right: 10px;
+                max-width: 120px;
+
+                :host-context(.night) & {
+                    background-color: #141414;
+                }
+            }
+
+            [nz-button] {
+                margin-right: 2px
+            }
+        }
     }
-  }
 }

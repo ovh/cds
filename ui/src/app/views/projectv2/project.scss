@@ -1,24 +1,27 @@
 .project {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-    overflow: hidden;
-
-  .header {
-      height: 60px;
-      padding: 14px 10px;
-  }
-  .body {
+    height: 100%;
     display: flex;
-    flex: 1;
+    flex-direction: column;
     overflow: hidden;
 
-    .content {
-      width: 100%;
+    .header {
+        height: 60px;
+        padding: 14px 10px;
     }
 
-    .loading {
-      width: 100%;
+    .body {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        flex-direction: row;
+        height: 100%;
+
+        .content {
+            flex: 1;
+        }
+
+        .loading {
+            width: 100%;
+        }
     }
-  }
 }
