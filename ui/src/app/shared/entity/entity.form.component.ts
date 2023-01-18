@@ -1,15 +1,16 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy} from "@angular/core";
-import {NzConfigService} from "ng-zorro-antd/core/config";
-import {CodeEditorConfig} from "ng-zorro-antd/core/config/config";
-import {ThemeStore} from "../../service/theme/theme.store";
-import {AutoUnsubscribe} from "../decorator/autoUnsubscribe";
-import {Subscription} from "rxjs/Subscription";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { NzConfigService } from "ng-zorro-antd/core/config";
+import { CodeEditorConfig } from "ng-zorro-antd/core/config/config";
+import { ThemeStore } from "../../service/theme/theme.store";
+import { AutoUnsubscribe } from "../decorator/autoUnsubscribe";
+import { Subscription } from "rxjs/Subscription";
 import {
     editor,
 } from 'monaco-editor';
-import {FlatSchema, JSONSchema} from "../../model/schema.model";
-import {Schema} from "jsonschema";
-import {JoinedEditorOptions} from "ng-zorro-antd/code-editor/typings";
+import { FlatSchema, JSONSchema } from "../../model/schema.model";
+import { Schema } from "jsonschema";
+import { EditorOptions } from "ng-zorro-antd/code-editor/typings";
+import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 
 declare const monaco: any;
 
@@ -20,38 +21,60 @@ declare const monaco: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class EntityFormComponent implements OnDestroy {
+export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
+    @ViewChild('editor') editor: NzCodeEditorComponent;
 
+    @Input() path: string;
     @Input() data: string;
+    @Input() schema: Schema;
 
-    _jsonSchema: FlatSchema;
-    @Input() set jsonschema(schema: Schema) {
-        this._jsonSchema = JSONSchema.flat(schema);
-    }
-
+    flatSchema: FlatSchema;
     themeSub: Subscription;
-    editorOption: JoinedEditorOptions;
+    editorOption: EditorOptions;
+    resizing: boolean;
 
-    constructor(private _cd: ChangeDetectorRef, private _configService: NzConfigService, private _themeStore: ThemeStore) {
+    constructor(
+        private _cd: ChangeDetectorRef,
+        private _configService: NzConfigService,
+        private _themeStore: ThemeStore
+    ) { }
+
+    ngOnInit(): void {
         this.themeSub = this._themeStore.get().subscribe(t => {
             const config: CodeEditorConfig = this._configService.getConfigForComponent('codeEditor') || {};
             this._configService.set('codeEditor', {
                 defaultEditorOption: {
                     ...config,
-                    theme: t === 'light' ? 'vs' : 'vs-dark'
+                    theme: t === 'light' ? 'vs' : 'vs-dark',
                 },
             });
         });
         this.editorOption = {
             language: 'yaml',
-            minimap: {enabled: false},
-        }
+            minimap: { enabled: false }
+        };
+        this._cd.markForCheck();
     }
 
-    ngOnDestroy() {}
+    ngOnChanges(): void {
+        this.flatSchema = JSONSchema.flat(this.schema);
+        this._cd.markForCheck();
+    }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
-        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({schemas: [{uri: '', schema: this._jsonSchema}]});
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ schemas: [{ uri: '', schema: this.flatSchema }] });
     }
 
+    panelStartResize(): void {
+        this.resizing = true;
+        this._cd.markForCheck();
+    }
+
+    panelEndResize(): void {
+        this.resizing = false;
+        this._cd.markForCheck();
+        setTimeout(() => { window.dispatchEvent(new Event('resize')) });
+    }
 }

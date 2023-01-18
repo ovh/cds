@@ -1,16 +1,15 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import {Entity, EntityWorkerModel, Project, ProjectRepository, VCSProject} from 'app/model/project.model';
+import { Entity, EntityWorkerModel, Project, ProjectRepository, VCSProject } from 'app/model/project.model';
 import { ProjectState } from 'app/store/project.state';
 import { Store } from '@ngxs/store';
 import { forkJoin } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
-import {SidebarEvent, SidebarService} from 'app/service/sidebar/sidebar.service';
-import {FlatNodeItem} from "../../../../../../shared/tree/tree.component";
-import {Schema} from "jsonschema";
-import {finalize, first} from "rxjs/operators";
+import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
+import { Schema } from "jsonschema";
+import { finalize } from "rxjs/operators";
 
 @Component({
     selector: 'app-projectv2-workermodel-show',
@@ -22,7 +21,6 @@ import {finalize, first} from "rxjs/operators";
 export class ProjectV2WorkerModelShowComponent implements OnDestroy {
 
     loading: boolean;
-
     project: Project;
     vcsProject: VCSProject;
     repository: ProjectRepository;
@@ -32,8 +30,15 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
     currentBranch: string;
     errorNotFound: boolean;
 
-    constructor(private _store: Store, private _routeActivated: ActivatedRoute, private _projectService: ProjectService,
-                private _cd: ChangeDetectorRef, private _toastService: ToastService, private _router: Router, private _sidebarService: SidebarService) {
+    constructor(
+        private _store: Store,
+        private _routeActivated: ActivatedRoute,
+        private _projectService: ProjectService,
+        private _cd: ChangeDetectorRef,
+        private _toastService: ToastService,
+        private _router: Router,
+        private _sidebarService: SidebarService
+    ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
             if (this.vcsProject?.name === p['vcsName'] && this.repository?.name === p['repoName'] && this.workerModel?.name === p['workerModelName']) {
@@ -42,7 +47,7 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
             this.currentBranch = this._routeActivated?.queryParams['branch'];
             this.currentWorkerModelName = p['workerModelName'];
             this.loading = true;
-            forkJoin( [
+            forkJoin([
                 this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
                 this._projectService.getVCSProject(this.project.key, p['vcsName']),
                 this._projectService.getJSONSchema(EntityWorkerModel)
@@ -59,7 +64,7 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
             if (this.currentBranch === q['branch']) {
                 return;
             }
-            if(this.repository && this.vcsProject) {
+            if (this.repository && this.vcsProject) {
                 this.loadWorkerModel(this.currentWorkerModelName, q['branch']);
             }
             this.currentBranch = q['branch'];
@@ -70,7 +75,7 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
     loadWorkerModel(workerModelName: string, branch?: string): void {
         this.loading = true;
         this._projectService.getRepoEntity(this.project.key, this.vcsProject.name, this.repository.name, EntityWorkerModel, workerModelName, branch)
-            .pipe(finalize( () => {
+            .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
             }))
@@ -88,8 +93,8 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
                     this.errorNotFound = true;
                     this._cd.markForCheck();
                 }
-            })
+            });
     }
 
-    ngOnDestroy() {}
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 }

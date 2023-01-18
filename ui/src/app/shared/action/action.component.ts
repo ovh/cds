@@ -113,7 +113,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         }
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.dragulaService.destroy('bag-nonfinal');
         this.dragulaService.destroy('bag-final');
     }

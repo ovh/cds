@@ -61,11 +61,6 @@
     .content {
         overflow: hidden;
         z-index: 2;
-        background-color: #ffffff;
-
-        :host-context(.night) & {
-            background-color: #222222;
-        }
 
         &.disableSelection {
             user-select: none;

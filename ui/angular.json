@@ -49,6 +49,7 @@
               "node_modules/animate.css/animate.min.css",
               "node_modules/prismjs/themes/prism-okaidia.css",
               "node_modules/spinkit/spinkit.min.css",
+              "node_modules/ng-zorro-antd/code-editor/style/index.min.css",
               "src/styles.scss"
             ],
             "scripts": [
@@ -79,14 +80,14 @@
               "node_modules/prismjs/prism.js"
             ],
             "allowedCommonJsDependencies": [
-                "raven-js",
-                "dragula",
-                "js-yaml",
-                "jsonschema",
-                "dagre-d3",
-                "ansi_up",
-                "fast-json-patch",
-                "zxcvbn"
+              "raven-js",
+              "dragula",
+              "js-yaml",
+              "jsonschema",
+              "dagre-d3",
+              "ansi_up",
+              "fast-json-patch",
+              "zxcvbn"
             ]
           },
           "configurations": {
@@ -179,6 +180,7 @@
               "node_modules/codemirror/addon/hint/show-hint.css",
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
+              "node_modules/ng-zorro-antd/code-editor/style/index.min.css",
               "src/styles.scss"
             ],
             "assets": [

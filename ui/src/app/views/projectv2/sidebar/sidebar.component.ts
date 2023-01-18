@@ -24,8 +24,8 @@ import { AnalysisService } from "../../../service/analysis/analysis.service";
 
 @Component({
     selector: 'app-projectv2-sidebar',
-    templateUrl: './project.sidebar.html',
-    styleUrls: ['./project.sidebar.scss'],
+    templateUrl: './sidebar.html',
+    styleUrls: ['./sidebar.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
@@ -51,7 +51,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     sidebarServiceSub: Subscription;
     analysisServiceSub: Subscription;
 
-    ngOnDestroy(): void { }
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -121,6 +121,11 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
         if (this.tree) {
             this.tree.removeNode(e.nodeID)
         }
+    }
+
+    clickRefresh(e: Event) {
+        e.stopPropagation();
+        this.loadWorkspace();
     }
 
     async loadWorkspace(si?: SelectedItem) {

@@ -7,9 +7,9 @@ import {
     OnInit,
     Output
 } from "@angular/core";
-import {FlatSchema} from "../../../model/schema.model";
-import {FormItem} from "./form-item/json-form-field.component";
-import {DumpOptions, dump, load, LoadOptions} from 'js-yaml'
+import { FlatSchema } from "../../../model/schema.model";
+import { FormItem } from "./form-item/json-form-field.component";
+import { DumpOptions, dump, load, LoadOptions } from 'js-yaml'
 
 export class JSONFormSchema {
     types: {};
@@ -23,12 +23,8 @@ export class JSONFormSchemaTypeItem {
 
 @Component({
     selector: 'app-json-form',
-    template: `
-    <ng-container *ngIf="jsonFormSchema && model">
-        <ng-container *ngFor="let f of jsonFormSchema.types[parentType].fields">
-            <app-json-form-field [parentType]="parentType" [field]="f" [jsonFormSchema]="jsonFormSchema" [(model)]="model" (modelChange)="mergeModelAndData()"></app-json-form-field>
-        </ng-container>
-    </ng-container>`,
+    templateUrl: './json-form.html',
+    styleUrls: ['./json-form.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JSONFormComponent implements OnInit {
@@ -40,7 +36,7 @@ export class JSONFormComponent implements OnInit {
     @Input() set data(d: any) {
         this._data = d;
         try {
-            this.model = load(<string>this._data, <LoadOptions>{onWarning: (e)=> {}});
+            this.model = load(<string>this._data, <LoadOptions>{ onWarning: (e) => { } });
         } catch (e) {
             // TODO: mark form as invalid
         }
@@ -53,53 +49,53 @@ export class JSONFormComponent implements OnInit {
     jsonFormSchema: JSONFormSchema;
     model: any;
 
-    constructor(private _cd: ChangeDetectorRef) {}
+    constructor(private _cd: ChangeDetectorRef) { }
 
     ngOnInit() {
         let allTypes = {};
         this.schema.flatTypes.forEach((v, k) => {
-           let items = Array<FormItem>();
-           let currentModel = {};
-           if (v) {
-               v.forEach(value => {
-                   if (value.disabled) {
-                       return;
-                   }
-                   let item = new FormItem();
-                   item.name = value.name;
-                   item.type = value.type[0];
-                   if (item.type === 'object' && value.type.length === 2) {
-                       item.objectType = value.type[1];
-                   }
-                   item.enum = value.enum;
-                   item.formOrder = value.formOrder;
-                   item.condition = value.condition;
-                   item.description = value.description;
-                   items.push(item);
-                   if (item.type) {
-                       currentModel[item.name] = null;
-                   } else {
-                       currentModel[item.name] = {};
-                   }
-               });
-           }
-           items.sort((i, j) => i.formOrder - j.formOrder);
-           let schemaDefs = this.schema.schema['$defs'];
-           let required = [];
-           if (k === this.parentType) {
-               required = schemaDefs[k].required;
-           } else {
-               required = schemaDefs[k]['$defs'][k].required;
-           }
-           allTypes[k] = <JSONFormSchemaTypeItem>{fields: items, model: currentModel, required: required};
+            let items = Array<FormItem>();
+            let currentModel = {};
+            if (v) {
+                v.forEach(value => {
+                    if (value.disabled) {
+                        return;
+                    }
+                    let item = new FormItem();
+                    item.name = value.name;
+                    item.type = value.type[0];
+                    if (item.type === 'object' && value.type.length === 2) {
+                        item.objectType = value.type[1];
+                    }
+                    item.enum = value.enum;
+                    item.formOrder = value.formOrder;
+                    item.condition = value.condition;
+                    item.description = value.description;
+                    items.push(item);
+                    if (item.type) {
+                        currentModel[item.name] = null;
+                    } else {
+                        currentModel[item.name] = {};
+                    }
+                });
+            }
+            items.sort((i, j) => i.formOrder - j.formOrder);
+            let schemaDefs = this.schema.schema['$defs'];
+            let required = [];
+            if (k === this.parentType) {
+                required = schemaDefs[k].required;
+            } else {
+                required = schemaDefs[k]['$defs'][k].required;
+            }
+            allTypes[k] = <JSONFormSchemaTypeItem>{ fields: items, model: currentModel, required: required };
         });
-        this.jsonFormSchema = {types: allTypes};
+        this.jsonFormSchema = { types: allTypes };
         this._cd.markForCheck();
     }
 
     mergeModelAndData(): void {
         this.omitEmpty(this.model);
-        this._data = dump(this.model, <DumpOptions>{lineWidth: 120});
+        this._data = dump(this.model, <DumpOptions>{ lineWidth: 120 });
         this.dataChange.emit(this._data);
     }
 

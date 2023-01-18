@@ -86,8 +86,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         }
     }
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         // Update data if route change
@@ -136,7 +135,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
         this.paramsSubs = this.activatedRoute.params.subscribe(() => {
-            this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+            this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
             this._workflowCoreService.setWorkflowPreview(null);
         });
 
@@ -158,7 +157,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
                 if (wfPreview != null) {
-                    this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
+                    this._workflowCoreService.toggleAsCodeEditor({ open: false, save: false });
                 }
             });
     }
@@ -218,7 +217,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     savePreview() {
-        this._workflowCoreService.toggleAsCodeEditor({open: false, save: true});
+        this._workflowCoreService.toggleAsCodeEditor({ open: false, save: true });
     }
 
     changeDirection() {
@@ -230,7 +229,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     showAsCodeEditor() {
-        this._workflowCoreService.toggleAsCodeEditor({open: true, save: false});
+        this._workflowCoreService.toggleAsCodeEditor({ open: true, save: false });
     }
 
     groupManagement(event: PermissionEvent): void {

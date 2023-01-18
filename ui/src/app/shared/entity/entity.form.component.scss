@@ -1,26 +1,48 @@
-@import "../../../../node_modules/ng-zorro-antd/code-editor/style/index.min.css";
-
-.entityContainer {
+:host {
     display: flex;
+    flex-direction: row;
     height: 100%;
+    width: 100%;
 
-    .form {
-        width: 50%;
-        padding-right: 20px;
+    app-json-form {
+        flex: 1;
     }
-    .yaml {
-        width: 50%;
-        height: 100%;
-        border-left: 1px solid #d9d9d9;
 
-        :host-context(.night) & {
-            border-left-color: #434343;
+    app-resizable-panel {
+        height: 100%;
+
+        ::ng-deep {
+            .ant-tabs-tab {
+                padding: 3px 16px !important;
+                cursor: inherit !important;
+
+                :host-context(.night) & {
+                    background-color: #1e1e1e;
+                    border-bottom-color: #1e1e1e !important;
+                }
+            }
+
+            .ant-tabs-tab-btn {
+                color: #979797;
+
+                :host-context(.night) & {
+                    color: #828282;
+                }
+            }
+
+            nz-tabs-nav {
+                margin: 0;
+            }
         }
 
-
-        .editor {
+        nz-code-editor {
             height: 100%;
+            background-color: #1e1e1e;
+            border-left: 1px solid #f0f0f0;
+
+            :host-context(.night) & {
+                border-left: 1px solid #303030;
+            }
         }
     }
 }
-

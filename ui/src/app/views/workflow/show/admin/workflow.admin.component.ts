@@ -169,7 +169,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         ];
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this._dragularService.destroy('bag-tag');
         this._eventService.unsubscribeWorkflowRetention();
     }
