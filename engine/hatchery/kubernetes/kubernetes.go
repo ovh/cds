@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/slug"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new hatchery local
@@ -184,6 +185,11 @@ func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, _ *sdk.Model, jobID i
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+	ctx, end := telemetry.Span(ctx, "HatcheryKubernetes.SpawnWorker",
+		telemetry.Tag(telemetry.TagWorkflowNodeJobRun, spawnArgs.JobID),
+		telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
+	defer end()
+
 	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}

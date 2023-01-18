@@ -18,6 +18,11 @@ export enum PanelDirection {
     VERTICAL = 'vertical'
 }
 
+export enum PanelGrowDirection {
+    BEFORE = 'before',
+    AFTER = 'after'
+}
+
 @Component({
     selector: 'app-resizable-panel',
     templateUrl: './resizable-panel.html',
@@ -30,6 +35,8 @@ export class ResizablePanelComponent implements AfterViewInit {
     @ViewChild('content') content: ElementRef;
 
     @Input() direction = PanelDirection.HORIZONTAL;
+    @Input() growDirection = PanelGrowDirection.BEFORE;
+    @Input() defaultSize = null;
 
     @Output() onGrabbingStart = new EventEmitter<void>();
     @Output() onGrabbingEnd = new EventEmitter<void>();
@@ -43,11 +50,11 @@ export class ResizablePanelComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         if (this.direction === PanelDirection.HORIZONTAL) {
-            const contentWidth = 600;
+            const contentWidth = this.defaultSize ?? 600;
             this._renderer.setStyle(this.content.nativeElement, 'width', `${contentWidth - 4}px`);
             this._cd.detectChanges();
         } else {
-            const contentHeight = 200;
+            const contentHeight = this.defaultSize ?? 200;
             this._renderer.setStyle(this.content.nativeElement, 'height', `${contentHeight - 4}px`);
             this._cd.detectChanges();
         }
@@ -70,11 +77,11 @@ export class ResizablePanelComponent implements AfterViewInit {
     onMouseMove(event: any): void {
         if (this.grabbing) {
             if (this.direction === PanelDirection.HORIZONTAL) {
-                const contentWidth = Math.max(window.innerWidth - event.clientX, 600);
+                const contentWidth = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX : window.innerWidth - event.clientX, this.defaultSize ?? 600);
                 this._renderer.setStyle(this.content.nativeElement, 'width', `${contentWidth - 4}px`);
                 this._cd.detectChanges();
             } else {
-                const contentHeight = Math.max(window.innerHeight - event.clientY, 200);
+                const contentHeight = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY : window.innerHeight - event.clientY, this.defaultSize ?? 200);
                 this._renderer.setStyle(this.content.nativeElement, 'height', `${contentHeight - 4}px`);
                 this._cd.detectChanges();
             }

@@ -4,7 +4,7 @@ import { FlatTreeControl, TreeControl } from '@angular/cdk/tree';
 import { CollectionViewer, DataSource, SelectionChange } from '@angular/cdk/collections';
 import { BehaviorSubject, merge, Observable } from 'rxjs';
 import { first, map, tap } from 'rxjs/operators';
-import {AnalysisEvent} from "../../service/analysis/analysis.service";
+import { AnalysisEvent } from "../../service/analysis/analysis.service";
 import {
     StatusAnalyzeError,
     StatusAnalyzeInProgress,
@@ -29,6 +29,7 @@ export interface SelectedItem {
 // Represent the data tree inside the ngZorro component
 export interface FlatNodeItem {
     expandable: boolean;
+    clickable: boolean;
     expanded: boolean;
     id: string;
     name: string;
@@ -46,7 +47,7 @@ export interface FlatNodeItem {
 }
 
 export interface FlatNodeItemSelect {
-    options: {key: string, value: string}[];
+    options: { key: string, value: string }[];
     selected: string;
     onchange: () => void;
 }
@@ -126,7 +127,7 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
             let currentLevel = node.level;
             let currentIndex = nodes.findIndex(n => n.id === node.id);
             if (nodes.length > currentIndex + 1) {
-                for (let i = currentIndex+1; i<nodes.length; i++) {
+                for (let i = currentIndex + 1; i < nodes.length; i++) {
                     let childNode = nodes[i];
                     if (childNode.level <= currentLevel) {
                         break;
@@ -154,7 +155,7 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
     }
 
     selectNodeRec(currentNodes: FlatNodeItem[], node: SelectedItem, level: number, parents: string[]) {
-        for (let i=0; i<currentNodes.length; i++) {
+        for (let i = 0; i < currentNodes.length; i++) {
             let n = currentNodes[i];
             if (n.level !== level) {
                 continue;
@@ -175,7 +176,14 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
                         if (node.child.action === 'select') {
                             let nodeIndex = currentNodes.findIndex(n => n.id === node.child.id)
                             if (nodeIndex === -1) {
-                                currentNodes.splice(i + 1, 0, <FlatNodeItem>{id: node.child.id, name: node.child.name, parentNames: parents, level: level + 1, type: node.child.type, expandable: true});
+                                currentNodes.splice(i + 1, 0, <FlatNodeItem>{
+                                    id: node.child.id,
+                                    name: node.child.name,
+                                    parentNames: parents,
+                                    level: level + 1,
+                                    type: node.child.type,
+                                    expandable: true
+                                });
                                 this.flattenedData.next(currentNodes);
                             }
                         }
@@ -257,7 +265,13 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
                             name = 'There is no cds files';
                             break;
                     }
-                    flattenedData.splice(index + 1, 0, <FlatNodeItem>{name: name, type: 'info', id: '', level: node.level+1, expandable: false});
+                    flattenedData.splice(index + 1, 0, <FlatNodeItem>{
+                        name: name,
+                        type: 'info',
+                        id: '',
+                        level: node.level + 1,
+                        expandable: false
+                    });
                 }
                 this.childrenLoadedSet.add(node);
             }
@@ -292,20 +306,35 @@ export class TreeComponent {
     @Input() set tree(data: FlatNodeItem[]) {
         this._currentNodeTree = data;
         if (data) {
-            this.dataSource = new DynamicDatasource(this.treeControl,  this._currentNodeTree);
+            this.dataSource = new DynamicDatasource(this.treeControl, this._currentNodeTree);
         }
     }
 
     @Output() nodeEvent = new EventEmitter<TreeEvent>();
 
-    constructor(private _cd: ChangeDetectorRef) {
-
-    }
+    constructor(
+        private _cd: ChangeDetectorRef
+    ) { }
 
     hasChild = (_: number, node: FlatNodeItem): boolean => node.expandable;
 
-    clickOnNode(t: string, n: FlatNodeItem): void {
-        this.nodeEvent.next({node: n, eventType: t});
+    clickOnNode(n: FlatNodeItem, e: Event): void {
+        if (!n.expandable) {
+            this.clickOnNodeLink(n, e);
+            return;
+        }
+        if (!n.expanded) {
+            this.treeControl.expand(n);
+        } else {
+            this.treeControl.collapse(n);
+        }
+        e.stopPropagation();
+    }
+
+    clickOnNodeLink(n: FlatNodeItem, e: Event): void {
+        if (!n.clickable || n.active) { return; }
+        this.nodeEvent.next({ node: n, eventType: 'select' });
+        e.stopPropagation();
     }
 
     selectNode(s: SelectedItem): void {

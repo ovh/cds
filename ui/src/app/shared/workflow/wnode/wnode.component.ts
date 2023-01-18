@@ -283,7 +283,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             n = Workflow.getNodeByID(this.node.id, this.workflow);
         }
         let fork = new WNode();
-        fork.name = 'fork';
         fork.ref = new Date().getTime().toString();
         fork.type = WNodeType.FORK;
         let t = new WNodeTrigger();
@@ -301,7 +300,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
 
     createJoin(): void {
         let join = new WNode();
-        join.name = 'join';
         join.ref = new Date().getTime().toString();
         join.type = WNodeType.JOIN;
         join.parents = new Array<WNodeJoin>();

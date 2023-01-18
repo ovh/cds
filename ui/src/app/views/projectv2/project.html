@@ -4,9 +4,10 @@
     </div>
     <div class="body">
         <ng-container *ngIf="project">
-            <div class="sidebar">
-                <app-projectv2-sidebar [project]="project"></app-projectv2-sidebar>
-            </div>
+            <app-resizable-panel growDirection="after" defaultSize="250" (onGrabbingStart)="panelStartResize()"
+                (onGrabbingEnd)="panelEndResize()">
+                <app-projectv2-sidebar class="sidebar" [project]="project"></app-projectv2-sidebar>
+            </app-resizable-panel>
             <div class="content">
                 <router-outlet></router-outlet>
             </div>
@@ -18,4 +19,3 @@
         </ng-container>
     </div>
 </div>
-

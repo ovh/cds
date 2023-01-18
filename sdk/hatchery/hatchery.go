@@ -449,27 +449,22 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, workerMode
 }
 
 func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
-	ctx, end := telemetry.Span(ctx, "hatchery.canRunJobWithModel", telemetry.Tag(telemetry.TagWorker, model.Name))
-	defer end()
-
 	if model.Type != h.ModelType() {
-		log.Debug(ctx, "canRunJobWithModel> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
+		log.Debug(ctx, "model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
 		return false
 	}
 
 	// If the model needs registration, don't spawn for now
 	if h.NeedRegistration(ctx, model) {
-		log.Debug(ctx, "canRunJobWithModel> model %s needs registration", model.Name)
+		log.Debug(ctx, "model %s needs registration", model.Name)
 		return false
 	}
 
 	if model.NbSpawnErr > 5 {
-		log.Warn(ctx, "canRunJobWithModel> Too many errors on spawn with model %s, please check this worker model", model.Name)
+		log.Warn(ctx, "Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}
 
-	var next context.CancelFunc
-	ctx, next = telemetry.Span(ctx, "hatchery.canRunJobWithModel.checkExecGroups")
 	if len(j.execGroups) > 0 {
 		checkGroup := false
 		for _, g := range j.execGroups {
@@ -479,11 +474,10 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			}
 		}
 		if !checkGroup {
-			log.Debug(ctx, "canRunJobWithModel> job %d - model %s attached to group %d can't run this job", j.id, model.Name, model.GroupID)
+			log.Debug(ctx, "job %d - model %s attached to group %d can't run this job", j.id, model.Name, model.GroupID)
 			return false
 		}
 	}
-	next()
 
 	var containsModelRequirement, containsHostnameRequirement bool
 	for _, r := range j.requirements {
@@ -497,12 +491,11 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 	}
 
 	if model.IsDeprecated && !containsModelRequirement {
-		log.Debug(ctx, "canRunJobWithModel> %d - job %d - Cannot launch this model because it is deprecated", j.timestamp, j.id)
+		log.Debug(ctx, "%d - job %d - Cannot launch this model because it is deprecated", j.timestamp, j.id)
 		return false
 	}
 
 	// Common check
-	ctx, next = telemetry.Span(ctx, "hatchery.canRunJobWithModel.commonCheckRequirements")
 	for _, r := range j.requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
 		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
@@ -513,34 +506,30 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			isSharedInfraModel := model.Group.Name == sdk.SharedInfraGroupName && modelName == model.Name
 			isSameName := modelName == model.Name // for backward compatibility with runs, if only the name match we considered that the model can be used, keep this condition until the workflow runs were not migrated.
 			if !isGroupModel && !isSharedInfraModel && !isSameName {
-				log.Debug(ctx, "canRunJobWithModel> %d - job %d - model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
-				next()
+				log.Debug(ctx, "%d - job %d - model requirement r.Value(%s) do not match model.Name(%s) and model.Group(%s)", j.timestamp, j.id, strings.Split(r.Value, " ")[0], model.Name, model.Group.Name)
 				return false
 			}
 		}
 
 		// service and memory requirements are only supported by docker model
 		if model.Type != sdk.Docker && (r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement) {
-			log.Debug(ctx, "canRunJobWithModel> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
-			next()
+			log.Debug(ctx, "%d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", j.timestamp, j.id, model.Type)
 			return false
 		}
 
 		// Skip other requirement as we can't check it
 		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug(ctx, "canRunJobWithModel> %d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
+			log.Debug(ctx, "%d - job %d - job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine", j.timestamp, j.id)
 			continue
 		}
 
 		if r.Type == sdk.OSArchRequirement && model.RegisteredOS != nil && *model.RegisteredOS != "" && model.RegisteredArch != nil && *model.RegisteredArch != "" && r.Value != (*model.RegisteredOS+"/"+*model.RegisteredArch) {
-			log.Debug(ctx, "canRunJobWithModel> %d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", j.timestamp, j.id, *model.RegisteredOS, *model.RegisteredArch)
-			next()
+			log.Debug(ctx, "%d - job %d - job with OSArch requirement: cannot spawn on this OSArch. current model: %s/%s", j.timestamp, j.id, *model.RegisteredOS, *model.RegisteredArch)
 			return false
 		}
 
 		if r.Type == sdk.RegionRequirement && r.Value != h.Configuration().Provision.Region {
-			log.Debug(ctx, "canRunJobWithModel> %d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
-			next()
+			log.Debug(ctx, "%d - job %d - job with region requirement: cannot spawn. hatchery-region:%s prerequisite:%s", j.timestamp, j.id, h.Configuration().Provision.Region, r.Value)
 			return false
 		}
 
@@ -556,14 +545,12 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 				}
 
 				if !found {
-					log.Debug(ctx, "canRunJobWithModel> %d - job %d - model(%s) does not have binary %s(%s) for this job.", j.timestamp, j.id, model.Name, r.Name, r.Value)
-					next()
+					log.Debug(ctx, "%d - job %d - model(%s) does not have binary %s(%s) for this job.", j.timestamp, j.id, model.Name, r.Name, r.Value)
 					return false
 				}
 			}
 		}
 	}
-	next()
 
 	return h.CanSpawn(ctx, model, j.id, j.requirements)
 }

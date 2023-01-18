@@ -1,7 +1,7 @@
 <div class="graph" [class.disableSelection]="resizing">
     <app-workflowv3-stages-graph [workflowRun]="data" [direction]="direction" (onSelectJob)="clickShowJobLogs($event)"
         #graph></app-workflowv3-stages-graph>
-    <app-resizable-panel class="night" [direction]="'vertical'" (onGrabbingStart)="panelStartResize()"
+    <app-resizable-panel [direction]="'vertical'" (onGrabbingStart)="panelStartResize()"
         (onGrabbingEnd)="panelEndResize()">
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <ng-containers *ngIf="selectedTab.key === 'problems'">
@@ -11,7 +11,7 @@
                     <div class="content">
                         Job "{{error.jobName}}": error on step
                         n°{{error.stepNumber}}. <a (click)="clickShowJobLogs(error.jobName)">Show
-                        logs...</a>
+                            logs...</a>
                     </div>
                 </li>
                 <li *ngFor="let problem of problems">
@@ -38,7 +38,7 @@
                     <div class="rightFloat content">
                         {{result.type}}
                         <a *ngIf="!!result.md5" title="Copy hash" ngxClipboard [cbContent]="result.md5"
-                           (click)="confirmCopy();$event.stopPropagation();">
+                            (click)="confirmCopy();$event.stopPropagation();">
                             <span nz-icon nzType="copy" nzTheme="outline"></span>
                         </a>
                     </div>
@@ -53,8 +53,7 @@
         </ng-containers>
     </app-resizable-panel>
 </div>
-<app-resizable-panel *ngIf="selectJobRun" class="night" (onGrabbingStart)="panelStartResize()"
-    (onGrabbingEnd)="panelEndResize()">
+<app-resizable-panel *ngIf="selectJobRun" (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize()">
     <app-workflowv3-run-job [projectKey]="projectKey" [workflowName]="data.resources.workflow.name"
         [workflowRunNum]="data.number" [jobRun]="selectJobRun" (onClickClose)="closeJobPanel()" #v3RunJob>
     </app-workflowv3-run-job>

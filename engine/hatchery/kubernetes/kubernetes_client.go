@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,6 +124,8 @@ var (
 )
 
 func (k *kubernetesClient) PodCreate(ctx context.Context, ns string, spec *corev1.Pod, options metav1.CreateOptions) (*corev1.Pod, error) {
+	ctx, end := telemetry.Span(ctx, "kubernetesClient.PodCreate")
+	defer end()
 	ctx = context.WithValue(ctx, logNS, ns)
 	ctx = context.WithValue(ctx, logPod, spec.Name)
 	log.Info(ctx, "creating pod %s", spec.Name)
