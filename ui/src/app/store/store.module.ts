@@ -15,6 +15,7 @@ import { ConfigState } from './config.state';
 import { EventState } from './event.state';
 import { FeatureState } from './feature.state';
 import { HelpState } from './help.state';
+import { PreferencesState } from './preferences.state';
 import { ProjectState } from './project.state';
 import { QueueState } from './queue.state';
 import { WorkflowState } from './workflow.state';
@@ -36,6 +37,7 @@ import { WorkflowState } from './workflow.state';
             FeatureState,
             HelpState,
             PipelinesState,
+            PreferencesState,
             ProjectState,
             QueueState,
             WorkflowState

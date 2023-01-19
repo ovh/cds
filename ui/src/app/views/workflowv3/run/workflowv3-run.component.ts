@@ -18,6 +18,8 @@ import { GraphDirection } from '../graph/workflowv3-graph.lib';
 import { WorkflowV3StagesGraphComponent } from '../graph/workflowv3-stages-graph.component';
 import { JobRun, WorkflowRunV3 } from '../workflowv3.model';
 import { WorkflowV3RunService } from '../workflowv3.run.service';
+import * as actionPreferences from 'app/store/preferences.action';
+import { PreferencesState } from 'app/store/preferences.state';
 
 @Component({
     selector: 'app-workflowv3-run',
@@ -27,6 +29,9 @@ import { WorkflowV3RunService } from '../workflowv3.run.service';
 })
 @AutoUnsubscribe()
 export class WorkflowV3RunComponent implements OnInit, OnDestroy {
+    static INFO_PANEL_KEY = 'workflow-v3-run-info'
+    static JOB_PANEL_KEY = 'workflow-v3-run-job'
+
     @ViewChild('graph') graph: WorkflowV3StagesGraphComponent;
     @ViewChild('v3RunJob') v3JobComponent: WorkflowV3RunJobComponent;
 
@@ -43,7 +48,8 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     selectJobRun: JobRun;
     eventSubscription: Subscription;
     results: Array<UIArtifact> = [];
-
+    infoPanelSize: number;
+    jobPanelSize: number;
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     cdnFilter: CDNStreamFilter;
@@ -96,6 +102,9 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
             .subscribe(e => {
                 this.loadWorkflowRun();
             });
+
+        this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3RunComponent.INFO_PANEL_KEY));
+        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3RunComponent.JOB_PANEL_KEY));
     }
 
     async loadWorkflowRun() {
@@ -220,6 +229,16 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
         if (this.graph) {
             this.graph.resize();
         }
+    }
+
+    infoPanelEndResize(size: number): void {
+        this.panelEndResize();
+        this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: WorkflowV3RunComponent.INFO_PANEL_KEY, size: size }));
+    }
+
+    jobPanelEndResize(size: number): void {
+        this.panelEndResize();
+        this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: WorkflowV3RunComponent.JOB_PANEL_KEY, size: size }));
     }
 
     clickShowJobLogs(name: string): void {

@@ -29,7 +29,6 @@ import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
 import { ProjectStore } from './service/project/project.store';
 import { RouterService } from './service/router/router.service';
-import { ThemeStore } from './service/theme/theme.store';
 import { TimelineService } from './service/timeline/timeline.service';
 import { TimelineStore } from './service/timeline/timeline.store';
 import { UserService } from './service/user/user.service';
@@ -64,7 +63,6 @@ describe('App: CDS', () => {
                 EnvironmentService,
                 AuthenticationService,
                 ConfigService,
-                ThemeStore,
                 NotificationService,
                 AppService,
                 RouterService,

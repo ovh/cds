@@ -10,14 +10,15 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { AllKeys, Key } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Project } from 'app/model/project.model';
 import { RepositoriesManager, Repository } from 'app/model/repositories.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
+import { PreferencesState } from 'app/store/preferences.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
@@ -96,7 +97,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
 
     constructor(
         private _repoManagerService: RepoManagerService,
-        private _theme: ThemeStore,
+        private _store: Store,
         public _sharedService: SharedService // used in html
     ) {
         this.codeMirrorConfig = {
@@ -116,7 +117,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
         }
         this.updateListRepo();
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);

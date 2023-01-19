@@ -7,9 +7,7 @@ import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } f
 import { Parameter } from 'app/model/parameter.model';
 import { ParameterService } from 'app/service/parameter/parameter.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { SharedModule } from '../../shared.module';
-import { ParameterEvent } from '../parameter.event.model';
 import { ParameterListComponent } from './parameter.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -24,8 +22,7 @@ describe('CDS: Parameter List Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
-                { provide: APP_BASE_HREF, useValue: '/' },
-                ThemeStore
+                { provide: APP_BASE_HREF, useValue: '/' }
             ],
             imports: [
                 RouterTestingModule.withRoutes([]),

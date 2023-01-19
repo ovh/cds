@@ -1,8 +1,8 @@
 <div class="graph" [class.disableSelection]="resizing">
     <app-workflowv3-stages-graph [workflowRun]="data" [direction]="direction" (onSelectJob)="clickShowJobLogs($event)"
         #graph></app-workflowv3-stages-graph>
-    <app-resizable-panel [direction]="'vertical'" (onGrabbingStart)="panelStartResize()"
-        (onGrabbingEnd)="panelEndResize()">
+    <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
+        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
         <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
         <ng-containers *ngIf="selectedTab.key === 'problems'">
             <ul class="infos">
@@ -53,7 +53,8 @@
         </ng-containers>
     </app-resizable-panel>
 </div>
-<app-resizable-panel *ngIf="selectJobRun" (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize()">
+<app-resizable-panel *ngIf="selectJobRun" minSize="400" [initialSize]="jobPanelSize"
+    (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
     <app-workflowv3-run-job [projectKey]="projectKey" [workflowName]="data.resources.workflow.name"
         [workflowRunNum]="data.number" [jobRun]="selectJobRun" (onClickClose)="closeJobPanel()" #v3RunJob>
     </app-workflowv3-run-job>

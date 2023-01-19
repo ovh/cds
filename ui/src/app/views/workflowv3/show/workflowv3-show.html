@@ -1,6 +1,7 @@
 <app-workflowv3-stages-graph [class.disableSelection]="resizing" [workflow]="data" [direction]="direction" #graph>
 </app-workflowv3-stages-graph>
-<app-resizable-panel (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize()">
+<app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"
+    (onGrabbingEnd)="panelEndResize($event)">
     <app-workflowv3-edit (onChange)="workflowEdit($event)">
     </app-workflowv3-edit>
 </app-resizable-panel>

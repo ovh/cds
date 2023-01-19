@@ -8,17 +8,18 @@ import { Project } from 'app/model/project.model';
 import { AuthSummary } from 'app/model/user.model';
 import { NavbarService } from 'app/service/navbar/navbar.service';
 import { RouterService } from 'app/service/router/router.service';
-import { ConfigService, ProjectStore } from 'app/service/services.module';
-import { ThemeStore } from 'app/service/theme/theme.store';
+import { ProjectStore } from 'app/service/services.module';
 import { WorkflowStore } from 'app/service/workflow/workflow.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SignoutCurrentUser } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
 import { ConfigState } from 'app/store/config.state';
 import { HelpState } from 'app/store/help.state';
+import { PreferencesState } from 'app/store/preferences.state';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import * as actionPreferences from 'app/store/preferences.action';
 
 @Component({
     selector: 'app-navbar',
@@ -63,7 +64,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _projectStore: ProjectStore,
         private _workflowStore: WorkflowStore,
         private _router: Router,
-        private _theme: ThemeStore,
         private _routerService: RouterService,
         private _cd: ChangeDetectorRef
     ) {
@@ -77,7 +77,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.darkActive = t === 'night';
             this._cd.markForCheck();
         });
@@ -102,8 +102,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     changeTheme() {
         this.darkActive = !this.darkActive;
-        this._theme.set(this.darkActive ? 'night' : 'light');
         this._cd.markForCheck();
+        this._store.dispatch(new actionPreferences.SetTheme({ theme: this.darkActive ? 'night' : 'light' }));
     }
 
     ngOnInit() {

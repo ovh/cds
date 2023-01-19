@@ -14,11 +14,11 @@ import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { FlatSchema, JSONSchema } from 'app/model/schema.model';
 import { Workflow } from 'app/model/workflow.model';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { UserService } from 'app/service/user/user.service';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { PreferencesState } from 'app/store/preferences.state';
 import { FetchAsCodeWorkflow, GetWorkflow, ImportWorkflow, PreviewWorkflow } from 'app/store/workflow.action';
 import * as yaml from 'js-yaml';
 import { Schema } from 'js-yaml';
@@ -46,7 +46,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
     set open(data: boolean) {
         if (data && !this.updated) {
             this.loadingGet = true;
-            this.store.dispatch(new FetchAsCodeWorkflow({
+            this._store.dispatch(new FetchAsCodeWorkflow({
                 projectKey: this.project.key,
                 workflowName: this.workflow.name
             })).pipe(finalize(() => {
@@ -76,13 +76,12 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
     viewInit: boolean;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _activatedRoute: ActivatedRoute,
         private _router: Router,
         private _workflowCore: WorkflowCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef,
         private _userService: UserService
     ) {
@@ -110,7 +109,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
         });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     workflowCheck = cm => {
         const errors = CodeMirror.lint.yaml(cm);
@@ -155,7 +154,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
                 }
             });
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -198,7 +197,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
 
     cancel() {
         if (this.previewMode) {
-            this.store.dispatch(new GetWorkflow({
+            this._store.dispatch(new GetWorkflow({
                 projectKey: this.project.key,
                 workflowName: this.workflow.name
             })).subscribe(() => this._workflowCore.toggleAsCodeEditor({ open: false, save: false }));
@@ -222,7 +221,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
         this.unselectAll();
         this.loading = true;
         this.previewMode = true;
-        this.store.dispatch(new PreviewWorkflow({
+        this._store.dispatch(new PreviewWorkflow({
             projectKey: this.project.key,
             workflowName: this.workflow.name,
             wfCode: this.exportedWf
@@ -236,7 +235,7 @@ export class WorkflowSidebarCodeComponent implements OnInit, AfterViewInit, OnDe
     save() {
         this.unselectAll();
         this.loading = true;
-        this.store.dispatch(new ImportWorkflow({
+        this._store.dispatch(new ImportWorkflow({
             projectKey: this.project.key,
             wfName: this.workflow.name,
             workflowCode: this.exportedWf

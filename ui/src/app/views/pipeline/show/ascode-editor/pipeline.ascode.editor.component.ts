@@ -14,11 +14,11 @@ import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { FlatSchema, JSONSchema } from 'app/model/schema.model';
 import { PipelineCoreService } from 'app/service/pipeline/pipeline.core.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { UserService } from 'app/service/user/user.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { FetchAsCodePipeline, ImportPipeline, PreviewPipeline, ResyncPipeline } from 'app/store/pipelines.action';
+import { PreferencesState } from 'app/store/preferences.state';
 import * as yaml from 'js-yaml';
 import { Schema } from 'js-yaml';
 import { Validator } from 'jsonschema';
@@ -44,7 +44,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
     @Input()
     set open(data: boolean) {
         if (data && !this.updated) {
-            this.store.dispatch(new FetchAsCodePipeline({
+            this._store.dispatch(new FetchAsCodePipeline({
                 projectKey: this.project.key,
                 pipelineName: this.pipeline.name
             })).pipe(finalize(() => {
@@ -72,11 +72,10 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
     viewInit: boolean;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _pipCoreService: PipelineCoreService,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef,
         private _userService: UserService
     ) {
@@ -104,7 +103,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
         this.viewInit = true;
@@ -170,7 +169,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
                 }
             });
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
@@ -188,7 +187,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
 
     cancel() {
         if (this.previewMode) {
-            this.store.dispatch(new ResyncPipeline({
+            this._store.dispatch(new ResyncPipeline({
                 projectKey: this.project.key,
                 pipelineName: this.pipeline.name
             })).subscribe(() => this._pipCoreService.toggleAsCodeEditor({ open: false, save: false }));
@@ -202,7 +201,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
     preview() {
         this.loading = true;
         this.previewMode = true;
-        this.store.dispatch(new PreviewPipeline({
+        this._store.dispatch(new PreviewPipeline({
             projectKey: this.project.key,
             pipelineName: this.pipeline.name,
             pipCode: this.exportedPip
@@ -215,7 +214,7 @@ export class PipelineAsCodeEditorComponent implements OnInit, AfterViewInit, OnD
 
     save() {
         this.loading = true;
-        this.store.dispatch(new ImportPipeline({
+        this._store.dispatch(new ImportPipeline({
             projectKey: this.project.key,
             pipName: this.pipeline.name,
             pipelineCode: this.exportedPip

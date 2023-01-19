@@ -3,10 +3,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthSummary } from 'app/model/user.model';
 import { ConfigService } from 'app/service/config/config.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { AuthenticationState } from 'app/store/authentication.state';
+import { PreferencesState } from 'app/store/preferences.state';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
@@ -44,7 +44,6 @@ export class CdsctlComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _configService: ConfigService,
         private _translate: TranslateService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
@@ -64,10 +63,10 @@ export class CdsctlComponent implements OnInit, OnDestroy {
         this.archChoice = 'amd64';
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror1 && this.codemirror1.instance) {
                 this.codemirror1.instance.setOption('theme', this.codeMirrorConfig.theme);

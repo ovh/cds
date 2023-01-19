@@ -6,6 +6,10 @@
 
     app-json-form {
         flex: 1;
+
+        &.disableSelection {
+            user-select: none;
+        }
     }
 
     app-resizable-panel {
@@ -37,10 +41,10 @@
 
         nz-code-editor {
             height: 100%;
-            background-color: #1e1e1e;
             border-left: 1px solid #f0f0f0;
 
             :host-context(.night) & {
+                background-color: #1e1e1e;
                 border-left: 1px solid #303030;
             }
         }

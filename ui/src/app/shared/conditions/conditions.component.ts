@@ -9,12 +9,13 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
+import { PreferencesState } from 'app/store/preferences.state';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -84,7 +85,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
     _triggerCondition: WorkflowTriggerConditionCache;
 
     constructor(
-        private _theme: ThemeStore,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
         super();
@@ -114,7 +115,7 @@ export class ConditionsComponent extends Table<WorkflowNodeCondition> implements
             readOnly: this.readonly,
         };
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
