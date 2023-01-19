@@ -55,8 +55,8 @@ export class ActionFormComponent implements OnDestroy {
         this.refreshActions();
     }
     get action(): Action {
- return this._action;
-}
+        return this._action;
+    }
 
     @Output() save = new EventEmitter<Action>();
     @Output() delete = new EventEmitter();
@@ -113,7 +113,7 @@ export class ActionFormComponent implements OnDestroy {
         }
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.dragulaService.destroy('bag-nonfinal');
         this.dragulaService.destroy('bag-final');
     }

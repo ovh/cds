@@ -182,7 +182,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
         this.selectedTab = tab;
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this._store.dispatch(new CleanEnvironmentState());
     }
 

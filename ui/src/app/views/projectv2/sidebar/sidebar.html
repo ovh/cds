@@ -1,0 +1,28 @@
+<div class="collapse">
+    <div class="panel" [class.collapsed]="!panels[0]" [class.expanded]="panels[0]">
+        <div class="header" (click)="togglePanel(0)">
+            <i class="toggle" nz-icon [nzType]="panels[0] ? 'down' : 'right'" nzTheme="outline"></i>
+            <div class="title">
+                Workspace
+            </div>
+            <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
+                nzTooltipTitle="Click to refresh the workspace" (click)="clickRefresh($event)">
+                <i nz-icon nzType="sync" [nzSpin]="refreshWorkspace" nzTheme="outline"></i>
+            </button>
+        </div>
+        <div class="content">
+            <app-tree [tree]="currentWorkspace" (nodeEvent)="handleWorkspaceEvent($event)" #treeWorkspace></app-tree>
+        </div>
+    </div>
+    <div class="panel" [class.collapsed]="!panels[1]" [class.expanded]="panels[1]">
+        <div class="header" (click)="togglePanel(1)">
+            <i class="toggle" nz-icon [nzType]="panels[1] ? 'down' : 'right'" nzTheme="outline"></i>
+            <div class="title">
+                Integrations
+            </div>
+        </div>
+        <div class="content">
+            <nz-alert nzMessage="Not implemented" nzType="info"></nz-alert>
+        </div>
+    </div>
+</div>

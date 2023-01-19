@@ -117,8 +117,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
             });
     }
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     refreshDatas(key: string, pipName: string) {
         this._store.dispatch(new FetchPipeline({
@@ -197,7 +196,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     this.pipeline = cloneDeep(pip.pipeline);
                 }
 
-                if (this.pipeline.from_repository && (!this.pipeline.ascode_events || this.pipeline.ascode_events.length ===0)) {
+                if (this.pipeline.from_repository && (!this.pipeline.ascode_events || this.pipeline.ascode_events.length === 0)) {
                     this.nzTagColor = 'green';
                 } else if (this.pipeline.from_repository && this.pipeline?.ascode_events?.length > 0) {
                     this.nzTagColor = 'orange';
@@ -215,7 +214,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 this.initTabs();
                 this._cd.markForCheck();
             }, () => {
-                this._router.navigate(['/project', this.projectKey], {queryParams: {tab: 'pipelines'}});
+                this._router.navigate(['/project', this.projectKey], { queryParams: { tab: 'pipelines' } });
             });
     }
 

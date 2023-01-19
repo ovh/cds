@@ -1,13 +1,10 @@
-<div class="entityContainer">
-    <ng-container *ngIf="_jsonSchema && data">
-        <div class="form">
-            <form nz-form>
-                <app-json-form parentType="V2WorkerModel" [schema]="_jsonSchema" [(data)]="data"></app-json-form>
-            </form>
-        </div>
-        <div class="yaml">
-            <nz-code-editor class="editor" [(ngModel)]="data" [nzEditorOption]="editorOption" (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
-        </div>
-    </ng-container>
-</div>
-
+<ng-container *ngIf="flatSchema && data">
+    <app-json-form parentType="V2WorkerModel" [schema]="flatSchema" [(data)]="data"></app-json-form>
+    <app-resizable-panel defaultSize="400" (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize()">
+        <nz-tabset nzType="card" nzSize="small">
+            <nz-tab [nzTitle]="path"></nz-tab>
+        </nz-tabset>
+        <nz-code-editor #editor [(ngModel)]="data" [nzEditorOption]="editorOption"
+            (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+    </app-resizable-panel>
+</ng-container>

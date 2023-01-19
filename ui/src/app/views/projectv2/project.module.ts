@@ -11,15 +11,15 @@ import {
 import {
     ProjectV2RepositoryShowComponent
 } from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
-import {ProjectV2WorkerModelShowComponent} from "./vcs/repository/workermodel/show/project.workermodel.show.component";
+import { ProjectV2WorkerModelShowComponent } from "./vcs/repository/workermodel/show/project.workermodel.show.component";
 
 @NgModule({
     declarations: [
-        ProjectV2TopMenuComponent,
-        ProjectV2ShowComponent,
-        ProjectV2SidebarComponent,
         ProjectV2RepositoryAddComponent,
         ProjectV2RepositoryShowComponent,
+        ProjectV2ShowComponent,
+        ProjectV2SidebarComponent,
+        ProjectV2TopMenuComponent,
         ProjectV2WorkerModelShowComponent
     ],
     imports: [
@@ -31,5 +31,4 @@ import {ProjectV2WorkerModelShowComponent} from "./vcs/repository/workermodel/sh
         CUSTOM_ELEMENTS_SCHEMA
     ]
 })
-export class ProjectV2Module {
-}
+export class ProjectV2Module { }

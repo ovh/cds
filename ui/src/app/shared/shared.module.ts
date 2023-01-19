@@ -147,7 +147,6 @@ import { BitbucketIconComponent } from 'app/shared/icons/bitbucket.icon.componen
 import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.success.component';
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
 import { TreeComponent } from 'app/shared/tree/tree.component';
-import { AutoHeightSidebarCollapseDirective } from 'app/shared/directives/auto-height-sidebar-collapse.directive';
 import { EntityFormComponent } from "./entity/entity.form.component";
 import { NzCodeEditorModule } from "ng-zorro-antd/code-editor";
 import { JSONFormComponent } from "./entity/form/json-form.component";
@@ -229,7 +228,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         AsCodeSaveModalComponent,
         AuditListComponent,
         AutoFocusInputComponent,
-        AutoHeightSidebarCollapseDirective,
         BitbucketIconComponent,
         BitbucketIconSuccessComponent,
         BreadcrumbComponent,
@@ -343,7 +341,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         AsCodeSaveModalComponent,
         AuditListComponent,
         AutoFocusInputComponent,
-        AutoHeightSidebarCollapseDirective,
         BitbucketIconComponent,
         BitbucketIconSuccessComponent,
         BreadcrumbComponent,

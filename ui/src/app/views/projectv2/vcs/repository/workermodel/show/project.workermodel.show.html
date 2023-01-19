@@ -1,23 +1,16 @@
-<div class="workerModelShow">
-    <ng-container *ngIf="currentWorkerModelName && !loading">
-        <h3>Worker model {{currentWorkerModelName}} <span *ngIf="workerModel?.file_path">({{' ' + workerModel.file_path + ' '}})</span></h3>
-        <div class="workerModel-container">
-            <ng-container *ngIf="workerModel && !errorNotFound">
-                <app-entity [data]="workerModel.data" [jsonschema]="jsonSchema"></app-entity>
-            </ng-container>
-            <ng-container *ngIf="errorNotFound">
-                <nz-alert nzType="warning" nzDescription="Worker model not found on branch {{currentBranch}}" nzShowIcon></nz-alert>
-            </ng-container>
+<ng-container *ngIf="currentWorkerModelName && !loading">
+    <div class="workerModel-container">
+        <app-entity *ngIf="workerModel && !errorNotFound" [path]="workerModel.file_path" [data]="workerModel.data"
+            [schema]="jsonSchema"></app-entity>
+        <nz-alert *ngIf="errorNotFound" nzType="warning"
+            nzDescription="Worker model not found on branch {{currentBranch}}" nzShowIcon></nz-alert>
+    </div>
+    <div class="footer">
+        <div class="buttons">
+            <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
+                Save
+            </button>
         </div>
-        <div class="footer">
-            <div class="buttons">
-                <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
-                    Save
-                </button>
-            </div>
-        </div>
-    </ng-container>
-    <ng-container *ngIf="loading">
-        <nz-spin nzTip="Loading worker model"></nz-spin>
-    </ng-container>
-</div>
+    </div>
+</ng-container>
+<nz-spin *ngIf="loading" nzTip="Loading worker model"></nz-spin>

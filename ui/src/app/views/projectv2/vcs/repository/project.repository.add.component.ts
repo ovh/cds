@@ -40,7 +40,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
         // Get project and VCS, subscribe to react in case of project switch
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
-            forkJoin( [
+            forkJoin([
                 this._projectService.getVCSRepositories(this.project.key, p['vcsName']),
                 this._projectService.getVCSProject(this.project.key, p['vcsName'])
             ]).subscribe(result => {
@@ -67,7 +67,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
             });
     }
 
-    filterRepo(query: string): void{
+    filterRepo(query: string): void {
         if (!query || query.length < 3) {
             return;
         }
@@ -88,12 +88,11 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
         this._projectService.addVCSRepository(this.project.key, this.vcsProject.name, repo).pipe(finalize(() => {
             this.loading = false;
             this._cd.markForCheck();
-        })).subscribe( r => {
+        })).subscribe(r => {
             this._toastService.success('Repository added', '');
             this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', this.vcsProject.name, 'repository', r.name]).then()
         });
     }
 
-    ngOnDestroy() {}
-
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 }

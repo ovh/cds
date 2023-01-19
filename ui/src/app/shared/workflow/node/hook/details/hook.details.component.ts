@@ -49,8 +49,7 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
         };
     }
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
