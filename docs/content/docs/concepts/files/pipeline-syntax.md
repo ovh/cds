@@ -146,7 +146,7 @@ Read more about available [actions]({{< relref "/docs/actions/_index.md" >}}).
 
 ### Optional 
 
-It is possible to make a step optional. Even if this task fail the pipeline will continue.
+It is possible to make a step optional. Even if this task fail the job will continue.
 
 
 ```yaml
