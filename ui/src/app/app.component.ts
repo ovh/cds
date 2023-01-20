@@ -25,6 +25,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzConfigService } from "ng-zorro-antd/core/config";
 import { CodeEditorConfig } from "ng-zorro-antd/core/config/config";
 import { PreferencesState } from './store/preferences.state';
+import { Editor } from './model/editor.model';
 
 declare const monaco: any;
 
@@ -116,6 +117,8 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.hideNavBar = e.url.startsWith('/auth');
             }
         });
+
+
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -135,11 +138,18 @@ export class AppComponent implements OnInit, OnDestroy {
                 }, 30000);
             }
         );
+
         this.toastSubs = this._toastService.getObservable().subscribe(data => {
             if (!this.toastTemplate) {
                 return;
             }
             this._nzNotificationService.template(this.toastTemplate, data)
+        });
+
+        const config: CodeEditorConfig = this._configService.getConfigForComponent('codeEditor');
+        this._configService.set('codeEditor', {
+            ...config,
+            onLoad: () => { monaco.languages.registerCompletionItemProvider("yaml", Editor.completionProvider(monaco)) }
         });
     }
 
