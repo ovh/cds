@@ -22,7 +22,6 @@ import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
 import { AddHelp } from './store/help.action';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { Editor } from "./model/editor.model";
 import { NzConfigService } from "ng-zorro-antd/core/config";
 import { CodeEditorConfig } from "ng-zorro-antd/core/config/config";
 import { PreferencesState } from './store/preferences.state';
@@ -141,13 +140,6 @@ export class AppComponent implements OnInit, OnDestroy {
                 return;
             }
             this._nzNotificationService.template(this.toastTemplate, data)
-        });
-        const defaultEditorOption: CodeEditorConfig = this._configService.getConfigForComponent('codeEditor')?.defaultEditorOption || {};
-        this._configService.set('codeEditor', {
-            defaultEditorOption: {
-                ...defaultEditorOption,
-                onLoad: () => { monaco.languages.registerCompletionItemProvider("yaml", Editor.completionProvider(monaco)) }
-            }
         });
     }
 

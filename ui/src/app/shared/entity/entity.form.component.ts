@@ -11,6 +11,7 @@ import { Store } from "@ngxs/store";
 import { PreferencesState } from "app/store/preferences.state";
 import * as actionPreferences from 'app/store/preferences.action';
 import { Subscription } from "rxjs";
+import { Editor } from "app/model/editor.model";
 
 declare const monaco: any;
 
@@ -67,6 +68,7 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
 
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ schemas: [{ uri: '', schema: this.flatSchema }] });
+        monaco.languages.registerCompletionItemProvider("yaml", Editor.completionProvider(monaco));
     }
 
     panelStartResize(): void {
