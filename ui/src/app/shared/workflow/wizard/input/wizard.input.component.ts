@@ -18,11 +18,11 @@ import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { ApplicationWorkflowService } from 'app/service/application/application.workflow.service';
 import { PipelineService } from 'app/service/pipeline/pipeline.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { VariableService } from 'app/service/variable/variable.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ParameterEvent } from 'app/shared/parameter/parameter.event.model';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { PreferencesState } from 'app/store/preferences.state';
 import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -70,23 +70,22 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
     themeSubscription: Subscription;
 
     constructor(
-        private store: Store,
+        private _store: Store,
         private _variableService: VariableService,
         private _appWorkflowService: ApplicationWorkflowService,
         private _translate: TranslateService,
         private _toast: ToastService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef,
         private _pipelineService: PipelineService
     ) {
-        this.project = this.store.selectSnapshot(ProjectState.projectSnapshot);
-        this.editMode = this.store.selectSnapshot(WorkflowState).editMode;
+        this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+        this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.noderun = this.store.selectSnapshot(WorkflowState).workflowNodeRun;
+        this.noderun = this._store.selectSnapshot(WorkflowState).workflowNodeRun;
         this.nodeSub = this.node$.subscribe(n => {
             this.editableNode = cloneDeep(n);
             if (this.editableNode) {
@@ -97,8 +96,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-
-
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -108,12 +105,15 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
             readOnly: this.readonly
         };
 
-        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+
+        this.themeSubscription = this._store.select(PreferencesState.theme)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror && this.codemirror.instance) {
+                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
     }
 
     init(): void {
@@ -151,7 +151,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
                         this.editableNode.context.default_payload = {};
                     }
                     this._cd.markForCheck();
-            });
+                });
         }
     }
 
@@ -250,10 +250,10 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
         n.context.default_pipeline_parameters = this.editableNode.context.default_pipeline_parameters;
         if (n.context.default_pipeline_parameters) {
             n.context.default_pipeline_parameters.forEach(p => {
-               p.value = p.value.toString();
+                p.value = p.value.toString();
             });
         }
-        this.store.dispatch(new UpdateWorkflow({
+        this._store.dispatch(new UpdateWorkflow({
             projectKey: this.workflow.project_key,
             workflowName: this.workflow.name,
             changes: clonedWorkflow

@@ -15,10 +15,10 @@ import { IdName, Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow } from 'app/model/workflow.model';
 import { HookService } from 'app/service/hook/hook.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { PreferencesState } from 'app/store/preferences.state';
 import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -69,7 +69,6 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
         private _toast: ToastService,
         private _hookService: HookService,
         private _workflowService: WorkflowService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
@@ -84,7 +83,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
         this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         if (this.mode !== 'create') {
@@ -94,12 +93,14 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+        this.themeSubscription = this._store.select(PreferencesState.theme)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror && this.codemirror.instance) {
+                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
 
         this.loadingModels = true;
         this._hookService.getOutgoingHookModel().pipe(finalize(() => {
@@ -200,13 +201,13 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
             this.loading = false;
             this._cd.markForCheck();
         })).subscribe(() => {
-                this.outgoinghookChange.emit(false);
-                if (this.editMode) {
-                    this._toast.info('', this._translate.instant('workflow_ascode_updated'));
-                } else {
-                    this._toast.success('', this._translate.instant('workflow_updated'));
-                }
-            });
+            this.outgoinghookChange.emit(false);
+            if (this.editMode) {
+                this._toast.info('', this._translate.instant('workflow_ascode_updated'));
+            } else {
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            }
+        });
     }
 
     changeCodeMirror(code: string) {

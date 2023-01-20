@@ -19,7 +19,7 @@ import { PipelineService } from 'app/service/pipeline/pipeline.service';
 import { ProjectService } from 'app/service/project/project.service';
 import { ProjectStore } from 'app/service/project/project.store';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ConfigService, MonitoringService, RouterService, ThemeStore, UserService } from 'app/service/services.module';
+import { ConfigService, MonitoringService, RouterService, UserService } from 'app/service/services.module';
 import { VariableService } from 'app/service/variable/variable.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
@@ -66,7 +66,6 @@ describe('CDS: Application Repo Component', () => {
                 RepoManagerService,
                 Store,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                ThemeStore,
                 RouterService,
                 WorkflowRunService,
                 WorkflowService,
@@ -119,7 +118,7 @@ describe('CDS: Application Repo Component', () => {
         p.key = 'key1';
         p.name = 'proj1';
 
-        let repoMan: RepositoriesManager = { name: 'RepoManager', type: '', auth: new(RepositoriesManagerAuth), description: ''};
+        let repoMan: RepositoriesManager = { name: 'RepoManager', type: '', auth: new (RepositoriesManagerAuth), description: '' };
         p.vcs_servers = new Array<RepositoriesManager>();
         p.vcs_servers.push(repoMan);
 

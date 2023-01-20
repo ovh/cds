@@ -9,6 +9,7 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import {
     ParamData,
@@ -17,8 +18,8 @@ import {
     WorkflowTemplateInstance
 } from 'app/model/workflow-template.model';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { PreferencesState } from 'app/store/preferences.state';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
@@ -59,7 +60,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     constructor(
         private _repoManagerService: RepoManagerService,
         private _cd: ChangeDetectorRef,
-        private _theme: ThemeStore
+        private _store: Store
     ) {
         this.codeMirrorConfig = this.codeMirrorConfig = {
             matchBrackets: true,
@@ -70,7 +71,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
             lineNumbers: true,
         };
 
-        this.themeSubscription = this._theme.get()
+        this.themeSubscription = this._store.select(PreferencesState.theme)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(t => {
                 this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';

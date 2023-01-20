@@ -21,9 +21,9 @@
         </div>
     </app-root>
     <script>
-        var theme = localStorage.getItem('CDS-Theme');
-        if (theme) {
-            document.body.className = theme;
+        var preferences = localStorage.getItem('CDS-PREFERENCES');
+        if (preferences) {
+            try { document.body.className = JSON.parse(preferences).theme; } catch (e) { }
         }
     </script>
 </body>

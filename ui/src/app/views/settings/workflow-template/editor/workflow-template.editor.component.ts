@@ -9,9 +9,10 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { WorkflowTemplateError } from 'app/model/workflow-template.model';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { PreferencesState } from 'app/store/preferences.state';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -35,7 +36,7 @@ export class WorkflowTemplateEditorComponent implements OnInit, OnChanges, OnDes
     themeSubscription: Subscription;
 
     constructor(
-        private _theme: ThemeStore,
+        private _store: Store,
         private _cd: ChangeDetectorRef
     ) {
         this.codeMirrorConfig = {
@@ -48,10 +49,10 @@ export class WorkflowTemplateEditorComponent implements OnInit, OnChanges, OnDes
         };
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);

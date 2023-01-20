@@ -36,12 +36,14 @@ export class ResizablePanelComponent implements AfterViewInit {
 
     @Input() direction = PanelDirection.HORIZONTAL;
     @Input() growDirection = PanelGrowDirection.BEFORE;
-    @Input() defaultSize = null;
+    @Input() minSize = null;
+    @Input() initialSize = null;
 
     @Output() onGrabbingStart = new EventEmitter<void>();
-    @Output() onGrabbingEnd = new EventEmitter<void>();
+    @Output() onGrabbingEnd = new EventEmitter<number>();
 
     grabbing = false;
+    size: number;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -50,41 +52,48 @@ export class ResizablePanelComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         if (this.direction === PanelDirection.HORIZONTAL) {
-            const contentWidth = this.defaultSize ?? 600;
-            this._renderer.setStyle(this.content.nativeElement, 'width', `${contentWidth - 4}px`);
-            this._cd.detectChanges();
+            this.size = this.initialSize ?? (this.minSize ?? 600);
         } else {
-            const contentHeight = this.defaultSize ?? 200;
-            this._renderer.setStyle(this.content.nativeElement, 'height', `${contentHeight - 4}px`);
-            this._cd.detectChanges();
+            this.size = this.initialSize ?? (this.minSize ?? 200);
         }
+        this.redraw();
     }
 
     onMouseDownGrabber(): void {
         this.grabbing = true;
-        this._cd.markForCheck();
+        this._cd.detectChanges();
         this.onGrabbingStart.emit();
     }
 
     @HostListener('mouseup', ['$event'])
     onMouseUpGrabber(): void {
+        if (!this.grabbing) {
+            return;
+        }
         this.grabbing = false;
-        this._cd.markForCheck();
-        this.onGrabbingEnd.emit();
+        this._cd.detectChanges();
+        this.onGrabbingEnd.emit(this.size);
     }
 
     @HostListener('window:mousemove', ['$event'])
     onMouseMove(event: any): void {
         if (this.grabbing) {
             if (this.direction === PanelDirection.HORIZONTAL) {
-                const contentWidth = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX : window.innerWidth - event.clientX, this.defaultSize ?? 600);
-                this._renderer.setStyle(this.content.nativeElement, 'width', `${contentWidth - 4}px`);
-                this._cd.detectChanges();
+                this.size = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX : window.innerWidth - event.clientX, this.minSize ?? 600);
             } else {
-                const contentHeight = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY : window.innerHeight - event.clientY, this.defaultSize ?? 200);
-                this._renderer.setStyle(this.content.nativeElement, 'height', `${contentHeight - 4}px`);
-                this._cd.detectChanges();
+                this.size = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY : window.innerHeight - event.clientY, this.minSize ?? 200);
             }
+            this.redraw();
+        }
+    }
+
+    redraw(): void {
+        if (this.direction === PanelDirection.HORIZONTAL) {
+            this._renderer.setStyle(this.content.nativeElement, 'width', `${this.size - 4}px`);
+            this._cd.detectChanges();
+        } else {
+            this._renderer.setStyle(this.content.nativeElement, 'height', `${this.size - 4}px`);
+            this._cd.detectChanges();
         }
     }
 }

@@ -3,7 +3,6 @@ import { Store } from '@ngxs/store';
 import { HookStatus, TaskExecution } from 'app/model/workflow.hook.model';
 import { WNodeHook, Workflow } from 'app/model/workflow.model';
 import { HookService } from 'app/service/hook/hook.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -34,7 +33,6 @@ export class WorkflowNodeHookDetailsComponent implements OnInit, OnDestroy {
 
     constructor(
         public _modal: NzModalRef,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _hookService: HookService

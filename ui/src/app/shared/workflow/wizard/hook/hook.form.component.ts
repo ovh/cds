@@ -6,9 +6,9 @@ import { Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from 'app/model/workflow.model';
 import { HookService } from 'app/service/hook/hook.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { PreferencesState } from 'app/store/preferences.state';
 import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
@@ -65,14 +65,13 @@ export class WorkflowNodeHookFormComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _toast: ToastService,
         private _translate: TranslateService,
-        private _theme: ThemeStore,
         private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
 
-    ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.nodeSub = this.node$.subscribe(n => {
@@ -101,12 +100,14 @@ export class WorkflowNodeHookFormComponent implements OnInit, OnDestroy {
             readOnly: this.mode === 'ro',
         };
 
-        this.themeSubscription = this._theme.get().pipe(finalize(() => this._cd.markForCheck())).subscribe(t => {
-            this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
-            if (this.codemirror && this.codemirror.instance) {
-                this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
-            }
-        });
+        this.themeSubscription = this._store.select(PreferencesState.theme)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(t => {
+                this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
+                if (this.codemirror && this.codemirror.instance) {
+                    this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);
+                }
+            });
 
         this.availableIntegrations = this.project.integrations?.filter(pf => pf.model.hook);
         if (this.hook && this.hook.config && this.hook.config['integration']) {

@@ -14,7 +14,6 @@ import { ParameterService } from 'app/service/parameter/parameter.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { RequirementService } from 'app/service/requirement/requirement.service';
 import { RequirementStore } from 'app/service/requirement/requirement.store';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { UserService } from 'app/service/user/user.service';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
 import { ParameterEvent } from '../parameter/parameter.event.model';
@@ -44,7 +43,6 @@ describe('CDS: Action Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                ThemeStore,
                 UserService,
                 AuthenticationService,
                 ConfigService

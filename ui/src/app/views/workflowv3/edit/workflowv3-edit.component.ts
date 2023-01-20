@@ -9,8 +9,9 @@ import {
     ViewChild
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ThemeStore } from 'app/service/theme/theme.store';
+import { Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { PreferencesState } from 'app/store/preferences.state';
 import { EMPTY, Observable, Subject, Subscription, timer } from 'rxjs';
 import { catchError, concatMap, debounce, finalize, tap } from 'rxjs/operators';
 import { WorkflowV3, WorkflowV3ValidationResponse } from '../workflowv3.model';
@@ -36,7 +37,7 @@ export class WorkflowV3EditComponent implements OnInit, OnDestroy {
     loading = false;
 
     constructor(
-        private _theme: ThemeStore,
+        private _store: Store,
         private _http: HttpClient,
         private _cd: ChangeDetectorRef,
         private _activatedRoute: ActivatedRoute
@@ -55,7 +56,7 @@ export class WorkflowV3EditComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);

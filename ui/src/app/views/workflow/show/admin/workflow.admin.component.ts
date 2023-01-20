@@ -15,7 +15,6 @@ import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
 import { Workflow, WorkflowProjectIntegration } from 'app/model/workflow.model';
 import { FeatureNames } from 'app/service/feature/feature.service';
-import { ThemeStore } from 'app/service/theme/theme.store';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -41,6 +40,7 @@ import { APIConfig } from 'app/model/config.service';
 import { WorkflowDeleteModalComponent } from './delete-modal/delete-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ConfigState } from 'app/store/config.state';
+import { PreferencesState } from 'app/store/preferences.state';
 
 declare let CodeMirror: any;
 
@@ -139,7 +139,6 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         private _workflowService: WorkflowService,
         private _cd: ChangeDetectorRef,
         private _dragularService: DragulaService,
-        private _theme: ThemeStore,
         private _nzModalService: NzModalService,
         private _eventService: EventService,
     ) {
@@ -185,7 +184,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             gutters: ['CodeMirror-lint-markers']
         };
 
-        this.themeSubscription = this._theme.get().subscribe(t => {
+        this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
             if (this.codemirror && this.codemirror.instance) {
                 this.codemirror.instance.setOption('theme', this.codeMirrorConfig.theme);

@@ -2,11 +2,15 @@
 <ng-container *ngIf="field && model && jsonFormSchema && field.type === 'object'">
     <h3>{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</h3>
     <ng-container *ngIf="field?.condition?.length > 0; else tmplNoCondition">
-        <app-json-form-field-conditional [jsonFormSchema]="jsonFormSchema" [field]="field" [(model)]="model" (modelChange)="updateParentModel(field.name, model[field.name])"></app-json-form-field-conditional>
+        <app-json-form-field-conditional [jsonFormSchema]="jsonFormSchema" [field]="field" [disabled]="disabled"
+            [(model)]="model"
+            (modelChange)="updateParentModel(field.name, model[field.name])"></app-json-form-field-conditional>
     </ng-container>
     <ng-template #tmplNoCondition>
         <ng-container *ngFor="let f of jsonFormSchema.types[field.objectType].fields">
-            <app-json-form-field [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f" [(model)]="model[field.name]" (modelChange)="updateParentModel(field.name, model[field.name])"></app-json-form-field>
+            <app-json-form-field [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
+                [(model)]="model[field.name]"
+                (modelChange)="updateParentModel(field.name, model[field.name])"></app-json-form-field>
         </ng-container>
     </ng-template>
 </ng-container>
@@ -17,16 +21,18 @@
     <nz-form-label nzSpan="4">
         <span *ngIf="required" class="red">{{ '* '}}</span>
         {{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}
-        <i *ngIf="field?.description" nz-icon nzType="info-circle" nzTheme="outline" nz-tooltip="{{field?.description}}"></i>
+        <i *ngIf="field?.description" nz-icon nzType="info-circle" nzTheme="outline"
+            nz-tooltip="{{field?.description}}"></i>
     </nz-form-label>
 
     <!-- FORM VALUE -->
     <nz-form-control nzSpan="20">
         <ng-container *ngIf="field.type === 'string' && !field.enum">
-            <input nz-input name="{{field.name}}" [(ngModel)]="model[field.name]" (ngModelChange)="emitChange()">
+            <input nz-input name="{{field.name}}" [disabled]="disabled" [(ngModel)]="model[field.name]"
+                (ngModelChange)="emitChange()">
         </ng-container>
         <ng-container *ngIf="field.enum">
-            <nz-select [(ngModel)]="model[field.name]" (ngModelChange)="emitChange()">
+            <nz-select [disabled]="disabled" [(ngModel)]="model[field.name]" (ngModelChange)="emitChange()">
                 <nz-option *ngFor="let e of field.enum" [nzLabel]="e" [nzValue]="e"></nz-option>
             </nz-select>
         </ng-container>

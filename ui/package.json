@@ -9,7 +9,6 @@
   },
   "scripts": {
     "ng": "ng",
-    "gulp": "gulp",
     "start": "ng serve -c development",
     "test": "ng test --watch false --code-coverage",
     "e2e": "testcafe chromium:headless ./e2e/tests/* -S -s screenshots",
@@ -41,6 +40,7 @@
     "@ngx-translate/http-loader": "4.0.0",
     "@ngxs/devtools-plugin": "3.7.3",
     "@ngxs/logger-plugin": "3.7.3",
+    "@ngxs/storage-plugin": "3.7.3",
     "@ngxs/store": "3.7.3",
     "@sgu/auto-complete": "13.0.0-rc",
     "@swimlane/ngx-charts": "16.0.0",

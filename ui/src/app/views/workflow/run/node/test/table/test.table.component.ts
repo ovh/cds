@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Store } from '@ngxs/store';
 import { Failure, Skipped, TestCase, Tests } from 'app/model/pipeline.model';
-import { ThemeStore } from 'app/service/services.module';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
+import { PreferencesState } from 'app/store/preferences.state';
 import { cloneDeep } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { HookStatus } from 'app/model/workflow.hook.model';
-
 
 @Component({
     selector: 'app-workflow-test-table',
@@ -43,7 +42,10 @@ export class WorkflowRunTestTableComponent implements OnInit {
         return this._tests;
     }
 
-    constructor(private _theme: ThemeStore, private _cd: ChangeDetectorRef) {
+    constructor(
+        private _store: Store,
+        private _cd: ChangeDetectorRef
+    ) {
         this.codeMirrorConfig = {
             lineWrapping: false,
             lineNumbers: true,
@@ -119,7 +121,7 @@ export class WorkflowRunTestTableComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.themeSubscription = this._theme.get()
+        this.themeSubscription = this._store.select(PreferencesState.theme)
             .pipe(finalize(() => this._cd.markForCheck()))
             .subscribe(t => {
                 this.codeMirrorConfig.theme = t === 'night' ? 'darcula' : 'default';
