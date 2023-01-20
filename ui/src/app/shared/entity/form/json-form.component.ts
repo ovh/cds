@@ -4,8 +4,10 @@ import {
     Component,
     EventEmitter,
     Input,
+    OnChanges,
     OnInit,
-    Output
+    Output,
+    SimpleChanges
 } from "@angular/core";
 import { FlatSchema } from "../../../model/schema.model";
 import { FormItem } from "./form-item/json-form-field.component";
@@ -27,23 +29,11 @@ export class JSONFormSchemaTypeItem {
     styleUrls: ['./json-form.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class JSONFormComponent implements OnInit {
-
+export class JSONFormComponent implements OnInit, OnChanges {
     @Input() schema: FlatSchema;
     @Input() parentType: string;
-
-    _data: {};
-    @Input() set data(d: any) {
-        this._data = d;
-        try {
-            this.model = load(<string>this._data, <LoadOptions>{ onWarning: (e) => { } });
-        } catch (e) {
-            // TODO: mark form as invalid
-        }
-    }
-    get data() {
-        return this._data;
-    }
+    @Input() disabled: boolean;
+    @Input() data: any;
     @Output() dataChange = new EventEmitter();
 
     jsonFormSchema: JSONFormSchema;
@@ -93,10 +83,19 @@ export class JSONFormComponent implements OnInit {
         this._cd.markForCheck();
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        try {
+            this.model = load(<string>this.data, <LoadOptions>{ onWarning: (e) => { } });
+        } catch (e) {
+            // TODO: mark form as invalid
+        }
+        this._cd.markForCheck();
+    }
+
     mergeModelAndData(): void {
         this.omitEmpty(this.model);
-        this._data = dump(this.model, <DumpOptions>{ lineWidth: 120 });
-        this.dataChange.emit(this._data);
+        this.data = dump(this.model, <DumpOptions>{ lineWidth: 120 });
+        this.dataChange.emit(this.data);
     }
 
     omitEmpty(root: any): boolean {

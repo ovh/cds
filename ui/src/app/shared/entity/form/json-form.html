@@ -1,4 +1,5 @@
 <form *ngIf="jsonFormSchema && model" nz-form>
-    <app-json-form-field *ngFor="let f of jsonFormSchema.types[parentType].fields" [parentType]="parentType" [field]="f"
-        [jsonFormSchema]="jsonFormSchema" [(model)]="model" (modelChange)="mergeModelAndData()"></app-json-form-field>
+    <app-json-form-field *ngFor="let f of jsonFormSchema.types[parentType].fields" [parentType]="parentType"
+        [disabled]="disabled" [field]="f" [jsonFormSchema]="jsonFormSchema" [(model)]="model"
+        (modelChange)="mergeModelAndData()"></app-json-form-field>
 </form>

@@ -10,6 +10,7 @@ import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Store } from "@ngxs/store";
 import { PreferencesState } from "app/store/preferences.state";
 import * as actionPreferences from 'app/store/preferences.action';
+import { Subscription } from "rxjs";
 
 declare const monaco: any;
 
@@ -28,11 +29,13 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input() path: string;
     @Input() data: string;
     @Input() schema: Schema;
+    @Input() disabled: boolean;
 
     flatSchema: FlatSchema;
     editorOption: EditorOptions;
     panelSize: number;
     resizing: boolean;
+    resizingSubscription: Subscription;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -44,7 +47,14 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
             language: 'yaml',
             minimap: { enabled: false }
         };
+
         this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(EntityFormComponent.PANEL_KEY)) ?? 600;
+
+        this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
+            this.resizing = resizing;
+            this._cd.markForCheck();
+        });
+
         this._cd.markForCheck();
     }
 
@@ -60,14 +70,12 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     panelStartResize(): void {
-        this.resizing = true;
-        this._cd.markForCheck();
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
     panelEndResize(size: number): void {
-        this.resizing = false;
-        this._cd.markForCheck();
         this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: EntityFormComponent.PANEL_KEY, size: size }));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
         setTimeout(() => { window.dispatchEvent(new Event('resize')) });
     }
 }

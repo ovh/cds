@@ -1,6 +1,6 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from "@angular/core";
-import {FlatElementTypeCondition} from "../../../../model/schema.model";
-import {JSONFormSchema} from "../json-form.component";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
+import { FlatElementTypeCondition } from "../../../../model/schema.model";
+import { JSONFormSchema } from "../json-form.component";
 
 export class FormItem {
     name: string;
@@ -17,41 +17,24 @@ export class FormItem {
     styleUrls: ['./json-form-field.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class JSONFormFieldComponent {
-
-    _field: FormItem;
-    @Input() set field(data: FormItem) {
-        this._field = data;
-        this.initModel();
-    };
-
-    get field(): FormItem {
-        return this._field;
-    }
-
-    _jsonFormSchema: JSONFormSchema
-    @Input() set jsonFormSchema(data: JSONFormSchema) {
-        this._jsonFormSchema = data;
-        this.initModel();
-    }
-    get jsonFormSchema(): JSONFormSchema {
-        return this._jsonFormSchema;
-    }
-
-    _model: any;
-    @Input() set model(model: any) {
-        this._model = model;
-        this.initModel();
-    }
-    get model() {
-        return this._model;
-    }
-
+export class JSONFormFieldComponent implements OnChanges {
+    @Input() field: FormItem;
+    @Input() jsonFormSchema: JSONFormSchema;
+    @Input() model: any;
     @Input() parentType: string;
-
+    @Input() disabled: boolean;
     @Output() modelChange = new EventEmitter();
 
     required: boolean;
+
+    constructor(
+        private _cd: ChangeDetectorRef
+    ) { }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        this.initModel();
+        this._cd.markForCheck();
+    }
 
     emitChange(): void {
         let required = <string[]>this.jsonFormSchema.types[this.parentType].required;
@@ -73,12 +56,12 @@ export class JSONFormFieldComponent {
         if (this.field.type !== 'object') {
             // check required
             let required = <string[]>this.jsonFormSchema.types[this.parentType].required;
-            let index = required.indexOf(this._field.name);
+            let index = required.indexOf(this.field.name);
             this.required = index !== -1;
             return;
         }
-        if (this.jsonFormSchema && this.field.objectType && !this._model[this.field.name]) {
-            this._model[this.field.name] = {}
+        if (this.jsonFormSchema && this.field.objectType && !this.model[this.field.name]) {
+            this.model[this.field.name] = {}
         }
     }
 }

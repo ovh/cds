@@ -1,47 +1,31 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from "@angular/core";
-import {JSONFormSchema} from "../json-form.component";
-import {FormItem} from "../form-item/json-form-field.component";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
+import { JSONFormSchema } from "../json-form.component";
+import { FormItem } from "../form-item/json-form-field.component";
 
 @Component({
     selector: 'app-json-form-field-conditional',
     templateUrl: './json-form-field-conditional.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class JSONFormFieldConditionalComponent {
-
-    _field: FormItem;
-    @Input() set field(data: FormItem) {
-        this._field = data;
-        if (data && this.model) {
-            this.initCondition();
-        }
-    };
-    get field(): FormItem {
-        return this._field;
-    }
-
-    _jsonFormSchema: JSONFormSchema
-    @Input() set jsonFormSchema(data: JSONFormSchema) {
-        this._jsonFormSchema = data;
-    }
-    get jsonFormSchema(): JSONFormSchema {
-        return this._jsonFormSchema;
-    }
-
-    _model: any;
-    @Input() set model(model: any) {
-        this._model = model;
-        if (this.field && model) {
-            this.initCondition();
-        }
-    }
-    get model() {
-        return this._model;
-    }
+export class JSONFormFieldConditionalComponent implements OnChanges {
+    @Input() disabled: boolean;
+    @Input() field: FormItem;
+    @Input() jsonFormSchema: JSONFormSchema;
+    @Input() model: any;
+    @Output() modelChange = new EventEmitter();
 
     currentType: string;
 
-    @Output() modelChange = new EventEmitter();
+    constructor(
+        private _cd: ChangeDetectorRef
+    ) { }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (this.field && this.model) {
+            this.initCondition();
+        }
+        this._cd.markForCheck();
+    }
 
     emitChange(): void {
         if (!this.model[this.field.name]) {
@@ -51,23 +35,23 @@ export class JSONFormFieldConditionalComponent {
     }
 
     initCondition(): void {
-        if (this._field.condition) {
-            for (let i=0; i<this._field.condition.length; i++) {
-                let c = this._field.condition[i];
-                if (this._model[c.refProperty] === c.conditionValue) {
+        if (this.field.condition) {
+            for (let i = 0; i < this.field.condition.length; i++) {
+                let c = this.field.condition[i];
+                if (this.model[c.refProperty] === c.conditionValue) {
                     if (this.currentType && this.currentType !== c.type) {
-                        this._model[this.field.name] = Object.assign({}, this._jsonFormSchema.types[c.type].model);
+                        this.model[this.field.name] = Object.assign({}, this.jsonFormSchema.types[c.type].model);
                     }
                     this.currentType = c.type;
                 }
             }
         }
-        if (!this._model[this.field.name]) {
-            let newModel = Object.assign({}, this._jsonFormSchema.types[this.currentType].model);
-            this._jsonFormSchema.types[this.currentType].required.forEach(r => {
+        if (!this.model[this.field.name]) {
+            let newModel = Object.assign({}, this.jsonFormSchema.types[this.currentType].model);
+            this.jsonFormSchema.types[this.currentType].required.forEach(r => {
                 newModel[r] = '';
             })
-            this._model[this.field.name] = newModel;
+            this.model[this.field.name] = newModel;
         }
         this.emitChange();
     }

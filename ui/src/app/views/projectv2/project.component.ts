@@ -66,7 +66,12 @@ export class ProjectV2ShowComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
+    panelStartResize(): void {
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
+    }
+
     panelEndResize(size: number): void {
         this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: ProjectV2ShowComponent.PANEL_KEY, size: size }));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
     }
 }

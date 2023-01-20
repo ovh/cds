@@ -1,6 +1,6 @@
 <ng-container *ngIf="flatSchema && data">
-    <app-json-form [class.disableSelection]="resizing" parentType="V2WorkerModel" [schema]="flatSchema"
-        [(data)]="data"></app-json-form>
+    <app-json-form [class.disableSelection]="resizing" [disabled]="resizing" parentType="V2WorkerModel"
+        [schema]="flatSchema" [(data)]="data"></app-json-form>
     <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"
         (onGrabbingEnd)="panelEndResize($event)">
         <nz-tabset nzType="card" nzSize="small">

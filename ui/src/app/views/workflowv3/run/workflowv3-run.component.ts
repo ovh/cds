@@ -53,6 +53,7 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     cdnFilter: CDNStreamFilter;
+    resizingSubscription: Subscription;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -102,6 +103,11 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
             .subscribe(e => {
                 this.loadWorkflowRun();
             });
+
+        this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
+            this.resizing = resizing;
+            this._cd.markForCheck();
+        });
 
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3RunComponent.INFO_PANEL_KEY));
         this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3RunComponent.JOB_PANEL_KEY));
@@ -219,12 +225,11 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     }
 
     panelStartResize(): void {
-        this.resizing = true;
-        this._cd.markForCheck();
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
     panelEndResize(): void {
-        this.resizing = false;
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
         this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {
             this.graph.resize();

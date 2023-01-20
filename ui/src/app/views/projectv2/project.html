@@ -5,7 +5,7 @@
     <div class="body">
         <ng-container *ngIf="project">
             <app-resizable-panel growDirection="after" minSize="250" [initialSize]="panelSize"
-                (onGrabbingEnd)="panelEndResize($event)">
+                (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
                 <app-projectv2-sidebar class="sidebar" [project]="project"></app-projectv2-sidebar>
             </app-resizable-panel>
             <div class="content">

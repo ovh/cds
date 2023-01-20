@@ -3,7 +3,10 @@ import { Action, createSelector, Selector, State, StateContext } from '@ngxs/sto
 import * as actionPreferences from './preferences.action';
 
 export class PreferencesStateModel {
-    panel: { sizes: { [key: string]: number } };
+    panel: {
+        resizing: boolean;
+        sizes: { [key: string]: number };
+    };
     theme: string;
 }
 
@@ -11,6 +14,7 @@ export class PreferencesStateModel {
     name: 'preferences',
     defaults: {
         panel: {
+            resizing: false,
             sizes: {}
         },
         theme: 'light'
@@ -34,6 +38,23 @@ export class PreferencesState {
         return state.theme;
     }
 
+    @Selector()
+    static resizing(state: PreferencesStateModel) {
+        return state.panel.resizing;
+    }
+
+    @Action(actionPreferences.SetPanelResize)
+    setPanelResize(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SetPanelResize) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            panel: {
+                ...state.panel,
+                resizing: action.payload.resizing
+            }
+        });
+    }
+
     @Action(actionPreferences.SavePanelSize)
     savePanelSive(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SavePanelSize) {
         const state = ctx.getState();
@@ -41,7 +62,10 @@ export class PreferencesState {
         sizes[action.payload.panelKey] = action.payload.size;
         ctx.setState({
             ...state,
-            panel: { sizes }
+            panel: {
+                ...state.panel,
+                sizes
+            }
         });
     }
 
