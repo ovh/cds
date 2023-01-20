@@ -62,6 +62,14 @@ type EventProjectKeyDelete struct {
 	Key ProjectKey `json:"key"`
 }
 
+type EventProjectKeyDisable struct {
+	Key ProjectKey `json:"key"`
+}
+
+type EventProjectKeyEnable struct {
+	Key ProjectKey `json:"key"`
+}
+
 // EventProjectVCSServerAdd represents the event when adding a project vcs server
 type EventProjectVCSServerAdd struct {
 	VCSServerName string `json:"vcs_server"`

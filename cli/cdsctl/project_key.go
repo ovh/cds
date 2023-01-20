@@ -20,6 +20,7 @@ func projectKey() *cobra.Command {
 		cli.NewCommand(projectKeyCreateCmd, projectCreateKeyRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectDisableKeyCmd, projectDisableKeyRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -78,4 +79,34 @@ var projectKeyDeleteCmd = cli.Command{
 
 func projectDeleteKeyRun(v cli.Values) error {
 	return client.ProjectKeysDelete(v.GetString(_ProjectKey), v.GetString("key-name"))
+}
+
+var projectDisableKeyCmd = cli.Command{
+	Name:  "disable",
+	Short: "Disable CDS project key",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "key-name"},
+	},
+}
+
+func projectDisableKeyRun(v cli.Values) error {
+	return client.ProjectKeysDisable(v.GetString(_ProjectKey), v.GetString("key-name"))
+}
+
+var projectEnableKeyCmd = cli.Command{
+	Name:  "enable",
+	Short: "Enable CDS project key",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "key-name"},
+	},
+}
+
+func projectEnableKeyRun(v cli.Values) error {
+	return client.ProjectKeysEnable(v.GetString(_ProjectKey), v.GetString("key-name"))
 }
