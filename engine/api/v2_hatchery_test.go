@@ -137,8 +137,8 @@ hatcheries:
 `, sdk.HatcheryRoleSpawn, hatcheryGet.Name, reg.Name)
 	var rbac1 sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(r1), &rbac1))
-	rbac1.Hatcheries[0].HatcheryID = hatcheryGet.ID
-	rbac1.Hatcheries[0].RegionID = reg.ID
+	rLoader := NewRBACLoader(db)
+	rLoader.FillRBACWithIDs(context.TODO(), &rbac1)
 
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rbac1))
 
@@ -162,7 +162,7 @@ hatcheries:
 	require.NoError(t, json.Unmarshal(wList.Body.Bytes(), &hs))
 	require.Len(t, hs, 0)
 
-	// Check rbac update and deletion
+	// Check rbac deletion
 	_, err := rbac.LoadRBACByName(context.TODO(), db, rbac1.Name, rbac.LoadOptions.All)
 	require.Error(t, err)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))

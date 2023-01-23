@@ -108,11 +108,44 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 
+			rbacRegions, err := rbac.LoadRBACByRegionID(ctx, api.mustDB(), reg.ID)
+			if err != nil {
+				return err
+			}
+
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
 			}
 			defer tx.Rollback() // nolint
+
+			for _, rbacPerm := range rbacRegions {
+				rbacPermRegions := make([]sdk.RBACRegion, 0)
+				for _, r := range rbacPerm.Regions {
+					if r.RegionID != reg.ID {
+						rbacPermRegions = append(rbacPermRegions, r)
+					}
+				}
+				rbacPerm.Regions = rbacPermRegions
+
+				rbacPermHatcheries := make([]sdk.RBACHatchery, 0)
+				for _, h := range rbacPerm.Hatcheries {
+					if h.RegionID != reg.ID {
+						rbacPermHatcheries = append(rbacPermHatcheries, h)
+					}
+				}
+				rbacPerm.Hatcheries = rbacPermHatcheries
+
+				if rbacPerm.IsEmpty() {
+					if err := rbac.Delete(ctx, tx, rbacPerm); err != nil {
+						return err
+					}
+				} else {
+					if err := rbac.Update(ctx, tx, &rbacPerm); err != nil {
+						return err
+					}
+				}
+			}
 
 			if err := region.Delete(tx, reg.ID); err != nil {
 				return err

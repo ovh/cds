@@ -54,3 +54,17 @@ func LoadRBACByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID s
 	return LoadRBACByIDs(ctx, db, rbacIDs, LoadOptions.All)
 
 }
+
+func loadRBacIDsByHatcheryRegionID(ctx context.Context, db gorp.SqlExecutor, regionID string) ([]string, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM rbac_hatchery WHERE region_id = $1`).Args(regionID)
+	rbHatcheries, err := getAllRBACHatchery(ctx, db, query)
+	if err != nil {
+		return nil, err
+	}
+	rbacIDs := make(sdk.StringSlice, 0)
+	for _, rh := range rbHatcheries {
+		rbacIDs = append(rbacIDs, rh.RbacID)
+	}
+	rbacIDs.Unique()
+	return rbacIDs, nil
+}
