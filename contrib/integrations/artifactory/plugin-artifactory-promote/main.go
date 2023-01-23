@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
+
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
-	"github.com/jfrog/jfrog-client-go/utils/log"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
@@ -56,6 +56,9 @@ func (e *artifactoryPromotePlugin) Manifest(_ context.Context, _ *empty.Empty) (
 }
 
 func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+	log.Factory = log.NewStdWrapper(log.StdWrapperOptions{DisableTimestamp: true, Level: log.LevelInfo})
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine, log.FieldStackTrace)
+
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
 
@@ -79,8 +82,6 @@ func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplu
 	if err != nil {
 		return fail("unable to list run results: %v", err)
 	}
-
-	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
