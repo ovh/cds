@@ -1,12 +1,9 @@
 package artifact_manager
 
 import (
-	"os"
-
 	buildinfo "github.com/jfrog/build-info-go/entities"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
-	"github.com/jfrog/jfrog-client-go/utils/log"
 	arti "github.com/ovh/cds/sdk/artifact_manager/artifactory"
 
 	"github.com/ovh/cds/sdk"
@@ -38,7 +35,6 @@ func NewClient(managerType, url, token string) (ArtifactManager, error) {
 }
 
 func newClient(managerType, url, token string) (ArtifactManager, error) {
-	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 	switch managerType {
 	case "artifactory":
 		asm, err := sdk.NewArtifactoryClient(url, token)
