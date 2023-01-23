@@ -10,7 +10,7 @@
     <tbody *ngFor="let k of keylist.data">
     <tr>
         <td>
-            {{ k.name }}
+            {{ k.name }} <span *ngIf="k.disabled" class="disabledKey">(disabled)</span>
         </td>
         <td>
             {{ k.type }}
@@ -22,7 +22,6 @@
             <ng-container *ngIf="k.type === 'pgp'">
                 <textarea nz-input [ngModel]="k.public" readonly rows="29"></textarea>
             </ng-container>
-
         </td>
         <td *ngIf="edit">
             <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this key ?"

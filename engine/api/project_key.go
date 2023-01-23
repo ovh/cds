@@ -126,6 +126,10 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 
 func (api *API) postDisableKeyInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isAdmin(ctx) {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		keyName := vars["name"]
@@ -146,7 +150,7 @@ func (api *API) postDisableKeyInProjectHandler() service.Handler {
 			if k.Name == keyName {
 				updateKey = k
 				updateKey.Disabled = true
-				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
+				if err := project.DisableProjectKey(tx, p.ID, keyName); err != nil {
 					return err
 				}
 				break
@@ -165,6 +169,10 @@ func (api *API) postDisableKeyInProjectHandler() service.Handler {
 
 func (api *API) postEnableKeyInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isAdmin(ctx) {
+			return sdk.ErrForbidden
+		}
+
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 		keyName := vars["name"]

@@ -21,6 +21,7 @@ func projectKey() *cobra.Command {
 		cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectDisableKeyCmd, projectDisableKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectEnableKeyCmd, projectEnableKeyRun, nil, withAllCommandModifiers()...),
 	})
 }
 

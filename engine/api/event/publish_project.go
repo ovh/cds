@@ -128,7 +128,7 @@ func PublishAddProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey,
 
 func PublishDisableProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
 	k.Private = sdk.PasswordPlaceholder
-	e := sdk.EventProjectKeyDelete{
+	e := sdk.EventProjectKeyDisable{
 		Key: k,
 	}
 	PublishProjectEvent(ctx, e, p.Key, u)
@@ -136,7 +136,7 @@ func PublishDisableProjectKey(ctx context.Context, p *sdk.Project, k sdk.Project
 
 func PublishEnableProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
 	k.Private = sdk.PasswordPlaceholder
-	e := sdk.EventProjectKeyDelete{
+	e := sdk.EventProjectKeyEnable{
 		Key: k,
 	}
 	PublishProjectEvent(ctx, e, p.Key, u)
