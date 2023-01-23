@@ -78,6 +78,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys add ITCLIAPPPRJ mykeytest ssh
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys disable ITCLIAPPPRJ mykeytest
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ | jq -c '.[] | select( .name | contains("mykeytest"))'
     assertions:
       - result.code ShouldEqual 0
