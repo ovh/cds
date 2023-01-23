@@ -267,7 +267,7 @@ func (rl *RBACLoader) fillRBACRegionWithNames(ctx context.Context, rbacRegion *s
 	rbacRegion.RBACGroupsName = make([]string, 0, len(rbacRegion.RBACGroupsIDs))
 	for _, groupID := range rbacRegion.RBACGroupsIDs {
 		groupName := rl.groupCache[groupID]
-		if groupID == 0 {
+		if groupName == "" {
 			groupDB, err := group.LoadByID(ctx, rl.db, groupID)
 			if err != nil {
 				return err

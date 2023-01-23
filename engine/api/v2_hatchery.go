@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	hatch_auth "github.com/ovh/cds/engine/api/authentication/hatchery"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -150,7 +151,12 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			vars := mux.Vars(req)
 			hatcheryIdentifier := vars["hatcheryIdentifier"]
 
-			reg, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
+			hatch, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			hatcheryPermissions, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatch.ID)
 			if err != nil {
 				return err
 			}
@@ -161,7 +167,28 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			}
 			defer tx.Rollback() // nolint
 
-			if err := hatchery.Delete(tx, reg.ID); err != nil {
+			// Remove all permissions on this hatchery
+			for _, rbacPerm := range hatcheryPermissions {
+				rbacHatcheries := make([]sdk.RBACHatchery, 0)
+				for _, h := range rbacPerm.Hatcheries {
+					if h.HatcheryID != hatch.ID {
+						rbacHatcheries = append(rbacHatcheries, h)
+					}
+				}
+				rbacPerm.Hatcheries = rbacHatcheries
+
+				if rbacPerm.IsEmpty() {
+					if err := rbac.Delete(ctx, tx, rbacPerm); err != nil {
+						return err
+					}
+				} else {
+					if err := rbac.Update(ctx, tx, &rbacPerm); err != nil {
+						return err
+					}
+				}
+			}
+
+			if err := hatchery.Delete(tx, hatch.ID); err != nil {
 				return err
 			}
 			return sdk.WithStack(tx.Commit())

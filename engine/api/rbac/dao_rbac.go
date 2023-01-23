@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -20,6 +21,11 @@ func LoadRBACByName(ctx context.Context, db gorp.SqlExecutor, name string, opts 
 func LoadRBACByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.RBAC, error) {
 	query := `SELECT * FROM rbac WHERE id = $1`
 	return get(ctx, db, gorpmapping.NewQuery(query).Args(id), opts...)
+}
+
+func LoadRBACByIDs(ctx context.Context, db gorp.SqlExecutor, IDs sdk.StringSlice, opts ...LoadOptionFunc) ([]sdk.RBAC, error) {
+	query := `SELECT * FROM rbac WHERE id = ANY ($1)`
+	return getAll(ctx, db, gorpmapping.NewQuery(query).Args(pq.StringArray(IDs)), opts...)
 }
 
 // Insert a RBAC permission in database
@@ -92,6 +98,32 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, rb sdk.RBAC) err
 		return err
 	}
 	return nil
+}
+
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.RBAC, error) {
+	var rs []sdk.RBAC
+	var rbacsDB []rbac
+	if err := gorpmapping.GetAll(ctx, db, q, &rbacsDB); err != nil {
+		return nil, err
+	}
+
+	for _, rbac := range rbacsDB {
+		isValid, err := gorpmapping.CheckSignature(rbac, rbac.Signature)
+		if err != nil {
+			return nil, sdk.WrapError(err, "error when checking signature for rbac %s", rbac.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac.get> rbac %s (%s) data corrupted", rbac.Name, rbac.ID)
+			return nil, sdk.WithStack(sdk.ErrNotFound)
+		}
+		for _, f := range opts {
+			if err := f(ctx, db, &rbac); err != nil {
+				return nil, err
+			}
+		}
+		rs = append(rs, rbac.RBAC)
+	}
+	return rs, nil
 }
 
 func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.RBAC, error) {

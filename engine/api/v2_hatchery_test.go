@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/engine/api/region"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -67,6 +68,7 @@ func Test_crudHatchery(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	db.Exec("DELETE FROM hatchery")
+	db.Exec("DELETE FROM rbac")
 
 	u, pass := assets.InsertLambdaUser(t, db)
 
@@ -123,6 +125,23 @@ global:
 	require.NoError(t, json.Unmarshal(wSignin.Body.Bytes(), &authSigninResponse))
 	require.NotEmpty(t, authSigninResponse.Token)
 
+	reg := sdk.Region{Name: sdk.RandomString(10)}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	// Add RBAC
+	r1 := fmt.Sprintf(`name: perm-hatchery-only
+hatcheries:
+  - role: %s
+    hatchery: %s
+    region: %s
+`, sdk.HatcheryRoleSpawn, hatcheryGet.Name, reg.Name)
+	var rbac1 sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(r1), &rbac1))
+	rbac1.Hatcheries[0].HatcheryID = hatcheryGet.ID
+	rbac1.Hatcheries[0].RegionID = reg.ID
+
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rbac1))
+
 	// Then Delete hatchery
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteHatcheryHandler, map[string]string{"hatcheryIdentifier": h.Name})
 	test.NotEmpty(t, uriDelete)
@@ -142,4 +161,9 @@ global:
 	var hs []sdk.Hatchery
 	require.NoError(t, json.Unmarshal(wList.Body.Bytes(), &hs))
 	require.Len(t, hs, 0)
+
+	// Check rbac update and deletion
+	_, err := rbac.LoadRBACByName(context.TODO(), db, rbac1.Name, rbac.LoadOptions.All)
+	require.Error(t, err)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 }
