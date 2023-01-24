@@ -77,18 +77,18 @@ testcases:
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys add ITCLIAPPPRJ mykeytest ssh
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys disable ITCLIAPPPRJ mykeytest
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys disable ITCLIAPPPRJ proj-mykeytest
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ | jq -c '.[] | select( .name | contains("mykeytest"))'
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ | jq -c '.[] | select( .name | contains("proj-mykeytest"))'
     assertions:
       - result.code ShouldEqual 0
       - result.systemoutjson.disable ShouldEqual "true"
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys enable ITCLIAPPPRJ mykeytest
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ | jq -c '.[] | select( .name | contains("mykeytest"))'
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys enable ITCLIAPPPRJ proj-mykeytest
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIAPPPRJ | jq -c '.[] | select( .name | contains("proj-mykeytest"))'
     assertions:
       - result.code ShouldEqual 0
       - result.systemoutjson.disable ShouldEqual "false"
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys delete ITCLIAPPPRJ mykeytest
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys delete ITCLIAPPPRJ proj-mykeytest
 
 - name: clean
   steps:
