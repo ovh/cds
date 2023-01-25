@@ -1196,6 +1196,10 @@ func saveWorkflowRunSecrets(ctx context.Context, db *gorp.DbMap, projID int64, w
 	}
 
 	for _, k := range p.Keys {
+		log.Debug(ctx, "checking %q (disabled:%v)", k.Name, k.Disabled)
+		if k.Disabled {
+			continue // skip disabled keys, so they are not usable in workers
+		}
 		wrSecret := sdk.WorkflowRunSecret{
 			WorkflowRunID: wr.ID,
 			Context:       workflow.SecretProjContext,

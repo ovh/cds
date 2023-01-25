@@ -123,3 +123,89 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}
 }
+
+func (api *API) postDisableKeyInProjectHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isAdmin(ctx) {
+			return sdk.ErrForbidden
+		}
+
+		vars := mux.Vars(r)
+		key := vars[permProjectKey]
+		keyName := vars["name"]
+
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithKeys)
+		if err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
+		}
+		defer tx.Rollback() // nolint
+
+		var updateKey sdk.ProjectKey
+		for _, k := range p.Keys {
+			if k.Name == keyName {
+				updateKey = k
+				updateKey.Disabled = true
+				if err := project.DisableProjectKey(tx, p.ID, keyName); err != nil {
+					return err
+				}
+				break
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+
+		event.PublishDisableProjectKey(ctx, p, updateKey, getUserConsumer(ctx))
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
+func (api *API) postEnableKeyInProjectHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !isAdmin(ctx) {
+			return sdk.ErrForbidden
+		}
+
+		vars := mux.Vars(r)
+		key := vars[permProjectKey]
+		keyName := vars["name"]
+
+		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithKeys)
+		if err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
+		}
+		defer tx.Rollback() // nolint
+
+		var updateKey sdk.ProjectKey
+		for _, k := range p.Keys {
+			if k.Name == keyName {
+				updateKey = k
+				updateKey.Disabled = false
+				if err := project.EnableProjectKey(tx, p.ID, keyName); err != nil {
+					return err
+				}
+				break
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		event.PublishEnableProjectKey(ctx, p, updateKey, getUserConsumer(ctx))
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}

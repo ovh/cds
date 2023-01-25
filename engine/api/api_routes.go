@@ -175,6 +175,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/notifications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getProjectNotificationsHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/keys", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys/{name}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteKeyInProjectHandler))
+	r.Handle("/project/{permProjectKey}/keys/{name}/disable", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postDisableKeyInProjectHandler))
+	r.Handle("/project/{permProjectKey}/keys/{name}/enable", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postEnableKeyInProjectHandler))
 
 	// Import Application
 	r.Handle("/project/{permProjectKey}/import/application", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postApplicationImportHandler))

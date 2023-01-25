@@ -108,6 +108,18 @@ func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) erro
 	return sdk.WrapError(err, "Cannot delete key %s", keyName)
 }
 
+// DisableProjectKey Disable the given key from the given project
+func DisableProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) error {
+	_, err := db.Exec("UPDATE project_key SET disabled = true WHERE project_id = $1 AND name = $2", projectID, keyName)
+	return sdk.WrapError(err, "unable to disable key %s", keyName)
+}
+
+// EnableProjectKey Enable the given key from the given project
+func EnableProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) error {
+	_, err := db.Exec("UPDATE project_key SET disabled = false WHERE project_id = $1 AND name = $2", projectID, keyName)
+	return sdk.WrapError(err, "unable to enable key %s", keyName)
+}
+
 func loadBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID int64) (*sdk.ProjectKey, error) {
 	query := gorpmapping.NewQuery(`
 	SELECT *
