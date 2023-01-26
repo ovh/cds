@@ -312,6 +312,8 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	if analysisError != "" {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 		analysis.Data.Error = analysisError
+	} else {
+		analysis.Data.CommitCheck = true
 	}
 
 	var filesContent map[string][]byte
@@ -456,7 +458,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 		cdsUser, err := user.LoadByID(ctx, db, gpgKey.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, "", "", sdk.NewErrorFrom(err, "unable to load user %s", gpgKey.AuthentifiedUserID)
+				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to load user %s", gpgKey.AuthentifiedUserID))
 			}
 			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("user %s not found for gpg key %s", gpgKey.AuthentifiedUserID, gpgKey.KeyID), nil
 		}
@@ -476,10 +478,6 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 		return nil, "", "", sdk.WithStack(err)
 	}
 
-	if err := tx.Commit(); err != nil {
-		return nil, "", "", sdk.WithStack(err)
-	}
-
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
 		commit, err := client.Commit(ctx, repoName, analysis.Commit)
@@ -489,7 +487,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 		commitUser, err := user.LoadByUsername(ctx, tx, commit.Committer.Slug)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, "", "", err
+				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", commit.Committer.Slug))
 			}
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
 		}
@@ -497,7 +495,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 	case sdk.VCSTypeGithub:
 		pr, err := client.SearchPullRequest(ctx, repoName, analysis.Commit, "closed")
 		if err != nil {
-			return nil, "", "", err
+			return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to retrieve pull request with commit %s", analysis.Commit))
 		}
 		// FIXME:  need to map vcs user <-> cds user
 		commitUser, err := user.LoadByUsername(ctx, tx, pr.MergeBy.Slug)
