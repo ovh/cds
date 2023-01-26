@@ -2,7 +2,7 @@ package gitea
 
 import (
 	"context"
-	
+
 	gg "code.gitea.io/sdk/gitea"
 
 	"github.com/ovh/cds/sdk"
@@ -41,22 +41,24 @@ func (g *giteaClient) toVCSCommit(commit *gg.Commit) sdk.VCSCommit {
 		URL:       commit.URL,
 		Timestamp: commit.Created.Unix() * 1000,
 	}
-	if commit.Committer != nil {
+	if commit.Author != nil {
 		vcsCommit.Author = sdk.VCSAuthor{
+			Name:        commit.Author.UserName,
+			Avatar:      commit.Author.AvatarURL,
+			Email:       commit.Author.Email,
+			DisplayName: commit.Author.UserName,
+			Slug:        commit.Author.UserName,
+		}
+	}
+	if commit.Committer != nil {
+		vcsCommit.Committer = sdk.VCSAuthor{
 			Name:        commit.Committer.UserName,
 			Avatar:      commit.Committer.AvatarURL,
 			Email:       commit.Committer.Email,
 			DisplayName: commit.Committer.UserName,
 		}
-	} else {
-		if commit.RepoCommit.Committer != nil {
-			vcsCommit.Author = sdk.VCSAuthor{
-				Name:        commit.RepoCommit.Committer.Name,
-				Email:       commit.RepoCommit.Committer.Email,
-				DisplayName: commit.RepoCommit.Committer.Name,
-			}
-		}
 	}
+
 	if commit.RepoCommit.Verification != nil && commit.RepoCommit.Verification.Signature != "" {
 		vcsCommit.Signature = commit.RepoCommit.Verification.Signature
 		vcsCommit.Verified = commit.RepoCommit.Verification.Verified

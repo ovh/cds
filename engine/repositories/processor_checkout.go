@@ -11,6 +11,8 @@ import (
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
+var vcsPublicKeys map[string][]sdk.Key
+
 func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error {
 	gitRepo, _, currentBranch, err := s.processGitClone(ctx, op)
 	if err != nil {
@@ -82,16 +84,31 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		ctx = context.WithValue(ctx, cdslog.GpgKey, c.GPGKeyID)
 		op.Setup.Checkout.Result.SignKeyID = c.GPGKeyID
 
-		// Retrieve gpg public key
-		key, err := s.Client.UserGpgKeyGet(ctx, c.GPGKeyID)
-		if err != nil {
-			op.Setup.Checkout.Result.CommitVerified = false
-			op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", c.GPGKeyID, err)
-			return nil
+		// Search for public key on vcsserver
+		var publicKey string
+		vcsKeys, has := vcsPublicKeys[op.VCSServer]
+		if has {
+			for _, k := range vcsKeys {
+				if k.KeyID == c.GPGKeyID {
+					publicKey = k.Public
+				}
+			}
+		}
+
+		// If not key found, try to get it from a user
+		if publicKey == "" {
+			// Retrieve gpg public key
+			userKey, err := s.Client.UserGpgKeyGet(ctx, c.GPGKeyID)
+			if err != nil {
+				op.Setup.Checkout.Result.CommitVerified = false
+				op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", c.GPGKeyID, err)
+				return nil
+			}
+			publicKey = userKey.PublicKey
 		}
 
 		// Import gpg public key
-		fileName, _, err := sdk.ImportGPGKey(os.TempDir(), c.GPGKeyID, key.PublicKey)
+		fileName, _, err := sdk.ImportGPGKey(os.TempDir(), c.GPGKeyID, publicKey)
 		if err != nil {
 			return err
 		}

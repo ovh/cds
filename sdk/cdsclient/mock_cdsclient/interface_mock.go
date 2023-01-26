@@ -6258,6 +6258,21 @@ func (mr *MockInterfaceMockRecorder) ConfigUser() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigUser", reflect.TypeOf((*MockInterface)(nil).ConfigUser))
 }
 
+// ConfigVCSGPGKeys mocks base method.
+func (m *MockInterface) ConfigVCSGPGKeys() (map[string][]sdk.Key, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfigVCSGPGKeys")
+	ret0, _ := ret[0].(map[string][]sdk.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfigVCSGPGKeys indicates an expected call of ConfigVCSGPGKeys.
+func (mr *MockInterfaceMockRecorder) ConfigVCSGPGKeys() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigVCSGPGKeys", reflect.TypeOf((*MockInterface)(nil).ConfigVCSGPGKeys))
+}
+
 // DeleteJSON mocks base method.
 func (m *MockInterface) DeleteJSON(ctx context.Context, path string, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	m.ctrl.T.Helper()

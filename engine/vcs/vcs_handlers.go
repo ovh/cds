@@ -1131,6 +1131,40 @@ func (s *Service) deleteHookHandler() service.Handler {
 	}
 }
 
+func (s *Service) SearchPullRequestHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		commit := QueryString(r, "commit")
+		state := QueryString(r, "state")
+		vcsAuth, err := getVCSAuth(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
+		}
+
+		consumer, err := s.getConsumer(name, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "VCS server unavailable %s", name)
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get authorized client %s", name)
+		}
+		// Check if access token has been refreshed
+		if vcsAuth.AccessToken != client.GetAccessToken(ctx) {
+			w.Header().Set(sdk.HeaderXAccessToken, client.GetAccessToken(ctx))
+		}
+
+		pr, err := client.SearchPullRequest(ctx, owner+"/"+repo, commit, state)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, pr, http.StatusOK)
+	}
+}
+
 func (s *Service) getListForks() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

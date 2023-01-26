@@ -77,6 +77,13 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 				Name:        sc.Author.Name,
 				Email:       sc.Author.Email,
 				DisplayName: sc.Author.DisplayName,
+				Slug:        sc.Author.Slug,
+			},
+			Committer: sdk.VCSAuthor{
+				Name:        sc.Committer.Name,
+				Email:       sc.Committer.Email,
+				DisplayName: sc.Committer.DisplayName,
+				Slug:        sc.Committer.Slug,
 			},
 			URL: urlCommit + sc.Hash,
 		}
@@ -111,6 +118,13 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 			Name:        sc.Author.Name,
 			Email:       sc.Author.Email,
 			DisplayName: sc.Author.DisplayName,
+			Slug:        sc.Author.Slug,
+		},
+		Committer: sdk.VCSAuthor{
+			Name:        sc.Committer.Name,
+			Email:       sc.Committer.Email,
+			DisplayName: sc.Committer.DisplayName,
+			Slug:        sc.Committer.Slug,
 		},
 		URL: urlCommit,
 	}
@@ -179,6 +193,13 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				Name:        sc.Author.Name,
 				Email:       sc.Author.Email,
 				DisplayName: sc.Author.DisplayName,
+				Slug:        sc.Author.Slug,
+			},
+			Committer: sdk.VCSAuthor{
+				Name:        sc.Committer.Name,
+				Email:       sc.Committer.Email,
+				DisplayName: sc.Committer.DisplayName,
+				Slug:        sc.Committer.Slug,
 			},
 			URL: urlCommit + sc.Hash,
 		}

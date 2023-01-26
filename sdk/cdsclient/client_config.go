@@ -21,3 +21,11 @@ func (c *client) ConfigCDN() (sdk.CDNConfig, error) {
 	}
 	return res, nil
 }
+
+func (c *client) ConfigVCSGPGKeys() (map[string][]sdk.Key, error) {
+	var res map[string][]sdk.Key
+	if _, err := c.GetJSON(context.Background(), "/v2/config/vcs/gpgkeys", &res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}

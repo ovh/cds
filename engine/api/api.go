@@ -226,6 +226,14 @@ type Configuration struct {
 		VCSManagementDisabled bool   `toml:"vcsManagementDisabled" comment:"Disable VCS management on project for CDS non admin users." json:"vcsManagementDisabled" default:"false" commented:"true"`
 	} `toml:"project" comment:"######################\n 'Project' global configuration \n######################" json:"project"`
 	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
+	VCS      struct {
+		GPGKeys map[string][]GPGKey
+	} `toml:"vcs"`
+}
+
+type GPGKey struct {
+	ID        string `toml:"id" comment:"gpg public key id"`
+	PublicKey string `toml:"publicKey" comment:"gpg public key"`
 }
 
 // DefaultValues is the struc for API Default configuration default values

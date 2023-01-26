@@ -40,7 +40,7 @@ type Configuration struct {
 }
 
 // Repo retiens a sdk.OperationRepo from an sdk.Operation
-func (s Service) Repo(op sdk.Operation) *sdk.OperationRepo {
+func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
 	r := new(sdk.OperationRepo)
 	r.URL = op.URL
 	r.Basedir = filepath.Join(s.Cfg.Basedir, r.ID())

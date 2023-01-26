@@ -439,6 +439,8 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/auth/consumer/hatchery/signin", ScopeNone(), r.POSTv2(api.postAuthHatcherySigninHandler, service.OverrideAuth(service.NoAuthMiddleware), MaintenanceAware()))
 
+	r.Handle("/v2/config/vcs/gpgkeys", ScopeNone(), r.GETv2(api.configVCSGPGKeysHandler))
+
 	r.Handle("/v2/hatchery", nil, r.GETv2(api.getHatcheriesHandler), r.POSTv2(api.postHatcheryHandler))
 	r.Handle("/v2/hatchery/heartbeat", nil, r.POSTv2(api.postHatcheryHeartbeatHandler))
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}", nil, r.GETv2(api.getHatcheryHandler), r.DELETEv2(api.deleteHatcheryHandler))
