@@ -21,7 +21,7 @@ export class ProjectV2ShowComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
     projSub: Subscription;
     project: Project;
-    panelSize: number;
+    panelSize: number | string;
 
     constructor(
         private _store: Store,
@@ -60,7 +60,7 @@ export class ProjectV2ShowComponent implements OnInit, OnDestroy {
             });
         });
 
-        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ShowComponent.PANEL_KEY));
+        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ShowComponent.PANEL_KEY)) ?? '15%';
         this._cd.markForCheck();
     }
 

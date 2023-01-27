@@ -4,7 +4,7 @@
     height: 100%;
     overflow: hidden;
 
-    .workerModel-container {
+    app-entity {
         flex: 1;
         width: 100%;
         overflow-y: hidden;
@@ -30,7 +30,11 @@
         }
     }
 
+    nz-alert {
+        margin: 20px;
+    }
+
     nz-spin {
-        margin-top: 50px;
+        margin: 50px;
     }
 }

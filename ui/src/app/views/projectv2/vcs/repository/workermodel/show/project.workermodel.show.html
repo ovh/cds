@@ -1,10 +1,5 @@
-<ng-container *ngIf="currentWorkerModelName && !loading">
-    <div class="workerModel-container">
-        <app-entity *ngIf="workerModel && !errorNotFound" [path]="workerModel.file_path" [data]="workerModel.data"
-            [schema]="jsonSchema"></app-entity>
-        <nz-alert *ngIf="errorNotFound" nzType="warning"
-            nzDescription="Worker model not found on branch {{currentBranch}}" nzShowIcon></nz-alert>
-    </div>
+<ng-container *ngIf="workerModel && !loading">
+    <app-entity [path]="workerModel.file_path" [data]="workerModel.data" [schema]="jsonSchema"></app-entity>
     <div class="footer">
         <div class="buttons">
             <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
@@ -13,4 +8,6 @@
         </div>
     </div>
 </ng-container>
+<nz-alert *ngIf="errorNotFound && !loading" nzType="warning"
+    nzDescription="Worker model not found on branch: '{{currentBranch}}'" nzShowIcon></nz-alert>
 <nz-spin *ngIf="loading" nzTip="Loading worker model"></nz-spin>

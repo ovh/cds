@@ -33,7 +33,7 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
 
     flatSchema: FlatSchema;
     editorOption: EditorOptions;
-    panelSize: number;
+    panelSize: number | string;
     resizing: boolean;
     resizingSubscription: Subscription;
 
@@ -48,7 +48,7 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
             minimap: { enabled: false }
         };
 
-        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(EntityFormComponent.PANEL_KEY)) ?? 600;
+        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(EntityFormComponent.PANEL_KEY)) ?? '50%';
 
         this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
             this.resizing = resizing;
