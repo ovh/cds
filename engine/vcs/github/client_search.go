@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
+	"net/url"
 	"strings"
 )
 
 func (g *githubClient) SearchPullRequest(ctx context.Context, repoFullName, commit, state string) (*sdk.VCSPullRequest, error) {
-	var nextPage = fmt.Sprintf("/search/issues?q=commit:%s", commit)
+	query := url.QueryEscape(fmt.Sprintf("commit:%s repo:%s", commit, repoFullName))
+	var nextPage = fmt.Sprintf("/search/issues?q=%s", query)
 	for nextPage != "" {
 		if ctx.Err() != nil {
 			break
 		}
-		opt := withoutETag
-		status, body, headers, err := g.get(ctx, nextPage, opt)
+		status, body, headers, err := g.get(ctx, nextPage)
 		if err != nil {
 			log.Warn(ctx, "githubClient.SearchPullRequest> Error %s", err)
 			return nil, err

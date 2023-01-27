@@ -500,7 +500,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 		// FIXME:  need to map vcs user <-> cds user
 		commitUser, err := user.LoadByUsername(ctx, tx, pr.MergeBy.Slug)
 		if err != nil {
-			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, "", "", err
 			}
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", pr.MergeBy.Slug), nil

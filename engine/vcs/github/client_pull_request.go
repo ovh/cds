@@ -290,6 +290,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 		Closed:  pullr.State == "closed",
 		Merged:  pullr.Merged,
 		Updated: pullr.UpdatedAt,
+		State:   pullr.State,
 	}
 
 	if pullr.MergedBy != nil {
