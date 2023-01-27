@@ -93,8 +93,8 @@ $(strip $(patsubst %.exe, %,$(shell echo $(1) | awk '{n=split($$1,a,"-");print a
 endef
 
 gobuild:
-	$(info Checking support for $(GOOS)/$(GOARCH))
-	@if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null 2>&1; then \
+	$(info [engine] Checking support for $(GOOS)/$(GOARCH))
+	@if go tool dist list | grep "^$$GOOS$$" | grep "^$$GOARCH$$" > /dev/null 2>&1; then \
 		GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(abspath $(OUTPUT)); \
 	fi
 

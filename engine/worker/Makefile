@@ -54,7 +54,8 @@ $(strip $(patsubst %.exe, %,$(shell echo $(1) | awk '{n=split($$1,a,"-");print a
 endef
 
 gobuild:
-	@if go tool dist list | grep "$$GOOS" | grep "$$GOARCH" > /dev/null; then \
+	$(info [worker] Building binary for $(GOOS)/$(GOARCH))
+	@if go tool dist list | grep "^$$GOOS$$" | grep "^$$GOARCH$$" > /dev/null; then \
 		GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(abspath $(OUTPUT)); \
 	fi
 

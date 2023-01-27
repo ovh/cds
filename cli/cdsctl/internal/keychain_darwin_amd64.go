@@ -1,3 +1,4 @@
+//go:build !nokeychain
 // +build !nokeychain
 
 package internal
@@ -12,7 +13,7 @@ import (
 
 var keychainEnabled = true
 
-//storeTokens store tokens into keychain
+// storeTokens store tokens into keychain
 func storeTokens(contextName string, tokens ContextTokens) error {
 	// delete existing value if present
 	item := keychain.NewItem()
@@ -40,7 +41,7 @@ func storeTokens(contextName string, tokens ContextTokens) error {
 	return nil
 }
 
-//getTokens rerieves a CDS Context from keychain
+// getTokens rerieves a CDS Context from keychain
 func (c CDSContext) getTokens(contextName string) (*ContextTokens, error) {
 	item := keychain.NewItem()
 	item.SetSecClass(keychain.SecClassGenericPassword)
