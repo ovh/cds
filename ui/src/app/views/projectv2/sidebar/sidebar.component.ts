@@ -128,7 +128,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
         this.loadWorkspace();
     }
 
-    async loadWorkspace(si?: SelectedItem) {
+    async loadWorkspace() {
         this.currentWorkspace = [];
         this.refreshWorkspace = true;
         this.loading = true;
@@ -150,10 +150,6 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
 
         this.loading = false;
         this.refreshWorkspace = false;
-        if (this.tree && si) {
-            setTimeout(() => { this.tree.selectNode(si); }, 500);
-        }
-
         this._cd.markForCheck();
     }
 
@@ -169,11 +165,12 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     clickable: true,
                     level: 1
                 };
-                let currentBranch = this._router?.routerState?.snapshot?.root?.queryParams['branch'];
                 nodeItem.loadChildren = () => {
+                    const currentBranch = this._router?.routerState?.snapshot?.root?.queryParams['branch'];
                     return this.loadEntities(this._currentProject.key, vcs, r.name, currentBranch);
                 };
                 nodeItem.onOpen = () => {
+                    const currentBranch = this._router?.routerState?.snapshot?.root?.queryParams['branch'];
                     return this._projectService.getVCSRepositoryBranches(key, vcs, r.name, 50).pipe(map(bs => {
                         nodeItem.select = <FlatNodeItemSelect>{ options: [] };
                         nodeItem.select.options = bs.map(b => {
@@ -213,7 +210,6 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     existingEntities.push(<FlatNodeItem>{ name: e.name, parentNames: [vcs, repo], id: e.id, type: e.type, expandable: false, clickable: true, level: 3, icon: 'file', iconTheme: 'outline' })
                     m.set(e.type, existingEntities);
                 });
-
                 Array.from(m.keys()).forEach(k => {
                     result.push(<FlatNodeItem>{
                         name: k, type: 'folder', expandable: true, clickable: false, level: 2, id: k, loading: false,
@@ -239,12 +235,16 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                 break;
             case 'repository':
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.name]).then();
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.name], {
+                        queryParamsHandling: 'preserve'
+                    }).then();
                 }
                 break;
             case EntityWorkerModel:
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], { queryParams: { branch: this._router?.routerState?.snapshot?.root?.queryParams['branch'] } }).then();
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], {
+                        queryParamsHandling: 'preserve'
+                    }).then();
                 }
         }
     }
