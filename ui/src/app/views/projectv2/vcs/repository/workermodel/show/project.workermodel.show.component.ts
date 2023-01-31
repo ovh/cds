@@ -8,8 +8,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
-import { Schema } from "jsonschema";
 import { finalize } from "rxjs/operators";
+import { Schema } from 'app/model/json-schema.model';
 
 @Component({
     selector: 'app-projectv2-workermodel-show',

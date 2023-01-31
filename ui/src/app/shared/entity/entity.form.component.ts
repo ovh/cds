@@ -4,13 +4,14 @@ import {
     editor,
 } from 'monaco-editor';
 import { FlatSchema, JSONSchema } from "../../model/schema.model";
-import { Schema } from "jsonschema";
 import { EditorOptions } from "ng-zorro-antd/code-editor/typings";
 import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Store } from "@ngxs/store";
 import { PreferencesState } from "app/store/preferences.state";
 import * as actionPreferences from 'app/store/preferences.action';
-import { Subscription } from "rxjs";
+import { Subscription } from 'rxjs';
+import Debounce from "../decorator/debounce";
+import { Schema } from "app/model/json-schema.model";
 
 declare const monaco: any;
 
@@ -32,6 +33,8 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input() disabled: boolean;
 
     flatSchema: FlatSchema;
+    dataForm: string;
+    dataEditor: string;
     editorOption: EditorOptions;
     panelSize: number;
     resizing: boolean;
@@ -60,6 +63,8 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnChanges(): void {
         this.flatSchema = JSONSchema.flat(this.schema);
+        this.dataForm = this.data;
+        this.dataEditor = this.data;
         this._cd.markForCheck();
     }
 
@@ -69,6 +74,17 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ schemas: [{ uri: '', schema: this.flatSchema }] });
     }
 
+    onEditorChange(data: string): void {
+        this.dataForm = data;
+        this._cd.markForCheck();
+    }
+
+    @Debounce(200)
+    onFormChange(data: string): void {
+        this.dataEditor = data;
+        this._cd.markForCheck();
+    }
+
     panelStartResize(): void {
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
@@ -76,6 +92,6 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     panelEndResize(size: number): void {
         this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: EntityFormComponent.PANEL_KEY, size: size }));
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
-        setTimeout(() => { window.dispatchEvent(new Event('resize')) });
+        this.editor.layout();
     }
 }

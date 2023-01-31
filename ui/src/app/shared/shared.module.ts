@@ -151,7 +151,6 @@ import { EntityFormComponent } from "./entity/entity.form.component";
 import { NzCodeEditorModule } from "ng-zorro-antd/code-editor";
 import { JSONFormComponent } from "./entity/form/json-form.component";
 import { JSONFormFieldComponent } from "./entity/form/form-item/json-form-field.component";
-import { JSONFormFieldConditionalComponent } from "./entity/form/form-item-conditional/json.form.item.conditional.component";
 import { APIConfigGuard } from 'app/guard/api-config.guard';
 import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
 import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
@@ -247,7 +246,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         ForMapPipe,
         JSONFormComponent,
         JSONFormFieldComponent,
-        JSONFormFieldConditionalComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
