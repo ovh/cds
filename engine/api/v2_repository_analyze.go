@@ -436,7 +436,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
 	publicKeyFound := false
-	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Name]
+	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Type]
 	if has {
 		for _, k := range publicKeys {
 			if analysis.Data.SignKeyID == k.ID {

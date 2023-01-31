@@ -3,10 +3,12 @@ package github
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk"
-	"github.com/rockbears/log"
 	"net/url"
 	"strings"
+
+	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/sdk"
 )
 
 func (g *githubClient) SearchPullRequest(ctx context.Context, repoFullName, commit, state string) (*sdk.VCSPullRequest, error) {
