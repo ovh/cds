@@ -227,7 +227,7 @@ type Configuration struct {
 	} `toml:"project" comment:"######################\n 'Project' global configuration \n######################" json:"project"`
 	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
 	VCS      struct {
-		GPGKeys map[string][]GPGKey
+		GPGKeys map[string][]GPGKey `toml:"gpgKeys" comment:"map of public gpg keys from vcs server" json:"gpgKeys"`
 	} `toml:"vcs"`
 }
 
