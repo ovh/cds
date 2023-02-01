@@ -228,12 +228,12 @@ type Configuration struct {
 	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
 	VCS      struct {
 		GPGKeys map[string][]GPGKey `toml:"gpgKeys" comment:"map of public gpg keys from vcs server" json:"gpgKeys"`
-	} `toml:"vcs"`
+	} `toml:"vcs" json:"vcs"`
 }
 
 type GPGKey struct {
-	ID        string `toml:"id" comment:"gpg public key id"`
-	PublicKey string `toml:"publicKey" comment:"gpg public key"`
+	ID        string `toml:"id" comment:"gpg public key id" json:"id"`
+	PublicKey string `toml:"publicKey" comment:"gpg public key" json:"publicKey"`
 }
 
 // DefaultValues is the struc for API Default configuration default values

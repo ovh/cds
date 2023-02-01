@@ -91,6 +91,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			for _, k := range vcsKeys {
 				if k.KeyID == c.GPGKeyID {
 					publicKey = k.Public
+					break
 				}
 			}
 		}
