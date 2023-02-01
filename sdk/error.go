@@ -244,7 +244,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrNoAttachedPipeline.ID:                            "pipeline not attached to the application",
 	ErrNoReposManager.ID:                                "repositories manager not found",
 	ErrNoReposManagerAuth.ID:                            "CDS authentication error, please contact CDS administrator",
-	ErrNoReposManagerClientAuth.ID:                      "Repository manager authentication error, please unlink and relink your CDS Project to the repository manager",
+	ErrNoReposManagerClientAuth.ID:                      "Repository manager error: please check your git repository permissions.",
 	ErrRepoNotFound.ID:                                  "repository not found",
 	ErrSecretStoreUnreachable.ID:                        "could not reach secret backend to fetch secret key",
 	ErrSecretKeyFetchFailed.ID:                          "error while fetching key from secret backend",
