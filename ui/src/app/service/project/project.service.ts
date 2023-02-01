@@ -2,11 +2,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
+import { Schema } from 'app/model/json-schema.model';
 import { Key } from 'app/model/keys.model';
 import { Entity, LoadOpts, Project, ProjectRepository, VCSProject } from 'app/model/project.model';
 import { Observable } from 'rxjs';
-import {RepositoryAnalysis} from "../../model/analysis.model";
-import {Branch} from "../../model/repositories.model";
+import { map } from 'rxjs/operators';
+import { RepositoryAnalysis } from "../../model/analysis.model";
+import { Branch } from "../../model/repositories.model";
 
 /**
  * Service to access Project from API.
@@ -15,8 +17,9 @@ import {Branch} from "../../model/repositories.model";
 @Injectable()
 export class ProjectService {
 
-    constructor(private _http: HttpClient) {
-    }
+    constructor(
+        private _http: HttpClient
+    ) { }
 
     /**
      * Get one specific project from API.
@@ -102,7 +105,7 @@ export class ProjectService {
         return this._http.get<Array<VCSProject>>(`/v2/project/${key}/vcs`);
     }
 
-    getVCSProject(key: string,  vcsName: string): Observable<VCSProject> {
+    getVCSProject(key: string, vcsName: string): Observable<VCSProject> {
         return this._http.get<VCSProject>(`/v2/project/${key}/vcs/${vcsName}`);
     }
 
@@ -155,7 +158,9 @@ export class ProjectService {
 
     }
 
-    getJSONSchema(type: string): Observable<Entity> {
-        return this._http.get<Entity>(`/v2/jsonschema/${type}`);
+    getJSONSchema(type: string): Observable<Schema> {
+        return this._http.get<Schema>(`/v2/jsonschema/${type}`).pipe(
+            map(s => Object.assign(new Schema(), s))
+        );
     }
 }

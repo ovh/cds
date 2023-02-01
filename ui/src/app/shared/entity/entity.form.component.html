@@ -1,12 +1,12 @@
 <ng-container *ngIf="flatSchema && data">
     <app-json-form [class.disableSelection]="resizing" [disabled]="resizing" parentType="V2WorkerModel"
-        [schema]="flatSchema" [(data)]="data"></app-json-form>
+        [schema]="flatSchema" [data]="dataForm" (dataChange)="onFormChange($event)"></app-json-form>
     <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"
         (onGrabbingEnd)="panelEndResize($event)">
         <nz-tabset nzType="card" nzSize="small">
             <nz-tab [nzTitle]="path"></nz-tab>
         </nz-tabset>
-        <nz-code-editor #editor [(ngModel)]="data" [nzEditorOption]="editorOption"
-            (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+        <nz-code-editor #editor [ngModel]="dataEditor" [nzEditorOption]="editorOption"
+            (ngModelChange)="onEditorChange($event)" (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
     </app-resizable-panel>
 </ng-container>

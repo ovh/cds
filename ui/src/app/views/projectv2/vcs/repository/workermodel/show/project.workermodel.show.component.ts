@@ -7,8 +7,8 @@ import { forkJoin } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
-import { Schema } from "jsonschema";
 import { finalize } from "rxjs/operators";
+import { Schema } from 'app/model/json-schema.model';
 
 @Component({
     selector: 'app-projectv2-workermodel-show',
