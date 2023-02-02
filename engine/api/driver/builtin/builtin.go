@@ -2,45 +2,52 @@ package builtin
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/driver/builtin"
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
-var _ sdk.AuthDriver = new(AuthDriver)
+var _ sdk.Driver = new(BuiltinDriver)
 
-// NewDriver returns a new initialized driver for builtin authentication.
-func NewDriver() sdk.AuthDriver {
-	return &AuthDriver{
-		driver: builtin.NewBuiltinDriver(),
+// NewBuiltinDriver returns a new initialized driver for builtin authentication.
+func NewBuiltinDriver() sdk.Driver {
+	return &BuiltinDriver{}
+}
+
+type BuiltinDriver struct{}
+
+func (d BuiltinDriver) GetUserInfoFromDriver(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+	var userInfo sdk.AuthDriverUserInfo
+
+	token, err := req.StringE("token")
+	if err != nil {
+		return userInfo, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
 	}
-}
 
-// AuthDriver for builtin authentication.
-type AuthDriver struct {
-	driver sdk.Driver
-}
-
-func (d AuthDriver) GetDriver() sdk.Driver {
-	return d.driver
-}
-
-func (d AuthDriver) GetManifest() sdk.AuthDriverManifest {
-	return sdk.AuthDriverManifest{
-		Type:           sdk.ConsumerBuiltin,
-		SignupDisabled: true,
+	consumerID, _, err := CheckSigninConsumerToken(token)
+	if err != nil {
+		return userInfo, err
 	}
+
+	log.Debug(ctx, "builtin.GetUserInfo> %s", consumerID)
+
+	return sdk.AuthDriverUserInfo{
+		ExternalID: consumerID,
+	}, nil
 }
 
-func (d AuthDriver) GetSessionDuration() time.Duration {
-	return time.Hour // 1 hour session
-}
+// CheckSigninRequest checks that given driver request is valid for a signin with auth builtin.
+func (d BuiltinDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
+	token, err := req.StringE("token")
+	if err != nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid authentication token")
+	}
 
-func (d AuthDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
-	return d.driver.GetUserInfoFromDriver(ctx, req)
+	_, _, err = CheckSigninConsumerToken(token)
+	return err
 }
 
 // NewConsumer returns a new builtin consumer for given data.
@@ -110,7 +117,7 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 		return nil, "", err
 	}
 
-	jws, err := builtin.NewSigninConsumerToken(&c)
+	jws, err := NewSigninConsumerToken(&c)
 	if err != nil {
 		return nil, "", err
 	}

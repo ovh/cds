@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	local2 "github.com/ovh/cds/engine/api/driver/local"
 	"net/http"
 	"time"
 
@@ -20,12 +21,12 @@ import (
 // postAuthLocalSignupHandler creates a new registration that need to be verified to create a new user.
 func (api *API) postAuthLocalSignupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
-		if !okDriver || driver.GetManifest().SignupDisabled {
+		authDriver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
+		if !okDriver || authDriver.GetManifest().SignupDisabled {
 			return sdk.WithStack(sdk.ErrSignupDisabled)
 		}
 
-		localDriver := driver.(*local.AuthDriver)
+		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
 
 		// Extract and validate signup request
 		var reqData sdk.AuthConsumerSigninRequest
@@ -187,17 +188,18 @@ func initBuiltinConsumersFromStartupConfig(ctx context.Context, tx gorpmapper.Sq
 // postAuthLocalSigninHandler returns a new session for an existing local consumer.
 func (api *API) postAuthLocalSigninHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
+		authDriver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
+		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
 
 		// Extract and validate signup request
 		var reqData sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
 			return err
 		}
-		if err := driver.CheckSigninRequest(reqData); err != nil {
+		if err := localDriver.CheckSigninRequest(reqData); err != nil {
 			return err
 		}
 
@@ -217,7 +219,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 			return sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 		}
 
-		userInfo, err := driver.GetUserInfo(ctx, reqData)
+		userInfo, err := authDriver.GetUserInfo(ctx, reqData)
 		if err != nil {
 			return err
 		}
@@ -245,7 +247,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, authDriver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -283,11 +285,11 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 
 func (api *API) postAuthLocalVerifyHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
+		authDriver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		localDriver := driver.(*local.AuthDriver)
+		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
 
 		var reqData sdk.AuthConsumerSigninRequest
 		var tokenInQueryString = QueryString(r, "token")
@@ -366,7 +368,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			}
 		}
 
-		userInfo, err := driver.GetUserInfo(ctx, reqData)
+		userInfo, err := authDriver.GetUserInfo(ctx, reqData)
 		if err != nil {
 			return err
 		}
@@ -395,7 +397,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, authDriver.GetSessionDuration())
 		if err != nil {
 			return err
 		}
@@ -433,12 +435,12 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 
 func (api *API) postAuthLocalAskResetHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
+		authDriver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := driver.(*local.AuthDriver)
+		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
 
 		var email string
 
@@ -511,12 +513,12 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 
 func (api *API) postAuthLocalResetHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		driver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
+		authDriver, okDriver := api.AuthenticationDrivers[sdk.ConsumerLocal]
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := driver.(*local.AuthDriver)
+		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
 
 		var reqData sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &reqData); err != nil {
@@ -572,7 +574,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, authDriver.GetSessionDuration())
 		if err != nil {
 			return err
 		}

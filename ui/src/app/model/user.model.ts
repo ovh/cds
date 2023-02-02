@@ -27,6 +27,11 @@ export class AuthentifiedUser {
     organization: string;
 }
 
+export class UserLink {
+    username: string;
+    type: string;
+}
+
 export class User {
     id: number;
     username: string;

@@ -13,6 +13,22 @@
     </nz-row>
     <div class="page-content">
         <app-scrollview class="scrollview" *ngIf="selectedItem" [ngSwitch]="selectedItem">
+            <ng-container *ngSwitchCase="'links'">
+                <nz-form-item *ngFor="let d of linkDriver">
+                    <nz-form-label [nzSpan]="2">Link {{d}}</nz-form-label>
+                    <nz-form-control>
+                        <ng-container *ngIf="userLinks.has(d)">
+                            <input name="link-{{d}}" nz-input [readOnly]="true" [ngModel]="userLinks.get(d).username">
+                        </ng-container>
+                        <ng-container *ngIf="!userLinks.has(d)">
+                            <button nz-button nzType="primary" (click)="linkUser(d)">
+                                <i nz-icon nzType="{{d}}" nzTheme="outline"></i>
+                                Link
+                            </button>
+                        </ng-container>
+                    </nz-form-control>
+                </nz-form-item>
+            </ng-container>
             <ng-container *ngSwitchCase="'profile'">
                 <div *ngIf="user;then showUser;else loadUser"></div>
                 <ng-template #showUser>
@@ -157,8 +173,6 @@
                                         {{d.type | titlecase}}
                                     </div>
                                 </ng-container>
-
-
                                 <div class="foot">
                                     <ng-container *ngIf="mConsumers[d.type]" [ngSwitch]="d.type">
                                         <ng-container *ngSwitchCase="'local'">
@@ -195,9 +209,6 @@
                                         </ng-container>
                                     </ng-container>
                                 </div>
-                                <!--span *ngIf="description">
-                                     <span [innerText]="description.slice(0, 90)"></span><span *ngIf="description.length > 90">...</span>
-                                </span-->
                             </div>
                         </nz-col>
                     </ng-container>

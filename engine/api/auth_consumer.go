@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	builtin2 "github.com/ovh/cds/engine/api/driver/builtin"
 	"net/http"
 	"time"
 
@@ -197,7 +198,7 @@ func (api *API) postConsumerRegenByUserHandler() service.Handler {
 			return err
 		}
 
-		jws, err := builtin.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
+		jws, err := builtin2.NewSigninConsumerToken(consumer) // Regen a new jws (signin token)
 		if err != nil {
 			return err
 		}

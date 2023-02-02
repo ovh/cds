@@ -53,12 +53,12 @@ func (api *API) getAuthAskSigninHandler() service.Handler {
 		if !consumerType.IsValid() {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
-		driver, ok := api.AuthenticationDrivers[consumerType]
+		authDriver, ok := api.AuthenticationDrivers[consumerType]
 		if !ok {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		driverRedirect, ok := driver.(sdk.AuthDriverWithRedirect)
+		driverRedirect, ok := authDriver.GetDriver().(sdk.DriverWithRedirect)
 		if !ok {
 			return nil
 		}
@@ -99,30 +99,31 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		if !consumerType.IsValid() {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
-		driver, ok := api.AuthenticationDrivers[consumerType]
+		authDriver, ok := api.AuthenticationDrivers[consumerType]
 		if !ok {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
+		signInDriver := authDriver.GetDriver().(sdk.DriverWithSignInRequest)
 
 		// Extract and validate signin request
 		var req sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return err
 		}
-		if err := driver.CheckSigninRequest(req); err != nil {
+		if err := signInDriver.CheckSigninRequest(req); err != nil {
 			return err
 		}
 
 		// Extract and validate signin state
-		switch x := driver.(type) {
-		case sdk.AuthDriverWithSigninStateToken:
+		switch x := authDriver.GetDriver().(type) {
+		case sdk.DriverWithSigninStateToken:
 			if err := x.CheckSigninStateToken(req); err != nil {
 				return err
 			}
 		}
 
 		// Convert code to external user info
-		userInfo, err := driver.GetUserInfo(ctx, req)
+		userInfo, err := authDriver.GetUserInfo(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -206,7 +207,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 					} else {
 						// We can't find any user with the same email address
 						// So we will do signup for a new user from the data got from the auth driver
-						if driver.GetManifest().SignupDisabled {
+						if authDriver.GetManifest().SignupDisabled {
 							return sdk.WithStack(sdk.ErrSignupDisabled)
 						}
 
@@ -273,7 +274,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		sessionDuration := driver.GetSessionDuration()
+		sessionDuration := authDriver.GetSessionDuration()
 		var session *sdk.AuthSession
 		if userInfo.MFA {
 			trackSudo(ctx, w)

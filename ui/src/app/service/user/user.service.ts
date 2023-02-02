@@ -1,9 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AuthConsumer, AuthConsumerCreateResponse, AuthSession } from 'app/model/authentication.model';
+import {
+    AuthConsumer,
+    AuthConsumerCreateResponse, AuthConsumerSigninResponse,
+    AuthDriverSigningRedirect,
+    AuthSession
+} from 'app/model/authentication.model';
 import { Bookmark } from 'app/model/bookmark.model';
 import { Group } from 'app/model/group.model';
-import { AuthentifiedUser, Schema, UserContact } from 'app/model/user.model';
+import {AuthentifiedUser, Schema, UserContact, UserLink} from 'app/model/user.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -19,6 +24,11 @@ export class UserService {
 
     get(username: string): Observable<AuthentifiedUser> {
         return this._http.get<AuthentifiedUser>(`/user/${username}`).pipe(map(u => Object.assign(new AuthentifiedUser(), u)));
+    }
+
+    getLinks(username: string): Observable<Array<UserLink>> {
+        return this._http.get<AuthentifiedUser>(`/user/${username}/link`).pipe(map(u => Object.assign([], u)));
+
     }
 
     update(username: string, user: AuthentifiedUser): Observable<AuthentifiedUser> {
@@ -78,5 +88,12 @@ export class UserService {
             p = p.append('filter', filter);
         }
         return this._http.get<Schema>('/user/schema', {params: p});
+    }
+
+    link(username: string, consumerType: string, code: string, state: string): Observable<any> {
+        return this._http.post(`/user/${username}/${consumerType}/link/callback`, {
+            code,
+            state
+        });
     }
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -436,7 +437,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
 	publicKeyFound := false
-	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Name]
+	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Type]
 	if has {
 		for _, k := range publicKeys {
 			if analysis.Data.SignKeyID == k.ID {
@@ -497,8 +498,15 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 		if err != nil {
 			return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to retrieve pull request with commit %s", analysis.Commit))
 		}
-		// FIXME:  need to map vcs user <-> cds user
-		commitUser, err := user.LoadByUsername(ctx, tx, pr.MergeBy.Slug)
+
+		userLink, err := link.LoadUserLinkByTypeAndUsername(ctx, tx, vcsProjectWithSecret.Type, pr.MergeBy.Slug)
+		if err != nil {
+			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return nil, "", "", err
+			}
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, pr.MergeBy.Slug), nil
+		}
+		commitUser, err := user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, "", "", err

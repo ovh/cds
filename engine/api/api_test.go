@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/organization"
 	"net/http/httptest"
 	"net/url"
@@ -43,6 +44,9 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 	api.AuthenticationDrivers[sdk.ConsumerBuiltin] = builtin.NewDriver()
 	api.AuthenticationDrivers[sdk.ConsumerTest] = authdrivertest.NewDriver(t)
 	api.AuthenticationDrivers[sdk.ConsumerTest2] = authdrivertest.NewDriver(t)
+
+	api.LinkDrivers = make(map[sdk.AuthConsumerType]link.LinkDriver)
+	api.LinkDrivers[sdk.ConsumerGithub] = authdrivertest.NewDriver(t)
 	api.GoRoutines = sdk.NewGoRoutines(context.TODO())
 
 	// Reset organization

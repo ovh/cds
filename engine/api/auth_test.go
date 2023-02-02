@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	corpsso2 "github.com/ovh/cds/engine/api/driver/corpsso"
 	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
@@ -319,7 +320,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	api.Config.Auth.AllowedOrganizations = []string{"planet-express"}
 
-	var cfg corpsso.Config
+	var cfg corpsso2.SSOConfig
 	cfg.Request.Keys.RequestSigningKey = AuthKey
 	cfg.Request.RedirectMethod = "POST"
 	cfg.Request.RedirectURL = "https://lolcat.local/sso/jwt"
@@ -356,7 +357,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 		requestedJWS = redirectInfo.Body["request"]
 		var data = sdk.AuthConsumerSigninRequest{}
 		data["state"] = requestedJWS
-		err := api.AuthenticationDrivers[sdk.ConsumerCorporateSSO].(sdk.AuthDriverWithSigninStateToken).CheckSigninStateToken(data)
+		err := api.AuthenticationDrivers[sdk.ConsumerCorporateSSO].GetDriver().(sdk.DriverWithSigninStateToken).CheckSigninStateToken(data)
 		require.NoError(t, err)
 	})
 
@@ -405,7 +406,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 }
 
 func generateToken(t *testing.T, username string) string {
-	ssoToken := corpsso.IssuedToken{
+	ssoToken := corpsso2.IssuedToken{
 		RemoteUser:     username,
 		RemoteUsername: strings.Title(username),
 		Email:          username + "@planet-express.futurama",

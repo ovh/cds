@@ -11,12 +11,13 @@ import (
 var _ sdk.AuthDriver = new(authDriver)
 
 type authDriver struct {
-	t *testing.T
+	t      *testing.T
+	driver sdk.Driver
 }
 
 // NewDriver returns a new ldap auth driver.
 func NewDriver(t *testing.T) sdk.AuthDriver {
-	var d = authDriver{t}
+	var d = authDriver{t, NewTestDriver()}
 	return d
 }
 
@@ -31,11 +32,8 @@ func (d authDriver) GetSessionDuration() time.Duration {
 	return time.Hour * 24 * 30 // 1 month session
 }
 
-func (d authDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
-	if bind, ok := req["username"]; !ok || bind == "" {
-		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid bind term for ldap signin")
-	}
-	return nil
+func (d authDriver) GetDriver() sdk.Driver {
+	return d.driver
 }
 
 func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
@@ -67,4 +65,22 @@ func (d authDriver) GetUserInfo(ctx context.Context, req sdk.AuthConsumerSigninR
 	}
 
 	return u, nil
+}
+
+func NewTestDriver() sdk.Driver {
+	return &TestDriver{}
+}
+
+type TestDriver struct {
+}
+
+func (t TestDriver) GetUserInfoFromDriver(ctx context.Context, req sdk.AuthConsumerSigninRequest) (sdk.AuthDriverUserInfo, error) {
+	return sdk.AuthDriverUserInfo{}, nil
+}
+
+func (t TestDriver) CheckSigninRequest(req sdk.AuthConsumerSigninRequest) error {
+	if bind, ok := req["username"]; !ok || bind == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing or invalid bind term for ldap signin")
+	}
+	return nil
 }

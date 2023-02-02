@@ -7,13 +7,14 @@ import (
 )
 
 // NewDefaultSigninStateToken returns a jws used for signin request.
-func NewDefaultSigninStateToken(origin, redirectURI string, isFirstConnection bool) (string, error) {
+func NewDefaultSigninStateToken(signinState sdk.AuthSigninConsumerToken) (string, error) {
 	var now = time.Now()
 	payload := sdk.AuthSigninConsumerToken{
-		Origin:            origin,
-		RedirectURI:       redirectURI,
+		Origin:            signinState.Origin,
+		RedirectURI:       signinState.RedirectURI,
 		IssuedAt:          now.Unix(),
-		IsFirstConnection: isFirstConnection,
+		IsFirstConnection: signinState.IsFirstConnection,
+		LinkUser:          signinState.LinkUser,
 	}
 	return SignJWS(payload, now, sdk.AuthSigninConsumerTokenDuration)
 }

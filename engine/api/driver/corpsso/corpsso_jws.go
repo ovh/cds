@@ -23,7 +23,7 @@ func (n nonceSource) Nonce() (string, error) {
 
 var nonceSrc jose.NonceSource = nonceSource{}
 
-func prepareRequest(requestSigningKey string, request sdk.AuthSigninConsumerToken) (string, error) {
+func prepareSSORequest(requestSigningKey string, request sdk.AuthSigninConsumerToken) (string, error) {
 	pk, err := gpg.NewPrivateKeyFromPem(requestSigningKey, "")
 	if err != nil {
 		return "", sdk.WrapError(err, "unable to load private key")

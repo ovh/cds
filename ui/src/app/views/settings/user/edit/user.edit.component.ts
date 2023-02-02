@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
-import { AuthentifiedUser, AuthSummary, UserContact } from 'app/model/user.model';
+import {AuthentifiedUser, AuthSummary, UserContact, UserLink} from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -14,7 +14,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import * as moment from 'moment';
 import { forkJoin } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { finalize, first } from 'rxjs/operators';
 import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';
 import {
     CloseEvent,
@@ -22,6 +22,9 @@ import {
     ConsumerDetailsModalComponent
 } from '../consumer-details-modal/consumer-details-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import {HttpClient} from "@angular/common/http";
+import {LinkService} from "../../../../service/link/link.service";
+import {SidebarEvent} from "../../../../service/sidebar/sidebar.service";
 
 const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -50,6 +53,7 @@ export class UserEditComponent implements OnInit {
     selectedItem: string;
     loadingUser: boolean;
     user: AuthentifiedUser;
+    userLinks: Map<string, UserLink>;
     columnsGroups: Array<Column<Group>>;
     loadingGroups = false;
     groups: Array<Group>;
@@ -70,6 +74,8 @@ export class UserEditComponent implements OnInit {
     loadingLocalReset: boolean;
     showLDAPSigninForm: boolean;
 
+    linkDriver: string[] = [];
+
     constructor(
         private _authenticationService: AuthenticationService,
         private _userService: UserService,
@@ -79,9 +85,20 @@ export class UserEditComponent implements OnInit {
         private _store: Store,
         private _toast: ToastService,
         private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _http: HttpClient,
+        private _linkService: LinkService
     ) {
         this.currentAuthSummary = this._store.selectSnapshot(AuthenticationState.summary);
+
+        this._linkService.getDrivers()
+            .pipe(finalize(() => {
+                this.loading = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe((data) => {
+                this.linkDriver = data;
+            });
 
         this.menuItems = new Map<string, string>();
         this.selectedItem = "profile";
@@ -98,7 +115,7 @@ export class UserEditComponent implements OnInit {
             <Column<Group>>{
                 name: 'user_group_role',
                 selector: (g: Group) => g.admin ? this._translate.instant('user_group_admin') : this._translate.instant('user_group_member')
-            },
+            }
         ];
 
         this.columnsContacts = [
@@ -357,6 +374,16 @@ export class UserEditComponent implements OnInit {
         });
     }
 
+    linkUser(type: string): void {
+        this._linkService.askLink(type, "/settings/user/" + this.user.username)
+            .pipe(first())
+            .subscribe(redirect  => {
+                if (redirect.method.toLowerCase() === ('get')) {
+                    window.location.replace(redirect.url);
+                }
+        })
+    }
+
     clickConsumerDetails(selected: AuthConsumer): void {
         this.selectedConsumer = selected;
 
@@ -528,16 +555,24 @@ export class UserEditComponent implements OnInit {
     getUser(): void {
         this.loadingUser = true;
         this._cd.markForCheck();
-        this._userService.get(this.username)
-            .pipe(finalize(() => {
-                this.loadingUser = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(u => {
-                this.user = u;
-                this.setDataFromUser();
-                this.updatePath();
-            });
+
+        forkJoin([
+            this._userService.get(this.username),
+            this._userService.getLinks(this.username)
+        ]).pipe(finalize(() => {
+            this.loadingUser = false;
+            this._cd.markForCheck();
+        })).subscribe(result => {
+            this.user = result[0];
+            if (result[1]) {
+                this.userLinks = new Map<string, UserLink>();
+                result[1].forEach(l => {
+                    this.userLinks.set(l.type, l);
+                })
+            }
+            this.setDataFromUser();
+            this.updatePath();
+        });
     }
 
     setDataFromUser(): void {
@@ -545,7 +580,9 @@ export class UserEditComponent implements OnInit {
         this.menuItems = new Map<string, string>();
         this.menuItems.set("profile", "Profile");
         this.menuItems.set("groups", "Groups");
-
+        if (this.linkDriver.length >= 0) {
+            this.menuItems.set("links", "Links");
+        }
         if (this.user.id === this.currentAuthSummary.user.id || this.currentAuthSummary.isMaintainer()) {
             this.menuItems.set("contacts", "Contacts");
             this.menuItems.set("authentication", "Authentication");

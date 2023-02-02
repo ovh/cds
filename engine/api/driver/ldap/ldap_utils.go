@@ -22,7 +22,7 @@ func shoudRetry(ctx context.Context, err error) bool {
 	return false
 }
 
-//Entry represents a LDAP entity
+// Entry represents a LDAP entity
 type Entry struct {
 	DN         string
 	Attributes map[string]string
