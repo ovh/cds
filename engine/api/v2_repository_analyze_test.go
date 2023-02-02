@@ -795,7 +795,7 @@ func TestAnalyzeGithubMergeCommitNoLink(t *testing.T) {
 
 	githubUsername := sdk.RandomString(10)
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
-		"github": {
+		"vcs-server": {
 			{
 				ID: "F344BDDCE15F17D7",
 				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -944,7 +944,7 @@ func TestAnalyzeGithubAddWorkerModelMergeCommit(t *testing.T) {
 
 	githubUsername := sdk.RandomString(10)
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
-		"github": {
+		"vcs-server": {
 			{
 				ID: "F344BDDCE15F17D7",
 				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
