@@ -6,7 +6,9 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func BenchmarkDo(b *testing.B) {
@@ -568,6 +570,13 @@ func TestDo(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUUID(t *testing.T) {
+	got, err := Do("{{ uuidv4 }}", nil)
+	require.NoError(t, err)
+	_, err = uuid.Parse(got)
+	require.NoError(t, err)
 }
 
 func TestWrapHelpers(t *testing.T) {

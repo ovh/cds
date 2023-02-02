@@ -16,6 +16,7 @@ import (
 	"text/template"
 
 	util "github.com/aokoli/goutils"
+	"github.com/google/uuid"
 	"github.com/huandu/xstrings"
 	"github.com/spf13/cast"
 )
@@ -48,6 +49,7 @@ func init() {
 		"randAlpha":    randAlpha,
 		"randASCII":    randASCII,
 		"randNumeric":  randNumeric,
+		"uuidv4":       uuidv4,
 		"swapcase":     util.SwapCase,
 		"shuffle":      xstrings.Shuffle,
 		"snakecase":    xstrings.ToSnakeCase,
@@ -262,6 +264,11 @@ func randASCII(count int) string {
 func randNumeric(count int) string {
 	r, _ := util.RandomNumeric(count)
 	return r
+}
+
+// uuidv4 generates a random UUID v4 as string.
+func uuidv4() string {
+	return uuid.New().String()
 }
 
 func untitle(str string) string {
