@@ -438,6 +438,15 @@ func (c *vcsClient) Branches(ctx context.Context, fullname string, filters sdk.V
 	return branches, nil
 }
 
+func (c *vcsClient) SearchPullRequest(ctx context.Context, repoFullName, commit, state string) (*sdk.VCSPullRequest, error) {
+	var pr sdk.VCSPullRequest
+	path := fmt.Sprintf("/vcs/%s/repos/%s/search/pullrequest?commit=%s&state=%s", c.name, repoFullName, commit, state)
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &pr); err != nil {
+		return nil, sdk.NewErrorFrom(err, "unable to find pullrequest with commit %s and state %s on %s", commit, state, c.name)
+	}
+	return &pr, nil
+}
+
 func (c *vcsClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
 	branch := sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s&default=%v", c.name, fullname, url.QueryEscape(filters.BranchName), filters.Default)

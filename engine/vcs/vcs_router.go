@@ -53,6 +53,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases", nil, r.POST(s.postReleaseHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases/{release}/artifacts/{artifactName}", nil, r.POST(s.postUploadReleaseFileHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/forks", nil, r.GET(s.getListForks))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/search/pullrequest", nil, r.GET(s.SearchPullRequestHandler))
 
 	r.Handle("/vcs/{name}/status", nil, r.POST(s.postStatusHandler))
 }

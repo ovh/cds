@@ -69,6 +69,7 @@ type CommitsResponse struct {
 type Commit struct {
 	Hash      string `json:"id"`
 	Author    Author `json:"author"`
+	Committer Author `json:"committer"`
 	Timestamp int64  `json:"authorTimestamp"`
 	Message   string `json:"message"`
 }

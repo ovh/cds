@@ -12,7 +12,7 @@ type RepositoryEvents struct {
 	PullRequestEvents []VCSPullRequestEvent `json:"pullrequest_events" db:"-"`
 }
 
-//RepositoryPollerExecution is a polling execution
+// RepositoryPollerExecution is a polling execution
 type RepositoryPollerExecution struct {
 	ID                    int64            `json:"id" db:"id"`
 	ApplicationID         int64            `json:"-" db:"application_id"`
@@ -31,7 +31,7 @@ type VCSRelease struct {
 	UploadURL string `json:"upload_url"`
 }
 
-//VCSRepo represents data about repository even on stash, or github, etc...
+// VCSRepo represents data about repository even on stash, or github, etc...
 type VCSRepo struct {
 	ID           string `json:"id"`
 	Name         string `json:"name"`     //On Github: Name = Slug
@@ -42,18 +42,20 @@ type VCSRepo struct {
 	SSHCloneURL  string `json:"ssh_url"`  //Git clone URL  "ssh://git@<baseURL>/PRJ/my-repo.git"
 }
 
-//VCSAuthor represents the auhor for every commit
+// VCSAuthor represents the auhor for every commit
 type VCSAuthor struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
 	Email       string `json:"emailAddress"`
 	Avatar      string `json:"avatar"`
+	Slug        string `json:"slug"`
 }
 
-//VCSCommit represents the commit in the repository
+// VCSCommit represents the commit in the repository
 type VCSCommit struct {
 	Hash      string    `json:"id"`
 	Author    VCSAuthor `json:"author"`
+	Committer VCSAuthor `json:"committer"`
 	Timestamp int64     `json:"authorTimestamp"`
 	Message   string    `json:"message"`
 	URL       string    `json:"url"`
@@ -61,13 +63,13 @@ type VCSCommit struct {
 	Signature string    `json:"signature"`
 }
 
-//VCSRemote represents remotes known by the repositories manager
+// VCSRemote represents remotes known by the repositories manager
 type VCSRemote struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
 }
 
-//VCSTag represents branches known by the repositories manager
+// VCSTag represents branches known by the repositories manager
 type VCSTag struct {
 	Tag     string    `json:"tag"`
 	Sha     string    `json:"sha"` // Represent sha of tag
@@ -76,7 +78,10 @@ type VCSTag struct {
 	Hash    string    `json:"hash"` // Represent hash of commit
 }
 
-//VCSBranch represents branches known by the repositories manager
+type VCSSearch struct {
+}
+
+// VCSBranch represents branches known by the repositories manager
 type VCSBranch struct {
 	ID           string   `json:"id"`
 	DisplayID    string   `json:"display_id"`
@@ -85,7 +90,7 @@ type VCSBranch struct {
 	Parents      []string `json:"parents"`
 }
 
-//VCSPullRequest represents a pull request
+// VCSPullRequest represents a pull request
 type VCSPullRequest struct {
 	ID       int          `json:"id"`
 	ChangeID string       `json:"change_id"`
@@ -98,6 +103,8 @@ type VCSPullRequest struct {
 	Closed   bool         `json:"closed"`
 	Revision string       `json:"revision"`
 	Updated  time.Time    `json:"updated"`
+	MergeBy  VCSAuthor    `json:"merge_by"`
+	State    string       `json:"state"`
 }
 
 type VCSContent struct {
@@ -133,7 +140,7 @@ type VCSPullRequestCommentRequest struct {
 	Message string `json:"message"`
 }
 
-//VCSPushEvent represents a push events for polling
+// VCSPushEvent represents a push events for polling
 type VCSPushEvent struct {
 	Repo     string    `json:"repo"`
 	Branch   VCSBranch `json:"branch"`
@@ -141,15 +148,15 @@ type VCSPushEvent struct {
 	CloneURL string    `json:"clone_url"`
 }
 
-//VCSCreateEvent represents a push events for polling
+// VCSCreateEvent represents a push events for polling
 type VCSCreateEvent VCSPushEvent
 
-//VCSDeleteEvent represents a push events for polling
+// VCSDeleteEvent represents a push events for polling
 type VCSDeleteEvent struct {
 	Branch VCSBranch `json:"branch"`
 }
 
-//VCSPullRequestEvent represents a push events for polling
+// VCSPullRequestEvent represents a push events for polling
 type VCSPullRequestEvent struct {
 	Action string       `json:"action"` // opened | closed
 	URL    string       `json:"url"`

@@ -436,6 +436,7 @@ type Interface interface {
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
 	ConfigCDN() (sdk.CDNConfig, error)
+	ConfigVCSGPGKeys() (map[string][]sdk.Key, error)
 	DownloadClient
 	EnvironmentClient
 	EventsClient

@@ -88,6 +88,13 @@ func (s *Service) Serve(c context.Context) error {
 		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
 	}
 
+	// Retrieve vcs public keys
+	keys, err := s.Client.ConfigVCSGPGKeys()
+	if err != nil {
+		return err
+	}
+	vcsPublicKeys = keys
+
 	var address = fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port)
 	log.Info(ctx, "Initializing HTTP router (%s)...", address)
 	//Init the http server
