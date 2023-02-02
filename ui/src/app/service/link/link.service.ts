@@ -1,5 +1,5 @@
 import {Observable} from "rxjs";
-import {AuthDriverManifests, AuthDriverSigningRedirect} from "../../model/authentication.model";
+import {AuthDriverSigningRedirect} from "../../model/authentication.model";
 import {Injectable} from "@angular/core";
 import {HttpClient, HttpParams} from "@angular/common/http";
 

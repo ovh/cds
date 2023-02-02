@@ -2,8 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
     AuthConsumer,
-    AuthConsumerCreateResponse, AuthConsumerSigninResponse,
-    AuthDriverSigningRedirect,
+    AuthConsumerCreateResponse,
     AuthSession
 } from 'app/model/authentication.model';
 import { Bookmark } from 'app/model/bookmark.model';

@@ -10,7 +10,6 @@ import { jws } from 'jsrsasign';
 import { Subscription } from 'rxjs';
 import {finalize, first} from 'rxjs/operators';
 import {Store} from "@ngxs/store";
-import {AuthenticationState} from "../../../store/authentication.state";
 
 @Component({
     selector: 'app-auth-callback',

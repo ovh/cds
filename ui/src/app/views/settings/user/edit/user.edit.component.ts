@@ -24,7 +24,6 @@ import {
 import { NzModalService } from 'ng-zorro-antd/modal';
 import {HttpClient} from "@angular/common/http";
 import {LinkService} from "../../../../service/link/link.service";
-import {SidebarEvent} from "../../../../service/sidebar/sidebar.service";
 
 const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -580,7 +579,7 @@ export class UserEditComponent implements OnInit {
         this.menuItems = new Map<string, string>();
         this.menuItems.set("profile", "Profile");
         this.menuItems.set("groups", "Groups");
-        if (this.linkDriver.length >= 0) {
+        if (this.linkDriver.length > 0) {
             this.menuItems.set("links", "Links");
         }
         if (this.user.id === this.currentAuthSummary.user.id || this.currentAuthSummary.isMaintainer()) {
