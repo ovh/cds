@@ -796,7 +796,7 @@ func TestAnalyzeBitbucketMergeCommit(t *testing.T) {
 	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
 
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
-		sdk.VCSTypeBitbucketServer: {
+		"vcs-server": {
 			{
 				ID: "F344BDDCE15F17D7",
 				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
