@@ -1384,6 +1384,7 @@ spec:
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
+	t.Logf("%+v", analysisUpdated)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, analysisUpdated.Status)
 
 	es, err := entity.LoadByRepositoryAndType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel)
