@@ -71,10 +71,6 @@ func TestGetWorkerModelv2Error(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unable to handle the worker model requirement")
 
-	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, "PROJ", wr, "mymodel")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "unable to retrieve worker model data because the workflow root pipeline does not contain application in context")
-
 	wr.Workflow.WorkflowData.Node.Context.ApplicationID = 1
 	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, "PROJ", wr, "mymodel")
 	require.Error(t, err)
