@@ -126,6 +126,22 @@ func PublishAddProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey,
 	PublishProjectEvent(ctx, e, p.Key, u)
 }
 
+func PublishDisableProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
+	k.Private = sdk.PasswordPlaceholder
+	e := sdk.EventProjectKeyDisable{
+		Key: k,
+	}
+	PublishProjectEvent(ctx, e, p.Key, u)
+}
+
+func PublishEnableProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
+	k.Private = sdk.PasswordPlaceholder
+	e := sdk.EventProjectKeyEnable{
+		Key: k,
+	}
+	PublishProjectEvent(ctx, e, p.Key, u)
+}
+
 // PublishDeleteProjectKey publishes an event on deleting a project key
 func PublishDeleteProjectKey(ctx context.Context, p *sdk.Project, k sdk.ProjectKey, u sdk.Identifiable) {
 	k.Private = sdk.PasswordPlaceholder

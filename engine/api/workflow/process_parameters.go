@@ -43,7 +43,15 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		vars[k] = v
 	}
 
-	tmpProj = sdk.ParametersFromProjectKeys(proj)
+	for _, k := range proj.Keys {
+		if k.Disabled {
+			continue
+		}
+		kk := fmt.Sprintf("cds.key.%s.pub", k.Name)
+		tmpProj[kk] = k.Public
+		kk = fmt.Sprintf("cds.key.%s.id", k.Name)
+		tmpProj[kk] = k.KeyID
+	}
 	for k, v := range tmpProj {
 		vars[k] = v
 	}

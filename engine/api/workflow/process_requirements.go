@@ -267,9 +267,6 @@ func processNodeJobRunRequirementsGetModelV2(ctx context.Context, db gorp.SqlExe
 		repoName = app.RepositoryFullname
 	}
 
-	if app.ID == 0 {
-		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to retrieve worker model data because the workflow root pipeline does not contain application in context")
-	}
 	if vcsName == "" || repoName == "" {
 		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to retrieve worker model data because the workflow root pipeline does not contain any vcs configuration")
 	}

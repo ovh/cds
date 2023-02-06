@@ -2889,6 +2889,34 @@ func (mr *MockProjectClientMockRecorder) ProjectKeysDelete(projectKey, keyProjec
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectKeysDelete), projectKey, keyProjectName)
 }
 
+// ProjectKeysDisable mocks base method.
+func (m *MockProjectClient) ProjectKeysDisable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysDisable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysDisable indicates an expected call of ProjectKeysDisable.
+func (mr *MockProjectClientMockRecorder) ProjectKeysDisable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDisable", reflect.TypeOf((*MockProjectClient)(nil).ProjectKeysDisable), projectKey, keyProjectName)
+}
+
+// ProjectKeysEnable mocks base method.
+func (m *MockProjectClient) ProjectKeysEnable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysEnable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysEnable indicates an expected call of ProjectKeysEnable.
+func (mr *MockProjectClientMockRecorder) ProjectKeysEnable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysEnable", reflect.TypeOf((*MockProjectClient)(nil).ProjectKeysEnable), projectKey, keyProjectName)
+}
+
 // ProjectKeysList mocks base method.
 func (m *MockProjectClient) ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error) {
 	m.ctrl.T.Helper()
@@ -3371,6 +3399,34 @@ func (m *MockProjectKeysClient) ProjectKeysDelete(projectKey, keyProjectName str
 func (mr *MockProjectKeysClientMockRecorder) ProjectKeysDelete(projectKey, keyProjectName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDelete", reflect.TypeOf((*MockProjectKeysClient)(nil).ProjectKeysDelete), projectKey, keyProjectName)
+}
+
+// ProjectKeysDisable mocks base method.
+func (m *MockProjectKeysClient) ProjectKeysDisable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysDisable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysDisable indicates an expected call of ProjectKeysDisable.
+func (mr *MockProjectKeysClientMockRecorder) ProjectKeysDisable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDisable", reflect.TypeOf((*MockProjectKeysClient)(nil).ProjectKeysDisable), projectKey, keyProjectName)
+}
+
+// ProjectKeysEnable mocks base method.
+func (m *MockProjectKeysClient) ProjectKeysEnable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysEnable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysEnable indicates an expected call of ProjectKeysEnable.
+func (mr *MockProjectKeysClientMockRecorder) ProjectKeysEnable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysEnable", reflect.TypeOf((*MockProjectKeysClient)(nil).ProjectKeysEnable), projectKey, keyProjectName)
 }
 
 // ProjectKeysList mocks base method.
@@ -6258,6 +6314,21 @@ func (mr *MockInterfaceMockRecorder) ConfigUser() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigUser", reflect.TypeOf((*MockInterface)(nil).ConfigUser))
 }
 
+// ConfigVCSGPGKeys mocks base method.
+func (m *MockInterface) ConfigVCSGPGKeys() (map[string][]sdk.Key, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfigVCSGPGKeys")
+	ret0, _ := ret[0].(map[string][]sdk.Key)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConfigVCSGPGKeys indicates an expected call of ConfigVCSGPGKeys.
+func (mr *MockInterfaceMockRecorder) ConfigVCSGPGKeys() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigVCSGPGKeys", reflect.TypeOf((*MockInterface)(nil).ConfigVCSGPGKeys))
+}
+
 // DeleteJSON mocks base method.
 func (m *MockInterface) DeleteJSON(ctx context.Context, path string, out interface{}, mods ...cdsclient.RequestModifier) (int, error) {
 	m.ctrl.T.Helper()
@@ -7534,6 +7605,34 @@ func (m *MockInterface) ProjectKeysDelete(projectKey, keyProjectName string) err
 func (mr *MockInterfaceMockRecorder) ProjectKeysDelete(projectKey, keyProjectName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDelete", reflect.TypeOf((*MockInterface)(nil).ProjectKeysDelete), projectKey, keyProjectName)
+}
+
+// ProjectKeysDisable mocks base method.
+func (m *MockInterface) ProjectKeysDisable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysDisable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysDisable indicates an expected call of ProjectKeysDisable.
+func (mr *MockInterfaceMockRecorder) ProjectKeysDisable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysDisable", reflect.TypeOf((*MockInterface)(nil).ProjectKeysDisable), projectKey, keyProjectName)
+}
+
+// ProjectKeysEnable mocks base method.
+func (m *MockInterface) ProjectKeysEnable(projectKey, keyProjectName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectKeysEnable", projectKey, keyProjectName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectKeysEnable indicates an expected call of ProjectKeysEnable.
+func (mr *MockInterfaceMockRecorder) ProjectKeysEnable(projectKey, keyProjectName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectKeysEnable", reflect.TypeOf((*MockInterface)(nil).ProjectKeysEnable), projectKey, keyProjectName)
 }
 
 // ProjectKeysList mocks base method.

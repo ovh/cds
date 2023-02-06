@@ -155,18 +155,6 @@ func ParametersFromProjectVariables(proj Project) map[string]string {
 	return ParametersToMap(params)
 }
 
-func ParametersFromProjectKeys(proj Project) map[string]string {
-	keys := make(map[string]string, 0)
-	for _, k := range proj.Keys {
-		kk := fmt.Sprintf("cds.key.%s.pub", k.Name)
-		keys[kk] = k.Public
-
-		kk = fmt.Sprintf("cds.key.%s.id", k.Name)
-		keys[kk] = k.KeyID
-	}
-	return keys
-}
-
 // ParametersFromApplicationVariables returns a map from a slice of parameters
 func ParametersFromApplicationVariables(app Application) map[string]string {
 	params := ApplicationVariablesToParameters("cds.app", app.Variables)

@@ -29,7 +29,7 @@ export class JSONSchema implements Schema {
             flatTypes.set(currentType, new Array<FlatTypeElement>());
         }
         if (properties) {
-            Object.keys(properties).forEach( k => {
+            Object.keys(properties).forEach(k => {
                 if (properties[k].type && properties[k].type === 'object' && properties[k].patternProperties) {
                     let pp = properties[k].patternProperties;
                     if (pp['.*'] && pp['.*'].$ref) {
@@ -50,7 +50,7 @@ export class JSONSchema implements Schema {
                 } else {
                     let types = new Array<any>();
                     if (properties[k].oneOf) {
-                        types = properties[k].oneOf.map(o => o.type).filter( o => o);
+                        types = properties[k].oneOf.map(o => o.type).filter(o => o);
                     }
                     if (defElt.allOf) {
                         defElt.allOf.forEach(ao => {
@@ -88,7 +88,7 @@ export class JSONSchema implements Schema {
             itemType.formOrder = properties?.order;
             itemType.disabled = properties?.disabled;
             itemType.description = properties?.description;
-
+            itemType.pattern = properties?.pattern;
 
             if (condition) {
                 itemType.condition = new Array<FlatElementTypeCondition>();
@@ -191,10 +191,11 @@ export class FlatTypeElement {
     formOrder: number;
     disabled: string;
     enum: string[];
+    pattern: string;
 }
 
 export class FlatElementsOneOfRequired {
-    name: {[key: string]: Array<string>};
+    name: { [key: string]: Array<string> };
 }
 
 export class FlatElementPosition {

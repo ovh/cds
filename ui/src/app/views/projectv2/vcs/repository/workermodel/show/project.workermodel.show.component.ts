@@ -4,12 +4,11 @@ import { Entity, EntityWorkerModel, Project, ProjectRepository, VCSProject } fro
 import { ProjectState } from 'app/store/project.state';
 import { Store } from '@ngxs/store';
 import { forkJoin } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
-import { ToastService } from 'app/shared/toast/ToastService';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
-import { Schema } from "jsonschema";
 import { finalize } from "rxjs/operators";
+import { Schema } from 'app/model/json-schema.model';
 
 @Component({
     selector: 'app-projectv2-workermodel-show',
@@ -35,8 +34,6 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
         private _routeActivated: ActivatedRoute,
         private _projectService: ProjectService,
         private _cd: ChangeDetectorRef,
-        private _toastService: ToastService,
-        private _router: Router,
         private _sidebarService: SidebarService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
@@ -47,6 +44,7 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
             this.currentBranch = this._routeActivated?.queryParams['branch'];
             this.currentWorkerModelName = p['workerModelName'];
             this.loading = true;
+            this._cd.markForCheck();
             forkJoin([
                 this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
                 this._projectService.getVCSProject(this.project.key, p['vcsName']),
@@ -58,7 +56,6 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
                 this._cd.markForCheck();
                 this.loadWorkerModel(p['workerModelName'], this._routeActivated?.snapshot?.queryParams['branch']);
             });
-            this._cd.markForCheck();
         });
         this._routeActivated.queryParams.subscribe(q => {
             if (this.currentBranch === q['branch']) {
@@ -74,6 +71,7 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
 
     loadWorkerModel(workerModelName: string, branch?: string): void {
         this.loading = true;
+        this._cd.markForCheck();
         this._projectService.getRepoEntity(this.project.key, this.vcsProject.name, this.repository.name, EntityWorkerModel, workerModelName, branch)
             .pipe(finalize(() => {
                 this.loading = false;

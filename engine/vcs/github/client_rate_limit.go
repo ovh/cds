@@ -16,7 +16,7 @@ func isRateLimitReached() bool {
 		log.Debug(context.Background(), "RateLimitReset not reached, it's ok to call github")
 		return false
 	}
-	return RateLimitRemaining < 100
+	return RateLimitRemaining < 5
 }
 
 // RateLimit Get your current rate limit status

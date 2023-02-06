@@ -169,6 +169,14 @@ func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, unti
 				Email:       c.Commit.Author.Email,
 				Name:        c.Commit.Author.Name,
 				Avatar:      c.Author.AvatarURL,
+				Slug:        c.Commit.Author.Name,
+			},
+			Committer: sdk.VCSAuthor{
+				DisplayName: c.Commit.Committer.Name,
+				Email:       c.Commit.Committer.Email,
+				Name:        c.Commit.Committer.Name,
+				Avatar:      c.Committer.AvatarURL,
+				Slug:        c.Committer.Login,
 			},
 		}
 

@@ -23,6 +23,9 @@ func (g *giteaClient) Branches(ctx context.Context, fullname string, filters sdk
 		Page:     -1,
 		PageSize: 1000,
 	}})
+	if err != nil {
+		return nil, err
+	}
 	vcsBranches := make([]sdk.VCSBranch, 0, len(branches))
 	for _, b := range branches {
 		vcsB := sdk.VCSBranch{

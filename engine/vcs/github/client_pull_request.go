@@ -240,7 +240,7 @@ func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sd
 }
 
 func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
-	return sdk.VCSPullRequest{
+	pr := sdk.VCSPullRequest{
 		ID: pullr.Number,
 		Base: sdk.VCSPushEvent{
 			Repo: pullr.Base.Repo.FullName,
@@ -285,9 +285,21 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 			Avatar:      pullr.User.AvatarURL,
 			DisplayName: pullr.User.Login,
 			Name:        pullr.User.Name,
+			Slug:        pullr.User.Login,
 		},
 		Closed:  pullr.State == "closed",
 		Merged:  pullr.Merged,
 		Updated: pullr.UpdatedAt,
+		State:   pullr.State,
 	}
+
+	if pullr.MergedBy != nil {
+		pr.MergeBy = sdk.VCSAuthor{
+			Name:        pullr.MergedBy.Name,
+			Slug:        pullr.MergedBy.Login,
+			DisplayName: pullr.MergedBy.Login,
+			Avatar:      pullr.MergedBy.AvatarURL,
+		}
+	}
+	return pr
 }

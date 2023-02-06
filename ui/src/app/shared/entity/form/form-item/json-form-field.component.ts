@@ -10,6 +10,7 @@ export class FormItem {
     formOrder: number;
     condition: FlatElementTypeCondition[];
     description: string;
+    pattern: string;
 }
 @Component({
     selector: 'app-json-form-field',
@@ -26,42 +27,33 @@ export class JSONFormFieldComponent implements OnChanges {
     @Output() modelChange = new EventEmitter();
 
     required: boolean;
+    currentModel: any;
+    isConditionnal: boolean;
+    selectedCondition: FlatElementTypeCondition;
+    conditionRefProperties: string[];
 
     constructor(
         private _cd: ChangeDetectorRef
     ) { }
 
     ngOnChanges(changes: SimpleChanges): void {
-        this.initModel();
-        this._cd.markForCheck();
-    }
-
-    emitChange(): void {
-        let required = <string[]>this.jsonFormSchema.types[this.parentType].required;
-        if (!this.model[this.field.name] && required.indexOf(this.field.name) === -1) {
-            delete this.model[this.field.name];
-        }
-        this.modelChange.emit(this.model);
-    }
-
-    updateParentModel(parentField: string, childModel: {}) {
-        this.model[parentField] = childModel;
-        this.emitChange();
-    }
-
-    initModel() {
         if (!this.jsonFormSchema || !this.field || !this.model) {
             return;
         }
-        if (this.field.type !== 'object') {
-            // check required
-            let required = <string[]>this.jsonFormSchema.types[this.parentType].required;
-            let index = required.indexOf(this.field.name);
-            this.required = index !== -1;
-            return;
+        this.currentModel = { ...this.model };
+        if (!this.currentModel[this.field.name]) {
+            this.currentModel[this.field.name] = null;
         }
-        if (this.jsonFormSchema && this.field.objectType && !this.model[this.field.name]) {
-            this.model[this.field.name] = {}
-        }
+        this.required = (<string[]>this.jsonFormSchema.types[this.parentType].required).indexOf(this.field.name) !== -1;
+        this.isConditionnal = this.field.condition && this.field.condition.length > 0;
+        this.selectedCondition = (this.field.condition ?? []).find(c => this.currentModel[c.refProperty] && this.currentModel[c.refProperty] === c.conditionValue);
+        this.conditionRefProperties = (this.field.condition ?? []).map(c => c.refProperty).filter((ref, index, arr) => arr.indexOf(ref) === index);
+        this._cd.markForCheck();
+    }
+
+    onValueChanged(value: any): void {
+        this.currentModel[this.field.name] = value;
+        this._cd.markForCheck();
+        this.modelChange.emit(this.currentModel);
     }
 }

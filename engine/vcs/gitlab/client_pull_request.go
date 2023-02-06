@@ -101,9 +101,15 @@ func toSDKPullRequest(repo string, mr gitlab.MergeRequest) sdk.VCSPullRequest {
 		User: sdk.VCSAuthor{
 			DisplayName: mr.Author.Username,
 			Name:        mr.Author.Name,
+			Slug:        mr.Author.Username,
 		},
 		Closed: mr.State == "closed",
 		Merged: mr.State == "merged",
+		MergeBy: sdk.VCSAuthor{
+			DisplayName: mr.MergedBy.Username,
+			Name:        mr.MergedBy.Name,
+			Slug:        mr.MergedBy.Username,
+		},
 	}
 	if mr.UpdatedAt != nil {
 		pr.Updated = *mr.UpdatedAt

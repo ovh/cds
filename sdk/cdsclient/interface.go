@@ -271,6 +271,8 @@ type ProjectKeysClient interface {
 	ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error)
 	ProjectKeyCreate(projectKey string, key *sdk.ProjectKey) error
 	ProjectKeysDelete(projectKey string, keyProjectName string) error
+	ProjectKeysDisable(projectKey string, keyProjectName string) error
+	ProjectKeysEnable(projectKey string, keyProjectName string) error
 }
 
 // ProjectVariablesClient exposes project variables related functions
@@ -434,6 +436,7 @@ type Interface interface {
 	ApplicationClient
 	ConfigUser() (sdk.ConfigUser, error)
 	ConfigCDN() (sdk.CDNConfig, error)
+	ConfigVCSGPGKeys() (map[string][]sdk.Key, error)
 	DownloadClient
 	EnvironmentClient
 	EventsClient

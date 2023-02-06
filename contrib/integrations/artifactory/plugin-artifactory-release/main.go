@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -12,7 +11,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/distribution/services"
 	distriUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
-	"github.com/jfrog/jfrog-client-go/utils/log"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
@@ -59,6 +58,9 @@ func (e *artifactoryReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (
 }
 
 func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplugin.RunQuery) (*integrationplugin.RunResult, error) {
+	log.Factory = log.NewStdWrapper(log.StdWrapperOptions{DisableTimestamp: true, Level: log.LevelInfo})
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine, log.FieldStackTrace)
+
 	artifactoryURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigURL)]
 	distributionURL := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigDistributionURL)]
 	token := opts.GetOptions()[fmt.Sprintf("cds.integration.artifact_manager.%s", sdk.ArtifactoryConfigToken)]
@@ -94,13 +96,12 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 
 	fmt.Printf("Found %d run results\n", len(runResult))
 
-	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 	if distributionURL == "" {
 		fmt.Printf("Using %s to release\n", artifactoryURL)
 		distributionURL = artifactoryURL
 	}
 	if releaseToken == "" {
-		fmt.Println("Using distribution token to release")
+		fmt.Println("Using artifactory token to release")
 		releaseToken = token
 	}
 

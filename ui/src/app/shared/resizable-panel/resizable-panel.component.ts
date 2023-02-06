@@ -37,7 +37,7 @@ export class ResizablePanelComponent implements AfterViewInit {
     @Input() direction = PanelDirection.HORIZONTAL;
     @Input() growDirection = PanelGrowDirection.BEFORE;
     @Input() minSize = null;
-    @Input() initialSize = null;
+    @Input() initialSize: number | string = null;
 
     @Output() onGrabbingStart = new EventEmitter<void>();
     @Output() onGrabbingEnd = new EventEmitter<number>();
@@ -47,15 +47,23 @@ export class ResizablePanelComponent implements AfterViewInit {
 
     constructor(
         private _cd: ChangeDetectorRef,
-        private _renderer: Renderer2
+        private _renderer: Renderer2,
+        private _elementRef: ElementRef
     ) { }
 
     ngAfterViewInit(): void {
-        if (this.direction === PanelDirection.HORIZONTAL) {
-            this.size = this.initialSize ?? (this.minSize ?? 600);
-        } else {
-            this.size = this.initialSize ?? (this.minSize ?? 200);
+        let initialSize = (this.minSize ?? (this.direction === PanelDirection.HORIZONTAL ? 600 : 200));
+        if (this.initialSize) {
+            if (typeof this.initialSize === 'number') {
+                initialSize = this.initialSize;
+            } else if ((<string>this.initialSize).endsWith('%')) {
+                try {
+                    const ratio = parseInt((<string>this.initialSize).replace('%', ''), 10);
+                    initialSize = (ratio * this._elementRef.nativeElement.parentNode.clientWidth) / 100;
+                } catch (e) { }
+            }
         }
+        this.size = initialSize;
         this.redraw();
     }
 

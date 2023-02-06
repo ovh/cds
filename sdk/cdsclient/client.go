@@ -156,6 +156,7 @@ func NewHatcheryServiceClient(ctx context.Context, clientConfig ServiceConfig, r
 	cli.httpNoTimeoutClient = NewHTTPClient(0, conf.InsecureSkipVerifyTLS)
 	cli.httpWebsocketClient = NewWebsocketDialer(conf.InsecureSkipVerifyTLS)
 	cli.config.Verbose = clientConfig.Verbose
+	cli.consumerType = sdk.ConsumerHatchery
 	cli.init()
 
 	cli.signinRequest = requestSign

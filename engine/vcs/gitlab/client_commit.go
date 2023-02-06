@@ -9,8 +9,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Commits returns commit data from a given starting commit, between two commits
-//The commits may be identified by branch or tag name or by hash.
+// Commits returns commit data from a given starting commit, between two commits
+// The commits may be identified by branch or tag name or by hash.
 func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until string) ([]sdk.VCSCommit, error) {
 	// Gitlab commit listing only allow 'since' and 'until' parameter as dates
 	// Need to fetch commit date, then use it to filter
@@ -44,7 +44,15 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 				Name:        c.AuthorName,
 				DisplayName: c.AuthorName,
 				Email:       c.AuthorEmail,
+				Slug:        c.AuthorName,
 			},
+			Committer: sdk.VCSAuthor{
+				Name:        c.CommitterName,
+				DisplayName: c.CommitterName,
+				Email:       c.CommitterEmail,
+				Slug:        c.CommitterName,
+			},
+
 			Timestamp: c.AuthoredDate.Unix() * 1000,
 			Message:   c.Message,
 		}
@@ -53,7 +61,7 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 	return vcscommits, nil
 }
 
-//Commit retrieves a specific according to a hash
+// Commit retrieves a specific according to a hash
 func (c *gitlabClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCommit, error) {
 	commit := sdk.VCSCommit{}
 
@@ -67,6 +75,13 @@ func (c *gitlabClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 		Name:        gc.AuthorName,
 		DisplayName: gc.AuthorName,
 		Email:       gc.AuthorEmail,
+		Slug:        gc.AuthorName,
+	}
+	commit.Committer = sdk.VCSAuthor{
+		Name:        gc.CommitterName,
+		DisplayName: gc.CommitterName,
+		Email:       gc.CommitterEmail,
+		Slug:        gc.CommitterName,
 	}
 	commit.Timestamp = gc.AuthoredDate.Unix() * 1000
 	commit.Message = gc.Message
@@ -97,6 +112,13 @@ func (c *gitlabClient) CommitsBetweenRefs(ctx context.Context, repo, base, head 
 				Name:        c.AuthorName,
 				DisplayName: c.AuthorName,
 				Email:       c.AuthorEmail,
+				Slug:        c.AuthorName,
+			},
+			Committer: sdk.VCSAuthor{
+				Name:        c.CommitterName,
+				DisplayName: c.CommitterName,
+				Email:       c.CommitterEmail,
+				Slug:        c.CommitterName,
 			},
 			Timestamp: c.AuthoredDate.Unix() * 1000,
 			Message:   c.Message,

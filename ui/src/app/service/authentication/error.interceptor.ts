@@ -37,6 +37,11 @@ export class ErrorInterceptor implements HttpInterceptor {
                         return observableThrowError(e);
                     }
 
+                    // ignore 404 errors for /v2/project routes
+                    if (e.status === 404 && req.url.indexOf('/v2/project') !== -1) {
+                        return observableThrowError(e);
+                    }
+
                     // error formatted from CDS API
                     if (!e.error) {
                         return observableThrowError(e);
