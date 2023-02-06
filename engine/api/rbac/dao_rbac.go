@@ -114,7 +114,7 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts 
 		}
 		if !isValid {
 			log.Error(ctx, "rbac.get> rbac %s (%s) data corrupted", rbac.Name, rbac.ID)
-			return nil, sdk.WithStack(sdk.ErrNotFound)
+			continue
 		}
 		for _, f := range opts {
 			if err := f(ctx, db, &rbac); err != nil {
