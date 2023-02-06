@@ -179,7 +179,7 @@ type Configuration struct {
 		Github struct {
 			Enabled bool `toml:"enabled" default:"false" json:"enabled"`
 		} `toml:"github" json:"github" comment:"#######\n GithubLink allows you to link your github user to your cds user \n######"`
-	} `toml:"link" comment:"##############################\n CDS Link Settings.# \n#############################" json:"auth"`
+	} `toml:"link" comment:"##############################\n CDS Link Settings.# \n#############################" json:"link"`
 	SMTP struct {
 		Disable               bool   `toml:"disable" default:"true" json:"disable" comment:"Set to false to enable the internal SMTP client. If false, emails will be displayed in CDS API Log."`
 		Host                  string `toml:"host" json:"host" comment:"smtp host"`
