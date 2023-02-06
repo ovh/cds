@@ -255,6 +255,9 @@ func Create(ctx context.Context, h Interface) error {
 					canTakeJob = false
 				} else if isWithModels {
 					if workerModelV2 != "" {
+						if h.CDSClientV2() == nil {
+							continue
+						}
 						chosenModel, err = canRunJobWithModelV2(currentCtx, hWithModels, workerModelV2)
 						if err != nil {
 							log.Error(currentCtx, "%v", err)
