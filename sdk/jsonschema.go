@@ -16,6 +16,11 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 	wmSchema.Definitions["V2WorkerModelVSphereSpec"] = wmVSphere
 	wmSchema.Definitions["V2WorkerModelOpenstackSpec"] = wmOpenstack
 	wmSchema.Definitions["V2WorkerModelDockerSpec"] = wmDocker
+
+	prop, _ := wmSchema.Definitions["V2WorkerModel"].Properties.Get("name")
+	name := prop.(*jsonschema.Schema)
+	name.Pattern = EntityNamePattern
+
 	return wmSchema
 }
 

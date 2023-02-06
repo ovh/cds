@@ -1,16 +1,17 @@
 package sdk
 
 import (
-	"github.com/rockbears/yaml"
 	"regexp"
 	"time"
+
+	"github.com/rockbears/yaml"
 )
 
 const (
 	EntityTypeWorkerModelTemplate = "WorkerModelTemplate"
 	EntityTypeWorkerModel         = "WorkerModel"
 
-	EntityNamePattern = "^[a-zA-Z0-9.-_-]{1,}$"
+	EntityNamePattern = "^[a-zA-Z0-9._-]{1,}$"
 )
 
 type ShortEntity struct {

@@ -43,6 +43,5 @@ export class Property {
     disabled: boolean;
     minLength: number;
     enum: string[];
+    pattern: string;
 }
-
-

@@ -32,7 +32,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
     @Input() schema: FlatSchema;
     @Input() parentType: string;
     @Input() disabled: boolean;
-    @Input() data: any;
+    @Input() data: string;
     @Output() dataChange = new EventEmitter();
 
     jsonFormSchema: JSONFormSchema;
@@ -56,6 +56,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
                         formOrder: value.formOrder,
                         condition: value.condition,
                         description: value.description,
+                        pattern: value.pattern,
                     };
                     if (item.type === 'object' && value.type.length === 2) {
                         item.objectType = value.type[1];
@@ -74,7 +75,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         try {
-            this.model = load(<string>this.data, <LoadOptions>{ onWarning: (e) => { } });
+            this.model = load(this.data && this.data !== '' ? this.data : '{}', <LoadOptions>{ onWarning: (e) => { } });
         } catch (e) {
             // TODO: mark form as invalid
         }
