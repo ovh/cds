@@ -1139,7 +1139,7 @@ spec:
 			pr := &sdk.VCSPullRequest{
 				MergeBy: sdk.VCSAuthor{
 					Slug: githubUsername,
-					ID:   ul.Exter
+					ID:   ul.ExternalID,
 				},
 			}
 			*(out.(*sdk.VCSPullRequest)) = *pr
