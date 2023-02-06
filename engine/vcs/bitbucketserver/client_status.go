@@ -64,6 +64,8 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event, disabl
 		return sdk.WrapError(err, "Unable to marshall status")
 	}
 
+	log.Info(ctx, "sending build status for %s : %s %s - %s", statusData.hash, status.Key, status.Name, state)
+
 	if err := b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil); err != nil {
 		return sdk.WrapError(err, "Unable to post build-status name:%s status:%s", status.Name, state)
 	}
