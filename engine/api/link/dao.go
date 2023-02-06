@@ -53,10 +53,15 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (
   return userLinks, nil
 }
 
-func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, uLInk *sdk.UserLink) error {
-  uLInk.Created = time.Now()
-  dbULink := &dbUserLink{UserLink: *uLInk}
+func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, uLink *sdk.UserLink) error {
+  uLink.Created = time.Now()
+  dbULink := &dbUserLink{UserLink: *uLink}
   return gorpmapping.InsertAndSign(ctx, db, dbULink)
+}
+
+func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, uLink *sdk.UserLink) error {
+  dbULink := &dbUserLink{UserLink: *uLink}
+  return gorpmapping.UpdateAndSign(ctx, db, dbULink)
 }
 
 func LoadUserLinksByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) ([]sdk.UserLink, error) {
@@ -64,7 +69,7 @@ func LoadUserLinksByUserID(ctx context.Context, db gorp.SqlExecutor, userID stri
   return getAll(ctx, db, query)
 }
 
-func LoadUserLinkByTypeAndUsername(ctx context.Context, db gorp.SqlExecutor, t string, username string) (*sdk.UserLink, error) {
-  query := gorpmapping.NewQuery(`SELECT * FROM user_link WHERE type = $1 AND username = $2`).Args(t, username)
+func LoadUserLinkByTypeAndExternalID(ctx context.Context, db gorp.SqlExecutor, t string, externalID string) (*sdk.UserLink, error) {
+  query := gorpmapping.NewQuery(`SELECT * FROM user_link WHERE type = $1 AND external_id = $2`).Args(t, externalID)
   return get(ctx, db, query)
 }

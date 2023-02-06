@@ -1019,6 +1019,7 @@ GDFkaTe3nUJdYV4=
 		Type:               "github",
 		AuthentifiedUserID: u.ID,
 		Username:           githubUsername,
+		ExternalID:         sdk.RandomString(10),
 	}
 	require.NoError(t, link.Insert(context.TODO(), db, &ul))
 
@@ -1138,6 +1139,7 @@ spec:
 			pr := &sdk.VCSPullRequest{
 				MergeBy: sdk.VCSAuthor{
 					Slug: githubUsername,
+					ID:   ul.Exter
 				},
 			}
 			*(out.(*sdk.VCSPullRequest)) = *pr

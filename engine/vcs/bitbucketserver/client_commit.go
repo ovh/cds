@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/rockbears/log"
 
@@ -78,12 +79,14 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 				Email:       sc.Author.Email,
 				DisplayName: sc.Author.DisplayName,
 				Slug:        sc.Author.Slug,
+				ID:          strconv.Itoa(sc.Author.ID),
 			},
 			Committer: sdk.VCSAuthor{
 				Name:        sc.Committer.Name,
 				Email:       sc.Committer.Email,
 				DisplayName: sc.Committer.DisplayName,
 				Slug:        sc.Committer.Slug,
+				ID:          strconv.Itoa(sc.Committer.ID),
 			},
 			URL: urlCommit + sc.Hash,
 		}
@@ -119,12 +122,14 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 			Email:       sc.Author.Email,
 			DisplayName: sc.Author.DisplayName,
 			Slug:        sc.Author.Slug,
+			ID:          strconv.Itoa(sc.Author.ID),
 		},
 		Committer: sdk.VCSAuthor{
 			Name:        sc.Committer.Name,
 			Email:       sc.Committer.Email,
 			DisplayName: sc.Committer.DisplayName,
 			Slug:        sc.Committer.Slug,
+			ID:          strconv.Itoa(sc.Committer.ID),
 		},
 		URL: urlCommit,
 	}
@@ -194,12 +199,14 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				Email:       sc.Author.Email,
 				DisplayName: sc.Author.DisplayName,
 				Slug:        sc.Author.Slug,
+				ID:          strconv.Itoa(sc.Author.ID),
 			},
 			Committer: sdk.VCSAuthor{
 				Name:        sc.Committer.Name,
 				Email:       sc.Committer.Email,
 				DisplayName: sc.Committer.DisplayName,
 				Slug:        sc.Committer.Slug,
+				ID:          strconv.Itoa(sc.Committer.ID),
 			},
 			URL: urlCommit + sc.Hash,
 		}

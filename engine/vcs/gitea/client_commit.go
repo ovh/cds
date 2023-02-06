@@ -2,6 +2,7 @@ package gitea
 
 import (
 	"context"
+	"strconv"
 
 	gg "code.gitea.io/sdk/gitea"
 
@@ -48,6 +49,7 @@ func (g *giteaClient) toVCSCommit(commit *gg.Commit) sdk.VCSCommit {
 			Email:       commit.Author.Email,
 			DisplayName: commit.Author.UserName,
 			Slug:        commit.Author.UserName,
+			ID:          strconv.FormatInt(commit.Author.ID, 10),
 		}
 	}
 	if commit.Committer != nil {
@@ -56,6 +58,7 @@ func (g *giteaClient) toVCSCommit(commit *gg.Commit) sdk.VCSCommit {
 			Avatar:      commit.Committer.AvatarURL,
 			Email:       commit.Committer.Email,
 			DisplayName: commit.Committer.UserName,
+			ID:          strconv.FormatInt(commit.Committer.ID, 10),
 		}
 	}
 

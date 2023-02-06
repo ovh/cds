@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -91,9 +89,9 @@ func (api *API) postLinkExternalUserWithCDSHandler() service.Handler {
 			AuthentifiedUserID: u.ID,
 			Created:            time.Now(),
 			Username:           userInfo.Username,
+			ExternalID:         userInfo.ExternalID,
 			Type:               string(consumerType),
 		}
-		log.Warn(ctx, "%+v", userLink)
 		if err := link.Insert(ctx, tx, &userLink); err != nil {
 			return err
 		}

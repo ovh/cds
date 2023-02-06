@@ -479,52 +479,58 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 		return nil, "", "", sdk.WithStack(err)
 	}
 
+	var commitUser *sdk.AuthentifiedUser
+
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
 		commit, err := client.Commit(ctx, repoName, analysis.Commit)
 		if err != nil {
 			return nil, "", "", err
 		}
-		commitUser, err := user.LoadByUsername(ctx, tx, commit.Committer.Slug)
+		commitUser, err = user.LoadByUsername(ctx, tx, commit.Committer.Slug)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", commit.Committer.Slug))
 			}
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
 		}
-		return commitUser, "", "", nil
 	case sdk.VCSTypeGithub:
 		pr, err := client.SearchPullRequest(ctx, repoName, analysis.Commit, "closed")
 		if err != nil {
 			return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to retrieve pull request with commit %s", analysis.Commit))
 		}
 
-		userLink, err := link.LoadUserLinkByTypeAndUsername(ctx, tx, vcsProjectWithSecret.Type, pr.MergeBy.Slug)
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, tx, vcsProjectWithSecret.Type, pr.MergeBy.ID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, pr.MergeBy.Slug), nil
 		}
-		commitUser, err := user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
+
+		//
+		if userLink.Username != pr.MergeBy.Slug {
+			// Update user link
+			userLink.Username = pr.MergeBy.Slug
+			if err := link.Update(ctx, tx, userLink); err != nil {
+				return nil, "", "", err
+			}
+		}
+
+		commitUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, "", "", err
 			}
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", pr.MergeBy.Slug), nil
 		}
-		return commitUser, "", "", nil
-	default:
-		//sdk.VCSTypeBitbucketCloud
-		//sdk.VCSTypeGitea
-		//sdk.VCSTypeGitlab: public instance
 	}
 
 	if err := tx.Commit(); err != nil {
 		return nil, "", "", sdk.WithStack(err)
 	}
 
-	return nil, "", "", nil
+	return commitUser, "", "", nil
 }
 
 func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.Entity, []error) {

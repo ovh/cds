@@ -102,6 +102,7 @@ func toSDKPullRequest(repo string, mr gitlab.MergeRequest) sdk.VCSPullRequest {
 			DisplayName: mr.Author.Username,
 			Name:        mr.Author.Name,
 			Slug:        mr.Author.Username,
+			ID:          strconv.Itoa(mr.Author.ID),
 		},
 		Closed: mr.State == "closed",
 		Merged: mr.State == "merged",
@@ -109,6 +110,7 @@ func toSDKPullRequest(repo string, mr gitlab.MergeRequest) sdk.VCSPullRequest {
 			DisplayName: mr.MergedBy.Username,
 			Name:        mr.MergedBy.Name,
 			Slug:        mr.MergedBy.Username,
+			ID:          strconv.Itoa(mr.MergedBy.ID),
 		},
 	}
 	if mr.UpdatedAt != nil {
