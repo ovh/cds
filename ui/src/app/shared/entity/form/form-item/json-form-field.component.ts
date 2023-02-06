@@ -10,6 +10,7 @@ export class FormItem {
     formOrder: number;
     condition: FlatElementTypeCondition[];
     description: string;
+    pattern: string;
 }
 @Component({
     selector: 'app-json-form-field',
@@ -27,6 +28,9 @@ export class JSONFormFieldComponent implements OnChanges {
 
     required: boolean;
     currentModel: any;
+    isConditionnal: boolean;
+    selectedCondition: FlatElementTypeCondition;
+    conditionRefProperties: string[];
 
     constructor(
         private _cd: ChangeDetectorRef
@@ -41,6 +45,9 @@ export class JSONFormFieldComponent implements OnChanges {
             this.currentModel[this.field.name] = null;
         }
         this.required = (<string[]>this.jsonFormSchema.types[this.parentType].required).indexOf(this.field.name) !== -1;
+        this.isConditionnal = this.field.condition && this.field.condition.length > 0;
+        this.selectedCondition = (this.field.condition ?? []).find(c => this.currentModel[c.refProperty] && this.currentModel[c.refProperty] === c.conditionValue);
+        this.conditionRefProperties = (this.field.condition ?? []).map(c => c.refProperty).filter((ref, index, arr) => arr.indexOf(ref) === index);
         this._cd.markForCheck();
     }
 

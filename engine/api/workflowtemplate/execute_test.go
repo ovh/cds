@@ -182,7 +182,7 @@ name: Environment-[[if .id]]`)),
 	errs := []sdk.WorkflowTemplateError{{
 		Type:    "workflow",
 		Line:    2,
-		Message: "unexpected \"]\" in operand",
+		Message: "bad character U+005D ']'",
 	}, {
 		Type:    "pipeline",
 		Line:    3,
