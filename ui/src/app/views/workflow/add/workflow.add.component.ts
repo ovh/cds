@@ -22,6 +22,8 @@ import { ProjectState, ProjectStateModel } from 'app/store/project.state';
 import { CreateWorkflow, ImportWorkflow } from 'app/store/workflow.action';
 import { Subscription } from 'rxjs';
 import { filter, finalize, first, map } from 'rxjs/operators';
+import {APIConfig} from "app/model/config.service";
+import {ConfigState} from "app/store/config.state";
 
 @Component({
     selector: 'app-workflow-add',
@@ -72,6 +74,8 @@ workflow:
     duplicateWorkflowName = false;
     fileTooLarge = false;
     themeSubscription: Subscription;
+    apiConfig: APIConfig;
+    configSubscription: Subscription;
 
     constructor(
         private _store: Store,
@@ -94,6 +98,11 @@ workflow:
             lineNumbers: true,
             autoRefresh: true,
         };
+
+        this.configSubscription = this._store.select(ConfigState.api).subscribe(c => {
+            this.apiConfig = c;
+            this._cd.markForCheck();
+        });
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT

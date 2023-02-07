@@ -126,7 +126,7 @@
                                                         </nz-form-control>
                                                     </nz-form-item>
                                                 </nz-col>
-                                                <nz-col [nzSpan]="10" [nzOffset]="2">
+                                                <nz-col [nzSpan]="10" [nzOffset]="2" *ngIf="apiConfig && !apiConfig.project_vcs_management_disabled">
                                                     <nz-form-item>
                                                         <nz-form-label>Or add a repository manager</nz-form-label>
                                                         <nz-form-control>
