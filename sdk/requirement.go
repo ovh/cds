@@ -7,8 +7,6 @@ const (
 	BinaryRequirement = "binary"
 	// ModelRequirement refers to the need fo a specific model
 	ModelRequirement = "model"
-	// ModelV2Requirement refers to a specific model v2
-	ModelV2Requirement = "modelv2"
 	// HostnameRequirement checks the hostname of the worker
 	HostnameRequirement = "hostname"
 	//PluginRequirement installs & checks plugins of the worker
