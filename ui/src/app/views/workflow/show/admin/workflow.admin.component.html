@@ -152,6 +152,19 @@
                 <nz-modal [(nzVisible)]="dryRunModalVisible" (nzOnCancel)="dryRunModalVisible = false" nzTitle="{{ 'workflow_retention_policy' | translate }}" nzWidth="900px">
                     <div *nzModalContent>
                         <ng-container>
+                            <div *ngIf="dryRunWarnings && dryRunWarnings?.length > 0">
+                                <nz-collapse>
+                                    <ng-template #warningTmpl>
+                                        <nz-tag [nzColor]="'red'">{{dryRunWarnings.length}}</nz-tag>
+                                        Errors
+                                    </ng-template>
+                                    <nz-collapse-panel [nzHeader]="warningTmpl" [nzActive]="true">
+                                        <ul>
+                                            <li *ngFor="let w of dryRunWarnings">{{w}}</li>
+                                        </ul>
+                                    </nz-collapse-panel>
+                                </nz-collapse>
+                            </div>
                             <div class="alignRight">
                                 <ng-container *ngIf="dryRunStatus === 'INCOMING'">
                                     <i nz-icon [nzType]="'sync'" [nzSpin]="true" class="blue"></i>

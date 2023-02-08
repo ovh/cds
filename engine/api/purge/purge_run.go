@@ -2,6 +2,7 @@ package purge
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -111,7 +112,9 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 	var nbRunsAnalyzed int64
 	limit := 50
 	offset := 0
+	eventErrorMsg := make([]string, 0)
 	for {
+
 		wfRuns, _, _, count, err := workflow.LoadRunsSummaries(ctx, db, wf.ProjectKey, wf.Name, offset, limit, nil)
 		if err != nil {
 			return err
@@ -133,7 +136,13 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 					if vcsClient != nil {
 						forkBranches, err = getBranches(ctx, gitRepo, vcsClient)
 						if err != nil {
-							return err
+							log.ErrorWithStackTrace(ctx, err)
+							version := strconv.FormatInt(run.Number, 10)
+							if run.Version != nil {
+								version = *run.Version
+							}
+							eventErrorMsg = append(eventErrorMsg, fmt.Sprintf("unable to get branch from fork %s for run %s", gitRepo, version))
+							continue
 						}
 					}
 				}
@@ -150,6 +159,11 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			}
 			if err != nil {
 				log.Error(ctx, "error on run %v:%d err:%v", wf.Name, run.Number, err)
+				version := strconv.FormatInt(run.Number, 10)
+				if run.Version != nil {
+					version = *run.Version
+				}
+				eventErrorMsg = append(eventErrorMsg, fmt.Sprintf("unable to apply retention policy for run %s", version))
 				continue
 			}
 		}
@@ -157,7 +171,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 		if count > offset+limit {
 			offset += limit
 			if u != nil {
-				event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "INCOMING", "", runs, nbRunsAnalyzed, u)
+				event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "INCOMING", "", nil, runs, nbRunsAnalyzed, u)
 				runs = runs[:0]
 			}
 			continue
@@ -165,7 +179,7 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 		break
 	}
 	if u != nil {
-		event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "DONE", "", runs, nbRunsAnalyzed, u)
+		event.PublishWorkflowRetentionDryRun(ctx, wf.ProjectKey, wf.Name, "DONE", "", eventErrorMsg, runs, nbRunsAnalyzed, u)
 	}
 	return nil
 }

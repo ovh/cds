@@ -31,6 +31,7 @@ export class WorkflowStateModel {
     retentionDryRunResults: Array<RunToKeep>;
     retentionDryRunStatus: string;
     retentionDryRunNbAnalyzedRuns: number;
+    retentionDryRunWarnings: string[];
     workflowRun: WorkflowRun;
     workflowNodeRun: WorkflowNodeRun;
     workflowNodeJobRun: WorkflowNodeJobRun;
@@ -59,6 +60,7 @@ export function getInitialWorkflowState(): WorkflowStateModel {
         retentionDryRunResults: new Array<RunToKeep>(),
         retentionDryRunStatus: null,
         retentionDryRunNbAnalyzedRuns: 0,
+        retentionDryRunWarnings: [],
         listRuns: new Array<WorkflowRunSummary>(),
         filters: {},
         editMode: false,
@@ -232,6 +234,13 @@ export class WorkflowState {
         return createSelector(
             [WorkflowState],
             (state: WorkflowStateModel): Array<RunToKeep> => state.retentionDryRunResults
+        );
+    }
+
+    static getRetentionDryRunWarnings() {
+        return createSelector(
+            [WorkflowState],
+            (state: WorkflowStateModel): string[] => state.retentionDryRunWarnings
         );
     }
 
@@ -1436,6 +1445,7 @@ export class WorkflowState {
         }
         ctx.setState({
             ...state,
+            retentionDryRunWarnings: action.payload.event?.warnings,
             retentionDryRunResults: runsKept,
             retentionDryRunStatus: action.payload.event.status,
             retentionDryRunNbAnalyzedRuns: state.retentionDryRunNbAnalyzedRuns + action.payload.event.nb_runs_analyzed
