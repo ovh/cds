@@ -373,7 +373,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/link/driver", ScopeNone(), r.GET(api.getLinkDriversHandler))
 	r.Handle("/link/{consumerType}/ask", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postAskLinkExternalUserWithCDSHandler))
-
+	r.Handle("/link/{consumerType}", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postLinkExternalUserWithCDSHandler))
 	// Users
 	r.Handle("/user", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUsersHandler))
 	r.Handle("/user/favorite", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postUserFavoriteHandler))
@@ -383,7 +383,6 @@ func (api *API) InitRouter() {
 	r.Handle("/user/{permUsernamePublic}", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserHandler), r.PUT(api.putUserHandler), r.DELETE(api.deleteUserHandler))
 	r.Handle("/user/{permUsernamePublic}/group", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserGroupsHandler))
 	r.Handle("/user/{permUsername}/contact", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserContactsHandler))
-	r.Handle("/user/{permUsername}/{consumerType}/link/callback", Scope(sdk.AuthConsumerScopeUser), r.POST(api.postLinkExternalUserWithCDSHandler))
 	r.Handle("/user/{permUsername}/link", Scope(sdk.AuthConsumerScopeUser), r.GET(api.getUserLinksHandler))
 	r.Handle("/user/{permUsername}/auth/consumer", Scope(sdk.AuthConsumerScopeAccessToken), r.GET(api.getConsumersByUserHandler), r.POST(api.postConsumerByUserHandler))
 	r.Handle("/user/{permUsername}/auth/consumer/{permConsumerID}", Scope(sdk.AuthConsumerScopeAccessToken), r.DELETE(api.deleteConsumerByUserHandler))

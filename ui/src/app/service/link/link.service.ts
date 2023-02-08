@@ -23,5 +23,12 @@ export class LinkService {
         }
         return this._http.post<AuthDriverSigningRedirect>(`/link/${consumerType}/ask`, {params})
     }
+
+    link(consumerType: string, code: string, state: string): Observable<any> {
+        return this._http.post(`/link/${consumerType}`, {
+            code,
+            state
+        });
+    }
 }
 

@@ -3,7 +3,7 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, DefaultUrlSerializer, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
-import {ConfigService, UserService} from 'app/service/services.module';
+import {ConfigService, LinkService, UserService} from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { jws } from 'jsrsasign';
@@ -41,6 +41,7 @@ export class CallbackComponent implements OnInit, OnDestroy {
         private _authenticationService: AuthenticationService,
         private _configService: ConfigService,
         private _userService: UserService,
+        private _linkService: LinkService,
         private _store: Store
     ) {
         this.loading = true;
@@ -119,7 +120,7 @@ export class CallbackComponent implements OnInit, OnDestroy {
                 if (u && u?.user?.username) {
                     this.loadingSignin = true;
                     this._cd.markForCheck();
-                    this._userService.link(u.user.username, this.consumerType, this.code, this.state)
+                    this._linkService.link(this.consumerType, this.code, this.state)
                         .pipe(first())
                         .subscribe( () => {
                             this._router.navigate(['/', 'settings', 'user', u.user.username])

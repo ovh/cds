@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	local2 "github.com/ovh/cds/engine/api/driver/local"
+	localdriver "github.com/ovh/cds/engine/api/driver/local"
 	"net/http"
 	"time"
 
@@ -26,7 +26,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrSignupDisabled)
 		}
 
-		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
+		localDriver := authDriver.GetDriver().(*localdriver.LocalDriver)
 
 		// Extract and validate signup request
 		var reqData sdk.AuthConsumerSigninRequest
@@ -192,7 +192,7 @@ func (api *API) postAuthLocalSigninHandler() service.Handler {
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
+		localDriver := authDriver.GetDriver().(*localdriver.LocalDriver)
 
 		// Extract and validate signup request
 		var reqData sdk.AuthConsumerSigninRequest
@@ -289,7 +289,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		if !okDriver {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
-		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
+		localDriver := authDriver.GetDriver().(*localdriver.LocalDriver)
 
 		var reqData sdk.AuthConsumerSigninRequest
 		var tokenInQueryString = QueryString(r, "token")
@@ -440,7 +440,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
+		localDriver := authDriver.GetDriver().(*localdriver.LocalDriver)
 
 		var email string
 
@@ -518,7 +518,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		localDriver := authDriver.GetDriver().(*local2.LocalDriver)
+		localDriver := authDriver.GetDriver().(*localdriver.LocalDriver)
 
 		var reqData sdk.AuthConsumerSigninRequest
 		if err := service.UnmarshalBody(r, &reqData); err != nil {

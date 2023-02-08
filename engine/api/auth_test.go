@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	corpsso2 "github.com/ovh/cds/engine/api/driver/corpsso"
+	corpssodriver "github.com/ovh/cds/engine/api/driver/corpsso"
 	"github.com/ovh/cds/engine/api/organization"
 	"net/http"
 	"net/http/httptest"
@@ -320,7 +320,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	api.Config.Auth.AllowedOrganizations = []string{"planet-express"}
 
-	var cfg corpsso2.SSOConfig
+	var cfg corpssodriver.SSOConfig
 	cfg.Request.Keys.RequestSigningKey = AuthKey
 	cfg.Request.RedirectMethod = "POST"
 	cfg.Request.RedirectURL = "https://lolcat.local/sso/jwt"
@@ -406,7 +406,7 @@ func Test_postAuthSigninHandler_WithCorporateSSO(t *testing.T) {
 }
 
 func generateToken(t *testing.T, username string) string {
-	ssoToken := corpsso2.IssuedToken{
+	ssoToken := corpssodriver.IssuedToken{
 		RemoteUser:     username,
 		RemoteUsername: strings.Title(username),
 		Email:          username + "@planet-express.futurama",

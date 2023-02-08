@@ -89,10 +89,5 @@ export class UserService {
         return this._http.get<Schema>('/user/schema', {params: p});
     }
 
-    link(username: string, consumerType: string, code: string, state: string): Observable<any> {
-        return this._http.post(`/user/${username}/${consumerType}/link/callback`, {
-            code,
-            state
-        });
-    }
+
 }

@@ -12,9 +12,9 @@ type dbUserLink struct {
 }
 
 func (ul dbUserLink) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{ul.ID, ul.AuthentifiedUserID, ul.Type, ul.Username}
+	_ = []interface{}{ul.ID, ul.AuthentifiedUserID, ul.Type, ul.ExternalID}
 	return []gorpmapper.CanonicalForm{
-		"{{.ID}}{{.AuthentifiedUserID}}{{.Type}}{{.Username}}",
+		"{{.ID}}{{.AuthentifiedUserID}}{{.Type}}{{.ExternalID}}",
 	}
 }
 
