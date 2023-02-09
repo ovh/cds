@@ -153,7 +153,7 @@ var (
 		//{"plan9/amd64", OSArchRequirement, "plan9/amd64"},
 		//{"plan9/arm", OSArchRequirement, "plan9/arm"},
 		//{"solaris/amd64", OSArchRequirement, "solaris/amd64"},
-		{Name: "windows/386", Type: OSArchRequirement, Value: "windows/386"},
+		//{Name: "windows/386", Type: OSArchRequirement, Value: "windows/386"},
 		{Name: "windows/amd64", Type: OSArchRequirement, Value: "windows/amd64"},
 	}
 )

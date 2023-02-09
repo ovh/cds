@@ -403,13 +403,26 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 	oldModel := sdk.Model{
 		ID:          0,
 		Type:        model.Type,
-		Name:        workerModelV2,
+		Name:        modelName + "/" + branch,
 		Description: model.Description,
 		// Fake group for naming
 		Group: &sdk.Group{
-			Name: "",
+			Name: projKey + "/" + vcsName + "/" + repoName,
 		},
 	}
+
+	preCmd := `
+    #!/bin/sh
+    if [ ! -z ` + "`which curl`" + ` ]; then
+      curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+    elif [ ! -z ` + "`which wget`" + ` ]; then
+      wget "{{.API}}/download/worker/linux/$(uname -m)" -O worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+    else
+      echo "Missing requirements to download CDS worker binary.";
+      exit 1;
+    fi
+  `
+
 	switch model.Type {
 	case sdk.WorkerModelTypeDocker:
 		var dockerSpec sdk.V2WorkerModelDockerSpec
@@ -422,8 +435,13 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 			Username: dockerSpec.Username,
 			Password: dockerSpec.Password,
 			Envs:     dockerSpec.Envs,
-			Cmd:      dockerSpec.Cmd,
-			Shell:    dockerSpec.Shell,
+		}
+		if model.OSArch == "windows/amd64" {
+			oldModel.ModelDocker.Cmd = "curl {{.API}}/download/worker/windows/amd64 -o worker.exe && worker.exe"
+			oldModel.ModelDocker.Shell = "cmd.exe /C"
+		} else {
+			oldModel.ModelDocker.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
+			oldModel.ModelDocker.Shell = "sh -c"
 		}
 	case sdk.WorkerModelTypeVSphere:
 		var vsphereSpec sdk.V2WorkerModelVSphereSpec
@@ -431,9 +449,9 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 			return nil, sdk.WithStack(err)
 		}
 		oldModel.ModelVirtualMachine = sdk.ModelVirtualMachine{
-			Cmd:      vsphereSpec.Cmd,
-			PreCmd:   vsphereSpec.PreCmd,
-			PostCmd:  vsphereSpec.PostCmd,
+			Cmd:      "./worker",
+			PreCmd:   preCmd,
+			PostCmd:  "sudo shutdown -h now",
 			User:     vsphereSpec.Username,
 			Password: vsphereSpec.Password,
 			Image:    vsphereSpec.Image,
@@ -444,9 +462,9 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 			return nil, sdk.WithStack(err)
 		}
 		oldModel.ModelVirtualMachine = sdk.ModelVirtualMachine{
-			Cmd:     openstackSpec.Cmd,
-			PreCmd:  openstackSpec.PreCmd,
-			PostCmd: openstackSpec.PostCmd,
+			Cmd:     "./worker",
+			PreCmd:  preCmd,
+			PostCmd: "sudo shutdown -h now",
 			Image:   openstackSpec.Image,
 			Flavor:  openstackSpec.Flavor,
 		}
