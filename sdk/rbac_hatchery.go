@@ -12,22 +12,3 @@ type RBACHatchery struct {
 	RegionName   string `json:"region" db:"-"`
 	HatcheryName string `json:"hatchery" db:"-"`
 }
-
-func isValidRBACHatchery(rbacName string, rbacHatchery RBACHatchery) error {
-	// Check empty hatchery
-	if rbacHatchery.HatcheryID == "" {
-		return NewErrorFrom(ErrInvalidData, "rbac %s: missing hatchery", rbacName)
-	}
-	if rbacHatchery.RegionID == "" {
-		return NewErrorFrom(ErrInvalidData, "rbac %s: missing region", rbacName)
-	}
-
-	// Check role
-	if rbacHatchery.Role == "" {
-		return NewErrorFrom(ErrInvalidData, "rbac %s: role for hatchery permission cannot be empty", rbacName)
-	}
-	if !HatcheryRoles.Contains(rbacHatchery.Role) {
-		return NewErrorFrom(ErrInvalidData, "rbac %s: role %s is not allowed on a hatchery permission", rbacName, rbacHatchery.Role)
-	}
-	return nil
-}
