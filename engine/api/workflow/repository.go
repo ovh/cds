@@ -20,7 +20,7 @@ import (
 )
 
 // WorkflowAsCodePattern is the default code pattern to find cds files
-const WorkflowAsCodePattern = ".cds/**/*.yml"
+const WorkflowAsCodePattern = ".cds/*.yml"
 
 // PushOption is the set of options for workflow push
 type PushOption struct {
