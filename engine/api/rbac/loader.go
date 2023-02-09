@@ -20,12 +20,14 @@ var LoadOptions = struct {
 	LoadRBACProject  LoadOptionFunc
 	LoadRBACHatchery LoadOptionFunc
 	LoadRBACRegion   LoadOptionFunc
+	All              LoadOptionFunc
 }{
 	Default:          loadDefault,
 	LoadRBACGlobal:   loadRBACGlobal,
 	LoadRBACProject:  loadRBACProject,
 	LoadRBACHatchery: loadRBACHatchery,
 	LoadRBACRegion:   loadRBACRegion,
+	All:              loadAll,
 }
 
 func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
@@ -33,6 +35,22 @@ func loadDefault(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 		return err
 	}
 	if err := loadRBACProject(ctx, db, rbac); err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadAll(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+	if err := loadRBACGlobal(ctx, db, rbac); err != nil {
+		return err
+	}
+	if err := loadRBACProject(ctx, db, rbac); err != nil {
+		return err
+	}
+	if err := loadRBACRegion(ctx, db, rbac); err != nil {
+		return err
+	}
+	if err := loadRBACHatchery(ctx, db, rbac); err != nil {
 		return err
 	}
 	return nil

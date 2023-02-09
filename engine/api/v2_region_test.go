@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
-	"github.com/ovh/cds/engine/api/region"
 	"github.com/rockbears/yaml"
 	"net/http/httptest"
 	"testing"
@@ -23,6 +22,9 @@ func Test_crudRegion(t *testing.T) {
 	db.Exec("DELETE FROM region")
 
 	u, pass := assets.InsertLambdaUser(t, db)
+
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10)}
+	require.NoError(t, hatchery.Insert(context.TODO(), db, &hatch))
 
 	// Insert rbac
 	perm := fmt.Sprintf(`name: perm-region-%s
@@ -45,26 +47,27 @@ global:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
 
-	regDB, err := region.LoadRegionByName(context.TODO(), api.mustDB(), reg.Name)
-	require.NoError(t, err)
+	//regDB, err := region.LoadRegionByName(context.TODO(), api.mustDB(), reg.Name)
+	//require.NoError(t, err)
 
 	rbacReadRegion := `name: perm-%s
 regions:
 - role: %s
   region: %s
   users: [%s]
-  organizations: [default]`
+  organizations: [default]
+hatcheries:
+- role: %s
+  region: %s
+  hatchery: %s`
 
-	rbacReadRegion = fmt.Sprintf(rbacReadRegion, sdk.RandomString(10), sdk.RegionRoleList, reg.Name, u.Username)
+	rbacReadRegion = fmt.Sprintf(rbacReadRegion, sdk.RandomString(10), sdk.RegionRoleList, reg.Name, u.Username,
+		sdk.HatcheryRoleSpawn, reg.Name, hatch.Name)
 	var rbRead sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(rbacReadRegion), &rbRead))
 
-	org, err := organization.LoadOrganizationByName(context.TODO(), api.mustDB(), "default")
-	require.NoError(t, err)
-
-	rbRead.Regions[0].RegionID = regDB.ID
-	rbRead.Regions[0].RBACUsersIDs = []string{u.ID}
-	rbRead.Regions[0].RBACOrganizationIDs = []string{org.ID}
+	rLoader := NewRBACLoader(db)
+	rLoader.FillRBACWithIDs(context.TODO(), &rbRead)
 
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rbRead))
 
@@ -90,6 +93,11 @@ regions:
 	wDelete := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wDelete, reqDelete)
 	require.Equal(t, 204, wDelete.Code)
+
+	// check rbac deletion
+	_, err := rbac.LoadRBACByName(context.TODO(), db, rbRead.Name, rbac.LoadOptions.All)
+	require.Error(t, err)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
 	// Then check if region has been deleted
 	uriList := api.Router.GetRouteV2("GET", api.getRegionsHandler, nil)
