@@ -240,13 +240,13 @@ func Create(ctx context.Context, h Interface) error {
 				var canTakeJob bool
 
 				var containsRegionRequirement bool
-				var workerModelV2 string
+				var jobModel string
 				for _, r := range workerRequest.requirements {
 					switch r.Type {
 					case sdk.RegionRequirement:
 						containsRegionRequirement = true
-					case sdk.ModelV2Requirement:
-						workerModelV2 = r.Value
+					case sdk.ModelRequirement:
+						jobModel = r.Value
 					}
 				}
 
@@ -254,11 +254,14 @@ func Create(ctx context.Context, h Interface) error {
 					log.Debug(currentCtx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
 					canTakeJob = false
 				} else if isWithModels {
-					if workerModelV2 != "" {
+
+					// Test ascode model
+					modelPath := strings.Split(jobModel, "/")
+					if len(modelPath) == 5 {
 						if h.CDSClientV2() == nil {
 							continue
 						}
-						chosenModel, err = canRunJobWithModelV2(currentCtx, hWithModels, workerModelV2)
+						chosenModel, err = canRunJobWithModelV2(currentCtx, hWithModels, workerRequest, jobModel)
 						if err != nil {
 							log.Error(currentCtx, "%v", err)
 							continue
@@ -370,7 +373,7 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 // a docker container for register a worker model. 128 Mo
 const MemoryRegisterContainer int64 = 128
 
-func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, workerModelV2 string) (*sdk.Model, error) {
+func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, workerModelV2 string) (*sdk.Model, error) {
 	ctx, end := telemetry.Span(ctx, "hatchery.canRunJobWithModelV2", telemetry.Tag(telemetry.TagWorker, workerModelV2))
 	defer end()
 
@@ -448,6 +451,10 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, workerMode
 			Flavor:  openstackSpec.Flavor,
 		}
 	}
+
+	if !h.CanSpawn(ctx, &oldModel, j.id, j.requirements) {
+		return nil, nil
+	}
 	return &oldModel, nil
 }
 
@@ -489,7 +496,6 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			containsModelRequirement = true
 		case sdk.HostnameRequirement:
 			containsHostnameRequirement = true
-
 		}
 	}
 

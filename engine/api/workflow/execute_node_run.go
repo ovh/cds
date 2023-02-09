@@ -186,7 +186,7 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 				// Add job to Queue
 				// Insert data in workflow_node_run_job
 				log.Debug(ctx, "workflow.executeNodeRun> stage %s call addJobsToQueue", stage.Name)
-				r, err := addJobsToQueue(ctx, db, proj, stage, wr, workflowNodeRun, &previousStage)
+				r, err := addJobsToQueue(ctx, store, db, proj, stage, wr, workflowNodeRun, &previousStage)
 				report.Merge(ctx, r)
 				if err != nil {
 					return report, err
@@ -437,7 +437,7 @@ func checkRunOnlyFailedJobs(wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) (*sdk.
 	return previousNR, nil
 }
 
-func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun, previousStage *sdk.Stage) (*ProcessorReport, error) {
+func addJobsToQueue(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, proj sdk.Project, stage *sdk.Stage, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun, previousStage *sdk.Stage) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = telemetry.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
@@ -496,7 +496,7 @@ jobLoop:
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, db, proj.Key, *wr, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)

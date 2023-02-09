@@ -6,4 +6,4 @@ jobs:
   - script:
     - env
   requirements:
-  - modelv2: docker-debian
+  - model: docker-debian
