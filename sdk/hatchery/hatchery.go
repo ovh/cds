@@ -403,11 +403,11 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 	oldModel := sdk.Model{
 		ID:          0,
 		Type:        model.Type,
-		Name:        workerModelV2,
+		Name:        modelName + "/" + branch,
 		Description: model.Description,
 		// Fake group for naming
 		Group: &sdk.Group{
-			Name: "",
+			Name: projKey + "/" + vcsName + "/" + repoName,
 		},
 	}
 
