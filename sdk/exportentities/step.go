@@ -554,6 +554,8 @@ func (s Step) asScript() (sdk.Action, error) {
 			}
 		}
 		val = strings.Join(lines, "\n")
+	} else if script, ok := s.Script.([]string); ok {
+		val = strings.Join(script, "\n")
 	} else if script, ok := s.Script.(string); ok {
 		val = script
 	} else {
