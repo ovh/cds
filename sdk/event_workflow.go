@@ -40,5 +40,6 @@ type EventRetentionWorkflowDryRun struct {
 	Runs         []WorkflowRunToKeep `json:"runs"`
 	Status       string              `json:"status"`
 	Error        string              `json:"error"`
+	Warnings     []string            `json:"warnings"`
 	RunsAnalyzed int64               `json:"nb_runs_analyzed"`
 }

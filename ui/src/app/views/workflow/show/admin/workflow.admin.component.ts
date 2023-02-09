@@ -114,10 +114,13 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     dryRunsStatusSubs: Subscription;
     @Select(WorkflowState.getRetentionProgress()) dryRunProgress$: Observable<number>;
     dryRunProgressSub: Subscription;
+    @Select(WorkflowState.getRetentionDryRunWarnings()) dryRunWarnings$: Observable<string[]>
+    dryRunWarningsSub: Subscription;
     dryRunColumns = [];
     dryRunDatas: Array<RunToKeep>;
     dryRunMaxDatas: number;
     dryRunStatus: string;
+    dryRunWarnings: string[];
     dryRunAnalyzedRuns: number;
     availableVariables: Array<string>;
     availableStringVariables: string;
@@ -301,6 +304,10 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
             this.dryRunAnalyzedRuns = nb;
             this._cd.markForCheck();
+        });
+        this.dryRunWarningsSub = this.dryRunWarnings$.subscribe(ws => {
+           this.dryRunWarnings = ws;
+           this._cd.markForCheck();
         });
 
     }

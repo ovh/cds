@@ -87,12 +87,13 @@ func PublishWorkflowPermissionDelete(ctx context.Context, projKey string, w sdk.
 	publishWorkflowEvent(ctx, e, projKey, w.Name, w.GetEventIntegration(), u)
 }
 
-func PublishWorkflowRetentionDryRun(ctx context.Context, projKey string, workflowName string, status string, error string, runsToKeep []sdk.WorkflowRunToKeep, nbRunsAnalyzed int64, u sdk.Identifiable) {
+func PublishWorkflowRetentionDryRun(ctx context.Context, projKey string, workflowName string, status string, error string, warnings []string, runsToKeep []sdk.WorkflowRunToKeep, nbRunsAnalyzed int64, u sdk.Identifiable) {
 	e := sdk.EventRetentionWorkflowDryRun{
 		Status:       status,
 		Error:        error,
 		Runs:         runsToKeep,
 		RunsAnalyzed: nbRunsAnalyzed,
+		Warnings:     warnings,
 	}
 	publishWorkflowEvent(ctx, e, projKey, workflowName, nil, u)
 }
