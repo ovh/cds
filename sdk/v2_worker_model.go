@@ -15,7 +15,7 @@ const (
 type V2WorkerModel struct {
 	Name        string          `json:"name" cli:"name" jsonschema:"minLength=1" jsonschema_extras:"order=1" jsonschema_description:"Name of the worker model"`
 	Description string          `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the worker model"`
-	OSArch      string          `json:"osarch,omitempty" jsonschema_extras:"order=3" jsonschema_description:"OS/Arch of the worker model"`
+	OSArch      string          `json:"osarch" jsonschema_extras:"order=3" jsonschema_description:"OS/Arch of the worker model"`
 	Type        string          `json:"type" cli:"type" jsonschema:"enum=docker,enum=openstack,enum=vsphere" jsonschema_extras:"order=4" jsonschema_description:"Type of worker model: docker, openstack, vsphere"`
 	Spec        json.RawMessage `json:"spec" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec" jsonschema_extras:"order=5" jsonschema_description:"Specification of the worker model"`
 }
