@@ -168,6 +168,19 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		nr.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
 
+	// If we rerun only failed job, retrieve cds.build variables from previous jobs
+	if nr.Manual != nil && nr.Manual.OnlyFailedJobs {
+		previousNodeRun, err := checkRunOnlyFailedJobs(wr, nr)
+		if err != nil {
+			return nil, false, err
+		}
+		for _, bp := range previousNodeRun.BuildParameters {
+			if strings.HasPrefix(bp.Name, "cds.build.") {
+				nr.BuildParameters = append(nr.BuildParameters, bp)
+			}
+		}
+	}
+
 	isRoot := n.ID == wr.Workflow.WorkflowData.Node.ID
 
 	// GIT PARAMS

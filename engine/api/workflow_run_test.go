@@ -2995,6 +2995,14 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 	}
 	assert.NoError(t, workflow.UpdateNodeRun(db, nr))
 
+	nr.BuildParameters = append(nr.BuildParameters, sdk.Parameter{
+		Name:  "cds.build.image",
+		Type:  "string",
+		Value: "myimage",
+	})
+	require.NoError(t, workflow.UpdateNodeRunBuildParameters(db, nr.ID, nr.BuildParameters))
+	wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0] = *nr
+
 	opts = sdk.WorkflowRunPostHandlerOption{
 		Manual: &sdk.WorkflowNodeRunManual{
 			OnlyFailedJobs: true,
@@ -3008,11 +3016,17 @@ func Test_postWorkflowRunHandlerRestartOnlyFailed(t *testing.T) {
 
 	wrr, _ = workflow.LoadRun(context.TODO(), db, proj2.Key, w1.Name, 1, workflow.LoadRunOptions{})
 
-	assert.Equal(t, sdk.StatusBuilding, wrr.Status)
-	assert.Equal(t, firstJobEnd.Unix(), wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Start.Unix())
-	assert.NotEqual(t, firstJobEnd, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Start)
-	assert.Equal(t, sdk.StatusSuccess, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Status)
-	assert.Equal(t, sdk.StatusWaiting, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Status)
+	require.Equal(t, sdk.StatusBuilding, wrr.Status)
+	require.Equal(t, firstJobEnd.Unix(), wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Start.Unix())
+	require.NotEqual(t, firstJobEnd, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Start)
+	require.Equal(t, sdk.StatusSuccess, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].Status)
+	require.Equal(t, sdk.StatusWaiting, wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].Stages[0].RunJobs[1].Status)
+
+	mapParams := sdk.ParametersToMap(wrr.WorkflowNodeRuns[wrr.Workflow.WorkflowData.Node.ID][0].BuildParameters)
+	p, has := mapParams["cds.build.image"]
+	require.True(t, has)
+	require.Equal(t, p, "myimage")
+
 }
 
 func Test_CheckRegionDuringInitWorkflow(t *testing.T) {
