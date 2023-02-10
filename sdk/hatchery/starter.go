@@ -3,7 +3,6 @@ package hatchery
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -22,9 +21,9 @@ type workerStarterRequest struct {
 	execGroups          []sdk.Group
 	requirements        []sdk.Requirement
 	hostname            string
-	timestamp           int64
 	workflowNodeRunID   int64
 	registerWorkerModel *sdk.Model
+	queued              time.Time
 }
 
 // Start all goroutines which manage the hatchery worker spawning routine.
@@ -115,10 +114,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	)
 	telemetry.Record(ctx, GetMetrics().SpawnedWorkers, 1)
 
-	ctx = context.WithValue(ctx, LogFieldJobID, strconv.Itoa(int(j.id)))
-
-	log.Debug(ctx, "hatchery> spawnWorkerForJob> %d", j.id)
-	defer log.Info(ctx, "hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())
+	logStepInfo(ctx, "starting-worker", j.queued)
 
 	maxProv := h.Configuration().Provision.MaxConcurrentProvisioning
 	if maxProv < 1 {
@@ -138,9 +134,10 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	if j.model != nil {
 		modelName = j.model.Group.Name + "/" + j.model.Name
 	}
+	ctx = context.WithValue(ctx, LogFieldModel, modelName)
 
 	if h.Service() == nil {
-		log.Warn(ctx, "hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered", j.timestamp, j.id, modelName)
+		log.Warn(ctx, "hatchery not registered")
 		return false
 	}
 
@@ -151,13 +148,13 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		next()
 		// perhaps already booked by another hatchery
 		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Info(ctx, "hatchery> spawnWorkerForJob> %d - cannot book job %d: %s", j.timestamp, j.id, err)
+		log.Info(ctx, "cannot book job: %s", err)
 		cancel()
 		return false
 	}
 	next()
 	cancel()
-	log.Debug(ctx, "hatchery> spawnWorkerForJob> %d - send book job %d", j.timestamp, j.id)
+	logStepInfo(ctx, "book-job", j.queued)
 
 	ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
 	start := time.Now()
@@ -170,11 +167,8 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	})
 	next()
 
-	workerName := namesgenerator.GenerateWorkerName(modelName, "")
-
-	ctxSpawnWorker, next := telemetry.Span(ctx, "hatchery.SpawnWorker", telemetry.Tag(telemetry.TagWorker, workerName))
 	arg := SpawnArguments{
-		WorkerName:   workerName,
+		WorkerName:   namesgenerator.GenerateWorkerName(modelName, ""),
 		Model:        j.model,
 		JobID:        j.id,
 		NodeRunID:    j.workflowNodeRunID,
@@ -188,8 +182,10 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		JobName:      bookedInfos.JobName,
 	}
 
-	ctxSpawnWorker = context.WithValue(ctxSpawnWorker, cdslog.AuthWorkerName, arg.WorkerName)
-	log.Info(ctx, "starting worker %q from model %q (project: %s, workflow: %s , job:%v, jobID:%v)", arg.WorkerName, modelName, arg.ProjectKey, arg.WorkflowName, arg.NodeRunName, arg.JobID)
+	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, arg.WorkerName)
+	ctx = context.WithValue(ctx, LogFieldProject, arg.ProjectKey)
+	ctx = context.WithValue(ctx, LogFieldWorkflow, arg.WorkflowName)
+	ctx = context.WithValue(ctx, LogFieldNodeRun, arg.NodeRunName)
 
 	// Get a JWT to authentified the worker
 	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
@@ -199,11 +195,17 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
 		}
 		if err := h.CDSClient().WorkerModelSpawnError(j.model.Group.Name, j.model.Name, spawnError); err != nil {
-			log.Error(ctx, "hatchery> spawnWorkerForJob> error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
+			log.Error(ctx, "error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
 		}
 		return false
 	}
 	arg.WorkerToken = jwt
+
+	ctx = context.WithValue(ctx, LogFieldStep, "starting-worker-spawn")
+	ctx = context.WithValue(ctx, LogFieldDelay, time.Since(j.queued).Nanoseconds())
+	log.Info(ctx, "starting worker spawn for job with id: %d", j.id)
+
+	ctxSpawnWorker, next := telemetry.Span(ctx, "hatchery.SpawnWorker", telemetry.Tag(telemetry.TagWorker, arg.WorkerName))
 	errSpawn := h.SpawnWorker(ctxSpawnWorker, arg)
 	next()
 	if errSpawn != nil {
@@ -226,5 +228,6 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		})
 		next()
 	}
+
 	return true // ok for this job
 }

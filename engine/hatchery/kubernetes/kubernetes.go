@@ -41,7 +41,7 @@ func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
 	if err := h.Common.Init(ctx, h); err != nil {
 		return err
 	}
-	h.GoRoutines.Run(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
+	h.GoRoutines.Run(ctx, "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
 	return nil

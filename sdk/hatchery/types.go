@@ -27,11 +27,29 @@ const (
 )
 
 var (
-	LogFieldJobID = log.Field("action_metadata_job_id")
+	LogFieldJobID        = log.Field("action_metadata_job_id")
+	LogFieldStep         = log.Field("hatchery_step")
+	LogFieldDelay        = log.Field("hatchery_step_delay")
+	LogFieldProjectID    = log.Field("worker_project_id")
+	LogFieldProject      = log.Field("worker_project")
+	LogFieldWorkflow     = log.Field("worker_workflow")
+	LogFieldNodeRunID    = log.Field("worker_node_run_id")
+	LogFieldNodeRun      = log.Field("worker_node_run")
+	LogFieldModel        = log.Field("worker_model")
+	LogFieldServiceCount = log.Field("worker_service_count")
 )
 
 func init() {
 	log.RegisterField(LogFieldJobID)
+	log.RegisterField(LogFieldStep)
+	log.RegisterField(LogFieldDelay)
+	log.RegisterField(LogFieldProjectID)
+	log.RegisterField(LogFieldProject)
+	log.RegisterField(LogFieldWorkflow)
+	log.RegisterField(LogFieldNodeRunID)
+	log.RegisterField(LogFieldNodeRun)
+	log.RegisterField(LogFieldModel)
+	log.RegisterField(LogFieldServiceCount)
 }
 
 // WorkerJWTClaims is the specific claims format for Worker JWT
