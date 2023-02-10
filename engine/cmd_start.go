@@ -274,28 +274,28 @@ See $ engine config command for more details.
 		for i := range serviceConfs {
 			s := serviceConfs[i]
 
-			ctx := context.WithValue(ctx, cdslog.Service, s.service.Name())
 			if err := s.service.ApplyConfiguration(s.cfg); err != nil {
 				sdk.Exit("Unable to init service %s: %v", s.arg, err)
 			}
 
+			serviceCtx := context.WithValue(ctx, cdslog.Service, s.service.Name())
 			log.Info(ctx, "%s> %s configuration applied", s.arg, s.service.Name())
 
 			if srv, ok := s.service.(service.BeforeStart); ok {
-				if err := srv.BeforeStart(ctx); err != nil {
+				if err := srv.BeforeStart(serviceCtx); err != nil {
 					sdk.Exit("Unable to start service %s: %v", s.arg, err)
 				}
 			}
 
 			var err error
-			ctx, err = telemetry.Init(ctx, conf.Telemetry, s.service)
+			serviceCtx, err = telemetry.Init(serviceCtx, conf.Telemetry, s.service)
 			if err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 
 			wg.Add(1)
 			go func(srv serviceConf) {
-				if err := start(ctx, srv.service, srv.arg, srv.cfg); err != nil {
+				if err := start(serviceCtx, srv.service, srv.arg, srv.cfg); err != nil {
 					log.Error(ctx, "%s> service has been stopped: %+v", srv.arg, err)
 				}
 				wg.Done()
@@ -327,11 +327,9 @@ func unregisterServices(ctx context.Context, serviceConfs []serviceConf) {
 	}
 }
 
-func start(c context.Context, s service.Service, serviceName string, cfg interface{}) error {
-	ctx, cancel := context.WithCancel(c)
+func start(ctx context.Context, s service.Service, serviceName string, cfg interface{}) error {
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
-	ctx = context.WithValue(ctx, cdslog.Service, serviceName)
 
 	srvConfig, err := s.Init(cfg)
 	if err != nil {
@@ -339,7 +337,7 @@ func start(c context.Context, s service.Service, serviceName string, cfg interfa
 	}
 
 	// Signin and register to CDS api
-	if err := s.Signin(c, srvConfig, cfg); err != nil {
+	if err := s.Signin(ctx, srvConfig, cfg); err != nil {
 		return sdk.WrapError(err, "unable to signin: %s", serviceName)
 	}
 	log.Info(ctx, "%s> Service signed in", serviceName)
