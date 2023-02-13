@@ -30,7 +30,7 @@ func LoadRBACByIDs(ctx context.Context, db gorp.SqlExecutor, IDs sdk.StringSlice
 
 // Insert a RBAC permission in database
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) error {
-	if err := sdk.IsValidRBAC(rb); err != nil {
+	if err := IsValidRBAC(ctx, db, rb); err != nil {
 		return err
 	}
 	if rb.ID == "" {

@@ -40,30 +40,3 @@ type RBAC struct {
 func (rbac *RBAC) IsEmpty() bool {
 	return len(rbac.Projects) == 0 && len(rbac.Hatcheries) == 0 && len(rbac.Global) == 0 && len(rbac.Regions) == 0
 }
-
-func IsValidRBAC(rbac *RBAC) error {
-	if rbac.Name == "" {
-		return WrapError(ErrInvalidData, "missing permission name")
-	}
-	for _, g := range rbac.Global {
-		if err := isValidRBACGlobal(rbac.Name, g); err != nil {
-			return err
-		}
-	}
-	for _, p := range rbac.Projects {
-		if err := isValidRBACProject(rbac.Name, p); err != nil {
-			return err
-		}
-	}
-	for _, r := range rbac.Regions {
-		if err := isValidRBACRegion(rbac.Name, r); err != nil {
-			return err
-		}
-	}
-	for _, h := range rbac.Hatcheries {
-		if err := isValidRBACHatchery(rbac.Name, h); err != nil {
-			return err
-		}
-	}
-	return nil
-}

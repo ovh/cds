@@ -19,18 +19,3 @@ type RBACRegion struct {
 	RBACGroupsIDs       []int64  `json:"-" db:"-"`
 	RBACOrganizationIDs []string `json:"-" db:"-"`
 }
-
-func isValidRBACRegion(rbacName string, rbacRegion RBACRegion) error {
-	if rbacRegion.RegionID == "" {
-		return NewErrorFrom(ErrInvalidData, "rbac %s: missing region", rbacName)
-	}
-
-	// Check role
-	if rbacRegion.Role == "" {
-		return NewErrorFrom(ErrInvalidData, "rbac %s: role for region permission cannot be empty", rbacName)
-	}
-	if !RegionRoles.Contains(rbacRegion.Role) {
-		return NewErrorFrom(ErrInvalidData, "rbac %s: role %s is not allowed on a region permission", rbacName, rbacRegion.Role)
-	}
-	return nil
-}
