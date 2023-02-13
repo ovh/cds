@@ -206,7 +206,7 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 				log.Error(ctx, err.Error())
 
 				httpErr := sdk.ExtractHTTPError(err)
-				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, 0, u.AuthConsumerUser.AuthentifiedUser)
+				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, nil, 0, u.AuthConsumerUser.AuthentifiedUser)
 			}
 		})
 		return service.WriteJSON(w, sdk.PurgeDryRunResponse{NbRunsToAnalize: int64(count)}, http.StatusOK)

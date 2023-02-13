@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
 	"io"
 	"net/http"
 	"testing"
@@ -423,16 +424,17 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	modelContent := `name: docker-debian
-description: my debian worker model
-type: docker
-spec:
-  image: myimage:1.1
-  registry: http://my-registry:9000
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  shell: sh -c
-  envs:
-    MYVAR: toto`
+	modelContent := `
+    name: docker-debian
+    description: my debian worker model
+    osarch: linux/amd64
+    type: docker
+    spec:
+      image: myimage:1.1
+      registry: http://my-registry:9000
+      envs:
+        MYVAR: toto
+  `
 	content64 := base64.StdEncoding.EncodeToString([]byte(modelContent))
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/content/.cds%2Fworker-models%2Fmymodel.yml?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -651,27 +653,18 @@ GDFkaTe3nUJdYV4=
 		services.NewClient = services.NewDefaultClient
 	}()
 
-	model := `name: docker-debian
-description: my debian worker model
-type: docker
-spec:
-  image: myimage:1.1
-  registry: http://my-registry:9000
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  shell: sh -c
-  envs:
-    MYVAR: toto
-
-`
+	model := `
+    name: docker-debian
+    description: my debian worker model
+    osarch: linux/amd64
+    type: docker
+    spec:
+      image: myimage:1.1
+      registry: http://my-registry:9000
+      envs:
+        MYVAR: toto
+  `
 	encodedModel := base64.StdEncoding.EncodeToString([]byte(model))
-
-	modelTemplate := `name: openstack-debian
-type: vm
-spec:
-  pre_cmd: apt-get install docker-ce
-  cmd: ./worker
-  post_cmd: sudo shutdown -h now`
-	encodedTemplate := base64.StdEncoding.EncodeToString([]byte(modelTemplate))
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -694,10 +687,6 @@ spec:
 					{
 						IsDirectory: true,
 						Name:        "worker-models",
-					},
-					{
-						IsDirectory: true,
-						Name:        "worker-model-templates",
 					},
 				}
 				*(out.(*[]sdk.VCSContent)) = contents
@@ -735,37 +724,6 @@ spec:
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds%2Fworker-model-templates?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				contents := []sdk.VCSContent{
-					{
-						IsDirectory: false,
-						IsFile:      true,
-						Name:        "mytemplate.yml",
-					},
-				}
-				*(out.(*[]sdk.VCSContent)) = contents
-				return nil, 200, nil
-			},
-		).MaxTimes(1)
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/content/.cds%2Fworker-model-templates%2Fmytemplate.yml?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-
-				content := sdk.VCSContent{
-					IsDirectory: false,
-					IsFile:      true,
-					Name:        "mytemplate.yml",
-					Content:     encodedTemplate,
-				}
-				*(out.(*sdk.VCSContent)) = content
-				return nil, 200, nil
-			},
-		).MaxTimes(1)
-
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -782,11 +740,6 @@ spec:
 	e, err := entity.LoadByBranchTypeName(context.TODO(), db, repo.ID, "master", sdk.EntityTypeWorkerModel, "docker-debian")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
-
-	esTempalte, err := entity.LoadByRepositoryAndType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModelTemplate)
-	require.NoError(t, err)
-	t.Logf("%+v", es[0])
-	require.Equal(t, 1, len(esTempalte))
 }
 
 func TestAnalyzeGithubMergeCommitNoLink(t *testing.T) {
@@ -1280,18 +1233,17 @@ GDFkaTe3nUJdYV4=
 		services.NewClient = services.NewDefaultClient
 	}()
 
-	model := `name: docker-debian
-description: my debian worker model
-type: docker
-spec:
-  image: myimage:1.1
-  registry: http://my-registry:9000
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  shell: sh -c
-  envs:
-    MYVAR: toto
-
-`
+	model := `
+    name: docker-debian
+    description: my debian worker model
+    osarch: linux/amd64
+    type: docker
+    spec:
+      image: myimage:1.1
+      registry: http://my-registry:9000
+      envs:
+        MYVAR: toto
+  `
 
 	buf := new(bytes.Buffer)
 	gw := gzip.NewWriter(buf)

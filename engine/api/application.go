@@ -237,11 +237,18 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		}
 		resp.Tags = tags
 
-		remotes, err := client.ListForks(ctx, repositoryFullname)
-		if err != nil {
-			return sdk.WrapError(err, "cannot get remotes from repository %s", repositoryFullname)
+		if remote == "" {
+			remotes, err := client.ListForks(ctx, repositoryFullname)
+			if err != nil {
+				return sdk.WrapError(err, "cannot get remotes from repository %s", repositoryFullname)
+			}
+			resp.Remotes = remotes
+			resp.Remotes = append(remotes, sdk.VCSRepo{
+				Name:     app.RepositoryFullname,
+				Slug:     app.RepositoryFullname,
+				Fullname: app.RepositoryFullname,
+			})
 		}
-		resp.Remotes = remotes
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)

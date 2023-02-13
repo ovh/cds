@@ -30,6 +30,12 @@ func (api *API) getRepositoryHookHandler() ([]service.RbacChecker, service.Handl
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			repoIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.NewErrorWithStack(
+					err,
+					sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given repository identifier"),
+				)
+			}
 			if !sdk.IsValidUUID(repoIdentifier) {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "this handler needs the repository uuid")
 			}

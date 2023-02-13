@@ -9,17 +9,17 @@ import (
 )
 
 func TestWorkerDockerModelWithoutImage(t *testing.T) {
-	dockerWM := `name: debian9
-image: debian:9
-description: "my debian worker model"
-type: docker
-spec:
-  envs:
-    CDS_GRAYLOG_EXTRA_KEY: '{{.GraylogExtraKey}}'
-    CDS_GRAYLOG_EXTRA_VALUE: '{{.GraylogExtraValue}}'
-    CDS_GRAYLOG_HOST: '{{.GraylogHost}}'
-    CDS_GRAYLOG_PORT: '{{.GraylogPort}}'
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker`
+	dockerWM := `
+    name: debian9
+    description: "my debian worker model"
+    type: docker
+    spec:
+      envs:
+        CDS_GRAYLOG_EXTRA_KEY: '{{.GraylogExtraKey}}'
+        CDS_GRAYLOG_EXTRA_VALUE: '{{.GraylogExtraValue}}'
+        CDS_GRAYLOG_HOST: '{{.GraylogHost}}'
+        CDS_GRAYLOG_PORT: '{{.GraylogPort}}'
+  `
 
 	var dockerModel V2WorkerModel
 	require.NoError(t, yaml.Unmarshal([]byte(dockerWM), &dockerModel))
@@ -30,17 +30,17 @@ spec:
 }
 
 func TestWorkerDockerModelWrongType(t *testing.T) {
-	dockerWM := `name: debian9
-image: debian:9
-description: "my debian worker model"
-type: marathon
-spec:
-  envs:
-    CDS_GRAYLOG_EXTRA_KEY: '{{.GraylogExtraKey}}'
-    CDS_GRAYLOG_EXTRA_VALUE: '{{.GraylogExtraValue}}'
-    CDS_GRAYLOG_HOST: '{{.GraylogHost}}'
-    CDS_GRAYLOG_PORT: '{{.GraylogPort}}'
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker`
+	dockerWM := `
+    name: debian9
+    description: "my debian worker model"
+    type: marathon
+    spec:
+      envs:
+        CDS_GRAYLOG_EXTRA_KEY: '{{.GraylogExtraKey}}'
+        CDS_GRAYLOG_EXTRA_VALUE: '{{.GraylogExtraValue}}'
+        CDS_GRAYLOG_HOST: '{{.GraylogHost}}'
+        CDS_GRAYLOG_PORT: '{{.GraylogPort}}'
+  `
 
 	var dockerModel V2WorkerModel
 	require.NoError(t, yaml.Unmarshal([]byte(dockerWM), &dockerModel))
@@ -51,14 +51,14 @@ spec:
 }
 
 func TestWorkerDockerModelOK(t *testing.T) {
-	dockerWM := `name: debian9
-image: debian:9
-description: "my debian worker model"
-type: docker
-spec:
-  image: myimage'
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  shell: sh -c`
+	dockerWM := `
+    name: debian9
+    description: "my debian worker model"
+    osarch: linux/amd64
+    type: docker
+    spec:
+      image: myimage
+  `
 
 	var dockerModel V2WorkerModel
 	require.NoError(t, yaml.Unmarshal([]byte(dockerWM), &dockerModel))

@@ -37,6 +37,10 @@ type RBAC struct {
 	Hatcheries   []RBACHatchery `json:"hatcheries,omitempty" db:"-"`
 }
 
+func (rbac *RBAC) IsEmpty() bool {
+	return len(rbac.Projects) == 0 && len(rbac.Hatcheries) == 0 && len(rbac.Global) == 0 && len(rbac.Regions) == 0
+}
+
 func IsValidRBAC(rbac *RBAC) error {
 	if rbac.Name == "" {
 		return WrapError(ErrInvalidData, "missing permission name")

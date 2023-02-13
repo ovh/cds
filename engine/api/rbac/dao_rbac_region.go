@@ -57,7 +57,6 @@ func getAllRBACRegions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 
 func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]sdk.RBACRegion, error) {
 	// Get rbac_region_groups
-
 	rbacRegionGroups, err := loadRBACRegionGroupsByUserID(ctx, db, userID)
 	if err != nil {
 		return nil, err
@@ -104,4 +103,25 @@ func loadRBACRegionsByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role 
 func loadRBACRegionOnAllUsers(ctx context.Context, db gorp.SqlExecutor, role string) ([]sdk.RBACRegion, error) {
 	q := gorpmapping.NewQuery("SELECT * from rbac_region WHERE role = $1 AND all_users = true").Args(role)
 	return getAllRBACRegions(ctx, db, q)
+}
+
+func LoadRBACByRegionID(ctx context.Context, db gorp.SqlExecutor, regionID string) ([]sdk.RBAC, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM rbac_region WHERE region_id = $1`).Args(regionID)
+	rbRegions, err := getAllRBACRegions(ctx, db, query)
+	if err != nil {
+		return nil, err
+	}
+	rbacIDs := make(sdk.StringSlice, 0)
+	for _, rg := range rbRegions {
+		rbacIDs = append(rbacIDs, rg.RbacID)
+	}
+
+	ids, err := loadRBacIDsByHatcheryRegionID(ctx, db, regionID)
+	if err != nil {
+		return nil, err
+	}
+	rbacIDs = append(rbacIDs, ids...)
+	rbacIDs.Unique()
+	return LoadRBACByIDs(ctx, db, rbacIDs, LoadOptions.All)
+
 }

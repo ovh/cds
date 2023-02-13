@@ -20,7 +20,6 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.BinaryRequirement:   checkBinaryRequirement,
 	sdk.HostnameRequirement: checkHostnameRequirement,
 	sdk.ModelRequirement:    checkModelRequirement,
-	sdk.ModelV2Requirement:  checkModelRequirementV2,
 	sdk.PluginRequirement:   checkPluginRequirement,
 	sdk.ServiceRequirement:  checkServiceRequirement,
 	sdk.MemoryRequirement:   checkMemoryRequirement,
@@ -108,11 +107,11 @@ func checkBinaryRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
-func checkModelRequirementV2(w *CurrentWorker, r sdk.Requirement) (bool, error) {
-	return true, nil
-}
-
 func checkModelRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
+	if len(strings.Split(r.Value, "/")) == 5 {
+		return true, nil
+	}
+
 	// if there is a model req and no model on worker -> return false
 	if w.model.ID == 0 {
 		return false, nil
