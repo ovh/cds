@@ -28,21 +28,21 @@ const (
 
 var (
 	LogFieldJobID        = log.Field("action_metadata_job_id")
-	LogFieldJobStep      = log.Field("hatchery_job_step")
-	LogFieldJobStepDelay = log.Field("hatchery_job_step_delay")
+	LogFieldStep         = log.Field("hatchery_step")
+	LogFieldStepDelay    = log.Field("hatchery_step_delay_num")
 	LogFieldProjectID    = log.Field("worker_project_id")
 	LogFieldProject      = log.Field("worker_project")
 	LogFieldWorkflow     = log.Field("worker_workflow")
 	LogFieldNodeRunID    = log.Field("worker_node_run_id")
 	LogFieldNodeRun      = log.Field("worker_node_run")
 	LogFieldModel        = log.Field("worker_model")
-	LogFieldServiceCount = log.Field("worker_service_count")
+	LogFieldServiceCount = log.Field("worker_service_count_num")
 )
 
 func init() {
 	log.RegisterField(LogFieldJobID)
-	log.RegisterField(LogFieldJobStep)
-	log.RegisterField(LogFieldJobStepDelay)
+	log.RegisterField(LogFieldStep)
+	log.RegisterField(LogFieldStepDelay)
 	log.RegisterField(LogFieldProjectID)
 	log.RegisterField(LogFieldProject)
 	log.RegisterField(LogFieldWorkflow)
