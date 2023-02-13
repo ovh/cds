@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/ovh/cds/engine/api/driver/builtin"
 	"io"
 	"os"
 	"sort"
@@ -18,7 +19,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"

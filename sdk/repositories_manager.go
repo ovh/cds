@@ -49,6 +49,7 @@ type VCSAuthor struct {
 	Email       string `json:"emailAddress"`
 	Avatar      string `json:"avatar"`
 	Slug        string `json:"slug"`
+	ID          string `json:"id"`
 }
 
 // VCSCommit represents the commit in the repository

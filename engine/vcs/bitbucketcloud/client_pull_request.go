@@ -181,6 +181,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 			Avatar:      pullr.Author.Links.Avatar.Href,
 			DisplayName: pullr.Author.DisplayName,
 			Name:        pullr.Author.Username,
+			ID:          pullr.Author.UUID,
 		},
 		Closed:  pullr.State == "SUPERSEDED",
 		Merged:  pullr.State == "MERGED",

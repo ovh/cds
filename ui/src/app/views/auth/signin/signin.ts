@@ -50,10 +50,10 @@ export class SigninComponent implements OnInit {
             }))
             .subscribe((data) => {
                 this.isFirstConnection = data.is_first_connection;
-                this.localDriver = data.manifests.find(d => d.type === 'local');
-                this.ldapDriver = data.manifests.find(d => d.type === 'ldap');
+                this.localDriver = data.manifests.find(d => d.type === 'local' && !d.signup_disabled);
+                this.ldapDriver = data.manifests.find(d => d.type === 'ldap' && !d.signup_disabled);
                 this.externalDrivers = data.manifests
-                    .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin')
+                    .filter(d => d.type !== 'local' && d.type !== 'ldap' && d.type !== 'builtin' && !d.signup_disabled)
                     .sort((a, b) => a.type < b.type ? -1 : 1)
                     .map(d => {
                         switch (d.type) {

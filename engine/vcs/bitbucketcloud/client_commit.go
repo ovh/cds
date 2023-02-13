@@ -34,6 +34,7 @@ func (client *bitbucketcloudClient) Commits(ctx context.Context, repo, theBranch
 				Email:       email,
 				Name:        c.Author.User.Username,
 				Avatar:      c.Author.User.Links.Avatar.Href,
+				ID:          c.Author.User.UUID,
 			},
 		}
 
@@ -107,6 +108,7 @@ func (client *bitbucketcloudClient) Commit(ctx context.Context, repo, hash strin
 			Email:       email,
 			Name:        c.Author.User.Username,
 			Avatar:      c.Author.User.Links.Avatar.Href,
+			ID:          c.Author.User.UUID,
 		},
 	}
 
@@ -164,6 +166,7 @@ func (client *bitbucketcloudClient) CommitsBetweenRefs(ctx context.Context, repo
 				Email:       email,
 				Name:        c.Author.User.Username,
 				Avatar:      c.Author.User.Links.Avatar.Href,
+				ID:          c.Author.User.UUID,
 			},
 		}
 

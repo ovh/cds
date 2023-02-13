@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/authentication/builtin"
+	"github.com/ovh/cds/engine/api/driver/builtin"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -19,7 +19,7 @@ import (
 func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get the consumer builtin driver
-		driver, ok := api.AuthenticationDrivers[sdk.ConsumerBuiltin]
+		authDriver, ok := api.AuthenticationDrivers[sdk.ConsumerBuiltin]
 		if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
@@ -29,12 +29,15 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
-		if err := driver.CheckSigninRequest(req); err != nil {
+
+		driv := authDriver.GetDriver().(sdk.DriverWithSignInRequest)
+
+		if err := driv.CheckSigninRequest(req); err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
 
 		// Convert code to external user info
-		userInfo, err := driver.GetUserInfo(ctx, req)
+		userInfo, err := authDriver.GetUserInfo(ctx, req)
 		if err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}
@@ -101,7 +104,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 		}
 
 		// Generate a new session for consumer
-		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, driver.GetSessionDuration())
+		session, err := authentication.NewSession(ctx, tx, &consumer.AuthConsumer, authDriver.GetSessionDuration())
 		if err != nil {
 			return err
 		}

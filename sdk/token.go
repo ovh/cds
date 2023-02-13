@@ -14,22 +14,31 @@ import (
 	"github.com/spf13/cast"
 )
 
+type Driver interface {
+	GetUserInfoFromDriver(ctx context.Context, req AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
+}
+
+type DriverWithSignInRequest interface {
+	Driver
+	CheckSigninRequest(req AuthConsumerSigninRequest) error
+}
+
+type DriverWithRedirect interface {
+	DriverWithSignInRequest
+	GetSigninURI(AuthSigninConsumerToken) (AuthDriverSigningRedirect, error)
+}
+
+type DriverWithSigninStateToken interface {
+	DriverWithSignInRequest
+	CheckSigninStateToken(AuthConsumerSigninRequest) error
+}
+
 // AuthDriver interface.
 type AuthDriver interface {
 	GetManifest() AuthDriverManifest
 	GetSessionDuration() time.Duration
-	CheckSigninRequest(AuthConsumerSigninRequest) error
 	GetUserInfo(context.Context, AuthConsumerSigninRequest) (AuthDriverUserInfo, error)
-}
-
-type AuthDriverWithRedirect interface {
-	AuthDriver
-	GetSigninURI(AuthSigninConsumerToken) (AuthDriverSigningRedirect, error)
-}
-
-type AuthDriverWithSigninStateToken interface {
-	AuthDriver
-	CheckSigninStateToken(AuthConsumerSigninRequest) error
+	GetDriver() Driver
 }
 
 type AuthDriverSigningRedirect struct {
@@ -646,4 +655,5 @@ type AuthSigninConsumerToken struct {
 	RedirectURI       string `json:"redirect_uri,omitempty"`
 	RequireMFA        bool   `json:"require_mfa,omitempty"`
 	IsFirstConnection bool   `json:"is_first_connection,omitempty"`
+	LinkUser          bool   `json:"link_user,omitempty"`
 }

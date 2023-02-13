@@ -64,6 +64,7 @@ import { WorkflowService } from './workflow/workflow.service';
 import { WorkflowStore } from './workflow/workflow.store';
 import { SidebarService } from 'app/service/sidebar/sidebar.service';
 import {AnalysisService} from "./analysis/analysis.service";
+import {LinkService} from "./link/link.service";
 
 @NgModule({})
 export class ServicesModule {
@@ -91,6 +92,7 @@ export class ServicesModule {
                 AuthenticationService,
                 ConfigService,
                 DownloadService,
+                LinkService,
                 EnvironmentAuditService,
                 EnvironmentService,
                 FeatureService,
@@ -163,6 +165,7 @@ export {
     AuthenticationService,
     ConfigService,
     DownloadService,
+    LinkService,
     EnvironmentAuditService,
     GroupService,
     HelpService,

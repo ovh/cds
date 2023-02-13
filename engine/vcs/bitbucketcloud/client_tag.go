@@ -39,6 +39,7 @@ func (client *bitbucketcloudClient) Tags(ctx context.Context, fullname string) (
 				DisplayName: tag.Target.Author.User.DisplayName,
 				Email:       email,
 				Name:        tag.Target.Author.User.Nickname,
+				ID:          tag.Target.Author.User.UUID,
 			},
 		}
 		responseTags = append(responseTags, t)

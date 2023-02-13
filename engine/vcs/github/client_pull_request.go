@@ -255,6 +255,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 					Avatar:      pullr.Base.User.AvatarURL,
 					DisplayName: pullr.Base.User.Login,
 					Name:        pullr.Base.User.Name,
+					ID:          strconv.Itoa(pullr.Base.User.ID),
 				},
 				Hash:      pullr.Base.Sha,
 				Message:   pullr.Base.Label,
@@ -274,6 +275,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 					Avatar:      pullr.Head.User.AvatarURL,
 					DisplayName: pullr.Head.User.Login,
 					Name:        pullr.Head.User.Name,
+					ID:          strconv.Itoa(pullr.Head.User.ID),
 				},
 				Hash:      pullr.Head.Sha,
 				Message:   pullr.Head.Label,
@@ -286,6 +288,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 			DisplayName: pullr.User.Login,
 			Name:        pullr.User.Name,
 			Slug:        pullr.User.Login,
+			ID:          strconv.Itoa(pullr.User.ID),
 		},
 		Closed:  pullr.State == "closed",
 		Merged:  pullr.Merged,
@@ -299,6 +302,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 			Slug:        pullr.MergedBy.Login,
 			DisplayName: pullr.MergedBy.Login,
 			Avatar:      pullr.MergedBy.AvatarURL,
+			ID:          strconv.Itoa(pullr.MergedBy.ID),
 		}
 	}
 	return pr

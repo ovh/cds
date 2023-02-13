@@ -57,6 +57,7 @@ type Author struct {
 	Email       string `json:"emailAddress"`
 	DisplayName string `json:"displayName"`
 	Slug        string `json:"slug"`
+	ID          int    `json:"id"`
 }
 
 type CommitsResponse struct {

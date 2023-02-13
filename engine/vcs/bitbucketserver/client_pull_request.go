@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -207,6 +208,7 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 			Name:        pullRequest.Author.User.Name,
 			DisplayName: pullRequest.Author.User.DisplayName,
 			Email:       pullRequest.Author.User.EmailAddress,
+			ID:          strconv.Itoa(pullRequest.Author.User.ID),
 		}
 	}
 

@@ -4,15 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/organization"
-
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
-
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
