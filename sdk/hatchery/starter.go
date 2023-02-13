@@ -201,9 +201,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	}
 	arg.WorkerToken = jwt
 
-	ctx = context.WithValue(ctx, LogFieldStep, "starting-worker-spawn")
-	ctx = context.WithValue(ctx, LogFieldDelay, time.Since(j.queued).Nanoseconds())
-	log.Info(ctx, "starting worker spawn for job with id: %d", j.id)
+	logStepInfo(ctx, "starting-worker-spawn", j.queued)
 
 	ctxSpawnWorker, next := telemetry.Span(ctx, "hatchery.SpawnWorker", telemetry.Tag(telemetry.TagWorker, arg.WorkerName))
 	errSpawn := h.SpawnWorker(ctxSpawnWorker, arg)
