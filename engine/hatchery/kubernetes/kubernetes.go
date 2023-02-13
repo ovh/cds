@@ -265,11 +265,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		i++
 	}
 
-	pullPolicy := "IfNotPresent"
-	if strings.HasSuffix(spawnArgs.Model.ModelDocker.Image, ":latest") {
-		pullPolicy = "Always"
-	}
-
 	// Create secret for worker config
 	configSecretName, err := h.createConfigSecret(ctx, workerConfig)
 	if err != nil {
@@ -307,7 +302,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 				{
 					Name:            spawnArgs.WorkerName,
 					Image:           spawnArgs.Model.ModelDocker.Image,
-					ImagePullPolicy: apiv1.PullPolicy(pullPolicy),
+					ImagePullPolicy: apiv1.PullAlways,
 					Env:             envs,
 					Command:         strings.Fields(spawnArgs.Model.ModelDocker.Shell),
 					Args:            []string{cmd},
