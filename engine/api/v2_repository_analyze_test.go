@@ -1019,11 +1019,9 @@ GDFkaTe3nUJdYV4=
 	model := `name: docker-debian
 description: my debian worker model
 type: docker
+osarch: linux/amd64
 spec:
   image: myimage:1.1
-  registry: http://my-registry:9000
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  shell: sh -c
   envs:
     MYVAR: toto
 
