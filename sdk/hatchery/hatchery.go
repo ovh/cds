@@ -595,8 +595,8 @@ func SendSpawnInfo(ctx context.Context, h Interface, jobID int64, spawnMsg sdk.S
 
 func logStepInfo(ctx context.Context, step string, queued time.Time) {
 	if id := ctx.Value(LogFieldJobID); id != nil {
-		ctx = context.WithValue(ctx, LogFieldJobStep, step)
-		ctx = context.WithValue(ctx, LogFieldJobStepDelay, time.Since(queued).Milliseconds())
+		ctx = context.WithValue(ctx, LogFieldStep, step)
+		ctx = context.WithValue(ctx, LogFieldStepDelay, time.Since(queued).Nanoseconds())
 		log.Info(ctx, "step: %s job: %s", step, id)
 	}
 }

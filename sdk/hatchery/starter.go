@@ -187,6 +187,14 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	ctx = context.WithValue(ctx, LogFieldWorkflow, arg.WorkflowName)
 	ctx = context.WithValue(ctx, LogFieldNodeRun, arg.NodeRunName)
 
+	var serviceCount int
+	for i := range arg.Requirements {
+		if arg.Requirements[i].Type == sdk.ServiceRequirement {
+			serviceCount++
+		}
+	}
+	ctx = context.WithValue(ctx, LogFieldServiceCount, serviceCount)
+
 	// Get a JWT to authentified the worker
 	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 	if err != nil {
