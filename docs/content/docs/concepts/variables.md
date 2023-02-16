@@ -151,6 +151,7 @@ parameters:
 
 stages:
   ...
+```
 
 This will let you to use `{{.cds.pip.param_name}}` in your pipeline.
 Then, in the workflow, you can set the value for pipeline parameter in the `pipeline context`.
