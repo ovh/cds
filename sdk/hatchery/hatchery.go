@@ -258,7 +258,7 @@ func Create(ctx context.Context, h Interface) error {
 
 					// Test ascode model
 					modelPath := strings.Split(jobModel, "/")
-					if len(modelPath) == 5 {
+					if len(modelPath) >= 5 {
 						if h.CDSClientV2() == nil {
 							continue
 						}
