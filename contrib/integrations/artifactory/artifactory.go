@@ -375,6 +375,24 @@ func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactM
 	ctx, end := telemetry.Span(ctx, "workflow.retrieveModulesFiles")
 	defer end()
 	log.Debug(ctx, "retrieve:ModulesFiles repoName:%s path:%s", repoName, path)
+	_, endc := telemetry.Span(ctx, "artifactoryClient.GetFileInfo", telemetry.Tag("path", path), telemetry.Tag("repoName", repoName))
+	fileInfo, err := client.GetFileInfo(repoName, path)
+	endc()
+	if err != nil {
+		return nil, err
+	}
+
+	// If it can be downloaded, it's a file
+	if fileInfo.DownloadURI != "" {
+		return []sdk.FileInfo{fileInfo}, nil
+	}
+	return retrieveModulesFilesFromFolder(ctx, client, repoName, path)
+}
+
+func retrieveModulesFilesFromFolder(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string) ([]sdk.FileInfo, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.retrieveModulesFilesFromFolder")
+	defer end()
+	log.Debug(ctx, "retrieve:retrieveModulesFilesFromFolder repoName:%s path:%s", repoName, path)
 	_, endc := telemetry.Span(ctx, "artifactoryClient.GetFolderInfo", telemetry.Tag("path", path), telemetry.Tag("repoName", repoName))
 	folderInfo, err := client.GetFolderInfo(repoName, path)
 	endc()
@@ -383,10 +401,9 @@ func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactM
 	}
 
 	files := make([]sdk.FileInfo, 0)
-
 	for _, c := range folderInfo.Children {
 		if c.Folder {
-			childrenFiles, err := retrieveModulesFiles(ctx, client, repoName, fmt.Sprintf("%s%s", path, c.Uri))
+			childrenFiles, err := retrieveModulesFilesFromFolder(ctx, client, repoName, fmt.Sprintf("%s%s", path, c.Uri))
 			if err != nil {
 				return nil, err
 			}
