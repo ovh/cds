@@ -313,7 +313,7 @@ func processNodeJobRunRequirementsGetModel(ctx context.Context, db gorp.SqlExecu
 	var wm *sdk.Model
 
 	modelName := strings.Split(model, " ")[0]
-	modelPath := strings.SplitN(modelName, "/", 2)
+	modelPath := strings.Split(modelName, "/")
 	if len(modelPath) == 2 {
 		// if model contains group name (myGroup/myModel), try to find the model for the
 		g, err := group.LoadByName(ctx, db, modelPath[0])
