@@ -6,12 +6,10 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rockbears/log"
-	"github.com/shirou/gopsutil/mem"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -130,11 +128,6 @@ func checkModelRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkServiceRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
-	// service are supported only for Model Docker
-	if w.model.Type != sdk.Docker {
-		return false, nil
-	}
-
 	retry := 3
 	for attempt := 0; attempt < retry; attempt++ {
 		ips, err := net.LookupIP(r.Name)
@@ -155,32 +148,7 @@ func checkServiceRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) 
 }
 
 func checkMemoryRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
-	var totalMemory int64
-	neededMemory, err := strconv.ParseInt(r.Value, 10, 64)
-	if err != nil {
-		return false, err
-	}
-
-	switch w.model.Type {
-	// Check env variables in a docker is safer than mem.VirtualMemory
-	case sdk.Docker:
-		var err error
-		memoryEnv := os.Getenv("CDS_MODEL_MEMORY")
-		totalMemory, err = strconv.ParseInt(memoryEnv, 10, 64)
-		if err != nil {
-			return false, err
-		}
-		totalMemory = totalMemory * 1024 * 1024
-	default:
-		v, err := mem.VirtualMemory()
-		if err != nil {
-			return false, err
-		}
-		totalMemory = int64(v.Total)
-	}
-	//Assuming memory is in megabytes
-	//If we have more than 90% of neededMemory, lets do it
-	return totalMemory >= (neededMemory*1024*1024)*90/100, nil
+	return true, nil
 }
 
 func checkOSArchRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
