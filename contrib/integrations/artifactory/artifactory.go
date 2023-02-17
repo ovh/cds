@@ -208,7 +208,7 @@ type BuildInfoRequest struct {
 	RunResults               []sdk.WorkflowRunResult
 }
 
-func PrepareBuildInfo(ctx context.Context, artiClient func() (artifact_manager.ArtifactManager, error), r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
+func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
 	ctx, end := telemetry.Span(ctx, "artifactory.PrepareBuildInfo", telemetry.Tag("buildInfoName", buildInfoName))
 	defer end()
@@ -258,7 +258,7 @@ func PrepareBuildInfo(ctx context.Context, artiClient func() (artifact_manager.A
 	return buildInfoRequest, nil
 }
 
-func computeBuildInfoModules(ctx context.Context, artiClient func() (artifact_manager.ArtifactManager, error), execContext executionContext, runResults []sdk.WorkflowRunResult) ([]buildinfo.Module, error) {
+func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.WorkflowRunResult) ([]buildinfo.Module, error) {
 	ctx, end := telemetry.Span(ctx, "artifactory.computeBuildInfoModules")
 	defer end()
 	modules := make([]buildinfo.Module, 0)
@@ -271,12 +271,7 @@ func computeBuildInfoModules(ctx context.Context, artiClient func() (artifact_ma
 		wg.Add(1)
 		go func(runResult sdk.WorkflowRunResult) {
 			defer wg.Done()
-			client, err := artiClient()
-			if err != nil {
-				chanError <- err
-				return
-			}
-			module, err := prepareBuildInfo(ctx, client, runResult, execContext)
+			module, err := prepareBuildInfo(ctx, artiClient, runResult, execContext)
 			if err != nil {
 				chanError <- err
 			}

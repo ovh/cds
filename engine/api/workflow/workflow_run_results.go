@@ -619,11 +619,12 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 	nodeRunURL := parameters["cds.ui.pipeline.run"][0]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
 
-	newArtifactoryClientFunc := func() (artifact_manager.ArtifactManager, error) {
-		return artifact_manager.NewClient(rtName, rtURL, rtToken)
+	artiClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
+	if err != nil {
+		return err
 	}
 
-	buildInfoRequest, err := art.PrepareBuildInfo(ctx, newArtifactoryClientFunc, art.BuildInfoRequest{
+	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artiClient, art.BuildInfoRequest{
 		BuildInfoPrefix:          buildInfoPrefix,
 		ProjectKey:               wr.Workflow.ProjectKey,
 		WorkflowName:             wr.Workflow.Name,
