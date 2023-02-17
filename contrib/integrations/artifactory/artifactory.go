@@ -267,9 +267,11 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 	results := make(chan buildinfo.Module, len(runResults))
 	chanError := make(chan error, len(runResults))
 
-	for _, r := range runResults {
+	for i := range runResults {
 		wg.Add(1)
-		go func(runResult sdk.WorkflowRunResult) {
+		runResult := runResults[i]
+		goRoutines := &sdk.GoRoutines{}
+		goRoutines.Exec(ctx, "goroutine-compute-build-info-module-"+runResult.ID, func(ctx context.Context) {
 			defer wg.Done()
 			module, err := prepareBuildInfo(ctx, artiClient, runResult, execContext)
 			if err != nil {
@@ -278,7 +280,7 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 			if module != nil {
 				results <- *module
 			}
-		}(r)
+		})
 	}
 	wg.Wait()
 	close(chanError)
