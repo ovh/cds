@@ -21,14 +21,13 @@ To be detected by CDS, your worker model files must be in this directory `.cds/w
 ```yaml
 name: my-worker-model-name
 description: my description
+osarch: linux/amd64
 type: docker
 spec:
   image: ns/myworkermodel:1.0
   registry: myregistry.org
   username: foo
   password: bar
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  shell: sh -c
   envs:
     myvar: myvalue
 ```
@@ -38,12 +37,11 @@ Fields:
 * <span style="color:red">*</span>`name`: Name of the worker model
 * `description`: Description of the worker model
 * <span style="color:red">*</span>`type`: Type of worker model
+* <span style="color:red">*</span>`osarch`: OS and architecture of the model
 * <span style="color:red">*</span>`spec.image`: Docker image name
 * `spec.registry`: Docker registry
 * `spec.username`: Docker registry username
 * `spec.password`: Docker registry password. <b>The field must be encrypted with [cdsctl]({{< relref "/docs/components/cdsctl/encrypt/_index.md" >}})</b>
-* <span style="color:red">*</span>`spec.cmd`: Command that start the worker
-* <span style="color:red">*</span>`spec.shell`: Shell use to run the command
 * `spec.envs`: Additional environment variables
 
 ## Openstack
@@ -52,24 +50,20 @@ Fields:
 name: my-worker-model-name
 description: my description
 type: openstack
+osarch: linux/amd64
 spec: 
   image: Ubuntu
   flavor: "b2-4"
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  pre_cmd:
-  post_cmd: shutdown -h
 ```
 
 Fields:
 
 * <span style="color:red">*</span>`name`: Name of the worker model
 * `description`: Description of the worker model
+* <span style="color:red">*</span>`osarch`: OS and architecture of the model
 * <span style="color:red">*</span>`type`: Type of worker model
 * <span style="color:red">*</span>`spec.image`: Openstack image name
 * <span style="color:red">*</span>`spec.flavor`: Openstack flavor to use
-* <span style="color:red">*</span>`spec.cmd`: Command that start the worker
-* `spec.pre_cmd`: Command executed before running the worker
-* <span style="color:red">*</span>`spec.post_cmd`:Command executed after your job to stop the VM
 
 
 ## vSphere
@@ -77,24 +71,20 @@ Fields:
 ```yaml
 name: my-worker-model-name
 description: my description
+osarch: linux/amd64
 type: vsphere
 spec:
   image: Ubuntu
   username: foo
   password: bar
-  cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-  pre_cmd:
-  post_cmd: shutdown -h
 ```
 
 Fields:
 
 * <span style="color:red">*</span>`name`: Name of the worker model
 * `description`: Description of the worker model
+* <span style="color:red">*</span>`osarch`: OS and architecture of the model
 * <span style="color:red">*</span>`type`: Type of worker model
 * <span style="color:red">*</span>`spec.image`: vSphere template name
 * <span style="color:red">*</span>`spec.username`: username to use to connect to the VM
 * <span style="color:red">*</span>`spec.password`: password to use to connect to the VM. <b>The field must be encrypted with [cdsctl]({{< relref "/docs/components/cdsctl/encrypt/_index.md" >}})</b>
-* <span style="color:red">*</span>`spec.cmd`: Command that start the worker
-* `spec.pre_cmd`: Command executed before running the worker
-* <span style="color:red">*</span>`spec.post_cmd`: Command executed after your job to stop the VM
