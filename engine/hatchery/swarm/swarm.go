@@ -196,9 +196,11 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		h.routines(ctx)
 	})
 
-	h.GoRoutines.Run(ctx, "worker-metrics", func(ctx context.Context) {
-		h.StartWorkerMetricsRoutine(ctx)
-	})
+	if h.Config.WorkerMetricsRefreshDelay > 0 {
+		h.GoRoutines.Run(ctx, "worker-metrics", func(ctx context.Context) {
+			h.StartWorkerMetricsRoutine(ctx, h.Config.WorkerMetricsRefreshDelay)
+		})
+	}
 
 	return nil
 }

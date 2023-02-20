@@ -49,8 +49,8 @@ func (h *HatcherySwarm) InitWorkersMetrics(ctx context.Context) error {
 	)
 }
 
-func (h *HatcherySwarm) StartWorkerMetricsRoutine(ctx context.Context) {
-	ticker := time.NewTicker(5 * time.Second)
+func (h *HatcherySwarm) StartWorkerMetricsRoutine(ctx context.Context, delay int64) {
+	ticker := time.NewTicker(time.Duration(delay) * time.Second)
 	defer ticker.Stop()
 
 	for {
