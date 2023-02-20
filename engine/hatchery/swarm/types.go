@@ -2,9 +2,10 @@ package swarm
 
 import (
 	docker "github.com/docker/docker/client"
-	"github.com/ovh/cds/engine/service"
+	"go.opencensus.io/stats"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
+	"github.com/ovh/cds/engine/service"
 )
 
 const (
@@ -14,6 +15,7 @@ const (
 	LabelServiceName        = "service_name"
 	LabelWorkerRequirements = "worker_requirements"
 	LabelWorkerModelPath    = "worker_model_path"
+	LabelJobID              = "job_id"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -39,6 +41,8 @@ type HatcheryConfiguration struct {
 	DockerEngines map[string]DockerEngineConfiguration `mapstructure:"dockerEngines" toml:"dockerEngines" comment:"List of Docker Engines" json:"dockerEngines,omitempty"`
 
 	RegistryCredentials []RegistryCredential `mapstructure:"registryCredentials" toml:"registryCredentials" commented:"true" comment:"List of Docker registry credentials" json:"-"`
+
+	WorkerMetricsRefreshDelay int64 `toml:"workerMetricsRefreshDelay" json:"workerMetricsRefreshDelay" commented:"true" comment:"Interval to compute worker metrics (in seconds), set to 0 will disable worker metrics."`
 }
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
@@ -46,6 +50,12 @@ type HatcherySwarm struct {
 	hatcheryCommon.Common
 	Config        HatcheryConfiguration
 	dockerClients map[string]*dockerClient
+	workerMetrics struct {
+		CPU           *stats.Float64Measure
+		CPURequest    *stats.Float64Measure
+		Memory        *stats.Int64Measure
+		MemoryRequest *stats.Int64Measure
+	}
 }
 
 type dockerClient struct {
@@ -70,4 +80,15 @@ type RegistryCredential struct {
 	Domain   string `mapstructure:"domain" default:"docker.io" commented:"true" toml:"domain" json:"-"`
 	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
 	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
+}
+
+type WorkerMetricsResource struct {
+	WorkerName    string
+	JobID         int64
+	Node          string
+	Name          string
+	CPU           float64
+	CPURequest    float64
+	Memory        int64
+	MemoryRequest int64
 }

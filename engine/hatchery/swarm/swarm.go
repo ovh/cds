@@ -54,6 +54,10 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		return err
 	}
 
+	if err := h.InitWorkersMetrics(ctx); err != nil {
+		return err
+	}
+
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
@@ -192,6 +196,12 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		h.routines(ctx)
 	})
 
+	if h.Config.WorkerMetricsRefreshDelay > 0 {
+		h.GoRoutines.Run(ctx, "worker-metrics", func(ctx context.Context) {
+			h.StartWorkerMetricsRoutine(ctx, h.Config.WorkerMetricsRefreshDelay)
+		})
+	}
+
 	return nil
 }
 
@@ -328,6 +338,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					LabelServiceWorker: spawnArgs.WorkerName,
 					LabelServiceName:   serviceName,
 					LabelHatchery:      h.Config.Name,
+					LabelJobID:         fmt.Sprintf("%d", spawnArgs.JobID),
 				}
 
 				if spawnArgs.JobID > 0 {
@@ -378,6 +389,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		LabelWorkerName:         spawnArgs.WorkerName,
 		LabelWorkerRequirements: strings.Join(services, ","),
 		LabelHatchery:           h.Config.Name,
+		LabelJobID:              fmt.Sprintf("%d", spawnArgs.JobID),
 	}
 
 	// Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one: #4594
