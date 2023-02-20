@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	TagHatcheryName string = "hatchery_name"
 	TagNodeName     string = "node_name"
 	TagJobID        string = "job_id"
 	TagWorkerName   string = "worker_name"
@@ -28,13 +27,14 @@ const (
 )
 
 func (h *HatcherySwarm) InitWorkersMetrics(ctx context.Context) error {
-	h.workerMetrics.CPU = stats.Float64("cds/cpu", "number of cpu for a worker resource", stats.UnitDimensionless)
-	h.workerMetrics.CPURequest = stats.Float64("cds/cpu_request", "number of cpu requested for a worker resource", stats.UnitDimensionless)
-	h.workerMetrics.Memory = stats.Int64("cds/memory", "number of memory for a worker resource", stats.UnitDimensionless)
-	h.workerMetrics.MemoryRequest = stats.Int64("cds/memory_request", "number of memory requested for a worker resource", stats.UnitDimensionless)
+	h.workerMetrics.CPU = stats.Float64("cds/hatchery/worker_cpu", "number of cpu for a worker resource", stats.UnitDimensionless)
+	h.workerMetrics.CPURequest = stats.Float64("cds/hatchery/worker_cpu_request", "number of cpu requested for a worker resource", stats.UnitDimensionless)
+	h.workerMetrics.Memory = stats.Int64("cds/hatchery/worker_memory", "number of memory for a worker resource", stats.UnitDimensionless)
+	h.workerMetrics.MemoryRequest = stats.Int64("cds/hatchery/worker_memory_request", "number of memory requested for a worker resource", stats.UnitDimensionless)
 
 	tags := []tag.Key{
-		telemetry.MustNewKey(TagHatcheryName),
+		telemetry.MustNewKey(telemetry.TagServiceName),
+		telemetry.MustNewKey(telemetry.TagServiceType),
 		telemetry.MustNewKey(TagNodeName),
 		telemetry.MustNewKey(TagJobID),
 		telemetry.MustNewKey(TagWorkerName),
@@ -62,7 +62,8 @@ func (h *HatcherySwarm) StartWorkerMetricsRoutine(ctx context.Context) {
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				ctx = telemetry.ContextWithTag(ctx, TagHatcheryName, h.Configuration().Name)
+				ctx = telemetry.ContextWithTag(ctx, telemetry.TagServiceName, h.Name())
+				ctx = telemetry.ContextWithTag(ctx, telemetry.TagServiceType, h.Type())
 				for _, m := range ms {
 					ctx = telemetry.ContextWithTag(ctx, TagNodeName, m.Node)
 					ctx = telemetry.ContextWithTag(ctx, TagJobID, m.JobID)
@@ -86,7 +87,6 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 	ctx, end := telemetry.Span(ctx, "hatchery.Workers")
 	defer end()
 
-	var mut sync.Mutex
 	var data []WorkerMetricsResource
 
 	for host, dockerClient := range h.dockerClients {
@@ -94,8 +94,12 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to list containers")
 		}
+
+		chanData := make(chan WorkerMetricsResource, len(cs))
+
 		var wg sync.WaitGroup
 		wg.Add(len(cs))
+
 		for i := range cs {
 			func(id string) {
 				h.GoRoutines.Exec(ctx, "container-get-stats-"+id, func(ctx context.Context) {
@@ -104,6 +108,10 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 					c, err := dockerClient.ContainerInspect(ctx, id)
 					if err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get stats for container %s/%s", host, id))
+						return
+					}
+
+					if c.State == nil || c.State.Status != "running" {
 						return
 					}
 
@@ -142,9 +150,7 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 					}
 					jobID, _ := strconv.ParseInt(c.Config.Labels[LabelJobID], 10, 64)
 
-					mut.Lock()
-					defer mut.Unlock()
-					data = append(data, WorkerMetricsResource{
+					chanData <- WorkerMetricsResource{
 						Node:          host,
 						JobID:         jobID,
 						WorkerName:    workerName,
@@ -153,11 +159,17 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 						MemoryRequest: c.HostConfig.Memory,
 						CPU:           cpuCoresUsage,
 						CPURequest:    1,
-					})
+					}
 				})
 			}(cs[i].ID)
 		}
+
 		wg.Wait()
+		close(chanData)
+
+		for v := range chanData {
+			data = append(data, v)
+		}
 	}
 
 	return data, nil
