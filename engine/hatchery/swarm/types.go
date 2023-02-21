@@ -3,6 +3,7 @@ package swarm
 import (
 	docker "github.com/docker/docker/client"
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
@@ -51,10 +52,14 @@ type HatcherySwarm struct {
 	Config        HatcheryConfiguration
 	dockerClients map[string]*dockerClient
 	workerMetrics struct {
-		CPU           *stats.Float64Measure
-		CPURequest    *stats.Float64Measure
-		Memory        *stats.Int64Measure
-		MemoryRequest *stats.Int64Measure
+		CPU               *stats.Float64Measure
+		CPURequest        *stats.Float64Measure
+		Memory            *stats.Int64Measure
+		MemoryRequest     *stats.Int64Measure
+		CPUView           *view.View
+		CPURequestView    *view.View
+		MemoryView        *view.View
+		MemoryRequestView *view.View
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 	"golang.org/x/net/context"
 
@@ -41,12 +42,12 @@ func (h *HatcherySwarm) InitWorkersMetrics(ctx context.Context) error {
 		telemetry.MustNewKey(TagResourceName),
 	}
 
-	return telemetry.RegisterView(ctx,
-		telemetry.NewViewLastFloat64("cds/hatchery/worker_cpu", h.workerMetrics.CPU, tags),
-		telemetry.NewViewLastFloat64("cds/hatchery/worker_cpu_request", h.workerMetrics.CPURequest, tags),
-		telemetry.NewViewLast("cds/hatchery/worker_memory", h.workerMetrics.Memory, tags),
-		telemetry.NewViewLast("cds/hatchery/worker_memory_request", h.workerMetrics.MemoryRequest, tags),
-	)
+	h.workerMetrics.CPUView = telemetry.NewViewLastFloat64("cds/hatchery/worker_cpu", h.workerMetrics.CPU, tags)
+	h.workerMetrics.CPURequestView = telemetry.NewViewLastFloat64("cds/hatchery/worker_cpu_request", h.workerMetrics.CPURequest, tags)
+	h.workerMetrics.MemoryView = telemetry.NewViewLast("cds/hatchery/worker_memory", h.workerMetrics.Memory, tags)
+	h.workerMetrics.MemoryRequestView = telemetry.NewViewLast("cds/hatchery/worker_memory_request", h.workerMetrics.MemoryRequest, tags)
+
+	return telemetry.RegisterView(ctx, h.workerMetrics.CPUView, h.workerMetrics.CPURequestView, h.workerMetrics.MemoryView, h.workerMetrics.MemoryRequestView)
 }
 
 func (h *HatcherySwarm) StartWorkerMetricsRoutine(ctx context.Context, delay int64) {
@@ -57,6 +58,10 @@ func (h *HatcherySwarm) StartWorkerMetricsRoutine(ctx context.Context, delay int
 		select {
 		case <-ticker.C:
 			h.GoRoutines.Exec(ctx, "compute-worker-metrics", func(ctx context.Context) {
+				// Re-register view to drop ended workers metrics
+				view.Unregister(h.workerMetrics.CPUView, h.workerMetrics.CPURequestView, h.workerMetrics.MemoryView, h.workerMetrics.MemoryRequestView)
+				view.Register(h.workerMetrics.CPUView, h.workerMetrics.CPURequestView, h.workerMetrics.MemoryView, h.workerMetrics.MemoryRequestView)
+
 				ms, err := h.WorkersMetrics(ctx)
 				if err != nil {
 					log.ErrorWithStackTrace(ctx, err)
@@ -127,7 +132,7 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 					}
 					var stats types.Stats
 					if err := json.Unmarshal(v, &stats); err != nil {
-						log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get unmarshal stats for container %s/%s", host, c.ID))
+						log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to unmarshal stats for container %s/%s", host, c.ID))
 						return
 					}
 
