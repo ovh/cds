@@ -608,7 +608,7 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	case 0:
 		// If there is already a root node, it is impossible have another one
 		if w.WorkflowData.Node.Name != "" {
-			return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid node dependencies. %s should have at least one dependency because the workflow already have a root", n.Name)
+			return false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid node dependencies. %s should have at least one dependency because the workflow already has a root", n.Name)
 		}
 		w.WorkflowData.Node = *n
 		return true, nil
