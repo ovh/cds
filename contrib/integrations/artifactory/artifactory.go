@@ -332,7 +332,7 @@ func prepareBuildInfo(ctx context.Context, client artifact_manager.ArtifactManag
 		parsedUrl, err := url.Parse(client.GetURL())
 		if err != nil {
 			endc()
-			return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]: %v", client.GetURL())
+			return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]", client.GetURL())
 		}
 		urlArtifactory := parsedUrl.Host
 		if parsedUrl.Port() != "" {
