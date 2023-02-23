@@ -71,7 +71,6 @@ require (
 	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
-	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.8.1
 	github.com/spf13/cast v1.4.1
@@ -95,7 +94,7 @@ require (
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.3.8
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
