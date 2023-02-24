@@ -185,18 +185,21 @@ func authConsumerNewRun(v cli.Values) error {
 	}
 
 	var svcType = v.GetString("service-type")
-	if svcType == "" && !v.GetBool("no-interactive") {
-		svcType = cli.AskValue("Service type")
-	}
-
 	var svcRegion = v.GetString("service-region")
-	if svcRegion == "" && !v.GetBool("no-interactive") {
-		svcRegion = cli.AskValue("Service region")
-	}
-
 	var svcIgnoreJobWithNoRegion = v.GetBool("service-ignore-job-with-no-region")
-	if !svcIgnoreJobWithNoRegion && !v.GetBool("no-interactive") {
-		svcIgnoreJobWithNoRegion = cli.AskConfirm("Service ignore job with no region")
+
+	if svcName != "" {
+		if svcType == "" && !v.GetBool("no-interactive") {
+			svcType = cli.AskValue("Service type")
+		}
+
+		if svcRegion == "" && !v.GetBool("no-interactive") {
+			svcRegion = cli.AskValue("Service region")
+		}
+
+		if !svcIgnoreJobWithNoRegion && !v.GetBool("no-interactive") {
+			svcIgnoreJobWithNoRegion = cli.AskConfirm("Service ignore job with no region")
+		}
 	}
 
 	var consumer = sdk.AuthUserConsumer{
