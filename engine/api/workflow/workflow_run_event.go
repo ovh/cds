@@ -204,7 +204,7 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		return nil
 	}
 
-	log.Info(ctx, "Send status %q for node run %d", nodeRun.ID, nodeRun.Status)
+	log.Info(ctx, "Send status %q for node run %d", nodeRun.Status, nodeRun.ID)
 	var app sdk.Application
 	var pip sdk.Pipeline
 	var env sdk.Environment
