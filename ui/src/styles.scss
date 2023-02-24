@@ -557,3 +557,7 @@ foreignObject {
 .bottomBtnsWrapper {
     z-index: 5; // an index to be over all codemirror elements
 }
+
+[ng-reflect-router-link] {
+  cursor: pointer;
+}
