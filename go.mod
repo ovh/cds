@@ -1,6 +1,6 @@
 module github.com/ovh/cds
 
-go 1.19
+go 1.20
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1-0.20220530220844-359c771ce3d2
@@ -31,7 +31,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gophercloud/gophercloud v0.0.0-20190504011306-6f9faf57fddc
 	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
-	github.com/gorilla/handlers v0.0.0-20160816184729-a5775781a543
+	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/vault/api v1.0.4
@@ -67,11 +67,11 @@ require (
 	github.com/pelletier/go-toml v1.9.4
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.9.1
-	github.com/rockbears/log v0.6.0
+	github.com/rockbears/log v0.7.0
 	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.8.1
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.1.1
@@ -91,10 +91,10 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	go.opencensus.io v0.23.0
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
+	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
-	golang.org/x/text v0.3.8
+	golang.org/x/sys v0.5.0
+	golang.org/x/text v0.7.0
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
@@ -149,6 +149,7 @@ require (
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.2 // indirect
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/forPelevin/gomoji v1.1.6 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/frankban/quicktest v1.14.3 // indirect
@@ -253,12 +254,12 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.1 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.1 // indirect
 	go.etcd.io/etcd/client/v2 v2.305.1 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.17.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
+	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
+	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.63.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
