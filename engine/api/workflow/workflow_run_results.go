@@ -588,12 +588,6 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		return handleSyncError(sdk.Errorf("unable to find artifact manager %q token", artifactManagerInteg.ProjectIntegration.Name))
 	}
 
-	// Instanciate artifactory client
-	artifactClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
-	if err != nil {
-		return err
-	}
-
 	version := fmt.Sprintf("%d", wr.Number)
 	if wr.Version != nil {
 		version = *wr.Version
@@ -625,7 +619,12 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 	nodeRunURL := parameters["cds.ui.pipeline.run"][0]
 	runURL := nodeRunURL[0:strings.Index(nodeRunURL, "/node/")]
 
-	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
+	artiClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
+	if err != nil {
+		return err
+	}
+
+	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artiClient, art.BuildInfoRequest{
 		BuildInfoPrefix:          buildInfoPrefix,
 		ProjectKey:               wr.Workflow.ProjectKey,
 		WorkflowName:             wr.Workflow.Name,
@@ -648,6 +647,13 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 
 	log.Debug(ctx, "artifact manager build info request: %+v", buildInfoRequest)
 	log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
+
+	// Instanciate artifactory client
+	artifactClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
+	if err != nil {
+		return err
+	}
+
 	ctxDelete, endDelete := telemetry.Span(ctx, "artifactClient.DeleteBuild")
 	if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
 		ctx = log.ContextWithStackTrace(ctxDelete, err)
