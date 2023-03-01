@@ -46,6 +46,8 @@ const (
 	KafkaBroker        = log.Field("kafka_broker")
 	KafkaTopic         = log.Field("kafka_topic")
 	AnalyzeID          = log.Field("analyze_id")
+	NodeRunID          = log.Field("node_run_id")
+	PermJobID          = log.Field("permJobID")
 )
 
 func init() {
@@ -87,6 +89,8 @@ func init() {
 		KafkaBroker,
 		KafkaTopic,
 		AnalyzeID,
+		NodeRunID,
+		PermJobID,
 	)
 }
 

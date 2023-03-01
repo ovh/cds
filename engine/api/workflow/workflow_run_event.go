@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -45,6 +46,8 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 }
 
 func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun) error {
+	ctx = context.WithValue(ctx, cdslog.NodeRunID, nodeRun.ID)
+
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -55,12 +58,15 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		return nil
 	}
 
+	log.Info(ctx, "sending VCS event for status = %q", nodeRun.Status)
+
 	if e.commitsStatuses == nil {
 		e.commitsStatuses = make(map[string][]sdk.VCSCommitStatus)
 	}
 
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if !node.IsLinkedToRepo(&wr.Workflow) {
+		log.Info(ctx, "node is not linked to the repo, skipping")
 		return nil
 	}
 
@@ -85,6 +91,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	}
 
 	if len(notifs) == 0 {
+		log.Info(ctx, "no vcs notification set in the node, skipping")
 		return nil
 	}
 
@@ -108,6 +115,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	statuses, ok := e.commitsStatuses[ref]
 	if !ok {
 		var err error
+		log.Info(ctx, "getting status for %s %s", repoFullName, ref)
 		statuses, err = e.vcsClient.ListStatuses(ctx, repoFullName, ref)
 		if err != nil {
 			return sdk.WrapError(err, "can't ListStatuses for %v with vcs %v/%v", repoFullName, proj.Key, vcsServerName)
@@ -117,6 +125,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
 		NodeName: nodeRun.WorkflowNodeName,
 	})
+	log.Info(ctx, "expected status description is %q", expected)
 
 	if e.vcsClient.IsBitbucketCloud() {
 		if len(expected) > 36 { // 40 maxlength on bitbucket cloud
@@ -134,6 +143,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 
 	if statusFound == nil || statusFound.State == "" {
 		for i := range notifs {
+			log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
 			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
 				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 			}
@@ -144,23 +154,27 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		case sdk.StatusSuccess:
 			switch nodeRun.Status {
 			case sdk.StatusSuccess:
+				log.Info(ctx, "status %q %s found, skipping", expected, statusFound.State)
 				skipStatus = true
 			}
 		case sdk.StatusFail:
 			switch nodeRun.Status {
 			case sdk.StatusFail:
+				log.Info(ctx, "status %q %s found, skipping", expected, statusFound.State)
 				skipStatus = true
 			}
 
 		case sdk.StatusSkipped:
 			switch nodeRun.Status {
 			case sdk.StatusDisabled, sdk.StatusNeverBuilt, sdk.StatusSkipped:
+				log.Info(ctx, "status %q %s found, skipping", expected, statusFound.State)
 				skipStatus = true
 			}
 		}
 
 		if !skipStatus {
 			for i := range notifs {
+				log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
 				if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
 					return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 				}
@@ -190,7 +204,7 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		return nil
 	}
 
-	log.Debug(ctx, "Send status for node run %d", nodeRun.ID)
+	log.Info(ctx, "Send status %q for node run %d", nodeRun.Status, nodeRun.ID)
 	var app sdk.Application
 	var pip sdk.Pipeline
 	var env sdk.Environment
