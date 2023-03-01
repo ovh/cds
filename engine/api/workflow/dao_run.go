@@ -345,7 +345,7 @@ func LoadRunsSummaries(ctx context.Context, db gorp.SqlExecutor, projectkey, wor
 			ORDER BY wr.start desc
 			LIMIT $3 OFFSET $4`, selectedColumn)
 
-	if len(tagFilter) > 0 {
+	if len(tagFilter) > 1 {
 		// Posgres operator: '<@' means 'is contained by' eg. 'ARRAY[2,7] <@ ARRAY[1,7,4,2,6]' ==> returns true
 		query = fmt.Sprintf(`
 			WITH workflowID as (
@@ -378,10 +378,22 @@ func LoadRunsSummaries(ctx context.Context, db gorp.SqlExecutor, projectkey, wor
 		for k, v := range tagFilter {
 			tags = append(tags, k+"="+v)
 		}
-
 		log.Debug(ctx, "tags=%v", tags)
-
 		args = append(args, strings.Join(tags, ","))
+	} else if len(tagFilter) == 1 {
+		query = fmt.Sprintf(`
+      SELECT %s
+      FROM workflow_run wr
+      JOIN workflow ON workflow.id = wr.workflow_id
+      JOIN project ON project.id = workflow.project_id
+      JOIN workflow_run_tag ON workflow_run_tag.workflow_run_id = wr.id
+      WHERE workflow.name = $2 AND project.projectkey = $1 AND workflow_run_tag.tag = $5 AND workflow_run_tag.value = $6
+      ORDER BY wr.start DESC OFFSET $4 LIMIT $3
+    `, selectedColumn)
+		for k, v := range tagFilter {
+			args = append(args, k, v)
+			break
+		}
 	}
 
 	var shortRuns []sdk.WorkflowRunSummary
