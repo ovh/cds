@@ -68,9 +68,9 @@ type rbacProject struct {
 }
 
 func (rp rbacProject) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{rp.ID, rp.RbacID, rp.Role, rp.All}
+	_ = []interface{}{rp.ID, rp.RbacID, rp.Role, rp.AllUsers}
 	return []gorpmapper.CanonicalForm{
-		"{{.ID}}{{.RbacID}}{{.Role}}{{.All}}",
+		"{{.ID}}{{.RbacID}}{{.Role}}{{.AllUsers}}",
 	}
 }
 

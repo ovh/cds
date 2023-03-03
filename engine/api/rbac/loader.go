@@ -76,7 +76,7 @@ func loadRBACProject(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error
 		if err := loadRBACProjectKeys(ctx, db, rbacProject); err != nil {
 			return err
 		}
-		if !rbacProject.All {
+		if !rbacProject.AllUsers {
 			if err := loadRBACProjectUsers(ctx, db, rbacProject); err != nil {
 				return err
 			}

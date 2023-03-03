@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getEntitiesHandler() ([]service.RbacChecker, service.Handler) {
+func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
@@ -78,7 +78,7 @@ func (api *API) getEntitiesHandler() ([]service.RbacChecker, service.Handler) {
 		}
 }
 
-func (api *API) getEntityHandler() ([]service.RbacChecker, service.Handler) {
+func (api *API) getProjectEntityHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
