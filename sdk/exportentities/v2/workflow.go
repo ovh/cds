@@ -175,7 +175,8 @@ func NewWorkflow(ctx context.Context, w sdk.Workflow, version string, opts ...Ex
 		}
 		exportedWorkflow.Workflow[n.Name] = entry
 
-		for _, h := range n.Hooks {
+		for i := range n.Hooks {
+			h := n.Hooks[i]
 			if exportedWorkflow.Hooks == nil {
 				exportedWorkflow.Hooks = make(map[string][]HookEntry)
 			}
