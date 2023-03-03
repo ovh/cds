@@ -41,6 +41,20 @@ import (
 	"github.com/ovh/cds/sdk/jws"
 )
 
+func InsertRBAcPublicProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string) {
+	perm := fmt.Sprintf(`name: perm-%s-project-%s
+projects:
+  - role: %s
+    projects: [%s]
+    all_users: true
+`, role, projKey, role, projKey)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Projects[0].RBACProjectKeys = []string{projKey}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
 func InsertRBAcProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, user sdk.AuthentifiedUser) {
 	perm := fmt.Sprintf(`name: perm-%s-project-%s
 projects:
