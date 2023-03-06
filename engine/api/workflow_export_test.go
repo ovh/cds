@@ -4,7 +4,14 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"github.com/go-gorp/gorp"
+	"github.com/golang/mock/gomock"
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -23,6 +30,19 @@ import (
 func Test_getWorkflowExportHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
+	hookModels, err := workflow.LoadHookModels(db)
+	require.NoError(t, err)
+
+	var repoWebHookModelID, webHookModelID int64
+	for _, hm := range hookModels {
+		switch hm.Name {
+		case sdk.RepositoryWebHookModelName:
+			repoWebHookModelID = hm.ID
+		case sdk.WebHookModelName:
+			webHookModelID = hm.ID
+		}
+	}
+
 	u, pass := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
@@ -31,6 +51,9 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		AuthentifiedUserID: u.ID,
 		Admin:              true,
 	}))
+
+	vcs := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -61,6 +84,16 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 
 	pip.Stages = append(pip.Stages, *s)
 
+	app := sdk.Application{
+		Name:               "app1",
+		ProjectID:          proj.ID,
+		RepositoryFullname: "foo/myrepo",
+		VCSServer:          vcs.Name,
+		FromRepository:     "myrepofrom",
+	}
+	assert.NoError(t, application.Insert(db, *proj, &app))
+	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -69,7 +102,8 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 			Node: sdk.Node{
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
-					PipelineID: pip.ID,
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
 				},
 				Triggers: []sdk.NodeTrigger{
 					{
@@ -96,6 +130,32 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 						},
 					},
 				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: repoWebHookModelID,
+						Config: map[string]sdk.WorkflowNodeHookConfigValue{
+							"Method": {
+								Type:  "string",
+								Value: "POST",
+							},
+						},
+						Conditions: sdk.WorkflowNodeConditions{
+							LuaScript: "return git_branch == \"master\"",
+						},
+					},
+					{
+						HookModelID: webHookModelID,
+						Config: map[string]sdk.WorkflowNodeHookConfigValue{
+							"Method": {
+								Type:  "string",
+								Value: "GET",
+							},
+						},
+						Conditions: sdk.WorkflowNodeConditions{
+							LuaScript: "return git_branch == \"toto\"",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -106,6 +166,46 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithGroups,
 	)
+
+	svcs, errS := services.LoadAll(context.TODO(), db)
+	require.NoError(t, errS)
+	for _, s := range svcs {
+		_ = services.Delete(db, &s) // nolint
+	}
+	_, _ = assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	_, _ = assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
+				actualHooks := in.(map[string]sdk.NodeHook)
+				for k, h := range actualHooks {
+					h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+						Value:        "http://lolcat.local",
+						Configurable: false,
+					}
+					actualHooks[k] = h
+				}
+				out = actualHooks
+				return nil, 200, nil
+			},
+		)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, 200, nil)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/foo/myrepo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, 200, nil)
 
 	require.NoError(t, workflow.Insert(context.TODO(), db, api.Cache, *proj, &w))
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, *proj, "test_1", workflow.LoadOptions{})
@@ -136,6 +236,15 @@ workflow:
     - pip1
   pip1:
     pipeline: pip1
+    application: app1
+    payload:
+      git.author: ""
+      git.branch: ""
+      git.hash: ""
+      git.hash.before: ""
+      git.message: ""
+      git.repository: foo/myrepo
+      git.tag: ""
   pip1_2:
     depends_on:
     - pip1
@@ -144,6 +253,24 @@ workflow:
     depends_on:
     - fork
     pipeline: pip1
+hooks:
+  pip1:
+  - type: RepositoryWebHook
+    config:
+      eventFilter: ""
+    conditions:
+      script: return git_branch == "master"
+  - type: WebHook
+    config:
+      method: POST
+    conditions:
+      script: return git_branch == "toto"
+metadata:
+  default_tags: git.branch,git.author
+notifications:
+- type: vcs
+  pipelines:
+  - pip1
 `, rec.Body.String())
 }
 
