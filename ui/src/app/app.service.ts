@@ -10,9 +10,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { concatMap, first } from 'rxjs/operators';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
-import { TimelineFilter } from './model/timeline.model';
 import { NavbarService } from './service/navbar/navbar.service';
-import { RouterService, SidebarService, TimelineStore } from './service/services.module';
+import { RouterService, SidebarService } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
 import {
@@ -47,14 +46,12 @@ export class AppService {
     // Information about current route
     routeParams: {};
 
-    filter: TimelineFilter;
 
     constructor(
         private _routerService: RouterService,
         private _routeActivated: ActivatedRoute,
         private _router: Router,
         private _translate: TranslateService,
-        private _timelineStore: TimelineStore,
         private _toast: ToastService,
         private _workflowRunService: WorkflowRunService,
         private _store: Store,
@@ -63,10 +60,6 @@ export class AppService {
         private _analysisService: AnalysisService
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
-    }
-
-    initFilter(filterTimeline: TimelineFilter) {
-        this.filter = cloneDeep(filterTimeline);
     }
 
     updateRoute(params: {}) {
@@ -141,32 +134,6 @@ export class AppService {
             await this.updateWorkflowCache(event);
         } else if (event.type_event.indexOf(EventType.RUN_WORKFLOW_PREFIX) === 0) {
             await this.updateWorkflowRunCache(event);
-        }
-        this.manageEventForTimeline(event);
-    }
-
-    manageEventForTimeline(event: Event) {
-        if (!event || !event.type_event) {
-            return;
-        }
-        if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
-            let mustAdd = true;
-            // Check if we have to mute it
-            if (this.filter && this.filter.projects) {
-                let workflowList = this.filter.projects.find(p => p.key === event.project_key);
-                if (workflowList) {
-                    let w = workflowList.workflow_names.find(wname => wname === event.workflow_name);
-                    if (w) {
-                        mustAdd = false;
-                    }
-                }
-            }
-
-            if (mustAdd) {
-                let e = cloneDeep(event);
-                this._timelineStore.add(e);
-            }
-
         }
     }
 
