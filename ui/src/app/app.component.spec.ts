@@ -29,8 +29,6 @@ import { PipelineService } from './service/pipeline/pipeline.service';
 import { ProjectService } from './service/project/project.service';
 import { ProjectStore } from './service/project/project.store';
 import { RouterService } from './service/router/router.service';
-import { TimelineService } from './service/timeline/timeline.service';
-import { TimelineStore } from './service/timeline/timeline.store';
 import { UserService } from './service/user/user.service';
 import { SharedModule } from './shared/shared.module';
 import { ToastService } from './shared/toast/ToastService';
@@ -67,8 +65,6 @@ describe('App: CDS', () => {
                 AppService,
                 RouterService,
                 ToastService,
-                TimelineStore,
-                TimelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService },
