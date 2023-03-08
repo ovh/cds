@@ -477,7 +477,6 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities/{entityType}/{entityName}", nil, r.GETv2(api.getEntityHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/regen", nil, r.POSTv2(api.postRepositoryHookRegenKeyHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
-	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/template", nil, r.GETv2(api.getWorkerModelTemplatesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", nil, r.GETv2(api.getUserGPGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey", nil, r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))

@@ -18,7 +18,6 @@ var experimentalWorkerModelCmd = cli.Command{
 func experimentalWorkerModel() *cobra.Command {
 	return cli.NewCommand(experimentalWorkerModelCmd, nil, []*cobra.Command{
 		cli.NewListCommand(wmListCmd, workerModelListFunc, nil, withAllCommandModifiers()...),
-		experimentalWorkerModelTemplate(),
 	})
 }
 

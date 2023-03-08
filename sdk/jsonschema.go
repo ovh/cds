@@ -29,16 +29,3 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 
 	return wmSchema
 }
-
-func GetWorkerModelTemplateJsonSchema() *jsonschema.Schema {
-	wmtSchema := jsonschema.Reflect(&WorkerModelTemplate{})
-	wmtDocker := jsonschema.Reflect(&WorkerModelTemplateDocker{})
-	wmtVM := jsonschema.Reflect(&WorkerModelTemplateVM{})
-
-	if wmtSchema.Definitions == nil {
-		wmtSchema.Definitions = make(map[string]*jsonschema.Schema)
-	}
-	wmtSchema.Definitions["WorkerModelTemplateDocker"] = wmtDocker
-	wmtSchema.Definitions["WorkerModelTemplateVM"] = wmtVM
-	return wmtSchema
-}

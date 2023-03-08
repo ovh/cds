@@ -541,9 +541,6 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		var es []sdk.Entity
 		var err sdk.MultiError
 		switch {
-		case strings.HasPrefix(filePath, ".cds/worker-model-templates/"):
-			var tmpls []sdk.WorkerModelTemplate
-			es, err = sdk.ReadEntityFile(dir, fileName, content, &tmpls, sdk.EntityTypeWorkerModelTemplate, *analysis)
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
 			es, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis)

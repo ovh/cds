@@ -4307,21 +4307,6 @@ func (mr *MockWorkerClientMockRecorder) WorkerModelSpawnError(groupName, name, i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockWorkerClient)(nil).WorkerModelSpawnError), groupName, name, info)
 }
 
-// WorkerModelTemplateList mocks base method.
-func (m *MockWorkerClient) WorkerModelTemplateList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerModelTemplateList", ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-	ret0, _ := ret[0].([]sdk.WorkerModelTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkerModelTemplateList indicates an expected call of WorkerModelTemplateList.
-func (mr *MockWorkerClientMockRecorder) WorkerModelTemplateList(ctx, projKey, vcsIdentifier, repoIdentifier, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelTemplateList", reflect.TypeOf((*MockWorkerClient)(nil).WorkerModelTemplateList), ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-}
-
 // WorkerModelv2List mocks base method.
 func (m *MockWorkerClient) WorkerModelv2List(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelV2Filter) ([]sdk.V2WorkerModel, error) {
 	m.ctrl.T.Helper()
@@ -9287,21 +9272,6 @@ func (mr *MockInterfaceMockRecorder) WorkerModelSpawnError(groupName, name, info
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockInterface)(nil).WorkerModelSpawnError), groupName, name, info)
 }
 
-// WorkerModelTemplateList mocks base method.
-func (m *MockInterface) WorkerModelTemplateList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerModelTemplateList", ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-	ret0, _ := ret[0].([]sdk.WorkerModelTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkerModelTemplateList indicates an expected call of WorkerModelTemplateList.
-func (mr *MockInterfaceMockRecorder) WorkerModelTemplateList(ctx, projKey, vcsIdentifier, repoIdentifier, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelTemplateList", reflect.TypeOf((*MockInterface)(nil).WorkerModelTemplateList), ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-}
-
 // WorkerModelv2List mocks base method.
 func (m *MockInterface) WorkerModelv2List(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelV2Filter) ([]sdk.V2WorkerModel, error) {
 	m.ctrl.T.Helper()
@@ -10716,21 +10686,6 @@ func (m *MockWorkerInterface) WorkerModelSpawnError(groupName, name string, info
 func (mr *MockWorkerInterfaceMockRecorder) WorkerModelSpawnError(groupName, name, info interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelSpawnError", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerModelSpawnError), groupName, name, info)
-}
-
-// WorkerModelTemplateList mocks base method.
-func (m *MockWorkerInterface) WorkerModelTemplateList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier string, filter *cdsclient.WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WorkerModelTemplateList", ctx, projKey, vcsIdentifier, repoIdentifier, filter)
-	ret0, _ := ret[0].([]sdk.WorkerModelTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// WorkerModelTemplateList indicates an expected call of WorkerModelTemplateList.
-func (mr *MockWorkerInterfaceMockRecorder) WorkerModelTemplateList(ctx, projKey, vcsIdentifier, repoIdentifier, filter interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkerModelTemplateList", reflect.TypeOf((*MockWorkerInterface)(nil).WorkerModelTemplateList), ctx, projKey, vcsIdentifier, repoIdentifier, filter)
 }
 
 // WorkerModelv2List mocks base method.

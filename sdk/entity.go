@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	EntityTypeWorkerModelTemplate = "WorkerModelTemplate"
-	EntityTypeWorkerModel         = "WorkerModel"
+	EntityTypeWorkerModel = "WorkerModel"
 
 	EntityNamePattern = "^[a-zA-Z0-9._-]{1,}$"
 )
@@ -36,7 +35,7 @@ type Entity struct {
 
 func GetManageRoleByEntity(entityType string) (string, error) {
 	switch entityType {
-	case EntityTypeWorkerModel, EntityTypeWorkerModelTemplate:
+	case EntityTypeWorkerModel:
 		return ProjectRoleManageWorkerModel, nil
 	}
 	return "", WrapError(ErrInvalidData, "unknown entity of type %s", entityType)
