@@ -5,7 +5,7 @@ var (
 )
 
 type RBACProject struct {
-	All             bool     `json:"all" db:"all"`
+	AllUsers        bool     `json:"all_users" db:"all_users"`
 	Role            string   `json:"role" db:"role"`
 	RBACProjectKeys []string `json:"projects,omitempty" db:"-"`
 	RBACUsersName   []string `json:"users,omitempty" db:"-"`

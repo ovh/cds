@@ -58,10 +58,41 @@ func HasRoleOnProjectAndUserID(ctx context.Context, db gorp.SqlExecutor, role st
 	if err != nil {
 		return false, err
 	}
-	return sdk.IsInArray(projectKey, projectKeys), nil
+
+	// Load public project
+	projectKeysPublic, err := LoadPublicProjectKeysByRole(ctx, db, role)
+	if err != nil {
+		return false, err
+	}
+
+	return sdk.IsInArray(projectKey, projectKeys) || sdk.IsInArray(projectKey, projectKeysPublic), nil
 }
 
-func LoadProjectKeysByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]string, error) {
+func LoadPublicProjectKeysByRole(ctx context.Context, db gorp.SqlExecutor, role string) (sdk.StringSlice, error) {
+	rbacProjects, err := loadRBACProjectByRoleAndPublic(ctx, db, role)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make(sdk.Int64Slice, 0, len(rbacProjects))
+	for _, rp := range rbacProjects {
+		ids = append(ids, rp.ID)
+	}
+	ids.Unique()
+
+	rbacProjectKeys, err := loadAllRBACProjectKeys(ctx, db, ids)
+	if err != nil {
+		return nil, err
+	}
+	projectKeys := make(sdk.StringSlice, 0, len(rbacProjectKeys))
+	for _, rpi := range rbacProjectKeys {
+		projectKeys = append(projectKeys, rpi.ProjectKey)
+	}
+	projectKeys.Unique()
+	return projectKeys, nil
+}
+
+func LoadProjectKeysByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) (sdk.StringSlice, error) {
 	// Get rbac_project_groups
 	rbacProjectGroups, err := loadRBACProjectGroupsByUserID(ctx, db, userID)
 	if err != nil {
@@ -99,14 +130,10 @@ func LoadProjectKeysByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, ro
 		return nil, err
 	}
 
-	// Deduplicate project keys
-	projectKeys := make([]string, 0)
-	projectMap := make(map[string]struct{})
+	projectKeys := make(sdk.StringSlice, 0, len(rbacProjectKeys))
 	for _, rpi := range rbacProjectKeys {
-		if _, has := projectMap[rpi.ProjectKey]; !has {
-			projectMap[rpi.ProjectKey] = struct{}{}
-			projectKeys = append(projectKeys, rpi.ProjectKey)
-		}
+		projectKeys = append(projectKeys, rpi.ProjectKey)
 	}
+	projectKeys.Unique()
 	return projectKeys, nil
 }

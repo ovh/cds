@@ -74,7 +74,7 @@ spec:
 		"entityType":           sdk.EntityTypeWorkerModel,
 		"entityName":           "model1",
 	}
-	uri := api.Router.GetRouteV2("GET", api.getEntityHandler, vars)
+	uri := api.Router.GetRouteV2("GET", api.getProjectEntityHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?branch=master", nil)
 
