@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
 
 	"github.com/jfrog/jfrog-cli-core/v2/artifactory/commands/distribution"
 	"github.com/jfrog/jfrog-cli-core/v2/common/commands"

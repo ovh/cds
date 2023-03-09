@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
 
 	"github.com/ovh/cds/cli"
 )

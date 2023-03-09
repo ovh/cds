@@ -7,10 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	yaml "github.com/ghodss/yaml"
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	yaml "sigs.k8s.io/yaml"
 )
 
 var projectVCSCmd = cli.Command{
