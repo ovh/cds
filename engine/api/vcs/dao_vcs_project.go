@@ -2,7 +2,6 @@ package vcs
 
 import (
 	"context"
-	"github.com/lib/pq"
 	"github.com/ovh/cds/sdk/telemetry"
 	"time"
 
@@ -125,12 +124,5 @@ func LoadVCSByID(ctx context.Context, db gorp.SqlExecutor, projectKey string, vc
 
 func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.type = 'gerrit'`)
-	return getAllVCSProject(ctx, db, query, opts...)
-}
-
-func LoadVCSByProjectIDs(ctx context.Context, db gorp.SqlExecutor, pIDs []int64, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
-	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByProjectIDs")
-	defer next()
-	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.project_ID = ANY($1)`).Args(pq.Int64Array(pIDs))
 	return getAllVCSProject(ctx, db, query, opts...)
 }

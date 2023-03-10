@@ -39,8 +39,6 @@ type Entity struct {
 	Commit              string    `json:"commit" db:"commit"`
 	LastUpdate          time.Time `json:"last_update" db:"last_update"`
 	Data                string    `json:"data" db:"data"`
-
-	FullName string `json:"fullname" db:"-"`
 }
 
 func GetManageRoleByEntity(entityType string) (string, error) {

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"github.com/lib/pq"
 	"github.com/ovh/cds/sdk/telemetry"
 	"strings"
 	"time"
@@ -37,27 +36,6 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, repo *sdk.Proj
 func Delete(db gorpmapper.SqlExecutorWithTx, vcsProjectID string, name string) error {
 	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND lower(name) = $2", vcsProjectID, strings.ToLower(name))
 	return sdk.WrapError(err, "cannot delete project_repository %s / %s", vcsProjectID, name)
-}
-
-func getRepositories(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectRepository, error) {
-	var res []dbProjectRepository
-	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
-		return nil, err
-	}
-
-	repositories := make([]sdk.ProjectRepository, 0, len(res))
-	for _, r := range res {
-		isValid, err := gorpmapping.CheckSignature(r, r.Signature)
-		if err != nil {
-			return nil, err
-		}
-		if !isValid {
-			log.Error(ctx, "project_repository %d / %s data corrupted", r.ID, r.Name)
-			continue
-		}
-		repositories = append(repositories, r.ProjectRepository)
-	}
-	return repositories, nil
 }
 
 func getRepository(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
@@ -119,13 +97,6 @@ func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor,
 		repositories = append(repositories, r.ProjectRepository)
 	}
 	return repositories, nil
-}
-
-func LoadRepositoryByVCSIDs(ctx context.Context, db gorp.SqlExecutor, ids []string, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectRepository, error) {
-	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByVCSIDs")
-	defer next()
-	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE id = ANY($1)`).Args(pq.StringArray(ids))
-	return getRepositories(ctx, db, query, opts...)
 }
 
 func LoadRepositoryByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
