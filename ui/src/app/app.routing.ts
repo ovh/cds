@@ -10,11 +10,7 @@ const routes: Routes = [
         canActivateChild: [AuthenticationGuard, APIConfigGuard],
         children: [
             {
-                path: '', redirectTo: 'home', pathMatch: 'full'
-            },
-            {
-                path: 'home', loadChildren: () => import('app/views/home/home.module')
-                    .then(m => m.HomeModule), data: { title: 'Home' }
+                path: '', redirectTo: 'project/list/all', pathMatch: 'full'
             },
             {
                 path: 'favorite', loadChildren: () => import('app/views/favorite/favorite.module')
