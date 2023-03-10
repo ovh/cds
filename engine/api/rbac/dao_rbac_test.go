@@ -59,13 +59,13 @@ projects:
 
 	require.NoError(t, rbac.Insert(context.Background(), db, &r))
 
-	projectKeysForUser1, err := rbac.LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.ProjectRoleRead, user1.ID)
+	projectKeysForUser1, err := rbac.LoadAllProjectKeysAllowed(context.TODO(), db, sdk.ProjectRoleRead, user1.ID)
 	require.NoError(t, err)
 	t.Logf("%+v", projectKeysForUser1)
 	require.Len(t, projectKeysForUser1, 1)
 	require.Equal(t, projectKeysForUser1[0], proj1.Key)
 
-	projectKeysForUser2, err := rbac.LoadProjectKeysByRoleAndUserID(context.TODO(), db, sdk.ProjectRoleManage, user2.ID)
+	projectKeysForUser2, err := rbac.LoadAllProjectKeysAllowed(context.TODO(), db, sdk.ProjectRoleManage, user2.ID)
 	require.NoError(t, err)
 	require.Len(t, projectKeysForUser2, 1)
 	require.Equal(t, projectKeysForUser2[0], proj2.Key)

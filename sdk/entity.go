@@ -13,6 +13,14 @@ const (
 	EntityNamePattern = "^[a-zA-Z0-9._-]{1,}$"
 )
 
+type EntityFullName struct {
+	Name       string `json:"name" db:"name"`
+	Branch     string `json:"branch" db:"branch"`
+	VCSName    string `json:"vcs_name" db:"vcs_name"`
+	RepoName   string `json:"repo_name" db:"repo_name"`
+	ProjectKey string `json:"project_key" db:"project_key"`
+}
+
 type ShortEntity struct {
 	ID     string `json:"id"`
 	Name   string `json:"name"`
@@ -31,6 +39,8 @@ type Entity struct {
 	Commit              string    `json:"commit" db:"commit"`
 	LastUpdate          time.Time `json:"last_update" db:"last_update"`
 	Data                string    `json:"data" db:"data"`
+
+	FullName string `json:"fullname" db:"-"`
 }
 
 func GetManageRoleByEntity(entityType string) (string, error) {

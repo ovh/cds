@@ -2,6 +2,7 @@ package vcs
 
 import (
 	"context"
+	"github.com/lib/pq"
 	"github.com/ovh/cds/sdk/telemetry"
 	"time"
 
@@ -60,6 +61,27 @@ func getVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query
 	return &res.VCSProject, nil
 }
 
+func getAllVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
+	var res []dbVCSProject
+	if err := gorpmapping.GetAll(ctx, db, q, &res, opts...); err != nil {
+		return nil, err
+	}
+	vcProjects := make([]sdk.VCSProject, 0, len(res))
+
+	for _, res := range res {
+		isValid, err := gorpmapping.CheckSignature(res, res.Signature)
+		if err != nil {
+			return nil, sdk.WrapError(err, "error when checking signature for vcs_project %s", res.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "vcs_project %d data corrupted", res.ID)
+			continue
+		}
+		vcProjects = append(vcProjects, res.VCSProject)
+	}
+	return vcProjects, nil
+}
+
 func LoadVCSByName(ctx context.Context, db gorp.SqlExecutor, projectKey, vcsName string) (*sdk.VCSProject, error) {
 	q := gorpmapping.NewQuery("SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2").Args(projectKey, vcsName)
 	return getVCSProject(ctx, db, q)
@@ -102,25 +124,13 @@ func LoadVCSByID(ctx context.Context, db gorp.SqlExecutor, projectKey string, vc
 }
 
 func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
-	var res []dbVCSProject
-
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.type = 'gerrit'`)
+	return getAllVCSProject(ctx, db, query, opts...)
+}
 
-	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
-		return nil, err
-	}
-	vcsGerritProjects := make([]sdk.VCSProject, 0, len(res))
-
-	for _, res := range res {
-		isValid, err := gorpmapping.CheckSignature(res, res.Signature)
-		if err != nil {
-			return nil, sdk.WrapError(err, "error when checking signature for vcs_project %s", res.ID)
-		}
-		if !isValid {
-			log.Error(ctx, "vcs_project %d data corrupted", res.ID)
-			continue
-		}
-		vcsGerritProjects = append(vcsGerritProjects, res.VCSProject)
-	}
-	return vcsGerritProjects, nil
+func LoadVCSByProjectIDs(ctx context.Context, db gorp.SqlExecutor, pIDs []int64, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
+	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByProjectIDs")
+	defer next()
+	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.project_ID = ANY($1)`).Args(pq.Int64Array(pIDs))
+	return getAllVCSProject(ctx, db, query, opts...)
 }

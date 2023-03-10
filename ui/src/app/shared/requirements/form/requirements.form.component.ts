@@ -37,7 +37,7 @@ export class RequirementsFormComponent implements OnInit {
             if (wms) {
                 wms.forEach(wm => {
                     let name = wm.name;
-                    if (wm.group.name !== SharedInfraGroupName) {
+                    if (wm.group && wm.group.name !== SharedInfraGroupName) {
                         name = `${wm.group.name}/${wm.name}`;
                     }
                     this.suggestWithWorkerModel.push(name);

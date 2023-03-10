@@ -13,7 +13,7 @@ import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
-import { Project } from 'app/model/project.model';
+import {EntityWorkerModel, Project} from 'app/model/project.model';
 import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkerModel } from 'app/model/worker-model.model';
@@ -27,6 +27,7 @@ import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula-sgu';
 import { finalize } from 'rxjs/operators';
+import {EntityService} from "../../service/entity/entity.service";
 
 @Component({
     selector: 'app-action',
@@ -77,7 +78,8 @@ export class ActionComponent implements OnDestroy, OnInit {
         private dragulaService: DragulaService,
         private _router: Router,
         private _workerModelService: WorkerModelService,
-        public _cd: ChangeDetectorRef
+        public _cd: ChangeDetectorRef,
+        private _entityService: EntityService
     ) {
         dragulaService.createGroup('bag-nonfinal', {
             moves(el, source, handle) {
@@ -108,9 +110,24 @@ export class ActionComponent implements OnDestroy, OnInit {
                 this.publicActions = as;
             });
             this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
-                this.workerModels = wms;
+                this.initWorkerModelList(wms);
+            });
+            this._entityService.getEntities(EntityWorkerModel).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
+                this.initWorkerModelList(<Array<WorkerModel>>entities.map(e => {
+                    return {
+                        name:`${e.project_key}/${e.vcs_name}/${e.repo_name}/${e.name}@${e.branch}`
+                    }
+                }))
+
             });
         }
+    }
+
+    initWorkerModelList(wms: Array<WorkerModel>): void {
+        if (!this.workerModels) {
+            this.workerModels = new Array<WorkerModel>();
+        }
+        this.workerModels.push(...wms);
     }
 
     ngOnDestroy(): void {

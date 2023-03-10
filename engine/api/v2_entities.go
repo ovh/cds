@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/ovh/cds/engine/api/rbac"
 	"net/http"
 	"net/url"
 
@@ -13,6 +14,40 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (api *API) getEntitiesHandler() ([]service.RbacChecker, service.Handler) {
+	return nil,
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			entityType := vars["entityType"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.ErrUnauthorized
+			}
+
+			var entities []sdk.EntityFullName
+			if isAdmin(ctx) {
+				var err error
+				entities, err = entity.UnsafeLoadAllByType(ctx, api.mustDB(), entityType)
+				if err != nil {
+					return err
+				}
+			} else {
+				projectKeys, err := rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
+				if err != nil {
+					return err
+				}
+				entities, err = entity.UnsafeLoadAllByTypeAndProjectKeys(ctx, api.mustDB(), entityType, projectKeys)
+				if err != nil {
+					return err
+				}
+			}
+
+			return service.WriteJSON(w, entities, http.StatusOK)
+		}
+}
+
+// getProjectEntitiesHandler
 func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
