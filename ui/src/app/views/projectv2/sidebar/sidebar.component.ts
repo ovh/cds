@@ -15,7 +15,7 @@ import {
     FlatNodeItemSelect
 } from 'app/shared/tree/tree.component';
 import { ProjectService } from 'app/service/project/project.service';
-import { EntityWorkerModel, Project, VCSProject } from 'app/model/project.model';
+import {EntityAction, EntityWorkerModel, Project, VCSProject} from 'app/model/project.model';
 import { Observable, of, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -243,6 +243,13 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
             case EntityWorkerModel:
                 if (e.eventType === 'select') {
                     this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], {
+                        queryParamsHandling: 'preserve'
+                    }).then();
+                }
+                break;
+            case EntityAction:
+                if (e.eventType === 'select') {
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'action', e.node.name], {
                         queryParamsHandling: 'preserve'
                     }).then();
                 }

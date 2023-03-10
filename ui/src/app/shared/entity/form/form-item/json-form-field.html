@@ -18,8 +18,23 @@
     </ng-template>
 </ng-container>
 
+<ng-container *ngIf="field && currentModel && jsonFormSchema && field.type === 'array'">
+    <h3>{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</h3>
+    <ng-container *ngFor="let arrayItem of currentModel[field.name]; let index = index">
+        -----------------------------------<br/>
+        <ng-container *ngFor="let f of jsonFormSchema.types[field.objectType].fields">
+            <app-json-form-field [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
+                                 [model]="currentModel[field.name][index]" (modelChange)="onValueChanged($event)"></app-json-form-field>
+        </ng-container>
+    </ng-container>
+</ng-container>
+
+<ng-container *ngIf="field && currentModel && jsonFormSchema && field.type === 'map'">
+    map
+</ng-container>
+
 <!-- SIMPLE FIELD -->
-<nz-form-item *ngIf="field && currentModel && jsonFormSchema && field.type !== 'object'">
+<nz-form-item *ngIf="field && currentModel && jsonFormSchema && field.type !== 'object' && field.type !== 'array' && field.type !== 'map'">
     <!-- FORM LABEL -->
     <nz-form-label nzFlex="120px">
         <span *ngIf="required" class="red">{{ '* '}}</span>

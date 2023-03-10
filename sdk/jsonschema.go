@@ -29,3 +29,17 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 
 	return wmSchema
 }
+
+func GetActionJsonSchema() *jsonschema.Schema {
+	actionSchema := jsonschema.Reflect(&V2Action{})
+
+	if actionSchema.Definitions == nil {
+		actionSchema.Definitions = make(map[string]*jsonschema.Schema)
+	}
+
+	propName, _ := actionSchema.Definitions["V2Action"].Properties.Get("name")
+	name := propName.(*jsonschema.Schema)
+	name.Pattern = EntityNamePattern
+
+	return actionSchema
+}

@@ -45,7 +45,11 @@ export class JSONFormComponent implements OnInit, OnChanges {
     ngOnInit() {
         const schemaDefs = this.schema.schema['$defs'];
         let allTypes = {};
+        console.log(this.schema);
         this.schema.flatTypes.forEach((v, k) => {
+            if (k === 'V2Action') {
+                console.log(v);
+            }
             let items = (v ?? [])
                 .filter(value => !value.disabled)
                 .map(value => {
@@ -58,17 +62,31 @@ export class JSONFormComponent implements OnInit, OnChanges {
                         description: value.description,
                         pattern: value.pattern,
                     };
-                    if (item.type === 'object' && value.type.length === 2) {
+                    if ( (item.type === 'object' || item.type === 'array') && value.type.length === 2) {
                         item.objectType = value.type[1];
+                    }
+                    if (item.type === 'map') {
+                        item.keyMapType = value.type[1];
+                        item.objectType = value.type[2];
                     }
                     return item;
                 })
                 .sort((i, j) => i.formOrder - j.formOrder);
+            let required = [];
+            if (schemaDefs[k]) {
+                // If sub jsonschema
+               if (schemaDefs[k]['$defs']) {
+                   required = schemaDefs[k]['$defs'][k].required
+               } else {
+                   required = schemaDefs[k].required
+               }
+            }
             allTypes[k] = <JSONFormSchemaTypeItem>{
                 fields: items,
-                required: k === this.parentType ? schemaDefs[k].required : schemaDefs[k]['$defs'][k].required
+                required: required
             };
         });
+        console.log(allTypes);
         this.jsonFormSchema = { types: allTypes };
         this._cd.markForCheck();
     }

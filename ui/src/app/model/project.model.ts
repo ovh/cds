@@ -93,6 +93,7 @@ export class ProjectRepository {
 }
 
 export const EntityWorkerModel = "WorkerModel";
+export const EntityAction = "Action";
 
 export class Entity {
     id: string;

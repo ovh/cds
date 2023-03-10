@@ -6,6 +6,7 @@ export class FormItem {
     name: string;
     type: string;
     objectType?: string;
+    keyMapType?: string;
     enum?: string[];
     formOrder: number;
     condition: FlatElementTypeCondition[];

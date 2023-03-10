@@ -31,10 +31,12 @@ export class JSONSchema implements Schema {
         if (properties) {
             Object.keys(properties).forEach(k => {
                 if (properties[k].type && properties[k].type === 'object' && properties[k].patternProperties) {
+                    // MAP
                     let pp = properties[k].patternProperties;
                     if (pp['.*'] && pp['.*'].$ref) {
                         let newElt = pp['.*'].$ref.replace(JSONSchema.defPrefix, '');
                         JSONSchema.browse(schema, flatSchema, flatTypes, newElt, [...tree, k, '.*']);
+                        JSONSchema.addElement(k, flatSchema, flatTypes.get(currentType), tree, ['map', 'string', newElt.replace(JSONSchema.refPrefix, '')], [], properties[k]);
                     }
                 } else if (properties[k].type) {
                     let currentOneOf = new Array<Schema>();
@@ -82,6 +84,9 @@ export class JSONSchema implements Schema {
             itemType.type = type;
             if (itemType.type?.length === 1 && itemType.type[0] === 'object' && properties['$ref']) {
                 itemType.type.push(properties['$ref'].replace(JSONSchema.refPrefix, ''));
+            }
+            if (type[0] === 'array') {
+                itemType.type.push(properties['items'].$ref.replace(JSONSchema.refPrefix, ''));
             }
             itemType.name = k;
             itemType.enum = properties?.enum;
@@ -186,6 +191,7 @@ export class FlatElement {
 export class FlatTypeElement {
     name: string;
     type: Array<string>;
+    arrayType: string;
     condition: Array<FlatElementTypeCondition>;
     description: string;
     formOrder: number;

@@ -382,9 +382,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 		// Check user role
 		if _, has := userRoles[e.Type]; !has {
-
 			roleName, err := sdk.GetManageRoleByEntity(e.Type)
 			if err != nil {
+				skippedFiles = append(skippedFiles, "User doesn't have the permission to manage "+e.Type)
 				return api.stopAnalysis(ctx, analysis, err)
 			}
 			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, userID, analysis.ProjectKey)
@@ -544,6 +544,9 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
 			es, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
+		case strings.HasPrefix(filePath, ".cds/actions/"):
+			var actions []sdk.V2Action
+			es, err = sdk.ReadEntityFile(dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis)
 		default:
 			continue
 		}
