@@ -344,7 +344,6 @@ type WorkerClient interface {
 	WorkerSetStatus(ctx context.Context, status string) error
 
 	WorkerModelv2List(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, filter *WorkerModelV2Filter) ([]sdk.V2WorkerModel, error)
-	WorkerModelTemplateList(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, filter *WorkerModelTemplateFilter) ([]sdk.WorkerModelTemplate, error)
 	CDNClient
 }
 
