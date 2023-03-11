@@ -1,0 +1,2 @@
+{{.cds.stuff}}
+{{.cds.stuff.secret}}

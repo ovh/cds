@@ -215,6 +215,10 @@ func getAllRouteInfo(path string) []Doc {
 
 	// Get all Handlers
 	d, err := parser.ParseFile(fset, path+"/api_routes.go", nil, parser.AllErrors)
+	if err != nil {
+		sdk.Exit(err.Error())
+	}
+
 	v := newVisitor()
 	ast.Walk(v, d)
 
