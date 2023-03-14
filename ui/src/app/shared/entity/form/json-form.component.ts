@@ -20,6 +20,12 @@ export class JSONFormSchema {
 export class JSONFormSchemaTypeItem {
     fields: FormItem[];
     required: string[];
+    oneOf: Map<string, JSONFormSchemaOneOfItem>;
+}
+
+export class JSONFormSchemaOneOfItem {
+    keyFormItem: FormItem;
+    fields: FormItem[];
 }
 
 @Component({
@@ -45,11 +51,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
     ngOnInit() {
         const schemaDefs = this.schema.schema['$defs'];
         let allTypes = {};
-        console.log(this.schema);
         this.schema.flatTypes.forEach((v, k) => {
-            if (k === 'V2Action') {
-                console.log(v);
-            }
             let items = (v ?? [])
                 .filter(value => !value.disabled)
                 .map(value => {
@@ -73,6 +75,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
                 })
                 .sort((i, j) => i.formOrder - j.formOrder);
             let required = [];
+            let oneOf = new Map<string, JSONFormSchemaOneOfItem> ();
             if (schemaDefs[k]) {
                 // If sub jsonschema
                if (schemaDefs[k]['$defs']) {
@@ -80,13 +83,30 @@ export class JSONFormComponent implements OnInit, OnChanges {
                } else {
                    required = schemaDefs[k].required
                }
+               if (schemaDefs[k].oneOf) {
+                   let oneOfListItemName = schemaDefs[k].oneOf.map(o => {
+                       return o.required[0];
+                   });
+                   schemaDefs[k].oneOf.forEach(v => {
+                       let oneOfItem = new JSONFormSchemaOneOfItem();
+                       let listAllowedItem = items.filter(i => {
+                           let indexOf = oneOfListItemName.indexOf(i.name);
+                           if (i.name === v.required[0]) {
+                               oneOfItem.keyFormItem = i;
+                           }
+                           return indexOf === -1;
+                       });
+                       oneOfItem.fields = listAllowedItem;
+                       oneOf.set(v.required[0], oneOfItem);
+                   });
+               }
             }
             allTypes[k] = <JSONFormSchemaTypeItem>{
                 fields: items,
-                required: required
+                required: required,
+                oneOf: oneOf
             };
         });
-        console.log(allTypes);
         this.jsonFormSchema = { types: allTypes };
         this._cd.markForCheck();
     }
@@ -115,17 +135,43 @@ export class JSONFormComponent implements OnInit, OnChanges {
         const schema = this.jsonFormSchema.types[objectType];
         let cleanData = {};
         schema.fields.forEach(f => {
-            const required = schema.required.indexOf(f.name) !== -1;
+            const required = schema.required && schema.required.indexOf(f.name) !== -1;
             if (f.type === 'object') {
                 const subObjectType = (f.condition && f.condition.length > 0) ?
                     f.condition.find(c => data[c.refProperty] && data[c.refProperty] === c.conditionValue)?.type
-                    : objectType;
+                    : f.objectType;
+
                 const cleanSubData = this.cleanModel(subObjectType, data[f.name]);
                 if (cleanSubData || required) {
                     cleanData[f.name] = cleanSubData ?? {};
                 }
+            } else if (f.type === 'array') {
+                if (data[f.name]) {
+                    data[f.name].forEach((d, i) => {
+                        const cleanSubData = this.cleanModel(f.objectType, d);
+                        if (cleanSubData) {
+                            if (!cleanData[f.name]) {
+                                cleanData[f.name] = [];
+                            }
+                            cleanData[f.name][i] = cleanSubData ?? {};
+                        }
+                    })
+                }
             } else if (data[f.name] || required) {
                 cleanData[f.name] = data[f.name] ?? '';
+            }
+
+            // One of check
+            if (schema.oneOf.size > 0) {
+                let keys = Array.from(schema.oneOf.keys());
+                let oneOfSelected = data['oneOfSelected'];
+                if (oneOfSelected) {
+                    keys.forEach(k => {
+                        if (k !== oneOfSelected) {
+                            delete cleanData[k];
+                        }
+                    });
+                }
             }
         });
         return cleanData;

@@ -8,10 +8,9 @@ import (
 
 type V2Action struct {
 	Name        string                  `json:"name"`
-	Author      string                  `json:"author"`
-	Description string                  `json:"description"`
-	Inputs      map[string]ActionInput  `json:"inputs"`
-	Outputs     map[string]ActionOutput `json:"outputs"`
+	Description string                  `json:"description,omitempty"`
+	Inputs      map[string]ActionInput  `json:"inputs,omitempty"`
+	Outputs     map[string]ActionOutput `json:"outputs,omitempty"`
 	Runs        ActionRuns              `json:"runs"`
 }
 
@@ -20,22 +19,23 @@ type ActionRuns struct {
 }
 
 type ActionInput struct {
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	Required    bool   `json:"required"`
-	Default     string `json:"default"`
+	Default     string `json:"default,omitempty"`
 }
 
 type ActionOutput struct {
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 	Value       string `json:"value"`
 }
 
 type ActionStep struct {
-	ID        string `json:"id"`
-	Uses      string `json:"uses"`
-	Run       string `json:"run"`
-	Condition string `json:"if"`
+	ID   string `json:"id,omitempty"`
+	Uses string `json:"uses,omitempty" jsonschema:"oneof_required=uses"`
+	Run  string `json:"run,omitempty" jsonschema:"oneof_required=run"`
 }
+
+type ActionStepUsesWith map[string]string
 
 func (a V2Action) GetName() string {
 	return a.Name

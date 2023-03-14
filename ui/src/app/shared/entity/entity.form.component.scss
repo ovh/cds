@@ -6,6 +6,8 @@
 
     app-json-form {
         flex: 1;
+        overflow: hidden;
+        overflow-y: auto;
 
         &.disableSelection {
             user-select: none;

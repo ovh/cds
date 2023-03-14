@@ -6,3 +6,29 @@ i {
 .red {
     color: $cds_color_red;
 }
+
+.array-container {
+    border: 1px #D9D9D9 dashed;
+    padding: 20px;
+    margin-bottom: 10px;
+
+    .array-item {
+        display: flex;
+        flex-direction: column;
+
+        .array-select {
+            display: flex;
+
+            nz-form-item {
+                nz-select {
+                    width: 110px;
+                }
+            }
+
+            .array-select-key-form {
+                width: 100%;
+                margin-left: 10px;
+            }
+        }
+    }
+}

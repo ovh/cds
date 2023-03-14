@@ -57,7 +57,6 @@ describe('CDS: Action Component', () => {
         }).compileComponents();
     });
 
-
     it('should create and then delete a requirement', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
