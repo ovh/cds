@@ -128,6 +128,9 @@ func (api *API) postAuthSigninHandler() service.Handler {
 			return err
 		}
 
+		ctx = context.WithValue(ctx, cdslog.AuthUsername, userInfo.Username)
+		SetTracker(w, cdslog.AuthUsername, userInfo.Username)
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
