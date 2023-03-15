@@ -81,7 +81,24 @@ func Test_putUserHandler(t *testing.T) {
 		ExpectedStatus int
 	}{
 		{
-			Name:           "A lambda user can't change username but can change fullname",
+			Name:           "A lambda user can change fullname",
+			JWT:            jwtInitialRaw,
+			TargetUsername: initial.Username,
+			Data: sdk.AuthentifiedUser{
+				Username: initial.Username,
+				Fullname: initialNewFullname,
+				Ring:     initial.Ring,
+			},
+			Expected: sdk.AuthentifiedUser{
+				Username:     initial.Username,
+				Fullname:     initialNewFullname,
+				Ring:         initial.Ring,
+				Organization: "default",
+			},
+			ExpectedStatus: http.StatusOK,
+		},
+		{
+			Name:           "A lambda user can't change username",
 			JWT:            jwtInitialRaw,
 			TargetUsername: initial.Username,
 			Data: sdk.AuthentifiedUser{
@@ -95,7 +112,7 @@ func Test_putUserHandler(t *testing.T) {
 				Ring:         initial.Ring,
 				Organization: "default",
 			},
-			ExpectedStatus: http.StatusOK,
+			ExpectedStatus: http.StatusForbidden,
 		},
 		{
 			Name:           "A lambda user can't change its ring",
@@ -189,6 +206,23 @@ func Test_putUserHandler(t *testing.T) {
 				Organization: "my-other-org",
 			},
 			ExpectedStatus: http.StatusForbidden,
+		},
+		{
+			Name:           "A admin user can change username",
+			JWT:            jwtAdmin2Raw,
+			TargetUsername: initial.Username,
+			Data: sdk.AuthentifiedUser{
+				Username: initial.Username + ".updated",
+				Fullname: initialNewFullname,
+				Ring:     sdk.UserRingMaintainer,
+			},
+			Expected: sdk.AuthentifiedUser{
+				Username:     initial.Username + ".updated",
+				Fullname:     initialNewFullname,
+				Ring:         sdk.UserRingMaintainer,
+				Organization: "default",
+			},
+			ExpectedStatus: http.StatusOK,
 		},
 	}
 

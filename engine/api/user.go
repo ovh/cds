@@ -83,6 +83,18 @@ func (api *API) putUserHandler() service.Handler {
 		}
 
 		newUser := *oldUser
+
+		if oldUser.Username != data.Username {
+			// Only an admin can change the username
+			if isAdmin(ctx) {
+				trackSudo(ctx, w)
+				log.Info(ctx, "putUserHandler> %s change username of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Username, data.Username)
+				newUser.Username = data.Username
+			} else {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+		}
+
 		newUser.Fullname = data.Fullname
 
 		// Only an admin can change the ring of a user
@@ -116,7 +128,7 @@ func (api *API) putUserHandler() service.Handler {
 			}
 
 			newUser.Ring = data.Ring
-			log.Debug(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
+			log.Info(ctx, "putUserHandler> %s change ring of user %s from %s to %s", consumer.AuthConsumerUser.AuthentifiedUserID, oldUser.ID, oldUser.Ring, newUser.Ring)
 		}
 
 		if err := user.Update(ctx, tx, &newUser); err != nil {

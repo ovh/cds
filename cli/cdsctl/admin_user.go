@@ -18,7 +18,39 @@ var adminUsersCmd = cli.Command{
 func adminUsers() *cobra.Command {
 	return cli.NewCommand(adminUsersCmd, nil, []*cobra.Command{
 		cli.NewCommand(adminUserSetOrganizationCmd, adminUserSetOrganizationRun, nil),
+		cli.NewCommand(adminUserRenameCmd, adminUserRenameRun, nil),
 	})
+}
+
+var adminUserRenameCmd = cli.Command{
+	Name:  "rename",
+	Short: "Rename a given user",
+	Args: []cli.Arg{
+		{
+			Name: "username",
+		},
+		{
+			Name: "new-username",
+		},
+	},
+}
+
+func adminUserRenameRun(v cli.Values) error {
+	ctx := context.Background()
+	username := v.GetString("username")
+	usernameNew := v.GetString("new-username")
+
+	u, err := client.UserGet(ctx, username)
+	if err != nil {
+		return err
+	}
+	u.Username = usernameNew
+	if err := client.UserUpdate(ctx, username, u); err != nil {
+		return err
+	}
+
+	fmt.Printf("User %q has been renamed to %q\n", username, usernameNew)
+	return nil
 }
 
 var adminUserSetOrganizationCmd = cli.Command{
