@@ -102,3 +102,11 @@ export class Entity {
     data: string;
     file_path: string;
 }
+
+export class EntityFullName {
+    name: string;
+    branch: string;
+    vcs_name: string;
+    repo_name: string;
+    project_key: string;
+}
