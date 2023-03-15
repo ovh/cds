@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -106,4 +107,44 @@ func LoadByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepos
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4`).Args(projectRepositoryID, branch, t, name)
 	return getEntity(ctx, db, query, opts...)
+}
+
+func UnsafeLoadAllByType(_ context.Context, db gorp.SqlExecutor, t string) ([]sdk.EntityFullName, error) {
+	query := `
+    SELECT entity.name as name,
+           vcs_project.name as vcs_name,
+           project_repository.name as repo_name,
+           entity.branch as branch,
+           entity.project_key as project_key
+    FROM entity
+    JOIN project_repository ON entity.project_repository_id = project_repository.id
+    JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
+    WHERE entity.type = $1
+    ORDER BY entity.project_key, vcs_project.name, project_repository.name, entity.name, entity.branch
+`
+	var entities []sdk.EntityFullName
+	if _, err := db.Select(&entities, query, t); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func UnsafeLoadAllByTypeAndProjectKeys(_ context.Context, db gorp.SqlExecutor, t string, keys []string) ([]sdk.EntityFullName, error) {
+	query := `
+    SELECT entity.name as name,
+           vcs_project.name as vcs_name,
+           project_repository.name as repo_name,
+           entity.branch as branch,
+           entity.project_key as project_key
+    FROM entity
+    JOIN project_repository ON entity.project_repository_id = project_repository.id
+    JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
+    WHERE entity.type = $1 AND entity.project_key = ANY($2)
+    ORDER BY entity.project_key, vcs_project.name, project_repository.name, entity.name, entity.branch
+    `
+	var entities []sdk.EntityFullName
+	if _, err := db.Select(&entities, query, t, pq.StringArray(keys)); err != nil {
+		return nil, err
+	}
+	return entities, nil
 }

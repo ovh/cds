@@ -32,7 +32,7 @@
                        (click)="prepareEditRequirements(); requirementModalVisible = true">
                         {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
                     </a>
-                    <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="900px"
+                    <nz-modal [nzVisible]="requirementModalVisible" nzTitle="Action requirements" nzWidth="1300px"
                               (nzOnCancel)="requirementModalVisible = false">
                         <div *nzModalContent class="modalContent">
                             <app-requirements-list [workerModels]="workerModels" [suggest]="suggest"
