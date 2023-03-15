@@ -72,8 +72,6 @@ export class JSONFormFieldComponent implements OnChanges {
         this.selectedCondition = (this.field.condition ?? []).find(c => this.currentModel[c.refProperty] && this.currentModel[c.refProperty] === c.conditionValue);
         this.conditionRefProperties = (this.field.condition ?? []).map(c => c.refProperty).filter((ref, index, arr) => arr.indexOf(ref) === index);
         this._cd.markForCheck();
-
-        console.log(this.currentModel);
     }
 
     trackByIndex(index: number) {
