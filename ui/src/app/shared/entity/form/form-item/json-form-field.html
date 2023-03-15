@@ -67,9 +67,12 @@
         <div class="map-item">
             <div class="map-key">
                 <nz-form-item>
-                    <nz-form-control>
-                        <input nz-input [name]="field.name + '-' + item.key" [disabled]="disabled"
-                               [ngModel]="item.key" (ngModelChange)="onKeyMapChanged($event, item.key)">
+                    <nz-form-control nzErrorTip="Pattern should match {{field.keyMapPattern}}">
+                        <ng-container *ngIf="field.keyMapType === 'string'">
+                            <input nz-input [name]="field.name + '-' + item.key" [disabled]="disabled"
+                                   [pattern]="field.keyMapPattern"
+                                   [ngModel]="item.key" (ngModelChange)="onKeyMapChanged($event, item.key)">
+                        </ng-container>
                     </nz-form-control>
                 </nz-form-item>
             </div>

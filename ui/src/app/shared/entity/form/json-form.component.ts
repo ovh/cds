@@ -69,7 +69,8 @@ export class JSONFormComponent implements OnInit, OnChanges {
                     }
                     if (item.type === 'map') {
                         item.keyMapType = value.type[1];
-                        item.objectType = value.type[2];
+                        item.keyMapPattern = value.type[2]
+                        item.objectType = value.type[3];
                     }
                     return item;
                 })

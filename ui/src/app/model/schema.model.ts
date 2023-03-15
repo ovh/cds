@@ -25,12 +25,11 @@ export class JSONSchema implements Schema {
         if (properties) {
             Object.keys(properties).forEach(k => {
                 if (properties[k].type && properties[k].type === 'object' && properties[k].patternProperties) {
-                    // MAP
                     let pp = properties[k].patternProperties;
-                    if (pp['.*'] && pp['.*'].$ref) {
-                        let newElt = pp['.*'].$ref.replace(JSONSchema.defPrefix, '');
-                        JSONSchema.browse(schema, flatSchema, newElt, [...tree, k, '.*']);
-                        JSONSchema.addElement(k, flatSchema, tree, ['map', 'string', newElt.replace(JSONSchema.refPrefix, '')], [], properties[k]);
+                    let ppKeys = Object.keys(pp)
+                    if (ppKeys.length === 1 && pp[ppKeys[0]].$ref) {
+                        let newElt = pp[ppKeys[0]].$ref.replace(JSONSchema.defPrefix, '');
+                        JSONSchema.browse(schema, flatSchema, newElt, [...tree, k, ppKeys[0]]);
                     }
                 } else if (properties[k].type) {
                     let currentOneOf = new Array<Schema>();
@@ -86,10 +85,11 @@ export class JSONSchema implements Schema {
                 // MAP
                 if (properties[k].type && properties[k].type === 'object' && properties[k].patternProperties) {
                     let pp = properties[k].patternProperties;
-                    if (pp['.*'] && pp['.*'].$ref) {
-                        let newElt = pp['.*'].$ref.replace(JSONSchema.defPrefix, '');
+                    let mapKeys = Object.keys(pp)
+                    if (mapKeys.length === 1 && pp[mapKeys[0]].$ref) {
+                        let newElt = pp[mapKeys[0]].$ref.replace(JSONSchema.defPrefix, '');
                         JSONSchema.flattenTypes(schema, newElt, flatTypes);
-                        flatTypes.get(currentType).push(JSONSchema.toFlatTypeElement(k, ['map', 'string', newElt.replace(JSONSchema.refPrefix, '')], properties[k]))
+                        flatTypes.get(currentType).push(JSONSchema.toFlatTypeElement(k, ['map', 'string', mapKeys[0], newElt.replace(JSONSchema.refPrefix, '')], properties[k]))
                     }
                 }
                 // Simple TYPE (string, number, array)
@@ -128,7 +128,6 @@ export class JSONSchema implements Schema {
     }
 
     static toFlatTypeElement(name: string, type: Array<string>, properties, condition?: any) {
-
         let itemType = new FlatTypeElement();
         itemType.type = type;
         if (itemType.type?.length === 1 && itemType.type[0] === 'object' && properties['$ref']) {
@@ -243,7 +242,6 @@ export class FlatElement {
 export class FlatTypeElement {
     name: string;
     type: Array<string>;
-    arrayType: string;
     condition: Array<FlatElementTypeCondition>;
     description: string;
     formOrder: number;
