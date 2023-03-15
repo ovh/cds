@@ -19,7 +19,7 @@
 </ng-container>
 
 <!-- ARRAY -->
-<ng-container *ngIf="field && currentModel && jsonFormSchema && field.type === 'array'">
+<div class="array-field" *ngIf="field && currentModel && jsonFormSchema && field.type === 'array'">
     <h3>{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</h3>
     <div class="item-container" *ngFor="let arrayItem of currentModel[field.name]; trackBy: trackByIndex; let index = index">
         <div class="array-item">
@@ -48,13 +48,20 @@
             <ng-container *ngIf="!oneOf">
                 <!-- NOT IMPLEMENTED : ARRAY WITHOUT ONEOF -->
             </ng-container>
+            <div class="deleteItem">
+                <span nz-icon nzType="drag" nzTheme="outline"></span>
+                <button nz-button nzType="primary" nzDanger>
+                    <span nz-icon nzType="delete" nzTheme="outline"></span>
+                </button>
+
+            </div>
         </div>
     </div>
-    <button nz-button nzType="default" nzBlock (click)="addArrayItem()">Add</button>
-</ng-container>
+    <button nz-button nzType="default" nzSize="small" nzBlock (click)="addArrayItem()">Add</button>
+</div>
 
 <!-- MAP -->
-<ng-container *ngIf="field && currentModel && jsonFormSchema && field.type === 'map'">
+<div class="map-field" *ngIf="field && currentModel && jsonFormSchema && field.type === 'map'">
     <h3>{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</h3>
     <div class="item-container" *ngFor="let item of currentModel[field.name] | keyvalue; trackBy: trackByIndex">
         <div class="map-item">
@@ -75,7 +82,7 @@
         </div>
     </div>
     <button nz-button nzType="default" nzBlock (click)="addMapItem()">Add</button>
-</ng-container>
+</div>
 
 <!-- SIMPLE FIELD (number / string) -->
 <nz-form-item *ngIf="field && currentModel && jsonFormSchema && field.type !== 'object' && field.type !== 'array' && field.type !== 'map'">

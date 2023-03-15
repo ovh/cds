@@ -6,6 +6,11 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+const (
+	EntityActionInputKey = "^[a-zA-Z]{1,}$"
+	EntityActionStepID   = "^[a-zA-Z]{0,}$"
+)
+
 type V2Action struct {
 	Name        string                  `json:"name"`
 	Description string                  `json:"description,omitempty"`

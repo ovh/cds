@@ -41,5 +41,23 @@ func GetActionJsonSchema() *jsonschema.Schema {
 	name := propName.(*jsonschema.Schema)
 	name.Pattern = EntityNamePattern
 
+	// Pattern on input/output keys
+	propInput, _ := actionSchema.Definitions["V2Action"].Properties.Get("inputs")
+	input := propInput.(*jsonschema.Schema)
+	input.PatternProperties[EntityActionInputKey] = input.PatternProperties[".*"]
+	delete(input.PatternProperties, ".*")
+
+	propOutput, _ := actionSchema.Definitions["V2Action"].Properties.Get("outputs")
+	output := propOutput.(*jsonschema.Schema)
+	output.PatternProperties[EntityActionInputKey] = output.PatternProperties[".*"]
+	delete(output.PatternProperties, ".*")
+
+	// Pattern on step id
+	propId, _ := actionSchema.Definitions["ActionStep"].Properties.Get("id")
+	stepId := propId.(*jsonschema.Schema)
+	stepId.Pattern = EntityActionStepID
+
+	// Enum on step uses
+
 	return actionSchema
 }
