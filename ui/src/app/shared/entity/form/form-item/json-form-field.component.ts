@@ -47,7 +47,7 @@ export class JSONFormFieldComponent implements OnChanges {
         if (!this.jsonFormSchema || !this.field || !this.model) {
             return;
         }
-        this.currentModel = { ...this.model };
+        this.currentModel = Object.assign({}, this.model);
         if (!this.currentModel[this.field.name]) {
             this.currentModel[this.field.name] = null;
         }
@@ -72,9 +72,11 @@ export class JSONFormFieldComponent implements OnChanges {
         this.selectedCondition = (this.field.condition ?? []).find(c => this.currentModel[c.refProperty] && this.currentModel[c.refProperty] === c.conditionValue);
         this.conditionRefProperties = (this.field.condition ?? []).map(c => c.refProperty).filter((ref, index, arr) => arr.indexOf(ref) === index);
         this._cd.markForCheck();
+
+        console.log(this.currentModel);
     }
 
-    trackStepElement(index: number) {
+    trackByIndex(index: number) {
         return index;
     }
 
@@ -90,8 +92,21 @@ export class JSONFormFieldComponent implements OnChanges {
         this._cd.markForCheck();
     }
 
-    onValueChanged(value: any, index?: number): void {
-        if (this.field.type === 'array') {
+    addMapItem() {
+        this.currentModel[this.field.name][''] = {};
+        this._cd.markForCheck();
+    }
+
+    onKeyMapChanged(value: any, previousValue): void {
+        this.currentModel[this.field.name][value] = this.currentModel[this.field.name][previousValue];
+        delete this.currentModel[this.field.name][previousValue];
+
+        this._cd.markForCheck();
+        this.modelChange.emit(this.currentModel);
+    }
+
+    onValueChanged(value: any, index?: any): void {
+        if (this.field.type === 'array' || this.field.type === 'map') {
             this.currentModel[this.field.name][index] = value;
          } else {
             this.currentModel[this.field.name] = value;

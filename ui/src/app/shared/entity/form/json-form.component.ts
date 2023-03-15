@@ -145,6 +145,16 @@ export class JSONFormComponent implements OnInit, OnChanges {
                 if (cleanSubData || required) {
                     cleanData[f.name] = cleanSubData ?? {};
                 }
+            } else if (f.type === 'map') {
+                let keys = Object.keys(data[f.name])
+                keys.forEach(k => {
+                    let d = data[f.name][k]
+                    const cleanSubData = this.cleanModel(f.objectType, d);
+                    if (!cleanData[f.name]) {
+                        cleanData[f.name] = {};
+                    }
+                    cleanData[f.name][k] = cleanSubData;
+                });
             } else if (f.type === 'array') {
                 if (data[f.name]) {
                     data[f.name].forEach((d, i) => {

@@ -21,7 +21,7 @@
 <!-- ARRAY -->
 <ng-container *ngIf="field && currentModel && jsonFormSchema && field.type === 'array'">
     <h3>{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</h3>
-    <div class="array-container" *ngFor="let arrayItem of currentModel[field.name]; trackBy: trackStepElement; let index = index">
+    <div class="item-container" *ngFor="let arrayItem of currentModel[field.name]; trackBy: trackByIndex; let index = index">
         <div class="array-item">
             <ng-container *ngIf="oneOf">
                 <div class="array-select">
@@ -56,6 +56,25 @@
 <!-- MAP -->
 <ng-container *ngIf="field && currentModel && jsonFormSchema && field.type === 'map'">
     <h3>{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</h3>
+    <div class="item-container" *ngFor="let item of currentModel[field.name] | keyvalue; trackBy: trackByIndex">
+        <div class="map-item">
+            <div class="map-key">
+                <nz-form-item>
+                    <nz-form-control>
+                        <input nz-input [name]="field.name + '-' + item.key" [disabled]="disabled"
+                               [ngModel]="item.key" (ngModelChange)="onKeyMapChanged($event, item.key)">
+                    </nz-form-control>
+                </nz-form-item>
+            </div>
+
+            <div class="map-value">
+                <app-json-form-field *ngFor="let f of jsonFormSchema.types[field.objectType].fields"
+                    [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
+                    [model]="currentModel[field.name][item.key]" (modelChange)="onValueChanged($event, item.key)"></app-json-form-field>
+            </div>
+        </div>
+    </div>
+    <button nz-button nzType="default" nzBlock (click)="addMapItem()">Add</button>
 </ng-container>
 
 <!-- SIMPLE FIELD (number / string) -->
