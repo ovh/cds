@@ -46,7 +46,7 @@ func (a V2Action) GetName() string {
 }
 
 func (a V2Action) Lint() []error {
-	actionSchema := GetActionJsonSchema()
+	actionSchema := GetActionJsonSchema(nil)
 	actionSchemaS, err := actionSchema.MarshalJSON()
 	if err != nil {
 		return []error{NewErrorFrom(err, "unable to load action schema")}

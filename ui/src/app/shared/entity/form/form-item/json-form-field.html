@@ -27,7 +27,7 @@
                 <div class="array-select">
                     <nz-form-item>
                         <nz-form-control>
-                            <nz-select [(ngModel)]="oneOfSelected[index]" (ngModelChange)="updateItemStruct(index)">
+                            <nz-select class="oneof" [(ngModel)]="oneOfSelected[index]" (ngModelChange)="updateItemStruct(index)">
                                 <nz-option *ngFor="let o of oneOfSelectOpts" [nzLabel]="o" [nzValue]="o"></nz-option>
                             </nz-select>
                         </nz-form-control>

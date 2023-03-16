@@ -25,7 +25,7 @@ i {
             display: flex;
 
             nz-form-item {
-                nz-select {
+                nz-select.oneof {
                     width: 110px;
                 }
             }

@@ -30,7 +30,7 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 	return wmSchema
 }
 
-func GetActionJsonSchema() *jsonschema.Schema {
+func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	actionSchema := jsonschema.Reflect(&V2Action{})
 
 	if actionSchema.Definitions == nil {
@@ -58,6 +58,13 @@ func GetActionJsonSchema() *jsonschema.Schema {
 	stepId.Pattern = EntityActionStepID
 
 	// Enum on step uses
+	if len(publicActionNames) > 0 {
+		propStepUses, _ := actionSchema.Definitions["ActionStep"].Properties.Get("uses")
+		stepUses := propStepUses.(*jsonschema.Schema)
+		for _, actName := range publicActionNames {
+			stepUses.Enum = append(stepUses.Enum, actName)
+		}
+	}
 
 	return actionSchema
 }
