@@ -279,7 +279,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace github.com/invopop/jsonschema v0.6.0 => github.com/sguiheux/jsonschema v0.0.0-20220907155307-5db145196fe8
+replace github.com/invopop/jsonschema v0.6.0 => github.com/sguiheux/jsonschema v0.0.0-20230316145935-733732e89063
 
 replace gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.3.0
 

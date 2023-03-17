@@ -142,6 +142,7 @@ export class JSONSchema implements Schema {
         itemType.disabled = properties?.disabled;
         itemType.description = properties?.description;
         itemType.pattern = properties?.pattern;
+        itemType.onchange = properties?.onchange;
 
         if (condition) {
             itemType.condition = new Array<FlatElementTypeCondition>();
@@ -248,6 +249,7 @@ export class FlatTypeElement {
     disabled: string;
     enum: string[];
     pattern: string;
+    onchange: string;
 }
 
 export class FlatElementsOneOfRequired {

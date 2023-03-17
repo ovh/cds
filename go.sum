@@ -837,8 +837,8 @@ github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 h1:qu90yDtRE5
 github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197/go.mod h1:0hhKrsUsoT7yvxwNGKa+TSYNA26DNWMqReeZEQq/9FI=
 github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc h1:2hQK9ZA+R4QK6YSeI6J8h40fv1pQVmsoLwdn0omv4NE=
 github.com/sguiheux/go-nfs-client v0.0.0-20210311091651-4f075a6103cc/go.mod h1:JWMmlL5pWPL6DVIvix8TwfsDIfw8Cu1uyvid9Js3nyE=
-github.com/sguiheux/jsonschema v0.0.0-20220907155307-5db145196fe8 h1:ZVa5RAVxY0ddYqLOS35oAvq5P3L5KbDdb9ubfLFP3L4=
-github.com/sguiheux/jsonschema v0.0.0-20220907155307-5db145196fe8/go.mod h1:O9uiLokuu0+MGFlyiaqtWxwqJm41/+8Nj0lD7A36YH0=
+github.com/sguiheux/jsonschema v0.0.0-20230316145935-733732e89063 h1:pI5cRAlDxjm+koDMzaphEtnURxpk1BKVw31+byq6BFk=
+github.com/sguiheux/jsonschema v0.0.0-20230316145935-733732e89063/go.mod h1:O9uiLokuu0+MGFlyiaqtWxwqJm41/+8Nj0lD7A36YH0=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMBDgk/93Q=

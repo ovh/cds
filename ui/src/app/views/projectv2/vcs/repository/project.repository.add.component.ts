@@ -1,9 +1,8 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { filter, finalize } from 'rxjs/operators';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { ProjectState } from 'app/store/project.state';
+import { finalize } from 'rxjs/operators';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { forkJoin, Subscription } from 'rxjs';
 import { Project, ProjectRepository, VCSProject } from 'app/model/project.model';
@@ -11,8 +10,6 @@ import { ProjectService } from 'app/service/project/project.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { Repository } from 'app/model/repositories.model';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { SidebarEvent } from 'app/service/sidebar/sidebar.service';
-import { FlatNodeItem } from 'app/shared/tree/tree.component';
 
 @Component({
     selector: 'app-projectv2-repository-add',
@@ -23,7 +20,6 @@ import { FlatNodeItem } from 'app/shared/tree/tree.component';
 @AutoUnsubscribe()
 export class ProjectV2RepositoryAddComponent implements OnDestroy {
 
-    projectSubscriber: Subscription
     loading: boolean;
     loadingResync: boolean;
 
