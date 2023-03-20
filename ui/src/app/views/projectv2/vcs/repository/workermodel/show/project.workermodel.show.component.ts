@@ -28,6 +28,7 @@ export class ProjectV2WorkerModelShowComponent implements OnDestroy {
     currentWorkerModelName: string;
     currentBranch: string;
     errorNotFound: boolean;
+    entityType = EntityWorkerModel;
 
     constructor(
         private _store: Store,

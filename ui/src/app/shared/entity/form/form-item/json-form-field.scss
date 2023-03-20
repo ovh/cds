@@ -34,21 +34,6 @@ i {
                 margin-left: 10px;
             }
         }
-
-        .deleteItem {
-            display: none;
-
-            button {
-                margin-left: auto;
-                margin-bottom: 20px;
-            }
-        }
-    }
-
-    .array-item:hover {
-        .deleteItem {
-            display: flex;
-        }
     }
 
     .map-item {

@@ -5,16 +5,19 @@
         <ng-container *ngIf="selectedCondition">
             <app-json-form-field *ngFor="let f of jsonFormSchema.types[selectedCondition.type].fields"
                 [disabled]="disabled" [parentType]="selectedCondition.type" [jsonFormSchema]="jsonFormSchema"
-                [field]="f" [model]="currentModel[field.name]"
+                [field]="f" [model]="currentModel[field.name]" [entityType]="entityType"
                 (modelChange)="onValueChanged($event)"></app-json-form-field>
         </ng-container>
         <nz-alert *ngIf="!selectedCondition" nzType="info"
             nzDescription="Please select a value for field '{{conditionRefProperties}}'" nzShowIcon></nz-alert>
     </ng-container>
     <ng-template #tmplNoCondition>
-        <app-json-form-field *ngFor="let f of jsonFormSchema.types[field.objectType].fields"
-            [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
-            [model]="currentModel[field.name]" (modelChange)="onValueChanged($event)"></app-json-form-field>
+        <ng-container *ngFor="let f of jsonFormSchema.types[field.objectType].fields">
+            <app-json-form-field
+                [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f" [entityType]="entityType"
+                [model]="currentModel[field.name]" (modelChange)="onValueChanged($event)"></app-json-form-field>
+        </ng-container>
+
     </ng-template>
 </ng-container>
 
@@ -33,31 +36,25 @@
                         </nz-form-control>
                     </nz-form-item>
                     <div class="array-select-key-form">
-                        <app-json-form-field [hideLabel]="true" [parentType]="field.objectType"
+                        <app-json-form-field [hideLabel]="true" [parentType]="field.objectType" [entityType]="entityType"
                                              [jsonFormSchema]="jsonFormSchema" [field]="oneOf.get(oneOfSelected[index]).keyFormItem"
                                              [model]="currentModel[field.name][index]" (modelChange)="onValueChanged($event, index)"></app-json-form-field>
                     </div>
                 </div>
                 <div class="array-form">
-                    <app-json-form-field *ngFor="let f of oneOf.get(oneOfSelected[index]).fields"
-                        [hideLabel]="f.name === oneOfSelected[index]"
-                        [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
-                        [model]="currentModel[field.name][index]" (modelChange)="onValueChanged($event, index)"></app-json-form-field>
+                    <ng-container *ngFor="let f of oneOf.get(oneOfSelected[index]).fields">
+                        <app-json-form-field [hideLabel]="f.name === oneOfSelected[index]" [entityType]="entityType"
+                                             [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
+                                             [model]="currentModel[field.name][index]" (modelChange)="onValueChanged($event, index)"></app-json-form-field>
+                    </ng-container>
                 </div>
             </ng-container>
             <ng-container *ngIf="!oneOf">
                 <!-- NOT IMPLEMENTED : ARRAY WITHOUT ONEOF -->
             </ng-container>
-            <div class="deleteItem">
-                <span nz-icon nzType="drag" nzTheme="outline"></span>
-                <button nz-button nzType="primary" nzDanger>
-                    <span nz-icon nzType="delete" nzTheme="outline"></span>
-                </button>
-
-            </div>
         </div>
     </div>
-    <button nz-button nzType="default" nzSize="small" nzBlock (click)="addArrayItem()">Add</button>
+    <button nz-button nzType="default" nzBlock (click)="addArrayItem()">Add</button>
 </div>
 
 <!-- MAP -->
@@ -67,24 +64,30 @@
         <div class="map-item">
             <div class="map-key">
                 <nz-form-item>
-                    <nz-form-control nzErrorTip="Pattern should match {{field.keyMapPattern}}">
-                        <ng-container *ngIf="field.keyMapType === 'string'">
+                    <nz-form-label *ngIf="field.mode === 'use'">{{item.key}}</nz-form-label>
+                    <nz-form-control nzErrorTip="Pattern should match {{field.keyMapPattern}}" *ngIf="field.keyMapType === 'string' && field.mode === 'edit'">
                             <input nz-input [name]="field.name + '-' + item.key" [disabled]="disabled"
                                    [pattern]="field.keyMapPattern"
                                    [ngModel]="item.key" (ngModelChange)="onKeyMapChanged($event, item.key)">
-                        </ng-container>
                     </nz-form-control>
                 </nz-form-item>
             </div>
 
             <div class="map-value">
-                <app-json-form-field *ngFor="let f of jsonFormSchema.types[field.objectType].fields"
-                    [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
-                    [model]="currentModel[field.name][item.key]" (modelChange)="onValueChanged($event, item.key)"></app-json-form-field>
+                <ng-container *ngIf="field.objectType === 'string'; else mapObj">
+                    <input nz-input [name]="field.name+'-value-' + item.key" [disabled]="disabled"
+                           [ngModel]="currentModel[field.name][item.key]" (ngModelChange)="onValueChanged($event, item.key)">
+                </ng-container>
+                <ng-template #mapObj>
+                    <app-json-form-field *ngFor="let f of jsonFormSchema.types[field.objectType].fields" [entityType]="entityType"
+                        [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
+                        [model]="currentModel[field.name][item.key]" (modelChange)="onValueChanged($event, item.key)"></app-json-form-field>
+                </ng-template>
             </div>
         </div>
     </div>
-    <button nz-button nzType="default" nzBlock (click)="addMapItem()">Add</button>
+    <nz-alert *ngIf="!currentModel[field.name] || currentModel[field.name].length === 0" nzMessage="No inputs this action" nzType="info"></nz-alert>
+    <button nz-button nzType="default" nzBlock (click)="addMapItem()" *ngIf="field.mode === 'edit'">Add</button>
 </div>
 
 <!-- SIMPLE FIELD (number / string) -->

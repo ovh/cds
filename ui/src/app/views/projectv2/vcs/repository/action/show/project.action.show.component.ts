@@ -34,6 +34,7 @@ export class ProjectV2ActionShowComponent implements OnDestroy {
     currentActionName: string;
     currentBranch: string;
     errorNotFound: boolean;
+    entityType = EntityAction;
 
     constructor(
         private _store: Store,

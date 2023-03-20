@@ -90,6 +90,9 @@ export class JSONSchema implements Schema {
                         let newElt = pp[mapKeys[0]].$ref.replace(JSONSchema.defPrefix, '');
                         JSONSchema.flattenTypes(schema, newElt, flatTypes);
                         flatTypes.get(currentType).push(JSONSchema.toFlatTypeElement(k, ['map', 'string', mapKeys[0], newElt.replace(JSONSchema.refPrefix, '')], properties[k]))
+                    } else if (mapKeys.length === 1 && pp[mapKeys[0]].type) {
+                        let newEltType = pp[mapKeys[0]].type;
+                        flatTypes.get(currentType).push(JSONSchema.toFlatTypeElement(k, ['map', 'string', mapKeys[0], newEltType], properties[k]))
                     }
                 }
                 // Simple TYPE (string, number, array)
@@ -143,6 +146,7 @@ export class JSONSchema implements Schema {
         itemType.description = properties?.description;
         itemType.pattern = properties?.pattern;
         itemType.onchange = properties?.onchange;
+        itemType.mode = properties?.mode;
 
         if (condition) {
             itemType.condition = new Array<FlatElementTypeCondition>();
@@ -250,6 +254,7 @@ export class FlatTypeElement {
     enum: string[];
     pattern: string;
     onchange: string;
+    mode: string;
 }
 
 export class FlatElementsOneOfRequired {

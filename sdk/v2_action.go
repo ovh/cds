@@ -14,8 +14,8 @@ const (
 type V2Action struct {
 	Name        string                  `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the action"`
 	Description string                  `json:"description,omitempty" jsonschema_extras:"order=2"`
-	Inputs      map[string]ActionInput  `json:"inputs,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Inputs of the action"`
-	Outputs     map[string]ActionOutput `json:"outputs,omitempty" jsonschema_extras:"order=4" jsonschema_description:"Outputs compute by the action"`
+	Inputs      map[string]ActionInput  `json:"inputs,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Inputs of the action"`
+	Outputs     map[string]ActionOutput `json:"outputs,omitempty" jsonschema_extras:"order=4,mode=edit" jsonschema_description:"Outputs compute by the action"`
 	Runs        ActionRuns              `json:"runs" jsonschema_extras:"order=5"`
 }
 
@@ -37,7 +37,7 @@ type ActionStep struct {
 	ID   string            `json:"id,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Identifier of the step"`
 	Uses string            `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=1,onchange=loadentity" jsonschema_description:"Sub action to call"`
 	Run  string            `json:"run,omitempty" jsonschema:"oneof_required=run" jsonschema_extras:"order=1" jsonschema_description:"Script to execute"`
-	With map[string]string `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=3" jsonschema_description:"Action parameters"`
+	With map[string]string `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=3,mode=use" jsonschema_description:"Action parameters"`
 }
 
 type ActionStepUsesWith map[string]string

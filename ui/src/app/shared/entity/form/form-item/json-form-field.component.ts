@@ -20,6 +20,7 @@ export class FormItem {
     description: string;
     pattern: string;
     onchange: string;
+    mode: string;
 }
 @Component({
     selector: 'app-json-form-field',
@@ -34,6 +35,7 @@ export class JSONFormFieldComponent implements OnChanges {
     @Input() parentType: string;
     @Input() disabled: boolean;
     @Input() hideLabel: boolean;
+    @Input() entityType: string
     @Output() modelChange = new EventEmitter();
 
     required: boolean;
@@ -101,13 +103,23 @@ export class JSONFormFieldComponent implements OnChanges {
     }
 
     addArrayItem() {
+        if (!this.currentModel[this.field.name]) {
+            this.currentModel[this.field.name] = [];
+        }
         this.currentModel[this.field.name].push({})
         this.oneOfSelected.push(this.oneOfSelectOpts[0]);
         this._cd.markForCheck();
     }
 
     addMapItem() {
-        this.currentModel[this.field.name][''] = {};
+        if (!this.currentModel[this.field.name]) {
+            this.currentModel[this.field.name] = {}
+        }
+        if (this.field.objectType === 'string') {
+            this.currentModel[this.field.name][''] = '';
+        } else {
+            this.currentModel[this.field.name][''] = {};
+        }
         this._cd.markForCheck();
     }
 
@@ -134,20 +146,34 @@ export class JSONFormFieldComponent implements OnChanges {
                 let vcsName = routeParams['vcsName'];
                 let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 
-                this._projectService.getRepoEntity(project.key, vcsName, repoName, EntityAction, actionName, branch).subscribe(e => {
-                    let action = load(e.data && e.data !== '' ? e.data : '{}', <LoadOptions>{ onWarning: (e) => { } });
-                    console.log(action);
-                });
+                this._projectService.getRepoEntity(project.key, vcsName, repoName, this.entityType, actionName, branch).subscribe(e => {
+                    let ent = load(e.data && e.data !== '' ? e.data : '{}', <LoadOptions>{ onWarning: (e) => { } });
+                    switch (this.entityType) {
+                        case EntityAction:
+                            if (ent.inputs) {
+                                let keys =  Object.keys(ent.inputs);
+                                if(keys.length > 0) {
+                                    if (!this.currentModel['with']) {
+                                        this.currentModel['with'] = {};
+                                    }
+                                    keys.forEach(k => {
+                                        this.currentModel['with'][k] = ent.inputs[k].default;
+                                    });
+                                }
+                            }
+                            break;
+                    }
 
+                    this.modelChange.emit(this.currentModel);
+                });
                 break;
-            default:
-                if (this.field.type === 'array' || this.field.type === 'map') {
-                    this.currentModel[this.field.name][index] = value;
-                } else {
-                    this.currentModel[this.field.name] = value;
-                }
-                this._cd.markForCheck();
-                this.modelChange.emit(this.currentModel);
         }
+        if (this.field.type === 'array' || this.field.type === 'map') {
+            this.currentModel[this.field.name][index] = value;
+        } else {
+            this.currentModel[this.field.name] = value;
+        }
+        this._cd.markForCheck();
+        this.modelChange.emit(this.currentModel);
     }
 }

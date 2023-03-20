@@ -39,6 +39,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
     @Input() parentType: string;
     @Input() disabled: boolean;
     @Input() data: string;
+    @Input() entityType: string;
     @Output() dataChange = new EventEmitter();
 
     jsonFormSchema: JSONFormSchema;
@@ -63,7 +64,8 @@ export class JSONFormComponent implements OnInit, OnChanges {
                         condition: value.condition,
                         description: value.description,
                         pattern: value.pattern,
-                        onchange: value.onchange
+                        onchange: value.onchange,
+                        mode: value.mode
                     };
                     if ( (item.type === 'object' || item.type === 'array') && value.type.length === 2) {
                         item.objectType = value.type[1];
@@ -92,6 +94,11 @@ export class JSONFormComponent implements OnInit, OnChanges {
                    schemaDefs[k].oneOf.forEach(v => {
                        let oneOfItem = new JSONFormSchemaOneOfItem();
                        let listAllowedItem = items.filter(i => {
+                           if (v.not && v.not.required) {
+                               if (v.not.required.indexOf(i.name) !== -1) {
+                                   return false;
+                               }
+                           }
                            let indexOf = oneOfListItemName.indexOf(i.name);
                            if (i.name === v.required[0]) {
                                oneOfItem.keyFormItem = i;
@@ -99,6 +106,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
                            return indexOf === -1;
                        });
                        oneOfItem.fields = listAllowedItem;
+
                        oneOf.set(v.required[0], oneOfItem);
                    });
                }
@@ -148,15 +156,25 @@ export class JSONFormComponent implements OnInit, OnChanges {
                     cleanData[f.name] = cleanSubData ?? {};
                 }
             } else if (f.type === 'map') {
-                let keys = Object.keys(data[f.name])
-                keys.forEach(k => {
-                    let d = data[f.name][k]
-                    const cleanSubData = this.cleanModel(f.objectType, d);
-                    if (!cleanData[f.name]) {
-                        cleanData[f.name] = {};
-                    }
-                    cleanData[f.name][k] = cleanSubData;
-                });
+                if (data[f.name]) {
+                    let keys = Object.keys(data[f.name])
+                    keys.forEach(k => {
+                        let d = data[f.name][k]
+                        if (f.objectType === 'string') {
+                            if (!cleanData[f.name]) {
+                                cleanData[f.name] = {};
+                            }
+                            cleanData[f.name][k] = d;
+                        } else {
+                            const cleanSubData = this.cleanModel(f.objectType, d);
+                            if (!cleanData[f.name]) {
+                                cleanData[f.name] = {};
+                            }
+                            cleanData[f.name][k] = cleanSubData;
+                        }
+
+                    });
+                }
             } else if (f.type === 'array') {
                 if (data[f.name]) {
                     data[f.name].forEach((d, i) => {
@@ -179,8 +197,22 @@ export class JSONFormComponent implements OnInit, OnChanges {
                 let oneOfSelected = data['oneOfSelected'];
                 if (oneOfSelected) {
                     keys.forEach(k => {
+                        if (!cleanData[k]) {
+                            return;
+                        }
                         if (k !== oneOfSelected) {
                             delete cleanData[k];
+                        } else {
+                            let currentKeys  = Object.keys(cleanData);
+                            let allowedKeys = schema.oneOf.get(k).fields;
+                            currentKeys.forEach(subKey => {
+                                let ff = allowedKeys.find(i => {
+                                    return i.name === subKey || i.name === k
+                                });
+                                if (!ff && subKey !== k) {
+                                    delete cleanData[subKey];
+                                }
+                            });
                         }
                     });
                 }
