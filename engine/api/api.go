@@ -842,12 +842,15 @@ func (a *API) Serve(ctx context.Context) error {
 			a.cleanWorkflowRunSecrets(ctx)
 		})
 	}
-	chanWorkflowTemplateBulkOperation := make(chan WorkflowTemplateBulkOperation)
+	if a.Config.Workflow.TemplateBulkRunnerCount == 0 {
+		a.Config.Workflow.TemplateBulkRunnerCount = 10
+	}
+	chanWorkflowTemplateBulkOperation := make(chan WorkflowTemplateBulkOperation, a.Config.Workflow.TemplateBulkRunnerCount*10)
 	defer close(chanWorkflowTemplateBulkOperation)
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowTemplateBulk", func(ctx context.Context) {
 		a.WorkflowTemplateBulk(ctx, 100*time.Millisecond, chanWorkflowTemplateBulkOperation)
 	})
-	a.WorkflowTemplateBulkOperation(ctx, a.Config.Workflow.MaxRuns, chanWorkflowTemplateBulkOperation)
+	a.WorkflowTemplateBulkOperation(ctx, chanWorkflowTemplateBulkOperation)
 
 	log.Info(ctx, "Bootstrapping database...")
 	defaultValues := sdk.DefaultValues{

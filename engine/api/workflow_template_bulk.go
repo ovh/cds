@@ -116,7 +116,7 @@ func (api *API) workflowTemplateBulk(ctx context.Context, bulkID int64, chanOper
 	}
 
 	if b.Parallel {
-		for len(operationTodo) > 0 {
+		for i := 0; i < int(api.Config.Workflow.TemplateBulkRunnerCount) && len(operationTodo) > 0; i++ {
 			chanOperation <- operationTodo.Pop()
 		}
 	} else {
@@ -137,7 +137,13 @@ func (api *API) workflowTemplateBulk(ctx context.Context, bulkID int64, chanOper
 				return nil
 			}
 			if (res.Status == sdk.OperationStatusDone || res.Status == sdk.OperationStatusError) && len(operationTodo) > 0 {
-				chanOperation <- operationTodo.Pop()
+				if b.Parallel {
+					for i := 0; i < int(api.Config.Workflow.TemplateBulkRunnerCount) && len(operationTodo) > 0; i++ {
+						chanOperation <- operationTodo.Pop()
+					}
+				} else {
+					chanOperation <- operationTodo.Pop()
+				}
 			}
 		case <-ctx.Done():
 			b.Status = sdk.OperationStatusPending
@@ -146,11 +152,8 @@ func (api *API) workflowTemplateBulk(ctx context.Context, bulkID int64, chanOper
 	}
 }
 
-func (api *API) WorkflowTemplateBulkOperation(ctx context.Context, routineCount int64, chanOperation chan WorkflowTemplateBulkOperation) {
-	if routineCount == 0 {
-		routineCount = 10
-	}
-	for i := int64(0); i < routineCount; i++ {
+func (api *API) WorkflowTemplateBulkOperation(ctx context.Context, chanOperation chan WorkflowTemplateBulkOperation) {
+	for i := int64(0); i < api.Config.Workflow.TemplateBulkRunnerCount; i++ {
 		api.GoRoutines.RunWithRestart(ctx, fmt.Sprintf("api.WorkflowTemplateBulkOperation-%d", i), func(ctx context.Context) {
 			for {
 				select {
