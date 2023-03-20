@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	docker "github.com/docker/docker/client"
+	docker "github.com/moby/moby/client"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"

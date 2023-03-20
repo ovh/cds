@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
+	docker "github.com/moby/moby/client"
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -161,9 +161,9 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 				}
 			}
 
-			var opts = []func(*docker.Client) error{docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient)}
-			if strings.HasPrefix(cfg.Host, "unix:///") {
-				opts = []func(*docker.Client) error{docker.WithHost(cfg.Host)}
+			var opts = []docker.Opt{docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion)}
+			if !strings.HasPrefix(cfg.Host, "unix:///") {
+				opts = append(opts, docker.WithHTTPClient(httpClient))
 			}
 
 			d, errc := docker.NewClientWithOpts(opts...)

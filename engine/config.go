@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/api/driver/builtin"
 	"io"
 	"os"
 	"sort"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/driver/builtin"
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/engine/database"
@@ -102,10 +102,12 @@ func configBootstrap(args []string) Configuration {
 		case sdk.TypeHatchery + ":swarm":
 			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
 			defaults.SetDefaults(conf.Hatchery.Swarm)
+			host := swarm.DockerEngineConfiguration{
+				Host: "unix:///var/run/docker.sock",
+			}
+			defaults.SetDefaults(&host)
 			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
-				"sample-docker-engine": {
-					Host: "unix:///var/run/docker.sock",
-				},
+				"default": host,
 			}
 			conf.Hatchery.Swarm.Name = "cds-hatchery-swarm-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.Swarm.HTTP.Port = 8086
