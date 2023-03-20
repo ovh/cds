@@ -60,7 +60,7 @@ export class ErrorInterceptor implements HttpInterceptor {
                                     });
                                 });
                             } else {
-                                this._router.navigate(['/home']);
+                                this._router.navigate(['/']);
                             }
                             return observableThrowError(e);
                         }

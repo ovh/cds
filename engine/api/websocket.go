@@ -57,7 +57,7 @@ func (f webSocketFilters) HasOneKey(keys ...string) (found bool, needCheckPermis
 			if keys[i] == filter.Key() {
 				found = true
 				switch filter.Type {
-				case sdk.WebsocketFilterTypeGlobal, sdk.WebsocketFilterTypeQueue, sdk.WebsocketFilterTypeTimeline, sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
+				case sdk.WebsocketFilterTypeGlobal, sdk.WebsocketFilterTypeQueue, sdk.WebsocketFilterTypeDryRunRetentionWorkflow:
 					needCheckPermission = true
 				}
 				// If we found a filter that don't need to check permission we can return directly
@@ -391,12 +391,6 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			Type:          sdk.WebsocketFilterTypeOperation,
 			ProjectKey:    event.ProjectKey,
 			OperationUUID: event.OperationUUID,
-		}.Key())
-	}
-	// Event that match timeline filter
-	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
-		keys = append(keys, sdk.WebsocketFilter{
-			Type: sdk.WebsocketFilterTypeTimeline,
 		}.Key())
 	}
 	// Event that match as code event filter
