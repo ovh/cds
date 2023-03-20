@@ -65,7 +65,7 @@ export class ProjectAdminComponent implements OnInit {
             }))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('project_deleted'));
-                this._router.navigate(['/home']);
+                this._router.navigate(['/']);
             });
     }
 

@@ -139,7 +139,7 @@ export class SigninComponent implements OnInit {
             if (this.redirect) {
                 this._router.navigateByUrl(decodeURIComponent(this.redirect));
             } else {
-                this._router.navigate(['home']);
+                this._router.navigate(['/']);
             }
         });
     }
@@ -149,7 +149,7 @@ export class SigninComponent implements OnInit {
             if (this.redirect) {
                 this._router.navigateByUrl(decodeURIComponent(this.redirect));
             } else {
-                this._router.navigate(['home']);
+                this._router.navigate(['/']);
             }
         });
     }

@@ -144,7 +144,7 @@ export class CallbackComponent implements OnInit, OnDestroy {
                     let dus = new DefaultUrlSerializer();
                     this._router.navigateByUrl(dus.parse(this.payloadData.redirect_uri));
                 } else {
-                    this._router.navigate(['/home']);
+                    this._router.navigate(['/']);
                 }
             }, () => {
                 this.showErrorMessage = true;

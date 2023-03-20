@@ -100,9 +100,6 @@ export class EventService {
 
         let urlSplitted = url.substr(1, url.length - 1).split('/');
         switch (urlSplitted[0]) {
-            case 'home':
-                fs.push(<WebsocketFilter>{ type: WebsocketFilterType.TIMELINE });
-                break;
             case 'settings':
                 if (urlSplitted.length === 1) { // Ignore settings root page
                     break;

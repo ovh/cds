@@ -15,7 +15,6 @@ const (
 	WebsocketFilterTypeEnvironment             WebsocketFilterType = "environment"
 	WebsocketFilterTypeQueue                   WebsocketFilterType = "queue"
 	WebsocketFilterTypeOperation               WebsocketFilterType = "operation"
-	WebsocketFilterTypeTimeline                WebsocketFilterType = "timeline"
 	WebsocketFilterTypeAscodeEvent             WebsocketFilterType = "ascode-event"
 	WebsocketFilterTypeDryRunRetentionWorkflow WebsocketFilterType = "workflow-retention-dryrun"
 )
@@ -32,7 +31,6 @@ func (f WebsocketFilterType) IsValid() bool {
 		WebsocketFilterTypeEnvironment,
 		WebsocketFilterTypeQueue,
 		WebsocketFilterTypeOperation,
-		WebsocketFilterTypeTimeline,
 		WebsocketFilterTypeDryRunRetentionWorkflow,
 		WebsocketFilterTypeAscodeEvent:
 		return true
