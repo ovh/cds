@@ -376,7 +376,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}
 
 	userRoles := make(map[string]bool)
-	skippedFiles := make([]string, 0)
+	skippedFiles := make(sdk.StringSlice, 0)
 	for i := range entities {
 		e := &entities[i]
 
@@ -384,7 +384,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		if _, has := userRoles[e.Type]; !has {
 			roleName, err := sdk.GetManageRoleByEntity(e.Type)
 			if err != nil {
-				skippedFiles = append(skippedFiles, "User doesn't have the permission to manage "+e.Type)
 				return api.stopAnalysis(ctx, analysis, err)
 			}
 			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, userID, analysis.ProjectKey)
@@ -422,6 +421,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			}
 		}
 	}
+	skippedFiles.Unique()
 	analysis.Data.Error = strings.Join(skippedFiles, "\n")
 	if len(skippedFiles) == len(analysis.Data.Entities) {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
