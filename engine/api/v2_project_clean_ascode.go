@@ -2,20 +2,19 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/entity"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/repository"
-	"github.com/ovh/cds/sdk"
 	"strconv"
-
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/sdk"
 )
 
 type EntitiesCleaner struct {
@@ -47,20 +46,15 @@ func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration) err
 						if err := workerCleanProject(ctx, a.mustDB(), a.Cache, pKey); err != nil {
 							log.ErrorWithStackTrace(ctx, err)
 						}
-						log.Info(ctx, "Send result")
 						resultChan <- true
 					}
 				})
 			}
-			log.Info(ctx, "Project to send: %d", len(projects))
 			for _, p := range projects {
-				log.Info(ctx, "Send project: %s / %d", p.Key, len(inputChan))
 				inputChan <- p.Key
 			}
-			log.Info(ctx, "Closing input")
 			close(inputChan)
 			for r := 0; r < len(projects); r++ {
-				log.Info(ctx, "Read result")
 				<-resultChan
 			}
 		}
