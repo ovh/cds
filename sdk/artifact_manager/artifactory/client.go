@@ -179,7 +179,7 @@ func (c *Client) GetRepositoryMaturity(repoName string) (string, error) {
 		return "", errors.Errorf("unable to get properties %s: %v", repoName, err)
 	}
 	if re.StatusCode == 404 {
-		return "", errors.Errorf("repository %s properties not foud", repoName)
+		return "", errors.Errorf("repository %s properties not found", repoName)
 	}
 	if re.StatusCode >= 400 {
 		return "", errors.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, uri, string(body))
