@@ -1,8 +1,10 @@
 package artifactory
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -193,4 +195,50 @@ func (c *Client) GetRepositoryMaturity(repoName string) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+func (c *Client) Search(_ context.Context, query string) (sdk.ArtifactResults, error) {
+	var result sdk.ArtifactResults
+	var offset int
+	var nbPage int
+	for {
+		nbPage = nbPage + 1
+		query := fmt.Sprintf(query+".offset(%d).limit(100)", offset)
+		body, err := c.Asm.Aql(query)
+		if err != nil {
+			return nil, err
+		}
+
+		btes, err := io.ReadAll(body)
+		body.Close()
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		var page sdk.ArtifactResultsSearchPage
+		if err := json.Unmarshal(btes, &page); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		if page.Range.EndPos == 0 {
+			break
+		}
+
+		result = append(result, page.Results...)
+		offset = page.Range.StartPos + page.Range.EndPos
+	}
+
+	return unique(result), nil
+}
+
+func unique(s sdk.ArtifactResults) sdk.ArtifactResults {
+	inResult := make(map[string]struct{})
+	var result sdk.ArtifactResults
+	for _, i := range s {
+		if _, ok := inResult[i.String()]; !ok {
+			inResult[i.String()] = struct{}{}
+			result = append(result, i)
+		}
+	}
+	return result
 }

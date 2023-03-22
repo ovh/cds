@@ -5,6 +5,7 @@
 package mock_artifact_manager
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -198,6 +199,21 @@ func (m *MockArtifactManager) PublishBuildInfo(project string, request *entities
 func (mr *MockArtifactManagerMockRecorder) PublishBuildInfo(project, request interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishBuildInfo", reflect.TypeOf((*MockArtifactManager)(nil).PublishBuildInfo), project, request)
+}
+
+// Search mocks base method.
+func (m *MockArtifactManager) Search(ctx context.Context, query string) (sdk.ArtifactResults, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Search", ctx, query)
+	ret0, _ := ret[0].(sdk.ArtifactResults)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Search indicates an expected call of Search.
+func (mr *MockArtifactManagerMockRecorder) Search(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockArtifactManager)(nil).Search), ctx, query)
 }
 
 // SetProperties mocks base method.

@@ -473,6 +473,47 @@ type FileInfo struct {
 	URI               string `json:"uri"`
 }
 
+type ArtifactResultsSearchPage struct {
+	Results []ArtifactResult `json:"results"`
+	Range   struct {
+		StartPos int `json:"start_pos"`
+		EndPos   int `json:"end_pos"`
+		Total    int `json:"total"`
+	} `json:"range"`
+}
+
+type ArtifactResults []ArtifactResult
+
+type ArtifactResult struct {
+	Repo         string         `json:"repo"`
+	Path         string         `json:"path"`
+	Name         string         `json:"name"`
+	Created      time.Time      `json:"created"`
+	Properties   []ItemProperty `json:"properties,omitempty"`
+	Size         int64          `json:"size,omitempty"`
+	Stats        []ItemStat     `json:"stats,omitempty"`
+	VirtualRepos []string       `json:"virtual_repos,omitempty"`
+	ActualMD5    string         `json:"actual_md5"`
+}
+
+func (i *ArtifactResult) String() string {
+	return i.Repo + "/" + i.Path + "/" + i.Name
+}
+
+type ItemProperty struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type ItemStat struct {
+	URI                  string `json:"uri"`
+	DownloadCount        int    `json:"downloadCount"`
+	LastDownloaded       int64  `json:"lastDownloaded"`
+	LastDownloadedBy     string `json:"lastDownloadedBy"`
+	RemoteDownloadCount  int    `json:"remoteDownloadCount"`
+	RemoteLastDownloaded int    `json:"remoteLastDownloaded"`
+}
+
 type FileInfoChecksum struct {
 	Md5    string `json:"md5"`
 	Sha1   string `json:"sha1"`
