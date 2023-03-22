@@ -118,7 +118,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPull, h.Name(), cArgs.image))
 
 	_, next = telemetry.Span(ctx, "swarm.dockerClient.ContainerCreate", telemetry.Tag(telemetry.TagWorker, cArgs.name), telemetry.Tag("network", fmt.Sprintf("%v", networkingConfig)))
-	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
+	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, name)
 	if err != nil {
 		next()
 		return sdk.WrapError(err, "unable to create container %s on %s", name, dockerClient.name)

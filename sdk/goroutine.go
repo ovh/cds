@@ -33,7 +33,7 @@ type GoRoutine struct {
 
 // GoRoutines contains list of routines that have to stay up
 type GoRoutines struct {
-	mutex  sync.Mutex
+	mutex  sync.RWMutex
 	status []*GoRoutine
 }
 
@@ -65,12 +65,18 @@ func (m *GoRoutines) restartGoRoutines(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			for _, g := range m.status {
-				if !g.Active && g.Restart {
-					log.Info(ctx, "restarting goroutine %q", g.Name)
-					m.exec(g)
-				}
-			}
+			m.runRestartGoRoutines(ctx)
+		}
+	}
+}
+
+func (m *GoRoutines) runRestartGoRoutines(ctx context.Context) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	for _, g := range m.status {
+		if !g.Active && g.Restart {
+			log.Info(ctx, "restarting goroutine %q", g.Name)
+			m.exec(g)
 		}
 	}
 }
@@ -108,6 +114,8 @@ func (m *GoRoutines) RunWithRestart(c context.Context, name string, fn func(ctx 
 
 // GetStatus returns the monitoring status of goroutines that should be running
 func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
 	lines := make([]MonitoringStatusLine, len(m.status))
 	i := 0
 	for _, g := range m.status {
