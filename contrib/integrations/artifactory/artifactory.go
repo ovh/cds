@@ -280,21 +280,6 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 			Dependencies: nil,
 		}
 
-		var currentMaturity string
-		if r.DataSync != nil {
-			latestPromotion := r.DataSync.LatestPromotionOrRelease()
-			if latestPromotion != nil {
-				currentMaturity = latestPromotion.ToMaturity
-			}
-		}
-		if currentMaturity == "" {
-			currentMaturity = execContext.defaultLowMaturitySuffix
-		}
-		props := utils.NewProperties()
-		props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
-		props.AddProperty("build.number", execContext.version)
-		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
-
 		switch data.FileType {
 		case "docker":
 			mod.Type = buildinfo.Docker
@@ -326,10 +311,6 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 				}
 				mod.Artifacts = append(mod.Artifacts, currentArtifact)
 			}
-			if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, currentMaturity, []sdk.FileInfo{{Path: data.Path}}, props); err != nil {
-				return nil, err
-			}
-
 		default:
 			_, objectName := filepath.Split(data.Path)
 			currentArtifact := buildinfo.Artifact{
@@ -342,6 +323,26 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 			mod.Artifacts = append(mod.Artifacts, currentArtifact)
 		}
 		modules = append(modules, mod)
+
+		var currentMaturity string
+		if r.DataSync != nil {
+			latestPromotion := r.DataSync.LatestPromotionOrRelease()
+			if latestPromotion != nil {
+				currentMaturity = latestPromotion.ToMaturity
+			}
+		}
+		if currentMaturity == "" {
+			currentMaturity = execContext.defaultLowMaturitySuffix
+		}
+		props := utils.NewProperties()
+		props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
+		props.AddProperty("build.number", execContext.version)
+		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+
+		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, currentMaturity, []sdk.FileInfo{{Path: data.Path}}, props); err != nil {
+			return nil, err
+		}
+
 	}
 	return modules, nil
 }
