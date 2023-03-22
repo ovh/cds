@@ -2,9 +2,10 @@ package api
 
 import (
 	"context"
-	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
+
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/repository"
