@@ -921,10 +921,6 @@ func (a *API) Serve(ctx context.Context) error {
 			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
 		})
 
-	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoryAnalysis", func(ctx context.Context) {
-		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
-	})
-
 	// Check maintenance on redis
 	if _, err := a.Cache.Get(sdk.MaintenanceAPIKey, &a.Maintenance); err != nil {
 		return err
