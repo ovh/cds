@@ -471,6 +471,7 @@ type StartupConfigConsumer struct {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
+
 	log.Info(ctx, "Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
@@ -837,15 +838,16 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "workflow.ResyncWorkflowRunResultsRoutine", func(ctx context.Context) {
 		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, a.Cache, 5*time.Second)
 	})
+	a.GoRoutines.RunWithRestart(ctx, "project.CleanAsCodeEntities", func(ctx context.Context) {
+		a.cleanProjectEntities(ctx, 1*time.Hour)
+	})
+
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {
 			a.cleanWorkflowRunSecrets(ctx)
 		})
 	}
-	if a.Config.Workflow.TemplateBulkRunnerCount == 0 {
-		a.Config.Workflow.TemplateBulkRunnerCount = 10
-	}
-	chanWorkflowTemplateBulkOperation := make(chan WorkflowTemplateBulkOperation, a.Config.Workflow.TemplateBulkRunnerCount*10)
+	chanWorkflowTemplateBulkOperation := make(chan WorkflowTemplateBulkOperation)
 	defer close(chanWorkflowTemplateBulkOperation)
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowTemplateBulk", func(ctx context.Context) {
 		a.WorkflowTemplateBulk(ctx, 100*time.Millisecond, chanWorkflowTemplateBulkOperation)
@@ -915,6 +917,10 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
 		})
+
+	a.GoRoutines.RunWithRestart(ctx, "api.cleanRepositoryAnalysis", func(ctx context.Context) {
+		a.cleanRepositoryAnalysis(ctx, 1*time.Hour)
+	})
 
 	// Check maintenance on redis
 	if _, err := a.Cache.Get(sdk.MaintenanceAPIKey, &a.Maintenance); err != nil {
