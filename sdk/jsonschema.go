@@ -29,3 +29,42 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 
 	return wmSchema
 }
+
+func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
+	actionSchema := jsonschema.Reflect(&V2Action{})
+
+	if actionSchema.Definitions == nil {
+		actionSchema.Definitions = make(map[string]*jsonschema.Schema)
+	}
+
+	propName, _ := actionSchema.Definitions["V2Action"].Properties.Get("name")
+	name := propName.(*jsonschema.Schema)
+	name.Pattern = EntityNamePattern
+
+	// Pattern on input/output keys
+	propInput, _ := actionSchema.Definitions["V2Action"].Properties.Get("inputs")
+	input := propInput.(*jsonschema.Schema)
+	input.PatternProperties[EntityActionInputKey] = input.PatternProperties[".*"]
+	delete(input.PatternProperties, ".*")
+
+	propOutput, _ := actionSchema.Definitions["V2Action"].Properties.Get("outputs")
+	output := propOutput.(*jsonschema.Schema)
+	output.PatternProperties[EntityActionInputKey] = output.PatternProperties[".*"]
+	delete(output.PatternProperties, ".*")
+
+	// Pattern on step id
+	propId, _ := actionSchema.Definitions["ActionStep"].Properties.Get("id")
+	stepId := propId.(*jsonschema.Schema)
+	stepId.Pattern = EntityActionStepID
+
+	// Enum on step uses
+	if len(publicActionNames) > 0 {
+		propStepUses, _ := actionSchema.Definitions["ActionStep"].Properties.Get("uses")
+		stepUses := propStepUses.(*jsonschema.Schema)
+		for _, actName := range publicActionNames {
+			stepUses.Enum = append(stepUses.Enum, actName)
+		}
+	}
+
+	return actionSchema
+}

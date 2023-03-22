@@ -20,6 +20,8 @@ testcases:
     - script: rm -Rf /tmp/myrepo && git clone "http://{{.git.user}}:{{.git.password}}@localhost:3000/{{.git.user}}/myrepo.git" /tmp/myrepo
     - script: mkdir -p /tmp/myrepo/.cds/worker-models
     - script: cat ./fixtures/worker-model/docker-debian9.yml > /tmp/myrepo/.cds/worker-models/docker-debian9.yml
+    - script: mkdir -p /tmp/myrepo/.cds/actions
+    - script: cat ./fixtures/ITCLIPRJVCS/my-action.yml > /tmp/myrepo/.cds/actions/my-action.yml
     - script: cd /tmp/myrepo && git config user.email "{{.git.user}}@gitea.eu" && git config user.name "{{.git.user}}"
     - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/* && git commit . --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
 
@@ -61,11 +63,9 @@ testcases:
         - result.code ShouldEqual 0
         - 'result.systemout ShouldContainSubstring "status: Success"'
         - 'result.systemout ShouldContainSubstring "key_sign_id: E027B500E97E52E7"'
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker-model list ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo --format json
-      assertions:
-        - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson0.name ShouldEqual docker-debian
-
+        - 'result.systemout ShouldContainSubstring "my-action.yml"'
+        - 'result.systemout ShouldContainSubstring "docker-debian9.yml"'
+        - 'result.systemout ShouldNotContainSubstring "error:"'
 - name: Push workflow and run it
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/workflow.yml ./fixtures/ITCLIPRJVCS/pipeline.pip.yml ./fixtures/ITCLIPRJVCS/application.app.yml --skip-update-files

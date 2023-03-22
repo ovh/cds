@@ -81,6 +81,9 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
         let nodes = this.flattenedData.getValue();
         let repoIndex = nodes.findIndex(n => n.id === event.repoID && n.type === 'repository');
         let repoNode = nodes[repoIndex];
+        if (!repoNode) {
+            return;
+        }
 
         switch (event.status) {
             case StatusAnalyzeInProgress:

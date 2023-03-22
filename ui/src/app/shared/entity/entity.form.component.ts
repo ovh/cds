@@ -31,6 +31,8 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input() data: string;
     @Input() schema: Schema;
     @Input() disabled: boolean;
+    @Input() parentType: string;
+    @Input() entityType: string;
 
     flatSchema: FlatSchema;
     dataForm: string;

@@ -1,5 +1,5 @@
 <ng-container *ngIf="flatSchema && data">
-    <app-json-form [class.disableSelection]="resizing" [disabled]="resizing" parentType="V2WorkerModel"
+    <app-json-form [class.disableSelection]="resizing" [disabled]="resizing" [parentType]="parentType" [entityType]="entityType"
         [schema]="flatSchema" [data]="dataForm" (dataChange)="onFormChange($event)"></app-json-form>
     <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"
         (onGrabbingEnd)="panelEndResize($event)">
