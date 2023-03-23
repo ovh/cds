@@ -73,7 +73,7 @@ export class JSONSchema implements Schema {
     }
 
     static flattenTypes(schema: Schema, elt: string, flatTypes: Map<string, Array<FlatTypeElement>>) {
-        let currentType = elt.replace(JSONSchema.refPrefix, '');
+        let currentType = elt.replace(JSONSchema.refPrefix, '').replace(JSONSchema.defPrefix, '');
         let defs = schema['$defs']
         let defElt = defs[currentType];
         let properties = defElt.properties;
@@ -137,7 +137,11 @@ export class JSONSchema implements Schema {
             itemType.type.push(properties['$ref'].replace(JSONSchema.refPrefix, ''));
         }
         if (type[0] === 'array') {
-            itemType.type.push(properties['items'].$ref.replace(JSONSchema.refPrefix, ''));
+            if (properties['items'].$ref) {
+                itemType.type.push(properties['items'].$ref.replace(JSONSchema.refPrefix, ''));
+            } else {
+                itemType.type.push(properties['items'].type);
+            }
         }
         itemType.name = name;
         itemType.enum = properties?.enum;
