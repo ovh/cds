@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	buildinfo "github.com/jfrog/build-info-go/entities"
@@ -263,109 +262,89 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 	defer end()
 	modules := make([]buildinfo.Module, 0)
 
-	var wg sync.WaitGroup
-	results := make(chan buildinfo.Module, len(runResults))
-	chanError := make(chan error, len(runResults))
+	runResultDatas := make([]sdk.WorkflowRunResultArtifactManager, 0, len(runResults))
+	for _, r := range runResults {
+		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
+			continue
+		}
 
-	for i := range runResults {
-		wg.Add(1)
-		runResult := runResults[i]
-		goRoutines := &sdk.GoRoutines{}
-		goRoutines.Exec(ctx, "goroutine-compute-build-info-module-"+runResult.ID, func(ctx context.Context) {
-			defer wg.Done()
-			module, err := prepareBuildInfo(ctx, artiClient, runResult, execContext)
+		data, err := r.GetArtifactManager()
+		if err != nil {
+			return nil, err
+		}
+		runResultDatas = append(runResultDatas, data)
+
+		mod := buildinfo.Module{
+			Id:           fmt.Sprintf("%s:%s", data.RepoType, data.Name),
+			Artifacts:    make([]buildinfo.Artifact, 0),
+			Dependencies: nil,
+		}
+
+		switch data.FileType {
+		case "docker":
+			mod.Type = buildinfo.Docker
+			modProps := make(map[string]string)
+			parsedUrl, err := url.Parse(artiClient.GetURL())
 			if err != nil {
-				chanError <- err
+				return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]", artiClient.GetURL())
 			}
-			if module != nil {
-				results <- *module
+			urlArtifactory := parsedUrl.Host
+			if parsedUrl.Port() != "" {
+				urlArtifactory += ":" + parsedUrl.Port()
 			}
-		})
-	}
-	wg.Wait()
-	close(chanError)
-	close(results)
+			modProps["docker.image.tag"] = fmt.Sprintf("%s.%s/%s", data.RepoName, urlArtifactory, data.Name)
+			mod.Properties = modProps
 
-	for e := range chanError {
-		log.ErrorWithStackTrace(ctx, e)
-		return nil, sdk.WrapError(sdk.ErrUnknownError, "unable to compute build info module")
-	}
+			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, data.RepoName, strings.TrimSuffix(data.Path, "/"))
+			searchResults, err := artiClient.Search(ctx, query)
+			if err != nil {
+				return nil, err
+			}
 
-	for b := range results {
-		modules = append(modules, b)
+			for _, sr := range searchResults {
+				currentArtifact := buildinfo.Artifact{
+					Name: sr.Name,
+					Type: strings.TrimPrefix(filepath.Ext(sr.Name), "."),
+					Checksum: buildinfo.Checksum{
+						Md5: sr.ActualMD5,
+					},
+				}
+				mod.Artifacts = append(mod.Artifacts, currentArtifact)
+			}
+		default:
+			_, objectName := filepath.Split(data.Path)
+			currentArtifact := buildinfo.Artifact{
+				Name: objectName,
+				Type: strings.TrimPrefix(filepath.Ext(objectName), "."),
+				Checksum: buildinfo.Checksum{
+					Md5: data.MD5,
+				},
+			}
+			mod.Artifacts = append(mod.Artifacts, currentArtifact)
+		}
+		modules = append(modules, mod)
+
+		var currentMaturity string
+		if r.DataSync != nil {
+			latestPromotion := r.DataSync.LatestPromotionOrRelease()
+			if latestPromotion != nil {
+				currentMaturity = latestPromotion.ToMaturity
+			}
+		}
+		if currentMaturity == "" {
+			currentMaturity = execContext.defaultLowMaturitySuffix
+		}
+		props := utils.NewProperties()
+		props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
+		props.AddProperty("build.number", execContext.version)
+		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+
+		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, currentMaturity, []sdk.FileInfo{{Path: data.Path}}, props); err != nil {
+			return nil, err
+		}
+
 	}
 	return modules, nil
-}
-
-func prepareBuildInfo(ctx context.Context, client artifact_manager.ArtifactManager, r sdk.WorkflowRunResult, execContext executionContext) (*buildinfo.Module, error) {
-	ctx, endc := telemetry.Span(ctx, "artifactory.PrepareBuildInfo", telemetry.Tag("runResult.Type", r.Type))
-	if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
-		endc()
-		return nil, nil
-	}
-
-	var currentMaturity string
-	if r.DataSync != nil {
-		latestPromotion := r.DataSync.LatestPromotionOrRelease()
-		if latestPromotion != nil {
-			currentMaturity = latestPromotion.ToMaturity
-		}
-	}
-	if currentMaturity == "" {
-		currentMaturity = execContext.defaultLowMaturitySuffix
-	}
-
-	data, err := r.GetArtifactManager()
-	if err != nil {
-		endc()
-		return nil, err
-	}
-	mod := buildinfo.Module{
-		Id:           fmt.Sprintf("%s:%s", data.RepoType, data.Name),
-		Artifacts:    make([]buildinfo.Artifact, 0),
-		Dependencies: nil,
-	}
-	switch data.RepoType {
-	case "docker":
-		mod.Type = buildinfo.Docker
-		props := make(map[string]string)
-		parsedUrl, err := url.Parse(client.GetURL())
-		if err != nil {
-			endc()
-			return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]", client.GetURL())
-		}
-		urlArtifactory := parsedUrl.Host
-		if parsedUrl.Port() != "" {
-			urlArtifactory += ":" + parsedUrl.Port()
-		}
-		props["docker.image.tag"] = fmt.Sprintf("%s.%s/%s", data.RepoName, urlArtifactory, data.Name)
-		mod.Properties = props
-	}
-
-	files, err := retrieveModulesFiles(ctx, client, data.RepoName, data.Path)
-	if err != nil {
-		endc()
-		return nil, err
-	}
-
-	props := utils.NewProperties()
-	props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
-	props.AddProperty("build.number", execContext.version)
-	props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
-
-	if err := SetPropertiesRecursive(ctx, client, data.RepoName, currentMaturity, files, props); err != nil {
-		endc()
-		return nil, err
-	}
-
-	artifacts, err := retrieveModulesArtifacts(ctx, client, files)
-	if err != nil {
-		endc()
-		return nil, err
-	}
-	mod.Artifacts = artifacts
-	endc()
-	return &mod, nil
 }
 
 func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string) ([]sdk.FileInfo, error) {
@@ -437,21 +416,4 @@ func SetPropertiesRecursive(ctx context.Context, client artifact_manager.Artifac
 		endc()
 	}
 	return nil
-}
-
-func retrieveModulesArtifacts(ctx context.Context, client artifact_manager.ArtifactManager, files []sdk.FileInfo) ([]buildinfo.Artifact, error) {
-	artifacts := make([]buildinfo.Artifact, 0)
-	for _, fileInfo := range files {
-		// If no children, it's a file, so we have checksum
-		_, objectName := filepath.Split(fileInfo.Path)
-		currentArtifact := buildinfo.Artifact{
-			Name: objectName,
-			Type: strings.TrimPrefix(filepath.Ext(objectName), "."),
-			Checksum: buildinfo.Checksum{
-				Md5: fileInfo.Checksums.Md5,
-			},
-		}
-		artifacts = append(artifacts, currentArtifact)
-	}
-	return artifacts, nil
 }

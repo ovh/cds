@@ -1,6 +1,7 @@
 package artifact_manager
 
 import (
+	"context"
 	buildinfo "github.com/jfrog/build-info-go/entities"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
@@ -24,6 +25,7 @@ type ArtifactManager interface {
 	Copy(params services.MoveCopyParams) (successCount, failedCount int, err error)
 	Move(params services.MoveCopyParams) (successCount, failedCount int, err error)
 	GetRepositoryMaturity(repoName string) (string, error)
+	Search(ctx context.Context, query string) (sdk.ArtifactResults, error)
 }
 
 type ClientFactoryFunc func(string, string, string) (ArtifactManager, error)
