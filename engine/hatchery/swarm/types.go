@@ -1,7 +1,7 @@
 package swarm
 
 import (
-	docker "github.com/docker/docker/client"
+	docker "github.com/moby/moby/client"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 
@@ -77,7 +77,7 @@ type DockerEngineConfiguration struct {
 	TLSCAPEM              string `mapstructure:"TLSCAPEM" toml:"TLSCAPEM" comment:"content of your ca.pem" json:"-"`
 	TLSCERTPEM            string `mapstructure:"TLSCERTPEM" toml:"TLSCERTPEM" comment:"content of your cert.pem" json:"-"`
 	TLSKEYPEM             string `mapstructure:"TLSKEYPEM" toml:"TLSKEYPEM" comment:"content of your key.pem" json:"-"`
-	APIVersion            string `mapstructure:"APIVersion" toml:"APIVersion" comment:"DOCKER_API_VERSION" json:"APIVersion"` // DOCKER_API_VERSION
+	APIVersion            string `mapstructure:"APIVersion" toml:"APIVersion" default:"1.41" comment:"DOCKER_API_VERSION" json:"APIVersion"` // DOCKER_API_VERSION
 	MaxContainers         int    `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery" json:"maxContainers"`
 }
 

@@ -1,5 +1,6 @@
 <ng-container *ngIf="workerModel && !loading">
-    <app-entity [path]="workerModel.file_path" [data]="workerModel.data" [schema]="jsonSchema"></app-entity>
+    <app-entity [path]="workerModel.file_path" [data]="workerModel.data"
+                [schema]="jsonSchema" parentType="V2WorkerModel" [entityType]="entityType"></app-entity>
     <div class="footer">
         <div class="buttons">
             <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">

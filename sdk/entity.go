@@ -9,8 +9,8 @@ import (
 
 const (
 	EntityTypeWorkerModel = "WorkerModel"
-
-	EntityNamePattern = "^[a-zA-Z0-9._-]{1,}$"
+	EntityTypeAction      = "Action"
+	EntityNamePattern     = "^[a-zA-Z0-9._-]{1,}$"
 )
 
 type EntityFullName struct {
@@ -45,8 +45,10 @@ func GetManageRoleByEntity(entityType string) (string, error) {
 	switch entityType {
 	case EntityTypeWorkerModel:
 		return ProjectRoleManageWorkerModel, nil
+	case EntityTypeAction:
+		return ProjectRoleManageAction, nil
 	}
-	return "", WrapError(ErrInvalidData, "unknown entity of type %s", entityType)
+	return "", NewErrorFrom(ErrInvalidData, "unknown entity of type %s", entityType)
 }
 
 type Lintable interface {

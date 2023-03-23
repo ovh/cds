@@ -10,6 +10,7 @@ import {
     ProjectV2RepositoryShowComponent
 } from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
 import {ProjectV2WorkerModelShowComponent} from "./vcs/repository/workermodel/show/project.workermodel.show.component";
+import {ProjectV2ActionShowComponent} from "./vcs/repository/action/show/project.action.show.component";
 
 
 const projectRoutes: Routes = [
@@ -37,6 +38,14 @@ const projectRoutes: Routes = [
                 path: 'vcs/:vcsName/repository/:repoName/workermodel/:workerModelName',
                 component: ProjectV2WorkerModelShowComponent,
                 data: { title: '{workerModelName} • Worker Model' },
+                resolve: {
+                    project: Projectv2Resolver,
+                },
+            },
+            {
+                path: 'vcs/:vcsName/repository/:repoName/action/:actionName',
+                component: ProjectV2ActionShowComponent,
+                data: { title: '{actionName} • Action' },
                 resolve: {
                     project: Projectv2Resolver,
                 },

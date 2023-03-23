@@ -1,0 +1,13 @@
+<ng-container *ngIf="action && !loading">
+    <app-entity [path]="action.file_path" [data]="action.data" [schema]="jsonSchema" parentType="V2Action" [entityType]="entityType"></app-entity>
+    <div class="footer">
+        <div class="buttons">
+            <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
+                Save
+            </button>
+        </div>
+    </div>
+</ng-container>
+<nz-alert *ngIf="errorNotFound && !loading" nzType="warning"
+          nzDescription="Action not found on branch: '{{currentBranch}}'" nzShowIcon></nz-alert>
+<nz-spin *ngIf="loading" nzTip="Loading action"></nz-spin>

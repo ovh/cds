@@ -376,13 +376,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}
 
 	userRoles := make(map[string]bool)
-	skippedFiles := make([]string, 0)
+	skippedFiles := make(sdk.StringSlice, 0)
 	for i := range entities {
 		e := &entities[i]
 
 		// Check user role
 		if _, has := userRoles[e.Type]; !has {
-
 			roleName, err := sdk.GetManageRoleByEntity(e.Type)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
@@ -422,6 +421,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			}
 		}
 	}
+	skippedFiles.Unique()
 	analysis.Data.Error = strings.Join(skippedFiles, "\n")
 	if len(skippedFiles) == len(analysis.Data.Entities) {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
@@ -544,6 +544,9 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
 			es, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
+		case strings.HasPrefix(filePath, ".cds/actions/"):
+			var actions []sdk.V2Action
+			es, err = sdk.ReadEntityFile(dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis)
 		default:
 			continue
 		}
