@@ -130,6 +130,9 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 						log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get read stats response for container %s/%s", host, c.ID))
 						return
 					}
+					if len(v) == 0 {
+						return
+					}
 					var stats types.Stats
 					if err := json.Unmarshal(v, &stats); err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to unmarshal stats for container %s/%s", host, c.ID))
