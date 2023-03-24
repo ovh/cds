@@ -64,6 +64,7 @@ import { SidebarService } from 'app/service/sidebar/sidebar.service';
 import {AnalysisService} from "./analysis/analysis.service";
 import {LinkService} from "./link/link.service";
 import {EntityService} from "./entity/entity.service";
+import {ActionAsCodeService} from "./action/actionAscode.service";
 
 @NgModule({})
 export class ServicesModule {
@@ -84,6 +85,7 @@ export class ServicesModule {
                 ApplicationResolver,
                 ApplicationQueryParamResolver,
                 ActionService,
+                ActionAsCodeService,
                 ApplicationWorkflowService,
                 ApplicationService,
                 ApplicationStore,
@@ -155,6 +157,7 @@ export class ServicesModule {
 }
 
 export {
+    ActionAsCodeService,
     ApplicationAuditService,
     ApplicationWorkflowService,
     ApplicationResolver,

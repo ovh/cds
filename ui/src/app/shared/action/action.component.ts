@@ -13,9 +13,10 @@ import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
-import {EntityWorkerModel, Project} from 'app/model/project.model';
+import {EntityAction, EntityFullName, EntityWorkerModel, Project} from 'app/model/project.model';
 import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
+import { ActionTypeAscode } from 'app/model/action.ascode.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
@@ -26,8 +27,9 @@ import { RequirementEvent } from 'app/shared/requirements/requirement.event.mode
 import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula-sgu';
-import { finalize } from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 import {EntityService} from "../../service/entity/entity.service";
+import {ActionAsCodeService} from "../../service/action/actionAscode.service";
 
 @Component({
     selector: 'app-action',
@@ -39,6 +41,7 @@ export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
     steps: Array<Action> = new Array<Action>();
     publicActions: Array<Action> = new Array<Action>();
+    mapAsCodeAction: Map<string, EntityFullName>;
 
     @Input() project: Project;
     @Input() keys: AllKeys;
@@ -78,6 +81,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         private dragulaService: DragulaService,
         private _router: Router,
         private _workerModelService: WorkerModelService,
+        private _actionAsCodeService: ActionAsCodeService,
         public _cd: ChangeDetectorRef,
         private _entityService: EntityService
     ) {
@@ -107,7 +111,19 @@ export class ActionComponent implements OnDestroy, OnInit {
     ngOnInit() {
         if (this.project) {
             this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
-                this.publicActions = as;
+                this.initPublicActionsList(as);
+            });
+            this._entityService.getEntities(EntityAction).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
+                this.mapAsCodeAction = new Map<string, EntityFullName>();
+                this.initPublicActionsList(<Array<Action>>entities.map(e => {
+                    let name = `${e.project_key}/${e.vcs_name}/${e.repo_name}/${e.name}@${e.branch}`;
+                    this.mapAsCodeAction.set(name, e);
+                    return {
+                        name: name,
+                        type: ActionTypeAscode,
+                    }
+                }))
+
             });
             this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
                 this.initWorkerModelList(wms);
@@ -121,6 +137,13 @@ export class ActionComponent implements OnDestroy, OnInit {
 
             });
         }
+    }
+
+    initPublicActionsList(acts: Array<Action>): void {
+        if (!this.publicActions) {
+            this.publicActions = new Array<Action>();
+        }
+        this.publicActions.push(...acts);
     }
 
     initWorkerModelList(wms: Array<WorkerModel>): void {
@@ -258,24 +281,44 @@ export class ActionComponent implements OnDestroy, OnInit {
     stepManagement(event: StepEvent): void {
         this.editableAction.hasChanged = true;
         this.editableAction.showAddStep = false;
-        switch (event.type) {
-            case 'expend':
-                this.editableAction.showAddStep = true;
-                break;
-            case 'cancel':
-                // nothing to do
-                break;
-            case 'add':
+        if (event.type === 'expend') {
+            this.editableAction.showAddStep = true;
+        } else if (event.type === 'cancel') {// nothing to do
+        } else if (event.type === 'add') {
+            if (event.step.type === ActionTypeAscode) {
+                let ent = this.mapAsCodeAction.get(event.step.name);
+                this._actionAsCodeService.get(ent.project_key, ent.vcs_name, ent.repo_name, ent.name, ent.branch)
+                    .pipe(first())
+                    .subscribe(act => {
+
+                        if (act.inputs) {
+                            let keys = Object.keys(act.inputs);
+                            event.step.parameters = new Array<Parameter>();
+                            keys.forEach(k => {
+                                let p = new Parameter();
+                                p.name = k;
+                                p.type = 'string';
+                                p.value = act.inputs[k].default;
+                                p.description = act.inputs[k].description;
+                                event.step.parameters.push(p);
+                            });
+                        }
+                        let newStep = cloneDeep(event.step);
+                        newStep.enabled = true;
+                        this.steps.push(newStep);
+                        console.log(newStep);
+                        this._cd.markForCheck();
+                    });
+            } else {
                 let newStep = cloneDeep(event.step);
                 newStep.enabled = true;
                 this.steps.push(newStep);
-                break;
-            case 'delete':
-                let index = this.steps.indexOf(event.step);
-                if (index >= 0) {
-                    this.steps.splice(index, 1);
-                }
-                break;
+            }
+        } else if (event.type === 'delete') {
+            let index = this.steps.indexOf(event.step);
+            if (index >= 0) {
+                this.steps.splice(index, 1);
+            }
         }
     }
 
