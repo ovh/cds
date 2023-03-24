@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"sigs.k8s.io/yaml"
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/cli"
 )

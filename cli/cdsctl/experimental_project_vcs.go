@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	yaml "sigs.k8s.io/yaml"
+	yaml "github.com/rockbears/yaml"
 )
 
 var projectVCSCmd = cli.Command{

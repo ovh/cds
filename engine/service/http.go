@@ -15,7 +15,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
-	yaml "sigs.k8s.io/yaml"
+	yaml "github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"sigs.k8s.io/yaml"
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/test"
