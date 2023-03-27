@@ -28,7 +28,7 @@ To generate a new workflow from a template you should use the cdsctl. Then use t
 ```sh
 cdsctl template apply
 ```
-<asciinema-player src="/images/workflow_template_apply.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+{{< asciinema "/images/workflow_template_apply.cast" >}}
 
 You can also create a workflow from a template with the web UI.
 ![Apply](/images/workflow_template_apply_ui.gif)
@@ -56,7 +56,7 @@ instances:
 cdsctl template bulk -f instances.yml
 ```
 
-<asciinema-player src="/images/workflow_template_bulk.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+{{< asciinema "/images/workflow_template_bulk.cast" >}}
 
 ![Bulk](/images/workflow_template_bulk_ui.gif)
 
@@ -68,7 +68,7 @@ cdsctl template push https://raw.githubusercontent.com/ovh/cds/{{< param "versio
 
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 ```
-<asciinema-player src="/images/workflow_template_pull_push.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+{{< asciinema "/images/workflow_template_pull_push.cast" >}}
 
 ## Delete/Change template group
 When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
@@ -88,7 +88,7 @@ parameters:
   withDeploy: "true"
 ```
 
-<asciinema-player src="/images/workflow_template_apply_ascode.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+{{< asciinema "/images/workflow_template_apply_ascode.cast" >}}
 
 You can ask for a specific revision of the template or remove the version number to always get the its latest version. 
 This means that you can use different template versions for different branches of your repository.
