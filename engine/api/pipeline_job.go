@@ -143,11 +143,26 @@ func (api *API) updateJobHandler() service.Handler {
 			return err
 		}
 
+		// Set ActionID (aka child_id in action_edge) for ascode action
+		asCodeAction, err := action.LoadAllByTypes(ctx, api.mustDB(), []string{sdk.AsCodeAction})
+		if err != nil {
+			return err
+		}
+		if len(asCodeAction) != 1 {
+			return sdk.WrapError(sdk.ErrUnknownError, "missing ascode action type")
+		}
+
+		for i := range job.Action.Actions {
+			a := &job.Action.Actions[i]
+			if a.Type == sdk.AsCodeAction {
+				a.ID = asCodeAction[0].ID
+			}
+		}
+
 		// check that actions used by job are valid
 		if err := job.IsValid(); err != nil {
 			return err
 		}
-
 		if jobID != job.PipelineActionID {
 			return sdk.WrapError(sdk.ErrInvalidID, "pipeline action does not match")
 		}

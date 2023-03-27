@@ -12,6 +12,7 @@ const (
 	BuiltinAction = "Builtin"
 	PluginAction  = "Plugin"
 	JoinedAction  = "Joined"
+	AsCodeAction  = "ActionAsCode"
 )
 
 // Builtin Action

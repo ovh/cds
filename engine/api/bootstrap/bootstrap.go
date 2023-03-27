@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//InitiliazeDB inits the database
+// InitiliazeDB inits the database
 func InitiliazeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
 	tx, err := DBFunc().Begin()
 	if err != nil {
@@ -38,6 +38,10 @@ func InitiliazeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc f
 
 	if err := action.CreateBuiltinActions(tx); err != nil {
 		return sdk.WrapError(err, "Cannot setup builtin actions")
+	}
+
+	if err := action.CreateAsCodeAction(ctx, tx); err != nil {
+		return sdk.WrapError(err, "Cannot setup ascode action")
 	}
 
 	if err := tx.Commit(); err != nil {

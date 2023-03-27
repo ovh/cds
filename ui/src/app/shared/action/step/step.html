@@ -10,10 +10,10 @@
         </nz-col>
         <!-- Step name -->
         <nz-col [nzSpan]="5">
-                <ng-container *ngIf="edit">
+                <ng-container *ngIf="edit && step.type !== 'ActionAsCode'">
                     <input nz-input name="stepName" [(ngModel)]="step.step_name"  (keydown)="action.hasChanged = true">
                 </ng-container>
-                <ng-container *ngIf="!edit">
+                <ng-container *ngIf="!edit || step.type === 'ActionAsCode'">
                     {{step.step_name}}
                 </ng-container>
         </nz-col>

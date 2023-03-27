@@ -16,7 +16,7 @@ import { Pipeline } from 'app/model/pipeline.model';
 import {EntityAction, EntityFullName, EntityWorkerModel, Project} from 'app/model/project.model';
 import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
-import { ActionTypeAscode } from 'app/model/action.ascode.model';
+import {ActionAsCode, ActionTypeAscode} from 'app/model/action.ascode.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
@@ -41,7 +41,8 @@ export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
     steps: Array<Action> = new Array<Action>();
     publicActions: Array<Action> = new Array<Action>();
-    mapAsCodeAction: Map<string, EntityFullName>;
+    mapAsCodeActionNames: Map<string, EntityFullName>;
+    mapAsCodeActionParams: Map<string, ActionAsCode> = new Map<string, ActionAsCode>();
 
     @Input() project: Project;
     @Input() keys: AllKeys;
@@ -64,6 +65,7 @@ export class ActionComponent implements OnDestroy, OnInit {
             this.steps = new Array<Action>();
             if (this.editableAction.actions) {
                 this.steps = cloneDeep(this.editableAction.actions);
+                this.loadAndMergeAscodeActionParameters(this.steps);
             }
         }
     }
@@ -114,16 +116,15 @@ export class ActionComponent implements OnDestroy, OnInit {
                 this.initPublicActionsList(as);
             });
             this._entityService.getEntities(EntityAction).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
-                this.mapAsCodeAction = new Map<string, EntityFullName>();
+                this.mapAsCodeActionNames = new Map<string, EntityFullName>();
                 this.initPublicActionsList(<Array<Action>>entities.map(e => {
                     let name = `${e.project_key}/${e.vcs_name}/${e.repo_name}/${e.name}@${e.branch}`;
-                    this.mapAsCodeAction.set(name, e);
+                    this.mapAsCodeActionNames.set(name, e);
                     return {
                         name: name,
                         type: ActionTypeAscode,
                     }
-                }))
-
+                }));
             });
             this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
                 this.initWorkerModelList(wms);
@@ -286,7 +287,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         } else if (event.type === 'cancel') {// nothing to do
         } else if (event.type === 'add') {
             if (event.step.type === ActionTypeAscode) {
-                let ent = this.mapAsCodeAction.get(event.step.name);
+                let ent = this.mapAsCodeActionNames.get(event.step.name);
                 this._actionAsCodeService.get(ent.project_key, ent.vcs_name, ent.repo_name, ent.name, ent.branch)
                     .pipe(first())
                     .subscribe(act => {
@@ -305,8 +306,9 @@ export class ActionComponent implements OnDestroy, OnInit {
                         }
                         let newStep = cloneDeep(event.step);
                         newStep.enabled = true;
+                        newStep.name = event.step.name;
+                        newStep.step_name = event.step.name;
                         this.steps.push(newStep);
-                        console.log(newStep);
                         this._cd.markForCheck();
                     });
             } else {
@@ -340,6 +342,91 @@ export class ActionComponent implements OnDestroy, OnInit {
             queryParams: {
                 from: `${this.project.key}/${this.pipeline.name}/${this.stage.id}/${this.editableAction.name}`
             }
+        }).then();
+    }
+
+    loadAndMergeAscodeActionParameters(s: Action[]) {
+        s.forEach(currentStep => {
+            if (currentStep.type !== ActionTypeAscode) {
+                return;
+            }
+
+            let actionAsCode = this.mapAsCodeActionParams.get(currentStep.step_name);
+            if (!actionAsCode) {
+                let branchSplit = currentStep.step_name.split('@');
+                let branch, projectKey, repo, vcs, name: string;
+
+                if (branchSplit.length === 2) {
+                    branch = branchSplit[1];
+                }
+                let actionSplit = branchSplit[0].split('/');
+                if (actionSplit.length !== 5) {
+                    return
+                }
+                projectKey = actionSplit[0];
+                vcs = actionSplit[1];
+                repo = actionSplit[2] + '/' + actionSplit[3];
+                name = actionSplit[4];
+                this._actionAsCodeService.get(projectKey, vcs, repo, name, branch)
+                    .pipe(first())
+                    .subscribe(ascodeAction => {
+                        this.mapAsCodeActionParams.set(currentStep.step_name, ascodeAction);
+                        this.mergeAscodeActionParameters(currentStep, ascodeAction);
+                        this.steps = Object.assign([], this.steps);
+                        this._cd.markForCheck();
+                    });
+            } else {
+                this.mergeAscodeActionParameters(currentStep, actionAsCode);
+                this.steps = Object.assign([], this.steps);
+                this._cd.markForCheck();
+            }
         });
+    }
+
+    mergeAscodeActionParameters(currentStep: Action, ascodeAction: ActionAsCode):  void {
+        if (!currentStep.parameters || currentStep.parameters.length === 0) {
+            let keys = Object.keys(ascodeAction.inputs);
+            currentStep.parameters = new Array<Parameter>();
+            keys.forEach(k => {
+                let p = new Parameter();
+                p.name = k;
+                p.type = 'string';
+                p.value = ascodeAction.inputs[k].default;
+                p.description = ascodeAction.inputs[k].description;
+                currentStep.parameters.push(p);
+            });
+        } else {
+            let keys = Object.keys(ascodeAction.inputs);
+            // Remove old parameters
+            for (let i = 0; i < currentStep.parameters.length; i++) {
+                let found = false;
+                keys.forEach(k => {
+                    if (k === currentStep.parameters[i].name) {
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    currentStep.parameters.splice(i, 1);
+                    i--;
+                }
+            }
+            // Add new parameters
+            keys.forEach(k => {
+                let found = false;
+                currentStep.parameters.forEach(p => {
+                    if (k === p.name) {
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    let newParam = new Parameter();
+                    newParam.name = k;
+                    newParam.type = 'string';
+                    newParam.value = ascodeAction.inputs[k].default;
+                    newParam.description = ascodeAction.inputs[k].description;
+                    currentStep.parameters.push(newParam);
+                }
+            });
+        }
     }
 }
