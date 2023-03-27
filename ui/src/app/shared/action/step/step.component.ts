@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output} from '@angular/core';
 import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
@@ -17,18 +17,20 @@ export class ActionStepComponent {
     withAdvanced: boolean;
     collapsed_advanced = false;
     @Input()
-    set step(step: Action) {
-        this._step = step;
-        if (step) {
-            this.stepURL = ['/settings', step.group ? 'action' : 'action-builtin'];
-            if (step.group) {
-                this.stepURL.push(step.group.name);
+    set step(data: Action) {
+        if (data) {
+            this._step = Object.assign({}, data);
+            this.stepURL = ['/settings', data.group ? 'action' : 'action-builtin'];
+            if (data.group) {
+                this.stepURL.push(data.group.name);
             }
-            this.stepURL.push(step.name);
+            this.stepURL.push(data.name);
             this._step.step_name = this._step.step_name || this._step.name;
-            if (step.parameters) {
-                this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
+            if (data.parameters) {
+                this.withAdvanced = data.parameters.some((parameter) => parameter.advanced);
             }
+        } else {
+            delete this._step;
         }
     }
     get step(): Action {
