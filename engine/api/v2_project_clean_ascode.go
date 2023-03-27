@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 type EntitiesCleaner struct {
@@ -62,6 +63,8 @@ func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration) err
 }
 
 func workerCleanProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pKey string) error {
+	ctx = context.WithValue(ctx, cdslog.Action, "workerCleanProject")
+	ctx = context.WithValue(ctx, "action_metadata_project_key", pKey)
 	log.Info(ctx, "Clean ascode entities on project %s", pKey)
 	lockKey := cache.Key("ascode", "clean", pKey)
 	locked, err := store.Lock(lockKey, 5*time.Minute, 500, 1)
@@ -84,12 +87,14 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		return err
 	}
 	for _, vcsServer := range vcsRepos {
+		ctx = context.WithValue(ctx, cdslog.VCSServer, vcsServer.Name)
 		repos, err := repository.LoadAllRepositoriesByVCSProjectID(ctx, db, vcsServer.ID)
 		if err != nil {
 			return err
 		}
 
 		for _, r := range repos {
+			ctx = context.WithValue(ctx, cdslog.Repository, r.Name)
 			entities, err := entity.LoadByRepository(ctx, db, r.ID)
 			if err != nil {
 				return err
