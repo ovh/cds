@@ -24,7 +24,7 @@ import { ActionComponent } from './action.component';
 import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {ConfigService, EntityService} from 'app/service/services.module';
+import {ActionAsCodeService, ConfigService, EntityService} from 'app/service/services.module';
 
 describe('CDS: Action Component', () => {
 
@@ -46,6 +46,7 @@ describe('CDS: Action Component', () => {
                 { provide: APP_BASE_HREF, useValue: '/' },
                 UserService,
                 AuthenticationService,
+                ActionAsCodeService,
                 ConfigService
             ],
             imports: [
