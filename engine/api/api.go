@@ -471,6 +471,7 @@ type StartupConfigConsumer struct {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
+
 	log.Info(ctx, "Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
@@ -837,6 +838,10 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "workflow.ResyncWorkflowRunResultsRoutine", func(ctx context.Context) {
 		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, a.Cache, 5*time.Second)
 	})
+	a.GoRoutines.RunWithRestart(ctx, "project.CleanAsCodeEntities", func(ctx context.Context) {
+		a.cleanProjectEntities(ctx, 1*time.Hour)
+	})
+
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {
 			a.cleanWorkflowRunSecrets(ctx)
