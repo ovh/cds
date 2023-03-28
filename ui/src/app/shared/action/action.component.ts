@@ -143,7 +143,9 @@ export class ActionComponent implements OnDestroy, OnInit {
         if (!this.publicActions) {
             this.publicActions = new Array<Action>();
         }
-        this.publicActions.push(...acts);
+        if (acts && acts.length > 0) {
+            this.publicActions.push(...acts);
+        }
     }
 
     initWorkerModelList(wms: Array<WorkerModel>): void {

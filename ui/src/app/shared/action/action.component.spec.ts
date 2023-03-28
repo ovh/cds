@@ -201,6 +201,8 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.stepManagement(event);
         expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
         expect(fixture.componentInstance.steps[1].name).toBe('action2');
+
+        flush();
     }));
 
     it('should init step not always executed and step always executed', fakeAsync(() => {
