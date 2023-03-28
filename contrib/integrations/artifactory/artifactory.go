@@ -170,12 +170,7 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 	}
 
 	if props != nil {
-		fmt.Printf("Set properties %+v on file %s at %s\n", props, data.Name, targetRepo)
-		files, err := retrieveModulesFiles(ctx, artiClient, targetRepo, data.Path)
-		if err != nil {
-			return err
-		}
-		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, highMaturity, files, props); err != nil {
+		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, highMaturity, data.Path, props); err != nil {
 			return err
 		}
 	}
@@ -339,7 +334,7 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 		props.AddProperty("build.number", execContext.version)
 		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
-		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, currentMaturity, []sdk.FileInfo{{Path: data.Path}}, props); err != nil {
+		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, currentMaturity, data.Path, props); err != nil {
 			return nil, err
 		}
 
@@ -347,73 +342,22 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 	return modules, nil
 }
 
-func retrieveModulesFiles(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string) ([]sdk.FileInfo, error) {
-	ctx, end := telemetry.Span(ctx, "workflow.retrieveModulesFiles")
-	defer end()
-	log.Debug(ctx, "retrieve:ModulesFiles repoName:%s path:%s", repoName, path)
-	_, endc := telemetry.Span(ctx, "artifactoryClient.GetFileInfo", telemetry.Tag("path", path), telemetry.Tag("repoName", repoName))
-	fileInfo, err := client.GetFileInfo(repoName, path)
-	endc()
-	if err != nil {
-		return nil, err
-	}
-
-	// If it can be downloaded, it's a file
-	if fileInfo.DownloadURI != "" {
-		return []sdk.FileInfo{fileInfo}, nil
-	}
-	return retrieveModulesFilesFromFolder(ctx, client, repoName, path)
-}
-
-func retrieveModulesFilesFromFolder(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, path string) ([]sdk.FileInfo, error) {
-	ctx, end := telemetry.Span(ctx, "workflow.retrieveModulesFilesFromFolder")
-	defer end()
-	log.Debug(ctx, "retrieve:retrieveModulesFilesFromFolder repoName:%s path:%s", repoName, path)
-	_, endc := telemetry.Span(ctx, "artifactoryClient.GetFolderInfo", telemetry.Tag("path", path), telemetry.Tag("repoName", repoName))
-	folderInfo, err := client.GetFolderInfo(repoName, path)
-	endc()
-	if err != nil {
-		return nil, err
-	}
-
-	files := make([]sdk.FileInfo, 0)
-	for _, c := range folderInfo.Children {
-		if c.Folder {
-			childrenFiles, err := retrieveModulesFilesFromFolder(ctx, client, repoName, fmt.Sprintf("%s%s", path, c.Uri))
-			if err != nil {
-				return nil, err
-			}
-			files = append(files, childrenFiles...)
-		} else {
-			_, end := telemetry.Span(ctx, "artifactoryClient.GetFileInfo", telemetry.Tag("path", path), telemetry.Tag("uri", c.Uri))
-			fileInfo, err := client.GetFileInfo(repoName, fmt.Sprintf("%s%s", path, c.Uri))
-			end()
-			if err != nil {
-				return nil, err
-			}
-			files = append(files, fileInfo)
-		}
-	}
-
-	return files, nil
-}
-
-func SetPropertiesRecursive(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, maturity string, files []sdk.FileInfo, props *utils.Properties) error {
+func SetPropertiesRecursive(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, maturity string, path string, props *utils.Properties) error {
 	ctx, end := telemetry.Span(ctx, "artifactory.SetPropertiesRecursive")
 	defer end()
 	if props == nil {
 		return nil
 	}
-	for _, fileInfo := range files {
-		repoSrc := repoName
-		repoSrc += "-" + maturity
-		log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, fileInfo.Path)
-		_, endc := telemetry.Span(ctx, "artifactory.SetProperties", telemetry.Tag("repoSrc", repoSrc))
-		if err := client.SetProperties(repoSrc, fileInfo.Path, props); err != nil {
-			endc()
-			return err
-		}
+
+	repoSrc := repoName
+	repoSrc += "-" + maturity
+	log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, path)
+	_, endc := telemetry.Span(ctx, "artifactory.SetProperties", telemetry.Tag("repoSrc", repoSrc))
+	if err := client.SetProperties(repoSrc, path, props); err != nil {
 		endc()
+		return err
 	}
+	endc()
+
 	return nil
 }
