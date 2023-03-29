@@ -473,7 +473,7 @@ func addJobsToQueue(ctx context.Context, store cache.Store, db gorpmapper.SqlExe
 	//Browse the jobs
 jobLoop:
 	for j := range stage.Jobs {
-		job := &stage.Jobs[j]
+		job := stage.Jobs[j]
 
 		if previousStage != nil {
 			for _, rj := range previousStage.RunJobs {
@@ -487,16 +487,20 @@ jobLoop:
 		// errors generated in the loop will be added to job run spawn info
 		spawnErrs := sdk.MultiError{}
 
+		if err := computeAscodeSteps(ctx, db, wr.Workflow, &job); err != nil {
+			spawnErrs.Append(err)
+		}
+
 		//Process variables for the jobs
 		_, next = telemetry.Span(ctx, "workflow..getNodeJobRunParameters")
-		jobParams, err := getNodeJobRunParameters(*job, nr, stage)
+		jobParams, err := getNodeJobRunParameters(job, nr, stage)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -529,7 +533,7 @@ jobLoop:
 			ExecGroups:         groups,
 			IntegrationPlugins: integrationPlugins,
 			Job: sdk.ExecutedJob{
-				Job: *job,
+				Job: job,
 			},
 			Header:          nr.Header,
 			ContainsService: containsService,
@@ -603,6 +607,36 @@ jobLoop:
 	}
 
 	return report, nil
+}
+
+func computeAscodeSteps(ctx context.Context, db gorp.SqlExecutor, w sdk.Workflow, j *sdk.Job) error {
+	basedAscodeAction, err := action.LoadAllByTypes(ctx, db, []string{sdk.AsCodeAction})
+	if err != nil {
+		return err
+	}
+	if len(basedAscodeAction) != 1 {
+		return sdk.WrapError(sdk.ErrInvalidData, "missing ascode base action")
+	}
+	scriptAction, err := action.LoadByTypesAndName(ctx, db, []string{sdk.BuiltinAction}, sdk.ScriptAction)
+	if err != nil {
+		return err
+	}
+
+	for stepIndex := range j.Action.Actions {
+		step := &j.Action.Actions[stepIndex]
+		if step.Type != sdk.AsCodeAction {
+			continue
+		}
+		act := &sdk.Action{}
+		if err := act.FromAsCodeAction(scriptAction.ID, basedAscodeAction[0].ID, w.AscodeActions, step.StepName, step.Parameters); err != nil {
+			return err
+		}
+		act.Enabled = step.Enabled
+		act.AlwaysExecuted = step.AlwaysExecuted
+		act.Optional = step.Optional
+		j.Action.Actions[stepIndex] = *act
+	}
+	return nil
 }
 
 func getIntegrationPlugins(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun, nr *sdk.WorkflowNodeRun) ([]sdk.IntegrationConfig, []sdk.GRPCPlugin, error) {

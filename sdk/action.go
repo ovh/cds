@@ -97,6 +97,50 @@ type UsagePipeline struct {
 	Warning      bool   `json:"warning"`
 }
 
+func (a *Action) FromAsCodeAction(scriptActionID int64, basedAscodeActionID int64, actionMap map[string]V2Action, actionName string, params []Parameter) error {
+	asCodeAction, has := actionMap[actionName]
+	if !has {
+		return WrapError(ErrNotFound, "invalid step %s", actionName)
+	}
+
+	a.Name = asCodeAction.Name
+	a.Description = asCodeAction.Description
+	a.Type = AsCodeAction
+	a.ID = basedAscodeActionID
+	a.Actions = make([]Action, 0, len(asCodeAction.Runs.Steps))
+	a.Enabled = true
+	a.Parameters = params
+
+	for _, s := range asCodeAction.Runs.Steps {
+		switch {
+		case s.Uses != "":
+			newActionStep := &Action{}
+			ascodeParams := ParametersFromMap(s.With)
+			if err := newActionStep.FromAsCodeAction(scriptActionID, basedAscodeActionID, actionMap, s.Uses, ascodeParams); err != nil {
+				return err
+			}
+			a.Actions = append(a.Actions, *newActionStep)
+		default:
+			actionStep := &Action{
+				Name:     ScriptAction,
+				StepName: s.ID,
+				Enabled:  true,
+				Type:     BuiltinAction,
+				ID:       scriptActionID,
+				Parameters: []Parameter{
+					{
+						Name:  "script",
+						Type:  TextParameter,
+						Value: s.Run,
+					},
+				},
+			}
+			a.Actions = append(a.Actions, *actionStep)
+		}
+	}
+	return nil
+}
+
 // Value returns driver.Value from action.
 func (a Action) Value() (driver.Value, error) {
 	j, err := json.Marshal(a)

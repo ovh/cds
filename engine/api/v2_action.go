@@ -6,8 +6,6 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/rockbears/yaml"
-
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -68,13 +66,9 @@ func (api *API) getActionV2Handler() ([]service.RbacChecker, service.Handler) {
 				branch = defaultBranch.DisplayID
 			}
 
-			ent, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeAction, actionName)
-			if err != nil {
-				return err
-			}
 			var act sdk.V2Action
-			if err := yaml.Unmarshal([]byte(ent.Data), &act); err != nil {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read action: %v", err)
+			if err := entity.LoadAndUnmarshalByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeAction, actionName, &act); err != nil {
+				return err
 			}
 			return service.WriteJSON(w, act, http.StatusOK)
 		}

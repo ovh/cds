@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -119,6 +120,18 @@ func LoadByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepos
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4`).Args(projectRepositoryID, branch, t, name)
 	return getEntity(ctx, db, query, opts...)
+}
+
+// LoadAndUnmarshalByBranchTypeName loads an entity by his repository, branch, type, name and unmarshal it
+func LoadAndUnmarshalByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, out interface{}, opts ...gorpmapping.GetOptionFunc) error {
+	ent, err := LoadByBranchTypeName(ctx, db, projectRepositoryID, branch, t, name, opts...)
+	if err != nil {
+		return err
+	}
+	if err := yaml.Unmarshal([]byte(ent.Data), out); err != nil {
+		return sdk.WrapError(err, "unable to read %s / %s @ %s", projectRepositoryID, name, branch)
+	}
+	return nil
 }
 
 func UnsafeLoadAllByType(_ context.Context, db gorp.SqlExecutor, t string) ([]sdk.EntityFullName, error) {
