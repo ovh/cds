@@ -12,7 +12,7 @@ import (
 
 func insertActionChild(db gorp.SqlExecutor, child sdk.Action, actionID int64, execOrder int) error {
 	// useful to not save a step_name if it's the same than the default name (for ascode)
-	if strings.ToLower(child.Name) == strings.ToLower(child.StepName) {
+	if strings.ToLower(child.Name) == strings.ToLower(child.StepName) && child.Type != sdk.AsCodeAction {
 		child.StepName = ""
 	}
 

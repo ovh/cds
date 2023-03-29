@@ -472,6 +472,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}", nil, r.PUTv2(api.putVCSProjectHandler), r.DELETEv2(api.deleteVCSProjectHandler), r.GETv2(api.getVCSProjectHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository", nil, r.POSTv2(api.postProjectRepositoryHandler), r.GETv2(api.getVCSProjectRepositoryAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}", nil, r.GETv2(api.getProjectRepositoryHandler), r.DELETEv2(api.deleteProjectRepositoryHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/action/{actionName}", nil, r.GETv2(api.getActionV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis", nil, r.GETv2(api.getProjectRepositoryAnalysesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis/{analysisID}", nil, r.GETv2(api.getProjectRepositoryAnalysisHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/branches", nil, r.GETv2(api.getProjectRepositoryBranchesHandler))

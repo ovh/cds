@@ -110,12 +110,14 @@ func LoadAllByIDsWithTypeBuiltinOrPluginOrDefaultInGroupIDs(ctx context.Context,
       AND (
         type = $2
         OR type = $3
-        OR (type = $4 AND group_id = ANY(string_to_array($5, ',')::int[]))
+        OR type = $4
+        OR (type = $5 AND group_id = ANY(string_to_array($6, ',')::int[]))
       )
   `).Args(
 		gorpmapping.IDsToQueryString(ids),
 		sdk.BuiltinAction,
 		sdk.PluginAction,
+		sdk.AsCodeAction,
 		sdk.DefaultAction,
 		gorpmapping.IDsToQueryString(groupIDs),
 	)

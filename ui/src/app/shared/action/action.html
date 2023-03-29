@@ -80,7 +80,8 @@
             </div>
         </div>
     </div>
-    <nz-alert nzType="info" nzMessage="There is no step."  *ngIf="steps.length === 0"></nz-alert>
+    <nz-alert nzType="info" nzMessage="There is no step."  *ngIf="steps.length === 0 && stepsReady"></nz-alert>
+    <nz-spin *ngIf="!stepsReady" nzTip="Loading steps..."></nz-spin>
 </form>
 <nz-layout class="bottomBtnsWrapper"
      *ngIf="edit && !(pipeline && pipeline.previewMode)">

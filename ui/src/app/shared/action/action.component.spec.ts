@@ -24,7 +24,7 @@ import { ActionComponent } from './action.component';
 import { ActionEvent } from './action.event.model';
 import { StepEvent } from './step/step.event';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {ConfigService, EntityService} from 'app/service/services.module';
+import {ActionAsCodeService, ConfigService, EntityService} from 'app/service/services.module';
 
 describe('CDS: Action Component', () => {
 
@@ -46,6 +46,7 @@ describe('CDS: Action Component', () => {
                 { provide: APP_BASE_HREF, useValue: '/' },
                 UserService,
                 AuthenticationService,
+                ActionAsCodeService,
                 ConfigService
             ],
             imports: [
@@ -200,6 +201,8 @@ describe('CDS: Action Component', () => {
         fixture.componentInstance.stepManagement(event);
         expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
         expect(fixture.componentInstance.steps[1].name).toBe('action2');
+
+        flush();
     }));
 
     it('should init step not always executed and step always executed', fakeAsync(() => {

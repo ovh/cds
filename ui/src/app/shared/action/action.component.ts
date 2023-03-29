@@ -13,9 +13,10 @@ import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
-import {EntityWorkerModel, Project} from 'app/model/project.model';
+import {EntityAction, EntityFullName, EntityWorkerModel, Project} from 'app/model/project.model';
 import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
+import {ActionAsCode, ActionTypeAscode} from 'app/model/action.ascode.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
@@ -26,8 +27,9 @@ import { RequirementEvent } from 'app/shared/requirements/requirement.event.mode
 import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula-sgu';
-import { finalize } from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 import {EntityService} from "../../service/entity/entity.service";
+import {ActionAsCodeService} from "../../service/action/actionAscode.service";
 
 @Component({
     selector: 'app-action',
@@ -39,6 +41,9 @@ export class ActionComponent implements OnDestroy, OnInit {
     editableAction: Action;
     steps: Array<Action> = new Array<Action>();
     publicActions: Array<Action> = new Array<Action>();
+    mapAsCodeActionNames: Map<string, EntityFullName>;
+    mapAsCodeActionParams: Map<string, ActionAsCode> = new Map<string, ActionAsCode>();
+    stepsReady = false;
 
     @Input() project: Project;
     @Input() keys: AllKeys;
@@ -58,9 +63,8 @@ export class ActionComponent implements OnDestroy, OnInit {
             } else {
                 this.prepareEditRequirements();
             }
-            this.steps = new Array<Action>();
             if (this.editableAction.actions) {
-                this.steps = cloneDeep(this.editableAction.actions);
+                this.loadAndMergeAscodeActionParameters();
             }
         }
     }
@@ -78,6 +82,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         private dragulaService: DragulaService,
         private _router: Router,
         private _workerModelService: WorkerModelService,
+        private _actionAsCodeService: ActionAsCodeService,
         public _cd: ChangeDetectorRef,
         private _entityService: EntityService
     ) {
@@ -107,7 +112,18 @@ export class ActionComponent implements OnDestroy, OnInit {
     ngOnInit() {
         if (this.project) {
             this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
-                this.publicActions = as;
+                this.initPublicActionsList(as);
+            });
+            this._entityService.getEntities(EntityAction).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
+                this.mapAsCodeActionNames = new Map<string, EntityFullName>();
+                this.initPublicActionsList(<Array<Action>>entities.map(e => {
+                    let name = `${e.project_key}/${e.vcs_name}/${e.repo_name}/${e.name}@${e.branch}`;
+                    this.mapAsCodeActionNames.set(name, e);
+                    return {
+                        name: name,
+                        type: ActionTypeAscode,
+                    }
+                }));
             });
             this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
                 this.initWorkerModelList(wms);
@@ -120,6 +136,15 @@ export class ActionComponent implements OnDestroy, OnInit {
                 }))
 
             });
+        }
+    }
+
+    initPublicActionsList(acts: Array<Action>): void {
+        if (!this.publicActions) {
+            this.publicActions = new Array<Action>();
+        }
+        if (acts && acts.length > 0) {
+            this.publicActions.push(...acts);
         }
     }
 
@@ -258,24 +283,45 @@ export class ActionComponent implements OnDestroy, OnInit {
     stepManagement(event: StepEvent): void {
         this.editableAction.hasChanged = true;
         this.editableAction.showAddStep = false;
-        switch (event.type) {
-            case 'expend':
-                this.editableAction.showAddStep = true;
-                break;
-            case 'cancel':
-                // nothing to do
-                break;
-            case 'add':
+        if (event.type === 'expend') {
+            this.editableAction.showAddStep = true;
+        } else if (event.type === 'cancel') {// nothing to do
+        } else if (event.type === 'add') {
+            if (event.step.type === ActionTypeAscode) {
+                let ent = this.mapAsCodeActionNames.get(event.step.name);
+                this._actionAsCodeService.get(ent.project_key, ent.vcs_name, ent.repo_name, ent.name, ent.branch)
+                    .pipe(first())
+                    .subscribe(act => {
+
+                        if (act.inputs) {
+                            let keys = Object.keys(act.inputs);
+                            event.step.parameters = new Array<Parameter>();
+                            keys.forEach(k => {
+                                let p = new Parameter();
+                                p.name = k;
+                                p.type = 'string';
+                                p.value = act.inputs[k].default;
+                                p.description = act.inputs[k].description;
+                                event.step.parameters.push(p);
+                            });
+                        }
+                        let newStep = cloneDeep(event.step);
+                        newStep.enabled = true;
+                        newStep.name = event.step.name;
+                        newStep.step_name = event.step.name;
+                        this.steps.push(newStep);
+                        this._cd.markForCheck();
+                    });
+            } else {
                 let newStep = cloneDeep(event.step);
                 newStep.enabled = true;
                 this.steps.push(newStep);
-                break;
-            case 'delete':
-                let index = this.steps.indexOf(event.step);
-                if (index >= 0) {
-                    this.steps.splice(index, 1);
-                }
-                break;
+            }
+        } else if (event.type === 'delete') {
+            let index = this.steps.indexOf(event.step);
+            if (index >= 0) {
+                this.steps.splice(index, 1);
+            }
         }
     }
 
@@ -297,6 +343,92 @@ export class ActionComponent implements OnDestroy, OnInit {
             queryParams: {
                 from: `${this.project.key}/${this.pipeline.name}/${this.stage.id}/${this.editableAction.name}`
             }
-        });
+        }).then();
+    }
+
+    async loadAndMergeAscodeActionParameters() {
+        let  tmpSteps = new Array<Action>();
+        for (let i = 0; i< this.editableAction.actions.length; i++) {
+            let currentStep = cloneDeep(this.editableAction.actions[i]);
+            if (currentStep.type !== ActionTypeAscode) {
+                tmpSteps.push(currentStep);
+                continue;
+            }
+
+            let actionAsCode = this.mapAsCodeActionParams.get(currentStep.step_name);
+            if (!actionAsCode) {
+                let branchSplit = currentStep.step_name.split('@');
+                let branch, projectKey, repo, vcs, name: string;
+
+                if (branchSplit.length === 2) {
+                    branch = branchSplit[1];
+                }
+                let actionSplit = branchSplit[0].split('/');
+                if (actionSplit.length !== 5) {
+                    tmpSteps.push(currentStep);
+                    continue;
+                }
+                projectKey = actionSplit[0];
+                vcs = actionSplit[1];
+                repo = actionSplit[2] + '/' + actionSplit[3];
+                name = actionSplit[4];
+                let ascodeActionGET = await this._actionAsCodeService.get(projectKey, vcs, repo, name, branch).toPromise();
+                this.mapAsCodeActionParams.set(currentStep.step_name, ascodeActionGET);
+                this.mergeAscodeActionParameters(currentStep, ascodeActionGET);
+            } else {
+                this.mergeAscodeActionParameters(currentStep, actionAsCode);
+            }
+            tmpSteps.push(currentStep);
+        }
+        this.steps = tmpSteps;
+        this.stepsReady = true;
+        this._cd.markForCheck();
+    }
+
+    mergeAscodeActionParameters(currentStep: Action, ascodeAction: ActionAsCode):  void {
+        if (!currentStep.parameters || currentStep.parameters.length === 0) {
+            let keys = Object.keys(ascodeAction.inputs);
+            currentStep.parameters = new Array<Parameter>();
+            keys.forEach(k => {
+                let p = new Parameter();
+                p.name = k;
+                p.type = 'string';
+                p.value = ascodeAction.inputs[k].default;
+                p.description = ascodeAction.inputs[k].description;
+                currentStep.parameters.push(p);
+            });
+        } else {
+            let keys = Object.keys(ascodeAction.inputs);
+            // Remove old parameters
+            for (let i = 0; i < currentStep.parameters.length; i++) {
+                let found = false;
+                keys.forEach(k => {
+                    if (k === currentStep.parameters[i].name) {
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    currentStep.parameters.splice(i, 1);
+                    i--;
+                }
+            }
+            // Add new parameters
+            keys.forEach(k => {
+                let found = false;
+                currentStep.parameters.forEach(p => {
+                    if (k === p.name) {
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    let newParam = new Parameter();
+                    newParam.name = k;
+                    newParam.type = 'string';
+                    newParam.value = ascodeAction.inputs[k].default;
+                    newParam.description = ascodeAction.inputs[k].description;
+                    currentStep.parameters.push(newParam);
+                }
+            });
+        }
     }
 }
