@@ -6,13 +6,6 @@ inputs:
     description: name of the person to greet
     required: true
     default: Steven
-outputs:
-  name:
-    description: name of the person who was greeted
-    value: ${{ steps.hello.outputs.person }}
 runs:
   steps:
-    - run: echo Welcome in nthis new action
-    - id: hello
       run: echo Hello ${{ inputs.name }}
-    - run: echo "name=${{ inputs.name }}" >> $CDS_OUTPUT

@@ -41,6 +41,7 @@ type WorkflowNodeJobRunData struct {
 	NodeJobRun               WorkflowNodeJobRun
 	Secrets                  []Variable
 	Features                 map[FeatureName]bool
+	AscodeActions            map[string]V2Action
 	Number                   int64
 	SubNumber                int64
 	SigningKey               string

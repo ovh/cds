@@ -79,6 +79,7 @@ testcases:
         - result.systemoutjson.status ShouldEqual Success
       retry: 30
       delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW 1 --pattern AsCode; grep "Hello ${{ inputs.name }}" *.log
 
 - name: delete rbac on project
   steps:

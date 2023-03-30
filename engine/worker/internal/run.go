@@ -265,6 +265,9 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	case sdk.PluginAction:
 		res := w.runGRPCPlugin(ctx, a)
 		return res
+	case sdk.AsCodeAction:
+		res := w.runAscodeAction(ctx, a.StepName)
+		return res
 	}
 
 	// There is is no children actions (action is empty) to do, success !

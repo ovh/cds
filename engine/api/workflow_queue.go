@@ -190,6 +190,7 @@ func (api *API) takeJob(ctx context.Context, p *sdk.Project, id int64, workerMod
 	wnjri.WorkflowID = workflowRun.WorkflowID
 	wnjri.WorkflowName = workflowRun.Workflow.Name
 	wnjri.NodeRunName = noderun.WorkflowNodeName
+	wnjri.AscodeActions = workflowRun.Workflow.AscodeActions
 
 	secretsReqs := job.Job.Action.Requirements.FilterByType(sdk.SecretRequirement).Values()
 	secretsReqsRegs := make([]*regexp.Regexp, 0, len(secretsReqs))

@@ -59,6 +59,7 @@ type CurrentWorker struct {
 		runNumber        int64
 		nodeRunName      string
 		features         map[sdk.FeatureName]bool
+		ascodeAction     map[string]sdk.V2Action
 		currentStepIndex int
 		currentStepName  string
 		envFromHooks     map[string]string
