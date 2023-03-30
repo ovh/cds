@@ -63,9 +63,9 @@ export class ActionComponent implements OnDestroy, OnInit {
             } else {
                 this.prepareEditRequirements();
             }
-            if (this.editableAction.actions) {
-                this.loadAndMergeAscodeActionParameters();
-            }
+            this.loadAndMergeAscodeActionParameters();
+        } else {
+            delete this.editableAction;
         }
     }
 
@@ -348,37 +348,39 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     async loadAndMergeAscodeActionParameters() {
         let  tmpSteps = new Array<Action>();
-        for (let i = 0; i< this.editableAction.actions.length; i++) {
-            let currentStep = cloneDeep(this.editableAction.actions[i]);
-            if (currentStep.type !== ActionTypeAscode) {
-                tmpSteps.push(currentStep);
-                continue;
-            }
-
-            let actionAsCode = this.mapAsCodeActionParams.get(currentStep.step_name);
-            if (!actionAsCode) {
-                let branchSplit = currentStep.step_name.split('@');
-                let branch, projectKey, repo, vcs, name: string;
-
-                if (branchSplit.length === 2) {
-                    branch = branchSplit[1];
-                }
-                let actionSplit = branchSplit[0].split('/');
-                if (actionSplit.length !== 5) {
+        if (this.editableAction.actions) {
+            for (let i = 0; i< this.editableAction.actions.length; i++) {
+                let currentStep = cloneDeep(this.editableAction.actions[i]);
+                if (currentStep.type !== ActionTypeAscode) {
                     tmpSteps.push(currentStep);
                     continue;
                 }
-                projectKey = actionSplit[0];
-                vcs = actionSplit[1];
-                repo = actionSplit[2] + '/' + actionSplit[3];
-                name = actionSplit[4];
-                let ascodeActionGET = await this._actionAsCodeService.get(projectKey, vcs, repo, name, branch).toPromise();
-                this.mapAsCodeActionParams.set(currentStep.step_name, ascodeActionGET);
-                this.mergeAscodeActionParameters(currentStep, ascodeActionGET);
-            } else {
-                this.mergeAscodeActionParameters(currentStep, actionAsCode);
+
+                let actionAsCode = this.mapAsCodeActionParams.get(currentStep.step_name);
+                if (!actionAsCode) {
+                    let branchSplit = currentStep.step_name.split('@');
+                    let branch, projectKey, repo, vcs, name: string;
+
+                    if (branchSplit.length === 2) {
+                        branch = branchSplit[1];
+                    }
+                    let actionSplit = branchSplit[0].split('/');
+                    if (actionSplit.length !== 5) {
+                        tmpSteps.push(currentStep);
+                        continue;
+                    }
+                    projectKey = actionSplit[0];
+                    vcs = actionSplit[1];
+                    repo = actionSplit[2] + '/' + actionSplit[3];
+                    name = actionSplit[4];
+                    let ascodeActionGET = await this._actionAsCodeService.get(projectKey, vcs, repo, name, branch).toPromise();
+                    this.mapAsCodeActionParams.set(currentStep.step_name, ascodeActionGET);
+                    this.mergeAscodeActionParameters(currentStep, ascodeActionGET);
+                } else {
+                    this.mergeAscodeActionParameters(currentStep, actionAsCode);
+                }
+                tmpSteps.push(currentStep);
             }
-            tmpSteps.push(currentStep);
         }
         this.steps = tmpSteps;
         this.stepsReady = true;

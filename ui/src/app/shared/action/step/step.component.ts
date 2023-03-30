@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from '@angular/core';
 import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
@@ -19,7 +19,7 @@ export class ActionStepComponent {
     @Input()
     set step(data: Action) {
         if (data) {
-            this._step = Object.assign({}, data);
+            this._step = data;
             this.stepURL = ['/settings', data.group ? 'action' : 'action-builtin'];
             if (data.group) {
                 this.stepURL.push(data.group.name);
