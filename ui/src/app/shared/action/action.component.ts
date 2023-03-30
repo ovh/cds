@@ -382,7 +382,6 @@ export class ActionComponent implements OnDestroy, OnInit {
                 tmpSteps.push(currentStep);
             }
         }
-        console.log(tmpSteps);
         this.steps = tmpSteps;
         this.stepsReady = true;
         this._cd.markForCheck();
