@@ -25,6 +25,7 @@ type Step struct {
 	InstallKey                *exportentities.StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty"`
 	Deploy                    *exportentities.StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty"`
 	Promote                   *exportentities.StepPromote          `json:"promote,omitempty" yaml:"promote,omitempty"`
+	AsCodeAction              *exportentities.StepAscodeAction     `json:"AsCodeAction,omitempty" yaml:"AsCodeAction,omitempty"`
 }
 
 func (s Step) MarshalJSON() ([]byte, error) {

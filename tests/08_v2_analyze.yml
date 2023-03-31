@@ -80,7 +80,7 @@ testcases:
       retry: 30
       delay: 10
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW 1 --pattern AsCode
-    - script: grep "Hello" ITCLIPRJVCSWRKFLW1-WORKFLOW*.log
+    - script: grep 'Hello' ITCLIPRJVCSWRKFLW1-WORKFLOW*.log
 
 - name: delete rbac on project
   steps:

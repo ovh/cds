@@ -231,6 +231,12 @@ func NewStep(act sdk.Action) Step {
 			step := StepDeploy("{{.cds.application}}")
 			s.Deploy = &step
 		}
+	case sdk.AsCodeAction:
+		step := make(StepAscodeAction)
+		for _, v := range act.Parameters {
+			step[v.Name] = v.Value
+		}
+		s.AsCodeAction = &step
 	default:
 		args := make(StepParameters)
 		for _, p := range act.Parameters {
