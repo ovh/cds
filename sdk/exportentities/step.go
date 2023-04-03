@@ -371,7 +371,7 @@ type Step struct {
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema:"oneof_required=actionCheckout" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
 	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema:"oneof_required=actionInstallKey" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
 	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema:"oneof_required=actionDeploy" jsonschema_description:"Deploy an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
-	AsCodeAction     *StepAscodeAction     `json:"AsCodeAction,omitempty" yaml:"AsCodeAction,omitempty" jsonschema:"oneof_required=AsCodeAction" jsonschema_description:"ascode action"`
+	AsCodeAction     *StepAscodeAction     `json:"asCodeAction,omitempty" yaml:"asCodeAction,omitempty" jsonschema:"oneof_required=asCodeAction" jsonschema_description:"ascode action"`
 }
 
 // MarshalJSON custom marshal json impl to inline custom step.

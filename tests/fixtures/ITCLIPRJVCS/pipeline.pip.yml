@@ -7,7 +7,7 @@ jobs:
   stage: AsCode
   steps:
   - name: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-action@master
-    AsCodeAction:
+    asCodeAction:
       name: John Doe
   requirements:
   - model: docker-debian
