@@ -163,15 +163,33 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 		deployReq.Alternative = altConfig.Name
 	}
 
-	// Do deploy request
-	fmt.Printf("Deploying %s (%s) on Arsenal at %s...\n", application, deployReq, arsenalHost)
-	followUpToken, err := arsenalClient.Deploy(deployReq)
-	if err != nil {
-		return fail("deploy failed: %v", err)
+	// Retry loop to deploy an application
+	// This loop consists of 6 retries (+ the first try), separated by 10 sec
+	var retry int
+	var followUpToken string
+	for retry < 7 {
+		if retry > 0 {
+			time.Sleep(time.Duration(10) * time.Second)
+		}
+
+		fmt.Printf("Deploying %s (%s) on Arsenal at %s...\n", application, deployReq, arsenalHost)
+		followUpToken, err = arsenalClient.Deploy(deployReq)
+		if err != nil {
+			if _, ok := err.(*arsenal.RequestError); ok {
+				fmt.Println("Deployment has failed, retrying...")
+				retry++
+			} else {
+				return fail("deploy failed: %v", err)
+			}
+		}
+
+		if followUpToken != "" {
+			break
+		}
 	}
 
 	// Retry loop to follow the deployment status
-	var retry int
+	retry = 0
 	var success bool
 	var lastProgress float64
 	for retry < maxRetry {
