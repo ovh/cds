@@ -63,7 +63,7 @@ func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out 
 	}
 
 	if err := yaml.UnmarshalMultipleDocuments(content, out); err != nil {
-		return nil, []error{WrapError(err, "unable to read %s%s", directory, fileName)}
+		return nil, []error{NewErrorFrom(ErrInvalidData, "unable to read %s%s: %v", directory, fileName, err)}
 	}
 	var entities []Entity
 	for _, o := range *out {

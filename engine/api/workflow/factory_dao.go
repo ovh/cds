@@ -13,10 +13,13 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -33,6 +36,13 @@ type LoadOptions struct {
 	WithIntegrations       bool
 	WithTemplate           bool
 	WithFavoritesForUserID string
+}
+
+type asCodeLoader struct {
+	db     gorp.SqlExecutor
+	vcs    map[string]*sdk.VCSProject
+	repo   map[string]*sdk.ProjectRepository
+	action map[string]sdk.V2Action
 }
 
 func (loadOpts LoadOptions) GetWorkflowDAO() WorkflowDAO {
@@ -217,7 +227,7 @@ func (dao WorkflowDAO) Query() gorpmapping.Query {
 
 func (dao WorkflowDAO) GetLoaders() []gorpmapping.GetOptionFunc {
 
-	var loaders = []gorpmapping.GetOptionFunc{}
+	var loaders = make([]gorpmapping.GetOptionFunc, 0)
 
 	if dao.Loaders.WithApplications {
 		loaders = append(loaders, func(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
@@ -446,12 +456,109 @@ func (dao WorkflowDAO) withPipelines(ctx context.Context, db gorp.SqlExecutor, w
 					if pip == nil {
 						return sdk.WrapError(sdk.ErrNotFound, "unable to find pipeline %d", n.Context.PipelineID)
 					}
+
+					// Load ascode actions
+					if deep {
+						ascodeLoader := &asCodeLoader{
+							db:     db,
+							vcs:    make(map[string]*sdk.VCSProject),
+							repo:   make(map[string]*sdk.ProjectRepository),
+							action: make(map[string]sdk.V2Action),
+						}
+						for stageIndex := range pip.Stages {
+							s := &pip.Stages[stageIndex]
+							for jobIndex := range s.Jobs {
+								j := &s.Jobs[jobIndex]
+								if err := ascodeLoader.browseNonAscodeActionSteps(ctx, j.Action.Actions); err != nil {
+									return err
+								}
+							}
+						}
+						w.AscodeActions = ascodeLoader.action
+					}
 					w.Pipelines[n.Context.PipelineID] = *pip
 				}
 			}
 		}
 	}
+	return nil
+}
 
+func (loader *asCodeLoader) browseNonAscodeActionSteps(ctx context.Context, actions []sdk.Action) error {
+	for _, a := range actions {
+		if a.Type != sdk.AsCodeAction && len(a.Actions) > 0 {
+			if err := loader.browseNonAscodeActionSteps(ctx, a.Actions); err != nil {
+				return err
+			}
+			continue
+		}
+		if a.Type == sdk.AsCodeAction {
+			if err := loader.loadAsCodeActionStep(ctx, a.StepName); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (loader *asCodeLoader) loadAsCodeActionStep(ctx context.Context, stepName string) error {
+	// If already loaded, skip it
+	if _, has := loader.action[stepName]; has {
+		return nil
+	}
+
+	branchSplit := strings.Split(stepName, "@")
+	var projKey, vcsName, repoName, actionName, branch string
+	if len(branchSplit) != 2 {
+		return nil
+	}
+	branch = branchSplit[1]
+	actionSplit := strings.Split(branchSplit[0], "/")
+	if len(actionSplit) != 5 {
+		return nil
+	}
+	projKey = actionSplit[0]
+	vcsName = actionSplit[1]
+	repoName = actionSplit[2] + "/" + actionSplit[3]
+	actionName = actionSplit[4]
+	vcsServer, has := loader.vcs[projKey+"/"+vcsName]
+	if !has {
+		var err error
+		vcsServer, err = vcs.LoadVCSByName(ctx, loader.db, projKey, vcsName)
+		if err != nil {
+			return err
+		}
+		loader.vcs[projKey+"/"+vcsName] = vcsServer
+	}
+	repo, has := loader.repo[projKey+"/"+vcsName+"/"+repoName]
+	if !has {
+		var err error
+		repo, err = repository.LoadRepositoryByName(ctx, loader.db, vcsServer.ID, repoName)
+		if err != nil {
+			return err
+		}
+		loader.repo[projKey+"/"+vcsName+"/"+repoName] = repo
+	}
+	var currentAction sdk.V2Action
+	if err := entity.LoadAndUnmarshalByBranchTypeName(ctx, loader.db, repo.ID, branch, sdk.EntityTypeAction, actionName, &currentAction); err != nil {
+		return err
+	}
+	loader.action[stepName] = currentAction
+	if err := loader.browseAsCodeActionSteps(ctx, currentAction.Runs.Steps); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (loader *asCodeLoader) browseAsCodeActionSteps(ctx context.Context, steps []sdk.ActionStep) error {
+	for _, step := range steps {
+		if step.Uses == "" {
+			continue
+		}
+		if err := loader.loadAsCodeActionStep(ctx, step.Uses); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -551,7 +658,7 @@ func (dao WorkflowDAO) withIntegrations(ctx context.Context, db gorp.SqlExecutor
 	return nil
 }
 
-func (dao WorkflowDAO) withAsCodeUpdateEvents(ctx context.Context, db gorp.SqlExecutor, ws *[]Workflow) error {
+func (dao WorkflowDAO) withAsCodeUpdateEvents(_ context.Context, db gorp.SqlExecutor, ws *[]Workflow) error {
 	var ids = make([]int64, 0, len(*ws))
 	for _, w := range *ws {
 		ids = append(ids, w.ID)

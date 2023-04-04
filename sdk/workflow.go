@@ -26,7 +26,7 @@ type WorkflowName struct {
 	ProjectID  int64  `json:"project_id" db:"project_id" cli:"-"`
 }
 
-//Workflow represents a pipeline based workflow
+// Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID                       int64                        `json:"id" db:"id" cli:"-"`
 	Name                     string                       `json:"name" db:"name" cli:"name,key"`
@@ -55,6 +55,7 @@ type Workflow struct {
 	ProjectIntegrations      map[int64]ProjectIntegration `json:"project_integrations,omitempty" db:"-" cli:"-"  mapstructure:"-"`
 	HookModels               map[int64]WorkflowHookModel  `json:"hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
 	OutGoingHookModels       map[int64]WorkflowHookModel  `json:"outgoing_hook_models,omitempty" db:"-" cli:"-"  mapstructure:"-"`
+	AscodeActions            map[string]V2Action          `json:"action_as_code,omitempty" db:"-" cli:"-"  mapstructure:"-"`
 	Labels                   []Label                      `json:"labels,omitempty" db:"-" cli:"labels"`
 	ToDelete                 bool                         `json:"to_delete" db:"to_delete" cli:"-"`
 	ToDeleteWithDependencies *bool                        `json:"to_delete_with_dependencies" db:"to_delete_with_dependencies" cli:"-"`
@@ -172,6 +173,9 @@ func (w *Workflow) InitMaps() {
 	if w.OutGoingHookModels == nil {
 		w.OutGoingHookModels = make(map[int64]WorkflowHookModel)
 	}
+	if w.AscodeActions == nil {
+		w.AscodeActions = make(map[string]V2Action)
+	}
 }
 
 // GetApplication retrieve application from workflow
@@ -200,7 +204,7 @@ func (w *Workflow) ResetIDs() {
 	}
 }
 
-//AddTrigger adds a trigger to the destination node from the node found by its name
+// AddTrigger adds a trigger to the destination node from the node found by its name
 func (w *Workflow) AddTrigger(name string, dest Node) {
 	if w.WorkflowData.Node.Name == "" {
 		return
@@ -229,7 +233,7 @@ func (w *Workflow) GetRepositories() []string {
 	return res
 }
 
-//Visit all the workflow and apply the visitor func on all nodes
+// Visit all the workflow and apply the visitor func on all nodes
 func (w *Workflow) VisitNode(visitor func(*Node, *Workflow)) {
 	w.WorkflowData.Node.VisitNode(w, visitor)
 	for i := range w.WorkflowData.Joins {
@@ -240,7 +244,7 @@ func (w *Workflow) VisitNode(visitor func(*Node, *Workflow)) {
 	}
 }
 
-//Sort sorts the workflow
+// Sort sorts the workflow
 func (w *Workflow) SortNode() {
 	w.VisitNode(func(n *Node, w *Workflow) {
 		n.Sort()
@@ -383,7 +387,7 @@ func (w *Workflow) GetEventIntegration() []WorkflowProjectIntegration {
 	return eventsIntegrations
 }
 
-//WorkflowNodeConditions is either an array of WorkflowNodeCondition or a lua script
+// WorkflowNodeConditions is either an array of WorkflowNodeCondition or a lua script
 type WorkflowNodeConditions struct {
 	PlainConditions []WorkflowNodeCondition `json:"plain,omitempty" yaml:"check,omitempty"`
 	LuaScript       string                  `json:"lua_script,omitempty" yaml:"script,omitempty"`
@@ -407,14 +411,14 @@ func (w *WorkflowNodeConditions) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowNodeConditions")
 }
 
-//WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type WorkflowNodeCondition struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Operator string `json:"operator" yaml:"operator"`
 	Value    string `json:"value" yaml:"value"`
 }
 
-//WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook
+// WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook
 type WorkflowNodeContextDefaultPayloadVCS struct {
 	GitBranch     string `json:"git.branch" db:"-"`
 	GitTag        string `json:"git.tag" db:"-"`

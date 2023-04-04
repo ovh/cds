@@ -425,6 +425,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	analysis.Data.Error = strings.Join(skippedFiles, "\n")
 	if len(skippedFiles) == len(analysis.Data.Entities) {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+		if len(analysis.Data.Entities) == 0 {
+			analysis.Data.Error = "no file found"
+		}
 	} else {
 		analysis.Status = sdk.RepositoryAnalysisStatusSucceed
 	}

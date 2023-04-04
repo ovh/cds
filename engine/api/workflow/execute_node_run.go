@@ -473,7 +473,7 @@ func addJobsToQueue(ctx context.Context, store cache.Store, db gorpmapper.SqlExe
 	//Browse the jobs
 jobLoop:
 	for j := range stage.Jobs {
-		job := &stage.Jobs[j]
+		job := stage.Jobs[j]
 
 		if previousStage != nil {
 			for _, rj := range previousStage.RunJobs {
@@ -489,14 +489,14 @@ jobLoop:
 
 		//Process variables for the jobs
 		_, next = telemetry.Span(ctx, "workflow..getNodeJobRunParameters")
-		jobParams, err := getNodeJobRunParameters(*job, nr, stage)
+		jobParams, err := getNodeJobRunParameters(job, nr, stage)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
-		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, *job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
+		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs)
 		next()
 		if err != nil {
 			spawnErrs.Join(*err)
@@ -529,7 +529,7 @@ jobLoop:
 			ExecGroups:         groups,
 			IntegrationPlugins: integrationPlugins,
 			Job: sdk.ExecutedJob{
-				Job: *job,
+				Job: job,
 			},
 			Header:          nr.Header,
 			ContainsService: containsService,

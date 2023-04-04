@@ -1,9 +1,13 @@
 version: v1.0
 name: ITCLIPRJVCSWRKFLW1-PIPELINE
+stages:
+  - AsCode
 jobs:
-- job: test
+- job: AsCodeJob
+  stage: AsCode
   steps:
-  - script:
-    - env
+  - name: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-action@master
+    asCodeAction:
+      name: John Doe
   requirements:
   - model: docker-debian

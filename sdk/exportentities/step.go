@@ -231,6 +231,12 @@ func NewStep(act sdk.Action) Step {
 			step := StepDeploy("{{.cds.application}}")
 			s.Deploy = &step
 		}
+	case sdk.AsCodeAction:
+		step := make(StepAscodeAction)
+		for _, v := range act.Parameters {
+			step[v.Name] = v.Value
+		}
+		s.AsCodeAction = &step
 	default:
 		args := make(StepParameters)
 		for _, p := range act.Parameters {
@@ -340,6 +346,8 @@ type StepInstallKey interface{}
 // StepDeploy represents exported push build info step.
 type StepDeploy string
 
+type StepAscodeAction map[string]string
+
 // Step represents exported step used in a job.
 type Step struct {
 	// common step data
@@ -363,6 +371,7 @@ type Step struct {
 	Checkout         *StepCheckout         `json:"checkout,omitempty" yaml:"checkout,omitempty" jsonschema:"oneof_required=actionCheckout" jsonschema_description:"Checkout repository for an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-checkoutapplication"`
 	InstallKey       *StepInstallKey       `json:"installKey,omitempty" yaml:"installKey,omitempty" jsonschema:"oneof_required=actionInstallKey" jsonschema_description:"Install a key (GPG, SSH) in your current workspace.\nhttps://ovh.github.io/cds/docs/actions/builtin-installkey"`
 	Deploy           *StepDeploy           `json:"deploy,omitempty" yaml:"deploy,omitempty" jsonschema:"oneof_required=actionDeploy" jsonschema_description:"Deploy an application.\nhttps://ovh.github.io/cds/docs/actions/builtin-deployapplication"`
+	AsCodeAction     *StepAscodeAction     `json:"asCodeAction,omitempty" yaml:"asCodeAction,omitempty" jsonschema:"oneof_required=asCodeAction" jsonschema_description:"ascode action"`
 }
 
 // MarshalJSON custom marshal json impl to inline custom step.
@@ -485,6 +494,9 @@ func (s Step) IsValid() bool {
 	if s.isPushBuildInfo() {
 		count++
 	}
+	if s.isAscodeAction() {
+		count++
+	}
 	count += len(s.StepCustom)
 
 	return count == 1
@@ -523,6 +535,8 @@ func (s Step) toAction() (*sdk.Action, error) {
 		a, err = s.asScript()
 	} else if s.isPushBuildInfo() {
 		a = s.asPushBuildInfo()
+	} else if s.isAscodeAction() {
+		a = s.asAscodeAction()
 	} else {
 		a = s.asAction()
 	}
@@ -611,10 +625,21 @@ func (s Step) asCheckoutApplication() sdk.Action {
 
 func (s Step) isPushBuildInfo() bool { return s.PushBuildInfo != nil }
 
+func (s Step) isAscodeAction() bool { return s.AsCodeAction != nil }
+
 func (s Step) asPushBuildInfo() sdk.Action {
 	return sdk.Action{
 		Name: sdk.PushBuildInfo,
 		Type: sdk.BuiltinAction,
+	}
+}
+
+func (s Step) asAscodeAction() sdk.Action {
+	return sdk.Action{
+		Name:       sdk.AsCodeAction,
+		Type:       sdk.AsCodeAction,
+		StepName:   s.Name,
+		Parameters: sdk.ParametersFromMap(*s.AsCodeAction),
 	}
 }
 

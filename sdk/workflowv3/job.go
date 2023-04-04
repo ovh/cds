@@ -188,6 +188,7 @@ func ConvertJob(j sdk.Job, isFullExport bool) Job {
 			Release:          s.Release,
 			PushBuildInfo:    s.PushBuildInfo,
 			Promote:          s.Promote,
+			AsCodeAction:     s.AsCodeAction,
 		}
 		if s.Script != nil {
 			var script StepScript

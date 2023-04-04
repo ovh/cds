@@ -115,31 +115,43 @@ func CheckJob(ctx context.Context, db gorp.SqlExecutor, job *sdk.Job) error {
 		step := &job.Action.Actions[i]
 		log.Debug(ctx, "CheckJob> Checking step %s", step.Name)
 
-		a, err := action.RetrieveForGroupAndName(ctx, db, step.Group, step.Name)
-		if err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNoAction) {
-				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
-				continue
+		if step.Type != sdk.AsCodeAction {
+			a, err := action.RetrieveForGroupAndName(ctx, db, step.Group, step.Name)
+			if err != nil {
+				if sdk.ErrorIs(err, sdk.ErrNoAction) {
+					errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
+					continue
+				}
+				return err
 			}
-			return err
-		}
-		job.Action.Actions[i].ID = a.ID
+			job.Action.Actions[i].ID = a.ID
 
-		// FIXME better check for params
-		for x := range step.Parameters {
-			sp := &step.Parameters[x]
-			log.Debug(ctx, "CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
-			var found bool
-			for y := range a.Parameters {
-				ap := a.Parameters[y]
-				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
-					found = true
-					break
+			// FIXME better check for params
+			for x := range step.Parameters {
+				sp := &step.Parameters[x]
+				log.Debug(ctx, "CheckJob> Checking step parameter %s = %s", sp.Name, sp.Value)
+				var found bool
+				for y := range a.Parameters {
+					ap := a.Parameters[y]
+					if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
 				}
 			}
-			if !found {
-				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
+
+		} else {
+			ascodeAction, err := action.LoadAllByTypes(ctx, db, []string{sdk.AsCodeAction})
+			if err != nil {
+				return err
 			}
+			if len(ascodeAction) != 1 {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to find ascode action")
+			}
+			job.Action.Actions[i].ID = ascodeAction[0].ID
 		}
 
 		if len(errs) > 0 {
