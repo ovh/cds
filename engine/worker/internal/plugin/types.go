@@ -1,0 +1,40 @@
+package plugin
+
+import (
+	"context"
+	"io"
+
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+)
+
+const (
+	TypeAction      = "action"
+	TypeIntegration = "integration"
+)
+
+type clientSocket struct {
+	Socket  string
+	StdPipe io.Reader
+	Client  interface{}
+}
+
+type Client interface {
+	Close(ctx context.Context)
+	Run(ctx context.Context, opts map[string]string) *Result
+}
+
+type client struct {
+	ctx        context.Context
+	socket     *clientSocket
+	grpcClient interface{}
+	done       chan struct{}
+	stopLog    context.CancelFunc
+	w          workerruntime.Runtime
+	pluginType string
+}
+
+type Result struct {
+	Status  string
+	Details string
+	Outputs map[string]string
+}

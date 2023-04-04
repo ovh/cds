@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+type WorkerDirectories struct {
+	WorkingDir string
+	BaseDir    string
+}
+
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
 	ID           string    `json:"id" cli:"-" db:"id"`

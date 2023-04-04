@@ -11,13 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
+	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
 func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
@@ -92,7 +91,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 			// 1. Integration artifact manager on workflow
 			// 2. CDN
 			if pluginArtifactManagement != nil {
-				if err := uploadArtifactByIntegrationPlugin(path, ctx, wk, pluginArtifactManagement, fileType); err != nil {
+				if err := uploadArtifactByIntegrationPlugin(path, ctx, wk, sdk.GRPCPluginUploadArtifact, fileType); err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact by plugin %s", path)
 					wgErrors.Add(1)
 				}
@@ -121,7 +120,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	return res, nil
 }
 
-func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk workerruntime.Runtime, artiManager *sdk.GRPCPlugin, fileType string) error {
+func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk workerruntime.Runtime, pluginName string, fileType string) error {
 	_, fileName := filepath.Split(path)
 
 	// Check run result
@@ -138,68 +137,23 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve artifact manager integration... Aborting")
 	}
 
-	binary := artiManager.GetBinary(strings.ToLower(sdk.GOOS), strings.ToLower(sdk.GOARCH))
-	if binary == nil {
-		return fmt.Errorf("unable to retrieve the plugin for artifact upload integration %s... Aborting", pfName.Value)
-	}
-
-	pluginSocket, err := startGRPCPlugin(ctx, binary.PluginName, wk, binary, startGRPCPluginOptions{})
+	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, pluginName)
 	if err != nil {
 		return fmt.Errorf("unable to start GRPCPlugin: %v", err)
 	}
-
-	c, err := integrationplugin.Client(context.Background(), pluginSocket.Socket)
-	if err != nil {
-		return fmt.Errorf("unable to call GRPCPlugin: %v", err)
-	}
-
-	qPort := integrationplugin.WorkerHTTPPortQuery{Port: wk.HTTPPort()}
-	if _, err := c.WorkerHTTPPort(ctx, &qPort); err != nil {
-		return fmt.Errorf("unable to setup plugin with worker port: %v", err)
-	}
-
-	pluginSocket.Client = c
-	if _, err := c.Manifest(context.Background(), new(empty.Empty)); err != nil {
-		return fmt.Errorf("unable to call GRPCPlugin: %v", err)
-	}
-
-	pluginClient := pluginSocket.Client
-	integrationPluginClient, ok := pluginClient.(integrationplugin.IntegrationPluginClient)
-	if !ok {
-		return fmt.Errorf("unable to retrieve integration GRPCPlugin: %v", err)
-	}
-
-	logCtx, stopLogs := context.WithCancel(ctx)
-	done := make(chan struct{})
-	go enablePluginLogger(logCtx, done, pluginSocket, wk)
-
-	defer integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)
-
-	manifest, err := integrationPluginClient.Manifest(ctx, &empty.Empty{})
-	if err != nil {
-		return fmt.Errorf("unable to retrieve retrieve plugin manifest: %v", err)
-	}
-
-	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
+	defer pluginClient.Close(ctx)
 
 	opts := sdk.ParametersToMap(wk.Parameters())
 	opts[sdk.ArtifactUploadPluginInputPath] = path
-	query := integrationplugin.RunQuery{
-		Options: opts,
-	}
 
-	res, err := integrationPluginClient.Run(ctx, &query)
-	if err != nil {
-		return fmt.Errorf("error uploading artifact: %v", err)
+	pluginResult := pluginClient.Run(ctx, opts)
+	if pluginResult.Status == sdk.StatusFail {
+		return fmt.Errorf("plugin execution failed %s: %s", pluginResult.Status, pluginResult.Details)
 	}
-
-	if !strings.EqualFold(res.Status, sdk.StatusSuccess) {
-		return fmt.Errorf("plugin execution failed %s: %s", res.Status, res.Details)
-	}
-	res.Outputs[sdk.ArtifactUploadPluginOutputFileType] = fileType
+	pluginResult.Outputs[sdk.ArtifactUploadPluginOutputFileType] = fileType
 
 	// Add run result
-	if err := addWorkflowRunResult(ctx, wk, path, sdk.WorkflowRunResultTypeArtifactManager, *res); err != nil {
+	if err := addWorkflowRunResult(ctx, wk, path, sdk.WorkflowRunResultTypeArtifactManager, pluginResult.Outputs); err != nil {
 		return fmt.Errorf("unable to add workflow run result for artifact %s: %v", path, err)
 	}
 
@@ -240,26 +194,26 @@ func checkArtifactUpload(ctx context.Context, wk workerruntime.Runtime, fileName
 	return wk.Client().QueueWorkflowRunResultCheck(ctx, runJobID, runResultCheck)
 }
 
-func addWorkflowRunResult(ctx context.Context, wk workerruntime.Runtime, filePath string, runResultType sdk.WorkflowRunResultType, uploadResult integrationplugin.RunResult) error {
+func addWorkflowRunResult(ctx context.Context, wk workerruntime.Runtime, filePath string, runResultType sdk.WorkflowRunResultType, uploadResults map[string]string) error {
 	runID, runNodeID, runJobID := wk.GetJobIdentifiers()
 
 	fileMode, err := os.Stat(filePath)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get file stat %s", fileMode)
 	}
-	perm, err := strconv.ParseUint(uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPerm], 10, 32)
+	perm, err := strconv.ParseUint(uploadResults[sdk.ArtifactUploadPluginOutputPerm], 10, 32)
 	if err != nil {
 		return sdk.WrapError(err, "unable to retrieve file perm")
 	}
 
 	data := sdk.WorkflowRunResultArtifactManager{
 		WorkflowRunResultArtifactCommon: sdk.WorkflowRunResultArtifactCommon{
-			Name: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFileName],
+			Name: uploadResults[sdk.ArtifactUploadPluginOutputPathFileName],
 		},
 		Perm:     uint32(perm),
-		RepoName: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathRepoName],
-		Path:     uploadResult.Outputs[sdk.ArtifactUploadPluginOutputPathFilePath],
-		FileType: uploadResult.Outputs[sdk.ArtifactUploadPluginOutputFileType],
+		RepoName: uploadResults[sdk.ArtifactUploadPluginOutputPathRepoName],
+		Path:     uploadResults[sdk.ArtifactUploadPluginOutputPathFilePath],
+		FileType: uploadResults[sdk.ArtifactUploadPluginOutputFileType],
 	}
 
 	bts, err := json.Marshal(data)

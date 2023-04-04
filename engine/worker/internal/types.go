@@ -37,15 +37,16 @@ type logger struct {
 }
 
 type CurrentWorker struct {
-	cfg         *workerruntime.WorkerConfig
-	id          string
-	model       sdk.Model
-	basedir     afero.Fs
-	manualExit  bool
-	gelfLogger  *logger
-	stepLogLine int64
-	httpPort    int32
-	currentJob  struct {
+	cfg           *workerruntime.WorkerConfig
+	id            string
+	model         sdk.Model
+	basedir       afero.Fs
+	workingDirAbs string
+	manualExit    bool
+	gelfLogger    *logger
+	stepLogLine   int64
+	httpPort      int32
+	currentJob    struct {
 		wJob             *sdk.WorkflowNodeJobRun
 		newVariables     []sdk.Variable
 		params           []sdk.Parameter

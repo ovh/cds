@@ -1,0 +1,9 @@
+name: run-action-script
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  This action execute a script
+parameters:
+  content:
+    type: text
+    description: The script to execute

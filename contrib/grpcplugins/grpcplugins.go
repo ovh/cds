@@ -68,3 +68,34 @@ func SendVulnerabilityReport(workerHTTPPort int32, report sdk.VulnerabilityWorke
 
 	return nil
 }
+
+func GetWorkerDirectories(workerHTTPPort int32) (*sdk.WorkerDirectories, error) {
+	if workerHTTPPort == 0 {
+		return nil, fmt.Errorf("worker port must not be 0")
+	}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/directories", workerHTTPPort), nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create request to get directories: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get run result directories: %v", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read body on get run result /working-directory: %v", err)
+	}
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot get working directory: HTTP %d", resp.StatusCode)
+	}
+
+	var workDir sdk.WorkerDirectories
+	if err := sdk.JSONUnmarshal(body, &workDir); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response: %v", err)
+	}
+	return &workDir, nil
+}

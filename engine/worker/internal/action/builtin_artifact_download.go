@@ -8,17 +8,15 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
+	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
 func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ []sdk.Variable) (sdk.Result, error) {
@@ -85,14 +83,14 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 		return res, err
 	}
 
-	pluginArtifactManagement := wk.GetPlugin(sdk.GRPCPluginDownloadArtifact)
-
 	// Priority:
 	// 1. Integration artifact manager on workflow
 	// 2. CDN
-	if pluginArtifactManagement != nil {
-		return GetArtifactFromIntegrationPlugin(ctx, wk, res, pattern, reg, destPath, pluginArtifactManagement, project, destinationWorkflow, n)
+	if wk.GetPlugin(sdk.GRPCPluginDownloadArtifact) != nil {
+		wk.SendLog(ctx, workerruntime.LevelInfo, "Using plugin...")
+		return GetArtifactFromIntegrationPlugin(ctx, wk, res, pattern, reg, destPath, sdk.GRPCPluginDownloadArtifact, project, destinationWorkflow, n)
 	}
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("CDN '%s'...", destPath))
 
 	// GET Artifact from CDS CDN
 	cdnItems, err := wk.Client().WorkflowRunArtifactsLinks(project, destinationWorkflow, n)
@@ -151,16 +149,12 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	return res, nil
 }
 
-func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, res sdk.Result, pattern string, regexp *regexp.Regexp, destPath string, plugin *sdk.GRPCPlugin, key, wkfName string, number int64) (sdk.Result, error) {
+func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, res sdk.Result, pattern string, regexp *regexp.Regexp, destPath string, pluginName string, key, wkfName string, number int64) (sdk.Result, error) {
 	pfName := sdk.ParameterFind(wk.Parameters(), "cds.integration.artifact_manager")
 	if pfName == nil {
 		return res, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve artifact manager integration... Aborting")
 	}
 
-	binary := plugin.GetBinary(strings.ToLower(sdk.GOOS), strings.ToLower(sdk.GOARCH))
-	if binary == nil {
-		return res, fmt.Errorf("unable to retrieve the plugin for artifact download integration %s... Aborting", pfName.Value)
-	}
 	wg := new(sync.WaitGroup)
 	runResults, err := wk.Client().WorkflowRunResultsList(ctx, key, wkfName, number)
 	if err != nil {
@@ -202,9 +196,10 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 		go func(opts map[string]string) {
 			defer wg.Done()
 			wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Downloading artifact %s from %s...", artData.Name, repoName))
-			if err := runGRPCIntegrationPlugin(ctx, wk, binary, opts); err != nil {
-				res.Status = sdk.StatusFail
-				res.Reason = err.Error()
+			resultPart := runGRPCIntegrationPlugin(ctx, wk, pluginName, opts)
+			if resultPart.Status == sdk.StatusFail {
+				res.Status = resultPart.Status
+				res.Reason = resultPart.Reason
 			}
 		}(opts)
 		// Be kind with the artifact manager
@@ -216,57 +211,15 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 	return res, nil
 }
 
-func runGRPCIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, binary *sdk.GRPCPluginBinary, opts map[string]string) error {
-	pluginSocket, err := startGRPCPlugin(ctx, binary.PluginName, wk, binary, startGRPCPluginOptions{})
+func runGRPCIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, pluginName string, opts map[string]string) sdk.Result {
+	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, pluginName)
 	if err != nil {
-		return fmt.Errorf("unable to start GRPCPlugin: %v", err)
+		return sdk.Result{
+			Status: sdk.StatusFail,
+			Reason: fmt.Sprintf("unable to start GRPCPlugin: %v", err),
+		}
 	}
-
-	c, err := integrationplugin.Client(context.Background(), pluginSocket.Socket)
-	if err != nil {
-		return fmt.Errorf("unable to call GRPCPlugin: %v", err)
-	}
-
-	qPort := integrationplugin.WorkerHTTPPortQuery{Port: wk.HTTPPort()}
-	if _, err := c.WorkerHTTPPort(ctx, &qPort); err != nil {
-		return fmt.Errorf("unable to setup plugin with worker port: %v", err)
-	}
-
-	pluginSocket.Client = c
-	if _, err := c.Manifest(context.Background(), new(empty.Empty)); err != nil {
-		return fmt.Errorf("unable to call GRPCPlugin: %v", err)
-	}
-
-	pluginClient := pluginSocket.Client
-	integrationPluginClient, ok := pluginClient.(integrationplugin.IntegrationPluginClient)
-	if !ok {
-		return fmt.Errorf("unable to retrieve integration GRPCPlugin: %v", err)
-	}
-
-	logCtx, stopLogs := context.WithCancel(ctx)
-	done := make(chan struct{})
-	go enablePluginLogger(logCtx, done, pluginSocket, wk)
-
-	defer integrationPluginClientStop(ctx, integrationPluginClient, done, stopLogs)
-
-	manifest, err := integrationPluginClient.Manifest(ctx, &empty.Empty{})
-	if err != nil {
-		return fmt.Errorf("unable to retrieve retrieve plugin manifest: %v", err)
-	}
-
-	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
-
-	query := integrationplugin.RunQuery{
-		Options: opts,
-	}
-
-	result, err := integrationPluginClient.Run(ctx, &query)
-	if err != nil {
-		return fmt.Errorf("error deploying application: %v", err)
-	}
-
-	if !strings.EqualFold(result.Status, sdk.StatusSuccess) {
-		return fmt.Errorf("plugin execution failed %s: %s", result.Status, result.Details)
-	}
-	return nil
+	defer pluginClient.Close(ctx)
+	pluginResult := pluginClient.Run(ctx, opts)
+	return sdk.Result{Status: pluginResult.Status, Reason: pluginResult.Details}
 }
