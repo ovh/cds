@@ -285,7 +285,7 @@ func (n *Node) CheckApplicationDeploymentStrategies(proj Project, w *Workflow) e
 
 	app := w.Applications[n.Context.ApplicationID]
 	if _, has := app.DeploymentStrategies[pf.Name]; !has {
-		n.Context.ProjectIntegrationID = 0 // remove the application from the context to still be able to load the workflow
+		n.Context.ProjectIntegrationID = 0 // remove the integration from the context to still be able to load the workflow
 		log.Error(context.Background(), "integration %s(%d) unavailable on application %s/%s (%d)", pf.Name, pf.ID, proj.Key, app.Name, app.ID)
 	}
 	return nil
