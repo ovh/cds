@@ -10,6 +10,7 @@ import (
 	"github.com/rockbears/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -113,6 +114,7 @@ type KubernetesClient interface {
 	SecretDelete(ctx context.Context, ns string, name string, options metav1.DeleteOptions) error
 	SecretGet(ctx context.Context, ns string, name string, options metav1.GetOptions) (*corev1.Secret, error)
 	SecretList(ctx context.Context, ns string, options metav1.ListOptions) (*corev1.SecretList, error)
+	Events(ctx context.Context, ns string, options metav1.ListOptions) (watch.Interface, error)
 }
 
 type kubernetesClient struct {
@@ -174,4 +176,11 @@ func (k *kubernetesClient) PodGetRawLogs(ctx context.Context, ns string, name st
 	log.Debug(ctx, "get logs for pod %s", name)
 	logs, err := k.client.CoreV1().Pods(ns).GetLogs(name, options).DoRaw(ctx)
 	return logs, sdk.WrapError(err, "unable to get pod %s raw logs", name)
+}
+
+func (k *kubernetesClient) Events(ctx context.Context, ns string, options metav1.ListOptions) (watch.Interface, error) {
+	ctx = context.WithValue(ctx, logNS, ns)
+	log.Debug(ctx, "get events for ns %s", ns)
+	evt, err := k.client.CoreV1().Events(ns).Watch(ctx, options)
+	return evt, sdk.WrapError(err, "unable to watch events on ns %s ", ns)
 }
