@@ -282,6 +282,20 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		},
 	})
 
+	var limits apiv1.ResourceList
+	if h.Config.DisableCPULimit {
+		limits = apiv1.ResourceList{
+			apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
+			apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
+		}
+	} else {
+		limits = apiv1.ResourceList{
+			apiv1.ResourceCPU:              resource.MustParse(cpu),
+			apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
+			apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
+		}
+	}
+
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -312,11 +326,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 							apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
 							apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
 						},
-						Limits: apiv1.ResourceList{
-							apiv1.ResourceCPU:              resource.MustParse(cpu),
-							apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
-							apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
-						},
+						Limits: limits,
 					},
 				},
 			},
