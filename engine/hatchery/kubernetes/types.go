@@ -20,7 +20,8 @@ var containerServiceNameRegexp = regexp.MustCompile(`service-([0-9]+)-(.*)`)
 type HatcheryConfiguration struct {
 	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
 	// DefaultCPU Worker default CPU
-	DefaultCPU string `mapstructure:"defaultCPU" toml:"defaultCPU" default:"500m" commented:"false" comment:"Worker default CPU" json:"defaultCPU"`
+	DefaultCPU      string `mapstructure:"defaultCPU" toml:"defaultCPU" default:"500m" commented:"false" comment:"Worker default CPU" json:"defaultCPU"`
+	DisableCPULimit bool   `mapstructure:"disableCPULimit" toml:"disableCPULimit" default:"false" commented:"false" comment:"Disable Worker default CPU" json:"disableCPULimit"`
 	// DefaultMemory Worker default memory
 	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"1024" commented:"false" comment:"Worker default memory in Mo" json:"defaultMemory"`
 	// DefaultEphemeralStorage Worker default ephemeral storage size
