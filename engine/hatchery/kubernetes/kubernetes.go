@@ -68,21 +68,9 @@ func (h *HatcheryKubernetes) WatchPodEvents(ctx context.Context) error {
 	watchCh := watcher.ResultChan()
 	defer watcher.Stop()
 	for event := range watchCh {
-		log.Debug(ctx, "%s %T %+v", event.Type, event.Object, event.Object)
 		switch x := event.Object.(type) {
 		case *corev1.Event:
-			log.Info(ctx, "%s %s %s", x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
-		case *corev1.Pod:
-			for _, c := range x.Status.ContainerStatuses {
-				switch {
-				case c.State.Running != nil:
-					log.Info(ctx, "%s %s (%s) - %s - %s", event.Type, x.Name, c.ContainerID, x.Status.Message, c.State.Running.String())
-				case c.State.Waiting != nil:
-					log.Info(ctx, "%s %s (%s) - %s - %s (%s)", event.Type, x.Name, c.ContainerID, x.Status.Message, c.State.Waiting.Message, c.State.Waiting.Reason)
-				case c.State.Terminated != nil:
-					log.Info(ctx, "%s %s (%s) - %s - %s (%s) (exit code: %d)", event.Type, x.Name, c.ContainerID, x.Status.Message, c.State.Terminated.Message, c.State.Terminated.Reason, c.State.Terminated.ExitCode)
-				}
-			}
+			log.Info(ctx, "object: %s, reason: %s, message: %s, component: %s, host: %s", x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
 		}
 	}
 	return nil
