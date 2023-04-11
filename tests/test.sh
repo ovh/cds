@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # script usage definition
-usage() { 
-    echo "Usage: ./test.sh <target...>" 
+usage() {
+    echo "Usage: ./test.sh <target...>"
     echo "   Available targets: smoke_api, smoke_services, initialization, cli, workflow, workflow_with_integration, workflow_with_third_parties, admin"
-} 
+}
 
 # Arguments are mandatory
-[[ $# -lt 1 ]] && usage && exit 1 
+[[ $# -lt 1 ]] && usage && exit 1
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 NOCOLOR='\033[0m'
@@ -46,15 +46,17 @@ GITEA_PASSWORD="${GITEA_PASSWORD:-gitpwd}"
 GITEA_HOST="${GITEA_HOST:-http://localhost:3000}"
 GITEA_CDS_HOOKS_URL="${GITEA_CDS_HOOKS_URL:-http://localhost:8083}"
 
+PLUGINS_DIRECTORY="${PLUGINS_DIRECTORY:-dist}"
+
 # If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
 CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
 # If you want to run some tests with a specific region requirement, set CDS_REGION_REQ
-CDS_REGION_REQ="${CDS_REGION_REQ:-""}" 
+CDS_REGION_REQ="${CDS_REGION_REQ:-""}"
 
 HOSTNAME="${HOSTNAME:-localhost}"
 
 # The default values below fit to default minio installation.
-# Run "make minio_start" to start a minio docker container 
+# Run "make minio_start" to start a minio docker container
 AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 S3_BUCKET="${S3_BUCKET:-cds-it}"
 AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-AKIAIOSFODNN7EXAMPLE}"
@@ -124,6 +126,12 @@ initialization_tests() {
 
     CMD="${VENOM} run ${VENOM_OPTS} 01_init_hatchery.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL} --var engine.config=${CDS_ENGINE_CONFIG} --var hatchery.name=${CDS_HATCHERY_NAME}"
     echo -e "  ${YELLOW}01_init_hatchery.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_init_hatchery.yml.output 2>&1
+    check_failure $? 01_init_hatchery.yml.output
+    mv_results ${f}
+
+    CMD="${VENOM} run ${VENOM_OPTS} 01_init_plugins.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL} --var dist=${PLUGINS_DIRECTORY}"
+    echo -e "  ${YELLOW}01_init_plugins.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
     ${CMD} >01_init_hatchery.yml.output 2>&1
     check_failure $? 01_init_hatchery.yml.output
     mv_results ${f}
@@ -244,17 +252,17 @@ mkdir results
 
 for target in $@; do
     case $target in
-        smoke_api) 
+        smoke_api)
             smoke_tests_api;;
-        initialization) 
+        initialization)
             initialization_tests;;
-        smoke_services) 
+        smoke_services)
             smoke_tests_services;;
-        cli) 
+        cli)
             cli_tests;;
-        workflow) 
+        workflow)
             workflow_tests;;
-        workflow_with_integration) 
+        workflow_with_integration)
             export AWS_DEFAULT_REGION
             export S3_BUCKET
             export AWS_ACCESS_KEY_ID
@@ -273,5 +281,5 @@ for target in $@; do
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
             usage
             exit 1;;
-    esac    
+    esac
 done
