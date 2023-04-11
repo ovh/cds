@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -31,6 +32,7 @@ type client struct {
 	stopLog    context.CancelFunc
 	w          workerruntime.Runtime
 	pluginType string
+	grpcPlugin *sdk.GRPCPlugin
 }
 
 type Result struct {

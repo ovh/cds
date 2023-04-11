@@ -61,6 +61,7 @@ type CurrentWorker struct {
 		nodeRunName      string
 		features         map[sdk.FeatureName]bool
 		ascodeAction     map[string]sdk.V2Action
+		actionPlugin     map[string]*sdk.GRPCPlugin
 		currentStepIndex int
 		currentStepName  string
 		envFromHooks     map[string]string
@@ -148,7 +149,14 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 	return signature, sdk.WrapError(err, "cannot sign log message")
 }
 
-func (wk *CurrentWorker) GetPlugin(pluginType string) *sdk.GRPCPlugin {
+func (wk *CurrentWorker) GetActionPlugin(pluginName string) *sdk.GRPCPlugin {
+	return wk.currentJob.actionPlugin[pluginName]
+}
+func (wk *CurrentWorker) SetActionPlugin(p *sdk.GRPCPlugin) {
+	wk.currentJob.actionPlugin[p.Name] = p
+}
+
+func (wk *CurrentWorker) GetIntegrationPlugin(pluginType string) *sdk.GRPCPlugin {
 	for i := range wk.currentJob.wJob.IntegrationPlugins {
 		if wk.currentJob.wJob.IntegrationPlugins[i].Type == pluginType {
 			return &wk.currentJob.wJob.IntegrationPlugins[i]

@@ -79,7 +79,7 @@ func RunArtifactUpload(ctx context.Context, wk workerruntime.Runtime, a sdk.Acti
 	}()
 
 	projectKey := sdk.ParameterValue(wk.Parameters(), "cds.project")
-	pluginArtifactManagement := wk.GetPlugin(sdk.GRPCPluginUploadArtifact)
+	pluginArtifactManagement := wk.GetIntegrationPlugin(sdk.GRPCPluginUploadArtifact)
 
 	wg.Add(len(filesPath))
 	for _, p := range filesPath {

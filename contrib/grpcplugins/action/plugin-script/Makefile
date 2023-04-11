@@ -1,5 +1,5 @@
 
-TARGET_NAME 			= run-action-script
+TARGET_NAME 			= script
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 

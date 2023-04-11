@@ -50,8 +50,7 @@ func (w *CurrentWorker) runAscodeAction(ctx context.Context, actionName string, 
 			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\"", stepName))
 
 		case step.Run != "":
-
-			res := w.runPlugin(ctx, "run-action-script", map[string]string{
+			res := w.runPlugin(ctx, "script", map[string]string{
 				"content": step.Run,
 			})
 			if res.Status == sdk.StatusFail {

@@ -86,7 +86,7 @@ func RunArtifactDownload(ctx context.Context, wk workerruntime.Runtime, a sdk.Ac
 	// Priority:
 	// 1. Integration artifact manager on workflow
 	// 2. CDN
-	if wk.GetPlugin(sdk.GRPCPluginDownloadArtifact) != nil {
+	if wk.GetIntegrationPlugin(sdk.GRPCPluginDownloadArtifact) != nil {
 		return GetArtifactFromIntegrationPlugin(ctx, wk, res, pattern, reg, destPath, sdk.GRPCPluginDownloadArtifact, project, destinationWorkflow, n)
 	}
 	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("CDN '%s'...", destPath))

@@ -15,26 +15,33 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin"
 )
 
-func createGRPCPluginSocket(ctx context.Context, pluginName string, w workerruntime.Runtime) (*clientSocket, error) {
+func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName string, w workerruntime.Runtime) (*clientSocket, *sdk.GRPCPlugin, error) {
 	currentOS := strings.ToLower(sdk.GOOS)
 	currentARCH := strings.ToLower(sdk.GOARCH)
 
 	var pluginBinaryInfos *sdk.GRPCPluginBinary
-	currentPlugin := w.GetPlugin(pluginName)
-	if currentPlugin != nil {
-		pluginBinaryInfos = currentPlugin.GetBinary(currentOS, currentARCH)
+	var currentPlugin *sdk.GRPCPlugin
+	switch pluginType {
+	case TypeAction:
+		currentPlugin = w.GetActionPlugin(pluginName)
+		if currentPlugin == nil {
+			var err error
+			currentPlugin, err = w.Client().PluginsGet(pluginName)
+			if err != nil {
+				return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin:%s Unable to get plugin ... Aborting", pluginName)
+			}
+			w.SetActionPlugin(currentPlugin)
+		}
+	case TypeIntegration:
+		currentPlugin = w.GetIntegrationPlugin(pluginName)
+		if currentPlugin == nil {
+			return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin:%s Unable to get plugin ... Aborting", pluginName)
+		}
 	}
 
+	pluginBinaryInfos = currentPlugin.GetBinary(currentOS, currentARCH)
 	if pluginBinaryInfos == nil {
-		log.Debug(ctx, "Retrieve plugin binary info: %s %s/%s", pluginName, currentOS, currentARCH)
-		var err error
-		pluginBinaryInfos, err = w.Client().PluginGetBinaryInfos(pluginName, currentOS, currentARCH)
-		if err != nil {
-			return nil, sdk.WrapError(err, "plugin:%s Unable to get plugin ... Aborting", pluginName)
-		}
-		if pluginBinaryInfos == nil {
-			return nil, sdk.WrapError(err, "plugin:%s plugin %s not found ... Aborting", pluginName)
-		}
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find plugin %s for %s/%s", pluginName, currentOS, currentARCH)
 	}
 
 	// Try to download the plugin
@@ -43,13 +50,13 @@ func createGRPCPluginSocket(ctx context.Context, pluginName string, w workerrunt
 		//If the file doesn't exist. Download it.
 		fi, err := w.BaseDir().OpenFile(pluginBinaryInfos.Name, os.O_CREATE|os.O_RDWR, os.FileMode(pluginBinaryInfos.Perm))
 		if err != nil {
-			return nil, sdk.WrapError(err, "unable to create the file %s", pluginBinaryInfos)
+			return nil, nil, sdk.WrapError(err, "unable to create the file %s", pluginBinaryInfos)
 		}
 
 		log.Debug(ctx, "Get the binary plugin %s", pluginBinaryInfos.PluginName)
 		if err := w.Client().PluginGetBinary(pluginBinaryInfos.PluginName, currentOS, currentARCH, fi); err != nil {
 			_ = fi.Close()
-			return nil, sdk.WrapError(err, "unable to get the binary plugin the file %s", pluginBinaryInfos.PluginName)
+			return nil, nil, sdk.WrapError(err, "unable to get the binary plugin the file %s", pluginBinaryInfos.PluginName)
 		}
 		_ = fi.Close()
 	} else {
@@ -59,17 +66,17 @@ func createGRPCPluginSocket(ctx context.Context, pluginName string, w workerrunt
 	log.Info(ctx, "Starting GRPC Plugin %s", pluginBinaryInfos.Name)
 	fileContent, err := afero.ReadFile(w.BaseDir(), pluginBinaryInfos.GetName())
 	if err != nil {
-		return nil, sdk.WrapError(err, "plugin:%s unable to get plugin binary file... Aborting", pluginName)
+		return nil, nil, sdk.WrapError(err, "plugin:%s unable to get plugin binary file... Aborting", pluginName)
 	}
 
 	switch {
 	case sdk.IsTar(fileContent):
 		if err := sdk.Untar(w.BaseDir(), "", bytes.NewReader(fileContent)); err != nil {
-			return nil, sdk.WrapError(err, "plugin:%s unable to untar binary file", pluginName)
+			return nil, nil, sdk.WrapError(err, "plugin:%s unable to untar binary file", pluginName)
 		}
 	case sdk.IsGz(fileContent):
 		if err := sdk.UntarGz(w.BaseDir(), "", bytes.NewReader(fileContent)); err != nil {
-			return nil, sdk.WrapError(err, "plugin:%s unable to untarGz binary file", pluginName)
+			return nil, nil, sdk.WrapError(err, "plugin:%s unable to untarGz binary file", pluginName)
 		}
 	}
 
@@ -82,7 +89,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginName string, w workerrunt
 
 	cmd := pluginBinaryInfos.Cmd
 	if _, err := sdk.LookPath(w.BaseDir(), cmd); err != nil {
-		return nil, sdk.WrapError(err, "plugin:%s unable to find GRPC plugin, binary command not found.", pluginName)
+		return nil, nil, sdk.WrapError(err, "plugin:%s unable to find GRPC plugin, binary command not found.", pluginName)
 	}
 	cmd = path.Join(basedir, cmd)
 
@@ -94,7 +101,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginName string, w workerrunt
 
 	workdir, err := workerruntime.WorkingDirectory(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var dir string
 	if x, ok := w.BaseDir().(*afero.BasePathFs); ok {
@@ -105,7 +112,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginName string, w workerrunt
 
 	c := clientSocket{}
 	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, []string{}); errstart != nil {
-		return nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
+		return nil, nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
-	return &c, nil
+	return &c, currentPlugin, nil
 }

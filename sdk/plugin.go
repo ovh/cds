@@ -24,7 +24,7 @@ type GRPCPlugin struct {
 	Type               string             `json:"type" yaml:"type" cli:"type" db:"type"`
 	Author             string             `json:"author" yaml:"author" cli:"author" db:"author"`
 	Description        string             `json:"description" yaml:"description" cli:"description" db:"description"`
-	Parameters         []Parameter        `json:"parameters,omitempty" yaml:"parameters,omitempty" cli:"parameters" db:"-"`
+	Inputs             PluginInputs       `json:"inputs,omitempty" yaml:"inputs,omitempty" cli:"inputs" db:"inputs"`
 	Binaries           GRPCPluginBinaries `json:"binaries" yaml:"binaries" cli:"-" db:"binaries"`
 	IntegrationModelID *int64             `json:"-" db:"integration_model_id" yaml:"-" cli:"-"`
 	Integration        string             `json:"integration" db:"-" yaml:"integration" cli:"integration"`
@@ -45,6 +45,30 @@ func (p GRPCPlugin) GetBinary(os, arch string) *GRPCPluginBinary {
 		}
 	}
 	return nil
+}
+
+type PluginInputs map[string]PluginInput
+
+type PluginInput struct {
+	Type        string `json:"type"`
+	Description string `json:"description,omitempty"`
+	Advanced    bool   `json:"advanced,omitempty"`
+	Default     string `json:"default"`
+}
+
+// Scan plugin inputs.
+func (p *PluginInputs) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(JSONUnmarshal(source, p), "cannot unmarshal PluginInputs")
+}
+
+// Value returns driver.Value from plugin inputs.
+func (p PluginInputs) Value() (driver.Value, error) {
+	j, err := json.Marshal(p)
+	return j, WrapError(err, "cannot marshal PluginInputs")
 }
 
 type GRPCPluginBinaries []GRPCPluginBinary

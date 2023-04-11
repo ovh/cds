@@ -19,7 +19,7 @@ import (
 // NewClient create a plugin client for the given plugin
 func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string) (Client, error) {
 	// Create socket
-	pluginSocket, err := createGRPCPluginSocket(ctx, pluginName, wk)
+	pluginSocket, currentPlugin, err := createGRPCPluginSocket(ctx, pluginType, pluginName, wk)
 	if err != nil {
 		return nil, fmt.Errorf("unable to start GRPCPlugin: %v", err)
 	}
@@ -30,6 +30,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 		socket:     pluginSocket,
 		done:       make(chan struct{}),
 		pluginType: pluginType,
+		grpcPlugin: currentPlugin,
 	}
 
 	switch pluginType {
@@ -97,10 +98,30 @@ func (c *client) Manifest(ctx context.Context) error {
 }
 
 func (c *client) Run(ctx context.Context, opts map[string]string) *Result {
+	inputs := c.getInputs(ctx, opts)
+
 	if c.pluginType == TypeAction {
-		return c.runActionPlugin(ctx, actionplugin.ActionQuery{Options: opts})
+		return c.runActionPlugin(ctx, actionplugin.ActionQuery{Options: inputs})
 	}
 	return c.runIntegrationPlugin(ctx, integrationplugin.RunQuery{Options: opts})
+}
+
+func (c *client) getInputs(ctx context.Context, opts map[string]string) map[string]string {
+	inputs := make(map[string]string)
+
+	// Get default value
+	for k, v := range c.grpcPlugin.Inputs {
+		inputs[k] = v.Default
+	}
+
+	// Override with user value
+	for k := range inputs {
+		if v, has := opts[k]; has {
+			inputs[k] = v
+		}
+	}
+	log.Debug(ctx, "Plugin inputs: %v", inputs)
+	return inputs
 }
 
 func (c *client) runIntegrationPlugin(ctx context.Context, query integrationplugin.RunQuery) *Result {

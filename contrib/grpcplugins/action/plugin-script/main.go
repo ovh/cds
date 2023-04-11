@@ -48,7 +48,7 @@ type script struct {
 
 func (actPlugin *runActionScriptPlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:        "run-action-script",
+		Name:        "script",
 		Author:      "Steven GUIHEUX <steven.guiheux@corp.ovh.com>",
 		Description: "This is a plugin to run action of type script",
 		Version:     sdk.VERSION,

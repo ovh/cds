@@ -1,5 +1,6 @@
 -- +migrate Up
-ALTER TABLE rbac_project RENAME COLUMN "all" TO "all_users";
+ALTER TABLE grpc_plugin ADD COLUMN inputs JSONB;
 
 -- +migrate Down
-ALTER TABLE rbac_project RENAME COLUMN "all_users" TO "all";
+ALTER TABLE grpc_plugin DROP COLUMN inputs;
+
