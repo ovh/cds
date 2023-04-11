@@ -70,6 +70,8 @@ func (h *HatcheryKubernetes) WatchPodEvents(ctx context.Context) error {
 	for event := range watchCh {
 		log.Debug(ctx, "%s %T %+v", event.Type, event.Object, event.Object)
 		switch x := event.Object.(type) {
+		case *corev1.Event:
+			log.Info(ctx, "%s %s %s", x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
 		case *corev1.Pod:
 			for _, c := range x.Status.ContainerStatuses {
 				switch {

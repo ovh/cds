@@ -179,7 +179,6 @@ func (k *kubernetesClient) PodGetRawLogs(ctx context.Context, ns string, name st
 
 func (k *kubernetesClient) Events(ctx context.Context, ns string, options metav1.ListOptions) (watch.Interface, error) {
 	ctx = context.WithValue(ctx, logNS, ns)
-	log.Debug(ctx, "get events for ns %s", ns)
 	evt, err := k.client.CoreV1().Events(ns).Watch(ctx, options)
 	return evt, sdk.WrapError(err, "unable to watch events on ns %s ", ns)
 }
