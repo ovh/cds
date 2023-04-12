@@ -257,8 +257,11 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 			return service.WriteJSON(w, models, http.StatusOK)
 		}
 
-		var err error
-		if ok := isHatchery(ctx); ok && len(consumer.AuthConsumerUser.GroupIDs) > 0 {
+		hatchery, err := isHatchery(ctx)
+		if err != nil {
+			return err
+		}
+		if hatchery && len(consumer.AuthConsumerUser.GroupIDs) > 0 {
 			models, err = workermodel.LoadAllByGroupIDs(ctx, api.mustDB(), consumer.GetGroupIDs(), &filter, workermodel.LoadOptions.Default)
 		} else if isMaintainer(ctx) {
 			models, err = workermodel.LoadAll(ctx, api.mustDB(), &filter, workermodel.LoadOptions.Default)

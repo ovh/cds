@@ -14,7 +14,9 @@ import (
 
 func (api *API) putBookWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !isHatchery(ctx) {
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -93,7 +95,11 @@ func (api *API) putSpawnErrorWorkerModelHandler() service.Handler {
 func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// this handler should only answer to an hatchery
-		if !isHatchery(ctx) && !isMaintainer(ctx) {
+		hatchery, err := isHatchery(ctx)
+		if err != nil {
+			return err
+		}
+		if !hatchery && !isMaintainer(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -118,7 +124,11 @@ func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 func (api *API) getWorkerModelSecretHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// this handler should only answer to an hatchery
-		if !isHatchery(ctx) && !isMaintainer(ctx) {
+		hatchery, err := isHatchery(ctx)
+		if err != nil {
+			return err
+		}
+		if !hatchery && !isMaintainer(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 

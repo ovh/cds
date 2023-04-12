@@ -89,7 +89,11 @@ func (api *API) checkJobIDPermissions(ctx context.Context, w http.ResponseWriter
 		return nil
 	}
 	if perm == sdk.PermissionRead {
-		if isHatcheryShared(ctx) || isMaintainer(ctx) {
+		isShared, err := isHatcheryShared(ctx)
+		if err != nil {
+			return err
+		}
+		if isShared || isMaintainer(ctx) {
 			return nil
 		}
 	} else {
@@ -356,7 +360,9 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 
 	if permissionValue > sdk.PermissionRead {
 		// Hatcheries started for "shared.infra" group are granted for group "shared.infra"
-		if isHatcheryShared(ctx) {
+		if ok, err := isHatcheryShared(ctx); err != nil {
+			return err
+		} else if ok {
 			return nil
 		}
 		// Only group administror or CDS administrator can update a group or its dependencies
@@ -369,7 +375,9 @@ func (api *API) checkGroupPermissions(ctx context.Context, w http.ResponseWriter
 		}
 	} else {
 		// Hatcheries started for "shared.infra" group are granted for group "shared.infra"
-		if isHatcheryShared(ctx) {
+		if ok, err := isHatcheryShared(ctx); err != nil {
+			return err
+		} else if ok {
 			return nil
 		}
 		if !isGroupMember(ctx, g) && !isMaintainer(ctx) { // Only group member or CDS maintainer can get a group or its dependencies
@@ -594,7 +602,7 @@ func (api *API) checkSessionPermissions(ctx context.Context, w http.ResponseWrit
 	}
 
 	authConsumer := getUserConsumer(ctx)
-	
+
 	session, err := authentication.LoadSessionByID(ctx, api.mustDB(), sessionID)
 	if err != nil {
 		return sdk.NewErrorWithStack(err, sdk.WrapError(sdk.ErrForbidden, "not authorized for session %s", sessionID))
