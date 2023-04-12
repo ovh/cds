@@ -14,6 +14,7 @@ import (
 	"github.com/rockbears/log"
 
 	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -44,6 +45,34 @@ func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
 	h.GoRoutines.Run(ctx, "hatchery kubernetes routines", func(ctx context.Context) {
 		h.routines(ctx)
 	})
+
+	h.GoRoutines.Run(ctx, "hatchery kubernetes watcher", func(ctx context.Context) {
+		if err := h.WatchPodEvents(ctx); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	})
+
+	return nil
+}
+
+func (h *HatcheryKubernetes) WatchPodEvents(ctx context.Context) error {
+	opts := metav1.ListOptions{
+		FieldSelector: "involvedObject.kind=Pod",
+		Watch:         true,
+	}
+	// requires "watch" permission on events in clusterrole
+	watcher, err := h.kubeClient.Events(ctx, h.Config.Namespace, opts)
+	if err != nil {
+		return err
+	}
+	watchCh := watcher.ResultChan()
+	defer watcher.Stop()
+	for event := range watchCh {
+		switch x := event.Object.(type) {
+		case *corev1.Event:
+			log.Info(ctx, "object: %s, reason: %s, message: %s, component: %s, host: %s", x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
+		}
+	}
 	return nil
 }
 
@@ -282,6 +311,20 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		},
 	})
 
+	var limits apiv1.ResourceList
+	if h.Config.DisableCPULimit {
+		limits = apiv1.ResourceList{
+			apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
+			apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
+		}
+	} else {
+		limits = apiv1.ResourceList{
+			apiv1.ResourceCPU:              resource.MustParse(cpu),
+			apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
+			apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
+		}
+	}
+
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -312,11 +355,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 							apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
 							apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
 						},
-						Limits: apiv1.ResourceList{
-							apiv1.ResourceCPU:              resource.MustParse(cpu),
-							apiv1.ResourceMemory:           *resource.NewScaledQuantity(memory, resource.Mega),
-							apiv1.ResourceEphemeralStorage: resource.MustParse(ephemeralStorage),
-						},
+						Limits: limits,
 					},
 				},
 			},

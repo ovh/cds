@@ -77,3 +77,17 @@ func inputsToParameters(inputs map[string]sdk.PluginInput) []sdk.Parameter {
 	}
 	return params
 }
+
+// DeleteGRPCPlugin delete action in database
+func DeleteGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlugin) error {
+	act, err := action.LoadByTypesAndName(ctx, db, []string{sdk.PluginAction}, pl.Name, action.LoadOptions.Default)
+	if err != nil {
+		return err
+	}
+
+	if err := action.Delete(db, act); err != nil {
+		return err
+	}
+
+	return nil
+}

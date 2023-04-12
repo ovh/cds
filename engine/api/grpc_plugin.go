@@ -160,11 +160,23 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load old plugin")
 		}
 
-		if err := plugin.Delete(ctx, api.mustDB(), api.SharedStorage, old); err != nil {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback()
+
+		if old.Type == sdk.GRPCPluginAction {
+			if err := actionplugin.DeleteGRPCPlugin(ctx, tx, old); err != nil {
+				return err
+			}
+		}
+
+		if err := plugin.Delete(ctx, tx, api.SharedStorage, old); err != nil {
 			return sdk.WrapError(err, "unable to delete plugin")
 		}
 
-		return nil
+		return sdk.WithStack(tx.Commit())
 	}
 }
 
