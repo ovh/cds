@@ -7301,6 +7301,20 @@ func (mr *MockInterfaceMockRecorder) PluginGetBinaryInfos(name, os, arch interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginGetBinaryInfos", reflect.TypeOf((*MockInterface)(nil).PluginGetBinaryInfos), name, os, arch)
 }
 
+// PluginImport mocks base method.
+func (m *MockInterface) PluginImport(arg0 *sdk.GRPCPlugin) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginImport", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginImport indicates an expected call of PluginImport.
+func (mr *MockInterfaceMockRecorder) PluginImport(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockInterface)(nil).PluginImport), arg0)
+}
+
 // PluginUpdate mocks base method.
 func (m *MockInterface) PluginUpdate(arg0 *sdk.GRPCPlugin) error {
 	m.ctrl.T.Helper()
@@ -11196,6 +11210,43 @@ func (m *MockGRPCPluginsClient) PluginsList() ([]sdk.GRPCPlugin, error) {
 func (mr *MockGRPCPluginsClientMockRecorder) PluginsList() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsList", reflect.TypeOf((*MockGRPCPluginsClient)(nil).PluginsList))
+}
+
+// MockGRPCPluginsV2Client is a mock of GRPCPluginsV2Client interface.
+type MockGRPCPluginsV2Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockGRPCPluginsV2ClientMockRecorder
+}
+
+// MockGRPCPluginsV2ClientMockRecorder is the mock recorder for MockGRPCPluginsV2Client.
+type MockGRPCPluginsV2ClientMockRecorder struct {
+	mock *MockGRPCPluginsV2Client
+}
+
+// NewMockGRPCPluginsV2Client creates a new mock instance.
+func NewMockGRPCPluginsV2Client(ctrl *gomock.Controller) *MockGRPCPluginsV2Client {
+	mock := &MockGRPCPluginsV2Client{ctrl: ctrl}
+	mock.recorder = &MockGRPCPluginsV2ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGRPCPluginsV2Client) EXPECT() *MockGRPCPluginsV2ClientMockRecorder {
+	return m.recorder
+}
+
+// PluginImport mocks base method.
+func (m *MockGRPCPluginsV2Client) PluginImport(arg0 *sdk.GRPCPlugin) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginImport", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PluginImport indicates an expected call of PluginImport.
+func (mr *MockGRPCPluginsV2ClientMockRecorder) PluginImport(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockGRPCPluginsV2Client)(nil).PluginImport), arg0)
 }
 
 // MockProviderClient is a mock of ProviderClient interface.
