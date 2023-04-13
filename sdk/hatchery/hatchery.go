@@ -429,7 +429,6 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 		}
 		oldModel.ModelDocker = sdk.ModelDocker{
 			Image:    dockerSpec.Image,
-			Registry: dockerSpec.Registry,
 			Username: dockerSpec.Username,
 			Password: dockerSpec.Password,
 			Envs:     dockerSpec.Envs,

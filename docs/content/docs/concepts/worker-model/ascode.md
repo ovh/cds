@@ -24,8 +24,7 @@ description: my description
 osarch: linux/amd64
 type: docker
 spec:
-  image: ns/myworkermodel:1.0
-  registry: myregistry.org
+  image: myregistry.org/ns/myworkermodel:1.0
   username: foo
   password: bar
   envs:
@@ -39,7 +38,6 @@ Fields:
 * <span style="color:red">*</span>`type`: Type of worker model
 * <span style="color:red">*</span>`osarch`: OS and architecture of the model
 * <span style="color:red">*</span>`spec.image`: Docker image name
-* `spec.registry`: Docker registry
 * `spec.username`: Docker registry username
 * `spec.password`: Docker registry password. <b>The field must be encrypted with [cdsctl]({{< relref "/docs/components/cdsctl/encrypt/_index.md" >}})</b>
 * `spec.envs`: Additional environment variables
