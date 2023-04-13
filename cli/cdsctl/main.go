@@ -95,7 +95,9 @@ var mainCmd = cli.Command{
 
 ## Download
 
-You will find latest release of ` + "`cdsctl`" + ` on [GitHub Releases](https://github.com/ovh/cds/releases/latest).
+You can find the cdstl version corresponding to your CDS version on the ui: Menu -> Settings -> Command line cdsctl
+
+The latest release is available on [GitHub Releases](https://github.com/ovh/cds/releases/latest).
 
 
 ## Authentication
