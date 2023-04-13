@@ -91,7 +91,6 @@ func (actPlugin *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin
 		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
 		pr, pw := io.Pipe()
 		cmd.Dir = script.dir
-		//cmd.Env = wk.Environ()
 		cmd.Stdout = pw
 		cmd.Stderr = pw
 
@@ -148,7 +147,7 @@ func (actPlugin *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin
 	res := &actionplugin.ActionResult{}
 	select {
 	case <-ctx.Done():
-		fmt.Printf("\"CDS Worker execution canceled: %v", ctx.Err())
+		fmt.Printf("CDS Worker execution canceled: %v", ctx.Err())
 		return nil, errors.New("CDS Worker execution canceled")
 	case res = <-chanRes:
 		if res.Status != sdk.StatusFail {
@@ -205,7 +204,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(
 		return nil, err
 	}
 	if !fi.IsDir() {
-		return nil, fmt.Errorf("working directory %s is not a directorry: %v", script.dir, err)
+		return nil, fmt.Errorf("working directory %s is not a directory: %v", script.dir, err)
 	}
 
 	// Generate a random string 16 chars length

@@ -50,12 +50,16 @@ func (w *CurrentWorker) runAscodeAction(ctx context.Context, actionName string, 
 			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\"", stepName))
 
 		case step.Run != "":
+			stepName := prefixStepName + "script"
+
+			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", stepName))
 			res := w.runPlugin(ctx, "script", map[string]string{
 				"content": step.Run,
 			})
 			if res.Status == sdk.StatusFail {
 				return res
 			}
+			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\"", stepName))
 		}
 	}
 	return sdk.Result{
@@ -82,7 +86,6 @@ func (wk *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts 
 		return wk.failAction(ctx, fmt.Sprintf("%v", err))
 	}
 
-	// TODO Set input regarding plugin descriptor + interpoloate action params with context
 	res := pluginClient.Run(ctx, opts)
 	if err != nil {
 		return wk.failAction(ctx, fmt.Sprintf("error uploading artifact: %v", err))
