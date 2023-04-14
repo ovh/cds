@@ -431,7 +431,6 @@ GDFkaTe3nUJdYV4=
     type: docker
     spec:
       image: myimage:1.1
-      registry: http://my-registry:9000
       envs:
         MYVAR: toto
   `
@@ -660,7 +659,6 @@ GDFkaTe3nUJdYV4=
     type: docker
     spec:
       image: myimage:1.1
-      registry: http://my-registry:9000
       envs:
         MYVAR: toto
   `
@@ -1238,7 +1236,6 @@ GDFkaTe3nUJdYV4=
     type: docker
     spec:
       image: myimage:1.1
-      registry: http://my-registry:9000
       envs:
         MYVAR: toto
   `
