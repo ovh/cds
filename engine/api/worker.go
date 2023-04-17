@@ -152,8 +152,9 @@ func (api *API) getWorkerHandler() service.Handler {
 func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var workers []sdk.Worker
-		var err error
-		if isHatchery(ctx) {
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if ok {
 			workers, err = worker.LoadAllByHatcheryID(ctx, api.mustDB(), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err

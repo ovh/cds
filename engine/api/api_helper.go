@@ -77,20 +77,27 @@ func isWorker(ctx context.Context) bool {
 	return c.AuthConsumerUser.Worker != nil
 }
 
-func isHatchery(ctx context.Context) bool {
+func isHatchery(ctx context.Context) (bool, error) {
 	c := getUserConsumer(ctx)
 	if c == nil {
-		return false
+		return false, nil
 	}
-	return c.AuthConsumerUser.Service != nil && c.AuthConsumerUser.Service.Type == sdk.TypeHatchery
+	if c.AuthConsumerUser.ServiceType != nil && c.AuthConsumerUser.Service == nil {
+		return false, sdk.WrapError(sdk.ErrUnauthorized, "consumer was created for a service of type %q that can't be loaded", *c.AuthConsumerUser.ServiceType)
+	}
+	if c.AuthConsumerUser.Service == nil || c.AuthConsumerUser.Service.Type != sdk.TypeHatchery {
+		return false, nil
+	}
+	return true, nil
 }
 
-func isHatcheryShared(ctx context.Context) bool {
+func isHatcheryShared(ctx context.Context) (bool, error) {
 	c := getUserConsumer(ctx)
 	if c == nil {
-		return false
+		return false, nil
 	}
-	return isHatchery(ctx) && c.AuthConsumerUser.GroupIDs.Contains(group.SharedInfraGroup.ID)
+	isHatchery, err := isHatchery(ctx)
+	return isHatchery && c.AuthConsumerUser.GroupIDs.Contains(group.SharedInfraGroup.ID), err
 }
 
 func isCDN(ctx context.Context) bool {

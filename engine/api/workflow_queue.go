@@ -254,7 +254,9 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		if ok := isHatchery(ctx); !ok {
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -300,7 +302,9 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		if ok := isHatchery(ctx); !ok {
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -383,7 +387,11 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "invalid id")
 		}
 
-		if ok := isHatchery(ctx) || isWorker(ctx); !ok {
+		hatchery, err := isHatchery(ctx)
+		if err != nil {
+			return err
+		}
+		if ok := hatchery || isWorker(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
@@ -433,7 +441,9 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			}
 		}
 
-		if isHatchery(ctx) {
+		if ok, err := isHatchery(ctx); err != nil {
+			return err
+		} else if ok {
 			hatch, err = services.LoadByID(ctx, api.mustDBWithCtx(ctx), getUserConsumer(ctx).AuthConsumerUser.Service.ID)
 			if err != nil {
 				return err
