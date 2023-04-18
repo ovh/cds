@@ -287,21 +287,6 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize in
 		return nil
 	}
 
-	if st == sdk.StatusBuilding && jobID.Valid {
-		// Worker is awol while building !
-		// We need to restart this action
-		wNodeJob, errL := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
-		if errL == nil && wNodeJob.Retry < 3 {
-			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob, maxLogSize); err != nil {
-				log.Warn(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
-			} else {
-				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
-			}
-		}
-
-		log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
-	}
-
 	if err := worker.SetStatus(ctx, tx, id, sdk.StatusDisabled); err != nil {
 		cause := sdk.Cause(err)
 		if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
@@ -310,5 +295,22 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize in
 		return sdk.WrapError(err, "cannot update worker status")
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	if st == sdk.StatusBuilding && jobID.Valid {
+		// Worker is awol while building !
+		// We need to restart this action
+		wNodeJob, err := workflow.LoadNodeJobRun(ctx, db, nil, jobID.Int64)
+		if err == nil && wNodeJob.Retry < 3 {
+			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob, maxLogSize); err != nil {
+				log.Warn(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
+			} else {
+				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
+			}
+		}
+		log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
+	}
+	return nil
 }
