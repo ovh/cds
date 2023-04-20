@@ -46,7 +46,7 @@ func (h *HatcheryKubernetes) InitHatchery(ctx context.Context) error {
 		h.routines(ctx)
 	})
 
-	h.GoRoutines.Run(ctx, "hatchery kubernetes watcher", func(ctx context.Context) {
+	h.GoRoutines.RunWithRestart(ctx, "hatchery kubernetes watcher", func(ctx context.Context) {
 		if err := h.WatchPodEvents(ctx); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
