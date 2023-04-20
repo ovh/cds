@@ -67,6 +67,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 		go func() {
 			select {
 			case <-c:
+				log.Info(ctx, "Received syscall.SIGTERM")
 				cancel()
 				return
 			case <-ctx.Done():
