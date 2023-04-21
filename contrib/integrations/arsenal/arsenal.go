@@ -55,6 +55,15 @@ type Client struct {
 	deploymentToken string
 }
 
+// RequestError represents an error from a HTTP 4XX status
+type RequestError struct {
+	msg string
+}
+
+func (r *RequestError) Error() string {
+	return r.msg
+}
+
 // NewClient creates a new client to call Arsenal public routes with a given host and deploymentToken.
 func NewClient(host, deploymentToken string) *Client {
 	return &Client{
@@ -78,6 +87,9 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (string, error) {
 		return "", err
 	}
 	if statusCode != http.StatusOK {
+		if statusCode == http.StatusBadRequest {
+			return "", &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
+		}
 		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
 			return "", fmt.Errorf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)
 		}
