@@ -51,23 +51,30 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 		}
 		domain := reference.Domain(ref)
 		var credentials *RegistryCredential
-		// Check if credentials match current domain
-		for i := range h.Config.RegistryCredentials {
-			if h.Config.RegistryCredentials[i].Domain == domain {
-				credentials = &h.Config.RegistryCredentials[i]
-				break
-			}
-		}
-		if credentials == nil {
-			// Check if regex credentials match current domain
+		if model.ModelDocker.Username == "" {
+			// Check if credentials match current domain
 			for i := range h.Config.RegistryCredentials {
-				reg := regexp.MustCompile(h.Config.RegistryCredentials[i].Domain)
-				if reg.MatchString(domain) {
+				if h.Config.RegistryCredentials[i].Domain == domain {
 					credentials = &h.Config.RegistryCredentials[i]
 					break
 				}
 			}
+			if credentials == nil {
+				// Check if regex credentials match current domain
+				for i := range h.Config.RegistryCredentials {
+					reg := regexp.MustCompile(h.Config.RegistryCredentials[i].Domain)
+					if reg.MatchString(domain) {
+						credentials = &h.Config.RegistryCredentials[i]
+						break
+					}
+				}
+			}
+		} else {
+			credentials.Username = model.ModelDocker.Username
+			credentials.Password = model.ModelDocker.Password
+			credentials.Domain = domain
 		}
+
 		if credentials != nil {
 			authConfig = &types.AuthConfig{
 				Username:      credentials.Username,
