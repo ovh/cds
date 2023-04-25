@@ -73,15 +73,10 @@ echo "lol"`,
 
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			script, err := prepareScriptContent(tst.parameters[0].Value, "/work/dir")
-			if tst.shouldHaveError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tst.scriptShell, script.shell)
-				assert.Equal(t, tst.scriptContent, string(script.content))
-				assert.EqualValues(t, tst.scriptOpts, script.opts)
-			}
+			script := prepareScriptContent(tst.parameters[0].Value, "/work/dir")
+			assert.Equal(t, tst.scriptShell, script.shell)
+			assert.Equal(t, tst.scriptContent, string(script.content))
+			assert.EqualValues(t, tst.scriptOpts, script.opts)
 		})
 	}
 }
@@ -104,8 +99,7 @@ func Test_writeScriptContent_windows(t *testing.T) {
 	_, err = baseDir.Open("working_directory")
 	require.NoError(t, err)
 
-	script, err := prepareScriptContent("sleep 1\necho this is a test from %HOME%\nsleep 1", "working_directory")
-	require.NoError(t, err)
+	script := prepareScriptContent("sleep 1\necho this is a test from %HOME%\nsleep 1", "working_directory")
 	require.NotNil(t, script)
 
 	deferFunc, err := writeScriptContent(context.Background(), script, baseDir)

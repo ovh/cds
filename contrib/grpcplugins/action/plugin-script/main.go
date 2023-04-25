@@ -56,6 +56,8 @@ func (actPlugin *runActionScriptPlugin) Manifest(_ context.Context, _ *empty.Emp
 }
 
 func (actPlugin *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	goRoutines := sdk.NewGoRoutines(ctx)
+
 	content := q.GetOptions()["content"]
 
 	workDirs, err := grpcplugins.GetWorkerDirectories(actPlugin.HTTPPort)
@@ -65,84 +67,11 @@ func (actPlugin *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin
 
 	chanRes := make(chan *actionplugin.ActionResult)
 
-	go func() {
-		gores := &actionplugin.ActionResult{Status: sdk.StatusSuccess}
-		script, err := prepareScriptContent(content, workDirs.WorkingDir)
-		if err != nil {
-			gores.Status = sdk.StatusFail
-			gores.Details = fmt.Sprintf("%v", err)
-			chanRes <- gores
-			return
+	goRoutines.Exec(ctx, "runActionScriptPlugin-runScript", func(ctx context.Context) {
+		if err := runScript(ctx, chanRes, workDirs, content); err != nil {
+			fmt.Printf("%+v\n", err)
 		}
-
-		fs := afero.NewOsFs()
-
-		deferFunc, err := writeScriptContent(ctx, script, fs)
-		if deferFunc != nil {
-			defer deferFunc()
-		}
-		if err != nil {
-			gores.Status = sdk.StatusFail
-			gores.Details = fmt.Sprintf("%v", err)
-			chanRes <- gores
-			return
-		}
-
-		cmd := exec.CommandContext(ctx, script.shell, script.opts...)
-		pr, pw := io.Pipe()
-		cmd.Dir = script.dir
-		cmd.Stdout = pw
-		cmd.Stderr = pw
-
-		workerpath, err := osext.Executable()
-		if err != nil {
-			gores.Status = sdk.StatusFail
-			gores.Details = fmt.Sprintf("failure due to internal error (Worker Path): %v", err)
-			chanRes <- gores
-			return
-		}
-
-		for i := range cmd.Env {
-			if strings.HasPrefix(cmd.Env[i], "PATH") {
-				cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))
-				break
-			}
-		}
-
-		reader := bufio.NewReader(pr)
-
-		outchan := make(chan bool)
-		go func() {
-			for {
-				line, errs := reader.ReadString('\n')
-				if line != "" {
-					fmt.Printf("%s", line)
-				}
-				if errs != nil {
-					close(outchan)
-					return
-				}
-			}
-		}()
-
-		if err := cmd.Start(); err != nil {
-			gores.Status = sdk.StatusFail
-			gores.Details = fmt.Sprintf("unable to start command: %v", err)
-			chanRes <- gores
-			return
-		}
-
-		if err := cmd.Wait(); err != nil {
-			gores.Status = sdk.StatusFail
-			gores.Details = fmt.Sprintf("command failure: %v", err)
-			chanRes <- gores
-		}
-
-		_ = pr.Close()
-		<-outchan
-
-		chanRes <- gores
-	}()
+	})
 
 	res := &actionplugin.ActionResult{}
 	select {
@@ -157,7 +86,84 @@ func (actPlugin *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin
 	return res, nil
 }
 
-func prepareScriptContent(scriptContent string, workingDir string) (*script, error) {
+func runScript(ctx context.Context, chanRes chan *actionplugin.ActionResult, workDirs *sdk.WorkerDirectories, content string) error {
+	gores := &actionplugin.ActionResult{Status: sdk.StatusSuccess}
+
+	script := prepareScriptContent(content, workDirs.WorkingDir)
+
+	fs := afero.NewOsFs()
+
+	deferFunc, err := writeScriptContent(ctx, script, fs)
+	if deferFunc != nil {
+		defer deferFunc()
+	}
+	if err != nil {
+		gores.Status = sdk.StatusFail
+		gores.Details = fmt.Sprintf("%v", err)
+		chanRes <- gores
+		return err
+	}
+
+	cmd := exec.CommandContext(ctx, script.shell, script.opts...)
+	pr, pw := io.Pipe()
+	cmd.Dir = script.dir
+	cmd.Stdout = pw
+	cmd.Stderr = pw
+
+	workerpath, err := osext.Executable()
+	if err != nil {
+		gores.Status = sdk.StatusFail
+		gores.Details = fmt.Sprintf("failure due to internal error (Worker Path): %v", err)
+		chanRes <- gores
+		return err
+	}
+
+	for i := range cmd.Env {
+		if strings.HasPrefix(cmd.Env[i], "PATH") {
+			cmd.Env[i] = fmt.Sprintf("%s:%s", cmd.Env[i], path.Dir(workerpath))
+			break
+		}
+	}
+
+	reader := bufio.NewReader(pr)
+
+	outchan := make(chan bool)
+	goRoutines := sdk.NewGoRoutines(ctx)
+	goRoutines.Exec(ctx, "runActionScriptPlugin-runScript-outchan", func(ctx context.Context) {
+		for {
+			line, errs := reader.ReadString('\n')
+			if line != "" {
+				fmt.Printf("%s", line)
+			}
+			if errs != nil {
+				close(outchan)
+				return
+			}
+		}
+	})
+
+	if err := cmd.Start(); err != nil {
+		gores.Status = sdk.StatusFail
+		gores.Details = fmt.Sprintf("unable to start command: %v", err)
+		chanRes <- gores
+		return err
+	}
+
+	if err := cmd.Wait(); err != nil {
+		gores.Status = sdk.StatusFail
+		gores.Details = fmt.Sprintf("command failure: %v", err)
+		chanRes <- gores
+		return err
+	}
+
+	_ = pr.Close()
+	<-outchan
+
+	chanRes <- gores
+	return nil
+}
+
+func prepareScriptContent(scriptContent string, workingDir string) *script {
 	var script = script{}
 
 	// Set default shell based on os
@@ -191,26 +197,26 @@ func prepareScriptContent(scriptContent string, workingDir string) (*script, err
 	script.content = []byte(scriptContent)
 	script.dir = workingDir
 
-	return &script, nil
+	return &script
 }
 
 func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(), error) {
 	workDir, err := fs.Open(script.dir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open working directory %s [%s]: %v", script.dir, filepath.Base(script.dir), err)
+		return nil, errors.Errorf("unable to open working directory %s [%s]: %v", script.dir, filepath.Base(script.dir), err)
 	}
 	fi, err := workDir.Stat()
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	if !fi.IsDir() {
-		return nil, fmt.Errorf("working directory %s is not a directory: %v", script.dir, err)
+		return nil, errors.Errorf("working directory %s is not a directory: %v", script.dir, err)
 	}
 
 	// Generate a random string 16 chars length
 	bs := make([]byte, 16)
 	if _, err := rand.Read(bs); err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	tmpFileName := hex.EncodeToString(bs)[0:16]
 
@@ -222,21 +228,21 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(
 
 	tmpscript, err := fs.OpenFile(scriptPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create temporary file, aborting: %v", err)
+		return nil, errors.Errorf("cannot create temporary file, aborting: %v", err)
 	}
 
 	// Put script in file
 	n, err := tmpscript.Write(script.content)
 	if err != nil || n != len(script.content) {
 		if err != nil {
-			return nil, fmt.Errorf("unable to create script: %v", err)
+			return nil, errors.Errorf("unable to create script: %v", err)
 		} else {
-			return nil, fmt.Errorf("unable to write all script: %d/%d", n, len(script.content))
+			return nil, errors.Errorf("unable to write all script: %d/%d", n, len(script.content))
 		}
 	}
 
 	if err := tmpscript.Close(); err != nil {
-		return nil, fmt.Errorf("unable to write script to %s", tmpscript)
+		return nil, errors.Errorf("unable to write script to %s", tmpscript)
 	}
 
 	var realScriptPath = scriptPath
@@ -245,11 +251,11 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(
 	case *afero.BasePathFs:
 		realScriptPath, err = x.RealPath(tmpscript.Name())
 		if err != nil {
-			return nil, fmt.Errorf("unable to get script working dir: %v", err)
+			return nil, errors.Errorf("unable to get script working dir: %v", err)
 		}
 		realScriptPath, err = filepath.Abs(realScriptPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get script working dir: %v", err)
+			return nil, errors.Errorf("unable to get script working dir: %v", err)
 		}
 	}
 
@@ -268,7 +274,7 @@ func writeScriptContent(ctx context.Context, script *script, fs afero.Fs) (func(
 
 	// Chmod file
 	if err := fs.Chmod(tmpscript.Name(), 0755); err != nil {
-		return deferFunc, fmt.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
+		return deferFunc, errors.Errorf("cannot chmod script %s: %v, aborting", tmpscript.Name(), err)
 	}
 	return deferFunc, nil
 }

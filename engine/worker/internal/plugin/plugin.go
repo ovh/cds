@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -21,7 +22,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 	// Create socket
 	pluginSocket, currentPlugin, err := createGRPCPluginSocket(ctx, pluginType, pluginName, wk)
 	if err != nil {
-		return nil, fmt.Errorf("unable to start GRPCPlugin: %v", err)
+		return nil, errors.Errorf("unable to start GRPCPlugin: %v", err)
 	}
 
 	// Create plugin client
@@ -38,22 +39,22 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 		// Create grpc client
 		grpcClient, err := actionplugin.Client(context.Background(), pluginSocket.Socket)
 		if err != nil {
-			return nil, fmt.Errorf("unable to call GRPCPlugin: %v", err)
+			return nil, errors.Errorf("unable to call GRPCPlugin: %v", err)
 		}
 		qPort := actionplugin.WorkerHTTPPortQuery{Port: wk.HTTPPort()}
 		if _, err := grpcClient.WorkerHTTPPort(ctx, &qPort); err != nil {
-			return nil, fmt.Errorf("unable to setup plugin with worker port: %v", err)
+			return nil, errors.Errorf("unable to setup plugin with worker port: %v", err)
 		}
 		c.grpcClient = grpcClient
 	case TypeIntegration:
 		// Create grpc client
 		grpcClient, err := integrationplugin.Client(context.Background(), pluginSocket.Socket)
 		if err != nil {
-			return nil, fmt.Errorf("unable to call GRPCPlugin: %v", err)
+			return nil, errors.Errorf("unable to call GRPCPlugin: %v", err)
 		}
 		qPort := integrationplugin.WorkerHTTPPortQuery{Port: wk.HTTPPort()}
 		if _, err := grpcClient.WorkerHTTPPort(ctx, &qPort); err != nil {
-			return nil, fmt.Errorf("unable to setup plugin with worker port: %v", err)
+			return nil, errors.Errorf("unable to setup plugin with worker port: %v", err)
 		}
 		c.grpcClient = grpcClient
 	}
@@ -69,7 +70,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 	// Test plugin
 	if err := c.Manifest(ctx); err != nil {
 		c.Close(ctx)
-		return nil, fmt.Errorf("unable to retrieve retrieve plugin manifest: %v", err)
+		return nil, errors.Errorf("unable to retrieve retrieve plugin manifest: %v", err)
 	}
 
 	return c, nil

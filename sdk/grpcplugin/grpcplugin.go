@@ -167,7 +167,7 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 
 func (c *Common) Stop(context.Context, *empty.Empty) (*empty.Empty, error) {
 	defer func() {
-		fmt.Printf("Stopping plugin...")
+		fmt.Printf("Stopping plugin...\n")
 		time.Sleep(2 * time.Second)
 		c.s.Stop()
 	}()
