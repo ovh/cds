@@ -266,7 +266,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		res := w.runGRPCPlugin(ctx, a)
 		return res
 	case sdk.AsCodeAction:
-		res := w.runAscodeAction(ctx, a.StepName)
+		res := w.runAscodeAction(ctx, a.StepName, filepath.Base(a.Name)+"/")
 		return res
 	}
 
@@ -600,6 +600,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 			Reason: fmt.Sprintf("Error: unable to setup workfing directory: %v", err),
 		}
 	}
+	w.workingDirAbs = wdAbs
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug(ctx, "Setup workspace - %s", wdFile.Name())
 

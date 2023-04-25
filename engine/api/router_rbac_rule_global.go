@@ -47,3 +47,7 @@ func (api *API) globalRegionManage(ctx context.Context, auth *sdk.AuthUserConsum
 func (api *API) globalHatcheryManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
 	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageHatchery)
 }
+
+func (api *API) globalPluginManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, _ map[string]string) error {
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManagePlugin)
+}

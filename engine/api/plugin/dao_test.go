@@ -27,6 +27,14 @@ func TestInsertUpdateLoadDelete(t *testing.T) {
 				Name: "blabla",
 			},
 		},
+		Inputs: sdk.PluginInputs{
+			"content": {
+				Type:        "string",
+				Advanced:    true,
+				Default:     "coucou",
+				Description: " content input",
+			},
+		},
 	}
 
 	db, _ := test.SetupPG(t)

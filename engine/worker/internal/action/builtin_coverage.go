@@ -48,9 +48,9 @@ func RunParseCoverageResultAction(ctx context.Context, wk workerruntime.Runtime,
 		return res, fmt.Errorf("coverage parser: unable to create signature: %v", err)
 	}
 
-	pluginArtifactManagement := wk.GetPlugin(sdk.GRPCPluginUploadArtifact)
+	pluginArtifactManagement := wk.GetIntegrationPlugin(sdk.GRPCPluginUploadArtifact)
 	if pluginArtifactManagement != nil {
-		if err := uploadArtifactByIntegrationPlugin(fpath, ctx, wk, pluginArtifactManagement, sdk.ArtifactFileTypeCoverage); err != nil {
+		if err := uploadArtifactByIntegrationPlugin(fpath, ctx, wk, sdk.GRPCPluginUploadArtifact, sdk.ArtifactFileTypeCoverage); err != nil {
 			return res, fmt.Errorf("coverage parser: unable to upload in artifact manager: %v", err)
 		}
 	} else {

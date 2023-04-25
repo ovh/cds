@@ -2,7 +2,7 @@ name: plugin-nodejs
 type: action
 author: Benjamin COENEN <benjamin.coenen@corp.ovh.com>
 description: This is an example plugin in NodeJS to print a log
-parameters:
+inputs:
   log:
     type: text
     description: The value of log to display

@@ -10,7 +10,7 @@ import (
 )
 
 // InsertWithGRPCPlugin creates action in database
-func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter) (*sdk.Action, error) {
+func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, inputs map[string]sdk.PluginInput) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,
 		Type:        sdk.PluginAction,
@@ -22,7 +22,7 @@ func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.
 				Value: pl.Name,
 			},
 		},
-		Parameters: params,
+		Parameters: inputsToParameters(inputs),
 		Enabled:    true,
 	}
 
@@ -34,7 +34,7 @@ func InsertWithGRPCPlugin(db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.
 }
 
 // UpdateGRPCPlugin creates action in database
-func UpdateGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlugin, params []sdk.Parameter) (*sdk.Action, error) {
+func UpdateGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlugin, inputs map[string]sdk.PluginInput) (*sdk.Action, error) {
 	a := sdk.Action{
 		Name:        pl.Name,
 		Type:        sdk.PluginAction,
@@ -46,7 +46,7 @@ func UpdateGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlug
 				Value: pl.Name,
 			},
 		},
-		Parameters: params,
+		Parameters: inputsToParameters(inputs),
 		Enabled:    true,
 	}
 
@@ -61,6 +61,21 @@ func UpdateGRPCPlugin(ctx context.Context, db gorp.SqlExecutor, pl *sdk.GRPCPlug
 	}
 
 	return &a, nil
+}
+
+func inputsToParameters(inputs map[string]sdk.PluginInput) []sdk.Parameter {
+	params := make([]sdk.Parameter, 0, len(inputs))
+	for k, v := range inputs {
+		p := sdk.Parameter{
+			Name:        k,
+			Type:        v.Type,
+			Value:       v.Default,
+			Description: v.Description,
+			Advanced:    v.Advanced,
+		}
+		params = append(params, p)
+	}
+	return params
 }
 
 // DeleteGRPCPlugin delete action in database

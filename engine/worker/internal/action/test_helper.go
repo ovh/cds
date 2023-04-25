@@ -63,10 +63,15 @@ func (w *TestWorker) Blur(i interface{}) error {
 	return nil
 }
 
-func (w *TestWorker) GetPlugin(t string) *sdk.GRPCPlugin {
+func (w *TestWorker) GetIntegrationPlugin(t string) *sdk.GRPCPlugin {
 	return nil
 }
+func (w *TestWorker) GetActionPlugin(t string) *sdk.GRPCPlugin {
+	return nil
+}
+func (w *TestWorker) SetActionPlugin(p *sdk.GRPCPlugin) {
 
+}
 func (w *TestWorker) Parameters() []sdk.Parameter {
 	return w.Params
 }

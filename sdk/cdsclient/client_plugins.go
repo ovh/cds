@@ -16,15 +16,6 @@ func (c client) PluginsList() ([]sdk.GRPCPlugin, error) {
 	return res, nil
 }
 
-func (c client) PluginsGet(name string) (*sdk.GRPCPlugin, error) {
-	path := "/admin/plugin/" + name
-	res := sdk.GRPCPlugin{}
-	if _, err := c.GetJSON(context.Background(), path, &res); err != nil {
-		return nil, err
-	}
-	return &res, nil
-}
-
 func (c client) PluginAdd(p *sdk.GRPCPlugin) error {
 	_, err := c.PostJSON(context.Background(), "/admin/plugin", p, p)
 	return err

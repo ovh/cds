@@ -51,11 +51,11 @@ func (api *API) postGRPCluginHandler() service.Handler {
 				return sdk.WithStack(err)
 			}
 			if old != nil {
-				if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters); err != nil {
+				if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Inputs); err != nil {
 					return sdk.WrapError(err, "error while updating action %s in database", p.Name)
 				}
 			} else {
-				if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Parameters); err != nil {
+				if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Inputs); err != nil {
 					return sdk.WrapError(err, "error while inserting action %s in database", p.Name)
 				}
 			}
@@ -134,7 +134,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 
 		if p.Type == sdk.GRPCPluginAction {
-			if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Parameters); err != nil {
+			if _, err := actionplugin.UpdateGRPCPlugin(ctx, tx, &p, p.Inputs); err != nil {
 				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}

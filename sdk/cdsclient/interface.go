@@ -443,6 +443,7 @@ type Interface interface {
 	FeatureEnabled(name sdk.FeatureName, params map[string]string) (sdk.FeatureEnabledResponse, error)
 	GroupClient
 	GRPCPluginsClient
+	GRPCPluginsV2Client
 	HatcheryClient
 	MaintenanceClient
 	PipelineClient
@@ -508,6 +509,10 @@ type GRPCPluginsClient interface {
 	PluginDeleteBinary(name, os, arch string) error
 	PluginGetBinary(name, os, arch string, w io.Writer) error
 	PluginGetBinaryInfos(name, os, arch string) (*sdk.GRPCPluginBinary, error)
+}
+
+type GRPCPluginsV2Client interface {
+	PluginImport(*sdk.GRPCPlugin) error
 }
 
 /*

@@ -1,5 +1,5 @@
 
-TARGET_NAME 			= plugin-download
+TARGET_NAME 			= script
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 
@@ -11,8 +11,7 @@ build: mk_go_build_plugin ## build action plugin and prepare configuration for p
 
 clean: mk_go_clean ## clean binary and tests results
 
-test:  ## run unit tests
-	@echo "No test for $(TARGET_NAME)"
+test: mk_go_test ## run unit tests
 
 publish: mk_plugin_publish ## publish the plugin on CDS. This use your cdsctl default context and commands cdsctl admin plugins import / binary-add.
 

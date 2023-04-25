@@ -167,7 +167,7 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 
 func (c *Common) Stop(context.Context, *empty.Empty) (*empty.Empty, error) {
 	defer func() {
-		fmt.Printf("Stopping plugin...")
+		fmt.Printf("Stopping plugin...\n")
 		time.Sleep(2 * time.Second)
 		c.s.Stop()
 	}()
@@ -177,12 +177,15 @@ func (c *Common) Stop(context.Context, *empty.Empty) (*empty.Empty, error) {
 // InfoMarkdown returns string formatted with markdown
 func InfoMarkdown(pl sdk.GRPCPlugin) string {
 	var sp string
-	sort.Slice(pl.Parameters, func(i, j int) bool {
-		return pl.Parameters[i].Name < pl.Parameters[j].Name
-	})
 
-	for _, param := range pl.Parameters {
-		sp += fmt.Sprintf("* **%s**: %s\n", param.Name, param.Description)
+	keys := make([]string, 0, len(pl.Inputs))
+	for k := range pl.Inputs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		sp += fmt.Sprintf("* **%s**: %s\n", k, pl.Inputs[k].Description)
 	}
 
 	info := fmt.Sprintf(`

@@ -10,6 +10,7 @@ const (
 	GlobalRoleManageHatchery     = "manage-hatchery"
 	GlobalRoleManageUser         = "manage-user"
 	GlobalRoleManageGroup        = "manage-group"
+	GlobalRoleManagePlugin       = "manage-plugin"
 	GlobalRoleProjectCreate      = "create-project"
 
 	// Project Role
