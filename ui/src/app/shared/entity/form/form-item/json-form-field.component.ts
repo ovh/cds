@@ -7,6 +7,7 @@ import {ActivatedRoute} from "@angular/router";
 import {ProjectState} from "../../../../store/project.state";
 import {Store} from "@ngxs/store";
 import { load, LoadOptions } from 'js-yaml'
+import {PluginService} from "../../../../service/plugin.service";
 
 export class FormItem {
     name: string;
@@ -21,6 +22,7 @@ export class FormItem {
     pattern: string;
     onchange: string;
     mode: string;
+    prefix: string;
 }
 @Component({
     selector: 'app-json-form-field',
@@ -52,6 +54,7 @@ export class JSONFormFieldComponent implements OnChanges {
     constructor(
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
+        private _pluginService: PluginService,
         private _store: Store,
         private _activatedRouter: ActivatedRoute
     ) { }
@@ -140,32 +143,78 @@ export class JSONFormFieldComponent implements OnChanges {
                     branch = branchSplit[1];
                 }
 
+                if (this.field.prefix) {
+                    branchSplit[0] = branchSplit[0].slice(this.field.prefix.length);
+                }
                 let routeParams = this._activatedRouter.snapshot.params;
-                let actionName = routeParams['actionName'];
-                let repoName = routeParams['repoName'];
-                let vcsName = routeParams['vcsName'];
-                let project = this._store.selectSnapshot(ProjectState.projectSnapshot);
+                let entitySplit = branchSplit[0].split('/');
+                let entityName = '';
+                let repoName = '';
+                let vcsName = '';
+                let projKey = '';
+                switch (entitySplit.length) {
+                    case 1:
+                        entityName = entitySplit[0];
+                        repoName = routeParams['repoName'];
+                        vcsName = routeParams['vcsName'];
+                        projKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+                        break;
+                    case 3:
+                        entityName = entitySplit[2];
+                        repoName = entitySplit[0] + '/' + entitySplit[1];
+                        vcsName = routeParams['vcsName'];
+                        projKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+                        break;
+                    case 4:
+                        entityName = entitySplit[3];
+                        repoName = entitySplit[1] + '/' + entitySplit[2];
+                        vcsName = entitySplit[0];
+                        projKey = this._store.selectSnapshot(ProjectState.projectSnapshot).key;
+                        break;
+                    case 5:
+                        entityName = entitySplit[4];
+                        repoName = entitySplit[2] + '/' + entitySplit[3];
+                        vcsName = entitySplit[1];
+                        projKey = entitySplit[0];
+                        break;
+                    default:
+                        console.error("Unable to load ", entitySplit);
+                        return;
+                }
 
-                this._projectService.getRepoEntity(project.key, vcsName, repoName, this.entityType, actionName, branch).subscribe(e => {
-                    let ent = load(e.data && e.data !== '' ? e.data : '{}', <LoadOptions>{ onWarning: (e) => { } });
-                    switch (this.entityType) {
-                        case EntityAction:
-                            if (ent.inputs) {
-                                let keys =  Object.keys(ent.inputs);
-                                if(keys.length > 0) {
-                                    if (!this.currentModel['with']) {
-                                        this.currentModel['with'] = {};
-                                    }
-                                    keys.forEach(k => {
-                                        this.currentModel['with'][k] = ent.inputs[k].default;
-                                    });
-                                }
+                if (this.entityType === EntityAction && entitySplit.length === 1) {
+                    this._pluginService.getPlugin(entityName).subscribe(pl => {
+                        if (pl.inputs) {
+                            let keys =  Object.keys(pl.inputs);
+                            if(keys.length > 0) {
+                                this.currentModel['with'] = {};
+                                keys.forEach(k => {
+                                    this.currentModel['with'][k] = pl.inputs[k].default;
+                                });
                             }
-                            break;
-                    }
+                            this.modelChange.emit(this.currentModel);
+                        }
+                    });
+                } else {
+                    this._projectService.getRepoEntity(projKey, vcsName, repoName, this.entityType, entityName, branch).subscribe(e => {
+                        let ent = load(e.data && e.data !== '' ? e.data : '{}', <LoadOptions>{ onWarning: (e) => { } });
+                        switch (this.entityType) {
+                            case EntityAction:
+                                if (ent.inputs) {
+                                    let keys =  Object.keys(ent.inputs);
+                                    if(keys.length > 0) {
+                                        this.currentModel['with'] = {};
+                                        keys.forEach(k => {
+                                            this.currentModel['with'][k] = ent.inputs[k].default;
+                                        });
+                                    }
+                                }
+                                break;
+                        }
+                        this.modelChange.emit(this.currentModel);
+                    });
+                }
 
-                    this.modelChange.emit(this.currentModel);
-                });
                 break;
         }
         if (this.field.type === 'array' || this.field.type === 'map') {

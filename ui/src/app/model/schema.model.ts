@@ -151,6 +151,7 @@ export class JSONSchema implements Schema {
         itemType.pattern = properties?.pattern;
         itemType.onchange = properties?.onchange;
         itemType.mode = properties?.mode;
+        itemType.prefix = properties?.prefix;
 
         if (condition) {
             itemType.condition = new Array<FlatElementTypeCondition>();
@@ -259,6 +260,7 @@ export class FlatTypeElement {
     pattern: string;
     onchange: string;
     mode: string;
+    prefix: string;
 }
 
 export class FlatElementsOneOfRequired {

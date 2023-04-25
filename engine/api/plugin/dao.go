@@ -87,6 +87,11 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.GRPCPlugin, error)
 	return getAll(ctx, db, query, LoadOptions.WithIntegrationModelName)
 }
 
+func LoadAllByType(ctx context.Context, db gorp.SqlExecutor, pluginType string) ([]sdk.GRPCPlugin, error) {
+	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin WHERE type = $1 ").Args(pluginType)
+	return getAll(ctx, db, query)
+}
+
 // LoadAllByIntegrationModelID load all GRPC plugins for given integration model id.
 func LoadAllByIntegrationModelID(ctx context.Context, db gorp.SqlExecutor, integrationModelID int64) ([]sdk.GRPCPlugin, error) {
 	query := gorpmapping.NewQuery("SELECT * FROM grpc_plugin WHERE integration_model_id = $1").Args(integrationModelID)

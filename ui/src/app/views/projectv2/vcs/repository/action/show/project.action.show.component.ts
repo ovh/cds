@@ -1,18 +1,18 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy} from "@angular/core";
-import {AutoUnsubscribe} from "../../../../../../shared/decorator/autoUnsubscribe";
+import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {
     Entity,
     EntityAction,
     Project,
     ProjectRepository,
     VCSProject
-} from "../../../../../../model/project.model";
-import {Schema} from "../../../../../../model/json-schema.model";
+} from "app/model/project.model";
+import {Schema} from "app/model/json-schema.model";
 import {Store} from "@ngxs/store";
 import {ActivatedRoute} from "@angular/router";
-import {ProjectService} from "../../../../../../service/project/project.service";
-import {SidebarEvent, SidebarService} from "../../../../../../service/sidebar/sidebar.service";
-import {ProjectState} from "../../../../../../store/project.state";
+import {ProjectService} from "app/service/project/project.service";
+import {SidebarEvent, SidebarService} from "app/service/sidebar/sidebar.service";
+import {ProjectState} from "app/store/project.state";
 import {forkJoin} from "rxjs";
 import {finalize} from "rxjs/operators";
 

@@ -109,7 +109,12 @@
         <ng-container *ngIf="field.enum">
             <nz-select [disabled]="disabled" [ngModel]="currentModel[field.name]"
                 (ngModelChange)="onValueChanged($event)">
-                <nz-option *ngFor="let e of field.enum" [nzLabel]="e" [nzValue]="e"></nz-option>
+                <ng-container *ngIf="field.prefix">
+                    <nz-option *ngFor="let e of field.enum" [nzLabel]="e.substring(field.prefix.length, e.length)" [nzValue]="e"></nz-option>
+                </ng-container>
+                <ng-container *ngIf="!field.prefix">
+                    <nz-option *ngFor="let e of field.enum" [nzLabel]="e" [nzValue]="e"></nz-option>
+                </ng-container>
             </nz-select>
         </ng-container>
     </nz-form-control>

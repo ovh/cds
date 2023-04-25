@@ -9,6 +9,7 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -27,6 +28,7 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 			case sdk.EntityTypeWorkerModel:
 				schema = sdk.GetWorkerModelJsonSchema()
 			case sdk.EntityTypeAction:
+				// Load available action
 				var actionNames []string
 				if u != nil {
 					keys, err := rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
@@ -40,6 +42,14 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 					for _, an := range actionFullNames {
 						actionNames = append(actionNames, fmt.Sprintf("%s/%s/%s/%s@%s", an.ProjectKey, an.VCSName, an.RepoName, an.Name, an.Branch))
 					}
+				}
+				// Load action plugin
+				pls, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+				if err != nil {
+					return err
+				}
+				for _, p := range pls {
+					actionNames = append(actionNames, p.Name)
 				}
 
 				schema = sdk.GetActionJsonSchema(actionNames)

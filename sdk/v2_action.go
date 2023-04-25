@@ -35,7 +35,7 @@ type ActionOutput struct {
 
 type ActionStep struct {
 	ID   string            `json:"id,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Identifier of the step"`
-	Uses string            `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=1,onchange=loadentity" jsonschema_description:"Sub action to call"`
+	Uses string            `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=1,onchange=loadentity,prefix=actions/" jsonschema_description:"Sub action to call"`
 	Run  string            `json:"run,omitempty" jsonschema:"oneof_required=run" jsonschema_extras:"order=1" jsonschema_description:"Script to execute"`
 	With map[string]string `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=3,mode=use" jsonschema_description:"Action parameters"`
 }
