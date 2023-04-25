@@ -148,18 +148,18 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 			switch p.Type {
 			case ParameterTypeBoolean:
 				if v != "" && !(v == "true" || v == "false") {
-					return NewErrorFrom(ErrInvalidData, "Given value it's not a boolean for %s", p.Key)
+					return NewErrorFrom(ErrInvalidData, "%q value should be a boolean", p.Key)
 				}
 			case ParameterTypeRepository:
 				sp := strings.Split(v, "/")
 				if len(sp) != 3 {
-					return NewErrorFrom(ErrInvalidData, "Given value don't match vcs/repository pattern for %s", p.Key)
+					return NewErrorFrom(ErrInvalidData, "%q value should match vcs/repository pattern", p.Key)
 				}
 			case ParameterTypeJSON:
 				if v != "" {
 					var res interface{}
 					if err := JSONUnmarshal([]byte(v), &res); err != nil {
-						return NewErrorFrom(ErrInvalidData, "Given value it's not json for %s", p.Key)
+						return NewErrorFrom(ErrInvalidData, "%q value should be json", p.Key)
 					}
 				}
 			}
