@@ -110,8 +110,18 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		dir = workdir.Name()
 	}
 
+	envVars := os.Environ()
+	envs := make([]string, 0, len(envVars))
+	for _, env := range envVars {
+		if strings.HasPrefix(env, "CDS_") {
+			continue
+		}
+		envs = append(envs, env)
+	}
+
 	c := clientSocket{}
-	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, []string{}); errstart != nil {
+
+	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
 	return &c, currentPlugin, nil

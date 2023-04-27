@@ -119,7 +119,10 @@ func userCacheDir() string {
 
 	switch runtime.GOOS {
 	case "windows":
-		cdir = os.Getenv("LocalAppData")
+		dir := os.Getenv("LocalAppData")
+		if dir != "" {
+			cdir = dir
+		}
 	case "darwin":
 		cdir += "/Library/Caches"
 	case "plan9":
