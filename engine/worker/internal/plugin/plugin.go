@@ -99,10 +99,11 @@ func (c *client) Manifest(ctx context.Context) error {
 }
 
 func (c *client) Run(ctx context.Context, opts map[string]string) *Result {
-	inputs := c.getInputs(ctx, opts)
+	// FIXME - check input only for action v2
+	// inputs := c.getInputs(ctx, opts)
 
 	if c.pluginType == TypeAction {
-		return c.runActionPlugin(ctx, actionplugin.ActionQuery{Options: inputs})
+		return c.runActionPlugin(ctx, actionplugin.ActionQuery{Options: opts})
 	}
 	return c.runIntegrationPlugin(ctx, integrationplugin.RunQuery{Options: opts})
 }
