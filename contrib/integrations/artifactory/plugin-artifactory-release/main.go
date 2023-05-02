@@ -9,16 +9,16 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+	"github.com/jfrog/jfrog-client-go/distribution"
 	"github.com/jfrog/jfrog-client-go/distribution/services"
 	distriUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/contrib/integrations/artifactory/plugin-artifactory-release/edge"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
+	"github.com/rockbears/log"
 )
 
 /*
@@ -108,7 +108,7 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
-	distriClient, err := art.CreateDistributionClient(ctx, distributionURL, releaseToken)
+	client, err := art.CreateClient(ctx, distributionURL, releaseToken)
 	if err != nil {
 		return fail("unable to create distribution client: %v", err)
 	}
@@ -128,6 +128,7 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 		artRegs = append(artRegs, r)
 	}
 
+	repoToReindex := make(map[string]string, 0)
 	promotedArtifacts := make([]string, 0)
 	for _, r := range runResult {
 		// static-file type does not need to be released
@@ -174,6 +175,8 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 			}
 			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
 		}
+
+		repoToReindex[fmt.Sprintf("%s-%s", rData.RepoName, latestPromotion.ToMaturity)] = rData.RepoType
 	}
 
 	if len(promotedArtifacts) == 0 {
@@ -181,13 +184,13 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 	}
 
 	// Release bundle
-	releaseName, releaseVersion, err := e.createReleaseBundle(distriClient, projectKey, workflowName, version, buildInfo, promotedArtifacts, destMaturity, releaseNote)
+	releaseName, releaseVersion, err := e.createReleaseBundle(*client.Dsm, projectKey, workflowName, version, buildInfo, promotedArtifacts, destMaturity, releaseNote)
 	if err != nil {
 		return fail(err.Error())
 	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release \n")
-	edges, err := edge.ListEdgeNodes(distriClient)
+	edges, err := edge.ListEdgeNodes(*client.Dsm)
 	if err != nil {
 		return fail("%v", err)
 	}
@@ -204,8 +207,18 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 			CountryCodes: []string{e.City.CountryCode},
 		})
 	}
-	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 1, false); err != nil {
+	if err := client.Dsm.DistributeReleaseBundleSync(distributionParams, 1, false); err != nil {
 		return fail("unable to distribute version: %v", err)
+	}
+
+	for k, v := range repoToReindex {
+		// Filter on Helm repo
+		if v == "helm" {
+			fmt.Printf("%s reindex will start soon\n", k)
+			if err := art.Reindex(*client.Asm, v, k); err != nil {
+				return fail("unable to reindex: %v", err)
+			}
+		}
 	}
 
 	return &integrationplugin.RunResult{
@@ -213,7 +226,7 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 	}, nil
 }
 
-func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribClient, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
+func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient distribution.DistributionServicesManager, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
 	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
@@ -244,7 +257,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribC
 		params.SignImmediately = true
 		fmt.Printf("Creating release %s %s\n", params.Name, params.Version)
 
-		if _, err := distriClient.Dsm.CreateReleaseBundle(params); err != nil {
+		if _, err := distriClient.CreateReleaseBundle(params); err != nil {
 			return "", "", fmt.Errorf("unable to create release bundle %s/%s: %v", params.Name, params.Version, err)
 		}
 	} else {
@@ -253,16 +266,16 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribC
 	return params.Name, params.Version, nil
 }
 
-func (e *artifactoryReleasePlugin) checkReleaseBundleExist(client art.DistribClient, name string, version string) (bool, error) {
+func (e *artifactoryReleasePlugin) checkReleaseBundleExist(client distribution.DistributionServicesManager, name string, version string) (bool, error) {
 	getReleasePath := fmt.Sprintf("api/v1/release_bundle/%s/%s?format=json", name, version)
 
-	fakeService := services.NewCreateReleaseBundleService(client.Dsm.Client())
-	fakeService.DistDetails = client.ServiceConfig.GetServiceDetails()
+	fakeService := services.NewCreateReleaseBundleService(client.Client())
+	fakeService.DistDetails = client.Config().GetServiceDetails()
 	clientDetail := fakeService.DistDetails.CreateHttpClientDetails()
 	getReleaseURL := fmt.Sprintf("%s%s", fakeService.DistDetails.GetUrl(), getReleasePath)
 	utils.SetContentType("application/json", &clientDetail.Headers)
 
-	resp, body, _, err := client.Dsm.Client().SendGet(getReleaseURL, true, &clientDetail)
+	resp, body, _, err := client.Client().SendGet(getReleaseURL, true, &clientDetail)
 	if err != nil {
 		return false, fmt.Errorf("unable to get release bundle %s/%s from distribution: %v", name, version, err)
 	}

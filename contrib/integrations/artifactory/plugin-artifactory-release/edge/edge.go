@@ -2,10 +2,10 @@ package edge
 
 import (
 	"fmt"
-	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
-	"github.com/jfrog/jfrog-client-go/distribution/services"
-	art "github.com/ovh/cds/contrib/integrations/artifactory"
 
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+	"github.com/jfrog/jfrog-client-go/distribution"
+	"github.com/jfrog/jfrog-client-go/distribution/services"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -20,16 +20,16 @@ type EdgeNode struct {
 	LicenseStatus string `json:"license_status"`
 }
 
-func ListEdgeNodes(distriClient art.DistribClient) ([]EdgeNode, error) {
+func ListEdgeNodes(distriClient distribution.DistributionServicesManager) ([]EdgeNode, error) {
 	listEdgeNodePath := fmt.Sprintf("api/ui/distribution/edge_nodes?action=x")
-	fakeService := services.NewCreateReleaseBundleService(distriClient.Dsm.Client())
-	fakeService.DistDetails = distriClient.ServiceConfig.GetServiceDetails()
+	fakeService := services.NewCreateReleaseBundleService(distriClient.Client())
+	fakeService.DistDetails = distriClient.Config().GetServiceDetails()
 	clientDetail := fakeService.DistDetails.CreateHttpClientDetails()
 
 	listEdgeURL := fmt.Sprintf("%s%s", fakeService.DistDetails.GetUrl(), listEdgeNodePath)
 	utils.SetContentType("application/json", &clientDetail.Headers)
 
-	resp, body, _, err := distriClient.Dsm.Client().SendGet(listEdgeURL, true, &clientDetail)
+	resp, body, _, err := distriClient.Client().SendGet(listEdgeURL, true, &clientDetail)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list edge node from distribution: %v", err)
 	}

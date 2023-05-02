@@ -10,9 +10,9 @@ import (
 	"github.com/jfrog/jfrog-client-go/distribution/services"
 	distriUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
 	"github.com/jfrog/jfrog-client-go/utils/log"
+	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/contrib/integrations/artifactory/plugin-artifactory-release/edge"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
@@ -68,13 +68,13 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 	defer cancel()
 
 	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
-	distriClient, err := art.CreateDistributionClient(ctx, url, token)
+	client, err := art.CreateClient(ctx, url, token)
 	if err != nil {
 		return actionplugin.Fail("unable to create distribution client: %v", err)
 	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release\n")
-	edges, err := edge.ListEdgeNodes(distriClient)
+	edges, err := edge.ListEdgeNodes(*client.Dsm)
 	if err != nil {
 		return actionplugin.Fail("%v", err)
 	}
@@ -94,8 +94,39 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 		})
 	}
 
-	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10, false); err != nil {
+	if err := client.Dsm.DistributeReleaseBundleSync(distributionParams, 10, false); err != nil {
 		return actionplugin.Fail("unable to distribute version: %v", err)
+	}
+
+	runResult, err := grpcplugins.GetRunResults(actPlugin.HTTPPort)
+	if err != nil {
+		return actionplugin.Fail("unable to list run results: %v", err)
+	}
+
+	fmt.Printf("Found %d run results\n", len(runResult))
+
+	repoToReindex := make(map[string]string, 0)
+	for _, r := range runResult {
+		// static-file type does not need to be released
+		if r.Type == sdk.WorkflowRunResultTypeStaticFile {
+			continue
+		}
+		rData, err := r.GetArtifactManager()
+		if err != nil {
+			return actionplugin.Fail("unable to read result %s: %v", r.ID, err)
+		}
+
+		repoToReindex[fmt.Sprintf("%s-release", rData.RepoName)] = rData.RepoType
+	}
+
+	for k, v := range repoToReindex {
+		// Filter on Helm repo
+		if v == "helm" {
+			fmt.Printf("%s reindex will start soon\n", k)
+			if err := art.Reindex(*client.Asm, v, k); err != nil {
+				return actionplugin.Fail("unable to reindex: %v", err)
+			}
+		}
 	}
 
 	return &actionplugin.ActionResult{

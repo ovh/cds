@@ -17,19 +17,30 @@ import (
 	"github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/distribution"
 	authdistrib "github.com/jfrog/jfrog-client-go/distribution/auth"
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
-type DistribClient struct {
-	Dsm           *distribution.DistributionServicesManager
-	ServiceConfig config.Config
+type Client struct {
+	Asm *artifactory.ArtifactoryServicesManager
+	Dsm *distribution.DistributionServicesManager
 }
 
-func CreateDistributionClient(ctx context.Context, url, token string) (DistribClient, error) {
+func CreateClient(ctx context.Context, url, token string) (Client, error) {
+	asm, err := CreateArtifactoryClient(ctx, url, token)
+	if err != nil {
+		return Client{}, err
+	}
+	dsm, err := CreateDistributionClient(ctx, url, token)
+	if err != nil {
+		return Client{}, err
+	}
+	return Client{Asm: &asm, Dsm: dsm}, nil
+}
+
+func CreateDistributionClient(ctx context.Context, url, token string) (*distribution.DistributionServicesManager, error) {
 	dtb := authdistrib.NewDistributionDetails()
 	dtb.SetUrl(strings.Replace(url, "/artifactory/", "/distribution/", -1))
 	dtb.SetAccessToken(token)
@@ -42,18 +53,13 @@ func CreateDistributionClient(ctx context.Context, url, token string) (DistribCl
 		SetHttpRetries(5).
 		Build()
 	if err != nil {
-		return DistribClient{}, fmt.Errorf("unable to create service config: %v", err)
+		return nil, fmt.Errorf("unable to create service config: %v", err)
 	}
-	dsm, err := distribution.New(serviceConfig)
-	if err != nil {
-		return DistribClient{}, nil
-	}
-	return DistribClient{Dsm: dsm, ServiceConfig: serviceConfig}, nil
+	return distribution.New(serviceConfig)
 }
 
 func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactory.ArtifactoryServicesManager, error) {
 	rtDetails := auth.NewArtifactoryDetails()
-	rtDetails.SetUrl(strings.TrimSuffix(url, "/") + "/") // ensure having '/' at the end
 	rtDetails.SetAccessToken(token)
 	serviceConfig, err := config.NewConfigBuilder().
 		SetServiceDetails(rtDetails).
@@ -175,6 +181,22 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 		}
 	}
 
+	return nil
+}
+
+func Reindex(client artifactory.ArtifactoryServicesManager, repoType, repoKey string) error {
+	httpDetails := client.GetConfig().GetServiceDetails().CreateHttpClientDetails()
+	utils.SetContentType("application/json", &httpDetails.Headers)
+
+	url := fmt.Sprintf("%s%s", client.GetConfig().GetServiceDetails().GetUrl(), fmt.Sprintf("api/v1/%s/%s/reindex", repoType, repoKey))
+
+	re, body, err := client.Client().SendPost(url, nil, &httpDetails)
+	if err != nil {
+		return fmt.Errorf("unable to reindex %s/%s: %v", repoType, repoKey, err)
+	}
+	if re.StatusCode >= 400 {
+		return fmt.Errorf("unable to call artifactory [HTTP: %d] %s %s", re.StatusCode, url, string(body))
+	}
 	return nil
 }
 
