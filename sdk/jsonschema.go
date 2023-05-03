@@ -57,14 +57,14 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	stepId := propId.(*jsonschema.Schema)
 	stepId.Pattern = EntityActionStepID
 
+	propStepUses, _ := actionSchema.Definitions["ActionStep"].Properties.Get("uses")
+	stepUses := propStepUses.(*jsonschema.Schema)
 	// Enum on step uses
 	if len(publicActionNames) > 0 {
-		propStepUses, _ := actionSchema.Definitions["ActionStep"].Properties.Get("uses")
-		stepUses := propStepUses.(*jsonschema.Schema)
+
 		for _, actName := range publicActionNames {
-			stepUses.Enum = append(stepUses.Enum, actName)
+			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
 		}
 	}
-
 	return actionSchema
 }

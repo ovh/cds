@@ -65,7 +65,8 @@ export class JSONFormComponent implements OnInit, OnChanges {
                         description: value.description,
                         pattern: value.pattern,
                         onchange: value.onchange,
-                        mode: value.mode
+                        mode: value.mode,
+                        prefix: value.prefix
                     };
                     if ( (item.type === 'object' || item.type === 'array') && value.type.length === 2) {
                         item.objectType = value.type[1];

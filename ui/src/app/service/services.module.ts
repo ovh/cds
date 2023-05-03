@@ -65,6 +65,7 @@ import {AnalysisService} from "./analysis/analysis.service";
 import {LinkService} from "./link/link.service";
 import {EntityService} from "./entity/entity.service";
 import {ActionAsCodeService} from "./action/actionAscode.service";
+import {PluginService} from "./plugin.service";
 
 @NgModule({})
 export class ServicesModule {
@@ -111,6 +112,7 @@ export class ServicesModule {
                 PipelineCoreService,
                 PipelineService,
                 IntegrationService,
+                PluginService,
                 Projectv2Resolver,
                 ProjectResolver,
                 ProjectForApplicationResolver,
@@ -179,6 +181,7 @@ export {
     MonitoringService,
     PipelineCoreService,
     IntegrationService,
+    PluginService,
     ProjectResolver,
     Projectv2Resolver,
     ProjectForApplicationResolver,
