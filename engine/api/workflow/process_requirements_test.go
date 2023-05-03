@@ -63,18 +63,17 @@ func TestGetWorkerModelv2Error(t *testing.T) {
 		},
 	}
 
-	_, _, err := processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, nil, "PROJ", wr, "cds/mymodel")
+	_, _, err := processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, nil, "PROJ", wr, "cds/mymodel", nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unable to find repository for this worker model")
 
-	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, nil, "PROJ", wr, "rien/proj/vcs/ovh/cds/mymodel")
+	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, nil, "PROJ", wr, "rien/proj/vcs/ovh/cds/mymodel", nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unable to handle the worker model requirement")
 
 	wr.Workflow.WorkflowData.Node.Context.ApplicationID = 1
-	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, nil, "PROJ", wr, "mymodel")
+	_, _, err = processNodeJobRunRequirementsGetModelV2(context.TODO(), nil, nil, "PROJ", wr, "mymodel", nil)
 	require.Error(t, err)
 	t.Logf("%+v", err)
 	require.Contains(t, err.Error(), "unable to retrieve worker model data because the workflow root pipeline does not contain any vcs configuration")
-
 }

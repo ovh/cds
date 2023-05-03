@@ -23,7 +23,7 @@ import (
 
 // processNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
 // one requirement is of type "Service"
-func processNodeJobRunRequirements(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, projectKey string, wr sdk.WorkflowRun, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig) (sdk.RequirementList, bool, string, *sdk.MultiError) {
+func processNodeJobRunRequirements(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, projectKey string, wr sdk.WorkflowRun, j sdk.Job, run *sdk.WorkflowNodeRun, execsGroupIDs []int64, integrationPlugins []sdk.GRPCPlugin, integrationsConfigs []sdk.IntegrationConfig, jobParams []sdk.Parameter) (sdk.RequirementList, bool, string, *sdk.MultiError) {
 	var requirements sdk.RequirementList
 	var errm sdk.MultiError
 	var containsService bool
@@ -96,7 +96,7 @@ func processNodeJobRunRequirements(ctx context.Context, store cache.Store, db go
 				wm, err = processNodeJobRunRequirementsGetModel(ctx, db, model, execsGroupIDs)
 				if err != nil {
 					if sdk.ErrorIs(err, sdk.ErrNotFound) {
-						workerModelV2, workerModelFullPath, err := processNodeJobRunRequirementsGetModelV2(ctx, store, db, projectKey, wr, model)
+						workerModelV2, workerModelFullPath, err := processNodeJobRunRequirementsGetModelV2(ctx, store, db, projectKey, wr, model, jobParams)
 						if err != nil {
 							log.Error(ctx, "getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
 							errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidJobRequirement, "unable to get worker model %s", model))
@@ -214,7 +214,7 @@ func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.P
 	return params
 }
 
-func processNodeJobRunRequirementsGetModelV2(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, projectKey string, wr sdk.WorkflowRun, requirementValue string) (*sdk.V2WorkerModel, string, error) {
+func processNodeJobRunRequirementsGetModelV2(ctx context.Context, store cache.Store, db gorpmapper.SqlExecutorWithTx, projectKey string, wr sdk.WorkflowRun, requirementValue string, jobParams []sdk.Parameter) (*sdk.V2WorkerModel, string, error) {
 	var workerProjKey, vcsName, repoName, workerModelName, branch string
 	var app sdk.Application
 
@@ -234,9 +234,11 @@ func processNodeJobRunRequirementsGetModelV2(ctx context.Context, store cache.St
 	}
 
 	modelPathSplit := strings.Split(modelFullPath, "/")
+	embeddedModel := false
 	switch len(modelPathSplit) {
 	case 1:
 		workerModelName = modelFullPath
+		embeddedModel = true
 	case 2:
 		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to find repository for this worker model")
 	case 3:
@@ -278,16 +280,28 @@ func processNodeJobRunRequirementsGetModelV2(ctx context.Context, store cache.St
 		return nil, "", err
 	}
 	if branch == "" {
-		// Get default branch
-		client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, workerProjKey, vcs.Name)
-		if err != nil {
-			return nil, "", err
+		if embeddedModel {
+			// Get current git.branch parameters
+			for _, p := range jobParams {
+				if p.Name == "git.branch" {
+					branch = p.Value
+				}
+			}
+			if branch == "" {
+				return nil, "", sdk.NewErrorFrom(sdk.ErrNotFound, "worker model %s not found on the current branch", workerModelName)
+			}
+		} else {
+			// Get default branch
+			client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, workerProjKey, vcs.Name)
+			if err != nil {
+				return nil, "", err
+			}
+			b, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+			if err != nil {
+				return nil, "", err
+			}
+			branch = b.DisplayID
 		}
-		b, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-		if err != nil {
-			return nil, "", err
-		}
-		branch = b.DisplayID
 	}
 	workerModelEntity, err := entity.LoadByBranchTypeName(ctx, db, repo.ID, branch, sdk.EntityTypeWorkerModel, workerModelName)
 	if err != nil {
