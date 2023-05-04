@@ -33,94 +33,91 @@ var actionParserStaticData struct {
 func actionParserInit() {
 	staticData := &actionParserStaticData
 	staticData.literalNames = []string{
-		"", "'.'", "','", "'['", "']'", "", "", "'null'", "'${{'", "'}}'", "",
-		"'=='", "'!='", "'>'", "'<'", "'>='", "'<='", "", "'('", "')'", "'!'",
-		"'||'", "'&&'",
+		"", "','", "'['", "']'", "", "", "'null'", "'${{'", "'}}'", "", "'=='",
+		"'!='", "'>'", "'<'", "'>='", "'<='", "", "'('", "')'", "'!'", "'||'",
+		"'&&'", "'.'",
 	}
 	staticData.symbolicNames = []string{
-		"", "", "", "", "", "STRING_INSIDE_EXPRESSION", "BOOLEAN", "NULL", "EXP_START",
+		"", "", "", "", "STRING_INSIDE_EXPRESSION", "BOOLEAN", "NULL", "EXP_START",
 		"EXP_END", "NUMBER", "EQ", "NEQ", "GT", "LT", "GTE", "LTE", "ID", "LPAREN",
-		"RPAREN", "NOT", "OR", "AND", "WS",
+		"RPAREN", "NOT", "OR", "AND", "DOT", "WS",
 	}
 	staticData.ruleNames = []string{
 		"start", "expression", "orExpression", "andExpression", "comparisonExpression",
 		"equalityExpression", "primaryExpression", "variableContext", "variablePath",
-		"numberExpression", "stringExpression", "termExpression", "notExpression",
-		"functionCall", "functionCallArguments", "functionCallArg", "array",
-		"arrayIndex", "andOperator", "orOperator", "comparisonOperator", "equalityOperator",
-		"literal",
+		"variableIdentifier", "numberExpression", "stringExpression", "termExpression",
+		"notExpression", "functionCall", "functionName", "functionCallArguments",
+		"array", "arrayIndex", "andOperator", "orOperator", "comparisonOperator",
+		"equalityOperator", "literal", "expressionStart", "expressionEnd",
 	}
 	staticData.predictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 23, 171, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 23, 169, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
 		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15,
 		2, 16, 7, 16, 2, 17, 7, 17, 2, 18, 7, 18, 2, 19, 7, 19, 2, 20, 7, 20, 2,
-		21, 7, 21, 2, 22, 7, 22, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 5, 1, 53,
-		8, 1, 10, 1, 12, 1, 56, 9, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 5, 2,
-		64, 8, 2, 10, 2, 12, 2, 67, 9, 2, 1, 3, 1, 3, 1, 3, 1, 3, 5, 3, 73, 8,
-		3, 10, 3, 12, 3, 76, 9, 3, 1, 4, 1, 4, 1, 4, 1, 4, 5, 4, 82, 8, 4, 10,
-		4, 12, 4, 85, 9, 4, 1, 5, 1, 5, 1, 5, 1, 5, 5, 5, 91, 8, 5, 10, 5, 12,
-		5, 94, 9, 5, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 3, 6, 102, 8, 6, 1, 7,
-		1, 7, 5, 7, 106, 8, 7, 10, 7, 12, 7, 109, 9, 7, 1, 8, 1, 8, 1, 8, 3, 8,
-		114, 8, 8, 1, 9, 1, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 11, 1, 11, 1, 12,
-		1, 12, 1, 12, 1, 13, 1, 13, 1, 13, 1, 13, 1, 13, 5, 13, 132, 8, 13, 10,
-		13, 12, 13, 135, 9, 13, 1, 14, 1, 14, 1, 14, 5, 14, 140, 8, 14, 10, 14,
-		12, 14, 143, 9, 14, 1, 15, 1, 15, 5, 15, 147, 8, 15, 10, 15, 12, 15, 150,
-		9, 15, 1, 15, 3, 15, 153, 8, 15, 1, 16, 1, 16, 1, 16, 1, 16, 1, 17, 1,
-		17, 1, 18, 1, 18, 1, 19, 1, 19, 1, 20, 1, 20, 1, 21, 1, 21, 1, 22, 1, 22,
-		1, 22, 0, 0, 23, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28,
-		30, 32, 34, 36, 38, 40, 42, 44, 0, 3, 1, 0, 13, 16, 1, 0, 11, 12, 2, 0,
-		5, 7, 10, 10, 164, 0, 46, 1, 0, 0, 0, 2, 49, 1, 0, 0, 0, 4, 59, 1, 0, 0,
-		0, 6, 68, 1, 0, 0, 0, 8, 77, 1, 0, 0, 0, 10, 86, 1, 0, 0, 0, 12, 101, 1,
-		0, 0, 0, 14, 103, 1, 0, 0, 0, 16, 113, 1, 0, 0, 0, 18, 115, 1, 0, 0, 0,
-		20, 117, 1, 0, 0, 0, 22, 119, 1, 0, 0, 0, 24, 123, 1, 0, 0, 0, 26, 126,
-		1, 0, 0, 0, 28, 136, 1, 0, 0, 0, 30, 152, 1, 0, 0, 0, 32, 154, 1, 0, 0,
-		0, 34, 158, 1, 0, 0, 0, 36, 160, 1, 0, 0, 0, 38, 162, 1, 0, 0, 0, 40, 164,
-		1, 0, 0, 0, 42, 166, 1, 0, 0, 0, 44, 168, 1, 0, 0, 0, 46, 47, 3, 2, 1,
-		0, 47, 48, 5, 0, 0, 1, 48, 1, 1, 0, 0, 0, 49, 50, 5, 8, 0, 0, 50, 54, 3,
-		4, 2, 0, 51, 53, 3, 4, 2, 0, 52, 51, 1, 0, 0, 0, 53, 56, 1, 0, 0, 0, 54,
-		52, 1, 0, 0, 0, 54, 55, 1, 0, 0, 0, 55, 57, 1, 0, 0, 0, 56, 54, 1, 0, 0,
-		0, 57, 58, 5, 9, 0, 0, 58, 3, 1, 0, 0, 0, 59, 65, 3, 6, 3, 0, 60, 61, 3,
-		38, 19, 0, 61, 62, 3, 6, 3, 0, 62, 64, 1, 0, 0, 0, 63, 60, 1, 0, 0, 0,
-		64, 67, 1, 0, 0, 0, 65, 63, 1, 0, 0, 0, 65, 66, 1, 0, 0, 0, 66, 5, 1, 0,
-		0, 0, 67, 65, 1, 0, 0, 0, 68, 74, 3, 8, 4, 0, 69, 70, 3, 36, 18, 0, 70,
-		71, 3, 8, 4, 0, 71, 73, 1, 0, 0, 0, 72, 69, 1, 0, 0, 0, 73, 76, 1, 0, 0,
-		0, 74, 72, 1, 0, 0, 0, 74, 75, 1, 0, 0, 0, 75, 7, 1, 0, 0, 0, 76, 74, 1,
-		0, 0, 0, 77, 83, 3, 10, 5, 0, 78, 79, 3, 40, 20, 0, 79, 80, 3, 10, 5, 0,
-		80, 82, 1, 0, 0, 0, 81, 78, 1, 0, 0, 0, 82, 85, 1, 0, 0, 0, 83, 81, 1,
-		0, 0, 0, 83, 84, 1, 0, 0, 0, 84, 9, 1, 0, 0, 0, 85, 83, 1, 0, 0, 0, 86,
-		92, 3, 12, 6, 0, 87, 88, 3, 42, 21, 0, 88, 89, 3, 12, 6, 0, 89, 91, 1,
-		0, 0, 0, 90, 87, 1, 0, 0, 0, 91, 94, 1, 0, 0, 0, 92, 90, 1, 0, 0, 0, 92,
-		93, 1, 0, 0, 0, 93, 11, 1, 0, 0, 0, 94, 92, 1, 0, 0, 0, 95, 102, 3, 14,
-		7, 0, 96, 102, 3, 18, 9, 0, 97, 102, 3, 26, 13, 0, 98, 102, 3, 20, 10,
-		0, 99, 102, 3, 22, 11, 0, 100, 102, 3, 24, 12, 0, 101, 95, 1, 0, 0, 0,
-		101, 96, 1, 0, 0, 0, 101, 97, 1, 0, 0, 0, 101, 98, 1, 0, 0, 0, 101, 99,
-		1, 0, 0, 0, 101, 100, 1, 0, 0, 0, 102, 13, 1, 0, 0, 0, 103, 107, 5, 17,
-		0, 0, 104, 106, 3, 16, 8, 0, 105, 104, 1, 0, 0, 0, 106, 109, 1, 0, 0, 0,
-		107, 105, 1, 0, 0, 0, 107, 108, 1, 0, 0, 0, 108, 15, 1, 0, 0, 0, 109, 107,
-		1, 0, 0, 0, 110, 111, 5, 1, 0, 0, 111, 114, 5, 17, 0, 0, 112, 114, 3, 32,
-		16, 0, 113, 110, 1, 0, 0, 0, 113, 112, 1, 0, 0, 0, 114, 17, 1, 0, 0, 0,
-		115, 116, 5, 10, 0, 0, 116, 19, 1, 0, 0, 0, 117, 118, 5, 5, 0, 0, 118,
-		21, 1, 0, 0, 0, 119, 120, 5, 18, 0, 0, 120, 121, 3, 4, 2, 0, 121, 122,
-		5, 19, 0, 0, 122, 23, 1, 0, 0, 0, 123, 124, 5, 20, 0, 0, 124, 125, 3, 12,
-		6, 0, 125, 25, 1, 0, 0, 0, 126, 127, 5, 17, 0, 0, 127, 128, 5, 18, 0, 0,
-		128, 129, 3, 28, 14, 0, 129, 133, 5, 19, 0, 0, 130, 132, 3, 16, 8, 0, 131,
-		130, 1, 0, 0, 0, 132, 135, 1, 0, 0, 0, 133, 131, 1, 0, 0, 0, 133, 134,
-		1, 0, 0, 0, 134, 27, 1, 0, 0, 0, 135, 133, 1, 0, 0, 0, 136, 141, 3, 30,
-		15, 0, 137, 138, 5, 2, 0, 0, 138, 140, 3, 30, 15, 0, 139, 137, 1, 0, 0,
-		0, 140, 143, 1, 0, 0, 0, 141, 139, 1, 0, 0, 0, 141, 142, 1, 0, 0, 0, 142,
-		29, 1, 0, 0, 0, 143, 141, 1, 0, 0, 0, 144, 153, 1, 0, 0, 0, 145, 147, 3,
-		12, 6, 0, 146, 145, 1, 0, 0, 0, 147, 150, 1, 0, 0, 0, 148, 146, 1, 0, 0,
-		0, 148, 149, 1, 0, 0, 0, 149, 153, 1, 0, 0, 0, 150, 148, 1, 0, 0, 0, 151,
-		153, 3, 44, 22, 0, 152, 144, 1, 0, 0, 0, 152, 148, 1, 0, 0, 0, 152, 151,
-		1, 0, 0, 0, 153, 31, 1, 0, 0, 0, 154, 155, 5, 3, 0, 0, 155, 156, 3, 34,
-		17, 0, 156, 157, 5, 4, 0, 0, 157, 33, 1, 0, 0, 0, 158, 159, 3, 12, 6, 0,
-		159, 35, 1, 0, 0, 0, 160, 161, 5, 22, 0, 0, 161, 37, 1, 0, 0, 0, 162, 163,
-		5, 21, 0, 0, 163, 39, 1, 0, 0, 0, 164, 165, 7, 0, 0, 0, 165, 41, 1, 0,
-		0, 0, 166, 167, 7, 1, 0, 0, 167, 43, 1, 0, 0, 0, 168, 169, 7, 2, 0, 0,
-		169, 45, 1, 0, 0, 0, 12, 54, 65, 74, 83, 92, 101, 107, 113, 133, 141, 148,
-		152,
+		21, 7, 21, 2, 22, 7, 22, 2, 23, 7, 23, 2, 24, 7, 24, 2, 25, 7, 25, 1, 0,
+		1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 5, 1, 59, 8, 1, 10, 1, 12, 1, 62, 9, 1, 1,
+		1, 1, 1, 1, 2, 1, 2, 1, 2, 1, 2, 5, 2, 70, 8, 2, 10, 2, 12, 2, 73, 9, 2,
+		1, 3, 1, 3, 1, 3, 1, 3, 5, 3, 79, 8, 3, 10, 3, 12, 3, 82, 9, 3, 1, 4, 1,
+		4, 1, 4, 1, 4, 3, 4, 88, 8, 4, 1, 5, 1, 5, 1, 5, 1, 5, 3, 5, 94, 8, 5,
+		1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 1, 6, 3, 6, 102, 8, 6, 1, 7, 1, 7, 5, 7,
+		106, 8, 7, 10, 7, 12, 7, 109, 9, 7, 1, 8, 1, 8, 1, 8, 3, 8, 114, 8, 8,
+		1, 9, 1, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 12, 1, 12, 1, 12, 1, 12, 1,
+		13, 1, 13, 1, 13, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 5, 14, 134, 8, 14,
+		10, 14, 12, 14, 137, 9, 14, 1, 14, 1, 14, 1, 15, 1, 15, 1, 16, 1, 16, 1,
+		16, 1, 16, 3, 16, 147, 8, 16, 1, 17, 1, 17, 1, 17, 1, 17, 1, 18, 1, 18,
+		1, 19, 1, 19, 1, 20, 1, 20, 1, 21, 1, 21, 1, 22, 1, 22, 1, 23, 1, 23, 1,
+		24, 1, 24, 1, 25, 1, 25, 1, 25, 0, 0, 26, 0, 2, 4, 6, 8, 10, 12, 14, 16,
+		18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 0,
+		3, 1, 0, 12, 15, 1, 0, 10, 11, 2, 0, 4, 6, 9, 9, 158, 0, 52, 1, 0, 0, 0,
+		2, 55, 1, 0, 0, 0, 4, 65, 1, 0, 0, 0, 6, 74, 1, 0, 0, 0, 8, 83, 1, 0, 0,
+		0, 10, 89, 1, 0, 0, 0, 12, 101, 1, 0, 0, 0, 14, 103, 1, 0, 0, 0, 16, 113,
+		1, 0, 0, 0, 18, 115, 1, 0, 0, 0, 20, 117, 1, 0, 0, 0, 22, 119, 1, 0, 0,
+		0, 24, 121, 1, 0, 0, 0, 26, 125, 1, 0, 0, 0, 28, 128, 1, 0, 0, 0, 30, 140,
+		1, 0, 0, 0, 32, 146, 1, 0, 0, 0, 34, 148, 1, 0, 0, 0, 36, 152, 1, 0, 0,
+		0, 38, 154, 1, 0, 0, 0, 40, 156, 1, 0, 0, 0, 42, 158, 1, 0, 0, 0, 44, 160,
+		1, 0, 0, 0, 46, 162, 1, 0, 0, 0, 48, 164, 1, 0, 0, 0, 50, 166, 1, 0, 0,
+		0, 52, 53, 3, 2, 1, 0, 53, 54, 5, 0, 0, 1, 54, 1, 1, 0, 0, 0, 55, 56, 3,
+		48, 24, 0, 56, 60, 3, 4, 2, 0, 57, 59, 3, 4, 2, 0, 58, 57, 1, 0, 0, 0,
+		59, 62, 1, 0, 0, 0, 60, 58, 1, 0, 0, 0, 60, 61, 1, 0, 0, 0, 61, 63, 1,
+		0, 0, 0, 62, 60, 1, 0, 0, 0, 63, 64, 3, 50, 25, 0, 64, 3, 1, 0, 0, 0, 65,
+		71, 3, 6, 3, 0, 66, 67, 3, 40, 20, 0, 67, 68, 3, 6, 3, 0, 68, 70, 1, 0,
+		0, 0, 69, 66, 1, 0, 0, 0, 70, 73, 1, 0, 0, 0, 71, 69, 1, 0, 0, 0, 71, 72,
+		1, 0, 0, 0, 72, 5, 1, 0, 0, 0, 73, 71, 1, 0, 0, 0, 74, 80, 3, 8, 4, 0,
+		75, 76, 3, 38, 19, 0, 76, 77, 3, 8, 4, 0, 77, 79, 1, 0, 0, 0, 78, 75, 1,
+		0, 0, 0, 79, 82, 1, 0, 0, 0, 80, 78, 1, 0, 0, 0, 80, 81, 1, 0, 0, 0, 81,
+		7, 1, 0, 0, 0, 82, 80, 1, 0, 0, 0, 83, 87, 3, 10, 5, 0, 84, 85, 3, 42,
+		21, 0, 85, 86, 3, 10, 5, 0, 86, 88, 1, 0, 0, 0, 87, 84, 1, 0, 0, 0, 87,
+		88, 1, 0, 0, 0, 88, 9, 1, 0, 0, 0, 89, 93, 3, 12, 6, 0, 90, 91, 3, 44,
+		22, 0, 91, 92, 3, 12, 6, 0, 92, 94, 1, 0, 0, 0, 93, 90, 1, 0, 0, 0, 93,
+		94, 1, 0, 0, 0, 94, 11, 1, 0, 0, 0, 95, 102, 3, 14, 7, 0, 96, 102, 3, 20,
+		10, 0, 97, 102, 3, 28, 14, 0, 98, 102, 3, 22, 11, 0, 99, 102, 3, 24, 12,
+		0, 100, 102, 3, 26, 13, 0, 101, 95, 1, 0, 0, 0, 101, 96, 1, 0, 0, 0, 101,
+		97, 1, 0, 0, 0, 101, 98, 1, 0, 0, 0, 101, 99, 1, 0, 0, 0, 101, 100, 1,
+		0, 0, 0, 102, 13, 1, 0, 0, 0, 103, 107, 3, 18, 9, 0, 104, 106, 3, 16, 8,
+		0, 105, 104, 1, 0, 0, 0, 106, 109, 1, 0, 0, 0, 107, 105, 1, 0, 0, 0, 107,
+		108, 1, 0, 0, 0, 108, 15, 1, 0, 0, 0, 109, 107, 1, 0, 0, 0, 110, 111, 5,
+		22, 0, 0, 111, 114, 3, 18, 9, 0, 112, 114, 3, 34, 17, 0, 113, 110, 1, 0,
+		0, 0, 113, 112, 1, 0, 0, 0, 114, 17, 1, 0, 0, 0, 115, 116, 5, 16, 0, 0,
+		116, 19, 1, 0, 0, 0, 117, 118, 5, 9, 0, 0, 118, 21, 1, 0, 0, 0, 119, 120,
+		5, 4, 0, 0, 120, 23, 1, 0, 0, 0, 121, 122, 5, 17, 0, 0, 122, 123, 3, 4,
+		2, 0, 123, 124, 5, 18, 0, 0, 124, 25, 1, 0, 0, 0, 125, 126, 5, 19, 0, 0,
+		126, 127, 3, 12, 6, 0, 127, 27, 1, 0, 0, 0, 128, 129, 3, 30, 15, 0, 129,
+		130, 5, 17, 0, 0, 130, 135, 3, 32, 16, 0, 131, 132, 5, 1, 0, 0, 132, 134,
+		3, 32, 16, 0, 133, 131, 1, 0, 0, 0, 134, 137, 1, 0, 0, 0, 135, 133, 1,
+		0, 0, 0, 135, 136, 1, 0, 0, 0, 136, 138, 1, 0, 0, 0, 137, 135, 1, 0, 0,
+		0, 138, 139, 5, 18, 0, 0, 139, 29, 1, 0, 0, 0, 140, 141, 5, 16, 0, 0, 141,
+		31, 1, 0, 0, 0, 142, 147, 1, 0, 0, 0, 143, 147, 3, 14, 7, 0, 144, 147,
+		3, 20, 10, 0, 145, 147, 3, 46, 23, 0, 146, 142, 1, 0, 0, 0, 146, 143, 1,
+		0, 0, 0, 146, 144, 1, 0, 0, 0, 146, 145, 1, 0, 0, 0, 147, 33, 1, 0, 0,
+		0, 148, 149, 5, 2, 0, 0, 149, 150, 3, 36, 18, 0, 150, 151, 5, 3, 0, 0,
+		151, 35, 1, 0, 0, 0, 152, 153, 3, 12, 6, 0, 153, 37, 1, 0, 0, 0, 154, 155,
+		5, 21, 0, 0, 155, 39, 1, 0, 0, 0, 156, 157, 5, 20, 0, 0, 157, 41, 1, 0,
+		0, 0, 158, 159, 7, 0, 0, 0, 159, 43, 1, 0, 0, 0, 160, 161, 7, 1, 0, 0,
+		161, 45, 1, 0, 0, 0, 162, 163, 7, 2, 0, 0, 163, 47, 1, 0, 0, 0, 164, 165,
+		5, 7, 0, 0, 165, 49, 1, 0, 0, 0, 166, 167, 5, 8, 0, 0, 167, 51, 1, 0, 0,
+		0, 10, 60, 71, 80, 87, 93, 101, 107, 113, 135, 146,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -162,25 +159,25 @@ const (
 	ActionParserT__0                     = 1
 	ActionParserT__1                     = 2
 	ActionParserT__2                     = 3
-	ActionParserT__3                     = 4
-	ActionParserSTRING_INSIDE_EXPRESSION = 5
-	ActionParserBOOLEAN                  = 6
-	ActionParserNULL                     = 7
-	ActionParserEXP_START                = 8
-	ActionParserEXP_END                  = 9
-	ActionParserNUMBER                   = 10
-	ActionParserEQ                       = 11
-	ActionParserNEQ                      = 12
-	ActionParserGT                       = 13
-	ActionParserLT                       = 14
-	ActionParserGTE                      = 15
-	ActionParserLTE                      = 16
-	ActionParserID                       = 17
-	ActionParserLPAREN                   = 18
-	ActionParserRPAREN                   = 19
-	ActionParserNOT                      = 20
-	ActionParserOR                       = 21
-	ActionParserAND                      = 22
+	ActionParserSTRING_INSIDE_EXPRESSION = 4
+	ActionParserBOOLEAN                  = 5
+	ActionParserNULL                     = 6
+	ActionParserEXP_START                = 7
+	ActionParserEXP_END                  = 8
+	ActionParserNUMBER                   = 9
+	ActionParserEQ                       = 10
+	ActionParserNEQ                      = 11
+	ActionParserGT                       = 12
+	ActionParserLT                       = 13
+	ActionParserGTE                      = 14
+	ActionParserLTE                      = 15
+	ActionParserID                       = 16
+	ActionParserLPAREN                   = 17
+	ActionParserRPAREN                   = 18
+	ActionParserNOT                      = 19
+	ActionParserOR                       = 20
+	ActionParserAND                      = 21
+	ActionParserDOT                      = 22
 	ActionParserWS                       = 23
 )
 
@@ -195,20 +192,23 @@ const (
 	ActionParserRULE_primaryExpression     = 6
 	ActionParserRULE_variableContext       = 7
 	ActionParserRULE_variablePath          = 8
-	ActionParserRULE_numberExpression      = 9
-	ActionParserRULE_stringExpression      = 10
-	ActionParserRULE_termExpression        = 11
-	ActionParserRULE_notExpression         = 12
-	ActionParserRULE_functionCall          = 13
-	ActionParserRULE_functionCallArguments = 14
-	ActionParserRULE_functionCallArg       = 15
-	ActionParserRULE_array                 = 16
-	ActionParserRULE_arrayIndex            = 17
-	ActionParserRULE_andOperator           = 18
-	ActionParserRULE_orOperator            = 19
-	ActionParserRULE_comparisonOperator    = 20
-	ActionParserRULE_equalityOperator      = 21
-	ActionParserRULE_literal               = 22
+	ActionParserRULE_variableIdentifier    = 9
+	ActionParserRULE_numberExpression      = 10
+	ActionParserRULE_stringExpression      = 11
+	ActionParserRULE_termExpression        = 12
+	ActionParserRULE_notExpression         = 13
+	ActionParserRULE_functionCall          = 14
+	ActionParserRULE_functionName          = 15
+	ActionParserRULE_functionCallArguments = 16
+	ActionParserRULE_array                 = 17
+	ActionParserRULE_arrayIndex            = 18
+	ActionParserRULE_andOperator           = 19
+	ActionParserRULE_orOperator            = 20
+	ActionParserRULE_comparisonOperator    = 21
+	ActionParserRULE_equalityOperator      = 22
+	ActionParserRULE_literal               = 23
+	ActionParserRULE_expressionStart       = 24
+	ActionParserRULE_expressionEnd         = 25
 )
 
 // IStartContext is an interface to support dynamic dispatch.
@@ -318,11 +318,11 @@ func (p *ActionParser) Start() (localctx IStartContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(46)
+		p.SetState(52)
 		p.Expression()
 	}
 	{
-		p.SetState(47)
+		p.SetState(53)
 		p.Match(ActionParserEOF)
 	}
 
@@ -337,10 +337,10 @@ type IExpressionContext interface {
 	GetParser() antlr.Parser
 
 	// Getter signatures
-	EXP_START() antlr.TerminalNode
+	ExpressionStart() IExpressionStartContext
 	AllOrExpression() []IOrExpressionContext
 	OrExpression(i int) IOrExpressionContext
-	EXP_END() antlr.TerminalNode
+	ExpressionEnd() IExpressionEndContext
 
 	// IsExpressionContext differentiates from other interfaces.
 	IsExpressionContext()
@@ -373,8 +373,20 @@ func NewExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, i
 
 func (s *ExpressionContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *ExpressionContext) EXP_START() antlr.TerminalNode {
-	return s.GetToken(ActionParserEXP_START, 0)
+func (s *ExpressionContext) ExpressionStart() IExpressionStartContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IExpressionStartContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IExpressionStartContext)
 }
 
 func (s *ExpressionContext) AllOrExpression() []IOrExpressionContext {
@@ -418,8 +430,20 @@ func (s *ExpressionContext) OrExpression(i int) IOrExpressionContext {
 	return t.(IOrExpressionContext)
 }
 
-func (s *ExpressionContext) EXP_END() antlr.TerminalNode {
-	return s.GetToken(ActionParserEXP_END, 0)
+func (s *ExpressionContext) ExpressionEnd() IExpressionEndContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IExpressionEndContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IExpressionEndContext)
 }
 
 func (s *ExpressionContext) GetRuleContext() antlr.RuleContext {
@@ -468,30 +492,30 @@ func (p *ActionParser) Expression() (localctx IExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(49)
-		p.Match(ActionParserEXP_START)
+		p.SetState(55)
+		p.ExpressionStart()
 	}
 	{
-		p.SetState(50)
+		p.SetState(56)
 		p.OrExpression()
 	}
-	p.SetState(54)
+	p.SetState(60)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&1442848) != 0 {
+	for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&721424) != 0 {
 		{
-			p.SetState(51)
+			p.SetState(57)
 			p.OrExpression()
 		}
 
-		p.SetState(56)
+		p.SetState(62)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
-		p.SetState(57)
-		p.Match(ActionParserEXP_END)
+		p.SetState(63)
+		p.ExpressionEnd()
 	}
 
 	return localctx
@@ -669,24 +693,24 @@ func (p *ActionParser) OrExpression() (localctx IOrExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(59)
+		p.SetState(65)
 		p.AndExpression()
 	}
-	p.SetState(65)
+	p.SetState(71)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == ActionParserOR {
 		{
-			p.SetState(60)
+			p.SetState(66)
 			p.OrOperator()
 		}
 		{
-			p.SetState(61)
+			p.SetState(67)
 			p.AndExpression()
 		}
 
-		p.SetState(67)
+		p.SetState(73)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -866,24 +890,24 @@ func (p *ActionParser) AndExpression() (localctx IAndExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(68)
+		p.SetState(74)
 		p.ComparisonExpression()
 	}
-	p.SetState(74)
+	p.SetState(80)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	for _la == ActionParserAND {
 		{
-			p.SetState(69)
+			p.SetState(75)
 			p.AndOperator()
 		}
 		{
-			p.SetState(70)
+			p.SetState(76)
 			p.ComparisonExpression()
 		}
 
-		p.SetState(76)
+		p.SetState(82)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -901,8 +925,7 @@ type IComparisonExpressionContext interface {
 	// Getter signatures
 	AllEqualityExpression() []IEqualityExpressionContext
 	EqualityExpression(i int) IEqualityExpressionContext
-	AllComparisonOperator() []IComparisonOperatorContext
-	ComparisonOperator(i int) IComparisonOperatorContext
+	ComparisonOperator() IComparisonOperatorContext
 
 	// IsComparisonExpressionContext differentiates from other interfaces.
 	IsComparisonExpressionContext()
@@ -976,37 +999,12 @@ func (s *ComparisonExpressionContext) EqualityExpression(i int) IEqualityExpress
 	return t.(IEqualityExpressionContext)
 }
 
-func (s *ComparisonExpressionContext) AllComparisonOperator() []IComparisonOperatorContext {
-	children := s.GetChildren()
-	len := 0
-	for _, ctx := range children {
-		if _, ok := ctx.(IComparisonOperatorContext); ok {
-			len++
-		}
-	}
-
-	tst := make([]IComparisonOperatorContext, len)
-	i := 0
-	for _, ctx := range children {
-		if t, ok := ctx.(IComparisonOperatorContext); ok {
-			tst[i] = t.(IComparisonOperatorContext)
-			i++
-		}
-	}
-
-	return tst
-}
-
-func (s *ComparisonExpressionContext) ComparisonOperator(i int) IComparisonOperatorContext {
+func (s *ComparisonExpressionContext) ComparisonOperator() IComparisonOperatorContext {
 	var t antlr.RuleContext
-	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IComparisonOperatorContext); ok {
-			if j == i {
-				t = ctx.(antlr.RuleContext)
-				break
-			}
-			j++
+			t = ctx.(antlr.RuleContext)
+			break
 		}
 	}
 
@@ -1063,26 +1061,23 @@ func (p *ActionParser) ComparisonExpression() (localctx IComparisonExpressionCon
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(77)
+		p.SetState(83)
 		p.EqualityExpression()
 	}
-	p.SetState(83)
+	p.SetState(87)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&122880) != 0 {
+	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&61440) != 0 {
 		{
-			p.SetState(78)
+			p.SetState(84)
 			p.ComparisonOperator()
 		}
 		{
-			p.SetState(79)
+			p.SetState(85)
 			p.EqualityExpression()
 		}
 
-		p.SetState(85)
-		p.GetErrorHandler().Sync(p)
-		_la = p.GetTokenStream().LA(1)
 	}
 
 	return localctx
@@ -1098,8 +1093,7 @@ type IEqualityExpressionContext interface {
 	// Getter signatures
 	AllPrimaryExpression() []IPrimaryExpressionContext
 	PrimaryExpression(i int) IPrimaryExpressionContext
-	AllEqualityOperator() []IEqualityOperatorContext
-	EqualityOperator(i int) IEqualityOperatorContext
+	EqualityOperator() IEqualityOperatorContext
 
 	// IsEqualityExpressionContext differentiates from other interfaces.
 	IsEqualityExpressionContext()
@@ -1173,37 +1167,12 @@ func (s *EqualityExpressionContext) PrimaryExpression(i int) IPrimaryExpressionC
 	return t.(IPrimaryExpressionContext)
 }
 
-func (s *EqualityExpressionContext) AllEqualityOperator() []IEqualityOperatorContext {
-	children := s.GetChildren()
-	len := 0
-	for _, ctx := range children {
-		if _, ok := ctx.(IEqualityOperatorContext); ok {
-			len++
-		}
-	}
-
-	tst := make([]IEqualityOperatorContext, len)
-	i := 0
-	for _, ctx := range children {
-		if t, ok := ctx.(IEqualityOperatorContext); ok {
-			tst[i] = t.(IEqualityOperatorContext)
-			i++
-		}
-	}
-
-	return tst
-}
-
-func (s *EqualityExpressionContext) EqualityOperator(i int) IEqualityOperatorContext {
+func (s *EqualityExpressionContext) EqualityOperator() IEqualityOperatorContext {
 	var t antlr.RuleContext
-	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IEqualityOperatorContext); ok {
-			if j == i {
-				t = ctx.(antlr.RuleContext)
-				break
-			}
-			j++
+			t = ctx.(antlr.RuleContext)
+			break
 		}
 	}
 
@@ -1260,26 +1229,23 @@ func (p *ActionParser) EqualityExpression() (localctx IEqualityExpressionContext
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(86)
+		p.SetState(89)
 		p.PrimaryExpression()
 	}
-	p.SetState(92)
+	p.SetState(93)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for _la == ActionParserEQ || _la == ActionParserNEQ {
+	if _la == ActionParserEQ || _la == ActionParserNEQ {
 		{
-			p.SetState(87)
+			p.SetState(90)
 			p.EqualityOperator()
 		}
 		{
-			p.SetState(88)
+			p.SetState(91)
 			p.PrimaryExpression()
 		}
 
-		p.SetState(94)
-		p.GetErrorHandler().Sync(p)
-		_la = p.GetTokenStream().LA(1)
 	}
 
 	return localctx
@@ -1528,7 +1494,7 @@ type IVariableContextContext interface {
 	GetParser() antlr.Parser
 
 	// Getter signatures
-	ID() antlr.TerminalNode
+	VariableIdentifier() IVariableIdentifierContext
 	AllVariablePath() []IVariablePathContext
 	VariablePath(i int) IVariablePathContext
 
@@ -1563,8 +1529,20 @@ func NewVariableContextContext(parser antlr.Parser, parent antlr.ParserRuleConte
 
 func (s *VariableContextContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *VariableContextContext) ID() antlr.TerminalNode {
-	return s.GetToken(ActionParserID, 0)
+func (s *VariableContextContext) VariableIdentifier() IVariableIdentifierContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IVariableIdentifierContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IVariableIdentifierContext)
 }
 
 func (s *VariableContextContext) AllVariablePath() []IVariablePathContext {
@@ -1655,13 +1633,13 @@ func (p *ActionParser) VariableContext() (localctx IVariableContextContext) {
 	p.EnterOuterAlt(localctx, 1)
 	{
 		p.SetState(103)
-		p.Match(ActionParserID)
+		p.VariableIdentifier()
 	}
 	p.SetState(107)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for _la == ActionParserT__0 || _la == ActionParserT__2 {
+	for _la == ActionParserT__1 || _la == ActionParserDOT {
 		{
 			p.SetState(104)
 			p.VariablePath()
@@ -1683,7 +1661,8 @@ type IVariablePathContext interface {
 	GetParser() antlr.Parser
 
 	// Getter signatures
-	ID() antlr.TerminalNode
+	DOT() antlr.TerminalNode
+	VariableIdentifier() IVariableIdentifierContext
 	Array() IArrayContext
 
 	// IsVariablePathContext differentiates from other interfaces.
@@ -1717,8 +1696,24 @@ func NewVariablePathContext(parser antlr.Parser, parent antlr.ParserRuleContext,
 
 func (s *VariablePathContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *VariablePathContext) ID() antlr.TerminalNode {
-	return s.GetToken(ActionParserID, 0)
+func (s *VariablePathContext) DOT() antlr.TerminalNode {
+	return s.GetToken(ActionParserDOT, 0)
+}
+
+func (s *VariablePathContext) VariableIdentifier() IVariableIdentifierContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IVariableIdentifierContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IVariableIdentifierContext)
 }
 
 func (s *VariablePathContext) Array() IArrayContext {
@@ -1785,17 +1780,17 @@ func (p *ActionParser) VariablePath() (localctx IVariablePathContext) {
 	p.GetErrorHandler().Sync(p)
 
 	switch p.GetTokenStream().LA(1) {
-	case ActionParserT__0:
+	case ActionParserDOT:
 		{
 			p.SetState(110)
-			p.Match(ActionParserT__0)
+			p.Match(ActionParserDOT)
 		}
 		{
 			p.SetState(111)
-			p.Match(ActionParserID)
+			p.VariableIdentifier()
 		}
 
-	case ActionParserT__2:
+	case ActionParserT__1:
 		{
 			p.SetState(112)
 			p.Array()
@@ -1803,6 +1798,103 @@ func (p *ActionParser) VariablePath() (localctx IVariablePathContext) {
 
 	default:
 		panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
+	}
+
+	return localctx
+}
+
+// IVariableIdentifierContext is an interface to support dynamic dispatch.
+type IVariableIdentifierContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// Getter signatures
+	ID() antlr.TerminalNode
+
+	// IsVariableIdentifierContext differentiates from other interfaces.
+	IsVariableIdentifierContext()
+}
+
+type VariableIdentifierContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyVariableIdentifierContext() *VariableIdentifierContext {
+	var p = new(VariableIdentifierContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = ActionParserRULE_variableIdentifier
+	return p
+}
+
+func (*VariableIdentifierContext) IsVariableIdentifierContext() {}
+
+func NewVariableIdentifierContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *VariableIdentifierContext {
+	var p = new(VariableIdentifierContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = ActionParserRULE_variableIdentifier
+
+	return p
+}
+
+func (s *VariableIdentifierContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *VariableIdentifierContext) ID() antlr.TerminalNode {
+	return s.GetToken(ActionParserID, 0)
+}
+
+func (s *VariableIdentifierContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *VariableIdentifierContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *VariableIdentifierContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.EnterVariableIdentifier(s)
+	}
+}
+
+func (s *VariableIdentifierContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.ExitVariableIdentifier(s)
+	}
+}
+
+func (p *ActionParser) VariableIdentifier() (localctx IVariableIdentifierContext) {
+	this := p
+	_ = this
+
+	localctx = NewVariableIdentifierContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 18, ActionParserRULE_variableIdentifier)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(115)
+		p.Match(ActionParserID)
 	}
 
 	return localctx
@@ -1878,7 +1970,7 @@ func (p *ActionParser) NumberExpression() (localctx INumberExpressionContext) {
 	_ = this
 
 	localctx = NewNumberExpressionContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 18, ActionParserRULE_numberExpression)
+	p.EnterRule(localctx, 20, ActionParserRULE_numberExpression)
 
 	defer func() {
 		p.ExitRule()
@@ -1898,7 +1990,7 @@ func (p *ActionParser) NumberExpression() (localctx INumberExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(115)
+		p.SetState(117)
 		p.Match(ActionParserNUMBER)
 	}
 
@@ -1975,7 +2067,7 @@ func (p *ActionParser) StringExpression() (localctx IStringExpressionContext) {
 	_ = this
 
 	localctx = NewStringExpressionContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 20, ActionParserRULE_stringExpression)
+	p.EnterRule(localctx, 22, ActionParserRULE_stringExpression)
 
 	defer func() {
 		p.ExitRule()
@@ -1995,7 +2087,7 @@ func (p *ActionParser) StringExpression() (localctx IStringExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(117)
+		p.SetState(119)
 		p.Match(ActionParserSTRING_INSIDE_EXPRESSION)
 	}
 
@@ -2094,7 +2186,7 @@ func (p *ActionParser) TermExpression() (localctx ITermExpressionContext) {
 	_ = this
 
 	localctx = NewTermExpressionContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 22, ActionParserRULE_termExpression)
+	p.EnterRule(localctx, 24, ActionParserRULE_termExpression)
 
 	defer func() {
 		p.ExitRule()
@@ -2114,15 +2206,15 @@ func (p *ActionParser) TermExpression() (localctx ITermExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(119)
+		p.SetState(121)
 		p.Match(ActionParserLPAREN)
 	}
 	{
-		p.SetState(120)
+		p.SetState(122)
 		p.OrExpression()
 	}
 	{
-		p.SetState(121)
+		p.SetState(123)
 		p.Match(ActionParserRPAREN)
 	}
 
@@ -2216,7 +2308,7 @@ func (p *ActionParser) NotExpression() (localctx INotExpressionContext) {
 	_ = this
 
 	localctx = NewNotExpressionContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 24, ActionParserRULE_notExpression)
+	p.EnterRule(localctx, 26, ActionParserRULE_notExpression)
 
 	defer func() {
 		p.ExitRule()
@@ -2236,11 +2328,11 @@ func (p *ActionParser) NotExpression() (localctx INotExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(123)
+		p.SetState(125)
 		p.Match(ActionParserNOT)
 	}
 	{
-		p.SetState(124)
+		p.SetState(126)
 		p.PrimaryExpression()
 	}
 
@@ -2255,12 +2347,11 @@ type IFunctionCallContext interface {
 	GetParser() antlr.Parser
 
 	// Getter signatures
-	ID() antlr.TerminalNode
+	FunctionName() IFunctionNameContext
 	LPAREN() antlr.TerminalNode
-	FunctionCallArguments() IFunctionCallArgumentsContext
+	AllFunctionCallArguments() []IFunctionCallArgumentsContext
+	FunctionCallArguments(i int) IFunctionCallArgumentsContext
 	RPAREN() antlr.TerminalNode
-	AllVariablePath() []IVariablePathContext
-	VariablePath(i int) IVariablePathContext
 
 	// IsFunctionCallContext differentiates from other interfaces.
 	IsFunctionCallContext()
@@ -2293,18 +2384,10 @@ func NewFunctionCallContext(parser antlr.Parser, parent antlr.ParserRuleContext,
 
 func (s *FunctionCallContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *FunctionCallContext) ID() antlr.TerminalNode {
-	return s.GetToken(ActionParserID, 0)
-}
-
-func (s *FunctionCallContext) LPAREN() antlr.TerminalNode {
-	return s.GetToken(ActionParserLPAREN, 0)
-}
-
-func (s *FunctionCallContext) FunctionCallArguments() IFunctionCallArgumentsContext {
+func (s *FunctionCallContext) FunctionName() IFunctionNameContext {
 	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IFunctionCallArgumentsContext); ok {
+		if _, ok := ctx.(IFunctionNameContext); ok {
 			t = ctx.(antlr.RuleContext)
 			break
 		}
@@ -2314,27 +2397,27 @@ func (s *FunctionCallContext) FunctionCallArguments() IFunctionCallArgumentsCont
 		return nil
 	}
 
-	return t.(IFunctionCallArgumentsContext)
+	return t.(IFunctionNameContext)
 }
 
-func (s *FunctionCallContext) RPAREN() antlr.TerminalNode {
-	return s.GetToken(ActionParserRPAREN, 0)
+func (s *FunctionCallContext) LPAREN() antlr.TerminalNode {
+	return s.GetToken(ActionParserLPAREN, 0)
 }
 
-func (s *FunctionCallContext) AllVariablePath() []IVariablePathContext {
+func (s *FunctionCallContext) AllFunctionCallArguments() []IFunctionCallArgumentsContext {
 	children := s.GetChildren()
 	len := 0
 	for _, ctx := range children {
-		if _, ok := ctx.(IVariablePathContext); ok {
+		if _, ok := ctx.(IFunctionCallArgumentsContext); ok {
 			len++
 		}
 	}
 
-	tst := make([]IVariablePathContext, len)
+	tst := make([]IFunctionCallArgumentsContext, len)
 	i := 0
 	for _, ctx := range children {
-		if t, ok := ctx.(IVariablePathContext); ok {
-			tst[i] = t.(IVariablePathContext)
+		if t, ok := ctx.(IFunctionCallArgumentsContext); ok {
+			tst[i] = t.(IFunctionCallArgumentsContext)
 			i++
 		}
 	}
@@ -2342,11 +2425,11 @@ func (s *FunctionCallContext) AllVariablePath() []IVariablePathContext {
 	return tst
 }
 
-func (s *FunctionCallContext) VariablePath(i int) IVariablePathContext {
+func (s *FunctionCallContext) FunctionCallArguments(i int) IFunctionCallArgumentsContext {
 	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IVariablePathContext); ok {
+		if _, ok := ctx.(IFunctionCallArgumentsContext); ok {
 			if j == i {
 				t = ctx.(antlr.RuleContext)
 				break
@@ -2359,7 +2442,11 @@ func (s *FunctionCallContext) VariablePath(i int) IVariablePathContext {
 		return nil
 	}
 
-	return t.(IVariablePathContext)
+	return t.(IFunctionCallArgumentsContext)
+}
+
+func (s *FunctionCallContext) RPAREN() antlr.TerminalNode {
+	return s.GetToken(ActionParserRPAREN, 0)
 }
 
 func (s *FunctionCallContext) GetRuleContext() antlr.RuleContext {
@@ -2387,7 +2474,7 @@ func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 	_ = this
 
 	localctx = NewFunctionCallContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 26, ActionParserRULE_functionCall)
+	p.EnterRule(localctx, 28, ActionParserRULE_functionCall)
 	var _la int
 
 	defer func() {
@@ -2408,34 +2495,135 @@ func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(126)
-		p.Match(ActionParserID)
-	}
-	{
-		p.SetState(127)
-		p.Match(ActionParserLPAREN)
-	}
-	{
 		p.SetState(128)
-		p.FunctionCallArguments()
+		p.FunctionName()
 	}
 	{
 		p.SetState(129)
-		p.Match(ActionParserRPAREN)
+		p.Match(ActionParserLPAREN)
 	}
-	p.SetState(133)
+	{
+		p.SetState(130)
+		p.FunctionCallArguments()
+	}
+	p.SetState(135)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for _la == ActionParserT__0 || _la == ActionParserT__2 {
+	for _la == ActionParserT__0 {
 		{
-			p.SetState(130)
-			p.VariablePath()
+			p.SetState(131)
+			p.Match(ActionParserT__0)
+		}
+		{
+			p.SetState(132)
+			p.FunctionCallArguments()
 		}
 
-		p.SetState(135)
+		p.SetState(137)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
+	}
+	{
+		p.SetState(138)
+		p.Match(ActionParserRPAREN)
+	}
+
+	return localctx
+}
+
+// IFunctionNameContext is an interface to support dynamic dispatch.
+type IFunctionNameContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// Getter signatures
+	ID() antlr.TerminalNode
+
+	// IsFunctionNameContext differentiates from other interfaces.
+	IsFunctionNameContext()
+}
+
+type FunctionNameContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyFunctionNameContext() *FunctionNameContext {
+	var p = new(FunctionNameContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = ActionParserRULE_functionName
+	return p
+}
+
+func (*FunctionNameContext) IsFunctionNameContext() {}
+
+func NewFunctionNameContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FunctionNameContext {
+	var p = new(FunctionNameContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = ActionParserRULE_functionName
+
+	return p
+}
+
+func (s *FunctionNameContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *FunctionNameContext) ID() antlr.TerminalNode {
+	return s.GetToken(ActionParserID, 0)
+}
+
+func (s *FunctionNameContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *FunctionNameContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *FunctionNameContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.EnterFunctionName(s)
+	}
+}
+
+func (s *FunctionNameContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.ExitFunctionName(s)
+	}
+}
+
+func (p *ActionParser) FunctionName() (localctx IFunctionNameContext) {
+	this := p
+	_ = this
+
+	localctx = NewFunctionNameContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 30, ActionParserRULE_functionName)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(140)
+		p.Match(ActionParserID)
 	}
 
 	return localctx
@@ -2449,8 +2637,9 @@ type IFunctionCallArgumentsContext interface {
 	GetParser() antlr.Parser
 
 	// Getter signatures
-	AllFunctionCallArg() []IFunctionCallArgContext
-	FunctionCallArg(i int) IFunctionCallArgContext
+	VariableContext() IVariableContextContext
+	NumberExpression() INumberExpressionContext
+	Literal() ILiteralContext
 
 	// IsFunctionCallArgumentsContext differentiates from other interfaces.
 	IsFunctionCallArgumentsContext()
@@ -2483,37 +2672,12 @@ func NewFunctionCallArgumentsContext(parser antlr.Parser, parent antlr.ParserRul
 
 func (s *FunctionCallArgumentsContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *FunctionCallArgumentsContext) AllFunctionCallArg() []IFunctionCallArgContext {
-	children := s.GetChildren()
-	len := 0
-	for _, ctx := range children {
-		if _, ok := ctx.(IFunctionCallArgContext); ok {
-			len++
-		}
-	}
-
-	tst := make([]IFunctionCallArgContext, len)
-	i := 0
-	for _, ctx := range children {
-		if t, ok := ctx.(IFunctionCallArgContext); ok {
-			tst[i] = t.(IFunctionCallArgContext)
-			i++
-		}
-	}
-
-	return tst
-}
-
-func (s *FunctionCallArgumentsContext) FunctionCallArg(i int) IFunctionCallArgContext {
+func (s *FunctionCallArgumentsContext) VariableContext() IVariableContextContext {
 	var t antlr.RuleContext
-	j := 0
 	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IFunctionCallArgContext); ok {
-			if j == i {
-				t = ctx.(antlr.RuleContext)
-				break
-			}
-			j++
+		if _, ok := ctx.(IVariableContextContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
 		}
 	}
 
@@ -2521,7 +2685,39 @@ func (s *FunctionCallArgumentsContext) FunctionCallArg(i int) IFunctionCallArgCo
 		return nil
 	}
 
-	return t.(IFunctionCallArgContext)
+	return t.(IVariableContextContext)
+}
+
+func (s *FunctionCallArgumentsContext) NumberExpression() INumberExpressionContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(INumberExpressionContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(INumberExpressionContext)
+}
+
+func (s *FunctionCallArgumentsContext) Literal() ILiteralContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(ILiteralContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(ILiteralContext)
 }
 
 func (s *FunctionCallArgumentsContext) GetRuleContext() antlr.RuleContext {
@@ -2549,8 +2745,7 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 	_ = this
 
 	localctx = NewFunctionCallArgumentsContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 28, ActionParserRULE_functionCallArguments)
-	var _la int
+	p.EnterRule(localctx, 32, ActionParserRULE_functionCallArguments)
 
 	defer func() {
 		p.ExitRule()
@@ -2568,204 +2763,30 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 		}
 	}()
 
-	p.EnterOuterAlt(localctx, 1)
-	{
-		p.SetState(136)
-		p.FunctionCallArg()
-	}
-	p.SetState(141)
+	p.SetState(146)
 	p.GetErrorHandler().Sync(p)
-	_la = p.GetTokenStream().LA(1)
-
-	for _la == ActionParserT__1 {
-		{
-			p.SetState(137)
-			p.Match(ActionParserT__1)
-		}
-		{
-			p.SetState(138)
-			p.FunctionCallArg()
-		}
-
-		p.SetState(143)
-		p.GetErrorHandler().Sync(p)
-		_la = p.GetTokenStream().LA(1)
-	}
-
-	return localctx
-}
-
-// IFunctionCallArgContext is an interface to support dynamic dispatch.
-type IFunctionCallArgContext interface {
-	antlr.ParserRuleContext
-
-	// GetParser returns the parser.
-	GetParser() antlr.Parser
-
-	// Getter signatures
-	AllPrimaryExpression() []IPrimaryExpressionContext
-	PrimaryExpression(i int) IPrimaryExpressionContext
-	Literal() ILiteralContext
-
-	// IsFunctionCallArgContext differentiates from other interfaces.
-	IsFunctionCallArgContext()
-}
-
-type FunctionCallArgContext struct {
-	*antlr.BaseParserRuleContext
-	parser antlr.Parser
-}
-
-func NewEmptyFunctionCallArgContext() *FunctionCallArgContext {
-	var p = new(FunctionCallArgContext)
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
-	p.RuleIndex = ActionParserRULE_functionCallArg
-	return p
-}
-
-func (*FunctionCallArgContext) IsFunctionCallArgContext() {}
-
-func NewFunctionCallArgContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *FunctionCallArgContext {
-	var p = new(FunctionCallArgContext)
-
-	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
-
-	p.parser = parser
-	p.RuleIndex = ActionParserRULE_functionCallArg
-
-	return p
-}
-
-func (s *FunctionCallArgContext) GetParser() antlr.Parser { return s.parser }
-
-func (s *FunctionCallArgContext) AllPrimaryExpression() []IPrimaryExpressionContext {
-	children := s.GetChildren()
-	len := 0
-	for _, ctx := range children {
-		if _, ok := ctx.(IPrimaryExpressionContext); ok {
-			len++
-		}
-	}
-
-	tst := make([]IPrimaryExpressionContext, len)
-	i := 0
-	for _, ctx := range children {
-		if t, ok := ctx.(IPrimaryExpressionContext); ok {
-			tst[i] = t.(IPrimaryExpressionContext)
-			i++
-		}
-	}
-
-	return tst
-}
-
-func (s *FunctionCallArgContext) PrimaryExpression(i int) IPrimaryExpressionContext {
-	var t antlr.RuleContext
-	j := 0
-	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IPrimaryExpressionContext); ok {
-			if j == i {
-				t = ctx.(antlr.RuleContext)
-				break
-			}
-			j++
-		}
-	}
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(IPrimaryExpressionContext)
-}
-
-func (s *FunctionCallArgContext) Literal() ILiteralContext {
-	var t antlr.RuleContext
-	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(ILiteralContext); ok {
-			t = ctx.(antlr.RuleContext)
-			break
-		}
-	}
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(ILiteralContext)
-}
-
-func (s *FunctionCallArgContext) GetRuleContext() antlr.RuleContext {
-	return s
-}
-
-func (s *FunctionCallArgContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
-	return antlr.TreesStringTree(s, ruleNames, recog)
-}
-
-func (s *FunctionCallArgContext) EnterRule(listener antlr.ParseTreeListener) {
-	if listenerT, ok := listener.(ActionListener); ok {
-		listenerT.EnterFunctionCallArg(s)
-	}
-}
-
-func (s *FunctionCallArgContext) ExitRule(listener antlr.ParseTreeListener) {
-	if listenerT, ok := listener.(ActionListener); ok {
-		listenerT.ExitFunctionCallArg(s)
-	}
-}
-
-func (p *ActionParser) FunctionCallArg() (localctx IFunctionCallArgContext) {
-	this := p
-	_ = this
-
-	localctx = NewFunctionCallArgContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 30, ActionParserRULE_functionCallArg)
-	var _la int
-
-	defer func() {
-		p.ExitRule()
-	}()
-
-	defer func() {
-		if err := recover(); err != nil {
-			if v, ok := err.(antlr.RecognitionException); ok {
-				localctx.SetException(v)
-				p.GetErrorHandler().ReportError(p, v)
-				p.GetErrorHandler().Recover(p, v)
-			} else {
-				panic(err)
-			}
-		}
-	}()
-
-	p.SetState(152)
-	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 11, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 9, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
-		p.SetState(148)
-		p.GetErrorHandler().Sync(p)
-		_la = p.GetTokenStream().LA(1)
-
-		for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&1442848) != 0 {
-			{
-				p.SetState(145)
-				p.PrimaryExpression()
-			}
-
-			p.SetState(150)
-			p.GetErrorHandler().Sync(p)
-			_la = p.GetTokenStream().LA(1)
+		{
+			p.SetState(143)
+			p.VariableContext()
 		}
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(151)
+			p.SetState(144)
+			p.NumberExpression()
+		}
+
+	case 4:
+		p.EnterOuterAlt(localctx, 4)
+		{
+			p.SetState(145)
 			p.Literal()
 		}
 
@@ -2856,7 +2877,7 @@ func (p *ActionParser) Array() (localctx IArrayContext) {
 	_ = this
 
 	localctx = NewArrayContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 32, ActionParserRULE_array)
+	p.EnterRule(localctx, 34, ActionParserRULE_array)
 
 	defer func() {
 		p.ExitRule()
@@ -2876,16 +2897,16 @@ func (p *ActionParser) Array() (localctx IArrayContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(154)
-		p.Match(ActionParserT__2)
+		p.SetState(148)
+		p.Match(ActionParserT__1)
 	}
 	{
-		p.SetState(155)
+		p.SetState(149)
 		p.ArrayIndex()
 	}
 	{
-		p.SetState(156)
-		p.Match(ActionParserT__3)
+		p.SetState(150)
+		p.Match(ActionParserT__2)
 	}
 
 	return localctx
@@ -2973,7 +2994,7 @@ func (p *ActionParser) ArrayIndex() (localctx IArrayIndexContext) {
 	_ = this
 
 	localctx = NewArrayIndexContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 34, ActionParserRULE_arrayIndex)
+	p.EnterRule(localctx, 36, ActionParserRULE_arrayIndex)
 
 	defer func() {
 		p.ExitRule()
@@ -2993,7 +3014,7 @@ func (p *ActionParser) ArrayIndex() (localctx IArrayIndexContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(158)
+		p.SetState(152)
 		p.PrimaryExpression()
 	}
 
@@ -3070,7 +3091,7 @@ func (p *ActionParser) AndOperator() (localctx IAndOperatorContext) {
 	_ = this
 
 	localctx = NewAndOperatorContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 36, ActionParserRULE_andOperator)
+	p.EnterRule(localctx, 38, ActionParserRULE_andOperator)
 
 	defer func() {
 		p.ExitRule()
@@ -3090,7 +3111,7 @@ func (p *ActionParser) AndOperator() (localctx IAndOperatorContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(160)
+		p.SetState(154)
 		p.Match(ActionParserAND)
 	}
 
@@ -3167,7 +3188,7 @@ func (p *ActionParser) OrOperator() (localctx IOrOperatorContext) {
 	_ = this
 
 	localctx = NewOrOperatorContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 38, ActionParserRULE_orOperator)
+	p.EnterRule(localctx, 40, ActionParserRULE_orOperator)
 
 	defer func() {
 		p.ExitRule()
@@ -3187,7 +3208,7 @@ func (p *ActionParser) OrOperator() (localctx IOrOperatorContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(162)
+		p.SetState(156)
 		p.Match(ActionParserOR)
 	}
 
@@ -3279,7 +3300,7 @@ func (p *ActionParser) ComparisonOperator() (localctx IComparisonOperatorContext
 	_ = this
 
 	localctx = NewComparisonOperatorContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 40, ActionParserRULE_comparisonOperator)
+	p.EnterRule(localctx, 42, ActionParserRULE_comparisonOperator)
 	var _la int
 
 	defer func() {
@@ -3300,10 +3321,10 @@ func (p *ActionParser) ComparisonOperator() (localctx IComparisonOperatorContext
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(164)
+		p.SetState(158)
 		_la = p.GetTokenStream().LA(1)
 
-		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&122880) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&61440) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -3389,7 +3410,7 @@ func (p *ActionParser) EqualityOperator() (localctx IEqualityOperatorContext) {
 	_ = this
 
 	localctx = NewEqualityOperatorContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 42, ActionParserRULE_equalityOperator)
+	p.EnterRule(localctx, 44, ActionParserRULE_equalityOperator)
 	var _la int
 
 	defer func() {
@@ -3410,7 +3431,7 @@ func (p *ActionParser) EqualityOperator() (localctx IEqualityOperatorContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(166)
+		p.SetState(160)
 		_la = p.GetTokenStream().LA(1)
 
 		if !(_la == ActionParserEQ || _la == ActionParserNEQ) {
@@ -3509,7 +3530,7 @@ func (p *ActionParser) Literal() (localctx ILiteralContext) {
 	_ = this
 
 	localctx = NewLiteralContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 44, ActionParserRULE_literal)
+	p.EnterRule(localctx, 46, ActionParserRULE_literal)
 	var _la int
 
 	defer func() {
@@ -3530,15 +3551,209 @@ func (p *ActionParser) Literal() (localctx ILiteralContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(168)
+		p.SetState(162)
 		_la = p.GetTokenStream().LA(1)
 
-		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&1248) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&624) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
 			p.Consume()
 		}
+	}
+
+	return localctx
+}
+
+// IExpressionStartContext is an interface to support dynamic dispatch.
+type IExpressionStartContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// Getter signatures
+	EXP_START() antlr.TerminalNode
+
+	// IsExpressionStartContext differentiates from other interfaces.
+	IsExpressionStartContext()
+}
+
+type ExpressionStartContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyExpressionStartContext() *ExpressionStartContext {
+	var p = new(ExpressionStartContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = ActionParserRULE_expressionStart
+	return p
+}
+
+func (*ExpressionStartContext) IsExpressionStartContext() {}
+
+func NewExpressionStartContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ExpressionStartContext {
+	var p = new(ExpressionStartContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = ActionParserRULE_expressionStart
+
+	return p
+}
+
+func (s *ExpressionStartContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *ExpressionStartContext) EXP_START() antlr.TerminalNode {
+	return s.GetToken(ActionParserEXP_START, 0)
+}
+
+func (s *ExpressionStartContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *ExpressionStartContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *ExpressionStartContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.EnterExpressionStart(s)
+	}
+}
+
+func (s *ExpressionStartContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.ExitExpressionStart(s)
+	}
+}
+
+func (p *ActionParser) ExpressionStart() (localctx IExpressionStartContext) {
+	this := p
+	_ = this
+
+	localctx = NewExpressionStartContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 48, ActionParserRULE_expressionStart)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(164)
+		p.Match(ActionParserEXP_START)
+	}
+
+	return localctx
+}
+
+// IExpressionEndContext is an interface to support dynamic dispatch.
+type IExpressionEndContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// Getter signatures
+	EXP_END() antlr.TerminalNode
+
+	// IsExpressionEndContext differentiates from other interfaces.
+	IsExpressionEndContext()
+}
+
+type ExpressionEndContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyExpressionEndContext() *ExpressionEndContext {
+	var p = new(ExpressionEndContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = ActionParserRULE_expressionEnd
+	return p
+}
+
+func (*ExpressionEndContext) IsExpressionEndContext() {}
+
+func NewExpressionEndContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ExpressionEndContext {
+	var p = new(ExpressionEndContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = ActionParserRULE_expressionEnd
+
+	return p
+}
+
+func (s *ExpressionEndContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *ExpressionEndContext) EXP_END() antlr.TerminalNode {
+	return s.GetToken(ActionParserEXP_END, 0)
+}
+
+func (s *ExpressionEndContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *ExpressionEndContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *ExpressionEndContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.EnterExpressionEnd(s)
+	}
+}
+
+func (s *ExpressionEndContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(ActionListener); ok {
+		listenerT.ExitExpressionEnd(s)
+	}
+}
+
+func (p *ActionParser) ExpressionEnd() (localctx IExpressionEndContext) {
+	this := p
+	_ = this
+
+	localctx = NewExpressionEndContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 50, ActionParserRULE_expressionEnd)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(166)
+		p.Match(ActionParserEXP_END)
 	}
 
 	return localctx

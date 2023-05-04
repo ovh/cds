@@ -2,23 +2,25 @@ grammar Action;
 
 
 start: expression EOF;
-expression: (EXP_START orExpression (orExpression)* EXP_END);
+expression: (expressionStart orExpression (orExpression)* expressionEnd);
 orExpression: andExpression (orOperator andExpression)*;
 andExpression: comparisonExpression (andOperator comparisonExpression)*;
-comparisonExpression: equalityExpression (comparisonOperator equalityExpression)*;
-equalityExpression: primaryExpression (equalityOperator primaryExpression)*;
+comparisonExpression: equalityExpression (comparisonOperator equalityExpression)?;
+equalityExpression: primaryExpression (equalityOperator primaryExpression)?;
 primaryExpression: variableContext | numberExpression | functionCall | stringExpression | termExpression | notExpression;
-variableContext: ID variablePath*;
-variablePath: ('.' ID | array) ;
+variableContext: variableIdentifier variablePath*;
+variablePath: (DOT variableIdentifier | array);
+variableIdentifier: ID;
 numberExpression: NUMBER;
 stringExpression: STRING_INSIDE_EXPRESSION;
-termExpression: '(' orExpression ')';
+termExpression: LPAREN orExpression RPAREN;
 notExpression: (NOT primaryExpression);
-functionCall: ID LPAREN functionCallArguments RPAREN (variablePath)*;
-functionCallArguments: functionCallArg (',' functionCallArg)*;
-functionCallArg
+functionCall: functionName LPAREN functionCallArguments (',' functionCallArguments)* RPAREN;
+functionName: ID;
+functionCallArguments
     : // No arguments
-    | primaryExpression* // Some arguments
+    | variableContext
+    | numberExpression
     | literal
     ;
 array: '[' arrayIndex ']';
@@ -28,6 +30,8 @@ orOperator: OR;
 comparisonOperator: (GT | LT | GTE | LTE);
 equalityOperator: (EQ | NEQ);
 literal: STRING_INSIDE_EXPRESSION | BOOLEAN | NULL | NUMBER;
+expressionStart: EXP_START;
+expressionEnd: EXP_END;
 
 STRING_INSIDE_EXPRESSION: '\'' (ESC|.)*? '\'';
 BOOLEAN: 'true' | 'false';
@@ -47,6 +51,7 @@ RPAREN      : ')';
 NOT         : '!';
 OR          : '||';
 AND         : '&&';
+DOT         : '.';
 
 fragment ESC: '\\' ["'\\/bfnrt];
 fragment INT: ('0' | [1-9][0-9]*) ;

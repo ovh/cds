@@ -35,6 +35,9 @@ type ActionListener interface {
 	// EnterVariablePath is called when entering the variablePath production.
 	EnterVariablePath(c *VariablePathContext)
 
+	// EnterVariableIdentifier is called when entering the variableIdentifier production.
+	EnterVariableIdentifier(c *VariableIdentifierContext)
+
 	// EnterNumberExpression is called when entering the numberExpression production.
 	EnterNumberExpression(c *NumberExpressionContext)
 
@@ -50,11 +53,11 @@ type ActionListener interface {
 	// EnterFunctionCall is called when entering the functionCall production.
 	EnterFunctionCall(c *FunctionCallContext)
 
+	// EnterFunctionName is called when entering the functionName production.
+	EnterFunctionName(c *FunctionNameContext)
+
 	// EnterFunctionCallArguments is called when entering the functionCallArguments production.
 	EnterFunctionCallArguments(c *FunctionCallArgumentsContext)
-
-	// EnterFunctionCallArg is called when entering the functionCallArg production.
-	EnterFunctionCallArg(c *FunctionCallArgContext)
 
 	// EnterArray is called when entering the array production.
 	EnterArray(c *ArrayContext)
@@ -76,6 +79,12 @@ type ActionListener interface {
 
 	// EnterLiteral is called when entering the literal production.
 	EnterLiteral(c *LiteralContext)
+
+	// EnterExpressionStart is called when entering the expressionStart production.
+	EnterExpressionStart(c *ExpressionStartContext)
+
+	// EnterExpressionEnd is called when entering the expressionEnd production.
+	EnterExpressionEnd(c *ExpressionEndContext)
 
 	// ExitStart is called when exiting the start production.
 	ExitStart(c *StartContext)
@@ -104,6 +113,9 @@ type ActionListener interface {
 	// ExitVariablePath is called when exiting the variablePath production.
 	ExitVariablePath(c *VariablePathContext)
 
+	// ExitVariableIdentifier is called when exiting the variableIdentifier production.
+	ExitVariableIdentifier(c *VariableIdentifierContext)
+
 	// ExitNumberExpression is called when exiting the numberExpression production.
 	ExitNumberExpression(c *NumberExpressionContext)
 
@@ -119,11 +131,11 @@ type ActionListener interface {
 	// ExitFunctionCall is called when exiting the functionCall production.
 	ExitFunctionCall(c *FunctionCallContext)
 
+	// ExitFunctionName is called when exiting the functionName production.
+	ExitFunctionName(c *FunctionNameContext)
+
 	// ExitFunctionCallArguments is called when exiting the functionCallArguments production.
 	ExitFunctionCallArguments(c *FunctionCallArgumentsContext)
-
-	// ExitFunctionCallArg is called when exiting the functionCallArg production.
-	ExitFunctionCallArg(c *FunctionCallArgContext)
 
 	// ExitArray is called when exiting the array production.
 	ExitArray(c *ArrayContext)
@@ -145,4 +157,10 @@ type ActionListener interface {
 
 	// ExitLiteral is called when exiting the literal production.
 	ExitLiteral(c *LiteralContext)
+
+	// ExitExpressionStart is called when exiting the expressionStart production.
+	ExitExpressionStart(c *ExpressionStartContext)
+
+	// ExitExpressionEnd is called when exiting the expressionEnd production.
+	ExitExpressionEnd(c *ExpressionEndContext)
 }

@@ -75,6 +75,12 @@ func (s *BaseActionListener) EnterVariablePath(ctx *VariablePathContext) {}
 // ExitVariablePath is called when production variablePath is exited.
 func (s *BaseActionListener) ExitVariablePath(ctx *VariablePathContext) {}
 
+// EnterVariableIdentifier is called when production variableIdentifier is entered.
+func (s *BaseActionListener) EnterVariableIdentifier(ctx *VariableIdentifierContext) {}
+
+// ExitVariableIdentifier is called when production variableIdentifier is exited.
+func (s *BaseActionListener) ExitVariableIdentifier(ctx *VariableIdentifierContext) {}
+
 // EnterNumberExpression is called when production numberExpression is entered.
 func (s *BaseActionListener) EnterNumberExpression(ctx *NumberExpressionContext) {}
 
@@ -105,17 +111,17 @@ func (s *BaseActionListener) EnterFunctionCall(ctx *FunctionCallContext) {}
 // ExitFunctionCall is called when production functionCall is exited.
 func (s *BaseActionListener) ExitFunctionCall(ctx *FunctionCallContext) {}
 
+// EnterFunctionName is called when production functionName is entered.
+func (s *BaseActionListener) EnterFunctionName(ctx *FunctionNameContext) {}
+
+// ExitFunctionName is called when production functionName is exited.
+func (s *BaseActionListener) ExitFunctionName(ctx *FunctionNameContext) {}
+
 // EnterFunctionCallArguments is called when production functionCallArguments is entered.
 func (s *BaseActionListener) EnterFunctionCallArguments(ctx *FunctionCallArgumentsContext) {}
 
 // ExitFunctionCallArguments is called when production functionCallArguments is exited.
 func (s *BaseActionListener) ExitFunctionCallArguments(ctx *FunctionCallArgumentsContext) {}
-
-// EnterFunctionCallArg is called when production functionCallArg is entered.
-func (s *BaseActionListener) EnterFunctionCallArg(ctx *FunctionCallArgContext) {}
-
-// ExitFunctionCallArg is called when production functionCallArg is exited.
-func (s *BaseActionListener) ExitFunctionCallArg(ctx *FunctionCallArgContext) {}
 
 // EnterArray is called when production array is entered.
 func (s *BaseActionListener) EnterArray(ctx *ArrayContext) {}
@@ -158,3 +164,15 @@ func (s *BaseActionListener) EnterLiteral(ctx *LiteralContext) {}
 
 // ExitLiteral is called when production literal is exited.
 func (s *BaseActionListener) ExitLiteral(ctx *LiteralContext) {}
+
+// EnterExpressionStart is called when production expressionStart is entered.
+func (s *BaseActionListener) EnterExpressionStart(ctx *ExpressionStartContext) {}
+
+// ExitExpressionStart is called when production expressionStart is exited.
+func (s *BaseActionListener) ExitExpressionStart(ctx *ExpressionStartContext) {}
+
+// EnterExpressionEnd is called when production expressionEnd is entered.
+func (s *BaseActionListener) EnterExpressionEnd(ctx *ExpressionEndContext) {}
+
+// ExitExpressionEnd is called when production expressionEnd is exited.
+func (s *BaseActionListener) ExitExpressionEnd(ctx *ExpressionEndContext) {}
