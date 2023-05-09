@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/docker/distribution/reference"
 	"github.com/rockbears/log"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,6 +67,13 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 	registry := "https://index.docker.io/v1/"
 	if model.ModelDocker.Registry != "" {
 		registry = model.ModelDocker.Registry
+	} else {
+		ref, err := reference.ParseNormalizedNamed(model.ModelDocker.Image)
+		if err != nil {
+			return "", sdk.WithStack(err)
+		}
+		domain := reference.Domain(ref)
+		model.ModelDocker.Registry = domain
 	}
 	dockerCfg := fmt.Sprintf(`{"auths":{"%s":{"username":"%s","password":"%s"}}}`, registry, model.ModelDocker.Username, model.ModelDocker.Password)
 

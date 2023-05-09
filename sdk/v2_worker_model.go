@@ -22,10 +22,9 @@ type V2WorkerModel struct {
 
 type V2WorkerModelDockerSpec struct {
 	Image    string            `json:"image" jsonschema:"minLength=1" jsonschema_extras:"order=1" jsonschema_description:"Docker image name"`
-	Registry string            `json:"registry,omitempty" jsonschema:"minLength=1" jsonschema_extras:"order=2" jsonschema_description:"The docker image registry"`
-	Username string            `json:"username,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Username to login to the registry"`
-	Password string            `json:"password,omitempty" jsonschema_extras:"order=4" jsonschema_description:"User password to login to the registry"`
-	Envs     map[string]string `json:"envs,omitempty" jsonschema_extras:"order=7" jsonschema_description:"Additional environment variables to inject into the worker"`
+	Username string            `json:"username,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Username to login to the registry"`
+	Password string            `json:"password,omitempty" jsonschema_extras:"order=3" jsonschema_description:"User password to login to the registry"`
+	Envs     map[string]string `json:"envs,omitempty" jsonschema_extras:"order=4" jsonschema_description:"Additional environment variables to inject into the worker"`
 }
 
 type V2WorkerModelOpenstackSpec struct {
