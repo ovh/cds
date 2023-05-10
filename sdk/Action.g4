@@ -63,20 +63,3 @@ fragment EXPONENT: [Ee] [+\-]? [0-9]+ ;
 fragment IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9-]*;
 
 WS: [ \t\r\n]+ -> skip;
-
-// ${{ github.repository }}
-//(${{ matrix.foo }} == 'bar' && ${{ env.BAZ }} != 'qux') || (${{ github.event_name }} == 'pull_request' && ${{ github.event.pull_request.head.ref }})} == 'main')
-
-//if [ "${{ matrix.os }}" = "ubuntu-latest" ] || [ "${{ matrix.os }}" = "macos-latest" ]; then echo "Hello, Linux/MacOS!"; fi
-//if [ "${{ contains(github.event.head_commit.message, 'Fix') }}" = "true" ]; then echo "Commit message contains 'Fix'"; fi
-
-//docker build -t my-image:${{ github.sha }} . && docker push my-image:${{ github.sha }}
-//if [ "${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}" = "true" ]; then echo "Push to main branch!"; fi
-
-// echo "The selected color is ${{ steps.random-color-generator.outputs.SELECTED_COLOR }}"
-// echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
-// ${{ input.data }}
-// ${{ toJSON(input.data).data[0].num }}
-// ${{ input.data.data[0].num }}
-// ${{ toInt('42') }}
-// ${{ format('Hello {0}!', 'world') }}
