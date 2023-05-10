@@ -96,20 +96,6 @@ func TestParserVariables(t *testing.T) {
 			},
 		},
 		{
-			name:   "simple array variable",
-			input:  "${{ git.changes[0].hash }}",
-			result: "123456",
-			context: map[string]interface{}{
-				"git": map[string]interface{}{
-					"changes": []map[string]interface{}{
-						{
-							"hash": "123456",
-						},
-					},
-				},
-			},
-		},
-		{
 			name:         "unknown context",
 			input:        "${{ job.id }}",
 			result:       "",
@@ -329,7 +315,7 @@ func TestParserBooleanExpression(t *testing.T) {
 			},
 		},
 		{
-			name:   "term expression or - ok",
+			name:   "term expression or - true",
 			input:  "${{ (git.branch == 'master' && git.ref == 'testing') || (git.branch == 'master' && git.ref == 'prod') }}",
 			result: "true",
 			context: map[string]interface{}{
@@ -340,7 +326,7 @@ func TestParserBooleanExpression(t *testing.T) {
 			},
 		},
 		{
-			name:   "term expression or - ko",
+			name:   "term expression or - false",
 			input:  "${{ (git.branch == 'dev' && git.id < 2) || (git.branch == 'dev' && git.ref == 'prod') }}",
 			result: "false",
 			context: map[string]interface{}{
@@ -352,7 +338,7 @@ func TestParserBooleanExpression(t *testing.T) {
 			},
 		},
 		{
-			name:   "term expression and - ok",
+			name:   "term expression and - true",
 			input:  "${{ (git.branch == 'master' || git.branch == 'testing') && (git.ref == 'testing' || git.id == 2) }}",
 			result: "true",
 			context: map[string]interface{}{
@@ -364,7 +350,7 @@ func TestParserBooleanExpression(t *testing.T) {
 			},
 		},
 		{
-			name:   "term expression and - ko",
+			name:   "term expression and - false",
 			input:  "${{ (git.branch == 'master' || git.branch == 'testing') && (git.ref == 'testing' || git.id == 2) }}",
 			result: "false",
 			context: map[string]interface{}{

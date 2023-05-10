@@ -3,13 +3,15 @@ package sdk
 import (
 	"context"
 	"fmt"
-	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
-	"github.com/ovh/cds/sdk/parser"
-	"github.com/rockbears/log"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/rockbears/log"
+
+	"github.com/ovh/cds/sdk/parser"
 )
 
 var extractRegexp = regexp.MustCompile("(\\${{ .+? }})")
