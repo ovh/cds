@@ -182,3 +182,9 @@ func (s *BaseActionListener) EnterExpressionEnd(ctx *ExpressionEndContext) {}
 
 // ExitExpressionEnd is called when production expressionEnd is exited.
 func (s *BaseActionListener) ExitExpressionEnd(ctx *ExpressionEndContext) {}
+
+// EnterFilterExpression is called when production filterExpression is entered.
+func (s *BaseActionListener) EnterFilterExpression(ctx *FilterExpressionContext) {}
+
+// ExitFilterExpression is called when production filterExpression is exited.
+func (s *BaseActionListener) ExitFilterExpression(ctx *FilterExpressionContext) {}

@@ -89,6 +89,9 @@ type ActionListener interface {
 	// EnterExpressionEnd is called when entering the expressionEnd production.
 	EnterExpressionEnd(c *ExpressionEndContext)
 
+	// EnterFilterExpression is called when entering the filterExpression production.
+	EnterFilterExpression(c *FilterExpressionContext)
+
 	// ExitStart is called when exiting the start production.
 	ExitStart(c *StartContext)
 
@@ -169,4 +172,7 @@ type ActionListener interface {
 
 	// ExitExpressionEnd is called when exiting the expressionEnd production.
 	ExitExpressionEnd(c *ExpressionEndContext)
+
+	// ExitFilterExpression is called when exiting the filterExpression production.
+	ExitFilterExpression(c *FilterExpressionContext)
 }

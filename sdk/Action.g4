@@ -9,7 +9,7 @@ comparisonExpression: equalityExpression (comparisonOperator equalityExpression)
 equalityExpression: primaryExpression (equalityOperator primaryExpression)?;
 primaryExpression: variableContext | numberExpression | functionCall | stringExpression | termExpression | notExpression;
 variableContext: variableIdentifier variablePath*;
-variablePath: (DOT variableIdentifier | array);
+variablePath: (DOT variableIdentifier | array | DOT filterExpression);
 variableIdentifier: ID;
 numberExpression: NUMBER;
 stringExpression: STRING_INSIDE_EXPRESSION;
@@ -35,6 +35,7 @@ equalityOperator: (EQ | NEQ);
 booleanExpression: BOOLEAN;
 expressionStart: EXP_START;
 expressionEnd: EXP_END;
+filterExpression: STAR;
 
 STRING_INSIDE_EXPRESSION: '\'' (ESC|.)*? '\'';
 BOOLEAN: 'true' | 'false';
@@ -55,6 +56,7 @@ NOT         : '!';
 OR          : '||';
 AND         : '&&';
 DOT         : '.';
+STAR        : '*';
 
 fragment ESC: '\\' ["'\\/bfnrt];
 fragment INT: ('0' | [1-9][0-9]*) ;
