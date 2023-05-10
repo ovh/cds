@@ -50,6 +50,9 @@ type ActionListener interface {
 	// EnterNotExpression is called when entering the notExpression production.
 	EnterNotExpression(c *NotExpressionContext)
 
+	// EnterNotOperator is called when entering the notOperator production.
+	EnterNotOperator(c *NotOperatorContext)
+
 	// EnterFunctionCall is called when entering the functionCall production.
 	EnterFunctionCall(c *FunctionCallContext)
 
@@ -77,8 +80,8 @@ type ActionListener interface {
 	// EnterEqualityOperator is called when entering the equalityOperator production.
 	EnterEqualityOperator(c *EqualityOperatorContext)
 
-	// EnterLiteral is called when entering the literal production.
-	EnterLiteral(c *LiteralContext)
+	// EnterBooleanExpression is called when entering the booleanExpression production.
+	EnterBooleanExpression(c *BooleanExpressionContext)
 
 	// EnterExpressionStart is called when entering the expressionStart production.
 	EnterExpressionStart(c *ExpressionStartContext)
@@ -128,6 +131,9 @@ type ActionListener interface {
 	// ExitNotExpression is called when exiting the notExpression production.
 	ExitNotExpression(c *NotExpressionContext)
 
+	// ExitNotOperator is called when exiting the notOperator production.
+	ExitNotOperator(c *NotOperatorContext)
+
 	// ExitFunctionCall is called when exiting the functionCall production.
 	ExitFunctionCall(c *FunctionCallContext)
 
@@ -155,8 +161,8 @@ type ActionListener interface {
 	// ExitEqualityOperator is called when exiting the equalityOperator production.
 	ExitEqualityOperator(c *EqualityOperatorContext)
 
-	// ExitLiteral is called when exiting the literal production.
-	ExitLiteral(c *LiteralContext)
+	// ExitBooleanExpression is called when exiting the booleanExpression production.
+	ExitBooleanExpression(c *BooleanExpressionContext)
 
 	// ExitExpressionStart is called when exiting the expressionStart production.
 	ExitExpressionStart(c *ExpressionStartContext)

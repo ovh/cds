@@ -105,6 +105,12 @@ func (s *BaseActionListener) EnterNotExpression(ctx *NotExpressionContext) {}
 // ExitNotExpression is called when production notExpression is exited.
 func (s *BaseActionListener) ExitNotExpression(ctx *NotExpressionContext) {}
 
+// EnterNotOperator is called when production notOperator is entered.
+func (s *BaseActionListener) EnterNotOperator(ctx *NotOperatorContext) {}
+
+// ExitNotOperator is called when production notOperator is exited.
+func (s *BaseActionListener) ExitNotOperator(ctx *NotOperatorContext) {}
+
 // EnterFunctionCall is called when production functionCall is entered.
 func (s *BaseActionListener) EnterFunctionCall(ctx *FunctionCallContext) {}
 
@@ -159,11 +165,11 @@ func (s *BaseActionListener) EnterEqualityOperator(ctx *EqualityOperatorContext)
 // ExitEqualityOperator is called when production equalityOperator is exited.
 func (s *BaseActionListener) ExitEqualityOperator(ctx *EqualityOperatorContext) {}
 
-// EnterLiteral is called when production literal is entered.
-func (s *BaseActionListener) EnterLiteral(ctx *LiteralContext) {}
+// EnterBooleanExpression is called when production booleanExpression is entered.
+func (s *BaseActionListener) EnterBooleanExpression(ctx *BooleanExpressionContext) {}
 
-// ExitLiteral is called when production literal is exited.
-func (s *BaseActionListener) ExitLiteral(ctx *LiteralContext) {}
+// ExitBooleanExpression is called when production booleanExpression is exited.
+func (s *BaseActionListener) ExitBooleanExpression(ctx *BooleanExpressionContext) {}
 
 // EnterExpressionStart is called when production expressionStart is entered.
 func (s *BaseActionListener) EnterExpressionStart(ctx *ExpressionStartContext) {}

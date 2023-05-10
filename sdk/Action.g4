@@ -14,14 +14,17 @@ variableIdentifier: ID;
 numberExpression: NUMBER;
 stringExpression: STRING_INSIDE_EXPRESSION;
 termExpression: LPAREN orExpression RPAREN;
-notExpression: (NOT primaryExpression);
+notExpression: (notOperator primaryExpression);
+notOperator: NOT;
 functionCall: functionName LPAREN functionCallArguments (',' functionCallArguments)* RPAREN;
 functionName: ID;
 functionCallArguments
     : // No arguments
     | variableContext
+    | stringExpression
     | numberExpression
-    | literal
+    | booleanExpression
+
     ;
 array: '[' arrayIndex ']';
 arrayIndex: primaryExpression;
@@ -29,7 +32,7 @@ andOperator: AND;
 orOperator: OR;
 comparisonOperator: (GT | LT | GTE | LTE);
 equalityOperator: (EQ | NEQ);
-literal: STRING_INSIDE_EXPRESSION | BOOLEAN | NULL | NUMBER;
+booleanExpression: BOOLEAN;
 expressionStart: EXP_START;
 expressionEnd: EXP_END;
 
