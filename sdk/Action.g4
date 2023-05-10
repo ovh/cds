@@ -2,7 +2,7 @@ grammar Action;
 
 
 start: expression EOF;
-expression: (expressionStart orExpression (orExpression)* expressionEnd);
+expression: (expressionStart orExpression expressionEnd);
 orExpression: andExpression (orOperator andExpression)*;
 andExpression: comparisonExpression (andOperator comparisonExpression)*;
 comparisonExpression: equalityExpression (comparisonOperator equalityExpression)?;

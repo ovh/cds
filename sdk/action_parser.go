@@ -343,7 +343,7 @@ func (a *ActionParser) parseTermExpressionContext(ctx context.Context, exp *pars
 func (a *ActionParser) parseVariableContextContext(ctx context.Context, exp *parser.VariableContextContext) (interface{}, error) {
 	log.Debug(ctx, "VariableContext expression detected: %s", exp.GetText())
 	var selectedValue interface{}
-  isFilter := false
+	isFilter := false
 	for i := 0; i < exp.GetChildCount(); i++ {
 		switch t := exp.GetChild(i).(type) {
 		case *parser.VariableIdentifierContext:
@@ -361,17 +361,17 @@ func (a *ActionParser) parseVariableContextContext(ctx context.Context, exp *par
 			}
 			switch kType := key.(type) {
 			case string:
-        if key == "*" {
-          if isFilter {
-            return nil, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
-          }
-          isFilter = true
-        } else {
-          selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
-          if err != nil {
-            return nil, err
-          }
-        }
+				if key == "*" {
+					if isFilter {
+						return nil, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
+					}
+					isFilter = true
+				} else {
+					selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
+					if err != nil {
+						return nil, err
+					}
+				}
 			case int:
 				selectedValue, err = a.getArrayItemValueFromContext(ctx, selectedValue, kType)
 				if err != nil {
@@ -399,9 +399,9 @@ func (a *ActionParser) parseVariablePathContext(ctx context.Context, exp *parser
 				return "", err
 			}
 			return result, nil
-    case *parser.FilterExpressionContext:
-      log.Debug(ctx, "Filter expression detected: %s", t.GetText())
-      return "*", nil
+		case *parser.FilterExpressionContext:
+			log.Debug(ctx, "Filter expression detected: %s", t.GetText())
+			return "*", nil
 		default:
 			return "", NewErrorFrom(ErrInvalidData, "unknown type %T in VariablePath", t)
 		}
@@ -458,24 +458,28 @@ func (a *ActionParser) getArrayItemValueFromContext(_ context.Context, currentCo
 
 // Item not found in a context must return empty
 func (a *ActionParser) getItemValueFromContext(ctx context.Context, currentContext interface{}, key string, isFilter bool) (interface{}, error) {
-  if isFilter {
-    varContext, ok := currentContext.([]map[string]interface{})
-    if !ok {
-      return nil, NewErrorFrom(ErrInvalidData, "unable to filter a non array object")
-    }
-    result := make([]interface{}, 0, len(varContext))
-    for _, currentItem := range varContext {
-      result = append(result, currentItem[key])
-    }
+	if isFilter {
+		varContext, ok := currentContext.([]map[string]interface{})
+		if !ok {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to filter a non array object")
+		}
+		result := make([]interface{}, 0, len(varContext))
+		for _, currentItem := range varContext {
+			result = append(result, currentItem[key])
+		}
 
-    return result, nil
-  }
-  varContext, ok := currentContext.(map[string]interface{})
-  if !ok {
-    log.Debug(ctx, "key [%s] do not exist in current context")
-    return "", nil
-  }
-  return varContext[key], nil
+		return result, nil
+	}
+	varContext, ok := currentContext.(map[string]interface{})
+	if !ok {
+		log.Debug(ctx, "key [%s] do not exist in current context")
+		return "", nil
+	}
+	value, has := varContext[key]
+	if !has {
+		return "", nil
+	}
+	return value, nil
 }
 
 func (a *ActionParser) compare(operands []interface{}, operator string) (bool, error) {

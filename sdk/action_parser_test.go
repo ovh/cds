@@ -126,23 +126,23 @@ func TestParserVariables(t *testing.T) {
 			result:       "",
 			containError: "",
 			context: map[string]interface{}{
-				"git": map[string]interface{}{
-					"branch": "master",
-				},
+				"job": map[string]interface{}{},
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		ap := NewActionParser(tt.context, DefaultFuncs)
-		result, err := ap.parse(context.TODO(), tt.input)
-		if tt.containError != "" {
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tt.containError)
-		} else {
-      require.NoError(t, err)
-			require.Equal(t, tt.result, result)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
 	}
 }
 
@@ -259,15 +259,17 @@ func TestParserOperations(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		ap := NewActionParser(tt.context, DefaultFuncs)
-		result, err := ap.parse(context.TODO(), tt.input)
-		if tt.containError != "" {
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tt.containError)
-		} else {
-      require.NoError(t, err)
-			require.Equal(t, tt.result, result)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
 	}
 }
 
@@ -376,15 +378,17 @@ func TestParserBooleanExpression(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		ap := NewActionParser(tt.context, DefaultFuncs)
-		result, err := ap.parse(context.TODO(), tt.input)
-		if tt.containError != "" {
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tt.containError)
-		} else {
-      require.NoError(t, err)
-			require.Equal(t, tt.result, result)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
 	}
 }
 
@@ -440,246 +444,359 @@ func TestInterpolateError(t *testing.T) {
 }
 
 func TestParserFuncContains(t *testing.T) {
-  log.Factory = log.NewTestingWrapper(t)
-  log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
-  tests := []struct {
-    name         string
-    context      map[string]interface{}
-    input        string
-    result       string
-    containError string
-  }{
-    {
-      name:   "simple contains function",
-      input:  "${{ contains(git.branch, 'ast') }}",
-      result: "true",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "branch": "master",
-        },
-      },
-    },
-    {
-      name:   "simple contains function with string filter",
-      input:  "${{ contains(git.changes.*.message, 'foo') }}",
-      result: "true",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "changes": []map[string]interface{}{
-            {
-              "message": "not me",
-            },
-            {
-              "message": "foo",
-            },
-            {
-              "message": "not me",
-            },
-          },
-        },
-      },
-    },
-    {
-      name:   "simple contains function with int filter",
-      input:  "${{ contains(git.changes.*.message, '2') }}",
-      result: "true",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "changes": []map[string]interface{}{
-            {
-              "message": 0,
-            },
-            {
-              "message": 2,
-            },
-            {
-              "message": 1,
-            },
-          },
-        },
-      },
-    },
-  }
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:   "simple contains function",
+			input:  "${{ contains(git.branch, 'ast') }}",
+			result: "true",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "master",
+				},
+			},
+		},
+		{
+			name:   "simple contains function with string filter",
+			input:  "${{ contains(git.changes.*.message, 'foo') }}",
+			result: "true",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"changes": []map[string]interface{}{
+						{
+							"message": "not me",
+						},
+						{
+							"message": "foo",
+						},
+						{
+							"message": "not me",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "simple contains function with int filter",
+			input:  "${{ contains(git.changes.*.message, '2') }}",
+			result: "true",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"changes": []map[string]interface{}{
+						{
+							"message": 0,
+						},
+						{
+							"message": 2,
+						},
+						{
+							"message": 1,
+						},
+					},
+				},
+			},
+		},
+	}
 
-  for _, tt := range tests {
-    ap := NewActionParser(tt.context, DefaultFuncs)
-    result, err := ap.parse(context.TODO(), tt.input)
-    if tt.containError != "" {
-      require.Error(t, err)
-      require.Contains(t, err.Error(), tt.containError)
-    } else {
-      require.NoError(t, err)
-      require.Equal(t, tt.result, result)
-    }
-  }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
 }
 
 func TestParserFuncStartsWith(t *testing.T) {
-  log.Factory = log.NewTestingWrapper(t)
-  log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
-  tests := []struct {
-    name         string
-    context      map[string]interface{}
-    input        string
-    result       string
-    containError string
-  }{
-    {
-      name:   "simple startsWith function",
-      input:  "${{ startsWith(git.branch, 'Mas') }}",
-      result: "true",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "branch": "master",
-        },
-      },
-    },
-    {
-      name:   "complex startsWith function",
-      input:  "${{ startsWith(git.branch, git.prefix) }}",
-      result: "true",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "branch": "Master",
-          "prefix": "mas",
-        },
-      },
-    },
-    {
-      name:   "startsWith wrong input",
-      input:  "${{ startsWith(git.branch, 2) }}",
-      result: "",
-      containError: "searchValue argument must be a string",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "branch": "Master",
-        },
-      },
-    },
-  }
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:   "simple startsWith function",
+			input:  "${{ startsWith(git.branch, 'Mas') }}",
+			result: "true",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "master",
+				},
+			},
+		},
+		{
+			name:   "complex startsWith function",
+			input:  "${{ startsWith(git.branch, git.prefix) }}",
+			result: "true",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "Master",
+					"prefix": "mas",
+				},
+			},
+		},
+		{
+			name:         "startsWith wrong input",
+			input:        "${{ startsWith(git.branch, 2) }}",
+			result:       "",
+			containError: "searchValue argument must be a string",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "Master",
+				},
+			},
+		},
+	}
 
-  for _, tt := range tests {
-    ap := NewActionParser(tt.context, DefaultFuncs)
-    result, err := ap.parse(context.TODO(), tt.input)
-    if tt.containError != "" {
-      require.Error(t, err)
-      require.Contains(t, err.Error(), tt.containError)
-    } else {
-      require.NoError(t, err)
-      require.Equal(t, tt.result, result)
-    }
-  }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
 }
 
 func TestParserFuncEndsWith(t *testing.T) {
-  log.Factory = log.NewTestingWrapper(t)
-  log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
-  tests := []struct {
-    name         string
-    context      map[string]interface{}
-    input        string
-    result       string
-    containError string
-  }{
-    {
-      name:   "simple endsWith function",
-      input:  "${{ endsWith(git.branch, 'Ter') }}",
-      result: "true",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "branch": "master",
-        },
-      },
-    },
-    {
-      name:   "complex endsWith function",
-      input:  "${{ endsWith(git.branch, git.prefix) }}",
-      result: "true",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "branch": "mastEr",
-          "prefix": "ter",
-        },
-      },
-    },
-    {
-      name:   "endsWith wrong input",
-      input:  "${{ endsWith(git.branch, 2) }}",
-      result: "",
-      containError: "searchValue argument must be a string",
-      context: map[string]interface{}{
-        "git": map[string]interface{}{
-          "branch": "Master",
-        },
-      },
-    },
-  }
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:   "simple endsWith function",
+			input:  "${{ endsWith(git.branch, 'Ter') }}",
+			result: "true",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "master",
+				},
+			},
+		},
+		{
+			name:   "complex endsWith function",
+			input:  "${{ endsWith(git.branch, git.prefix) }}",
+			result: "true",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "mastEr",
+					"prefix": "ter",
+				},
+			},
+		},
+		{
+			name:         "endsWith wrong input",
+			input:        "${{ endsWith(git.branch, 2) }}",
+			result:       "",
+			containError: "searchValue argument must be a string",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "Master",
+				},
+			},
+		},
+	}
 
-  for _, tt := range tests {
-    ap := NewActionParser(tt.context, DefaultFuncs)
-    result, err := ap.parse(context.TODO(), tt.input)
-    if tt.containError != "" {
-      require.Error(t, err)
-      require.Contains(t, err.Error(), tt.containError)
-    } else {
-      require.NoError(t, err)
-      require.Equal(t, tt.result, result)
-    }
-  }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
 }
 
 func TestParserFuncFormat(t *testing.T) {
-  log.Factory = log.NewTestingWrapper(t)
-  log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
-  tests := []struct {
-    name         string
-    context      map[string]interface{}
-    input        string
-    result       string
-    containError string
-  }{
-    {
-      name:   "simple string format",
-      input:  "${{ format('Hello {0} {1}', 'foo', 'bar') }}",
-      result: "Hello foo bar",
-      context: map[string]interface{}{},
-    },
-    {
-      name:   "complex string format with variable",
-      input:  "${{ format(job.message, job.replace1, job.replace2) }}",
-      result: "Hello foo bar",
-      context: map[string]interface{}{
-        "job": map[string]interface{}{
-          "message": "Hello {0} {1}",
-          "replace1": "foo",
-          "replace2": "bar",
-        },
-      },
-    },
-    {
-      name:   "complex string and int format with variable",
-      input:  "${{ format(job.message, job.replace1, job.replace2) }}",
-      result: "Hello foo 2",
-      context: map[string]interface{}{
-        "job": map[string]interface{}{
-          "message": "Hello {0} {1}",
-          "replace1": "foo",
-          "replace2": 2,
-        },
-      },
-    },
-  }
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:    "simple string format",
+			input:   "${{ format('Hello {0} {1}', 'foo', 'bar') }}",
+			result:  "Hello foo bar",
+			context: map[string]interface{}{},
+		},
+		{
+			name:   "complex string format with variable",
+			input:  "${{ format(job.message, job.replace1, job.replace2) }}",
+			result: "Hello foo bar",
+			context: map[string]interface{}{
+				"job": map[string]interface{}{
+					"message":  "Hello {0} {1}",
+					"replace1": "foo",
+					"replace2": "bar",
+				},
+			},
+		},
+		{
+			name:   "complex string and int format with variable",
+			input:  "${{ format(job.message, job.replace1, job.replace2) }}",
+			result: "Hello foo 2",
+			context: map[string]interface{}{
+				"job": map[string]interface{}{
+					"message":  "Hello {0} {1}",
+					"replace1": "foo",
+					"replace2": 2,
+				},
+			},
+		},
+	}
 
-  for _, tt := range tests {
-    ap := NewActionParser(tt.context, DefaultFuncs)
-    result, err := ap.parse(context.TODO(), tt.input)
-    if tt.containError != "" {
-      require.Error(t, err)
-      require.Contains(t, err.Error(), tt.containError)
-    } else {
-      require.NoError(t, err)
-      require.Equal(t, tt.result, result)
-    }
-  }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
 }
 
+func TestParserFuncJoin(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:   "object filter join ",
+			input:  "${{ join(git.changes.*.id, '-') }}",
+			result: "1-2-3",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"changes": []map[string]interface{}{
+						{
+							"id": 1,
+						},
+						{
+							"id": 2,
+						},
+						{
+							"id": 3,
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "join with no separator",
+			input:  "${{ join(git.changes.*.id) }}",
+			result: "1,2,3",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"changes": []map[string]interface{}{
+						{
+							"id": 1,
+						},
+						{
+							"id": 2,
+						},
+						{
+							"id": 3,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
+}
+
+func TestParserFuncToJSON(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:  "toJSON",
+			input: "${{ toJSON(git) }}",
+			result: `{
+  "branch": "master"
+}`,
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"branch": "master",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
+}
