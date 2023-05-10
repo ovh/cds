@@ -17,6 +17,12 @@ var (
 		"format":     format,
 		"join":       join,
 		"toJSON":     toJSON,
+		"fromJSON":   fromJSON,
+		"hashFiles":  hashFiles,
+		"success":    success,
+		"always":     always,
+		"cancelled":  cancelled,
+		"failure":    failure,
 	}
 )
 
@@ -133,4 +139,28 @@ func toJSON(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interf
 		return nil, NewErrorFrom(ErrInvalidData, "toJSON: given input cannot be convert to JSON")
 	}
 	return string(bts), nil
+}
+
+func fromJSON(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+	return nil, NewErrorFrom(ErrNotImplemented, "fromJSON is not implemented yet")
+}
+
+func hashFiles(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+	return nil, NewErrorFrom(ErrNotImplemented, "hashFiles is not implemented yet")
+}
+
+func success(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+	return nil, NewErrorFrom(ErrNotImplemented, "success is not implemented yet")
+}
+
+func always(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+	return nil, NewErrorFrom(ErrNotImplemented, "always is not implemented yet")
+}
+
+func cancelled(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+	return nil, NewErrorFrom(ErrNotImplemented, "cancelled is not implemented yet")
+}
+
+func failure(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+	return nil, NewErrorFrom(ErrNotImplemented, "failure is not implemented yet")
 }
