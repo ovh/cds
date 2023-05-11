@@ -115,6 +115,9 @@ func processNodeJobRunRequirements(ctx context.Context, store cache.Store, db go
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
 	}
 	if wm != nil {
+		if wm.Disabled {
+			errm.Append(sdk.NewErrorFrom(sdk.ErrInvalidData, "worker model %s is disabled. Please update your requirement", wm.Name))
+		}
 		modelType = wm.Type
 
 		// Check that the worker model has the binaries capabilitites
