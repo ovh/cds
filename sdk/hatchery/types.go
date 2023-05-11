@@ -61,7 +61,8 @@ type WorkerJWTClaims struct {
 type SpawnArgumentsJWT struct {
 	WorkerName string `json:"worker_model,omitempty"`
 	Model      struct {
-		ID int64 `json:"id,omitempty"`
+		ID   int64  `json:"id,omitempty"`
+		Name string `json:"name,omitempty"`
 	} `json:"model,omitempty"`
 	JobID        int64  `json:"job_id,omitempty"`
 	RegisterOnly bool   `json:"register_only"`

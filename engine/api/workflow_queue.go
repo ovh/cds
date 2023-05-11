@@ -80,6 +80,8 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 				return err
 			}
 			workerModelName = wm.Name
+		} else if wk.ModelName != nil {
+			workerModelName = *wk.ModelName
 		}
 
 		// Load job run

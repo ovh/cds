@@ -27,6 +27,7 @@ func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration 
 	}
 	if w.Model != nil {
 		claims.Worker.Model.ID = w.Model.ID
+		claims.Worker.Model.Name = w.Model.Name
 	}
 
 	jwtoken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)
