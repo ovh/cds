@@ -1,4 +1,4 @@
-FROM alpine:3.17
+FROM alpine:3.18
 RUN apk update && apk update && \
     apk --no-cache add curl && \
     apk --no-cache add gpg && \
@@ -6,7 +6,7 @@ RUN apk update && apk update && \
     apk --no-cache add tzdata && \
     apk --no-cache add openssh-client && \
     apk --no-cache add gpg-agent && \
-    apk --no-cache add ca-certificates && rm -rf /var/cache/apk/* 
+    apk --no-cache add ca-certificates && rm -rf /var/cache/apk/*
 RUN update-ca-certificates
 RUN echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /etc/ssh/ssh_config
 RUN mkdir -p /app/sql /app/ui_static_files
