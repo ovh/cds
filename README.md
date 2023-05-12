@@ -39,9 +39,9 @@ Docker-Compose is your friend, see [Ready To Run Tutorials](https://ovh.github.i
 
 ## Blog posts and talks
 
-- CDS Introduction: https://www.ovh.com/fr/blog/how-does-ovh-manage-the-ci-cd-at-scale/
-- DataBuzzWord Podcast (French) : https://www.ovh.com/fr/blog/understanding-ci-cd-for-big-data-and-machine-learning/
-- Continuous Delivery and Deployment Workflows with CDS: https://www.ovh.com/fr/blog/continuous-delivery-and-deployment-workflows-with-cds/
+- CDS Introduction: https://blog.ovhcloud.com/how-does-ovh-manage-the-ci-cd-at-scale/
+- DataBuzzWord Podcast (French) : https://blog.ovhcloud.com/understanding-ci-cd-for-big-data-and-machine-learning/
+- Continuous Delivery and Deployment Workflows with CDS: https://blog.ovhcloud.com/continuous-delivery-and-deployment-workflows-with-cds/
 - Talk at conference [Breizhcamp](https://www.breizhcamp.org) to introduce CDS (French): https://www.youtube.com/watch?v=JUzEQuOehv4
 
 ## FAQ
