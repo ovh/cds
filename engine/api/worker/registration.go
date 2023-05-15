@@ -138,9 +138,11 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		OS:           registrationForm.OS,
 		Arch:         registrationForm.Arch,
 	}
+	w.ModelName = &spawnArgs.Model.Name
 	if model != nil {
 		w.ModelID = &spawnArgs.Model.ID
 	}
+
 	if spawnArgs.JobID > 0 {
 		w.JobRunID = &spawnArgs.JobID
 	}
