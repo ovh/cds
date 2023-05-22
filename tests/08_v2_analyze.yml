@@ -64,7 +64,8 @@ testcases:
         - result.code ShouldEqual 0
         - 'result.systemout ShouldContainSubstring "status: Success"'
         - 'result.systemout ShouldContainSubstring "key_sign_id: E027B500E97E52E7"'
-        - 'result.systemout ShouldContainSubstring "my-action.yml"'
+        - 'result.systemout ShouldContainSubstring "my-parent-action.yml"'
+        - 'result.systemout ShouldContainSubstring "my-child-action.yml"'
         - 'result.systemout ShouldContainSubstring "docker-debian9.yml"'
         - 'result.systemout ShouldNotContainSubstring "error:"'
 - name: Push workflow and run it
