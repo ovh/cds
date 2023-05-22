@@ -56,14 +56,16 @@ type ActionContext struct {
 
 type CDSContext struct {
 	// Workflow
-	Event           map[string]interface{} `json:"event,omitempty"`
-	Version         string                 `json:"version,omitempty"`
-	RunID           string                 `json:"run_id,omitempty"`
-	RunNumber       string                 `json:"run_number,omitempty"`
-	RunAttempt      string                 `json:"run_attempt,omitempty"`
-	WorkflowRef     string                 `json:"workflow_ref,omitempty"`
-	WorkflowSha     string                 `json:"workflow_sha,omitempty"`
-	TriggeringActor string                 `json:"triggering_actor,omitempty"`
+	Event                map[string]interface{} `json:"event,omitempty"`
+	Version              string                 `json:"version,omitempty"`
+	RunID                string                 `json:"run_id,omitempty"`
+	RunNumber            string                 `json:"run_number,omitempty"`
+	RunAttempt           string                 `json:"run_attempt,omitempty"`
+	WorkflowRef          string                 `json:"workflow_ref,omitempty"`
+	WorkflowSha          string                 `json:"workflow_sha,omitempty"`
+	WorkflowIntegrations map[string]interface{} `json:"integrations,omitempty"` // actual key: artifact_manager
+	TriggeringActor      string                 `json:"triggering_actor,omitempty"`
+
 	// Job
 	Job   string `json:"job,omitempty"`
 	Stage string `json:"stage,omitempty"`

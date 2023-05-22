@@ -100,12 +100,9 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		}
 		prefix := sdk.GetIntegrationVariablePrefix(integ.ProjectIntegration.Model)
 		vars["cds.integration."+prefix] = integ.ProjectIntegration.Name
-		varsContext[strings.Replace(strings.ToUpper(prefix), ".", "_", -1)] = integ.ProjectIntegration.Name
 		tmp := sdk.ParametersFromIntegration(prefix, integ.ProjectIntegration.Config)
 		for k, v := range tmp {
 			vars[k] = v
-			varKey := strings.TrimPrefix(k, "cds.integration.")
-			varsContext[strings.Replace(strings.ToUpper(varKey), ".", "_", -1)] = v
 		}
 
 		tmpWkfConf := sdk.ParametersFromIntegration(prefix, integ.Config)
