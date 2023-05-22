@@ -70,7 +70,7 @@ testcases:
 - name: Push workflow and run it
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/workflow.yml ./fixtures/ITCLIPRJVCS/pipeline.pip.yml ./fixtures/ITCLIPRJVCS/application.app.yml --skip-update-files
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow run ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW  -d '{"name":"John"}'
       assertions:
         - result.code ShouldEqual 0
         - "result.systemout ShouldContainSubstring Workflow ITCLIPRJVCSWRKFLW1-WORKFLOW #1 has been launched"
@@ -81,7 +81,7 @@ testcases:
       retry: 30
       delay: 10
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITCLIPRJVCS ITCLIPRJVCSWRKFLW1-WORKFLOW 1 --pattern AsCode
-    - script: grep 'Hello' ITCLIPRJVCSWRKFLW1-WORKFLOW*.log
+    - script: grep 'Hello John Doe from project ITCLIPRJVCS' ITCLIPRJVCSWRKFLW1-WORKFLOW*.log
 
 - name: delete rbac on project
   steps:

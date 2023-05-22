@@ -6,8 +6,10 @@ inputs:
     description: project name
   name:
     description: name of the person to greet
-    required: true
     default: Steven
+  lastname:
+    description: lastname of the person to greet
+    default: Doe
 runs:
   steps:
-  - run: echo "Hello ${{ inputs.name }} from project {{ inputs.projectName }}"
+  - run: echo "Hello ${{ inputs.name }} ${{ inputs.lastname }} from project ${{ inputs.projectName }}"

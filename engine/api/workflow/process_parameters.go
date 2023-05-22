@@ -344,12 +344,7 @@ func computeCDSContext(ctx context.Context, wr sdk.WorkflowRun, wnr sdk.Workflow
 			if err := json.Unmarshal([]byte(payload), &m); err != nil {
 				log.Warn(ctx, "unable to unmarshal payload [%s]: %v", payload, err)
 			}
-		}
-		cdsCtx.Event = make(map[string]interface{})
-		for k, v := range wnr.HookEvent.Payload {
-			if k != "payload" {
-				cdsCtx.Event[k] = v
-			}
+			cdsCtx.Event = m
 		}
 	}
 	return cdsCtx

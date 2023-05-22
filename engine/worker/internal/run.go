@@ -271,11 +271,10 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		res := w.runGRPCPlugin(ctx, a)
 		return res
 	case sdk.AsCodeAction:
-		actionContext, err := w.createSubActionContextFromActionParameters(ctx, w.currentJob.contexts, a.Parameters)
+		actionContext, err := w.createSubActionContextFromActionParameters(ctx, a.StepName, w.currentJob.wJob.Contexts, a.Parameters)
 		if err != nil {
 			return w.failAction(ctx, fmt.Sprintf("%v", err.Error()))
 		}
-		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Context root ascode action: %+v", actionContext))
 		res := w.runAsCodeAction(ctx, actionContext, a.StepName, filepath.Base(a.Name)+"/")
 		return res
 	}
@@ -298,7 +297,31 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	return r
 }
 
-func (w *CurrentWorker) createSubActionContextFromActionParameters(ctx context.Context, currentContext sdk.JobRunContext, params []sdk.Parameter) (sdk.ActionContext, error) {
+func (w *CurrentWorker) createSubActionContextFromActionParameters(ctx context.Context, currentActionName string, currentContext sdk.JobRunContext, params []sdk.Parameter) (sdk.ActionContext, error) {
+	subActionContext := sdk.ActionContext{
+		Inputs: make(map[string]interface{}),
+	}
+
+	currentAsCodeAction, has := w.currentJob.ascodeAction[currentActionName]
+	if !has {
+		return subActionContext, sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown ascode action: %s", currentActionName)
+	}
+
+	actionMapParameter := make(map[string]string, 0)
+	// Remove inputs that are not in action definition
+	for _, v := range params {
+		if _, has := currentAsCodeAction.Inputs[v.Name]; has {
+			actionMapParameter[v.Name] = v.Value
+		}
+	}
+
+	// Fill missing input with default values
+	for k, v := range currentAsCodeAction.Inputs {
+		if _, has := actionMapParameter[k]; !has {
+			actionMapParameter[k] = v.Default
+		}
+	}
+
 	// Interpolate subaction inputs filled by parent
 	bts, err := json.Marshal(currentContext)
 	if err != nil {
@@ -308,16 +331,13 @@ func (w *CurrentWorker) createSubActionContextFromActionParameters(ctx context.C
 	if err := json.Unmarshal(bts, &mapContexts); err != nil {
 		return sdk.ActionContext{}, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal current context")
 	}
-	subActionContext := sdk.ActionContext{
-		Inputs: make(map[string]interface{}),
-	}
 
-	for _, v := range params {
-		interpolatedInput, err := w.interpolateActionInput(ctx, mapContexts, v.Value)
+	for k, v := range actionMapParameter {
+		interpolatedInput, err := w.interpolateActionInput(ctx, mapContexts, v)
 		if err != nil {
-			return sdk.ActionContext{}, sdk.NewErrorFrom(sdk.ErrInvalidData, fmt.Sprintf("unable to interpolate input %s: %v", v.Name, err))
+			return sdk.ActionContext{}, sdk.NewErrorFrom(sdk.ErrInvalidData, fmt.Sprintf("unable to interpolate input %s: %v", k, err))
 		}
-		subActionContext.Inputs[v.Name] = interpolatedInput
+		subActionContext.Inputs[k] = interpolatedInput
 	}
 	return subActionContext, nil
 }
