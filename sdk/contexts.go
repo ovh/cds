@@ -30,7 +30,8 @@ func (m *NodeRunContext) Scan(src interface{}) error {
 
 type JobRunContext struct {
 	NodeRunContext
-	Job JobContext `json:"job,omitempty"`
+	Job     JobContext        `json:"job,omitempty"`
+	Secrets map[string]string `json:"secrets,omitempty"`
 }
 
 func (m JobRunContext) Value() (driver.Value, error) {

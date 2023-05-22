@@ -335,7 +335,17 @@ func computeCDSContext(ctx context.Context, wr sdk.WorkflowRun, wnr sdk.Workflow
 
 	if wnr.Manual != nil {
 		if wnr.Manual.Payload != nil {
-			cdsCtx.Event = wnr.Manual.Payload.(map[string]interface{})
+			p, is := wnr.Manual.Payload.(map[string]interface{})
+			if is {
+				cdsCtx.Event = p
+			} else {
+				stringify, _ := json.Marshal(wnr.Manual.Payload)
+				var m map[string]interface{}
+				if err := json.Unmarshal(stringify, &m); err != nil {
+					log.Warn(ctx, "unable to unmarshal payload: %s", string(stringify))
+				}
+				cdsCtx.Event = m
+			}
 		}
 		cdsCtx.TriggeringActor = wnr.Manual.Username
 	} else if wnr.HookEvent != nil && wnr.HookEvent.Payload != nil {
