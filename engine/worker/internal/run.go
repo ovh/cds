@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -219,42 +220,46 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		}
 	}
 
-	// Replace variable placeholder that may have been added by last step
-	if err := w.replaceVariablesPlaceholder(&a, w.currentJob.params); err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-		w.SendLog(ctx, workerruntime.LevelError, err.Error())
-		return sdk.Result{
-			Status:  sdk.StatusFail,
-			BuildID: jobID,
-			Reason:  err.Error(),
-		}
-	}
-	if err := processActionVariables(&a, nil, w.currentJob.params); err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-		w.SendLog(ctx, workerruntime.LevelError, err.Error())
-		return sdk.Result{
-			Status:  sdk.StatusFail,
-			BuildID: jobID,
-			Reason:  err.Error(),
-		}
-	}
+	if a.Type != sdk.AsCodeAction {
 
-	// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
-	if a.Name != sdk.ScriptAction {
-		var getFilteredEnv = func(s string) string {
-			if strings.HasPrefix(s, "CDS_") {
-				return s
+		// Replace variable placeholder that may have been added by last step
+		if err := w.replaceVariablesPlaceholder(&a, w.currentJob.params); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			w.SendLog(ctx, workerruntime.LevelError, err.Error())
+			return sdk.Result{
+				Status:  sdk.StatusFail,
+				BuildID: jobID,
+				Reason:  err.Error(),
 			}
-			return os.Getenv(s)
 		}
-		for i := range a.Parameters {
-			a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+		if err := processActionVariables(&a, nil, w.currentJob.params); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			w.SendLog(ctx, workerruntime.LevelError, err.Error())
+			return sdk.Result{
+				Status:  sdk.StatusFail,
+				BuildID: jobID,
+				Reason:  err.Error(),
+			}
 		}
-	}
 
-	//Set env variables from hooks
-	for k, v := range w.currentJob.envFromHooks {
-		os.Setenv(k, v)
+		// ExpandEnv over all action parameters, avoid expending "CDS_*" env variables
+		if a.Name != sdk.ScriptAction {
+			var getFilteredEnv = func(s string) string {
+				if strings.HasPrefix(s, "CDS_") {
+					return s
+				}
+				return os.Getenv(s)
+			}
+			for i := range a.Parameters {
+				a.Parameters[i].Value = os.Expand(a.Parameters[i].Value, getFilteredEnv)
+			}
+		}
+
+		//Set env variables from hooks
+		for k, v := range w.currentJob.envFromHooks {
+			os.Setenv(k, v)
+		}
+
 	}
 
 	//If the action if a edge of the action tree; run it
@@ -266,11 +271,16 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		res := w.runGRPCPlugin(ctx, a)
 		return res
 	case sdk.AsCodeAction:
-		res := w.runAscodeAction(ctx, a.StepName, filepath.Base(a.Name)+"/")
+		actionContext, err := w.createSubActionContextFromActionParameters(ctx, w.currentJob.contexts, a.Parameters)
+		if err != nil {
+			return w.failAction(ctx, fmt.Sprintf("%v", err.Error()))
+		}
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Context root ascode action: %+v", actionContext))
+		res := w.runAsCodeAction(ctx, actionContext, a.StepName, filepath.Base(a.Name)+"/")
 		return res
 	}
 
-	// There is is no children actions (action is empty) to do, success !
+	// There is no children actions (action is empty) to do, success !
 	if len(a.Actions) == 0 {
 		return sdk.Result{
 			Status:  sdk.StatusSuccess,
@@ -286,6 +296,30 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	}
 
 	return r
+}
+
+func (w *CurrentWorker) createSubActionContextFromActionParameters(ctx context.Context, currentContext sdk.JobRunContext, params []sdk.Parameter) (sdk.ActionContext, error) {
+	// Interpolate subaction inputs filled by parent
+	bts, err := json.Marshal(currentContext)
+	if err != nil {
+		return sdk.ActionContext{}, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to marshal current context")
+	}
+	var mapContexts map[string]interface{}
+	if err := json.Unmarshal(bts, &mapContexts); err != nil {
+		return sdk.ActionContext{}, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal current context")
+	}
+	subActionContext := sdk.ActionContext{
+		Inputs: make(map[string]interface{}),
+	}
+
+	for _, v := range params {
+		interpolatedInput, err := w.interpolateActionInput(ctx, mapContexts, v.Value)
+		if err != nil {
+			return sdk.ActionContext{}, sdk.NewErrorFrom(sdk.ErrInvalidData, fmt.Sprintf("unable to interpolate input %s: %v", v.Name, err))
+		}
+		subActionContext.Inputs[v.Name] = interpolatedInput
+	}
+	return subActionContext, nil
 }
 
 func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.Action, jobID int64, secrets []sdk.Variable, stepName string) (sdk.Result, int) {

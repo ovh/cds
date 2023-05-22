@@ -51,7 +51,7 @@ func (h *WorkflowRunHeaders) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, h), "cannot unmarshal WorkflowRunHeaders")
 }
 
-//WorkflowRun is an execution instance of a run
+// WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
 	ID               int64                         `json:"id" db:"id"`
 	Number           int64                         `json:"num" db:"num" cli:"num,key"`
@@ -187,7 +187,7 @@ func (a *WorkflowRunPostHandlerOption) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, a), "cannot unmarshal WorkflowRunPostHandlerOption")
 }
 
-//WorkflowRunNumber contains a workflow run number
+// WorkflowRunNumber contains a workflow run number
 type WorkflowRunNumber struct {
 	Num int64 `json:"num" cli:"run-number"`
 }
@@ -340,7 +340,7 @@ const (
 	RunInfoTypeError   = "Error"
 )
 
-//WorkflowRunInfo is an info on workflow run
+// WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
 	Message SpawnMsg  `json:"message,omitempty" db:"-"`
@@ -350,14 +350,14 @@ type WorkflowRunInfo struct {
 	Type        string `json:"type" db:"-"`
 }
 
-//WorkflowRunTag is a tag on workflow run
+// WorkflowRunTag is a tag on workflow run
 type WorkflowRunTag struct {
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
 	Tag           string `json:"tag,omitempty" db:"tag" cli:"tag"`
 	Value         string `json:"value,omitempty" db:"value" cli:"value"`
 }
 
-//WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
+// WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
 type WorkflowNodeRun struct {
 	WorkflowRunID          int64                                `json:"workflow_run_id"`
 	WorkflowID             int64                                `json:"workflow_id"`
@@ -378,6 +378,7 @@ type WorkflowNodeRun struct {
 	Payload                interface{}                          `json:"payload,omitempty"`
 	PipelineParameters     []Parameter                          `json:"pipeline_parameters,omitempty"`
 	BuildParameters        []Parameter                          `json:"build_parameters,omitempty"`
+	Contexts               NodeRunContext                       `json:"contexts,omitempty"`
 	Coverage               WorkflowNodeRunCoverage              `json:"coverage,omitempty"`
 	VulnerabilitiesReport  WorkflowNodeRunVulnerabilityReport   `json:"vulnerabilities_report,omitempty"`
 	Tests                  *TestsResults                        `json:"tests,omitempty"`
@@ -475,7 +476,7 @@ func (nr *WorkflowNodeRun) Translate() {
 	}
 }
 
-//WorkflowNodeJobRun represents an job to be run
+// WorkflowNodeJobRun represents an job to be run
 type WorkflowNodeJobRun struct {
 	ProjectID          int64              `json:"project_id"`
 	ID                 int64              `json:"id"`
@@ -499,6 +500,7 @@ type WorkflowNodeJobRun struct {
 	HatcheryName       string             `json:"hatchery_name,omitempty"`
 	WorkerName         string             `json:"worker_name,omitempty"`
 	IntegrationPlugins []GRPCPlugin       `json:"integration_plugin,omitempty"`
+	Contexts           JobRunContext      `json:"contexts,omitempty"`
 }
 
 type BookedBy struct {
@@ -536,7 +538,7 @@ func (wnjr WorkflowNodeJobRun) ToSummary() WorkflowNodeJobRunSummary {
 	return sum
 }
 
-//WorkflowNodeJobRunInfo represents info on a job
+// WorkflowNodeJobRunInfo represents info on a job
 type WorkflowNodeJobRunInfo struct {
 	ID                   int64       `json:"id"`
 	WorkflowNodeJobRunID int64       `json:"workflow_node_job_run_id,omitempty"`
@@ -579,7 +581,7 @@ func (wnjr *WorkflowNodeJobRun) GetPuginBinary(pluginType string, os string, arc
 	return nil
 }
 
-//WorkflowNodeRunHookEvent is an instanc of event received on a hook
+// WorkflowNodeRunHookEvent is an instanc of event received on a hook
 type WorkflowNodeRunHookEvent struct {
 	Payload              map[string]string `json:"payload" db:"-"`
 	WorkflowNodeHookUUID string            `json:"uuid" db:"-"`
@@ -591,7 +593,7 @@ type WorkflowNodeRunHookEvent struct {
 	} `json:"parent_workflow" db:"-"`
 }
 
-//WorkflowNodeRunManual is an instanc of event received on a hook
+// WorkflowNodeRunManual is an instanc of event received on a hook
 type WorkflowNodeRunManual struct {
 	Payload            interface{} `json:"payload" db:"-"`
 	PipelineParameters []Parameter `json:"pipeline_parameter" db:"-"`

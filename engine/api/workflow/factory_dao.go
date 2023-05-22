@@ -555,7 +555,7 @@ func (loader *asCodeLoader) browseAsCodeActionSteps(ctx context.Context, steps [
 		if step.Uses == "" {
 			continue
 		}
-		if err := loader.loadAsCodeActionStep(ctx, step.Uses); err != nil {
+		if err := loader.loadAsCodeActionStep(ctx, strings.TrimPrefix(step.Uses, "actions/")); err != nil {
 			return err
 		}
 	}

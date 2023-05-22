@@ -278,7 +278,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		repl(&vcsInf.Message)
 		repl(&vcsInf.Tag)
 
-		setValuesGitInBuildParameters(nr, *vcsInf)
+		setValuesGitInBuildParameters(nr, runContext, *vcsInf)
 	}
 
 	// CONDITION
@@ -311,7 +311,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		repl(&vcsInf.Message)
 		repl(&vcsInf.Tag)
 
-		setValuesGitInBuildParameters(nr, *vcsInf)
+		setValuesGitInBuildParameters(nr, runContext, *vcsInf)
 	}
 
 	// ADD TAG
@@ -512,13 +512,19 @@ func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual
 }
 
 func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
-	nodeRunParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
+	allContexts := sdk.NodeRunContext{}
+
+	nodeRunParams, varsContext, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {
 		AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errParam)))
 		// if there an error -> display it in workflowRunInfo and not stop the launch
 		log.Error(ctx, "processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, nodeRunParams...)
+
+	allContexts.Vars = varsContext
+	allContexts.CDS = computeCDSContext(ctx, *wr, *run)
+	run.Contexts = allContexts
 }
 
 func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, parents []*sdk.WorkflowNodeRun, manual *sdk.WorkflowNodeRunManual) ([]sdk.Parameter, error) {

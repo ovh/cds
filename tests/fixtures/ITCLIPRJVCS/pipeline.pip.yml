@@ -6,8 +6,9 @@ jobs:
 - job: AsCodeJob
   stage: AsCode
   steps:
-  - name: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-action@master
+  - name: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
     asCodeAction:
       name: John Doe
+      allvars: ${{ vars }}
   requirements:
   - model: docker-debian

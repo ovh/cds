@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"fmt"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -34,7 +35,7 @@ func TestParserVariables(t *testing.T) {
 		name         string
 		context      map[string]interface{}
 		input        string
-		result       string
+		result       interface{}
 		containError string
 	}{
 		{
@@ -64,7 +65,7 @@ func TestParserVariables(t *testing.T) {
 		{
 			name:   "simple number variable",
 			input:  "${{ git.commitID }}",
-			result: "1",
+			result: 1,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"commitID": 1,
@@ -74,7 +75,7 @@ func TestParserVariables(t *testing.T) {
 		{
 			name:   "simple boolean variable",
 			input:  "${{ git.closed }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"closed": true,
@@ -139,13 +140,13 @@ func TestParserOperations(t *testing.T) {
 		name         string
 		context      map[string]interface{}
 		input        string
-		result       string
+		result       interface{}
 		containError string
 	}{
 		{
 			name:   "simple equality",
 			input:  "${{ git.branch == 'master' }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -155,7 +156,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "full variable equality",
 			input:  "${{ git.branch == git.ref.branch }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -168,7 +169,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "simple variable not equals",
 			input:  "${{ git.branch != 'dev/myfeature' }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -178,7 +179,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "full variable not equals",
 			input:  "${{ git.branch != git.ref.branch }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -191,7 +192,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "simple greater than",
 			input:  "${{ job.num > 1 }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"job": map[string]interface{}{
 					"num": 5,
@@ -201,7 +202,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "simple greater than",
 			input:  "${{ job.num > job.num2 }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"job": map[string]interface{}{
 					"num":  5,
@@ -212,7 +213,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "simple greater or equal than",
 			input:  "${{ job.num >= job.num2 }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"job": map[string]interface{}{
 					"num":  5,
@@ -223,7 +224,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "simple less than",
 			input:  "${{ job.num < job.num2 }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"job": map[string]interface{}{
 					"num":  1,
@@ -234,7 +235,7 @@ func TestParserOperations(t *testing.T) {
 		{
 			name:   "simple less or equal than",
 			input:  "${{ job.num <= job.num2 }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"job": map[string]interface{}{
 					"num":  1,
@@ -266,13 +267,13 @@ func TestParserBooleanExpression(t *testing.T) {
 		name         string
 		context      map[string]interface{}
 		input        string
-		result       string
+		result       interface{}
 		containError string
 	}{
 		{
 			name:   "or expression true",
 			input:  "${{ git.branch == 'master' || git.ref == 'testing' }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -283,7 +284,7 @@ func TestParserBooleanExpression(t *testing.T) {
 		{
 			name:   "or expression false",
 			input:  "${{ git.branch == 'master' || git.ref == 'testing' }}",
-			result: "false",
+			result: false,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "dev",
@@ -295,7 +296,7 @@ func TestParserBooleanExpression(t *testing.T) {
 		{
 			name:   "and expression true",
 			input:  "${{ git.branch == 'master' && git.ref == 'testing' }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -306,7 +307,7 @@ func TestParserBooleanExpression(t *testing.T) {
 		{
 			name:   "and expression false",
 			input:  "${{ git.branch == 'master' && git.ref == 'testing' }}",
-			result: "false",
+			result: false,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -317,7 +318,7 @@ func TestParserBooleanExpression(t *testing.T) {
 		{
 			name:   "term expression or - true",
 			input:  "${{ (git.branch == 'master' && git.ref == 'testing') || (git.branch == 'master' && git.ref == 'prod') }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -328,7 +329,7 @@ func TestParserBooleanExpression(t *testing.T) {
 		{
 			name:   "term expression or - false",
 			input:  "${{ (git.branch == 'dev' && git.id < 2) || (git.branch == 'dev' && git.ref == 'prod') }}",
-			result: "false",
+			result: false,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -340,7 +341,7 @@ func TestParserBooleanExpression(t *testing.T) {
 		{
 			name:   "term expression and - true",
 			input:  "${{ (git.branch == 'master' || git.branch == 'testing') && (git.ref == 'testing' || git.id == 2) }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -352,7 +353,7 @@ func TestParserBooleanExpression(t *testing.T) {
 		{
 			name:   "term expression and - false",
 			input:  "${{ (git.branch == 'master' || git.branch == 'testing') && (git.ref == 'testing' || git.id == 2) }}",
-			result: "false",
+			result: false,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -381,7 +382,7 @@ func TestParserBooleanExpression(t *testing.T) {
 func TestInterpolate(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
-	input := `echo ${{ git.author }}
+	input := `echo ${{git.author}}
 if [[ "${{ git.branch }}" == 'master' ]]; then
   echo 'Master branch'
 fi;
@@ -436,13 +437,13 @@ func TestParserFuncContains(t *testing.T) {
 		name         string
 		context      map[string]interface{}
 		input        string
-		result       string
+		result       interface{}
 		containError string
 	}{
 		{
 			name:   "simple contains function",
 			input:  "${{ contains(git.branch, 'ast') }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -452,7 +453,7 @@ func TestParserFuncContains(t *testing.T) {
 		{
 			name:   "simple contains function with string filter",
 			input:  "${{ contains(git.changes.*.message, 'foo') }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"changes": []map[string]interface{}{
@@ -472,7 +473,7 @@ func TestParserFuncContains(t *testing.T) {
 		{
 			name:   "simple contains function with int filter",
 			input:  "${{ contains(git.changes.*.message, '2') }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"changes": []map[string]interface{}{
@@ -513,13 +514,13 @@ func TestParserFuncStartsWith(t *testing.T) {
 		name         string
 		context      map[string]interface{}
 		input        string
-		result       string
+		result       interface{}
 		containError string
 	}{
 		{
 			name:   "simple startsWith function",
 			input:  "${{ startsWith(git.branch, 'Mas') }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -529,7 +530,7 @@ func TestParserFuncStartsWith(t *testing.T) {
 		{
 			name:   "complex startsWith function",
 			input:  "${{ startsWith(git.branch, git.prefix) }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "Master",
@@ -572,13 +573,13 @@ func TestParserFuncEndsWith(t *testing.T) {
 		name         string
 		context      map[string]interface{}
 		input        string
-		result       string
+		result       interface{}
 		containError string
 	}{
 		{
 			name:   "simple endsWith function",
 			input:  "${{ endsWith(git.branch, 'Ter') }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "master",
@@ -588,7 +589,7 @@ func TestParserFuncEndsWith(t *testing.T) {
 		{
 			name:   "complex endsWith function",
 			input:  "${{ endsWith(git.branch, git.prefix) }}",
-			result: "true",
+			result: true,
 			context: map[string]interface{}{
 				"git": map[string]interface{}{
 					"branch": "mastEr",
@@ -782,6 +783,46 @@ func TestParserFuncToJSON(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.result, result)
+			}
+		})
+	}
+}
+
+func TestParserReturningObject(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:   "parse returning object",
+			input:  "${{ git.repo }}",
+			result: "map[string]interface {}",
+			context: map[string]interface{}{
+				"git": map[string]interface{}{
+					"repo": map[string]interface{}{
+						"id":  "123",
+						"url": "http://lolcat?host",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, fmt.Sprintf("%T", result))
 			}
 		})
 	}

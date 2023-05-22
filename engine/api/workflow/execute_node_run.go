@@ -487,6 +487,12 @@ jobLoop:
 		// errors generated in the loop will be added to job run spawn info
 		spawnErrs := sdk.MultiError{}
 
+		// Copy context from noderun
+		jobFullContext := sdk.JobRunContext{}
+		jobFullContext.CDS = nr.Contexts.CDS
+		jobFullContext.Vars = nr.Contexts.Vars
+		jobFullContext.Git = nr.Contexts.Git
+
 		//Process variables for the jobs
 		_, next = telemetry.Span(ctx, "workflow..getNodeJobRunParameters")
 		jobParams, err := getNodeJobRunParameters(job, nr, stage)
@@ -494,6 +500,8 @@ jobLoop:
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
+		jobFullContext.CDS.Job = job.Action.Name
+		jobFullContext.CDS.Stage = stage.Name
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
 		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs, jobParams)
@@ -501,6 +509,18 @@ jobLoop:
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
+
+		// Retrieve service requirement
+		jobContext := sdk.JobContext{Services: make(map[string]sdk.JobContextService)}
+
+		jobContext.Status = strings.ToLower(sdk.StatusSuccess)
+		for _, jreq := range jobRequirements {
+			if jreq.Type != sdk.ServiceRequirement {
+				continue
+			}
+			jobContext.Services[jreq.Name] = sdk.JobContextService{}
+		}
+		jobFullContext.Job = jobContext
 
 		if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion); exist {
 			if err := checkJobRegion(ctx, db, proj.Key, proj.Organization, wr.Workflow.Name, jobRequirements); err != nil {
@@ -533,6 +553,7 @@ jobLoop:
 			},
 			Header:          nr.Header,
 			ContainsService: containsService,
+			Contexts:        jobFullContext,
 		}
 		wjob.ModelType = modelType
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
@@ -802,7 +823,7 @@ func NodeBuildParametersFromWorkflow(proj sdk.Project, wf *sdk.Workflow, refNode
 		runContext.NodeGroups = refNode.Groups
 
 		var err error
-		res, err = getBuildParameterFromNodeContext(proj, *wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
+		res, _, err = getBuildParameterFromNodeContext(proj, *wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}

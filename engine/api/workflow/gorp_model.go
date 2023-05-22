@@ -37,63 +37,65 @@ type dbWorkflowProjectIntegration sdk.WorkflowProjectIntegration
 
 // NodeRun is a gorp wrapper around sdk.WorkflowNodeRun
 type NodeRun struct {
-	WorkflowID             sql.NullInt64  `db:"workflow_id"`
-	WorkflowRunID          int64          `db:"workflow_run_id"`
-	ApplicationID          sql.NullInt64  `db:"application_id"`
-	ID                     int64          `db:"id"`
-	WorkflowNodeID         int64          `db:"workflow_node_id"`
-	WorkflowNodeName       string         `db:"workflow_node_name"`
-	Number                 int64          `db:"num"`
-	SubNumber              int64          `db:"sub_num"`
-	Status                 string         `db:"status"`
-	Start                  time.Time      `db:"start"`
-	Done                   time.Time      `db:"done"`
-	LastModified           time.Time      `db:"last_modified"`
-	HookEvent              sql.NullString `db:"hook_event"`
-	Manual                 sql.NullString `db:"manual"`
-	SourceNodeRuns         sql.NullString `db:"source_node_runs"`
-	Payload                sql.NullString `db:"payload"`
-	PipelineParameters     sql.NullString `db:"pipeline_parameters"`
-	BuildParameters        sql.NullString `db:"build_parameters"`
-	Tests                  sql.NullString `db:"tests"`
-	Commits                sql.NullString `db:"commits"`
-	Stages                 sql.NullString `db:"stages"`
-	TriggersRun            sql.NullString `db:"triggers_run"`
-	VCSRepository          sql.NullString `db:"vcs_repository"`
-	VCSBranch              sql.NullString `db:"vcs_branch"`
-	VCSTag                 sql.NullString `db:"vcs_tag"`
-	VCSHash                sql.NullString `db:"vcs_hash"`
-	VCSServer              sql.NullString `db:"vcs_server"`
-	Header                 sql.NullString `db:"header"`
-	UUID                   sql.NullString `db:"uuid"`
-	OutgoingHook           sql.NullString `db:"outgoinghook"`
-	HookExecutionTimestamp sql.NullInt64  `db:"hook_execution_timestamp"`
-	ExecutionID            sql.NullString `db:"execution_id"`
-	Callback               sql.NullString `db:"callback"`
+	WorkflowID             sql.NullInt64      `db:"workflow_id"`
+	WorkflowRunID          int64              `db:"workflow_run_id"`
+	ApplicationID          sql.NullInt64      `db:"application_id"`
+	ID                     int64              `db:"id"`
+	WorkflowNodeID         int64              `db:"workflow_node_id"`
+	WorkflowNodeName       string             `db:"workflow_node_name"`
+	Number                 int64              `db:"num"`
+	SubNumber              int64              `db:"sub_num"`
+	Status                 string             `db:"status"`
+	Start                  time.Time          `db:"start"`
+	Done                   time.Time          `db:"done"`
+	LastModified           time.Time          `db:"last_modified"`
+	HookEvent              sql.NullString     `db:"hook_event"`
+	Manual                 sql.NullString     `db:"manual"`
+	SourceNodeRuns         sql.NullString     `db:"source_node_runs"`
+	Payload                sql.NullString     `db:"payload"`
+	PipelineParameters     sql.NullString     `db:"pipeline_parameters"`
+	BuildParameters        sql.NullString     `db:"build_parameters"`
+	Tests                  sql.NullString     `db:"tests"`
+	Commits                sql.NullString     `db:"commits"`
+	Stages                 sql.NullString     `db:"stages"`
+	TriggersRun            sql.NullString     `db:"triggers_run"`
+	VCSRepository          sql.NullString     `db:"vcs_repository"`
+	VCSBranch              sql.NullString     `db:"vcs_branch"`
+	VCSTag                 sql.NullString     `db:"vcs_tag"`
+	VCSHash                sql.NullString     `db:"vcs_hash"`
+	VCSServer              sql.NullString     `db:"vcs_server"`
+	Header                 sql.NullString     `db:"header"`
+	UUID                   sql.NullString     `db:"uuid"`
+	OutgoingHook           sql.NullString     `db:"outgoinghook"`
+	HookExecutionTimestamp sql.NullInt64      `db:"hook_execution_timestamp"`
+	ExecutionID            sql.NullString     `db:"execution_id"`
+	Callback               sql.NullString     `db:"callback"`
+	Contexts               sdk.NodeRunContext `db:"contexts"`
 }
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
 type JobRun struct {
-	ProjectID          int64          `db:"project_id"`
-	ID                 int64          `db:"id"`
-	WorkflowNodeRunID  int64          `db:"workflow_node_run_id"`
-	Job                sql.NullString `db:"job"`
-	Parameters         sql.NullString `db:"variables"`
-	Status             string         `db:"status"`
-	Retry              int            `db:"retry"`
-	Queued             time.Time      `db:"queued"`
-	Start              time.Time      `db:"start"`
-	Done               time.Time      `db:"done"`
-	Model              string         `db:"model"`
-	ExecGroups         sql.NullString `db:"exec_groups"`
-	BookedBy           sdk.BookedBy   `db:"-"`
-	Region             *string        `db:"region"`
-	ContainsService    bool           `db:"contains_service"`
-	ModelType          sql.NullString `db:"model_type"`
-	Header             sql.NullString `db:"header"`
-	HatcheryName       string         `db:"hatchery_name"`
-	WorkerName         string         `db:"worker_name"`
-	IntegrationPlugins sql.NullString `db:"integration_plugins"`
+	ProjectID          int64             `db:"project_id"`
+	ID                 int64             `db:"id"`
+	WorkflowNodeRunID  int64             `db:"workflow_node_run_id"`
+	Job                sql.NullString    `db:"job"`
+	Parameters         sql.NullString    `db:"variables"`
+	Status             string            `db:"status"`
+	Retry              int               `db:"retry"`
+	Queued             time.Time         `db:"queued"`
+	Start              time.Time         `db:"start"`
+	Done               time.Time         `db:"done"`
+	Model              string            `db:"model"`
+	ExecGroups         sql.NullString    `db:"exec_groups"`
+	BookedBy           sdk.BookedBy      `db:"-"`
+	Region             *string           `db:"region"`
+	ContainsService    bool              `db:"contains_service"`
+	ModelType          sql.NullString    `db:"model_type"`
+	Header             sql.NullString    `db:"header"`
+	HatcheryName       string            `db:"hatchery_name"`
+	WorkerName         string            `db:"worker_name"`
+	IntegrationPlugins sql.NullString    `db:"integration_plugins"`
+	Contexts           sdk.JobRunContext `db:"contexts"`
 }
 
 // ToJobRun transform the JobRun with data of the provided sdk.WorkflowNodeJobRun
@@ -132,6 +134,7 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	if err != nil {
 		return sdk.WrapError(err, "column header")
 	}
+	j.Contexts = jr.Contexts
 	return nil
 }
 
@@ -153,6 +156,7 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		HatcheryName:      j.HatcheryName,
 		WorkerName:        j.WorkerName,
 		Model:             j.Model,
+		Contexts:          j.Contexts,
 	}
 	if err := gorpmapping.JSONNullString(j.Job, &jr.Job); err != nil {
 		return jr, sdk.WrapError(err, "column job")

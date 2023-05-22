@@ -65,6 +65,7 @@ type CurrentWorker struct {
 		currentStepIndex int
 		currentStepName  string
 		envFromHooks     map[string]string
+		contexts         sdk.JobRunContext
 	}
 	status struct {
 		Name   string `json:"name"`

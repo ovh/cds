@@ -43,6 +43,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.currentJob.runNumber = info.Number
 	w.currentJob.features = info.Features
 	w.currentJob.ascodeAction = info.AscodeActions
+	w.currentJob.contexts = info.Contexts
 
 	w.currentJob.actionPlugin = make(map[string]*sdk.GRPCPlugin)
 
