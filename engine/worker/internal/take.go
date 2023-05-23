@@ -37,10 +37,11 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	}
 	secretContext := make(map[string]string)
 	for _, secret := range w.currentJob.secrets {
-		s := strings.TrimPrefix(secret.Name, "cds.proj")
-		s = strings.TrimPrefix(s, "cds.app")
-		s = strings.TrimPrefix(s, "cds.env")
-		s = strings.TrimPrefix(s, "cds.integration")
+		s := strings.TrimPrefix(secret.Name, "cds.proj.")
+		s = strings.TrimPrefix(s, "cds.app.")
+		s = strings.TrimPrefix(s, "cds.env.")
+
+		s = strings.TrimPrefix(s, "cds.integration.")
 		s = strings.Replace(s, ".", "_", -1)
 
 		secretContext[strings.ToUpper(s)] = secret.Value
