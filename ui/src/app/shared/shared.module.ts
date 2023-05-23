@@ -154,6 +154,7 @@ import { JSONFormFieldComponent } from "./entity/form/form-item/json-form-field.
 import { APIConfigGuard } from 'app/guard/api-config.guard';
 import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
 import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
+import { EditorInputComponent } from './input/editor/editor.input.component';
 
 const ngZorroConfig: NzConfig = {
     notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
@@ -240,6 +241,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
+        EditorInputComponent,
         EntityFormComponent,
         FavoriteButtonComponent,
         FavoriteCardsComponent,
@@ -356,6 +358,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         DiffListComponent,
         DragulaModule,
         DurationMsPipe,
+        EditorInputComponent,
         EntityFormComponent,
         FavoriteButtonComponent,
         FavoriteCardsComponent,

@@ -1,13 +1,18 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from "@angular/core";
 import { FlatElementTypeCondition } from "../../../../model/schema.model";
-import {JSONFormSchema, JSONFormSchemaOneOfItem} from "../json-form.component";
-import {EntityAction} from "../../../../model/project.model";
-import {ProjectService} from "../../../../service/project/project.service";
-import {ActivatedRoute} from "@angular/router";
-import {ProjectState} from "../../../../store/project.state";
-import {Store} from "@ngxs/store";
+import { JSONFormSchema, JSONFormSchemaOneOfItem } from "../json-form.component";
+import { EntityAction } from "../../../../model/project.model";
+import { ProjectService } from "../../../../service/project/project.service";
+import { ActivatedRoute } from "@angular/router";
+import { ProjectState } from "../../../../store/project.state";
+import { Store } from "@ngxs/store";
 import { load, LoadOptions } from 'js-yaml'
-import {PluginService} from "../../../../service/plugin.service";
+import { PluginService } from "../../../../service/plugin.service";
+import { DragulaService } from "ng2-dragula-sgu";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { Subscription } from "rxjs";
+import { PreferencesState } from "app/store/preferences.state";
+import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 
 export class FormItem {
     name: string;
@@ -23,6 +28,7 @@ export class FormItem {
     onchange: string;
     mode: string;
     prefix: string;
+    code: boolean;
 }
 @Component({
     selector: 'app-json-form-field',
@@ -30,34 +36,70 @@ export class FormItem {
     styleUrls: ['./json-form-field.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class JSONFormFieldComponent implements OnChanges {
+@AutoUnsubscribe()
+export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
+    @ViewChild('editor') editor: NzCodeEditorComponent;
+
     @Input() field: FormItem;
     @Input() jsonFormSchema: JSONFormSchema;
     @Input() model: any;
     @Input() parentType: string;
     @Input() disabled: boolean;
     @Input() hideLabel: boolean;
-    @Input() entityType: string
+    @Input() entityType: string;
+    @Input() indent: number = 0;
     @Output() modelChange = new EventEmitter();
 
     required: boolean;
     oneOf: Map<string, JSONFormSchemaOneOfItem>;
     oneOfSelected: string[] = new Array<string>();
     oneOfSelectOpts: string[];
-
-
+    timestamp = Date.now();
     currentModel: any;
     isConditionnal: boolean;
     selectedCondition: FlatElementTypeCondition;
     conditionRefProperties: string[];
+    resizingSubscription: Subscription;
 
     constructor(
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
         private _pluginService: PluginService,
         private _store: Store,
-        private _activatedRouter: ActivatedRoute
-    ) { }
+        private _activatedRouter: ActivatedRoute,
+        private _dragulaService: DragulaService
+    ) {
+        this.trackByIndex = this.trackByIndex.bind(this);
+    }
+
+    ngOnInit(): void {
+        if (!this._dragulaService.find('array-field')) {
+            this._dragulaService.createGroup('array-field', {
+                moves(el, source, handle) {
+                    const f = (element: Element) => {
+                        if (element.classList.contains('move')) {
+                            return true;
+                        };
+                        if (element.parentElement) {
+                            return f(element.parentElement);
+                        }
+                        return false;
+                    };
+                    return f(handle);
+                },
+                direction: 'vertical'
+            });
+        }
+
+        this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
+            if (this.editor && !resizing) {
+                this.editor.layout();
+            }
+            this._cd.markForCheck();
+        });
+    }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnChanges(changes: SimpleChanges): void {
         if (!this.jsonFormSchema || !this.field || !this.model) {
@@ -95,8 +137,8 @@ export class JSONFormFieldComponent implements OnChanges {
         this._cd.markForCheck();
     }
 
-    trackByIndex(index: number) {
-        return index;
+    trackByIndex(index: number, v) {
+        return this.timestamp + '-' + index;
     }
 
     updateItemStruct(index: number) {
@@ -185,8 +227,8 @@ export class JSONFormFieldComponent implements OnChanges {
                 if (this.entityType === EntityAction && entitySplit.length === 1) {
                     this._pluginService.getPlugin(entityName).subscribe(pl => {
                         if (pl.inputs) {
-                            let keys =  Object.keys(pl.inputs);
-                            if(keys.length > 0) {
+                            let keys = Object.keys(pl.inputs);
+                            if (keys.length > 0) {
                                 this.currentModel['with'] = {};
                                 keys.forEach(k => {
                                     this.currentModel['with'][k] = pl.inputs[k].default;
@@ -201,8 +243,8 @@ export class JSONFormFieldComponent implements OnChanges {
                         switch (this.entityType) {
                             case EntityAction:
                                 if (ent.inputs) {
-                                    let keys =  Object.keys(ent.inputs);
-                                    if(keys.length > 0) {
+                                    let keys = Object.keys(ent.inputs);
+                                    if (keys.length > 0) {
                                         this.currentModel['with'] = {};
                                         keys.forEach(k => {
                                             this.currentModel['with'][k] = ent.inputs[k].default;
@@ -222,6 +264,25 @@ export class JSONFormFieldComponent implements OnChanges {
         } else {
             this.currentModel[this.field.name] = value;
         }
+        this._cd.markForCheck();
+        this.modelChange.emit(this.currentModel);
+    }
+
+    onDragArrayItem(field: string, array: any): void {
+        this.timestamp = Date.now();
+        this.currentModel[field] = array;
+        this._cd.markForCheck();
+        this.modelChange.emit(this.currentModel);
+    }
+
+    onArrayItemDelete(field: string, index: number): void {
+        this.currentModel[field] = this.currentModel[field].filter((v: any, i: number) => i !== index);
+        this._cd.markForCheck();
+        this.modelChange.emit(this.currentModel);
+    }
+
+    onMapItemDelete(field: string, key: string): void {
+        delete this.currentModel[field][key];
         this._cd.markForCheck();
         this.modelChange.emit(this.currentModel);
     }
