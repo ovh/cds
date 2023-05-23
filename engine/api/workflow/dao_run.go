@@ -186,10 +186,13 @@ func LoadLastRun(ctx context.Context, db gorp.SqlExecutor, projectkey, workflown
 
 // LoadLastRuns returns the last run per workflowIDs
 func LoadLastRuns(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64, limit int) ([]sdk.WorkflowRun, error) {
-	query := fmt.Sprintf(`select %s
-	from workflow_run
-	where workflow_run.workflow_id = ANY($1)
-	order by workflow_run.workflow_id, workflow_run.num desc limit $2`, wfRunfields)
+	query := fmt.Sprintf(`
+    SELECT %s
+	  FROM workflow_run
+	  WHERE workflow_run.workflow_id = ANY($1)
+	  ORDER BY workflow_run.start DESC, workflow_run.num DESC
+    LIMIT $2
+  `, wfRunfields)
 	return loadRuns(ctx, db, query, pq.Int64Array(workflowIDs), limit)
 }
 
