@@ -271,11 +271,12 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 		res := w.runGRPCPlugin(ctx, a)
 		return res
 	case sdk.AsCodeAction:
-		actionContext, err := w.createSubActionContextFromActionParameters(ctx, strings.TrimPrefix(a.StepName, "actions/"), w.currentJob.wJob.Contexts, a.Parameters)
+		actionNameWithoutPrefix := strings.TrimPrefix(a.StepName, "actions/")
+		actionContext, err := w.createSubActionContextFromActionParameters(ctx, actionNameWithoutPrefix, w.currentJob.wJob.Contexts, a.Parameters)
 		if err != nil {
 			return w.failAction(ctx, fmt.Sprintf("%v", err.Error()))
 		}
-		res := w.runAsCodeAction(ctx, actionContext, a.StepName, filepath.Base(a.Name)+"/")
+		res := w.runAsCodeAction(ctx, actionContext, actionNameWithoutPrefix, filepath.Base(a.Name)+"/")
 		return res
 	}
 
