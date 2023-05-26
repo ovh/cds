@@ -377,6 +377,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	userRoles := make(map[string]bool)
 	skippedFiles := make(sdk.StringSlice, 0)
+skipEntity:
 	for i := range entities {
 		e := &entities[i]
 
@@ -401,6 +402,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 				} else {
 					skippedFiles = append(skippedFiles, "User doesn't have the permission to manage "+e.Type)
 					analysisEntity.Status = sdk.RepositoryAnalysisStatusSkipped
+					continue skipEntity
 				}
 				break
 			}
