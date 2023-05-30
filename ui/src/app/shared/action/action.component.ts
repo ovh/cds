@@ -146,6 +146,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         if (acts && acts.length > 0) {
             this.publicActions.push(...acts);
         }
+        this._cd.markForCheck();
     }
 
     initWorkerModelList(wms: Array<WorkerModel>): void {
