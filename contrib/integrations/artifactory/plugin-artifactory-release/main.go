@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -231,12 +232,18 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribC
 
 		paramsBuild := fmt.Sprintf("%s/%s", strings.Replace(buildInfoName, "/", "\\/", -1), version)
 
+		newReleaseProperties := new(utils.Properties)
+		newReleaseProperties.AddProperty("release.name", params.Name)
+		newReleaseProperties.AddProperty("release.version", params.Version)
+		newReleaseProperties.AddProperty("release.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+
 		params.SpecFiles = make([]*utils.CommonParams, 0, len(artifactPromoted))
 		for _, arti := range artifactPromoted {
 			query := &utils.CommonParams{
-				Recursive: true,
-				Build:     paramsBuild,
-				Pattern:   arti,
+				Recursive:   true,
+				Build:       paramsBuild,
+				Pattern:     arti,
+				TargetProps: newReleaseProperties,
 			}
 			params.SpecFiles = append(params.SpecFiles, query)
 		}
