@@ -232,7 +232,7 @@ func (e *artifactoryReleasePlugin) createReleaseBundle(distriClient art.DistribC
 
 		paramsBuild := fmt.Sprintf("%s/%s", strings.Replace(buildInfoName, "/", "\\/", -1), version)
 
-		newReleaseProperties := new(utils.Properties)
+		newReleaseProperties := utils.NewProperties()
 		newReleaseProperties.AddProperty("release.name", params.Name)
 		newReleaseProperties.AddProperty("release.version", params.Version)
 		newReleaseProperties.AddProperty("release.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
