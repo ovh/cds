@@ -12,6 +12,8 @@ import (
 
 	"github.com/fsamin/go-dump"
 	defaults "github.com/mcuadros/go-defaults"
+	"github.com/ovh/symmecrypt"
+	"github.com/ovh/symmecrypt/ciphers/aesgcm"
 	"github.com/ovh/symmecrypt/convergent"
 	"github.com/ovh/symmecrypt/keyloader"
 	"github.com/spf13/viper"
@@ -157,6 +159,26 @@ func configBootstrap(args []string) Configuration {
 			conf.CDN.HTTP.Port = 8089
 			conf.CDN.Database.Schema = "cdn"
 			conf.CDN.Units.HashLocatorSalt = sdk.RandomString(8)
+
+			kc := keyloader.KeyConfig{
+				Identifier: "cdn-buffer-local",
+				Timestamp:  time.Now().Unix(),
+				Cipher:     aesgcm.CipherName,
+				Sealed:     false,
+			}
+
+			key, err := symmecrypt.NewRandomKey(kc.Cipher)
+			if err != nil {
+				sdk.Exit("Error generate cdn buffer key'%v'", err)
+			}
+
+			keyStr, err := key.String()
+			if err != nil {
+				sdk.Exit("Error getting cdn buffer key: '%v'", err)
+			}
+
+			kc.Key = keyStr
+
 			conf.CDN.Units.Buffers = map[string]storage.BufferConfiguration{
 				"redis": {
 					BufferType: storage.CDNBufferTypeLog,
@@ -167,7 +189,8 @@ func configBootstrap(args []string) Configuration {
 				"local-buffer": {
 					BufferType: storage.CDNBufferTypeFile,
 					Local: &storage.LocalBufferConfiguration{
-						Path: "/var/lib/cds-engine/cdn-buffer",
+						Path:       "/var/lib/cds-engine/cdn-buffer",
+						Encryption: []*keyloader.KeyConfig{&kc},
 					},
 				},
 			}
