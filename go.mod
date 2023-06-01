@@ -74,7 +74,7 @@ require (
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.8.1
-	github.com/spf13/cast v1.4.1
+	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.10.1
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
@@ -129,7 +129,7 @@ require (
 	github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/andybalholm/brotli v1.0.1 // indirect
-	github.com/aokoli/goutils v1.1.0 // indirect
+	github.com/aokoli/goutils v1.1.1 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.3.0 // indirect
@@ -151,7 +151,6 @@ require (
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/forPelevin/gomoji v1.1.6 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
-	github.com/frankban/quicktest v1.14.3 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
@@ -169,7 +168,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
@@ -193,7 +192,7 @@ require (
 	github.com/hashicorp/serf v0.9.6 // indirect
 	github.com/hashicorp/vault/sdk v0.8.1 // indirect
 	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
-	github.com/huandu/xstrings v1.2.0 // indirect
+	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
