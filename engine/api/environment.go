@@ -302,15 +302,29 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		}
 
 		// create keys
+		envKeys, err := environment.LoadAllKeysWithPrivateContent(tx, env.ID)
+		if err != nil {
+			return err
+		}
 		for i := range env.Keys {
 			k := &env.Keys[i]
-			newKey, err := keys.GenerateKey(k.Name, k.Type)
-			if err != nil {
-				return err
+			if k.ID == 0 {
+				newKey, err := keys.GenerateKey(k.Name, k.Type)
+				if err != nil {
+					return err
+				}
+				k.Public = newKey.Public
+				k.Private = newKey.Private
+				k.KeyID = newKey.KeyID
+			} else {
+				for _, kClear := range envKeys {
+					if kClear.ID == k.ID {
+						k.Public = kClear.Public
+						k.Private = kClear.Private
+						k.KeyID = kClear.KeyID
+					}
+				}
 			}
-			k.Public = newKey.Public
-			k.Private = newKey.Private
-			k.KeyID = newKey.KeyID
 		}
 
 		u := getUserConsumer(ctx)

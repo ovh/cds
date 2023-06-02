@@ -67,45 +67,25 @@ func Import(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, env *sdk.Environm
 
 // ImportInto import variables and groups on an existing environment
 func ImportInto(ctx context.Context, db gorpmapper.SqlExecutorWithTx, env *sdk.Environment, into *sdk.Environment, msgChan chan<- sdk.Message, u sdk.Identifiable) error {
-	var updateVar = func(v *sdk.EnvironmentVariable) {
-		log.Debug(ctx, "ImportInto> Updating var %q with value %q", v.Name, v.Value)
-
-		varBefore, errV := LoadVariable(db, into.ID, v.Name)
-		if errV != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeUpdated, v.Name, into.Name, errV)
-			return
-		}
-
-		if err := UpdateVariable(db, into.ID, v, varBefore, u); err != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeUpdated, v.Name, into.Name, err)
-			return
-		}
-		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableUpdated, v.Name, into.Name)
+	//Delete all Variables
+	if err := DeleteAllVariables(db, into.ID); err != nil {
+		return err
 	}
 
-	var insertVar = func(v *sdk.EnvironmentVariable) {
-		log.Debug(ctx, "ImportInto> Creating var %s", v.Name)
-		if err := InsertVariable(db, into.ID, v, u); err != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeCreated, v.Name, into.Name, err)
-			return
-		}
-		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCreated, v.Name, into.Name)
+	///Delete all Keys
+	if err := DeleteAllEnvironmentKeys(db, into.ID); err != nil {
+		return err
 	}
 
 	for i := range env.Variables {
-		log.Debug(ctx, "ImportInto> Checking >> %s", env.Variables[i].Name)
-		var found bool
-		for j := range into.Variables {
-			log.Debug(ctx, "ImportInto> \t with >> %s", into.Variables[j].Name)
-			if env.Variables[i].Name == into.Variables[j].Name {
-				env.Variables[i].ID = into.Variables[j].ID
-				found = true
-				updateVar(&env.Variables[i])
-				break
-			}
+		if err := InsertVariable(db, into.ID, &env.Variables[i], u); err != nil {
+			return err
 		}
-		if !found {
-			insertVar(&env.Variables[i])
+	}
+
+	for i := range env.Keys {
+		if err := InsertKey(db, &env.Keys[i]); err != nil {
+			return err
 		}
 	}
 
