@@ -512,14 +512,7 @@ jobLoop:
 
 		// Retrieve service requirement
 		jobContext := sdk.JobContext{Services: make(map[string]sdk.JobContextService)}
-
 		jobContext.Status = strings.ToLower(sdk.StatusSuccess)
-		for _, jreq := range jobRequirements {
-			if jreq.Type != sdk.ServiceRequirement {
-				continue
-			}
-			jobContext.Services[jreq.Name] = sdk.JobContextService{}
-		}
 		jobFullContext.Job = jobContext
 
 		if exist := featureflipping.Exists(ctx, gorpmapping.Mapper, db, sdk.FeatureRegion); exist {
