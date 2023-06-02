@@ -151,8 +151,14 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	}
 	runContext.WorkflowProjectIntegrations = append(runContext.WorkflowProjectIntegrations, wr.Workflow.Integrations...)
 
-	// NODE CONTEXT BUILD PARAMETER
+	// NODE CONTEXT BUILD PARAMETER + NEW VARS CONTEXT
 	computeNodeContextBuildParameters(ctx, proj, wr, nr, n, runContext)
+
+	// NEW CDS CONTEXT
+	cdsContext := computeCDSContext(ctx, *wr, *nr)
+	workflowIntegrationsContext := computeWorkflowIntegrationSubContext(runContext)
+	cdsContext.WorkflowIntegrations = workflowIntegrationsContext
+	nr.Contexts.CDS = cdsContext
 
 	// PARENT BUILD PARAMETER WITH git.*
 	if len(parents) > 0 {
@@ -278,7 +284,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		repl(&vcsInf.Message)
 		repl(&vcsInf.Tag)
 
-		setValuesGitInBuildParameters(nr, *vcsInf)
+		setValuesGitInBuildParameters(nr, runContext, *vcsInf)
 	}
 
 	// CONDITION
@@ -311,7 +317,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		repl(&vcsInf.Message)
 		repl(&vcsInf.Tag)
 
-		setValuesGitInBuildParameters(nr, *vcsInf)
+		setValuesGitInBuildParameters(nr, runContext, *vcsInf)
 	}
 
 	// ADD TAG
@@ -424,6 +430,30 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	return report, true, nil
 }
 
+func computeWorkflowIntegrationSubContext(runContext nodeRunContext) map[string]interface{} {
+	workflowIntegrationContextes := make(map[string]interface{})
+	for _, integ := range runContext.WorkflowProjectIntegrations {
+		if !integ.ProjectIntegration.Model.ArtifactManager {
+			continue
+		}
+		artifactContext := make(map[string]string)
+		for k, c := range integ.ProjectIntegration.Config {
+			if c.Type != sdk.IntegrationConfigTypePassword {
+				artifactContext[k] = c.Value
+			}
+		}
+
+		for k, c := range integ.Config {
+			if c.Type != sdk.IntegrationConfigTypePassword {
+				artifactContext[k] = c.Value
+			}
+		}
+		prefix := sdk.GetIntegrationVariablePrefix(integ.ProjectIntegration.Model)
+		workflowIntegrationContextes[prefix] = artifactContext
+	}
+	return workflowIntegrationContextes
+}
+
 func getParentsStatus(wr *sdk.WorkflowRun, parents []*sdk.WorkflowNodeRun) string {
 	for _, p := range parents {
 		for _, v := range wr.WorkflowNodeRuns {
@@ -512,13 +542,18 @@ func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual
 }
 
 func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
-	nodeRunParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
+	allContexts := sdk.NodeRunContext{}
+
+	nodeRunParams, varsContext, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {
 		AddWorkflowRunInfo(wr, sdk.SpawnMsgNew(*sdk.MsgWorkflowError, sdk.ExtractHTTPError(errParam)))
 		// if there an error -> display it in workflowRunInfo and not stop the launch
 		log.Error(ctx, "processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, run.SubNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, nodeRunParams...)
+
+	allContexts.Vars = varsContext
+	run.Contexts = allContexts
 }
 
 func computeBuildParameters(wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, parents []*sdk.WorkflowNodeRun, manual *sdk.WorkflowNodeRunManual) ([]sdk.Parameter, error) {

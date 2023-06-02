@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/luascript"
 )
 
-func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
+func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, runContext nodeRunContext, vcsInfos vcsInfos) {
 	if run.ApplicationID != 0 {
 		run.VCSRepository = vcsInfos.Repository
 		if vcsInfos.Tag == "" {
@@ -37,6 +37,31 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitURL, sdk.StringParameter, vcsInfos.URL)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.HTTPUrl)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitServer, sdk.StringParameter, vcsInfos.Server)
+
+	gitContext := sdk.GitContext{
+		Hash:       vcsInfos.Hash,
+		Repository: vcsInfos.Repository,
+		Branch:     vcsInfos.Branch,
+		Tag:        vcsInfos.Tag,
+		Author:     vcsInfos.Author,
+		Message:    vcsInfos.Message,
+		URL:        vcsInfos.URL,
+		Server:     vcsInfos.Server,
+	}
+	if runContext.Application.RepositoryStrategy.ConnectionType != "" {
+		gitContext.Connection = runContext.Application.RepositoryStrategy.ConnectionType
+		gitContext.SSHKey = runContext.Application.RepositoryStrategy.SSHKey
+		gitContext.PGPKey = runContext.Application.RepositoryStrategy.PGPKey
+		gitContext.HttpUser = runContext.Application.RepositoryStrategy.User
+
+		for _, v := range run.BuildParameters {
+			if v.Name == "git.hook" {
+				gitContext.EventName = v.Value
+				break
+			}
+		}
+	}
+	run.Contexts.Git = gitContext
 }
 
 func checkCondition(ctx context.Context, wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {

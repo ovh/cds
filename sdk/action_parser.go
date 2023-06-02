@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -14,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/parser"
 )
 
-var extractRegexp = regexp.MustCompile("(\\${{ .+? }})")
+var extractRegexp = regexp.MustCompile("(\\${{.+?}})")
 
 type ActionParser struct {
 	contexts map[string]interface{}
@@ -61,7 +62,7 @@ func (a *ActionParser) checkSyntax(_ context.Context, input string) []string {
 	return errorLst.Errors
 }
 
-func (a *ActionParser) Interpolate(ctx context.Context, input string) (string, error) {
+func (a *ActionParser) Interpolate(ctx context.Context, input string) (interface{}, error) {
 	interpolatedInput := input
 	matches := extractRegexp.FindAllString(input, -1)
 	for _, match := range matches {
@@ -70,12 +71,25 @@ func (a *ActionParser) Interpolate(ctx context.Context, input string) (string, e
 		if err != nil {
 			return input, err
 		}
-		interpolatedInput = strings.Replace(interpolatedInput, match, result, 1)
+		switch result.(type) {
+		case map[string]interface{}, []interface{}:
+			if len(matches) == 1 {
+				return result, nil
+			}
+			bts, err := json.Marshal(result)
+			if err != nil {
+				return nil, NewErrorFrom(ErrInvalidData, "unable to stringify %s: %v", match, err)
+			}
+			interpolatedInput = strings.Replace(interpolatedInput, match, fmt.Sprintf("%s", string(bts)), 1)
+		default:
+			interpolatedInput = strings.Replace(interpolatedInput, match, fmt.Sprintf("%v", result), 1)
+		}
+
 	}
 	return interpolatedInput, nil
 }
 
-func (a *ActionParser) parse(ctx context.Context, elt string) (string, error) {
+func (a *ActionParser) parse(ctx context.Context, elt string) (interface{}, error) {
 	p, errorLst := a.createLexerAndParser(elt)
 	tree := p.Expression()
 	if len(errorLst.Errors) != 0 {
@@ -95,7 +109,7 @@ func (a *ActionParser) parse(ctx context.Context, elt string) (string, error) {
 	return "", NewErrorFrom(ErrInvalidData, "No expression found. Gor [%s]", elt)
 }
 
-func (a *ActionParser) parseOrExpressionContext(ctx context.Context, exp *parser.OrExpressionContext) (string, error) {
+func (a *ActionParser) parseOrExpressionContext(ctx context.Context, exp *parser.OrExpressionContext) (interface{}, error) {
 	log.Debug(ctx, "Or expression detected: %s", exp.GetText())
 	operands := make([]interface{}, 0, exp.GetChildCount())
 	for i := 0; i < exp.GetChildCount(); i++ {
@@ -114,13 +128,13 @@ func (a *ActionParser) parseOrExpressionContext(ctx context.Context, exp *parser
 	}
 	switch len(operands) {
 	case 1:
-		return fmt.Sprintf("%v", operands[0]), nil
+		return operands[0], nil
 	default:
 		b, err := a.or(operands)
 		if err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("%v", b), nil
+		return b, nil
 	}
 }
 
@@ -330,7 +344,7 @@ func (a *ActionParser) parseTermExpressionContext(ctx context.Context, exp *pars
 			if err != nil {
 				return false, err
 			}
-			b, err := strconv.ParseBool(result)
+			b, err := strconv.ParseBool(fmt.Sprintf("%v", result))
 			if err != nil {
 				return false, NewErrorFrom(ErrInvalidData, "%s is not a boolean", result)
 			}

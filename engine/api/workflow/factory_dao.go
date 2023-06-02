@@ -493,7 +493,7 @@ func (loader *asCodeLoader) browseNonAscodeActionSteps(ctx context.Context, acti
 			continue
 		}
 		if a.Type == sdk.AsCodeAction {
-			if err := loader.loadAsCodeActionStep(ctx, a.StepName); err != nil {
+			if err := loader.loadAsCodeActionStep(ctx, strings.TrimPrefix(a.StepName, "actions/")); err != nil {
 				return err
 			}
 		}
@@ -555,7 +555,7 @@ func (loader *asCodeLoader) browseAsCodeActionSteps(ctx context.Context, steps [
 		if step.Uses == "" {
 			continue
 		}
-		if err := loader.loadAsCodeActionStep(ctx, step.Uses); err != nil {
+		if err := loader.loadAsCodeActionStep(ctx, strings.TrimPrefix(step.Uses, "actions/")); err != nil {
 			return err
 		}
 	}

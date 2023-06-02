@@ -1,0 +1,19 @@
+name: test-parent-action
+author: cds_team
+description: simple parent action as code
+inputs:
+  allvars:
+    description: vars context
+  name:
+    description: name of the person to greet
+    required: true
+    default: Steven
+runs:
+  steps:
+  - run: |
+      echo "Welcome in action test-parent-action"
+  - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-child-action@master
+    with:
+      projectName: ${{ inputs.allvars.PROJECT }}
+      name: ${{inputs.name}}
+

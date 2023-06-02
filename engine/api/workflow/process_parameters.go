@@ -2,10 +2,12 @@ package workflow
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/fsamin/go-dump"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -36,11 +38,15 @@ func getNodeJobRunParameters(j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Sta
 }
 
 // getBuildParameterFromNodeContext returns the parameters compute from  node context (project, application,  pipeline, pyaload)
-func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
+func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, map[string]string, error) {
+	varsContext := make(map[string]string)
+
 	tmpProj := sdk.ParametersFromProjectVariables(proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
 		vars[k] = v
+		varKey := strings.TrimPrefix(k, "cds.proj.")
+		varsContext[strings.Replace(strings.ToUpper(varKey), ".", "_", -1)] = v
 	}
 
 	for _, k := range proj.Keys {
@@ -62,6 +68,8 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		tmp := sdk.ParametersFromApplicationVariables(runContext.Application)
 		for k, v := range tmp {
 			vars[k] = v
+			varKey := strings.TrimPrefix(k, "cds.app.")
+			varsContext[strings.Replace(strings.ToUpper(varKey), ".", "_", -1)] = v
 		}
 
 		tmp = sdk.ParametersFromApplicationKeys(runContext.Application)
@@ -76,6 +84,8 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		tmp := sdk.ParametersFromEnvironmentVariables(runContext.Environment)
 		for k, v := range tmp {
 			vars[k] = v
+			varKey := strings.TrimPrefix(k, "cds.env.")
+			varsContext[strings.Replace(strings.ToUpper(varKey), ".", "_", -1)] = v
 		}
 		tmp = sdk.ParametersFromEnvironmentKeys(runContext.Environment)
 		for k, v := range tmp {
@@ -105,9 +115,12 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 	for _, integ := range runContext.ProjectIntegrations {
 		prefix := sdk.GetIntegrationVariablePrefix(integ.Model)
 		vars["cds.integration."+prefix] = integ.Name
+		varsContext[strings.ToUpper(prefix)] = integ.Name
 		tmp := sdk.ParametersFromIntegration(prefix, integ.Config)
 		for k, v := range tmp {
 			vars[k] = v
+			varKey := strings.TrimPrefix(k, "cds.integration.")
+			varsContext[strings.Replace(strings.ToUpper(varKey), ".", "_", -1)] = v
 		}
 
 		if integ.Model.Deployment {
@@ -118,6 +131,8 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 						tmp := sdk.ParametersFromIntegration(prefix, pfConfig)
 						for k, v := range tmp {
 							vars[k] = v
+							varKey := strings.TrimPrefix(k, "cds.integration.")
+							varsContext[strings.Replace(strings.ToUpper(varKey), ".", "_", -1)] = v
 						}
 					}
 				}
@@ -129,6 +144,8 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 	tmpPip := sdk.ParametersFromPipelineParameters(pipelineParameters)
 	for k, v := range tmpPip {
 		vars[k] = v
+		varKey := strings.TrimPrefix(k, "cds.pip.")
+		varsContext[strings.Replace(strings.ToUpper(varKey), ".", "_", -1)] = v
 	}
 
 	// COMPUTE PAYLOAD
@@ -141,16 +158,21 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 	e.ExtraFields.Type = false
 	tmpVars, errdump := e.ToStringMap(payload)
 	if errdump != nil {
-		return nil, sdk.WrapError(errdump, "do-dump error")
+		return nil, nil, sdk.WrapError(errdump, "do-dump error")
 	}
-
 	//Merge the dumped payload with vars
 	vars = sdk.ParametersMapMerge(vars, tmpVars)
 
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = runContext.Pipeline.Name
+	varsContext["PROJECT"] = w.ProjectKey
+	varsContext["WORKFLOW"] = w.Name
+	varsContext["PIPELINE"] = runContext.Pipeline.Name
 
+	if runContext.Application.Name != "" {
+		varsContext["APPLICATION"] = runContext.Application.Name
+	}
 	// COMPUTE VCS STRATEGY VARIABLE
 	if runContext.Application.RepositoryStrategy.ConnectionType != "" {
 		vars["git.connection.type"] = runContext.Application.RepositoryStrategy.ConnectionType
@@ -185,7 +207,7 @@ func getBuildParameterFromNodeContext(proj sdk.Project, w sdk.Workflow, runConte
 		sdk.AddParameter(&params, k, sdk.StringParameter, v)
 	}
 
-	return params, nil
+	return params, varsContext, nil
 }
 
 func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
@@ -251,7 +273,7 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun) ([
 	return params, nil
 }
 
-func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, map[string]string, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.getNodeRunBuildParameters",
 		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
 		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
@@ -260,9 +282,9 @@ func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.Wo
 	defer end()
 
 	// GET PARAMETER FROM NODE CONTEXT
-	params, errparam := getBuildParameterFromNodeContext(proj, wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
+	params, varsContext, errparam := getBuildParameterFromNodeContext(proj, wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
 	if errparam != nil {
-		return nil, sdk.WrapError(errparam, "unable to compute node build parameters")
+		return nil, nil, sdk.WrapError(errparam, "unable to compute node build parameters")
 	}
 
 	errm := &sdk.MultiError{}
@@ -294,8 +316,44 @@ func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.Wo
 	next()
 
 	if errm.IsEmpty() {
-		return params, nil
+		return params, varsContext, nil
 	}
 
-	return params, errm
+	return params, varsContext, errm
+}
+
+func computeCDSContext(ctx context.Context, wr sdk.WorkflowRun, wnr sdk.WorkflowNodeRun) sdk.CDSContext {
+	cdsCtx := sdk.CDSContext{}
+
+	cdsCtx.RunID = fmt.Sprintf("%d", wr.ID)
+	cdsCtx.RunNumber = fmt.Sprintf("%d", wr.Number)
+	cdsCtx.RunAttempt = fmt.Sprintf("%d", wr.LastSubNumber+1)
+	cdsCtx.WorkflowRef = wr.Workflow.Name
+
+	if wnr.Manual != nil {
+		if wnr.Manual.Payload != nil {
+			p, is := wnr.Manual.Payload.(map[string]interface{})
+			if is {
+				cdsCtx.Event = p
+			} else {
+				stringify, _ := json.Marshal(wnr.Manual.Payload)
+				var m map[string]interface{}
+				if err := json.Unmarshal(stringify, &m); err != nil {
+					log.Warn(ctx, "unable to unmarshal payload: %s", string(stringify))
+				}
+				cdsCtx.Event = m
+			}
+		}
+		cdsCtx.TriggeringActor = wnr.Manual.Username
+	} else if wnr.HookEvent != nil && wnr.HookEvent.Payload != nil {
+		if payload, has := wnr.HookEvent.Payload["payload"]; has {
+			var m map[string]interface{}
+			if err := json.Unmarshal([]byte(payload), &m); err != nil {
+				log.Warn(ctx, "unable to unmarshal payload [%s]: %v", payload, err)
+			}
+			cdsCtx.Event = m
+		}
+	}
+	return cdsCtx
+
 }

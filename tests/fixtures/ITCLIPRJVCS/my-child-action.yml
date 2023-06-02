@@ -1,0 +1,15 @@
+name: test-child-action
+author: cds_team
+description: simple child action as code
+inputs:
+  projectName:
+    description: project name
+  name:
+    description: name of the person to greet
+    default: Steven
+  lastname:
+    description: lastname of the person to greet
+    default: Doe
+runs:
+  steps:
+  - run: echo "Hello ${{ inputs.name }} ${{ inputs.lastname }} from project ${{ inputs.projectName }}"
