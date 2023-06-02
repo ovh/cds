@@ -322,6 +322,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 						k.Public = kClear.Public
 						k.Private = kClear.Private
 						k.KeyID = kClear.KeyID
+						break
 					}
 				}
 			}
