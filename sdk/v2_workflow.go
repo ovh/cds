@@ -22,13 +22,21 @@ type WorkflowStage struct {
 }
 
 type V2Job struct {
-	Name     string            `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
-	If       string            `json:"if,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Condition to execute the job"`
-	Contexts []string          `json:"contexts" jsonschema_extras:"order=3" jsonschema_description:"Contexts use by the job"`
-	Env      map[string]string `json:"env,omitempty" jsonschema_extras:"order=4,mode=edit" jsonschema_description:"Environment variables"`
-	Steps    []ActionStep      `json:"steps" jsonschema_extras:"order=5" jsonschema_description:"List of steps"`
-	Needs    []string          `json:"needs,omitempty" jsonschema_extras:"order=6" jsonschema_description:"Job dependencies"`
-	Stage    string            `json:"stage" jsonschema_extras:"order=7" `
+	Name   string            `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
+	If     string            `json:"if,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Condition to execute the job"`
+	Inputs map[string]string `json:"inputs,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Input of thejob"`
+	Steps  []ActionStep      `json:"steps,omitempty" jsonschema_extras:"order=5" jsonschema_description:"List of steps"`
+	Needs  []string          `json:"needs,omitempty" jsonschema_extras:"order=6" jsonschema_description:"Job dependencies"`
+	Stage  string            `json:"stage,omitempty" jsonschema_extras:"order=7"`
+	// TODO
+	Concurrency V2JobConcurrency `json:"-"`
+	Strategy    V2JobStrategy    `json:"-"`
+}
+
+type V2JobStrategy struct {
+}
+
+type V2JobConcurrency struct {
 }
 
 func (w V2Workflow) GetName() string {
