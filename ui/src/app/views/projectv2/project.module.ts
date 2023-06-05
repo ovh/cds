@@ -13,6 +13,19 @@ import {
 } from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
 import { ProjectV2WorkerModelShowComponent } from "./vcs/repository/workermodel/show/project.workermodel.show.component";
 import {ProjectV2ActionShowComponent} from "./vcs/repository/action/show/project.action.show.component";
+import {ProjectV2WorkflowShowComponent} from "./vcs/repository/workflow/show/project.workflow.show.component";
+import {
+    ProjectV2WorkflowForkJoinNodeComponent,
+} from "./vcs/repository/workflow/show/graph/node/fork-join-node.components";
+import {
+    ProjectV2WorkflowJobNodeComponent
+} from "./vcs/repository/workflow/show/graph/node/job-node.component";
+import {
+    ProjectV2WorkflowStagesGraphComponent
+} from "./vcs/repository/workflow/show/graph/stages-graph.component";
+import {
+    ProjectV2WorkflowJobsGraphComponent
+} from "./vcs/repository/workflow/show/graph/jobs-graph.component";
 
 @NgModule({
     declarations: [
@@ -23,6 +36,12 @@ import {ProjectV2ActionShowComponent} from "./vcs/repository/action/show/project
         ProjectV2TopMenuComponent,
         ProjectV2WorkerModelShowComponent,
         ProjectV2ActionShowComponent,
+        ProjectV2WorkflowShowComponent,
+
+        ProjectV2WorkflowForkJoinNodeComponent,
+        ProjectV2WorkflowJobNodeComponent,
+        ProjectV2WorkflowStagesGraphComponent,
+        ProjectV2WorkflowJobsGraphComponent
     ],
     imports: [
         SharedModule,

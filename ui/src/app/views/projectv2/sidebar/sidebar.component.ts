@@ -15,12 +15,13 @@ import {
     FlatNodeItemSelect
 } from 'app/shared/tree/tree.component';
 import { ProjectService } from 'app/service/project/project.service';
-import {EntityAction, EntityWorkerModel, Project, VCSProject} from 'app/model/project.model';
+import { Project, VCSProject} from 'app/model/project.model';
 import { Observable, of, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
 import { AnalysisService } from "../../../service/analysis/analysis.service";
+import {EntityAction, EntityWorkerModel, EntityWorkflow} from "../../../model/entity.model";
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -253,6 +254,14 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                         queryParamsHandling: 'preserve'
                     }).then();
                 }
+                break;
+            case EntityWorkflow:
+                if (e.eventType === 'select') {
+                    this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workflow', e.node.name], {
+                        queryParamsHandling: 'preserve'
+                    }).then();
+                }
+                break;
         }
     }
 

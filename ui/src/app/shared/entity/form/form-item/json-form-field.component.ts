@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from "@angular/core";
 import { FlatElementTypeCondition } from "../../../../model/schema.model";
 import { JSONFormSchema, JSONFormSchemaOneOfItem } from "../json-form.component";
-import { EntityAction } from "../../../../model/project.model";
 import { ProjectService } from "../../../../service/project/project.service";
 import { ActivatedRoute } from "@angular/router";
 import { ProjectState } from "../../../../store/project.state";
@@ -13,6 +12,7 @@ import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Subscription } from "rxjs";
 import { PreferencesState } from "app/store/preferences.state";
 import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
+import {EntityAction} from "../../../../model/entity.model";
 
 export class FormItem {
     name: string;

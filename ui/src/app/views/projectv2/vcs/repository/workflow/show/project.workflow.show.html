@@ -1,0 +1,13 @@
+<ng-container *ngIf="workflow && !loading">
+    <div class="footer">
+        <div class="buttons">
+            <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
+                Save
+            </button>
+        </div>
+    </div>
+    <app-stages-graph [workflow]="dataGraph"></app-stages-graph>
+</ng-container>
+<nz-alert *ngIf="errorNotFound && !loading" nzType="warning"
+          nzDescription="Workflow not found on branch: '{{currentBranch}}'" nzShowIcon></nz-alert>
+<nz-spin *ngIf="loading" nzTip="Loading workflow"></nz-spin>
