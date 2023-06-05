@@ -1,10 +1,6 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy} from "@angular/core";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild} from "@angular/core";
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
-import {
-    Project,
-    ProjectRepository,
-    VCSProject
-} from "app/model/project.model";
+import {Project, ProjectRepository, VCSProject} from "app/model/project.model";
 import {Store} from "@ngxs/store";
 import {ActivatedRoute} from "@angular/router";
 import {ProjectService} from "app/service/project/project.service";
@@ -13,6 +9,8 @@ import {ProjectState} from "app/store/project.state";
 import {forkJoin} from "rxjs";
 import {finalize} from "rxjs/operators";
 import {Entity, EntityWorkflow} from "../../../../../../model/entity.model";
+import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
+import {Schema} from "../../../../../../model/json-schema.model";
 
 @Component({
     selector: 'app-projectv2-workflow-show',
@@ -23,12 +21,14 @@ import {Entity, EntityWorkflow} from "../../../../../../model/entity.model";
 @AutoUnsubscribe()
 export class ProjectV2WorkflowShowComponent implements OnDestroy {
 
+    @ViewChild('editor') editor: NzCodeEditorComponent;
+
     loading: boolean;
     project: Project;
     vcsProject: VCSProject;
     repository: ProjectRepository;
     workflow: Entity;
-    //jsonSchema: Schema;
+    jsonSchema: Schema;
     currentWorkflowName: string;
     currentBranch: string;
     errorNotFound: boolean;
@@ -37,6 +37,7 @@ export class ProjectV2WorkflowShowComponent implements OnDestroy {
     //
     dataGraph: string;
     dataEditor: string;
+
 
     constructor(
         private _store: Store,
@@ -57,11 +58,11 @@ export class ProjectV2WorkflowShowComponent implements OnDestroy {
             forkJoin([
                 this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
                 this._projectService.getVCSProject(this.project.key, p['vcsName']),
-                //this._projectService.getJSONSchema(EntityWorkflow)
+                this._projectService.getJSONSchema(EntityWorkflow)
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
-                //this.jsonSchema = result[2];
+                this.jsonSchema = result[2];
                 this._cd.markForCheck();
                 this.loadWorkflow(p['workflowName'], this._routeActivated?.snapshot?.queryParams['branch']);
             });
@@ -105,7 +106,8 @@ export class ProjectV2WorkflowShowComponent implements OnDestroy {
             });
     }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
 }
 

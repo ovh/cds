@@ -12,7 +12,7 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {ProjectV2WorkflowJobsGraphComponent} from "./jobs-graph.component";
 import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
 import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
@@ -35,10 +35,14 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     static minScale = 1 / 5;
 
     nodes: Array<GraphNode> = [];
+
     @Input() set workflow(data: any) {
         let workflow: any;
         try {
-            workflow = load(data && data !== '' ? data : '{}', <LoadOptions>{ onWarning: (e) => { } });
+            workflow = load(data && data !== '' ? data : '{}', <LoadOptions>{
+                onWarning: (e) => {
+                }
+            });
         } catch (e) {
             console.error("Invalid workflow:", data)
         }
@@ -46,12 +50,17 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         this.nodes = [];
         if (workflow["stages"]) {
             this.nodes.push(...Object.keys(workflow["stages"])
-                .map(k => <GraphNode>{ name: k, depends_on: workflow["stages"][k].needs, sub_graph: [], type: GraphNodeTypeStage }));
+                .map(k => <GraphNode>{
+                    name: k,
+                    depends_on: workflow["stages"][k].needs,
+                    sub_graph: [],
+                    type: GraphNodeTypeStage
+                }));
         }
         if (workflow["jobs"] && Object.keys(workflow["jobs"]).length > 0) {
             Object.keys(workflow["jobs"]).map(k => {
                 let job = workflow.jobs[k];
-                let node = <GraphNode>{ name: k, depends_on: job?.needs, type: GraphNodeTypeJob };
+                let node = <GraphNode>{name: k, depends_on: job?.needs, type: GraphNodeTypeJob};
                 // TODO manage run
                 /*
                 if (this.jobRuns[k]) {
@@ -75,6 +84,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     }
 
     jobRuns: { [name: string]: Array<JobRun> } = {};
+
     @Input() set workflowRun(data: any) {
         if (!data) {
             return;
@@ -91,12 +101,13 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     hasStages = false;
 
     // workflow graph
-    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
+    @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer: ViewContainerRef;
     graph: WorkflowV2Graph<WorkflowV2JobsGraphOrNodeComponent>;
 
     constructor(
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+    }
 
     static isJobsGraph = (component: WorkflowV2JobsGraphOrNodeComponent): component is ProjectV2WorkflowJobsGraphComponent => {
         if ((component as ProjectV2WorkflowJobsGraphComponent).direction) {
@@ -105,7 +116,8 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         return false;
     };
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
         this.ready = true;
@@ -116,7 +128,9 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     @HostListener('window:resize')
     onResize() {
         const element = this.svgContainer.element.nativeElement;
-        if (!this.graph) { return; }
+        if (!this.graph) {
+            return;
+        }
         this.graph.resize(element.offsetWidth, element.offsetHeight);
     }
 

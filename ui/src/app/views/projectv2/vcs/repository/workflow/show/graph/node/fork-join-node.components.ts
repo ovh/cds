@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { PipelineStatus } from 'app/model/pipeline.model';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {GraphNode} from "../graph.model";
 
 @Component({
@@ -30,9 +30,12 @@ export class ProjectV2WorkflowForkJoinNodeComponent implements OnInit, OnDestroy
         this.status = PipelineStatus.sum(this.nodes.map(n => n.run ? n.run.status : null));
     }
 
-    getNodes() { return this.nodes; }
+    getNodes() {
+        return this.nodes;
+    }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     onMouseEnter(): void {
         if (this.mouseCallback) {
@@ -55,5 +58,6 @@ export class ProjectV2WorkflowForkJoinNodeComponent implements OnInit, OnDestroy
         this._cd.markForCheck();
     }
 
-    setSelect(_: boolean): void { }
+    setSelect(_: boolean): void {
+    }
 }

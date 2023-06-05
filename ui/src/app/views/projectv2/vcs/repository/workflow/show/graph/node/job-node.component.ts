@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
-import { PipelineStatus } from 'app/model/pipeline.model';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy} from '@angular/core';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {GraphNode} from "../graph.model";
 
 @Component({
@@ -24,9 +24,13 @@ export class ProjectV2WorkflowJobNodeComponent implements OnDestroy {
         this.setHighlight.bind(this);
         this.setSelect.bind(this);
     }
-    getNodes() { return [this.node]; }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    getNodes() {
+        return [this.node];
+    }
+
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     onMouseEnter(): void {
         if (this.mouseCallback) {

@@ -9,7 +9,7 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {GraphNode} from "./graph.model";
 import {GraphDirection, WorkflowNodeComponent, WorkflowV2Graph} from "./graph.lib";
 import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
@@ -28,11 +28,13 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
 
     node: GraphNode;
     nodes: Array<GraphNode> = [];
+
     @Input() set graphNode(data: GraphNode) {
         this.node = data;
         this.nodes = data.sub_graph;
         this.changeDisplay();
     }
+
     @Input() direction: GraphDirection;
     @Input() centerCallback: any;
     @Input() mouseCallback: (type: string, node: GraphNode) => void;
@@ -42,16 +44,20 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
     highlight = false;
 
     // workflow graph
-    @ViewChild('svgSubGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
+    @ViewChild('svgSubGraph', {read: ViewContainerRef}) svgContainer: ViewContainerRef;
     graph: WorkflowV2Graph<WorkflowNodeComponent>;
 
     constructor(
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+    }
 
-    getNodes() { return [this.node]; }
+    getNodes() {
+        return [this.node];
+    }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     onMouseEnter(): void {
         if (this.mouseCallback) {
@@ -140,6 +146,8 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
     }
 
     clickCenter(): void {
-        if (this.centerCallback) { this.centerCallback(this.node); }
+        if (this.centerCallback) {
+            this.centerCallback(this.node);
+        }
     }
 }

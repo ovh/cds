@@ -26,6 +26,7 @@ import {
 import {
     ProjectV2WorkflowJobsGraphComponent
 } from "./vcs/repository/workflow/show/graph/jobs-graph.component";
+import {ProjectWorkflowEntityComponent} from "./vcs/repository/workflow/show/entity/project.workflow.entity.component";
 
 @NgModule({
     declarations: [
@@ -41,7 +42,8 @@ import {
         ProjectV2WorkflowForkJoinNodeComponent,
         ProjectV2WorkflowJobNodeComponent,
         ProjectV2WorkflowStagesGraphComponent,
-        ProjectV2WorkflowJobsGraphComponent
+        ProjectV2WorkflowJobsGraphComponent,
+        ProjectWorkflowEntityComponent
     ],
     imports: [
         SharedModule,

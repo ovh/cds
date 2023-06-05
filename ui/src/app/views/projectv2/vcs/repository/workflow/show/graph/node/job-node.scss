@@ -70,11 +70,13 @@
     }
 
     .title {
-        height: 22px;
+        height: 100%;
         display: flex;
         flex-direction: row;
         font-size: 1em;
         padding: 2px 4px 0 4px;
+        align-items: center;
+        text-align: center;
 
         .name {
             flex: 1;
