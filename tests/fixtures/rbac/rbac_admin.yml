@@ -10,6 +10,7 @@ projects:
     projects: [ITCLIPRJVCS]
     users: [cds.integration.tests.rw]
   - role: manage-workflow
+    projects: [ITCLIPRJVCS]
     users: [cds.integration.tests.rw]
 globals:
   - role: manage-permission
