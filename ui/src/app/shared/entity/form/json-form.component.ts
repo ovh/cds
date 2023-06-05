@@ -66,9 +66,10 @@ export class JSONFormComponent implements OnInit, OnChanges {
                         pattern: value.pattern,
                         onchange: value.onchange,
                         mode: value.mode,
-                        prefix: value.prefix
+                        prefix: value.prefix,
+                        code: value.code
                     };
-                    if ( (item.type === 'object' || item.type === 'array') && value.type.length === 2) {
+                    if ((item.type === 'object' || item.type === 'array') && value.type.length === 2) {
                         item.objectType = value.type[1];
                     }
                     if (item.type === 'map') {
@@ -80,37 +81,37 @@ export class JSONFormComponent implements OnInit, OnChanges {
                 })
                 .sort((i, j) => i.formOrder - j.formOrder);
             let required = [];
-            let oneOf = new Map<string, JSONFormSchemaOneOfItem> ();
+            let oneOf = new Map<string, JSONFormSchemaOneOfItem>();
             if (schemaDefs[k]) {
                 // If sub jsonschema
-               if (schemaDefs[k]['$defs']) {
-                   required = schemaDefs[k]['$defs'][k].required
-               } else {
-                   required = schemaDefs[k].required
-               }
-               if (schemaDefs[k].oneOf) {
-                   let oneOfListItemName = schemaDefs[k].oneOf.map(o => {
-                       return o.required[0];
-                   });
-                   schemaDefs[k].oneOf.forEach(v => {
-                       let oneOfItem = new JSONFormSchemaOneOfItem();
-                       let listAllowedItem = items.filter(i => {
-                           if (v.not && v.not.required) {
-                               if (v.not.required.indexOf(i.name) !== -1) {
-                                   return false;
-                               }
-                           }
-                           let indexOf = oneOfListItemName.indexOf(i.name);
-                           if (i.name === v.required[0]) {
-                               oneOfItem.keyFormItem = i;
-                           }
-                           return indexOf === -1;
-                       });
-                       oneOfItem.fields = listAllowedItem;
+                if (schemaDefs[k]['$defs']) {
+                    required = schemaDefs[k]['$defs'][k].required
+                } else {
+                    required = schemaDefs[k].required
+                }
+                if (schemaDefs[k].oneOf) {
+                    let oneOfListItemName = schemaDefs[k].oneOf.map(o => {
+                        return o.required[0];
+                    });
+                    schemaDefs[k].oneOf.forEach(v => {
+                        let oneOfItem = new JSONFormSchemaOneOfItem();
+                        let listAllowedItem = items.filter(i => {
+                            if (v.not && v.not.required) {
+                                if (v.not.required.indexOf(i.name) !== -1) {
+                                    return false;
+                                }
+                            }
+                            let indexOf = oneOfListItemName.indexOf(i.name);
+                            if (i.name === v.required[0]) {
+                                oneOfItem.keyFormItem = i;
+                            }
+                            return indexOf === -1;
+                        });
+                        oneOfItem.fields = listAllowedItem;
 
-                       oneOf.set(v.required[0], oneOfItem);
-                   });
-               }
+                        oneOf.set(v.required[0], oneOfItem);
+                    });
+                }
             }
             allTypes[k] = <JSONFormSchemaTypeItem>{
                 fields: items,
@@ -204,7 +205,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
                         if (k !== oneOfSelected) {
                             delete cleanData[k];
                         } else {
-                            let currentKeys  = Object.keys(cleanData);
+                            let currentKeys = Object.keys(cleanData);
                             let allowedKeys = schema.oneOf.get(k).fields;
                             currentKeys.forEach(subKey => {
                                 let ff = allowedKeys.find(i => {

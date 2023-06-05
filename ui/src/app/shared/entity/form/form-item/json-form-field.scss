@@ -1,34 +1,101 @@
 @import "../../../../../common";
+
 i {
     margin-left: 5px;
+}
+
+
+h3 {
+    margin: 10px;
 }
 
 .red {
     color: $cds_color_red;
 }
 
-.array-field, .map-field {
+.array-field,
+.map-field {
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
+.item-title {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 5px;
+
+    h3 {
+        margin: 0 0 0 10px;
+    }
+
+    .item-add {
+        width: 20px;
+        height: 20px;
+        padding: 1px 2px;
+        font-size: 12px;
+        margin-left: 5px;
+    }
+}
+
 .item-container {
     border: 1px #D9D9D9 dashed;
-
-    padding: 20px 20px 0 20px;
+    padding: 15px 15px 0 15px;
     margin-bottom: 10px;
+    position: relative;
+
+    &:hover {
+        .actions {
+            .action {
+                visibility: visible;
+            }
+        }
+    }
+
+    .actions {
+        display: flex;
+        position: absolute;
+        right: -35px;
+        width: 35px;
+        height: 100%;
+        top: 0;
+        flex-direction: column;
+        align-items: center;
+        z-index: 9000;
+
+        .action {
+            visibility: hidden;
+            width: 20px;
+            height: 20px;
+            padding: 1px 2px;
+            margin-bottom: 5px;
+            font-size: 12px;
+            transition-duration: 0ms !important;
+        }
+
+        &:hover {
+            .action {
+                visibility: visible;
+            }
+        }
+    }
 
     .array-item {
         display: flex;
         flex-direction: column;
+        overflow: hidden;
 
         .array-select {
             display: flex;
+            overflow: hidden;
 
             nz-form-item {
                 nz-select.oneof {
                     width: 110px;
                 }
             }
+
             .array-select-key-form {
                 flex: 1;
                 margin-left: 10px;
@@ -39,10 +106,12 @@ i {
     .map-item {
         display: flex;
         flex-direction: row;
+        overflow: hidden;
 
         .map-key {
             width: 200px;
         }
+
         .map-value {
             flex: 1;
             margin-left: 10px;

@@ -1,0 +1,13 @@
+:host {
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    border: 1px solid #d9d9d9;
+
+    nz-code-editor {
+        height: 400px; // usefull to limit editor grow
+        background-color: inherit; // prevent adding background while editor content loading
+        width: 100%;
+        overflow: hidden;
+    }
+}

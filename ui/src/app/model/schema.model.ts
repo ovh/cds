@@ -146,6 +146,7 @@ export class JSONSchema implements Schema {
         itemType.name = name;
         itemType.enum = properties?.enum;
         itemType.formOrder = properties?.order;
+        itemType.code = properties?.code;
         itemType.disabled = properties?.disabled;
         itemType.description = properties?.description;
         itemType.pattern = properties?.pattern;
@@ -230,6 +231,9 @@ export class JSONSchema implements Schema {
             if (properties.enum) {
                 flatElementPosition.enum = properties.enum;
             }
+            if (properties.code) {
+                flatElementPosition.code = properties.code;
+            }
         }
         flatElement.positions.push(flatElementPosition);
     }
@@ -261,6 +265,7 @@ export class FlatTypeElement {
     onchange: string;
     mode: string;
     prefix: string;
+    code: boolean;
 }
 
 export class FlatElementsOneOfRequired {
@@ -274,6 +279,7 @@ export class FlatElementPosition {
     condition: Array<FlatElementTypeCondition>;
     formOrder: number;
     enum: string[];
+    code: boolean;
 }
 
 export class FlatElementTypeCondition {

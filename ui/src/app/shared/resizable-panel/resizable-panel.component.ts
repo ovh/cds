@@ -59,7 +59,7 @@ export class ResizablePanelComponent implements AfterViewInit {
             } else if ((<string>this.initialSize).endsWith('%')) {
                 try {
                     const ratio = parseInt((<string>this.initialSize).replace('%', ''), 10);
-                    initialSize = (ratio * this._elementRef.nativeElement.parentNode.clientWidth) / 100;
+                    initialSize = (ratio * (this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight)) / 100;
                 } catch (e) { }
             }
         }
@@ -73,7 +73,7 @@ export class ResizablePanelComponent implements AfterViewInit {
         this.onGrabbingStart.emit();
     }
 
-    @HostListener('mouseup', ['$event'])
+    @HostListener('window:mouseup', ['$event'])
     onMouseUpGrabber(): void {
         if (!this.grabbing) {
             return;
@@ -87,9 +87,13 @@ export class ResizablePanelComponent implements AfterViewInit {
     onMouseMove(event: any): void {
         if (this.grabbing) {
             if (this.direction === PanelDirection.HORIZONTAL) {
-                this.size = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX : window.innerWidth - event.clientX, this.minSize ?? 600);
+                const maxSize = this._elementRef.nativeElement.parentNode.clientWidth;
+                const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX : window.innerWidth - event.clientX, this.minSize ?? 600);
+                this.size = Math.min(newSize, maxSize);
             } else {
-                this.size = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY : window.innerHeight - event.clientY, this.minSize ?? 200);
+                const maxSize = this._elementRef.nativeElement.parentNode.clientHeight;
+                const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY : window.innerHeight - event.clientY, this.minSize ?? 200);
+                this.size = Math.min(newSize, maxSize);
             }
             this.redraw();
         }
