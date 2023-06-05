@@ -79,21 +79,23 @@ func ImportInto(ctx context.Context, db gorpmapper.SqlExecutorWithTx, env *sdk.E
 
 	for i := range env.Variables {
 		if err := InsertVariable(db, into.ID, &env.Variables[i], u); err != nil {
+			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCannotBeCreated, env.Variables[i].Name, into.Name, err)
 			return err
 		}
+		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCreated, env.Variables[i].Name, into.Name)
 	}
 
 	for i := range env.Keys {
 		if err := InsertKey(db, &env.Keys[i]); err != nil {
+			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentKeyCannotBeCreated, sdk.SSHKeyVariable, env.Keys[i].Name, into.Name, err)
 			return err
 		}
+		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentKeyCreated, sdk.SSHKeyVariable, env.Keys[i].Name, into.Name)
 	}
 
 	if err := UpdateEnvironment(db, env); err != nil {
 		return sdk.WrapError(err, "unable to update environment")
 	}
-
 	log.Debug(ctx, "ImportInto> Done")
-
 	return nil
 }
