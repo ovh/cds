@@ -5,15 +5,36 @@
     width: 100%;
     overflow: hidden;
 
-    app-stages-graph {
+    .leftPanel {
         flex: 1;
+        display: flex;
         overflow: hidden;
         overflow-y: auto;
+        flex-direction: column;
 
-        &.disableSelection {
-            user-select: none;
+        app-stages-graph {
+            flex: 1;
+            overflow: hidden;
+            overflow-y: auto;
+        }
+        .jobForm {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+
+            app-json-form {
+                flex: 1;
+                overflow: hidden;
+                overflow-y: auto;
+            }
         }
     }
+
+
+
+
+
+
 
     app-resizable-panel {
         height: 100%;

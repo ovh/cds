@@ -8,7 +8,7 @@ import {SidebarEvent, SidebarService} from "app/service/sidebar/sidebar.service"
 import {ProjectState} from "app/store/project.state";
 import {forkJoin} from "rxjs";
 import {finalize} from "rxjs/operators";
-import {Entity, EntityWorkflow} from "../../../../../../model/entity.model";
+import {Entity, EntityJob, EntityWorkflow} from "../../../../../../model/entity.model";
 import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
 import {Schema} from "../../../../../../model/json-schema.model";
 
@@ -28,7 +28,8 @@ export class ProjectV2WorkflowShowComponent implements OnDestroy {
     vcsProject: VCSProject;
     repository: ProjectRepository;
     workflow: Entity;
-    jsonSchema: Schema;
+    workflowJsonSchema: Schema;
+    jobSchema: Schema;
     currentWorkflowName: string;
     currentBranch: string;
     errorNotFound: boolean;
@@ -58,11 +59,13 @@ export class ProjectV2WorkflowShowComponent implements OnDestroy {
             forkJoin([
                 this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
                 this._projectService.getVCSProject(this.project.key, p['vcsName']),
-                this._projectService.getJSONSchema(EntityWorkflow)
+                this._projectService.getJSONSchema(EntityWorkflow),
+                this._projectService.getJSONSchema(EntityJob)
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
-                this.jsonSchema = result[2];
+                this.workflowJsonSchema = result[2];
+                this.jobSchema = result[3];
                 this._cd.markForCheck();
                 this.loadWorkflow(p['workflowName'], this._routeActivated?.snapshot?.queryParams['branch']);
             });

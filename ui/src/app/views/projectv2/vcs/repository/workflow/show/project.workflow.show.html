@@ -1,6 +1,7 @@
 <ng-container *ngIf="workflow && !loading">
-    <app-project-workflow-entity [entityType]="entityType" [parentType]="'V2Workflow'"
-                                 [schema]="jsonSchema" [data]="workflow.data"
+    <app-project-workflow-entity [parentType]="'V2Workflow'"
+                                 [workflowSchema]="workflowJsonSchema" [jobSchema]="jobSchema"
+                                 [data]="workflow.data"
                                  [path]="workflow.file_path"></app-project-workflow-entity>
     <div class="footer">
         <div class="buttons">

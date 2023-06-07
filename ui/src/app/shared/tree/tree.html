@@ -29,7 +29,7 @@
                     (click)="clickOnNodeLink(node, $event)">{{ node.name }}</span>
             </div>
             <ng-container *ngIf="node.expanded && node.select?.options">
-                <nz-select nzSize="small" [nzCustomTemplate]="selectLabelTmpl" [(ngModel)]="node.select.selected"
+                <nz-select nzShowSearch nzSize="small" [nzCustomTemplate]="selectLabelTmpl" [(ngModel)]="node.select.selected"
                     (ngModelChange)="node.select.onchange()" (click)="$event.stopPropagation()">
                     <nz-option *ngFor="let opt of node.select.options" [nzValue]="opt.value"
                         [nzLabel]="opt.key"></nz-option>

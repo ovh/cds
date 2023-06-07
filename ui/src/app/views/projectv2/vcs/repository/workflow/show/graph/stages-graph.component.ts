@@ -52,13 +52,13 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             this.nodes.push(...Object.keys(workflow["stages"])
                 .map(k => <GraphNode>{
                     name: k,
-                    depends_on: workflow["stages"][k].needs,
+                    depends_on: workflow["stages"][k]?.needs,
                     sub_graph: [],
                     type: GraphNodeTypeStage
                 }));
         }
         if (workflow["jobs"] && Object.keys(workflow["jobs"]).length > 0) {
-            Object.keys(workflow["jobs"]).map(k => {
+            Object.keys(workflow["jobs"]).forEach(k => {
                 let job = workflow.jobs[k];
                 let node = <GraphNode>{name: k, depends_on: job?.needs, type: GraphNodeTypeJob};
                 // TODO manage run

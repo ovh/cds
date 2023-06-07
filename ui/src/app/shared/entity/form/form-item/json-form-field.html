@@ -42,7 +42,7 @@
                     <div class="array-select">
                         <nz-form-item>
                             <nz-form-control>
-                                <nz-select class="oneof" [(ngModel)]="oneOfSelected[index]"
+                                <nz-select nzShowSearch class="oneof" [(ngModel)]="oneOfSelected[index]"
                                     (ngModelChange)="updateItemStruct(index)">
                                     <nz-option *ngFor="let o of oneOfSelectOpts" [nzLabel]="o"
                                         [nzValue]="o"></nz-option>
@@ -78,8 +78,9 @@
 <!-- MAP -->
 <div class="map-field" *ngIf="field && currentModel && jsonFormSchema && field.type === 'map'">
     <div class="item-title">
-        <h3 [style]="{marginLeft: indent+'px'}">{{field.name.charAt(0).toUpperCase() + field.name.substring(1,
-            field.name.length)}}</h3>
+        <h3 [style]="{marginLeft: indent+'px'}">{{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}</h3>
+        <i *ngIf="field?.description" nz-icon nzType="info-circle" nzTheme="outline"
+           [nz-tooltip]="field?.description"></i>
         <button class="item-add" nz-button nzType="default" (click)="addMapItem()" *ngIf="field.mode === 'edit'"><span
                 nz-icon nzType="plus" nzTheme="outline"></span></button>
     </div>
@@ -116,8 +117,6 @@
             </div>
         </div>
     </div>
-    <nz-alert *ngIf="!currentModel[field.name] || currentModel[field.name].length === 0"
-        nzMessage="No inputs this action" nzType="info"></nz-alert>
 </div>
 
 <!-- SIMPLE FIELD (number / string) -->
@@ -143,7 +142,7 @@
             </app-editor-input>
         </ng-container>
         <ng-container *ngIf="field.enum">
-            <nz-select [disabled]="disabled" [ngModel]="currentModel[field.name]"
+            <nz-select nzShowSearch [disabled]="disabled" [ngModel]="currentModel[field.name]"
                 (ngModelChange)="onValueChanged($event)">
                 <ng-container *ngIf="field.prefix">
                     <nz-option *ngFor="let e of field.enum" [nzLabel]="e.substring(field.prefix.length, e.length)"
