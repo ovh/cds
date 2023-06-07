@@ -40,6 +40,7 @@ var (
 	MsgEnvironmentGroupDeleted              = &Message{"MsgEnvironmentGroupDeleted", trad{FR: "Le groupe %s de l'environnement %s a été supprimé", EN: "Group %s on environment %s has been deleted"}, nil, RunInfoTypInfo}
 	MsgEnvironmentGroupCannotBeDeleted      = &Message{"MsgEnvironmentGMsgEnvironmentGroupCannotBeDeletedroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être supprimé : %s", EN: "Group %s on environment %s cannot be deleted: %s"}, nil, RunInfoTypeError}
 	MsgEnvironmentKeyCreated                = &Message{"MsgEnvironmentKeyCreated", trad{FR: "La clé %s %s a été créée sur l'environnement %s", EN: "%s key %s created on environment %s"}, nil, RunInfoTypInfo}
+	MsgEnvironmentKeyCannotBeCreated        = &Message{"MsgEnvironmentKeyCannotBeCreated", trad{FR: "La clé %s %s n'a pas été créée sur l'environnement %s", EN: "%s key %s cannot be created on environment %s: %v"}, nil, RunInfoTypeError}
 	MsgJobNotValidActionNotFound            = &Message{"MsgJobNotValidActionNotFound", trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil, RunInfoTypeError}
 	MsgJobNotValidInvalidActionParameter    = &Message{"MsgJobNotValidInvalidActionParameter", trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil, RunInfoTypeError}
 	MsgPipelineGroupUpdated                 = &Message{"MsgPipelineGroupUpdated", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été mises à jour", EN: "Permission for group %s on pipeline %s has been updated"}, nil, RunInfoTypInfo}
@@ -125,6 +126,7 @@ var Messages = map[string]*Message{
 	MsgEnvironmentGroupDeleted.ID:              MsgEnvironmentGroupDeleted,
 	MsgEnvironmentGroupCannotBeDeleted.ID:      MsgEnvironmentGroupCannotBeDeleted,
 	MsgEnvironmentKeyCreated.ID:                MsgEnvironmentKeyCreated,
+	MsgEnvironmentKeyCannotBeCreated.ID:        MsgEnvironmentKeyCannotBeCreated,
 	MsgJobNotValidActionNotFound.ID:            MsgJobNotValidActionNotFound,
 	MsgJobNotValidInvalidActionParameter.ID:    MsgJobNotValidInvalidActionParameter,
 	MsgPipelineGroupUpdated.ID:                 MsgPipelineGroupUpdated,

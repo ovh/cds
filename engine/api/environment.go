@@ -240,10 +240,31 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 			return err
 		}
 
-		// check application name pattern
+		// check environment name pattern
 		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(env.Name) {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Environment name %s do not respect pattern", env.Name)
+		}
+
+		envDB, err := environment.LoadEnvironmentByName(api.mustDB(), key, environmentName)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load environment %s", environmentName)
+		}
+
+		// replace placeholder before export
+		envVarsClear, err := environment.LoadAllVariablesWithDecrytion(api.mustDB(), envDB.ID)
+		if err != nil {
+			return err
+		}
+		for i := range env.Variables {
+			v := &env.Variables[i]
+			if v.Type == sdk.SecretVariable && v.Value == sdk.PasswordPlaceholder {
+				for _, dbvar := range envVarsClear {
+					if dbvar.ID == v.ID {
+						v.Value = dbvar.Value
+					}
+				}
+			}
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -255,11 +276,6 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		proj, err := project.Load(ctx, tx, key, project.LoadOptions.WithClearKeys, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
-		}
-
-		envDB, err := environment.LoadEnvironmentByName(tx, key, environmentName)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load environment %s", environmentName)
 		}
 
 		if envDB.FromRepository == "" {
@@ -302,15 +318,30 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		}
 
 		// create keys
+		envKeys, err := environment.LoadAllKeysWithPrivateContent(tx, env.ID)
+		if err != nil {
+			return err
+		}
 		for i := range env.Keys {
 			k := &env.Keys[i]
-			newKey, err := keys.GenerateKey(k.Name, k.Type)
-			if err != nil {
-				return err
+			if k.ID == 0 {
+				newKey, err := keys.GenerateKey(k.Name, k.Type)
+				if err != nil {
+					return err
+				}
+				k.Public = newKey.Public
+				k.Private = newKey.Private
+				k.KeyID = newKey.KeyID
+			} else {
+				for _, kClear := range envKeys {
+					if kClear.ID == k.ID {
+						k.Public = kClear.Public
+						k.Private = kClear.Private
+						k.KeyID = kClear.KeyID
+						break
+					}
+				}
 			}
-			k.Public = newKey.Public
-			k.Private = newKey.Private
-			k.KeyID = newKey.KeyID
 		}
 
 		u := getUserConsumer(ctx)

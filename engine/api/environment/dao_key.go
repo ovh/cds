@@ -135,3 +135,9 @@ func DeleteEnvironmentKey(db gorp.SqlExecutor, envID int64, keyName string) erro
 	_, err := db.Exec("DELETE FROM environment_key WHERE environment_id = $1 AND name = $2", envID, keyName)
 	return sdk.WrapError(err, "Cannot delete key %s", keyName)
 }
+
+// DeleteAllEnvironmentKeys Delete all environment keys for the given env
+func DeleteAllEnvironmentKeys(db gorp.SqlExecutor, envID int64) error {
+	_, err := db.Exec("DELETE FROM environment_key WHERE environment_id = $1", envID)
+	return sdk.WrapError(err, "Cannot delete keys from %d", envID)
+}

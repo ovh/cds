@@ -50,7 +50,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		//If the file doesn't exist. Download it.
 		fi, err := w.BaseDir().OpenFile(pluginBinaryInfos.Name, os.O_CREATE|os.O_RDWR, os.FileMode(pluginBinaryInfos.Perm))
 		if err != nil {
-			return nil, nil, sdk.WrapError(err, "unable to create the file %s", pluginBinaryInfos)
+			return nil, nil, sdk.WrapError(err, "unable to create the file %s", pluginBinaryInfos.Name)
 		}
 
 		log.Debug(ctx, "Get the binary plugin %s", pluginBinaryInfos.PluginName)

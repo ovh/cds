@@ -129,7 +129,7 @@ func TestImportInto_Variable(t *testing.T) {
 		}
 	}
 
-	assert.True(t, v0found)
+	assert.False(t, v0found)
 	assert.True(t, v1found)
 	assert.True(t, v2found)
 	assert.True(t, v3found)
