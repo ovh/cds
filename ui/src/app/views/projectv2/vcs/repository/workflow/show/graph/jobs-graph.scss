@@ -1,0 +1,108 @@
+@import "../../../../../../../../common";
+
+:host {
+    display: flex;
+    flex-direction: block;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+.stage {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border: dashed 2px $darkBackground;
+    border-radius: 3px;
+
+    &.highlight {
+        border-color: black !important;
+    }
+
+    .title {
+        width: 100%;
+        height: 25px;
+        padding: 0 10px;
+        position: absolute;
+        top: -25px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        .info {
+            flex: 1;
+            font-size: 20px;
+            line-height: 25px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .controls {
+            i {
+                color: $polar_grey_1;
+                cursor: pointer;
+            }
+
+            i:hover {
+                color: unset;
+            }
+        }
+    }
+
+    .svg-wrapper {
+        width: 100%;
+        display: block;
+        height: 100%;
+        position: relative;
+        cursor: all-scroll;
+
+        ::ng-deep {
+            .edgePath {
+                path {
+                    stroke: $polar_grey_3;
+
+                    &.highlight {
+                        stroke: black !important;
+                    }
+
+                    :host-context(.night) & {
+                        stroke: $darkTheme_grey_5;
+
+                        &.highlight {
+                            stroke: white !important;
+                        }
+                    }
+                }
+
+                &.color-success path {
+                    stroke: $cds_color_green;
+                }
+
+                &.color-fail path {
+                    stroke: $cds_color_red;
+                }
+
+                &.color-inactive path {
+                    stroke: grey;
+                }
+
+                :host-context(.night) & {
+                    &.color-success path {
+                        stroke: $darkTheme_green;
+                    }
+
+                    &.color-fail path {
+                        stroke: $darkTheme_red;
+                    }
+
+                    &.color-inactive path {
+                        stroke: grey;
+                    }
+                }
+            }
+        }
+    }
+}

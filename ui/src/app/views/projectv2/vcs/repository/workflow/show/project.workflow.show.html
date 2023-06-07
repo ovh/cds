@@ -1,0 +1,15 @@
+<ng-container *ngIf="workflow && !loading">
+    <app-project-workflow-entity [entityType]="entityType" [parentType]="'V2Workflow'"
+                                 [schema]="jsonSchema" [data]="workflow.data"
+                                 [path]="workflow.file_path"></app-project-workflow-entity>
+    <div class="footer">
+        <div class="buttons">
+            <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
+                Save
+            </button>
+        </div>
+    </div>
+</ng-container>
+<nz-alert *ngIf="errorNotFound && !loading" nzType="warning"
+          nzDescription="Workflow not found on branch: '{{currentBranch}}'" nzShowIcon></nz-alert>
+<nz-spin *ngIf="loading" nzTip="Loading workflow"></nz-spin>

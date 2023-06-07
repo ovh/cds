@@ -1,0 +1,19 @@
+name: MyFirstWorkflow
+stages:
+  build:
+    needs: []
+jobs:
+  myFirstJob:
+    stage: build
+    name: This is my first job
+    if: cds.workflow == 'MyFirstWorkflow'
+    steps:
+      - run: |-
+          echo "Workflow: ${{cds.workflow}}"
+      - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
+        with:
+          name: ${{ cds.event.name }}
+          allvars: ${{ vars }}
+      - run: |-
+          echo "End"
+

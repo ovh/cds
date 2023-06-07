@@ -23,6 +23,8 @@ testcases:
     - script: mkdir -p /tmp/myrepo/.cds/actions
     - script: cat ./fixtures/ITCLIPRJVCS/my-parent-action.yml > /tmp/myrepo/.cds/actions/my-parent-action.yml
     - script: cat ./fixtures/ITCLIPRJVCS/my-child-action.yml > /tmp/myrepo/.cds/actions/my-child-action.yml
+    - script: mkdir -p /tmp/myrepo/.cds/workflows
+    - script: cat ./fixtures/ITCLIPRJVCS/my-workflow.yml > /tmp/myrepo/.cds/workflows/my-workflow.yml
     - script: cd /tmp/myrepo && git config user.email "{{.git.user}}@gitea.eu" && git config user.name "{{.git.user}}"
     - script: cd /tmp/myrepo && git add /tmp/myrepo/.cds/* && git commit . --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
 
@@ -66,6 +68,7 @@ testcases:
         - 'result.systemout ShouldContainSubstring "key_sign_id: E027B500E97E52E7"'
         - 'result.systemout ShouldContainSubstring "my-parent-action.yml"'
         - 'result.systemout ShouldContainSubstring "my-child-action.yml"'
+        - 'result.systemout ShouldContainSubstring "my-workflow.yml"'
         - 'result.systemout ShouldContainSubstring "docker-debian9.yml"'
         - 'result.systemout ShouldNotContainSubstring "error:"'
 - name: Push workflow and run it

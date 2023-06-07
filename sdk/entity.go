@@ -10,6 +10,7 @@ import (
 const (
 	EntityTypeWorkerModel = "WorkerModel"
 	EntityTypeAction      = "Action"
+	EntityTypeWorkflow    = "Workflow"
 	EntityNamePattern     = "^[a-zA-Z0-9._-]{1,}$"
 )
 
@@ -47,6 +48,8 @@ func GetManageRoleByEntity(entityType string) (string, error) {
 		return ProjectRoleManageWorkerModel, nil
 	case EntityTypeAction:
 		return ProjectRoleManageAction, nil
+  case EntityTypeWorkflow:
+    return ProjectRoleManageWorkflow, nil
 	}
 	return "", NewErrorFrom(ErrInvalidData, "unknown entity of type %s", entityType)
 }

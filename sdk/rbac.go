@@ -18,6 +18,7 @@ const (
 	ProjectRoleManage            = "manage"
 	ProjectRoleManageWorkerModel = "manage-worker-model"
 	ProjectRoleManageAction      = "manage-action"
+	ProjectRoleManageWorkflow    = "manage-workflow"
 
 	// Hatchery Role
 	HatcheryRoleSpawn = "start-worker"

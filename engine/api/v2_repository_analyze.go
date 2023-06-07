@@ -552,6 +552,9 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		case strings.HasPrefix(filePath, ".cds/actions/"):
 			var actions []sdk.V2Action
 			es, err = sdk.ReadEntityFile(dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis)
+		case strings.HasPrefix(filePath, ".cds/workflows/"):
+			var w []sdk.V2Workflow
+			es, err = sdk.ReadEntityFile(dir, fileName, content, &w, sdk.EntityTypeWorkflow, *analysis)
 		default:
 			continue
 		}

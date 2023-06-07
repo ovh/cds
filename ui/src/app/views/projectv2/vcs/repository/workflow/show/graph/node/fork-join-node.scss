@@ -1,0 +1,81 @@
+@import "../../../../../../../../../common";
+
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+.node {
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    border: 2px solid $polar_grey_3;
+    color: $polar_grey_1;
+    padding: 2px;
+    background-color: white;
+
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_1;
+        border-color: $darkTheme_grey_5;
+        color: $darkTheme_grey_6;
+
+        a {
+            color: $polar_grey_4;
+        }
+
+        &.success {
+            background-color: $darkTheme_night_green;
+            border-color: $darkTheme_green;
+        }
+
+        &.fail {
+            background-color: $darkTheme_night_red;
+            border-color: $darkTheme_red;
+        }
+
+        &.building {
+            background-color: $darkTheme_night_blue;
+            border-color: $darkTheme_blue;
+        }
+
+        &.inactive {
+            background-color: $darkTheme_night_grey;
+            border-color: grey;
+        }
+
+        &.active,
+        &.highlight {
+            border-color: white;
+        }
+    }
+
+    &.success {
+        background-color: $cds_color_light_green;
+        border-color: $cds_color_green;
+    }
+
+    &.fail {
+        background-color: $cds_color_light_red;
+        border-color: $cds_color_red;
+    }
+
+    &.building {
+        background-color: $cds_color_light_teal;
+        border-color: $cds_color_teal;
+    }
+
+    &.inactive {
+        background-color: $cds_color_light_grey;
+        border-color: grey;
+    }
+
+    &.active {
+        border: 3px solid black;
+        padding: 1px;
+    }
+
+    &.highlight {
+        border-color: black;
+    }
+}

@@ -1,0 +1,11 @@
+<div class="svg-wrapper" #svgGraph>
+    <div class="controls">
+        <button nz-button (click)="changeDirection()" nzSize="large">
+            <span *ngIf="direction === 'horizontal'">↔</span>
+            <span *ngIf="direction === 'vertical'">↕</span>
+        </button>
+        <button nz-button (click)="clickOrigin()" nzSize="large">
+            ⌖
+        </button>
+    </div>
+</div>

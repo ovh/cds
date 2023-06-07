@@ -13,7 +13,7 @@ import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
-import {EntityAction, EntityFullName, EntityWorkerModel, Project} from 'app/model/project.model';
+import { Project} from 'app/model/project.model';
 import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
 import {ActionAsCode, ActionTypeAscode} from 'app/model/action.ascode.model';
@@ -30,6 +30,7 @@ import { DragulaService } from 'ng2-dragula-sgu';
 import {finalize, first} from 'rxjs/operators';
 import {EntityService} from "../../service/entity/entity.service";
 import {ActionAsCodeService} from "../../service/action/actionAscode.service";
+import {EntityAction, EntityFullName, EntityWorkerModel} from "../../model/entity.model";
 
 @Component({
     selector: 'app-action',

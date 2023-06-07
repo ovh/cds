@@ -1,0 +1,13 @@
+<ng-container *ngIf="flatSchema && data">
+
+    <app-stages-graph [workflow]="dataGraph"></app-stages-graph>
+    <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"
+                         (onGrabbingEnd)="panelEndResize($event)">
+        <nz-tabset nzType="card" nzSize="small">
+            <nz-tab [nzTitle]="path"></nz-tab>
+        </nz-tabset>
+        <nz-code-editor #editor [ngModel]="dataEditor" [nzEditorOption]="editorOption"
+                        (ngModelChange)="onEditorChange($event)"
+                        (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+    </app-resizable-panel>
+</ng-container>
