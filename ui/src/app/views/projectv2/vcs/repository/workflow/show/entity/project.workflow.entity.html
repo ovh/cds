@@ -1,7 +1,8 @@
 <ng-container *ngIf="workflowFlatSchema && data">
 
     <div class="leftPanel">
-        <app-stages-graph [ngClass]="{'hide': selectedJob}" [workflow]="dataGraph" (onSelectJob)="selectJob($event)"></app-stages-graph>
+        <app-stages-graph [ngClass]="{'hide': selectedJob}" [workflow]="dataGraph"
+                          (onSelectJob)="selectJob($event)"></app-stages-graph>
 
 
         <div class="jobForm" *ngIf="selectedJob">
@@ -11,8 +12,6 @@
                            (dataChange)="onFormChange($event)"></app-json-form>
         </div>
     </div>
-
-
 
 
     <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"

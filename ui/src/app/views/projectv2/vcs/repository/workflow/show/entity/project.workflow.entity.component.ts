@@ -21,7 +21,6 @@ import {Schema} from "app/model/json-schema.model";
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {FlatSchema, JSONSchema} from "app/model/schema.model";
 import Debounce from "app/shared/decorator/debounce";
-import {PanelDirection} from "../../../../../../../shared/resizable-panel/resizable-panel.component";
 import {dump, load, LoadOptions} from "js-yaml";
 import {EntityAction, EntityWorkflow} from "../../../../../../../model/entity.model";
 import {EntityService} from "../../../../../../../service/entity/entity.service";
@@ -168,7 +167,12 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
     }
 
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
-        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({schemas: [{uri: '', schema: this.workflowFlatSchema}]});
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+            schemas: [{
+                uri: '',
+                schema: this.workflowFlatSchema
+            }]
+        });
     }
 
     panelStartResize(): void {
