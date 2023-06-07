@@ -351,13 +351,14 @@ func (n *Buffer) ResyncWithDatabase(ctx context.Context, db gorp.SqlExecutor, t 
 	}
 	for _, e := range entries {
 		if e.IsDir() {
-			log.Warn(ctx, "nfs-buffer: found directory inside %s: %s", string(t), e)
+			log.Warn(ctx, "nfs-buffer: found directory inside %s: %s", string(t), e.FileName)
 			continue
 		}
 		if e.FileName == "" {
 			log.Warn(ctx, "nfs-buffer: missing file name")
 			continue
 		}
+		log.Info(ctx, "Found file %s [%d]", e.FileName, e.Size())
 		has, err := storage.HashItemUnitByApiRefHash(db, e.FileName, n.ID())
 		if err != nil {
 			log.Error(ctx, "nfs-buffer: unable to check if unit item exist for api ref hash %s: %v", e.FileName, err)
