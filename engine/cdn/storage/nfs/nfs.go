@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	gonfs "github.com/vmware/go-nfs-client/nfs"
 	"github.com/vmware/go-nfs-client/nfs/rpc"
@@ -173,6 +174,9 @@ func (n *Buffer) ItemExists(ctx context.Context, m *gorpmapper.Mapper, db gorp.S
 	}
 	_, _, err = target.Lookup(path)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil
+		}
 		return false, sdk.WithStack(err)
 	}
 	return true, nil
