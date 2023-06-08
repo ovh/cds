@@ -104,6 +104,9 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 		}
 	} else {
 		for k, j := range w.Jobs {
+			if j.Stage != "" {
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))
+			}
 			for _, n := range j.Needs {
 				if _, exist := w.Jobs[n]; !exist {
 					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: needs not found [%s]", k, n))

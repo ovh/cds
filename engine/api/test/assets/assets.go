@@ -354,6 +354,20 @@ func AuthentifyRequest(t *testing.T, req *http.Request, _ *sdk.AuthentifiedUser,
 	req.Header.Add("Authorization", auth)
 }
 
+func NewAuthentifiedStringRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i string) *http.Request {
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer([]byte(i)))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	AuthentifyRequest(t, req, nil, pass)
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
+	return req
+}
+
 // NewAuthentifiedRequest prepare a request
 func NewAuthentifiedRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i interface{}) *http.Request {
 	var btes []byte
