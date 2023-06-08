@@ -44,11 +44,11 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                 }
             });
         } catch (e) {
-            console.error("Invalid workflow:", data)
+            console.error("Invalid workflow:", data, e)
         }
         this.hasStages = !!workflow && !!workflow["stages"];
         this.nodes = [];
-        if (workflow["stages"]) {
+        if (workflow && workflow["stages"]) {
             this.nodes.push(...Object.keys(workflow["stages"])
                 .map(k => <GraphNode>{
                     name: k,
@@ -57,7 +57,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                     type: GraphNodeTypeStage
                 }));
         }
-        if (workflow["jobs"] && Object.keys(workflow["jobs"]).length > 0) {
+        if (workflow && workflow["jobs"] && Object.keys(workflow["jobs"]).length > 0) {
             Object.keys(workflow["jobs"]).forEach(k => {
                 let job = workflow.jobs[k];
                 let node = <GraphNode>{name: k, depends_on: job?.needs, type: GraphNodeTypeJob};

@@ -24,6 +24,30 @@ func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler
 			Messages: make([]string, 0),
 		}
 		switch entityType {
+		case sdk.EntityTypeWorkerModel:
+			var wm sdk.V2WorkerModel
+			err := service.UnmarshalRequest(ctx, req, &wm)
+			if err != nil {
+				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
+			}
+			if err == nil {
+				errs := wm.Lint()
+				for _, err := range errs {
+					response.Messages = append(response.Messages, err.Error())
+				}
+			}
+		case sdk.EntityTypeAction:
+			var a sdk.V2Action
+			err := service.UnmarshalRequest(ctx, req, &a)
+			if err != nil {
+				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
+			}
+			if err == nil {
+				errs := a.Lint()
+				for _, err := range errs {
+					response.Messages = append(response.Messages, err.Error())
+				}
+			}
 		case sdk.EntityTypeWorkflow:
 			var w sdk.V2Workflow
 			err := service.UnmarshalRequest(ctx, req, &w)

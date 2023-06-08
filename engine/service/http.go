@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	yaml "github.com/ghodss/yaml"
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
 	"github.com/ovh/cds/engine/cache"
