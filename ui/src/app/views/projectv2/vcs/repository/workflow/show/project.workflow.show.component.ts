@@ -8,9 +8,9 @@ import {SidebarEvent, SidebarService} from "app/service/sidebar/sidebar.service"
 import {ProjectState} from "app/store/project.state";
 import {forkJoin} from "rxjs";
 import {finalize} from "rxjs/operators";
-import {Entity, EntityJob, EntityWorkflow} from "../../../../../../model/entity.model";
+import {Entity, EntityJob, EntityWorkflow} from "app/model/entity.model";
 import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
-import {Schema} from "../../../../../../model/json-schema.model";
+import {Schema} from "app/model/json-schema.model";
 
 @Component({
     selector: 'app-projectv2-workflow-show',

@@ -22,8 +22,8 @@ import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {FlatSchema, JSONSchema} from "app/model/schema.model";
 import Debounce from "app/shared/decorator/debounce";
 import {dump, load, LoadOptions} from "js-yaml";
-import {EntityAction, EntityWorkflow} from "../../../../../../../model/entity.model";
-import {EntityService} from "../../../../../../../service/entity/entity.service";
+import {EntityAction, EntityWorkflow} from "app/model/entity.model";
+import {EntityService} from "app/service/entity/entity.service";
 import {first} from "rxjs/operators";
 
 declare const monaco: any;
