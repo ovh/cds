@@ -25,6 +25,11 @@ func IsValidRBAC(ctx context.Context, db gorp.SqlExecutor, rbac *sdk.RBAC) error
 			return err
 		}
 	}
+	for _, w := range rbac.Workflows {
+		if err := isValidRBACWorkflow(rbac.Name, w); err != nil {
+			return err
+		}
+	}
 	for _, r := range rbac.Regions {
 		if err := isValidRBACRegion(ctx, db, rbac.Name, r); err != nil {
 			return err
@@ -48,6 +53,33 @@ func isValidRBACGlobal(rbacName string, rg sdk.RBACGlobal) error {
 
 	if !sdk.IsInArray(rg.Role, sdk.GlobalRoles) {
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role %s is not allowed on a global permission", rbacName, rg.Role)
+	}
+	return nil
+}
+
+func isValidRBACWorkflow(rbacName string, rbacWorkflow sdk.RBACWorkflow) error {
+	// Check empty group and users
+	if len(rbacWorkflow.RBACGroupsIDs) == 0 && len(rbacWorkflow.RBACUsersIDs) == 0 && !rbacWorkflow.AllUsers {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: missing groups or users on workflow permission", rbacName)
+	}
+
+	if (len(rbacWorkflow.RBACGroupsIDs) > 0 || len(rbacWorkflow.RBACUsersIDs) > 0) && rbacWorkflow.AllUsers {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: cannot have a list of groups or users with flag allUsers", rbacName)
+	}
+
+	// Check role
+	if rbacWorkflow.Role == "" {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role for workflow permission cannot be empty", rbacName)
+	}
+	roleFound := false
+	for _, r := range sdk.WorkflowRoles {
+		if r == rbacWorkflow.Role {
+			roleFound = true
+			break
+		}
+	}
+	if !roleFound {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role %s is not allowed on a workflow permission", rbacName, rbacWorkflow.Role)
 	}
 	return nil
 }

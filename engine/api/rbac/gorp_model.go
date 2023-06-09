@@ -184,6 +184,48 @@ func (rro rbacRegionOrganization) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
+type rbacWorkflow struct {
+	ID     int64  `json:"-" db:"id"`
+	RbacID string `json:"-" db:"rbac_uuid"`
+	sdk.RBACWorkflow
+	gorpmapper.SignedEntity
+}
+
+func (rp rbacWorkflow) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rp.ID, rp.RbacID, rp.Role, rp.AllUsers}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacID}}{{.Role}}{{.AllUsers}}",
+	}
+}
+
+type rbacWorkflowUser struct {
+	ID                 int64  `json:"-" db:"id"`
+	RbacWorkflowID     int64  `db:"rbac_workflow_id"`
+	RbacWorkflowUserID string `db:"user_id"`
+	gorpmapper.SignedEntity
+}
+
+func (rgu rbacWorkflowUser) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgu.ID, rgu.RbacWorkflowID, rgu.RbacWorkflowUserID}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacWorkflowID}}{{.RbacWorkflowUserID}}",
+	}
+}
+
+type rbacWorkflowGroup struct {
+	ID                  int64 `json:"-" db:"id"`
+	RbacWorkflowID      int64 `db:"rbac_workflow_id"`
+	RbacWorkflowGroupID int64 `db:"group_id"`
+	gorpmapper.SignedEntity
+}
+
+func (rgg rbacWorkflowGroup) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgg.ID, rgg.RbacWorkflowID, rgg.RbacWorkflowGroupID}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacWorkflowID}}{{.RbacWorkflowGroupID}}",
+	}
+}
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(rbac{}, "rbac", false, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacGlobal{}, "rbac_global", true, "id"))
@@ -201,4 +243,8 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(rbacRegionGroup{}, "rbac_region_groups", true, "id"))
 
 	gorpmapping.Register(gorpmapping.New(rbacHatchery{}, "rbac_hatchery", true, "id"))
+
+	gorpmapping.Register(gorpmapping.New(rbacWorkflow{}, "rbac_workflow", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacWorkflowUser{}, "rbac_workflow_users", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacWorkflowGroup{}, "rbac_workflow_groups", true, "id"))
 }

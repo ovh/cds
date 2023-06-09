@@ -63,6 +63,15 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 			return err
 		}
 	}
+	for i := range rb.Workflows {
+		dbRbWorkflow := rbacWorkflow{
+			RbacID:       dbRb.ID,
+			RBACWorkflow: rb.Workflows[i],
+		}
+		if err := insertRBACWorkflow(ctx, db, &dbRbWorkflow); err != nil {
+			return err
+		}
+	}
 	for i := range rb.Regions {
 		rbRegion := &rb.Regions[i]
 		rbRegion.RbacID = dbRb.ID
