@@ -1,7 +1,7 @@
 -- +migrate Up
 CREATE TABLE rbac_workflow (
   "id"            BIGSERIAL PRIMARY KEY,
-  "rbac_uuid"     uuid         NOT NULL,
+  "rbac_id"       uuid         NOT NULL,
   "all_users"     BOOLEAN      NOT NULL DEFAULT FALSE,
   "role"          VARCHAR(255) NOT NULL,
   "project"       VARCHAR(255) NOT NULL,

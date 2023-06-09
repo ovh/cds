@@ -186,7 +186,7 @@ func (rro rbacRegionOrganization) Canonical() gorpmapper.CanonicalForms {
 
 type rbacWorkflow struct {
 	ID     int64  `json:"-" db:"id"`
-	RbacID string `json:"-" db:"rbac_uuid"`
+	RbacID string `json:"-" db:"rbac_id"`
 	sdk.RBACWorkflow
 	gorpmapper.SignedEntity
 }
