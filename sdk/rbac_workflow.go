@@ -14,7 +14,7 @@ var (
 type RBACWorkflow struct {
 	AllUsers           bool              `json:"all_users" db:"all_users"`
 	Role               string            `json:"role" db:"role"`
-	ProjectKey         string            `json:"project" db:"project"`
+	ProjectKey         string            `json:"project" db:"project_key"`
 	RBACUsersName      []string          `json:"users,omitempty" db:"-"`
 	RBACGroupsName     []string          `json:"groups,omitempty" db:"-"`
 	RBACWorkflowsNames RBACWorkflowNames `json:"workflows,omitempty" db:"workflows"`

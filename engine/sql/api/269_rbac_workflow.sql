@@ -4,7 +4,7 @@ CREATE TABLE rbac_workflow (
   "rbac_id"       uuid         NOT NULL,
   "all_users"     BOOLEAN      NOT NULL DEFAULT FALSE,
   "role"          VARCHAR(255) NOT NULL,
-  "project"       VARCHAR(255) NOT NULL,
+  "project_key"       VARCHAR(255) NOT NULL,
   "workflows"     JSONB,
   "all_workflows" BOOLEAN NOT NULL DEFAULT FALSE,
   "sig"           BYTEA,
@@ -13,7 +13,7 @@ CREATE TABLE rbac_workflow (
 );
 CREATE INDEX rbac_workflow_name_gin_idx ON rbac_workflow USING gin (workflows);
 SELECT create_foreign_key_idx_cascade('FK_rbac_workflow', 'rbac_workflow', 'rbac', 'rbac_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_rbac_workflow_project', 'rbac_workflow', 'project', 'project', 'projectkey');
+SELECT create_foreign_key_idx_cascade('FK_rbac_workflow_project', 'rbac_workflow', 'project_key', 'project', 'projectkey');
 SELECT create_index('rbac_workflow', 'idx_rbac_workflow_project_role', 'role');
 
 CREATE TABLE rbac_workflow_users

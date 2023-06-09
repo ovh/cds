@@ -137,7 +137,7 @@ func LoadAllWorkflowsAllowed(ctx context.Context, db gorp.SqlExecutor, role stri
 }
 
 func loadRBACWorkflowsByProjectAndRole(ctx context.Context, db gorp.SqlExecutor, projectKey string, role string) ([]rbacWorkflow, error) {
-	query := gorpmapping.NewQuery(`SELECT * FROM rbac_workflow WHERE project = $1 AND role = $2`).Args(projectKey, role)
+	query := gorpmapping.NewQuery(`SELECT * FROM rbac_workflow WHERE project_key = $1 AND role = $2`).Args(projectKey, role)
 	rbacWorkflows, err := getAllRBACWorkflows(ctx, db, query)
 	if err != nil {
 		return nil, err
