@@ -20,6 +20,7 @@ var LoadOptions = struct {
 	LoadRBACProject  LoadOptionFunc
 	LoadRBACHatchery LoadOptionFunc
 	LoadRBACRegion   LoadOptionFunc
+	LoadRBACWorkflow LoadOptionFunc
 	All              LoadOptionFunc
 }{
 	Default:          loadDefault,
@@ -27,6 +28,7 @@ var LoadOptions = struct {
 	LoadRBACProject:  loadRBACProject,
 	LoadRBACHatchery: loadRBACHatchery,
 	LoadRBACRegion:   loadRBACRegion,
+	LoadRBACWorkflow: loadRBACWorkflow,
 	All:              loadAll,
 }
 
@@ -52,6 +54,39 @@ func loadAll(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
 	}
 	if err := loadRBACHatchery(ctx, db, rbac); err != nil {
 		return err
+	}
+	if err := loadRBACWorkflow(ctx, db, rbac); err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadRBACWorkflow(ctx context.Context, db gorp.SqlExecutor, rbac *rbac) error {
+	query := "SELECT * FROM rbac_workflow WHERE rbac_id = $1"
+	var rbacWorkflows []rbacWorkflow
+	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(query).Args(rbac.ID), &rbacWorkflows); err != nil {
+		return err
+	}
+	rbac.Workflows = make([]sdk.RBACWorkflow, 0, len(rbacWorkflows))
+	for i := range rbacWorkflows {
+		rbacWf := &rbacWorkflows[i]
+		isValid, err := gorpmapping.CheckSignature(rbacWf, rbacWf.Signature)
+		if err != nil {
+			return sdk.WrapError(err, "error when checking signature for rbac_workflow %d", rbacWf.ID)
+		}
+		if !isValid {
+			log.Error(ctx, "rbac_workflow.get> rbac_workflow %d data corrupted", rbacWf.ID)
+			continue
+		}
+		if !rbacWf.AllUsers {
+			if err := loadRBACWorkflowUsers(ctx, db, rbacWf); err != nil {
+				return err
+			}
+			if err := loadRBACWorkflowGroups(ctx, db, rbacWf); err != nil {
+				return err
+			}
+		}
+		rbac.Workflows = append(rbac.Workflows, rbacWf.RBACWorkflow)
 	}
 	return nil
 }

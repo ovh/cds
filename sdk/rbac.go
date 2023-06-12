@@ -38,6 +38,7 @@ type RBAC struct {
 	Projects     []RBACProject  `json:"projects,omitempty" db:"-"`
 	Regions      []RBACRegion   `json:"regions,omitempty" db:"-"`
 	Hatcheries   []RBACHatchery `json:"hatcheries,omitempty" db:"-"`
+	Workflows    []RBACWorkflow `json:"workflows,omitempty" db:"-"`
 }
 
 func (rbac *RBAC) IsEmpty() bool {

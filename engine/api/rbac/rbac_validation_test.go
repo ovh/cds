@@ -173,3 +173,64 @@ func TestRBACProjectInvalidAllAndListOfGroups(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "rbac myRule: cannot have a list of groups or users with flag allUsers")
 }
+
+func TestRBACWorkflowInvalidRole(t *testing.T) {
+	rb := sdk.RBACWorkflow{
+		RBACWorkflowsNames: []string{"foo"},
+		AllUsers:           false,
+		Role:               sdk.GlobalRoleProjectCreate,
+		RBACGroupsIDs:      []int64{1},
+		RBACUsersIDs:       []string{"aa-aa-aa"},
+	}
+	err := isValidRBACWorkflow("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), fmt.Sprintf("rbac myRule: role %s is not allowed on a workflow permission", sdk.GlobalRoleProjectCreate))
+}
+func TestRBACWorkflowInvalidGroupAndUsers(t *testing.T) {
+	rb := sdk.RBACWorkflow{
+		RBACWorkflowsNames: []string{"foo"},
+		AllUsers:           false,
+		Role:               sdk.WorkflowRoleExecute,
+		RBACGroupsIDs:      []int64{},
+		RBACUsersIDs:       []string{},
+	}
+	err := isValidRBACWorkflow("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: missing groups or users on workflow permission")
+}
+func TestRBACWorkflowInvalidGroupsAndUsers(t *testing.T) {
+	rb := sdk.RBACWorkflow{
+		RBACWorkflowsNames: []string{"PROJ"},
+		AllUsers:           false,
+		Role:               sdk.WorkflowRoleExecute,
+		RBACGroupsIDs:      []int64{},
+		RBACUsersIDs:       []string{},
+	}
+	err := isValidRBACWorkflow("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: missing groups or users on workflow permission")
+}
+func TestRBACWorkflowEmptyRole(t *testing.T) {
+	rb := sdk.RBACWorkflow{
+		RBACWorkflowsNames: []string{"foo"},
+		AllUsers:           false,
+		Role:               "",
+		RBACGroupsIDs:      []int64{1},
+		RBACUsersIDs:       []string{},
+	}
+	err := isValidRBACWorkflow("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: role for workflow permission cannot be empty")
+}
+func TestRBACWorkflowInvalidAllAndListOfGroups(t *testing.T) {
+	rb := sdk.RBACWorkflow{
+		RBACWorkflowsNames: []string{"foo"},
+		AllUsers:           true,
+		Role:               sdk.WorkflowRoleExecute,
+		RBACGroupsIDs:      []int64{1},
+		RBACUsersIDs:       []string{},
+	}
+	err := isValidRBACWorkflow("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: cannot have a list of groups or users with flag allUsers")
+}

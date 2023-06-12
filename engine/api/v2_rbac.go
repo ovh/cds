@@ -171,6 +171,12 @@ func (rl *RBACLoader) FillRBACWithNames(ctx context.Context, r *sdk.RBAC) error 
 			return err
 		}
 	}
+	for wID := range r.Workflows {
+		rbacWkf := &r.Workflows[wID]
+		if err := rl.fillRBACWorkflowWithNames(ctx, rbacWkf); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -207,6 +213,12 @@ func (rl *RBACLoader) FillRBACWithIDs(ctx context.Context, r *sdk.RBAC) error {
 	for hID := range r.Hatcheries {
 		rbacOrg := &r.Hatcheries[hID]
 		if err := rl.fillRBACHatcheryWithID(ctx, rbacOrg); err != nil {
+			return err
+		}
+	}
+	for wID := range r.Workflows {
+		rbacWf := &r.Workflows[wID]
+		if err := rl.fillRBACWorkflowWIthID(ctx, rbacWf); err != nil {
 			return err
 		}
 	}
@@ -401,6 +413,66 @@ func (rl *RBACLoader) fillRBACProjectWithID(ctx context.Context, rbacPrj *sdk.RB
 			rl.groupIDCache[groupDB.Name] = groupID
 		}
 		rbacPrj.RBACGroupsIDs = append(rbacPrj.RBACGroupsIDs, groupID)
+	}
+	return nil
+}
+
+func (rl *RBACLoader) fillRBACWorkflowWithNames(ctx context.Context, rbacWkf *sdk.RBACWorkflow) error {
+	rbacWkf.RBACUsersName = make([]string, 0, len(rbacWkf.RBACUsersIDs))
+	for _, userID := range rbacWkf.RBACUsersIDs {
+		userName := rl.userCache[userID]
+		if userName == "" {
+			authentifierUser, err := user.LoadByID(ctx, rl.db, userID)
+			if err != nil {
+				return err
+			}
+			userName = authentifierUser.Username
+			rl.userCache[userID] = userName
+		}
+		rbacWkf.RBACUsersName = append(rbacWkf.RBACUsersName, userName)
+	}
+	rbacWkf.RBACGroupsName = make([]string, 0, len(rbacWkf.RBACGroupsIDs))
+	for _, groupID := range rbacWkf.RBACGroupsIDs {
+		groupName := rl.groupCache[groupID]
+		if groupName == "" {
+			groupDB, err := group.LoadByID(ctx, rl.db, groupID)
+			if err != nil {
+				return err
+			}
+			groupName = groupDB.Name
+			rl.groupCache[groupDB.ID] = groupName
+		}
+		rbacWkf.RBACGroupsName = append(rbacWkf.RBACGroupsName, groupName)
+	}
+	return nil
+}
+
+func (rl *RBACLoader) fillRBACWorkflowWIthID(ctx context.Context, rbacWkf *sdk.RBACWorkflow) error {
+	rbacWkf.RBACUsersIDs = make([]string, 0, len(rbacWkf.RBACUsersName))
+	for _, userName := range rbacWkf.RBACUsersName {
+		userID := rl.userCache[userName]
+		if userID == "" {
+			authentifierUser, err := user.LoadByUsername(ctx, rl.db, userName)
+			if err != nil {
+				return err
+			}
+			userID = authentifierUser.ID
+			rl.userCache[userName] = userID
+		}
+		rbacWkf.RBACUsersIDs = append(rbacWkf.RBACUsersIDs, userID)
+	}
+	rbacWkf.RBACGroupsIDs = make([]int64, 0, len(rbacWkf.RBACGroupsName))
+	for _, groupName := range rbacWkf.RBACGroupsName {
+		groupID := rl.groupIDCache[groupName]
+		if groupID == 0 {
+			groupDB, err := group.LoadByName(ctx, rl.db, groupName)
+			if err != nil {
+				return err
+			}
+			groupID = groupDB.ID
+			rl.groupIDCache[groupDB.Name] = groupID
+		}
+		rbacWkf.RBACGroupsIDs = append(rbacWkf.RBACGroupsIDs, groupID)
 	}
 	return nil
 }
