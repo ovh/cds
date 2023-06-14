@@ -11,7 +11,7 @@
                 </nz-form-control>
 
             </nz-form-item>
-            <nz-form-item *ngIf="selected && actions.length > 0">
+            <nz-form-item *ngIf="actions.length > 0">
                 <nz-select [(ngModel)]="selected" name="action" nzShowSearch>
                     <ng-container *ngFor="let a of actions">
                         <nz-option nzCustomContent [nzValue]="a" [nzLabel]="a.name" [nzDisabled]="a.deprecated">
