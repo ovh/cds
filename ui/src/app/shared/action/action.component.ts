@@ -145,7 +145,7 @@ export class ActionComponent implements OnDestroy, OnInit {
             this.publicActions = new Array<Action>();
         }
         if (acts && acts.length > 0) {
-            this.publicActions = Object.assign([], ...this.publicActions)
+            this.publicActions = Object.assign([], ...this.publicActions);
             this.publicActions.push(...acts);
         }
         this._cd.markForCheck();
