@@ -48,6 +48,7 @@ const (
 	AnalyzeID          = log.Field("analyze_id")
 	NodeRunID          = log.Field("node_run_id")
 	PermJobID          = log.Field("permJobID")
+	Workflow           = log.Field("workflow")
 )
 
 func init() {
@@ -91,6 +92,7 @@ func init() {
 		AnalyzeID,
 		NodeRunID,
 		PermJobID,
+    Workflow,
 	)
 }
 

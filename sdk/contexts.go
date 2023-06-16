@@ -4,32 +4,35 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"github.com/rockbears/yaml"
 )
 
-type NodeRunContext struct {
+// DEPRECATED - Only use on old workflow
+type RunContext struct {
 	CDS  CDSContext        `json:"cds,omitempty"`
 	Git  GitContext        `json:"git,omitempty"`
 	Vars map[string]string `json:"vars,omitempty"`
+	Jobs JobsResultContext `json:"jobs,omitempty"`
 }
 
-func (m NodeRunContext) Value() (driver.Value, error) {
-	j, err := json.Marshal(m)
-	return j, WrapError(err, "cannot marshal NodeRunContext")
+func (m RunContext) Value() (driver.Value, error) {
+	j, err := yaml.Marshal(m)
+	return j, WrapError(err, "cannot marshal RunContext")
 }
 
-func (m *NodeRunContext) Scan(src interface{}) error {
+func (m *RunContext) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
-	source, ok := src.([]byte)
+	source, ok := src.(string)
 	if !ok {
-		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
-	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal NodeRunContext")
+	return WrapError(JSONUnmarshal([]byte(source), m), "cannot unmarshal RunContext")
 }
 
 type JobRunContext struct {
-	NodeRunContext
+	RunContext
 	Job     JobContext        `json:"job,omitempty"`
 	Secrets map[string]string `json:"secrets,omitempty"`
 }
@@ -58,11 +61,15 @@ type CDSContext struct {
 	// Workflow
 	Event                map[string]interface{} `json:"event,omitempty"`
 	Version              string                 `json:"version,omitempty"`
+	ProjectKey           string                 `json:"project_key,omitempty"`
 	RunID                string                 `json:"run_id,omitempty"`
-	RunNumber            string                 `json:"run_number,omitempty"`
-	RunAttempt           string                 `json:"run_attempt,omitempty"`
+	RunNumber            int64                  `json:"run_number,omitempty"`
+	RunAttempt           int64                  `json:"run_attempt,omitempty"`
+	Workflow             string                 `json:"workflow,omitempty"`
 	WorkflowRef          string                 `json:"workflow_ref,omitempty"`
 	WorkflowSha          string                 `json:"workflow_sha,omitempty"`
+	WorkflowVCSServer    string                 `json:"workflow_vcs_server,omitempty"`
+	WorkflowRepository   string                 `json:"workflow_repository,omitempty"`
 	WorkflowIntegrations map[string]interface{} `json:"integrations,omitempty"` // actual key: artifact_manager
 	TriggeringActor      string                 `json:"triggering_actor,omitempty"`
 
@@ -104,4 +111,29 @@ type JobContext struct {
 type JobContextService struct {
 	ID   string            `json:"id"`
 	Port map[string]string `json:"ports"`
+}
+
+type JobsResultContext map[string]JobResultContext
+
+type JobResultContext struct {
+	Result  string          `json:"result"`
+	Outputs JobResultOutput `json:"outputs"`
+}
+
+type JobResultOutput map[string]string
+
+func (jro JobResultOutput) Value() (driver.Value, error) {
+	j, err := json.Marshal(jro)
+	return j, WrapError(err, "cannot marshal JobResultOutput")
+}
+
+func (jro *JobResultOutput) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal([]byte(source), jro), "cannot unmarshal JobResultOutput")
 }

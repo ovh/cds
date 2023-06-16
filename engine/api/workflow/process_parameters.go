@@ -326,8 +326,8 @@ func computeCDSContext(ctx context.Context, wr sdk.WorkflowRun, wnr sdk.Workflow
 	cdsCtx := sdk.CDSContext{}
 
 	cdsCtx.RunID = fmt.Sprintf("%d", wr.ID)
-	cdsCtx.RunNumber = fmt.Sprintf("%d", wr.Number)
-	cdsCtx.RunAttempt = fmt.Sprintf("%d", wr.LastSubNumber+1)
+	cdsCtx.RunNumber = wr.Number
+	cdsCtx.RunAttempt = wr.LastSubNumber + 1
 	cdsCtx.WorkflowRef = wr.Workflow.Name
 
 	if wnr.Manual != nil {

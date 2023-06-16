@@ -122,6 +122,14 @@ func LoadByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepos
 	return getEntity(ctx, db, query, opts...)
 }
 
+// LoadByBranchTypeNameCommit loads an entity by his repository, branch, type, name and commit
+func LoadByBranchTypeNameCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, commit string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * from entity
+		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4 AND commit = $5`).Args(projectRepositoryID, branch, t, name, commit)
+	return getEntity(ctx, db, query, opts...)
+}
+
 // LoadAndUnmarshalByBranchTypeName loads an entity by his repository, branch, type, name and unmarshal it
 func LoadAndUnmarshalByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, out interface{}, opts ...gorpmapping.GetOptionFunc) error {
 	ent, err := LoadByBranchTypeName(ctx, db, projectRepositoryID, branch, t, name, opts...)

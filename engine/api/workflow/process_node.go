@@ -542,7 +542,7 @@ func computePayload(n *sdk.Node, hookEvent *sdk.WorkflowNodeRunHookEvent, manual
 }
 
 func computeNodeContextBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, n *sdk.Node, runContext nodeRunContext) {
-	allContexts := sdk.NodeRunContext{}
+	allContexts := sdk.RunContext{}
 
 	nodeRunParams, varsContext, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {
