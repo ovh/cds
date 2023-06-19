@@ -58,6 +58,9 @@ type HatcheryConfiguration struct {
 
 	// DefaultFlavor, if set the hatchery will use a model with the default flavor in priority to start jobs without model requirement
 	DefaultFlavor string `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"" commented:"true" comment:"If set the hatchery will use a model with the default flavor in priority to start jobs without model requirement" json:"defaultFlavor"`
+
+	// DefaultSecurityGroups, if set the VMs spawned by the hatchery will have the given security groups
+	DefaultSecurityGroups []string `mapstructure:"defaultSecurityGroups" toml:"defaultSecurityGroups" default:"" commented:"true" comment:"If set the hatchery will add given groups on spawned VMs" json:"defaultSecurityGroups"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
