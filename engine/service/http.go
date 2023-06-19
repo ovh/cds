@@ -16,7 +16,6 @@ import (
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
-	yaml "github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
