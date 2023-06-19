@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 	yaml "github.com/rockbears/yaml"
 

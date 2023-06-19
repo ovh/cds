@@ -1,6 +1,7 @@
 export const EntityWorkerModel = "WorkerModel";
 export const EntityAction = "Action";
 export const EntityWorkflow = "Workflow";
+export const EntityJob = "Job";
 
 export class Entity {
     id: string;
@@ -17,4 +18,8 @@ export class EntityFullName {
     vcs_name: string;
     repo_name: string;
     project_key: string;
+}
+
+export class EntityCheckResponse {
+    messages: string[];
 }

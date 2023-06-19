@@ -1,13 +1,24 @@
 <ng-container *ngIf="flatSchema && data">
     <app-json-form [class.disableSelection]="resizing" [disabled]="resizing" [parentType]="parentType"
-        [entityType]="entityType" [schema]="flatSchema" [data]="dataForm"
-        (dataChange)="onFormChange($event)"></app-json-form>
+                   [entityType]="entityType" [schema]="flatSchema" [data]="dataForm"
+                   (dataChange)="onFormChange($event)"></app-json-form>
     <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"
-        (onGrabbingEnd)="panelEndResize($event)">
+                         (onGrabbingEnd)="panelEndResize($event)">
+        <ng-container *ngIf="syntaxErrors?.length > 0">
+            <nz-alert nzType="error" [nzMessage]="syntaxErrorTmpl"></nz-alert>
+            <ng-template #syntaxErrorTmpl>
+                <ul>
+                    <li *ngFor="let e of syntaxErrors">
+                        {{e}}
+                    </li>
+                </ul>
+            </ng-template>
+        </ng-container>
         <nz-tabset nzType="card" nzSize="small">
             <nz-tab [nzTitle]="path"></nz-tab>
         </nz-tabset>
         <nz-code-editor #editor [ngModel]="dataEditor" [nzEditorOption]="editorOption"
-            (ngModelChange)="onEditorChange($event)" (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+                        (ngModelChange)="onEditorChange($event)"
+                        (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
     </app-resizable-panel>
 </ng-container>

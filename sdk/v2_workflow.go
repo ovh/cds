@@ -23,11 +23,12 @@ type WorkflowStage struct {
 
 type V2Job struct {
 	Name   string            `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
-	If     string            `json:"if,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Condition to execute the job"`
-	Inputs map[string]string `json:"inputs,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Input of thejob"`
+	Stage  string            `json:"stage,omitempty" jsonschema_extras:"order=2"`
+	If     string            `json:"if,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Condition to execute the job"`
+	Inputs map[string]string `json:"inputs,omitempty" jsonschema_extras:"order=4,mode=edit" jsonschema_description:"Input of the job. If you define inputs, your job will only be able to use these inputs and no others variables/contexts."`
 	Steps  []ActionStep      `json:"steps,omitempty" jsonschema_extras:"order=5" jsonschema_description:"List of steps"`
 	Needs  []string          `json:"needs,omitempty" jsonschema_extras:"order=6" jsonschema_description:"Job dependencies"`
-	Stage  string            `json:"stage,omitempty" jsonschema_extras:"order=7"`
+
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
 	Strategy    V2JobStrategy    `json:"-"`
@@ -90,8 +91,22 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 				}
 			}
 		}
+		for k, j := range w.Jobs {
+			if len(j.Needs) > 0 {
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "As you use stages, you can't add `needs` attribute on job %s", k))
+			}
+			if j.Stage == "" {
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "Missing stage on job %s", k))
+			}
+			if _, stageExist := stages[j.Stage]; !stageExist {
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))
+			}
+		}
 	} else {
 		for k, j := range w.Jobs {
+			if j.Stage != "" {
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))
+			}
 			for _, n := range j.Needs {
 				if _, exist := w.Jobs[n]; !exist {
 					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: needs not found [%s]", k, n))

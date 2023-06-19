@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -13,6 +14,56 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler) {
+	return nil, func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+		vars := mux.Vars(req)
+		entityType := vars["entityType"]
+
+		response := sdk.EntityCheckResponse{
+			Messages: make([]string, 0),
+		}
+		switch entityType {
+		case sdk.EntityTypeWorkerModel:
+			var wm sdk.V2WorkerModel
+			err := service.UnmarshalRequest(ctx, req, &wm)
+			if err != nil {
+				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
+			}
+			if err == nil {
+				errs := wm.Lint()
+				for _, err := range errs {
+					response.Messages = append(response.Messages, err.Error())
+				}
+			}
+		case sdk.EntityTypeAction:
+			var a sdk.V2Action
+			err := service.UnmarshalRequest(ctx, req, &a)
+			if err != nil {
+				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
+			}
+			if err == nil {
+				errs := a.Lint()
+				for _, err := range errs {
+					response.Messages = append(response.Messages, err.Error())
+				}
+			}
+		case sdk.EntityTypeWorkflow:
+			var w sdk.V2Workflow
+			err := service.UnmarshalRequest(ctx, req, &w)
+			if err != nil {
+				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
+			}
+			if err == nil {
+				errs := w.Lint()
+				for _, err := range errs {
+					response.Messages = append(response.Messages, err.Error())
+				}
+			}
+		}
+		return service.WriteJSON(w, response, http.StatusOK)
+	}
+}
 
 func (api *API) getEntitiesHandler() ([]service.RbacChecker, service.Handler) {
 	return nil,

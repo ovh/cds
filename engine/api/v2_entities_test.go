@@ -17,6 +17,49 @@ import (
 	"time"
 )
 
+func TestCheckEntityHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	wkYaml := `name: MyFirstWorkflow
+jobs:
+  myFirstJob:
+    name: This is my first job
+    contexts: [git]
+    contexts: [git]
+    env:
+      wname: ${{ cds.workflow }}
+      proj: ${{ cds.project }}
+    if: cds.workflow == 'MyFirstWorkflow'
+    steps:
+    - run: |-
+        echo "Workflow: ${WNAME}"
+    - uses: actions/PROJ/stash-build/SGU/cds-test-repo/test-child-action@tt7
+      with:
+        projectName: ${{ env.proj }}
+    - run: |-
+        echo "End"
+`
+	u, pass := assets.InsertAdminUser(t, db)
+
+	vars := map[string]string{
+		"entityType": sdk.EntityTypeWorkflow,
+	}
+	uri := api.Router.GetRouteV2("POST", api.postEntityCheckHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedStringRequest(t, u, pass, "POST", uri, wkYaml)
+
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	body := w.Body.Bytes()
+	var resp sdk.EntityCheckResponse
+	require.NoError(t, json.Unmarshal(body, &resp))
+	require.Len(t, resp.Messages, 1)
+	require.Contains(t, resp.Messages[0], "mapping key \\\"contexts\\\" already defined")
+	t.Logf("%s", resp.Messages[0])
+
+}
 func TestGetEntitiesHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 

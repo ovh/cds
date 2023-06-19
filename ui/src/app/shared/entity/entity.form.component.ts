@@ -1,17 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from "@angular/core";
-import { AutoUnsubscribe } from "../decorator/autoUnsubscribe";
 import {
-    editor,
-} from 'monaco-editor';
-import { FlatSchema, JSONSchema } from "../../model/schema.model";
-import { EditorOptions } from "ng-zorro-antd/code-editor/typings";
-import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
-import { Store } from "@ngxs/store";
-import { PreferencesState } from "app/store/preferences.state";
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    ViewChild
+} from "@angular/core";
+import {AutoUnsubscribe} from "../decorator/autoUnsubscribe";
+import {editor,} from 'monaco-editor';
+import {FlatSchema, JSONSchema} from "app/model/schema.model";
+import {EditorOptions} from "ng-zorro-antd/code-editor/typings";
+import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
+import {Store} from "@ngxs/store";
+import {PreferencesState} from "app/store/preferences.state";
 import * as actionPreferences from 'app/store/preferences.action';
-import { Subscription } from 'rxjs';
+import {Subscription} from 'rxjs';
 import Debounce from "../decorator/debounce";
-import { Schema } from "app/model/json-schema.model";
+import {Schema} from "app/model/json-schema.model";
+import {EntityService} from "app/service/entity/entity.service";
+import {first} from "rxjs/operators";
 
 declare const monaco: any;
 
@@ -41,16 +50,19 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     panelSize: number | string;
     resizing: boolean;
     resizingSubscription: Subscription;
+    syntaxErrors: string[];
 
     constructor(
         private _cd: ChangeDetectorRef,
-        private _store: Store
-    ) { }
+        private _store: Store,
+        private _entityService: EntityService
+    ) {
+    }
 
     ngOnInit(): void {
         this.editorOption = {
             language: 'yaml',
-            minimap: { enabled: false }
+            minimap: {enabled: false}
         };
 
         this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(EntityFormComponent.PANEL_KEY)) ?? '50%';
@@ -70,15 +82,19 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.markForCheck();
     }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
-        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ schemas: [{ uri: '', schema: this.flatSchema }] });
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({schemas: [{uri: '', schema: this.flatSchema}]});
     }
 
     onEditorChange(data: string): void {
-        this.dataForm = data;
-        this._cd.markForCheck();
+        this._entityService.checkEntity(this.entityType, data).pipe(first()).subscribe(resp => {
+            this.syntaxErrors = resp.messages;
+            this.dataForm = data;
+            this._cd.markForCheck();
+        });
     }
 
     @Debounce(200)
@@ -88,12 +104,15 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     panelStartResize(): void {
-        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
+        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: true}));
     }
 
     panelEndResize(size: number): void {
-        this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: EntityFormComponent.PANEL_KEY, size: size }));
-        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
+        this._store.dispatch(new actionPreferences.SavePanelSize({
+            panelKey: EntityFormComponent.PANEL_KEY,
+            size: size
+        }));
+        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: false}));
         this.editor.layout();
     }
 }

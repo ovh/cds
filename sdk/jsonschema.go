@@ -69,6 +69,21 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	return actionSchema
 }
 
+func GetJobJsonSchema(publicActionNames []string) *jsonschema.Schema {
+	jobSchema := jsonschema.Reflect(&V2Job{})
+
+	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
+	stepUses := propStepUses.(*jsonschema.Schema)
+	// Enum on step uses
+	if len(publicActionNames) > 0 {
+		for _, actName := range publicActionNames {
+			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
+		}
+	}
+
+	return jobSchema
+}
+
 func GetWorkflowJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	workflowSchema := jsonschema.Reflect(&V2Workflow{})
 
