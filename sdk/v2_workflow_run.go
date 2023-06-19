@@ -136,9 +136,9 @@ type V2WorkflowRunJob struct {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID string           `json:"run_id"`
-	Jobs  []string         `json:"jobs"`
-	User  AuthentifiedUser `json:"user"`
+	RunID  string   `json:"run_id"`
+	Jobs   []string `json:"jobs"`
+	UserID string   `json:"user_id"`
 }
 
 type V2WorkflowRunInfo struct {

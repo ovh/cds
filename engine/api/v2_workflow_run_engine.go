@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -138,6 +139,11 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	}
 	next()
 
+	u, err := user.LoadByID(ctx, db, wrEnqueue.UserID)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
 	// If jobs has already been queue and wr not terminated and user want to trigger some job => error
 	if !sdk.StatusIsTerminated(run.Status) && len(wrEnqueue.Jobs) > 0 && len(runJobs) > 0 {
 		info := sdk.V2WorkflowRunInfo{
@@ -196,14 +202,14 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 		}
 
 		_, next = telemetry.Span(ctx, "retrieveJobToQueue.checkUserRight")
-		hasRight, err := checkUserRight(ctx, db, jobDef, wrEnqueue.User, defaultRegions)
+		hasRight, err := checkUserRight(ctx, db, jobDef, *u, defaultRegions)
 		if err != nil {
 			next()
 			log.ErrorWithStackTrace(ctx, err)
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelInfo,
-				Message:       fmt.Sprintf("job %s: unable to check right for user %s: %v", jobID, wrEnqueue.User.Username, err),
+				Message:       fmt.Sprintf("job %s: unable to check right for user %s: %v", jobID, u.Username, err),
 			})
 			continue
 		}
@@ -212,7 +218,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelInfo,
-				Message:       fmt.Sprintf("job %s: user %s does not have enough right", jobID, wrEnqueue.User.Username),
+				Message:       fmt.Sprintf("job %s: user %s does not have enough right", jobID, u.Username),
 			})
 			continue
 		}

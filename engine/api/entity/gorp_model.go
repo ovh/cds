@@ -19,5 +19,6 @@ func (v dbEntity) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{v.ID, v.Name, v.ProjectKey, v.ProjectRepositoryID, v.Type, v.Branch, v.Commit, v.Data}
 	return []gorpmapper.CanonicalForm{
 		"{{.ID}}{{.Name}}{{.ProjectKey}}{{.ProjectRepositoryID}}{{.Type}}{{.Branch}}{{.Commit}}{{.Data}}",
+		"{{.ID}}{{.Name}}{{.ProjectKey}}{{.ProjectRepositoryID}}{{.Type}}{{.Branch}}{{.Commit}}",
 	}
 }

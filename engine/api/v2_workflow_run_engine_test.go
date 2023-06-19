@@ -76,9 +76,9 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID: wr.ID,
-		User:  *admin,
-		Jobs:  []string{},
+		RunID:  wr.ID,
+		UserID: admin.ID,
+		Jobs:   []string{},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -163,9 +163,9 @@ func TestWorkflowTrigger1JobOnARunningWorkflowRun(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID: wr.ID,
-		User:  *admin,
-		Jobs:  []string{"job2"},
+		RunID:  wr.ID,
+		UserID: admin.ID,
+		Jobs:   []string{"job2"},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -242,9 +242,9 @@ func TestWorkflowTriggerMissingJobRequired(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID: wr.ID,
-		User:  *admin,
-		Jobs:  []string{"job2"},
+		RunID:  wr.ID,
+		UserID: admin.ID,
+		Jobs:   []string{"job2"},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -318,9 +318,9 @@ func TestWorkflowTriggerWrongPermission(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID: wr.ID,
-		User:  *admin,
-		Jobs:  []string{},
+		RunID:  wr.ID,
+		UserID: admin.ID,
+		Jobs:   []string{},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -385,6 +385,11 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Event:        sdk.V2WorkflowRunEvent{},
+		Contexts: sdk.WorkflowRunContext{
+			CDS: sdk.CDSContext{
+				Workflow: wkfName,
+			},
+		},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
@@ -394,19 +399,19 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 					If: fmt.Sprintf("${{ cds.workflow == '%s' }}", wkfName),
 				},
 			},
-		}},
+		},
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID: wr.ID,
-		User:  *admin,
-		Jobs:  []string{},
+		RunID:  wr.ID,
+		UserID: admin.ID,
+		Jobs:   []string{},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
 	require.NoError(t, err)
-	t.Logf("%+v", runInfos)
 	require.Equal(t, 0, len(runInfos))
 
 	runjobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID)
@@ -477,9 +482,9 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID: wr.ID,
-		User:  *admin,
-		Jobs:  []string{},
+		RunID:  wr.ID,
+		UserID: admin.ID,
+		Jobs:   []string{},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -556,9 +561,9 @@ func TestWorkflowTriggerWithConditionKOWithWarning(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID: wr.ID,
-		User:  *admin,
-		Jobs:  []string{"job1"},
+		RunID:  wr.ID,
+		UserID: admin.ID,
+		Jobs:   []string{"job1"},
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)

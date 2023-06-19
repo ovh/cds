@@ -24,14 +24,15 @@ import (
 )
 
 type WorkflowRunEntityFinder struct {
-	vcsServerCache   map[string]sdk.VCSProject
-	repoCache        map[string]sdk.ProjectRepository
-	actionsCache     map[string]sdk.V2Action
-	workerModelCache map[string]sdk.V2WorkerModel
-	run              sdk.V2WorkflowRun
-	runVcsServer     sdk.VCSProject
-	runRepo          sdk.ProjectRepository
-	userName         string
+	vcsServerCache         map[string]sdk.VCSProject
+	repoCache              map[string]sdk.ProjectRepository
+	repoDefaultBranchCache map[string]string
+	actionsCache           map[string]sdk.V2Action
+	workerModelCache       map[string]sdk.V2WorkerModel
+	run                    sdk.V2WorkflowRun
+	runVcsServer           sdk.VCSProject
+	runRepo                sdk.ProjectRepository
+	userName               string
 }
 
 // Return the complete path of the entity
@@ -106,6 +107,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	// If no repo in path, get it from workflow run
 	if repoName == "" || (vcsName == wref.runVcsServer.Name && repoName == wref.runRepo.Name) {
 		repoName = wref.runRepo.Name
+		entityRepo = wref.runRepo
 	} else {
 		entityFromCache, has := wref.repoCache[vcsName+"/"+repoName]
 		if has {
@@ -120,27 +122,33 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 		}
 	}
 	if branch == "" {
-		if embeddedEntity {
+		if embeddedEntity || (projKey == wref.run.ProjectKey && entityVCS.ID == wref.runVcsServer.ID && entityRepo.ID == wref.runRepo.ID) {
 			// Get current git.branch parameters
 			branch = wref.run.WorkflowRef
 		} else {
-			// Get default branch
-			tx, err := db.Begin()
-			if err != nil {
-				return "", nil, sdk.WithStack(err)
+			defaultCache, has := wref.repoDefaultBranchCache[entityVCS.Name+"/"+entityRepo.Name]
+			if has {
+				branch = defaultCache
+			} else {
+				// Get default branch
+				tx, err := db.Begin()
+				if err != nil {
+					return "", nil, sdk.WithStack(err)
+				}
+				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, projKey, entityVCS.Name)
+				if err != nil {
+					return "", nil, err
+				}
+				b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					return "", nil, err
+				}
+				if err := tx.Commit(); err != nil {
+					return "", nil, sdk.WithStack(err)
+				}
+				branch = b.DisplayID
+				wref.repoDefaultBranchCache[entityVCS.Name+"/"+entityRepo.Name] = branch
 			}
-			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, projKey, entityVCS.Name)
-			if err != nil {
-				return "", nil, err
-			}
-			b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{Default: true})
-			if err != nil {
-				return "", nil, err
-			}
-			if err := tx.Commit(); err != nil {
-				return "", nil, sdk.WithStack(err)
-			}
-			branch = b.DisplayID
 		}
 	}
 
@@ -163,9 +171,9 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	var entityDB *sdk.Entity
 	var err error
 	if projKey != wref.run.ProjectKey || entityVCS.Name != wref.runVcsServer.Name || entityRepo.Name != wref.runRepo.Name || branch != wref.run.WorkflowRef {
-		entityDB, err = entity.LoadByBranchTypeName(ctx, db, entityRepo.ID, branch, sdk.EntityTypeWorkerModel, entityName)
+		entityDB, err = entity.LoadByBranchTypeName(ctx, db, entityRepo.ID, branch, entityType, entityName)
 	} else {
-		entityDB, err = entity.LoadByBranchTypeNameCommit(ctx, db, entityRepo.ID, branch, sdk.EntityTypeWorkerModel, entityName, wref.run.WorkflowSha)
+		entityDB, err = entity.LoadByBranchTypeNameCommit(ctx, db, entityRepo.ID, branch, entityType, entityName, wref.run.WorkflowSha)
 	}
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -247,7 +255,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	if err != nil {
 		next()
-		return sdk.WrapError(err, "unable to load workflow run %d", id)
+		return sdk.WrapError(err, "unable to load workflow run %s", id)
 	}
 	next()
 
@@ -274,14 +282,15 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	run.Contexts = runContext
 
 	wref := WorkflowRunEntityFinder{
-		run:              *run,
-		runRepo:          *repo,
-		runVcsServer:     *vcsServer,
-		actionsCache:     make(map[string]sdk.V2Action),
-		workerModelCache: make(map[string]sdk.V2WorkerModel),
-		repoCache:        make(map[string]sdk.ProjectRepository),
-		vcsServerCache:   make(map[string]sdk.VCSProject),
-		userName:         u.Username,
+		run:                    *run,
+		runRepo:                *repo,
+		runVcsServer:           *vcsServer,
+		actionsCache:           make(map[string]sdk.V2Action),
+		workerModelCache:       make(map[string]sdk.V2WorkerModel),
+		repoCache:              make(map[string]sdk.ProjectRepository),
+		vcsServerCache:         make(map[string]sdk.VCSProject),
+		repoDefaultBranchCache: make(map[string]string),
+		userName:               u.Username,
 	}
 
 	// Retrieve all deps
@@ -333,9 +342,20 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 	defer tx.Rollback() // nolint
+
+	run.Status = sdk.StatusBuilding
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
 	}
+
+	enqueueRequest := sdk.V2WorkflowRunEnqueue{
+		RunID:  run.ID,
+		UserID: run.UserID,
+	}
+	if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
+		return err
+	}
+
 	return sdk.WithStack(tx.Commit())
 }
 

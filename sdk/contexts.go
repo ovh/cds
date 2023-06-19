@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/rockbears/yaml"
 )
 
 // DEPRECATED - Only use on old workflow
@@ -16,7 +15,7 @@ type RunContext struct {
 }
 
 func (m RunContext) Value() (driver.Value, error) {
-	j, err := yaml.Marshal(m)
+	j, err := json.Marshal(m)
 	return j, WrapError(err, "cannot marshal RunContext")
 }
 
@@ -24,11 +23,11 @@ func (m *RunContext) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
-	source, ok := src.(string)
+	source, ok := src.([]byte)
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
-	return WrapError(JSONUnmarshal([]byte(source), m), "cannot unmarshal RunContext")
+	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal RunContext")
 }
 
 type JobRunContext struct {
