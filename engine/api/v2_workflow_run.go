@@ -102,6 +102,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				ToDelete:     false,
 				WorkflowData: sdk.V2WorkflowRunData{Workflow: wk},
 				UserID:       u.AuthConsumerUser.AuthentifiedUserID,
+				Username:     u.AuthConsumerUser.AuthentifiedUser.Username,
 				Event:        sdk.V2WorkflowRunEvent{},
 			}
 

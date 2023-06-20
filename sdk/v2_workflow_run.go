@@ -25,6 +25,7 @@ type V2WorkflowRun struct {
 	ToDelete     bool               `json:"to_delete" db:"to_delete"`
 	WorkflowData V2WorkflowRunData  `json:"workflow_data" db:"workflow_data"`
 	UserID       string             `json:"user_id" db:"user_id"`
+	Username     string             `json:"username" db:"username"`
 	Contexts     WorkflowRunContext `json:"contexts" db:"contexts"`
 	Event        V2WorkflowRunEvent `json:"event" db:"event"`
 }
@@ -135,6 +136,7 @@ type V2WorkflowRunJob struct {
 	HatcheryName  string          `json:"hatchery_name" db:"hatchery_name"`
 	Outputs       JobResultOutput `json:"outputs" db:"outputs"`
 	UserID        string          `json:"user_id" db:"user_id"`
+	Username      string          `json:"username" db:"username"`
 }
 
 type V2WorkflowRunEnqueue struct {

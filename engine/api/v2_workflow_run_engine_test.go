@@ -63,6 +63,7 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
+		Username:     admin.Username,
 		Event:        sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
@@ -142,6 +143,7 @@ func TestWorkflowTrigger1JobOnARunningWorkflowRun(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
+		Username:     admin.Username,
 		Event:        sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
@@ -156,6 +158,8 @@ func TestWorkflowTrigger1JobOnARunningWorkflowRun(t *testing.T) {
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
 		Outputs:       sdk.JobResultOutput{},
+		UserID:        admin.ID,
+		Username:      admin.Username,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -229,6 +233,7 @@ func TestWorkflowTriggerMissingJobRequired(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
+		Username:     admin.Username,
 		Event:        sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
@@ -308,6 +313,7 @@ func TestWorkflowTriggerWrongPermission(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
+		Username:     admin.Username,
 		Event:        sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
@@ -384,6 +390,7 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
+		Username:     admin.Username,
 		Event:        sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
 			CDS: sdk.CDSContext{
@@ -470,6 +477,7 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
+		Username:     admin.Username,
 		Event:        sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
@@ -549,6 +557,7 @@ func TestWorkflowTriggerWithConditionKOWithWarning(t *testing.T) {
 		LastModified: time.Now(),
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
+		Username:     admin.Username,
 		Event:        sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{

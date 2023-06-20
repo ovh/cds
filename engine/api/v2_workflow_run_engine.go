@@ -83,7 +83,12 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return nil
 	}
 
-	jobsToQueue, runMsgs, currentJobRunStatus, err := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, api.Config.Workflow.JobDefaultRegion)
+	u, err := user.LoadByID(ctx, api.mustDB(), wrEnqueue.UserID)
+	if err != nil {
+		return err
+	}
+
+	jobsToQueue, runMsgs, currentJobRunStatus, err := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
 	if err != nil {
 		return err
 	}
@@ -102,6 +107,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			JobID:         jobID,
 			Job:           jobDef,
 			UserID:        wrEnqueue.UserID,
+			Username:      u.Username,
 		}
 		if err := workflow_v2.InsertRunJob(ctx, tx, &runJob); err != nil {
 			return err
@@ -127,7 +133,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 }
 
 // TODO manage re run
-func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, defaultRegions []string) (map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, string, error) {
+func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, u *sdk.AuthentifiedUser, defaultRegions []string) (map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, string, error) {
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	jobToQueue := make(map[string]sdk.V2Job)
 
@@ -139,11 +145,6 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 		return nil, nil, "", sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
 	}
 	next()
-
-	u, err := user.LoadByID(ctx, db, wrEnqueue.UserID)
-	if err != nil {
-		return nil, nil, "", err
-	}
 
 	// If jobs has already been queue and wr not terminated and user want to trigger some job => error
 	if !sdk.StatusIsTerminated(run.Status) && len(wrEnqueue.Jobs) > 0 && len(runJobs) > 0 {

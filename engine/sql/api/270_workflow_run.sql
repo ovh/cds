@@ -16,13 +16,13 @@ CREATE TABLE v2_workflow_run (
   "workflow_data"   TEXT          NOT NULL,
   "contexts"        TEXT          NOT NULL,
   "user_id"         VARCHAR(36)   NOT NULL,
+  "username"        TEXT          NOT NULL,
   "event"           JSONB         NOT NULL,
   "sig"             BYTEA,
   "signer"          TEXT
 );
 SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_project', 'v2_workflow_run', 'project', 'project_key', 'projectkey');
 SELECT create_index('v2_workflow_run', 'idx_v2_workflow_run_status', 'status');
-SELECT create_foreign_key('FK_v2_workflow_run_user', 'v2_workflow_run', 'authentified_user', 'user_id', 'id');
 
 CREATE TABLE v2_workflow_run_job (
   "id"              uuid PRIMARY KEY,
@@ -37,12 +37,12 @@ CREATE TABLE v2_workflow_run_job (
   "worker_id"       VARCHAR(36),
   "worker_name"     VARCHAR(255),
   "hatchery_name"   VARCHAR(512),
-  "user_id"         VARCHAR(36),
+  "user_id"         VARCHAR(36) NOT NULL,
+  "username"        TEXT        NOT NULL,
   "sig"             BYTEA,
   "signer"          TEXT
 );
 SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_job', 'v2_workflow_run_job', 'v2_workflow_run', 'workflow_run_id', 'id');
-SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_job_user', 'v2_workflow_run_job', 'authentified_user', 'user_id', 'id');
 SELECT create_index('v2_workflow_run_job', 'idx_v2_workflow_run_job_status', 'status');
 
 CREATE TABLE v2_workflow_run_info (
