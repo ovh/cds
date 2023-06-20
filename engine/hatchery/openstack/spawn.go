@@ -147,10 +147,10 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 			UserData:  []byte(udata64),
 			Networks:  networks,
 		}
-		r := servers.Create(h.openstackClient, opts)
 		if len(h.Config.DefaultSecurityGroups) > 0 {
 			opts.SecurityGroups = h.Config.DefaultSecurityGroups
 		}
+		r := servers.Create(h.openstackClient, opts)
 
 		server, err := r.Extract()
 		if err != nil {
