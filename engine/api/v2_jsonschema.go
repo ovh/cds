@@ -27,7 +27,7 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 			switch t {
 			case sdk.EntityTypeWorkerModel:
 				schema = sdk.GetWorkerModelJsonSchema()
-			case sdk.EntityTypeAction, sdk.EntityTypeWorkflow:
+			case sdk.EntityTypeAction, sdk.EntityTypeWorkflow, sdk.EntityTypeJob:
 				// Load available action
 				var actionNames []string
 				if u != nil {
@@ -57,6 +57,8 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 					schema = sdk.GetWorkflowJsonSchema(actionNames)
 				case sdk.EntityTypeAction:
 					schema = sdk.GetActionJsonSchema(actionNames)
+				case sdk.EntityTypeJob:
+					schema = sdk.GetJobJsonSchema(actionNames)
 				}
 			}
 			return service.WriteJSON(w, schema, http.StatusOK)

@@ -16,11 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
@@ -365,6 +365,20 @@ func InsertLambdaUserInOrganization(t *testing.T, db gorpmapper.SqlExecutorWithT
 func AuthentifyRequest(t *testing.T, req *http.Request, _ *sdk.AuthentifiedUser, jwt string) {
 	auth := "Bearer " + jwt
 	req.Header.Add("Authorization", auth)
+}
+
+func NewAuthentifiedStringRequest(t *testing.T, _ *sdk.AuthentifiedUser, pass, method, uri string, i string) *http.Request {
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer([]byte(i)))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	AuthentifyRequest(t, req, nil, pass)
+	date := sdk.FormatDateRFC5322(time.Now())
+	req.Header.Set("Date", date)
+	req.Header.Set("X-CDS-RemoteTime", date)
+
+	return req
 }
 
 // NewAuthentifiedRequest prepare a request

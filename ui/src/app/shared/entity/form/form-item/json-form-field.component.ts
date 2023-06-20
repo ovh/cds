@@ -1,17 +1,29 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from "@angular/core";
-import { FlatElementTypeCondition } from "../../../../model/schema.model";
-import { JSONFormSchema, JSONFormSchemaOneOfItem } from "../json-form.component";
-import { ProjectService } from "../../../../service/project/project.service";
-import { ActivatedRoute } from "@angular/router";
-import { ProjectState } from "../../../../store/project.state";
-import { Store } from "@ngxs/store";
-import { load, LoadOptions } from 'js-yaml'
-import { PluginService } from "../../../../service/plugin.service";
-import { DragulaService } from "ng2-dragula-sgu";
-import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
-import { Subscription } from "rxjs";
-import { PreferencesState } from "app/store/preferences.state";
-import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild
+} from "@angular/core";
+import {FlatElementTypeCondition} from "../../../../model/schema.model";
+import {JSONFormSchema, JSONFormSchemaOneOfItem} from "../json-form.component";
+import {ProjectService} from "../../../../service/project/project.service";
+import {ActivatedRoute} from "@angular/router";
+import {ProjectState} from "../../../../store/project.state";
+import {Store} from "@ngxs/store";
+import {load, LoadOptions} from 'js-yaml'
+import {PluginService} from "../../../../service/plugin.service";
+import {DragulaService} from "ng2-dragula-sgu";
+import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
+import {Subscription} from "rxjs";
+import {PreferencesState} from "app/store/preferences.state";
+import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
 import {EntityAction} from "../../../../model/entity.model";
 
 export class FormItem {
@@ -30,6 +42,7 @@ export class FormItem {
     prefix: string;
     code: boolean;
 }
+
 @Component({
     selector: 'app-json-form-field',
     templateUrl: './json-form-field.html',
@@ -79,7 +92,8 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
                     const f = (element: Element) => {
                         if (element.classList.contains('move')) {
                             return true;
-                        };
+                        }
+                        ;
                         if (element.parentElement) {
                             return f(element.parentElement);
                         }
@@ -99,7 +113,8 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
         });
     }
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnChanges(changes: SimpleChanges): void {
         if (!this.jsonFormSchema || !this.field || !this.model) {
@@ -239,7 +254,10 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
                     });
                 } else {
                     this._projectService.getRepoEntity(projKey, vcsName, repoName, this.entityType, entityName, branch).subscribe(e => {
-                        let ent = load(e.data && e.data !== '' ? e.data : '{}', <LoadOptions>{ onWarning: (e) => { } });
+                        let ent = load(e.data && e.data !== '' ? e.data : '{}', <LoadOptions>{
+                            onWarning: (e) => {
+                            }
+                        });
                         switch (this.entityType) {
                             case EntityAction:
                                 if (ent.inputs) {

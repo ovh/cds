@@ -9,9 +9,9 @@ import {
     Output,
     SimpleChanges
 } from "@angular/core";
-import { FlatSchema } from "../../../model/schema.model";
-import { FormItem } from "./form-item/json-form-field.component";
-import { DumpOptions, dump, load, LoadOptions } from 'js-yaml'
+import {FlatSchema} from "../../../model/schema.model";
+import {FormItem} from "./form-item/json-form-field.component";
+import {dump, DumpOptions, load, LoadOptions} from 'js-yaml'
 
 export class JSONFormSchema {
     types: { [key: string]: JSONFormSchemaTypeItem };
@@ -47,7 +47,8 @@ export class JSONFormComponent implements OnInit, OnChanges {
 
     constructor(
         private _cd: ChangeDetectorRef
-    ) { }
+    ) {
+    }
 
     ngOnInit() {
         const schemaDefs = this.schema.schema['$defs'];
@@ -119,13 +120,16 @@ export class JSONFormComponent implements OnInit, OnChanges {
                 oneOf: oneOf
             };
         });
-        this.jsonFormSchema = { types: allTypes };
+        this.jsonFormSchema = {types: allTypes};
         this._cd.markForCheck();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         try {
-            this.model = load(this.data && this.data !== '' ? this.data : '{}', <LoadOptions>{ onWarning: (e) => { } });
+            this.model = load(this.data && this.data !== '' ? this.data : '{}', <LoadOptions>{
+                onWarning: (e) => {
+                }
+            });
         } catch (e) {
             // TODO: mark form as invalid
         }
@@ -136,7 +140,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
         this.model = value;
         this._cd.markForCheck();
         const cleanModel = this.cleanModel(this.parentType, this.model);
-        this.dataChange.emit(dump(cleanModel, <DumpOptions>{ lineWidth: 120 }));
+        this.dataChange.emit(dump(cleanModel, <DumpOptions>{lineWidth: 120}));
     }
 
     // For given data remove useless fields and empty values

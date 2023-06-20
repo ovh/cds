@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/require"
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/test"

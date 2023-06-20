@@ -141,11 +141,10 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     initPublicActionsList(acts: Array<Action>): void {
-        if (!this.publicActions) {
-            this.publicActions = new Array<Action>();
-        }
+        let tmp = new Array<Action>();
         if (acts && acts.length > 0) {
-            this.publicActions.push(...acts);
+            tmp = this.publicActions.concat(acts);
+            this.publicActions = tmp;
         }
         this._cd.markForCheck();
     }
