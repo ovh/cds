@@ -367,10 +367,6 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("invalid download directory (empty)")
 	}
 
-	if len(aConfig.Workflow.JobDefaultRegion) == 0 {
-		return fmt.Errorf("invalid job default region. It cannot be empty")
-	}
-
 	if ok, err := sdk.DirectoryExists(aConfig.Download.Directory); !ok {
 		if err := os.MkdirAll(aConfig.Download.Directory, os.FileMode(0700)); err != nil {
 			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Download.Directory, err)
