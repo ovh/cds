@@ -52,8 +52,49 @@ CREATE TABLE v2_workflow_run_info (
 );
 SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_infos', 'v2_workflow_run_info', 'v2_workflow_run', 'workflow_run_id', 'id');
 
+CREATE TABLE IF NOT EXISTS "v2_workflow_run_sequences" (
+    repository_id uuid,
+    workflow_name VARCHAR(255),
+    current_val BIGINT,
+    PRIMARY KEY (repository_id,workflow_name)
+);
+SELECT create_foreign_key_idx_cascade('FK_V2_WORKFLOW_RUN_SEQUENCES', 'v2_workflow_run_sequences', 'project_repository', 'repository_id', 'id');
+
+-- +migrate StatementBegin
+CREATE OR REPLACE FUNCTION v2_workflow_run_sequences_nextval(repositoryID text, workflowName text) RETURNS integer AS $$
+DECLARE
+  workflow_exists integer;
+  cur_val integer;
+  repositoryUUID uuid;
+BEGIN
+  SELECT CAST(repositoryID as uuid) INTO repositoryUUID;
+
+  SELECT    COUNT(1) INTO workflow_exists
+  FROM      v2_workflow_run_sequences
+  WHERE     repository_id = repositoryUUID AND workflow_name = $2;
+
+  IF workflow_exists = 0 THEN
+    BEGIN
+      INSERT INTO v2_workflow_run_sequences(repository_id, workflow_name, current_val) VALUES (repositoryUUID, $2, 0);
+    EXCEPTION WHEN others THEN
+    -- Do nothing
+    END;
+  END IF;
+
+  SELECT    current_val INTO cur_val
+  FROM      v2_workflow_run_sequences
+  WHERE     repository_id = repositoryUUID AND workflow_name = $2 FOR UPDATE;
+
+  UPDATE    v2_workflow_run_sequences SET current_val = cur_val + 1;
+  RETURN    cur_val + 1;
+END;
+$$ LANGUAGE plpgsql;
+-- +migrate StatementEnd
+
 -- +migrate Down
 DROP TABLE v2_workflow_run_info;
 DROP TABLE v2_workflow_run_job;
+DROP TABLE v2_workflow_run_sequences;
+DROP FUNCTION v2_workflow_run_sequences_nextval;
 DROP TABLE v2_workflow_run;
 

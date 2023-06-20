@@ -82,7 +82,11 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 
 			u := getUserConsumer(ctx)
 
-			// TODO compute run number
+			wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
+			if err != nil {
+				return err
+			}
+
 			wr := sdk.V2WorkflowRun{
 				ProjectKey:   proj.Key,
 				VCSServerID:  vcsProject.ID,
@@ -91,7 +95,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				WorkflowRef:  workflowEntity.Branch,
 				WorkflowSha:  workflowEntity.Commit,
 				Status:       sdk.StatusWorkflowRunCrafting,
-				RunNumber:    0,
+				RunNumber:    wrNumber,
 				RunAttempt:   0,
 				Started:      time.Now(),
 				LastModified: time.Now(),
@@ -106,6 +110,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return sdk.WithStack(err)
 			}
 
+			wr.RunNumber = wrNumber
 			if err := workflow_v2.InsertRun(ctx, tx, &wr); err != nil {
 				return err
 			}

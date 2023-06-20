@@ -22,6 +22,15 @@ func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (
 	return &dbWkfRun.V2WorkflowRun, nil
 }
 
+func WorkflowRunNextNumber(db gorp.SqlExecutor, repoID, workflowName string) (int64, error) {
+	i, err := db.SelectInt("select v2_workflow_run_sequences_nextval($1, $2)", repoID, workflowName)
+	if err != nil {
+		return 0, sdk.WrapError(err, "nextRunNumber")
+	}
+	return i, nil
+
+}
+
 func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun) error {
 	wr.ID = sdk.UUID()
 	wr.Started = time.Now()
