@@ -39,6 +39,10 @@ type WorkflowRunEntityFinder struct {
 func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (string, *sdk.V2WorkflowRunInfo, error) {
 	var branch, entityName, repoName, vcsName, projKey string
 
+	if name == "" {
+		return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: entityType + " cannot be empty"}, nil
+	}
+
 	// Get branch if present
 	splitBranch := strings.Split(name, "@")
 	if len(splitBranch) == 2 {

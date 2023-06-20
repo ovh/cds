@@ -367,6 +367,10 @@ type ServiceClient interface {
 	ServiceConfigurationGet(context.Context, string) ([]sdk.ServiceConfiguration, error)
 }
 
+type WorkflowV2Client interface {
+	WorkflowV2Run(projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+}
+
 // WorkflowClient exposes workflows functions
 type WorkflowClient interface {
 	WorkflowSearch(opts ...RequestModifier) ([]sdk.Workflow, error)
@@ -461,6 +465,7 @@ type Interface interface {
 	UserClient
 	WorkerClient
 	WorkflowClient
+	WorkflowV2Client
 	WorkflowV3Client
 	MonitoringClient
 	HookClient
