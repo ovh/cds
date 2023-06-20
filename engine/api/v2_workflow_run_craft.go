@@ -3,12 +3,12 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/rockbears/yaml"
 	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/entity"

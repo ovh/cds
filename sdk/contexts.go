@@ -7,19 +7,19 @@ import (
 )
 
 // DEPRECATED - Only use on old workflow
-type RunContext struct {
+type NodeRunContext struct {
 	CDS  CDSContext        `json:"cds,omitempty"`
 	Git  GitContext        `json:"git,omitempty"`
 	Vars map[string]string `json:"vars,omitempty"`
 	Jobs JobsResultContext `json:"jobs,omitempty"`
 }
 
-func (m RunContext) Value() (driver.Value, error) {
+func (m NodeRunContext) Value() (driver.Value, error) {
 	j, err := json.Marshal(m)
 	return j, WrapError(err, "cannot marshal RunContext")
 }
 
-func (m *RunContext) Scan(src interface{}) error {
+func (m *NodeRunContext) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
@@ -31,7 +31,7 @@ func (m *RunContext) Scan(src interface{}) error {
 }
 
 type JobRunContext struct {
-	RunContext
+	NodeRunContext
 	Job     JobContext        `json:"job,omitempty"`
 	Secrets map[string]string `json:"secrets,omitempty"`
 }

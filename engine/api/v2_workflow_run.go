@@ -2,19 +2,19 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/entity"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/workflow_v2"
-	"gopkg.in/yaml.v2"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/yaml"
 )
 
 func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
@@ -114,16 +114,6 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			if err := workflow_v2.InsertRun(ctx, tx, &wr); err != nil {
 				return err
 			}
-
-			/*
-				// Enqueue workflow run
-				workflowRunEnqueue := sdk.V2WorkflowRunEnqueue{
-					RunID: wr.ID,
-				}
-				if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, workflowRunEnqueue); err != nil {
-					return err
-				}
-			*/
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)

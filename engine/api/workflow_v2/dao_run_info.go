@@ -2,8 +2,9 @@ package workflow_v2
 
 import (
 	"context"
-	"github.com/go-gorp/gorp"
 	"time"
+
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"

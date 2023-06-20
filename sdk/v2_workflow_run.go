@@ -4,8 +4,9 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/rockbears/yaml"
 	"time"
+
+	"github.com/rockbears/yaml"
 )
 
 type V2WorkflowRun struct {
@@ -133,6 +134,7 @@ type V2WorkflowRunJob struct {
 	WorkerName    string          `json:"worker_name" db:"worker_name"`
 	HatcheryName  string          `json:"hatchery_name" db:"hatchery_name"`
 	Outputs       JobResultOutput `json:"outputs" db:"outputs"`
+	UserID        string          `json:"user_id" db:"user_id"`
 }
 
 type V2WorkflowRunEnqueue struct {

@@ -37,10 +37,12 @@ CREATE TABLE v2_workflow_run_job (
   "worker_id"       VARCHAR(36),
   "worker_name"     VARCHAR(255),
   "hatchery_name"   VARCHAR(512),
+  "user_id"         VARCHAR(36),
   "sig"             BYTEA,
   "signer"          TEXT
 );
 SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_job', 'v2_workflow_run_job', 'v2_workflow_run', 'workflow_run_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_job_user', 'v2_workflow_run_job', 'authentified_user', 'user_id', 'id');
 SELECT create_index('v2_workflow_run_job', 'idx_v2_workflow_run_job_status', 'status');
 
 CREATE TABLE v2_workflow_run_info (
