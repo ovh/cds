@@ -40,7 +40,7 @@ func TestHasRoleWorkflowExecute(t *testing.T) {
 			name: "user has direct right",
 			rabc: fmt.Sprintf(`name: test-perm
 workflows:
-- role: execute
+- role: trigger
   users: [%s]
   workflows: [my-workflow]
   project: %s`, user1.Username, proj.Key),
@@ -51,7 +51,7 @@ workflows:
 			name: "user has right through a group",
 			rabc: fmt.Sprintf(`name: test-perm
 workflows:
-- role: execute
+- role: trigger
   groups: [%s]
   workflows: [my-workflow]
   project: %s`, g.Name, proj.Key),
@@ -62,7 +62,7 @@ workflows:
 			name: "all workflows are allowed on project",
 			rabc: fmt.Sprintf(`name: test-perm
 workflows:
-- role: execute
+- role: trigger
   groups: [%s]
   all_workflows: true
   project: %s`, g.Name, proj.Key),
@@ -73,7 +73,7 @@ workflows:
 			name: "all users are allowed on project",
 			rabc: fmt.Sprintf(`name: test-perm
 workflows:
-- role: execute
+- role: trigger
   all_users: true
   all_workflows: true
   project: %s`, proj.Key),
@@ -84,7 +84,7 @@ workflows:
 			name: "user does not have the right",
 			rabc: fmt.Sprintf(`name: test-perm
 workflows:
-- role: execute
+- role: trigger
   users: [%s]
   all_workflows: true
   project: %s`, user2.Username, proj.Key),
