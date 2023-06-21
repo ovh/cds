@@ -211,20 +211,31 @@ func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) erro
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
+		case id := <-api.workflowRunCraftChan:
+			api.GoRoutines.Exec(
+				ctx,
+				"V2WorkflowRunCraftChan-"+id,
+				func(ctx context.Context) {
+					ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraftFromChan", nil, trace.SpanKindUnspecified)
+					if err := api.craftWorkflowRunV2(ctx, id); err != nil {
+						log.Error(ctx, "V2WorkflowRunCraftChan> error on workflow run %s: %v", id, err)
+					}
+				},
+			)
 		case <-ticker.C:
 			ids, err := workflow_v2.LoadCratingWorkflowRunIDs(api.mustDB())
 			if err != nil {
-				log.Error(ctx, "V2WorkflowRunCraft> unable to start tx: %v", err)
+				log.Error(ctx, "V2WorkflowRunCraftChan> unable to start tx: %v", err)
 				continue
 			}
 			for _, id := range ids {
 				api.GoRoutines.Exec(
 					ctx,
-					"V2WorkflowRunCraft-"+id,
+					"V2WorkflowRunCraftDB-"+id,
 					func(ctx context.Context) {
-						ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraft", nil, trace.SpanKindUnspecified)
+						ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraftDB", nil, trace.SpanKindUnspecified)
 						if err := api.craftWorkflowRunV2(ctx, id); err != nil {
-							log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
+							log.Error(ctx, "V2WorkflowRunCraftDB> error on workflow run %s: %v", id, err)
 						}
 					},
 				)
@@ -355,6 +366,12 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	enqueueRequest := sdk.V2WorkflowRunEnqueue{
 		RunID:  run.ID,
 		UserID: run.UserID,
+	}
+
+	select {
+	case api.workflowRunTriggerChan <- enqueueRequest:
+		log.Debug(ctx, "workflow run %s %d trigger in chan", run.WorkflowName, run.RunNumber)
+	default:
 	}
 	if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
 		return err

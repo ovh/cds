@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -21,7 +20,23 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) V2WorkflowRunEngine(ctx context.Context) error {
+func (api *API) V2WorkflowRunEngineChan(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			return nil
+		case wrEnqueue := <-api.workflowRunTriggerChan:
+			if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+		}
+	}
+}
+
+func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) error {
 	for {
 		var wrEnqueue sdk.V2WorkflowRunEnqueue
 		if err := api.Cache.DequeueWithContext(ctx, workflow_v2.WorkflowEngineKey, 250*time.Millisecond, &wrEnqueue); err != nil {
@@ -35,7 +50,6 @@ func (api *API) V2WorkflowRunEngine(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
-
 }
 
 // TODO Manage stage
@@ -53,7 +67,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	if !b {
 		log.Debug(ctx, "api.workflowRunV2Trigger> run %d is locked in cache", wrEnqueue.RunID)
 		// re-enqueue workflow-run
-		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, wrEnqueue.RunID); err != nil {
+		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, wrEnqueue); err != nil {
 			next()
 			return err
 		}
@@ -88,16 +102,30 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	jobsToQueue, runMsgs, currentJobRunStatus, err := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
-	if err != nil {
-		return err
-	}
+	jobsToQueue, runMsgs, currentJobRunStatus, errRetrieveJobs := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
+	log.Debug(ctx, "workflowRunV2Trigger> jobs to queue: %+v", jobsToQueue)
 
-	tx, err := api.mustDB().Begin()
-	if err != nil {
+	tx, errTx := api.mustDB().Begin()
+	if errTx != nil {
 		return sdk.WithStack(err)
 	}
 	defer tx.Rollback() // nolint
+
+	if errRetrieveJobs != nil {
+		for i := range runMsgs {
+			if err := workflow_v2.InsertRunInfo(ctx, tx, &runMsgs[i]); err != nil {
+				return err
+			}
+			run.Status = sdk.StatusFail
+			if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return err
+			}
+		}
+		return errRetrieveJobs
+	}
 
 	// Enqueue JOB
 	for jobID, jobDef := range jobsToQueue {
@@ -124,6 +152,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// End workflow if there is no job to queue,  no running jobs and current status is not terminated
 	if len(jobsToQueue) == 0 && sdk.StatusIsTerminated(currentJobRunStatus) && !sdk.StatusIsTerminated(run.Status) {
 		run.Status = currentJobRunStatus
+
 		if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 			return err
 		}
@@ -133,7 +162,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 }
 
 // TODO manage re run
-func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, u *sdk.AuthentifiedUser, defaultRegions []string) (map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, string, error) {
+func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, string, error) {
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	jobToQueue := make(map[string]sdk.V2Job)
 
@@ -158,13 +187,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	}
 
 	// Compute run context
-	_, next = telemetry.Span(ctx, "retrieveJobToQueue.buildRunContext")
 	jobsContext := buildJobsContext(runJobs)
-	if err != nil {
-		next()
-		return nil, nil, "", err
-	}
-	next()
 
 	// Select jobs to check ( all workflow or list of jobs from enqueue request )
 	jobsToCheck := make(map[string]sdk.V2Job)
@@ -196,7 +219,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 			if len(wrEnqueue.Jobs) > 0 {
 				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
-					Level:         sdk.WorkflowRunInfoLevelInfo,
+					Level:         sdk.WorkflowRunInfoLevelWarning,
 					Message:       fmt.Sprintf("job %s: missing some required job: %s", jobID, requiredJob),
 				})
 			}
@@ -204,22 +227,21 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 		}
 
 		_, next = telemetry.Span(ctx, "retrieveJobToQueue.checkUserRight")
-		hasRight, err := checkUserRight(ctx, db, jobDef, *u, defaultRegions)
+		hasRight, err := checkUserRight(ctx, db, jobDef, *u, defaultRegion)
 		if err != nil {
 			next()
-			log.ErrorWithStackTrace(ctx, err)
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("job %s: unable to check right for user %s: %v", jobID, u.Username, err),
 			})
-			continue
+			return nil, runInfos, sdk.StatusFail, err
 		}
 		next()
 		if !hasRight {
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Level:         sdk.WorkflowRunInfoLevelWarning,
 				Message:       fmt.Sprintf("job %s: user %s does not have enough right", jobID, u.Username),
 			})
 			continue
@@ -229,19 +251,18 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 		canRun, err := checkJobCondition(ctx, jobID, run.Contexts, jobsContext, jobDef)
 		if err != nil {
 			next()
-			log.ErrorWithStackTrace(ctx, err)
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("%v", err),
 			})
-			continue
+			return nil, runInfos, sdk.StatusFail, err
 		}
 		next()
 		if !canRun && len(wrEnqueue.Jobs) > 0 {
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Level:         sdk.WorkflowRunInfoLevelWarning,
 				Message:       fmt.Sprintf("job %s: cannot be run because of if statement", jobID),
 			})
 			continue
@@ -268,9 +289,9 @@ func computeJobRunStatus(runJobs []sdk.V2WorkflowRunJob) string {
 	return finalStatus
 }
 
-func checkUserRight(ctx context.Context, db gorp.SqlExecutor, jobDef sdk.V2Job, u sdk.AuthentifiedUser, defaultRegions []string) (bool, error) {
+func checkUserRight(ctx context.Context, db gorp.SqlExecutor, jobDef sdk.V2Job, u sdk.AuthentifiedUser, defaultRegion string) (bool, error) {
 	if jobDef.Region == "" {
-		jobDef.Region = defaultRegions[rand.Intn(len(defaultRegions))]
+		jobDef.Region = defaultRegion
 	}
 
 	_, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName")

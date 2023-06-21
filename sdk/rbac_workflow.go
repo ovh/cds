@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	WorkflowRoleExecute = "execute"
-	WorkflowRoles       = []string{WorkflowRoleExecute}
+	WorkflowRoleTrigger = "trigger"
+	WorkflowRoles       = []string{WorkflowRoleTrigger}
 )
 
 type RBACWorkflow struct {

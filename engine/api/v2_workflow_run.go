@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
@@ -114,6 +115,12 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			wr.RunNumber = wrNumber
 			if err := workflow_v2.InsertRun(ctx, tx, &wr); err != nil {
 				return err
+			}
+
+			select {
+			case api.workflowRunCraftChan <- wr.ID:
+				log.Debug(ctx, "postWorkflowRunV2Handler: workflow run %s %d sent into chan", wr.WorkflowName, wr.RunNumber)
+			default:
 			}
 
 			if err := tx.Commit(); err != nil {

@@ -14,7 +14,7 @@ type dbWorkflowRun struct {
 func (r dbWorkflowRun) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSServerID, r.RepositoryID, r.WorkflowName, r.WorkflowData, r.UserID, r.Contexts}
 	return gorpmapper.CanonicalForms{
-		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.RepositoryID}}{{.WorkflowData}}{{.UserID}}{{.Contexts}}",
+		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.RepositoryID}}{{hash .WorkflowData}}{{.UserID}}{{hash .Contexts}}",
 	}
 }
 
@@ -26,7 +26,7 @@ type dbWorkflowRunJob struct {
 func (r dbWorkflowRunJob) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{r.ID, r.WorkflowRunID, r.JobID, r.Job, r.Outputs, r.UserID}
 	return gorpmapper.CanonicalForms{
-		"{{.ID}}{{.WorkflowRunID}}{{.JobID}}{{.Job}}{{.Outputs}}{{.UserID}}",
+		"{{.ID}}{{.WorkflowRunID}}{{.JobID}}{{hash .Job}}{{hash .Outputs}}{{.UserID}}",
 	}
 }
 
