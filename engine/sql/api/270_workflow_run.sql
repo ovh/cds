@@ -87,7 +87,7 @@ BEGIN
   FROM      v2_workflow_run_sequences
   WHERE     repository_id = repositoryUUID AND workflow_name = $2 FOR UPDATE;
 
-  UPDATE    v2_workflow_run_sequences SET current_val = cur_val + 1;
+  UPDATE    v2_workflow_run_sequences SET current_val = cur_val + 1 WHERE repository_id = repositoryUUID AND workflow_name = $2;
   RETURN    cur_val + 1;
 END;
 $$ LANGUAGE plpgsql;
