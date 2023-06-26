@@ -32,8 +32,8 @@ func hasRoleOnWorkflow(ctx context.Context, auth *sdk.AuthUserConsumer, store ca
 	return nil
 }
 
-// workflowExecute return nil if the current AuthUserConsumer have the WorkflowRoleTrigger on current workflow
-func (api *API) workflowExecute(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+// workflowTrigger return nil if the current AuthUserConsumer have the WorkflowRoleTrigger on current workflow
+func (api *API) workflowTrigger(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
 	workflowName := vars["workflowName"]
 	return hasRoleOnWorkflow(ctx, auth, store, db, projectKey, workflowName, sdk.WorkflowRoleTrigger)

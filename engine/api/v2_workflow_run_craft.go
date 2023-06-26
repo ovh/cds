@@ -214,28 +214,28 @@ func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) erro
 		case id := <-api.workflowRunCraftChan:
 			api.GoRoutines.Exec(
 				ctx,
-				"V2WorkflowRunCraftChan-"+id,
+				"V2WorkflowRunCraft-"+id,
 				func(ctx context.Context) {
-					ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraftFromChan", nil, trace.SpanKindUnspecified)
+					ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraft", nil, trace.SpanKindUnspecified)
 					if err := api.craftWorkflowRunV2(ctx, id); err != nil {
-						log.Error(ctx, "V2WorkflowRunCraftChan> error on workflow run %s: %v", id, err)
+						log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
 					}
 				},
 			)
 		case <-ticker.C:
 			ids, err := workflow_v2.LoadCratingWorkflowRunIDs(api.mustDB())
 			if err != nil {
-				log.Error(ctx, "V2WorkflowRunCraftChan> unable to start tx: %v", err)
+				log.Error(ctx, "V2WorkflowRunCraft> unable to start tx: %v", err)
 				continue
 			}
 			for _, id := range ids {
 				api.GoRoutines.Exec(
 					ctx,
-					"V2WorkflowRunCraftDB-"+id,
+					"V2WorkflowRunCraft-"+id,
 					func(ctx context.Context) {
-						ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraftDB", nil, trace.SpanKindUnspecified)
+						ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraft", nil, trace.SpanKindUnspecified)
 						if err := api.craftWorkflowRunV2(ctx, id); err != nil {
-							log.Error(ctx, "V2WorkflowRunCraftDB> error on workflow run %s: %v", id, err)
+							log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
 						}
 					},
 				)
@@ -262,17 +262,13 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		_ = api.Cache.Unlock(lockKey)
 	}()
 
-	_, next = telemetry.Span(ctx, "api.craftWorkflowRunV2.LoadRunByID")
 	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), id)
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		next()
 		return nil
 	}
 	if err != nil {
-		next()
 		return sdk.WrapError(err, "unable to load workflow run %s", id)
 	}
-	next()
 
 	if run.Status != sdk.StatusWorkflowRunCrafting {
 		return nil
@@ -372,11 +368,10 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	case api.workflowRunTriggerChan <- enqueueRequest:
 		log.Debug(ctx, "workflow run %s %d trigger in chan", run.WorkflowName, run.RunNumber)
 	default:
+		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
+			return err
+		}
 	}
-	if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-		return err
-	}
-
 	return sdk.WithStack(tx.Commit())
 }
 

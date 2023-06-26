@@ -19,7 +19,7 @@ import (
 )
 
 func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.workflowExecute),
+	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -121,6 +121,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			case api.workflowRunCraftChan <- wr.ID:
 				log.Debug(ctx, "postWorkflowRunV2Handler: workflow run %s %d sent into chan", wr.WorkflowName, wr.RunNumber)
 			default:
+				// Default behaviour is made by a goroutine that call directly the database
 			}
 
 			if err := tx.Commit(); err != nil {

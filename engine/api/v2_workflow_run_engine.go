@@ -80,17 +80,13 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}()
 
 	// Load run by id
-	_, next = telemetry.Span(ctx, "workflowRunV2Trigger.LoadRunByID")
 	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), wrEnqueue.RunID)
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		next()
 		return nil
 	}
 	if err != nil {
-		next()
 		return sdk.WrapError(err, "unable to load workflow run %s", wrEnqueue.RunID)
 	}
-	next()
 
 	if sdk.StatusIsTerminated(run.Status) && len(wrEnqueue.Jobs) == 0 {
 		log.Debug(ctx, "workflow run already on a final state")
@@ -163,17 +159,16 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 // TODO manage re run
 func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, string, error) {
+	_, next := telemetry.Span(ctx, "retrieveJobToQueue")
+	defer next()
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	jobToQueue := make(map[string]sdk.V2Job)
 
 	// Load run_jobs
-	_, next := telemetry.Span(ctx, "retrieveJobToQueue.LoadRunJobsByRunID")
 	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, run.ID)
 	if err != nil {
-		next()
 		return nil, nil, "", sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
 	}
-	next()
 
 	// If jobs has already been queue and wr not terminated and user want to trigger some job => error
 	if !sdk.StatusIsTerminated(run.Status) && len(wrEnqueue.Jobs) > 0 && len(runJobs) > 0 {
@@ -226,10 +221,8 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 			continue
 		}
 
-		_, next = telemetry.Span(ctx, "retrieveJobToQueue.checkUserRight")
 		hasRight, err := checkUserRight(ctx, db, jobDef, *u, defaultRegion)
 		if err != nil {
-			next()
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -237,7 +230,6 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 			})
 			return nil, runInfos, sdk.StatusFail, err
 		}
-		next()
 		if !hasRight {
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
@@ -247,10 +239,8 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 			continue
 		}
 
-		_, next = telemetry.Span(ctx, "retrieveJobToQueue.checkJobCondition")
 		canRun, err := checkJobCondition(ctx, jobID, run.Contexts, jobsContext, jobDef)
 		if err != nil {
-			next()
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -258,7 +248,6 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 			})
 			return nil, runInfos, sdk.StatusFail, err
 		}
-		next()
 		if !canRun && len(wrEnqueue.Jobs) > 0 {
 			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
@@ -290,19 +279,17 @@ func computeJobRunStatus(runJobs []sdk.V2WorkflowRunJob) string {
 }
 
 func checkUserRight(ctx context.Context, db gorp.SqlExecutor, jobDef sdk.V2Job, u sdk.AuthentifiedUser, defaultRegion string) (bool, error) {
+	_, next := telemetry.Span(ctx, "checkUserRight")
+	defer next()
 	if jobDef.Region == "" {
 		jobDef.Region = defaultRegion
 	}
 
-	_, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName")
 	wantedRegion, err := region.LoadRegionByName(ctx, db, jobDef.Region)
 	if err != nil {
-		next()
 		return false, err
 	}
-	next()
 
-	_, next = telemetry.Span(ctx, "checkUserRight.LoadRegionIDsByRoleAndUserID")
 	allowedRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, u.ID)
 	if err != nil {
 		next()
@@ -330,6 +317,8 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) (string,
 }
 
 func checkJobCondition(ctx context.Context, jobID string, runContext sdk.WorkflowRunContext, jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) (bool, error) {
+	_, next := telemetry.Span(ctx, "checkJobCondition")
+	defer next()
 	if jobDef.If == "" {
 		return true, nil
 	}

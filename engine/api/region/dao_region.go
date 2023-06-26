@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, region *sdk.Region) error {
@@ -75,6 +76,8 @@ func LoadAllRegions(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Region, err
 }
 
 func LoadRegionByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Region, error) {
+	_, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName")
+	defer next()
 	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.name = $1`).Args(name)
 	return getRegion(ctx, db, query)
 }

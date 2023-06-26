@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func getAllRunJobs(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunJob, error) {
@@ -45,6 +46,8 @@ func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 }
 
 func LoadRunJobsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunJob, error) {
+	_, next := telemetry.Span(ctx, "LoadRunJobsByRunID")
+	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1").Args(runID)
 	return getAllRunJobs(ctx, db, query)
 }
