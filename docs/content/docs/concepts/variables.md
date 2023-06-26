@@ -176,11 +176,13 @@ workflow:
     pipeline: build
     parameters:
       varname: {{.cds.version}}
-      varname2: {{cds.pip.param_name}}
+      varname2: {{.cds.pip.param_name}}
 ...
 ~~~
 
 Notice that you can't create a pipeline parameter of type `password`. If you want to use a variable of type password, you have to create it in your project / application or environment. Then, in your workflow, use this variable to set the value of the pipeline parameter - the pipeline parameter can be of type `string`.
+
+You can also access a pipeline parameter `myparam` of the pipeline `mypipeline` from another pipeline in the same workflow using `{{.workflow.mypipeline.pip.myparam}}`.
 
 ## Helpers
 
