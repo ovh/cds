@@ -114,11 +114,19 @@ func LoadByTypeAndBranch(ctx context.Context, db gorp.SqlExecutor, projectReposi
 	return getEntities(ctx, db, query, opts...)
 }
 
-// LoadByBranchTypeName loads an entity by his repository, branch, type and name
+// LoadByBranchTypeName loads an entity by its repository, branch, type and name
 func LoadByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4`).Args(projectRepositoryID, branch, t, name)
+	return getEntity(ctx, db, query, opts...)
+}
+
+// LoadByBranchTypeNameCommit loads an entity by its repository, branch, type, name and commit
+func LoadByBranchTypeNameCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, commit string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT * from entity
+		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4 AND commit = $5`).Args(projectRepositoryID, branch, t, name, commit)
 	return getEntity(ctx, db, query, opts...)
 }
 

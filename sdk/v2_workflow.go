@@ -1,7 +1,10 @@
 package sdk
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"fmt"
+	"github.com/rockbears/yaml"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -22,16 +25,34 @@ type WorkflowStage struct {
 }
 
 type V2Job struct {
-	Name   string            `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
-	Stage  string            `json:"stage,omitempty" jsonschema_extras:"order=2"`
-	If     string            `json:"if,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Condition to execute the job"`
-	Inputs map[string]string `json:"inputs,omitempty" jsonschema_extras:"order=4,mode=edit" jsonschema_description:"Input of the job. If you define inputs, your job will only be able to use these inputs and no others variables/contexts."`
-	Steps  []ActionStep      `json:"steps,omitempty" jsonschema_extras:"order=5" jsonschema_description:"List of steps"`
-	Needs  []string          `json:"needs,omitempty" jsonschema_extras:"order=6" jsonschema_description:"Job dependencies"`
+	Name        string            `json:"name" jsonschema_extras:"order=1,required" jsonschema_description:"Name of the job"`
+	If          string            `json:"if,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Condition to execute the job"`
+	Inputs      map[string]string `json:"inputs,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Input of thejob"`
+	Steps       []ActionStep      `json:"steps,omitempty" jsonschema_extras:"order=5" jsonschema_description:"List of steps"`
+	Needs       []string          `json:"needs,omitempty" jsonschema_extras:"order=6" jsonschema_description:"Job dependencies"`
+	Stage       string            `json:"stage,omitempty" jsonschema_extras:"order=7"`
+	Region      string            `json:"region,omitempty" jsonschema_extras:"order=8"`
+	WorkerModel string            `json:"worker_model,omitempty" jsonschema_extras:"required,order=9"`
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
 	Strategy    V2JobStrategy    `json:"-"`
+}
+
+func (w V2Job) Value() (driver.Value, error) {
+	j, err := yaml.Marshal(w)
+	return j, WrapError(err, "cannot marshal V2Job")
+}
+
+func (w *V2Job) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2Job")
 }
 
 type V2JobStrategy struct {

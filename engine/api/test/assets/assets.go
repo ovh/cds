@@ -7,7 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ovh/cds/engine/api/organization"
-	"io"
+  "github.com/ovh/cds/engine/api/repository"
+  "io"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -123,6 +124,18 @@ func InsertTestVCSProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, projID 
 	err := vcs.Insert(context.TODO(), db, &vcsProj)
 	require.NoError(t, err)
 	return &vcsProj
+}
+
+func InsertTestProjectRepository(t *testing.T, db gorpmapper.SqlExecutorWithTx, vcsServerID string, name string) *sdk.ProjectRepository {
+  repo := sdk.ProjectRepository{
+    Name:         name,
+    Created:      time.Now(),
+    VCSProjectID: vcsServerID,
+    CreatedBy:    "test",
+    CloneURL:     "myurl",
+  }
+  require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+  return &repo
 }
 
 // DeleteTestProject delete a test project

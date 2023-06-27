@@ -235,6 +235,7 @@ type Configuration struct {
 		DefaultRetentionPolicy  string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
 		DisablePurgeDeletion    bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
 		TemplateBulkRunnerCount int64  `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
+		JobDefaultRegion        string `toml:"jobDefaultRegion" comment:"The default region where the job will be sent if no one is defined on a job" json:"jobDefaultRegion"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	Project struct {
 		CreationDisabled      bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
@@ -320,8 +321,10 @@ type API struct {
 		RunResultSynchronized      *stats.Int64Measure
 		RunResultSynchronizedError *stats.Int64Measure
 	}
-	AuthenticationDrivers map[sdk.AuthConsumerType]sdk.AuthDriver
-	LinkDrivers           map[sdk.AuthConsumerType]link.LinkDriver
+	workflowRunCraftChan   chan string
+	workflowRunTriggerChan chan sdk.V2WorkflowRunEnqueue
+	AuthenticationDrivers  map[sdk.AuthConsumerType]sdk.AuthDriver
+	LinkDrivers            map[sdk.AuthConsumerType]link.LinkDriver
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -826,9 +829,22 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "authentication.SessionCleaner", func(ctx context.Context) {
 		authentication.SessionCleaner(ctx, a.mustDB, 10*time.Second)
 	})
+
+	a.workflowRunCraftChan = make(chan string, 50)
+	a.workflowRunTriggerChan = make(chan sdk.V2WorkflowRunEnqueue, 1)
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
+	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunCraft", func(ctx context.Context) {
+		a.V2WorkflowRunCraft(ctx, 10*time.Second)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunEngineChan", func(ctx context.Context) {
+		a.V2WorkflowRunEngineChan(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunEngineDequeue", func(ctx context.Context) {
+		a.V2WorkflowRunEngineDequeue(ctx)
+	})
+
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
 		a.repositoryAnalysisPoller(ctx, 5*time.Second)
 	})

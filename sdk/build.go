@@ -124,6 +124,8 @@ const (
 	StatusStopped           = "Stopped"
 	StatusWorkerPending     = "Pending"
 	StatusWorkerRegistering = "Registering"
+
+	StatusWorkflowRunCrafting = "Crafting"
 )
 
 var (

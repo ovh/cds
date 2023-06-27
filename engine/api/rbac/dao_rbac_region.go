@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 	"github.com/rockbears/log"
@@ -9,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func insertRBACRegion(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rbacRegion *rbacRegion) error {
@@ -56,6 +58,8 @@ func getAllRBACRegions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 }
 
 func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]sdk.RBACRegion, error) {
+	_, next := telemetry.Span(ctx, "LoadRegionIDsByRoleAndUserID")
+	defer next()
 	// Get rbac_region_groups
 	rbacRegionGroups, err := loadRBACRegionGroupsByUserID(ctx, db, userID)
 	if err != nil {

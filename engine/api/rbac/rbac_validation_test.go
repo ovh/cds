@@ -190,7 +190,7 @@ func TestRBACWorkflowInvalidGroupAndUsers(t *testing.T) {
 	rb := sdk.RBACWorkflow{
 		RBACWorkflowsNames: []string{"foo"},
 		AllUsers:           false,
-		Role:               sdk.WorkflowRoleExecute,
+		Role:               sdk.WorkflowRoleTrigger,
 		RBACGroupsIDs:      []int64{},
 		RBACUsersIDs:       []string{},
 	}
@@ -202,7 +202,7 @@ func TestRBACWorkflowInvalidGroupsAndUsers(t *testing.T) {
 	rb := sdk.RBACWorkflow{
 		RBACWorkflowsNames: []string{"PROJ"},
 		AllUsers:           false,
-		Role:               sdk.WorkflowRoleExecute,
+		Role:               sdk.WorkflowRoleTrigger,
 		RBACGroupsIDs:      []int64{},
 		RBACUsersIDs:       []string{},
 	}
@@ -226,7 +226,7 @@ func TestRBACWorkflowInvalidAllAndListOfGroups(t *testing.T) {
 	rb := sdk.RBACWorkflow{
 		RBACWorkflowsNames: []string{"foo"},
 		AllUsers:           true,
-		Role:               sdk.WorkflowRoleExecute,
+		Role:               sdk.WorkflowRoleTrigger,
 		RBACGroupsIDs:      []int64{1},
 		RBACUsersIDs:       []string{},
 	}

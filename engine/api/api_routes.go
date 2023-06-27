@@ -482,6 +482,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/regen", nil, r.POSTv2(api.postRepositoryHookRegenKeyHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflowName}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
 
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))

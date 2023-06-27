@@ -4584,6 +4584,49 @@ func (mr *MockServiceClientMockRecorder) ServiceConfigurationGet(arg0, arg1 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceConfigurationGet", reflect.TypeOf((*MockServiceClient)(nil).ServiceConfigurationGet), arg0, arg1)
 }
 
+// MockWorkflowV2Client is a mock of WorkflowV2Client interface.
+type MockWorkflowV2Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockWorkflowV2ClientMockRecorder
+}
+
+// MockWorkflowV2ClientMockRecorder is the mock recorder for MockWorkflowV2Client.
+type MockWorkflowV2ClientMockRecorder struct {
+	mock *MockWorkflowV2Client
+}
+
+// NewMockWorkflowV2Client creates a new mock instance.
+func NewMockWorkflowV2Client(ctrl *gomock.Controller) *MockWorkflowV2Client {
+	mock := &MockWorkflowV2Client{ctrl: ctrl}
+	mock.recorder = &MockWorkflowV2ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockWorkflowV2Client) EXPECT() *MockWorkflowV2ClientMockRecorder {
+	return m.recorder
+}
+
+// WorkflowV2Run mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2Run indicates an expected call of WorkflowV2Run.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2Run), varargs...)
+}
+
 // MockWorkflowClient is a mock of WorkflowClient interface.
 type MockWorkflowClient struct {
 	ctrl     *gomock.Controller
@@ -9976,6 +10019,26 @@ func (m *MockInterface) WorkflowUpdate(projectKey, name string, wf *sdk.Workflow
 func (mr *MockInterfaceMockRecorder) WorkflowUpdate(projectKey, name, wf interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowUpdate", reflect.TypeOf((*MockInterface)(nil).WorkflowUpdate), projectKey, name, wf)
+}
+
+// WorkflowV2Run mocks base method.
+func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2Run indicates an expected call of WorkflowV2Run.
+func (mr *MockInterfaceMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockInterface)(nil).WorkflowV2Run), varargs...)
 }
 
 // WorkflowV3Get mocks base method.
