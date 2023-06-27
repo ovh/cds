@@ -2,14 +2,14 @@ package api
 
 import (
 	"context"
-	"github.com/go-gorp/gorp"
-	"go.opencensus.io/trace"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
+	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -173,10 +173,10 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-      telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
-        trace.StringAttribute(telemetry.TagWorkflow, jobRun.WorkflowName),
-        trace.StringAttribute(telemetry.TagProjectKey, jobRun.ProjectKey),
-        trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(jobRun.RunNumber, 10)))
+			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
+				trace.StringAttribute(telemetry.TagWorkflow, jobRun.WorkflowName),
+				trace.StringAttribute(telemetry.TagProjectKey, jobRun.ProjectKey),
+				trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(jobRun.RunNumber, 10)))
 
 			if jobRun.Status != sdk.StatusWaiting {
 				return sdk.WrapError(sdk.ErrNotFound, "job has already been taken by %s", jobRun.HatcheryName)
@@ -244,8 +244,8 @@ func (api *API) getJobRunHandler() ([]service.RbacChecker, service.Handler) {
 }
 
 func hatcheryCanGetJob(ctx context.Context, db gorp.SqlExecutor, regionName string, hatcheryID string) (bool, error) {
-  ctx, next := telemetry.Span(ctx, "hatcheryCanGetJob")
-  defer next()
+	ctx, next := telemetry.Span(ctx, "hatcheryCanGetJob")
+	defer next()
 
 	reg, err := region.LoadRegionByName(ctx, db, regionName)
 	if err != nil {

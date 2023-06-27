@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/region"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -11,7 +9,9 @@ import (
 
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"

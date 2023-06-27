@@ -2,7 +2,6 @@ package rbac
 
 import (
   "context"
-  "github.com/ovh/cds/sdk/telemetry"
 
   "github.com/go-gorp/gorp"
   "github.com/ovh/cds/sdk"
@@ -10,6 +9,7 @@ import (
 
   "github.com/ovh/cds/engine/api/database/gorpmapping"
   "github.com/ovh/cds/engine/gorpmapper"
+  "github.com/ovh/cds/sdk/telemetry"
 )
 
 func insertRBACHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rbacHatchery *rbacHatchery) error {
@@ -70,7 +70,7 @@ func LoadRBACByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID s
   if err != nil {
     return nil, err
   }
-  return LoadRBACByID(ctx, db, rbHatchery.RbacID, LoadOptions.All)
+  return LoadRBACByID(ctx, db, rbHatchery.RbacID, LoadOptions.LoadRBACHatchery)
 
 }
 

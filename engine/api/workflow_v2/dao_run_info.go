@@ -2,14 +2,14 @@ package workflow_v2
 
 import (
 	"context"
-  "github.com/ovh/cds/sdk/telemetry"
-  "time"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func getAllRunInfos(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunInfo, error) {
@@ -25,8 +25,8 @@ func getAllRunInfos(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.
 }
 
 func InsertRunInfo(ctx context.Context, db gorpmapper.SqlExecutorWithTx, info *sdk.V2WorkflowRunInfo) error {
-  ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRunInfo")
-  defer next()
+	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRunInfo")
+	defer next()
 	info.ID = sdk.UUID()
 	info.IssuedAt = time.Now()
 	dbWkfRunInfos := &dbWorkflowRunInfo{V2WorkflowRunInfo: *info}

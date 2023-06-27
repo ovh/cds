@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/telemetry"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -11,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.AuthentifiedUser, error) {
