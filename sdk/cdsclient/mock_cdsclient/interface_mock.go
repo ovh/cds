@@ -4608,9 +4608,9 @@ func (m *MockWorkflowV2Client) EXPECT() *MockWorkflowV2ClientMockRecorder {
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2Run(projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, vcsIdentifier, repoIdentifier, wkfName}
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -4621,9 +4621,9 @@ func (m *MockWorkflowV2Client) WorkflowV2Run(projectKey, vcsIdentifier, repoIden
 }
 
 // WorkflowV2Run indicates an expected call of WorkflowV2Run.
-func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Run(projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2Run), varargs...)
 }
 
@@ -10022,9 +10022,9 @@ func (mr *MockInterfaceMockRecorder) WorkflowUpdate(projectKey, name, wf interfa
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockInterface) WorkflowV2Run(projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{projectKey, vcsIdentifier, repoIdentifier, wkfName}
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -10035,9 +10035,9 @@ func (m *MockInterface) WorkflowV2Run(projectKey, vcsIdentifier, repoIdentifier,
 }
 
 // WorkflowV2Run indicates an expected call of WorkflowV2Run.
-func (mr *MockInterfaceMockRecorder) WorkflowV2Run(projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2Run", reflect.TypeOf((*MockInterface)(nil).WorkflowV2Run), varargs...)
 }
 

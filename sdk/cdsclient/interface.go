@@ -368,7 +368,7 @@ type ServiceClient interface {
 }
 
 type WorkflowV2Client interface {
-	WorkflowV2Run(projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 }
 
 // WorkflowClient exposes workflows functions
