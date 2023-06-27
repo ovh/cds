@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/spf13/cobra"
@@ -45,7 +46,7 @@ func workflowRunFunc(v cli.Values) error {
 	wkfName := v.GetString("workflow_name")
 	branch := v.GetString("branch")
 
-	run, err := client.WorkflowV2Run(projKey, vcsId, repoId, wkfName, cdsclient.WithQueryParameter("branch", branch))
+	run, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, cdsclient.WithQueryParameter("branch", branch))
 	if err != nil {
 		return err
 	}
