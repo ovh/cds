@@ -8,12 +8,13 @@ import (
 )
 
 type AuthConsumerHatcherySigninRequest struct {
-	Token     string        `json:"token"`
-	Name      string        `json:"name"`
-	HTTPURL   string        `json:"http_url"`
-	Config    ServiceConfig `json:"config" db:"config" cli:"-" mapstructure:"config"`
-	PublicKey []byte        `json:"public_key"`
-	Version   string        `json:"version"`
+	Token        string        `json:"token"`
+	Name         string        `json:"name"`
+	HatcheryType string        `json:"type"`
+	HTTPURL      string        `json:"http_url"`
+	Config       ServiceConfig `json:"config" db:"config" cli:"-" mapstructure:"config"`
+	PublicKey    []byte        `json:"public_key"`
+	Version      string        `json:"version"`
 }
 
 type AuthConsumerHatcherySigninResponse struct {
@@ -33,6 +34,7 @@ type HatcheryStatus struct {
 type Hatchery struct {
 	ID            string        `json:"id" db:"id" cli:"id,key"`
 	Name          string        `json:"name" db:"name" cli:"name"`
+	ModelType     string        `json:"model_type" db:"model_type" cli:"model_type"`
 	Config        ServiceConfig `json:"config" db:"config"`
 	LastHeartbeat time.Time     `json:"last_heartbeat,omitempty" db:"last_heartbeat" cli:"last_heartbeat"`
 	PublicKey     []byte        `json:"public_key" db:"public_key"`

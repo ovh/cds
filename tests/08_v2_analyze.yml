@@ -88,6 +88,16 @@ testcases:
     - script: cat ITCLIPRJVCSWRKFLW1-WORKFLOW*.log
     - script: grep 'Hello John Doe from project ITCLIPRJVCS' ITCLIPRJVCSWRKFLW1-WORKFLOW*.log
 
+- name: Run ascode workflow
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.status ShouldEqual "Fail"
+      retry: 30
+      delay: 10
+
 - name: delete rbac on project
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac delete perm-test --force

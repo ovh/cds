@@ -76,7 +76,7 @@ func LoadAllRegions(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Region, err
 }
 
 func LoadRegionByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Region, error) {
-	_, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName")
+	ctx, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName")
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.name = $1`).Args(name)
 	return getRegion(ctx, db, query)

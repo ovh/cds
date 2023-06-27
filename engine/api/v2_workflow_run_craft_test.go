@@ -31,7 +31,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		UserID:       admin.ID,
 		ProjectKey:   proj.Key,
-		Status:       sdk.StatusWorkflowRunCrafting,
+		Status:       sdk.StatusCrafting,
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		RunNumber:    0,
@@ -98,7 +98,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		UserID:       admin.ID,
 		ProjectKey:   proj.Key,
-		Status:       sdk.StatusWorkflowRunCrafting,
+		Status:       sdk.StatusCrafting,
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		RunNumber:    0,
@@ -193,7 +193,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		UserID:       admin.ID,
 		ProjectKey:   proj.Key,
-		Status:       sdk.StatusWorkflowRunCrafting,
+		Status:       sdk.StatusCrafting,
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		RunNumber:    0,

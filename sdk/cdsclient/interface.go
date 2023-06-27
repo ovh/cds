@@ -225,6 +225,10 @@ type HatcheryClient interface {
 type HatcheryServiceClient interface {
 	Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error
 	GetWorkerModel(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, workerModelName string, mods ...RequestModifier) (*sdk.V2WorkerModel, error)
+	V2HatcheryTakeJob(ctx context.Context, jobRun *sdk.V2WorkflowRunJob) error
+	V2QueueGetJobRun(ctx context.Context, id string) (*sdk.V2WorkflowRunJob, error)
+	V2QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	V2QueueJobResult(ctx context.Context, jobRunID string, result sdk.V2WorkflowRunJobResult) error
 }
 
 // ProjectClient exposes project related functions
@@ -369,6 +373,7 @@ type ServiceClient interface {
 
 type WorkflowV2Client interface {
 	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunStatus(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64) (*sdk.V2WorkflowRun, error)
 }
 
 // WorkflowClient exposes workflows functions

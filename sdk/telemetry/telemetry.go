@@ -120,6 +120,7 @@ const (
 	TagWorkflowNodeJobRun = "workflow_node_job_run"
 	TagWorkflowNodeRun    = "workflow_node_run"
 	TagWorkflowRun        = "workflow_run"
+	TagWorkflowRunNumber  = "run_number"
 )
 
 func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {

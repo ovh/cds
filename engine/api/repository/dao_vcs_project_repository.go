@@ -60,6 +60,8 @@ func getRepository(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 }
 
 func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID, repoID string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
+	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByVCSAndID")
+	defer next()
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.id = $2`).Args(vcsProjectID, repoID)
 	repo, err := getRepository(ctx, db, query, opts...)
 	if err != nil {
@@ -69,6 +71,8 @@ func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProje
 }
 
 func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
+	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByName")
+	defer next()
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND lower(project_repository.name) = $2`).Args(vcsProjectID, strings.ToLower(repoName))
 	repo, err := getRepository(ctx, db, query, opts...)
 	if err != nil {

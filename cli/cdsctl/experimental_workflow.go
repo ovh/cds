@@ -17,7 +17,40 @@ var experimentalWorkflowCmd = cli.Command{
 func experimentalWorkflow() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowRunCmd, workflowRunFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
 	})
+}
+
+var workflowRunStatusCmd = cli.Command{
+	Name:    "status",
+	Aliases: []string{"st"},
+	Short:   "Get the workflow run status",
+	Example: "cdsctl experimental workflow status <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "proj_key"},
+		{Name: "vcs_identifier"},
+		{Name: "repo_identifier"},
+		{Name: "workflow_name"},
+		{Name: "run-number"},
+	},
+}
+
+func workflowRunStatusFunc(v cli.Values) (interface{}, error) {
+	projKey := v.GetString("proj_key")
+	vcsId := v.GetString("vcs_identifier")
+	repoId := v.GetString("repo_identifier")
+	wkfName := v.GetString("workflow_name")
+	runNumber, err := v.GetInt64("run-number")
+	if err != nil {
+		return nil, err
+	}
+
+	run, err := client.WorkflowV2RunStatus(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	if err != nil {
+		return nil, err
+	}
+	return run, nil
 }
 
 var workflowRunCmd = cli.Command{

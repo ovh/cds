@@ -137,6 +137,7 @@ type Common struct {
 	GoRoutines            *sdk.GoRoutines
 	Region                string
 	IgnoreJobWithNoRegion bool
+	ModelType             string
 }
 
 // Service is the interface for a engine service

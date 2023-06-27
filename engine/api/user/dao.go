@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk/telemetry"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -116,6 +117,8 @@ func LoadAllByIDs(ctx context.Context, db gorp.SqlExecutor, ids []string, opts .
 
 // LoadByID returns a user from database for given id.
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...LoadOptionFunc) (*sdk.AuthentifiedUser, error) {
+	ctx, next := telemetry.Span(ctx, "user.LoadByID")
+	defer next()
 	query := gorpmapping.NewQuery("SELECT * FROM authentified_user WHERE id = $1").Args(id)
 	return Get(ctx, db, query, opts...)
 }

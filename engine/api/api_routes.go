@@ -451,6 +451,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/entity/{entityType}/check", ScopeNone(), r.POSTv2(api.postEntityCheckHandler))
 
 	r.Handle("/v2/hatchery", nil, r.GETv2(api.getHatcheriesHandler), r.POSTv2(api.postHatcheryHandler))
+	r.Handle("/v2/hatchery/ws", nil, r.GETv2(api.getHatcheryWebsocketHandler))
 	r.Handle("/v2/hatchery/heartbeat", nil, r.POSTv2(api.postHatcheryHeartbeatHandler))
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}", nil, r.GETv2(api.getHatcheryHandler), r.DELETEv2(api.deleteHatcheryHandler))
 
@@ -482,10 +483,16 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/regen", nil, r.POSTv2(api.postRepositoryHookRegenKeyHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
-	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflowName}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
+  r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}", nil, r.GETv2(api.getWorkflowRunV2Handler))
 
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))
+
+	r.Handle("/v2/queue/job/{runJobID}", nil, r.GETv2(api.getJobRunHandler))
+	r.Handle("/v2/queue/job/{runJobID}/hatchery/take", nil, r.POSTv2(api.postHatcheryTakeJobRunHandler))
+	r.Handle("/v2/queue/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
+	r.Handle("/v2/queue", nil, r.GETv2(api.getJobsQueuedHandler))
 
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", nil, r.GETv2(api.getUserGPGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey", nil, r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))

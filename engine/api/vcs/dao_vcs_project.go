@@ -82,7 +82,9 @@ func getAllVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Qu
 }
 
 func LoadVCSByName(ctx context.Context, db gorp.SqlExecutor, projectKey, vcsName string) (*sdk.VCSProject, error) {
-	q := gorpmapping.NewQuery("SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2").Args(projectKey, vcsName)
+  ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByName")
+  defer next()
+  q := gorpmapping.NewQuery("SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2").Args(projectKey, vcsName)
 	return getVCSProject(ctx, db, q)
 }
 
@@ -111,6 +113,8 @@ func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey st
 }
 
 func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsName string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
+	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByProject")
+	defer next()
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2`).Args(projectKey, vcsName)
 	return getVCSProject(ctx, db, query, opts...)
 }

@@ -156,6 +156,7 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 		Config:    serviceConfig,
 		Name:      c.Name(),
 		HTTPURL:   c.HTTPURL,
+    HatcheryType: c.ModelType,
 	}
 
 	initClient := func(ctx context.Context) error {

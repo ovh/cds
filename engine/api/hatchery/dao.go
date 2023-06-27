@@ -1,15 +1,14 @@
 package hatchery
 
 import (
-	"context"
-	"github.com/lib/pq"
-	"github.com/rockbears/log"
+  "context"
+  "github.com/rockbears/log"
 
-	"github.com/go-gorp/gorp"
+  "github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/gorpmapper"
-	"github.com/ovh/cds/sdk"
+  "github.com/ovh/cds/engine/api/database/gorpmapping"
+  "github.com/ovh/cds/engine/gorpmapper"
+  "github.com/ovh/cds/sdk"
 )
 
 func getHatchery(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (*sdk.Hatchery, error) {
@@ -19,7 +18,7 @@ func getHatchery(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 		return nil, err
 	}
 	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to get hatchery")
 	}
 
 	isValid, err := gorpmapping.CheckSignature(dbHatchery, dbHatchery.Signature)
@@ -86,11 +85,6 @@ func LoadHatcheryByName(ctx context.Context, db gorp.SqlExecutor, name string) (
 func LoadHatcheryByID(ctx context.Context, db gorp.SqlExecutor, ID string) (*sdk.Hatchery, error) {
 	query := gorpmapping.NewQuery(`SELECT hatchery.* FROM hatchery WHERE hatchery.id = $1`).Args(ID)
 	return getHatchery(ctx, db, query)
-}
-
-func LoadHatcheryByIDs(ctx context.Context, db gorp.SqlExecutor, IDs []string) ([]sdk.Hatchery, error) {
-	query := gorpmapping.NewQuery(`SELECT hatchery.* FROM hatchery WHERE hatchery.id = ANY($1)`).Args(pq.StringArray(IDs))
-	return getAllHatcheries(ctx, db, query)
 }
 
 func Delete(db gorpmapper.SqlExecutorWithTx, hatcheryID string) error {

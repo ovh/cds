@@ -17,9 +17,12 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, repositoryIdentifier string, opts ...gorpmapper.GetOptionFunc) (*sdk.ProjectRepository, error) {
+	ctx, next := telemetry.Span(ctx, "api.getRepositoryByIdentifier")
+	defer next()
 	var repo *sdk.ProjectRepository
 	var err error
 	if sdk.IsValidUUID(repositoryIdentifier) {

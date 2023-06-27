@@ -156,7 +156,7 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 				return err
 			}
 
-			hatcheryPermissions, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatch.ID)
+			hatcheryPermission, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatch.ID)
 			if err != nil {
 				return err
 			}
@@ -168,23 +168,21 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			defer tx.Rollback() // nolint
 
 			// Remove all permissions on this hatchery
-			for _, rbacPerm := range hatcheryPermissions {
-				rbacHatcheries := make([]sdk.RBACHatchery, 0)
-				for _, h := range rbacPerm.Hatcheries {
-					if h.HatcheryID != hatch.ID {
-						rbacHatcheries = append(rbacHatcheries, h)
-					}
+			rbacHatcheries := make([]sdk.RBACHatchery, 0)
+			for _, h := range hatcheryPermission.Hatcheries {
+				if h.HatcheryID != hatch.ID {
+					rbacHatcheries = append(rbacHatcheries, h)
 				}
-				rbacPerm.Hatcheries = rbacHatcheries
+			}
+			hatcheryPermission.Hatcheries = rbacHatcheries
 
-				if rbacPerm.IsEmpty() {
-					if err := rbac.Delete(ctx, tx, rbacPerm); err != nil {
-						return err
-					}
-				} else {
-					if err := rbac.Update(ctx, tx, &rbacPerm); err != nil {
-						return err
-					}
+			if hatcheryPermission.IsEmpty() {
+				if err := rbac.Delete(ctx, tx, *hatcheryPermission); err != nil {
+					return err
+				}
+			} else {
+				if err := rbac.Update(ctx, tx, hatcheryPermission); err != nil {
+					return err
 				}
 			}
 
