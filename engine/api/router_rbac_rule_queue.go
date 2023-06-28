@@ -21,6 +21,7 @@ func (api *API) jobRunRead(ctx context.Context, auth *sdk.AuthUserConsumer, stor
 	if getHatcheryConsumer(ctx) != nil {
 		return nil
 	}
+	// TODO manage worker
 	return sdk.WithStack(sdk.ErrForbidden)
 }
 
@@ -29,5 +30,6 @@ func (api *API) jobRunUpdate(ctx context.Context, auth *sdk.AuthUserConsumer, st
 	if getHatcheryConsumer(ctx) != nil {
 		return nil
 	}
+	// TODO manage worker
 	return sdk.WithStack(sdk.ErrForbidden)
 }

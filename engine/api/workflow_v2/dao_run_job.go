@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -54,7 +55,7 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 }
 
 func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk.V2WorkflowRunJob) error {
-	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRunJob")
+	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRunJob", trace.StringAttribute(telemetry.TagJob, wrj.JobID))
 	defer next()
 	wrj.ID = sdk.UUID()
 	wrj.Queued = time.Now()

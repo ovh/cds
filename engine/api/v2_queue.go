@@ -132,8 +132,13 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 				RunID:  jobRun.WorkflowRunID,
 				UserID: jobRun.UserID,
 			}
-			if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-				return err
+			select {
+			case api.workflowRunTriggerChan <- enqueueRequest:
+				log.Debug(ctx, "workflow run %s %d trigger in chan", jobRun.WorkflowName, jobRun.RunNumber)
+			default:
+				if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
+					return err
+				}
 			}
 			return sdk.WithStack(tx.Commit())
 		}
