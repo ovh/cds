@@ -160,6 +160,7 @@ func TestWorkflowTrigger1JobOnARunningWorkflowRun(t *testing.T) {
 		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
+		ProjectKey:    wr.ProjectKey,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 

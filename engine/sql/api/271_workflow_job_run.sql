@@ -19,6 +19,11 @@ CREATE TABLE v2_workflow_run_job_info (
 SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_job_info_run', 'v2_workflow_run_job_info', 'v2_workflow_run', 'workflow_run_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_v2_workflow_run_job_info_job', 'v2_workflow_run_job_info', 'v2_workflow_run_job', 'workflow_run_job_id', 'id');
 
+select create_unique_index('v2_workflow_run', 'IDX_workflow_run_unq', 'project_key,vcs_server_id,repository_id,workflow_name,run_number');
+select create_unique_index('v2_workflow_run_job', 'IDX_workflow_run_job_unq', 'workflow_run_id,job_id,run_number,run_attempt');
+
+
+
 -- +migrate Down
 ALTER TABLE hatchery DROP COLUMN model_type;
 ALTER TABLE v2_workflow_run_job DROP COLUMN project_key;
@@ -28,4 +33,5 @@ ALTER TABLE v2_workflow_run_job DROP COLUMN workflow_name;
 ALTER TABLE v2_workflow_run_job DROP COLUMN run_number;
 ALTER TABLE v2_workflow_run_job DROP COLUMN run_attempt;
 DROP TABLE v2_workflow_run_job_info;
-
+DROP INDEX IDX_workflow_run_unq;
+DROP INDEX IDX_workflow_run_job_unq;
