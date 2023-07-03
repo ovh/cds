@@ -98,7 +98,7 @@ func Create(ctx context.Context, h Interface) error {
 		h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
 			log.Debug(ctx, "starting v2 queue polling")
 
-			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetGoRoutines(), v2Runjobs, errs, 20*time.Second); err != nil {
+			if err := h.CDSClientV2().V2QueuePolling(ctx, h.Configuration().Provision.Region, h.GetGoRoutines(), v2Runjobs, errs, 20*time.Second); err != nil {
 				log.Error(ctx, "V2 Queues polling stopped: %v", err)
 			}
 		})
@@ -401,7 +401,7 @@ func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob) error
 		return err
 	}
 
-	if err := h.CDSClientV2().V2QueueJobResult(ctx, j.ID, sdk.V2WorkflowRunJobResult{
+	if err := h.CDSClientV2().V2QueueJobResult(ctx, j.Region, j.ID, sdk.V2WorkflowRunJobResult{
 		Status: sdk.StatusFail,
 		Error:  "spawn worker not yet implemented",
 	}); err != nil {

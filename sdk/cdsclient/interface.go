@@ -226,9 +226,9 @@ type HatcheryServiceClient interface {
 	Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error
 	GetWorkerModel(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, workerModelName string, mods ...RequestModifier) (*sdk.V2WorkerModel, error)
 	V2HatcheryTakeJob(ctx context.Context, jobRun *sdk.V2WorkflowRunJob) error
-	V2QueueGetJobRun(ctx context.Context, id string) (*sdk.V2WorkflowRunJob, error)
-	V2QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
-	V2QueueJobResult(ctx context.Context, jobRunID string, result sdk.V2WorkflowRunJobResult) error
+	V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error)
+	V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	V2QueueJobResult(ctx context.Context, regionName, jobRunID string, result sdk.V2WorkflowRunJobResult) error
 }
 
 // ProjectClient exposes project related functions

@@ -9,8 +9,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) V2QueueJobResult(ctx context.Context, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
-	path := fmt.Sprintf("/v2/queue/job/%s/result", jobRunID)
+func (c *client) V2QueueJobResult(ctx context.Context, regionName string, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/result", regionName, jobRunID)
 	if _, err := c.PostJSON(ctx, path, result, nil); err != nil {
 		return err
 	}
@@ -19,7 +19,7 @@ func (c *client) V2QueueJobResult(ctx context.Context, jobRunID string, result s
 
 // V2HatcheryTakeJob job status pssed to crafting and other hatcheries cannot work on it
 func (c *client) V2HatcheryTakeJob(ctx context.Context, jobRun *sdk.V2WorkflowRunJob) error {
-	path := fmt.Sprintf("/v2/queue/job/%s/hatchery/take", jobRun.ID)
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/hatchery/take", jobRun.Region, jobRun.ID)
 	if _, err := c.PostJSON(ctx, path, jobRun, jobRun); err != nil {
 		return err
 	}
@@ -27,8 +27,8 @@ func (c *client) V2HatcheryTakeJob(ctx context.Context, jobRun *sdk.V2WorkflowRu
 }
 
 // V2QueueGetJobRun returns information about a job
-func (c *client) V2QueueGetJobRun(ctx context.Context, id string) (*sdk.V2WorkflowRunJob, error) {
-	path := "/v2/queue/job/" + id
+func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error) {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s", regionName, id)
 	var job sdk.V2WorkflowRunJob
 	if _, err := c.GetJSON(ctx, path, &job); err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, id string) (*sdk.V2Workfl
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the Websocket
@@ -57,7 +57,7 @@ func (c *client) V2QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines,
 			if jobs == nil {
 				continue
 			}
-			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Event.JobRunID)
+			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Event.Region, wsEvent.Event.JobRunID)
 			// Do not log the error if the job does not exist
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
 				continue
@@ -81,7 +81,7 @@ func (c *client) V2QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines,
 
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 			var queue []sdk.V2WorkflowRunJob
-			if _, err := c.GetJSON(ctxt, "/v2/queue", &queue); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
+			if _, err := c.GetJSON(ctxt, "/v2/queue/"+regionName, &queue); err != nil && !sdk.ErrorIs(err, sdk.ErrUnauthorized) {
 				errs <- newError(fmt.Errorf("unable to load jobs: %v", err))
 				cancel()
 				continue

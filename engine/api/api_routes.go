@@ -484,15 +484,15 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
-  r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}", nil, r.GETv2(api.getWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}", nil, r.GETv2(api.getWorkflowRunV2Handler))
 
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))
 
-	r.Handle("/v2/queue/job/{runJobID}", nil, r.GETv2(api.getJobRunHandler))
-	r.Handle("/v2/queue/job/{runJobID}/hatchery/take", nil, r.POSTv2(api.postHatcheryTakeJobRunHandler))
-	r.Handle("/v2/queue/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
-	r.Handle("/v2/queue", nil, r.GETv2(api.getJobsQueuedHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}", nil, r.GETv2(api.getJobRunHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/hatchery/take", nil, r.POSTv2(api.postHatcheryTakeJobRunHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
+	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedHandler))
 
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", nil, r.GETv2(api.getUserGPGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey", nil, r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))

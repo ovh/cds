@@ -28,7 +28,8 @@ const (
 func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.jobRunList),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-
+			vars := mux.Vars(req)
+			regionName := vars["regionName"]
 			hatchConsumer := getHatcheryConsumer(ctx)
 			u := getUserConsumer(ctx)
 			switch {
@@ -37,22 +38,7 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 				if err != nil {
 					return err
 				}
-				hatchPerm, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatch.ID)
-				if err != nil {
-					return err
-				}
-				var regName string
-				for _, p := range hatchPerm.Hatcheries {
-					if p.HatcheryID == hatch.ID {
-						reg, err := region.LoadRegionByID(ctx, api.mustDB(), p.RegionID)
-						if err != nil {
-							return err
-						}
-						regName = reg.Name
-						break
-					}
-				}
-				jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegion(ctx, api.mustDB(), regName, hatch.ModelType)
+				jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegion(ctx, api.mustDB(), regionName, hatch.ModelType)
 				if err != nil {
 					return err
 				}
@@ -72,6 +58,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			jobRunID := vars["runJobID"]
+			regionName := vars["regionName"]
 
 			var result sdk.V2WorkflowRunJobResult
 			if err := service.UnmarshalBody(req, &result); err != nil {
@@ -81,6 +68,9 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			jobRun, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
 			if err != nil {
 				return err
+			}
+			if jobRun.Region != regionName {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
 
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
@@ -149,6 +139,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			jobRunID := vars["runJobID"]
+			regionName := vars["regionName"]
 
 			_, next := telemetry.Span(ctx, "api.postHatcheryTakeJobRunHandler.lock")
 			lockKey := cache.Key(JobRunHatcheryTakeKey, jobRunID)
@@ -176,6 +167,9 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			jobRun, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
 			if err != nil {
 				return err
+			}
+			if jobRun.Region != regionName {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
 
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),

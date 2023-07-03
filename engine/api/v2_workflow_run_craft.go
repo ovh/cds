@@ -203,6 +203,10 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		UserID: run.UserID,
 	}
 
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(tx.Commit())
+	}
+
 	select {
 	case api.workflowRunTriggerChan <- enqueueRequest:
 		log.Debug(ctx, "workflow run %s %d trigger in chan", run.WorkflowName, run.RunNumber)
@@ -211,7 +215,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return err
 		}
 	}
-	return sdk.WithStack(tx.Commit())
+	return nil
 }
 
 // Return the complete path of the entity

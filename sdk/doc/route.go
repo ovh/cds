@@ -121,6 +121,8 @@ func CleanURLParameter(u string) string {
 		u = "action-name"
 	case "runNumber":
 		u = "run-number"
+	case "regionName":
+		u = "region-name"
 	}
 	return u
 }

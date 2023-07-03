@@ -71,7 +71,17 @@ func LoadRBACByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID s
 		return nil, err
 	}
 	return LoadRBACByID(ctx, db, rbHatchery.RbacID, LoadOptions.LoadRBACHatchery)
+}
 
+func LoadRBACHatcheryByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) (*sdk.RBACHatchery, error) {
+  ctx, next := telemetry.Span(ctx, "hatchery.LoadRBACByHatcheryID")
+  defer next()
+  query := gorpmapping.NewQuery(`SELECT * FROM rbac_hatchery WHERE hatchery_id = $1`).Args(hatcheryID)
+  rbHatchery, err := getRBACHatchery(ctx, db, query)
+  if err != nil {
+    return nil, err
+  }
+  return &rbHatchery.RBACHatchery, nil
 }
 
 func loadRBacIDsByHatcheryRegionID(ctx context.Context, db gorp.SqlExecutor, regionID string) ([]string, error) {

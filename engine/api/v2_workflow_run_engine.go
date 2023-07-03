@@ -175,6 +175,10 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(tx.Commit())
+	}
+
 	// Send to websocket
 	for _, rj := range runJobs {
 		runJobEvent := sdk.WebsocketJobQueueEvent{
@@ -192,7 +196,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	return sdk.WithStack(tx.Commit())
+	return nil
 }
 
 // TODO manage re run
