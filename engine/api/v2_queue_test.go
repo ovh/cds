@@ -101,11 +101,15 @@ func TestPostJobResultHandler(t *testing.T) {
 	ctx := context.TODO()
 
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
 
 	admin, _ := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, "myrepo")
+
+	reg := sdk.Region{Name: "default"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -123,6 +127,19 @@ func TestPostJobResultHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 	}
 	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+
+	rbacYaml := `name: perm-default
+hatcheries:
+- role: %s
+  region: default
+  hatchery: %s
+`
+	rbacYaml = fmt.Sprintf(rbacYaml, sdk.HatcheryRoleSpawn, hatch.Name)
+	var r sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(rbacYaml), &r))
+	r.Hatcheries[0].RegionID = reg.ID
+	r.Hatcheries[0].HatcheryID = hatch.ID
+	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
