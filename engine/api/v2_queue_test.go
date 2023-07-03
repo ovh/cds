@@ -83,7 +83,7 @@ hatcheries:
 	require.NoError(t, err)
 
 	// Take Job
-	vars := map[string]string{"runJobID": jobRun.ID}
+	vars := map[string]string{"runJobID": jobRun.ID, "regionName": "default"}
 	uri := api.Router.GetRouteV2("POST", api.postHatcheryTakeJobRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
@@ -93,7 +93,7 @@ hatcheries:
 	require.Equal(t, 200, w.Code)
 	var jobRunResponse sdk.V2WorkflowRunJob
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &jobRunResponse))
-	require.Equal(t, sdk.StatusCrafting, jobRunResponse.Status)
+	require.Equal(t, sdk.StatusScheduling, jobRunResponse.Status)
 }
 
 func TestPostJobResultHandler(t *testing.T) {
@@ -127,7 +127,7 @@ func TestPostJobResultHandler(t *testing.T) {
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusCrafting,
+		Status:        sdk.StatusScheduling,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
@@ -148,7 +148,7 @@ func TestPostJobResultHandler(t *testing.T) {
 		Status: sdk.StatusFail,
 		Error:  "unable to craft job",
 	}
-	vars := map[string]string{"runJobID": jobRun.ID}
+	vars := map[string]string{"runJobID": jobRun.ID, "regionName": "default"}
 	uri := api.Router.GetRouteV2("POST", api.postJobResultHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, jobResult)
@@ -252,7 +252,7 @@ hatcheries:
 	require.NoError(t, err)
 
 	// Take Job
-	uri := api.Router.GetRouteV2("GET", api.getJobsQueuedHandler, nil)
+	uri := api.Router.GetRouteV2("GET", api.getJobsQueuedHandler, map[string]string{"regionName": "default"})
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
@@ -333,7 +333,8 @@ hatcheries:
 
 	// Take Job
 	vars := map[string]string{
-		"runJobID": jobRun.ID,
+		"runJobID":   jobRun.ID,
+		"regionName": "default",
 	}
 	uri := api.Router.GetRouteV2("GET", api.getJobRunHandler, vars)
 	test.NotEmpty(t, uri)
