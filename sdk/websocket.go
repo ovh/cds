@@ -140,11 +140,11 @@ type WebsocketHatcheryEvent struct {
 }
 
 type WebsocketJobQueueEvent struct {
-	JobRunID     string
-	Region       string
-	ModelType    string
-	ProjectKey   string
-	WorkflowName string
-	JobID        string
-	RunNumber    int64
+	JobRunID     string `json:"job_run_id"`
+	Region       string `json:"region"`
+	ModelType    string `json:"model_type"`
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+	JobID        string `json:"job_id"`
+	RunNumber    int64  `json:"run_number"`
 }

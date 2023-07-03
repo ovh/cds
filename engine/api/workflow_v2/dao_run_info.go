@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func getAllRunInfos(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunInfo, error) {
+func getAllRunInfo(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunInfo, error) {
 	var dbWkfRunInfos []dbWorkflowRunInfo
 	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRunInfos); err != nil {
 		return nil, err
@@ -40,5 +40,5 @@ func InsertRunInfo(ctx context.Context, db gorpmapper.SqlExecutorWithTx, info *s
 
 func LoadRunInfosByRunID(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunInfo, error) {
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_info WHERE workflow_run_id = $1").Args(runID)
-	return getAllRunInfos(ctx, db, query)
+	return getAllRunInfo(ctx, db, query)
 }

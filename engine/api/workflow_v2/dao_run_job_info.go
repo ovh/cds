@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getAllRunJobInfos(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunJobInfo, error) {
+func getAllRunJobInfo(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunJobInfo, error) {
 	var dbWkfRunJobInfos []dbWorkflowRunJobInfo
 	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRunJobInfos); err != nil {
 		return nil, err
@@ -37,5 +37,5 @@ func InsertRunJobInfo(ctx context.Context, db gorpmapper.SqlExecutorWithTx, info
 
 func LoadRunJobInfosByRunID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunJobInfo, error) {
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job_info WHERE workflow_run_job_id = $1").Args(runJobID)
-	return getAllRunJobInfos(ctx, db, query)
+	return getAllRunJobInfo(ctx, db, query)
 }
