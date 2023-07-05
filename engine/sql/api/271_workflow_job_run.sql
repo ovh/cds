@@ -25,6 +25,8 @@ select create_unique_index('v2_workflow_run_job', 'IDX_workflow_run_job_unq', 'w
 
 
 -- +migrate Down
+DROP INDEX IDX_workflow_run_job_unq;
+DROP INDEX IDX_workflow_run_unq;
 ALTER TABLE hatchery DROP COLUMN model_type;
 ALTER TABLE v2_workflow_run_job DROP COLUMN project_key;
 ALTER TABLE v2_workflow_run_job DROP COLUMN region;
@@ -33,5 +35,4 @@ ALTER TABLE v2_workflow_run_job DROP COLUMN workflow_name;
 ALTER TABLE v2_workflow_run_job DROP COLUMN run_number;
 ALTER TABLE v2_workflow_run_job DROP COLUMN run_attempt;
 DROP TABLE v2_workflow_run_job_info;
-DROP INDEX IDX_workflow_run_unq;
-DROP INDEX IDX_workflow_run_job_unq;
+
