@@ -500,7 +500,7 @@ type WorkflowNodeJobRun struct {
 	HatcheryName       string             `json:"hatchery_name,omitempty"`
 	WorkerName         string             `json:"worker_name,omitempty"`
 	IntegrationPlugins []GRPCPlugin       `json:"integration_plugin,omitempty"`
-	Contexts           JobRunContext      `json:"contexts,omitempty"`
+	Contexts           JobRunContext      `json:"-"`
 }
 
 type BookedBy struct {
