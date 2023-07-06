@@ -113,6 +113,21 @@ func (mr *MockArtifactManagerMockRecorder) GetFolderInfo(repoName, folderPath in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFolderInfo", reflect.TypeOf((*MockArtifactManager)(nil).GetFolderInfo), repoName, folderPath)
 }
 
+// GetProperties mocks base method.
+func (m *MockArtifactManager) GetProperties(repoName, filePath string) (map[string][]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProperties", repoName, filePath)
+	ret0, _ := ret[0].(map[string][]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProperties indicates an expected call of GetProperties.
+func (mr *MockArtifactManagerMockRecorder) GetProperties(repoName, filePath interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProperties", reflect.TypeOf((*MockArtifactManager)(nil).GetProperties), repoName, filePath)
+}
+
 // GetRepository mocks base method.
 func (m *MockArtifactManager) GetRepository(repoName string) (*services.RepositoryDetails, error) {
 	m.ctrl.T.Helper()
