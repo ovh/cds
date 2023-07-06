@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 	"strconv"
+
+	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
