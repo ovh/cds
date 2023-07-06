@@ -105,7 +105,7 @@ func (c *Client) GetProperties(repoName string, filePath string) (map[string][]s
 		return nil, errors.Errorf("unable to get properties on %s%s: %v", repoName, filePath, err)
 	}
 	if resp.StatusCode >= http.StatusBadRequest {
-		return nil, errors.WithStack(errorutils.CheckError(errors.New(fmt.Sprintf("GET Properties Artifactory on repository %s response: [%d] %v\n", key, resp.StatusCode, string(body)))))
+		return nil, errors.WithStack(errorutils.CheckError(errors.New(fmt.Sprintf("GET Properties Artifactory on %s%s response: [%d] %v\n", repoName, filePath, resp.StatusCode, string(body)))))
 	}
 
 	var props PropertiesResponse
