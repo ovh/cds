@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -677,6 +679,77 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			return handleSyncError(sdk.Errorf("unable to publish build info on artifact manager"))
 		} else {
 			log.Error(ctx, "error while pushing buildinfo %s %s. Retrying...\n", buildInfoRequest.Name, buildInfoRequest.Number)
+		}
+	}
+
+	// Push git info as properties
+	for _, result := range runResults {
+		if result.Type != sdk.WorkflowRunResultTypeArtifactManager {
+			continue
+		}
+
+		artifact, err := result.GetArtifactManager()
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact from result %s: %v", result.ID, err)
+			continue
+		}
+
+		fi, err := artifactClient.GetFileInfo(artifact.RepoName, artifact.Path)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
+			continue
+		}
+
+		existingProperties, err := artifactClient.GetProperties(artifact.RepoName, artifact.Path)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+			continue
+		}
+
+		if sdk.MapHasKeys(existingProperties, "git.url", "git.hash", "cds.signature") {
+			log.Debug(ctx, "artifact is already signed by cds")
+			continue
+		}
+
+		// Push git properties as artifact properties
+		props := utils.NewProperties()
+		signedProps := utils.NewProperties()
+		props.AddProperty("git.url", gitUrl)
+		signedProps.AddProperty("git.url", gitUrl)
+		props.AddProperty("git.hash", gitHash)
+		signedProps.AddProperty("git.hash", gitHash)
+		if gitBranch != "" {
+			props.AddProperty("git.branch", gitBranch)
+			signedProps.AddProperty("git.branch", gitBranch)
+		}
+
+		// Prepare artifact signature
+		signedProps.AddProperty("repository", artifact.RepoName)
+		signedProps.AddProperty("type", artifact.RepoType)
+		signedProps.AddProperty("path", artifact.Path)
+		signedProps.AddProperty("name", artifact.Name)
+		signedProps.AddProperty("md5", fi.Checksums.Md5)
+		signedProps.AddProperty("sha1", fi.Checksums.Sha1)
+		signedProps.AddProperty("sha256", fi.Checksums.Sha256)
+
+		// Sign the properties with main CDS authentication key pair
+		signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+			continue
+		}
+
+		log.Info(ctx, "artifact %s%s signature: %s", artifact.RepoName, artifact.Path, signature)
+
+		props.AddProperty("cds.signature", signature)
+		if err := artifactClient.SetProperties(artifact.RepoName, artifact.Path, props); err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
+			continue
 		}
 	}
 
