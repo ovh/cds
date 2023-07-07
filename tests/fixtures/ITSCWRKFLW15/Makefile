@@ -11,7 +11,7 @@ plugin-simple-darwin-amd64:
 	$(MAKE) build-plugin OS=darwin ARCH=amd64
 
 build-plugin:
-	@docker run \
+	docker run \
 	--mount type=bind,source=$$(pwd)/../../../,dst=/go/src/github.com/ovh/cds \
 	--rm \
 	-e "GOOS=$(OS)" \
