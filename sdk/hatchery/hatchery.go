@@ -612,6 +612,12 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 
 	workerStarterModel := &sdk.WorkerStarterWorkerModel{ModelV2: model}
 
+	entity, err := h.CDSClientV2().EntityGet(ctx, projKey, vcsName, repoName, sdk.EntityTypeWorkerModel, modelName)
+	if err != nil {
+		return nil, nil
+	}
+	workerStarterModel.Commit = entity.Commit
+
 	preCmd := `
     #!/bin/sh
     if [ ! -z ` + "`which curl`" + ` ]; then

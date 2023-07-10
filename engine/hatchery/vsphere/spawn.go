@@ -319,9 +319,9 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 
 	// Redirect worker stdout and stderr in /tmp
 	if spawnArgs.RegisterOnly {
-		udata += " register 1>/root/worker.register.log 2>&1"
+		udata += " register 1>/tmp/worker.register.log 2>&1"
 	} else {
-		udata += " 1>/root/worker.log 2>&1;"
+		udata += " 1>/tmp/worker.log 2>&1;"
 	}
 	udata += "\n" + spawnArgs.Model.GetPostCmd()
 

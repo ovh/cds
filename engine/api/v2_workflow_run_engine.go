@@ -175,9 +175,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			return err
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
-	}
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(tx.Commit())

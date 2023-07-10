@@ -198,10 +198,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
-	}
-
 	enqueueRequest := sdk.V2WorkflowRunEnqueue{
 		RunID:  run.ID,
 		UserID: run.UserID,

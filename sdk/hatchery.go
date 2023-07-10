@@ -75,6 +75,7 @@ type WorkerStarterWorkerModel struct {
 	DockerSpec    V2WorkerModelDockerSpec
 	OpenstackSpec V2WorkerModelOpenstackSpec
 	VSphereSpec   V2WorkerModelVSphereSpec
+	Commit        string
 }
 
 func (w WorkerStarterWorkerModel) GetName() string {
@@ -265,7 +266,7 @@ func (w WorkerStarterWorkerModel) GetLastModified() string {
 	case w.ModelV1 != nil:
 		return fmt.Sprintf("%d", w.ModelV1.UserLastModified.Unix())
 	case w.ModelV2 != nil:
-		return w.ModelV2.Commit
+		return w.Commit
 	}
 	return ""
 }

@@ -3,7 +3,6 @@ package local
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk/telemetry"
 	"io"
 	"net/http"
 	"os"
@@ -23,6 +22,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new hatchery local

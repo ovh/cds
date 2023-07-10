@@ -349,7 +349,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
 					labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
 					labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
-					labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%s", spawnArgs.JobID)
+					labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
 					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
 					labels[hatchery.LabelServiceReqName] = r.Name
 				}

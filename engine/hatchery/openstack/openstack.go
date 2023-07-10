@@ -3,7 +3,6 @@ package openstack
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk/telemetry"
 	"sort"
 	"strings"
 	"sync"
@@ -21,6 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/slug"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
