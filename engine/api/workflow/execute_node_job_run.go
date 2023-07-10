@@ -81,7 +81,7 @@ func (r *ProcessorReport) addWorkflowNodeRun(nr sdk.WorkflowNodeRun) {
 	r.nodes = append(r.nodes, nr)
 }
 
-//All returns all the objects in the reports
+// All returns all the objects in the reports
 func (r *ProcessorReport) All() []interface{} {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -351,8 +351,8 @@ func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workfl
 	return secrets, nil
 }
 
-//BookNodeJobRun  Book a job for a hatchery
-func BookNodeJobRun(ctx context.Context, store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
+// BookNodeJobRun  Book a job for a hatchery
+func BookNodeJobRun(ctx context.Context, store cache.Store, defaultBookDelay int64, customBookDelay map[string]int64, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(id)
 	h := sdk.Service{}
 	find, err := store.Get(k, &h)
@@ -361,7 +361,16 @@ func BookNodeJobRun(ctx context.Context, store cache.Store, id int64, hatchery *
 	}
 	if !find {
 		// job not already booked, book it for 2 min
-		if err := store.SetWithTTL(k, hatchery, 120); err != nil {
+		delay := 120
+		if defaultBookDelay > 0 {
+			delay = int(defaultBookDelay)
+		}
+		if customBookDelay != nil {
+			if d, ok := customBookDelay[hatchery.Name]; ok {
+				delay = int(d)
+			}
+		}
+		if err := store.SetWithTTL(k, hatchery, delay); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 		return nil, nil
@@ -372,7 +381,7 @@ func BookNodeJobRun(ctx context.Context, store cache.Store, id int64, hatchery *
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)
 }
 
-//FreeNodeJobRun  Free a job for a hatchery
+// FreeNodeJobRun  Free a job for a hatchery
 func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	k := keyBookJob(id)
 	h := sdk.Service{}

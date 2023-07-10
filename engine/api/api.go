@@ -231,11 +231,13 @@ type Configuration struct {
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 	Workflow struct {
-		MaxRuns                 int64  `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
-		DefaultRetentionPolicy  string `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
-		DisablePurgeDeletion    bool   `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
-		TemplateBulkRunnerCount int64  `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
-		JobDefaultRegion        string `toml:"jobDefaultRegion" comment:"The default region where the job will be sent if no one is defined on a job" json:"jobDefaultRegion"`
+		MaxRuns                   int64            `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		DefaultRetentionPolicy    string           `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
+		DisablePurgeDeletion      bool             `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
+		TemplateBulkRunnerCount   int64            `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
+		JobDefaultRegion          string           `toml:"jobDefaultRegion" comment:"The default region where the job will be sent if no one is defined on a job" json:"jobDefaultRegion"`
+		JobDefaultBookDelay       int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue" json:"jobDefaultBookDelay" default:"120"`
+		CustomServiceJobBookDelay map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery" json:"customServiceJobBookDelay" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	Project struct {
 		CreationDisabled      bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
