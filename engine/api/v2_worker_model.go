@@ -88,7 +88,6 @@ func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handle
 					return err
 				}
 			}
-			workerModel.Commit = ent.Commit
 			return service.WriteJSON(w, workerModel, http.StatusOK)
 		}
 }

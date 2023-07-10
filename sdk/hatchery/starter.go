@@ -224,7 +224,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 				log.Error(ctx, "error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.ModelV1.Name, err)
 			}
 		} else if j.model.ModelV2 != nil {
-			if err := h.CDSClientV2().V2QueueJobResult(ctx, arg.JobID, sdk.V2WorkflowRunJobResult{
+			if err := h.CDSClientV2().V2QueueJobResult(ctx, h.Configuration().Provision.Region, arg.JobID, sdk.V2WorkflowRunJobResult{
 				Status: sdk.StatusFail,
 				Error:  "unable to generate worker token",
 			}); err != nil {
