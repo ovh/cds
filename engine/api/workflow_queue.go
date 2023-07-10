@@ -267,7 +267,7 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, id, s); err != nil {
+		if _, err := workflow.BookNodeJobRun(ctx, api.Cache, api.Config.Workflow.JobDefaultBookDelay, api.Config.Workflow.CustomServiceJobBookDelay, id, s); err != nil {
 			return sdk.WrapError(err, "job already booked")
 		}
 
