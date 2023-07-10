@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -370,7 +371,7 @@ func Test_authMiddlewareWithServiceOrWorker(t *testing.T) {
 	jwtWorkerSignin, err := hatchery.NewWorkerToken(hSrv.Name, privateKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
 		WorkerName:   hSrv.Name + "-worker",
-		JobID:        workflowTestContext.job.ID,
+		JobID:        fmt.Sprintf("%d", workflowTestContext.job.ID),
 	})
 	require.NoError(t, err)
 	uri = api.Router.GetRoute("POST", api.postRegisterWorkerHandler, nil)

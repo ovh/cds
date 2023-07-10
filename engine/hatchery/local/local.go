@@ -3,6 +3,7 @@ package local
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/sdk/telemetry"
 	"io"
 	"net/http"
 	"os"
@@ -222,7 +223,9 @@ func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "local.CanSpawn")
+	defer end()
 	for _, r := range requirements {
 		ok, err := h.checkRequirement(r)
 		if err != nil || !ok {
@@ -238,11 +241,11 @@ func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64,
 		}
 
 		if r.Type == sdk.OSArchRequirement && r.Value != (runtime.GOOS+"/"+runtime.GOARCH) {
-			log.Debug(ctx, "CanSpawn> job %d cannot spawn on this OSArch.", jobID)
+			log.Debug(ctx, "CanSpawn> job %s cannot spawn on this OSArch.", jobID)
 			return false
 		}
 	}
-	log.Debug(ctx, "CanSpawn true for job %d", jobID)
+	log.Debug(ctx, "CanSpawn true for job %s", jobID)
 	return true
 }
 

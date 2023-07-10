@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"github.com/ovh/cds/sdk/telemetry"
 	"strings"
 	"time"
 
@@ -133,20 +134,22 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
-	if model.Type != sdk.VSphere {
+func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "vsphere.CanSpawn")
+	defer end()
+	if (model.ModelV1 != nil && model.ModelV1.Type != sdk.VSphere) || (model.ModelV2 != nil && model.ModelV2.Type != sdk.WorkerModelTypeVSphere) {
 		return false
 	}
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement ||
 			r.Type == sdk.MemoryRequirement ||
 			r.Type == sdk.HostnameRequirement ||
-			model.ModelVirtualMachine.Cmd == "" {
+			model.GetCmd() == "" {
 			return false
 		}
 	}
 
-	if jobID <= 0 {
+	if jobID == "0" {
 		// If jobID <= 0, it means that it's a call for a registration
 		// So we have to check if there is no pending registration at this time
 		// ie. virtual machine with name "<model>-tmp" or "register-<model>"
@@ -157,12 +160,16 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model *sdk.Model, jobID 
 				continue
 			}
 
-			switch {
-			case vm.Name == model.Name+"-tmp":
-				log.Warn(ctx, "can't span worker for model %q registration because there is a temporary machine %q", model.Name, vm.Name)
+			if model.ModelV1 == nil {
+				log.Warn(ctx, "can't register a worker model v2: %s", model.GetName())
 				return false
-			case strings.HasPrefix(vm.Name, "register-") && model.Name == vmAnnotation.WorkerModelPath:
-				log.Warn(ctx, "can't span worker for model %q registration because there is a registering worker %q", model.Name, vm.Name)
+			}
+			switch {
+			case vm.Name == model.ModelV1.Name+"-tmp":
+				log.Warn(ctx, "can't span worker for model %q registration because there is a temporary machine %q", model.GetName(), vm.Name)
+				return false
+			case strings.HasPrefix(vm.Name, "register-") && model.ModelV1.Name == vmAnnotation.WorkerModelPath:
+				log.Warn(ctx, "can't span worker for model %q registration because there is a registering worker %q", model.GetName(), vm.Name)
 				return false
 			}
 		}

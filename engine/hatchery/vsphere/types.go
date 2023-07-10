@@ -41,7 +41,7 @@ type HatcheryVSphere struct {
 	reservedIPAddresses  []string
 	cachePendingJobID    struct {
 		mu   sync.Mutex
-		list []int64
+		list []string
 	}
 	cacheProvisioning struct {
 		mu         sync.Mutex

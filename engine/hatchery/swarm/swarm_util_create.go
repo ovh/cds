@@ -51,7 +51,7 @@ type containerArgs struct {
 
 // shortcut to create+start(=run) a container
 func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
-	if spawnArgs.Model == nil {
+	if spawnArgs.Model.ModelV1 == nil && spawnArgs.Model.ModelV2 == nil {
 		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
@@ -106,7 +106,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	if err := h.pullImage(dockerClient,
 		cArgs.image,
 		timeoutPullImage,
-		*spawnArgs.Model); err != nil {
+		spawnArgs.Model); err != nil {
 		next()
 
 		spawnMsg := sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPullErr, h.Name(), cArgs.image, sdk.Cause(err))

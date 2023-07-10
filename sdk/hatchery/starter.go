@@ -16,8 +16,8 @@ import (
 type workerStarterRequest struct {
 	ctx                 context.Context
 	cancel              func()
-	id                  int64
-	model               *sdk.Model
+	id                  string
+	model               sdk.WorkerStarterWorkerModel
 	execGroups          []sdk.Group
 	requirements        []sdk.Requirement
 	hostname            string
@@ -65,8 +65,9 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			arg := SpawnArguments{
 				WorkerName:   workerName,
-				Model:        m,
+				Model:        sdk.WorkerStarterWorkerModel{ModelV1: m},
 				RegisterOnly: true,
+				JobID:        "0",
 				HatcheryName: h.Service().Name,
 			}
 
@@ -131,41 +132,12 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	}(&nbWorkerToStart)
 
 	var modelName = "local"
-	if j.model != nil {
-		modelName = j.model.Group.Name + "/" + j.model.Name
+	if j.model.ModelV1 != nil {
+		modelName = j.model.GetFullPath()
+	} else if j.model.ModelV2 != nil {
+		modelName = j.model.GetName()
 	}
 	ctx = context.WithValue(ctx, LogFieldModel, modelName)
-
-	if h.Service() == nil {
-		log.Warn(ctx, "hatchery not registered")
-		return false
-	}
-
-	ctxQueueJobBook, next := telemetry.Span(ctx, "hatchery.QueueJobBook")
-	ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
-	bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id)
-	if err != nil {
-		next()
-		// perhaps already booked by another hatchery
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Info(ctx, "cannot book job: %s", err)
-		cancel()
-		return false
-	}
-	next()
-	cancel()
-	logStepInfo(ctx, "book-job", j.queued)
-
-	ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
-	start := time.Now()
-	SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
-		ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
-		Args: []interface{}{
-			h.Service().Name,
-			modelName,
-		},
-	})
-	next()
 
 	arg := SpawnArguments{
 		WorkerName:   namesgenerator.GenerateWorkerName(modelName, ""),
@@ -174,13 +146,58 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		NodeRunID:    j.workflowNodeRunID,
 		Requirements: j.requirements,
 		HatcheryName: h.Service().Name,
-		NodeRunName:  bookedInfos.NodeRunName,
-		RunID:        bookedInfos.RunID,
-		WorkflowID:   bookedInfos.WorkflowID,
-		WorkflowName: bookedInfos.WorkflowName,
-		ProjectKey:   bookedInfos.ProjectKey,
-		JobName:      bookedInfos.JobName,
 	}
+
+	if sdk.IsValidUUID(j.id) {
+		jobRun, err := h.CDSClientV2().V2HatcheryTakeJob(ctx, j.id)
+		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Info(ctx, "cannot book job: %s", err)
+			return false
+		}
+		arg.RunID = jobRun.WorkflowRunID
+		arg.WorkflowName = jobRun.WorkflowName
+		arg.ProjectKey = jobRun.ProjectKey
+		arg.JobName = jobRun.JobID
+	} else {
+		if h.Service() == nil {
+			log.Warn(ctx, "hatchery not registered")
+			return false
+		}
+		ctxQueueJobBook, next := telemetry.Span(ctx, "hatchery.QueueJobBook")
+		ctxQueueJobBook, cancel := context.WithTimeout(ctxQueueJobBook, 10*time.Second)
+		bookedInfos, err := h.CDSClient().QueueJobBook(ctxQueueJobBook, j.id)
+		if err != nil {
+			next()
+			// perhaps already booked by another hatchery
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Info(ctx, "cannot book job: %s", err)
+			cancel()
+			return false
+		}
+		next()
+		cancel()
+
+		ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryStarts.ID))
+		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
+			ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
+			Args: []interface{}{
+				h.Service().Name,
+				modelName,
+			},
+		})
+		next()
+
+		arg.NodeRunName = bookedInfos.NodeRunName
+		arg.RunID = fmt.Sprintf("%d", bookedInfos.RunID)
+		arg.WorkflowID = bookedInfos.WorkflowID
+		arg.WorkflowName = bookedInfos.WorkflowName
+		arg.ProjectKey = bookedInfos.ProjectKey
+		arg.JobName = bookedInfos.JobName
+	}
+
+	logStepInfo(ctx, "book-job", j.queued)
+	start := time.Now()
 
 	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, arg.WorkerName)
 	ctx = context.WithValue(ctx, LogFieldProject, arg.ProjectKey)
@@ -198,13 +215,24 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	// Get a JWT to authentified the worker
 	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 	if err != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		var spawnError = sdk.SpawnErrorForm{
-			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
+		if j.model.ModelV1 != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			var spawnError = sdk.SpawnErrorForm{
+				Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
+			}
+			if err := h.CDSClient().WorkerModelSpawnError(j.model.ModelV1.Group.Name, j.model.ModelV1.Name, spawnError); err != nil {
+				log.Error(ctx, "error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.ModelV1.Name, err)
+			}
+		} else if j.model.ModelV2 != nil {
+			if err := h.CDSClientV2().V2QueueJobResult(ctx, arg.JobID, sdk.V2WorkflowRunJobResult{
+				Status: sdk.StatusFail,
+				Error:  "unable to generate worker token",
+			}); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				return false
+			}
 		}
-		if err := h.CDSClient().WorkerModelSpawnError(j.model.Group.Name, j.model.Name, spawnError); err != nil {
-			log.Error(ctx, "error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.Name, err)
-		}
+		// TODO manage modelv2
 		return false
 	}
 	arg.WorkerToken = jwt
@@ -216,18 +244,18 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	next()
 	if errSpawn != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, errSpawn)
-		ctxSendSpawnInfo, next = telemetry.Span(ctx, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
+		ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
 			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()},
 		})
-		log.ErrorWithStackTrace(ctx, sdk.WrapError(errSpawn, "hatchery %s cannot spawn worker %s for job %d", h.Service().Name, modelName, j.id))
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(errSpawn, "hatchery %s cannot spawn worker %s for job %s", h.Service().Name, modelName, j.id))
 		next()
 		return false
 	}
 
-	if j.model != nil && j.model.IsDeprecated {
-		ctxSendSpawnInfo, next = telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
+	if j.model.ModelV1 != nil && j.model.ModelV1.IsDeprecated {
+		ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.SendSpawnInfo", telemetry.Tag("msg", sdk.MsgSpawnInfoDeprecatedModel.ID))
 		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
 			Args: []interface{}{modelName},

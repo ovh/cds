@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/ovh/cds/sdk"
@@ -72,7 +73,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 					errs <- newError(fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err))
 					continue
 				}
-				job, err := c.QueueJobInfo(ctx, jobEvent.ID)
+				job, err := c.QueueJobInfo(ctx, strconv.FormatInt(jobEvent.ID, 10))
 				// Do not log the error if the job does not exist
 				if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 					continue
@@ -164,8 +165,8 @@ func (c *client) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (
 }
 
 // QueueJobInfo returns information about a job
-func (c *client) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
-	path := fmt.Sprintf("/queue/workflows/%d/infos", id)
+func (c *client) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
+	path := fmt.Sprintf("/queue/workflows/%s/infos", id)
 	var job sdk.WorkflowNodeJobRun
 
 	if _, err := c.GetJSON(context.Background(), path, &job); err != nil {
@@ -175,16 +176,16 @@ func (c *client) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJ
 }
 
 // QueueJobSendSpawnInfo sends a spawn info on a job
-func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
-	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
+func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
+	path := fmt.Sprintf("/queue/workflows/%s/spawn/infos", id)
 	_, err := c.PostJSON(ctx, path, &in, nil)
 	return err
 }
 
 // QueueJobBook books a job for a Hatchery
-func (c *client) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (c *client) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	var resp sdk.WorkflowNodeJobRunBooked
-	path := fmt.Sprintf("/queue/workflows/%d/book", id)
+	path := fmt.Sprintf("/queue/workflows/%s/book", id)
 	_, err := c.PostJSON(ctx, path, nil, &resp)
 	return resp, err
 }
@@ -204,8 +205,8 @@ func (c *client) QueueWorkflowRunResultCheck(ctx context.Context, jobID int64, r
 }
 
 // QueueJobRelease release a job for a worker
-func (c *client) QueueJobRelease(ctx context.Context, id int64) error {
-	path := fmt.Sprintf("/queue/workflows/%d/book", id)
+func (c *client) QueueJobRelease(ctx context.Context, id string) error {
+	path := fmt.Sprintf("/queue/workflows/%s/book", id)
 	_, err := c.DeleteJSON(context.Background(), path, nil)
 	return err
 }

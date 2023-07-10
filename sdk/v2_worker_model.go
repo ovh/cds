@@ -18,6 +18,9 @@ type V2WorkerModel struct {
 	OSArch      string          `json:"osarch" jsonschema_extras:"order=3" jsonschema_description:"OS/Arch of the worker model"`
 	Type        string          `json:"type" cli:"type" jsonschema:"enum=docker,enum=openstack,enum=vsphere" jsonschema_extras:"order=4" jsonschema_description:"Type of worker model: docker, openstack, vsphere"`
 	Spec        json.RawMessage `json:"spec" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec" jsonschema_extras:"order=5" jsonschema_description:"Specification of the worker model"`
+
+	// Not in json schema
+	Commit string `json:"commit,omitempty" jsonschema:"-"`
 }
 
 type V2WorkerModelDockerSpec struct {

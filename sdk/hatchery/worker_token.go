@@ -2,6 +2,7 @@ package hatchery
 
 import (
 	"crypto/rsa"
+	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
@@ -10,10 +11,14 @@ import (
 
 // NewWorkerToken .
 func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration time.Time, w SpawnArguments) (string, error) {
+	jobIDInt, err := strconv.ParseInt(w.JobID, 10, 64)
+	if err != nil {
+		return "", sdk.WithStack(err)
+	}
 	claims := WorkerJWTClaims{
 		Worker: SpawnArgumentsJWT{
 			WorkerName:   w.WorkerName,
-			JobID:        w.JobID,
+			JobID:        jobIDInt,
 			RegisterOnly: w.RegisterOnly,
 			HatcheryName: w.HatcheryName,
 		},
@@ -25,9 +30,9 @@ func NewWorkerToken(hatcheryName string, privateKey *rsa.PrivateKey, expiration 
 			ExpiresAt: expiration.Unix(),
 		},
 	}
-	if w.Model != nil {
-		claims.Worker.Model.ID = w.Model.ID
-		claims.Worker.Model.Name = w.Model.Name
+	if w.Model.ModelV1 != nil {
+		claims.Worker.Model.ID = w.Model.ModelV1.ID
+		claims.Worker.Model.Name = w.Model.ModelV1.Name
 	}
 
 	jwtoken := jwt.NewWithClaims(jwt.SigningMethodRS512, claims)

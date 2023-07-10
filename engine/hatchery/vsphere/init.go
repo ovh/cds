@@ -34,7 +34,7 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 		}
 	}
 
-	killAwolServersTick := time.NewTicker(2 * time.Minute)
+	killAwolServersTick := time.NewTicker(20 * time.Minute)
 	killDisabledWorkersTick := time.NewTicker(2 * time.Minute)
 	provisioningTick := time.NewTicker(2 * time.Minute)
 

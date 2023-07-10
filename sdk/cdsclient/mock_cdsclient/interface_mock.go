@@ -3684,7 +3684,7 @@ func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until
 }
 
 // QueueJobBook mocks base method.
-func (m *MockQueueClient) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockQueueClient) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -3699,7 +3699,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobBook(ctx, id interface{}) *gomock
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockQueueClient) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockQueueClient) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -3714,7 +3714,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobInfo(ctx, id interface{}) *gomock
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockQueueClient) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockQueueClient) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -3728,7 +3728,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobRelease(ctx, id interface{}) *gom
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockQueueClient) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockQueueClient) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)
@@ -8107,7 +8107,7 @@ func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, 
 }
 
 // QueueJobBook mocks base method.
-func (m *MockInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -8122,7 +8122,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobBook(ctx, id interface{}) *gomock.C
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockInterface) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockInterface) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -8137,7 +8137,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobInfo(ctx, id interface{}) *gomock.C
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockInterface) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockInterface) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -8151,7 +8151,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobRelease(ctx, id interface{}) *gomoc
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockInterface) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockInterface) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)
@@ -10395,7 +10395,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, u
 }
 
 // QueueJobBook mocks base method.
-func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -10410,7 +10410,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobBook(ctx, id interface{}) *go
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockWorkerInterface) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockWorkerInterface) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -10425,7 +10425,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobInfo(ctx, id interface{}) *go
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockWorkerInterface) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockWorkerInterface) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -10439,7 +10439,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobRelease(ctx, id interface{}) 
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockWorkerInterface) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockWorkerInterface) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)

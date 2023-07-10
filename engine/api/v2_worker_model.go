@@ -75,14 +75,20 @@ func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handle
 			}
 
 			var workerModel sdk.V2WorkerModel
-			if err := entity.LoadAndUnmarshalByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkerModel, workerModelName, &workerModel); err != nil {
+			ent, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkerModel, workerModelName)
+			if err != nil {
 				return err
 			}
-			if withCreds {
+			if err := yaml.Unmarshal([]byte(ent.Data), &workerModel); err != nil {
+				return sdk.WrapError(err, "unable to read %s / %s @ %s", repo.ID, workerModelName, branch)
+			}
+			// Only hatchery can ask for cred
+			if withCreds && getHatcheryConsumer(ctx) != nil {
 				if err := entity.WorkerModelDecryptSecrets(ctx, api.mustDB(), proj.ID, &workerModel, project.DecryptWithBuiltinKey); err != nil {
 					return err
 				}
 			}
+			workerModel.Commit = ent.Commit
 			return service.WriteJSON(w, workerModel, http.StatusOK)
 		}
 }

@@ -125,7 +125,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	}
 	h.Common.Common.Region = h.Config.Provision.Region
 	h.Common.Common.IgnoreJobWithNoRegion = h.Config.Provision.IgnoreJobWithNoRegion
-  h.Common.Common.ModelType = h.ModelType()
+	h.Common.Common.ModelType = h.ModelType()
 
 	return nil
 }
@@ -202,11 +202,13 @@ func (h *HatcheryKubernetes) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModel
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, _ *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "kubernetes.CanSpawn")
+	defer end()
 	// Service and Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
-			log.Debug(ctx, "CanSpawn> Job %d has a hostname requirement. Kubernetes can't spawn a worker for this job", jobID)
+			log.Debug(ctx, "CanSpawn> Job %s has a hostname requirement. Kubernetes can't spawn a worker for this job", jobID)
 			return false
 		}
 	}
@@ -220,13 +222,13 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
 	defer end()
 
-	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+	if spawnArgs.JobID == "0" && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
 	var logJob string
-	if spawnArgs.JobID > 0 {
-		logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
+	if spawnArgs.JobID != "0" {
+		logJob = fmt.Sprintf("for workflow job %s,", spawnArgs.JobID)
 	}
 
 	cpu := h.Config.DefaultCPU
@@ -262,7 +264,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		API: workerConfig.APIEndpoint,
 	}
 
-	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
+	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.GetCmd())
 	if errt != nil {
 		return errt
 	}
@@ -277,14 +279,11 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		memory = hatchery.MemoryRegisterContainer
 	}
 
-	if spawnArgs.Model.ModelDocker.Envs == nil {
-		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
-	}
 	envsWm := workerConfig.InjectEnvVars
 	envsWm["CDS_MODEL_MEMORY"] = fmt.Sprintf("%d", memory)
 	envsWm["CDS_FROM_WORKER_IMAGE"] = "true"
 
-	for envName, envValue := range spawnArgs.Model.ModelDocker.Envs {
+	for envName, envValue := range spawnArgs.Model.GetDockerEnvs() {
 		envsWm[envName] = envValue
 	}
 
@@ -335,7 +334,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Labels: map[string]string{
 				LABEL_HATCHERY_NAME:     h.Configuration().Name,
 				LABEL_WORKER_NAME:       workerConfig.Name,
-				LABEL_WORKER_MODEL_PATH: slug.Convert(spawnArgs.Model.Path()),
+				LABEL_WORKER_MODEL_PATH: slug.Convert(spawnArgs.Model.GetPath()),
 			},
 			Annotations: map[string]string{},
 		},
@@ -345,10 +344,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Containers: []apiv1.Container{
 				{
 					Name:            spawnArgs.WorkerName,
-					Image:           spawnArgs.Model.ModelDocker.Image,
+					Image:           spawnArgs.Model.GetDockerImage(),
 					ImagePullPolicy: apiv1.PullAlways,
 					Env:             envs,
-					Command:         strings.Fields(spawnArgs.Model.ModelDocker.Shell),
+					Command:         strings.Fields(spawnArgs.Model.GetShell()),
 					Args:            []string{cmd},
 					Resources: apiv1.ResourceRequirements{
 						Requests: apiv1.ResourceList{
@@ -371,10 +370,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	}
 
 	// Check here to add secret if needed
-	if spawnArgs.Model.ModelDocker.Private || (spawnArgs.Model.ModelDocker.Username != "" && spawnArgs.Model.ModelDocker.Password != "") {
-		secretRegistryName, err := h.createRegistrySecret(ctx, *spawnArgs.Model)
+	if spawnArgs.Model.IsPrivate() || (spawnArgs.Model.GetDockerUsername() != "" && spawnArgs.Model.GetDockerPassword() != "") {
+		secretRegistryName, err := h.createRegistrySecret(ctx, spawnArgs.Model)
 		if err != nil {
-			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.Path())
+			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.GetPath())
 		}
 		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretRegistryName}}
 	}
@@ -451,12 +450,12 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			}
 		}
 
-		podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%d", spawnArgs.JobID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobID] = fmt.Sprintf("%s", spawnArgs.JobID)
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
-		podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunID] = fmt.Sprintf("%d", spawnArgs.RunID)
+		podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
 		podSchema.ObjectMeta.Annotations[hatchery.LabelServiceJobName] = spawnArgs.JobName
 

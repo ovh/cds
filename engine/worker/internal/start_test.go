@@ -66,7 +66,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		})
 
-	gock.New("http://cds-api.local").Post("/worker/waiting").Times(2).
+	gock.New("http://cds-api.local").Post("/worker/waiting").Times(1).
 		HeaderPresent("Authorization").
 		Reply(200).JSON(nil)
 
@@ -368,7 +368,7 @@ export FOO_FROM_HOOK=BAR`,
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	require.NoError(t, internal.StartWorker(ctx, w, 42))
+	require.NoError(t, internal.StartWorker(ctx, w, "42"))
 
 	var isDone bool
 	if gock.IsDone() {

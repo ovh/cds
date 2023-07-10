@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -122,9 +123,8 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 				var j *sdk.WorkflowNodeJobRun
 				var err error
 				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
-				defer cancelGetJSON()
-
-				if j, err = w.Client().QueueJobInfo(ctxGetJSON, jobID); err != nil {
+				if j, err = w.Client().QueueJobInfo(ctxGetJSON, strconv.FormatInt(jobID, 10)); err != nil {
+					cancelGetJSON()
 					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
 						log.Info(ctx, "takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
 						cancel()
@@ -143,7 +143,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 
 					continue // do not kill the worker here, could be a timeout
 				}
-
+				cancelGetJSON()
 				nbConnrefused = 0
 				if j == nil || j.Status != sdk.StatusBuilding {
 					log.Info(ctx, "takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
@@ -171,7 +171,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowError.ID, Args: []interface{}{res.Reason}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, job.ID, infos); err != nil {
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(job.ID, 10), infos); err != nil {
 			log.Error(ctx, "processJob> Unable to send spawn info: %v", err)
 		}
 	}

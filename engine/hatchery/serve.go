@@ -384,7 +384,6 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 
 	cfg := workerruntime.WorkerConfig{
 		Name:                     spawnArgs.WorkerName,
-		BookedJobID:              spawnArgs.JobID,
 		HatcheryName:             h.Name(),
 		Model:                    spawnArgs.ModelName(),
 		APIToken:                 spawnArgs.WorkerToken,
@@ -405,6 +404,13 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 			GraylogFieldCDSServiceType: "worker",
 			GraylogFieldCDSServiceName: spawnArgs.WorkerName,
 		},
+	}
+
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		cfg.RunJobID = spawnArgs.JobID
+	} else {
+		jobID, _ := strconv.ParseInt(spawnArgs.JobID, 10, 64)
+		cfg.BookedJobID = jobID
 	}
 	return cfg
 }

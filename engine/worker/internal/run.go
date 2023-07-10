@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -811,7 +812,7 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 				RemoteTime: time.Now(),
 				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookSetup.ID, Args: []interface{}{h.Config.Label}},
 			}}
-			if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+			if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(w.currentJob.wJob.ID, 10), infos); err != nil {
 				return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 			}
 
@@ -870,7 +871,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, work
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookRun.ID, Args: []interface{}{h.Config.Label}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(w.currentJob.wJob.ID, 10), infos); err != nil {
 			return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 		}
 
@@ -918,7 +919,7 @@ func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, fs afero.Fs, w
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerHookRunTeardown.ID, Args: []interface{}{h.Config.Label}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, w.currentJob.wJob.ID, infos); err != nil {
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(w.currentJob.wJob.ID, 10), infos); err != nil {
 			return sdk.WrapError(err, "cannot record QueueJobSendSpawnInfo for job (err spawn): %d", w.currentJob.wJob.ID)
 		}
 

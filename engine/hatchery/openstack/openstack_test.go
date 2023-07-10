@@ -18,19 +18,19 @@ func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
 	h := &HatcheryOpenstack{}
 
 	// no model, no requirement, canSpawn must be true
-	canSpawn := h.CanSpawn(context.TODO(), nil, 1, nil)
+	canSpawn := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", nil)
 	require.True(t, canSpawn)
 
 	// no model, service requirement, canSpawn must be false: service can't be managed by openstack hatchery
-	canSpawn = h.CanSpawn(context.TODO(), nil, 1, []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgres:9.5.4"}})
+	canSpawn = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Name: "pg", Type: sdk.ServiceRequirement, Value: "postgres:9.5.4"}})
 	require.False(t, canSpawn)
 
 	// no model, memory prerequisite, canSpawn must be false: memory prerequisite can't be managed by openstack hatchery
-	canSpawn = h.CanSpawn(context.TODO(), nil, 1, []sdk.Requirement{{Name: "mem", Type: sdk.MemoryRequirement, Value: "4096"}})
+	canSpawn = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Name: "mem", Type: sdk.MemoryRequirement, Value: "4096"}})
 	require.False(t, canSpawn)
 
 	// no model, hostname prerequisite, canSpawn must be false: hostname can't be managed by openstack hatchery
-	canSpawn = h.CanSpawn(context.TODO(), nil, 1, []sdk.Requirement{{Type: sdk.HostnameRequirement, Value: "localhost"}})
+	canSpawn = h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", []sdk.Requirement{{Type: sdk.HostnameRequirement, Value: "localhost"}})
 	require.False(t, canSpawn)
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -75,7 +76,7 @@ func runCmd() func(cmd *cobra.Command, args []string) {
 			}
 		}()
 		// Start the worker
-		if err := internal.StartWorker(ctx, w, cfg.BookedJobID); err != nil {
+		if err := internal.StartWorker(ctx, w, fmt.Sprint("%d", cfg.BookedJobID)); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			ctx = context.WithValue(ctx, cdslog.RequestID, sdk.ExtractHTTPError(err).RequestID)
 			log.Error(ctx, err.Error())

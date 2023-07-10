@@ -28,7 +28,7 @@ func (localWorkerRunner) NewCmd(ctx context.Context, command string, args ...str
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	log.Debug(ctx, "HatcheryLocal.SpawnWorker> %s want to spawn a worker named %s (jobID = %d)", spawnArgs.HatcheryName, spawnArgs.WorkerName, spawnArgs.JobID)
 
-	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+	if spawnArgs.JobID == "0" && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 

@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,13 +13,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
+func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID string) (mainError error) {
 	ctx = context.WithValue(ctx, log.Field("permJobID"), bookedJobID)
 
 	log.Info(ctx, "Starting worker %s on job %d", w.Name(), bookedJobID)
 
-	if bookedJobID == 0 {
-		return errors.Errorf("startWorker: bookedJobID is mandatory. val:%d", bookedJobID)
+	if bookedJobID == "0" {
+		return errors.Errorf("startWorker: bookedJobID is mandatory. val: %s", bookedJobID)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -38,7 +39,6 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 	refreshTick := time.NewTicker(30 * time.Second)
 
 	// start queue polling
-	jobsChan := make(chan sdk.WorkflowNodeJobRun, 50)
 	errsChan := make(chan error, 1)
 
 	//Definition of the function which must be called to stop the worker
@@ -59,7 +59,8 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 		}
 	}
 
-	if err := processBookedWJob(ctx, w, jobsChan, bookedJobID); err != nil {
+	runJob, err := processBookedWJob(ctx, w, bookedJobID)
+	if err != nil {
 		// Unbook job
 		if errR := w.Client().QueueJobRelease(ctx, bookedJobID); errR != nil {
 			log.Error(ctx, "runCmd> QueueJobRelease> Cannot release job")
@@ -107,47 +108,25 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 		}
 	}()
 
-	// main loop
-	for {
-		if ctx.Err() != nil {
-			endFunc()
-			return ctx.Err()
-		}
-
-		select {
-		case <-ctx.Done():
-			endFunc()
-			return ctx.Err()
-		case j := <-jobsChan:
-			if j.ID == 0 {
-				continue
-			}
-			log.Debug(ctx, "checkQueue> Receive workflow job %d", j.ID)
-
-			//Take the job
-			log.Debug(ctx, "checkQueue> Try take the job %d", j.ID)
-			if err := w.Take(ctx, j); err != nil {
-				log.Info(ctx, "Unable to run this job  %d. Take info: %v", j.ID, err)
-				errsChan <- err
-			}
-
-			if err := w.Client().WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
-				log.Error(ctx, "WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %v", err)
-			}
-
-			// Unregister from engine
-			log.Info(ctx, "Job is done. Unregistering...")
-			endFunc()
-			return nil
-		}
+	//Take the job
+	log.Debug(ctx, "checkQueue> Try take the job %d", runJob.ID)
+	if err := w.Take(ctx, *runJob); err != nil {
+		log.Info(ctx, "Unable to run this job  %d. Take info: %v", runJob.ID, err)
+		errsChan <- err
 	}
+
+	// Unregister from engine
+	log.Info(ctx, "Job is done. Unregistering...")
+	endFunc()
+	return nil
+
 }
 
-func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.WorkflowNodeJobRun, bookedWJobID int64) error {
-	log.Debug(ctx, "Try to take the workflow node job %d", bookedWJobID)
+func processBookedWJob(ctx context.Context, w *CurrentWorker, bookedWJobID string) (*sdk.WorkflowNodeJobRun, error) {
+	log.Debug(ctx, "Try to take the workflow node job %s", bookedWJobID)
 	wjob, err := w.Client().QueueJobInfo(ctx, bookedWJobID)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to load workflow node job %d", bookedWJobID)
+		return nil, sdk.WrapError(err, "Unable to load workflow node job %s", bookedWJobID)
 	}
 
 	requirementsOK, errRequirements := checkRequirements(ctx, w, &wjob.Job.Action)
@@ -160,10 +139,10 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.Name(), details}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, wjob.ID, infos); err != nil {
-			return sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(wjob.ID, 10), infos); err != nil {
+			return nil, sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
-		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
+		return nil, fmt.Errorf("processBookedWJob> the worker have no all requirements")
 	}
 
 	pluginsOK, errPlugins := checkPlugins(ctx, w, *wjob)
@@ -173,14 +152,10 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, wjobs chan<- sdk.W
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.Name(), details}},
 		}}
-		if err := w.Client().QueueJobSendSpawnInfo(ctx, wjob.ID, infos); err != nil {
-			return sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
+		if err := w.Client().QueueJobSendSpawnInfo(ctx, strconv.FormatInt(wjob.ID, 10), infos); err != nil {
+			return nil, sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
-		return fmt.Errorf("processBookedWJob> the worker doesn't have the required plugins")
+		return nil, fmt.Errorf("processBookedWJob> the worker doesn't have the required plugins")
 	}
-
-	// requirementsOK is ok
-	wjobs <- *wjob
-
-	return nil
+	return wjob, nil
 }

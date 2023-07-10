@@ -2,6 +2,7 @@ package hatchery
 
 import (
 	"context"
+	"github.com/ovh/cds/sdk/telemetry"
 	"sync/atomic"
 	"time"
 
@@ -15,6 +16,8 @@ var (
 )
 
 func checkCapacities(ctx context.Context, h Interface) bool {
+	ctx, end := telemetry.Span(ctx, "hatchery.checkCapacities")
+	defer end()
 	t := time.Now()
 	defer log.Debug(ctx, "hatchery> checkCapacities> %.3f seconds elapsed", time.Since(t).Seconds())
 
