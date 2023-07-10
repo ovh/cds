@@ -174,6 +174,8 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos))
+
+	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].WorkerModel, "myworker-model@master")
 }
 
 func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
