@@ -236,8 +236,8 @@ type Configuration struct {
 		DisablePurgeDeletion      bool             `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
 		TemplateBulkRunnerCount   int64            `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
 		JobDefaultRegion          string           `toml:"jobDefaultRegion" comment:"The default region where the job will be sent if no one is defined on a job" json:"jobDefaultRegion"`
-		JobDefaultBookDelay       int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue" json:"jobDefaultBookDelay" default:"120"`
-		CustomServiceJobBookDelay map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery" json:"customServiceJobBookDelay" commented:"true"`
+		JobDefaultBookDelay       int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue (in seconds)" json:"jobDefaultBookDelay" default:"120"`
+		CustomServiceJobBookDelay map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery (in seconds)" json:"customServiceJobBookDelay" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	Project struct {
 		CreationDisabled      bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
@@ -672,9 +672,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
 		return err
 	}
-  if err := a.initHatcheryWebsocket(event.JobQueuedPubSubKey); err != nil {
-    return err
-  }
+	if err := a.initHatcheryWebsocket(event.JobQueuedPubSubKey); err != nil {
+		return err
+	}
 	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}

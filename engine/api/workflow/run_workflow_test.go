@@ -581,7 +581,7 @@ queueRun:
 		t.Logf("##### work on job : %+v\n", j.Job.Action.Name)
 
 		//BookNodeJobRun
-		_, err = workflow.BookNodeJobRun(context.TODO(), cache, j.ID, &sdk.Service{
+		_, err = workflow.BookNodeJobRun(context.TODO(), cache, 0, nil, j.ID, &sdk.Service{
 			CanonicalService: sdk.CanonicalService{
 				Name: "Hatchery",
 				ID:   1,
