@@ -57,6 +57,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	}
 	h.Common.Common.Region = h.Config.Provision.Region
 	h.Common.Common.IgnoreJobWithNoRegion = h.Config.Provision.IgnoreJobWithNoRegion
+	h.Common.Common.ModelType = h.ModelType()
 
 	return nil
 }

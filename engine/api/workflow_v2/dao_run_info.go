@@ -9,9 +9,10 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func getAllRunInfos(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunInfo, error) {
+func getAllRunInfo(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunInfo, error) {
 	var dbWkfRunInfos []dbWorkflowRunInfo
 	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRunInfos); err != nil {
 		return nil, err
@@ -24,6 +25,8 @@ func getAllRunInfos(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.
 }
 
 func InsertRunInfo(ctx context.Context, db gorpmapper.SqlExecutorWithTx, info *sdk.V2WorkflowRunInfo) error {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRunInfo")
+	defer next()
 	info.ID = sdk.UUID()
 	info.IssuedAt = time.Now()
 	dbWkfRunInfos := &dbWorkflowRunInfo{V2WorkflowRunInfo: *info}
@@ -37,5 +40,5 @@ func InsertRunInfo(ctx context.Context, db gorpmapper.SqlExecutorWithTx, info *s
 
 func LoadRunInfosByRunID(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunInfo, error) {
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_info WHERE workflow_run_id = $1").Args(runID)
-	return getAllRunInfos(ctx, db, query)
+	return getAllRunInfo(ctx, db, query)
 }

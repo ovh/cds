@@ -132,6 +132,7 @@ func (api *API) hatcheryRegister(ctx context.Context, tx gorpmapper.SqlExecutorW
 	h.HTTPURL = signInRequest.HTTPURL
 	h.Config = signInRequest.Config
 	h.PublicKey = signInRequest.PublicKey
+	h.ModelType = signInRequest.HatcheryType
 	h.LastHeartbeat = time.Now()
 
 	if err := hatch.Update(ctx, tx, h); err != nil {

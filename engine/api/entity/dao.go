@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func getEntity(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
@@ -116,6 +117,8 @@ func LoadByTypeAndBranch(ctx context.Context, db gorp.SqlExecutor, projectReposi
 
 // LoadByBranchTypeName loads an entity by its repository, branch, type and name
 func LoadByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
+	ctx, next := telemetry.Span(ctx, "entity.LoadByBranchTypeName")
+	defer next()
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4`).Args(projectRepositoryID, branch, t, name)
@@ -124,7 +127,9 @@ func LoadByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepos
 
 // LoadByBranchTypeNameCommit loads an entity by its repository, branch, type, name and commit
 func LoadByBranchTypeNameCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, commit string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
-	query := gorpmapping.NewQuery(`
+  ctx, next := telemetry.Span(ctx, "entity.LoadByBranchTypeNameCommit")
+  defer next()
+  query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4 AND commit = $5`).Args(projectRepositoryID, branch, t, name, commit)
 	return getEntity(ctx, db, query, opts...)

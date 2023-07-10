@@ -58,7 +58,7 @@ func getAllRBACRegions(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Q
 }
 
 func LoadRegionIDsByRoleAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string) ([]sdk.RBACRegion, error) {
-	_, next := telemetry.Span(ctx, "LoadRegionIDsByRoleAndUserID")
+	ctx, next := telemetry.Span(ctx, "LoadRegionIDsByRoleAndUserID")
 	defer next()
 	// Get rbac_region_groups
 	rbacRegionGroups, err := loadRBACRegionGroupsByUserID(ctx, db, userID)

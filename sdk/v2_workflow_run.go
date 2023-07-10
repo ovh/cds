@@ -14,18 +14,18 @@ type V2WorkflowRun struct {
 	ProjectKey   string             `json:"project_key" db:"project_key"`
 	VCSServerID  string             `json:"vcs_server_id" db:"vcs_server_id"`
 	RepositoryID string             `json:"repository_id" db:"repository_id"`
-	WorkflowName string             `json:"workflow_name" db:"workflow_name"`
+	WorkflowName string             `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
 	WorkflowSha  string             `json:"workflow_sha" db:"workflow_sha"`
 	WorkflowRef  string             `json:"workflow_ref" db:"workflow_ref"`
-	Status       string             `json:"status" db:"status"`
+	Status       string             `json:"status" db:"status" cli:"status"`
 	RunNumber    int64              `json:"run_number" db:"run_number"`
 	RunAttempt   int64              `json:"run_attempt" db:"run_attempt"`
-	Started      time.Time          `json:"started" db:"started"`
-	LastModified time.Time          `json:"last_modified" db:"last_modified"`
+	Started      time.Time          `json:"started" db:"started" cli:"started"`
+	LastModified time.Time          `json:"last_modified" db:"last_modified" cli:"last_modified"`
 	ToDelete     bool               `json:"to_delete" db:"to_delete"`
 	WorkflowData V2WorkflowRunData  `json:"workflow_data" db:"workflow_data"`
 	UserID       string             `json:"user_id" db:"user_id"`
-	Username     string             `json:"username" db:"username"`
+	Username     string             `json:"username" db:"username" cli:"username"`
 	Contexts     WorkflowRunContext `json:"contexts" db:"contexts"`
 	Event        V2WorkflowRunEvent `json:"event" db:"event"`
 }
@@ -125,6 +125,10 @@ type WebHookTrigger struct {
 type V2WorkflowRunJob struct {
 	ID            string          `json:"id" db:"id"`
 	WorkflowRunID string          `json:"workflow_run_id" db:"workflow_run_id"`
+	ProjectKey    string          `json:"project_key" db:"project_key"`
+	WorkflowName  string          `json:"workflow_name" db:"workflow_name"`
+	RunNumber     int64           `json:"run_number" db:"run_number"`
+	RunAttempt    int64           `json:"run_attempt" db:"run_attempt"`
 	Status        string          `json:"status" db:"status"`
 	Queued        time.Time       `json:"queued" db:"queued"`
 	Started       time.Time       `json:"started" db:"started"`
@@ -137,6 +141,8 @@ type V2WorkflowRunJob struct {
 	Outputs       JobResultOutput `json:"outputs" db:"outputs"`
 	UserID        string          `json:"user_id" db:"user_id"`
 	Username      string          `json:"username" db:"username"`
+	Region        string          `json:"region,omitempty" db:"region"`
+	ModelType     string          `json:"model_type,omitempty" db:"model_type"`
 }
 
 type V2WorkflowRunEnqueue struct {
@@ -153,8 +159,22 @@ type V2WorkflowRunInfo struct {
 	Message       string    `json:"message" db:"message"`
 }
 
+type V2WorkflowRunJobInfo struct {
+	ID               string    `json:"id" db:"id"`
+	WorkflowRunID    string    `json:"workflow_run_id" db:"workflow_run_id"`
+	WorkflowRunJobID string    `json:"workflow_run_job_id" db:"workflow_run_job_id"`
+	IssuedAt         time.Time `json:"issued_at" db:"issued_at"`
+	Level            string    `json:"level" db:"level"`
+	Message          string    `json:"message" db:"message"`
+}
+
 const (
 	WorkflowRunInfoLevelInfo    = "info"
 	WorkflowRunInfoLevelWarning = "warning"
 	WorkflowRunInfoLevelError   = "error"
 )
+
+type V2WorkflowRunJobResult struct {
+	Status string `json:"status"`
+	Error  string `json:"error,omitempty"`
+}

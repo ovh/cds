@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -19,6 +20,7 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
+	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -31,15 +33,16 @@ import (
 const nbPanicsBeforeFail = 50
 
 var (
-	onceMetrics         sync.Once
-	Errors              *stats.Int64Measure
-	Hits                *stats.Int64Measure
-	WebSocketClients    *stats.Int64Measure
-	WebSocketEvents     *stats.Int64Measure
-	ServerRequestCount  *stats.Int64Measure
-	ServerRequestBytes  *stats.Int64Measure
-	ServerResponseBytes *stats.Int64Measure
-	ServerLatency       *stats.Float64Measure
+	onceMetrics              sync.Once
+	Errors                   *stats.Int64Measure
+	Hits                     *stats.Int64Measure
+	WebSocketClients         *stats.Int64Measure
+	WebSocketHatcheryClients *stats.Int64Measure
+	WebSocketEvents          *stats.Int64Measure
+	ServerRequestCount       *stats.Int64Measure
+	ServerRequestBytes       *stats.Int64Measure
+	ServerResponseBytes      *stats.Int64Measure
+	ServerLatency            *stats.Float64Measure
 )
 
 // Router is a wrapper around mux.Router
@@ -279,9 +282,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 	f := func(w http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
-
 		ctx = telemetry.ContextWithTelemetry(r.Background, ctx)
-
 		var requestID = cdslog.ContextValue(ctx, cdslog.RequestID)
 		dateRFC5322 := req.Header.Get("Date")
 		dateReq, err := sdk.ParseDateRFC5322(dateRFC5322)
@@ -356,11 +357,22 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		ctx = context.WithValue(ctx, cdslog.IPAddress, clientIP)
 
 		var fields = mux.Vars(req)
+		traceTags := make([]trace.Attribute, 0)
 		for k, v := range fields {
 			var s = doc.CleanURLParameter(k)
 			s = strings.ReplaceAll(s, "-", "_")
 			var f = log.Field("action_metadata_" + s)
 			ctx = context.WithValue(ctx, f, v)
+			ctx = telemetry.ContextWithTag(ctx, s, v)
+
+			vUnescaped, err := url.PathUnescape(v)
+			if err == nil {
+				traceTags = append(traceTags, trace.StringAttribute(s, vUnescaped))
+			} else {
+				log.Warn(ctx, "unable to unescape path %s: %v", v, err)
+				traceTags = append(traceTags, trace.StringAttribute(s, v))
+			}
+
 		}
 
 		// By default track all request as not sudo, TrackSudo will be enabled when required
@@ -435,8 +447,9 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 				return
 			}
 		}
-
 		var end func()
+
+		telemetry.MainSpan(ctx).AddAttributes(traceTags...)
 		ctx, end = telemetry.SpanFromMain(ctx, "router.handle")
 
 		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {

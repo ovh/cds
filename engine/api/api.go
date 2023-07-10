@@ -297,6 +297,8 @@ type API struct {
 	Maintenance         bool
 	WSBroker            *websocket.Broker
 	WSServer            *websocketServer
+	WSHatcheryBroker    *websocket.Broker
+	WSHatcheryServer    *websocketHatcheryServer
 	Cache               cache.Store
 	Metrics             struct {
 		WorkflowRunFailed          *stats.Int64Measure
@@ -668,6 +670,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
 		return err
 	}
+  if err := a.initHatcheryWebsocket(event.JobQueuedPubSubKey); err != nil {
+    return err
+  }
 	if err := InitRouterMetrics(ctx, a); err != nil {
 		log.Error(ctx, "unable to init router metrics: %v", err)
 	}

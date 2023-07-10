@@ -52,6 +52,11 @@ type WebsocketFilter struct {
 	OperationUUID     string              `json:"operation_uuid"`
 }
 
+type WebsocketHatcheryFilter struct {
+	Region    string `json:"region"`
+	ModelType string `json:"model_type"`
+}
+
 // Key generates the unique key associated to given filter.
 func (f WebsocketFilter) Key() string {
 	switch f.Type {
@@ -126,4 +131,20 @@ type WebsocketEvent struct {
 	Status string `json:"status"`
 	Error  string `json:"error"`
 	Event  Event  `json:"event"`
+}
+
+type WebsocketHatcheryEvent struct {
+	Status string                 `json:"status"`
+	Error  string                 `json:"error"`
+	Event  WebsocketJobQueueEvent `json:"event"`
+}
+
+type WebsocketJobQueueEvent struct {
+	JobRunID     string `json:"job_run_id"`
+	Region       string `json:"region"`
+	ModelType    string `json:"model_type"`
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+	JobID        string `json:"job_id"`
+	RunNumber    int64  `json:"run_number"`
 }

@@ -13,9 +13,12 @@ import (
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsIdentifier string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
+	ctx, next := telemetry.Span(ctx, "api.getVCSByIdentifier")
+	defer next()
 	var vcsProject *sdk.VCSProject
 	var err error
 	if sdk.IsValidUUID(vcsIdentifier) {

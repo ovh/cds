@@ -34,6 +34,8 @@ func WorkflowRunNextNumber(db gorp.SqlExecutor, repoID, workflowName string) (in
 }
 
 func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun) error {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRun")
+	defer next()
 	wr.ID = sdk.UUID()
 	wr.Started = time.Now()
 	wr.LastModified = time.Now()
@@ -47,6 +49,8 @@ func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 }
 
 func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun) error {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.UpdateRun")
+	defer next()
 	wr.LastModified = time.Now()
 	dbWkfRun := &dbWorkflowRun{V2WorkflowRun: *wr}
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbWkfRun); err != nil {
@@ -57,9 +61,18 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 }
 
 func LoadRunByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.V2WorkflowRun, error) {
-	_, next := telemetry.Span(ctx, "LoadRunByID")
+	ctx, next := telemetry.Span(ctx, "LoadRunByID")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run WHERE id = $1").Args(id)
+	return getRun(ctx, db, query)
+}
+
+func LoadRunByRunNumber(ctx context.Context, db gorp.SqlExecutor, projectKey, vcsServerID, repositoryID, wfName string, runNumber int64) (*sdk.V2WorkflowRun, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT * from v2_workflow_run
+    WHERE project_key = $1 AND vcs_server_id = $2
+    AND repository_id = $3 AND workflow_name = $4 AND run_number = $5`).
+		Args(projectKey, vcsServerID, repositoryID, wfName, runNumber)
 	return getRun(ctx, db, query)
 }
 
@@ -71,7 +84,7 @@ func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]string, error) {
 		LIMIT 10
 	`
 	var ids []string
-	_, err := db.Select(&ids, query, sdk.StatusWorkflowRunCrafting)
+	_, err := db.Select(&ids, query, sdk.StatusCrafting)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to load crafting v2 workflow runs")
 	}

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"go.opencensus.io/stats"
@@ -83,6 +83,7 @@ func Create(ctx context.Context, h Interface) error {
 	}
 
 	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
+	v2Runjobs := make(chan sdk.V2WorkflowRunJob, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
 
 	// Create a cache to keep in memory the jobID processed in the last 10s.
@@ -91,6 +92,16 @@ func Create(ctx context.Context, h Interface) error {
 	// Create a cache to only process each jobID only a number of attempts before force to fail the job
 	cacheNbAttemptsIDs := &CacheNbAttemptsJobIDs{
 		cache: cache.New(CacheNbAttemptsIDsTTL, 2*CacheNbAttemptsIDsTTL),
+	}
+
+	if h.CDSClientV2() != nil {
+		h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
+			log.Debug(ctx, "starting v2 queue polling")
+
+			if err := h.CDSClientV2().V2QueuePolling(ctx, h.Configuration().Provision.Region, h.GetGoRoutines(), v2Runjobs, errs, 20*time.Second); err != nil {
+				log.Error(ctx, "V2 Queues polling stopped: %v", err)
+			}
+		})
 	}
 
 	h.GetGoRoutines().Run(ctx, "queuePolling", func(ctx context.Context) {
@@ -142,11 +153,14 @@ func Create(ctx context.Context, h Interface) error {
 				if errwm != nil {
 					log.Error(ctx, "error on h.WorkerModelsEnabled(): %v", errwm)
 				}
+			case j := <-v2Runjobs:
+				if err := handleJobV2(ctx, h, j); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
 			case j := <-wjobs:
 				if j.ID == 0 {
 					continue
 				}
-
 				currentCtx, currentCancel := context.WithTimeout(context.Background(), 10*time.Minute)
 				fields := log.FieldValues(ctx)
 				for k, v := range fields {
@@ -342,6 +356,57 @@ func Create(ctx context.Context, h Interface) error {
 			}
 		}
 	})
+	return nil
+}
+
+func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx = telemetry.New(ctx, h, "hatchery.V2JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+	ctx, end := telemetry.Span(ctx, "hatchery.V2JobReceive", telemetry.Tag(telemetry.TagWorkflow, j.WorkflowName),
+		telemetry.Tag(telemetry.TagWorkflowRunNumber, j.RunNumber),
+		telemetry.Tag(telemetry.TagProjectKey, j.ProjectKey),
+		telemetry.Tag(telemetry.TagJob, j.JobID))
+
+	endTrace := func(reason string) {
+		if cancel != nil {
+			cancel()
+		}
+		if reason != "" {
+			telemetry.Current(ctx,
+				telemetry.Tag("reason", reason),
+			)
+		}
+		if end != nil {
+			end()
+		}
+		telemetry.End(ctx, nil, nil)
+	}
+	defer endTrace("")
+	go func() {
+		<-ctx.Done()
+		endTrace(ctx.Err().Error())
+	}()
+
+	fields := log.FieldValues(ctx)
+	for k, v := range fields {
+		ctx = context.WithValue(ctx, k, v)
+	}
+	ctx = context.WithValue(ctx, LogFieldJobID, j.ID)
+	ctx = context.WithValue(ctx, LogFieldProject, j.ProjectKey)
+	logStepInfo(ctx, "dequeue", j.Queued)
+
+	stats.Record(ctx, GetMetrics().Jobs.M(1))
+
+	if err := h.CDSClientV2().V2HatcheryTakeJob(ctx, &j); err != nil {
+		return err
+	}
+
+	if err := h.CDSClientV2().V2QueueJobResult(ctx, j.Region, j.ID, sdk.V2WorkflowRunJobResult{
+		Status: sdk.StatusFail,
+		Error:  "spawn worker not yet implemented",
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 

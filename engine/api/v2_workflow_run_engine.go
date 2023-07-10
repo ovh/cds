@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.opencensus.io/trace"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/user"
@@ -57,7 +59,10 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) error {
 // TODO manage git context
 // TODO manage vars context
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
-	_, next := telemetry.Span(ctx, "api.workflowRunV2Trigger.lock")
+	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
+	defer next()
+
+	_, next = telemetry.Span(ctx, "api.workflowRunV2Trigger.lock")
 	lockKey := cache.Key("api:workflow:engine", wrEnqueue.RunID)
 	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
@@ -87,6 +92,11 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	if err != nil {
 		return sdk.WrapError(err, "unable to load workflow run %s", wrEnqueue.RunID)
 	}
+
+	telemetry.Current(ctx).AddAttributes(
+		trace.StringAttribute(telemetry.TagProjectKey, run.ProjectKey),
+		trace.StringAttribute(telemetry.TagWorkflow, run.WorkflowName),
+		trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(run.RunNumber, 10)))
 
 	if sdk.StatusIsTerminated(run.Status) && len(wrEnqueue.Jobs) == 0 {
 		log.Debug(ctx, "workflow run already on a final state")
@@ -124,6 +134,8 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	// Enqueue JOB
+
+	runJobs := make([]sdk.V2WorkflowRunJob, 0, len(jobsToQueue))
 	for jobID, jobDef := range jobsToQueue {
 		runJob := sdk.V2WorkflowRunJob{
 			WorkflowRunID: run.ID,
@@ -132,10 +144,19 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			Job:           jobDef,
 			UserID:        wrEnqueue.UserID,
 			Username:      u.Username,
+			ProjectKey:    run.ProjectKey,
+			Region:        jobDef.Region,
+			WorkflowName:  run.WorkflowName,
+			RunNumber:     run.RunNumber,
+			RunAttempt:    0, // TODO manage rerun
+		}
+		if jobDef.WorkerModel != "" {
+			runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
 		}
 		if err := workflow_v2.InsertRunJob(ctx, tx, &runJob); err != nil {
 			return err
 		}
+		runJobs = append(runJobs, runJob)
 	}
 
 	// Save Run message
@@ -154,12 +175,33 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	return sdk.WithStack(tx.Commit())
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(tx.Commit())
+	}
+
+	// Send to websocket
+	for _, rj := range runJobs {
+		runJobEvent := sdk.WebsocketJobQueueEvent{
+			Region:       rj.Region,
+			ModelType:    rj.ModelType,
+			JobRunID:     rj.ID,
+			RunNumber:    run.RunNumber,
+			WorkflowName: run.WorkflowName,
+			ProjectKey:   rj.ProjectKey,
+			JobID:        rj.JobID,
+		}
+		bts, _ := json.Marshal(runJobEvent)
+		if err := api.Cache.Publish(ctx, event.JobQueuedPubSubKey, string(bts)); err != nil {
+			log.Error(ctx, "%v", err)
+		}
+	}
+
+	return nil
 }
 
 // TODO manage re run
 func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, string, error) {
-	_, next := telemetry.Span(ctx, "retrieveJobToQueue")
+	ctx, next := telemetry.Span(ctx, "retrieveJobToQueue")
 	defer next()
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	jobToQueue := make(map[string]sdk.V2Job)
@@ -178,7 +220,13 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 			Message:       "unable to start a job on a running workflow",
 		}
 		runInfos = append(runInfos, info)
-		return nil, runInfos, "", nil
+		return nil, runInfos, sdk.StatusBuilding, nil
+	}
+
+	// all current runJobs Status
+	allrunJobsMap := make(map[string]sdk.V2WorkflowRunJob)
+	for _, rj := range runJobs {
+		allrunJobsMap[rj.JobID] = rj
 	}
 
 	// Compute run context
@@ -188,7 +236,10 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	jobsToCheck := make(map[string]sdk.V2Job)
 	if len(wrEnqueue.Jobs) == 0 {
 		for jobID, jobDef := range run.WorkflowData.Workflow.Jobs {
-			jobsToCheck[jobID] = jobDef
+			// Do not enqueue jobs that have already a run
+			if _, has := allrunJobsMap[jobID]; !has {
+				jobsToCheck[jobID] = jobDef
+			}
 		}
 	} else {
 		for _, jobID := range wrEnqueue.Jobs {
@@ -200,69 +251,82 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 
 	// Check jobs : Needs / Condition / User Right
 	for jobID, jobDef := range jobsToCheck {
-
-		// TODO manage re run
-		if _, has := jobsContext[jobID]; has {
-			log.Debug(ctx, "job %s: already executed, skip it", jobID)
-			continue
-		}
-
-		// Check jobs needs
-		requiredJob, ok := checkJobNeeds(jobsContext, jobDef)
-		if !ok {
-			// If not ok , and ask to run it => send message
-			if len(wrEnqueue.Jobs) > 0 {
-				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-					WorkflowRunID: run.ID,
-					Level:         sdk.WorkflowRunInfoLevelWarning,
-					Message:       fmt.Sprintf("job %s: missing some required job: %s", jobID, requiredJob),
-				})
-			}
-			continue
-		}
-
-		hasRight, err := checkUserRight(ctx, db, jobDef, *u, defaultRegion)
+		canBeQueued, infos, err := checkJob(ctx, db, *u, wrEnqueue, *run, jobsContext, jobID, &jobDef, defaultRegion)
+		runInfos = append(runInfos, infos...)
 		if err != nil {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("job %s: unable to check right for user %s: %v", jobID, u.Username, err),
-			})
 			return nil, runInfos, sdk.StatusFail, err
 		}
-		if !hasRight {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelWarning,
-				Message:       fmt.Sprintf("job %s: user %s does not have enough right", jobID, u.Username),
-			})
-			continue
-		}
-
-		canRun, err := checkJobCondition(ctx, jobID, run.Contexts, jobsContext, jobDef)
-		if err != nil {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("%v", err),
-			})
-			return nil, runInfos, sdk.StatusFail, err
-		}
-		if !canRun && len(wrEnqueue.Jobs) > 0 {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelWarning,
-				Message:       fmt.Sprintf("job %s: cannot be run because of if statement", jobID),
-			})
-			continue
-		}
-		if canRun {
+		if canBeQueued {
 			jobToQueue[jobID] = jobDef
 		}
 	}
 	currentJobRunStatus := computeJobRunStatus(runJobs)
 
 	return jobToQueue, runInfos, currentJobRunStatus, nil
+}
+
+func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, wrEnqueue sdk.V2WorkflowRunEnqueue, run sdk.V2WorkflowRun, jobsContext sdk.JobsResultContext, jobID string, jobDef *sdk.V2Job, defaultRegion string) (bool, []sdk.V2WorkflowRunInfo, error) {
+	ctx, next := telemetry.Span(ctx, "checkJob", trace.StringAttribute(telemetry.TagJob, jobID))
+	defer next()
+
+	// TODO manage re run
+	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
+	if _, has := jobsContext[jobID]; has {
+		log.Debug(ctx, "job %s: already executed, skip it", jobID)
+		return false, nil, nil
+	}
+
+	// Check jobs needs
+	requiredJob, ok := checkJobNeeds(jobsContext, *jobDef)
+	if !ok {
+		// If not ok , and ask to run it => send message
+		if len(wrEnqueue.Jobs) > 0 {
+			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelWarning,
+				Message:       fmt.Sprintf("job %s: missing some required job: %s", jobID, requiredJob),
+			})
+		}
+		return false, runInfos, nil
+	}
+
+	hasRight, err := checkUserRight(ctx, db, jobDef, u, defaultRegion)
+	if err != nil {
+		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("job %s: unable to check right for user %s: %v", jobID, u.Username, err),
+		})
+		return false, runInfos, err
+	}
+	if !hasRight {
+		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelWarning,
+			Message:       fmt.Sprintf("job %s: user %s does not have enough right", jobID, u.Username),
+		})
+		return false, runInfos, nil
+	}
+
+	canRun, err := checkJobCondition(ctx, jobID, run.Contexts, jobsContext, *jobDef)
+	if err != nil {
+		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("%v", err),
+		})
+		return false, runInfos, err
+	}
+	if !canRun && len(wrEnqueue.Jobs) > 0 {
+		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelWarning,
+			Message:       fmt.Sprintf("job %s: cannot be run because of if statement", jobID),
+		})
+		return false, runInfos, nil
+	}
+
+	return true, runInfos, nil
 }
 
 func computeJobRunStatus(runJobs []sdk.V2WorkflowRunJob) string {
@@ -278,8 +342,8 @@ func computeJobRunStatus(runJobs []sdk.V2WorkflowRunJob) string {
 	return finalStatus
 }
 
-func checkUserRight(ctx context.Context, db gorp.SqlExecutor, jobDef sdk.V2Job, u sdk.AuthentifiedUser, defaultRegion string) (bool, error) {
-	_, next := telemetry.Span(ctx, "checkUserRight")
+func checkUserRight(ctx context.Context, db gorp.SqlExecutor, jobDef *sdk.V2Job, u sdk.AuthentifiedUser, defaultRegion string) (bool, error) {
+	ctx, next := telemetry.Span(ctx, "checkUserRight")
 	defer next()
 	if jobDef.Region == "" {
 		jobDef.Region = defaultRegion
@@ -317,7 +381,7 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) (string,
 }
 
 func checkJobCondition(ctx context.Context, jobID string, runContext sdk.WorkflowRunContext, jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) (bool, error) {
-	_, next := telemetry.Span(ctx, "checkJobCondition")
+	ctx, next := telemetry.Span(ctx, "checkJobCondition")
 	defer next()
 	if jobDef.If == "" {
 		return true, nil

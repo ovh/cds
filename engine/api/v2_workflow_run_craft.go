@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,8 +36,193 @@ type WorkflowRunEntityFinder struct {
 	userName               string
 }
 
+func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) error {
+	ticker := time.NewTicker(tick)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case id := <-api.workflowRunCraftChan:
+			api.GoRoutines.Exec(
+				ctx,
+				"V2WorkflowRunCraft-"+id,
+				func(ctx context.Context) {
+					if err := api.craftWorkflowRunV2(ctx, id); err != nil {
+						log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
+					}
+				},
+			)
+		case <-ticker.C:
+			ids, err := workflow_v2.LoadCratingWorkflowRunIDs(api.mustDB())
+			if err != nil {
+				log.Error(ctx, "V2WorkflowRunCraft> unable to start tx: %v", err)
+				continue
+			}
+			for _, id := range ids {
+				api.GoRoutines.Exec(
+					ctx,
+					"V2WorkflowRunCraft-"+id,
+					func(ctx context.Context) {
+						if err := api.craftWorkflowRunV2(ctx, id); err != nil {
+							log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
+						}
+					},
+				)
+			}
+		}
+	}
+}
+
+func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
+	ctx, next := telemetry.Span(ctx, "api.craftWorkflowRunV2")
+	defer next()
+
+	_, next = telemetry.Span(ctx, "api.craftWorkflowRunV2.lock")
+	lockKey := cache.Key("api:craftWorkflowRunV2", id)
+	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
+	if err != nil {
+		next()
+		return err
+	}
+	if !b {
+		log.Debug(ctx, "api.craftWorkflowRunV2> run %d is locked in cache", id)
+		next()
+		return nil
+	}
+	next()
+	defer func() {
+		_ = api.Cache.Unlock(lockKey)
+	}()
+
+	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), id)
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil
+	}
+	if err != nil {
+		return sdk.WrapError(err, "unable to load workflow run %s", id)
+	}
+
+	telemetry.Current(ctx).AddAttributes(
+		trace.StringAttribute(telemetry.TagProjectKey, run.ProjectKey),
+		trace.StringAttribute(telemetry.TagWorkflow, run.WorkflowName),
+		trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(run.RunNumber, 10)))
+
+	if run.Status != sdk.StatusCrafting {
+		return nil
+	}
+
+	vcsServer, err := vcs.LoadVCSByID(ctx, api.mustDB(), run.ProjectKey, run.VCSServerID)
+	if err != nil {
+		return err
+	}
+	repo, err := repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), vcsServer.ID, run.RepositoryID)
+	if err != nil {
+		return err
+	}
+
+	u, err := user.LoadByID(ctx, api.mustDB(), run.UserID)
+	if err != nil {
+		return err
+	}
+
+	// Build run context
+	runContext := buildRunContext(*run, *vcsServer, *repo, *u)
+	run.Contexts = runContext
+
+	wref := WorkflowRunEntityFinder{
+		run:                    *run,
+		runRepo:                *repo,
+		runVcsServer:           *vcsServer,
+		actionsCache:           make(map[string]sdk.V2Action),
+		workerModelCache:       make(map[string]sdk.V2WorkerModel),
+		repoCache:              make(map[string]sdk.ProjectRepository),
+		vcsServerCache:         make(map[string]sdk.VCSProject),
+		repoDefaultBranchCache: make(map[string]string),
+		userName:               u.Username,
+	}
+
+	// Retrieve all deps
+	for jobID := range run.WorkflowData.Workflow.Jobs {
+		j := run.WorkflowData.Workflow.Jobs[jobID]
+
+		// Get worker model
+		completeName, msg, err := wref.searchEntity(ctx, api.mustDB(), api.Cache, j.WorkerModel, sdk.EntityTypeWorkerModel)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       "unable to trigger workflow. Please contact an administrator",
+			})
+		}
+		if msg != nil {
+			return stopRun(ctx, api.mustDB(), run, msg)
+		}
+		j.WorkerModel = completeName
+
+		// Get actions and sub actions
+		msg, err = searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("unable to retrieve job[%s] definition. Please contact an administrator", jobID),
+			})
+		}
+		if msg != nil {
+			return stopRun(ctx, api.mustDB(), run, msg)
+		}
+
+	}
+
+	for k, v := range wref.actionsCache {
+		run.WorkflowData.Actions = make(map[string]sdk.V2Action)
+		run.WorkflowData.Actions[k] = v
+	}
+	for k, v := range wref.workerModelCache {
+		run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
+		run.WorkflowData.WorkerModels[k] = v
+	}
+
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() // nolint
+
+	run.Status = sdk.StatusBuilding
+	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
+		return err
+	}
+
+	enqueueRequest := sdk.V2WorkflowRunEnqueue{
+		RunID:  run.ID,
+		UserID: run.UserID,
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(tx.Commit())
+	}
+
+	select {
+	case api.workflowRunTriggerChan <- enqueueRequest:
+		log.Debug(ctx, "workflow run %s %d trigger in chan", run.WorkflowName, run.RunNumber)
+	default:
+		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Return the complete path of the entity
 func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (string, *sdk.V2WorkflowRunInfo, error) {
+	ctx, end := telemetry.Span(ctx, "WorkflowRunEntityFinder.searchEntity", trace.StringAttribute("entity-type", entityType), trace.StringAttribute("entity-name", name))
+	defer end()
+
 	var branch, entityName, repoName, vcsName, projKey string
 
 	if name == "" {
@@ -203,179 +389,9 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	return completePath, nil, nil
 }
 
-func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) error {
-	ticker := time.NewTicker(tick)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case id := <-api.workflowRunCraftChan:
-			api.GoRoutines.Exec(
-				ctx,
-				"V2WorkflowRunCraft-"+id,
-				func(ctx context.Context) {
-					ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraft", nil, trace.SpanKindUnspecified)
-					if err := api.craftWorkflowRunV2(ctx, id); err != nil {
-						log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
-					}
-				},
-			)
-		case <-ticker.C:
-			ids, err := workflow_v2.LoadCratingWorkflowRunIDs(api.mustDB())
-			if err != nil {
-				log.Error(ctx, "V2WorkflowRunCraft> unable to start tx: %v", err)
-				continue
-			}
-			for _, id := range ids {
-				api.GoRoutines.Exec(
-					ctx,
-					"V2WorkflowRunCraft-"+id,
-					func(ctx context.Context) {
-						ctx = telemetry.New(ctx, api, "api.V2WorkflowRunCraft", nil, trace.SpanKindUnspecified)
-						if err := api.craftWorkflowRunV2(ctx, id); err != nil {
-							log.Error(ctx, "V2WorkflowRunCraft> error on workflow run %s: %v", id, err)
-						}
-					},
-				)
-			}
-		}
-	}
-}
-
-func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
-	_, next := telemetry.Span(ctx, "api.craftWorkflowRunV2.lock")
-	lockKey := cache.Key("api:craftWorkflowRunV2", id)
-	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
-	if err != nil {
-		next()
-		return err
-	}
-	if !b {
-		log.Debug(ctx, "api.craftWorkflowRunV2> run %d is locked in cache", id)
-		next()
-		return nil
-	}
-	next()
-	defer func() {
-		_ = api.Cache.Unlock(lockKey)
-	}()
-
-	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), id)
-	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil
-	}
-	if err != nil {
-		return sdk.WrapError(err, "unable to load workflow run %s", id)
-	}
-
-	if run.Status != sdk.StatusWorkflowRunCrafting {
-		return nil
-	}
-
-	vcsServer, err := vcs.LoadVCSByID(ctx, api.mustDB(), run.ProjectKey, run.VCSServerID)
-	if err != nil {
-		return err
-	}
-	repo, err := repository.LoadRepositoryByVCSAndID(ctx, api.mustDB(), vcsServer.ID, run.RepositoryID)
-	if err != nil {
-		return err
-	}
-
-	u, err := user.LoadByID(ctx, api.mustDB(), run.UserID)
-	if err != nil {
-		return err
-	}
-
-	// Build run context
-	runContext := buildRunContext(*run, *vcsServer, *repo, *u)
-	run.Contexts = runContext
-
-	wref := WorkflowRunEntityFinder{
-		run:                    *run,
-		runRepo:                *repo,
-		runVcsServer:           *vcsServer,
-		actionsCache:           make(map[string]sdk.V2Action),
-		workerModelCache:       make(map[string]sdk.V2WorkerModel),
-		repoCache:              make(map[string]sdk.ProjectRepository),
-		vcsServerCache:         make(map[string]sdk.VCSProject),
-		repoDefaultBranchCache: make(map[string]string),
-		userName:               u.Username,
-	}
-
-	// Retrieve all deps
-	for jobID := range run.WorkflowData.Workflow.Jobs {
-		j := run.WorkflowData.Workflow.Jobs[jobID]
-
-		// Get worker model
-		completeName, msg, err := wref.searchEntity(ctx, api.mustDB(), api.Cache, j.WorkerModel, sdk.EntityTypeWorkerModel)
-		if err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       "unable to trigger workflow. Please contact an administrator",
-			})
-		}
-		if msg != nil {
-			return stopRun(ctx, api.mustDB(), run, msg)
-		}
-		j.WorkerModel = completeName
-
-		// Get actions and sub actions
-		msg, err = searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)
-		if err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("unable to retrieve job[%s] definition. Please contact an administrator", jobID),
-			})
-		}
-		if msg != nil {
-			return stopRun(ctx, api.mustDB(), run, msg)
-		}
-
-	}
-
-	for k, v := range wref.actionsCache {
-		run.WorkflowData.Actions = make(map[string]sdk.V2Action)
-		run.WorkflowData.Actions[k] = v
-	}
-	for k, v := range wref.workerModelCache {
-		run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
-		run.WorkflowData.WorkerModels[k] = v
-	}
-
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback() // nolint
-
-	run.Status = sdk.StatusBuilding
-	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
-		return err
-	}
-
-	enqueueRequest := sdk.V2WorkflowRunEnqueue{
-		RunID:  run.ID,
-		UserID: run.UserID,
-	}
-
-	select {
-	case api.workflowRunTriggerChan <- enqueueRequest:
-		log.Debug(ctx, "workflow run %s %d trigger in chan", run.WorkflowName, run.RunNumber)
-	default:
-		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-			return err
-		}
-	}
-	return sdk.WithStack(tx.Commit())
-}
-
 func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, steps []sdk.ActionStep) (*sdk.V2WorkflowRunInfo, error) {
+	ctx, end := telemetry.Span(ctx, "searchActions")
+	defer end()
 	for i := range steps {
 		step := &steps[i]
 		if step.Uses == "" || !strings.HasPrefix(step.Uses, "actions/") {

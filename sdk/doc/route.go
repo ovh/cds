@@ -119,6 +119,10 @@ func CleanURLParameter(u string) string {
 		u = "rbac-identifier"
 	case "actionName":
 		u = "action-name"
+	case "runNumber":
+		u = "run-number"
+	case "regionName":
+		u = "region-name"
 	}
 	return u
 }

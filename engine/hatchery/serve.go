@@ -40,6 +40,7 @@ func (c *Common) MaxHeartbeat() int {
 
 func (c *Common) Service() *sdk.Service {
 	return c.Common.ServiceInstance
+
 }
 
 func (c *Common) ServiceName() string {
@@ -150,12 +151,13 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 	}
 
 	registerPayload := &sdk.AuthConsumerHatcherySigninRequest{
-		Token:     clientConfig.TokenV2,
-		Version:   sdk.VERSION,
-		PublicKey: pubKey,
-		Config:    serviceConfig,
-		Name:      c.Name(),
-		HTTPURL:   c.HTTPURL,
+		Token:        clientConfig.TokenV2,
+		Version:      sdk.VERSION,
+		PublicKey:    pubKey,
+		Config:       serviceConfig,
+		Name:         c.Name(),
+		HTTPURL:      c.HTTPURL,
+		HatcheryType: c.ModelType,
 	}
 
 	initClient := func(ctx context.Context) error {
