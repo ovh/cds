@@ -175,7 +175,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		if msg != nil {
 			return stopRun(ctx, api.mustDB(), run, msg)
 		}
-
+		run.WorkflowData.Workflow.Jobs[jobID] = j
 	}
 
 	for k, v := range wref.actionsCache {

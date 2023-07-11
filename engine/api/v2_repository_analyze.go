@@ -294,6 +294,9 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
 
+	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProjectWithSecret.Name)
+	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
+
 	var keyID, analysisError string
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab:
@@ -320,18 +323,18 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	var filesContent map[string][]byte
 	var userID string
 	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
-		user, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), *analysis, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
+		u, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), *analysis, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
 		if err != nil {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
-		if user == nil {
+		if u == nil {
 			analysis.Status = analysisStatus
 			analysis.Data.Error = analysisError
 		}
-		if user != nil {
-			userID = user.ID
-			analysis.Data.CDSUserID = user.ID
-			analysis.Data.CDSUserName = user.Username
+		if u != nil {
+			userID = u.ID
+			analysis.Data.CDSUserID = u.ID
+			analysis.Data.CDSUserName = u.Username
 
 			if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 				switch vcsProjectWithSecret.Type {
@@ -392,10 +395,11 @@ skipEntity:
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
 			}
 			userRoles[e.Type] = b
+			log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, e.Type, b)
 		}
 
-		for i := range analysis.Data.Entities {
-			analysisEntity := &analysis.Data.Entities[i]
+		for entityIndex := range analysis.Data.Entities {
+			analysisEntity := &analysis.Data.Entities[entityIndex]
 			if analysisEntity.Path+analysisEntity.FileName == e.FilePath {
 				if userRoles[e.Type] {
 					analysisEntity.Status = sdk.RepositoryAnalysisStatusSucceed
