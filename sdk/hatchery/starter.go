@@ -232,7 +232,9 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 				return false
 			}
 		}
-		// TODO manage modelv2
+		if err := h.CDSClient().QueueJobRelease(ctx, j.id); err != nil {
+			log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot release job with id %s", j.id))
+		}
 		return false
 	}
 	arg.WorkerToken = jwt
@@ -250,6 +252,9 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()},
 		})
 		log.ErrorWithStackTrace(ctx, sdk.WrapError(errSpawn, "hatchery %s cannot spawn worker %s for job %s", h.Service().Name, modelName, j.id))
+		if err := h.CDSClient().QueueJobRelease(ctx, j.id); err != nil {
+			log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot release job with id %s", j.id))
+		}
 		next()
 		return false
 	}
