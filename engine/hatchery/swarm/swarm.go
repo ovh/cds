@@ -338,7 +338,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					LabelServiceWorker: spawnArgs.WorkerName,
 					LabelServiceName:   serviceName,
 					LabelHatchery:      h.Config.Name,
-					LabelJobID:         fmt.Sprintf("%s", spawnArgs.JobID),
+					LabelJobID:         spawnArgs.JobID,
 				}
 
 				if spawnArgs.JobID != "0" {
@@ -390,7 +390,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		LabelWorkerName:         spawnArgs.WorkerName,
 		LabelWorkerRequirements: strings.Join(services, ","),
 		LabelHatchery:           h.Config.Name,
-		LabelJobID:              fmt.Sprintf("%s", spawnArgs.JobID),
+		LabelJobID:              spawnArgs.JobID,
 	}
 
 	// Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one: #4594
