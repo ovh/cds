@@ -24,6 +24,7 @@ type workerStarterRequest struct {
 	workflowNodeRunID   int64
 	registerWorkerModel *sdk.Model
 	queued              time.Time
+	region              string
 }
 
 // Start all goroutines which manage the hatchery worker spawning routine.
@@ -149,7 +150,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	}
 
 	if sdk.IsValidUUID(j.id) {
-		jobRun, err := h.CDSClientV2().V2HatcheryTakeJob(ctx, j.id)
+		jobRun, err := h.CDSClientV2().V2HatcheryTakeJob(ctx, j.region, j.id)
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Info(ctx, "cannot book job: %s", err)

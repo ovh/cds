@@ -406,6 +406,7 @@ func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cache
 		ctx:          ctx,
 		cancel:       cancel,
 		id:           j.ID,
+		region:       j.Region,
 		requirements: nil,
 		queued:       j.Queued,
 		model:        sdk.WorkerStarterWorkerModel{},
