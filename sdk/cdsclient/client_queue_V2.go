@@ -18,8 +18,8 @@ func (c *client) V2QueueJobResult(ctx context.Context, regionName string, jobRun
 }
 
 // V2HatcheryTakeJob job status pssed to crafting and other hatcheries cannot work on it
-func (c *client) V2HatcheryTakeJob(ctx context.Context, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
-	path := fmt.Sprintf("/v2/queue/job/%s/hatchery/take", jobRunID)
+func (c *client) V2HatcheryTakeJob(ctx context.Context, regionName string, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/hatchery/take", regionName, jobRunID)
 	var jobRun sdk.V2WorkflowRunJob
 	if _, err := c.PostJSON(ctx, path, nil, &jobRun); err != nil {
 		return nil, err

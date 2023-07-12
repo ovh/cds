@@ -2671,18 +2671,18 @@ func (mr *MockHatcheryServiceClientMockRecorder) Heartbeat(ctx, mon interface{})
 }
 
 // V2HatcheryTakeJob mocks base method.
-func (m *MockHatcheryServiceClient) V2HatcheryTakeJob(ctx context.Context, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
+func (m *MockHatcheryServiceClient) V2HatcheryTakeJob(ctx context.Context, regionName, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2HatcheryTakeJob", ctx, jobRunID)
+	ret := m.ctrl.Call(m, "V2HatcheryTakeJob", ctx, regionName, jobRunID)
 	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2HatcheryTakeJob indicates an expected call of V2HatcheryTakeJob.
-func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryTakeJob(ctx, jobRunID interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryTakeJob(ctx, regionName, jobRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2HatcheryTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2HatcheryTakeJob), ctx, jobRunID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2HatcheryTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2HatcheryTakeJob), ctx, regionName, jobRunID)
 }
 
 // V2QueueGetJobRun mocks base method.
