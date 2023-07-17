@@ -272,14 +272,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//Memory for the worker
 	memory := int64(h.Config.DefaultMemory)
 
-	if spawnArgs.Model.GetDockerMemory() != 0 {
-		memory = spawnArgs.Model.GetDockerMemory()
-	}
-
 	var network, networkAlias string
 	services := []string{}
 
-	if spawnArgs.JobID != "0" {
+	if !sdk.IsJobIDForRegister(spawnArgs.JobID) {
 		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error

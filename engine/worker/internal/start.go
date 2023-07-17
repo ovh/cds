@@ -19,7 +19,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (main
 	log.Info(ctx, "Starting worker %s on job %d", w.Name(), bookedJobID)
 
 	if bookedJobID == 0 {
-		return errors.Errorf("startWorker: bookedJobID is mandatory. val: %s", bookedJobID)
+		return errors.Errorf("startWorker: bookedJobID is mandatory. val: %d", bookedJobID)
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -126,7 +126,7 @@ func processBookedWJob(ctx context.Context, w *CurrentWorker, bookedWJobID int64
 	log.Debug(ctx, "Try to take the workflow node job %s", bookedWJobID)
 	wjob, err := w.Client().QueueJobInfo(ctx, fmt.Sprintf("%d", bookedWJobID))
 	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow node job %s", bookedWJobID)
+		return nil, sdk.WrapError(err, "Unable to load workflow node job %d", bookedWJobID)
 	}
 
 	requirementsOK, errRequirements := checkRequirements(ctx, w, &wjob.Job.Action)

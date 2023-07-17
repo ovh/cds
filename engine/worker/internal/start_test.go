@@ -368,7 +368,7 @@ export FOO_FROM_HOOK=BAR`,
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	require.NoError(t, internal.StartWorker(ctx, w, "42"))
+	require.NoError(t, internal.StartWorker(ctx, w, 42))
 
 	var isDone bool
 	if gock.IsDone() {

@@ -161,17 +161,6 @@ func (w WorkerStarterWorkerModel) GetPostCmd() string {
 	return ""
 }
 
-func (w WorkerStarterWorkerModel) GetDockerMemory() int64 {
-	switch {
-	case w.ModelV1 != nil:
-		return w.ModelV1.ModelDocker.Memory
-	case w.ModelV2 != nil:
-		// TODO
-		return 0
-	}
-	return 0
-}
-
 func (w WorkerStarterWorkerModel) GetDockerEnvs() map[string]string {
 	switch {
 	case w.ModelV1 != nil:
