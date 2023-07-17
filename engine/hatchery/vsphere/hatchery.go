@@ -149,7 +149,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		}
 	}
 
-	if jobID == "0" {
+	if sdk.IsJobIDForRegister(jobID) {
 		// If jobID <= 0, it means that it's a call for a registration
 		// So we have to check if there is no pending registration at this time
 		// ie. virtual machine with name "<model>-tmp" or "register-<model>"

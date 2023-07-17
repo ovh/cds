@@ -212,7 +212,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	ctx, end := telemetry.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
-	if spawnArgs.JobID == "0" && !spawnArgs.RegisterOnly {
+	if sdk.IsJobIDForRegister(spawnArgs.JobID) && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("unable to spawn worker, no Job ID and no Register"))
 	}
 

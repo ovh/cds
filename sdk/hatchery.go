@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -269,4 +270,12 @@ func (w WorkerStarterWorkerModel) GetLastModified() string {
 		return w.Commit
 	}
 	return ""
+}
+
+func IsJobIDForRegister(jobID string) bool {
+	if IsValidUUID(jobID) {
+		return false
+	}
+	jobIDint, _ := strconv.Atoi(jobID)
+	return jobIDint == 0 || jobIDint < 0
 }

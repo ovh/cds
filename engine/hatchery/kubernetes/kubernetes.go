@@ -222,12 +222,12 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
 	defer end()
 
-	if spawnArgs.JobID == "0" && !spawnArgs.RegisterOnly {
+	if sdk.IsJobIDForRegister(spawnArgs.JobID) && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
 	var logJob string
-	if spawnArgs.JobID != "0" {
+	if !sdk.IsJobIDForRegister(spawnArgs.JobID) {
 		logJob = fmt.Sprintf("for workflow job %s,", spawnArgs.JobID)
 	}
 

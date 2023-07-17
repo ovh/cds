@@ -13,12 +13,12 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID string) (mainError error) {
+func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID int64) (mainError error) {
 	ctx = context.WithValue(ctx, log.Field("permJobID"), bookedJobID)
 
 	log.Info(ctx, "Starting worker %s on job %d", w.Name(), bookedJobID)
 
-	if bookedJobID == "0" {
+	if bookedJobID == 0 {
 		return errors.Errorf("startWorker: bookedJobID is mandatory. val: %s", bookedJobID)
 	}
 
@@ -62,7 +62,7 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID string) (mai
 	runJob, err := processBookedWJob(ctx, w, bookedJobID)
 	if err != nil {
 		// Unbook job
-		if errR := w.Client().QueueJobRelease(ctx, bookedJobID); errR != nil {
+		if errR := w.Client().QueueJobRelease(ctx, fmt.Sprintf("%d", bookedJobID)); errR != nil {
 			log.Error(ctx, "runCmd> QueueJobRelease> Cannot release job")
 		}
 		// this worker was spawned for a job
@@ -122,9 +122,9 @@ func StartWorker(ctx context.Context, w *CurrentWorker, bookedJobID string) (mai
 
 }
 
-func processBookedWJob(ctx context.Context, w *CurrentWorker, bookedWJobID string) (*sdk.WorkflowNodeJobRun, error) {
+func processBookedWJob(ctx context.Context, w *CurrentWorker, bookedWJobID int64) (*sdk.WorkflowNodeJobRun, error) {
 	log.Debug(ctx, "Try to take the workflow node job %s", bookedWJobID)
-	wjob, err := w.Client().QueueJobInfo(ctx, bookedWJobID)
+	wjob, err := w.Client().QueueJobInfo(ctx, fmt.Sprintf("%d", bookedWJobID))
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow node job %s", bookedWJobID)
 	}
