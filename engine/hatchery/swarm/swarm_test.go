@@ -2,6 +2,7 @@ package swarm
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -317,8 +318,8 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 	gock.New("https://lolcat.local").Post("/v6.66/containers/workerIDContainer/start").Reply(http.StatusOK).JSON(nil)
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
-		JobID:      1,
-		Model:      &m,
+		JobID:      "1",
+		Model:      sdk.WorkerStarterWorkerModel{ModelV1: &m},
 		WorkerName: "swarmy-worker1",
 		Requirements: []sdk.Requirement{
 			{
@@ -363,8 +364,8 @@ func TestHatcherySwarm_SpawnMaxContainerReached(t *testing.T) {
 	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
-		JobID:      666,
-		Model:      &m,
+		JobID:      "666",
+		Model:      sdk.WorkerStarterWorkerModel{ModelV1: &m},
 		WorkerName: "swarmy-workerReached",
 	})
 	assert.Error(t, err)
@@ -395,7 +396,7 @@ func TestHatcherySwarm_CanSpawn(t *testing.T) {
 	}
 	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
 
-	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
 	assert.True(t, b)
 	assert.True(t, gock.IsDone())
 }
@@ -431,7 +432,7 @@ func TestHatcherySwarm_MaxContainerReached(t *testing.T) {
 	}
 
 	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
-	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
 	assert.False(t, b)
 	assert.True(t, gock.IsDone())
 }
@@ -449,7 +450,7 @@ func TestHatcherySwarm_CanSpawnNoDockerClient(t *testing.T) {
 		},
 	}
 	jobID := int64(1)
-	b := h.CanSpawn(context.TODO(), &m, jobID, []sdk.Requirement{})
+	b := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, fmt.Sprintf("%d", jobID), []sdk.Requirement{})
 	assert.False(t, b)
 	assert.True(t, gock.IsDone())
 }

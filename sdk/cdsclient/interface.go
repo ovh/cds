@@ -225,10 +225,11 @@ type HatcheryClient interface {
 type HatcheryServiceClient interface {
 	Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error
 	GetWorkerModel(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, workerModelName string, mods ...RequestModifier) (*sdk.V2WorkerModel, error)
-	V2HatcheryTakeJob(ctx context.Context, jobRun *sdk.V2WorkflowRunJob) error
-	V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error)
-	V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
-	V2QueueJobResult(ctx context.Context, regionName, jobRunID string, result sdk.V2WorkflowRunJobResult) error
+	V2HatcheryTakeJob(ctx context.Context, regionName string, jobRunID string) (*sdk.V2WorkflowRunJob, error)
+	V2QueueGetJobRun(ctx context.Context, regionName string, id string) (*sdk.V2WorkflowRunJob, error)
+	V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
+	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string) (*sdk.Entity, error)
 }
 
 // ProjectClient exposes project related functions
@@ -297,10 +298,10 @@ type QueueClient interface {
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error)
-	QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error)
-	QueueJobRelease(ctx context.Context, id int64) error
-	QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error)
-	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
+	QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error)
+	QueueJobRelease(ctx context.Context, id string) error
+	QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error)
+	QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error
 	QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error
 	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
 	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error

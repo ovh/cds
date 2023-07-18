@@ -67,7 +67,7 @@ func RunReleaseVCS(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, 
 		Artifacts:      artSplitted,
 	}
 
-	jobrun, err := wk.Client().QueueJobInfo(ctx, jobID)
+	jobrun, err := wk.Client().QueueJobInfo(ctx, strconv.FormatInt(jobID, 10))
 	if err != nil {
 		return res, fmt.Errorf("unable to get job info: %v", err)
 	}

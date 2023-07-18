@@ -66,7 +66,7 @@ func TestStartWorkerWithABookedJob(t *testing.T) {
 			},
 		})
 
-	gock.New("http://cds-api.local").Post("/worker/waiting").Times(2).
+	gock.New("http://cds-api.local").Post("/worker/waiting").Times(1).
 		HeaderPresent("Authorization").
 		Reply(200).JSON(nil)
 

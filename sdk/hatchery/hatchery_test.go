@@ -81,8 +81,8 @@ func TestCreate(t *testing.T) {
 	// This calls are expected for each job received in the channel
 	mockCDSClient.EXPECT().WorkerList(gomock.Any()).Return(nil, nil).AnyTimes()
 	mockHatchery.EXPECT().WorkersStarted(gomock.Any()).Return(nil, nil).AnyTimes()
-	mockHatchery.EXPECT().CanSpawn(gomock.Any(), gomock.Any(), int64(666), gomock.Any()).Return(true).AnyTimes()
-	mockCDSClient.EXPECT().QueueJobBook(gomock.Any(), int64(666)).Return(sdk.WorkflowNodeJobRunBooked{}, nil).AnyTimes()
+	mockHatchery.EXPECT().CanSpawn(gomock.Any(), gomock.Any(), "666", gomock.Any()).Return(true).AnyTimes()
+	mockCDSClient.EXPECT().QueueJobBook(gomock.Any(), "666").Return(sdk.WorkflowNodeJobRunBooked{}, nil).AnyTimes()
 	mockCDSClient.EXPECT().QueueJobSendSpawnInfo(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	privateKey, err := jws.NewRandomRSAKey()
 	require.NoError(t, err)

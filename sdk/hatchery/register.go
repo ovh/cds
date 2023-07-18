@@ -64,7 +64,7 @@ loopModels:
 		if ms[k].Type != h.ModelType() {
 			continue
 		}
-		if h.CanSpawn(ctx, &ms[k], 0, nil) && (h.NeedRegistration(ctx, &ms[k]) || ms[k].CheckRegistration) {
+		if h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &ms[k]}, "0", nil) && (h.NeedRegistration(ctx, &ms[k]) || ms[k].CheckRegistration) {
 			log.Debug(ctx, "model %q need to register", ms[k].Path())
 		} else {
 			continue
@@ -120,6 +120,7 @@ loopModels:
 		//Ask for the creation
 		startWorkerChan <- workerStarterRequest{
 			registerWorkerModel: &ms[k],
+			id:                  "0",
 			ctx:                 ctx,
 			cancel:              end,
 		}

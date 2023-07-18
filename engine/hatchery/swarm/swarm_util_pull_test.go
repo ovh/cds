@@ -56,8 +56,8 @@ func Test_pullImage(t *testing.T) {
 		return false, nil
 	}).Reply(http.StatusOK)
 
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-registry.lolcat.local/my-image-1:my-tag", time.Minute, sdk.Model{}))
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-2:my-tag", time.Minute, sdk.Model{}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-registry.lolcat.local/my-image-1:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-2:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
 
 	h.Config.RegistryCredentials = []RegistryCredential{
 		{
@@ -77,9 +77,9 @@ func Test_pullImage(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-first-registry.lolcat.local/my-image-3:my-tag", time.Minute, sdk.Model{}))
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-second-registry.lolcat.local/my-image-4:my-tag", time.Minute, sdk.Model{}))
-	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-5:my-tag", time.Minute, sdk.Model{}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-first-registry.lolcat.local/my-image-3:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-second-registry.lolcat.local/my-image-4:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
+	require.NoError(t, h.pullImage(h.dockerClients["default"], "my-image-5:my-tag", time.Minute, sdk.WorkerStarterWorkerModel{ModelV1: &sdk.Model{}}))
 
 	require.True(t, gock.IsDone())
 }

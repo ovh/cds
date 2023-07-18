@@ -120,9 +120,9 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 	})
 
 	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
-		JobID:      666,
+		JobID:      "666",
 		NodeRunID:  999,
-		Model:      m,
+		Model:      sdk.WorkerStarterWorkerModel{ModelV1: m},
 		WorkerName: "my-worker",
 		Requirements: []sdk.Requirement{
 			{

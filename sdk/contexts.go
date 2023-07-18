@@ -25,7 +25,7 @@ func (m *NodeRunContext) Scan(src interface{}) error {
 	}
 	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+		return WithStack(fmt.Errorf("type assertion .([]byte]) failed (%T)", src))
 	}
 	return WrapError(JSONUnmarshal(source, m), "cannot unmarshal RunContext")
 }

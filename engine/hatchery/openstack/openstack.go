@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/slug"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 var (
@@ -230,7 +231,9 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
-func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, _ string, requirements []sdk.Requirement) bool {
+	ctx, end := telemetry.Span(ctx, "openstack.CanSpawn")
+	defer end()
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false

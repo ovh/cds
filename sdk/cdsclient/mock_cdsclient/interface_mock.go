@@ -2621,6 +2621,21 @@ func (m *MockHatcheryServiceClient) EXPECT() *MockHatcheryServiceClientMockRecor
 	return m.recorder
 }
 
+// EntityGet mocks base method.
+func (m *MockHatcheryServiceClient) EntityGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, entityType, entityName string) (*sdk.Entity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityGet", ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName)
+	ret0, _ := ret[0].(*sdk.Entity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityGet indicates an expected call of EntityGet.
+func (mr *MockHatcheryServiceClientMockRecorder) EntityGet(ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).EntityGet), ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName)
+}
+
 // GetWorkerModel mocks base method.
 func (m *MockHatcheryServiceClient) GetWorkerModel(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, workerModelName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkerModel, error) {
 	m.ctrl.T.Helper()
@@ -2656,17 +2671,18 @@ func (mr *MockHatcheryServiceClientMockRecorder) Heartbeat(ctx, mon interface{})
 }
 
 // V2HatcheryTakeJob mocks base method.
-func (m *MockHatcheryServiceClient) V2HatcheryTakeJob(ctx context.Context, jobRun *sdk.V2WorkflowRunJob) error {
+func (m *MockHatcheryServiceClient) V2HatcheryTakeJob(ctx context.Context, regionName, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2HatcheryTakeJob", ctx, jobRun)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "V2HatcheryTakeJob", ctx, regionName, jobRunID)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // V2HatcheryTakeJob indicates an expected call of V2HatcheryTakeJob.
-func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryTakeJob(ctx, jobRun interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryTakeJob(ctx, regionName, jobRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2HatcheryTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2HatcheryTakeJob), ctx, jobRun)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2HatcheryTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2HatcheryTakeJob), ctx, regionName, jobRunID)
 }
 
 // V2QueueGetJobRun mocks base method.
@@ -2685,23 +2701,23 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueGetJobRun(ctx, regionNam
 }
 
 // V2QueueJobResult mocks base method.
-func (m *MockHatcheryServiceClient) V2QueueJobResult(ctx context.Context, regionName, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
+func (m *MockHatcheryServiceClient) V2QueueJobResult(ctx context.Context, region, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobResult", ctx, regionName, jobRunID, result)
+	ret := m.ctrl.Call(m, "V2QueueJobResult", ctx, region, jobRunID, result)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // V2QueueJobResult indicates an expected call of V2QueueJobResult.
-func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobResult(ctx, regionName, jobRunID, result interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobResult(ctx, region, jobRunID, result interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobResult", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobResult), ctx, regionName, jobRunID, result)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobResult", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobResult), ctx, region, jobRunID, result)
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, regionName, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, region, goRoutines, jobs, errs, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -2711,9 +2727,9 @@ func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, regionNa
 }
 
 // V2QueuePolling indicates an expected call of V2QueuePolling.
-func (mr *MockHatcheryServiceClientMockRecorder) V2QueuePolling(ctx, regionName, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueuePolling(ctx, region, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, regionName, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, region, goRoutines, jobs, errs, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueuePolling), varargs...)
 }
 
@@ -3684,7 +3700,7 @@ func (mr *MockQueueClientMockRecorder) QueueCountWorkflowNodeJobRun(since, until
 }
 
 // QueueJobBook mocks base method.
-func (m *MockQueueClient) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockQueueClient) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -3699,7 +3715,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobBook(ctx, id interface{}) *gomock
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockQueueClient) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockQueueClient) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -3714,7 +3730,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobInfo(ctx, id interface{}) *gomock
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockQueueClient) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockQueueClient) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -3728,7 +3744,7 @@ func (mr *MockQueueClientMockRecorder) QueueJobRelease(ctx, id interface{}) *gom
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockQueueClient) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockQueueClient) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)
@@ -8107,7 +8123,7 @@ func (mr *MockInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, until, 
 }
 
 // QueueJobBook mocks base method.
-func (m *MockInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -8122,7 +8138,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobBook(ctx, id interface{}) *gomock.C
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockInterface) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockInterface) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -8137,7 +8153,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobInfo(ctx, id interface{}) *gomock.C
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockInterface) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockInterface) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -8151,7 +8167,7 @@ func (mr *MockInterfaceMockRecorder) QueueJobRelease(ctx, id interface{}) *gomoc
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockInterface) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockInterface) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)
@@ -10395,7 +10411,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueCountWorkflowNodeJobRun(since, u
 }
 
 // QueueJobBook mocks base method.
-func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id int64) (sdk.WorkflowNodeJobRunBooked, error) {
+func (m *MockWorkerInterface) QueueJobBook(ctx context.Context, id string) (sdk.WorkflowNodeJobRunBooked, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobBook", ctx, id)
 	ret0, _ := ret[0].(sdk.WorkflowNodeJobRunBooked)
@@ -10410,7 +10426,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobBook(ctx, id interface{}) *go
 }
 
 // QueueJobInfo mocks base method.
-func (m *MockWorkerInterface) QueueJobInfo(ctx context.Context, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func (m *MockWorkerInterface) QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobInfo", ctx, id)
 	ret0, _ := ret[0].(*sdk.WorkflowNodeJobRun)
@@ -10425,7 +10441,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobInfo(ctx, id interface{}) *go
 }
 
 // QueueJobRelease mocks base method.
-func (m *MockWorkerInterface) QueueJobRelease(ctx context.Context, id int64) error {
+func (m *MockWorkerInterface) QueueJobRelease(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobRelease", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -10439,7 +10455,7 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobRelease(ctx, id interface{}) 
 }
 
 // QueueJobSendSpawnInfo mocks base method.
-func (m *MockWorkerInterface) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
+func (m *MockWorkerInterface) QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueJobSendSpawnInfo", ctx, id, in)
 	ret0, _ := ret[0].(error)

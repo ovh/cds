@@ -117,7 +117,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplateByName(ctx context.Context, n
 
 	for _, m := range models {
 		if m.Name != name {
-			log.Debug(ctx, "%q (%+v) doens't match  with %q", m.Name, m.Config, name)
+			log.Debug(ctx, "%q (%+v) doesn't match  with %q", m.Name, m.Config, name)
 			continue
 		}
 
@@ -152,6 +152,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 			var spawnErr = sdk.SpawnErrorForm{
 				Error: err.Error(),
 			}
+			log.Error(ctx, "failed check worker model register: %v", err)
 			tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
 			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
 				log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
@@ -292,15 +293,15 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 }
 
 // launchClientOp launch a script on the virtual machine given in parameters
-func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.ModelVirtualMachine, script string, env []string) error {
+func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.VirtualMachine, model sdk.WorkerStarterWorkerModel, script string, env []string) error {
 	procman, err := h.vSphereClient.ProcessManager(ctx, vm)
 	if err != nil {
 		return err
 	}
 
 	auth := types.NamePasswordAuthentication{
-		Username: model.User,
-		Password: model.Password,
+		Username: model.GetVSphereUsername(),
+		Password: model.GetVSpherePassword(),
 	}
 
 	guestspec := types.GuestProgramSpec{

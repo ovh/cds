@@ -68,7 +68,7 @@ func (mr *MockInterfaceMockRecorder) CDSClientV2() *gomock.Call {
 }
 
 // CanSpawn mocks base method.
-func (m *MockInterface) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (m *MockInterface) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)
@@ -274,7 +274,7 @@ func (mr *MockInterfaceWithModelsMockRecorder) CDSClientV2() *gomock.Call {
 }
 
 // CanSpawn mocks base method.
-func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
+func (m *MockInterfaceWithModels) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanSpawn", ctx, model, jobID, requirements)
 	ret0, _ := ret[0].(bool)

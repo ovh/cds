@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"runtime"
 	"testing"
@@ -34,9 +35,9 @@ func RegisterWorker(t *testing.T, api *API, db gorpmapper.SqlExecutorWithTx, gro
 
 	jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
-		Model:        model,
+		Model:        sdk.WorkerStarterWorkerModel{ModelV1: model},
 		WorkerName:   hSrv.Name + "-worker",
-		JobID:        jobID,
+		JobID:        fmt.Sprintf("%d", jobID),
 		RegisterOnly: registerOnly,
 	})
 	require.NoError(t, err)
@@ -146,9 +147,9 @@ func TestPostInvalidRegister(t *testing.T) {
 
 	jwt, err := hatchery.NewWorkerToken(hSrv.Name, hPrivKey, time.Now().Add(time.Hour), hatchery.SpawnArguments{
 		HatcheryName: hSrv.Name,
-		Model:        model,
+		Model:        sdk.WorkerStarterWorkerModel{ModelV1: model},
 		WorkerName:   hSrv.Name + "-worker",
-		JobID:        0,
+		JobID:        "0",
 		RegisterOnly: false,
 	})
 	require.NoError(t, err)

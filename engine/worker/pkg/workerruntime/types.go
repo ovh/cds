@@ -28,6 +28,7 @@ type WorkerConfig struct {
 	GelfServiceAddrEnableTLS bool              `json:"gelf_service_addr_enable_tls,omitempty"`
 	Model                    string            `json:"model"`
 	BookedJobID              int64             `json:"booked_job_id,omitempty"`
+	RunJobID                 string            `json:"run_job_id,omitempty"`
 	Region                   string            `json:"region,omitempty"`
 	InjectEnvVars            map[string]string `json:"inject_env_vars,omitempty"`
 }

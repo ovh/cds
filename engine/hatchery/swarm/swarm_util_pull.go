@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeout time.Duration, model sdk.Model) error {
+func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeout time.Duration, model sdk.WorkerStarterWorkerModel) error {
 	t0 := time.Now()
 	log.Debug(context.TODO(), "hatchery> swarm> pullImage> pulling image %s on %s", img, dockerClient.name)
 
@@ -26,10 +26,10 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 
 	//Pull the worker image
 	var authConfig *types.AuthConfig
-	if model.ModelDocker.Private {
+	if model.IsPrivate() {
 		registry := "index.docker.io"
-		if model.ModelDocker.Registry != "" {
-			urlParsed, err := url.Parse(model.ModelDocker.Registry)
+		if model.ModelV1.ModelDocker.Registry != "" {
+			urlParsed, err := url.Parse(model.ModelV1.ModelDocker.Registry)
 			if err != nil {
 				return sdk.WrapError(err, "cannot parse registry url %q", registry)
 			}
@@ -40,8 +40,8 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 			}
 		}
 		authConfig = &types.AuthConfig{
-			Username:      model.ModelDocker.Username,
-			Password:      model.ModelDocker.Password,
+			Username:      model.GetDockerUsername(),
+			Password:      model.GetDockerPassword(),
 			ServerAddress: registry,
 		}
 	} else {
@@ -51,7 +51,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 		}
 		domain := reference.Domain(ref)
 		var credentials *RegistryCredential
-		if model.ModelDocker.Username == "" {
+		if model.GetDockerUsername() == "" {
 			// Check if credentials match current domain
 			for i := range h.Config.RegistryCredentials {
 				if h.Config.RegistryCredentials[i].Domain == domain {
@@ -70,8 +70,8 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 				}
 			}
 		} else {
-			credentials.Username = model.ModelDocker.Username
-			credentials.Password = model.ModelDocker.Password
+			credentials.Username = model.GetDockerUsername()
+			credentials.Password = model.GetDockerPassword()
 			credentials.Domain = domain
 		}
 

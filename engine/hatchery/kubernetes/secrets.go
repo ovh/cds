@@ -59,23 +59,23 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	return nil
 }
 
-func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.Model) (string, error) {
-	secretName := slug.Convert("cds-worker-registry-" + model.Path())
+func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel) (string, error) {
+	secretName := slug.Convert("cds-worker-registry-" + model.GetPath())
 
 	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
 
 	registry := "https://index.docker.io/v1/"
-	if model.ModelDocker.Registry != "" {
-		registry = model.ModelDocker.Registry
+	if model.ModelV1 != nil && model.ModelV1.ModelDocker.Registry != "" {
+		registry = model.ModelV1.ModelDocker.Registry
 	} else {
-		ref, err := reference.ParseNormalizedNamed(model.ModelDocker.Image)
+		ref, err := reference.ParseNormalizedNamed(model.GetDockerImage())
 		if err != nil {
 			return "", sdk.WithStack(err)
 		}
 		domain := reference.Domain(ref)
-		model.ModelDocker.Registry = domain
+		registry = domain
 	}
-	dockerCfg := fmt.Sprintf(`{"auths":{"%s":{"username":"%s","password":"%s"}}}`, registry, model.ModelDocker.Username, model.ModelDocker.Password)
+	dockerCfg := fmt.Sprintf(`{"auths":{"%s":{"username":"%s","password":"%s"}}}`, registry, model.GetDockerUsername(), model.GetDockerPassword())
 
 	if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -83,7 +83,7 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 			Namespace: h.Config.Namespace,
 			Labels: map[string]string{
 				LABEL_HATCHERY_NAME:     h.Configuration().Name,
-				LABEL_WORKER_MODEL_PATH: slug.Convert(model.Path()),
+				LABEL_WORKER_MODEL_PATH: slug.Convert(model.GetPath()),
 			},
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,

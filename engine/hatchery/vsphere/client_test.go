@@ -328,6 +328,7 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 		User:     "user",
 		Password: "password",
 	}
+	modelV1 := sdk.Model{ModelVirtualMachine: model}
 
 	var procman = guest.ProcessManager{}
 
@@ -350,5 +351,5 @@ func TestHatcheryVSphere_launchClientOp(t *testing.T) {
 	)
 
 	ctx := context.Background()
-	h.launchClientOp(ctx, &vm, model, "this is a script", []string{"env=1"})
+	h.launchClientOp(ctx, &vm, sdk.WorkerStarterWorkerModel{ModelV1: &modelV1}, "this is a script", []string{"env=1"})
 }

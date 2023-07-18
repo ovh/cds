@@ -140,7 +140,7 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
 			json.Unmarshal([]byte(cloneSpec.Config.Annotation), &givenAnnotation)
-			assert.Equal(t, "model", givenAnnotation.WorkerModelPath)
+			assert.Equal(t, "shared.infra/model", givenAnnotation.WorkerModelPath)
 			assert.True(t, givenAnnotation.Model)
 			assert.Equal(t, "192.168.0.2", (cloneSpec.Customization.NicSettingMap[0].Adapter.Ip.(*types.CustomizationFixedIp).IpAddress))
 			return &clonedVM, nil
@@ -189,7 +189,7 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 		},
 	)
 
-	vmTemplate, err := h.createVirtualMachineTemplate(ctx, validModel, "worker1")
+	vmTemplate, err := h.createVirtualMachineTemplate(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &validModel}, "worker1")
 	require.NoError(t, err)
 	require.NotNil(t, vmTemplate)
 }
@@ -260,7 +260,7 @@ func TestHatcheryVSphere_launchScriptWorker(t *testing.T) {
 	spawnArgs := hatchery.SpawnArguments{
 		WorkerName:   "worker1",
 		WorkerToken:  "xxxxxxxx",
-		Model:        &validModel,
+		Model:        sdk.WorkerStarterWorkerModel{ModelV1: &validModel},
 		RegisterOnly: true,
 	}
 
@@ -433,9 +433,9 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
 		WorkerName:  "worker-name",
 		WorkerToken: "worker.token.xxx",
-		Model:       &validModel,
+		Model:       sdk.WorkerStarterWorkerModel{ModelV1: &validModel},
 		JobName:     "job_name",
-		JobID:       666,
+		JobID:       "666",
 		NodeRunID:   999,
 		NodeRunName: "nore_run_name",
 		Requirements: []sdk.Requirement{
@@ -621,9 +621,9 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	err := h.SpawnWorker(ctx, hatchery.SpawnArguments{
 		WorkerName:  "worker-name",
 		WorkerToken: "worker.token.xxx",
-		Model:       &validModel,
+		Model:       sdk.WorkerStarterWorkerModel{ModelV1: &validModel},
 		JobName:     "job_name",
-		JobID:       666,
+		JobID:       "666",
 		NodeRunID:   999,
 		NodeRunName: "nore_run_name",
 		Requirements: []sdk.Requirement{

@@ -20,45 +20,48 @@ import (
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
 func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
-	if spawnArgs.JobID > 0 {
-		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s for job %d", spawnArgs.WorkerName, spawnArgs.Model.Name, spawnArgs.JobID)
+	if spawnArgs.JobID != "0" {
+		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s for job %d", spawnArgs.WorkerName, spawnArgs.Model.GetName(), spawnArgs.JobID)
 	} else {
-		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s", spawnArgs.WorkerName, spawnArgs.Model.Name)
+		log.Debug(ctx, "spawnWorker> spawning worker %s model:%s", spawnArgs.WorkerName, spawnArgs.Model.GetName())
 	}
 
-	if spawnArgs.JobID == 0 && !spawnArgs.RegisterOnly {
+	if spawnArgs.JobID == "0" && !spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	if err := h.checkSpawnLimits(ctx, *spawnArgs.Model); err != nil {
+	if err := h.checkSpawnLimits(ctx, spawnArgs.Model); err != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, err.Error())
 		return nil
 	}
 
 	// Get flavor for target model
-	flavor, err := h.flavor(spawnArgs.Model.ModelVirtualMachine.Flavor)
+	flavor, err := h.flavor(spawnArgs.Model.GetFlavor())
 	if err != nil {
 		return err
 	}
 
 	// Get image ID
-	imageID, err := h.imageID(ctx, spawnArgs.Model.ModelVirtualMachine.Image)
+	imageID, err := h.imageID(ctx, spawnArgs.Model.GetOpenstackImage())
 	if err != nil {
 		return err
 	}
 
 	var withExistingImage bool
-	if !spawnArgs.Model.NeedRegistration && !spawnArgs.RegisterOnly {
+	if spawnArgs.Model.ModelV1 == nil || (!spawnArgs.Model.ModelV1.NeedRegistration && !spawnArgs.RegisterOnly) {
 		start := time.Now()
 		imgs := h.getImages(ctx)
 		log.Debug(ctx, "spawnWorker> call images.List on openstack took %fs, nbImages:%d", time.Since(start).Seconds(), len(imgs))
 		for _, img := range imgs {
+			if !strings.HasPrefix(img.Name, "cds_image") {
+				continue
+			}
 			workerModelName := img.Metadata["worker_model_name"] // Temporary check on name for old registred model but new snapshot will only have path
 			workerModelPath := img.Metadata["worker_model_path"]
 			workerModelLastModified := img.Metadata["worker_model_last_modified"]
-			nameOrPathMatch := (workerModelName != "" && workerModelName == spawnArgs.Model.Name) || workerModelPath == spawnArgs.Model.Group.Name+"/"+spawnArgs.Model.Name
-			if nameOrPathMatch && fmt.Sprintf("%s", workerModelLastModified) == fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()) {
+			nameOrPathMatch := (workerModelName != "" && workerModelName == spawnArgs.Model.GetName()) || workerModelPath == spawnArgs.Model.GetFullPath()
+			if nameOrPathMatch && fmt.Sprintf("%s", workerModelLastModified) == spawnArgs.Model.GetLastModified() {
 				withExistingImage = true
 				imageID = img.ID
 				break
@@ -67,13 +70,14 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	}
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 
+	var cmdSuffix string
 	if spawnArgs.RegisterOnly {
-		spawnArgs.Model.ModelVirtualMachine.Cmd += fmt.Sprintf(" --config %s register", workerConfig.EncodeBase64())
+		cmdSuffix = fmt.Sprintf(" --config %s register", workerConfig.EncodeBase64())
 	} else {
-		spawnArgs.Model.ModelVirtualMachine.Cmd += fmt.Sprintf(" --config %s", workerConfig.EncodeBase64())
+		cmdSuffix += fmt.Sprintf(" --config %s", workerConfig.EncodeBase64())
 	}
 
-	udata := spawnArgs.Model.ModelVirtualMachine.PreCmd + "\n" + spawnArgs.Model.ModelVirtualMachine.Cmd + "\n" + spawnArgs.Model.ModelVirtualMachine.PostCmd
+	udata := spawnArgs.Model.GetPreCmd() + "\n" + spawnArgs.Model.GetCmd() + cmdSuffix + "\n" + spawnArgs.Model.GetPostCmd()
 	tmpl, err := template.New("udata").Parse(udata)
 	if err != nil {
 		return err
@@ -119,10 +123,10 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		"worker":                     spawnArgs.WorkerName,
 		"hatchery_name":              h.Name(),
 		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
-		"flavor":                     spawnArgs.Model.ModelVirtualMachine.Flavor,
-		"model":                      spawnArgs.Model.ModelVirtualMachine.Image,
-		"worker_model_path":          spawnArgs.Model.Group.Name + "/" + spawnArgs.Model.Name,
-		"worker_model_last_modified": fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
+		"flavor":                     spawnArgs.Model.GetFlavor(),
+		"model":                      spawnArgs.Model.GetOpenstackImage(),
+		"worker_model_path":          spawnArgs.Model.GetFullPath(),
+		"worker_model_last_modified": spawnArgs.Model.GetLastModified(),
 	}
 
 	maxTries := 3
@@ -166,14 +170,14 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	return nil
 }
 
-func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.Model) error {
+func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.WorkerStarterWorkerModel) error {
 	existingServers := h.getServers(ctx)
 	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
 		return sdk.WithStack(fmt.Errorf("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker))
 	}
 
 	// Get flavor for target model
-	flavor, err := h.flavor(model.ModelVirtualMachine.Flavor)
+	flavor, err := h.flavor(model.GetFlavor())
 	if err != nil {
 		return err
 	}
@@ -202,11 +206,11 @@ func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.Mode
 			minCPUsNeededToStart := flavor.VCPUs + h.Config.CountSmallerFlavorToKeep*smallerFlavor.VCPUs
 			countCPUsLeft := int(math.Max(.0, float64(h.Config.MaxCPUs-totalCPUsUsed))) // Set zero as min value in case that the limit changed and count of used greater than max count
 			if minCPUsNeededToStart > countCPUsLeft {
-				return sdk.WithStack(fmt.Errorf("CountSmallerFlavorToKeep limit reached, can't start model %s/%s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs",
-					model.Group.Name, model.Name, flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
+				return sdk.WithStack(fmt.Errorf("CountSmallerFlavorToKeep limit reached, can't start model %s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs",
+					model.GetFullPath(), flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
 			}
-			log.Debug(ctx, "checkSpawnLimits> %d/%d CPUs left is enougth to start model %s/%s with flavor %s that require %d CPUs",
-				countCPUsLeft, h.Config.MaxCPUs, model.Group.Name, model.Name, flavor.Name, flavor.VCPUs)
+			log.Debug(ctx, "checkSpawnLimits> %d/%d CPUs left is enough to start model %s with flavor %s that require %d CPUs",
+				countCPUsLeft, h.Config.MaxCPUs, model.GetFullPath(), flavor.Name, flavor.VCPUs)
 		}
 	}
 

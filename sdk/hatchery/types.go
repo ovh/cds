@@ -86,23 +86,25 @@ func (s SpawnArgumentsJWT) Validate() error {
 type SpawnArguments struct {
 	WorkerName   string `json:"worker_model"`
 	WorkerToken  string
-	Model        *sdk.Model        `json:"model"`
-	JobName      string            `json:"job_name"`
-	JobID        int64             `json:"job_id"`
-	NodeRunID    int64             `json:"node_run_id"`
-	NodeRunName  string            `json:"node_run_name"`
-	Requirements []sdk.Requirement `json:"requirements"`
-	RegisterOnly bool              `json:"register_only"`
-	HatcheryName string            `json:"hatchery_name"`
-	ProjectKey   string            `json:"project_key"`
-	WorkflowName string            `json:"workflow_name"`
-	WorkflowID   int64             `json:"workflow_id"`
-	RunID        int64             `json:"run_id"`
+	Model        sdk.WorkerStarterWorkerModel `json:"model"`
+	JobName      string                       `json:"job_name"`
+	JobID        string                       `json:"job_id"`
+	NodeRunID    int64                        `json:"node_run_id"`
+	NodeRunName  string                       `json:"node_run_name"`
+	Requirements []sdk.Requirement            `json:"requirements"`
+	RegisterOnly bool                         `json:"register_only"`
+	HatcheryName string                       `json:"hatchery_name"`
+	ProjectKey   string                       `json:"project_key"`
+	WorkflowName string                       `json:"workflow_name"`
+	WorkflowID   int64                        `json:"workflow_id"`
+	RunID        string                       `json:"run_id"`
 }
 
 func (s *SpawnArguments) ModelName() string {
-	if s.Model != nil {
-		return s.Model.Group.Name + "/" + s.Model.Name
+	if s.Model.ModelV1 != nil {
+		return s.Model.GetFullPath()
+	} else if s.Model.ModelV2 != nil {
+		return s.Model.GetName()
 	}
 	return ""
 }
@@ -123,7 +125,7 @@ type Interface interface {
 	Type() string
 	InitHatchery(ctx context.Context) error
 	SpawnWorker(ctx context.Context, spawnArgs SpawnArguments) error
-	CanSpawn(ctx context.Context, model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
+	CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool
 	WorkersStarted(ctx context.Context) ([]string, error)
 	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
