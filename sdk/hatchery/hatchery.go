@@ -2,6 +2,7 @@ package hatchery
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -409,7 +410,6 @@ func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cache
 		region:       j.Region,
 		requirements: nil,
 		queued:       j.Queued,
-		model:        sdk.WorkerStarterWorkerModel{},
 	}
 
 	// Check at least one worker model can match
@@ -613,9 +613,9 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 
 	workerStarterModel := &sdk.WorkerStarterWorkerModel{ModelV2: model}
 
-	entity, err := h.CDSClientV2().EntityGet(ctx, projKey, vcsName, repoName, sdk.EntityTypeWorkerModel, modelName)
+	entity, err := h.CDSClientV2().EntityGet(ctx, projKey, vcsName, repoName, sdk.EntityTypeWorkerModel, modelName, cdsclient.WithQueryParameter("branch", branch))
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	workerStarterModel.Commit = entity.Commit
 
@@ -640,14 +640,30 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 			workerStarterModel.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
 			workerStarterModel.Shell = "sh -c"
 		}
+		var dockerSpec sdk.V2WorkerModelDockerSpec
+		if err := json.Unmarshal(model.Spec, &dockerSpec); err != nil {
+			return nil, sdk.WrapError(err, "unable to get docker spec")
+		}
+		workerStarterModel.DockerSpec = dockerSpec
+
 	case sdk.WorkerModelTypeVSphere:
 		workerStarterModel.Cmd = "./worker"
 		workerStarterModel.PreCmd = preCmd
 		workerStarterModel.PostCmd = "sudo shutdown -h now"
+		var vsphereSpec sdk.V2WorkerModelVSphereSpec
+		if err := json.Unmarshal(model.Spec, &vsphereSpec); err != nil {
+			return nil, sdk.WrapError(err, "unable to get vsphere spec")
+		}
+		workerStarterModel.VSphereSpec = vsphereSpec
 	case sdk.WorkerModelTypeOpenstack:
 		workerStarterModel.Cmd = "./worker"
 		workerStarterModel.PreCmd = preCmd
 		workerStarterModel.PostCmd = "sudo shutdown -h now"
+		var openstackSpec sdk.V2WorkerModelOpenstackSpec
+		if err := json.Unmarshal(model.Spec, &openstackSpec); err != nil {
+			return nil, sdk.WrapError(err, "unable to get openstack spec")
+		}
+		workerStarterModel.OpenstackSpec = openstackSpec
 	}
 	return workerStarterModel, nil
 }

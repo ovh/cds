@@ -226,10 +226,10 @@ type HatcheryServiceClient interface {
 	Heartbeat(ctx context.Context, mon *sdk.MonitoringStatus) error
 	GetWorkerModel(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, workerModelName string, mods ...RequestModifier) (*sdk.V2WorkerModel, error)
 	V2HatcheryTakeJob(ctx context.Context, regionName string, jobRunID string) (*sdk.V2WorkflowRunJob, error)
-	V2QueueGetJobRun(ctx context.Context, regionName string, id string) (*sdk.V2WorkflowRunJob, error)
-	V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
-	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
-	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string) (*sdk.Entity, error)
+
+	V2HatcheryReleaseJob(ctx context.Context, regionName string, jobRunID string) error
+	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
+	V2QueueClient
 }
 
 // ProjectClient exposes project related functions
@@ -292,6 +292,14 @@ type ProjectVariablesClient interface {
 	VariableEncryptDelete(projectKey, name string) error
 }
 
+type V2QueueClient interface {
+	V2QueueGetJobRun(ctx context.Context, regionName string, id string) (*sdk.V2WorkflowRunJob, error)
+	V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
+	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
+	V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error
+	V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error)
+}
+
 // QueueClient exposes queue related functions
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(mods ...RequestModifier) ([]sdk.WorkflowNodeJobRun, error)
@@ -328,6 +336,12 @@ type UserClient interface {
 	UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error)
 	UserGpgKeyDelete(ctx context.Context, username string, keyID string) error
 	UserGpgKeyCreate(ctx context.Context, username string, publicKey string) (sdk.UserGPGKey, error)
+}
+
+type V2WorkerClient interface {
+	V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error)
+	V2WorkerUnregister(ctx context.Context, region, runJobID string) error
+	V2WorkerRefresh(ctx context.Context, region, runJobID string) error
 }
 
 // WorkerClient exposes workers functions
@@ -478,6 +492,11 @@ type Interface interface {
 	Version() (*sdk.Version, error)
 	TemplateClient
 	WebsocketClient
+}
+
+type V2WorkerInterface interface {
+	V2WorkerClient
+	V2QueueClient
 }
 
 type WorkerInterface interface {

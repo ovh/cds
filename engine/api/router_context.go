@@ -9,4 +9,5 @@ const (
 	contextHatcheryConsumer
 	contextDriverManifest
 	contextDate
+	contextWorker
 )

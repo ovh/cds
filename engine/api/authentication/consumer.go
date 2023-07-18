@@ -50,6 +50,26 @@ func NewConsumerWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, nam
 	return &c, nil
 }
 
+func NewConsumerWorkerV2(ctx context.Context, db gorpmapper.SqlExecutorWithTx, name string, hatcheryConsumer *sdk.AuthHatcheryConsumer) (*sdk.AuthHatcheryConsumer, error) {
+	c := sdk.AuthHatcheryConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            name,
+			ParentID:        &hatcheryConsumer.ID,
+			Type:            sdk.ConsumerHatchery,
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 24*time.Hour),
+		},
+		AuthConsumerHatchery: sdk.AuthConsumerHatcheryData{
+			HatcheryID: hatcheryConsumer.AuthConsumerHatchery.HatcheryID,
+		},
+	}
+
+	if err := InsertHatcheryConsumer(ctx, db, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
 // NewConsumerExternal returns a new local consumer for given data.
 func NewConsumerExternal(ctx context.Context, db gorpmapper.SqlExecutorWithTx, userID string, consumerType sdk.AuthConsumerType, userInfo sdk.AuthDriverUserInfo) (*sdk.AuthUserConsumer, error) {
 	c := sdk.AuthUserConsumer{

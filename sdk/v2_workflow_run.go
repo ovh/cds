@@ -175,6 +175,13 @@ const (
 )
 
 type V2WorkflowRunJobResult struct {
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
+	Status string    `json:"status"`
+	Error  string    `json:"error,omitempty"`
+	Time   time.Time `json:"time"`
+}
+
+type V2SendJobRunInfo struct {
+	Level   string    `json:"level" db:"level"`
+	Message string    `json:"message" db:"message"`
+	Time    time.Time `json:"time" db:"time"`
 }

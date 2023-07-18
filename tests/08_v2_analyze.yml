@@ -78,7 +78,7 @@ testcases:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.status ShouldEqual "Fail"
+        - result.systemoutjson.status ShouldEqual "Success"
       retry: 30
       delay: 10
 

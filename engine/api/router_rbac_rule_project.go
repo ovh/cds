@@ -41,5 +41,13 @@ func (api *API) projectManage(ctx context.Context, auth *sdk.AuthUserConsumer, s
 // ProjectRead return nil if the current AuthUserConsumer have the ProjectRoleRead on current project KEY
 func (api *API) projectRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
+	entityType := vars["entityType"]
+	hatch := getHatcheryConsumer(ctx)
+
+	// hatchery can get every worker model
+	if hatch != nil && entityType == sdk.EntityTypeWorkerModel {
+		return nil
+	}
+
 	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.ProjectRoleRead)
 }

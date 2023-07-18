@@ -82,6 +82,29 @@ func (s SpawnArgumentsJWT) Validate() error {
 	return nil
 }
 
+// WorkerJWTClaims is the specific claims format for Worker JWT
+type WorkerJWTClaimsV2 struct {
+	jwt.StandardClaims
+	Worker SpawnArgumentsJWTV2
+}
+
+type SpawnArgumentsJWTV2 struct {
+	WorkerName   string `json:"worker_model,omitempty"`
+	ModelName    string `json:"model_name,omitempty"`
+	RunJobID     string `json:"run_job_id,omitempty"`
+	HatcheryName string `json:"hatchery_name,omitempty"`
+}
+
+func (s SpawnArgumentsJWTV2) Validate() error {
+	if s.WorkerName == "" {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker without a name")
+	}
+	if !sdk.IsValidUUID(s.RunJobID) {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unauthorized to register a worker for a run_job without a valid ID")
+	}
+	return nil
+}
+
 // SpawnArguments contains arguments to func SpawnWorker
 type SpawnArguments struct {
 	WorkerName   string `json:"worker_model"`

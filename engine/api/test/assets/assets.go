@@ -6,9 +6,12 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
 	"github.com/ovh/cds/engine/api/organization"
-  "github.com/ovh/cds/engine/api/repository"
-  "io"
+	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/worker_v2"
+	sdkhatch "github.com/ovh/cds/sdk/hatchery"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -18,9 +21,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
@@ -69,6 +72,27 @@ projects:
 	rb.Projects[0].RBACProjectKeys = []string{projKey}
 	rb.Projects[0].RBACUsersIDs = []string{user.ID}
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
+func InsertWorker(t *testing.T, ctx context.Context, db gorpmapper.SqlExecutorWithTx, hatcheryConsumer *sdk.AuthHatcheryConsumer, hatch sdk.Hatchery, workerName string, jobRun sdk.V2WorkflowRunJob) (*sdk.V2Worker, string) {
+	workerConsumer, err := authentication.NewConsumerWorkerV2(ctx, db, workerName, hatcheryConsumer)
+	require.NoError(t, err)
+
+	spawnaargs := sdkhatch.SpawnArgumentsJWTV2{
+		WorkerName: workerName,
+		RunJobID:   jobRun.ID,
+		ModelName:  jobRun.Job.WorkerModel,
+	}
+	wk, err := worker_v2.RegisterWorker(ctx, db, spawnaargs, hatch, workerConsumer, sdk.WorkerRegistrationForm{Arch: "amd64", OS: "linux"})
+	require.NoError(t, err)
+
+	workerSession, err := authentication.NewSession(ctx, db, &workerConsumer.AuthConsumer, workerauth.SessionDuration)
+	require.NoError(t, err)
+
+	jwt, err := authentication.NewSessionJWT(workerSession, "")
+	require.NoError(t, err)
+
+	return wk, jwt
 }
 
 // InsertTestProject create a test project.
@@ -127,15 +151,15 @@ func InsertTestVCSProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, projID 
 }
 
 func InsertTestProjectRepository(t *testing.T, db gorpmapper.SqlExecutorWithTx, vcsServerID string, name string) *sdk.ProjectRepository {
-  repo := sdk.ProjectRepository{
-    Name:         name,
-    Created:      time.Now(),
-    VCSProjectID: vcsServerID,
-    CreatedBy:    "test",
-    CloneURL:     "myurl",
-  }
-  require.NoError(t, repository.Insert(context.TODO(), db, &repo))
-  return &repo
+	repo := sdk.ProjectRepository{
+		Name:         name,
+		Created:      time.Now(),
+		VCSProjectID: vcsServerID,
+		CreatedBy:    "test",
+		CloneURL:     "myurl",
+	}
+	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+	return &repo
 }
 
 // DeleteTestProject delete a test project

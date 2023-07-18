@@ -142,6 +142,18 @@ func getHatcheryConsumer(ctx context.Context) *sdk.AuthHatcheryConsumer {
 	return consumer
 }
 
+func getWorker(ctx context.Context) *sdk.V2Worker {
+  i := ctx.Value(contextWorker)
+  if i == nil {
+    return nil
+  }
+  w, ok := i.(*sdk.V2Worker)
+  if !ok {
+    return nil
+  }
+  return w
+}
+
 func getUserConsumer(ctx context.Context) *sdk.AuthUserConsumer {
 	i := ctx.Value(contextUserConsumer)
 	if i == nil {

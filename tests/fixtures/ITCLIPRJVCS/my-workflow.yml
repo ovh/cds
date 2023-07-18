@@ -1,12 +1,10 @@
 name: MyFirstWorkflow
-stages:
-  build:
-    needs: []
 jobs:
   myFirstJob:
-    stage: build
     name: This is my first job
     if: cds.workflow == 'MyFirstWorkflow'
+    region: default
+    worker_model: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
     steps:
       - run: |-
           echo "Workflow: ${{cds.workflow}}"

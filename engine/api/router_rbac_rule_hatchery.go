@@ -32,7 +32,7 @@ func hatcheryHasRoleOnRegion(ctx context.Context, db gorp.SqlExecutor, hatcheryI
 }
 
 func (api *API) isHatchery(ctx context.Context, _ *sdk.AuthUserConsumer, _ cache.Store, _ gorp.SqlExecutor, _ map[string]string) error {
-	if getHatcheryConsumer(ctx) != nil {
+  if getHatcheryConsumer(ctx) != nil && getWorker(ctx) == nil {
 		return nil
 	}
 	return sdk.WithStack(sdk.ErrForbidden)
