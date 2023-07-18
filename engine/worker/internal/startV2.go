@@ -42,7 +42,7 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 	//Definition of the function which must be called to stop the worker
 	var endFunc = func() {
 		log.Info(ctx, "Stopping worker %s", w.Name())
-		if err := w.V2Unregister(ctx, runJobID, region); err != nil {
+		if err := w.V2Unregister(ctx, region, runJobID); err != nil {
 			log.Error(ctx, "Unable to unregister: %v", err)
 			mainError = err
 		}
@@ -53,7 +53,7 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 		if err := ctx.Err(); err != nil {
 			log.Warn(ctx, "Exiting worker: %v", err)
 		} else {
-			log.Warn(ctx, "Exiting worker")
+			log.Info(ctx, "Exiting worker")
 		}
 	}
 
