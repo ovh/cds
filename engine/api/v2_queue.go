@@ -300,28 +300,28 @@ func (api *API) getJobRunHandler() ([]service.RbacChecker, service.Handler) {
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			jobRunID := vars["runJobID"]
-      regionName := vars["regionName"]
+			regionName := vars["regionName"]
 
 			jobRun, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
 			if err != nil {
 				return err
 			}
-      if jobRun.Region != regionName {
-        return sdk.WithStack(sdk.ErrForbidden)
-      }
+			if jobRun.Region != regionName {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			hatch := getHatcheryConsumer(ctx)
 			switch {
 			case hatch != nil:
-        if jobRun.HatcheryName == "" {
-          canGet, err := hatcheryCanGetJob(ctx, api.mustDB(), jobRun.Region, hatch.AuthConsumerHatchery.HatcheryID)
-          if err != nil {
-            return err
-          }
-          if !canGet {
-            return sdk.WithStack(sdk.ErrForbidden)
-          }
-        }
+				if jobRun.HatcheryName == "" {
+					canGet, err := hatcheryCanGetJob(ctx, api.mustDB(), jobRun.Region, hatch.AuthConsumerHatchery.HatcheryID)
+					if err != nil {
+						return err
+					}
+					if !canGet {
+						return sdk.WithStack(sdk.ErrForbidden)
+					}
+				}
 			default:
 				// Manage worker / user rights
 				return sdk.WithStack(sdk.ErrNotImplemented)

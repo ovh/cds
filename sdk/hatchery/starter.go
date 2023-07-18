@@ -219,15 +219,17 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		jwt, err = NewWorkerTokenV2(h.Name(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			result := sdk.V2WorkflowRunJobResult{
-				Status: sdk.StatusFail,
-				Error:  "unable to generate worker token",
+			msg := sdk.V2SendJobRunInfo{
+				Time:    time.Now(),
+				Level:   sdk.WorkflowRunInfoLevelError,
+				Message: "unable to create a token for the worker. Please contact an administrator",
 			}
-			if err := h.CDSClientV2().V2QueueJobResult(ctx, j.region, arg.JobID, result); err != nil {
+			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, j.region, arg.JobID, msg); err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 			}
-
-			// Job in error : return
+			if err := h.CDSClientV2().V2HatcheryReleaseJob(ctx, j.region, arg.JobID); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
 			return false
 		}
 	} else {
@@ -244,7 +246,6 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			if err := h.CDSClient().QueueJobRelease(ctx, j.id); err != nil {
 				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot release job with id %s", j.id))
 			}
-
 			return false
 		}
 	}

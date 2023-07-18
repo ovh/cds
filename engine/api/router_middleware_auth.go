@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/worker_v2"
-
 	"net/http"
 	"time"
 
@@ -17,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"

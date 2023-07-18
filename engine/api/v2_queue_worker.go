@@ -3,18 +3,18 @@ package api
 import (
 	"context"
 	"encoding/base64"
-	"github.com/gorilla/mux"
-	"github.com/ovh/cds/engine/api/worker_v2"
-	"github.com/ovh/cds/engine/api/workflow_v2"
-	"github.com/ovh/cds/engine/gorpmapper"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
+	"github.com/ovh/cds/engine/api/worker_v2"
+	"github.com/ovh/cds/engine/api/workflow_v2"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )

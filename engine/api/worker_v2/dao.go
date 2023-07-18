@@ -3,6 +3,7 @@ package worker_v2
 import (
 	"context"
 	"github.com/go-gorp/gorp"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -18,6 +19,14 @@ func getWorker(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 	}
 	if !found {
 		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to find v2_worker")
+	}
+	isValid, err := gorpmapping.CheckSignature(dbW, dbW.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(ctx, "worker %s: data corrupted", dbW.ID)
+		return nil, sdk.ErrNotFound
 	}
 	return &dbW.V2Worker, nil
 }
