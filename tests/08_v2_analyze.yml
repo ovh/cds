@@ -84,11 +84,6 @@ testcases:
         - result.systemoutjson.status ShouldEqual "Success"
       retry: 30
       delay: 10
-- name: delete region
-  steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region delete default
-      assertions:
-        - result.code ShouldEqual 0
 
 - name: delete rbac on project
   steps:

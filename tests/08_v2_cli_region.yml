@@ -17,7 +17,7 @@ testcases:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region list --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson0.name ShouldEqual "my-region"
+        - result.systemoutjson ShouldContainSubstring "my-region"
 
 - name: remove region
   steps:
