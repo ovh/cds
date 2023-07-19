@@ -237,7 +237,7 @@ cds_v2_tests() {
     curl --fail -I -X GET ${GITEA_HOST}/api/swagger
     echo "Running CDS v2 tests:"
     for f in $(ls -1 08_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL}"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
