@@ -299,9 +299,18 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		return err
 	}
 
-	auth := types.NamePasswordAuthentication{
-		Username: model.GetVSphereUsername(),
-		Password: model.GetVSpherePassword(),
+	var auth types.NamePasswordAuthentication
+	if model.GetVSphereUsername() != "" {
+		auth.Username = model.GetVSphereUsername()
+		auth.Password = model.GetVSpherePassword()
+	}
+
+	for i := range h.Config.GuestCredentials {
+		if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
+			auth.Username = h.Config.GuestCredentials[i].Username
+			auth.Password = h.Config.GuestCredentials[i].Password
+			break
+		}
 	}
 
 	guestspec := types.GuestProgramSpec{

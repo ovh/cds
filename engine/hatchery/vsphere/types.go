@@ -23,12 +23,19 @@ type HatcheryConfiguration struct {
 	SubnetMask                          string                     `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Subnet Mask" json:"subnetMask"`
 	WorkerTTL                           int                        `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	WorkerRegistrationTTL               int                        `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
-	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"false" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
+	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
+	GuestCredentials                    []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
 }
 
 type WorkerProvisioningConfig struct {
-	ModelPath string `mapstructure:"modelPath" toml:"modelPath" json:"modelPath"`
-	Number    int64  `mapstructure:"number" toml:"number" json:"number"`
+	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"modelPath"`
+	Number    int    `mapstructure:"number" commented:"true" toml:"number" json:"number"`
+}
+
+type GuestCredential struct {
+	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"-"`
+	Username  string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
+	Password  string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
 }
 
 // HatcheryVSphere spawns vm
