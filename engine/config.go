@@ -124,6 +124,12 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.Hatchery.VSphere)
 			conf.Hatchery.VSphere.Name = "cds-hatchery-vsphere-" + namesgenerator.GetRandomNameCDS()
 			conf.Hatchery.VSphere.HTTP.Port = 8086
+			conf.Hatchery.VSphere.WorkerProvisioning = []vsphere.WorkerProvisioningConfig{{
+				ModelPath: "my/model",
+			}}
+			conf.Hatchery.VSphere.GuestCredentials = []vsphere.GuestCredential{{
+				ModelPath: "my/model",
+			}}
 		case sdk.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
@@ -485,7 +491,6 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			privateKey, _ := jws.NewRandomRSAKey()
 			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
 			h.VSphere.RSAPrivateKey = string(privateKeyPEM)
-			h.VSphere.WorkerProvisioning = append(h.VSphere.WorkerProvisioning, vsphere.WorkerProvisioningConfig{ModelPath: "my/model", Number: 10})
 		}
 
 		if h.Swarm != nil {
