@@ -236,7 +236,7 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 
 	if len(h.availableIPAddresses) > 0 {
 		var err error
-		ip, err := h.findAvailableIP(ctx, workerName)
+		ip, err := h.findAvailableIP(ctx)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}

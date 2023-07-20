@@ -8,8 +8,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// for each ip in the range, look for the first free ones
-func (h *HatcheryVSphere) findAvailableIP(ctx context.Context, workerName string) (string, error) {
+// For each IPs in the range, look for the first free ones
+func (h *HatcheryVSphere) findAvailableIP(ctx context.Context) (string, error) {
 	h.IpAddressesMutex.Lock()
 	defer h.IpAddressesMutex.Unlock()
 
@@ -45,6 +45,7 @@ func (h *HatcheryVSphere) findAvailableIP(ctx context.Context, workerName string
 			return ip, nil
 		}
 	}
+
 	return "", sdk.WithStack(errors.New("no IP address available"))
 }
 

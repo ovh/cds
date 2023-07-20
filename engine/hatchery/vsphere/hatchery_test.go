@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sdkhatchery "github.com/ovh/cds/sdk/hatchery"
 	"strings"
 	"testing"
 	"time"
+
+	sdkhatchery "github.com/ovh/cds/sdk/hatchery"
 
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/hatchery"
@@ -485,7 +486,7 @@ func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 					},
 				}, {
 					ManagedEntity: mo.ManagedEntity{
-						Name: "provisionned_worker",
+						Name: "provision-worker",
 					},
 					Summary: types.VirtualMachineSummary{
 						Config: types.VirtualMachineConfigSummary{

@@ -23,6 +23,8 @@ type HatcheryConfiguration struct {
 	SubnetMask                          string                     `mapstructure:"subnetMask" toml:"subnetMask" default:"255.255.255.0" commented:"false" comment:"Subnet Mask" json:"subnetMask"`
 	WorkerTTL                           int                        `mapstructure:"workerTTL" toml:"workerTTL" default:"120" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
 	WorkerRegistrationTTL               int                        `mapstructure:"workerRegistrationTTL" toml:"workerRegistrationTTL" commented:"false" comment:"Worker Registration TTL (minutes)" json:"workerRegistrationTTL"`
+	WorkerProvisioningInterval          int                        `mapstructure:"workerProvisioningInterval" toml:"workerProvisioningInterval" commented:"true" comment:"Worker Provisioning interval (seconds)" json:"workerProvisioningInterval"`
+	WorkerProvisioningPoolSize          int                        `mapstructure:"workerProvisioningPoolSize" toml:"workerProvisioningPoolSize" commented:"true" comment:"Worker Provisioning pool size" json:"workerProvisioningPoolSize"`
 	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
 	GuestCredentials                    []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
 }

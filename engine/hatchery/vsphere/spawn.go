@@ -35,13 +35,12 @@ type annotation struct {
 func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (err error) {
 	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, spawnArgs.WorkerName)
 	defer func() {
+		h.cachePendingJobID.mu.Lock()
+		h.cachePendingJobID.list = sdk.DeleteFromArray(h.cachePendingJobID.list, spawnArgs.JobID)
+		h.cachePendingJobID.mu.Unlock()
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "SpawnWorker %q from model %q: ERROR: %v", spawnArgs.WorkerName, spawnArgs.ModelName(), err)
-
-			h.cachePendingJobID.mu.Lock()
-			h.cachePendingJobID.list = sdk.DeleteFromArray(h.cachePendingJobID.list, spawnArgs.JobID)
-			h.cachePendingJobID.mu.Unlock()
 		} else {
 			log.Info(ctx, "SpawnWorker %q from model %q: DONE", spawnArgs.WorkerName, spawnArgs.ModelName())
 		}
@@ -54,14 +53,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	if spawnArgs.JobID != "0" {
 		h.cachePendingJobID.mu.Lock()
 		h.cachePendingJobID.list = append(h.cachePendingJobID.list, spawnArgs.JobID)
-		defer h.cachePendingJobID.mu.Unlock()
-
-		go func() {
-			time.Sleep(3 * time.Minute)
-			h.cachePendingJobID.mu.Lock()
-			h.cachePendingJobID.list = sdk.DeleteFromArray(h.cachePendingJobID.list, spawnArgs.JobID)
-			h.cachePendingJobID.mu.Unlock()
-		}()
+		h.cachePendingJobID.mu.Unlock()
 	}
 
 	var vmTemplate *object.VirtualMachine
