@@ -63,7 +63,10 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		log.Info(ctx, "creating virtual machine model %q", spawnArgs.Model.GetName())
 		vmTemplate, err = h.createVirtualMachineTemplate(ctx, spawnArgs.Model, spawnArgs.WorkerName)
 		if err != nil {
-			log.Error(ctx, "Unable to create VM Model: %v", err)
+			if sdk.Cause(err).Error() == "no IP address available" {
+				log.Warn(ctx, "unable to create VM Model: %v", err)
+				return nil
+			}
 			return err
 		}
 	}
@@ -146,6 +149,10 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	cloneSpec, err := h.prepareCloneSpec(ctx, vmTemplate, &annot, spawnArgs.WorkerName)
 	if err != nil {
+		if sdk.Cause(err).Error() == "no IP address available" {
+			log.Warn(ctx, "unable to create worker: %v", err)
+			return nil
+		}
 		return err
 	}
 
