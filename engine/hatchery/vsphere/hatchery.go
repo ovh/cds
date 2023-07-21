@@ -282,6 +282,9 @@ func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) ([]string, error) 
 	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, 0, len(srvs))
 	for _, s := range srvs {
+		if strings.HasPrefix(s.Name, "provision-") {
+			continue
+		}
 		res = append(res, s.Name)
 	}
 	return res, nil
@@ -334,6 +337,9 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	for _, s := range srvs {
 		var annot = getVirtualMachineCDSAnnotation(ctx, s)
 		if annot == nil {
+			continue
+		}
+		if annot.HatcheryName != h.Name() {
 			continue
 		}
 
@@ -399,6 +405,9 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		}
 		annot := getVirtualMachineCDSAnnotation(ctx, machine)
 		if annot == nil {
+			continue
+		}
+		if annot.HatcheryName != h.Name() {
 			continue
 		}
 		if annot.Provisioning {
