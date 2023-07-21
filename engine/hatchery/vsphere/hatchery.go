@@ -438,7 +438,10 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
 
 		mapModels[modelPath] = model
-		mapToProvision[modelPath] = int(number) - mapAlreadyProvisionned[modelPath]
+		count := int(number) - mapAlreadyProvisionned[modelPath]
+		if count > 0 {
+			mapToProvision[modelPath] = count
+		}
 	}
 
 	// Distribute models in provision queue
