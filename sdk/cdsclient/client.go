@@ -89,6 +89,29 @@ func New(c Config) Interface {
 	return cli
 }
 
+func NewWorkerV2(endpoint string, name string, c *http.Client) V2WorkerInterface {
+	conf := Config{
+		Host:  endpoint,
+		Retry: 10,
+	}
+	cli := new(serviceClient)
+	cli.config = &conf
+	cli.config.Mutex = new(sync.Mutex)
+	cli.consumerType = sdk.ConsumerBuiltin
+
+	if c == nil {
+		cli.httpClient = NewHTTPClient(time.Second*360, false)
+	} else {
+		cli.httpClient = c
+	}
+	cli.httpNoTimeoutClient = NewHTTPClient(0, false)
+	cli.httpWebsocketClient = NewWebsocketDialer(false)
+
+	cli.name = name
+	cli.init()
+	return cli
+}
+
 // NewWorker returns client for a worker
 func NewWorker(endpoint string, name string, c *http.Client) WorkerInterface {
 	conf := Config{

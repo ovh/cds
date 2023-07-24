@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-
 	"net/http"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -160,6 +160,12 @@ func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http
 	}
 
 	ctx = context.WithValue(ctx, contextHatcheryConsumer, consumer)
+
+	work, err := worker_v2.LoadByConsumerID(ctx, api.mustDB(), consumer.ID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return ctx, err
+	}
+	ctx = context.WithValue(ctx, contextWorker, work)
 
 	ctx = context.WithValue(ctx, cdslog.AuthServiceName, currentHatchery.Name)
 	SetTracker(w, cdslog.AuthServiceName, currentHatchery.Name)

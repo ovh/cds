@@ -139,7 +139,6 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		modelName = j.model.GetName()
 	}
 	ctx = context.WithValue(ctx, LogFieldModel, modelName)
-
 	arg := SpawnArguments{
 		WorkerName:   namesgenerator.GenerateWorkerName(modelName, ""),
 		Model:        j.model,
@@ -214,9 +213,29 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	ctx = context.WithValue(ctx, LogFieldServiceCount, serviceCount)
 
 	// Get a JWT to authentified the worker
-	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
-	if err != nil {
-		if j.model.ModelV1 != nil {
+	var jwt string
+	if sdk.IsValidUUID(arg.JobID) {
+		var err error
+		jwt, err = NewWorkerTokenV2(h.Name(), h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			msg := sdk.V2SendJobRunInfo{
+				Time:    time.Now(),
+				Level:   sdk.WorkflowRunInfoLevelError,
+				Message: "unable to create a token for the worker. Please contact an administrator",
+			}
+			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, j.region, arg.JobID, msg); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			if err := h.CDSClientV2().V2HatcheryReleaseJob(ctx, j.region, arg.JobID); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			return false
+		}
+	} else {
+		var err error
+		jwt, err = NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			var spawnError = sdk.SpawnErrorForm{
 				Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
@@ -224,20 +243,13 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			if err := h.CDSClient().WorkerModelSpawnError(j.model.ModelV1.Group.Name, j.model.ModelV1.Name, spawnError); err != nil {
 				log.Error(ctx, "error on call client.WorkerModelSpawnError on worker model %s for register: %s", j.model.ModelV1.Name, err)
 			}
-		} else if j.model.ModelV2 != nil {
-			if err := h.CDSClientV2().V2QueueJobResult(ctx, h.Configuration().Provision.Region, arg.JobID, sdk.V2WorkflowRunJobResult{
-				Status: sdk.StatusFail,
-				Error:  "unable to generate worker token",
-			}); err != nil {
-				log.ErrorWithStackTrace(ctx, err)
-				return false
+			if err := h.CDSClient().QueueJobRelease(ctx, j.id); err != nil {
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot release job with id %s", j.id))
 			}
+			return false
 		}
-		if err := h.CDSClient().QueueJobRelease(ctx, j.id); err != nil {
-			log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot release job with id %s", j.id))
-		}
-		return false
 	}
+
 	arg.WorkerToken = jwt
 
 	logStepInfo(ctx, "starting-worker-spawn", j.queued)
@@ -246,17 +258,38 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	errSpawn := h.SpawnWorker(ctxSpawnWorker, arg)
 	next()
 	if errSpawn != nil {
-		ctx = sdk.ContextWithStacktrace(ctx, errSpawn)
-		ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
-		SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
-			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
-			Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()},
-		})
-		log.ErrorWithStackTrace(ctx, sdk.WrapError(errSpawn, "hatchery %s cannot spawn worker %s for job %s", h.Service().Name, modelName, j.id))
-		if err := h.CDSClient().QueueJobRelease(ctx, j.id); err != nil {
-			log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot release job with id %s", j.id))
+		log.ErrorWithStackTrace(ctx, errSpawn)
+
+		if sdk.IsValidUUID(arg.JobID) {
+			ctx, next := telemetry.Span(ctx, "hatchery")
+			msg := sdk.V2SendJobRunInfo{
+				Time:    time.Now(),
+				Level:   sdk.WorkflowRunInfoLevelError,
+				Message: fmt.Sprintf("Error while Hatchery %s spawns worker with model %s after %s, err: %s", h.Name(), j.model.GetName(), sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()),
+			}
+			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, j.region, arg.JobID, msg); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			next()
+			ctx, next = telemetry.Span(ctx, "hatchery.releaseJob")
+			if err := h.CDSClientV2().V2HatcheryReleaseJob(ctx, j.region, arg.JobID); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			next()
+
+		} else {
+			ctxSendSpawnInfo, next := telemetry.Span(ctx, "hatchery.QueueJobSendSpawnInfo", telemetry.Tag("status", "errSpawn"), telemetry.Tag("msg", sdk.MsgSpawnInfoHatcheryErrorSpawn.ID))
+			SendSpawnInfo(ctxSendSpawnInfo, h, j.id, sdk.SpawnMsg{
+				ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
+				Args: []interface{}{h.Service().Name, modelName, sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()},
+			})
+			log.ErrorWithStackTrace(ctx, sdk.WrapError(errSpawn, "hatchery %s cannot spawn worker %s for job %s", h.Service().Name, modelName, j.id))
+			if err := h.CDSClient().QueueJobRelease(ctx, j.id); err != nil {
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot release job with id %s", j.id))
+			}
+			next()
 		}
-		next()
+
 		return false
 	}
 

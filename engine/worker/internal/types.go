@@ -46,13 +46,18 @@ type CurrentWorker struct {
 	gelfLogger    *logger
 	stepLogLine   int64
 	httpPort      int32
-	currentJob    struct {
+	signer        jose.Signer
+	currentJobV2  struct {
+		runJob  sdk.V2WorkflowRunJob
+		secrets map[string]string
+		actions map[string]sdk.V2Action
+	}
+	currentJob struct {
 		wJob             *sdk.WorkflowNodeJobRun
 		newVariables     []sdk.Variable
 		params           []sdk.Parameter
 		secrets          []sdk.Variable
 		context          context.Context
-		signer           jose.Signer
 		projectKey       string
 		workflowName     string
 		workflowID       int64
@@ -70,9 +75,10 @@ type CurrentWorker struct {
 		Name   string `json:"name"`
 		Status string `json:"status"`
 	}
-	client cdsclient.WorkerInterface
-	blur   *sdk.Blur
-	hooks  []workerHook
+	clientV2 cdsclient.V2WorkerInterface
+	client   cdsclient.WorkerInterface
+	blur     *sdk.Blur
+	hooks    []workerHook
 }
 
 type workerHook struct {
@@ -88,7 +94,11 @@ func (wk *CurrentWorker) Init(cfg *workerruntime.WorkerConfig, workspace afero.F
 	wk.cfg = cfg
 	wk.status.Name = cfg.Name
 	wk.basedir = workspace
-	wk.client = cdsclient.NewWorker(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*30, cfg.APIEndpointInsecure))
+	if sdk.IsValidUUID(cfg.RunJobID) {
+		wk.clientV2 = cdsclient.NewWorkerV2(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*30, cfg.APIEndpointInsecure))
+	} else {
+		wk.client = cdsclient.NewWorker(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*30, cfg.APIEndpointInsecure))
+	}
 	return nil
 }
 
@@ -145,7 +155,7 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 			CacheTag:   tag,
 		},
 	}
-	signature, err := jws.Sign(wk.currentJob.signer, sig)
+	signature, err := jws.Sign(wk.signer, sig)
 	return signature, sdk.WrapError(err, "cannot sign log message")
 }
 
@@ -185,7 +195,7 @@ func (wk *CurrentWorker) RunResultSignature(artifactName string, perm uint32, t 
 			RunResultType: string(t),
 		},
 	}
-	signature, err := jws.Sign(wk.currentJob.signer, sig)
+	signature, err := jws.Sign(wk.signer, sig)
 	return signature, sdk.WrapError(err, "cannot sign log message")
 }
 
@@ -254,7 +264,7 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 
 	res.Value = s
 
-	signature, err := jws.Sign(wk.currentJob.signer, res.Signature)
+	signature, err := jws.Sign(wk.signer, res.Signature)
 	if err != nil {
 		return res, "", sdk.WrapError(err, "cannot sign log message")
 	}
@@ -264,6 +274,10 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 
 func (wk *CurrentWorker) Name() string {
 	return wk.status.Name
+}
+
+func (wk *CurrentWorker) ClientV2() cdsclient.V2WorkerInterface {
+	return wk.clientV2
 }
 
 func (wk *CurrentWorker) Client() cdsclient.WorkerInterface {

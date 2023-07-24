@@ -71,7 +71,7 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	w.currentJob.signer = signer
+	w.signer = signer
 
 	log.Info(ctx, "Setup step logger %s", w.cfg.GelfServiceAddr)
 	throttlePolicy := hook.NewDefaultThrottlePolicy()

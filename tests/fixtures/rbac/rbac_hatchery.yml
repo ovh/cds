@@ -1,0 +1,5 @@
+name: perm-hatchery-test
+hatcheries:
+  - hatchery: "${HATCHERY_NAME}"
+    region: default
+    role: start-worker

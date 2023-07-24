@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (*sdk.V2WorkflowRun, error) {
@@ -19,6 +20,14 @@ func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (
 		return nil, err
 	}
 	if !found {
+		return nil, sdk.ErrNotFound
+	}
+	isValid, err := gorpmapping.CheckSignature(dbWkfRun, dbWkfRun.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(ctx, "run %s: data corrupted", dbWkfRun.ID)
 		return nil, sdk.ErrNotFound
 	}
 	return &dbWkfRun.V2WorkflowRun, nil

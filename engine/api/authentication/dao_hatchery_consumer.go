@@ -50,6 +50,24 @@ func LoadHatcheryConsumerByID(ctx context.Context, db gorp.SqlExecutor, consumer
 	return &hc, nil
 }
 
+func LoadHatcheryConsumerByName(ctx context.Context, db gorp.SqlExecutor, hatcheryName string) (*sdk.AuthHatcheryConsumer, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND name = $2").Args(sdk.ConsumerHatchery, hatcheryName)
+	c, err := getConsumer(ctx, db, q)
+	if err != nil {
+
+	}
+	queryhatch := gorpmapping.NewQuery("SELECT * from auth_consumer_hatchery WHERE auth_consumer_id = $1").Args(c.ID)
+	hatcheryData, err := getAuthConsumerHatchery(ctx, db, queryhatch)
+	if err != nil {
+		return nil, err
+	}
+	hc := sdk.AuthHatcheryConsumer{
+		AuthConsumer:         *c,
+		AuthConsumerHatchery: *hatcheryData,
+	}
+	return &hc, nil
+}
+
 func LoadHatcheryConsumerByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) (*sdk.AuthHatcheryConsumer, error) {
 	q := gorpmapping.NewQuery("SELECT * from auth_consumer_hatchery WHERE hatchery_id = $1").Args(hatcheryID)
 	hatcheryData, err := getAuthConsumerHatchery(ctx, db, q)

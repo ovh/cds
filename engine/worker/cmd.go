@@ -27,6 +27,7 @@ const (
 	// TODO: the flag below will be removed
 	flagBaseDir             = "basedir"
 	flagBookedWorkflowJobID = "booked-workflow-job-id"
+	flagRunJobID            = "run-job-id"
 	flagGraylogProtocol     = "graylog-protocol"
 	flagGraylogHost         = "graylog-host"
 	flagGraylogPort         = "graylog-port"
@@ -48,6 +49,7 @@ func initFlagsRun(cmd *cobra.Command) {
 	// TODO: the flag below will be removed
 	flags.String(flagBaseDir, "", "This directory (default TMPDIR os environment var) will contains worker working directory and temporary files")
 	flags.Int64(flagBookedWorkflowJobID, 0, "Booked Workflow job id")
+	flags.String(flagRunJobID, "", "Run job ID")
 	flags.String(flagGraylogProtocol, "", "Ex: --graylog-protocol=xxxx-yyyy")
 	flags.String(flagGraylogHost, "", "Ex: --graylog-host=xxxx-yyyy")
 	flags.String(flagGraylogPort, "", "Ex: --graylog-port=12202")

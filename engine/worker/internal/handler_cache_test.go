@@ -67,7 +67,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 	ctxPush = workerruntime.SetTmpDirectory(ctxPush, tdPushFile)
 	t.Logf("Setup push tmp directory at %s", tdPushFile.Name())
 
-	wkPush.currentJob.signer = signer
+	wkPush.signer = signer
 	wkPush.currentJob.context = ctxPush
 	wkPush.currentJob.wJob = &sdk.WorkflowNodeJobRun{
 		Parameters: []sdk.Parameter{{
@@ -84,7 +84,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 	pullJobInfo := sdk.WorkflowNodeJobRunData{}
 	pullJobInfo.NodeJobRun.Job.Job.Action.Name = sdk.RandomString(10)
 
-	wkPull.currentJob.signer = signer
+	wkPull.signer = signer
 	wkPull.currentJob.wJob = &sdk.WorkflowNodeJobRun{
 		Parameters: []sdk.Parameter{{
 			Name:  "cds.project",

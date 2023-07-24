@@ -9,6 +9,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/info", regionName, jobRunID)
+	if _, err := c.PostJSON(ctx, path, msg, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) V2QueueJobResult(ctx context.Context, regionName string, jobRunID string, result sdk.V2WorkflowRunJobResult) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/result", regionName, jobRunID)
 	if _, err := c.PostJSON(ctx, path, result, nil); err != nil {
@@ -25,6 +33,14 @@ func (c *client) V2HatcheryTakeJob(ctx context.Context, regionName string, jobRu
 		return nil, err
 	}
 	return &jobRun, nil
+}
+
+func (c *client) V2HatcheryReleaseJob(ctx context.Context, regionName string, jobRunID string) error {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/hatchery/take", regionName, jobRunID)
+	if _, err := c.DeleteJSON(ctx, path, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 // V2QueueGetJobRun returns information about a job
