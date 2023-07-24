@@ -33,10 +33,9 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 		return sdk.WrapError(err, "unable to register to CDS")
 	}
 
-	//Register every 10 seconds
+	//Refresh every 30 seconds
 	refreshTick := time.NewTicker(30 * time.Second)
 
-	// start queue polling
 	errsChan := make(chan error, 1)
 
 	//Definition of the function which must be called to stop the worker
