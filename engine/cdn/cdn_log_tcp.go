@@ -141,7 +141,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	switch {
 	case signature.Worker != nil:
 		telemetry.Record(ctx, s.Metrics.tcpServerStepLogCount, 1)
-		return s.handleWorkerLog(ctx, signature.Worker.WorkerName, signature.Worker.WorkerID, sig, m)
+		return s.handleWorkerLog(ctx, signature, sig, m)
 	case signature.Service != nil:
 		telemetry.Record(ctx, s.Metrics.tcpServerServiceLogCount, 1)
 		return s.handleServiceLog(ctx, signature.Service.HatcheryID, signature.Service.HatcheryName, signature.Service.WorkerName, sig, m)
@@ -151,21 +151,36 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 }
 
 // Handle Message from worker (job logs). Enqueue in Redis
-func (s *Service) handleWorkerLog(ctx context.Context, workerName string, workerID string, sig interface{}, m hook.Message) error {
+func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, m hook.Message) error {
 	var signature cdn.Signature
 
-	// Get worker data from cache
-	workerData, err := s.getWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: true})
-	if err != nil {
-		return err
-	}
-
-	// Verify Signature
-	if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
-		return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
-	}
-	if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != workerID {
-		return sdk.WithStack(sdk.ErrForbidden)
+	switch {
+	case unsafeSign.JobID != 0:
+		// Get worker data from cache
+		workerData, err := s.getWorker(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+		if err != nil {
+			return err
+		}
+		// Verify Signature
+		if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
+			return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
+		}
+		if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != unsafeSign.Worker.WorkerID {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+	case unsafeSign.RunJobID != "":
+		// Get worker data from cache
+		workerData, err := s.getWorkerV2(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+		if err != nil {
+			return err
+		}
+		// Verify Signatures
+		if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
+			return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
+		}
+		if workerData.JobRunID == "" || workerData.JobRunID != signature.RunJobID || workerData.ID != unsafeSign.Worker.WorkerID {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 	}
 
 	terminatedI := m.Extra["_"+cdslog.ExtraFieldTerminated]

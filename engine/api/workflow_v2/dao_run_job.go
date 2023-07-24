@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
@@ -93,10 +94,24 @@ func LoadRunJobByID(ctx context.Context, db gorp.SqlExecutor, jobRunID string) (
 	return getRunJob(ctx, db, query)
 }
 
+func LoadRunJobByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jobName string) (*sdk.V2WorkflowRunJob, error) {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByID")
+	defer next()
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND job_id = $2").Args(wrID, jobName)
+	return getRunJob(ctx, db, query)
+}
+
 func LoadQueuedRunJobByModelTypeAndRegion(ctx context.Context, db gorp.SqlExecutor, regionName string, modelType string) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadQueuedRunJobByModelTypeAndRegion")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE status = $1 AND model_type = $2 and region = $3 ORDER BY queued ASC").
 		Args(sdk.StatusWaiting, modelType, regionName)
+	return getAllRunJobs(ctx, db, query)
+}
+
+func LoadRunJobsByRunIDAndStatus(ctx context.Context, db gorp.SqlExecutor, runID string, status []string) ([]sdk.V2WorkflowRunJob, error) {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobsByRunIDAndStatus")
+	defer next()
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND status = ANY($2)").Args(runID, pq.StringArray(status))
 	return getAllRunJobs(ctx, db, query)
 }

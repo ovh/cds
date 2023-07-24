@@ -22,7 +22,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 	// Create socket
 	pluginSocket, currentPlugin, err := createGRPCPluginSocket(ctx, pluginType, pluginName, wk)
 	if err != nil {
-		return nil, errors.Errorf("unable to start GRPCPlugin: %v", err)
+		return nil, errors.Errorf("unable to start GRPCPlugin %s: %v", pluginName, err)
 	}
 
 	// Create plugin client
@@ -32,6 +32,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 		done:       make(chan struct{}),
 		pluginType: pluginType,
 		grpcPlugin: currentPlugin,
+		pluginName: pluginName,
 	}
 
 	switch pluginType {
@@ -39,22 +40,22 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 		// Create grpc client
 		grpcClient, err := actionplugin.Client(context.Background(), pluginSocket.Socket)
 		if err != nil {
-			return nil, errors.Errorf("unable to call GRPCPlugin: %v", err)
+			return nil, errors.Errorf("unable to call GRPCPlugin %s: %v", pluginName, err)
 		}
 		qPort := actionplugin.WorkerHTTPPortQuery{Port: wk.HTTPPort()}
 		if _, err := grpcClient.WorkerHTTPPort(ctx, &qPort); err != nil {
-			return nil, errors.Errorf("unable to setup plugin with worker port: %v", err)
+			return nil, errors.Errorf("unable to setup plugin %s with worker port: %v", pluginName, err)
 		}
 		c.grpcClient = grpcClient
 	case TypeIntegration:
 		// Create grpc client
 		grpcClient, err := integrationplugin.Client(context.Background(), pluginSocket.Socket)
 		if err != nil {
-			return nil, errors.Errorf("unable to call GRPCPlugin: %v", err)
+			return nil, errors.Errorf("unable to call GRPCPlugin %s: %v", pluginName, err)
 		}
 		qPort := integrationplugin.WorkerHTTPPortQuery{Port: wk.HTTPPort()}
 		if _, err := grpcClient.WorkerHTTPPort(ctx, &qPort); err != nil {
-			return nil, errors.Errorf("unable to setup plugin with worker port: %v", err)
+			return nil, errors.Errorf("unable to setup plugin %s with worker port: %v", pluginName, err)
 		}
 		c.grpcClient = grpcClient
 	}
@@ -70,7 +71,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 	// Test plugin
 	if err := c.Manifest(ctx); err != nil {
 		c.Close(ctx)
-		return nil, errors.Errorf("unable to retrieve retrieve plugin manifest: %v", err)
+		return nil, errors.Errorf("unable to retrieve retrieve plugin %s manifest: %v", pluginName, err)
 	}
 
 	return c, nil
@@ -156,17 +157,19 @@ func (c *client) runActionPlugin(ctx context.Context, query actionplugin.ActionQ
 		return &Result{Status: sdk.StatusFail, Details: "wrong plugin type"}
 	}
 
-	jobID, err := workerruntime.JobID(ctx)
-	if err != nil {
-		return &Result{Status: sdk.StatusFail, Details: fmt.Sprintf("Unable to retrieve job ID... Aborting (%v)", err)}
+	if workerruntime.RunJobID(ctx) == "" {
+		jobID, err := workerruntime.JobID(ctx)
+		if err != nil {
+			return &Result{Status: sdk.StatusFail, Details: fmt.Sprintf("Unable to retrieve job ID... Aborting (%v)", err)}
+		}
+		query.JobID = jobID
 	}
-	query.JobID = jobID
 
 	res, err := c.grpcClient.(actionplugin.ActionPluginClient).Run(ctx, &query)
 	if err != nil {
 		res = &actionplugin.ActionResult{
 			Status:  sdk.StatusFail,
-			Details: fmt.Sprintf("error while running plugin: %v", err),
+			Details: fmt.Sprintf("error while running plugin %s: %v", c.pluginName, err),
 		}
 	}
 	result := &Result{Status: res.Status, Details: res.Details}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -91,6 +92,7 @@ const (
 	workDir
 	keysDir
 	tmpDir
+	runJobID
 )
 
 type Runtime interface {
@@ -111,11 +113,14 @@ type Runtime interface {
 	InstallKeyTo(key sdk.Variable, destinationPath string) (*KeyResponse, error)
 	Unregister(ctx context.Context) error
 	Client() cdsclient.WorkerInterface
+	ClientV2() cdsclient.V2WorkerInterface
 	BaseDir() afero.Fs
 	Environ() []string
 	Blur(interface{}) error
 	HTTPPort() int32
 	Parameters() []sdk.Parameter
+	PluginGet(pluginName string) (*sdk.GRPCPlugin, error)
+	PluginGetBinary(name, os, arch string, w io.Writer) error
 }
 
 func JobID(ctx context.Context) (int64, error) {
@@ -129,6 +134,14 @@ func JobID(ctx context.Context) (int64, error) {
 
 func SetJobID(ctx context.Context, i int64) context.Context {
 	return context.WithValue(ctx, jobID, i)
+}
+
+func RunJobID(ctx context.Context) string {
+  return ctx.Value(runJobID).(string)
+}
+
+func SetRunJobID(ctx context.Context, i string) context.Context {
+	return context.WithValue(ctx, runJobID, i)
 }
 
 func StepOrder(ctx context.Context) (int, error) {

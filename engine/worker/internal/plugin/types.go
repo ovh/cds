@@ -32,6 +32,7 @@ type client struct {
 	stopLog    context.CancelFunc
 	w          workerruntime.Runtime
 	pluginType string
+	pluginName string
 	grpcPlugin *sdk.GRPCPlugin
 }
 

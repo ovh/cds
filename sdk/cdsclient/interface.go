@@ -53,6 +53,7 @@ type Admin interface {
 	AdminOrganizationList(ctx context.Context) ([]sdk.Organization, error)
 	AdminOrganizationDelete(ctx context.Context, orgaIdentifier string) error
 	AdminOrganizationMigrateUser(ctx context.Context, orgaIdentifier string) error
+	HasProjectRole(ctx context.Context, projectKey, sessionID string, role string) error
 	Features() ([]sdk.Feature, error)
 	FeatureCreate(f sdk.Feature) error
 	FeatureDelete(name sdk.FeatureName) error
@@ -298,6 +299,7 @@ type V2QueueClient interface {
 	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
 	V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error
 	V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error)
+	V2QueueJobStepUpdate(ctx context.Context, regionName string, id string, stepsContext sdk.StepsContext) error
 }
 
 // QueueClient exposes queue related functions
@@ -363,6 +365,7 @@ type WorkerClient interface {
 	WorkerSetStatus(ctx context.Context, status string) error
 
 	WorkerModelv2List(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, filter *WorkerModelV2Filter) ([]sdk.V2WorkerModel, error)
+	V2WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.V2Worker, error)
 	CDNClient
 }
 
@@ -389,6 +392,8 @@ type ServiceClient interface {
 type WorkflowV2Client interface {
 	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 	WorkflowV2RunStatus(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunJobs(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64) ([]sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64, jobName string) (sdk.CDNLogLinks, error)
 }
 
 // WorkflowClient exposes workflows functions
@@ -497,6 +502,7 @@ type Interface interface {
 type V2WorkerInterface interface {
 	V2WorkerClient
 	V2QueueClient
+	GRPCPluginsClient
 }
 
 type WorkerInterface interface {

@@ -9,6 +9,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) V2WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.V2Worker, error) {
+	var worker sdk.V2Worker
+	url := fmt.Sprintf("/v2/worker/" + name)
+	if _, err := c.GetJSON(ctx, url, &worker, mods...); err != nil {
+		return nil, err
+	}
+	return &worker, nil
+}
+
 func (c *client) V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()

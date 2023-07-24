@@ -462,11 +462,13 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/rbac/import", nil, r.POSTv2(api.postImportRBACHandler))
 	r.Handle("/v2/rbac/{rbacIdentifier}", nil, r.GETv2(api.getRBACHandler), r.DELETEv2(api.deleteRBACHandler))
+	r.Handle("/v2/rbac/access/project/session/check", nil, r.POSTv2(api.getCheckSessionProjectAccessHandler))
 
 	r.Handle("/v2/region", nil, r.POSTv2(api.postRegionHandler), r.GETv2(api.getRegionsHandler))
 	r.Handle("/v2/region/{regionIdentifier}", nil, r.GETv2(api.getRegionHandler), r.DELETEv2(api.deleteRegionHandler))
 
 	r.Handle("/v2/repository/analyze", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRepositoryAnalysisHandler))
+
 	r.Handle("/v2/project/repositories", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getAllRepositoriesHandler))
 	r.Handle("/v2/project/repositories/{repositoryIdentifier}/hook", Scope(sdk.AuthConsumerScopeHooks), r.GETv2(api.getRepositoryHookHandler))
 
@@ -485,12 +487,15 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}", nil, r.GETv2(api.getWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs", nil, r.GETv2(api.getWorkflowRunJobsV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobName}/logs/links", nil, r.GETv2(api.getWorkflowRunJobLogsLinksV2Handler))
 
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))
 
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}", nil, r.GETv2(api.getJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/info", nil, r.POSTv2(api.postJobRunInfoHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", nil, r.POSTv2(api.postJobRunStepHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/take", nil, r.POSTv2(api.postV2WorkerTakeJobHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/refresh", nil, r.POSTv2(api.postV2RefreshWorkerHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signin", nil, r.POSTv2(api.postV2RegisterWorkerHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -498,6 +503,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/hatchery/take", nil, r.POSTv2(api.postHatcheryTakeJobRunHandler), r.DELETEv2(api.deleteHatcheryReleaseJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
 	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedHandler))
+
+	r.Handle("/v2/worker/{workerName}", nil, r.GETv2(api.getWorkerV2Handler))
 
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", nil, r.GETv2(api.getUserGPGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey", nil, r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))

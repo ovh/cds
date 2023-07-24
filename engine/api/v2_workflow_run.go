@@ -8,19 +8,170 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/mitchellh/hashstructure"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
-	"github.com/rockbears/yaml"
 )
 
+func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, runJobs, http.StatusOK)
+
+		}
+}
+
+func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+			jobName := vars["jobName"]
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			if err != nil {
+				return err
+			}
+
+			refs := make([]sdk.CDNLogAPIRefV2, 0)
+			apiRef := sdk.CDNLogAPIRefV2{
+				ProjectKey:   proj.Key,
+				WorkflowName: wr.WorkflowName,
+				RunID:        wr.ID,
+				RunJobName:   runJob.JobID,
+				RunJobID:     runJob.ID,
+				RunNumber:    runJob.RunNumber,
+				RunAttempt:   runJob.RunAttempt,
+			}
+
+			for k := range runJob.StepsContext {
+				stepOrder := -1
+				for i := range runJob.Job.Steps {
+					stepName := sdk.GetJobStepName(runJob.Job.Steps[i].ID, i)
+					if stepName == k {
+						stepOrder = i
+						break
+					}
+				}
+
+				if stepOrder == -1 {
+					continue
+				}
+				ref := apiRef
+				ref.StepName = sdk.GetJobStepName(k, stepOrder)
+				ref.StepOrder = int64(stepOrder)
+				refs = append(refs, ref)
+			}
+			datas := make([]sdk.CDNLogLinkData, 0, len(refs))
+			for _, r := range refs {
+				apiRefHashU, err := hashstructure.Hash(r, nil)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
+				apiRefHash := strconv.FormatUint(apiRefHashU, 10)
+				datas = append(datas, sdk.CDNLogLinkData{
+					APIRef:    apiRefHash,
+					StepOrder: r.StepOrder,
+				})
+			}
+
+			httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+			if err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, sdk.CDNLogLinks{
+				CDNURL:   httpURL,
+				ItemType: sdk.CDNTypeItemJobStepLog,
+				Data:     datas,
+			}, http.StatusOK)
+		}
+}
 func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
