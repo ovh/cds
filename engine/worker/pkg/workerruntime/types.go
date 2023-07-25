@@ -137,7 +137,10 @@ func SetJobID(ctx context.Context, i int64) context.Context {
 }
 
 func RunJobID(ctx context.Context) string {
-  return ctx.Value(runJobID).(string)
+	if ctx.Value(runJobID) == nil {
+		return ""
+	}
+	return ctx.Value(runJobID).(string)
 }
 
 func SetRunJobID(ctx context.Context, i string) context.Context {

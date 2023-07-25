@@ -33,8 +33,5 @@ func (api *API) checkSessionPermission(ctx context.Context, auth *sdk.AuthUserCo
 	if isCDN(ctx) {
 		return nil
 	}
-	if isMaintainer(ctx) {
-		return nil
-	}
 	return sdk.WithStack(sdk.ErrUnauthorized)
 }
