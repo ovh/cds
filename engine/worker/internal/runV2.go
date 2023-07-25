@@ -135,7 +135,10 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		stepsContext[w.currentJobV2.currentStepName] = sdk.StepContext{}
 		actionContext.Steps = stepsContext
 
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepName))
 		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, actionContext)
+		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepName))
+		w.gelfLogger.hook.Flush()
 
 		stepCxt := actionContext.Steps[w.currentJobV2.currentStepName]
 		stepCxt.Outcome = stepRes.Status
@@ -155,14 +158,7 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 }
 
 func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, stepName string, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
-	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", stepName))
-	defer func() {
-		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", stepName))
-		w.gelfLogger.hook.Flush()
-	}()
-
 	// TODO manage step if condition
-
 	var result sdk.V2WorkflowRunJobResult
 	switch {
 	case step.Uses != "":
@@ -178,7 +174,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, parentContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]string) sdk.V2WorkflowRunJobResult {
 	name := strings.TrimPrefix(step.Uses, "actions/")
 	actionPath := strings.Split(name, "/")
-	stepName := parentStepName + filepath.Base(name)
+	stepName := parentStepName + "-" + filepath.Base(name)
 
 	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", stepName))
 	defer func() {
@@ -218,8 +214,8 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		}
 		return w.runPlugin(ctx, actionPath[0], opts)
 	case 5:
-		for _, step := range actionDef.Runs.Steps {
-			stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, actionContext)
+		for stepIndex, step := range actionDef.Runs.Steps {
+			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, actionContext)
 			if stepRes.Status == sdk.StatusFail {
 				return stepRes
 			}
@@ -229,6 +225,15 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	return sdk.V2WorkflowRunJobResult{
 		Status: sdk.StatusSuccess,
 	}
+}
+
+func (w *CurrentWorker) runSubActionStep(ctx context.Context, step sdk.ActionStep, stepName string, stepIndex int, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
+	currentStep := stepName + "-" + sdk.GetJobStepName(step.ID, stepIndex)
+	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", currentStep))
+	defer func() {
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", currentStep))
+	}()
+	return w.runActionStep(ctx, step, currentStep, runJobContext)
 }
 
 func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionStep, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {

@@ -143,11 +143,10 @@ func (c *client) runIntegrationPlugin(ctx context.Context, query integrationplug
 
 	if !strings.EqualFold(result.Status, sdk.StatusSuccess) {
 		result.Status = sdk.StatusFail
+		c.w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", result.Details))
 	} else {
 		result.Status = sdk.StatusSuccess
 	}
-
-	c.w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", result.Details))
 	c.w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", result.Status))
 	return result
 }
@@ -175,11 +174,10 @@ func (c *client) runActionPlugin(ctx context.Context, query actionplugin.ActionQ
 	result := &Result{Status: res.Status, Details: res.Details}
 	if !strings.EqualFold(result.Status, sdk.StatusSuccess) {
 		result.Status = sdk.StatusFail
+		c.w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", result.Details))
 	} else {
 		result.Status = sdk.StatusSuccess
 	}
-
-	c.w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Details: %s", result.Details))
 	c.w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Status: %s", result.Status))
 	return result
 }
