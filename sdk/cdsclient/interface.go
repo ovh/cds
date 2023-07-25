@@ -366,6 +366,7 @@ type WorkerClient interface {
 
 	WorkerModelv2List(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, filter *WorkerModelV2Filter) ([]sdk.V2WorkerModel, error)
 	V2WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.V2Worker, error)
+	V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error)
 	CDNClient
 }
 

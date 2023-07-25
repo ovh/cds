@@ -106,3 +106,8 @@ func loadWorkerByStatus(ctx context.Context, db gorp.SqlExecutor, status string)
 	query := gorpmapping.NewQuery(`SELECT * FROM v2_worker WHERE status = $1`).Args(status)
 	return getWorkers(ctx, db, query)
 }
+
+func LoadAllWorker(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Worker, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM v2_worker`)
+	return getWorkers(ctx, db, query)
+}

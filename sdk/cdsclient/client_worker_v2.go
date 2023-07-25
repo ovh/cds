@@ -9,6 +9,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
+	var workers []sdk.V2Worker
+	url := fmt.Sprintf("/v2/worker")
+	if _, err := c.GetJSON(ctx, url, &workers); err != nil {
+		return nil, err
+	}
+	return workers, nil
+}
+
 func (c *client) V2WorkerGet(ctx context.Context, name string, mods ...RequestModifier) (*sdk.V2Worker, error) {
 	var worker sdk.V2Worker
 	url := fmt.Sprintf("/v2/worker/" + name)

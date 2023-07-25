@@ -23,3 +23,11 @@ func (api *API) workerGet(ctx context.Context, _ *sdk.AuthUserConsumer, _ cache.
 	}
 	return sdk.WithStack(sdk.ErrForbidden)
 }
+
+
+func (api *API) workerList(ctx context.Context, _ *sdk.AuthUserConsumer, _ cache.Store, _ gorp.SqlExecutor, _ map[string]string) error {
+  if isAdmin(ctx) {
+    return nil
+  }
+  return sdk.WithStack(sdk.ErrForbidden)
+}

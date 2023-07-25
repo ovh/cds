@@ -13,6 +13,16 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (api *API) getWorkersV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.workerList), func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+		wks, err := worker_v2.LoadAllWorker(ctx, api.mustDB())
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, wks, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkerV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workerGet),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

@@ -504,6 +504,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
 	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedHandler))
 
+	r.Handle("/v2/worker", nil, r.GETv2(api.getWorkersV2Handler))
 	r.Handle("/v2/worker/{workerName}", nil, r.GETv2(api.getWorkerV2Handler))
 
 	r.Handle("/v2/user/gpgkey/{gpgKeyID}", nil, r.GETv2(api.getUserGPGKeyHandler))
