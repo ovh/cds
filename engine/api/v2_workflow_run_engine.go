@@ -326,8 +326,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 		})
 		return false, runInfos, nil
 	}
-
-	return true, runInfos, nil
+	return canRun, runInfos, nil
 }
 
 func computeJobRunStatus(runJobs []sdk.V2WorkflowRunJob) string {

@@ -1,5 +1,8 @@
 name: perm-test
 projects:
+  - role: read
+    projects: [ ITCLIPRJVCS ]
+    users: [ cds.integration.tests.rw ]
   - role: manage
     projects: [ITCLIPRJVCS]
     users: [cds.integration.tests.rw]
