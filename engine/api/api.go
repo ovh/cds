@@ -49,6 +49,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
@@ -865,6 +866,9 @@ func (a *API) Serve(ctx context.Context) error {
 		a.cleanProjectEntities(ctx, 1*time.Hour)
 	})
 
+	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorker", func(ctx context.Context) {
+		worker_v2.DeleteDisabledWorker(ctx, a.mustDB)
+	})
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {
 			a.cleanWorkflowRunSecrets(ctx)
