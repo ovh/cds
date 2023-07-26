@@ -236,15 +236,15 @@ func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.Virtu
 
 	if len(h.availableIPAddresses) > 0 {
 		var err error
-		ip, err := h.findAvailableIP(ctx, workerName)
+		ip, err := h.findAvailableIP(ctx)
 		if err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, err
 		}
 		log.Debug(ctx, "Found %s as available IP", ip)
 		// Once we found an IP Address, we have to reserve this IP in local memory
 		// because the IP address won't be used directly on the server
 		if err := h.reserveIPAddress(ctx, ip); err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, err
 		}
 
 		customSpec.NicSettingMap = []types.CustomizationAdapterMapping{{

@@ -3,8 +3,8 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk/telemetry"
 	"strings"
+	"sync"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/namesgenerator"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // New instanciates a new Hatchery vsphere
@@ -198,6 +199,13 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		}
 	}
 
+	// Check if there is one ip available
+	if len(h.availableIPAddresses) > 0 {
+		if _, err := h.findAvailableIP(ctx); err != nil {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -274,6 +282,9 @@ func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) ([]string, error) 
 	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, 0, len(srvs))
 	for _, s := range srvs {
+		if strings.HasPrefix(s.Name, "provision-") {
+			continue
+		}
 		res = append(res, s.Name)
 	}
 	return res, nil
@@ -328,6 +339,9 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		if annot == nil {
 			continue
 		}
+		if annot.HatcheryName != h.Name() {
+			continue
+		}
 
 		var isMarkToDelete = h.isMarkedToDelete(s)
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
@@ -380,39 +394,36 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 }
 
 func (h *HatcheryVSphere) provisioning(ctx context.Context) {
-	if len(h.Config.WorkerProvisioning) == 0 {
-		log.Debug(ctx, "provisioning is disabled")
-		return
-	}
-
-	if len(h.cacheProvisioning.pending) > 0 {
-		log.Debug(ctx, "provisioning is still on going")
-		return
-	}
-
 	h.cacheProvisioning.mu.Lock()
 
+	// Count exiting provisionned machine for each model
 	var mapAlreadyProvisionned = make(map[string]int)
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
+		if !strings.HasPrefix(machine.Name, "provision-") {
+			continue
+		}
 		annot := getVirtualMachineCDSAnnotation(ctx, machine)
 		if annot == nil {
 			continue
 		}
-		// Provisionned machines are powered off
-		if annot.Provisioning && machine.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
+		if annot.HatcheryName != h.Name() {
+			continue
+		}
+		if annot.Provisioning {
 			mapAlreadyProvisionned[annot.WorkerModelPath] = mapAlreadyProvisionned[annot.WorkerModelPath] + 1
 		}
 	}
-
 	h.cacheProvisioning.mu.Unlock()
 
+	// Count provision to create for each model
+	mapToProvision := make(map[string]int)
+	mapModels := make(map[string]sdk.Model)
 	for i := range h.Config.WorkerProvisioning {
 		modelPath := h.Config.WorkerProvisioning[i].ModelPath
 		number := h.Config.WorkerProvisioning[i].Number
-
-		if number == 0 {
-			continue // If provisioning is disabled
+		if modelPath == "" || number == 0 {
+			continue
 		}
 
 		tuple := strings.Split(modelPath, "/")
@@ -435,14 +446,54 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 
 		log.Info(ctx, "model %q provisioning: %d/%d", modelPath, mapAlreadyProvisionned[modelPath], number)
 
-		for i := 0; i < int(number)-mapAlreadyProvisionned[modelPath]; i++ {
+		mapModels[modelPath] = model
+		count := int(number) - mapAlreadyProvisionned[modelPath]
+		if count > 0 {
+			mapToProvision[modelPath] = count
+		}
+	}
+
+	// Distribute models in provision queue
+	countModelToProvision := len(mapToProvision)
+	if countModelToProvision == 0 {
+		return
+	}
+	poolSize := h.Config.WorkerProvisioningPoolSize
+	if poolSize == 0 {
+		poolSize = 1
+	}
+	var provisionQueue []string
+	for len(mapToProvision) > 0 {
+		for i := range h.Config.WorkerProvisioning {
+			modelPath := h.Config.WorkerProvisioning[i].ModelPath
+			count, ok := mapToProvision[modelPath]
+			if !ok {
+				continue
+			}
+			if count == 0 {
+				delete(mapToProvision, modelPath)
+				continue
+			}
+			provisionQueue = append(provisionQueue, modelPath)
+			mapToProvision[modelPath] = mapToProvision[modelPath] - 1
+		}
+	}
+
+	// Provision workers
+	wg := new(sync.WaitGroup)
+	for i := 0; i < len(provisionQueue) && i < poolSize; i++ {
+		modelPath := provisionQueue[i]
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
 			workerName := namesgenerator.GenerateWorkerName(modelPath, "provision")
 
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
 			h.cacheProvisioning.mu.Unlock()
 
-			if err := h.ProvisionWorker(ctx, model, workerName); err != nil {
+			if err := h.ProvisionWorker(ctx, mapModels[modelPath], workerName); err != nil {
 				ctx = log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
 			}
@@ -450,6 +501,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
 			h.cacheProvisioning.mu.Unlock()
-		}
+		}()
 	}
+	wg.Wait()
 }
