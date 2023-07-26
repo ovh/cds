@@ -56,6 +56,10 @@ func (c *Common) CDSClientV2() cdsclient.HatcheryServiceClient {
 	return c.Clientv2
 }
 
+func (c *Common) GetRegion() string {
+	return c.Region
+}
+
 // GetGoRoutines returns the goRoutines manager
 func (c *Common) GetGoRoutines() *sdk.GoRoutines {
 	return c.GoRoutines
@@ -164,7 +168,7 @@ func (c *Common) SigninV2(ctx context.Context, clientConfig cdsclient.ServiceCon
 		var err error
 		// The call below should return the sdk.Service from the signin
 		fmt.Printf("New Hatchery Client \n")
-		c.Clientv2, c.APIPublicKey, err = cdsclient.NewHatcheryServiceClient(ctx, clientConfig, registerPayload)
+		c.Clientv2, c.APIPublicKey, c.Region, err = cdsclient.NewHatcheryServiceClient(ctx, clientConfig, registerPayload)
 		if err != nil {
 			fmt.Printf("Waiting for CDS API (%v)...\n", err)
 		}
@@ -393,7 +397,6 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 		GelfServiceAddr:          cdnTCP,
 		GelfServiceAddrEnableTLS: cdnTCPEnableTLS,
 		InjectEnvVars:            envvars,
-		Region:                   h.Configuration().Provision.Region,
 		Basedir:                  h.Configuration().Provision.WorkerBasedir,
 		Log: cdslog.Conf{
 			GraylogHost:                h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
@@ -408,9 +411,11 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 
 	if sdk.IsValidUUID(spawnArgs.JobID) {
 		cfg.RunJobID = spawnArgs.JobID
+		cfg.Region = h.GetRegion()
 	} else {
 		jobID, _ := strconv.ParseInt(spawnArgs.JobID, 10, 64)
 		cfg.BookedJobID = jobID
+		cfg.Region = h.Configuration().Provision.Region
 	}
 	return cfg
 }

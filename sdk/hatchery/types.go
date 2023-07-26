@@ -158,6 +158,7 @@ type Interface interface {
 	Serve(ctx context.Context) error
 	GetPrivateKey() *rsa.PrivateKey
 	GetGoRoutines() *sdk.GoRoutines
+	GetRegion() string
 }
 
 type InterfaceWithModels interface {

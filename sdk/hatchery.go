@@ -23,6 +23,7 @@ type AuthConsumerHatcherySigninResponse struct {
 	APIURL   string   `json:"api_url"`
 	Token    string   `json:"token"`
 	Hatchery Hatchery `json:"hatchery"`
+	Region   string   `json:"region"`
 }
 
 type HatcheryStatus struct {
