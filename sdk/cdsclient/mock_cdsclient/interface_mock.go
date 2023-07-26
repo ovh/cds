@@ -7773,17 +7773,22 @@ func (mr *MockInterfaceMockRecorder) PluginGetBinaryInfos(name, os, arch interfa
 }
 
 // PluginImport mocks base method.
-func (m *MockInterface) PluginImport(arg0 *sdk.GRPCPlugin) error {
+func (m *MockInterface) PluginImport(arg0 *sdk.GRPCPlugin, arg1 ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PluginImport", arg0)
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PluginImport", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PluginImport indicates an expected call of PluginImport.
-func (mr *MockInterfaceMockRecorder) PluginImport(arg0 interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) PluginImport(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockInterface)(nil).PluginImport), arg0)
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockInterface)(nil).PluginImport), varargs...)
 }
 
 // PluginUpdate mocks base method.
@@ -12128,17 +12133,22 @@ func (m *MockGRPCPluginsV2Client) EXPECT() *MockGRPCPluginsV2ClientMockRecorder 
 }
 
 // PluginImport mocks base method.
-func (m *MockGRPCPluginsV2Client) PluginImport(arg0 *sdk.GRPCPlugin) error {
+func (m *MockGRPCPluginsV2Client) PluginImport(arg0 *sdk.GRPCPlugin, arg1 ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PluginImport", arg0)
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PluginImport", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PluginImport indicates an expected call of PluginImport.
-func (mr *MockGRPCPluginsV2ClientMockRecorder) PluginImport(arg0 interface{}) *gomock.Call {
+func (mr *MockGRPCPluginsV2ClientMockRecorder) PluginImport(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockGRPCPluginsV2Client)(nil).PluginImport), arg0)
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginImport", reflect.TypeOf((*MockGRPCPluginsV2Client)(nil).PluginImport), varargs...)
 }
 
 // MockProviderClient is a mock of ProviderClient interface.

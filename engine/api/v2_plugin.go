@@ -28,6 +28,7 @@ func (api *API) getPluginHandler() ([]service.RbacChecker, service.Handler) {
 func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.globalPluginManage),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			force := service.FormBool(r, "force")
 			var p sdk.GRPCPlugin
 			db := api.mustDB()
 			if err := service.UnmarshalBody(r, &p); err != nil {
@@ -44,8 +45,20 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 			}
 			defer tx.Rollback() //nolint
 
-			if err := plugin.Insert(tx, &p); err != nil {
-				return sdk.WrapError(err, "unable to insert plugin")
+			oldP, err := plugin.LoadByName(ctx, db, p.Name)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) && force {
+				if err := plugin.Insert(tx, &p); err != nil {
+					return sdk.WrapError(err, "unable to insert plugin")
+				}
+			} else {
+				p.ID = oldP.ID
+				if err := plugin.Update(tx, &p); err != nil {
+					return sdk.WrapError(err, "unable to insert plugin")
+				}
 			}
 
 			if err := tx.Commit(); err != nil {

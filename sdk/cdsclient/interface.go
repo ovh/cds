@@ -549,7 +549,7 @@ type GRPCPluginsClient interface {
 }
 
 type GRPCPluginsV2Client interface {
-	PluginImport(*sdk.GRPCPlugin) error
+	PluginImport(*sdk.GRPCPlugin, ...RequestModifier) error
 }
 
 /*
