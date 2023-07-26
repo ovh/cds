@@ -717,6 +717,18 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		// Push git properties as artifact properties
 		props := utils.NewProperties()
 		signedProps := utils.NewProperties()
+
+		props.AddProperty("cds.project", wr.Workflow.ProjectKey)
+		signedProps.AddProperty("cds.project", wr.Workflow.ProjectKey)
+		props.AddProperty("cds.workflow", wr.Workflow.Name)
+		signedProps.AddProperty("cds.workflow", wr.Workflow.Name)
+		if wr.Version != nil {
+			props.AddProperty("cds.version", *wr.Version)
+			signedProps.AddProperty("cds.version", *wr.Version)
+		}
+		props.AddProperty("cds.run", strconv.FormatInt(wr.Number, 10))
+		signedProps.AddProperty("cds.run", strconv.FormatInt(wr.Number, 10))
+
 		if gitUrl != "" {
 			props.AddProperty("git.url", gitUrl)
 		}
