@@ -32,18 +32,15 @@ type TestWorker struct {
 }
 
 func (w *TestWorker) ClientV2() cdsclient.V2WorkerInterface {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (w *TestWorker) PluginGet(pluginName string) (*sdk.GRPCPlugin, error) {
-	//TODO implement me
-	panic("implement me")
+	return nil, nil
 }
 
 func (w *TestWorker) PluginGetBinary(name, os, arch string, wr io.Writer) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (w *TestWorker) GetJobIdentifiers() (int64, int64, int64) {

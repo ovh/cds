@@ -33,7 +33,7 @@ func (api *API) getCheckSessionProjectAccessHandler() ([]service.RbacChecker, se
 
 			switch consumer.Type {
 			case sdk.ConsumerHatchery:
-				return sdk.WrapError(sdk.ErrUnauthorized, "hatchery consumer cannot access proejct %s", checkRequest.ProjectKey)
+				return sdk.WrapError(sdk.ErrUnauthorized, "hatchery consumer cannot access project %s", checkRequest.ProjectKey)
 			default:
 				userConsumer, err := authentication.LoadUserConsumerByID(ctx, api.mustDB(), session.ConsumerID)
 				if err != nil {

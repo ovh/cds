@@ -95,7 +95,7 @@ func LoadRunJobByID(ctx context.Context, db gorp.SqlExecutor, jobRunID string) (
 }
 
 func LoadRunJobByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jobName string) (*sdk.V2WorkflowRunJob, error) {
-	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByID")
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByName")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND job_id = $2").Args(wrID, jobName)
 	return getRunJob(ctx, db, query)
