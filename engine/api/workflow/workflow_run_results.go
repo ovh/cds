@@ -709,7 +709,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			continue
 		}
 
-		if sdk.MapHasKeys(existingProperties, "git.url", "git.hash", "cds.signature") {
+		if sdk.MapHasKeys(existingProperties, "cds.signature") {
 			log.Debug(ctx, "artifact is already signed by cds")
 			continue
 		}
@@ -717,9 +717,13 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		// Push git properties as artifact properties
 		props := utils.NewProperties()
 		signedProps := utils.NewProperties()
-		props.AddProperty("git.url", gitUrl)
+		if gitUrl != "" {
+			props.AddProperty("git.url", gitUrl)
+		}
 		signedProps.AddProperty("git.url", gitUrl)
-		props.AddProperty("git.hash", gitHash)
+		if gitHash != "" {
+			props.AddProperty("git.hash", gitHash)
+		}
 		signedProps.AddProperty("git.hash", gitHash)
 		if gitBranch != "" {
 			props.AddProperty("git.branch", gitBranch)
@@ -736,17 +740,17 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		signedProps.AddProperty("sha256", fi.Checksums.Sha256)
 
 		// Sign the properties with main CDS authentication key pair
-		signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
+		signature, err := authentication.SignJWS(signedProps.ToMap(), time.Now(), 0)
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
 			continue
 		}
 
-		log.Info(ctx, "artifact %s%s signature: %s", artifact.RepoName, artifact.Path, signature)
+		log.Info(ctx, "artifact %s%s signature: %s", fi.Repo, artifact.Path, signature)
 
 		props.AddProperty("cds.signature", signature)
-		if err := artifactClient.SetProperties(artifact.RepoName, artifact.Path, props); err != nil {
+		if err := artifactClient.SetProperties(fi.Repo, artifact.Path, props); err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
 			continue
