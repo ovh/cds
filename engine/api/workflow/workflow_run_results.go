@@ -647,7 +647,6 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		return handleSyncError(sdk.Errorf("unable to prepare build info for artifact manager"))
 	}
 
-	log.Debug(ctx, "artifact manager build info request: %+v", buildInfoRequest)
 	log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
 
 	// Instanciate artifactory client
