@@ -94,7 +94,9 @@ func (c *Client) GetProperties(repoName string, filePath string) (map[string][]s
 	type PropertiesResponse struct {
 		Properties map[string][]string `json:"properties"`
 	}
-
+	if !strings.HasPrefix(filePath, "/") {
+		filePath = "/" + filePath
+	}
 	var rp = services.NewCreateReplicationService(c.Asm.Client())
 	rp.ArtDetails = c.Asm.GetConfig().GetServiceDetails()
 	var httpDetails = rp.ArtDetails.CreateHttpClientDetails()
