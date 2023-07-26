@@ -694,6 +694,8 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			continue
 		}
 
+		localRepository := fmt.Sprintf("%s-%s", artifact.RepoName, result.DataSync.LatestPromotionOrRelease().ToMaturity)
+
 		fi, err := artifactClient.GetFileInfo(artifact.RepoName, artifact.Path)
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
@@ -701,7 +703,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			continue
 		}
 
-		existingProperties, err := artifactClient.GetProperties(artifact.RepoName, artifact.Path)
+		existingProperties, err := artifactClient.GetProperties(localRepository, artifact.Path)
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
@@ -758,10 +760,10 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			continue
 		}
 
-		log.Info(ctx, "artifact %s%s signature: %s", fi.Repo, artifact.Path, signature)
+		log.Info(ctx, "artifact %s%s signature: %s", localRepository, artifact.Path, signature)
 
 		props.AddProperty("cds.signature", signature)
-		if err := artifactClient.SetProperties(fi.Repo, artifact.Path, props); err != nil {
+		if err := artifactClient.SetProperties(localRepository, artifact.Path, props); err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
 			continue
