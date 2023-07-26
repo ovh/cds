@@ -143,6 +143,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		WorkerName:   namesgenerator.GenerateWorkerName(modelName, ""),
 		Model:        j.model,
 		JobID:        j.id,
+		Region:       j.region,
 		NodeRunID:    j.workflowNodeRunID,
 		Requirements: j.requirements,
 		HatcheryName: h.Service().Name,

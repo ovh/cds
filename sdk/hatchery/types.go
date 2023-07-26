@@ -121,6 +121,7 @@ type SpawnArguments struct {
 	WorkflowName string                       `json:"workflow_name"`
 	WorkflowID   int64                        `json:"workflow_id"`
 	RunID        string                       `json:"run_id"`
+	Region       string                       `json:"region"`
 }
 
 func (s *SpawnArguments) ModelName() string {
