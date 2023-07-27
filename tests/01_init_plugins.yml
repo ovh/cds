@@ -3,7 +3,7 @@ name: plugin initialization
 testcases:
   - name: install script plugin
     steps:
-      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/script.yml
-      - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add script {{.dist}}/script-linux-amd64.yml {{.dist}}/script-linux-amd64
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/plugin-script.yml
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add script {{.dist}}/plugin-script-linux-amd64.yml {{.dist}}/plugin-script-linux-amd64
 
 
