@@ -123,6 +123,20 @@ func (mr *MockInterfaceMockRecorder) GetPrivateKey() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateKey", reflect.TypeOf((*MockInterface)(nil).GetPrivateKey))
 }
 
+// GetRegion mocks base method.
+func (m *MockInterface) GetRegion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRegion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetRegion indicates an expected call of GetRegion.
+func (mr *MockInterfaceMockRecorder) GetRegion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegion", reflect.TypeOf((*MockInterface)(nil).GetRegion))
+}
+
 // InitHatchery mocks base method.
 func (m *MockInterface) InitHatchery(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -327,6 +341,20 @@ func (m *MockInterfaceWithModels) GetPrivateKey() *rsa.PrivateKey {
 func (mr *MockInterfaceWithModelsMockRecorder) GetPrivateKey() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateKey", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetPrivateKey))
+}
+
+// GetRegion mocks base method.
+func (m *MockInterfaceWithModels) GetRegion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRegion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetRegion indicates an expected call of GetRegion.
+func (mr *MockInterfaceWithModelsMockRecorder) GetRegion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegion", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetRegion))
 }
 
 // InitHatchery mocks base method.

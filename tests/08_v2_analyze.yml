@@ -13,10 +13,7 @@ testcases:
   - script: gpg --import ./fixtures/gpg-ADMIN/key.priv
   - script: gpg --import ./fixtures/gpg-ADMIN/key.pub
   - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg-ADMIN/key.pub.json'
-  - script: export HATCHERY_NAME={{.hatchery.name}} && envsubst < ./fixtures/rbac/rbac_hatchery.yml > ./fixtures/rbac/rbac_hatchery_replaced.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region add default
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_admin.yml --force
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_hatchery_replaced.yml --force
 
 - name: commitStep
   steps:
@@ -104,9 +101,6 @@ testcases:
 - name: delete rbac on project
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac delete perm-test --force
-      assertions:
-        - result.code ShouldEqual 0
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac delete perm-hatchery-test --force
       assertions:
         - result.code ShouldEqual 0
 - name: delete repository on project

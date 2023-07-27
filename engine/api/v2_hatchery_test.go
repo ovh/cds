@@ -67,8 +67,8 @@ func Test_hatcheryHeartbeat(t *testing.T) {
 func Test_crudHatchery(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	db.Exec("DELETE FROM hatchery")
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM hatchery")
 
 	u, pass := assets.InsertLambdaUser(t, db)
 
@@ -107,6 +107,24 @@ global:
 	require.NoError(t, json.Unmarshal(wGet.Body.Bytes(), &hatcheryGet))
 	require.Equal(t, hatcheryGet.Name, hatcheryGet.Name)
 
+	// Create hatchery permissions
+	reg := sdk.Region{Name: sdk.RandomString(10)}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	// Add RBAC
+	r1 := fmt.Sprintf(`name: perm-hatchery-only
+hatcheries:
+  - role: %s
+    hatchery: %s
+    region: %s
+`, sdk.HatcheryRoleSpawn, hatcheryGet.Name, reg.Name)
+	var rbac1 sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(r1), &rbac1))
+	rLoader := NewRBACLoader(db)
+	rLoader.FillRBACWithIDs(context.TODO(), &rbac1)
+
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rbac1))
+
 	// Login with hatchery
 	uriLogin := api.Router.GetRouteV2("POST", api.postAuthHatcherySigninHandler, nil)
 	test.NotEmpty(t, uriLogin)
@@ -124,23 +142,6 @@ global:
 	var authSigninResponse sdk.AuthConsumerHatcherySigninResponse
 	require.NoError(t, json.Unmarshal(wSignin.Body.Bytes(), &authSigninResponse))
 	require.NotEmpty(t, authSigninResponse.Token)
-
-	reg := sdk.Region{Name: sdk.RandomString(10)}
-	require.NoError(t, region.Insert(context.TODO(), db, &reg))
-
-	// Add RBAC
-	r1 := fmt.Sprintf(`name: perm-hatchery-only
-hatcheries:
-  - role: %s
-    hatchery: %s
-    region: %s
-`, sdk.HatcheryRoleSpawn, hatcheryGet.Name, reg.Name)
-	var rbac1 sdk.RBAC
-	require.NoError(t, yaml.Unmarshal([]byte(r1), &rbac1))
-	rLoader := NewRBACLoader(db)
-	rLoader.FillRBACWithIDs(context.TODO(), &rbac1)
-
-	require.NoError(t, rbac.Insert(context.TODO(), db, &rbac1))
 
 	// Then Delete hatchery
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteHatcheryHandler, map[string]string{"hatcheryIdentifier": h.Name})

@@ -15,3 +15,8 @@ testcases:
           hatcheryToken:
             from: result.systemoutjson.token
       - script: echo "{{.hatcheryToken}}" > tmp.hatcheryv2.token
+  - name: createHatcheryPermission
+    steps:
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental region add default
+      - script: export HATCHERY_NAME={{.hatchery.name}} && envsubst < ./fixtures/rbac/rbac_hatchery.yml > ./fixtures/rbac/rbac_hatchery_replaced.yml
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_hatchery_replaced.yml --force
