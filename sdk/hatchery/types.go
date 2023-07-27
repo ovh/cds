@@ -121,6 +121,7 @@ type SpawnArguments struct {
 	WorkflowName string                       `json:"workflow_name"`
 	WorkflowID   int64                        `json:"workflow_id"`
 	RunID        string                       `json:"run_id"`
+	Region       string                       `json:"region"`
 }
 
 func (s *SpawnArguments) ModelName() string {
@@ -157,6 +158,7 @@ type Interface interface {
 	Serve(ctx context.Context) error
 	GetPrivateKey() *rsa.PrivateKey
 	GetGoRoutines() *sdk.GoRoutines
+	GetRegion() string
 }
 
 type InterfaceWithModels interface {

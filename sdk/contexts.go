@@ -136,3 +136,26 @@ func (jro *JobResultOutput) Scan(src interface{}) error {
 	}
 	return WrapError(JSONUnmarshal([]byte(source), jro), "cannot unmarshal JobResultOutput")
 }
+
+type StepsContext map[string]StepContext
+type StepContext struct {
+	Conclusion string          `json:"conclusion"` // result of a step after 'continue-on-error'
+	Outcome    string          `json:"outcome"`    // result of a step before 'continue-on-error'
+	Outputs    JobResultOutput `json:"outputs"`
+}
+
+func (sc StepsContext) Value() (driver.Value, error) {
+	j, err := json.Marshal(sc)
+	return j, WrapError(err, "cannot marshal StepsContext")
+}
+
+func (sc *StepsContext) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal([]byte(source), sc), "cannot unmarshal StepsContext")
+}

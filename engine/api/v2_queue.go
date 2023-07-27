@@ -27,6 +27,35 @@ const (
 	JobRunHatcheryTakeKey = "workflow:jobrun:hatchery:take"
 )
 
+func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler) {
+	return []service.RbacChecker{api.jobRunUpdate}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		jobRunID := vars["runJobID"]
+
+		var stepsContext sdk.StepsContext
+		if err := service.UnmarshalBody(r, &stepsContext); err != nil {
+			return err
+		}
+
+		runjob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+		if err != nil {
+			return err
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		runjob.StepsContext = stepsContext
+		if err := workflow_v2.UpdateJobRun(ctx, tx, runjob); err != nil {
+			return err
+		}
+
+		return sdk.WithStack(tx.Commit())
+	}
+}
+
 func (api *API) postJobRunInfoHandler() ([]service.RbacChecker, service.Handler) {
 	return []service.RbacChecker{api.jobRunUpdate}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

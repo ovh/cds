@@ -1,5 +1,8 @@
 name: perm-test
 projects:
+  - role: read
+    projects: [ ITCLIPRJVCS ]
+    users: [ cds.integration.tests.rw ]
   - role: manage
     projects: [ITCLIPRJVCS]
     users: [cds.integration.tests.rw]
@@ -12,6 +15,16 @@ projects:
   - role: manage-workflow
     projects: [ITCLIPRJVCS]
     users: [cds.integration.tests.rw]
+workflows:
+  - role: trigger
+    all_users: true
+    all_workflows: true
+    project: ITCLIPRJVCS
+regions:
+  - role: execute
+    all_users: true
+    organizations: [default]
+    region: default
 globals:
   - role: manage-permission
     users: [cds.integration.tests.rw]

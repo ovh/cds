@@ -11,6 +11,8 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/hatchery"
 	hatch "github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -38,6 +40,19 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 			}
 
 			h, err := hatch.LoadHatcheryByID(ctx, api.mustDB(), consumer.AuthConsumerHatchery.HatcheryID)
+			if err != nil {
+				return err
+			}
+
+			rbacHatchery, err := rbac.LoadRBACHatcheryByHatcheryID(ctx, api.mustDB(), h.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return sdk.WrapError(sdk.ErrForbidden, "hatchery need to be granted on a region")
+			}
+
+			reg, err := region.LoadRegionByID(ctx, api.mustDB(), rbacHatchery.RegionID)
 			if err != nil {
 				return err
 			}
@@ -104,6 +119,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 				Hatchery: *h,
 				APIURL:   api.Config.URL.API,
 				Uptodate: req.Version == sdk.VERSION,
+				Region:   reg.Name,
 			}
 
 			if err := api.hatcheryRegister(ctx, tx, *consumer, session.ID, h, req); err != nil {

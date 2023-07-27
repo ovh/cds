@@ -178,12 +178,12 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.Workflow.Jobs[jobID] = j
 	}
 
+	run.WorkflowData.Actions = make(map[string]sdk.V2Action)
 	for k, v := range wref.actionsCache {
-		run.WorkflowData.Actions = make(map[string]sdk.V2Action)
 		run.WorkflowData.Actions[k] = v
 	}
+	run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
 	for k, v := range wref.workerModelCache {
-		run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
 		run.WorkflowData.WorkerModels[k] = v
 	}
 
@@ -394,9 +394,17 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 	defer end()
 	for i := range steps {
 		step := &steps[i]
-		if step.Uses == "" || !strings.HasPrefix(step.Uses, "actions/") {
+		if step.Uses == "" {
 			continue
 		}
+
+		if !strings.HasPrefix(step.Uses, "actions/") && !strings.HasPrefix(step.Uses, "./.cds/actions") {
+			msg := sdk.V2WorkflowRunInfo{
+				Message: fmt.Sprintf("Invalid action %s. Missing prefix 'actions/' or './cds/actions/", step.Uses),
+			}
+			return &msg, nil
+		}
+
 		actionName := strings.TrimPrefix(step.Uses, "actions/")
 		completeName, msg, err := wref.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
 		if msg != nil || err != nil {

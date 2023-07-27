@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
@@ -26,6 +27,10 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 
 		wk := getWorker(ctx)
 		wrkWithSecret, err := worker_v2.LoadByID(ctx, api.mustDB(), wk.ID, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+		workerKey := wrkWithSecret.PrivateKey
 
 		if wrkWithSecret.Status != sdk.StatusWaiting {
 			return sdk.WithStack(sdk.ErrForbidden)
@@ -41,6 +46,11 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		}
 
 		run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
+		if err != nil {
+			return err
+		}
+
+		contexts, err := computeRunJobContext(ctx, api.mustDB(), *run, *jobRun, *wk)
 		if err != nil {
 			return err
 		}
@@ -71,10 +81,36 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		takeResponse := sdk.V2TakeJobResponse{
 			RunJob:        *jobRun,
 			AsCodeActions: run.WorkflowData.Actions,
-			SigningKey:    base64.StdEncoding.EncodeToString(wrkWithSecret.PrivateKey),
+			SigningKey:    base64.StdEncoding.EncodeToString(workerKey),
+			Contexts:      *contexts,
 		}
 		return service.WriteJSON(w, takeResponse, http.StatusOK)
 	}
+}
+
+func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, error) {
+	contexts := &sdk.WorkflowRunJobsContext{}
+	contexts.CDS = run.Contexts.CDS
+	contexts.CDS.Job = jobRun.JobID
+	contexts.CDS.Stage = jobRun.Job.Stage
+
+	contexts.Vars = run.Contexts.Vars
+
+	contexts.Git = run.Contexts.Git
+
+	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped})
+	if err != nil {
+		return nil, err
+	}
+	contexts.Jobs = sdk.JobsResultContext{}
+	for _, rj := range runJobs {
+		jobResult := sdk.JobResultContext{
+			Result:  rj.Status,
+			Outputs: rj.Outputs,
+		}
+		contexts.Jobs[rj.JobID] = jobResult
+	}
+	return contexts, nil
 }
 
 func (api *API) postV2RefreshWorkerHandler() ([]service.RbacChecker, service.Handler) {

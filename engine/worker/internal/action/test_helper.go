@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"testing"
@@ -28,6 +29,18 @@ type TestWorker struct {
 	client           cdsclient.WorkerInterface
 	Params           []sdk.Parameter
 	logBuffer        bytes.Buffer
+}
+
+func (w *TestWorker) ClientV2() cdsclient.V2WorkerInterface {
+	return nil
+}
+
+func (w *TestWorker) PluginGet(pluginName string) (*sdk.GRPCPlugin, error) {
+	return nil, nil
+}
+
+func (w *TestWorker) PluginGetBinary(name, os, arch string, wr io.Writer) error {
+	return nil
 }
 
 func (w *TestWorker) GetJobIdentifiers() (int64, int64, int64) {

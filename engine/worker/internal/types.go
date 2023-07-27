@@ -4,16 +4,17 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"gopkg.in/square/go-jose.v2"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -47,10 +48,15 @@ type CurrentWorker struct {
 	stepLogLine   int64
 	httpPort      int32
 	signer        jose.Signer
+	actionPlugin  map[string]*sdk.GRPCPlugin
+	actions       map[string]sdk.V2Action
 	currentJobV2  struct {
-		runJob  sdk.V2WorkflowRunJob
-		secrets map[string]string
-		actions map[string]sdk.V2Action
+		runJob           *sdk.V2WorkflowRunJob
+		secrets          map[string]string
+		runJobContext    sdk.WorkflowRunJobsContext
+		context          context.Context
+		currentStepIndex int
+		currentStepName  string
 	}
 	currentJob struct {
 		wJob             *sdk.WorkflowNodeJobRun
@@ -65,8 +71,6 @@ type CurrentWorker struct {
 		runNumber        int64
 		nodeRunName      string
 		features         map[sdk.FeatureName]bool
-		ascodeAction     map[string]sdk.V2Action
-		actionPlugin     map[string]*sdk.GRPCPlugin
 		currentStepIndex int
 		currentStepName  string
 		envFromHooks     map[string]string
@@ -107,7 +111,10 @@ func (wk *CurrentWorker) GetJobIdentifiers() (int64, int64, int64) {
 }
 
 func (wk *CurrentWorker) GetContext() context.Context {
-	return wk.currentJob.context
+	if wk.currentJob.context != nil {
+		return wk.currentJob.context
+	}
+	return wk.currentJobV2.context
 }
 
 func (wk *CurrentWorker) SetContext(c context.Context) {
@@ -160,10 +167,10 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 }
 
 func (wk *CurrentWorker) GetActionPlugin(pluginName string) *sdk.GRPCPlugin {
-	return wk.currentJob.actionPlugin[pluginName]
+	return wk.actionPlugin[pluginName]
 }
 func (wk *CurrentWorker) SetActionPlugin(p *sdk.GRPCPlugin) {
-	wk.currentJob.actionPlugin[p.Name] = p
+	wk.actionPlugin[p.Name] = p
 }
 
 func (wk *CurrentWorker) GetIntegrationPlugin(pluginType string) *sdk.GRPCPlugin {
@@ -221,9 +228,6 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 	var ts = time.Now().UnixNano()
 	var res cdslog.Message
 
-	if wk.currentJob.wJob == nil {
-		return res, "", sdk.WithStack(fmt.Errorf("job is nil"))
-	}
 	if wk.blur == nil {
 		return res, "", sdk.WithStack(fmt.Errorf("blur is nil"))
 	}
@@ -243,27 +247,48 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 	stepOrder, _ := workerruntime.StepOrder(ctx)
 	stepName, _ := workerruntime.StepName(ctx)
 
-	res.Signature = cdn.Signature{
-		Worker: &cdn.SignatureWorker{
-			WorkerID:   wk.id,
-			WorkerName: wk.Name(),
-			StepOrder:  int64(stepOrder),
-			StepName:   stepName,
-		},
-		ProjectKey:   wk.currentJob.projectKey,
-		JobID:        wk.currentJob.wJob.ID,
-		NodeRunID:    wk.currentJob.wJob.WorkflowNodeRunID,
-		Timestamp:    ts,
-		WorkflowID:   wk.currentJob.workflowID,
-		WorkflowName: wk.currentJob.workflowName,
-		NodeRunName:  wk.currentJob.nodeRunName,
-		RunID:        wk.currentJob.runID,
-		RunNumber:    wk.currentJob.runNumber,
-		JobName:      wk.currentJob.wJob.Job.Action.Name,
+	switch {
+	case wk.currentJob.wJob != nil:
+		res.Signature = cdn.Signature{
+			Worker: &cdn.SignatureWorker{
+				WorkerID:   wk.id,
+				WorkerName: wk.Name(),
+				StepOrder:  int64(stepOrder),
+				StepName:   stepName,
+			},
+			ProjectKey:   wk.currentJob.projectKey,
+			JobID:        wk.currentJob.wJob.ID,
+			NodeRunID:    wk.currentJob.wJob.WorkflowNodeRunID,
+			Timestamp:    ts,
+			WorkflowID:   wk.currentJob.workflowID,
+			WorkflowName: wk.currentJob.workflowName,
+			NodeRunName:  wk.currentJob.nodeRunName,
+			RunID:        wk.currentJob.runID,
+			RunNumber:    wk.currentJob.runNumber,
+			JobName:      wk.currentJob.wJob.Job.Action.Name,
+		}
+	case wk.currentJobV2.runJob != nil:
+		res.Signature = cdn.Signature{
+			Worker: &cdn.SignatureWorker{
+				WorkerID:   wk.id,
+				WorkerName: wk.Name(),
+				StepOrder:  int64(stepOrder),
+				StepName:   stepName,
+			},
+			ProjectKey:    wk.currentJobV2.runJob.ProjectKey,
+			RunJobID:      wk.currentJobV2.runJob.ID,
+			Timestamp:     ts,
+			WorkflowName:  wk.currentJobV2.runJob.WorkflowName,
+			WorkflowRunID: wk.currentJobV2.runJob.WorkflowRunID,
+			RunNumber:     wk.currentJobV2.runJob.RunNumber,
+			RunAttempt:    wk.currentJobV2.runJob.RunAttempt,
+			JobName:       wk.currentJobV2.runJob.JobID,
+		}
+	default:
+		return res, "", sdk.WithStack(fmt.Errorf("job is nil"))
 	}
 
 	res.Value = s
-
 	signature, err := jws.Sign(wk.signer, res.Signature)
 	if err != nil {
 		return res, "", sdk.WrapError(err, "cannot sign log message")
@@ -286,6 +311,20 @@ func (wk *CurrentWorker) Client() cdsclient.WorkerInterface {
 
 func (wk *CurrentWorker) BaseDir() afero.Fs {
 	return wk.basedir
+}
+
+func (wk *CurrentWorker) PluginGetBinary(name, os, arch string, w io.Writer) error {
+	if wk.Client() != nil {
+		return wk.Client().PluginGetBinary(name, os, arch, w)
+	}
+	return wk.ClientV2().PluginGetBinary(name, os, arch, w)
+}
+
+func (wk *CurrentWorker) PluginGet(pluginName string) (*sdk.GRPCPlugin, error) {
+	if wk.Client() != nil {
+		return wk.Client().PluginsGet(pluginName)
+	}
+	return wk.ClientV2().PluginsGet(pluginName)
 }
 
 func (wk *CurrentWorker) Environ() []string {

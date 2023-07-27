@@ -98,7 +98,7 @@ func Create(ctx context.Context, h Interface) error {
 		h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
 			log.Debug(ctx, "starting v2 queue polling")
 
-			if err := h.CDSClientV2().V2QueuePolling(ctx, h.Configuration().Provision.Region, h.GetGoRoutines(), v2Runjobs, errs, 20*time.Second); err != nil {
+			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.GetGoRoutines(), v2Runjobs, errs, 20*time.Second); err != nil {
 				log.Error(ctx, "V2 Queues polling stopped: %v", err)
 			}
 		})

@@ -123,6 +123,10 @@ func CleanURLParameter(u string) string {
 		u = "run-number"
 	case "regionName":
 		u = "region-name"
+	case "workerName":
+		u = "worker-name"
+	case "jobName":
+		u = "job-name"
 	}
 	return u
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -100,7 +101,17 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 		}
 	}
 
-	hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryStartDockerPull, h.Name(), cArgs.image))
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
+			Time:    time.Now(),
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Hatchery %s starts docker pull %s...", h.Name(), cArgs.image),
+		}); err != nil {
+			log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)
+		}
+	} else {
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryStartDockerPull, h.Name(), cArgs.image))
+	}
 
 	_, next := telemetry.Span(ctx, "swarm.dockerClient.pullImage", telemetry.Tag("image", cArgs.image))
 	if err := h.pullImage(dockerClient,
@@ -109,13 +120,33 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 		spawnArgs.Model); err != nil {
 		next()
 
-		spawnMsg := sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPullErr, h.Name(), cArgs.image, sdk.Cause(err))
-		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, spawnMsg)
+		if sdk.IsValidUUID(spawnArgs.JobID) {
+			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
+				Time:    time.Now(),
+				Level:   sdk.WorkflowRunInfoLevelInfo,
+				Message: fmt.Sprintf("⚠ Hatchery %s - docker pull %s done with error: %v", h.Name(), cArgs.image, sdk.Cause(err)),
+			}); err != nil {
+				log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)
+			}
+		} else {
+			spawnMsg := sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPullErr, h.Name(), cArgs.image, sdk.Cause(err))
+			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, spawnMsg)
+		}
 		return sdk.WrapError(err, "unable to pull image %s on %s", cArgs.image, dockerClient.name)
 	}
 	next()
 
-	hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPull, h.Name(), cArgs.image))
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
+			Time:    time.Now(),
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Hatchery %s docker pull %s done", h.Name(), cArgs.image),
+		}); err != nil {
+			log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)
+		}
+	} else {
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPull, h.Name(), cArgs.image))
+	}
 
 	_, next = telemetry.Span(ctx, "swarm.dockerClient.ContainerCreate", telemetry.Tag(telemetry.TagWorker, cArgs.name), telemetry.Tag("network", fmt.Sprintf("%v", networkingConfig)))
 	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, nil, name)

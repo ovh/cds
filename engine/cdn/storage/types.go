@@ -273,7 +273,7 @@ func (x RunningStorageUnits) LogsBuffer() LogBufferUnit {
 
 func (x RunningStorageUnits) GetBuffer(bufferType sdk.CDNItemType) BufferUnit {
 	switch bufferType {
-	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog:
+	case sdk.CDNTypeItemStepLog, sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemJobStepLog:
 		return x.LogsBuffer()
 	default:
 		return x.FileBuffer()
@@ -313,7 +313,7 @@ func (x *RunningStorageUnits) FilterItemUnitFromBuffer(ius []sdk.CDNItemUnit) []
 
 func (x *RunningStorageUnits) FilterItemUnitReaderByType(ius []sdk.CDNItemUnit) []sdk.CDNItemUnit {
 	// Remove cds backend from getting something that is not a log
-	if ius[0].Type != sdk.CDNTypeItemStepLog && ius[0].Type != sdk.CDNTypeItemServiceLog {
+	if ius[0].Type != sdk.CDNTypeItemStepLog && ius[0].Type != sdk.CDNTypeItemServiceLog && ius[0].Type != sdk.CDNTypeItemJobStepLog {
 		var cdsBackendID string
 		for _, unit := range x.Storages {
 			if unit.GetDriverName() == "cds" {

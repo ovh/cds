@@ -26,9 +26,16 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	w.currentJobV2.context = ctx
+	w.currentJobV2.runJob = &info.RunJob
+	w.actions = info.AsCodeActions
+	w.currentJobV2.runJobContext = info.Contexts
+	w.actionPlugin = make(map[string]*sdk.GRPCPlugin)
 
-	w.currentJobV2.runJob = info.RunJob
-	w.currentJobV2.actions = info.AsCodeActions
+	// setup blur
+	if err := w.SetSecrets(nil); err != nil {
+		return err
+	}
 
 	secretKey := make([]byte, 32)
 	if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {
@@ -95,17 +102,17 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 		log.Info(ctx, "takeWorkflowJob> Sending build result...")
 		lasterr = w.ClientV2().V2QueueJobResult(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, res)
 		if lasterr == nil {
-			log.Info(ctx, "takeWorkflowJob> Send build result OK")
+			log.Info(ctx, "takeWorkflowJob> Build result sent")
 			return nil
 		}
 		if ctx.Err() != nil {
 			log.Info(ctx, "takeWorkflowJob> Cannot send build result: HTTP %v - worker cancelled - giving up", lasterr)
 			return nil
 		}
-		log.Warn(ctx, "takeWorkflowJob> Cannot send build result for job id %d: HTTP %v - try: %d - new try in 15s", w.currentJobV2.runJob.ID, lasterr, try)
+		log.Warn(ctx, "takeWorkflowJob> Cannot send build result for job id %s: HTTP %v - try: %d - new try in 15s", w.currentJobV2.runJob.ID, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
-	log.Error(ctx, "takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", w.currentJobV2.runJob.ID)
+	log.Error(ctx, "takeWorkflowJob> Could not send built result 10 times, giving up. job: %s", w.currentJobV2.runJob.ID)
 	if lasterr == nil {
 		lasterr = err
 	}

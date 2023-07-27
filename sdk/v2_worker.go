@@ -22,7 +22,8 @@ type V2Worker struct {
 }
 
 type V2TakeJobResponse struct {
-	RunJob        V2WorkflowRunJob    `json:"run_job"`
-	AsCodeActions map[string]V2Action `json:"actions"`
-	SigningKey    string              `json:"signing_key"`
+	RunJob        V2WorkflowRunJob       `json:"run_job"`
+	AsCodeActions map[string]V2Action    `json:"actions"`
+	SigningKey    string                 `json:"signing_key"`
+	Contexts      WorkflowRunJobsContext `json:"contexts"`
 }

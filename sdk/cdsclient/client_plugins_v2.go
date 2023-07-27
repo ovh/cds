@@ -14,7 +14,7 @@ func (c client) PluginsGet(name string) (*sdk.GRPCPlugin, error) {
 	return &res, nil
 }
 
-func (c client) PluginImport(p *sdk.GRPCPlugin) error {
-	_, err := c.PostJSON(context.Background(), "/v2/plugin", p, p)
+func (c client) PluginImport(p *sdk.GRPCPlugin, mods ...RequestModifier) error {
+	_, err := c.PostJSON(context.Background(), "/v2/plugin", p, p, mods...)
 	return err
 }

@@ -21,10 +21,19 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 	// Browse all messages
 	for _, hm := range hms {
 		var itemType sdk.CDNItemType
-		if hm.Signature.Service != nil {
-			itemType = sdk.CDNTypeItemServiceLog
+		if hm.Signature.JobID != 0 {
+			if hm.Signature.Service != nil {
+				itemType = sdk.CDNTypeItemServiceLog
+			} else {
+				itemType = sdk.CDNTypeItemStepLog
+			}
 		} else {
-			itemType = sdk.CDNTypeItemStepLog
+			// FIXME manage new service log
+			if hm.Signature.Service != nil {
+				itemType = sdk.CDNTypeItemServiceLog
+			} else {
+				itemType = sdk.CDNTypeItemJobStepLog
+			}
 		}
 		currentLog := buildMessage(hm)
 		cpt := 0

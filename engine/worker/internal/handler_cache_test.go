@@ -57,12 +57,12 @@ func Test_cachePushPullHandler(t *testing.T) {
 	pushJobInfo := sdk.WorkflowNodeJobRunData{}
 	pushJobInfo.NodeJobRun.Job.Job.Action.Name = sdk.RandomString(10)
 
-	wdPushFile, wdPushAbs, err := wkPush.setupWorkingDirectory(ctxPush, pushJobInfo)
+	wdPushFile, wdPushAbs, err := wkPush.setupWorkingDirectory(ctxPush, pushJobInfo.NodeJobRun.Job.Job.Action.Name)
 	require.NoError(t, err)
 	ctxPush = workerruntime.SetWorkingDirectory(ctxPush, wdPushFile)
 	t.Logf("Setup push workspace at %s", wdPushFile.Name())
 
-	tdPushFile, _, err := wkPush.setupTmpDirectory(ctxPush, pushJobInfo)
+	tdPushFile, _, err := wkPush.setupTmpDirectory(ctxPush, pushJobInfo.NodeJobRun.Job.Job.Action.Name)
 	require.NoError(t, err)
 	ctxPush = workerruntime.SetTmpDirectory(ctxPush, tdPushFile)
 	t.Logf("Setup push tmp directory at %s", tdPushFile.Name())

@@ -64,6 +64,12 @@ func (c *CDNItem) UnmarshalJSON(data []byte) error {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
+	case CDNTypeItemJobStepLog:
+		var apiRef CDNLogAPIRefV2
+		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
+			return WithStack(err)
+		}
+		itemAlias.APIRef = &apiRef
 	case CDNTypeItemRunResult:
 		var apiRef CDNRunResultAPIRef
 		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
@@ -130,6 +136,23 @@ type CDNApiRef interface {
 	ToFilename() string
 }
 
+type CDNLogAPIRefV2 struct {
+	ProjectKey   string `json:"project_key"`
+	WorkflowName string `json:"workflow_name"`
+	RunID        string `json:"run_id"`
+	RunJobID     string `json:"run_job_id"`
+	RunJobName   string `json:"run_job_name"`
+	RunNumber    int64  `json:"run_number"`
+	RunAttempt   int64  `json:"run_attempt"`
+
+	// for workers
+	StepOrder int64  `json:"step_order"`
+	StepName  string `json:"step_name,omitempty"`
+
+	// for hatcheries
+	RequirementServiceName string `json:"service_name,omitempty"`
+}
+
 type CDNLogAPIRef struct {
 	ProjectKey     string `json:"project_key"`
 	WorkflowName   string `json:"workflow_name"`
@@ -176,6 +199,8 @@ func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
 		return NewCDNRunResultApiRef(signature), nil
 	case CDNTypeItemWorkerCache:
 		return NewCDNWorkerCacheApiRef(signature), nil
+	case CDNTypeItemJobStepLog:
+		return NewCDNLogApiRefV2(signature), nil
 	}
 	return nil, WrapError(ErrInvalidData, "item type unknown")
 }
@@ -202,6 +227,27 @@ func NewCDNRunResultApiRef(signature cdn.Signature) CDNApiRef {
 		ArtifactName:  signature.Worker.FileName,
 		Perm:          signature.Worker.FilePerm,
 		RunResultType: WorkflowRunResultType(signature.Worker.RunResultType),
+	}
+	return &apiRef
+}
+
+func NewCDNLogApiRefV2(signature cdn.Signature) CDNApiRef {
+	// Build cds api ref
+	apiRef := CDNLogAPIRefV2{
+		ProjectKey:   signature.ProjectKey,
+		WorkflowName: signature.WorkflowName,
+		RunID:        signature.WorkflowRunID,
+		RunJobName:   signature.JobName,
+		RunJobID:     signature.RunJobID,
+		RunNumber:    signature.RunNumber,
+		RunAttempt:   signature.RunAttempt,
+	}
+	if signature.Worker != nil {
+		apiRef.StepName = signature.Worker.StepName
+		apiRef.StepOrder = signature.Worker.StepOrder
+	}
+	if signature.Service != nil {
+		apiRef.RequirementServiceName = signature.Service.RequirementName
 	}
 	return &apiRef
 }
@@ -234,6 +280,33 @@ type CDNItemResume struct {
 	Location map[string]CDNItemUnit `json:"item_units"`
 }
 
+func (a *CDNLogAPIRefV2) ToHash() (string, error) {
+	hashRefU, err := hashstructure.Hash(a, nil)
+	if err != nil {
+		return "", WithStack(err)
+	}
+	return strconv.FormatUint(hashRefU, 10), nil
+}
+
+func (a *CDNLogAPIRefV2) ToFilename() string {
+	jobName := strings.Replace(a.RunJobName, " ", "", -1)
+
+	isService := a.RequirementServiceName != ""
+	var suffix string
+	if isService {
+		suffix = fmt.Sprintf("service.%s", a.RequirementServiceName)
+	} else {
+		suffix = fmt.Sprintf("step.%d", a.StepOrder)
+	}
+
+	return fmt.Sprintf("project.%s-workflow.%s-job.%s-%s.log",
+		a.ProjectKey,
+		a.WorkflowName,
+		jobName,
+		suffix,
+	)
+}
+
 func (a *CDNLogAPIRef) ToFilename() string {
 	jobName := strings.Replace(a.NodeRunJobName, " ", "", -1)
 
@@ -252,6 +325,11 @@ func (a *CDNLogAPIRef) ToFilename() string {
 		jobName,
 		suffix,
 	)
+}
+
+func (c CDNItem) GetCDNLogApiRefV2() (*CDNLogAPIRefV2, bool) {
+  apiRef, has := c.APIRef.(*CDNLogAPIRefV2)
+  return apiRef, has
 }
 
 func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
@@ -337,7 +415,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemJobStepLog:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
@@ -345,7 +423,7 @@ func (t CDNItemType) Validate() error {
 
 func (t CDNItemType) IsLog() bool {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemJobStepLog:
 		return true
 	}
 	return false
@@ -353,6 +431,7 @@ func (t CDNItemType) IsLog() bool {
 
 const (
 	CDNTypeItemStepLog     CDNItemType = "step-log"
+	CDNTypeItemJobStepLog  CDNItemType = "job-step-log"
 	CDNTypeItemServiceLog  CDNItemType = "service-log"
 	CDNTypeItemRunResult   CDNItemType = "run-result"
 	CDNTypeItemWorkerCache CDNItemType = "worker-cache"

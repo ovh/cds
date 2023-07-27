@@ -38,7 +38,9 @@ type WorkflowRunContext struct {
 
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
-	Jobs JobsResultContext `json:"jobs,omitempty"`
+	Jobs   JobsResultContext      `json:"jobs,omitempty"`
+	Inputs map[string]interface{} `json:"inputs,omitempty"`
+	Steps  StepsContext           `json:"steps,omitempty"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -124,21 +126,22 @@ type WebHookTrigger struct {
 
 type V2WorkflowRunJob struct {
 	ID            string          `json:"id" db:"id"`
+	JobID         string          `json:"job_id" db:"job_id" cli:"job_id"`
 	WorkflowRunID string          `json:"workflow_run_id" db:"workflow_run_id"`
 	ProjectKey    string          `json:"project_key" db:"project_key"`
 	WorkflowName  string          `json:"workflow_name" db:"workflow_name"`
 	RunNumber     int64           `json:"run_number" db:"run_number"`
 	RunAttempt    int64           `json:"run_attempt" db:"run_attempt"`
-	Status        string          `json:"status" db:"status"`
+	Status        string          `json:"status" db:"status" cli:"status"`
 	Queued        time.Time       `json:"queued" db:"queued"`
 	Started       time.Time       `json:"started" db:"started"`
 	Ended         time.Time       `json:"ended" db:"ended"`
-	JobID         string          `json:"job_id" db:"job_id"`
 	Job           V2Job           `json:"job" db:"job"`
 	WorkerID      string          `json:"worker_id,omitempty" db:"worker_id"`
 	WorkerName    string          `json:"worker_name" db:"worker_name"`
 	HatcheryName  string          `json:"hatchery_name" db:"hatchery_name"`
 	Outputs       JobResultOutput `json:"outputs" db:"outputs"`
+	StepsContext  StepsContext    `json:"steps_context" db:"steps_context"`
 	UserID        string          `json:"user_id" db:"user_id"`
 	Username      string          `json:"username" db:"username"`
 	Region        string          `json:"region,omitempty" db:"region"`
@@ -184,4 +187,12 @@ type V2SendJobRunInfo struct {
 	Level   string    `json:"level" db:"level"`
 	Message string    `json:"message" db:"message"`
 	Time    time.Time `json:"time" db:"time"`
+}
+
+func GetJobStepName(stepID string, stepIndex int) string {
+	if stepID != "" {
+		return stepID
+	}
+	return fmt.Sprintf("step-%d", stepIndex)
+
 }

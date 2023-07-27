@@ -9,9 +9,7 @@ jobs:
       - run: |-
           echo "Workflow: ${{cds.workflow}}"
       - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
-        with:
-          name: ${{ cds.event.name }}
-          allvars: ${{ vars }}
+        id: customaction
       - run: |-
-          echo "End"
+          echo "Thank you"
 

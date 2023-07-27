@@ -26,7 +26,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		currentPlugin = w.GetActionPlugin(pluginName)
 		if currentPlugin == nil {
 			var err error
-			currentPlugin, err = w.Client().PluginsGet(pluginName)
+			currentPlugin, err = w.PluginGet(pluginName)
 			if err != nil {
 				return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin:%s Unable to get plugin ... Aborting", pluginName)
 			}
@@ -54,7 +54,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		}
 
 		log.Debug(ctx, "Get the binary plugin %s", pluginBinaryInfos.PluginName)
-		if err := w.Client().PluginGetBinary(pluginBinaryInfos.PluginName, currentOS, currentARCH, fi); err != nil {
+		if err := w.PluginGetBinary(pluginBinaryInfos.PluginName, currentOS, currentARCH, fi); err != nil {
 			_ = fi.Close()
 			return nil, nil, sdk.WrapError(err, "unable to get the binary plugin the file %s", pluginBinaryInfos.PluginName)
 		}
