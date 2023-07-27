@@ -49,15 +49,20 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
-
-			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) && force {
+			// If plugin does not exist, create it
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
 				if err := plugin.Insert(tx, &p); err != nil {
 					return sdk.WrapError(err, "unable to insert plugin")
 				}
 			} else {
-				p.ID = oldP.ID
-				if err := plugin.Update(tx, &p); err != nil {
-					return sdk.WrapError(err, "unable to insert plugin")
+				// If plugin exist and --force, update it
+				if force {
+					p.ID = oldP.ID
+					if err := plugin.Update(tx, &p); err != nil {
+						return sdk.WrapError(err, "unable to insert plugin")
+					}
+				} else {
+					return sdk.NewErrorFrom(sdk.ErrConflictData, "plugin already exist")
 				}
 			}
 
