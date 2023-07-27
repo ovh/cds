@@ -721,43 +721,43 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 
 		// Push git properties as artifact properties
 		props := utils.NewProperties()
-		signedProps := utils.NewProperties()
+		signedProps := make(map[string]string)
 
 		props.AddProperty("cds.project", wr.Workflow.ProjectKey)
-		signedProps.AddProperty("cds.project", wr.Workflow.ProjectKey)
+		signedProps["cds.project"] = wr.Workflow.ProjectKey
 		props.AddProperty("cds.workflow", wr.Workflow.Name)
-		signedProps.AddProperty("cds.workflow", wr.Workflow.Name)
+		signedProps["cds.workflow"] = wr.Workflow.Name
 		if wr.Version != nil {
 			props.AddProperty("cds.version", *wr.Version)
-			signedProps.AddProperty("cds.version", *wr.Version)
+			signedProps["cds.version"] = *wr.Version
 		}
 		props.AddProperty("cds.run", strconv.FormatInt(wr.Number, 10))
-		signedProps.AddProperty("cds.run", strconv.FormatInt(wr.Number, 10))
+		signedProps["cds.run"] = strconv.FormatInt(wr.Number, 10)
 
 		if gitUrl != "" {
 			props.AddProperty("git.url", gitUrl)
 		}
-		signedProps.AddProperty("git.url", gitUrl)
+		signedProps["git.url"] = gitUrl
 		if gitHash != "" {
 			props.AddProperty("git.hash", gitHash)
 		}
-		signedProps.AddProperty("git.hash", gitHash)
+		signedProps["git.hash"] = gitHash
 		if gitBranch != "" {
 			props.AddProperty("git.branch", gitBranch)
-			signedProps.AddProperty("git.branch", gitBranch)
+			signedProps["git.branch"] = gitBranch
 		}
 
 		// Prepare artifact signature
-		signedProps.AddProperty("repository", artifact.RepoName)
-		signedProps.AddProperty("type", artifact.RepoType)
-		signedProps.AddProperty("path", artifact.Path)
-		signedProps.AddProperty("name", artifact.Name)
-		signedProps.AddProperty("md5", fi.Checksums.Md5)
-		signedProps.AddProperty("sha1", fi.Checksums.Sha1)
-		signedProps.AddProperty("sha256", fi.Checksums.Sha256)
+		signedProps["repository"] = artifact.RepoName
+		signedProps["type"] = artifact.RepoType
+		signedProps["path"] = artifact.Path
+		signedProps["name"] = artifact.Name
+		signedProps["md5"] = fi.Checksums.Md5
+		signedProps["sha1"] = fi.Checksums.Sha1
+		signedProps["sha256"] = fi.Checksums.Sha256
 
 		// Sign the properties with main CDS authentication key pair
-		signature, err := authentication.SignJWS(signedProps.ToMap(), time.Now(), 0)
+		signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
