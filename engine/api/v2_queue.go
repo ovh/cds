@@ -304,6 +304,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 
 			jobRun.HatcheryName = hatch.Name
 			jobRun.Status = sdk.StatusScheduling
+			jobRun.Scheduled = time.Now()
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {

@@ -36,14 +36,17 @@ type WorkflowRunEntityFinder struct {
 	userName               string
 }
 
-func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) error {
+func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case id := <-api.workflowRunCraftChan:
 			api.GoRoutines.Exec(
 				ctx,

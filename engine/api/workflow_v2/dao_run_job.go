@@ -104,7 +104,7 @@ func LoadRunJobByName(ctx context.Context, db gorp.SqlExecutor, wrID string, job
 func LoadQueuedRunJobByModelTypeAndRegion(ctx context.Context, db gorp.SqlExecutor, regionName string, modelType string) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadQueuedRunJobByModelTypeAndRegion")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE status = $1 AND model_type = $2 and region = $3 ORDER BY queued ASC").
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE status = $1 AND model_type = $2 and region = $3 ORDER BY queued").
 		Args(sdk.StatusWaiting, modelType, regionName)
 	return getAllRunJobs(ctx, db, query)
 }
@@ -113,5 +113,27 @@ func LoadRunJobsByRunIDAndStatus(ctx context.Context, db gorp.SqlExecutor, runID
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobsByRunIDAndStatus")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND status = ANY($2)").Args(runID, pq.StringArray(status))
+	return getAllRunJobs(ctx, db, query)
+}
+
+func LoadOldScheduledRunJob(ctx context.Context, db gorp.SqlExecutor, timeout float64) ([]sdk.V2WorkflowRunJob, error) {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadOldScheduledRunJob")
+	defer next()
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run_job
+    WHERE status = $1 AND now() - scheduled > $2 * INTERVAL '1' SECOND
+    `).Args(sdk.StatusScheduling, timeout)
+	return getAllRunJobs(ctx, db, query)
+}
+
+func LoadDeadJobs(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRunJob, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT v2_workflow_run_job.*
+		FROM v2_workflow_run_job
+		LEFT JOIN v2_worker ON v2_worker.run_job_id = v2_workflow_run_job.id
+		WHERE v2_workflow_run_job.status = $1 AND v2_worker.id IS NULL
+    ORDER BY started
+  `).Args(sdk.StatusBuilding)
 	return getAllRunJobs(ctx, db, query)
 }

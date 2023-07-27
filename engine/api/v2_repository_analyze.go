@@ -39,14 +39,17 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration) error {
+func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration) {
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case <-ticker.C:
 			repositories, err := repository.LoadAllRepositories(ctx, api.mustDB())
 			if err != nil {
@@ -219,14 +222,17 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	return &response, nil
 }
 
-func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration) error {
+func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration) {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case <-ticker.C:
 			analysis, err := repository.LoadRepositoryIDsAnalysisInProgress(ctx, api.mustDB())
 			if err != nil {

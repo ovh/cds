@@ -22,14 +22,14 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) V2WorkflowRunEngineChan(ctx context.Context) error {
+func (api *API) V2WorkflowRunEngineChan(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				return ctx.Err()
+				log.Error(ctx, "%v", ctx.Err())
 			}
-			return nil
+			return
 		case wrEnqueue := <-api.workflowRunTriggerChan:
 			if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
 				log.ErrorWithStackTrace(ctx, err)
@@ -38,7 +38,7 @@ func (api *API) V2WorkflowRunEngineChan(ctx context.Context) error {
 	}
 }
 
-func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) error {
+func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 	for {
 		var wrEnqueue sdk.V2WorkflowRunEnqueue
 		if err := api.Cache.DequeueWithContext(ctx, workflow_v2.WorkflowEngineKey, 250*time.Millisecond, &wrEnqueue); err != nil {
@@ -49,7 +49,10 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) error {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 		if ctx.Err() != nil {
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		}
 	}
 }
@@ -70,7 +73,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 	if !b {
-		log.Debug(ctx, "api.workflowRunV2Trigger> run %d is locked in cache", wrEnqueue.RunID)
+		log.Debug(ctx, "api.workflowRunV2Trigger> run %s is locked in cache", wrEnqueue.RunID)
 		// re-enqueue workflow-run
 		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, wrEnqueue); err != nil {
 			next()

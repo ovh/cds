@@ -10,7 +10,7 @@ type V2Worker struct {
 	Name         string    `json:"name" cli:"name,key" db:"name"`
 	LastBeat     time.Time `json:"last_beat" cli:"last_beat" db:"last_beat"`
 	ModelName    string    `json:"model_name" cli:"-" db:"model_name"`
-	JobRunID     string    `json:"job_run_id" cli:"-" db:"job_run_id"`
+	JobRunID     string    `json:"run_job_id" cli:"-" db:"run_job_id"`
 	Status       string    `json:"status" cli:"status" db:"status"` // Waiting, Building, Disabled, Unknown
 	HatcheryID   string    `json:"hatchery_id,omitempty" cli:"-" db:"hatchery_id"`
 	HatcheryName string    `json:"hatchery_name" cli:"-" db:"hatchery_name"` // If the hatchery service was deleted we will keep its name in the worker

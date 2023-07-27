@@ -19,14 +19,17 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) error {
+func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case <-ticker.C:
 			ids, err := workflow.LoadCratingWorkflowRunIDs(api.mustDB())
 			if err != nil {

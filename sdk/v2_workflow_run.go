@@ -134,6 +134,7 @@ type V2WorkflowRunJob struct {
 	RunAttempt    int64           `json:"run_attempt" db:"run_attempt"`
 	Status        string          `json:"status" db:"status" cli:"status"`
 	Queued        time.Time       `json:"queued" db:"queued"`
+	Scheduled     time.Time       `json:"scheduled" db:"scheduled"`
 	Started       time.Time       `json:"started" db:"started"`
 	Ended         time.Time       `json:"ended" db:"ended"`
 	Job           V2Job           `json:"job" db:"job"`

@@ -20,13 +20,16 @@ import (
 	"go.opencensus.io/trace"
 )
 
-func (api *API) WorkflowTemplateBulk(ctx context.Context, tick time.Duration, chanOperation chan WorkflowTemplateBulkOperation) error {
+func (api *API) WorkflowTemplateBulk(ctx context.Context, tick time.Duration, chanOperation chan WorkflowTemplateBulkOperation) {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case <-ticker.C:
 			bs, err := workflowtemplate.GetBulksPending(ctx, api.mustDBWithCtx(ctx))
 			if err != nil {
