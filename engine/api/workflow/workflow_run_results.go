@@ -470,6 +470,8 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 	}
 }
 
+type ArtifactSignature map[string]string
+
 func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbMap) ([]int64, error) {
 	var results []int64
 	_, err := dbmap.Select(&results, "select distinct workflow_run_id from workflow_run_result where sync is NULL order by workflow_run_id asc limit 100")
@@ -721,7 +723,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 
 		// Push git properties as artifact properties
 		props := utils.NewProperties()
-		signedProps := make(map[string]string)
+		signedProps := make(ArtifactSignature)
 
 		props.AddProperty("cds.project", wr.Workflow.ProjectKey)
 		signedProps["cds.project"] = wr.Workflow.ProjectKey
