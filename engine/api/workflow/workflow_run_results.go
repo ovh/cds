@@ -694,7 +694,11 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			continue
 		}
 
-		localRepository := fmt.Sprintf("%s-%s", artifact.RepoName, result.DataSync.LatestPromotionOrRelease().ToMaturity)
+		maturity := lowMaturitySuffixFromConfig
+		if result.DataSync != nil {
+			maturity = result.DataSync.LatestPromotionOrRelease().ToMaturity
+		}
+		localRepository := fmt.Sprintf("%s-%s", artifact.RepoName, maturity)
 
 		fi, err := artifactClient.GetFileInfo(artifact.RepoName, artifact.Path)
 		if err != nil {
