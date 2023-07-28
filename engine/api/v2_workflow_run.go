@@ -215,7 +215,45 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		}
 }
 
-func (api *API)  postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
+func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.workflowTrigger),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			runs, err := workflow_v2.LoadRuns(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, runs, http.StatusOK)
+		}
+}
+
+func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)

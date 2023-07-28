@@ -91,6 +91,16 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	return nil
 }
 
+func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, repoID, workflowName string) ([]sdk.V2WorkflowRun, error) {
+	ctx, next := telemetry.Span(ctx, "LoadRuns")
+	defer next()
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run
+    WHERE project_key = $1 AND vcs_server_id = $2 AND repository_id = $3 AND workflow_name = $4`).Args(projKey, vcsProjectID, repoID, workflowName)
+	return getRuns(ctx, db, query)
+}
+
 func LoadRunByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRunByID")
 	defer next()

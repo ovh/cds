@@ -485,7 +485,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/hook/regen", nil, r.POSTv2(api.postRepositoryHookRegenKeyHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
-	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.GETv2(api.getWorkflowRunsV2Handler), r.POSTv2(api.postWorkflowRunV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}", nil, r.GETv2(api.getWorkflowRunV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs", nil, r.GETv2(api.getWorkflowRunJobsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobName}/logs/links", nil, r.GETv2(api.getWorkflowRunJobLogsLinksV2Handler))

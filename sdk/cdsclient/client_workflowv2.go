@@ -3,9 +3,20 @@ package cdsclient
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk"
 	"net/url"
+
+	"github.com/ovh/cds/sdk"
 )
+
+func (c *client) WorkflowV2RunList(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error) {
+	var runs []sdk.V2WorkflowRun
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run", projectKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName)
+	_, err := c.GetJSON(ctx, path, &runs, mods...)
+	if err != nil {
+		return nil, err
+	}
+	return runs, nil
+}
 
 func (c *client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun

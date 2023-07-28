@@ -17,10 +17,38 @@ var experimentalWorkflowCmd = cli.Command{
 func experimentalWorkflow() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowRunCmd, workflowRunFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunJobsCmd, workflowRunJobsFunc, nil, withAllCommandModifiers()...),
 		experimentalWorkflowRunJobs(),
 	})
+}
+
+var workflowRunHistoryCmd = cli.Command{
+	Name:    "history",
+	Aliases: []string{"h"},
+	Short:   "Display the run history for the given workflow",
+	Example: "cdsctl experimental workflow history <proj_key> <vcs_identifier> <repo_identifier> <workflow_name>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "proj_key"},
+		{Name: "vcs_identifier"},
+		{Name: "repo_identifier"},
+		{Name: "workflow_name"},
+	},
+}
+
+func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
+	projKey := v.GetString("proj_key")
+	vcsId := v.GetString("vcs_identifier")
+	repoId := v.GetString("repo_identifier")
+	wkfName := v.GetString("workflow_name")
+
+	runs, err := client.WorkflowV2RunList(context.Background(), projKey, vcsId, repoId, wkfName)
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(runs), nil
 }
 
 var workflowRunStatusCmd = cli.Command{
