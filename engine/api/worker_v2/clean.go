@@ -19,7 +19,7 @@ const (
 
 func DisabledDeadWorkers(ctx context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
 	db := DBFunc()
-	tickDelete := time.NewTicker(1 * time.Minute)
+	tickDisable := time.NewTicker(1 * time.Minute)
 
 	for {
 		select {
@@ -28,14 +28,14 @@ func DisabledDeadWorkers(ctx context.Context, store cache.Store, DBFunc func() *
 				log.Error(ctx, "Exiting worker ticker: %v", ctx.Err())
 			}
 			return
-		case <-tickDelete.C:
+		case <-tickDisable.C:
 			workers, err := LoadDeadWorkers(ctx, db, workerHeartbeatTimeout, []string{sdk.StatusWaiting, sdk.StatusBuilding})
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				continue
 			}
 			for i := range workers {
-				if err := DisableDeadWorker(ctx, store, db, workers[i].ID); err != nil {
+				if err := DisableDeadWorker(ctx, store, db, workers[i].ID, workers[i].Name); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					continue
 				}
@@ -62,7 +62,7 @@ func DeleteDisabledWorkers(ctx context.Context, store cache.Store, DBFunc func()
 				continue
 			}
 			for i := range workers {
-				if err := DeleteDisabledWorker(ctx, store, db, workers[i].ID); err != nil {
+				if err := DeleteDisabledWorker(ctx, store, db, workers[i].ID, workers[i].Name); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					continue
 				}
@@ -71,8 +71,8 @@ func DeleteDisabledWorkers(ctx context.Context, store cache.Store, DBFunc func()
 	}
 }
 
-func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, workerID string) error {
-	ctx, next := telemetry.Span(ctx, "deleteDisabledWorker")
+func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, workerID string, workerName string) error {
+	ctx, next := telemetry.Span(ctx, "deleteDisabledWorker", telemetry.Tag(telemetry.TagWorker, workerName))
 	defer next()
 
 	_, next = telemetry.Span(ctx, "deleteDisabledWorker.lock")
@@ -92,9 +92,13 @@ func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap
 	}()
 
 	worker, err := LoadByID(ctx, db, workerID)
-	if err != nil {
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return err
 	}
+	if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -111,8 +115,8 @@ func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap
 	return nil
 }
 
-func DisableDeadWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, workerID string) error {
-	ctx, next := telemetry.Span(ctx, "disableDeadWorker")
+func DisableDeadWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, workerID string, workerName string) error {
+	ctx, next := telemetry.Span(ctx, "disableDeadWorker", telemetry.Tag(telemetry.TagWorker, workerName))
 	defer next()
 
 	_, next = telemetry.Span(ctx, "disableDeadWorker.lock")
@@ -134,6 +138,15 @@ func DisableDeadWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, w
 	worker, err := LoadByID(ctx, db, workerID)
 	if err != nil {
 		return err
+	}
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return err
+	}
+	if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return nil
+	}
+	if worker.Status == sdk.StatusDisabled {
+		return nil
 	}
 
 	tx, err := db.Begin()

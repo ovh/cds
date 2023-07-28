@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
@@ -22,7 +23,7 @@ const (
 )
 
 func (api *API) StopDeadJobs(ctx context.Context) {
-	tickScheduledJob := time.NewTicker(1 * time.Minute)
+	tickStopDeadJobs := time.NewTicker(1 * time.Minute)
 	for {
 		select {
 		case <-ctx.Done():
@@ -30,7 +31,7 @@ func (api *API) StopDeadJobs(ctx context.Context) {
 				log.Error(ctx, "%v", ctx.Err())
 			}
 			return
-		case <-tickScheduledJob.C:
+		case <-tickStopDeadJobs.C:
 			jobs, err := workflow_v2.LoadDeadJobs(ctx, api.mustDB())
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
@@ -93,12 +94,19 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	if err != nil {
 		return err
 	}
+	if runJob.Status != sdk.StatusScheduling {
+		return nil
+	}
+
+	ctx = context.WithValue(ctx, cdslog.Workflow, runJob.WorkflowName)
 
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback() // nolint
+
+	log.Info(ctx, fmt.Sprintf("reEnqueueScheduledJob: re-enqueue job %s/%s on workflow %s run %d", runJob.JobID, runJob.ID, runJob.WorkflowName, runJob.RunNumber))
 
 	runJob.Status = sdk.StatusWaiting
 	runJob.HatcheryName = ""
@@ -153,12 +161,19 @@ func stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbMap, runJobI
 		return err
 	}
 
+	ctx = context.WithValue(ctx, cdslog.Workflow, runJob.WorkflowName)
+
+	if runJob.Status == sdk.StatusStopped {
+		return nil
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback() // nolint
 
+	log.Info(ctx, fmt.Sprintf("stopDeadJob: stopping job %s/%s on workflow %s run %d", runJob.JobID, runJob.ID, runJob.WorkflowName, runJob.RunNumber))
 	runJob.Status = sdk.StatusStopped
 
 	if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {

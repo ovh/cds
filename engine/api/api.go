@@ -843,6 +843,7 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
+
 	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunCraft", func(ctx context.Context) {
 		a.V2WorkflowRunCraft(ctx, 10*time.Second)
 	})
@@ -852,11 +853,14 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunEngineDequeue", func(ctx context.Context) {
 		a.V2WorkflowRunEngineDequeue(ctx)
 	})
-	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunJobScheduled", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "api.ReEnqueueScheduledJobs", func(ctx context.Context) {
 		a.ReEnqueueScheduledJobs(ctx)
 	})
-	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunJobScheduled", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "api.StopDeadJobs", func(ctx context.Context) {
 		a.StopDeadJobs(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.xx", func(ctx context.Context) {
+		a.TriggerBlockedWorklowRuns(ctx)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {

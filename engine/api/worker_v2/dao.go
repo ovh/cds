@@ -122,6 +122,7 @@ func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, 
 		WHERE status = ANY(string_to_array($1, ',')::text[])
 		AND now() - last_beat > $2 * INTERVAL '1' SECOND
     ORDER BY last_beat ASC
+    LIMIT 100
   `).Args(strings.Join(status, ","), timeout)
 	return getWorkers(ctx, db, query)
 }

@@ -123,6 +123,7 @@ func LoadOldScheduledRunJob(ctx context.Context, db gorp.SqlExecutor, timeout fl
     SELECT *
     FROM v2_workflow_run_job
     WHERE status = $1 AND now() - scheduled > $2 * INTERVAL '1' SECOND
+    LIMIT 100
     `).Args(sdk.StatusScheduling, timeout)
 	return getAllRunJobs(ctx, db, query)
 }
@@ -134,6 +135,7 @@ func LoadDeadJobs(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun
 		LEFT JOIN v2_worker ON v2_worker.run_job_id = v2_workflow_run_job.id
 		WHERE v2_workflow_run_job.status = $1 AND v2_worker.id IS NULL
     ORDER BY started
+    LIMIT 100
   `).Args(sdk.StatusBuilding)
 	return getAllRunJobs(ctx, db, query)
 }
