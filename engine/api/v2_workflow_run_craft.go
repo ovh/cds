@@ -201,23 +201,11 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	enqueueRequest := sdk.V2WorkflowRunEnqueue{
-		RunID:  run.ID,
-		UserID: run.UserID,
-	}
-
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(tx.Commit())
 	}
 
-	select {
-	case api.workflowRunTriggerChan <- enqueueRequest:
-		log.Debug(ctx, "workflow run %s %d trigger in chan", run.WorkflowName, run.RunNumber)
-	default:
-		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-			return err
-		}
-	}
+	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
 	return nil
 }
 

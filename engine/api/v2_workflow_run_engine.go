@@ -101,7 +101,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 	if !b {
 		log.Debug(ctx, "api.workflowRunV2Trigger> run %s is locked in cache", wrEnqueue.RunID)
-		// re-enqueue workflow-run
 		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, wrEnqueue); err != nil {
 			next()
 			return err
@@ -513,18 +512,22 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 		userID = wr.UserID
 	}
 
+	api.EnqueueWorkflowRun(ctx, wr.ID, userID, wr.WorkflowName, wr.RunNumber)
+	return nil
+}
+
+func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, userID string, workflowName string, runNumber int64) {
+	// Continue workflow
 	enqueueRequest := sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
+		RunID:  runID,
 		UserID: userID,
 	}
-
 	select {
 	case api.workflowRunTriggerChan <- enqueueRequest:
-		log.Debug(ctx, "workflow run %s %d trigger in chan", wr.WorkflowName, wr.RunNumber)
+		log.Debug(ctx, "workflow run %s %d trigger in chan", workflowName, runNumber)
 	default:
 		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-			return err
+			log.ErrorWithStackTrace(ctx, err)
 		}
 	}
-	return nil
 }

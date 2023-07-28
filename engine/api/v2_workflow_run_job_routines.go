@@ -38,7 +38,7 @@ func (api *API) StopDeadJobs(ctx context.Context) {
 				continue
 			}
 			for i := range jobs {
-				if err := stopDeadJob(ctx, api.Cache, api.mustDB(), jobs[i].ID); err != nil {
+				if err := api.stopDeadJob(ctx, api.Cache, api.mustDB(), jobs[i].ID); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			}
@@ -136,7 +136,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	return nil
 }
 
-func stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbMap, runJobID string) error {
+func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbMap, runJobID string) error {
 	ctx, next := telemetry.Span(ctx, "stopDeadJob")
 	defer next()
 
@@ -196,19 +196,7 @@ func stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbMap, runJobI
 		return sdk.WithStack(err)
 	}
 
-	// Enqueue the job
-	runJobEvent := sdk.WebsocketJobQueueEvent{
-		Region:       runJob.Region,
-		ModelType:    runJob.ModelType,
-		JobRunID:     runJob.ID,
-		RunNumber:    runJob.RunNumber,
-		WorkflowName: runJob.WorkflowName,
-		ProjectKey:   runJob.ProjectKey,
-		JobID:        runJob.JobID,
-	}
-	bts, _ := json.Marshal(runJobEvent)
-	if err := store.Publish(ctx, event.JobQueuedPubSubKey, string(bts)); err != nil {
-		log.Error(ctx, "%v", err)
-	}
+	// Trigger workflow
+	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber)
 	return nil
 }

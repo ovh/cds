@@ -176,21 +176,12 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
 				return err
 			}
+			if err := sdk.WithStack(tx.Commit()); err != nil {
+				return err
+			}
 
-			// Continue workflow
-			enqueueRequest := sdk.V2WorkflowRunEnqueue{
-				RunID:  jobRun.WorkflowRunID,
-				UserID: jobRun.UserID,
-			}
-			select {
-			case api.workflowRunTriggerChan <- enqueueRequest:
-				log.Debug(ctx, "workflow run %s %d trigger in chan", jobRun.WorkflowName, jobRun.RunNumber)
-			default:
-				if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-					return err
-				}
-			}
-			return sdk.WithStack(tx.Commit())
+			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.UserID, jobRun.WorkflowName, jobRun.RunNumber)
+			return nil
 		}
 }
 

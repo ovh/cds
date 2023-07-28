@@ -168,7 +168,7 @@ func TestStopDeadJobs(t *testing.T) {
 	require.Equal(t, 1, len(jobs))
 	require.Equal(t, wrj2.ID, jobs[0].ID)
 
-	require.NoError(t, stopDeadJob(ctx, api.Cache, db.DbMap, wrj2.ID))
+	require.NoError(t, api.stopDeadJob(ctx, api.Cache, db.DbMap, wrj2.ID))
 
 	rjDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobs[0].ID)
 	require.NoError(t, err)
