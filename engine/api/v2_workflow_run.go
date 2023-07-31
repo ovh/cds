@@ -72,6 +72,72 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 		}
 }
 
+func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.workflowTrigger),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+			jobName := vars["jobName"]
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			if err != nil {
+				return err
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback() // nolint
+
+			runJob.Status = sdk.StatusStopped
+			if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
+			api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber)
+			return nil
+		}
+}
+
 func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -250,6 +316,83 @@ func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 			return service.WriteJSON(w, runs, http.StatusOK)
+		}
+}
+
+func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.workflowTrigger),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, api.mustDB(), wr.ID, []string{sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusScheduling})
+			if err != nil {
+				return err
+			}
+
+			for _, rj := range runJobs {
+				rj.Status = sdk.StatusStopped
+
+				tx, err := api.mustDB().Begin()
+				if err != nil {
+					return err
+				}
+
+				if err := workflow_v2.UpdateJobRun(ctx, tx, &rj); err != nil {
+					_ = tx.Rollback()
+					return err
+				}
+
+				if err := tx.Commit(); err != nil {
+					return sdk.WithStack(err)
+				}
+			}
+			wr.Status = sdk.StatusStopped
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return err
+			}
+			defer tx.Rollback() // nolint
+
+			if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
+				return err
+			}
+
+			return sdk.WithStack(tx.Commit())
 		}
 }
 

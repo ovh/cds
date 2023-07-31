@@ -163,7 +163,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 
 	ctx = context.WithValue(ctx, cdslog.Workflow, runJob.WorkflowName)
 
-	if runJob.Status == sdk.StatusStopped {
+	if sdk.StatusIsTerminated(runJob.Status) {
 		return nil
 	}
 

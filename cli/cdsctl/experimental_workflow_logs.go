@@ -19,7 +19,7 @@ var experimentalWorkflowRunJobsCmd = cli.Command{
 	Aliases: []string{"log"},
 }
 
-func experimentalWorkflowRunJobs() *cobra.Command {
+func experimentalWorkflowRunLogs() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowRunJobsCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowRunJobLogsDownloadCmd, workflowRunJobLogsDownloadFunc, nil, withAllCommandModifiers()...),
 	})

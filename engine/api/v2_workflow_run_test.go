@@ -267,3 +267,146 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 	require.Equal(t, 1, len(jobs))
 	require.Equal(t, wrj.ID, jobs[0].ID)
 }
+
+func TestPostStopWorkflowRunHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		Event:        sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Needs: []string{"job1"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrj := sdk.V2WorkflowRunJob{
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr.ID,
+		Outputs:       sdk.JobResultOutput{},
+		UserID:        admin.ID,
+		Username:      admin.Username,
+		ProjectKey:    wr.ProjectKey,
+		Status:        sdk.StatusBuilding,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            fmt.Sprintf("%d", wr.RunNumber),
+	}
+	// Then Get the region
+	uri := api.Router.GetRouteV2("POST", api.postStopWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, nil)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 204, w.Code)
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.StatusStopped, wrDB.Status)
+
+	rjDB, err := workflow_v2.LoadRunJobByID(context.TODO(), db, wrj.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.StatusStopped, rjDB.Status)
+
+}
+
+func TestPostStopJobHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		Event:        sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Needs: []string{"job1"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrj := sdk.V2WorkflowRunJob{
+		JobID:         sdk.RandomString(10),
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr.ID,
+		Outputs:       sdk.JobResultOutput{},
+		UserID:        admin.ID,
+		Username:      admin.Username,
+		ProjectKey:    wr.ProjectKey,
+		Status:        sdk.StatusBuilding,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            fmt.Sprintf("%d", wr.RunNumber),
+		"jobName":              wrj.JobID,
+	}
+	// Then Get the region
+	uri := api.Router.GetRouteV2("POST", api.postStopJobHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, nil)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 204, w.Code)
+
+	// Workflow must be re-enqueued
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.StatusBuilding, wrDB.Status)
+
+	rjDB, err := workflow_v2.LoadRunJobByID(context.TODO(), db, wrj.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.StatusStopped, rjDB.Status)
+
+}

@@ -139,6 +139,10 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
 
+			if sdk.StatusIsTerminated(jobRun.Status) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "job %s is already in a final state %s", jobRun.JobID, jobRun.Status)
+			}
+
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
 				trace.StringAttribute(telemetry.TagWorkflow, jobRun.WorkflowName),
 				trace.StringAttribute(telemetry.TagProjectKey, jobRun.ProjectKey),
@@ -273,6 +277,9 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			}
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
+			}
+			if sdk.StatusIsTerminated(jobRun.Status) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "job %s is already in a final state %s", jobRun.JobID, jobRun.Status)
 			}
 
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
