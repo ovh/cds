@@ -359,7 +359,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	}
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelWarning, Message: fmt.Sprintf("obsolete workflow dependency used: %s", name)}, nil
+			return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("obsolete workflow dependency used: %s", name)}, nil
 		}
 		return "", nil, err
 	}
