@@ -106,7 +106,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	}
 	defer tx.Rollback() // nolint
 
-	log.Info(ctx, fmt.Sprintf("reEnqueueScheduledJob: re-enqueue job %s/%s on workflow %s run %d", runJob.JobID, runJob.ID, runJob.WorkflowName, runJob.RunNumber))
+	log.Info(ctx, fmt.Sprintf("reEnqueueScheduledJob: re-enqueue job %s/%s (timeout %s) on workflow %s run %d", runJob.JobID, runJob.ID, time.Now().Sub(runJob.Scheduled).String(), runJob.WorkflowName, runJob.RunNumber))
 
 	runJob.Status = sdk.StatusWaiting
 	runJob.HatcheryName = ""
