@@ -13,7 +13,9 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/user"
@@ -150,8 +152,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
 
-		// Get worker model
-		completeName, msg, err := wref.searchEntity(ctx, api.mustDB(), api.Cache, j.WorkerModel, sdk.EntityTypeWorkerModel)
+		completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.WorkerModel, j.Region, api.Config.Workflow.JobDefaultRegion)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
@@ -476,4 +477,56 @@ func buildRunContext(wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.Pr
 	runContext.Git = gitContext
 	runContext.Vars = nil
 	return runContext
+}
+
+func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.Store, jobName, workerModel, reg, defaultRegion string) (string, *sdk.V2WorkflowRunInfo, error) {
+	hatcheries, err := hatchery.LoadHatcheries(ctx, db)
+	if err != nil {
+		return "", nil, err
+	}
+	if reg == "" {
+		reg = defaultRegion
+	}
+
+	currentRegion, err := region.LoadRegionByName(ctx, db, reg)
+	if err != nil {
+		return "", nil, err
+	}
+
+	modelCompleteName := ""
+	modelType := ""
+	if workerModel != "" {
+		completeName, msg, err := wref.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
+		if err != nil {
+			return "", nil, err
+		}
+		if msg != nil {
+			return "", msg, nil
+		}
+		modelType = wref.workerModelCache[completeName].Type
+		modelCompleteName = completeName
+	}
+
+	for _, h := range hatcheries {
+		if h.ModelType == modelType {
+			// check permission
+			rbacHatchery, err := rbac.LoadRBACHatcheryByHatcheryID(ctx, db, h.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return "", nil, err
+			}
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+				continue
+			}
+			if rbacHatchery.RegionID == currentRegion.ID {
+				return modelCompleteName, nil, nil
+			}
+		}
+	}
+
+	return modelCompleteName, &sdk.V2WorkflowRunInfo{
+		WorkflowRunID: wref.run.ID,
+		Level:         sdk.WorkflowRunInfoLevelError,
+		IssuedAt:      time.Now(),
+		Message:       fmt.Sprintf("wrong configuration on job %s. No hatchery can run it", jobName),
+	}, nil
 }

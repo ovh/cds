@@ -69,7 +69,6 @@ type WorkerStarterWorkerModel struct {
 
 	// Worker model v2
 	ModelV2       *V2WorkerModel
-	FullName      string
 	PreCmd        string
 	Cmd           string
 	Shell         string
@@ -84,9 +83,8 @@ func (w WorkerStarterWorkerModel) GetName() string {
 	if w.ModelV1 != nil {
 		return w.ModelV1.Name
 	} else {
-		return w.FullName
+		return w.ModelV2.Name
 	}
-	return ""
 }
 
 func (w WorkerStarterWorkerModel) GetFlavor() string {
@@ -207,7 +205,7 @@ func (w WorkerStarterWorkerModel) GetPath() string {
 	case w.ModelV1 != nil:
 		return w.ModelV1.Path()
 	case w.ModelV2 != nil:
-		return w.FullName
+		return w.ModelV2.Name
 	}
 	return ""
 }
@@ -217,7 +215,7 @@ func (w WorkerStarterWorkerModel) GetFullPath() string {
 	case w.ModelV1 != nil:
 		return w.ModelV1.Group.Name + "/" + w.ModelV1.Name
 	case w.ModelV2 != nil:
-		return w.FullName
+		return w.ModelV2.Name
 	}
 	return ""
 }

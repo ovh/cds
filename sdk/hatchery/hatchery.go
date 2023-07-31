@@ -419,16 +419,17 @@ func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cache
 		return nil
 	}
 
-	workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, j.Job.WorkerModel)
-	if err != nil {
-		endTrace(fmt.Sprintf("%v", err.Error()))
-		return err
-	}
-	workerRequest.model = *workerModel
-
-	if !h.CanSpawn(ctx, *workerModel, j.ID, nil) {
-		endTrace("cannot spawn")
-		return nil
+	if hWithModels != nil {
+		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, j.Job.WorkerModel)
+		if err != nil {
+			endTrace(fmt.Sprintf("%v", err.Error()))
+			return err
+		}
+		workerRequest.model = *workerModel
+		if !h.CanSpawn(ctx, *workerModel, j.ID, nil) {
+			endTrace("cannot spawn")
+			return nil
+		}
 	}
 
 	// Check if we already try to start a worker for this job
