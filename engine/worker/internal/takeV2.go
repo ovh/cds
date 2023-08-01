@@ -84,6 +84,7 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, runJobID string, tick *time.Ticker) {
+		defer tick.Stop()
 		var nbConnrefused int
 		for {
 			select {
