@@ -843,6 +843,7 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.WorkflowRunCraft", func(ctx context.Context) {
 		a.WorkflowRunCraft(ctx, 100*time.Millisecond)
 	})
+
 	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunCraft", func(ctx context.Context) {
 		a.V2WorkflowRunCraft(ctx, 10*time.Second)
 	})
@@ -851,6 +852,15 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.V2WorkflowRunEngineDequeue", func(ctx context.Context) {
 		a.V2WorkflowRunEngineDequeue(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.ReEnqueueScheduledJobs", func(ctx context.Context) {
+		a.ReEnqueueScheduledJobs(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.StopDeadJobs", func(ctx context.Context) {
+		a.StopDeadJobs(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.xx", func(ctx context.Context) {
+		a.TriggerBlockedWorklowRuns(ctx)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
@@ -866,8 +876,11 @@ func (a *API) Serve(ctx context.Context) error {
 		a.cleanProjectEntities(ctx, 1*time.Hour)
 	})
 
-	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorker", func(ctx context.Context) {
-		worker_v2.DeleteDisabledWorker(ctx, a.mustDB)
+	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorkers", func(ctx context.Context) {
+		worker_v2.DeleteDisabledWorkers(ctx, a.Cache, a.mustDB)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "worker.DisabledDeadWorkers", func(ctx context.Context) {
+		worker_v2.DisabledDeadWorkers(ctx, a.Cache, a.mustDB)
 	})
 	if a.Config.Secrets.SnapshotRetentionDelay > 0 {
 		a.GoRoutines.RunWithRestart(ctx, "workflow.CleanSecretsSnapshot", func(ctx context.Context) {

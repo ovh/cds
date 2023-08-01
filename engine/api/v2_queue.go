@@ -139,6 +139,10 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
 
+			if sdk.StatusIsTerminated(jobRun.Status) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "job %s is already in a final state %s", jobRun.JobID, jobRun.Status)
+			}
+
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
 				trace.StringAttribute(telemetry.TagWorkflow, jobRun.WorkflowName),
 				trace.StringAttribute(telemetry.TagProjectKey, jobRun.ProjectKey),
@@ -176,21 +180,12 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
 				return err
 			}
+			if err := sdk.WithStack(tx.Commit()); err != nil {
+				return err
+			}
 
-			// Continue workflow
-			enqueueRequest := sdk.V2WorkflowRunEnqueue{
-				RunID:  jobRun.WorkflowRunID,
-				UserID: jobRun.UserID,
-			}
-			select {
-			case api.workflowRunTriggerChan <- enqueueRequest:
-				log.Debug(ctx, "workflow run %s %d trigger in chan", jobRun.WorkflowName, jobRun.RunNumber)
-			default:
-				if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-					return err
-				}
-			}
-			return sdk.WithStack(tx.Commit())
+			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.UserID, jobRun.WorkflowName, jobRun.RunNumber)
+			return nil
 		}
 }
 
@@ -283,6 +278,9 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
+			if sdk.StatusIsTerminated(jobRun.Status) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "job %s is already in a final state %s", jobRun.JobID, jobRun.Status)
+			}
 
 			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagJob, jobRun.JobID),
 				trace.StringAttribute(telemetry.TagWorkflow, jobRun.WorkflowName),
@@ -304,6 +302,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 
 			jobRun.HatcheryName = hatch.Name
 			jobRun.Status = sdk.StatusScheduling
+			jobRun.Scheduled = time.Now()
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {

@@ -18,7 +18,7 @@ type V2WorkflowRun struct {
 	WorkflowSha  string             `json:"workflow_sha" db:"workflow_sha"`
 	WorkflowRef  string             `json:"workflow_ref" db:"workflow_ref"`
 	Status       string             `json:"status" db:"status" cli:"status"`
-	RunNumber    int64              `json:"run_number" db:"run_number"`
+	RunNumber    int64              `json:"run_number" db:"run_number" cli:"run_number"`
 	RunAttempt   int64              `json:"run_attempt" db:"run_attempt"`
 	Started      time.Time          `json:"started" db:"started" cli:"started"`
 	LastModified time.Time          `json:"last_modified" db:"last_modified" cli:"last_modified"`
@@ -134,6 +134,7 @@ type V2WorkflowRunJob struct {
 	RunAttempt    int64           `json:"run_attempt" db:"run_attempt"`
 	Status        string          `json:"status" db:"status" cli:"status"`
 	Queued        time.Time       `json:"queued" db:"queued"`
+	Scheduled     time.Time       `json:"scheduled" db:"scheduled"`
 	Started       time.Time       `json:"started" db:"started"`
 	Ended         time.Time       `json:"ended" db:"ended"`
 	Job           V2Job           `json:"job" db:"job"`

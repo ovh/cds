@@ -2,6 +2,7 @@ package worker_v2
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -52,7 +53,7 @@ func getWorker(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 	return &dbW.V2Worker, nil
 }
 
-func insert(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, w *sdk.V2Worker) error {
+func Insert(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, w *sdk.V2Worker) error {
 	ctx, next := telemetry.Span(ctx, "worker.insert")
 	defer next()
 	w.ID = sdk.UUID()
@@ -92,6 +93,8 @@ func LoadByConsumerID(ctx context.Context, db gorp.SqlExecutor, authConsumerID s
 }
 
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, workerID string, opts ...gorpmapping.GetOptionFunc) (*sdk.V2Worker, error) {
+	ctx, next := telemetry.Span(ctx, "v2_worker.LoadByID")
+	defer next()
 	query := gorpmapping.NewQuery("SELECT * FROM v2_worker WHERE id = $1").Args(workerID)
 	return getWorker(ctx, db, query, opts...)
 }
@@ -102,12 +105,24 @@ func LoadWorkerByName(ctx context.Context, db gorp.SqlExecutor, workerName strin
 	return getWorker(ctx, db, query, opts...)
 }
 
-func loadWorkerByStatus(ctx context.Context, db gorp.SqlExecutor, status string) ([]sdk.V2Worker, error) {
+func LoadWorkerByStatus(ctx context.Context, db gorp.SqlExecutor, status string) ([]sdk.V2Worker, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM v2_worker WHERE status = $1`).Args(status)
 	return getWorkers(ctx, db, query)
 }
 
 func LoadAllWorker(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Worker, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM v2_worker`)
+	return getWorkers(ctx, db, query)
+}
+
+func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.V2Worker, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT *
+		FROM v2_worker
+		WHERE status = ANY(string_to_array($1, ',')::text[])
+		AND now() - last_beat > $2 * INTERVAL '1' SECOND
+    ORDER BY last_beat ASC
+    LIMIT 100
+  `).Args(strings.Join(status, ","), timeout)
 	return getWorkers(ctx, db, query)
 }

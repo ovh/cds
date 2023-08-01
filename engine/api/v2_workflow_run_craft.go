@@ -13,7 +13,9 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/user"
@@ -36,14 +38,17 @@ type WorkflowRunEntityFinder struct {
 	userName               string
 }
 
-func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) error {
+func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case id := <-api.workflowRunCraftChan:
 			api.GoRoutines.Exec(
 				ctx,
@@ -147,8 +152,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
 
-		// Get worker model
-		completeName, msg, err := wref.searchEntity(ctx, api.mustDB(), api.Cache, j.WorkerModel, sdk.EntityTypeWorkerModel)
+		completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.WorkerModel, j.Region, api.Config.Workflow.JobDefaultRegion)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
@@ -198,23 +202,11 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	enqueueRequest := sdk.V2WorkflowRunEnqueue{
-		RunID:  run.ID,
-		UserID: run.UserID,
-	}
-
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(tx.Commit())
 	}
 
-	select {
-	case api.workflowRunTriggerChan <- enqueueRequest:
-		log.Debug(ctx, "workflow run %s %d trigger in chan", run.WorkflowName, run.RunNumber)
-	default:
-		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
-			return err
-		}
-	}
+	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
 	return nil
 }
 
@@ -367,7 +359,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	}
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelWarning, Message: fmt.Sprintf("obsolete workflow dependency used: %s", name)}, nil
+			return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("obsolete workflow dependency used: %s", name)}, nil
 		}
 		return "", nil, err
 	}
@@ -485,4 +477,56 @@ func buildRunContext(wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.Pr
 	runContext.Git = gitContext
 	runContext.Vars = nil
 	return runContext
+}
+
+func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.Store, jobName, workerModel, reg, defaultRegion string) (string, *sdk.V2WorkflowRunInfo, error) {
+	hatcheries, err := hatchery.LoadHatcheries(ctx, db)
+	if err != nil {
+		return "", nil, err
+	}
+	if reg == "" {
+		reg = defaultRegion
+	}
+
+	currentRegion, err := region.LoadRegionByName(ctx, db, reg)
+	if err != nil {
+		return "", nil, err
+	}
+
+	modelCompleteName := ""
+	modelType := ""
+	if workerModel != "" {
+		completeName, msg, err := wref.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
+		if err != nil {
+			return "", nil, err
+		}
+		if msg != nil {
+			return "", msg, nil
+		}
+		modelType = wref.workerModelCache[completeName].Type
+		modelCompleteName = completeName
+	}
+
+	for _, h := range hatcheries {
+		if h.ModelType == modelType {
+			// check permission
+			rbacHatchery, err := rbac.LoadRBACHatcheryByHatcheryID(ctx, db, h.ID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return "", nil, err
+			}
+			if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+				continue
+			}
+			if rbacHatchery.RegionID == currentRegion.ID {
+				return modelCompleteName, nil, nil
+			}
+		}
+	}
+
+	return modelCompleteName, &sdk.V2WorkflowRunInfo{
+		WorkflowRunID: wref.run.ID,
+		Level:         sdk.WorkflowRunInfoLevelError,
+		IssuedAt:      time.Now(),
+		Message:       fmt.Sprintf("wrong configuration on job %s. No hatchery can run it", jobName),
+	}, nil
 }

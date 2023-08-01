@@ -81,6 +81,11 @@ testcases:
         - result.systemoutjson.status ShouldEqual "Success"
       retry: 30
       delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow --format json
+      assertions:
+        - result.code ShouldEqual 0
+        - result.systemoutjson.systemoutjson0.workflow_name ShouldEqual "MyFirstWorkflow"
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1
     - script: "cat *step-0 | grep \"Workflow: MyFirstWorkflow\""
     - script: "cat *customaction | grep \"Welcome in action test-parent-action\""

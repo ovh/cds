@@ -38,7 +38,7 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, spawnA
 		JobRunID:     spawnArgs.RunJobID,
 		PrivateKey:   workerKey,
 	}
-	if err := insert(ctx, db, w); err != nil {
+	if err := Insert(ctx, db, w); err != nil {
 		return nil, err
 	}
 	return w, nil

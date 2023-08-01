@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -12,6 +13,27 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
+
+func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRun, error) {
+	var dbWkfRuns []dbWorkflowRun
+	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRuns); err != nil {
+		return nil, err
+	}
+	runs := make([]sdk.V2WorkflowRun, 0, len(dbWkfRuns))
+	for _, dbWkfRun := range dbWkfRuns {
+		isValid, err := gorpmapping.CheckSignature(dbWkfRun, dbWkfRun.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "run %s: data corrupted", dbWkfRun.ID)
+			continue
+		}
+		runs = append(runs, dbWkfRun.V2WorkflowRun)
+	}
+
+	return runs, nil
+}
 
 func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (*sdk.V2WorkflowRun, error) {
 	var dbWkfRun dbWorkflowRun
@@ -69,6 +91,17 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	return nil
 }
 
+func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, repoID, workflowName string) ([]sdk.V2WorkflowRun, error) {
+	ctx, next := telemetry.Span(ctx, "LoadRuns")
+	defer next()
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run
+    WHERE project_key = $1 AND vcs_server_id = $2 AND repository_id = $3 AND workflow_name = $4
+    LIMIT 50`).Args(projKey, vcsProjectID, repoID, workflowName)
+	return getRuns(ctx, db, query)
+}
+
 func LoadRunByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRunByID")
 	defer next()
@@ -98,4 +131,19 @@ func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]string, error) {
 		return nil, sdk.WrapError(err, "unable to load crafting v2 workflow runs")
 	}
 	return ids, nil
+}
+
+func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun, error) {
+	query := gorpmapping.NewQuery(`
+  SELECT v2_workflow_run.*
+  FROM v2_workflow_run
+  WHERE status = $1
+  AND (
+    SELECT count(1) FROM v2_workflow_run_job
+    WHERE v2_workflow_run_job.workflow_run_id = v2_workflow_run.id AND v2_workflow_run_job.status != ALL($2)
+) = 0
+  LIMIT 100;
+`).Args(sdk.StatusBuilding, pq.StringArray([]string{sdk.StatusBuilding, sdk.StatusScheduling, sdk.StatusWaiting}))
+
+	return getRuns(ctx, db, query)
 }

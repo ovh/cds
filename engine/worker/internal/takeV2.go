@@ -81,6 +81,53 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	}
 	w.SetGelfLogger(h, l)
 
+	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
+	tick := time.NewTicker(5 * time.Second)
+	go func(cancel context.CancelFunc, runJobID string, tick *time.Ticker) {
+		defer tick.Stop()
+		var nbConnrefused int
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case _, ok := <-tick.C:
+				if !ok {
+					return
+				}
+				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
+				j, err := w.ClientV2().V2QueueGetJobRun(ctxGetJSON, region, runJobID)
+				if err != nil {
+					cancelGetJSON()
+					if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+						log.Info(ctx, "V2Take> Unable to load workflow run job - Not Found (Request) %s: %v", runJobID, err)
+						cancel()
+						return
+					}
+					log.Error(ctx, "V2Take> Unable to load workflow run job (Request) %s: %v", runJobID, err)
+
+					// If we got a "connection refused", retry 5 times
+					if strings.Contains(err.Error(), "connection refused") {
+						nbConnrefused++
+					}
+					if nbConnrefused >= 5 {
+						cancel()
+						return
+					}
+
+					continue // do not kill the worker here, could be a timeout
+				}
+				cancelGetJSON()
+				nbConnrefused = 0
+				if j == nil || j.Status != sdk.StatusBuilding {
+					log.Warn(ctx, "V2Take> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
+					cancel()
+					return
+				}
+
+			}
+		}
+	}(cancel, jobRunID, tick)
+
 	//Run !
 	res := w.V2ProcessJob()
 	res.Time = time.Now()

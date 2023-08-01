@@ -19,17 +19,44 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) V2WorkflowRunEngineChan(ctx context.Context) error {
+func (api *API) TriggerBlockedWorklowRuns(ctx context.Context) {
+	tickTrigger := time.NewTicker(1 * time.Minute)
+
 	for {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				return ctx.Err()
+				log.Error(ctx, "%v", ctx.Err())
 			}
-			return nil
+			return
+		case <-tickTrigger.C:
+			wrs, err := workflow_v2.LoadBuildingRunWithEndedJobs(ctx, api.mustDB())
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				continue
+			}
+			for _, wr := range wrs {
+				if err := api.triggerBlockedWorkflowRun(ctx, wr); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
+			}
+
+		}
+	}
+}
+
+func (api *API) V2WorkflowRunEngineChan(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case wrEnqueue := <-api.workflowRunTriggerChan:
 			if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
 				log.ErrorWithStackTrace(ctx, err)
@@ -38,7 +65,7 @@ func (api *API) V2WorkflowRunEngineChan(ctx context.Context) error {
 	}
 }
 
-func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) error {
+func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 	for {
 		var wrEnqueue sdk.V2WorkflowRunEnqueue
 		if err := api.Cache.DequeueWithContext(ctx, workflow_v2.WorkflowEngineKey, 250*time.Millisecond, &wrEnqueue); err != nil {
@@ -49,7 +76,10 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) error {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 		if ctx.Err() != nil {
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		}
 	}
 }
@@ -70,8 +100,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 	if !b {
-		log.Debug(ctx, "api.workflowRunV2Trigger> run %d is locked in cache", wrEnqueue.RunID)
-		// re-enqueue workflow-run
+		log.Debug(ctx, "api.workflowRunV2Trigger> run %s is locked in cache", wrEnqueue.RunID)
 		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, wrEnqueue); err != nil {
 			next()
 			return err
@@ -434,4 +463,71 @@ func buildJobsContext(runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
 		}
 	}
 	return jobsContext
+}
+
+func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2WorkflowRun) error {
+	ctx = context.WithValue(ctx, cdslog.Workflow, wr.WorkflowName)
+	ctx, next := telemetry.Span(ctx, "api.triggerBlockedWorkflowRun")
+	defer next()
+
+	_, next = telemetry.Span(ctx, "api.triggerBlockedWorkflowRun.lock")
+	lockKey := cache.Key("api:workflow:engine", wr.ID)
+	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
+	if err != nil {
+		next()
+		return err
+	}
+	if !b {
+		next()
+		return nil
+	}
+	next()
+	defer func() {
+		_ = api.Cache.Unlock(lockKey)
+	}()
+
+	log.Info(ctx, "triggerBlockedWorkflowRun: trigger workflow %s for run %d", wr.WorkflowName, wr.RunNumber)
+	if wr.Status != sdk.StatusBuilding {
+		return nil
+	}
+
+	// Search last userID that trigger a job in this run
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID)
+	if err != nil {
+		return err
+	}
+	var lastJobs sdk.V2WorkflowRunJob
+	for _, rj := range runJobs {
+		if !sdk.StatusIsTerminated(rj.Status) {
+			return nil
+		}
+		if rj.Started.After(lastJobs.Started) {
+			lastJobs = rj
+		}
+	}
+
+	userID := lastJobs.UserID
+	// No job have been triggered
+	if userID == "" {
+		userID = wr.UserID
+	}
+
+	api.EnqueueWorkflowRun(ctx, wr.ID, userID, wr.WorkflowName, wr.RunNumber)
+	return nil
+}
+
+func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, userID string, workflowName string, runNumber int64) {
+	// Continue workflow
+	enqueueRequest := sdk.V2WorkflowRunEnqueue{
+		RunID:  runID,
+		UserID: userID,
+	}
+	select {
+	case api.workflowRunTriggerChan <- enqueueRequest:
+		log.Debug(ctx, "workflow run %s %d trigger in chan", workflowName, runNumber)
+	default:
+		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}
 }

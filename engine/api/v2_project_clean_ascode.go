@@ -25,14 +25,17 @@ type EntitiesCleaner struct {
 	branches map[string]struct{}
 }
 
-func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration) error {
+func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration) {
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
 		case <-ticker.C:
 			projects, err := project.LoadAll(ctx, a.mustDB(), a.Cache)
 			if err != nil {

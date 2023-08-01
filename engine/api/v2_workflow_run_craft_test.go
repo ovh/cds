@@ -6,6 +6,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -17,9 +20,87 @@ import (
 	"time"
 )
 
+func TestCraftWorkflowRunNoHatchery(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM region")
+	db.Exec("DELETE FROM rbac")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, vcsProject.ID, "my/repo")
+
+	wkName := sdk.RandomString(10)
+	wr := sdk.V2WorkflowRun{
+		UserID:       admin.ID,
+		ProjectKey:   proj.Key,
+		Status:       sdk.StatusCrafting,
+		VCSServerID:  vcsProject.ID,
+		RepositoryID: repo.ID,
+		RunNumber:    0,
+		RunAttempt:   0,
+		WorkflowRef:  "master",
+		WorkflowSha:  "123456",
+		WorkflowName: wkName,
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Name: wkName,
+				Jobs: map[string]sdk.V2Job{
+					"job1": {
+						Name:   "My super job",
+						If:     "cds.workflow == 'toto'",
+						Region: "build",
+						Steps: []sdk.ActionStep{
+							{
+								ID:   "myfirstStep",
+								Uses: fmt.Sprintf("actions/%s/%s/%s/myaction", proj.Key, vcsProject.Name, repo.Name),
+							},
+							{
+								ID:   "mysecondStep",
+								Uses: fmt.Sprintf("actions/%s/%s/myaction", vcsProject.Name, repo.Name),
+							},
+							{
+								ID:   "mythirdStep",
+								Uses: fmt.Sprintf("actions/%s/myaction", repo.Name),
+							},
+							{
+								ID:   "myfourthStep",
+								Uses: fmt.Sprintf("actions/myaction"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
+
+	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.StatusFail, wrDB.Status)
+	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(wrInfos))
+	require.Equal(t, "wrong configuration on job My super job. No hatchery can run it", wrInfos[0].Message)
+}
+
 func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
+
+	db.Exec("DELETE FROM region")
+	db.Exec("DELETE FROM rbac")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
@@ -73,11 +154,27 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(ctx, db, &perm))
+
 	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.StatusSkipped, wrDB.Status)
+	require.Equal(t, sdk.StatusFail, wrDB.Status)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(wrInfos))
@@ -87,6 +184,12 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
+
+	db.Exec("DELETE FROM region")
+	db.Exec("DELETE FROM rbac")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
@@ -166,11 +269,27 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	}
 	require.NoError(t, entity.Insert(ctx, db, &myWMEnt))
 
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(ctx, db, &perm))
+
 	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, wrDB.Status, sdk.StatusBuilding)
+	require.Equal(t, sdk.StatusBuilding, wrDB.Status)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos))
@@ -181,6 +300,12 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
+
+	db.Exec("DELETE FROM region")
+	db.Exec("DELETE FROM rbac")
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
@@ -299,6 +424,22 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 				return nil, 200, nil
 			},
 		).Times(1)
+
+	// Create hatchery
+	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+
+	perm := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Hatcheries: []sdk.RBACHatchery{
+			{
+				RegionID:   reg.ID,
+				HatcheryID: hatch.ID,
+				Role:       sdk.HatcheryRoleSpawn,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(ctx, db, &perm))
 
 	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
 
