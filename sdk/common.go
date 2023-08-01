@@ -382,3 +382,24 @@ func NoPath(path string) string {
 	}
 	return filepath.Base(CleanPath(path))
 }
+
+func MapHasKeys(i interface{}, expectedKeys ...interface{}) bool {
+	valueOf := reflect.ValueOf(i)
+	if valueOf.Kind() != reflect.Map {
+		return false
+	}
+	actualKeyValues := valueOf.MapKeys()
+	for _, expectedKey := range expectedKeys {
+		var found = false
+		for _, actualKey := range actualKeyValues {
+			if actualKey.Equal(reflect.ValueOf(expectedKey)) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}

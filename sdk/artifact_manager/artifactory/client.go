@@ -14,6 +14,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+	"github.com/jfrog/jfrog-client-go/utils/errorutils"
 	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/sdk"
@@ -87,6 +88,33 @@ func (c *Client) SetProperties(repoName string, filePath string, props *utils.Pr
 		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to call artifactory [HTTP: %d] %s", re.StatusCode, fileInfoURL)
 	}
 	return nil
+}
+
+func (c *Client) GetProperties(repoName string, filePath string) (map[string][]string, error) {
+	type PropertiesResponse struct {
+		Properties map[string][]string `json:"properties"`
+	}
+	if !strings.HasPrefix(filePath, "/") {
+		filePath = "/" + filePath
+	}
+	var rp = services.NewCreateReplicationService(c.Asm.Client())
+	rp.ArtDetails = c.Asm.GetConfig().GetServiceDetails()
+	var httpDetails = rp.ArtDetails.CreateHttpClientDetails()
+	propUrl := fmt.Sprintf("%sapi/storage/%s%s?properties", c.Asm.GetConfig().GetServiceDetails().GetUrl(), repoName, filePath)
+
+	resp, body, _, err := c.Asm.Client().SendGet(propUrl, true, &httpDetails)
+	if err != nil {
+		return nil, errors.Errorf("unable to get properties on %s%s: %v", repoName, filePath, err)
+	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		return nil, errors.WithStack(errorutils.CheckError(errors.New(fmt.Sprintf("GET Properties Artifactory on %s%s response: [%d] %v\n", repoName, filePath, resp.StatusCode, string(body)))))
+	}
+
+	var props PropertiesResponse
+	if err := json.Unmarshal(body, &props); err != nil {
+		return nil, errors.Errorf("unable get properties, unable to read response: %s: %v", string(body), err)
+	}
+	return props.Properties, nil
 }
 
 type DeleteBuildRequest struct {

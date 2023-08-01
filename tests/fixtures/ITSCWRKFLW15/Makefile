@@ -11,11 +11,11 @@ plugin-simple-darwin-amd64:
 	$(MAKE) build-plugin OS=darwin ARCH=amd64
 
 build-plugin:
-	@docker run \
+	docker run \
 	--mount type=bind,source=$$(pwd)/../../../,dst=/go/src/github.com/ovh/cds \
 	--rm \
 	-e "GOOS=$(OS)" \
 	-e "GOARCH=$(ARCH)" \
-	golang:1.18 \
+	golang:1.20 \
 	/bin/bash -c \
 	"cd /go/src/github.com/ovh/cds/tests/fixtures/ITSCWRKFLW15 && go version && CGO_ENABLED=0 go build -installsuffix cgo -ldflags '-extldflags "-static"' -o plugin-simple-integ-$(OS)-$(ARCH) ."

@@ -2,6 +2,7 @@ package artifact_manager
 
 import (
 	"context"
+
 	buildinfo "github.com/jfrog/build-info-go/entities"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
@@ -15,6 +16,7 @@ type ArtifactManager interface {
 	GetFileInfo(repoName string, filePath string) (sdk.FileInfo, error)
 	GetRepository(repoName string) (*services.RepositoryDetails, error)
 	GetFolderInfo(repoName string, folderPath string) (*utils.FolderInfo, error)
+	GetProperties(repoName string, filePath string) (map[string][]string, error)
 	SetProperties(repoName string, filePath string, values *utils.Properties) error
 	DeleteBuild(project string, buildName string, buildVersion string) error
 	PublishBuildInfo(project string, request *buildinfo.BuildInfo) error
