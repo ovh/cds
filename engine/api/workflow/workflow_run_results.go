@@ -702,14 +702,26 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		}
 		localRepository := fmt.Sprintf("%s-%s", artifact.RepoName, maturity)
 
-		fi, err := artifactClient.GetFileInfo(artifact.RepoName, artifact.Path)
+		repoDetails, err := artifactClient.GetRepository(localRepository)
+		if err != nil {
+			log.Error(ctx, "unable to get repository %q fror result %s: %v", localRepository, result.ID, err)
+			continue
+		}
+
+		// To get FileInfo for a docker image, we have to check the manifest file
+		filePath := artifact.Path
+		if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
+			filePath = path.Join(filePath, "manifest.json")
+		}
+
+		fi, err := artifactClient.GetFileInfo(artifact.RepoName, filePath)
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
 			continue
 		}
 
-		existingProperties, err := artifactClient.GetProperties(localRepository, artifact.Path)
+		existingProperties, err := artifactClient.GetProperties(localRepository, filePath)
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
 			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
@@ -754,9 +766,13 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		signedProps["type"] = artifact.RepoType
 		signedProps["path"] = artifact.Path
 		signedProps["name"] = artifact.Name
-		signedProps["md5"] = fi.Checksums.Md5
-		signedProps["sha1"] = fi.Checksums.Sha1
-		signedProps["sha256"] = fi.Checksums.Sha256
+		if fi.Checksums == nil {
+			log.Error(ctx, "unable to get checksums for artifact %s %s", artifact.RepoName, artifact.Path)
+		} else {
+			signedProps["md5"] = fi.Checksums.Md5
+			signedProps["sha1"] = fi.Checksums.Sha1
+			signedProps["sha256"] = fi.Checksums.Sha256
+		}
 
 		// Sign the properties with main CDS authentication key pair
 		signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
