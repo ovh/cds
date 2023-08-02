@@ -69,7 +69,7 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	return actionSchema
 }
 
-func GetJobJsonSchema(publicActionNames []string) *jsonschema.Schema {
+func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerModels []string) *jsonschema.Schema {
 	jobSchema := jsonschema.Reflect(&V2Job{})
 
 	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
@@ -78,6 +78,23 @@ func GetJobJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	if len(publicActionNames) > 0 {
 		for _, actName := range publicActionNames {
 			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
+		}
+	}
+
+	// Enum on region
+	propRegion, _ := jobSchema.Definitions["V2Job"].Properties.Get("region")
+	regionSchema := propRegion.(*jsonschema.Schema)
+	if len(regionNames) > 0 {
+		for _, regName := range regionNames {
+			regionSchema.Enum = append(regionSchema.Enum, regName)
+		}
+	}
+
+	propWM, _ := jobSchema.Definitions["V2Job"].Properties.Get("worker_model")
+	wmSchema := propWM.(*jsonschema.Schema)
+	if len(workerModels) > 0 {
+		for _, wmName := range workerModels {
+			wmSchema.Enum = append(wmSchema.Enum, wmName)
 		}
 	}
 
