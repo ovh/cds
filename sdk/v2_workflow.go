@@ -70,7 +70,7 @@ func (w V2Workflow) Lint() []error {
 
 	errs = w.CheckStageAndJobNeeds()
 
-	workflowSchema := GetWorkflowJsonSchema(nil)
+	workflowSchema := GetWorkflowJsonSchema(nil, nil, nil)
 	workflowSchemaS, err := workflowSchema.MarshalJSON()
 	if err != nil {
 		return []error{NewErrorFrom(err, "unable to load action schema")}

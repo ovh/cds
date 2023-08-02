@@ -250,6 +250,7 @@ export class FlatElement {
     name: string;
     positions: Array<FlatElementPosition>;
     type: Array<string>;
+    enum: Array<string>;
     children: Array<string>;
     oneOf: FlatElementsOneOfRequired;
 }

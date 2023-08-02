@@ -101,8 +101,11 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 	return jobSchema
 }
 
-func GetWorkflowJsonSchema(publicActionNames []string) *jsonschema.Schema {
+func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []string) *jsonschema.Schema {
 	workflowSchema := jsonschema.Reflect(&V2Workflow{})
+
+	jobSchema := GetJobJsonSchema(publicActionNames, regionNames, workerModelNames)
+	actionStepSchema := GetActionJsonSchema(publicActionNames)
 
 	if workflowSchema.Definitions == nil {
 		workflowSchema.Definitions = make(map[string]*jsonschema.Schema)
@@ -118,14 +121,8 @@ func GetWorkflowJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	jobs.PatternProperties[EntityActionInputKey] = jobs.PatternProperties[".*"]
 	delete(jobs.PatternProperties, ".*")
 
-	propStepUses, _ := workflowSchema.Definitions["ActionStep"].Properties.Get("uses")
-	stepUses := propStepUses.(*jsonschema.Schema)
-	// Enum on step uses
-	if len(publicActionNames) > 0 {
+	workflowSchema.Definitions["ActionStep"] = actionStepSchema.Definitions["ActionStep"]
+	workflowSchema.Definitions["V2Job"] = jobSchema.Definitions["V2Job"]
 
-		for _, actName := range publicActionNames {
-			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
-		}
-	}
 	return workflowSchema
 }

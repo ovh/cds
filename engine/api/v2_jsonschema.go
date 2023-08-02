@@ -35,21 +35,21 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 				if err != nil {
 					return err
 				}
+				regNames, err := getRegionNames(ctx, api.mustDB(), u)
+				if err != nil {
+					return err
+				}
+				wmNames, err := getWorkerModelNames(ctx, api.mustDB(), u)
+				if err != nil {
+					return err
+				}
 
 				switch t {
 				case sdk.EntityTypeWorkflow:
-					schema = sdk.GetWorkflowJsonSchema(actionNames)
+					schema = sdk.GetWorkflowJsonSchema(actionNames, regNames, wmNames)
 				case sdk.EntityTypeAction:
 					schema = sdk.GetActionJsonSchema(actionNames)
 				case sdk.EntityTypeJob:
-					regNames, err := getRegionNames(ctx, api.mustDB(), u)
-					if err != nil {
-						return err
-					}
-					wmNames, err := getWorkerModelNames(ctx, api.mustDB(), u)
-					if err != nil {
-						return err
-					}
 					schema = sdk.GetJobJsonSchema(actionNames, regNames, wmNames)
 				}
 			}
