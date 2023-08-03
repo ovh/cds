@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/rockbears/log"
 
@@ -27,6 +28,7 @@ func RunPromote(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, _ [
 	}
 
 	log.Info(ctx, "RunPromote> preparing run result %+v for promotion", promotedRunResultIDs)
+	wk.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Preparing run results %v for promotion to %q", promotedRunResultIDs, sdk.ParameterValue(a.Parameters, "destMaturity")))
 	if err := wk.Client().QueueWorkflowRunResultsPromote(ctx,
 		jobID, promotedRunResultIDs,
 		sdk.ParameterValue(a.Parameters, "destMaturity"),

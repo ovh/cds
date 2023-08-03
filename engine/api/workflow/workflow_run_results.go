@@ -387,11 +387,15 @@ func getAll(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) (
 }
 
 func LoadRunResultsByRunIDFilterByIDs(ctx context.Context, db gorp.SqlExecutor, runID int64, resultIDs ...string) (sdk.WorkflowRunResults, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.LoadRunResultsByRunIDFilterByIDs")
+	defer end()
 	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 AND id = ANY($2) ORDER BY sub_num DESC").Args(runID, pq.StringArray(resultIDs))
 	return getAll(ctx, db, query)
 }
 
 func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID int64) (sdk.WorkflowRunResults, error) {
+	ctx, end := telemetry.Span(ctx, "workflow.LoadRunResultsByRunIDFilterByIDs")
+	defer end()
 	query := gorpmapping.NewQuery("SELECT * FROM workflow_run_result WHERE workflow_run_id = $1 ORDER BY sub_num DESC").Args(runID)
 	return getAll(ctx, db, query)
 }
@@ -830,6 +834,7 @@ func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExec
 		}
 	}
 	if len(filteredRunResults) == 0 {
+		log.Info(ctx, "nothing to process on workflow run %d", workflowRunID)
 		return nil
 	}
 
@@ -883,12 +888,14 @@ func ProcessRunResultPromotionByRunID(ctx context.Context, db gorpmapper.SqlExec
 				FromMaturity: currentMaturity,
 				ToMaturity:   promotionRequest.ToMaturity,
 			})
+			log.Info(ctx, "updating run result %s with release %+v", result.DataSync.Releases[len(result.DataSync.Releases)-1])
 		case sdk.WorkflowRunResultPromotionTypePromote:
 			result.DataSync.Promotions = append(result.DataSync.Promotions, sdk.WorkflowRunResultPromotion{
 				Date:         now,
 				FromMaturity: currentMaturity,
 				ToMaturity:   promotionRequest.ToMaturity,
 			})
+			log.Info(ctx, "updating run result %s with promotion %+v", result.DataSync.Promotions[len(result.DataSync.Promotions)-1])
 		}
 		if err := UpdateRunResult(ctx, db, &result); err != nil {
 			return err
