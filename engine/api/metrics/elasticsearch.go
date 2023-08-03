@@ -72,20 +72,6 @@ func GetMetrics(ctx context.Context, db gorp.SqlExecutor, key string, appID int6
 	return events, nil
 }
 
-// PushVulnerabilities Create metrics from vulnerabilities and send them
-func PushVulnerabilities(projKey string, appID int64, workflowID int64, num int64, summary map[string]float64) {
-	m := sdk.Metric{
-		Date:          time.Now(),
-		ProjectKey:    projKey,
-		WorkflowID:    workflowID,
-		Num:           num,
-		ApplicationID: appID,
-		Key:           sdk.MetricKeyVulnerability,
-		Value:         summary,
-	}
-	metricsChan <- m
-}
-
 // PushUnitTests Create metrics from unit tests and send them
 func PushUnitTests(projKey string, appID int64, workflowID int64, num int64, tests sdk.TestsStats) {
 	m := sdk.Metric{

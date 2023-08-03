@@ -76,8 +76,6 @@ import { VariableFormComponent } from './variable/form/variable.form';
 import { VariableComponent } from './variable/list/variable.component';
 import { VariableValueComponent } from './variable/value/variable.value.component';
 import { VCSStrategyComponent } from './vcs/vcs.strategy.component';
-import { VulnerabilitiesListComponent } from './vulnerability/list/vulnerability.list.component';
-import { VulnerabilitiesComponent } from './vulnerability/vulnerabilities.component';
 import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-form/workflow-template.apply-form.component';
 import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
@@ -286,8 +284,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         VariableFormComponent,
         VariableValueComponent,
         VCSStrategyComponent,
-        VulnerabilitiesComponent,
-        VulnerabilitiesListComponent,
         WorkflowDeleteNodeComponent,
         WorkflowHookMenuEditComponent,
         WorkflowHookModalComponent,
@@ -439,8 +435,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         VariableFormComponent,
         VariableValueComponent,
         VCSStrategyComponent,
-        VulnerabilitiesComponent,
-        VulnerabilitiesListComponent,
         WorkflowDeleteNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeEditModalComponent,

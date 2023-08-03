@@ -12,13 +12,10 @@ import (
 
 type dbApplicationVariableAudit sdk.ApplicationVariableAudit
 
-type dbApplicationVulnerability sdk.Vulnerability
-
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbApplication{}, "application", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationVariableAudit{}, "application_variable_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationKey{}, "application_key", true, "id"))
-	gorpmapping.Register(gorpmapping.New(dbApplicationVulnerability{}, "application_vulnerability", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationVariable{}, "application_variable", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbApplicationDeploymentStrategy{}, "application_deployment_strategy", true, "id"))
 }

@@ -4036,20 +4036,6 @@ func (mr *MockQueueClientMockRecorder) QueueSendUnitTests(ctx, id, report interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendUnitTests", reflect.TypeOf((*MockQueueClient)(nil).QueueSendUnitTests), ctx, id, report)
 }
 
-// QueueSendVulnerability mocks base method.
-func (m *MockQueueClient) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendVulnerability", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendVulnerability indicates an expected call of QueueSendVulnerability.
-func (mr *MockQueueClientMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockQueueClient)(nil).QueueSendVulnerability), ctx, id, report)
-}
-
 // QueueTakeJob mocks base method.
 func (m *MockQueueClient) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error) {
 	m.ctrl.T.Helper()
@@ -8657,20 +8643,6 @@ func (mr *MockInterfaceMockRecorder) QueueSendUnitTests(ctx, id, report interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendUnitTests", reflect.TypeOf((*MockInterface)(nil).QueueSendUnitTests), ctx, id, report)
 }
 
-// QueueSendVulnerability mocks base method.
-func (m *MockInterface) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendVulnerability", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendVulnerability indicates an expected call of QueueSendVulnerability.
-func (mr *MockInterfaceMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockInterface)(nil).QueueSendVulnerability), ctx, id, report)
-}
-
 // QueueTakeJob mocks base method.
 func (m *MockInterface) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (*sdk.WorkflowNodeJobRunData, error) {
 	m.ctrl.T.Helper()
@@ -11342,20 +11314,6 @@ func (m *MockWorkerInterface) QueueSendUnitTests(ctx context.Context, id int64, 
 func (mr *MockWorkerInterfaceMockRecorder) QueueSendUnitTests(ctx, id, report interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendUnitTests", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendUnitTests), ctx, id, report)
-}
-
-// QueueSendVulnerability mocks base method.
-func (m *MockWorkerInterface) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueueSendVulnerability", ctx, id, report)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// QueueSendVulnerability indicates an expected call of QueueSendVulnerability.
-func (mr *MockWorkerInterfaceMockRecorder) QueueSendVulnerability(ctx, id, report interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueSendVulnerability", reflect.TypeOf((*MockWorkerInterface)(nil).QueueSendVulnerability), ctx, id, report)
 }
 
 // QueueTakeJob mocks base method.

@@ -313,7 +313,6 @@ type QueueClient interface {
 	QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error
 	QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error
-	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
 	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error

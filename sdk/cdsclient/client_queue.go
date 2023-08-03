@@ -234,12 +234,6 @@ func (c *client) QueueSendUnitTests(ctx context.Context, id int64, report sdk.JU
 	return err
 }
 
-func (c *client) QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error {
-	path := fmt.Sprintf("/queue/workflows/%d/vulnerability", id)
-	_, err := c.PostJSON(ctx, path, report, nil)
-	return err
-}
-
 func (c *client) QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error {
 	path := fmt.Sprintf("/queue/workflows/%d/step", id)
 	_, err := c.PostJSON(ctx, path, res, nil)

@@ -173,11 +173,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             icon: 'font-colors',
             iconTheme: 'outline'
         }, <Tab>{
-            title: 'Vulnerabilities',
-            icon: 'bug',
-            iconTheme: 'outline',
-            key: 'vuln'
-        }, <Tab>{
             title: usageText,
             icon: 'global',
             iconTheme: 'outline',
