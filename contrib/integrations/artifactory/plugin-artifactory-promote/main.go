@@ -116,12 +116,13 @@ func (e *artifactoryPromotePlugin) Run(ctx context.Context, opts *integrationplu
 		if skip {
 			continue
 		}
+		fmt.Println("Promoting run result ", r.ID)
 		if r.DataSync == nil {
-			return fail("unable to find an existing promotion for result %s", r.ID)
+			return fail("unable to find an existing promotion for result %s (run result has never be synchronized with artifactory manager) ", r.ID)
 		}
 		latestPromotion := r.DataSync.LatestPromotionOrRelease()
 		if latestPromotion == nil {
-			return fail("unable to find an existing promotion for result %s", r.ID)
+			return fail("unable to find latest promotion/release for result %s", r.ID)
 		}
 		switch rData.RepoType {
 		case "docker":
