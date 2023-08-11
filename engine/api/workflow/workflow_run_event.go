@@ -398,7 +398,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		for _, pr := range prs {
 			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && IsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
-				log.Info(ctx, "send comment %+v on repo %s", reqComment, app.RepositoryFullname)
+				log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", reqComment.Revision, reqComment.ID, app.RepositoryFullname)
 				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					return err
