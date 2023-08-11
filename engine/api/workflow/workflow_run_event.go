@@ -325,19 +325,25 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 }
 
 func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string) error {
-	if notif.Settings.Template == nil || (notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment) {
+	log.Info(ctx, "Send pull-request comment for node run %d", nodeRun.ID)
+	if notif.Settings.Template == nil {
+		log.Info(ctx, "nothing to do: template is empty", nodeRun.ID)
+		return nil
+	}
+	if notif.Settings.Template.DisableComment != nil && *notif.Settings.Template.DisableComment {
+		log.Info(ctx, "nothing to do: comment are disabled")
 		return nil
 	}
 
 	if nodeRun.Status != sdk.StatusFail && nodeRun.Status != sdk.StatusStopped && notif.Settings.OnSuccess != sdk.UserNotificationAlways {
+		log.Info(ctx, "nothing to do: status is %v", nodeRun.Status)
 		return nil
 	}
-
-	log.Debug(ctx, "Send pull-request comment for node run %d", nodeRun.ID)
 
 	var app sdk.Application
 	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 	if !node.IsLinkedToRepo(&wr.Workflow) {
+		log.Info(ctx, "nothing to do: node is not linked to repo")
 		return nil
 	}
 
@@ -349,6 +355,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 	report, err := nodeRun.Report()
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return err
 	}
 
@@ -369,18 +376,21 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 	isGerrit, err := e.vcsClient.IsGerrit(ctx, db)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return err
 	}
 
 	if changeID != "" && isGerrit {
 		reqComment.ChangeID = changeID
 		if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return err
 		}
 	} else if !isGerrit {
 		//Check if this branch and this commit is a pullrequest
 		prs, err := e.vcsClient.PullRequests(ctx, app.RepositoryFullname)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return err
 		}
 
@@ -388,10 +398,14 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		for _, pr := range prs {
 			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && IsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
+				log.Info(ctx, "send comment %+v on repo %s", reqComment, app.RepositoryFullname)
 				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
 					return err
 				}
 				break
+			} else {
+				log.Info(ctx, "nothing to do on pr %+v for branch %s", pr, nodeRun.VCSBranch)
 			}
 		}
 	}
