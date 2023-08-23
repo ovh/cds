@@ -205,7 +205,7 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 			CountryCodes: []string{e.City.CountryCode},
 		})
 	}
-	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 1, false); err != nil {
+	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10, false); err != nil {
 		return fail("unable to distribute version: %v", err)
 	}
 
