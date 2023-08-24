@@ -8,7 +8,7 @@ card:
 
 ## Add the service requirement
 
-* Name: `mypg`. This will be the service hostname
+* Name: `mynginx`. This will be the service hostname
 * Type: `service`
 * Docker Image: `nginx:1.11.1`. This is the name of Docker image to link to current job
 
