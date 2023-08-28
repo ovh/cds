@@ -153,6 +153,7 @@ export class JSONSchema implements Schema {
         itemType.onchange = properties?.onchange;
         itemType.mode = properties?.mode;
         itemType.prefix = properties?.prefix;
+        itemType.textarea = properties?.textarea;
 
         if (condition) {
             itemType.condition = new Array<FlatElementTypeCondition>();
@@ -249,6 +250,7 @@ export class FlatElement {
     name: string;
     positions: Array<FlatElementPosition>;
     type: Array<string>;
+    enum: Array<string>;
     children: Array<string>;
     oneOf: FlatElementsOneOfRequired;
 }
@@ -266,6 +268,7 @@ export class FlatTypeElement {
     mode: string;
     prefix: string;
     code: boolean;
+    textarea: boolean;
 }
 
 export class FlatElementsOneOfRequired {

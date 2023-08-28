@@ -308,7 +308,7 @@ export class PipelineAuditComponent implements OnInit {
             // change enabled/description/name
             diff.title = 'Update ' + stage.name + ' > ' + job.action.name + ' > ' + pathSplitted[5];
             diff.type = 'string';
-            if (!pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]]) {
+            if ( !pipFrom.stages || !pipFrom.stages[pathSplitted[1]] || !pipFrom.stages[pathSplitted[1]].jobs || !pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]] ) {
                 return null;
             }
             diff.before = pipFrom.stages[pathSplitted[1]].jobs[pathSplitted[3]].action[pathSplitted[5]];

@@ -24,7 +24,8 @@
 </ng-container>
 
 <!-- ARRAY -->
-<div class="array-field" *ngIf="field && currentModel && jsonFormSchema && field.type === 'array'">
+<div class="array-field"
+     *ngIf="field && currentModel && jsonFormSchema && field.type === 'array' && field.objectType !== 'string'">
     <div class="item-title">
         <h3 [style]="{marginLeft: indent+'px'}">{{field.name.charAt(0).toUpperCase() + field.name.substring(1,
             field.name.length)}}</h3>
@@ -74,7 +75,14 @@
                     </div>
                 </ng-container>
                 <ng-container *ngIf="!oneOf">
-                    <!-- NOT IMPLEMENTED : ARRAY WITHOUT ONEOF -->
+                    <ng-container *ngFor="let f of currentModel[field.name]; let i=index">
+                        <ng-container *ngIf="field.objectType === 'string'">
+                            <input nz-input [name]="field.name+'-value-' + i" [disabled]="disabled"
+                                   [ngModel]="currentModel[field.name][i]"
+                                   (ngModelChange)="onValueChanged($event, i)">
+                        </ng-container>
+                    </ng-container>
+
                 </ng-container>
             </div>
         </div>
@@ -130,6 +138,25 @@
     </div>
 </div>
 
+<!-- Simple array field ([]string) -->
+<nz-form-item
+    *ngIf="field && currentModel && jsonFormSchema && field.type === 'array' && field.objectType === 'string'">
+    <nz-form-label nzFlex="120px">
+        <span *ngIf="required" class="red">{{ '* '}}</span>
+        {{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}
+        <i *ngIf="field?.description" nz-icon nzType="info-circle" nzTheme="outline"
+           [nz-tooltip]="field?.description"></i>
+    </nz-form-label>
+    <nz-form-control>
+        <ng-container *ngIf="field.mode === 'tags'">
+            <nz-select nzMode="tags" [nzPlaceHolder]="field.description" [ngModel]="currentModel[field.name]"
+                       (ngModelChange)="onFullArrayChanged($event)">
+                <nz-option *ngFor="let e of field.enum" [nzLabel]="e" [nzValue]="e"></nz-option>
+            </nz-select>
+        </ng-container>
+    </nz-form-control>
+</nz-form-item>
+
 <!-- SIMPLE FIELD (number / string) -->
 <nz-form-item
     *ngIf="field && currentModel && jsonFormSchema && field.type !== 'object' && field.type !== 'array' && field.type !== 'map'">
@@ -143,26 +170,49 @@
 
     <!-- FORM VALUE -->
     <nz-form-control nzErrorTip="Pattern should match {{field.pattern}}">
-        <ng-container *ngIf="field.type === 'string' && !field.enum && !field.code">
-            <input nz-input [pattern]="field.pattern" [name]="field.name" [disabled]="disabled"
-                   [ngModel]="currentModel[field.name]" (ngModelChange)="onValueChanged($event)">
-        </ng-container>
         <ng-container *ngIf="field.code">
             <app-editor-input #editor ngDefaultControl [ngModel]="currentModel[field.name]"
                               (ngModelChange)="onValueChanged($event)" [config]="{ language: 'shell' }">
             </app-editor-input>
         </ng-container>
         <ng-container *ngIf="field.enum">
-            <nz-select nzShowSearch [disabled]="disabled" [ngModel]="currentModel[field.name]"
-                       (ngModelChange)="onValueChanged($event)">
-                <ng-container *ngIf="field.prefix">
-                    <nz-option *ngFor="let e of field.enum" [nzLabel]="e.substring(field.prefix.length, e.length)"
-                               [nzValue]="e"></nz-option>
-                </ng-container>
-                <ng-container *ngIf="!field.prefix">
-                    <nz-option *ngFor="let e of field.enum" [nzLabel]="e" [nzValue]="e"></nz-option>
-                </ng-container>
-            </nz-select>
+            <ng-container *ngIf="field.mode === 'split'">
+                <nz-select nzShowSearch [nzCustomTemplate]="selectedTmpl" [disabled]="disabled"
+                           [ngModel]="currentModel[field.name]"
+                           (ngModelChange)="onValueChanged($event)">
+                    <nz-option *ngFor="let e of values" nzCustomContent [nzLabel]="e.label"
+                               [nzValue]="e.value">
+                        <div>{{e.label}}</div>
+                        <div class="description">
+                            {{e.description}}
+                            <span *ngIf="e.branch">{{ ' @' + e.branch}}</span>
+                        </div>
+                    </nz-option>
+                </nz-select>
+                <ng-template #selectedTmpl let-selected>
+                    {{selected.nzValue }}
+                </ng-template>
+            </ng-container>
+            <ng-container *ngIf="field.mode !== 'split'">
+                <nz-select nzShowSearch [disabled]="disabled" [ngModel]="currentModel[field.name]"
+                           (ngModelChange)="onValueChanged($event)">
+                    <ng-container *ngIf="field.prefix">
+                        <nz-option *ngFor="let e of field.enum" [nzLabel]="e.substring(field.prefix.length, e.length)"
+                                   [nzValue]="e"></nz-option>
+                    </ng-container>
+                    <ng-container *ngIf="!field.prefix">
+                        <nz-option *ngFor="let e of field.enum" [nzLabel]="e" [nzValue]="e"></nz-option>
+                    </ng-container>
+                </nz-select>
+            </ng-container>
+        </ng-container>
+        <ng-container *ngIf="field.textarea">
+            <textarea nz-input [pattern]="field.pattern" [name]="field.name" [disabled]="disabled"
+                      [ngModel]="currentModel[field.name]" (ngModelChange)="onValueChanged($event)"></textarea>
+        </ng-container>
+        <ng-container *ngIf="!field.enum && !field.code && !field.textarea">
+            <input nz-input [pattern]="field.pattern" [name]="field.name" [disabled]="disabled"
+                   [ngModel]="currentModel[field.name]" (ngModelChange)="onValueChanged($event)">
         </ng-container>
     </nz-form-control>
 </nz-form-item>

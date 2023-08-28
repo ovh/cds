@@ -51,6 +51,11 @@ export class JSONFormComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
+        this.buildSchemaType();
+        this._cd.markForCheck();
+    }
+
+    buildSchemaType(): void {
         const schemaDefs = this.schema.schema['$defs'];
         let allTypes = {};
         this.schema.flatTypes.forEach((v, k) => {
@@ -68,7 +73,8 @@ export class JSONFormComponent implements OnInit, OnChanges {
                         onchange: value.onchange,
                         mode: value.mode,
                         prefix: value.prefix,
-                        code: value.code
+                        code: value.code,
+                        textarea: value.textarea
                     };
                     if ((item.type === 'object' || item.type === 'array') && value.type.length === 2) {
                         item.objectType = value.type[1];
@@ -121,17 +127,21 @@ export class JSONFormComponent implements OnInit, OnChanges {
             };
         });
         this.jsonFormSchema = {types: allTypes};
-        this._cd.markForCheck();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        try {
-            this.model = load(this.data && this.data !== '' ? this.data : '{}', <LoadOptions>{
-                onWarning: (e) => {
-                }
-            });
-        } catch (e) {
-            // TODO: mark form as invalid
+        if (changes['data']) {
+            try {
+                this.model = load(this.data && this.data !== '' ? this.data : '{}', <LoadOptions>{
+                    onWarning: (e) => {
+                    }
+                });
+            } catch (e) {
+                // TODO: mark form as invalid
+            }
+        }
+        if (changes['schema']) {
+            this.buildSchemaType();
         }
         this._cd.markForCheck();
     }
@@ -147,6 +157,9 @@ export class JSONFormComponent implements OnInit, OnChanges {
     cleanModel(objectType: string, data: any): any {
         if (!objectType || !data) {
             return null;
+        }
+        if (objectType === 'string') {
+            return data;
         }
         const schema = this.jsonFormSchema.types[objectType];
         let cleanData = {};
