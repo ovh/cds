@@ -98,7 +98,59 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
     selectJob(jobName: string) {
         this.selectedJob = jobName;
         this.updateSelectedJob();
+        this.updateSchemaWithNewJobs()
         this._cd.markForCheck();
+    }
+
+    updateSchemaWithNewJobs(): void {
+        // list available jobs
+        let jobNames = this.listJobNames()
+        let jobType = this.jobFlatSchema.flatTypes.get("V2Job");
+        let hasBeenUpdated = false;
+        jobType.forEach(v => {
+            if (v.name !== 'needs') {
+                return;
+            }
+            let filteredJobName = jobNames.filter(j => j !== this.selectedJob);
+            if (filteredJobName && !v.enum) {
+                v.enum = filteredJobName;
+                hasBeenUpdated = true;
+                return;
+            }
+            if (filteredJobName && v.enum && filteredJobName.length !== v.enum.length) {
+                v.enum = filteredJobName;
+                hasBeenUpdated = true;
+                return;
+            }
+            if (filteredJobName && v.enum && filteredJobName.length === v.enum.length) {
+                let needUpdate = false
+                v.enum.forEach((v, i) => {
+                   if (filteredJobName[i] !== v) {
+                       needUpdate = true
+                   }
+                });
+                if (needUpdate) {
+                    v.enum = filteredJobName;
+                    hasBeenUpdated = true;
+                }
+            }
+        });
+        if (hasBeenUpdated) {
+            this.jobFlatSchema = Object.assign({}, this.jobFlatSchema);
+        }
+    }
+
+    listJobNames(): string[] {
+        let workflowForm: any;
+        try {
+            workflowForm = load(this.dataGraph && this.dataGraph !== '' ? this.dataGraph : '{}', <LoadOptions>{
+                onWarning: (e) => {
+                }
+            });
+        } catch (e) {
+            console.error("Invalid workflow:", this.dataGraph)
+        }
+        return Object.keys(workflowForm['jobs']);
     }
 
     updateSelectedJob(): void {
@@ -116,8 +168,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
         }
     }
 
-    @Debounce(500)
-    onEditorChange(data: string): void {
+    checkWorkflowSyntax(data: string): void {
         // Call api to check syntax
         this._entityService.checkEntity(EntityWorkflow, data).pipe(first()).subscribe(resp => {
             if (resp?.messages?.length > 0) {
@@ -125,13 +176,19 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
             } else {
                 delete this.syntaxErrors
                 this.dataGraph = data;
+                this.dataEditor = data;
+                this.updateSchemaWithNewJobs();
                 if (this.selectedJob) {
                     this.updateSelectedJob();
                 }
             }
             this._cd.markForCheck();
         })
+    }
 
+    @Debounce(500)
+    onEditorChange(data: string): void {
+        this.checkWorkflowSyntax(data);
     }
 
     @Debounce(200)
@@ -146,7 +203,6 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
             console.error("Invalid job:", data);
             return;
         }
-
         let workflowYml: any;
         try {
             workflowYml = load(this.dataGraph && this.dataGraph !== '' ? this.dataGraph : '{}', <LoadOptions>{
@@ -160,9 +216,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
         if (workflowYml && workflowYml['jobs'] && workflowYml['jobs'][this.selectedJob]) {
             workflowYml['jobs'][this.selectedJob] = jobYml
         }
-        this.dataGraph = dump(workflowYml);
-        this.dataEditor = this.dataGraph;
-
+        this.checkWorkflowSyntax(dump(workflowYml));
         this._cd.markForCheck();
     }
 

@@ -69,7 +69,7 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	return actionSchema
 }
 
-func GetJobJsonSchema(publicActionNames []string) *jsonschema.Schema {
+func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerModels []string) *jsonschema.Schema {
 	jobSchema := jsonschema.Reflect(&V2Job{})
 
 	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
@@ -81,11 +81,31 @@ func GetJobJsonSchema(publicActionNames []string) *jsonschema.Schema {
 		}
 	}
 
+	// Enum on region
+	propRegion, _ := jobSchema.Definitions["V2Job"].Properties.Get("region")
+	regionSchema := propRegion.(*jsonschema.Schema)
+	if len(regionNames) > 0 {
+		for _, regName := range regionNames {
+			regionSchema.Enum = append(regionSchema.Enum, regName)
+		}
+	}
+
+	propWM, _ := jobSchema.Definitions["V2Job"].Properties.Get("worker_model")
+	wmSchema := propWM.(*jsonschema.Schema)
+	if len(workerModels) > 0 {
+		for _, wmName := range workerModels {
+			wmSchema.Enum = append(wmSchema.Enum, wmName)
+		}
+	}
+
 	return jobSchema
 }
 
-func GetWorkflowJsonSchema(publicActionNames []string) *jsonschema.Schema {
+func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []string) *jsonschema.Schema {
 	workflowSchema := jsonschema.Reflect(&V2Workflow{})
+
+	jobSchema := GetJobJsonSchema(publicActionNames, regionNames, workerModelNames)
+	actionStepSchema := GetActionJsonSchema(publicActionNames)
 
 	if workflowSchema.Definitions == nil {
 		workflowSchema.Definitions = make(map[string]*jsonschema.Schema)
@@ -101,14 +121,8 @@ func GetWorkflowJsonSchema(publicActionNames []string) *jsonschema.Schema {
 	jobs.PatternProperties[EntityActionInputKey] = jobs.PatternProperties[".*"]
 	delete(jobs.PatternProperties, ".*")
 
-	propStepUses, _ := workflowSchema.Definitions["ActionStep"].Properties.Get("uses")
-	stepUses := propStepUses.(*jsonschema.Schema)
-	// Enum on step uses
-	if len(publicActionNames) > 0 {
+	workflowSchema.Definitions["ActionStep"] = actionStepSchema.Definitions["ActionStep"]
+	workflowSchema.Definitions["V2Job"] = jobSchema.Definitions["V2Job"]
 
-		for _, actName := range publicActionNames {
-			stepUses.Enum = append(stepUses.Enum, "actions/"+actName)
-		}
-	}
 	return workflowSchema
 }

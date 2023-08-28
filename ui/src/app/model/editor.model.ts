@@ -1,5 +1,5 @@
 import {editor, IPosition, Range} from "monaco-editor";
-import {FlatSchema} from "./schema.model";
+import {FlatElement, FlatElementPosition, FlatSchema} from "./schema.model";
 import ITextModel = editor.ITextModel;
 
 export class Editor {
@@ -12,34 +12,76 @@ export class Editor {
                 const wordInfo = model.getWordUntilPosition(position);
                 let currentLine = model.getLineContent(position.lineNumber);
                 let firstColon = currentLine.indexOf(':');
+                let result = [];
+                let currentDepthCursor = Editor.findDepth(model.getLineContent(position.lineNumber));
                 if (firstColon !== -1 && (position.column - 1) > firstColon) {
                     // Value suggestion : manage enum
+                    result = Editor.autoCompleteValue(model, position, flatSchema, currentDepthCursor);
                 } else {
-                    let currentDepthCursor = Editor.findDepth(model.getLineContent(position.lineNumber));
                     if (currentDepthCursor === -1) {
-                        return null;
+                        return {
+                            incomplete: false,
+                            suggestions: [],
+                        };
                     }
-                    let result = Editor.autoCompleteKey(model, position, flatSchema, currentDepthCursor);
-                    return {
-                        incomplete: false,
-                        suggestions: result.map(r => {
-                            return {
-                                label: r,
-                                kind: 13,//CompletionItemKind.Value;
-                                insertText: r,
-                                range: new Range(
-                                    position.lineNumber,
-                                    wordInfo.startColumn,
-                                    position.lineNumber,
-                                    wordInfo.endColumn,
-                                )
-                            }
-                        }),
-                    };
+                    result = Editor.autoCompleteKey(model, position, flatSchema, currentDepthCursor);
                 }
-                return;
+                if (!result) {
+                    return null;
+                }
+                return {
+                    incomplete: false,
+                    suggestions: result.map(r => {
+                        return {
+                            label: r,
+                            kind: 13,//CompletionItemKind.Value;
+                            insertText: r,
+                            range: new Range(
+                                position.lineNumber,
+                                wordInfo.startColumn,
+                                position.lineNumber,
+                                wordInfo.endColumn,
+                            )
+                        }
+                    }),
+                };
             },
         }
+    }
+
+    static autoCompleteValue(model: ITextModel, position: IPosition, flatSchema: FlatSchema, currentDepth): string[] {
+        let currentLineContent = model.getLineContent(position.lineNumber);
+        let key = currentLineContent.replace(':', '').trim();
+        let parents = Editor.findParent(model, position, currentDepth);
+        let flatEltPosition = Editor.findElement(key, parents, flatSchema.flatElements);
+        if (!flatEltPosition) {
+            return [];
+        }
+        return flatEltPosition.enum;
+    }
+
+    static findElement(key: string, parents: Array<string>, flatElts: FlatElement[]): FlatElementPosition {
+        let currentEltPosition = new FlatElementPosition();
+        all: for (let i=0; i<flatElts.length; i++) {
+            let flatElt = flatElts[i];
+            if (flatElt.name !== key) {
+                continue
+            }
+            posLoop: for (let j=0; j<flatElt.positions.length; j++) {
+                let eltPos = flatElt.positions[j];
+                if (parents.length !== eltPos.parent.length) {
+                    continue;
+                }
+                for (let k = 0; k<eltPos.parent.length; k++) {
+                    if (!parents[k].match(eltPos.parent[k])) {
+                        continue posLoop
+                    }
+                }
+                currentEltPosition = eltPos;
+                break all;
+            }
+        }
+        return currentEltPosition;
     }
 
     static findParent(model: ITextModel, position: IPosition, currentDepth: number) {

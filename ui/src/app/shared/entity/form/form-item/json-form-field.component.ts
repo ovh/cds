@@ -41,6 +41,7 @@ export class FormItem {
     mode: string;
     prefix: string;
     code: boolean;
+    textarea: boolean;
 }
 
 @Component({
@@ -73,6 +74,8 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
     selectedCondition: FlatElementTypeCondition;
     conditionRefProperties: string[];
     resizingSubscription: Subscription;
+
+    values: selectValues[] = [];
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -149,6 +152,33 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
         this.isConditionnal = this.field.condition && this.field.condition.length > 0;
         this.selectedCondition = (this.field.condition ?? []).find(c => this.currentModel[c.refProperty] && this.currentModel[c.refProperty] === c.conditionValue);
         this.conditionRefProperties = (this.field.condition ?? []).map(c => c.refProperty).filter((ref, index, arr) => arr.indexOf(ref) === index);
+
+        if (this.field?.mode === 'split' && this.field?.enum?.length > 0) {
+            this.values = [];
+            let tmpMapModel = new Map<string, boolean>();
+            this.field.enum.forEach(e => {
+                let v = new selectValues();
+                let itemSplit = e.split('@')
+                if (itemSplit.length == 2) {
+                    v.branch = itemSplit[1];
+                }
+                let pathSplit = itemSplit[0].split('/');
+                v.label = pathSplit[pathSplit.length -1];
+                v.description = itemSplit[0].replace('/' + v.label, '');
+                v.value = e;
+                this.values.push(v);
+
+                if (!tmpMapModel.has(itemSplit[0])) {
+                    tmpMapModel.set(itemSplit[0], true);
+                    let valueWithoutBranch = new selectValues();
+                    valueWithoutBranch.label = v.label;
+                    valueWithoutBranch.description = v.description;
+                    valueWithoutBranch.value = v.description + '/' + v.label;
+                    this.values.push(valueWithoutBranch);
+                }
+            })
+        }
+
         this._cd.markForCheck();
     }
 
@@ -166,8 +196,10 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
         if (!this.currentModel[this.field.name]) {
             this.currentModel[this.field.name] = [];
         }
-        this.currentModel[this.field.name].push({})
-        this.oneOfSelected.push(this.oneOfSelectOpts[0]);
+        if (this.oneOf) {
+            this.currentModel[this.field.name].push({})
+            this.oneOfSelected.push(this.oneOfSelectOpts[0]);
+        }
         this._cd.markForCheck();
     }
 
@@ -176,9 +208,7 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
             this.currentModel[this.field.name] = {}
         }
         if (this.field.objectType === 'string') {
-            this.currentModel[this.field.name][''] = '';
-        } else {
-            this.currentModel[this.field.name][''] = {};
+            this.currentModel[this.field.name] = [];
         }
         this._cd.markForCheck();
     }
@@ -187,6 +217,12 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
         this.currentModel[this.field.name][value] = this.currentModel[this.field.name][previousValue];
         delete this.currentModel[this.field.name][previousValue];
 
+        this._cd.markForCheck();
+        this.modelChange.emit(this.currentModel);
+    }
+
+    onFullArrayChanged(value: any): void {
+        this.currentModel[this.field.name] = value;
         this._cd.markForCheck();
         this.modelChange.emit(this.currentModel);
     }
@@ -304,4 +340,11 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.markForCheck();
         this.modelChange.emit(this.currentModel);
     }
+}
+
+class selectValues {
+    label: string;
+    description: string;
+    branch: string;
+    value: string;
 }

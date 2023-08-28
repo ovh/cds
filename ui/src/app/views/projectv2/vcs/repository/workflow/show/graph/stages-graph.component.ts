@@ -3,7 +3,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    ComponentRef,
+    ComponentRef, ElementRef,
     EventEmitter,
     HostListener,
     Input,
@@ -67,7 +67,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                     node.run = this.jobRuns[k][0];
                 }
                  */
-                if (job.stage) {
+                if (job?.stage) {
                     for (let i = 0; i < this.nodes.length; i++) {
                         if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
                             this.nodes[i].sub_graph.push(node);
@@ -104,9 +104,11 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer: ViewContainerRef;
     graph: WorkflowV2Graph<WorkflowV2JobsGraphOrNodeComponent>;
 
-    constructor(
-        private _cd: ChangeDetectorRef
-    ) {
+    constructor(private _cd: ChangeDetectorRef, private host: ElementRef) {
+        const observer = new ResizeObserver(entries => {
+            this.onResize();
+        });
+        observer.observe(this.host.nativeElement);
     }
 
     static isJobsGraph = (component: WorkflowV2JobsGraphOrNodeComponent): component is ProjectV2WorkflowJobsGraphComponent => {
@@ -125,7 +127,6 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         this.changeDisplay();
     }
 
-    @HostListener('window:resize')
     onResize() {
         const element = this.svgContainer.element.nativeElement;
         if (!this.graph) {

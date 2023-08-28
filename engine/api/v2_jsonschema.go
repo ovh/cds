@@ -3,14 +3,17 @@ package api
 import (
 	"context"
 	"fmt"
+
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/invopop/jsonschema"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -28,39 +31,97 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 			case sdk.EntityTypeWorkerModel:
 				schema = sdk.GetWorkerModelJsonSchema()
 			case sdk.EntityTypeAction, sdk.EntityTypeWorkflow, sdk.EntityTypeJob:
-				// Load available action
-				var actionNames []string
-				if u != nil {
-					keys, err := rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
-					if err != nil {
-						return err
-					}
-					actionFullNames, err := entity.UnsafeLoadAllByTypeAndProjectKeys(ctx, api.mustDB(), sdk.EntityTypeAction, keys)
-					if err != nil {
-						return nil
-					}
-					for _, an := range actionFullNames {
-						actionNames = append(actionNames, fmt.Sprintf("%s/%s/%s/%s@%s", an.ProjectKey, an.VCSName, an.RepoName, an.Name, an.Branch))
-					}
-				}
-				// Load action plugin
-				pls, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+				actionNames, err := getActionNames(ctx, api.mustDB(), u)
 				if err != nil {
 					return err
 				}
-				for _, p := range pls {
-					actionNames = append(actionNames, p.Name)
+				regNames, err := getRegionNames(ctx, api.mustDB(), u)
+				if err != nil {
+					return err
+				}
+				wmNames, err := getWorkerModelNames(ctx, api.mustDB(), u)
+				if err != nil {
+					return err
 				}
 
 				switch t {
 				case sdk.EntityTypeWorkflow:
-					schema = sdk.GetWorkflowJsonSchema(actionNames)
+					schema = sdk.GetWorkflowJsonSchema(actionNames, regNames, wmNames)
 				case sdk.EntityTypeAction:
 					schema = sdk.GetActionJsonSchema(actionNames)
 				case sdk.EntityTypeJob:
-					schema = sdk.GetJobJsonSchema(actionNames)
+					schema = sdk.GetJobJsonSchema(actionNames, regNames, wmNames)
 				}
 			}
 			return service.WriteJSON(w, schema, http.StatusOK)
 		}
+}
+
+func getWorkerModelNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserConsumer) ([]string, error) {
+	if u == nil {
+		return nil, nil
+	}
+	pKeys, err := rbac.LoadAllProjectKeysAllowed(ctx, db, sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
+	if err != nil {
+		return nil, err
+	}
+	entities, err := entity.UnsafeLoadAllByTypeAndProjectKeys(ctx, db, sdk.EntityTypeWorkerModel, pKeys)
+	if err != nil {
+		return nil, err
+	}
+	wmNames := make([]string, 0, len(entities))
+	for _, wm := range entities {
+		wmNames = append(wmNames, fmt.Sprintf("%s/%s/%s/%s@%s", wm.ProjectKey, wm.VCSName, wm.RepoName, wm.Name, wm.Branch))
+	}
+	return wmNames, nil
+}
+
+func getRegionNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserConsumer) ([]string, error) {
+	if u == nil {
+		return nil, nil
+	}
+	rbacRegion, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, u.AuthConsumerUser.AuthentifiedUserID)
+	if err != nil {
+		return nil, err
+	}
+	regIDs := make([]string, 0, len(rbacRegion))
+	for _, r := range rbacRegion {
+		regIDs = append(regIDs, r.RegionID)
+	}
+	regs, err := region.LoadRegionByIDs(ctx, db, regIDs)
+	if err != nil {
+		return nil, err
+	}
+	regNames := make([]string, 0, len(regs))
+	for _, r := range regs {
+		regNames = append(regNames, r.Name)
+	}
+	return regNames, nil
+}
+
+func getActionNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserConsumer) ([]string, error) {
+	// Load available action
+	var actionNames []string
+	if u != nil {
+		keys, err := rbac.LoadAllProjectKeysAllowed(ctx, db, sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
+		if err != nil {
+			return nil, err
+		}
+		actionFullNames, err := entity.UnsafeLoadAllByTypeAndProjectKeys(ctx, db, sdk.EntityTypeAction, keys)
+		if err != nil {
+			return nil, err
+		}
+		for _, an := range actionFullNames {
+			actionNames = append(actionNames, fmt.Sprintf("%s/%s/%s/%s@%s", an.ProjectKey, an.VCSName, an.RepoName, an.Name, an.Branch))
+		}
+	}
+	// Load action plugin
+	pls, err := plugin.LoadAllByType(ctx, db, sdk.GRPCPluginAction)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range pls {
+		actionNames = append(actionNames, p.Name)
+	}
+	return actionNames, nil
 }
