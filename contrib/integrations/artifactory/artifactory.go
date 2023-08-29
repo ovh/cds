@@ -70,8 +70,17 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 }
 
 func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
-	srcRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
-	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
+	var srcRepo, targetRepo string
+	switch data.RepoType {
+	case "cargo":
+		repoParts := strings.Split(data.RepoName, "-")
+		srcRepo = fmt.Sprintf("%s-%s", strings.Join(repoParts[:len(repoParts)-1], "-"), lowMaturity)
+		targetRepo = fmt.Sprintf("%s-%s", strings.Join(repoParts[:len(repoParts)-1], "-"), highMaturity)
+	default:
+		srcRepo = fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
+		targetRepo = fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
+	}
+
 	params := services.NewMoveCopyParams()
 	params.Pattern = fmt.Sprintf("%s/%s", srcRepo, data.Path)
 	params.Target = fmt.Sprintf("%s/%s", targetRepo, data.Path)
@@ -170,7 +179,7 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 	}
 
 	if props != nil {
-		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, highMaturity, data.Path, props); err != nil {
+		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoType, data.RepoName, highMaturity, data.Path, props); err != nil {
 			return err
 		}
 	}
@@ -334,7 +343,7 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 		props.AddProperty("build.number", execContext.version)
 		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
-		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoName, currentMaturity, data.Path, props); err != nil {
+		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoType, data.RepoName, currentMaturity, data.Path, props); err != nil {
 			return nil, err
 		}
 
@@ -342,7 +351,7 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 	return modules, nil
 }
 
-func SetPropertiesRecursive(ctx context.Context, client artifact_manager.ArtifactManager, repoName string, maturity string, path string, props *utils.Properties) error {
+func SetPropertiesRecursive(ctx context.Context, client artifact_manager.ArtifactManager, repoType string, repoName string, maturity string, path string, props *utils.Properties) error {
 	ctx, end := telemetry.Span(ctx, "artifactory.SetPropertiesRecursive")
 	defer end()
 	if props == nil {
@@ -350,7 +359,12 @@ func SetPropertiesRecursive(ctx context.Context, client artifact_manager.Artifac
 	}
 
 	repoSrc := repoName
+	if repoType == "cargo" {
+		repoParts := strings.Split(repoName, "-")
+		repoSrc = fmt.Sprintf("%s", strings.Join(repoParts[:len(repoParts)-1], "-"))
+	}
 	repoSrc += "-" + maturity
+
 	log.Debug(ctx, "setting properties %+v on repoSrc:%s path:%s", props, repoSrc, path)
 	_, endc := telemetry.Span(ctx, "artifactory.SetProperties", telemetry.Tag("repoSrc", repoSrc))
 	if err := client.SetProperties(repoSrc, path, props); err != nil {
