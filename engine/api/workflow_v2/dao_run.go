@@ -97,7 +97,7 @@ func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, r
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM v2_workflow_run
-    WHERE project_key = $1 AND vcs_server_id = $2 AND repository_id = $3 AND workflow_name = $4
+    WHERE project_key = $1 AND vcs_server_id = $2 AND repository_id = $3 AND workflow_name = $4 ORDER BY run_number desc
     LIMIT 50`).Args(projKey, vcsProjectID, repoID, workflowName)
 	return getRuns(ctx, db, query)
 }

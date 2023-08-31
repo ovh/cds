@@ -20,8 +20,8 @@ import { Observable, of, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
-import { AnalysisService } from "../../../service/analysis/analysis.service";
-import {EntityAction, EntityWorkerModel, EntityWorkflow} from "../../../model/entity.model";
+import { AnalysisService } from "app/service/analysis/analysis.service";
+import {Entity, EntityAction, EntityWorkerModel, EntityWorkflow} from "app/model/entity.model";
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -63,7 +63,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     ) { }
 
     ngAfterViewInit(): void {
-        this.sidebarServiceSub = this._sidebarService.getObservable().subscribe(e => {
+        this.sidebarServiceSub = this._sidebarService.getWorkspaceObservable().subscribe(e => {
             switch (e?.nodeType) {
                 case 'vcs':
                     // TODO select vcs
@@ -208,7 +208,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     if (!existingEntities) {
                         existingEntities = [];
                     }
-                    existingEntities.push(<FlatNodeItem>{ name: e.name, parentNames: [vcs, repo], id: e.id, type: e.type, expandable: false, clickable: true, level: 3, icon: 'file', iconTheme: 'outline' })
+                    existingEntities.push(<FlatNodeItem>{ name: e.name, parentNames: [vcs, repo], id: e.id, type: e.type, expandable: false, clickable: true, level: 3, icon: 'file', iconTheme: 'outline', menu: this.buildMenuForEntity(e, vcs, repo) })
                     m.set(e.type, existingEntities);
                 });
                 Array.from(m.keys()).forEach(k => {
@@ -220,6 +220,17 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
             }
             return result;
         }));
+    }
+
+    buildMenuForEntity(e: Entity, vcs: string, repo: string): MenuItem[] {
+        switch (e.type) {
+            case EntityWorkflow:
+                return [<MenuItem>{
+                    name: 'Runs',
+                    route: ['/', 'projectv2', this.project.key, 'run', 'vcs', vcs, 'repository', repo, 'workflow', e.name]
+                }];
+        }
+        return null;
     }
 
     getVCSMenu(vcs: VCSProject): MenuItem[] {

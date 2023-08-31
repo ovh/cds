@@ -1,0 +1,27 @@
+<div class="collapse">
+    <div class="panel">
+        <div class="header">
+            <i class="toggle" nz-icon nzTheme="outline"></i>
+            <div class="title">
+                <a [routerLink]="['/', 'projectv2', this.project.key, 'vcs', this.currentVCSName, 'repository', this.currentRepoName, 'workflow', this.currentWorkflowName]">{{currentWorkflowName}}</a>
+                <span *ngIf="runs">
+                    {{ ': ' + runs?.length + ' '}}runs
+                </span>
+            </div>
+        </div>
+        <div class="content">
+           <ng-container *ngFor="let r of runs">
+               <div class="item pointing" (click)="selectRun(r)"
+                    [class.selected]="r.id === selectedRun?.id"
+                    [class.success]="r.status === 'Success'"
+                    [class.fail]="r.status === 'Fail'"
+                    [class.building]="r.status === 'Building'">
+                   <div class="number">#{{ r.run_number }}</div>
+                   <div class="metadata">
+                       {{r.started | amLocal | amDateFormat: 'DD/MM/YYYY HH:mm' }}
+                   </div>
+               </div>
+           </ng-container>
+        </div>
+    </div>
+</div>
