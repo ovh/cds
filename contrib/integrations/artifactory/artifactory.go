@@ -70,6 +70,7 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 }
 
 func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
+  // artifactory does not manage virtual cargo repositories
 	var srcRepo, targetRepo string
 	switch data.RepoType {
 	case "cargo":
