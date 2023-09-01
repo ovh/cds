@@ -1,0 +1,72 @@
+@import '../../../../common';
+
+:host {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+app-tabs {
+    ::ng-deep {
+        .menu {
+            background-color: inherit !important;
+        }
+    }
+}
+
+.close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 40px;
+    width: 40px;
+    padding: 10px;
+    cursor: pointer;
+
+    &:hover {
+        color: white;
+    }
+
+    .icon {
+        margin: unset;
+    }
+}
+
+.problems,
+.infos {
+    padding: 10px;
+
+    .right a {
+        text-decoration: none;
+    }
+
+    .error {
+        color: $darkTheme_red;
+    }
+
+    .warning {
+        color: $darkTheme_orange;
+    }
+
+    .info {
+        color: $darkTheme_blue;
+    }
+}
+
+ul {
+    padding-left: 0;
+    list-style: none;
+
+    .rightFloat {
+        float: right;
+    }
+
+    .content {
+        display: inline;
+    }
+}
+
+
+

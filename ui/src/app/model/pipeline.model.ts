@@ -221,6 +221,7 @@ export class CDNLogLinks {
 export class CDNLogLinkData {
     api_ref: string
     step_order: number
+    step_name: string
     requirement_id: number
 }
 

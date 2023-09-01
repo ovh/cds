@@ -29,6 +29,8 @@ import {ProjectWorkflowEntityComponent} from "./vcs/repository/workflow/show/ent
 import {ProjectV2WorkflowRunComponent} from "./run/project.run.component";
 import { ProjectV2SidebarComponent } from './sidebar/workspace/sidebar.component';
 import {ProjectV2SidebarRunComponent} from "./sidebar/run/sidebar.run.component";
+import {RunJobComponent} from "./run/run-job.component";
+import {RunJobLogsComponent} from "./run/run-job-logs.component";
 
 @NgModule({
     declarations: [
@@ -48,7 +50,9 @@ import {ProjectV2SidebarRunComponent} from "./sidebar/run/sidebar.run.component"
         ProjectWorkflowEntityComponent,
 
         ProjectV2WorkflowRunComponent,
-        ProjectV2SidebarRunComponent
+        ProjectV2SidebarRunComponent,
+        RunJobComponent,
+        RunJobLogsComponent,
     ],
     imports: [
         SharedModule,

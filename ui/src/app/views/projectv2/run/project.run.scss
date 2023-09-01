@@ -1,0 +1,61 @@
+@import '../../../../common';
+
+:host {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.graph {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+
+    &.disableSelection {
+        user-select: none;
+    }
+
+    app-tabs {
+        ::ng-deep {
+            .menu {
+                background-color: inherit;
+            }
+        }
+    }
+
+    .problems,
+    .infos {
+        padding: 10px;
+
+        .right a {
+            text-decoration: none;
+        }
+
+        .error {
+            color: $darkTheme_red;
+        }
+
+        .warning {
+            color: $darkTheme_orange;
+        }
+
+        .info {
+            color: $darkTheme_blue;
+        }
+    }
+}
+
+ul {
+    padding-left: 0;
+    list-style: none;
+
+    .rightFloat {
+        float: right;
+    }
+
+    .content {
+        display: inline;
+    }
+}

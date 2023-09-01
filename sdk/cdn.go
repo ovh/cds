@@ -120,6 +120,7 @@ type CDNLogLinks struct {
 type CDNLogLinkData struct {
 	APIRef    string `json:"api_ref"`
 	StepOrder int64  `json:"step_order"`
+	StepName  string `json:"step_name"`
 }
 
 type CDNLogLink struct {
@@ -328,8 +329,8 @@ func (a *CDNLogAPIRef) ToFilename() string {
 }
 
 func (c CDNItem) GetCDNLogApiRefV2() (*CDNLogAPIRefV2, bool) {
-  apiRef, has := c.APIRef.(*CDNLogAPIRefV2)
-  return apiRef, has
+	apiRef, has := c.APIRef.(*CDNLogAPIRefV2)
+	return apiRef, has
 }
 
 func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {

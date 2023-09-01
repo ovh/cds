@@ -35,7 +35,7 @@ func InsertRunJobInfo(ctx context.Context, db gorpmapper.SqlExecutorWithTx, info
 	return nil
 }
 
-func LoadRunJobInfosByRunID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunJobInfo, error) {
+func LoadRunJobInfosByRunJobID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunJobInfo, error) {
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job_info WHERE workflow_run_job_id = $1").Args(runJobID)
 	return getAllRunJobInfo(ctx, db, query)
 }

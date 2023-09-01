@@ -41,7 +41,7 @@ export class V2WorkflowRunJob {
     scheduled: string;
     started: string;
     ended: string;
-    job: string;
+    job: {};
     worker_id: string;
     worker_name: string;
     hatchery_name: string;
@@ -57,4 +57,12 @@ export class StepContext {
     conclusion: string;
     outcome: string;
     outputs: {[key:string]:string};
+}
+
+export class WorkflowRunInfo {
+    id: string;
+    workflow_run_id: string;
+    issued_at: string;
+    level: string;
+    message: string;
 }
