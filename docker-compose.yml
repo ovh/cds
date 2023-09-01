@@ -60,7 +60,6 @@ services:
           echo '/!\\ Config file already exists';
         fi;
         chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/cdn-buffer /app/cdn-storage;
-        /app/cds-engine-linux-amd64 config new > /app/conf/conf.toml;
         mkdir -p /app/artifacts /app/repositories /app/hatchery-local;
         chown -R cds:cds /app/conf /app/artifacts /app/repositories /app/hatchery-local /app/cdn-buffer /app/cdn-storage;
         /app/cds-engine-linux-amd64 config edit /app/conf/conf.toml --output /app/conf/conf.toml api.artifact.local.baseDirectory=/app/artifacts;
