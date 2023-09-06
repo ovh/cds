@@ -32,8 +32,8 @@ func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler)
 		vars := mux.Vars(r)
 		jobRunID := vars["runJobID"]
 
-		var stepsContext sdk.StepsContext
-		if err := service.UnmarshalBody(r, &stepsContext); err != nil {
+		var stepsStatus sdk.JobStepsStatus
+		if err := service.UnmarshalBody(r, &stepsStatus); err != nil {
 			return err
 		}
 
@@ -47,12 +47,14 @@ func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler)
 			return sdk.WithStack(err)
 		}
 
-		runjob.StepsContext = stepsContext
+		runjob.StepsStatus = stepsStatus
 		if err := workflow_v2.UpdateJobRun(ctx, tx, runjob); err != nil {
 			return err
 		}
-
-		return sdk.WithStack(tx.Commit())
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+		return nil
 	}
 }
 
@@ -216,6 +218,16 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 			defer tx.Rollback() // nolint
 
 			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
+				return err
+			}
+
+			info := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: jobRun.WorkflowRunID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelWarning,
+				Message:       hatch.Name + "stop working on job " + jobRun.JobID,
+			}
+			if err := workflow_v2.InsertRunInfo(ctx, tx, &info); err != nil {
 				return err
 			}
 

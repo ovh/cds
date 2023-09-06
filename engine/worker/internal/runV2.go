@@ -122,6 +122,7 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 
 	// Init step context
 	stepsContext := sdk.StepsContext{}
+	w.currentJobV2.runJob.StepsStatus = sdk.JobStepsStatus{}
 
 	for jobStepIndex, step := range w.currentJobV2.runJob.Job.Steps {
 		// Reset step log line to 0
@@ -132,21 +133,30 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		w.currentJobV2.currentStepName = sdk.GetJobStepName(step.ID, jobStepIndex)
 		ctx = workerruntime.SetStepName(ctx, w.currentJobV2.currentStepName)
 
+		currentStepStatus := sdk.JobStepStatus{
+			Started: time.Now(),
+		}
+		w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName] = currentStepStatus
 		stepsContext[w.currentJobV2.currentStepName] = sdk.StepContext{}
 		actionContext.Steps = stepsContext
+
+		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
+			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
+		}
 
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepName))
 		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, actionContext)
 		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepName))
 		w.gelfLogger.hook.Flush()
 
-		stepCxt := actionContext.Steps[w.currentJobV2.currentStepName]
-		stepCxt.Outcome = stepRes.Status
+		currentStepStatus.Ended = time.Now()
+		currentStepStatus.Outcome = stepRes.Status
 		// FIXME - continue-on-error
-		stepCxt.Conclusion = stepRes.Status
-		actionContext.Steps[w.currentJobV2.currentStepName] = stepCxt
+		currentStepStatus.Conclusion = stepRes.Status
+		w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName] = currentStepStatus
+		actionContext.Steps[w.currentJobV2.currentStepName] = currentStepStatus.ToStepContext()
 
-		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, actionContext.Steps); err != nil {
+		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
 

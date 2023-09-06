@@ -3,7 +3,7 @@
     <span nz-icon nzType="close" nzTheme="outline"></span>
 </div>
 <ng-container *ngIf="selectedTab.key === 'logs' && jobRun">
-    <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun"></app-run-job-logs>
+    <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun" (onScroll)="onJobScroll($event)" #runJobLogs></app-run-job-logs>
 </ng-container>
 <div class="problems" *ngIf="selectedTab.key === 'problems' && jobRun">
     <ul>

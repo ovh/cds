@@ -361,8 +361,8 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 func computeJobRunStatus(runJobs []sdk.V2WorkflowRunJob) string {
 	finalStatus := sdk.StatusSuccess
 	for _, rj := range runJobs {
-		if rj.Status == sdk.StatusFail && sdk.StatusIsTerminated(finalStatus) {
-			finalStatus = sdk.StatusFail
+		if (rj.Status == sdk.StatusFail || rj.Status == sdk.StatusStopped) && sdk.StatusIsTerminated(finalStatus) {
+			finalStatus = rj.Status
 		}
 		if rj.Status == sdk.StatusBuilding || rj.Status == sdk.StatusWaiting {
 			finalStatus = rj.Status

@@ -169,6 +169,17 @@ func LoadLastItemUnitByJobUnitType(ctx context.Context, m *gorpmapper.Mapper, db
 	return getItemUnit(ctx, m, db, query, opts...)
 }
 
+func LoadLastItemUnitByRunJobIDUnitType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, runJobID string, cdnType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
+	url := `
+		SELECT sui.* FROM storage_unit_item  sui
+		JOIN item on item.id = sui.item_id
+		WHERE item.api_ref->>'run_job_id' = $1 AND sui.unit_id= $2  AND sui.type = $3
+        ORDER BY item.api_ref->>'step_order' DESC LIMIT 1
+	`
+	query := gorpmapper.NewQuery(url).Args(runJobID, unitID, cdnType)
+	return getItemUnit(ctx, m, db, query, opts...)
+}
+
 func LoadItemUnitByUnit(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, unitID string, itemID string, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItemUnit, error) {
 	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE unit_id = $1 and item_id = $2 AND to_delete = false LIMIT 1").Args(unitID, itemID)
 	return getItemUnit(ctx, m, db, query, opts...)

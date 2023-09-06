@@ -45,7 +45,7 @@
     <app-resizable-panel *ngIf="selectedJobRun" minSize="400" [initialSize]="jobPanelSize"
                          (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
         <app-run-job [workflowRun]="selectedRun" [jobRun]="selectedJobRun" [jobRunInfos]="selectedJobRunInfos"
-                     (onClickClose)="unselectJob()"></app-run-job>
+                     (onClickClose)="unselectJob()" #runJob></app-run-job>
     </app-resizable-panel>
 </ng-container>
 

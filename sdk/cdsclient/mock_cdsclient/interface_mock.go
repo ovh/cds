@@ -2748,17 +2748,17 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobResult(ctx, region, j
 }
 
 // V2QueueJobStepUpdate mocks base method.
-func (m *MockHatcheryServiceClient) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsContext sdk.StepsContext) error {
+func (m *MockHatcheryServiceClient) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsStatus sdk.JobStepsStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsContext)
+	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsStatus)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // V2QueueJobStepUpdate indicates an expected call of V2QueueJobStepUpdate.
-func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsContext interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsStatus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsContext)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsStatus)
 }
 
 // V2QueuePolling mocks base method.
@@ -3790,17 +3790,17 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobResult(ctx, region, jobRunID,
 }
 
 // V2QueueJobStepUpdate mocks base method.
-func (m *MockV2QueueClient) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsContext sdk.StepsContext) error {
+func (m *MockV2QueueClient) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsStatus sdk.JobStepsStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsContext)
+	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsStatus)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // V2QueueJobStepUpdate indicates an expected call of V2QueueJobStepUpdate.
-func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsContext interface{}) *gomock.Call {
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsStatus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsContext)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsStatus)
 }
 
 // V2QueuePolling mocks base method.
@@ -10852,17 +10852,17 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobResult(ctx, region, jobRu
 }
 
 // V2QueueJobStepUpdate mocks base method.
-func (m *MockV2WorkerInterface) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsContext sdk.StepsContext) error {
+func (m *MockV2WorkerInterface) V2QueueJobStepUpdate(ctx context.Context, regionName, id string, stepsStatus sdk.JobStepsStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsContext)
+	ret := m.ctrl.Call(m, "V2QueueJobStepUpdate", ctx, regionName, id, stepsStatus)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // V2QueueJobStepUpdate indicates an expected call of V2QueueJobStepUpdate.
-func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsContext interface{}) *gomock.Call {
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, stepsStatus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsContext)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobStepUpdate", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobStepUpdate), ctx, regionName, id, stepsStatus)
 }
 
 // V2QueuePolling mocks base method.

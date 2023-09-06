@@ -12,14 +12,10 @@ import {Store} from '@ngxs/store';
 import {Parameter} from 'app/model/parameter.model';
 import {CDNLine} from 'app/model/pipeline.model';
 import {WorkflowNodeJobRun} from 'app/model/workflow.run.model';
-import {WorkflowRunService} from 'app/service/services.module';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {Tab} from 'app/shared/tabs/tabs.component';
-import {
-    ScrollTarget,
-    WorkflowRunJobComponent
-} from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo} from "app/model/v2.workflow.run.model";
+import {RunJobLogsComponent} from "./run-job-logs.component";
 
 
 @Component({
@@ -30,7 +26,7 @@ import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo} from "app/model/v2.wor
 })
 @AutoUnsubscribe()
 export class RunJobComponent implements OnInit {
-    @ViewChild('workflowRunJob') workflowRunJob: WorkflowRunJobComponent;
+    @ViewChild('runJobLogs') jobLogsComponent: RunJobLogsComponent;
 
     @Input() workflowRun: V2WorkflowRun
     @Input() jobRun: V2WorkflowRunJob;
@@ -47,7 +43,6 @@ export class RunJobComponent implements OnInit {
 
     constructor(
         private _cd: ChangeDetectorRef,
-        private _workflowRunService: WorkflowRunService,
         private _store: Store
     ) {
         this.tabs = [<Tab>{
@@ -77,8 +72,8 @@ export class RunJobComponent implements OnInit {
         }
     }
 
-    onJobScroll(target: ScrollTarget): void {
-        this.workflowRunJob.onJobScroll(target);
+    onJobScroll(target) {
+        this.jobLogsComponent.onJobScroll(target);
     }
 
     setVariables(data: Array<Parameter>) {
@@ -133,6 +128,6 @@ export class RunJobComponent implements OnInit {
     }
 
     receiveLogs(l: CDNLine) {
-        this.workflowRunJob.receiveLogs(l);
+        this.jobLogsComponent.receiveLogs(l);
     }
 }

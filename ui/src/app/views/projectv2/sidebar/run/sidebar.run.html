@@ -14,7 +14,7 @@
                <div class="item pointing" (click)="selectRun(r)"
                     [class.selected]="r.id === selectedRun?.id"
                     [class.success]="r.status === 'Success'"
-                    [class.fail]="r.status === 'Fail'"
+                    [class.fail]="r.status === 'Fail' || r.status === 'Stopped'"
                     [class.building]="r.status === 'Building'">
                    <div class="number">#{{ r.run_number }}</div>
                    <div class="metadata">

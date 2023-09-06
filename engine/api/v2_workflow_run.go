@@ -298,7 +298,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				RunAttempt:   runJob.RunAttempt,
 			}
 
-			for k := range runJob.StepsContext {
+			for k := range runJob.StepsStatus {
 				stepOrder := -1
 				for i := range runJob.Job.Steps {
 					stepName := sdk.GetJobStepName(runJob.Job.Steps[i].ID, i)

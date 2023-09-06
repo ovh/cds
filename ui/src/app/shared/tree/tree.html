@@ -18,7 +18,9 @@
                 </button>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
-                        <li nz-menu-item *ngFor="let item of node.menu" [routerLink]="item.route">{{item.name}}</li>
+                        <ng-container *ngFor="let item of node.menu">
+                            <li nz-menu-item  [routerLink]="item.route">{{item.name}}</li>
+                        </ng-container>
                     </ul>
                 </nz-dropdown-menu>
             </ng-container>

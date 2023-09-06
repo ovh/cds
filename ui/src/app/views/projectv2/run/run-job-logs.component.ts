@@ -1,4 +1,12 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output} from "@angular/core";
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    Output
+} from "@angular/core";
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {V2WorkflowRun, V2WorkflowRunJob} from "app/model/v2.workflow.run.model";
 import {LogBlock, ScrollTarget} from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
@@ -24,9 +32,6 @@ export class RunJobLogsComponent {
 
     _runJob: V2WorkflowRunJob;
     @Input() set runJob(data: V2WorkflowRunJob) {
-        if (this._runJob?.id === data?.id) {
-            return;
-        }
         this.changeRunJob(data);
     }
 
@@ -39,7 +44,7 @@ export class RunJobLogsComponent {
     steps: Array<LogBlock>;
     currentTabIndex = 0;
 
-    constructor(private _cd: ChangeDetectorRef, private _workflowRunService: V2WorkflowRunService, private _workflowService: WorkflowService) {
+    constructor(private ref: ElementRef, private _cd: ChangeDetectorRef, private _workflowRunService: V2WorkflowRunService, private _workflowService: WorkflowService) {
     }
 
     async changeRunJob(data: V2WorkflowRunJob) {
@@ -51,10 +56,10 @@ export class RunJobLogsComponent {
                 if (!v['id']) {
                     v['id'] = 'step-' + index;
                 }
-                if (this._runJob.steps_context[v['id']]) {
+                if (this._runJob.steps_status && this._runJob.steps_status[v['id']]) {
                     let block = new LogBlock(v['id']);
-                    block.failed = PipelineStatus.FAIL === this._runJob.steps_context[v['id']].conclusion
-                    if (this._runJob.steps_context[v['id']].conclusion === PipelineStatus.SUCCESS && this._runJob.steps_context[v['id']].conclusion !== this._runJob.steps_context[v['id']].outcome) {
+                    block.failed = PipelineStatus.FAIL === this._runJob.steps_status[v['id']].conclusion
+                    if (this._runJob.steps_status[v['id']].conclusion === PipelineStatus.SUCCESS && this._runJob.steps_status[v['id']].conclusion !== this._runJob.steps_status[v['id']].outcome) {
                         block.optional = true
                     }
                     this.steps.push(block);
@@ -79,23 +84,27 @@ export class RunJobLogsComponent {
             }
         });
 
-        let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount).toPromise();
-        if (results) {
-            results.forEach(r => {
-                let step = this.steps.find(s => s.link.api_ref === r.api_ref)
-                step.totalLinesCount = r.lines_count;
-                step.open = false;
-                step.loading = false;
-            });
+        if (links?.datas?.length > 0) {
+            let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount).toPromise();
+            if (results) {
+                results.forEach(r => {
+                    let step = this.steps.find(s => s.link.api_ref === r.api_ref);
+                    if (step) {
+                        step.totalLinesCount = r.lines_count;
+                        step.open = false;
+                        step.loading = false;
+                    }
+                });
+            }
         }
+
 
         this.computeStepFirstLineNumbers();
 
         if (PipelineStatus.isDone(this.runJob.status)) {
             await this.loadFirstFailedOrLastStep();
         } else {
-            // TODO Start websocket
-            // await this.startListenLastActiveStep();
+            // TODO
         }
 
         this._cd.markForCheck();
@@ -193,4 +202,23 @@ export class RunJobLogsComponent {
         this._cd.markForCheck();
     }
 
+    receiveLogs(l: CDNLine): void {
+        if (this.steps) {
+            this.steps.forEach(v => {
+                if (v?.link?.api_ref === l.api_ref_hash) {
+                    if (!v.lines.find(line => line.number === l.number)
+                        && !v.endLines.find(line => line.number === l.number)) {
+                        v.endLines.push(l);
+                        v.totalLinesCount++;
+                    }
+                }
+            });
+        }
+        this._cd.markForCheck();
+    }
+
+    onJobScroll(target: ScrollTarget) {
+        this.ref.nativeElement.children[0].scrollTop = target === ScrollTarget.TOP ?
+            0 : this.ref.nativeElement.children[0].scrollHeight;
+    }
 }

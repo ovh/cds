@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild} from "@angular/core";
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {SidebarService} from "app/service/sidebar/sidebar.service";
-import {forkJoin, Subscription} from "rxjs";
+import {forkJoin, from, interval, of, race, Subject, Subscription, timer} from "rxjs";
 import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo} from "app/model/v2.workflow.run.model";
 import {dump} from "js-yaml";
 import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
@@ -10,6 +10,11 @@ import {Store} from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
 import {Tab} from "app/shared/tabs/tabs.component";
 import {ProjectV2WorkflowStagesGraphComponent} from "../vcs/repository/workflow/show/graph/stages-graph.component";
+import {CDNLine, CDNStreamFilter, PipelineStatus} from "../../../model/pipeline.model";
+import {webSocket, WebSocketSubject} from "rxjs/webSocket";
+import {concatMap, delay, mergeMap, repeat, retryWhen, takeUntil, tap} from "rxjs/operators";
+import {Router} from "@angular/router";
+import {RunJobComponent} from "./run-job.component";
 
 
 @Component({
@@ -22,6 +27,7 @@ import {ProjectV2WorkflowStagesGraphComponent} from "../vcs/repository/workflow/
 export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     @ViewChild('graph') graph: ProjectV2WorkflowStagesGraphComponent;
+    @ViewChild('runJob') runJobComponent: RunJobComponent
 
     selectedRun: V2WorkflowRun;
     selectedJobRun: V2WorkflowRunJob;
@@ -29,10 +35,14 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     jobs: Array<V2WorkflowRunJob>;
     selectedRunInfos: Array<WorkflowRunInfo>;
     workflowGraph: any;
+    cdnFilter: CDNStreamFilter;
 
     // Subs
     sidebarSubs: Subscription;
     resizingSubscription: Subscription;
+    websocket: WebSocketSubject<any>;
+    websocketSubscription: Subscription;
+    pollSubs: Subscription;
 
     // Panels
     resizing: boolean;
@@ -46,23 +56,25 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     static JOB_PANEL_KEY = 'workflow-run-job';
 
     constructor(private _sidebarService: SidebarService, private _cd: ChangeDetectorRef,
-                private _workflowService: V2WorkflowRunService, private _store: Store) {
+                private _workflowService: V2WorkflowRunService, private _store: Store, private _router: Router) {
         this.sidebarSubs = this._sidebarService.getRunObservable().subscribe(r => {
-            if (r?.id === this.selectedRun?.id) {
+            if (r?.id === this.selectedRun?.id && r?.status === this.selectedRun?.status) {
                 return;
             }
             delete this.selectedJobRun;
             delete this.selectedJobRunInfos;
             delete this.selectedRunInfos;
             this.selectedRun = r;
+            if (this.pollSubs) {
+                this.pollSubs.unsubscribe();
+            }
             if (r) {
+                this.pollSubs = interval(2000)
+                    .pipe(concatMap(_ => from(this.loadJobs())))
+                    .subscribe();
                 this.workflowGraph = dump(r.workflow_data.workflow);
-                forkJoin([
-                    this._workflowService.getJobs(r),
-                    this._workflowService.getRunInfos(r)
-                ]).subscribe(result => {
-                    this.jobs = result[0];
-                    this.selectedRunInfos = result[1];
+                this._workflowService.getRunInfos(r).subscribe(infos => {
+                    this.selectedRunInfos = infos;
                     this._cd.markForCheck();
                 });
             } else {
@@ -94,6 +106,18 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }];
     }
 
+    async loadJobs() {
+        let updatedJobs = await this._workflowService.getJobs(this.selectedRun).toPromise();
+        if (this.selectedJobRun) {
+            this.selectJob(this.selectedJobRun.job_id)
+        }
+        this.jobs = Object.assign([], updatedJobs);
+        if (PipelineStatus.isDone(this.selectedRun.status)) {
+            this.pollSubs.unsubscribe();
+        }
+        this._cd.markForCheck();
+    }
+
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
     }
@@ -122,7 +146,6 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         this._store.dispatch(new actionPreferences.SetPanelResize({resizing: false}));
         this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {
-            console.log('bim');
             this.graph.resize();
         }
     }
@@ -131,15 +154,16 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     }
 
     selectJob(jobName: string): void {
-        if (this.selectedJobRun?.job_id === jobName) {
+        let jobRun = this.jobs.find(j => j.job_id === jobName);
+        if (this.selectedJobRun && PipelineStatus.isDone(this.selectedJobRun.status) && PipelineStatus.isDone((jobRun.status))) {
             return;
         }
-        forkJoin([
-            this._workflowService.getRunJob(this.selectedRun, jobName),
-            this._workflowService.getRunJobInfos(this.selectedRun, jobName)
-        ]).subscribe(result => {
-            this.selectedJobRun = result[0];
-            this.selectedJobRunInfos = result[1];
+        if (!PipelineStatus.isDone(jobRun.status)) {
+            this.startStreamingLogsForJob();
+        }
+
+        this._workflowService.getRunJobInfos(this.selectedRun, jobName).subscribe(infos => {
+            this.selectedJobRunInfos = infos;
             this._cd.markForCheck();
         });
     }
@@ -151,6 +175,52 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this.graph.resize();
         }
         this._cd.detectChanges(); // force rendering to compute graph container size
+    }
+
+    startStreamingLogsForJob() {
+        if (!this.cdnFilter) {
+            this.cdnFilter = new CDNStreamFilter();
+        }
+        if (this.cdnFilter.job_run_id === this.selectedJobRun.id) {
+            return;
+        }
+
+        if (!this.websocket) {
+            const protocol = window.location.protocol.replace('http', 'ws');
+            const host = window.location.host;
+            const href = this._router['location']._baseHref;
+            this.websocket = webSocket({
+                url: `${protocol}//${host}${href}/cdscdn/item/stream`,
+                openObserver: {
+                    next: value => {
+                        if (value.type === 'open') {
+                            this.cdnFilter.job_run_id = this.selectedJobRun.id;
+                            this.websocket.next(this.cdnFilter);
+                        }
+                    }
+                }
+            });
+
+            this.websocketSubscription = this.websocket
+                .pipe(retryWhen(errors => errors.pipe(delay(2000))))
+                .subscribe((l: CDNLine) => {
+                    if (this.runJobComponent) {
+                        this.runJobComponent.receiveLogs(l);
+                    } else {
+                        console.log('job component not loaded');
+                    }
+                }, (err) => {
+                    console.error('Error: ', err);
+                }, () => {
+                    console.warn('Websocket Completed');
+                });
+        } else {
+            // Refresh cdn filter if job changed
+            if (this.cdnFilter.job_run_id !== this.selectedJobRun.id) {
+                this.cdnFilter.job_run_id = this.selectedJobRun.id;
+                this.websocket.next(this.cdnFilter);
+            }
+        }
     }
 
 }

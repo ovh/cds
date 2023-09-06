@@ -46,17 +46,19 @@ export class V2WorkflowRunJob {
     worker_name: string;
     hatchery_name: string;
     outputs: {[key:string]:string};
-    steps_context: {[key:string]:StepContext };
+    steps_status: {[key:string]:StepStatus };
     user_id: string;
     username: string;
     region: string;
     model_type: string;
 }
 
-export class StepContext {
+export class StepStatus {
     conclusion: string;
     outcome: string;
     outputs: {[key:string]:string};
+    started: string;
+    ended: string;
 }
 
 export class WorkflowRunInfo {

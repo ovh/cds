@@ -449,16 +449,16 @@ const (
 
 type CDNWSEvent struct {
 	ItemType   CDNItemType `json:"item_type"`
-	JobRunID   int64       `json:"job_run_id"`
+	JobRunID   string      `json:"job_run_id"`
 	ItemUnitID string      `json:"new_item_unit_id"`
 }
 
 type CDNStreamFilter struct {
-	JobRunID int64 `json:"job_run_id"`
+	JobRunID string `json:"job_run_id"`
 }
 
 func (f CDNStreamFilter) Validate() error {
-	if f.JobRunID == 0 {
+	if f.JobRunID == "0" || f.JobRunID == "" {
 		return NewErrorFrom(ErrWrongRequest, "invalid given job run identifier")
 	}
 	return nil

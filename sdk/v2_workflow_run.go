@@ -142,11 +142,44 @@ type V2WorkflowRunJob struct {
 	WorkerName    string          `json:"worker_name" db:"worker_name"`
 	HatcheryName  string          `json:"hatchery_name" db:"hatchery_name"`
 	Outputs       JobResultOutput `json:"outputs" db:"outputs"`
-	StepsContext  StepsContext    `json:"steps_context" db:"steps_context"`
+	StepsStatus   JobStepsStatus  `json:"steps_status" db:"steps_status"`
 	UserID        string          `json:"user_id" db:"user_id"`
 	Username      string          `json:"username" db:"username"`
 	Region        string          `json:"region,omitempty" db:"region"`
 	ModelType     string          `json:"model_type,omitempty" db:"model_type"`
+}
+
+type JobStepsStatus map[string]JobStepStatus
+type JobStepStatus struct {
+	Conclusion string          `json:"conclusion"` // result of a step after 'continue-on-error'
+	Outcome    string          `json:"outcome"`    // result of a step before 'continue-on-error'
+	Outputs    JobResultOutput `json:"outputs"`
+	Started    time.Time       `json:"started"`
+	Ended      time.Time       `json:"ended"`
+}
+
+func (sc JobStepsStatus) Value() (driver.Value, error) {
+	j, err := json.Marshal(sc)
+	return j, WrapError(err, "cannot marshal JobStepsStatus")
+}
+
+func (sc *JobStepsStatus) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal([]byte(source), sc), "cannot unmarshal JobStepsStatus")
+}
+
+func (s JobStepStatus) ToStepContext() StepContext {
+	return StepContext{
+		Outcome:    s.Outcome,
+		Conclusion: s.Conclusion,
+		Outputs:    s.Outputs,
+	}
 }
 
 type V2WorkflowRunEnqueue struct {

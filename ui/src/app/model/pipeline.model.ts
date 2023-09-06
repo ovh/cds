@@ -242,7 +242,7 @@ export class CDNLine {
 
 export class CDNStreamFilter {
     item_type: string;
-    job_run_id: number;
+    job_run_id: string;
 }
 
 export class Tests {
