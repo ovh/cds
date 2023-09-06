@@ -19,21 +19,21 @@
 <meta name="description"
     content="Before contributing to CDS, you&rsquo;ll need to install your development environment.
  PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
-PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.6. Version 14.0 recommanded
+PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.6. Version 14.0 recommended
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
 $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data Create user cds and database cds">
 <meta property="og:description"
     content="Before contributing to CDS, you&rsquo;ll need to install your development environment.
  PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
-PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.6. Version 14.0 recommanded
+PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.6. Version 14.0 recommended
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
 $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data Create user cds and database cds">
 <meta name="twitter:description"
     content="Before contributing to CDS, you&rsquo;ll need to install your development environment.
  PostgreSQL Redis Node.js Golang CDS  If you are familiar with these different tools, you probably will not need to read this page :-)
-PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.6. Version 14.0 recommanded
+PostgreSQL Download PostgreSQL from https://www.postgresql.org/download/, version &gt;= 9.6. Version 14.0 recommended
 You can easily use only PostgreSQL binaries, downloaded from https://www.enterprisedb.com/download-postgresql-binaries.
 Initialize DB by running:
 $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data Create user cds and database cds">
@@ -42,22 +42,21 @@ $ mkdir -p ~/data/postgres/data $ initdb -D ~/data/postgres/data Create user cds
 <meta name="twitter:title" content="Development Environment">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../../js/script.js"></script>
 <script type="text/javascript" src="../../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../../index.json"></a>
 
-<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../../js/search.js"></script>
-<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -294,7 +293,7 @@ development environment.</p>
 </ul>
 <p>If you are familiar with these different tools, you probably will not need to read this page :-)</p>
 <h2 id="postgresql">PostgreSQL</h2>
-<p>Download PostgreSQL from <a href="https://www.postgresql.org/download/,">https://www.postgresql.org/download/,</a> version &gt;= 9.6. Version 14.0 recommanded</p>
+<p>Download PostgreSQL from <a href="https://www.postgresql.org/download/,">https://www.postgresql.org/download/,</a> version &gt;= 9.6. Version 14.0 recommended</p>
 <p>You can easily use only PostgreSQL binaries, downloaded from <a href="https://www.enterprisedb.com/download-postgresql-binaries">https://www.enterprisedb.com/download-postgresql-binaries</a>.</p>
 <p>Initialize DB by running:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ mkdir -p ~/data/postgres/data
@@ -328,16 +327,16 @@ $ tar xzf node-v16.4.2-darwin-x64.tar.gz
 <span style="color:#75715e"># directory node-v16.4.2-darwin-x64 is created</span>
 <span style="color:#75715e"># You should add node-v16.4.2-darwin-x64/bin to your PATH</span>
 </code></pre></div><h2 id="golang">Golang</h2>
-<p>Download the latest Golang version from <a href="https://golang.org/dl/,">https://golang.org/dl/,</a> version &gt;= 1.18</p>
-<p>Example with version 1.18 on macOS:</p>
+<p>Download the latest Golang version from <a href="https://golang.org/dl/,">https://golang.org/dl/,</a> version &gt;= 1.19</p>
+<p>Example with version 1.19 on macOS:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ export GOROOT<span style="color:#f92672">=</span>~/go
 $ export PATH<span style="color:#f92672">=</span>$PATH:$GOROOT/bin
 $ cd ~
-$ curl -O https://dl.google.com/go/go1.18.darwin-amd64.tar.gz
-$ tar xzf go1.18.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.19.darwin-amd64.tar.gz
+$ tar xzf go1.19.darwin-amd64.tar.gz
 </code></pre></div><p>Check if Go installation is ok</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ go version
-go version go1.18 darwin/amd64
+go version go1.19 darwin/amd64
 </code></pre></div><h2 id="cds">CDS</h2>
 <p>Compile CDS:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># Checkout code</span>

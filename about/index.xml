@@ -29,15 +29,6 @@ Talks March 22, 2019 - Talk at conference Breizhcamp to introduce CDS (French): 
     </item>
     
     <item>
-      <title>Comparison Matrix</title>
-      <link>/about/matrix/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/about/matrix/</guid>
-      <description>Feature CDS Bamboo Buildbot Gitlab CI Jenkins     Pipeline        Workflow     *17    Visual configuration with Web UI      *1   Configuration on Git Repository        Configuration as code on UI      *2   Native Git branching      *3   Job&#39;s Services        Secure Remote Caching      *4   Enterprise Notification Bus &amp;amp; Built-in Hooks        Continuous Deployment &amp;amp; Environment Support      *5   Enterprise-grade permissions, Support of ACLs delegation      *6   Build Artifacts Cloud      *7   Tests &amp;amp; Vulnerabilities Reports     *8    Self-Service Project Creation - ability to create a tenant    *9     Execution Environment Customization      *10   Multi-Tenancy      *11   Command Line Interface (cdsctl): 100% features supported &amp;amp; User Friendly      *12   REST API &amp;amp; SDK        Self-Hosting        High Availability &amp;amp; Scalability &amp;amp; Upgrade without User Downtime     *13    Built-in Metrics      *14   Extensibility Plugins        OS/Arch Compatibility        Auto-Scale OnDemand multi-cloud     *15  *16    CDS User features Pipeline Ability to run multiple jobs simultaneously while keeping an isolation between them.</description>
-    </item>
-    
-    <item>
       <title>Contact us</title>
       <link>/about/contact/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

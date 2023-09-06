@@ -30,95 +30,6 @@ Parameters  destination: (optional) Destination of this artifact. Use the name o
     </item>
     
     <item>
-      <title>cds-docker-package</title>
-      <link>/docs/actions/cds-docker-package/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-docker-package/</guid>
-      <description>Build image and push it to docker repository
-Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag dockerRegistryPassword: Docker Registry Password. Enter password to connect on your docker registry. dockerRegistryUsername: Docker Registry Username. Enter username to connect on your docker registry. dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag og your docker image.</description>
-    </item>
-    
-    <item>
-      <title>cds-go-build</title>
-      <link>/docs/actions/cds-go-build/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-go-build/</guid>
-      <description>Go Build: compile a go program
-Parameters  architecture: GOARCH artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; os: GOOS package: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar preRun: Pre-command. Example: export CGO_ENABLED=0 runGoGet: Run go get -u before go build  Requirements  bash: type: binary Value: bash go: type: binary Value: go  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-nexus-upload</title>
-      <link>/docs/actions/cds-nexus-upload/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-nexus-upload/</guid>
-      <description>Upload file on Nexus
-Parameters  artifactId: Artifact id of the artifact extension: Extension of the artifact files: Regex of files you want to upload groupId: Group id of the artifact login: Login for nexus packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in url: Nexus URL version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.</description>
-    </item>
-    
-    <item>
-      <title>cds-perl-test</title>
-      <link>/docs/actions/cds-perl-test/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-perl-test/</guid>
-      <description>Parameters  perllib: PERL_LIB, added to $PERL5LIB proveOptions: Options passed to prove testDirectory:  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-publish-ovh-metrics</title>
-      <link>/docs/actions/cds-publish-ovh-metrics/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-publish-ovh-metrics/</guid>
-      <description>Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/
-Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-python-pylint</title>
-      <link>/docs/actions/cds-python-pylint/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-python-pylint/</guid>
-      <description>Run pylint. By default, each pylint recommendation will be displayed as a Junit test. The short errors are fully contained inside the test title, an arrow (-&amp;gt;) will be present if a part of the recommendation is displayed in the test body.
-Parameters  extra_options: Extra options to pass during pylint invocation. ignore: List of ignored files / directory (base name, not path), separated by a ; module_path: List of modules paths (absolute or relative) to launch pylint into, separated by a ;.</description>
-    </item>
-    
-    <item>
-      <title>cds-sonar-scanner</title>
-      <link>/docs/actions/cds-sonar-scanner/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-sonar-scanner/</guid>
-      <description>Run Sonar analysis. You must have a file sonar-project.properties in your source directory.
-Parameters  sonar-project.properties: sonar-project.properties file sonarBranch: The Sonar branch (e.g. master) sonarDownloadURL: The download URL of Sonar CLI sonarPassword: The Sonar server&amp;rsquo;s password sonarURL: The URL of the Sonar server sonarUsername: The Sonar server&amp;rsquo;s username sonarVersion: SonarScanner&amp;rsquo;s version to use workspace: The directory where your project is (e.g. /go/src/github.com/ovh/cds)  Requirements  bash: type: binary Value: bash plugin-archive: type: plugin Value: plugin-archive plugin-download: type: plugin Value: plugin-download  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-split-download</title>
-      <link>/docs/actions/cds-split-download/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-split-download/</guid>
-      <description>Download Artifacts which were uploaded using CDS_SplitUploadArtifact action.
-Parameters  destinationFile: Destination File to save the file. (Mandatory). (like dist.tar.gz) pattern: Prefix pattern to identify files to be downloaded. (Mandatory). (like bigfile-*) prefixHandle: Prefix of the Artifacts uploaded. (Mandatory). tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number. (Optional)  Requirements  bash: type: binary Value: bash  More documentation on GitHub</description>
-    </item>
-    
-    <item>
-      <title>cds-split-upload</title>
-      <link>/docs/actions/cds-split-upload/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/cds-split-upload/</guid>
-      <description>Split and Upload Artifact with size greater than 500 MB.
-Parameters  numericSuffixes: Use numeric suffixes instead of alphabetic. Default suffix is set to be Numeric. (Optional) prefixHandle: Prefix to be added to destination files after split. (Mandatory) sourceFile: Artifact File to be split and uploaded. (Mandatory). splitSize: Size of each split files. Default size is 200MB. (Optional) tag: Tag to identify uploaded artifacts. Default tag value is CDS run version number.</description>
-    </item>
-    
-    <item>
       <title>CheckoutApplication</title>
       <link>/docs/actions/builtin-checkoutapplication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -137,7 +48,10 @@ Parameters  directory: The name of a directory to clone into.  Requirements  git
       
       <guid>/docs/actions/builtin-coverage/</guid>
       <description>Coverage is a builtin action, you can&amp;rsquo;t modify it.
-CDS Builtin Action. Parse given file to extract coverage results for lcov, cobertura and clover format. Then the coverage report is uploaded in CDN. Coverage report will be linked to the application from the pipeline context for lcov, cobertura and clover format. You will be able to see the coverage history in the application home page for lcov, cobertura and clover format.</description>
+CDS Builtin Action. Upload you coverage file to CDS as a coverage run result.
+Parameters  path: Path of the coverage report file.  Requirements No Requirement
+YAML example Example of a pipeline using Coverage action:
+version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - coverage: path: ./coverage.xml </description>
     </item>
     
     <item>
@@ -231,48 +145,6 @@ Parameters  name: Release Bundle name token_variable: JFrog Distribution token v
     </item>
     
     <item>
-      <title>plugin-download</title>
-      <link>/docs/actions/plugin-download/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/plugin-download/</guid>
-      <description>This is a plugin to download file from URL
-Parameters  filepath: The destination of your file to be copied headers: Specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list) url: The url of your file  </description>
-    </item>
-    
-    <item>
-      <title>plugin-group-tmpl</title>
-      <link>/docs/actions/plugin-group-tmpl/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/plugin-group-tmpl/</guid>
-      <description>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
-Parameters  applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  </description>
-    </item>
-    
-    <item>
-      <title>plugin-kafka-publish</title>
-      <link>/docs/actions/plugin-kafka-publish/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/plugin-kafka-publish/</guid>
-      <description>This action helps you to send data through Kafka across every network.
-You are able to send a custom &amp;ldquo;message&amp;rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.
-This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
-    </item>
-    
-    <item>
-      <title>plugin-marathon</title>
-      <link>/docs/actions/plugin-marathon/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/plugin-marathon/</guid>
-      <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
-Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successful.
-Parameters  configuration: Marathon application configuration file (json format) insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate password: Marathon Password (please use project, application or environment variables) timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true.</description>
-    </item>
-    
-    <item>
       <title>plugin-npm-audit-parser</title>
       <link>/docs/actions/plugin-npm-audit-parser/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -283,13 +155,13 @@ Parameters  file: Path to audit file (generally generated by npm audit &amp;ndas
     </item>
     
     <item>
-      <title>plugin-ssh-cmd</title>
-      <link>/docs/actions/plugin-ssh-cmd/</link>
+      <title>plugin-script</title>
+      <link>/docs/actions/plugin-script/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/docs/actions/plugin-ssh-cmd/</guid>
-      <description>This plugin helps you to run cmd on remote server over ssh.
-Parameters  command: Command commandTimeout: Command Timeout (seconds) hostnames: Hostnames (comma separated values) privateKey: SSH RSA private key timeout: Timeout (seconds) username: Username  </description>
+      <guid>/docs/actions/plugin-script/</guid>
+      <description>This action execute a script
+Parameters  content: The script to execute  </description>
     </item>
     
     <item>
@@ -304,17 +176,6 @@ Parameters  file: Template file to use output: Output path for generated file (d
     </item>
     
     <item>
-      <title>plugin-venom</title>
-      <link>/docs/actions/plugin-venom/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/plugin-venom/</guid>
-      <description>This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
-Add an extra step of type junit on your job to view tests results on CDS UI.
-Parameters  exclude: Exclude some files, one file per line loglevel: Log Level: debug, info, warn or error output: Directory where output xunit result file parallel: Launch Test Suites in parallel. Enter here number of routines path: Path containers yml venom files. Format: adirectory/, .</description>
-    </item>
-    
-    <item>
       <title>Promote</title>
       <link>/docs/actions/builtin-promote/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -322,9 +183,8 @@ Parameters  exclude: Exclude some files, one file per line loglevel: Log Level: 
       <guid>/docs/actions/builtin-promote/</guid>
       <description>Promote is a builtin action, you can&amp;rsquo;t modify it.
 This action promote artifacts in an artifact manager
-Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement
-YAML example Example of a pipeline using Promote action:
-version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - promote: artifacts: &amp;#39;*.</description>
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved setProperties: Properties to add on the promoted artifacts srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement
+YAML example Example of a pipeline using Promote action:</description>
     </item>
     
     <item>
@@ -349,7 +209,7 @@ version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 s
       <guid>/docs/actions/builtin-release/</guid>
       <description>Release is a builtin action, you can&amp;rsquo;t modify it.
 This action creates a release on a artifact manager. It promotes artifacts.
-Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved releaseNote: (optional) Set a release note for the release. srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement</description>
+Parameters  artifacts: (optional) Set a list of artifacts, separate by &amp;lsquo;,&amp;rsquo;. You can also use regexp. destMaturity: Repository suffix in which the artifact will be moved releaseNote: (optional) Set a release note for the release. setProperties: Properties to add on the released artifacts srcMaturity: Repository suffix from which the artifact will be moved  Requirements No Requirement</description>
     </item>
     
     <item>

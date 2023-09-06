@@ -68,7 +68,7 @@ To configure a Mutex with the configuration as code, use the boolean property on
       
       <guid>/docs/concepts/workflow/sidebar/</guid>
       <description>On the left sidebar, there is only one select box for filter on CDS Tags.
-So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment. For example, if you want to know on which branch the build was launched, you just have to filter on a specific CDS tag (in this case git.branch)
+So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, triggered_by and environment. For example, if you want to know on which branch the build was launched, you just have to filter on a specific CDS tag (in this case git.branch)
 Inside a job, a user can add a Tag with the worker command</description>
     </item>
     

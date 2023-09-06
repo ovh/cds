@@ -31,22 +31,21 @@
 <meta name="twitter:title" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="./js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="./js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="./js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="./js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="./js/anchor.min.js"></script>
+<script type="text/javascript" src="./js/jquery.min.js"></script>
+<script type="text/javascript" src="./js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="./js/bootstrap.min.js"></script>
 <script type="text/javascript" src="./js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="./js/script.js"></script>
 <script type="text/javascript" src="./js/lunr.min.js"></script>
 <a id="indexJSON" href="./index.json"></a>
 
-<script type="text/javascript" src="./js/auto-complete.js"></script>
+<script type="text/javascript" src="./js/auto-complete.min.js"></script>
 <script type="text/javascript" src="./js/search.js"></script>
-<script type="text/javascript" src="./js/asciinema-player.js"></script>
+<script type="text/javascript" src="./js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -195,227 +194,6 @@ any intervention from the CDS administrators.</p>
             <asciinema-player src="./images/init_template_as_code.cast" cols="80" rows="25" autoplay="true" loop="true"></asciinema-player>
         </div>
     </main>
-</section>
-
-<section id="matrix-home">
-<main>
-
-	
-	<h2>Comparison Matrix</h2>
-	
-
-	<div id="matrix">
-			<table>
-					<thead>
-					<tr>
-					<th>Feature</th>
-					<th>CDS</th>
-					<th>Bamboo</th>
-					<th>Buildbot</th>
-					<th>Gitlab CI</th>
-					<th>Jenkins</th>
-					</tr>
-					</thead>
-					<tbody>
-					<tr>
-					<td><a href="about/matrix/#pipeline">Pipeline</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#workflow">Workflow</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*17</a></sup></sub></td>
-					<td><i class="fa fa-times"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#visual-configuration-with-web-ui">Visual configuration with Web UI</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*1</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#configuration-on-git-repository">Configuration on Git Repository</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#configuration-as-code-on-ui">Configuration as code on UI</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*2</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#native-git-branching">Native Git branching</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*3</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#jobs-services">Job's Services</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#secure-remote-caching">Secure Remote Caching</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*4</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#enterprise-notification-bus">Enterprise Notification Bus</a> &amp; <a href="about/matrix/#built-in-hooks">Built-in Hooks</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#continuous-deployment--environment-support">Continuous Deployment &amp; Environment Support</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*5</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#enterprise-grade-permissions--support-of-acls-delegation">Enterprise-grade permissions, Support of ACLs delegation</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*6</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#build-artifacts-cloud">Build Artifacts Cloud</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*7</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#tests--vulnerabilities-reports">Tests &amp; Vulnerabilities Reports</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*8</a></sup></sub></td>
-					<td><i class="fa fa-check"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#self-service-project-creation">Self-Service Project Creation - ability to create a tenant</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*9</a></sup></sub></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#execution-environment-customization">Execution Environment Customization</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*10</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#multi-tenancy">Multi-Tenancy</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*11</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#command-line-interface-cdsctl-100-features-supported">Command Line Interface (cdsctl): 100% features supported &amp; User Friendly</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*12</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#rest-api--sdk">REST API &amp; SDK</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#self-hosting">Self-Hosting</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#high-availability--scalability--upgrade-without-user-downtime">High Availability &amp; Scalability &amp; Upgrade without User Downtime</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-check"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*13</a></sup></sub></td>
-					<td><i class="fa fa-times"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#built-in-metrics">Built-in Metrics</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*14</a></sup></sub></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#extensibility-plugins">Extensibility Plugins</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#osarch-compatibility">OS/Arch Compatibility</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-check"></i></td>
-					</tr>
-					<tr>
-					<td><a href="about/matrix/#auto-scale-ondemand-multi-cloud">Auto-Scale OnDemand multi-cloud</a></td>
-					<td><i class="fa fa-check"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*15</a></sup></sub></td>
-					<td><i class="fa fa-times"></i> <sub><sup><a class="moreTips" href="about/matrix/#some-explanations-on-the-comparison-matrix">*16</a></sup></sub></td>
-					</tr>
-					</tbody>
-					</table>
-
-		
-	</div>
-</main>
-
 </section>
 
 <section id="home-contribution">

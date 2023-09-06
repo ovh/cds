@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>link - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
+
+<meta name="description"
+    content="GET /link/driver    URL /link/driver     Method GET   Permissions Auth: true   Code getLinkDriversHandler    POST /link/&lt;consumer-type&gt;/ask    URL /link/&lt;consumer-type&gt;/ask     Method POST   Permissions Auth: true   Scopes User   Code postAskLinkExternalUserWithCDSHandler    POST /link/&lt;consumer-type&gt;    URL /link/&lt;consumer-type&gt;     Method POST   Permissions Auth: true   Scopes User   Code postLinkExternalUserWithCDSHandler    ">
+<meta property="og:description"
+    content="GET /link/driver    URL /link/driver     Method GET   Permissions Auth: true   Code getLinkDriversHandler    POST /link/&lt;consumer-type&gt;/ask    URL /link/&lt;consumer-type&gt;/ask     Method POST   Permissions Auth: true   Scopes User   Code postAskLinkExternalUserWithCDSHandler    POST /link/&lt;consumer-type&gt;    URL /link/&lt;consumer-type&gt;     Method POST   Permissions Auth: true   Scopes User   Code postLinkExternalUserWithCDSHandler    ">
+<meta name="twitter:description"
+    content="GET /link/driver    URL /link/driver     Method GET   Permissions Auth: true   Code getLinkDriversHandler    POST /link/&lt;consumer-type&gt;/ask    URL /link/&lt;consumer-type&gt;/ask     Method POST   Permissions Auth: true   Scopes User   Code postAskLinkExternalUserWithCDSHandler    POST /link/&lt;consumer-type&gt;    URL /link/&lt;consumer-type&gt;     Method POST   Permissions Auth: true   Scopes User   Code postLinkExternalUserWithCDSHandler    ">
+<meta property="og:url" content="/development/rest/link/">
+<meta property="og:title" content="link">
+<meta name="twitter:title" content="link">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
+
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="../../../" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="../../../docs/">Documentation</a></li>
+					
+					<li><a href="../../../hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="../../../development/" class="active">CDS Developer Manual</a></li>
+					
+					<li><a href="../../../about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+				
+				<li><a href="../../../development/rest/" class="menuSelected">REST API</a></li>
+			
+				
+				<li><a href="../../../development/sdk/">SDK</a></li>
+			
+				
+				<li><a href="../../../development/contribute/">Contributing</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="REST API" href="../../../development/rest/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="action" href="../../../development/rest/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="actionBuiltin" href="../../../development/rest/actionbuiltin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="admin" href="../../../development/rest/admin/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="auth" href="../../../development/rest/auth/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="bookmarks" href="../../../development/rest/bookmarks/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="config" href="../../../development/rest/config/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="download" href="../../../development/rest/download/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="feature" href="../../../development/rest/feature/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="group" href="../../../development/rest/group/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="hook" href="../../../development/rest/hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="import" href="../../../development/rest/import/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="integration" href="../../../development/rest/integration/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="link" href="../../../development/rest/link/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="mon" href="../../../development/rest/mon/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="notification" href="../../../development/rest/notification/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="parameter" href="../../../development/rest/parameter/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="project" href="../../../development/rest/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="queue" href="../../../development/rest/queue/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="repositories_manager" href="../../../development/rest/repositories_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="requirement" href="../../../development/rest/requirement/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="services" href="../../../development/rest/services/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="suggest" href="../../../development/rest/suggest/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="template" href="../../../development/rest/template/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ui" href="../../../development/rest/ui/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="user" href="../../../development/rest/user/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="variable" href="../../../development/rest/variable/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="worker" href="../../../development/rest/worker/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="workflow" href="../../../development/rest/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="ws" href="../../../development/rest/ws/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>link</h1>
+
+
+
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#get-linkdriver">GET <code>/link/driver</code></a></li>
+    <li><a href="#post-linkconsumer-typeask">POST <code>/link/&lt;consumer-type&gt;/ask</code></a></li>
+    <li><a href="#post-linkconsumer-type">POST <code>/link/&lt;consumer-type&gt;</code></a></li>
+  </ul>
+</nav>
+
+<h2 id="get-linkdriver">GET <code>/link/driver</code></h2>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/link/driver</code></strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getLinkDriversHandler%22">getLinkDriversHandler</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="post-linkconsumer-typeask">POST <code>/link/&lt;consumer-type&gt;/ask</code></h2>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/link/&lt;consumer-type&gt;/ask</code></strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+<tr>
+<td>Scopes</td>
+<td>User</td>
+</tr>
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAskLinkExternalUserWithCDSHandler%22">postAskLinkExternalUserWithCDSHandler</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="post-linkconsumer-type">POST <code>/link/&lt;consumer-type&gt;</code></h2>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/link/&lt;consumer-type&gt;</code></strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+<tr>
+<td>Scopes</td>
+<td>User</td>
+</tr>
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postLinkExternalUserWithCDSHandler%22">postLinkExternalUserWithCDSHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

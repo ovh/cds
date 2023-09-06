@@ -20,38 +20,37 @@
     content="The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Follow the section Create a consumer on documentation https://support.">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More information  How to configure Bitbucket Cloud integration  Follow documentation on https://support.">
 <meta property="og:description"
     content="The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Follow the section Create a consumer on documentation https://support.">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More information  How to configure Bitbucket Cloud integration  Follow documentation on https://support.">
 <meta name="twitter:description"
     content="The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Follow the section Create a consumer on documentation https://support.">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More information  How to configure Bitbucket Cloud integration  Follow documentation on https://support.">
 <meta property="og:url" content="/docs/integrations/bitbucketcloud/">
 <meta property="og:title" content="Bitbucket Cloud">
 <meta name="twitter:title" content="Bitbucket Cloud">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../../js/script.js"></script>
 <script type="text/javascript" src="../../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../../index.json"></a>
 
-<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../../js/search.js"></script>
-<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -388,12 +387,6 @@ This integration enables some features:
 	
 		
 			
-<a class="item" data-title="Mesos/Marathon" href="../../../docs/integrations/marathon/"></a>
-
-		
-	
-		
-			
 <a class="item" data-title="OpenID-Connect Authentication" href="../../../docs/integrations/openid-connect/"></a>
 
 		
@@ -458,8 +451,8 @@ This integration enables some features:
   <ul>
     <li><a href="#how-to-configure-bitbucket-cloud-integration">How to configure Bitbucket Cloud integration</a>
       <ul>
-        <li><a href="#create-the-personal-access-token-on-bitbucket-datacenter">Create the Personal Access Token on Bitbucket Datacenter</a></li>
-        <li><a href="#import-configuration">Import configuration</a></li>
+        <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
+        <li><a href="#start-the-vcs-and-hooks-µservice">Start the vcs and hooks µService</a></li>
       </ul>
     </li>
     <li><a href="#vcs-events">Vcs events</a></li>
@@ -473,44 +466,112 @@ to a CDS Application.</p>
 <ul>
 <li><a href="../../../docs/concepts/workflow/hooks/git-repo-webhook/">Git Repository Webhook</a></li>
 <li>Easy to use action <a href="../../../docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="../../../docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
-<li>Send <a href="https://confluence.atlassian.com/bitbucket/check-build-status-in-a-pull-request-945541505.html">build notifications</a> on your Pull-Requests and Commits on Bitbucket Cloud. <a href="../../../docs/concepts/workflow/notifications/#vcs-notifications">More informations</a></li>
+<li>Send <a href="https://confluence.atlassian.com/bitbucket/check-build-status-in-a-pull-request-945541505.html">build notifications</a> on your Pull-Requests and Commits on Bitbucket Cloud. <a href="../../../docs/concepts/workflow/notifications/#vcs-notifications">More information</a></li>
 </ul>
 <h2 id="how-to-configure-bitbucket-cloud-integration">How to configure Bitbucket Cloud integration</h2>
 <ul>
-<li>Follow the section <strong>Create a consumer</strong> on documentation <a href="https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/">https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/</a></li>
-<li>Bitbucket requests some informations:</li>
-<li><strong>name</strong> you can simply write CDS</li>
-<li><strong>description</strong> is optional</li>
-<li><strong>callback url</strong> must be the URL of your CDS -&gt; <code>{CDS_UI_URL}/cdsapi/repositories_manager/oauth2/callback</code> (if you are in development mode you have to omit /cdsapi and replace {CDS_UI_URL} with your API URL)</li>
-<li><strong>URL</strong> is optional.</li>
-<li><strong>Permissions</strong> : select <code>Account Read</code>, <code>Workspace membership Read</code>, <code>Repositories Read</code>, <code>Pull requests Read</code>, <code>Webhooks Read and Write</code></li>
+<li>Follow documentation on <a href="https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/,">https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/,</a> section <strong>Create a consumer</strong></li>
+<li>Bitbucket requests some information:
+++ <strong>name</strong> you can simply write CDS
+++ <strong>description</strong> is optional
+++ <strong>callback url</strong> must be the URL of your CDS -&gt; <code>{CDS_UI_URL}/cdsapi/repositories_manager/oauth2/callback</code> (if you are in development mode you have to omit /cdsapi and replace {CDS_UI_URL} with your API URL)
+++ <strong>URL</strong> is optional.
+++ <strong>Permissions</strong> : select <code>Account Read</code>, <code>Workspace membership Read</code>, <code>Repositories Read</code>, <code>Webhooks Read and Write</code></li>
 <li>Click on Save and toggle the consumer name to see the generated <code>Key</code> and <code>Secret</code>. It correspond to <code>clientId</code> and <code>clientSecret</code> in the CDS config.toml file.</li>
 </ul>
-<h3 id="create-the-personal-access-token-on-bitbucket-datacenter">Create the Personal Access Token on Bitbucket Datacenter</h3>
-<p>On <a href="https://bitbucket.org/account/settings/app-passwords/">https://bitbucket.org/account/settings/app-passwords/</a> create a new app password with the following scopes:</p>
+<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
+<h4 id="vcs-µservice-configuration">VCS µService Configuration</h4>
+<p>If you don&rsquo;t already have any of vcs integrations on your CDS please follow these steps. The file configuration for the VCS µService can be retrieved with:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ engine config new vcs &gt; vcs-config.toml
+
+<span style="color:#75715e"># or with all other configuration parts:</span>
+$ engine config new &gt; config.toml
+</code></pre></div><p>Edit the toml file:</p>
 <ul>
-<li>Account <code>Email</code> and <code>Read</code></li>
-<li>Workspace membership <code>Read</code></li>
-<li>Projects <code>Read</code></li>
-<li>Repositories <code>Read</code> and <code>Write</code></li>
-<li>Pull requests <code>Read</code> and <code>Write</code></li>
-<li>Webhooks <code>Read and write</code></li>
+<li>section <code>[vcs.api]</code>
+<ul>
+<li>this section will be used to communicate with CDS API. Check the url and the consumer token generated by CDS.</li>
+<li>Token can be generated with cdsctl:</li>
 </ul>
-<h3 id="import-configuration">Import configuration</h3>
-<p>Create a yml file:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
-<span style="color:#f92672">name</span>: <span style="color:#ae81ff">bitbucket-cloud</span>
-<span style="color:#f92672">type</span>: <span style="color:#ae81ff">bitbucketcloud</span>
-<span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;My Bitbucket Cloud&#34;</span>
-<span style="color:#f92672">auth</span>:
-    <span style="color:#f92672">username</span>: <span style="color:#ae81ff">my-user-on-bitbucket-cloud</span>
-    <span style="color:#f92672">token</span>: <span style="color:#ae81ff">the-long-token-here</span>
-<span style="color:#f92672">options</span>:
-    <span style="color:#f92672">disableStatus</span>: <span style="color:#66d9ef">false</span>    <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server - optional</span>
-    <span style="color:#f92672">disableStatusDetails</span>: <span style="color:#66d9ef">false</span> <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push CDS URL in statuses on the VCS server - optional</span>
-    <span style="color:#f92672">disablePolling</span>: <span style="color:#66d9ef">false</span>   <span style="color:#75715e"># Does polling is supported by VCS Server - optional</span>
-    <span style="color:#f92672">disableWebHooks</span>: <span style="color:#66d9ef">false</span>  <span style="color:#75715e"># Does webhooks are supported by VCS Server - optional</span>
-</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl experimental project vcs import YOUR_CDS_PROJECT_KEY vcs-bitbucketcloud.yml
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ cdsctl consumer new me <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>--scopes<span style="color:#f92672">=</span>Service <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>--name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;cds-vcs&#34;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>--description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Consumer token for vcs service&#34;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>--groups<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#34;</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>--no-interactive
+
+Builtin consumer successfully created, use the following token to sign in:
+xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">  [<span style="color:#a6e22e">vcs</span>.<span style="color:#a6e22e">api</span>]
+    <span style="color:#a6e22e">maxHeartbeatFailures</span> = <span style="color:#ae81ff">10</span>
+    <span style="color:#a6e22e">requestTimeout</span> = <span style="color:#ae81ff">10</span>
+    <span style="color:#75715e">## Consumer Token previously generated</span>
+    <span style="color:#a6e22e">token</span> = <span style="color:#e6db74">&#34;xxxxxxxx.xxxxxxx.4Bd9XJMIWrfe8Lwb-Au68TKUqflPorY2Fmcuw5vIoUs5gQyCLuxxxxxxxxxxxxxx&#34;</span>
+
+    [<span style="color:#a6e22e">vcs</span>.<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">http</span>]
+      <span style="color:#75715e"># insecure = false</span>
+      <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">&#34;http://localhost:8081&#34;</span>
+</code></pre></div><ul>
+<li>section <code>[vcs.ui.http]</code>
+<ul>
+<li>URL of CDS UI. This URL will be used by Bitbucket Cloud as a callback on Oauth2. This url must be accessible by users' browsers.</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">    [<span style="color:#a6e22e">vcs</span>.<span style="color:#a6e22e">ui</span>.<span style="color:#a6e22e">http</span>]
+      <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">&#34;http://localhost:8080&#34;</span>
+</code></pre></div><ul>
+<li>section <code>[vcs.servers]</code></li>
+</ul>
+<p>Then add this part to specify you want to add bitbucketcloud integration. Set value to <code>clientId</code> and <code>clientSecret</code>.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml"> [<span style="color:#a6e22e">vcs</span>.<span style="color:#a6e22e">servers</span>]
+    [<span style="color:#a6e22e">vcs</span>.<span style="color:#a6e22e">servers</span>.<span style="color:#a6e22e">bitbucketcloud</span>]
+
+      [<span style="color:#a6e22e">vcs</span>.<span style="color:#a6e22e">servers</span>.<span style="color:#a6e22e">bitbucketcloud</span>.<span style="color:#a6e22e">bitbucketcloud</span>]
+
+        <span style="color:#75715e"># Bitbucket Cloud OAuth Key</span>
+        <span style="color:#a6e22e">clientId</span> = <span style="color:#e6db74">&#34;XXXX&#34;</span>
+
+        <span style="color:#75715e"># Bitbucket Cloud OAuth Secret</span>
+        <span style="color:#a6e22e">clientSecret</span> = <span style="color:#e6db74">&#34;XXXX&#34;</span>
+
+        <span style="color:#75715e"># Does webhooks are supported by VCS Server</span>
+        <span style="color:#a6e22e">disableWebHooks</span> = <span style="color:#66d9ef">false</span>
+
+        <span style="color:#75715e"># Does webhooks creation are supported by VCS Server</span>
+        <span style="color:#a6e22e">disableWebHooksCreation</span> = <span style="color:#66d9ef">false</span>
+
+        <span style="color:#75715e">#proxyWebhook = &#34;https://myproxy.com/&#34;</span>
+
+        [<span style="color:#a6e22e">vcs</span>.<span style="color:#a6e22e">servers</span>.<span style="color:#a6e22e">bitbucketcloud</span>.<span style="color:#a6e22e">bitbucketcloud</span>.<span style="color:#a6e22e">Status</span>]
+
+          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server</span>
+          <span style="color:#a6e22e">disable</span> = <span style="color:#66d9ef">false</span>
+
+          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push CDS URL in statuses on the VCS server</span>
+          <span style="color:#a6e22e">showDetail</span> = <span style="color:#66d9ef">false</span>
+</code></pre></div><h4 id="hooks-µservice-configuration">hooks µService Configuration</h4>
+<p>If you have not already a hooks µService configured. Then, as the <code>vcs</code> µService, you have to configure the <code>hooks</code> µService</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ engine config new hooks &gt; hooks-config.toml
+</code></pre></div><p>In the <code>[hooks]</code> section</p>
+<ul>
+<li>check the URL, this will be used by CDS API to call CDS Hooks</li>
+<li>configure <code>urlPublic</code> if you want to use <a href="../../../docs/concepts/workflow/hooks/webhook/">simple Webhook</a></li>
+<li>add a name, as <code>cds-hooks</code></li>
+</ul>
+<p>In the <code>[hooks.api]</code> section</p>
+<ul>
+<li>put the same token as the <code>[vcs.api]</code> section</li>
+</ul>
+<h3 id="start-the-vcs-and-hooks-µservice">Start the vcs and hooks µService</h3>
+<p><em>As a CDS Administrator</em></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ engine start vcs --config vcs-config.toml
+$ engine start hooks --config hooks-config.toml
+
+<span style="color:#75715e"># you can also start CDS api and vcs in the same process:</span>
+$ engine start api vcs hooks --config config.toml
 </code></pre></div><h2 id="vcs-events">Vcs events</h2>
 <p>For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).</p>
 

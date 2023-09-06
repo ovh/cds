@@ -33,22 +33,21 @@
 <meta name="twitter:title" content="Understand the CDS µServices">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../js/script.js"></script>
 <script type="text/javascript" src="../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../index.json"></a>
 
-<script type="text/javascript" src="../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../js/search.js"></script>
-<script type="text/javascript" src="../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -327,6 +326,12 @@
 
 		
 	
+		
+			
+<a class="item" data-title="Migrate 0.53" href="../../hosting/upgrade/migrate_0.53/"></a>
+
+		
+	
 
 	</div>
 </div>
@@ -386,19 +391,19 @@
 </li>
 <li><strong>hooks</strong>: this service manages <a href="../../docs/concepts/workflow/hooks/">Hooks</a>.
 <ul>
-<li>You can multi-instanciate this service, it uses a redis to synchronize all tasks over all instances.</li>
+<li>You can multi-instantiate this service, it uses a redis to synchronize all tasks over all instances.</li>
 <li>Users and some integrations need to send HTTP requests to this service, you can use the proxypass <code>/cdshooks</code> on the CDS UI to reach this service.</li>
 </ul>
 </li>
 <li><strong>vcs</strong>: The aim of this µService is to communicate with Repository Manager as <a href="../../docs/integrations/github/">GitHub</a>, <a href="../../docs/integrations/gitlab/">GitLab</a>, <a href="../../docs/integrations/bitbucket/">Bitbucket</a>&hellip;
 <ul>
-<li>You can multi-instanciate this service, a redis is used to synchronize tasks over all instances.</li>
+<li>You can multi-instantiate this service, a redis is used to synchronize tasks over all instances.</li>
 </ul>
 </li>
 <li><strong>repositories</strong>: this µService is used to enable the as-code feature.
 <ul>
 <li>Users can store CDS Files on their repositories. This service clones user repositories on local filesystem.</li>
-<li>You can&rsquo;t multi-instanciate this service for now.</li>
+<li>You can&rsquo;t multi-instantiate this service for now.</li>
 </ul>
 </li>
 <li><strong>elasticsearch</strong>: user timeline and vulnerabilities computed are stored on a elasticsearch through this µService.
@@ -409,7 +414,7 @@
 <li><strong>hatchery:local</strong>: the local hatchery spawns CDS Workers locally.
 <ul>
 <li>All workers shares the same filesystem.</li>
-<li>Not recommanded for production with <code>shared.infra</code> group</li>
+<li>Not recommended for production with <code>shared.infra</code> group</li>
 </ul>
 </li>
 <li><strong>hatchery:swarm</strong>: the swarm hatchery spawn CDS Workers with docker.
@@ -430,11 +435,6 @@
 <li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> docker.</li>
 </ul>
 </li>
-<li><strong>hatchery:marathon</strong>: the marathon hatchery run CDS Worker as a marathon application.
-<ul>
-<li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> docker.</li>
-</ul>
-</li>
 <li><strong>hatchery:vsphere</strong>: the vSphere hatchery creates Virtual Machine with a CDS Worker inside.
 <ul>
 <li>This hatchery uses the <a href="https://ovh.github.io/cds/docs/concepts/worker-model/">worker model</a> vsphere.</li>
@@ -447,11 +447,11 @@
 </li>
 </ul>
 <h1 id="single-process">Single Process</h1>
-<p>With a single CDS Engine process, you can run all µServices. This is very convenient for testing CDS locally but it&rsquo;s not recommanded for a production installation.</p>
+<p>With a single CDS Engine process, you can run all µServices. This is very convenient for testing CDS locally but it&rsquo;s not recommended for a production installation.</p>
 <p><img src="../images/one-process.png" alt="One Process"></p>
 <h1 id="multi-processes">Multi-Processes</h1>
-<p>The binary engine can be used to launch in different processes each µService. This is recommanded for a production installation.</p>
-<p>Each µService can be multi-instanciated, example:</p>
+<p>The binary engine can be used to launch in different processes each µService. This is recommended for a production installation.</p>
+<p>Each µService can be multi-instantiated, example:</p>
 <ul>
 <li>6x <code>$engine start api</code>, each api shared the same PostgreSQL and redis.</li>
 <li>6x <code>$engine start cdn</code>, each cdn shared the same PostgreSQL and redis.</li>

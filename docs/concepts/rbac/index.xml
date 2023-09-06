@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>[Experimental] Permissions - RBAC on CDS - Continuous Delivery Service</title>
+    <link>/docs/concepts/rbac/</link>
+    <description>Recent content in [Experimental] Permissions - RBAC on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/concepts/rbac/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Global roles</title>
+      <link>/docs/concepts/rbac/global/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/rbac/global/</guid>
+      <description>These roles allow users/groups to manage global CDS configuration:
+ manage-permission: Allow users/groups to create/update/delete an permission manage-organization: Allow users/groups to create/delete an organization manage-region: Allow users/groups to create/delete a region manage-hatchery: Allow users/groups to create/update/delete a hatchery create-project: Allow users/groups to create/delete a project  Yaml example:
+name: my-permission-name global: - role: manage-permission users: [foo,bar] groups: [grpFoo] List of fields:
+ role: [mandatory]role to applied users: list of usernames groups: list of groups  </description>
+    </item>
+    
+    <item>
+      <title>Project roles</title>
+      <link>/docs/concepts/rbac/project/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/rbac/project/</guid>
+      <description>These roles allow users/groups to manage a project
+ read: Allow users/groups to list all resources defined inside a project manage: Allow users/groups to manage VCS and repository on a project manage-worker-model: Allow users/groups to create/update/delete a worker model  Yaml example:
+name: my-permission-name projects: - role: read all: true users: [foo,bar] groups: [grpFoo] - role: manage-worker-model users: [foo] projects: [PROJ_KEY1, PROJ_KEY2] List of fields:
+ role: [mandatory]role to applied all: applied the permission on for all projects projects: list of projects key if there is no field all users: list of usernames groups: list of groups  </description>
+    </item>
+    
+  </channel>
+</rss>

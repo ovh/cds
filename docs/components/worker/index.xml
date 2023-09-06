@@ -49,7 +49,7 @@ worker download worker download --workflow={{.cds.workflow}} --number={{.cds.run
       
       <guid>/docs/components/worker/exit/</guid>
       <description>worker exit worker exit
-Synopsis worker exit command lets job finish current step and disabled all further steps
+Synopsis worker exit command lets job finish current step with exit code 0 (success) and disabled all further steps
 worker exit SEE ALSO  worker	- CDS Worker  </description>
     </item>
     

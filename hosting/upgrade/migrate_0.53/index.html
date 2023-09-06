@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Migrate 0.53 - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="../../../images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../css/callouts.css">
+<link rel="stylesheet" href="../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../css/solarized-light.css">
+
+<meta name="description"
+    content="Migrate an existing instance Before upgrading your CDS Instance:
+ You have to backup your databases: cds and cdn databases. You have to install the version 0.52.0. You must follow the following step before upgrading to 0.53.0.  Before upgrading Organization The version 0.52.0 introduced the notion of Organization in CDS for all authentication drivers. In 0.53.0, organizations are now mandatory so you need to add them before upgrading to 0.">
+<meta property="og:description"
+    content="Migrate an existing instance Before upgrading your CDS Instance:
+ You have to backup your databases: cds and cdn databases. You have to install the version 0.52.0. You must follow the following step before upgrading to 0.53.0.  Before upgrading Organization The version 0.52.0 introduced the notion of Organization in CDS for all authentication drivers. In 0.53.0, organizations are now mandatory so you need to add them before upgrading to 0.">
+<meta name="twitter:description"
+    content="Migrate an existing instance Before upgrading your CDS Instance:
+ You have to backup your databases: cds and cdn databases. You have to install the version 0.52.0. You must follow the following step before upgrading to 0.53.0.  Before upgrading Organization The version 0.52.0 introduced the notion of Organization in CDS for all authentication drivers. In 0.53.0, organizations are now mandatory so you need to add them before upgrading to 0.">
+<meta property="og:url" content="/hosting/upgrade/migrate_0.53/">
+<meta property="og:title" content="Migrate 0.53">
+<meta name="twitter:title" content="Migrate 0.53">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../../js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+<script type="text/javascript" src="../../../js/script.js"></script>
+<script type="text/javascript" src="../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../index.json"></a>
+
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
+<script type="text/javascript" src="../../../js/search.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="../../../" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="../../../docs/">Documentation</a></li>
+					
+					<li><a href="../../../hosting/" class="active">Hosting your own instance</a></li>
+					
+					<li><a href="../../../development/">CDS Developer Manual</a></li>
+					
+					<li><a href="../../../about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                            
+                        
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Upgrade your CDS Instance" href="../../../hosting/upgrade/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Migrate 0.48" href="../../../hosting/upgrade/migrate_0.48/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Migrate 0.49" href="../../../hosting/upgrade/migrate_0.49/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Migrate 0.50" href="../../../hosting/upgrade/migrate_0.50/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Migrate 0.51" href="../../../hosting/upgrade/migrate_0.51/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Migrate 0.53" href="../../../hosting/upgrade/migrate_0.53/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Migrate 0.53</h1>
+
+
+
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#migrate-an-existing-instance">Migrate an existing instance</a></li>
+    <li><a href="#before-upgrading">Before upgrading</a>
+      <ul>
+        <li><a href="#organization">Organization</a></li>
+      </ul>
+    </li>
+    <li><a href="#upgrading-to-0530">Upgrading to 0.53.0</a></li>
+  </ul>
+</nav>
+
+<h2 id="migrate-an-existing-instance">Migrate an existing instance</h2>
+<p>Before upgrading your CDS Instance:</p>
+<ul>
+<li>You have to backup your databases: cds and cdn databases.</li>
+<li>You have to install the version 0.52.0.</li>
+<li>You must follow the following step before upgrading to 0.53.0.</li>
+</ul>
+<h2 id="before-upgrading">Before upgrading</h2>
+<h3 id="organization">Organization</h3>
+<p>The version 0.52.0 introduced the notion of Organization in CDS for all authentication drivers. In 0.53.0, organizations are now mandatory so you need to add them before upgrading to 0.53.0.</p>
+<ul>
+<li>Upgrade you CDS API configuration to add the following fields on your different authentication drivers.</li>
+<li>List all allowed organizations in the field &lsquo;allowedOrganizations&rsquo;</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">[<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>]
+    <span style="color:#a6e22e">allowedOrganizations</span> = [<span style="color:#e6db74">&#34;my-organization&#34;</span>]
+    [<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">local</span>]
+      <span style="color:#a6e22e">organization</span> = <span style="color:#e6db74">&#34;my-organization&#34;</span>
+    [<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">github</span>]
+      <span style="color:#a6e22e">organization</span> = <span style="color:#e6db74">&#34;my-organization&#34;</span>
+    [<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">gitlab</span>]
+      <span style="color:#a6e22e">organization</span> = <span style="color:#e6db74">&#34;my-organization&#34;</span>
+    [<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">oidc</span>]
+      <span style="color:#a6e22e">organization</span> = <span style="color:#e6db74">&#34;my-organization&#34;</span>      
+    [<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">corporateSSO</span>] <span style="color:#75715e"># There is no organization in SSO configuration, as it&#39;s provided by the SSO itself</span>
+    [<span style="color:#a6e22e">api</span>.<span style="color:#a6e22e">auth</span>.<span style="color:#a6e22e">ldap</span>] <span style="color:#75715e"># There is no organization in ldap configuration as it&#39;s provided by the company ldap field </span>
+</code></pre></div><ul>
+<li>Create organization in CDS through the cli</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">cdsctl admin organization add my-organization
+cdsctl admin organization list
++--------------------------------------+-----------------+
+|                  ID                  |      NAME       |
++--------------------------------------+-----------------+
+| 47cc19b8-918e-4bc3-b291-b1cf1ba233ef | my-organization |
++--------------------------------------+-----------------+
+
+</code></pre></div><ul>
+<li>Migrate all existing users in the organization</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">cdsctl admin organization user-migrate my-organization
+</code></pre></div><h2 id="upgrading-to-0530">Upgrading to 0.53.0</h2>
+<p>This version contains changes on database table used to authenticate users, this will requires CDS to be stopped before the migration.</p>
+<ul>
+<li>Shutdown all CDS&rsquo;s services.</li>
+<li>Apply the following changes to your CDS API configuration:</li>
+</ul>
+<pre><code># The field enabled was renamed by signinEnabled in auth api.auth
+[api.auth]
+    [api.auth.local]
+      signinEnabled = true
+    [api.auth.github]
+      signinEnabled = true
+    [api.auth.gitlab]
+      signinEnabled = true
+    [api.auth.oidc]
+      signinEnabled = true
+    [api.auth.corporateSSO]
+      signinEnabled = true
+    [api.auth.ldap]
+      signinEnabled = true
+
+# The common configuration for auth drivers were moved to a new config section called drivers
+[api.drivers]    
+    [api.drivers.github]
+      url = &quot;&quot;
+      apiUrl = &quot;&quot;
+      clientId = &quot;&quot;
+      clientSecret = &quot;&quot;
+    [api.drivers.gitlab]
+      url = &quot;&quot;
+      applicationID = &quot;&quot;
+      secret = &quot;&quot;
+    [api.drivers.oidc]
+      ...
+    [api.drivers.corporateSSO]
+      ...
+    [api.drivers.ldap]
+      ...
+</code></pre><ul>
+<li>Run the database migration, documentation on <a href="https://ovh.github.io/cds/hosting/database/">https://ovh.github.io/cds/hosting/database/</a></li>
+<li>Start CDS API service (scale to 1 instance if you usually use multiple instances).</li>
+<li>Login to CDS using the command line and check if there is no error on migration using <code>cdsctl admin migration list</code>.
+<ul>
+<li>There are two migrations to check: &lsquo;OrganizationMigration&rsquo; and &lsquo;ConsumerMigration&rsquo;.</li>
+<li>Migration can take a few minutes depending on the number of users.</li>
+</ul>
+</li>
+<li>Scale up CDS API if you usually use multiple instances then restart others services.</li>
+</ul>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

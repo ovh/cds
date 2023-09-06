@@ -7,6 +7,17 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language><atom:link href="/docs/components/cdsctl/admin/users/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>rename</title>
+      <link>/docs/components/cdsctl/admin/users/rename/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/users/rename/</guid>
+      <description>cdsctl admin users rename Rename a given user
+Synopsis Rename a given user
+cdsctl admin users rename USERNAME NEW-USERNAME Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin users	- Manage CDS users  </description>
+    </item>
+    
+    <item>
       <title>set-organization</title>
       <link>/docs/components/cdsctl/admin/users/set-organization/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

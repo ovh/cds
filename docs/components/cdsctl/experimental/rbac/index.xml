@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>rbac on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/experimental/rbac/</link>
+    <description>Recent content in rbac on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/experimental/rbac/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/experimental/rbac/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/rbac/delete/</guid>
+      <description>cdsctl experimental rbac delete Delete a permission
+Synopsis Delete a permission
+cdsctl experimental rbac delete PERMISSION_IDENTIFIER [flags] Examples cdsctl rbac delete &amp;lt;permission_identifier&amp;gt; Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental rbac	- CDS Experimental rbac commands  </description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>/docs/components/cdsctl/experimental/rbac/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/rbac/import/</guid>
+      <description>cdsctl experimental rbac import Import a rbac rule from a yaml file
+Synopsis Import a rbac rule from a yaml file
+cdsctl experimental rbac import FILENAME [flags] Examples cdsctl rbac import file.yml Options  --force Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental rbac	- CDS Experimental rbac commands  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>/docs/components/cdsctl/experimental/rbac/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/rbac/show/</guid>
+      <description>cdsctl experimental rbac show GET a CDS permission
+Synopsis GET a CDS permission
+cdsctl experimental rbac show PERMISSIONIDENTIFIER [flags] Examples cdsctl rbac get &amp;lt;permission identifier&amp;gt; Options  --format string Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental rbac	- CDS Experimental rbac commands  </description>
+    </item>
+    
+  </channel>
+</rss>

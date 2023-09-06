@@ -18,37 +18,36 @@
 
 <meta name="description"
     content="Migrate an existing instance Before upgrading your CDS Instance:
- You have to backup your databases: cds and cdn databases. You have to install the version 0.49.0 if you use the 0.48 version. The backend cds-backend have to be removed from the cdn configuration.  PostgreSQL PostgreSQL 14 is now recommanded
+ You have to backup your databases: cds and cdn databases. You have to install the version 0.49.0 if you use the 0.48 version. The backend cds-backend have to be removed from the cdn configuration.  PostgreSQL PostgreSQL 14 is now recommended
 CDN Service This release introduced the CDN Artifacts. This means that all artifacts upload / download will be done through the CDN service.">
 <meta property="og:description"
     content="Migrate an existing instance Before upgrading your CDS Instance:
- You have to backup your databases: cds and cdn databases. You have to install the version 0.49.0 if you use the 0.48 version. The backend cds-backend have to be removed from the cdn configuration.  PostgreSQL PostgreSQL 14 is now recommanded
+ You have to backup your databases: cds and cdn databases. You have to install the version 0.49.0 if you use the 0.48 version. The backend cds-backend have to be removed from the cdn configuration.  PostgreSQL PostgreSQL 14 is now recommended
 CDN Service This release introduced the CDN Artifacts. This means that all artifacts upload / download will be done through the CDN service.">
 <meta name="twitter:description"
     content="Migrate an existing instance Before upgrading your CDS Instance:
- You have to backup your databases: cds and cdn databases. You have to install the version 0.49.0 if you use the 0.48 version. The backend cds-backend have to be removed from the cdn configuration.  PostgreSQL PostgreSQL 14 is now recommanded
+ You have to backup your databases: cds and cdn databases. You have to install the version 0.49.0 if you use the 0.48 version. The backend cds-backend have to be removed from the cdn configuration.  PostgreSQL PostgreSQL 14 is now recommended
 CDN Service This release introduced the CDN Artifacts. This means that all artifacts upload / download will be done through the CDN service.">
 <meta property="og:url" content="/hosting/upgrade/migrate_0.50/">
 <meta property="og:title" content="Migrate 0.50">
 <meta name="twitter:title" content="Migrate 0.50">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../../js/script.js"></script>
 <script type="text/javascript" src="../../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../../index.json"></a>
 
-<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../../js/search.js"></script>
-<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -226,6 +225,12 @@ CDN Service This release introduced the CDN Artifacts. This means that all artif
 
 		
 	
+		
+			
+<a class="item" data-title="Migrate 0.53" href="../../../hosting/upgrade/migrate_0.53/"></a>
+
+		
+	
 
 
 
@@ -270,7 +275,7 @@ CDN Service This release introduced the CDN Artifacts. This means that all artif
 <li>The backend cds-backend have to be removed from the cdn configuration.</li>
 </ul>
 <h2 id="postgresql">PostgreSQL</h2>
-<p>PostgreSQL 14 is now recommanded</p>
+<p>PostgreSQL 14 is now recommended</p>
 <h2 id="cdn-service">CDN Service</h2>
 <p>This release introduced the CDN Artifacts. This means that all artifacts upload / download will be done through the CDN service.
 This is not enabled by default, you have to enable that with a feature flipping. The version 0.51 will use the CDN service to manage artifacts by default.</p>
@@ -284,7 +289,7 @@ This is not enabled by default, you have to enable that with a feature flipping.
 
         [<span style="color:#a6e22e">cdn</span>.<span style="color:#a6e22e">storageUnits</span>.<span style="color:#a6e22e">buffers</span>.<span style="color:#a6e22e">local</span><span style="color:#960050;background-color:#1e0010">-</span><span style="color:#a6e22e">buffer</span>.<span style="color:#a6e22e">local</span>]
           <span style="color:#a6e22e">path</span> = <span style="color:#e6db74">&#34;/var/lib/cds-engine/cdn-buffer&#34;</span>
-</code></pre></div><p>To multi-instanciate the cdn service, you can use a NFS for the bufferType file, example:</p>
+</code></pre></div><p>To multi-instantiate the cdn service, you can use a NFS for the bufferType file, example:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">      [<span style="color:#a6e22e">cdn</span>.<span style="color:#a6e22e">storageUnits</span>.<span style="color:#a6e22e">buffers</span>.<span style="color:#a6e22e">buffer</span><span style="color:#960050;background-color:#1e0010">-</span><span style="color:#a6e22e">nfs</span>]
         <span style="color:#a6e22e">bufferType</span> = <span style="color:#e6db74">&#34;file&#34;</span>
  
@@ -297,7 +302,7 @@ This is not enabled by default, you have to enable that with a feature flipping.
           [[<span style="color:#a6e22e">cdn</span>.<span style="color:#a6e22e">storageUnits</span>.<span style="color:#a6e22e">buffers</span>.<span style="color:#a6e22e">buffer</span><span style="color:#960050;background-color:#1e0010">-</span><span style="color:#a6e22e">nfs</span>.<span style="color:#a6e22e">nfs</span>.<span style="color:#a6e22e">encryption</span>]]
             <span style="color:#a6e22e">Cipher</span> = <span style="color:#e6db74">&#34;aes-gcm&#34;</span>
             <span style="color:#a6e22e">Identifier</span> = <span style="color:#e6db74">&#34;nfs-buffer-id&#34;</span>
-            <span style="color:#75715e">## enter a key here, 32 lenght</span>
+            <span style="color:#75715e">## enter a key here, 32 length</span>
             <span style="color:#a6e22e">Key</span> = <span style="color:#e6db74">&#34;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&#34;</span>
             <span style="color:#a6e22e">Sealed</span> = <span style="color:#66d9ef">false</span>   
 </code></pre></div><h2 id="how-to-enable-the-cds-artifact">How to enable the CDS Artifact?</h2>

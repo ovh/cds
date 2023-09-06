@@ -27,7 +27,7 @@ This integration allows you:
       <description>The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Follow the section Create a consumer on documentation https://support.</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More information  How to configure Bitbucket Cloud integration  Follow documentation on https://support.</description>
     </item>
     
     <item>
@@ -39,7 +39,7 @@ This integration enables some features:
       <description>The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More informations Send comments on your Pull-Requests when a workflow is failed  Create the Personal Access Token on Bitbucket Datacenter Generate a new token on https://your-bitbucket-datacenter/plugins/servlet/access-tokens/manage with the following scopes:</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More information Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:</description>
     </item>
     
     <item>
@@ -64,7 +64,7 @@ $ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ 
       <description>The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/+1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Import configuration Create a yml file:</description>
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/+1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.</description>
     </item>
     
     <item>
@@ -80,26 +80,13 @@ How to configure LDAP Authentication integration Edit the toml file:
     </item>
     
     <item>
-      <title>Mesos/Marathon</title>
-      <link>/docs/integrations/marathon/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/integrations/marathon/</guid>
-      <description>The Mesos/Marathon integration have to be configured by CDS administrator.
-This integration allows you to run the Marathon Hatchery to start CDS Workers.
-As an end-users, this integration allows to use Worker Models of type &amp;ldquo;Docker&amp;rdquo;
-Start Marathon hatchery Generate a token:
-$ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ --name=&amp;#34;hatchery.marathon&amp;#34; \ --description=&amp;#34;Consumer token for marathon hatchery&amp;#34; \ --groups=&amp;#34;&amp;#34; \ --no-interactive Builtin consumer successfully created, use the following token to sign in: xxxxxxxx.</description>
-    </item>
-    
-    <item>
       <title>OpenID-Connect Authentication</title>
       <link>/docs/integrations/openid-connect/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/integrations/openid-connect/</guid>
       <description>The OpenID-Connect Integration have to be configured on your CDS by a CDS Administrator.
-This integration allows you to delegate users authetication to an OpenID-Connect third party like Keycloak or Hydra
+This integration allows you to delegate users authentication to an OpenID-Connect third party like Keycloak or Hydra
 How to configure OpenID-Connect Authentication integration Edit the toml file:
  section [api.auth.oidc]  enable the signin with enabled = true if you want to disable signup, set signupDisabled = true    [api.auth.oidc] clientId = &amp;#34;YOUR CLIENT ID&amp;#34; clientSecret = &amp;#34;YOUR CLIENT SECRET&amp;#34; enabled = true signupDisabled = false url = &amp;#34;http[s]://&amp;lt;OIDC HOST&amp;gt;:&amp;lt;PORT&amp;gt;/auth/realms/&amp;lt;YOUR REALM&amp;gt;&amp;#34; For example :</description>
     </item>

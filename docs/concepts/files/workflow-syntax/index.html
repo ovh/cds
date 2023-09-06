@@ -17,35 +17,34 @@
 <link rel="stylesheet" href="../../../../css/solarized-light.css">
 
 <meta name="description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow which implements a basic two-stage workflow:
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production parameters: name: value one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.">
 <meta property="og:description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow which implements a basic two-stage workflow:
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production parameters: name: value one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.">
 <meta name="twitter:description"
-    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow wich implements a basic two-stage workflow:
-name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.bar retention_policy: return run_days_before &lt; 7 There are two major things to understand: workflow and hooks.">
+    content="A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc. Consider the following workflow which implements a basic two-stage workflow:
+name: my-workflow workflow: build: pipeline: build application: my-application deploy: depends_on: - build when: - success pipeline: deploy application: my-application environment: my-production parameters: name: value one_at_a_time: true hooks: build: - type: RepositoryWebHook integrations: my-artifactory-integration-name: type: artifact_manager notifications: - type: email pipelines: - deploy settings: on_success: never recipients: - me@foo.">
 <meta property="og:url" content="/docs/concepts/files/workflow-syntax/">
 <meta property="og:title" content="Workflow configuration file">
 <meta name="twitter:title" content="Workflow configuration file">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../../../js/script.js"></script>
 <script type="text/javascript" src="../../../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../../../index.json"></a>
 
-<script type="text/javascript" src="../../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../../../js/search.js"></script>
-<script type="text/javascript" src="../../../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -224,6 +223,36 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 	
 		
 			
+<div class="item" data-title="[Experimental] Permissions - RBAC">
+	<div class="container">
+		
+		<a class="item" data-title="[Experimental] Permissions - RBAC" href="../../../../docs/concepts/rbac/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Global roles" href="../../../../docs/concepts/rbac/global/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Project roles" href="../../../../docs/concepts/rbac/project/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
 <a class="item" data-title="Permissions - ACLs" href="../../../../docs/concepts/permissions/"></a>
 
 		
@@ -231,6 +260,12 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 		
 			
 <a class="item" data-title="Pipeline" href="../../../../docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Organization" href="../../../../docs/concepts/organization/"></a>
 
 		
 	
@@ -488,6 +523,12 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 	
 		
 			
+<a class="item" data-title="[Experimental] Ascode Worker Model" href="../../../../docs/concepts/worker-model/ascode/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="Worker Model patterns" href="../../../../docs/concepts/worker-model/patterns/"></a>
 
 		
@@ -537,7 +578,7 @@ name: my-workflow workflow: build: pipeline: build application: my-application d
 </nav>
 
 <p>A CDS workflow file only contains the description of pipelines orchestration, hooks, run conditions, etc.
-Consider the following workflow wich implements a basic two-stage workflow:</p>
+Consider the following workflow which implements a basic two-stage workflow:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">my-workflow</span>
 <span style="color:#f92672">workflow</span>:
   <span style="color:#f92672">build</span>:
@@ -551,6 +592,8 @@ Consider the following workflow wich implements a basic two-stage workflow:</p>
     <span style="color:#f92672">pipeline</span>: <span style="color:#ae81ff">deploy</span>
     <span style="color:#f92672">application</span>: <span style="color:#ae81ff">my-application</span>
     <span style="color:#f92672">environment</span>: <span style="color:#ae81ff">my-production</span>
+    <span style="color:#f92672">parameters</span>:
+      <span style="color:#f92672">name</span>: <span style="color:#ae81ff">value</span>
     <span style="color:#f92672">one_at_a_time</span>: <span style="color:#66d9ef">true</span>
 <span style="color:#f92672">hooks</span>:
   <span style="color:#f92672">build</span>:
@@ -620,14 +663,14 @@ Consider the following workflow wich implements a basic two-stage workflow:</p>
       <span style="color:#f92672">disable_status</span>: <span style="color:#66d9ef">false</span>
 </code></pre></div><h2 id="mutex">Mutex</h2>
 <p><a href="../../../../docs/concepts/workflow/mutex/">Mutex documentation</a></p>
-<p>Example of a pipeline limited to one execution at a time: deployments to production cannot be executed concurently.</p>
+<p>Example of a pipeline limited to one execution at a time: deployments to production cannot be executed concurrently.</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yml" data-lang="yml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">my-workflow</span>
 <span style="color:#f92672">workflow</span>:
   <span style="color:#75715e"># ...</span>
   <span style="color:#f92672">deploy</span>:
     <span style="color:#f92672">pipeline</span>: <span style="color:#ae81ff">deploy</span>
     <span style="color:#75715e"># ...</span>
-    <span style="color:#f92672">one_at_a_time</span>: <span style="color:#66d9ef">true</span> <span style="color:#75715e"># No concurent deployments</span>
+    <span style="color:#f92672">one_at_a_time</span>: <span style="color:#66d9ef">true</span> <span style="color:#75715e"># No concurrent deployments</span>
 </code></pre></div><h2 id="retention-policy">Retention Policy</h2>
 <p><a href="../../../../docs/concepts/workflow/retention/">Retention documentation</a></p>
 

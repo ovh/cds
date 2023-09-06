@@ -48,7 +48,7 @@ engine config init-token [flags] Options  --config string config file --remote-c
 Synopsis Generate the whole configuration file $ engine config new &amp;gt; conf.toml
 you can compose your file configuration this will generate a file configuration containing api and hatchery:local µService $ engine config new api hatchery:local
 For advanced usage, Debug and Tracing section can be generated as: $ engine config new debug tracing [µService(s)&amp;hellip;]
-All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]</description>
+All options $ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]</description>
     </item>
     
     <item>

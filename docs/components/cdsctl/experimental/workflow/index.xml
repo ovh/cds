@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>workflow on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/experimental/workflow/</link>
+    <description>Recent content in workflow on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/experimental/workflow/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>history</title>
+      <link>/docs/components/cdsctl/experimental/workflow/history/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/workflow/history/</guid>
+      <description>cdsctl experimental workflow history Display the run history for the given workflow
+Synopsis Display the run history for the given workflow
+cdsctl experimental workflow history PROJ_KEY VCS_IDENTIFIER REPO_IDENTIFIER WORKFLOW_NAME [flags] Examples cdsctl experimental workflow history &amp;lt;proj_key&amp;gt; &amp;lt;vcs_identifier&amp;gt; &amp;lt;repo_identifier&amp;gt; &amp;lt;workflow_name&amp;gt; Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>jobs</title>
+      <link>/docs/components/cdsctl/experimental/workflow/jobs/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/workflow/jobs/</guid>
+      <description>cdsctl experimental workflow jobs Get the workflow run jobs status
+Synopsis Get the workflow run jobs status
+cdsctl experimental workflow jobs PROJ_KEY VCS_IDENTIFIER REPO_IDENTIFIER WORKFLOW_NAME RUN-NUMBER [flags] Examples cdsctl experimental workflow run jobs status &amp;lt;proj_key&amp;gt; &amp;lt;vcs_identifier&amp;gt; &amp;lt;repo_identifier&amp;gt; &amp;lt;workflow_name&amp;gt; &amp;lt;run_number&amp;gt; Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>run</title>
+      <link>/docs/components/cdsctl/experimental/workflow/run/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/workflow/run/</guid>
+      <description>cdsctl experimental workflow run Start a new workflow
+Synopsis Start a new workflow
+cdsctl experimental workflow run PROJ_KEY VCS_IDENTIFIER REPO_IDENTIFIER WORKFLOW_NAME [flags] Examples cdsctl workflow run &amp;lt;proj_key&amp;gt; &amp;lt;vcs_identifier&amp;gt; &amp;lt;repo_identifier&amp;gt; &amp;lt;workflow_name&amp;gt; Options  --branch string Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental workflow	- CDS Experimental workflow commands  </description>
+    </item>
+    
+    <item>
+      <title>status</title>
+      <link>/docs/components/cdsctl/experimental/workflow/status/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/workflow/status/</guid>
+      <description>cdsctl experimental workflow status Get the workflow run status
+Synopsis Get the workflow run status
+cdsctl experimental workflow status PROJ_KEY VCS_IDENTIFIER REPO_IDENTIFIER WORKFLOW_NAME RUN-NUMBER [flags] Examples cdsctl experimental workflow status &amp;lt;proj_key&amp;gt; &amp;lt;vcs_identifier&amp;gt; &amp;lt;repo_identifier&amp;gt; &amp;lt;workflow_name&amp;gt; &amp;lt;run_number&amp;gt; Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>stop</title>
+      <link>/docs/components/cdsctl/experimental/workflow/stop/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/workflow/stop/</guid>
+      <description>cdsctl experimental workflow stop Stop the workflow run
+Synopsis Stop the workflow run
+cdsctl experimental workflow stop PROJ_KEY VCS_IDENTIFIER REPO_IDENTIFIER WORKFLOW_NAME RUN-NUMBER Examples cdsctl experimental workflow stop &amp;lt;proj_key&amp;gt; &amp;lt;vcs_identifier&amp;gt; &amp;lt;repo_identifier&amp;gt; &amp;lt;workflow_name&amp;gt; &amp;lt;run_number&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental workflow	- CDS Experimental workflow commands  </description>
+    </item>
+    
+    <item>
+      <title>stop-job</title>
+      <link>/docs/components/cdsctl/experimental/workflow/stop-job/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/workflow/stop-job/</guid>
+      <description>cdsctl experimental workflow stop-job Stop the workflow run job
+Synopsis Stop the workflow run job
+cdsctl experimental workflow stop-job PROJ_KEY VCS_IDENTIFIER REPO_IDENTIFIER WORKFLOW_NAME RUN-NUMBER JOB-NAME Examples cdsctl experimental workflow job stop &amp;lt;proj_key&amp;gt; &amp;lt;vcs_identifier&amp;gt; &amp;lt;repo_identifier&amp;gt; &amp;lt;workflow_name&amp;gt; &amp;lt;run_number&amp;gt; &amp;lt;job_name&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental workflow	- CDS Experimental workflow commands  </description>
+    </item>
+    
+  </channel>
+</rss>

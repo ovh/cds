@@ -58,7 +58,7 @@ cdsctl admin database list-signed-data SERVICE [flags] Options  --fields string 
       <guid>/docs/components/cdsctl/admin/database/roll-encrypted-data/</guid>
       <description>cdsctl admin database roll-encrypted-data Roll a encrypted data in database
 Synopsis Roll a encrypted data in database
-cdsctl admin database roll-encrypted-data SERVICE ENTITY ... Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin database	- Manage CDS Database  </description>
+cdsctl admin database roll-encrypted-data SERVICE ENTITY ... [flags] Options  --index string Resume from a specific index (only available for one entity) Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -69,7 +69,7 @@ cdsctl admin database roll-encrypted-data SERVICE ENTITY ... Options inherited f
       <guid>/docs/components/cdsctl/admin/database/roll-signed-data/</guid>
       <description>cdsctl admin database roll-signed-data Roll a signed data in database
 Synopsis Roll a signed data in database
-cdsctl admin database roll-signed-data SERVICE ENTITY ... Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin database	- Manage CDS Database  </description>
+cdsctl admin database roll-signed-data SERVICE ENTITY ... [flags] Options  --index string Resume from a specific index (only available for one entity) Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>

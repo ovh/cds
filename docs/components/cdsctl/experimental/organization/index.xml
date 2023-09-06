@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>organization on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/experimental/organization/</link>
+    <description>Recent content in organization on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/experimental/organization/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>add</title>
+      <link>/docs/components/cdsctl/experimental/organization/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/organization/add/</guid>
+      <description>cdsctl experimental organization add Create a new organization
+Synopsis Create a new organization
+cdsctl experimental organization add ORGANIZATIONIDENTIFIER Examples cdsctl organization add &amp;lt;organization_name&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental organization	- CDS Experimental organization commands  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/experimental/organization/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/organization/delete/</guid>
+      <description>cdsctl experimental organization delete Remove organization
+Synopsis Remove organization
+cdsctl experimental organization delete ORGANIZATIONIDENTIFIER [flags] Examples cdsctl organization delete Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental organization	- CDS Experimental organization commands  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/experimental/organization/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/organization/list/</guid>
+      <description>cdsctl experimental organization list List all organizations
+Synopsis List all organizations
+cdsctl experimental organization list [flags] Examples cdsctl organization list Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>/docs/components/cdsctl/experimental/organization/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/organization/show/</guid>
+      <description>cdsctl experimental organization show Get an organization by its identifier
+Synopsis Get an organization by its identifier
+cdsctl experimental organization show ORGANIZATIONIDENTIFIER [flags] Examples cdsctl organization show &amp;lt;organization_identifier&amp;gt; Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

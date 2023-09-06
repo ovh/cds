@@ -17,35 +17,34 @@
 <link rel="stylesheet" href="../../../css/solarized-light.css">
 
 <meta name="description"
-    content="CDN service The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit. In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit here. Time is coming to disabled it. In the next release (0.50), all logs datas in CDS will be deleted, and CDN will become the only way to manage logs.
+    content="CDN service The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit. In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit here. Time is coming to disabled it. In the next release (0.50), all logs data in CDS will be deleted, and CDN will become the only way to manage logs.
 Disable CDS Unit Add in your cdn configuration, the property &ldquo;disableSync = true&rdquo; for the CDS Unit">
 <meta property="og:description"
-    content="CDN service The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit. In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit here. Time is coming to disabled it. In the next release (0.50), all logs datas in CDS will be deleted, and CDN will become the only way to manage logs.
+    content="CDN service The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit. In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit here. Time is coming to disabled it. In the next release (0.50), all logs data in CDS will be deleted, and CDN will become the only way to manage logs.
 Disable CDS Unit Add in your cdn configuration, the property &ldquo;disableSync = true&rdquo; for the CDS Unit">
 <meta name="twitter:description"
-    content="CDN service The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit. In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit here. Time is coming to disabled it. In the next release (0.50), all logs datas in CDS will be deleted, and CDN will become the only way to manage logs.
+    content="CDN service The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit. In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit here. Time is coming to disabled it. In the next release (0.50), all logs data in CDS will be deleted, and CDN will become the only way to manage logs.
 Disable CDS Unit Add in your cdn configuration, the property &ldquo;disableSync = true&rdquo; for the CDS Unit">
 <meta property="og:url" content="/hosting/upgrade/migrate_0.49/">
 <meta property="og:title" content="Migrate 0.49">
 <meta name="twitter:title" content="Migrate 0.49">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../../js/script.js"></script>
 <script type="text/javascript" src="../../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../../index.json"></a>
 
-<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../../js/search.js"></script>
-<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -223,6 +222,12 @@ Disable CDS Unit Add in your cdn configuration, the property &ldquo;disableSync 
 
 		
 	
+		
+			
+<a class="item" data-title="Migrate 0.53" href="../../../hosting/upgrade/migrate_0.53/"></a>
+
+		
+	
 
 
 
@@ -248,7 +253,7 @@ Disable CDS Unit Add in your cdn configuration, the property &ldquo;disableSync 
 <h2 id="cdn-service">CDN service</h2>
 <p>The release 0.49 introduced a new parameter in CDN configuration to disable and remove a CDN unit.
 In the previous version 0.48, you migrate log from CDS to CDN, by adding a temporary CDN Unit <a href="../../../hosting/upgrade/migrate_0.48/">here</a>. Time is coming to disabled it.
-In the next release (0.50), all logs datas in CDS will be deleted, and CDN will become the only way to manage logs.</p>
+In the next release (0.50), all logs data in CDS will be deleted, and CDN will become the only way to manage logs.</p>
 <h1 id="disable-cds-unit">Disable CDS Unit</h1>
 <p>Add in your cdn configuration, the property &ldquo;disableSync = true&rdquo; for the CDS Unit</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">[<span style="color:#a6e22e">cdn</span>.<span style="color:#a6e22e">storageUnits</span>.<span style="color:#a6e22e">storages</span>.<span style="color:#a6e22e">cds</span><span style="color:#960050;background-color:#1e0010">-</span><span style="color:#a6e22e">backend</span>]

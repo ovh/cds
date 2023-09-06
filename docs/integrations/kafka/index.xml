@@ -12,7 +12,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/integrations/kafka/kafka_events/</guid>
-      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
+      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configure this integration to be available on all CDS Projects.
 An example of use case could be that you want to generate some svg badge. Then you can just add an event integration for your workflow and plug the badge microservice on this kafka topic.
 Notice that Kafka communication is done using SASL and TLS enable only.</description>
     </item>
@@ -23,7 +23,7 @@ Notice that Kafka communication is done using SASL and TLS enable only.</descrip
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/integrations/kafka/kafka_hooks/</guid>
-      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configue this integration to be available on all CDS Projects.
+      <description>The Kafka Integration is a Self-Service integration that can be configured on a CDS Project. If you are a CDS Administrator, you can configure this integration to be available on all CDS Projects.
 This integration enables the Kafka Hook feature.
 Notice that Kafka communication is done using SASL and TLS enable only.
 Configure with WebUI You can add a Kafka Integration on your CDS Project.

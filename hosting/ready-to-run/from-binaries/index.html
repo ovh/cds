@@ -18,34 +18,33 @@
 
 <meta name="description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min (Version 14.0 recommanded)  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min (Version 14.0 recommended)  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta property="og:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min (Version 14.0 recommanded)  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min (Version 14.0 recommended)  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta name="twitter:description"
     content="This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
- Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min (Version 14.0 recommanded)  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
+ Download CDS from GitHub Prepare Database Launch CDS API, CDS UI and a Local Hatchery  Prerequisite  a Redis a PostgreSQL 9.6 min (Version 14.0 recommended)  Get the latest release from GitHub mkdir $HOME/cds cd cds LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_name | head -n 1 | cut -d &#39;&#34;&#39; -f 4) OS=linux # could be linux, darwin, windows, freebsd, openbsd ARCH=amd64 # could be 386, arm, amd64, arm64, ppc64le # GET Binaries from GitHub curl -L https://github.">
 <meta property="og:url" content="/hosting/ready-to-run/from-binaries/">
 <meta property="og:title" content="Run with binaries">
 <meta name="twitter:title" content="Run with binaries">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../../js/script.js"></script>
 <script type="text/javascript" src="../../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../../index.json"></a>
 
-<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../../js/search.js"></script>
-<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -272,7 +271,7 @@
 <h2 id="prerequisite">Prerequisite</h2>
 <ul>
 <li>a Redis</li>
-<li>a PostgreSQL 9.6 min (Version 14.0 recommanded)</li>
+<li>a PostgreSQL 9.6 min (Version 14.0 recommended)</li>
 </ul>
 <h2 id="get-the-latest-release-from-github">Get the latest release from GitHub</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir $HOME/cds
@@ -403,7 +402,7 @@ $ vi config.vcs.toml <span style="color:#75715e"># Edit the file and keep only t
 <li>How to use OpenStack infrastructure to spawn CDS container <a href="../../../docs/integrations/openstack/openstack_compute/">read more</a></li>
 </ul>
 <ul>
-<li>Link CDS to a Repository Manager as <a href="../../../docs/integrations/github/">GitHub</a>, <a href="../../../docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="../../../docs/integrations/gitlab/">GitLab</a> setted up on your CDS Instance.</li>
+<li>Link CDS to a Repository Manager as <a href="../../../docs/integrations/github/">GitHub</a>, <a href="../../../docs/integrations/bitbucket/">Bitbucket Server</a> or <a href="../../../docs/integrations/gitlab/">GitLab</a> set up on your CDS Instance.</li>
 </ul>
 <ul>
 <li>Learn more about CDS variables <a href="../../../docs/concepts/variables/">read more</a></li>

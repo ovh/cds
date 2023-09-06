@@ -12,6 +12,8 @@
   </url><url>
     <loc>/docs/</loc>
   </url><url>
+    <loc>/docs/concepts/rbac/global/</loc>
+  </url><url>
     <loc>/docs/components/hatchery/local/</loc>
   </url><url>
     <loc>/docs/tutorials/init_workflow_with_cdsctl/</loc>
@@ -25,6 +27,8 @@
     <loc>/hosting/upgrade/migrate_0.50/</loc>
   </url><url>
     <loc>/hosting/upgrade/migrate_0.51/</loc>
+  </url><url>
+    <loc>/hosting/upgrade/migrate_0.53/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/payload/</loc>
   </url><url>
@@ -46,6 +50,8 @@
   </url><url>
     <loc>/docs/concepts/project/</loc>
   </url><url>
+    <loc>/docs/concepts/rbac/project/</loc>
+  </url><url>
     <loc>/hosting/requirements/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/hooks/scheduler/</loc>
@@ -59,6 +65,10 @@
     <loc>/docs/concepts/files/worker_model-syntax/</loc>
   </url><url>
     <loc>/development/contribute/documentation/</loc>
+  </url><url>
+    <loc>/docs/concepts/worker-model/ascode/</loc>
+  </url><url>
+    <loc>/docs/concepts/rbac/</loc>
   </url><url>
     <loc>/docs/concepts/files/action-syntax/</loc>
   </url><url>
@@ -121,6 +131,8 @@
     <loc>/docs/concepts/workflow/join/</loc>
   </url><url>
     <loc>/docs/concepts/workflow/hooks/kafka-hook/</loc>
+  </url><url>
+    <loc>/docs/concepts/organization/</loc>
   </url><url>
     <loc>/docs/concepts/requirement/requirement_service/</loc>
   </url><url>
@@ -190,6 +202,8 @@
   </url><url>
     <loc>/development/rest/actionbuiltin/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/organization/add/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/application/keys/add/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/application/variable/add/</loc>
@@ -197,6 +211,14 @@
     <loc>/docs/components/cdsctl/environment/keys/add/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/environment/variable/add/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/hatchery/add/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/organization/add/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/repository/add/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/region/add/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/group/member/add/</loc>
   </url><url>
@@ -213,6 +235,8 @@
     <loc>/docs/components/cdsctl/admin/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/advanced/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/analysis/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/metadata/application/</loc>
   </url><url>
@@ -264,24 +288,6 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/</loc>
   </url><url>
-    <loc>/docs/actions/cds-docker-package/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-go-build/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-nexus-upload/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-perl-test/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-publish-ovh-metrics/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-python-pylint/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-sonar-scanner/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-split-download/</loc>
-  </url><url>
-    <loc>/docs/actions/cds-split-upload/</loc>
-  </url><url>
     <loc>/docs/components/cdsctl/</loc>
   </url><url>
     <loc>/docs/components/engine/config/check/</loc>
@@ -291,8 +297,6 @@
     <loc>/docs/actions/builtin-checkoutapplication/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/cache/clear/</loc>
-  </url><url>
-    <loc>/about/matrix/</loc>
   </url><url>
     <loc>/development/rest/config/</loc>
   </url><url>
@@ -338,6 +342,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/integration-model/delete/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/organization/delete/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/admin/plugins/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/services/delete/</loc>
@@ -357,6 +363,18 @@
     <loc>/docs/components/cdsctl/environment/keys/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/environment/variable/delete/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/hatchery/delete/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/organization/delete/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/repository/delete/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/vcs/delete/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/rbac/delete/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/region/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/group/delete/</loc>
   </url><url>
@@ -378,6 +396,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/template/delete/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/user/gpg/delete/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/worker/model/delete/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/advanced/delete/</loc>
@@ -391,6 +411,8 @@
     <loc>/docs/components/cdsctl/template/detach/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/maintenance/disable/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/project/keys/disable/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/worker/disable/</loc>
   </url><url>
@@ -406,6 +428,8 @@
   </url><url>
     <loc>/development/rest/download/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/logs/download/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/workflow/artifact/download/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/logs/download/</loc>
@@ -420,6 +444,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/maintenance/enable/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/project/keys/enable/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/encrypt/</loc>
   </url><url>
     <loc>/docs/components/engine/</loc>
@@ -433,6 +459,8 @@
     <loc>/docs/components/cdsctl/admin/hooks/executions/</loc>
   </url><url>
     <loc>/docs/components/worker/exit/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/action/export/</loc>
   </url><url>
@@ -451,6 +479,8 @@
     <loc>/docs/components/cdsctl/application/export/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/environment/export/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/vcs/export/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/pipeline/export/</loc>
   </url><url>
@@ -492,17 +522,25 @@
   </url><url>
     <loc>/docs/actions/builtin-gittag/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/user/gpg/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/group/grant/</loc>
   </url><url>
     <loc>/development/rest/group/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/group/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/hatchery/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/health/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/history/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/history/</loc>
   </url><url>
     <loc>/development/rest/hook/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/repository/hook-regen/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/hooks/</loc>
   </url><url>
@@ -524,9 +562,17 @@
   </url><url>
     <loc>/docs/components/cdsctl/environment/import/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/plugin/import/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/vcs/import/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/rbac/import/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/pipeline/import/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/integration/import/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/user/gpg/import/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/worker/model/import/</loc>
   </url><url>
@@ -549,6 +595,8 @@
     <loc>/docs/components/cdsctl/queue/interactive/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/item/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/jobs/</loc>
   </url><url>
     <loc>/docs/actions/builtin-junit/</loc>
   </url><url>
@@ -578,6 +626,8 @@
   </url><url>
     <loc>/docs/integrations/ldap/</loc>
   </url><url>
+    <loc>/development/rest/link/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/action/builtin/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/action/list/</loc>
@@ -593,6 +643,8 @@
     <loc>/docs/components/cdsctl/admin/integration-model/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/migration/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/admin/organization/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/plugins/list/</loc>
   </url><url>
@@ -616,6 +668,22 @@
   </url><url>
     <loc>/docs/components/cdsctl/environment/variable/list/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/hatchery/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/organization/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/analysis/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/repository/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/vcs/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/region/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/worker-model/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/worker/list/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/group/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/group/member/list/</loc>
@@ -635,6 +703,8 @@
     <loc>/docs/components/cdsctl/session/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/template/list/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/user/gpg/list/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/user/list/</loc>
   </url><url>
@@ -658,6 +728,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/login/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/logs/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/workflow/logs/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/maintenance/</loc>
@@ -667,8 +739,6 @@
     <loc>/docs/components/cdsctl/user/me/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/group/member/</loc>
-  </url><url>
-    <loc>/docs/integrations/marathon/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/metadata/</loc>
   </url><url>
@@ -696,9 +766,15 @@
   </url><url>
     <loc>/docs/integrations/openstack/openstack_swift/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/organization/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/organization/</loc>
+  </url><url>
     <loc>/development/rest/parameter/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/pipeline/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/plugin/</loc>
   </url><url>
     <loc>/docs/actions/plugin-archive/</loc>
   </url><url>
@@ -708,21 +784,11 @@
   </url><url>
     <loc>/docs/actions/plugin-artifactory-release-bundle-distribute/</loc>
   </url><url>
-    <loc>/docs/actions/plugin-download/</loc>
-  </url><url>
-    <loc>/docs/actions/plugin-group-tmpl/</loc>
-  </url><url>
-    <loc>/docs/actions/plugin-kafka-publish/</loc>
-  </url><url>
-    <loc>/docs/actions/plugin-marathon/</loc>
-  </url><url>
     <loc>/docs/actions/plugin-npm-audit-parser/</loc>
   </url><url>
-    <loc>/docs/actions/plugin-ssh-cmd/</loc>
+    <loc>/docs/actions/plugin-script/</loc>
   </url><url>
     <loc>/docs/actions/plugin-tmpl/</loc>
-  </url><url>
-    <loc>/docs/actions/plugin-venom/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/plugins/</loc>
   </url><url>
@@ -731,6 +797,8 @@
     <loc>/development/rest/project/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/metadata/project/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/</loc>
   </url><url>
@@ -760,17 +828,27 @@
   </url><url>
     <loc>/docs/integrations/rabbitmq/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/rbac/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/consumer/regen/</loc>
   </url><url>
     <loc>/docs/components/engine/config/regen/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/region/</loc>
   </url><url>
     <loc>/docs/actions/builtin-release/</loc>
   </url><url>
     <loc>/docs/actions/builtin-releasevcs/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/users/rename/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/group/rename/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/repositories/</loc>
+  </url><url>
     <loc>/development/rest/repositories_manager/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/repository/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/repository-manager/</loc>
   </url><url>
@@ -792,7 +870,11 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/database/roll-signed-data/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/run/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/workflow/run/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/workflow/run-delete/</loc>
   </url><url>
     <loc>/docs/components/worker/run-result/</loc>
   </url><url>
@@ -826,11 +908,23 @@
   </url><url>
     <loc>/docs/components/cdsctl/environment/variable/show/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/hatchery/show/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/organization/show/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/analysis/show/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/rbac/show/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/region/show/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/group/show/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/show/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/variable/show/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/user/gpg/show/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/user/show/</loc>
   </url><url>
@@ -856,7 +950,11 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/cdn/status/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/repositories/status/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/admin/services/status/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/status/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/health/status/</loc>
   </url><url>
@@ -866,7 +964,11 @@
   </url><url>
     <loc>/docs/components/cdsctl/admin/hooks/stop/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/stop/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/workflow/stop/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/stop-job/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/hooks/stopall/</loc>
   </url><url>
@@ -922,6 +1024,8 @@
   </url><url>
     <loc>/docs/components/cdsctl/user/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/admin/organization/user-migrate/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/admin/users/</loc>
   </url><url>
     <loc>/development/rest/variable/</loc>
@@ -931,6 +1035,8 @@
     <loc>/docs/components/cdsctl/environment/variable/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/project/variable/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/project/vcs/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/signup/verify/</loc>
   </url><url>
@@ -944,6 +1050,8 @@
   </url><url>
     <loc>/development/rest/worker/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/worker/</loc>
+  </url><url>
     <loc>/docs/components/cdsctl/worker/</loc>
   </url><url>
     <loc>/docs/components/worker/</loc>
@@ -952,11 +1060,15 @@
   </url><url>
     <loc>/docs/components/cdsctl/project/integration/worker-hooks-import/</loc>
   </url><url>
+    <loc>/docs/components/cdsctl/experimental/worker-model/</loc>
+  </url><url>
     <loc>/docs/components/engine/download/workers/</loc>
   </url><url>
     <loc>/development/rest/workflow/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/admin/metadata/workflow/</loc>
+  </url><url>
+    <loc>/docs/components/cdsctl/experimental/workflow/</loc>
   </url><url>
     <loc>/docs/components/cdsctl/workflow/</loc>
   </url><url>

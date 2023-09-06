@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>organization on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/admin/organization/</link>
+    <description>Recent content in organization on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/admin/organization/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>add</title>
+      <link>/docs/components/cdsctl/admin/organization/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/organization/add/</guid>
+      <description>cdsctl admin organization add Add a new Organization on CDS
+Synopsis Add a new Organization on CDS
+cdsctl admin organization add ORGANIZATION-NAME Examples cdsctl admin organization add &amp;lt;organization-name&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin organization	- Manage CDS Organization  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/admin/organization/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/organization/delete/</guid>
+      <description>cdsctl admin organization delete Delete an organization
+Synopsis Delete an organization
+cdsctl admin organization delete ORGANIZATION-NAME [flags] Examples cdsctl admin organization delete &amp;lt;organization-name&amp;gt; Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin organization	- Manage CDS Organization  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/admin/organization/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/organization/list/</guid>
+      <description>cdsctl admin organization list List all organizations
+Synopsis List all organizations
+cdsctl admin organization list [flags] Examples cdsctl admin organization list Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>user-migrate</title>
+      <link>/docs/components/cdsctl/admin/organization/user-migrate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/organization/user-migrate/</guid>
+      <description>cdsctl admin organization user-migrate Associate an organization to all empty without it
+Synopsis Associate an organization to all empty without it
+cdsctl admin organization user-migrate ORGANIZATION-NAME Examples cdsctl admin organization user-migrate &amp;lt;organization-name&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin organization	- Manage CDS Organization  </description>
+    </item>
+    
+  </channel>
+</rss>

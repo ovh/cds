@@ -64,6 +64,16 @@ CDS pipelines can be parametrized. This allows you to reuse the same pipeline wh
     </item>
     
     <item>
+      <title>Organization</title>
+      <link>/docs/concepts/organization/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/organization/</guid>
+      <description>Organization represents an organizational group that contains a set of people.
+ a project belongs to only one organization, its value is computed based on the groups that have R/W/E permissions on the project.  you&amp;rsquo;ll be able to add a group from another organization only with R permission.   a group belongs to only one organization. You cannot have users from different organizations in the same group.  Configuration  You must defined a list of allowed organization in your CDS configuration file  ############################## # CDS Authentication Settings# ############################## [api.</description>
+    </item>
+    
+    <item>
       <title>Variables</title>
       <link>/docs/concepts/variables/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

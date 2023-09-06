@@ -24,7 +24,7 @@
       
       <guid>/docs/tutorials/init_workflow_with_cdsctl/</guid>
       <description>In this tutorial, you will create a CDS Workflow from an existing git repository.
- This will creates you some files inside your local git repository. Then you&amp;rsquo;ll can push them to get a CDS workflow lives with his configuration &amp;lsquo;as code&amp;rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance. Have cdsctl command line, you can download it from here  To get started with CDS  In a terminal, go into your git repository and login with cdsctl  $ cd &amp;lt;path-to-repo&amp;gt; $ cdsctl login -H &amp;lt;cds-api-url&amp;gt; # you will be ask for your username and password  Create your first workflow  $ cdsctl workflow init This will ask you to choose:</description>
+ This will creates you some files inside your local git repository. Then you&amp;rsquo;ll can push them to get a CDS workflow lives with his configuration &amp;lsquo;as code&amp;rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab set up on your CDS Instance. Have cdsctl command line, you can download it from here  To get started with CDS  In a terminal, go into your git repository and login with cdsctl  $ cd &amp;lt;path-to-repo&amp;gt; $ cdsctl login -H &amp;lt;cds-api-url&amp;gt; # you will be ask for your username and password  Create your first workflow  $ cdsctl workflow init This will ask you to choose:</description>
     </item>
     
     <item>
@@ -34,7 +34,7 @@
       
       <guid>/docs/tutorials/import_workflow_with_webui/</guid>
       <description>In this tutorial, you will create a CDS Workflow from an existing git repository.
- The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &amp;lsquo;as code&amp;rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab setted up on your CDS Instance.  Prepare your git repository The easiest way to initialize cds files in your repository is to follow first tutorial</description>
+ The repository have to add .cds/ directory. With the web UI, on will create a CDS Workflow &amp;lsquo;as code&amp;rsquo;.   Prerequisites  Have an account on your CDS instance Have a Repository manager as GitHub, Bitbucket Server or GitLab set up on your CDS Instance.  Prepare your git repository The easiest way to initialize cds files in your repository is to follow first tutorial</description>
     </item>
     
     <item>
@@ -43,7 +43,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>/docs/tutorials/service-requirement-nginx/</guid>
-      <description>Add the service requirement  Name: mypg. This will be the service hostname Type: service Docker Image: nginx:1.11.1. This is the name of Docker image to link to current job  Add a step of type script Docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx
+      <description>Add the service requirement  Name: mynginx. This will be the service hostname Type: service Docker Image: nginx:1.11.1. This is the name of Docker image to link to current job  Add a step of type script Docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx
 curl -v -X GET http://mynginx Execute Pipeline
 See output:</description>
     </item>

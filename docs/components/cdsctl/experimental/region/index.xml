@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>region on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/experimental/region/</link>
+    <description>Recent content in region on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/experimental/region/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>add</title>
+      <link>/docs/components/cdsctl/experimental/region/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/region/add/</guid>
+      <description>cdsctl experimental region add Create a new region
+Synopsis Create a new region
+cdsctl experimental region add REGIONIDENTIFIER Examples cdsctl region add &amp;lt;region_name&amp;gt; Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental region	- CDS Experimental region commands  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/experimental/region/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/region/delete/</guid>
+      <description>cdsctl experimental region delete Remove region
+Synopsis Remove region
+cdsctl experimental region delete REGIONIDENTIFIER [flags] Examples cdsctl region delete Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental region	- CDS Experimental region commands  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/experimental/region/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/region/list/</guid>
+      <description>cdsctl experimental region list List all regions
+Synopsis List all regions
+cdsctl experimental region list [flags] Examples cdsctl region list Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>/docs/components/cdsctl/experimental/region/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/region/show/</guid>
+      <description>cdsctl experimental region show Get an region by its identifier
+Synopsis Get an region by its identifier
+cdsctl experimental region show REGIONIDENTIFIER [flags] Examples cdsctl region show &amp;lt;region_identifier&amp;gt; Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

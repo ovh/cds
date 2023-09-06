@@ -116,7 +116,7 @@ cdsctl workflow pull [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  --force Forc
       <description>cdsctl workflow push Push a workflow
 Synopsis Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)
 For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
-cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml  cdsctl workflow push [ PROJECT-KEY ] YAML-FILE ... [flags] Options  --skip-update-files Useful if you don&#39;t want to update yaml files after pushing the workflow.</description>
+cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml  cdsctl workflow push [ PROJECT-KEY ] YAML-FILE ... [flags] Options  --force Override workflow if exists --skip-update-files Useful if you don&#39;t want to update yaml files after pushing the workflow.</description>
     </item>
     
     <item>
@@ -128,6 +128,17 @@ cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml  cdsctl workflow
       <description>cdsctl workflow run Run a CDS workflow
 Synopsis Run a CDS workflow
 cdsctl workflow run [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  -d, --data string Run the workflow with payload data -i, --interactive Follow the workflow run in an interactive terminal user interface --node-name string Node Name to launch; Flag run-number is mandatory -o, --open-web-browser Open web browser on the workflow run -p, --parameter strings Run the workflow with pipeline parameter --run-number string Existing Workflow RUN Number -s, --sync Synchronise your pipelines with your last editions.</description>
+    </item>
+    
+    <item>
+      <title>run-delete</title>
+      <link>/docs/components/cdsctl/workflow/run-delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/workflow/run-delete/</guid>
+      <description>cdsctl workflow run-delete Delete a workflow run
+Synopsis Delete a workflow run
+cdsctl workflow run-delete [ PROJECT-KEY WORKFLOW-NAME ] RUN-NUMBER ... [flags] Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl workflow	- Manage CDS workflow  </description>
     </item>
     
     <item>

@@ -33,22 +33,21 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 <meta name="twitter:title" content="Workflow Template">
 <meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
 <meta property="og:image" content="/images/cds-transparent.png">
-<script type="text/javascript" src="../../../js/anchor-4.1.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="../../../js/jquery-ui-1.12.1.min.js"></script>
-<script type="text/javascript" src="../../../js/bootstrap-3.3.7.min.js"></script>
+<script type="text/javascript" src="../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../js/bootstrap.min.js"></script>
 <script type="text/javascript" src="../../../js/highlight.pack.js"></script>
 <script>
     hljs.initHighlightingOnLoad();
-
 </script>
 <script type="text/javascript" src="../../../js/script.js"></script>
 <script type="text/javascript" src="../../../js/lunr.min.js"></script>
 <a id="indexJSON" href="../../../index.json"></a>
 
-<script type="text/javascript" src="../../../js/auto-complete.js"></script>
+<script type="text/javascript" src="../../../js/auto-complete.min.js"></script>
 <script type="text/javascript" src="../../../js/search.js"></script>
-<script type="text/javascript" src="../../../js/asciinema-player.js"></script>
+<script type="text/javascript" src="../../../js/asciinema-player.min.js"></script>
 
 	</head>
 	<body>
@@ -227,6 +226,36 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 	
 		
 			
+<div class="item" data-title="[Experimental] Permissions - RBAC">
+	<div class="container">
+		
+		<a class="item" data-title="[Experimental] Permissions - RBAC" href="../../../docs/concepts/rbac/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Global roles" href="../../../docs/concepts/rbac/global/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Project roles" href="../../../docs/concepts/rbac/project/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
 <a class="item" data-title="Permissions - ACLs" href="../../../docs/concepts/permissions/"></a>
 
 		
@@ -234,6 +263,12 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 		
 			
 <a class="item" data-title="Pipeline" href="../../../docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Organization" href="../../../docs/concepts/organization/"></a>
 
 		
 	
@@ -491,6 +526,12 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 	
 		
 			
+<a class="item" data-title="[Experimental] Ascode Worker Model" href="../../../docs/concepts/worker-model/ascode/"></a>
+
+		
+	
+		
+			
 <a class="item" data-title="Worker Model patterns" href="../../../docs/concepts/worker-model/patterns/"></a>
 
 		
@@ -558,7 +599,9 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 <h2 id="apply-a-template">Apply a template</h2>
 <p>To generate a new workflow from a template you should use the cdsctl. Then use the same command to update a generated workflow:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl template apply
-</code></pre></div><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+</code></pre></div>
+<asciinema-player src="../../../images/workflow_template_apply.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+
 <p>You can also create a workflow from a template with the web UI.
 <img src="../../../images/workflow_template_apply_ui.gif" alt="Apply"></p>
 <h2 id="bulk-apply-a-template">Bulk apply a template</h2>
@@ -576,15 +619,19 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
   - <span style="color:#ae81ff">withDeploy=false                                                                                </span>
   - <span style="color:#ae81ff">data=[&#34;one&#34;, &#34;two&#34;] </span>
 </code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl template bulk -f instances.yml
-</code></pre></div><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+</code></pre></div>
+<asciinema-player src="../../../images/workflow_template_bulk.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+
 <p><img src="../../../images/workflow_template_bulk_ui.gif" alt="Bulk"></p>
 <h2 id="importcreateexport">Import/Create/Export</h2>
 <p>With cdsctl you can import/export a template from/to yaml files, you can also create a template in the UI from the <strong>settings</strong> menu:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl template push ./my-template/*.yml <span style="color:#75715e">#from local files</span>
-cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/tests/fixtures/template/simple/example-simple.yml <span style="color:#75715e">#from remote files</span>
+cdsctl template push https://raw.githubusercontent.com/ovh/cds/v0.53.0/tests/fixtures/template/simple/example-simple.yml <span style="color:#75715e">#from remote files</span>
 
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
-</code></pre></div><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+</code></pre></div>
+<asciinema-player src="../../../images/workflow_template_pull_push.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+
 <h2 id="deletechange-template-group">Delete/Change template group</h2>
 <p>When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
 With the CDS UI you can change the template name or group, this will not affect template instances or generated workflow but no group members will be able to re-apply the template anymore.</p>
@@ -598,7 +645,9 @@ You can create this file manually or directly with the CDS command line.</p>
   <span style="color:#f92672">repo</span>: <span style="color:#ae81ff">gitlab/richardlt/demo</span>
   <span style="color:#f92672">ssh_key_name</span>: <span style="color:#ae81ff">proj-ssh-key</span>
   <span style="color:#f92672">withDeploy</span>: <span style="color:#e6db74">&#34;true&#34;</span>
-</code></pre></div><p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+</code></pre></div>
+<asciinema-player src="../../../images/workflow_template_apply_ascode.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+
 <p>You can ask for a specific revision of the template or remove the version number to always get the its latest version.
 This means that you can use different template versions for different branches of your repository.
 Also you can change the template reference to use another template on a specific branch.</p>
