@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -427,7 +428,7 @@ func workflowLogStreamRun(v cli.Values) error {
 	})
 
 	buf, err := json.Marshal(sdk.CDNStreamFilter{
-		JobRunID: log.jobID,
+		JobRunID: strconv.FormatInt(log.jobID, 10),
 	})
 	if err != nil {
 		return cli.WrapError(err, "unable to marshal streamFilter")
