@@ -66,7 +66,7 @@ export class RunJobLogsComponent {
                 }
             });
         }
-
+        
         this.computeStepsDuration();
 
         this._cd.markForCheck();
@@ -128,7 +128,20 @@ export class RunJobLogsComponent {
 
 
     computeStepsDuration(): void {
-        // TODO : no data on step start/end for now
+        if (this.steps) {
+            this.steps.forEach(s => {
+                console.log(s, this._runJob.steps_status)
+                let stepStatus = this._runJob.steps_status[s.name];
+                if (!stepStatus) {
+                    return;
+                }
+                s.startDate = moment(stepStatus.started);
+                if (stepStatus.ended && stepStatus.ended !== '0001-01-01T00:00:00Z') {
+                    s.duration = DurationService.duration(s.startDate.toDate(), moment(stepStatus.ended).toDate());
+                }
+
+            });
+        }
     }
 
     computeStepFirstLineNumbers(): void {
