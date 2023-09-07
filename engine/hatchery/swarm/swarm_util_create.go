@@ -123,7 +123,7 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 		if sdk.IsValidUUID(spawnArgs.JobID) {
 			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
 				Time:    time.Now(),
-				Level:   sdk.WorkflowRunInfoLevelInfo,
+				Level:   sdk.WorkflowRunInfoLevelError,
 				Message: fmt.Sprintf("⚠ Hatchery %s - docker pull %s done with error: %v", h.Name(), cArgs.image, sdk.Cause(err)),
 			}); err != nil {
 				log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)

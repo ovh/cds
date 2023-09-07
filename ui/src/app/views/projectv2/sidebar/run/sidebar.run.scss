@@ -54,7 +54,6 @@
             .content {
                 flex: 1;
                 overflow-y: auto;
-                background-color: #141414;
 
                 :host-context(.night) & {
                     background-color: #141414;
@@ -65,15 +64,22 @@
                     margin-left: 2px;
                     height: 40px;
                     flex: 1;
-                    background-color: #202020;
                     padding-left: 5px;
 
                     .metadata {
                         font-size: 10px;
                     }
+
+                    :host-context(.night) {
+                        background-color: #202020;
+                    }
                 }
                 .item.selected, .item:hover {
-                    background-color: #2d2c2c;
+                    background-color: #b7b7b7;
+
+                    :host-context(.night) {
+                        background-color: #2d2c2c;
+                    }
                 }
                 .item.success {
                     border-left: 5px solid $cds_color_green;

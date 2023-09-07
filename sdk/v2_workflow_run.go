@@ -174,12 +174,16 @@ func (sc *JobStepsStatus) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal([]byte(source), sc), "cannot unmarshal JobStepsStatus")
 }
 
-func (s JobStepStatus) ToStepContext() StepContext {
-	return StepContext{
-		Outcome:    s.Outcome,
-		Conclusion: s.Conclusion,
-		Outputs:    s.Outputs,
+func (s JobStepsStatus) ToStepContext() StepsContext {
+	stepsContext := StepsContext{}
+	for k, v := range s {
+		stepsContext[k] = StepContext{
+			Conclusion: v.Conclusion,
+			Outcome:    v.Outcome,
+			Outputs:    v.Outputs,
+		}
 	}
+	return stepsContext
 }
 
 type V2WorkflowRunEnqueue struct {
