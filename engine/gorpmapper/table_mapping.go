@@ -1,9 +1,8 @@
 package gorpmapper
 
 import (
-	"bytes"
+	"crypto/md5"
 	"crypto/sha1"
-	"encoding/gob"
 	"fmt"
 	"reflect"
 	"strings"
@@ -129,10 +128,8 @@ func (m *Mapper) NewTableMapping(target interface{}, name string, autoIncrement 
 				"printDate": func(i time.Time) string {
 					return i.In(time.UTC).Format(time.RFC3339)
 				},
-				"hash": func(i interface{}) string {
-					var b bytes.Buffer
-					gob.NewEncoder(&b).Encode(b)
-					return string(b.Bytes())
+				"hash": func(i string) string {
+					return fmt.Sprintf("%x", md5.Sum([]byte(i)))
 				},
 			})
 
