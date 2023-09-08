@@ -1,10 +1,10 @@
 package gorpmapper
 
 import (
-	"bytes"
+	"crypto/md5"
 	"crypto/sha1"
-	"encoding/gob"
 	"fmt"
+	"github.com/rockbears/yaml"
 	"reflect"
 	"strings"
 	"text/template"
@@ -130,9 +130,15 @@ func (m *Mapper) NewTableMapping(target interface{}, name string, autoIncrement 
 					return i.In(time.UTC).Format(time.RFC3339)
 				},
 				"hash": func(i interface{}) string {
-					var b bytes.Buffer
-					gob.NewEncoder(&b).Encode(b)
-					return string(b.Bytes())
+					var dataBts []byte
+					dataString, is := i.(string)
+					if !is {
+						dataBts, _ := yaml.Marshal(i)
+						dataString = string(dataBts)
+					} else {
+						dataBts = []byte(dataString)
+					}
+					return fmt.Sprintf("%x", md5.Sum(dataBts))
 				},
 			})
 

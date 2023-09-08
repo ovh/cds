@@ -147,3 +147,17 @@ func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor) ([]s
 
 	return getRuns(ctx, db, query)
 }
+
+func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun, error) {
+	query := gorpmapping.NewQuery(`SELECT * from v2_workflow_run`)
+	var dbWkfRuns []dbWorkflowRun
+	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRuns); err != nil {
+		return nil, err
+	}
+	runs := make([]sdk.V2WorkflowRun, 0, len(dbWkfRuns))
+	for _, dbWkfRun := range dbWkfRuns {
+		runs = append(runs, dbWkfRun.V2WorkflowRun)
+	}
+
+	return runs, nil
+}
