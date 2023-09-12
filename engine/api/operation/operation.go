@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ovh/cds/sdk/telemetry"
 	"net/http"
 	"time"
+
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/go-gorp/gorp"
 
@@ -174,7 +175,7 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 		return ope, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
 	tick := time.NewTicker(2 * time.Second)
 	defer tick.Stop()
