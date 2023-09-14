@@ -4839,6 +4839,21 @@ func (m *MockHookClient) EXPECT() *MockHookClientMockRecorder {
 	return m.recorder
 }
 
+// HookRepositoriesList mocks base method.
+func (m *MockHookClient) HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookRepositoriesList", ctx, vcsServer, repoName)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookRepositoriesList indicates an expected call of HookRepositoriesList.
+func (mr *MockHookClientMockRecorder) HookRepositoriesList(ctx, vcsServer, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookRepositoriesList", reflect.TypeOf((*MockHookClient)(nil).HookRepositoriesList), ctx, vcsServer, repoName)
+}
+
 // PollVCSEvents mocks base method.
 func (m *MockHookClient) PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (sdk.RepositoryEvents, time.Duration, error) {
 	m.ctrl.T.Helper()
@@ -7426,6 +7441,21 @@ func (m *MockInterface) HatcheryList(ctx context.Context) ([]sdk.Hatchery, error
 func (mr *MockInterfaceMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockInterface)(nil).HatcheryList), ctx)
+}
+
+// HookRepositoriesList mocks base method.
+func (m *MockInterface) HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HookRepositoriesList", ctx, vcsServer, repoName)
+	ret0, _ := ret[0].([]sdk.ProjectRepository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HookRepositoriesList indicates an expected call of HookRepositoriesList.
+func (mr *MockInterfaceMockRecorder) HookRepositoriesList(ctx, vcsServer, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HookRepositoriesList", reflect.TypeOf((*MockInterface)(nil).HookRepositoriesList), ctx, vcsServer, repoName)
 }
 
 // IntegrationModelAdd mocks base method.

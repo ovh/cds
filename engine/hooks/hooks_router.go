@@ -38,11 +38,9 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Handle("/v2/webhook/repository", nil, r.POST(s.repositoryHooksHandler, service.OverrideAuth(CheckWebhookRequestSignatureMiddleware(s.WebHooksParsedPublicKey))))
-	r.Handle("/v2/webhook/repository/gitea/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
-	r.Handle("/v2/webhook/repository/github/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
-	r.Handle("/v2/webhook/repository/bitbucketserver/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature"))))
-	r.Handle("/v2/webhook/repository/gitlab/{uuid}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHeaderToken("X-Gitlab-Token"))))
-	r.Handle("/v2/task", nil, r.POST(s.registerHookHandler))
+	r.Handle("/v2/webhook/repository/{vcsServerType}/{vcsServer}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
+	r.Handle("/v2/repository/event/analysis/callback", nil, r.POST(s.postRepositoryEventAnalysisCallbackHandler))
+	r.Handle("/v2/repository/key/{vcsServerType}/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
 
 	r.Handle("/webhook/{uuid}", nil, r.POST(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.GET(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.DELETE(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.PUT(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/task", nil, r.POST(s.postTaskHandler), r.GET(s.getTasksHandler))
@@ -58,29 +56,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/task/{uuid}/execution/{timestamp}/stop", nil, r.POST(s.postStopTaskExecutionHandler))
 }
 
-func (s *Service) CheckHeaderToken(headerName string) service.Middleware {
-	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
-		tokenHeaderValue := req.Header.Get(headerName)
-		if tokenHeaderValue == "" {
-			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check token")
-		}
-		vars := mux.Vars(req)
-		uuid := vars["uuid"]
-
-		hook, err := s.Client.RepositoryHook(ctx, uuid)
-		if err != nil {
-			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to retrieve sign key")
-		}
-
-		defer req.Body.Close()
-
-		if tokenHeaderValue != hook.HookSignKey {
-			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "token mismatch")
-		}
-		return ctx, nil
-	}
-}
-
 func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 		signHeaderValue := req.Header.Get(headerName)
@@ -88,24 +63,27 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
 		}
 		vars := mux.Vars(req)
-		uuid := vars["uuid"]
+		vcsType := vars["vcsServerType"]
+		vcsName := vars["vcsServerName"]
 
-		hook, err := s.Client.RepositoryHook(ctx, uuid)
-		if err != nil {
-			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to retrieve sign key")
-		}
-
-		defer req.Body.Close()
+		defer req.Body.Close() // nolint
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
+		}
+
+		repoName, err := s.extractRepoNameFromPayload(vcsType, body)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return ctx, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find repository")
 		}
 
 		newRequestBody := io.NopCloser(bytes.NewBuffer(body))
 		req.Body = newRequestBody
 
 		// Create a new HMAC by defining the hash type and the key (as byte array)
-		h := hmac.New(sha256.New, []byte(hook.HookSignKey))
+		h := hmac.New(sha256.New, []byte(sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsType, vcsName, repoName)))
 		h.Write(body)
 		sha := hex.EncodeToString(h.Sum(nil))
 
@@ -128,7 +106,7 @@ func (v *webhookHttpVerifier) SetKey(pubKey *rsa.PublicKey) {
 	v.pubKey = pubKey
 }
 
-func (v *webhookHttpVerifier) GetKey(id string) interface{} {
+func (v *webhookHttpVerifier) GetKey(_ string) interface{} {
 	v.Lock()
 	defer v.Unlock()
 	return v.pubKey
@@ -143,7 +121,7 @@ func CheckWebhookRequestSignatureMiddleware(pubKey *rsa.PublicKey) service.Middl
 	webhookHTTPVerifier.SetKey(pubKey)
 
 	verifier := httpsig.NewVerifier(webhookHTTPVerifier)
-	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date", sdk.SignHeaderVCSType, sdk.SignHeaderVCSName, sdk.SignHeaderRepoName})
+	verifier.SetRequiredHeaders([]string{"(request-target)", "host", "date", sdk.SignHeaderVCSType, sdk.SignHeaderVCSName, sdk.SignHeaderRepoName, sdk.SignHeaderEventName})
 
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 		if err := verifier.Verify(req); err != nil {

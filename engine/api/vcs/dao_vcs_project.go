@@ -82,9 +82,9 @@ func getAllVCSProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Qu
 }
 
 func LoadVCSByName(ctx context.Context, db gorp.SqlExecutor, projectKey, vcsName string) (*sdk.VCSProject, error) {
-  ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByName")
-  defer next()
-  q := gorpmapping.NewQuery("SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2").Args(projectKey, vcsName)
+	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByName")
+	defer next()
+	q := gorpmapping.NewQuery("SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2").Args(projectKey, vcsName)
 	return getVCSProject(ctx, db, q)
 }
 
@@ -119,11 +119,18 @@ func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey strin
 	return getVCSProject(ctx, db, query, opts...)
 }
 
-func LoadVCSByID(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsID string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
-	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByID")
+func LoadVCSByIDAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsID string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
+	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByIDAndProjectKey")
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.id = $2`).Args(projectKey, vcsID)
 	return getVCSProject(ctx, db, query, opts...)
+}
+
+func LoadVCSByID(ctx context.Context, db gorp.SqlExecutor, vcsID string) (*sdk.VCSProject, error) {
+	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByID")
+	defer next()
+	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.id = $2`).Args(vcsID)
+	return getVCSProject(ctx, db, query)
 }
 
 func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {

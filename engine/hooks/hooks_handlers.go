@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -21,46 +20,28 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) registerHookHandler() service.Handler {
+func (s *Service) getGenerateRepositoryWebHookSecretHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcsServerType := vars["vcsServerType"]
+		vcsServerName := vars["vcsServer"]
+		repoName := vars["repoName"]
 
-		var newHook sdk.Hook
-		//Read the body
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read request")
-		}
-		if err := json.Unmarshal(body, &newHook); err != nil {
-			return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal request")
-		}
+		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsServerType, vcsServerName, repoName)
+		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key}, http.StatusOK)
+	}
+}
 
-		if len(newHook.Configuration) == 0 {
-			return sdk.NewErrorFrom(sdk.ErrInvalidData, "missing hook configuration")
+func (s *Service) postRepositoryEventAnalysisCallbackHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var hookCallback sdk.HookAnalysisCallback
+		if err := service.UnmarshalBody(r, &hookCallback); err != nil {
+			return err
 		}
-
-		vcsType, has := newHook.Configuration[sdk.HookConfigVCSType]
-		if !has || vcsType.Value == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing vcs type")
+		if err := s.Dao.EnqueueRepositoryEventCallback(ctx, hookCallback); err != nil {
+			return err
 		}
-
-		vcsName, has := newHook.Configuration[sdk.HookConfigVCSServer]
-		if !has || vcsName.Value == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing vcs name")
-		}
-
-		repoName, has := newHook.Configuration[sdk.HookConfigRepoFullName]
-		if !has || repoName.Value == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing repository name")
-		}
-
-		project, has := newHook.Configuration[sdk.HookConfigProject]
-		if !has || project.Value == "" {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing project key")
-		}
-
-		if err := s.addTaskFromHook(newHook); err != nil {
-			return sdk.WithStack(err)
-		}
+		s.Dao.enqueuedRepositoryEventCallbackIncr()
 		return nil
 	}
 }
@@ -69,8 +50,9 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get repository data
 		vcsName := r.Header.Get(sdk.SignHeaderVCSName)
-		repoName := r.Header.Get(sdk.SignHeaderRepoName)
 		vcsType := r.Header.Get(sdk.SignHeaderVCSType)
+		repoName := r.Header.Get(sdk.SignHeaderRepoName)
+		eventName := r.Header.Get(sdk.SignHeaderEventName)
 
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
@@ -78,53 +60,21 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		// Search for existing hooks
-		hookKey := strings.ToLower(cache.Key(EntitiesHookRootKey, vcsType, vcsName, repoName, "*"))
-		keys, err := s.Dao.GetAllEntitiesHookKeysByPattern(hookKey)
+		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, repoName, eventName, body)
 		if err != nil {
-			log.Error(ctx, "unable to check if a hook exist for %s: %v", hookKey, err)
+			log.ErrorWithStackTrace(ctx, err)
 			return err
 		}
-		if len(keys) == 0 {
-			log.Warn(ctx, "Receive hook from %s, but there is no tasks", hookKey)
-		}
-		for _, k := range keys {
-			var uuid string
-			if _, err := s.Dao.store.Get(k, &uuid); err != nil {
-				log.Error(ctx, "unable to retrieve hook uuid for %s: %v", k, err)
-				continue
-			}
-			hook := s.Dao.FindTask(ctx, uuid)
-			if hook == nil {
-				return sdk.WrapError(sdk.ErrNotFound, "no task found for %s", uuid)
-			}
 
-			// Enqueue execution
-			exec := &sdk.TaskExecution{
-				Timestamp:     time.Now().UnixNano(),
-				Type:          hook.Type,
-				UUID:          hook.UUID,
-				Configuration: hook.Configuration,
-				Status:        TaskExecutionScheduled,
-				EntitiesHook: &sdk.EntitiesHookExecution{
-					RequestBody:   body,
-					RequestHeader: r.Header,
-					RequestURL:    r.URL.RawQuery,
-				},
-			}
-			log.Info(ctx, "Save Entities hook execution for task %v", hook.Configuration)
-			if err := s.Dao.SaveTaskExecution(exec); err != nil {
-				return err
-			}
-		}
-		return service.WriteJSON(w, nil, http.StatusAccepted)
+		return service.WriteJSON(w, exec, http.StatusAccepted)
 	}
 }
 
 func (s *Service) repositoryWebHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		uuid := vars["uuid"]
+		vcsServerType := vars["vcsServerType"]
+		vcsServerName := vars["vcsServer"]
 
 		defer r.Body.Close()
 		body, err := io.ReadAll(r.Body)
@@ -132,32 +82,141 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		hook := s.Dao.FindTask(ctx, uuid)
-		if hook == nil {
-			log.Error(ctx, "unable to find task for hook uuid %s", uuid)
-			return sdk.WrapError(sdk.ErrNotFound, "no hook found on")
+		repoName, err := s.extractRepoNameFromPayload(vcsServerType, body)
+		if err != nil {
+			return err
+		}
+		eventName, err := s.extractEventFromHeader(ctx, vcsServerType, r.Header)
+		if err != nil {
+			return err
 		}
 
-		// Enqueue execution
-		exec := &sdk.TaskExecution{
-			Timestamp:     time.Now().UnixNano(),
-			Type:          hook.Type,
-			UUID:          hook.UUID,
-			Configuration: hook.Configuration,
-			Status:        TaskExecutionScheduled,
-			EntitiesHook: &sdk.EntitiesHookExecution{
-				RequestBody:   body,
-				RequestHeader: r.Header,
-				RequestURL:    r.URL.RawQuery,
-			},
-		}
-		log.Debug(ctx, "Save execution for task %v", hook.Configuration)
-		if err := s.Dao.SaveTaskExecution(exec); err != nil {
+		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, eventName, body)
+		if err != nil {
 			return err
 		}
 
 		return service.WriteJSON(w, exec, http.StatusAccepted)
 	}
+}
+
+func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, eventName string, event []byte) (*sdk.HookRepositoryEvent, error) {
+	repoKey := cache.Key(vcsServerType, s.Dao.GetRepositoryMemberKey(vcsServerType, vcsServerName, repoName))
+	hr := s.Dao.FindRepository(ctx, repoKey)
+	if hr == nil {
+		var err error
+		hr, err = s.Dao.CreateRepository(ctx, repoKey, vcsServerType, vcsServerName, repoName)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
+		}
+	}
+
+	exec := &sdk.HookRepositoryEvent{
+		UUID:           sdk.UUID(),
+		EventName:      eventName,
+		VCSServerType:  vcsServerType,
+		VCSServerName:  vcsServerName,
+		RepositoryName: repoName,
+		Body:           event,
+		Status:         sdk.HookEventStatusScheduled,
+	}
+
+	// Save event
+	if err := s.Dao.SaveRepositoryEvent(ctx, exec); err != nil {
+		return nil, sdk.WrapError(err, "unable to create repository event %s", exec.GetFullName())
+	}
+
+	// Enqueue event
+	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
+		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
+	}
+	s.Dao.enqueuedRepositoryEventIncr()
+
+	return exec, nil
+}
+
+func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType string, header http.Header) (string, error) {
+	var eventName string
+	var headerName string
+	switch vcsServerType {
+	case sdk.VCSTypeBitbucketServer:
+		headerName = BitbucketHeader
+	case sdk.VCSTypeGithub:
+		headerName = GithubHeader
+	case sdk.VCSTypeGitea:
+		headerName = GiteaHeader
+	case sdk.VCSTypeGitlab:
+		headerName = GitlabHeader
+	default:
+		log.Warn(ctx, "invalid vcs server of type %s", vcsServerType)
+		return "", sdk.WithStack(sdk.ErrNotImplemented)
+	}
+	if v, has := header[headerName]; has && len(v) > 0 {
+		eventName = v[0]
+	}
+	if eventName == "" {
+		return "", sdk.WrapError(sdk.ErrNotFound, "unable to found event from header")
+	}
+
+	var cdsWorkflowHookEvent string
+	switch vcsServerType {
+	case sdk.VCSTypeBitbucketServer:
+		cdsWorkflowHookEvent = GetWorkflowHookEventFromBitbucketEvent(eventName)
+	case sdk.VCSTypeGithub:
+		cdsWorkflowHookEvent = GetWorkflowHookEventFromGithubEvent(eventName)
+	case sdk.VCSTypeGitea:
+		cdsWorkflowHookEvent = GetWorkflowHookEventFromGiteaEvent(eventName)
+	case sdk.VCSTypeGitlab:
+		cdsWorkflowHookEvent = GetWorkflowHookEventFromGitlabEvent(eventName)
+	default:
+		return "", sdk.WithStack(sdk.ErrNotImplemented)
+	}
+	if cdsWorkflowHookEvent == "" {
+		msg := fmt.Sprintf("unable to translate event %s from %s to a valid workflow hook", eventName, vcsServerType)
+		log.Warn(ctx, msg)
+		return "", sdk.WrapError(sdk.ErrNotImplemented, msg)
+	}
+
+	return cdsWorkflowHookEvent, nil
+}
+
+func (s *Service) extractRepoNameFromPayload(vcsServerType string, body []byte) (string, error) {
+	switch vcsServerType {
+	case sdk.VCSTypeBitbucketServer:
+		var event sdk.BitbucketServerWebhookEvent
+		if err := json.Unmarshal(body, &event); err != nil {
+			return "", err
+		}
+
+		if event.Repository != nil {
+			return event.Repository.Project.Key + "/" + event.Repository.Slug, nil
+		}
+	case sdk.VCSTypeGithub:
+		var event GithubWebHookEvent
+		if err := json.Unmarshal(body, &event); err != nil {
+			return "", err
+		}
+		if event.Repository != nil {
+			return event.Repository.FullName, nil
+		}
+	case sdk.VCSTypeGitlab:
+		var event GitlabEvent
+		if err := json.Unmarshal(body, &event); err != nil {
+			return "", err
+		}
+		if event.Project != nil {
+			return event.Project.PathWithNamespace, nil
+		}
+	case sdk.VCSTypeGitea:
+		var event GiteaEventPayload
+		if err := json.Unmarshal(body, &event); err != nil {
+			return "", err
+		}
+		return event.Repository.FullName, nil
+	default:
+		return "", sdk.WithStack(sdk.ErrNotImplemented)
+	}
+	return "", sdk.WrapError(sdk.ErrNotFound, "repository not found")
 }
 
 func (s *Service) webhookHandler() service.Handler {
@@ -576,18 +635,6 @@ func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	return nil
 }
 
-func (s *Service) addTaskFromHook(h sdk.Hook) error {
-	t, err := s.hookToTask(h)
-	if err != nil {
-		return err
-	}
-
-	if err := s.Dao.SaveRepoWebHook(t); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun) (sdk.Task, sdk.TaskExecution, error) {
 	// Parse the hook as a task
 	t, err := s.nodeRunToTask(nr)
@@ -646,15 +693,6 @@ func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	switch t.Type {
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
-	case TypeEntitiesHook:
-		entitiesHookKey := cache.Key(EntitiesHookRootKey,
-			t.Configuration[sdk.HookConfigVCSType].Value,
-			t.Configuration[sdk.HookConfigVCSServer].Value,
-			t.Configuration[sdk.HookConfigRepoFullName].Value,
-			t.Configuration[sdk.HookConfigTypeProject].Value)
-		if err := s.Dao.store.Delete(entitiesHookKey); err != nil {
-			return err
-		}
 	}
 
 	//Delete the task
@@ -691,6 +729,20 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusWarn
 	}
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Balance", Value: fmt.Sprintf("%d/%d", in, out), Status: status})
+
+	hookEventIn, hookEventOut := s.Dao.RepsitoryEventBalance()
+	status = sdk.MonitoringStatusOK
+	if float64(hookEventIn) > float64(hookEventOut) {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEvent", Value: fmt.Sprintf("%d/%d", hookEventIn, hookEventOut), Status: status})
+
+	hookEventCallbackIn, hookEventCallbackOut := s.Dao.RepositoryEventCallbackBalance()
+	status = sdk.MonitoringStatusOK
+	if float64(hookEventCallbackIn) > float64(hookEventCallbackOut) {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEventCallbackEvent", Value: fmt.Sprintf("%d/%d", hookEventIn, hookEventOut), Status: status})
 
 	var nbHooksKafkaTotal int64
 

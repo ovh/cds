@@ -181,7 +181,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 			defer tx.Rollback()
 
-			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit)
+			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit, analysis.HookEventUUID)
 			if err != nil {
 				return err
 			}
@@ -195,7 +195,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 		}
 }
 
-func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit string) (*sdk.AnalysisResponse, error) {
+func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit, hookEventUUID string) (*sdk.AnalysisResponse, error) {
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProject.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
@@ -207,7 +207,9 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		ProjectKey:          proj.Key,
 		Branch:              branch,
 		Commit:              commit,
-		Data:                sdk.ProjectRepositoryData{},
+		Data: sdk.ProjectRepositoryData{
+			HookEventUUID: hookEventUUID,
+		},
 	}
 
 	if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
@@ -290,7 +292,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 
-	vcsProjectWithSecret, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
+	vcsProjectWithSecret, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load vcs %s", analysis.VCSProjectID))
 	}
