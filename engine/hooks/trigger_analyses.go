@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"github.com/rockbears/log"
 	"strings"
 	"time"
 
@@ -9,12 +10,15 @@ import (
 )
 
 func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	log.Info(ctx, "triggering analysis for event [%s] %s", hre.EventName, hre.GetFullName())
+
 	// If first time
 	if len(hre.Analyses) == 0 {
 		repos, err := s.Client.HookRepositoriesList(ctx, hre.VCSServerName, hre.RepositoryName)
 		if err != nil {
 			return err
 		}
+		log.Info(ctx, "found %d repositories to analyze", len(repos))
 		hre.Analyses = make([]sdk.HookRepositoryEventAnalysis, 0, len(repos))
 		for _, r := range repos {
 			hre.Analyses = append(hre.Analyses, sdk.HookRepositoryEventAnalysis{
@@ -50,10 +54,9 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 					a.Status = apiAnalysis.Status
 				}
 			}
-
-			if a.Status == sdk.RepositoryAnalysisStatusInProgress {
-				allEnded = false
-			}
+		}
+		if a.Status == sdk.RepositoryAnalysisStatusInProgress {
+			allEnded = false
 		}
 	}
 	if !allEnded {
@@ -94,11 +97,12 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 	}
 
 	analyze := sdk.AnalysisRequest{
-		RepoName:   hre.RepositoryName,
-		VcsName:    hre.VCSServerName,
-		ProjectKey: analysis.ProjectKey,
-		Branch:     strings.TrimPrefix(branch, "refs/heads/"),
-		Commit:     commit,
+		RepoName:      hre.RepositoryName,
+		VcsName:       hre.VCSServerName,
+		ProjectKey:    analysis.ProjectKey,
+		Branch:        strings.TrimPrefix(branch, "refs/heads/"),
+		Commit:        commit,
+		HookEventUUID: hre.UUID,
 	}
 	resp, err := s.Client.ProjectRepositoryAnalysis(ctx, analyze)
 	if err != nil {

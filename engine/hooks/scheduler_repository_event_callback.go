@@ -10,10 +10,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) error {
+func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 	for {
 		if ctx.Err() != nil {
-			return ctx.Err()
+			log.Error(ctx, "%v", ctx.Err())
+			return
 		}
 		size, err := s.Dao.RepositoryEventCallbackQueueLen()
 		if err != nil {
@@ -25,7 +26,8 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) error {
 		// Dequeuing context
 		var callback sdk.HookAnalysisCallback
 		if ctx.Err() != nil {
-			return ctx.Err()
+			log.Error(ctx, "%v", ctx.Err())
+			return
 		}
 
 		// Get next EventKEY
@@ -57,9 +59,9 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 	defer s.Dao.UnlockRepositoryEvent(callback.VCSServerType, callback.VCSServerName, callback.RepositoryName, callback.HookEventUUID)
 
 	// Load the event
-	var hre *sdk.HookRepositoryEvent
+	var hre sdk.HookRepositoryEvent
 	eventKey := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerType, hre.VCSServerName, hre.RepositoryName))
-	find, err := s.Cache.Get(eventKey, hre)
+	find, err := s.Cache.Get(eventKey, &hre)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get hook event %s", eventKey)
 	}
@@ -76,7 +78,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		if a.AnalyzeID == callback.AnalysisID {
 			if a.Status == sdk.RepositoryAnalysisStatusInProgress {
 				a.Status = callback.AnalysisStatus
-				if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+				if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 					return err
 				}
 				break

@@ -61,14 +61,14 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 	}
 	defer s.Dao.UnlockRepositoryEvent(repoEventTmp.VCSServerType, repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 
-	var hre *sdk.HookRepositoryEvent
-	find, err = s.Cache.Get(repoEventKey, hre)
+	var hre sdk.HookRepositoryEvent
+	find, err = s.Cache.Get(repoEventKey, &hre)
 	if err != nil {
 		return sdk.WrapError(err, "unable to retrieve repository event")
 	}
 	if !find {
 		log.Info(ctx, "repository event %s does not exist anymore.", hre.GetFullName())
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
 			return err
 		}
 		return nil
@@ -76,7 +76,8 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 
 	// Check last update time
 	if time.Now().UnixMilli()-hre.LastUpdate > RetryDelayMilli {
-		if err := s.Dao.EnqueueRepositoryEvent(ctx, hre); err != nil {
+		log.Info(ctx, "re-enqueue event %s", hre.GetFullName())
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
 			return err
 		}
 	}

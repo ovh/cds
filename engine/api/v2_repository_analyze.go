@@ -119,7 +119,7 @@ func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, se
 }
 
 func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
+	return service.RBAC(api.analysisRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]

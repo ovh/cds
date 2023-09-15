@@ -3,8 +3,6 @@ package hooks
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
@@ -47,23 +45,9 @@ func (d *dao) FindRepository(ctx context.Context, repoKey string) *sdk.HookRepos
 }
 
 func (d *dao) CreateRepository(ctx context.Context, repoKey, vcsServerType, vcsServerName, repoName string) (*sdk.HookRepository, error) {
-	lockKey := cache.Key(repositoryRootKey, repoKey, "lock")
-	b, err := d.store.Lock(lockKey, 1*time.Minute, 100, 20)
-	if err != nil {
-		return nil, err
-	}
-	if !b {
-		return nil, sdk.WrapError(sdk.ErrConflictData, "unable to take the lock to create repository hook")
-	}
-	defer d.store.Unlock(lockKey) // no-lint
-
-	hr := d.FindRepository(ctx, repoKey)
-	if hr != nil {
-		return hr, nil
-	}
-
 	// Create a task for the current repository
-	hr = &sdk.HookRepository{
+	log.Info(ctx, "creating repository %s", repoKey)
+	hr := &sdk.HookRepository{
 		RepositoryName: repoName,
 		VCSServerName:  vcsServerName,
 		VCSServerType:  vcsServerType,

@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -32,18 +31,20 @@ func (d *dao) SaveRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent)
 	return d.store.SetAdd(k, e.UUID, e)
 }
 
-func (d *dao) RemoveRepositoryEventFromInProgressList(_ context.Context, e sdk.HookRepositoryEvent) error {
-	k := cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName), e.UUID)
-	return d.store.SetRemove(cache.Key(repositoryEventInProgressKey), k, e)
+func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, e sdk.HookRepositoryEvent) error {
+	return d.store.SetRemove(repositoryEventInProgressKey, e.UUID, e)
 }
 
-func (d *dao) EnqueueRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent) error {
+func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
 	// Use to identify event in progress:
 	k := cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName), e.UUID)
-	if err := d.store.SetRemove(repositoryEventInProgressKey, fmt.Sprintf("%d", e.Timestamp), k); err != nil {
+	if err := d.RemoveRepositoryEventFromInProgressList(ctx, *e); err != nil {
 		return err
 	}
-	if err := d.store.SetAdd(repositoryEventInProgressKey, fmt.Sprintf("%d", e.Timestamp), k); err != nil {
+	if err := d.store.SetRemove(repositoryEventInProgressKey, e.UUID, k); err != nil {
+		return err
+	}
+	if err := d.store.SetAdd(repositoryEventInProgressKey, e.UUID, k); err != nil {
 		return err
 	}
 	return d.store.Enqueue(repositoryEventQueue, k)
@@ -68,13 +69,19 @@ func (d *dao) ListInProgressRepositoryEvent(ctx context.Context) ([]string, erro
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", repositoryEventInProgressKey)
 	}
-	inProgressEvents := make([]string, nbHookEventInProgress, nbHookEventInProgress)
+	inProgressEvents := make([]*string, 0, nbHookEventInProgress)
 	for i := 0; i < nbHookEventInProgress; i++ {
-		inProgressEvents[i] = ""
+		content := ""
+		inProgressEvents = append(inProgressEvents, &content)
 	}
 	if err := d.store.SetScan(ctx, repositoryEventInProgressKey, sdk.InterfaceSlice(inProgressEvents)...); err != nil {
-		return nil, sdk.WrapError(err, "Unable to scan %s", rootKey)
+		return nil, sdk.WrapError(err, "Unable to scan %s", repositoryEventInProgressKey)
 	}
 
-	return inProgressEvents, nil
+	eventKeys := make([]string, 0, len(inProgressEvents))
+	for _, k := range inProgressEvents {
+		eventKeys = append(eventKeys, *k)
+	}
+
+	return eventKeys, nil
 }

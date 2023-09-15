@@ -51,3 +51,10 @@ func (api *API) projectRead(ctx context.Context, auth *sdk.AuthUserConsumer, sto
 
 	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.ProjectRoleRead)
 }
+
+func (api *API) analysisRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+	if isHooks(ctx) {
+		return nil
+	}
+	return api.projectRead(ctx, auth, store, db, vars)
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gorilla/mux"
 	"net/http"
+	"net/url"
 
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/vcs"
@@ -16,7 +17,11 @@ func (api *API) getHooksRepositoriesHandler() ([]service.RbacChecker, service.Ha
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			vcsName := vars["vcsServer"]
-			repoName := vars["repositoryName"]
+
+			repoName, err := url.PathUnescape(vars["repositoryName"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
 
 			repos, err := repository.LoadByNameWithoutVCSServer(ctx, api.mustDB(), repoName)
 			if err != nil {
@@ -25,7 +30,7 @@ func (api *API) getHooksRepositoriesHandler() ([]service.RbacChecker, service.Ha
 
 			repositories := make([]sdk.ProjectRepository, 0)
 			for _, r := range repos {
-				vcsserver, err := vcs.LoadVCSByID(ctx, api.mustDB(), r.VCSProjectID)
+				vcsserver, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), r.ProjectKey, r.VCSProjectID)
 				if err != nil {
 					return err
 				}

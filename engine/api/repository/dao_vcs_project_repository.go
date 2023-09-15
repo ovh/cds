@@ -106,7 +106,7 @@ func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID
 func LoadByNameWithoutVCSServer(ctx context.Context, db gorp.SqlExecutor, repoName string) ([]sdk.ProjectRepository, error) {
 	ctx, next := telemetry.Span(ctx, "repository.LoadByNameWithoutVCSServer")
 	defer next()
-	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE lower(project_repository.name) = $2`).Args(strings.ToLower(repoName))
+	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE lower(project_repository.name) = $1`).Args(strings.ToLower(repoName))
 	repos, err := getRepositories(ctx, db, query)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get repositories %s", repoName)

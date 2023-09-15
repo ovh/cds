@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -28,8 +29,8 @@ func (c *client) PollVCSEvents(uuid string, workflowID int64, vcsServer string, 
 }
 
 func (c *client) HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error) {
-	url := fmt.Sprintf("/v2/hooks/repositories/%s/%s", vcsServer, repoName)
+	path := fmt.Sprintf("/v2/hooks/repositories/%s/%s", vcsServer, url.PathEscape(repoName))
 	var repos []sdk.ProjectRepository
-	_, err := c.GetJSON(ctx, url, &repos)
+	_, err := c.GetJSON(ctx, path, &repos)
 	return repos, err
 }

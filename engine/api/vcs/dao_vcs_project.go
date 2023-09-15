@@ -126,13 +126,6 @@ func LoadVCSByIDAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectK
 	return getVCSProject(ctx, db, query, opts...)
 }
 
-func LoadVCSByID(ctx context.Context, db gorp.SqlExecutor, vcsID string) (*sdk.VCSProject, error) {
-	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByID")
-	defer next()
-	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.id = $2`).Args(vcsID)
-	return getVCSProject(ctx, db, query)
-}
-
 func LoadAllVCSGerrit(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapping.GetOptionFunc) ([]sdk.VCSProject, error) {
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project WHERE vcs_project.type = 'gerrit'`)
 	return getAllVCSProject(ctx, db, query, opts...)

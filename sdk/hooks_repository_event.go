@@ -42,7 +42,7 @@ type HookRepository struct {
 
 type HookRepositoryEvent struct {
 	UUID                string                        `json:"uuid"`
-	Timestamp           int64                         `json:"timestamp"`
+	Created             int64                         `json:"timestamp"`
 	EventName           string                        `json:"event_name"`
 	VCSServerType       string                        `json:"vcs_server_type"`
 	VCSServerName       string                        `json:"vcs_server_name"`
