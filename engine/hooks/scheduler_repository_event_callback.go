@@ -60,12 +60,13 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 
 	// Load the event
 	var hre sdk.HookRepositoryEvent
-	eventKey := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerType, hre.VCSServerName, hre.RepositoryName))
+	eventKey := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(callback.VCSServerType, callback.VCSServerName, callback.RepositoryName), callback.HookEventUUID)
 	find, err := s.Cache.Get(eventKey, &hre)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get hook event %s", eventKey)
 	}
 	if !find {
+		log.Info(ctx, "repository hook %s does not exist anymore", eventKey)
 		return nil
 	}
 
@@ -85,5 +86,10 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			}
 		}
 	}
+
+	if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
+		return err
+	}
+
 	return nil
 }

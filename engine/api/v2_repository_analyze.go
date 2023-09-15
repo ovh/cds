@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
@@ -302,6 +303,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
 
+	defer func() {
+		if err := sendAnalysisHookCallback(ctx, api.mustDB(), *analysis, vcsProjectWithSecret.Type, vcsProjectWithSecret.Name, repo.Name); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}()
+
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProjectWithSecret.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
@@ -449,7 +456,32 @@ skipEntity:
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return sdk.WrapError(err, "unable to update analysis")
 	}
+
 	return sdk.WithStack(tx.Commit())
+}
+
+func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, vcsServerType, vcsServerName, repoName string) error {
+	// Remove hooks
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
+	if err != nil {
+		return err
+	}
+	if len(srvs) < 1 {
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+	}
+	hookCallback := sdk.HookAnalysisCallback{
+		HookEventUUID:  analysis.Data.HookEventUUID,
+		RepositoryName: repoName,
+		VCSServerType:  vcsServerType,
+		VCSServerName:  vcsServerName,
+		AnalysisStatus: analysis.Status,
+		AnalysisID:     analysis.ID,
+	}
+	_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/analysis/callback", hookCallback, nil)
+	if (errHooks != nil || code >= 400) && code != 404 {
+		return sdk.WrapError(errHooks, "unable to send analysis call to  hook [HTTP: %d]", code)
+	}
+	return nil
 }
 
 func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
