@@ -150,13 +150,14 @@ func InsertTestVCSProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, projID 
 	return &vcsProj
 }
 
-func InsertTestProjectRepository(t *testing.T, db gorpmapper.SqlExecutorWithTx, vcsServerID string, name string) *sdk.ProjectRepository {
+func InsertTestProjectRepository(t *testing.T, db gorpmapper.SqlExecutorWithTx, pKey string, vcsServerID string, name string) *sdk.ProjectRepository {
 	repo := sdk.ProjectRepository{
 		Name:         name,
 		Created:      time.Now(),
 		VCSProjectID: vcsServerID,
 		CreatedBy:    "test",
 		CloneURL:     "myurl",
+		ProjectKey:   pKey,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 	return &repo

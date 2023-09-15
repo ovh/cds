@@ -66,7 +66,8 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 
 	// Creation request
 	repo := sdk.ProjectRepository{
-		Name: "ovh/cds",
+		Name:       "ovh/cds",
+		ProjectKey: proj.Key,
 	}
 
 	vars := map[string]string{
