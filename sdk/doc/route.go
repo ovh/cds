@@ -129,6 +129,8 @@ func CleanURLParameter(u string) string {
 		u = "job-name"
 	case "repositoryName":
 		u = "repository-name"
+	case "vcsType":
+		u = "vcs-type"
 	}
 	return u
 }

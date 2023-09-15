@@ -22,11 +22,10 @@ import (
 func (s *Service) getGenerateRepositoryWebHookSecretHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		vcsServerType := vars["vcsServerType"]
 		vcsServerName := vars["vcsServer"]
 		repoName := vars["repoName"]
 
-		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsServerType, vcsServerName, repoName)
+		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsServerName, repoName)
 		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key}, http.StatusOK)
 	}
 }

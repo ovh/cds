@@ -22,6 +22,7 @@ import (
 
 func (s *Service) initRouter(ctx context.Context) {
 	r := s.Router
+	r.Mux.UseEncodedPath()
 	r.Background = ctx
 	r.URL = s.Cfg.URL
 	r.SetHeaderFunc = service.DefaultHeaders
@@ -40,7 +41,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/v2/webhook/repository", nil, r.POST(s.repositoryHooksHandler, service.OverrideAuth(CheckWebhookRequestSignatureMiddleware(s.WebHooksParsedPublicKey))))
 	r.Handle("/v2/webhook/repository/{vcsServerType}/{vcsServer}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
 	r.Handle("/v2/repository/event/analysis/callback", nil, r.POST(s.postRepositoryEventAnalysisCallbackHandler))
-	r.Handle("/v2/repository/key/{vcsServerType}/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
+	r.Handle("/v2/repository/key/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
 
 	r.Handle("/webhook/{uuid}", nil, r.POST(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.GET(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.DELETE(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.PUT(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/task", nil, r.POST(s.postTaskHandler), r.GET(s.getTasksHandler))
@@ -83,7 +84,7 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 		req.Body = newRequestBody
 
 		// Create a new HMAC by defining the hash type and the key (as byte array)
-		h := hmac.New(sha256.New, []byte(sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsType, vcsName, repoName)))
+		h := hmac.New(sha256.New, []byte(sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsName, repoName)))
 		h.Write(body)
 		sha := hex.EncodeToString(h.Sum(nil))
 

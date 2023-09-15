@@ -84,8 +84,8 @@ type AnalysisResponse struct {
 	Status     string `json:"status"`
 }
 
-func GenerateRepositoryWebHookSecret(hookSecretKey, vcsType, vcsName, repoName string) string {
-	pass := fmt.Sprintf("%s-%s-%s", vcsType, vcsName, repoName)
+func GenerateRepositoryWebHookSecret(hookSecretKey, vcsName, repoName string) string {
+	pass := fmt.Sprintf("%s-%s", vcsName, repoName)
 	keyBytes := pbkdf2.Key([]byte(pass), []byte(hookSecretKey), 4096, 128, sha512.New)
 	key64 := base64.StdEncoding.EncodeToString(keyBytes)
 	return key64
