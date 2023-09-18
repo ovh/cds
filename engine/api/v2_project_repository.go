@@ -145,6 +145,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			if err := service.UnmarshalRequest(ctx, req, &repoBody); err != nil {
 				return err
 			}
+			repoBody.ProjectKey = pKey
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
