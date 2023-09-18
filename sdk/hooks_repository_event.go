@@ -53,7 +53,7 @@ type HookRepositoryEvent struct {
 	LastUpdate          int64                         `json:"last_update"`
 	LastError           string                        `json:"last_error"`
 	NbErrors            int64                         `json:"nb_errors"`
-	Analyses            []HookRepositoryEventAnalysis `analyses`
+	Analyses            []HookRepositoryEventAnalysis `json:"analyses"`
 }
 
 type GenerateRepositoryWebhook struct {
