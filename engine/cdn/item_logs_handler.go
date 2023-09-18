@@ -57,12 +57,20 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			var iuID string
 			jobRunInt, err := strconv.Atoi(filter.JobRunID)
 			if err == nil {
-				iu, _ := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), int64(jobRunInt), sdk.CDNTypeItemStepLog)
+				iu, err := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), int64(jobRunInt), sdk.CDNTypeItemStepLog)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
 				if iu != nil {
 					iuID = iu.ID
 				}
 			} else {
-				iu, _ := storage.LoadLastItemUnitByRunJobIDUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
+				iu, err := storage.LoadLastItemUnitByRunJobIDUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
 				if iu != nil {
 					iuID = iu.ID
 				}

@@ -52,7 +52,7 @@ func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler)
 			return err
 		}
 		if err := tx.Commit(); err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 		return nil
 	}
