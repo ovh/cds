@@ -2,14 +2,19 @@ package hooks
 
 import (
 	"context"
-	"github.com/rockbears/log"
 	"strings"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	ctx, next := telemetry.Span(ctx, "s.triggerAnalyses")
+	defer next()
+
 	log.Info(ctx, "triggering analysis for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// If first time
@@ -71,6 +76,9 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 }
 
 func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent, analysis *sdk.HookRepositoryEventAnalysis) error {
+	ctx, next := telemetry.Span(ctx, "s.runAnalysis")
+	defer next()
+
 	var branch, commit string
 	var err error
 	switch hre.VCSServerType {

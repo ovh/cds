@@ -4,7 +4,10 @@ import (
 	"context"
 	"time"
 
+	"go.opencensus.io/trace"
+
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
 
@@ -44,6 +47,7 @@ func (s *Service) dequeueRepositoryEvent(ctx context.Context) {
 			continue
 		}
 		log.Info(ctx, "dequeueRepositoryEvent> work on event: %s", eventKey)
+		ctx := telemetry.New(ctx, s, "hooks.dequeueRepositoryEvent", nil, trace.SpanKindUnspecified)
 		if err := s.manageRepositoryEvent(ctx, eventKey); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			continue
@@ -53,6 +57,9 @@ func (s *Service) dequeueRepositoryEvent(ctx context.Context) {
 }
 
 func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) error {
+	ctx, next := telemetry.Span(ctx, "s.manageRepositoryEvent")
+	defer next()
+
 	// Load the event
 	var hre sdk.HookRepositoryEvent
 	find, err := s.Cache.Get(eventKey, &hre)
@@ -62,6 +69,10 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 	if !find {
 		return nil
 	}
+
+	telemetry.Current(ctx,
+		telemetry.Tag(telemetry.TagVCSServer, hre.VCSServerName),
+		telemetry.Tag(telemetry.TagRepository, hre.RepositoryName))
 
 	b, err := s.Dao.LockRepositoryEvent(hre.VCSServerType, hre.VCSServerName, hre.RepositoryName, hre.UUID)
 	if err != nil {
@@ -139,6 +150,9 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 }
 
 func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	ctx, next := telemetry.Span(ctx, "s.executeEvent")
+	defer next()
+
 	switch hre.Status {
 	// Start processing event
 	case sdk.HookEventStatusScheduled:

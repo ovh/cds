@@ -103,6 +103,7 @@ const (
 	TagHostname           = "hostname"
 	TagJob                = "job"
 	TagRepository         = "repository"
+	TagVCSServer          = "vcs_server"
 	TagPercentil          = "percentil"
 	TagPermission         = "permission"
 	TagPipeline           = "pipeline"

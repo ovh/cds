@@ -12,9 +12,9 @@ import (
 /**
  * Create Repository: hooks:repository:bitbucketserver-my_bibucket_server-my/repo
  * Receive Event:
- *    1. Save event: SADD -> hooks:events:repository:bitbucketserver-my_bibucket_server-my/repo
- *    2. Insert uuid in inprogress list: SADD -> hooks:queue:repository:event:inprogress
- *    3. Enqueue for scheduling: ZADD ->  hooks:queue:repository:event
+ *    1. Save event:  -> hooks:events:repository:bitbucketserver-my_bibucket_server-my/repo
+ *    2. Insert event_key in inprogress list: -> hooks:queue:repository:event:inprogress
+ *    3. Enqueue event_key for scheduling: ->  hooks:queue:repository:event
  *
  */
 

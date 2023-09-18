@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/rockbears/log"
+	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
@@ -39,6 +41,10 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 			continue
 		}
 		log.Info(ctx, "dequeueRepositoryEventCallback> work on event: %s", callback.HookEventUUID)
+		ctx := telemetry.New(ctx, s, "hooks.dequeueRepositoryEventCallback", nil, trace.SpanKindUnspecified)
+		telemetry.Current(ctx,
+			telemetry.Tag(telemetry.TagVCSServer, callback.VCSServerName),
+			telemetry.Tag(telemetry.TagRepository, callback.RepositoryName))
 		if err := s.updateHookEventWithCallback(ctx, callback); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
@@ -46,6 +52,9 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 }
 
 func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.HookAnalysisCallback) error {
+	ctx, next := telemetry.Span(ctx, "s.updateHookEventWithCallback")
+	defer next()
+
 	b, err := s.Dao.LockRepositoryEvent(callback.VCSServerType, callback.VCSServerName, callback.RepositoryName, callback.HookEventUUID)
 	if err != nil {
 		return sdk.WrapError(err, "unable to lock hook event %s to manage callback", callback.HookEventUUID)

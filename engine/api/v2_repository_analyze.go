@@ -477,9 +477,8 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 		AnalysisStatus: analysis.Status,
 		AnalysisID:     analysis.ID,
 	}
-	_, code, errHooks := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/analysis/callback", hookCallback, nil)
-	if (errHooks != nil || code >= 400) && code != 404 {
-		return sdk.WrapError(errHooks, "unable to send analysis call to  hook [HTTP: %d]", code)
+	if _, code, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/analysis/callback", hookCallback, nil); err != nil {
+		return sdk.WrapError(err, "unable to send analysis call to  hook [HTTP: %d]", code)
 	}
 	return nil
 }
