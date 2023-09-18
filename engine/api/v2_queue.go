@@ -221,13 +221,14 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return err
 			}
 
-			info := sdk.V2WorkflowRunInfo{
-				WorkflowRunID: jobRun.WorkflowRunID,
-				IssuedAt:      time.Now(),
-				Level:         sdk.WorkflowRunInfoLevelWarning,
-				Message:       hatch.Name + "stop working on job " + jobRun.JobID,
+			info := sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    jobRun.WorkflowRunID,
+				IssuedAt:         time.Now(),
+				Level:            sdk.WorkflowRunInfoLevelWarning,
+				Message:          hatch.Name + "stop working on job " + jobRun.JobID,
+				WorkflowRunJobID: jobRun.ID,
 			}
-			if err := workflow_v2.InsertRunInfo(ctx, tx, &info); err != nil {
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
 				return err
 			}
 

@@ -69,7 +69,8 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
                 this.pollSubs.unsubscribe();
             }
             if (r) {
-                this.pollSubs = interval(2000)
+                this.loadJobs();
+                this.pollSubs = interval(5000)
                     .pipe(concatMap(_ => from(this.loadJobs())))
                     .subscribe();
                 this.workflowGraph = dump(r.workflow_data.workflow);
@@ -158,6 +159,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         if (this.selectedJobRun && PipelineStatus.isDone(this.selectedJobRun.status) && PipelineStatus.isDone((jobRun.status))) {
             return;
         }
+        this.selectedJobRun = jobRun;
         if (!PipelineStatus.isDone(jobRun.status)) {
             this.startStreamingLogsForJob();
         }
@@ -166,6 +168,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this.selectedJobRunInfos = infos;
             this._cd.markForCheck();
         });
+        this._cd.markForCheck();
     }
 
     unselectJob(): void {

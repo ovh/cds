@@ -128,6 +128,9 @@ export class RunJobComponent implements OnInit {
     }
 
     receiveLogs(l: CDNLine) {
-        this.jobLogsComponent.receiveLogs(l);
+        if (this.jobLogsComponent) {
+            this.jobLogsComponent.receiveLogs(l);
+        }
+
     }
 }

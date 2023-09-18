@@ -75,6 +75,7 @@ export class ProjectV2SidebarRunComponent implements OnInit, OnDestroy {
         if (this.pollSub) {
             this.pollSub.unsubscribe();
         }
+        this.loadRun();
         this.pollSub = interval(5000)
             .pipe(concatMap(_ => from(this.loadRun())))
             .subscribe();
