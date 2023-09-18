@@ -66,6 +66,7 @@ import {LinkService} from "./link/link.service";
 import {EntityService} from "./entity/entity.service";
 import {ActionAsCodeService} from "./action/actionAscode.service";
 import {PluginService} from "./plugin.service";
+import {V2WorkflowRunService} from "./workflowv2/workflow.service";
 
 @NgModule({})
 export class ServicesModule {
@@ -152,7 +153,8 @@ export class ServicesModule {
                     provide: HTTP_INTERCEPTORS,
                     useClass: ErrorInterceptor,
                     multi: true
-                }
+                },
+                V2WorkflowRunService
             ]
         };
     }
@@ -200,6 +202,7 @@ export {
     WorkflowTemplateService,
     WorkflowStore,
     WorkflowRunService,
-    WorkflowCoreService
+    WorkflowCoreService,
+    V2WorkflowRunService
 };
 

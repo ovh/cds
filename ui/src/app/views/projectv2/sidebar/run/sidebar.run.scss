@@ -1,0 +1,96 @@
+@import '../../../../../common';
+
+:host {
+    width: 100%;
+    height: 100%;
+
+    .collapse {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background-color: #ffffff0a;
+        overflow: hidden;
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+
+            &.expanded {
+                margin-bottom: auto;
+                height: 100%;
+            }
+
+            &.collapsed {
+                .content {
+                    display: none;
+                }
+            }
+
+            .header {
+                height: 32px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                cursor: pointer;
+                background-color: #fafafa;
+
+                :host-context(.night) & {
+                    background-color: #202020;
+                }
+
+                .toggle {
+                    margin-left: 10px;
+                }
+
+                .title {
+                    flex: 1;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    margin: 0 10px;
+                }
+            }
+
+            .content {
+                flex: 1;
+                overflow-y: auto;
+
+                :host-context(.night) & {
+                    background-color: #141414;
+                }
+
+                .item {
+                    margin-top: 5px;
+                    margin-left: 2px;
+                    height: 40px;
+                    flex: 1;
+                    padding-left: 5px;
+
+                    .metadata {
+                        font-size: 10px;
+                    }
+
+                    :host-context(.night) {
+                        background-color: #202020;
+                    }
+                }
+                .item.selected, .item:hover {
+                    background-color: #b7b7b7;
+
+                    :host-context(.night) {
+                        background-color: #2d2c2c;
+                    }
+                }
+                .item.success {
+                    border-left: 5px solid $cds_color_green;
+                }
+                .item.fail {
+                    border-left: 5px solid $cds_color_red;
+                }
+                .item.building {
+                    border-left: 5px solid $cds_color_teal;
+                }
+            }
+        }
+    }
+}

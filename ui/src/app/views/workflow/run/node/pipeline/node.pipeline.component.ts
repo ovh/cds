@@ -143,7 +143,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 openObserver: {
                     next: value => {
                         if (value.type === 'open') {
-                            this.cdnFilter.job_run_id = this.currentNodeJobRun.id;
+                            this.cdnFilter.job_run_id = this.currentNodeJobRun.id.toString();
                             this.websocket.next(this.cdnFilter);
                         }
                     }
@@ -165,8 +165,8 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
                 });
         } else {
             // Refresh cdn filter if job changed
-            if (this.cdnFilter.job_run_id !== this.currentNodeJobRun.id) {
-                this.cdnFilter.job_run_id = this.currentNodeJobRun.id;
+            if (this.cdnFilter.job_run_id !== this.currentNodeJobRun.id.toString()) {
+                this.cdnFilter.job_run_id = this.currentNodeJobRun.id.toString();
                 this.websocket.next(this.cdnFilter);
             }
         }

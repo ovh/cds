@@ -1,3 +1,5 @@
+import {V2WorkflowRunJob} from "app/model/v2.workflow.run.model";
+
 export class StepStatus {
     step_order: number;
     status: string;
@@ -14,7 +16,7 @@ export class GraphNode {
     name: string;
     depends_on: Array<string>;
     sub_graph: Array<GraphNode>;
-    run: JobRun;
+    run: V2WorkflowRunJob;
     type: string;
 }
 

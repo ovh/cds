@@ -16,9 +16,215 @@ import (
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 )
+
+func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		Event:        sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Needs: []string{"job1"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	infos := sdk.V2WorkflowRunInfo{
+		IssuedAt:      time.Now(),
+		Level:         sdk.WorkflowRunInfoLevelInfo,
+		Message:       "Coucou",
+		WorkflowRunID: wr.ID,
+	}
+	require.NoError(t, workflow_v2.InsertRunInfo(context.TODO(), db, &infos))
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
+	}
+	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunInfoV2Handler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri, nil)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	infoDB, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(infoDB))
+	require.Equal(t, infos.ID, infoDB[0].ID)
+}
+
+func TestGetWorkflowRunJobHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		Event:        sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Needs: []string{"job1"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrj := sdk.V2WorkflowRunJob{
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr.ID,
+		Outputs:       sdk.JobResultOutput{},
+		UserID:        admin.ID,
+		Username:      admin.Username,
+		ProjectKey:    wr.ProjectKey,
+		JobID:         sdk.RandomString(10),
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
+		"jobName":              wrj.JobID,
+	}
+	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri, nil)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	var rj sdk.V2WorkflowRunJob
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &rj))
+
+	require.Equal(t, wrj.ID, rj.ID)
+}
+
+func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		Event:        sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Needs: []string{"job1"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrj := sdk.V2WorkflowRunJob{
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr.ID,
+		Outputs:       sdk.JobResultOutput{},
+		UserID:        admin.ID,
+		Username:      admin.Username,
+		ProjectKey:    wr.ProjectKey,
+		JobID:         sdk.RandomString(10),
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
+
+	infos := sdk.V2WorkflowRunJobInfo{
+		IssuedAt:         time.Now(),
+		Level:            sdk.WorkflowRunInfoLevelInfo,
+		Message:          "Coucou",
+		WorkflowRunJobID: wrj.ID,
+		WorkflowRunID:    wrj.WorkflowRunID,
+	}
+	require.NoError(t, workflow_v2.InsertRunJobInfo(context.TODO(), db, &infos))
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
+		"jobName":              wrj.JobID,
+	}
+	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobInfosHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri, nil)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	infoDB, err := workflow_v2.LoadRunJobInfosByRunJobID(context.TODO(), db, wrj.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, 1, len(infoDB))
+	require.Equal(t, infos.ID, infoDB[0].ID)
+}
 
 // r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", nil, r.POSTv2(api.postJobRunStepHandler))
 func TestPostJobRunStepHandler(t *testing.T) {
@@ -101,8 +307,8 @@ hatcheries:
 	workerName := sdk.RandomString(10)
 	_, jwtWorker := assets.InsertWorker(t, ctx, db, hatchConsumer, hatch, workerName, wrj)
 
-	steps := sdk.StepsContext{}
-	steps["job1"] = sdk.StepContext{
+	steps := sdk.JobStepsStatus{}
+	steps["job1"] = sdk.JobStepStatus{
 		Outcome:    sdk.StatusFail,
 		Conclusion: sdk.StatusSuccess,
 	}
@@ -116,8 +322,8 @@ hatcheries:
 
 	runJobDB, err := workflow_v2.LoadRunJobByID(ctx, db, wrj.ID)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(runJobDB.StepsContext))
-	require.Equal(t, sdk.StatusSuccess, runJobDB.StepsContext["job1"].Conclusion)
+	require.Equal(t, 1, len(runJobDB.StepsStatus))
+	require.Equal(t, sdk.StatusSuccess, runJobDB.StepsStatus["job1"].Conclusion)
 
 }
 
@@ -171,7 +377,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
-		StepsContext: sdk.StepsContext{
+		StepsStatus: sdk.JobStepsStatus{
 			"step1": {
 				Outcome:    sdk.StatusSuccess,
 				Conclusion: sdk.StatusSuccess,

@@ -2,26 +2,28 @@ import {
     AfterViewInit,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component, Input,
-    OnDestroy, ViewChild,
+    Component,
+    Input,
+    OnDestroy,
+    ViewChild,
 } from '@angular/core';
-import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {
-    MenuItem,
     FlatNodeItem,
-    TreeEvent,
+    FlatNodeItemSelect,
+    MenuItem,
     SelectedItem,
     TreeComponent,
-    FlatNodeItemSelect
+    TreeEvent
 } from 'app/shared/tree/tree.component';
-import { ProjectService } from 'app/service/project/project.service';
-import { Project, VCSProject} from 'app/model/project.model';
-import { Observable, of, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Router } from '@angular/router';
-import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
-import { AnalysisService } from "../../../service/analysis/analysis.service";
-import {EntityAction, EntityWorkerModel, EntityWorkflow} from "../../../model/entity.model";
+import {ProjectService} from 'app/service/project/project.service';
+import {Project, VCSProject} from 'app/model/project.model';
+import {Observable, of, Subscription} from 'rxjs';
+import {map} from 'rxjs/operators';
+import {Router} from '@angular/router';
+import {SidebarEvent, SidebarService} from 'app/service/sidebar/sidebar.service';
+import {AnalysisService} from "app/service/analysis/analysis.service";
+import {Entity, EntityAction, EntityWorkerModel, EntityWorkflow} from "app/model/entity.model";
 
 @Component({
     selector: 'app-projectv2-sidebar',
@@ -32,9 +34,11 @@ import {EntityAction, EntityWorkerModel, EntityWorkflow} from "../../../model/en
 @AutoUnsubscribe()
 export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     _currentProject: Project;
+
     get project(): Project {
         return this._currentProject;
     }
+
     @Input() set project(data: Project) {
         this._currentProject = data;
         if (data) {
@@ -52,18 +56,20 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     sidebarServiceSub: Subscription;
     analysisServiceSub: Subscription;
 
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void {
+    } // Should be set to use @AutoUnsubscribe with AOT
 
     constructor(
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
         private _router: Router,
         private _sidebarService: SidebarService,
-        private _analysisService: AnalysisService
-    ) { }
+        private _analysisService: AnalysisService,
+    ) {
+    }
 
     ngAfterViewInit(): void {
-        this.sidebarServiceSub = this._sidebarService.getObservable().subscribe(e => {
+        this.sidebarServiceSub = this._sidebarService.getWorkspaceObservable().subscribe(e => {
             switch (e?.nodeType) {
                 case 'vcs':
                     // TODO select vcs
@@ -103,7 +109,11 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
             child: {
                 id: e.parentIDs[1],
                 type: 'repository',
-                child: { id: EntityWorkerModel, type: 'folder', child: { id: e.nodeID, name: e.nodeName, action: 'select', type: EntityWorkerModel } }
+                child: {
+                    id: EntityWorkerModel,
+                    type: 'folder',
+                    child: {id: e.nodeID, name: e.nodeName, action: 'select', type: EntityWorkerModel}
+                }
             }
         }
         this.tree.selectNode(si);
@@ -113,7 +123,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
         let si = <SelectedItem>{
             id: e.parentIDs[0],
             type: 'vcs',
-            child: { id: e.nodeID, name: e.nodeName, action: 'select', type: 'repository' }
+            child: {id: e.nodeID, name: e.nodeName, action: 'select', type: 'repository'}
         }
         this.tree.selectNode(si);
     }
@@ -173,7 +183,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                 nodeItem.onOpen = () => {
                     const currentBranch = this._router?.routerState?.snapshot?.root?.queryParams['branch'];
                     return this._projectService.getVCSRepositoryBranches(key, vcs, r.name, 50).pipe(map(bs => {
-                        nodeItem.select = <FlatNodeItemSelect>{ options: [] };
+                        nodeItem.select = <FlatNodeItemSelect>{options: []};
                         nodeItem.select.options = bs.map(b => {
                             if (b.display_id === currentBranch) {
                                 nodeItem.select.selected = b.display_id;
@@ -181,14 +191,14 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                             if (b.default && !nodeItem.select.selected) {
                                 nodeItem.select.selected = b.display_id;
                             }
-                            return { key: b.display_id, value: b.display_id }
+                            return {key: b.display_id, value: b.display_id}
                         });
                         nodeItem.select.onchange = () => {
                             nodeItem.loadChildren = () => {
                                 return this.loadEntities(this._currentProject.key, vcs, r.name, nodeItem.select.selected);
                             };
                             this.tree.resetChildren(nodeItem);
-                            this._router.navigate([], { queryParams: { branch: nodeItem.select.selected } }).then();
+                            this._router.navigate([], {queryParams: {branch: nodeItem.select.selected}}).then();
                         }
                         this.tree.refresh();
                     }));
@@ -208,7 +218,19 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     if (!existingEntities) {
                         existingEntities = [];
                     }
-                    existingEntities.push(<FlatNodeItem>{ name: e.name, parentNames: [vcs, repo], id: e.id, type: e.type, expandable: false, clickable: true, level: 3, icon: 'file', iconTheme: 'outline' })
+                    existingEntities.push(<FlatNodeItem>{
+                        name: e.name,
+                        branch: branch,
+                        parentNames: [vcs, repo],
+                        id: e.id,
+                        type: e.type,
+                        expandable: false,
+                        clickable: true,
+                        level: 3,
+                        icon: 'file',
+                        iconTheme: 'outline',
+                        menu: this.buildMenuForEntity(e, vcs, repo)
+                    })
                     m.set(e.type, existingEntities);
                 });
                 Array.from(m.keys()).forEach(k => {
@@ -220,6 +242,17 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
             }
             return result;
         }));
+    }
+
+    buildMenuForEntity(e: Entity, vcs: string, repo: string): MenuItem[] {
+        switch (e.type) {
+            case EntityWorkflow:
+                return [<MenuItem>{
+                    name: 'Display runs',
+                    route: ['/', 'projectv2', this.project.key, 'run', 'vcs', vcs, 'repository', repo, 'workflow', e.name]
+                }];
+        }
+        return null;
     }
 
     getVCSMenu(vcs: VCSProject): MenuItem[] {

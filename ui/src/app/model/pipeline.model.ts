@@ -221,6 +221,7 @@ export class CDNLogLinks {
 export class CDNLogLinkData {
     api_ref: string
     step_order: number
+    step_name: string
     requirement_id: number
 }
 
@@ -241,7 +242,7 @@ export class CDNLine {
 
 export class CDNStreamFilter {
     item_type: string;
-    job_run_id: number;
+    job_run_id: string;
 }
 
 export class Tests {

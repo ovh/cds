@@ -1,0 +1,45 @@
+<app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
+<div class="close" (click)="clickClose()">
+    <span nz-icon nzType="close" nzTheme="outline"></span>
+</div>
+<ng-container *ngIf="selectedTab.key === 'logs' && jobRun">
+    <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun" (onScroll)="onJobScroll($event)" #runJobLogs></app-run-job-logs>
+</ng-container>
+<div class="problems" *ngIf="selectedTab.key === 'problems' && jobRun">
+    <ul>
+        <ng-container *ngFor="let info of jobRunInfos">
+            <ul>
+                <ng-container *ngIf="info.level === 'error'">
+                    <li>
+                        <span class="error" nz-icon nzType="close-circle" nzTheme="fill"></span>
+                        <div class="content">
+                            {{info.message}}.
+                        </div>
+                    </li>
+                </ng-container>
+                <ng-container *ngIf="info.level === 'warning'">
+                    <li>
+                        <span class="warning" nz-icon nzType="warning" nzTheme="fill"></span>
+                        <div class="content">
+                            {{info.message}}.
+                        </div>
+                    </li>
+                </ng-container>
+            </ul>
+        </ng-container>
+    </ul>
+</div>
+<div class="infos" *ngIf="selectedTab.key === 'infos' && jobRun">
+    <ul>
+        <ng-container *ngFor="let info of jobRunInfos">
+            <ul>
+                <li *ngIf="info.level === 'info'">
+                    <span class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
+                    <div class="content">
+                        {{info.message}}.
+                    </div>
+                </li>
+            </ul>
+        </ng-container>
+    </ul>
+</div>

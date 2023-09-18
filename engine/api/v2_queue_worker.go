@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -71,6 +72,17 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		jobRun.Started = time.Now()
 		jobRun.WorkerName = wrkWithSecret.Name
 		if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
+			return err
+		}
+
+		info := sdk.V2WorkflowRunJobInfo{
+			Level:            sdk.WorkflowRunInfoLevelInfo,
+			IssuedAt:         time.Now(),
+			WorkflowRunJobID: jobRun.ID,
+			WorkflowRunID:    jobRun.WorkflowRunID,
+			Message:          fmt.Sprintf("Worker %s starts working on job %s", wk.Name, jobRun.JobID),
+		}
+		if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
 			return err
 		}
 

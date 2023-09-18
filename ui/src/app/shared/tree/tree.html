@@ -11,6 +11,19 @@
                 <span class="text" (click)="clickOnNodeLink(node, $event)">{{ node.name
                     }}</span>
             </div>
+            <ng-container *ngIf="node?.menu?.length > 0">
+                <button nz-button nzType="text" nzSize="small">
+                    <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"
+                       (click)="$event.stopPropagation()"></i>
+                </button>
+                <nz-dropdown-menu #menu="nzDropdownMenu">
+                    <ul nz-menu>
+                        <ng-container *ngFor="let item of node.menu">
+                            <li nz-menu-item  [routerLink]="item.route">{{item.name}}</li>
+                        </ng-container>
+                    </ul>
+                </nz-dropdown-menu>
+            </ng-container>
         </div>
     </nz-tree-node>
 
