@@ -13,6 +13,7 @@ func TestHatcheryOpenstack_initFlavors(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
+	h.cache = NewCache(1, 1)
 
 	allFlavors := []flavors.Flavor{
 		{Name: "b2-7", VCPUs: 2},
