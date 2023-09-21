@@ -463,7 +463,7 @@ hatcheries:
 	require.Equal(t, 204, w.Code)
 
 	// Get run info from db
-	info, err := workflow_v2.LoadRunJobInfosByRunID(ctx, db, jobRun.ID)
+	info, err := workflow_v2.LoadRunJobInfosByRunJobID(ctx, db, jobRun.ID)
 	require.NoError(t, err)
 	require.Len(t, info, 1)
 	require.Equal(t, infoToSend.Message, info[0].Message)

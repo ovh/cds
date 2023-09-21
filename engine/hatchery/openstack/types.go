@@ -61,6 +61,11 @@ type HatcheryConfiguration struct {
 
 	// DefaultSecurityGroups, if set the VMs spawned by the hatchery will have the given security groups
 	DefaultSecurityGroups []string `mapstructure:"defaultSecurityGroups" toml:"defaultSecurityGroups" default:"" commented:"true" comment:"If set the hatchery will add given groups on spawned VMs" json:"defaultSecurityGroups"`
+
+	Cache struct {
+		ImagesExpirationDelay  int `mapstructure:"imagesExpirationDelay" toml:"imagesExpirationDelay" default:"30" commented:"true" comment:"Expiration delay for Openstack images list cache (in seconds)." json:"imagesExpirationDelay"`
+		ServersExpirationDelay int `mapstructure:"serversExpirationDelay" toml:"serversExpirationDelay" default:"2" commented:"true" comment:"Expiration delay for Openstack servers list cache (in seconds)." json:"serversExpirationDelay"`
+	} `mapstructure:"cache" toml:"cache" json:"cache"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
@@ -70,8 +75,8 @@ type HatcheryOpenstack struct {
 	Config          HatcheryConfiguration
 	flavors         []flavors.Flavor
 	openstackClient *gophercloud.ServiceClient
-
-	networkID string // computed from networkString
+	cache           *cache
+	networkID       string // computed from networkString
 }
 
 type ipInfos struct {

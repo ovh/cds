@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { FlatNodeItem } from 'app/shared/tree/tree.component';
+import {V2WorkflowRun} from "../../model/v2.workflow.run.model";
+import {V2WorkflowRunService} from "../workflowv2/workflow.service";
 
 export class SidebarEvent {
     nodeID: string
@@ -22,19 +24,28 @@ export class SidebarEvent {
 @Injectable()
 export class SidebarService {
 
-    private _sidebar: BehaviorSubject<SidebarEvent> = new BehaviorSubject(null);
+    private _sidebarWorkspace: BehaviorSubject<SidebarEvent> = new BehaviorSubject(null);
+    private _sidebarRun: BehaviorSubject<V2WorkflowRun> = new BehaviorSubject<V2WorkflowRun>(null);
 
     constructor(private _http: HttpClient) { }
 
-    getObservable(): Observable<SidebarEvent> {
-        return new Observable<SidebarEvent>(fn => this._sidebar.subscribe(fn));
+    getWorkspaceObservable(): Observable<SidebarEvent> {
+        return new Observable<SidebarEvent>(fn => this._sidebarWorkspace.subscribe(fn));
+    }
+
+    getRunObservable(): Observable<V2WorkflowRun> {
+        return new Observable<V2WorkflowRun>(fn => this._sidebarRun.subscribe(fn));
     }
 
     sendEvent(event: SidebarEvent): void {
         if (!event.nodeID) {
             return;
         }
-        this._sidebar.next(event);
+        this._sidebarWorkspace.next(event);
+    }
+
+    selectRun(r: V2WorkflowRun): void {
+        this._sidebarRun.next(r)
     }
 
 }

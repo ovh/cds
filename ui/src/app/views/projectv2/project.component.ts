@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
 import { Store } from '@ngxs/store';
-import { ActivatedRoute } from '@angular/router';
+import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 import { Project } from 'app/model/project.model';
 import { ProjectStore } from 'app/service/project/project.store';
 import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
+import {RouterService} from "../../service/router/router.service";
 
 @Component({
     selector: 'app-projectv2-show',
@@ -22,13 +23,34 @@ export class ProjectV2ShowComponent implements OnInit, OnDestroy {
     projSub: Subscription;
     project: Project;
     panelSize: number | string;
+    routerSub: Subscription;
+
+    runSidebar = false;
+    workspaceSidebar = true;
 
     constructor(
         private _store: Store,
         private _route: ActivatedRoute,
         private _projectStore: ProjectStore,
         private _cd: ChangeDetectorRef,
-    ) { }
+        private _activatedRoute: ActivatedRoute,
+        private _router: Router,
+        private _routerService: RouterService
+    ) {
+        this.routerSub = this._router.events.subscribe(e => {
+            if (e instanceof NavigationEnd) {
+                let activatedRoute = this._routerService.getActivatedRoute(this._router.routerState.root);
+                if (activatedRoute.snapshot.url.length >= 1 && activatedRoute.snapshot.url[0].path === 'run') {
+                    this.runSidebar = true;
+                    this.workspaceSidebar = false;
+                } else {
+                    this.workspaceSidebar = true;
+                    this.runSidebar = false;
+                }
+                this._cd.markForCheck();
+            }
+        });
+    }
 
     ngOnInit(): void {
         this.routeSub = this._route.params.subscribe(r => {

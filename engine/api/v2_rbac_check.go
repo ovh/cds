@@ -44,7 +44,7 @@ func (api *API) getCheckSessionProjectAccessHandler() ([]service.RbacChecker, se
 					return err
 				}
 				if !hasRole {
-					return sdk.WrapError(sdk.ErrUnauthorized, "user %s doesn't have the right on project %s", userConsumer.AuthConsumerUser.AuthentifiedUser.Username, checkRequest.ProjectKey)
+					return sdk.WrapError(sdk.ErrUnauthorized, "user %s doesn't have the right on project %s", userConsumer.AuthConsumerUser.AuthentifiedUserID, checkRequest.ProjectKey)
 				}
 			}
 			return nil

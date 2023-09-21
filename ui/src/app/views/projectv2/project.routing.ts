@@ -12,6 +12,7 @@ import {
 import {ProjectV2WorkerModelShowComponent} from "./vcs/repository/workermodel/show/project.workermodel.show.component";
 import {ProjectV2ActionShowComponent} from "./vcs/repository/action/show/project.action.show.component";
 import {ProjectV2WorkflowShowComponent} from "./vcs/repository/workflow/show/project.workflow.show.component";
+import {ProjectV2WorkflowRunComponent} from "./run/project.run.component";
 
 
 const projectRoutes: Routes = [
@@ -54,6 +55,14 @@ const projectRoutes: Routes = [
             {
                 path: 'vcs/:vcsName/repository/:repoName/workflow/:workflowName',
                 component: ProjectV2WorkflowShowComponent,
+                data: { title: '{workflowName} • Workflow' },
+                resolve: {
+                    project: Projectv2Resolver,
+                },
+            },
+            {
+                path: 'run/vcs/:vcsName/repository/:repoName/workflow/:workflowName',
+                component: ProjectV2WorkflowRunComponent,
                 data: { title: '{workflowName} • Workflow' },
                 resolve: {
                     project: Projectv2Resolver,

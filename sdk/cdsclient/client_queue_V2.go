@@ -9,9 +9,9 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jobRunID string, stepsContext sdk.StepsContext) error {
+func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jobRunID string, stepsStatus sdk.JobStepsStatus) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/step", regionName, jobRunID)
-	if _, err := c.PostJSON(ctx, path, stepsContext, nil); err != nil {
+	if _, err := c.PostJSON(ctx, path, stepsStatus, nil); err != nil {
 		return err
 	}
 	return nil
