@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (d *dao) RepsitoryEventBalance() (int64, int64) {
+func (d *dao) RepositoryEventBalance() (int64, int64) {
 	return d.enqueuedRepositoryEvents, d.dequeuedRepositoryEvents
 }
 

@@ -734,7 +734,7 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	}
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Balance", Value: fmt.Sprintf("%d/%d", in, out), Status: status})
 
-	hookEventIn, hookEventOut := s.Dao.RepsitoryEventBalance()
+	hookEventIn, hookEventOut := s.Dao.RepositoryEventBalance()
 	status = sdk.MonitoringStatusOK
 	if float64(hookEventIn) > float64(hookEventOut) {
 		status = sdk.MonitoringStatusWarn

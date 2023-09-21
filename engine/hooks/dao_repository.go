@@ -36,7 +36,7 @@ func (d *dao) FindRepository(ctx context.Context, repoKey string) *sdk.HookRepos
 	hr := &sdk.HookRepository{}
 	find, err := d.store.Get(key, hr)
 	if err != nil {
-		log.Error(ctx, "cannot get from cache %s: %v", key, err)
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot get from cache %s", key))
 	}
 	if find {
 		return hr
