@@ -470,6 +470,8 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -729,6 +731,8 @@ GDFkaTe3nUJdYV4=
 				return nil, 200, nil
 			},
 		).MaxTimes(1)
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
@@ -1106,6 +1110,8 @@ spec:
 		},
 		).MaxTimes(1)
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -1340,6 +1346,8 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -1393,7 +1401,9 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/myDefRepo", "main"))
+	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
+
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, repoDef.Name, "push")
 	require.NoError(t, err)
@@ -1443,7 +1453,8 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/myDefRepo", "main"))
+	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
@@ -1495,7 +1506,8 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 			},
 		},
 	}
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/myDefRepo", "main"))
+	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
@@ -1547,7 +1559,8 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 			},
 		},
 	}
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/myDefRepo", "main"))
+	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
