@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -58,7 +57,12 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, repoName, eventName, body)
+		repoName, extractData, err := s.extractDataFromPayload(vcsType, body)
+		if err != nil {
+			return err
+		}
+
+		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, repoName, extractData, eventName, body)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return err
@@ -80,16 +84,17 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		repoName, err := s.extractRepoNameFromPayload(vcsServerType, body)
+		repoName, extractedData, err := s.extractDataFromPayload(vcsServerType, body)
 		if err != nil {
 			return err
 		}
+
 		eventName, err := s.extractEventFromHeader(ctx, vcsServerType, r.Header)
 		if err != nil {
 			return err
 		}
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, eventName, body)
+		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, extractedData, eventName, body)
 		if err != nil {
 			return err
 		}
@@ -98,7 +103,7 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 	}
 }
 
-func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, eventName string, event []byte) (*sdk.HookRepositoryEvent, error) {
+func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, eventName string, event []byte) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(vcsServerType, vcsServerName, repoName)
 	hr := s.Dao.FindRepository(ctx, repoKey)
 	if hr == nil {
@@ -123,6 +128,7 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType strin
 		Body:           event,
 		Created:        time.Now().UnixNano(),
 		Status:         sdk.HookEventStatusScheduled,
+		ExtractData:    extractedData,
 	}
 
 	// Save event
@@ -182,45 +188,6 @@ func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType stri
 		return "", sdk.WrapError(sdk.ErrNotFound, "unable to found event from header")
 	}
 	return eventName, nil
-}
-
-func (s *Service) extractRepoNameFromPayload(vcsServerType string, body []byte) (string, error) {
-	switch vcsServerType {
-	case sdk.VCSTypeBitbucketServer:
-		var event sdk.BitbucketServerWebhookEvent
-		if err := json.Unmarshal(body, &event); err != nil {
-			return "", err
-		}
-
-		if event.Repository != nil {
-			return event.Repository.Project.Key + "/" + event.Repository.Slug, nil
-		}
-	case sdk.VCSTypeGithub:
-		var event GithubWebHookEvent
-		if err := json.Unmarshal(body, &event); err != nil {
-			return "", err
-		}
-		if event.Repository != nil {
-			return event.Repository.FullName, nil
-		}
-	case sdk.VCSTypeGitlab:
-		var event GitlabEvent
-		if err := json.Unmarshal(body, &event); err != nil {
-			return "", err
-		}
-		if event.Project != nil {
-			return event.Project.PathWithNamespace, nil
-		}
-	case sdk.VCSTypeGitea:
-		var event GiteaEventPayload
-		if err := json.Unmarshal(body, &event); err != nil {
-			return "", err
-		}
-		return event.Repository.FullName, nil
-	default:
-		return "", sdk.WithStack(sdk.ErrNotImplemented)
-	}
-	return "", sdk.WrapError(sdk.ErrNotFound, "repository not found")
 }
 
 func (s *Service) webhookHandler() service.Handler {

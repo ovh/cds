@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -156,7 +157,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			repoDB := repoBody
 			repoDB.VCSProjectID = vcsProjectWithSecret.ID
 			repoDB.CreatedBy = getUserConsumer(ctx).GetUsername()
-
+			repoDB.Name = strings.ToLower(repoDB.Name)
 			// Insert Repository
 			if err := repository.Insert(ctx, tx, &repoDB); err != nil {
 				return err

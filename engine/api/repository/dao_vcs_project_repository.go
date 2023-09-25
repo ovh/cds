@@ -34,7 +34,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, repo *sdk.Proj
 }
 
 func Delete(db gorpmapper.SqlExecutorWithTx, vcsProjectID string, name string) error {
-	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND lower(name) = $2", vcsProjectID, strings.ToLower(name))
+	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND name = $2", vcsProjectID, strings.ToLower(name))
 	return sdk.WrapError(err, "cannot delete project_repository %s / %s", vcsProjectID, name)
 }
 
@@ -95,7 +95,7 @@ func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProje
 func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
 	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByName")
 	defer next()
-	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND lower(project_repository.name) = $2`).Args(vcsProjectID, strings.ToLower(repoName))
+	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, strings.ToLower(repoName))
 	repo, err := getRepository(ctx, db, query, opts...)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get repository %s from vcs %s", repoName, vcsProjectID)
@@ -106,7 +106,7 @@ func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID
 func LoadByNameWithoutVCSServer(ctx context.Context, db gorp.SqlExecutor, repoName string) ([]sdk.ProjectRepository, error) {
 	ctx, next := telemetry.Span(ctx, "repository.LoadByNameWithoutVCSServer")
 	defer next()
-	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE lower(project_repository.name) = $1`).Args(strings.ToLower(repoName))
+	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.name = $1`).Args(strings.ToLower(repoName))
 	repos, err := getRepositories(ctx, db, query)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get repositories %s", repoName)

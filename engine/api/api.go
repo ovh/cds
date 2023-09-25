@@ -638,6 +638,9 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: "HashSignatureMigration", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateHashSignature(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), a.Cache)
 	}})
+  migrate.Add(ctx, sdk.Migration{Name: "MigrateProjectRepsositories", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+    return migrate.MigrateProjectRepsositories(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+  }})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {

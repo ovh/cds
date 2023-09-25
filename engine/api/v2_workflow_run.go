@@ -435,7 +435,7 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.workflowTrigger),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -546,6 +546,16 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			}
 
 			return sdk.WithStack(tx.Commit())
+		}
+}
+
+func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.isHookService),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			// TODO - Manage git context
+			log.Info(ctx, "Workflow started: %v", vars)
+			return nil
 		}
 }
 

@@ -43,6 +43,13 @@ type Entity struct {
 	Data                string    `json:"data" db:"data"`
 }
 
+type EntityWithObject struct {
+	Entity
+	Workflow V2Workflow
+	Action   V2Action
+	Model    V2WorkerModel
+}
+
 func GetManageRoleByEntity(entityType string) (string, error) {
 	switch entityType {
 	case EntityTypeWorkerModel:
@@ -60,7 +67,7 @@ type Lintable interface {
 	GetName() string
 }
 
-func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]Entity, []error) {
+func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out *[]T, t string, analysis ProjectRepositoryAnalysis) ([]EntityWithObject, []error) {
 	namePattern, err := regexp.Compile(EntityNamePattern)
 	if err != nil {
 		return nil, []error{WrapError(err, "unable to compile regexp %s", namePattern)}
@@ -69,24 +76,36 @@ func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out 
 	if err := yaml.UnmarshalMultipleDocuments(content, out); err != nil {
 		return nil, []error{NewErrorFrom(ErrInvalidData, "unable to read %s%s: %v", directory, fileName, err)}
 	}
-	var entities []Entity
+	var entities []EntityWithObject
 	for _, o := range *out {
 		if err := o.Lint(); err != nil {
 			return nil, err
 		}
-		entities = append(entities, Entity{
-			Data:                string(content),
-			Name:                o.GetName(),
-			Branch:              analysis.Branch,
-			Commit:              analysis.Commit,
-			ProjectKey:          analysis.ProjectKey,
-			ProjectRepositoryID: analysis.ProjectRepositoryID,
-			Type:                t,
-			FilePath:            directory + fileName,
-		})
+		eo := EntityWithObject{
+			Entity: Entity{
+				Data:                string(content),
+				Name:                o.GetName(),
+				Branch:              analysis.Branch,
+				Commit:              analysis.Commit,
+				ProjectKey:          analysis.ProjectKey,
+				ProjectRepositoryID: analysis.ProjectRepositoryID,
+				Type:                t,
+				FilePath:            directory + fileName,
+			},
+		}
 		if !namePattern.MatchString(o.GetName()) {
 			return nil, []error{WrapError(ErrInvalidData, "name %s doesn't match %s", o.GetName(), EntityNamePattern)}
 		}
+		switch t {
+		case EntityTypeWorkerModel:
+			eo.Model = any(o).(V2WorkerModel)
+		case EntityTypeAction:
+			eo.Action = any(o).(V2Action)
+		case EntityTypeWorkflow:
+			eo.Workflow = any(o).(V2Workflow)
+		}
+
+		entities = append(entities, eo)
 	}
 	return entities, nil
 }

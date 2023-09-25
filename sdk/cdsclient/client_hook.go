@@ -34,3 +34,9 @@ func (c *client) HookRepositoriesList(ctx context.Context, vcsServer, repoName s
 	_, err := c.GetJSON(ctx, path, &repos)
 	return repos, err
 }
+
+func (c *client) ListWorkflowToTrigger(ctx context.Context, req sdk.HookListWorkflowRequest) ([]sdk.V2WorkflowHook, error) {
+	var workflowHooks []sdk.V2WorkflowHook
+	_, err := c.PostJSON(ctx, "/v2/hooks/workflows", &req, &workflowHooks)
+	return workflowHooks, err
+}

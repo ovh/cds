@@ -74,7 +74,7 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
 		}
 
-		repoName, err := s.extractRepoNameFromPayload(vcsType, body)
+		repoName, _, err := s.extractDataFromPayload(vcsType, body)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return ctx, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find repository")
