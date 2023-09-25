@@ -322,7 +322,7 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 
 	for i := range vcsProjects {
 		// We are loading with decryption, but we don't keep sensitive data
-		decryptedVCSProject, err := vcs.LoadVCSByID(ctx, db, p.Key, vcsProjects[i].ID, gorpmapper.GetOptions.WithDecryption)
+		decryptedVCSProject, err := vcs.LoadVCSByIDAndProjectKey(ctx, db, p.Key, vcsProjects[i].ID, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			return nil, err
 		}

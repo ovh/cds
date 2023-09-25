@@ -7,13 +7,6 @@ import (
 	"database/sql/driver"
 )
 
-const (
-	RepositoryEntitiesHook = "EntitiesHook"
-	SignHeaderVCSName      = "X-Cds-Hooks-Vcs-Name"
-	SignHeaderRepoName     = "X-Cds-Hooks-Repo-Name"
-	SignHeaderVCSType      = "X-Cds-Hooks-Vcs-Type"
-)
-
 type HookAccessData struct {
 	URL         string `json:"url" cli:"url"`
 	HookSignKey string `json:"hook_sign_key" cli:"hook_sign_key"`
@@ -41,40 +34,6 @@ func (hc *HookConfiguration) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(JSONUnmarshal(source, hc), "cannot unmarshal HookConfiguration")
-}
-
-func NewEntitiesHook(uuid, projectKey, vcsType, vcsName, repoName string) (Hook, error) {
-	hookSignKey, err := GenerateHookSecret()
-	if err != nil {
-		return Hook{}, err
-	}
-	return Hook{
-		UUID:     uuid,
-		HookType: RepositoryEntitiesHook,
-		Configuration: map[string]WorkflowNodeHookConfigValue{
-			HookConfigProject: {
-				Value:        projectKey,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-			HookConfigVCSServer: {
-				Value:        vcsName,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-			HookConfigVCSType: {
-				Value:        vcsType,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-			HookConfigRepoFullName: {
-				Value:        repoName,
-				Type:         HookConfigTypeString,
-				Configurable: false,
-			},
-		},
-		HookSignKey: hookSignKey,
-	}, nil
 }
 
 // HookConfigValue represents the value of a node hook config
@@ -113,7 +72,6 @@ type TaskExecution struct {
 	RabbitMQ            *RabbitMQTaskExecution  `json:"rabbitmq,omitempty" cli:"-"`
 	ScheduledTask       *ScheduledTaskExecution `json:"scheduled_task,omitempty" cli:"-"`
 	GerritEvent         *GerritEventExecution   `json:"gerrit,omitempty" cli:"-"`
-	EntitiesHook        *EntitiesHookExecution  `json:"entities_hook_execution,omitempty" cli:"-"`
 	Status              string                  `json:"status" cli:"status"`
 	Configuration       HookConfiguration       `json:"configuration" cli:"-"`
 	// DEPRECATED
@@ -133,16 +91,6 @@ type WebHookExecution struct {
 	RequestMethod string              `json:"request_method"`
 }
 
-type EntitiesHookExecution struct {
-	RequestURL    string              `json:"request_url"`
-	RequestBody   []byte              `json:"request_body"`
-	RequestHeader map[string][]string `json:"request_header"`
-	RequestMethod string              `json:"request_method"`
-
-	// Execution result
-	AnalysisID string `json:"analysis_id"`
-}
-
 // KafkaTaskExecution contains specific data for a kafka hook
 type KafkaTaskExecution struct {
 	Message []byte `json:"message"`
@@ -156,17 +104,4 @@ type RabbitMQTaskExecution struct {
 // ScheduledTaskExecution contains specific data for a scheduled task execution
 type ScheduledTaskExecution struct {
 	DateScheduledExecution string `json:"date_scheduled_execution"`
-}
-
-type AnalysisRequest struct {
-	ProjectKey string `json:"projectKey"`
-	VcsName    string `json:"vcsName"`
-	RepoName   string `json:"repoName"`
-	Branch     string `json:"branch"`
-	Commit     string `json:"commit"`
-}
-
-type AnalysisResponse struct {
-	AnalysisID string `json:"analysis_id"`
-	Status     string `json:"status"`
 }

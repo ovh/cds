@@ -54,6 +54,7 @@ func TestCleanAnalysis(t *testing.T) {
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
 		CloneURL:     "myurl",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -88,6 +89,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -155,6 +157,7 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -231,6 +234,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -365,6 +369,7 @@ GDFkaTe3nUJdYV4=
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -488,6 +493,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -622,6 +628,7 @@ GDFkaTe3nUJdYV4=
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -824,6 +831,7 @@ GDFkaTe3nUJdYV4=
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -984,6 +992,7 @@ GDFkaTe3nUJdYV4=
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -1194,6 +1203,7 @@ GDFkaTe3nUJdYV4=
 		Created:      time.Now(),
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 

@@ -947,7 +947,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testi
 	}
 	require.NoError(t, vcs.Insert(context.TODO(), db, vcsProject))
 
-	vcsProject, err := vcs.LoadVCSByID(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
+	vcsProject, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
 	uri := api.Router.GetRoute("POST", api.postAdminDatabaseRollEncryptedEntityByPrimaryKey, map[string]string{"entity": "vcs.dbVCSProject", "pk": fmt.Sprintf("%s", vcsProject.ID)})
@@ -957,7 +957,7 @@ func Test_postAdminDatabaseRollEncryptedEntityByPrimaryKeyForProjectVCS(t *testi
 	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 204, w.Code)
 
-	vcsProject2, err := vcs.LoadVCSByID(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
+	vcsProject2, err := vcs.LoadVCSByIDAndProjectKey(context.TODO(), db, proj.Key, vcsProject.ID, gorpmapper.GetOptions.WithDecryption)
 	require.NoError(t, err)
 
 	require.Equal(t, vcsProject.Auth.SSHPrivateKey, vcsProject2.Auth.SSHPrivateKey)

@@ -118,7 +118,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return nil
 	}
 
-	vcsServer, err := vcs.LoadVCSByID(ctx, api.mustDB(), run.ProjectKey, run.VCSServerID)
+	vcsServer, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), run.ProjectKey, run.VCSServerID)
 	if err != nil {
 		return err
 	}

@@ -30,7 +30,7 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, "myrepo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -122,7 +122,7 @@ func TestPostJobResultHandler(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, "myrepo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
 
 	reg := sdk.Region{Name: "default"}
 	require.NoError(t, region.Insert(ctx, db, &reg))
@@ -205,7 +205,7 @@ func TestGetJobsQueuedHandler(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, "myrepo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -310,7 +310,7 @@ func TestGetJobHandler(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, "myrepo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -393,7 +393,7 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsServer.ID, "myrepo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{

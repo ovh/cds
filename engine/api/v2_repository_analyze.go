@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
@@ -119,7 +120,7 @@ func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, se
 }
 
 func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
+	return service.RBAC(api.analysisRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -181,7 +182,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 			defer tx.Rollback()
 
-			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit)
+			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit, analysis.HookEventUUID)
 			if err != nil {
 				return err
 			}
@@ -195,7 +196,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 		}
 }
 
-func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit string) (*sdk.AnalysisResponse, error) {
+func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit, hookEventUUID string) (*sdk.AnalysisResponse, error) {
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProject.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
@@ -207,7 +208,9 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		ProjectKey:          proj.Key,
 		Branch:              branch,
 		Commit:              commit,
-		Data:                sdk.ProjectRepositoryData{},
+		Data: sdk.ProjectRepositoryData{
+			HookEventUUID: hookEventUUID,
+		},
 	}
 
 	if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
@@ -290,7 +293,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 
-	vcsProjectWithSecret, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
+	vcsProjectWithSecret, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load vcs %s", analysis.VCSProjectID))
 	}
@@ -299,6 +302,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
+
+	defer func() {
+		if err := sendAnalysisHookCallback(ctx, api.mustDB(), *analysis, vcsProjectWithSecret.Type, vcsProjectWithSecret.Name, repo.Name); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}()
 
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProjectWithSecret.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
@@ -447,7 +456,31 @@ skipEntity:
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return sdk.WrapError(err, "unable to update analysis")
 	}
+
 	return sdk.WithStack(tx.Commit())
+}
+
+func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, vcsServerType, vcsServerName, repoName string) error {
+	// Remove hooks
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
+	if err != nil {
+		return err
+	}
+	if len(srvs) < 1 {
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+	}
+	hookCallback := sdk.HookAnalysisCallback{
+		HookEventUUID:  analysis.Data.HookEventUUID,
+		RepositoryName: repoName,
+		VCSServerType:  vcsServerType,
+		VCSServerName:  vcsServerName,
+		AnalysisStatus: analysis.Status,
+		AnalysisID:     analysis.ID,
+	}
+	if _, code, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/analysis/callback", hookCallback, nil); err != nil {
+		return sdk.WrapError(err, "unable to send analysis call to  hook [HTTP: %d]", code)
+	}
+	return nil
 }
 
 func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
