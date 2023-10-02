@@ -61,7 +61,8 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 
 	telemetry.Current(ctx,
 		telemetry.Tag(telemetry.TagVCSServer, repoEventTmp.VCSServerName),
-		telemetry.Tag(telemetry.TagRepository, repoEventTmp.RepositoryName))
+		telemetry.Tag(telemetry.TagRepository, repoEventTmp.RepositoryName),
+		telemetry.Tag(telemetry.TagEventID, repoEventTmp.UUID))
 
 	b, err := s.Dao.LockRepositoryEvent(repoEventTmp.VCSServerType, repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 	if err != nil {

@@ -113,9 +113,11 @@ func (s *Service) Serve(c context.Context) error {
 		s.GoRoutines.RunWithRestart(ctx, "dequeueRepositoryEvent", func(ctx context.Context) {
 			s.dequeueRepositoryEvent(ctx)
 		})
+
 		s.GoRoutines.RunWithRestart(ctx, "dequeueRepositoryEventCallback", func(ctx context.Context) {
 			s.dequeueRepositoryEventCallback(ctx)
 		})
+
 		s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
 			s.manageOldRepositoryEvent(ctx)
 		})

@@ -1,18 +1,46 @@
 package sdk
 
 import (
+	"fmt"
+
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"github.com/rockbears/yaml"
 	"github.com/xeipuuv/gojsonschema"
 )
 
+const (
+	WorkflowHookTypeRepository  = "RepositoryWebHook"
+	WorkflowHookTypeWorkerModel = "WorkerModel"
+	WorkflowHookTypeWorkflow    = "Workflow"
+)
+
 type V2Workflow struct {
 	Name       string                   `json:"name"`
-	Repository WorkflowRepository       `json:"repository,omitempty"`
+	Repository *WorkflowRepository      `json:"repository,omitempty"`
+	On         *WorkflowOn              `json:"on,omitempty"`
 	Stages     map[string]WorkflowStage `json:"stages,omitempty"`
 	Jobs       map[string]V2Job         `json:"jobs"`
+}
+
+type WorkflowOn struct {
+	Push           *WorkflowOnPush           `json:"push,omitempty"`
+	ModelUpdate    *WorkflowOnModelUpdate    `json:"model_update,omitempty"`
+	WorkflowUpdate *WorkflowOnWorkflowUpdate `json:"workflow_update,omitempty"`
+}
+
+type WorkflowOnPush struct {
+	Branches []string `json:"branches,omitempty"`
+	Paths    []string `json:"paths,omitempty"`
+}
+
+type WorkflowOnModelUpdate struct {
+	Models       []string `json:"models,omitempty"`
+	TargetBranch string   `json:"target_branch,omitempty"`
+}
+
+type WorkflowOnWorkflowUpdate struct {
+	TargetBranch string `json:"target_branch,omitempty"`
 }
 
 type WorkflowRepository struct {
@@ -53,6 +81,45 @@ func (w *V2Job) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2Job")
+}
+
+type V2WorkflowHook struct {
+	ID             string             `json:"id" db:"id"`
+	ProjectKey     string             `json:"project_key" db:"project_key"`
+	VCSName        string             `json:"vcs_name" db:"vcs_name"`
+	RepositoryName string             `json:"repository_name" db:"repository_name"`
+	EntityID       string             `json:"entity_id" db:"entity_id"`
+	WorkflowName   string             `json:"workflow_name" db:"workflow_name"`
+	Branch         string             `json:"branch" db:"branch"`
+	Commit         string             `json:"commit" db:"commit"`
+	Type           string             `json:"type" db:"type"`
+	Data           V2WorkflowHookData `json:"data" db:"data"`
+}
+
+type V2WorkflowHookData struct {
+	VCSServer       string   `json:"vcs_server,omitempty"`
+	RepositoryName  string   `json:"repository_name,omitempty"`
+	RepositoryEvent string   `json:"repository_event,omitempty"`
+	Model           string   `json:"model,omitempty"`
+	BranchFilter    []string `json:"branch_filter,omitempty"`
+	PathFilter      []string `json:"path_filter,omitempty"`
+	TargetBranch    string   `json:"target_branch,omitempty"`
+}
+
+func (w V2WorkflowHookData) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal V2WorkflowHookData")
+}
+
+func (w *V2WorkflowHookData) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal V2WorkflowHookData")
 }
 
 type V2JobStrategy struct {

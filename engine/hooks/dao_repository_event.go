@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -27,7 +28,7 @@ func (d *dao) RepositoryEventQueueLen() (int, error) {
 
 func (d *dao) SaveRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent) error {
 	e.LastUpdate = time.Now().UnixMilli()
-	k := cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName))
+	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName)))
 	return d.store.SetAdd(k, e.UUID, e)
 }
 
@@ -37,7 +38,7 @@ func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, e sdk
 
 func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
 	// Use to identify event in progress:
-	k := cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName), e.UUID)
+	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName), e.UUID))
 	if err := d.RemoveRepositoryEventFromInProgressList(ctx, *e); err != nil {
 		return err
 	}
@@ -51,7 +52,7 @@ func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryE
 }
 
 func (d *dao) getRepositoryEventLockKey(vcsType, vcsName, repoName, hookEventUUID string) string {
-	return cache.Key(repositoryEventLockRootKey, d.GetRepositoryMemberKey(vcsType, vcsName, repoName), hookEventUUID)
+	return strings.ToLower(cache.Key(repositoryEventLockRootKey, d.GetRepositoryMemberKey(vcsType, vcsName, repoName), hookEventUUID))
 }
 
 func (d *dao) LockRepositoryEvent(vcsType, vcsName, repoName, hookEventUUID string) (bool, error) {

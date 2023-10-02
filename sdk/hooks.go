@@ -1,11 +1,69 @@
 package sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/rockbears/log"
+	"regexp"
 
 	"database/sql/driver"
 )
+
+type HookListWorkflowRequest struct {
+	VCSName             string           `json:"vcs_name"`
+	RepositoryName      string           `json:"repository_name"`
+	Branch              string           `json:"branch"`
+	Paths               []string         `json:"paths"`
+	RepositoryEventName string           `json:"repository_event"`
+	AnayzedProjectKeys  StringSlice      `json:"project_keys"`
+	Models              []EntityFullName `json:"models"`
+	Workflows           []EntityFullName `json:"workflows"`
+}
+
+func IsValidHookPath(ctx context.Context, configuredPaths []string, paths []string) bool {
+	if len(configuredPaths) == 0 {
+		return true
+	}
+	if len(paths) == 0 {
+		return false
+	}
+	regExps := make([]*regexp.Regexp, 0, len(configuredPaths))
+	for _, p := range configuredPaths {
+		regexpP, err := regexp.Compile(p)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			continue
+		}
+		regExps = append(regExps, regexpP)
+	}
+
+	for _, p := range paths {
+		for _, r := range regExps {
+			if r.MatchString(p) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func IsValidHookBranch(ctx context.Context, configuredBranches []string, currentEventBranch string) bool {
+	if len(configuredBranches) == 0 {
+		return true
+	}
+	for _, b := range configuredBranches {
+		regexpB, err := regexp.Compile(b)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			continue
+		}
+		if regexpB.MatchString(currentEventBranch) {
+			return true
+		}
+	}
+	return false
+}
 
 type HookAccessData struct {
 	URL         string `json:"url" cli:"url"`

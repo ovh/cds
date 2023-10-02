@@ -455,8 +455,10 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/hatchery/heartbeat", nil, r.POSTv2(api.postHatcheryHeartbeatHandler))
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}", nil, r.GETv2(api.getHatcheryHandler), r.DELETEv2(api.deleteHatcheryHandler))
 
+	r.Handle("/v2/hooks/workflows", nil, r.POSTv2(api.postRetrieveWorkflowToTriggerHandler))
 	r.Handle("/v2/hooks/repositories/{vcsServer}/{repositoryName}", nil, r.GETv2(api.getHooksRepositoriesHandler))
 	r.Handle("/v2/hooks/{projectKey}/vcs/{vcsType}/{vcsServer}/repository/{repositoryName}/secret", nil, r.GETv2(api.getRepositoryWebHookSecretHandler))
+	r.Handle("/v2/hooks/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunFromHookV2Handler))
 
 	r.Handle("/v2/jsonschema/{type}", nil, r.GETv2(api.getJsonSchemaHandler))
 

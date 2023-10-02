@@ -15,7 +15,7 @@ import (
 func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 	for {
 		if ctx.Err() != nil {
-			log.Error(ctx, "%v", ctx.Err())
+			log.ErrorWithStackTrace(ctx, ctx.Err())
 			return
 		}
 		size, err := s.Dao.RepositoryEventCallbackQueueLen()
@@ -44,7 +44,8 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 		ctx := telemetry.New(ctx, s, "hooks.dequeueRepositoryEventCallback", nil, trace.SpanKindUnspecified)
 		telemetry.Current(ctx,
 			telemetry.Tag(telemetry.TagVCSServer, callback.VCSServerName),
-			telemetry.Tag(telemetry.TagRepository, callback.RepositoryName))
+			telemetry.Tag(telemetry.TagRepository, callback.RepositoryName),
+			telemetry.Tag(telemetry.TagEventID, callback.HookEventUUID))
 		if err := s.updateHookEventWithCallback(ctx, callback); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
@@ -88,6 +89,8 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		if a.AnalyzeID == callback.AnalysisID {
 			if a.Status == sdk.RepositoryAnalysisStatusInProgress {
 				a.Status = callback.AnalysisStatus
+				hre.ModelUpdated = append(hre.ModelUpdated, callback.Models...)
+				hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.Workflows...)
 				if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 					return err
 				}

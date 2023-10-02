@@ -92,6 +92,10 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 		EventName:      "push",
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
+		ExtractData: sdk.HookRepositoryEventExtractData{
+			Branch: "master",
+			Commit: "123456",
+		},
 	}
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
@@ -113,7 +117,7 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	require.NoError(t, s.manageRepositoryEvent(context.TODO(), k))
 }
 
-func TestManageRepositoryEvent_NonPushEventNoTriggerAnalysis(t *testing.T) {
+func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
 	defer cancel()
@@ -142,6 +146,16 @@ func TestManageRepositoryEvent_NonPushEventNoTriggerAnalysis(t *testing.T) {
 	repoKey := s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
 	_, err := s.Dao.CreateRepository(context.TODO(), repoKey, hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
+
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ListWorkflowToTrigger(gomock.Any(), gomock.Any()).Return([]sdk.V2WorkflowHook{
+		{
+			ProjectKey:     "PROJ",
+			VCSName:        "github",
+			RepositoryName: "repo",
+			WorkflowName:   "myworkflow",
+		},
+	}, nil)
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().WorkflowV2RunFromHook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	// Force dequeue
 	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName), hr.UUID)

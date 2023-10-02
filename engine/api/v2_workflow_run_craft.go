@@ -454,7 +454,7 @@ func buildRunContext(wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.Pr
 
 	// TODO manage git context
 	var gitContext sdk.GitContext
-	if wr.WorkflowData.Workflow.Repository.Name != "" {
+	if wr.WorkflowData.Workflow.Repository != nil {
 		gitContext = sdk.GitContext{
 			Hash:       "",
 			HashShort:  "",

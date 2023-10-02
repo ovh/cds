@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -152,7 +153,7 @@ func InsertTestVCSProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, projID 
 
 func InsertTestProjectRepository(t *testing.T, db gorpmapper.SqlExecutorWithTx, pKey string, vcsServerID string, name string) *sdk.ProjectRepository {
 	repo := sdk.ProjectRepository{
-		Name:         name,
+		Name:         strings.ToLower(name),
 		Created:      time.Now(),
 		VCSProjectID: vcsServerID,
 		CreatedBy:    "test",

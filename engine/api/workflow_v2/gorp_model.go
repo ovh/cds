@@ -30,6 +30,18 @@ func (r dbWorkflowRunJob) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
+type dbWorkflowHook struct {
+	sdk.V2WorkflowHook
+	gorpmapper.SignedEntity
+}
+
+func (r dbWorkflowHook) Canonical() gorpmapper.CanonicalForms {
+	var _ = []interface{}{r.ID, r.Data, r.ProjectKey, r.VCSName, r.RepositoryName, r.EntityID, r.WorkflowName, r.Branch, r.Commit}
+	return gorpmapper.CanonicalForms{
+		"{{.ID}}{{.Data}}{{.ProjectKey}}{{.VCSName}}{{.RepositoryName}}{{.EntityID}}{{.WorkflowName}}{{.Branch}}{{.Commit}}",
+	}
+}
+
 type dbWorkflowRunInfo struct {
 	sdk.V2WorkflowRunInfo
 }
@@ -43,4 +55,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRunJob{}, "v2_workflow_run_job", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRunInfo{}, "v2_workflow_run_info", false, "id"))
 	gorpmapping.Register(gorpmapping.New(dbWorkflowRunJobInfo{}, "v2_workflow_run_job_info", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbWorkflowHook{}, "v2_workflow_hook", false, "id"))
 }

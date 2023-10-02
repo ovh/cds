@@ -45,17 +45,17 @@ type GithubSender struct {
 }
 
 type GithubCommit struct {
-	ID        string        `json:"id"`
-	TreeID    string        `json:"tree_id"`
-	Distinct  bool          `json:"distinct"`
-	Message   string        `json:"message"`
-	Timestamp time.Time     `json:"timestamp"`
-	URL       string        `json:"url"`
-	Author    GithubAuthor  `json:"author"`
-	Committer GithubAuthor  `json:"committer"`
-	Added     []interface{} `json:"added"`
-	Removed   []interface{} `json:"removed"`
-	Modified  []string      `json:"modified"`
+	ID        string       `json:"id"`
+	TreeID    string       `json:"tree_id"`
+	Distinct  bool         `json:"distinct"`
+	Message   string       `json:"message"`
+	Timestamp time.Time    `json:"timestamp"`
+	URL       string       `json:"url"`
+	Author    GithubAuthor `json:"author"`
+	Committer GithubAuthor `json:"committer"`
+	Added     []string     `json:"added"`
+	Removed   []string     `json:"removed"`
+	Modified  []string     `json:"modified"`
 }
 
 type GithubAuthor struct {
