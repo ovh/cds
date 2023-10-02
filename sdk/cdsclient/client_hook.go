@@ -40,3 +40,20 @@ func (c *client) ListWorkflowToTrigger(ctx context.Context, req sdk.HookListWork
 	_, err := c.PostJSON(ctx, "/v2/hooks/workflows", &req, &workflowHooks)
 	return workflowHooks, err
 }
+
+func (c *client) RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error) {
+	var ope sdk.Operation
+	_, err := c.PostJSON(ctx, "/v2/hooks/event/signKey", &req, &ope)
+	return ope, err
+}
+func (c *client) RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error) {
+	var resp sdk.HookRetrieveUserResponse
+	_, err := c.PostJSON(ctx, "/v2/hooks/event/user", &req, &resp)
+	return resp, err
+}
+
+func (c *client) RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error) {
+	var ope sdk.Operation
+	_, err := c.GetJSON(ctx, "/v2/hooks/event/signKey/"+operationUUID, &ope)
+	return ope, err
+}

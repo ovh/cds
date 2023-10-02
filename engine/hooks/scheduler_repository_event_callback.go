@@ -26,7 +26,7 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 		log.Debug(ctx, "dequeueRepositoryEventCallback> current queue size: %d", size)
 
 		// Dequeuing context
-		var callback sdk.HookAnalysisCallback
+		var callback sdk.HookEventCallback
 		if ctx.Err() != nil {
 			log.Error(ctx, "%v", ctx.Err())
 			return
@@ -37,7 +37,7 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 			continue
 		}
 		s.Dao.dequeuedRepositoryEventCallbackIncr()
-		if callback.AnalysisID == "" {
+		if callback.AnalysisCallback == nil && callback.SigningKeyCallback == nil {
 			continue
 		}
 		log.Info(ctx, "dequeueRepositoryEventCallback> work on event: %s", callback.HookEventUUID)
@@ -46,13 +46,14 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 			telemetry.Tag(telemetry.TagVCSServer, callback.VCSServerName),
 			telemetry.Tag(telemetry.TagRepository, callback.RepositoryName),
 			telemetry.Tag(telemetry.TagEventID, callback.HookEventUUID))
+
 		if err := s.updateHookEventWithCallback(ctx, callback); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 	}
 }
 
-func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.HookAnalysisCallback) error {
+func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.HookEventCallback) error {
 	ctx, next := telemetry.Span(ctx, "s.updateHookEventWithCallback")
 	defer next()
 
@@ -80,28 +81,51 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		return nil
 	}
 
-	if hre.Status != sdk.HookEventStatusAnalysis {
+	if hre.Status != sdk.HookEventStatusAnalysis && hre.Status != sdk.HookEventStatusSignKey {
 		return nil
 	}
 
-	for i := range hre.Analyses {
-		a := &hre.Analyses[i]
-		if a.AnalyzeID == callback.AnalysisID {
-			if a.Status == sdk.RepositoryAnalysisStatusInProgress {
-				a.Status = callback.AnalysisStatus
-				hre.ModelUpdated = append(hre.ModelUpdated, callback.Models...)
-				hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.Workflows...)
-				if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
-					return err
+	if callback.AnalysisCallback != nil {
+		if callback.AnalysisCallback.UserID != "" {
+			hre.UserID = callback.AnalysisCallback.UserID
+		}
+		for i := range hre.Analyses {
+			a := &hre.Analyses[i]
+			if a.AnalyzeID == callback.AnalysisCallback.AnalysisID {
+				if a.Status == sdk.RepositoryAnalysisStatusInProgress {
+					a.Status = callback.AnalysisCallback.AnalysisStatus
+					hre.ModelUpdated = append(hre.ModelUpdated, callback.AnalysisCallback.Models...)
+					hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.AnalysisCallback.Workflows...)
+					if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
+						return err
+					}
+					break
 				}
-				break
 			}
+		}
+	}
+
+	// Manage signinKey
+	if callback.SigningKeyCallback != nil {
+		if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
+			// event on error commit unverified
+			hre.Status = sdk.HookEventStatusError
+			hre.LastError = callback.SigningKeyCallback.Error
+			hre.NbErrors++
+		} else if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error == "" {
+			// commit verified
+			hre.SignKey = callback.SigningKeyCallback.SignKey
+		} else if callback.SigningKeyCallback.Error != "" {
+			hre.LastError = callback.SigningKeyCallback.Error
+			hre.NbErrors++
+		}
+		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
+			return err
 		}
 	}
 
 	if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
 		return err
 	}
-
 	return nil
 }

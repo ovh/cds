@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -39,6 +41,8 @@ func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, e sdk
 func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
 	// Use to identify event in progress:
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName), e.UUID))
+	log.Debug(ctx, "enqueue event: %s", k)
+
 	if err := d.RemoveRepositoryEventFromInProgressList(ctx, *e); err != nil {
 		return err
 	}

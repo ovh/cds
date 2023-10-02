@@ -50,13 +50,15 @@ func TestManageAnalysisCallback(t *testing.T) {
 	_, err := s.Dao.CreateRepository(context.TODO(), repoKey, hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
-	callback := sdk.HookAnalysisCallback{
-		AnalysisID:     hr.Analyses[0].AnalyzeID,
+	callback := sdk.HookEventCallback{
 		RepositoryName: hr.RepositoryName,
 		VCSServerName:  hr.VCSServerName,
 		VCSServerType:  hr.VCSServerType,
 		HookEventUUID:  hr.UUID,
-		AnalysisStatus: sdk.RepositoryAnalysisStatusSucceed,
+		AnalysisCallback: &sdk.HookAnalysisCallback{
+			AnalysisID:     hr.Analyses[0].AnalyzeID,
+			AnalysisStatus: sdk.RepositoryAnalysisStatusSucceed,
+		},
 	}
 
 	require.NoError(t, s.updateHookEventWithCallback(context.TODO(), callback))
@@ -139,6 +141,7 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 		EventName:      "pull_request",
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
+		SignKey:        "AZERTY",
 	}
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
@@ -155,7 +158,9 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 			WorkflowName:   "myworkflow",
 		},
 	}, nil)
-	s.Client.(*mock_cdsclient.MockInterface).EXPECT().WorkflowV2RunFromHook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().WorkflowV2RunFromHook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
+	s.Client.(*mock_cdsclient.MockInterface).EXPECT().RetrieveHookEventUser(gomock.Any(), gomock.Any()).Return(sdk.HookRetrieveUserResponse{UserID: "bbb"}, nil)
 
 	// Force dequeue
 	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName), hr.UUID)

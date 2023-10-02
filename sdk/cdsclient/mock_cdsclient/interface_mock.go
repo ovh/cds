@@ -4885,6 +4885,51 @@ func (mr *MockHookClientMockRecorder) PollVCSEvents(uuid, workflowID, vcsServer,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PollVCSEvents", reflect.TypeOf((*MockHookClient)(nil).PollVCSEvents), uuid, workflowID, vcsServer, timestamp)
 }
 
+// RetrieveHookEventSigningKey mocks base method.
+func (m *MockHookClient) RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKey", ctx, req)
+	ret0, _ := ret[0].(sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventSigningKey indicates an expected call of RetrieveHookEventSigningKey.
+func (mr *MockHookClientMockRecorder) RetrieveHookEventSigningKey(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKey", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventSigningKey), ctx, req)
+}
+
+// RetrieveHookEventSigningKeyOperation mocks base method.
+func (m *MockHookClient) RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKeyOperation", ctx, operationUUID)
+	ret0, _ := ret[0].(sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventSigningKeyOperation indicates an expected call of RetrieveHookEventSigningKeyOperation.
+func (mr *MockHookClientMockRecorder) RetrieveHookEventSigningKeyOperation(ctx, operationUUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKeyOperation", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventSigningKeyOperation), ctx, operationUUID)
+}
+
+// RetrieveHookEventUser mocks base method.
+func (m *MockHookClient) RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventUser", ctx, req)
+	ret0, _ := ret[0].(sdk.HookRetrieveUserResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventUser indicates an expected call of RetrieveHookEventUser.
+func (mr *MockHookClientMockRecorder) RetrieveHookEventUser(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventUser", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventUser), ctx, req)
+}
+
 // VCSConfiguration mocks base method.
 func (m *MockHookClient) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
 	m.ctrl.T.Helper()
@@ -4997,9 +5042,9 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Run(ctx, projectKey, vcsId
 }
 
 // WorkflowV2RunFromHook mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockWorkflowV2Client) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -5010,9 +5055,9 @@ func (m *MockWorkflowV2Client) WorkflowV2RunFromHook(ctx context.Context, projec
 }
 
 // WorkflowV2RunFromHook indicates an expected call of WorkflowV2RunFromHook.
-func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunFromHook(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunFromHook(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunFromHook", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunFromHook), varargs...)
 }
 
@@ -9022,6 +9067,51 @@ func (mr *MockInterfaceMockRecorder) Requirements() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Requirements", reflect.TypeOf((*MockInterface)(nil).Requirements))
 }
 
+// RetrieveHookEventSigningKey mocks base method.
+func (m *MockInterface) RetrieveHookEventSigningKey(ctx context.Context, req sdk.HookRetrieveSignKeyRequest) (sdk.Operation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKey", ctx, req)
+	ret0, _ := ret[0].(sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventSigningKey indicates an expected call of RetrieveHookEventSigningKey.
+func (mr *MockInterfaceMockRecorder) RetrieveHookEventSigningKey(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKey", reflect.TypeOf((*MockInterface)(nil).RetrieveHookEventSigningKey), ctx, req)
+}
+
+// RetrieveHookEventSigningKeyOperation mocks base method.
+func (m *MockInterface) RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventSigningKeyOperation", ctx, operationUUID)
+	ret0, _ := ret[0].(sdk.Operation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventSigningKeyOperation indicates an expected call of RetrieveHookEventSigningKeyOperation.
+func (mr *MockInterfaceMockRecorder) RetrieveHookEventSigningKeyOperation(ctx, operationUUID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventSigningKeyOperation", reflect.TypeOf((*MockInterface)(nil).RetrieveHookEventSigningKeyOperation), ctx, operationUUID)
+}
+
+// RetrieveHookEventUser mocks base method.
+func (m *MockInterface) RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetrieveHookEventUser", ctx, req)
+	ret0, _ := ret[0].(sdk.HookRetrieveUserResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RetrieveHookEventUser indicates an expected call of RetrieveHookEventUser.
+func (mr *MockInterfaceMockRecorder) RetrieveHookEventUser(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventUser", reflect.TypeOf((*MockInterface)(nil).RetrieveHookEventUser), ctx, req)
+}
+
 // ServiceCallDELETE mocks base method.
 func (m *MockInterface) ServiceCallDELETE(stype, url string) error {
 	m.ctrl.T.Helper()
@@ -10578,9 +10668,9 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2Run(ctx, projectKey, vcsIdentifie
 }
 
 // WorkflowV2RunFromHook mocks base method.
-func (m *MockInterface) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockInterface) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
@@ -10591,9 +10681,9 @@ func (m *MockInterface) WorkflowV2RunFromHook(ctx context.Context, projectKey, v
 }
 
 // WorkflowV2RunFromHook indicates an expected call of WorkflowV2RunFromHook.
-func (mr *MockInterfaceMockRecorder) WorkflowV2RunFromHook(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName interface{}, mods ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunFromHook(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest interface{}, mods ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName}, mods...)
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runRequest}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunFromHook", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunFromHook), varargs...)
 }
 

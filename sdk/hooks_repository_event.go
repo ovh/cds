@@ -14,11 +14,15 @@ const (
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
 	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
 
-	WorkflowHookEventPush = "push"
+	WorkflowHookEventWorkflowUpdate = "workflow_update"
+	WorkflowHookEventModelUpdate    = "model_update"
+	WorkflowHookEventPush           = "push"
 
 	HookEventStatusScheduled     = "Scheduled"
 	HookEventStatusAnalysis      = "Analyzing"
 	HookEventStatusWorkflowHooks = "WorkflowHooks"
+	HookEventStatusSignKey       = "SignKey"
+	HookEventStatusWorkflow      = "Workflow"
 	HookEventStatusDone          = "Done"
 	HookEventStatusError         = "Error"
 	HookEventStatusSkipped       = "Skipped"
@@ -27,15 +31,26 @@ const (
 	HookEventWorkflowStatusDone      = "Done"
 )
 
+type HookEventCallback struct {
+	AnalysisCallback   *HookAnalysisCallback  `json:"analysis_callback"`
+	SigningKeyCallback *HookSigninKeyCallback `json:"signing_key_callback"`
+	HookEventUUID      string                 `json:"hook_event_uuid"`
+	VCSServerType      string                 `json:"vcs_server_type"`
+	VCSServerName      string                 `json:"vcs_server_name"`
+	RepositoryName     string                 `json:"repository_name"`
+}
+
+type HookSigninKeyCallback struct {
+	SignKey string `json:"sign_key"`
+	Error   string `json:"error"`
+}
+
 type HookAnalysisCallback struct {
 	AnalysisID     string           `json:"analysis_id"`
 	AnalysisStatus string           `json:"analysis_status"`
-	VCSServerType  string           `json:"vcs_server_type"`
-	VCSServerName  string           `json:"vcs_server_name"`
-	RepositoryName string           `json:"repository_name"`
-	HookEventUUID  string           `json:"hook_event_uuid"`
 	Models         []EntityFullName `json:"models"`
 	Workflows      []EntityFullName `json:"workflows"`
+	UserID         string           `json:"user_id"`
 }
 
 type HookRepository struct {
@@ -63,6 +78,9 @@ type HookRepositoryEvent struct {
 	ModelUpdated        []EntityFullName               `json:"model_updated"`
 	WorkflowUpdated     []EntityFullName               `json:"workflow_updated"`
 	WorkflowHooks       []HookRepositoryEventWorkflow  `json:"workflows"`
+	UserID              string                         `json:"user_id"`
+	SignKey             string                         `json:"sign_key"`
+	SigningKeyOperation string                         `json:"signing_key_operation"`
 }
 
 type HookRepositoryEventWorkflow struct {
@@ -95,6 +113,30 @@ type HookRepositoryEventAnalysis struct {
 	AnalyzeID  string `json:"analyze_id"`
 	Status     string `json:"status"`
 	ProjectKey string `json:"project_key"`
+}
+
+type HookRetrieveSignKeyRequest struct {
+	ProjectKey     string `json:"projectKey"`
+	VCSServerType  string `json:"vcs_server_type"`
+	VCSServerName  string `json:"vcs_server_name"`
+	RepositoryName string `json:"repository_name"`
+	Commit         string `json:"commit"`
+	Branch         string `json:"branch"`
+	HookEventUUID  string `json:"hook_event_uuid"`
+}
+
+type HookRetrieveUserRequest struct {
+	ProjectKey     string `json:"projectKey"`
+	VCSServerType  string `json:"vcs_server_type"`
+	VCSServerName  string `json:"vcs_server_name"`
+	RepositoryName string `json:"repository_name"`
+	Commit         string `json:"commit"`
+	Branch         string `json:"branch"`
+	SignKey        string `json:"sign_key"`
+}
+
+type HookRetrieveUserResponse struct {
+	UserID string `json:"user_id"`
 }
 
 type AnalysisRequest struct {

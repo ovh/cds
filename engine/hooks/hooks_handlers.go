@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"time"
@@ -22,7 +23,10 @@ func (s *Service) getGenerateRepositoryWebHookSecretHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		vcsServerName := vars["vcsServer"]
-		repoName := vars["repoName"]
+		repoName, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
 
 		key := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsServerName, repoName)
 		return service.WriteJSON(w, sdk.GenerateRepositoryWebhook{Key: key}, http.StatusOK)
@@ -31,7 +35,7 @@ func (s *Service) getGenerateRepositoryWebHookSecretHandler() service.Handler {
 
 func (s *Service) postRepositoryEventAnalysisCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var hookCallback sdk.HookAnalysisCallback
+		var hookCallback sdk.HookEventCallback
 		if err := service.UnmarshalBody(r, &hookCallback); err != nil {
 			return err
 		}

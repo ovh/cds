@@ -179,11 +179,19 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		if err := s.triggerAnalyses(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger analyses")
 		}
-
 		// Check if all workflow triggered has been sent
 	case sdk.HookEventStatusWorkflowHooks:
-
-		// Remove event from in progress list
+		if err := s.triggerWorkflowHooks(ctx, hre); err != nil {
+			return sdk.WrapError(err, "unable to trigger workflow hooks")
+		}
+	case sdk.HookEventStatusSignKey:
+		if err := s.triggerGetSigningKey(ctx, hre); err != nil {
+			return sdk.WrapError(err, "unable to get signing key")
+		}
+	case sdk.HookEventStatusWorkflow:
+		if err := s.triggerWorkflows(ctx, hre); err != nil {
+			return sdk.WrapError(err, "unable to trigger workflow")
+		}
 	case sdk.HookEventStatusDone, sdk.HookEventStatusSkipped, sdk.HookEventStatusError:
 		// Remove event from inprogressList
 		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {

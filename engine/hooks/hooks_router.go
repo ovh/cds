@@ -40,7 +40,7 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/v2/webhook/repository", nil, r.POST(s.repositoryHooksHandler, service.OverrideAuth(CheckWebhookRequestSignatureMiddleware(s.WebHooksParsedPublicKey))))
 	r.Handle("/v2/webhook/repository/{vcsServerType}/{vcsServer}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
-	r.Handle("/v2/repository/event/analysis/callback", nil, r.POST(s.postRepositoryEventAnalysisCallbackHandler))
+	r.Handle("/v2/repository/event/callback", nil, r.POST(s.postRepositoryEventAnalysisCallbackHandler))
 	r.Handle("/v2/repository/key/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
 
 	r.Handle("/webhook/{uuid}", nil, r.POST(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.GET(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.DELETE(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.PUT(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -65,7 +65,7 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 		}
 		vars := mux.Vars(req)
 		vcsType := vars["vcsServerType"]
-		vcsName := vars["vcsServerName"]
+		vcsName := vars["vcsServer"]
 
 		defer req.Body.Close() // nolint
 		body, err := io.ReadAll(req.Body)
@@ -84,7 +84,8 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 		req.Body = newRequestBody
 
 		// Create a new HMAC by defining the hash type and the key (as byte array)
-		h := hmac.New(sha256.New, []byte(sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsName, repoName)))
+		hookKey := sdk.GenerateRepositoryWebHookSecret(s.Cfg.RepositoryWebHookKey, vcsName, repoName)
+		h := hmac.New(sha256.New, []byte(hookKey))
 		h.Write(body)
 		sha := hex.EncodeToString(h.Sum(nil))
 
