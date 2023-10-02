@@ -425,7 +425,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 			},
 		).Times(1)
 
-	// Create hatc
+	// Create hatchery
 	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
 	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
 
