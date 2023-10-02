@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func MigrateProjectRepsositories(ctx context.Context, db *gorp.DbMap) error {
+func MigrateProjectRepositories(ctx context.Context, db *gorp.DbMap) error {
 	repos, err := repository.LoadAllRepositories(ctx, db)
 	if err != nil {
 		return err
