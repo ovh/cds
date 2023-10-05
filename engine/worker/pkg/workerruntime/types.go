@@ -121,6 +121,7 @@ type Runtime interface {
 	Parameters() []sdk.Parameter
 	PluginGet(pluginName string) (*sdk.GRPCPlugin, error)
 	PluginGetBinary(name, os, arch string, w io.Writer) error
+
 }
 
 func JobID(ctx context.Context) (int64, error) {

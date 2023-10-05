@@ -2,13 +2,10 @@ package workflow
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/fsamin/go-dump"
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -320,40 +317,4 @@ func getNodeRunBuildParameters(ctx context.Context, proj sdk.Project, wr *sdk.Wo
 	}
 
 	return params, varsContext, errm
-}
-
-func computeCDSContext(ctx context.Context, wr sdk.WorkflowRun, wnr sdk.WorkflowNodeRun) sdk.CDSContext {
-	cdsCtx := sdk.CDSContext{}
-
-	cdsCtx.RunID = fmt.Sprintf("%d", wr.ID)
-	cdsCtx.RunNumber = wr.Number
-	cdsCtx.RunAttempt = wr.LastSubNumber + 1
-	cdsCtx.WorkflowRef = wr.Workflow.Name
-
-	if wnr.Manual != nil {
-		if wnr.Manual.Payload != nil {
-			p, is := wnr.Manual.Payload.(map[string]interface{})
-			if is {
-				cdsCtx.Event = p
-			} else {
-				stringify, _ := json.Marshal(wnr.Manual.Payload)
-				var m map[string]interface{}
-				if err := json.Unmarshal(stringify, &m); err != nil {
-					log.Warn(ctx, "unable to unmarshal payload: %s", string(stringify))
-				}
-				cdsCtx.Event = m
-			}
-		}
-		cdsCtx.TriggeringActor = wnr.Manual.Username
-	} else if wnr.HookEvent != nil && wnr.HookEvent.Payload != nil {
-		if payload, has := wnr.HookEvent.Payload["payload"]; has {
-			var m map[string]interface{}
-			if err := json.Unmarshal([]byte(payload), &m); err != nil {
-				log.Warn(ctx, "unable to unmarshal payload [%s]: %v", payload, err)
-			}
-			cdsCtx.Event = m
-		}
-	}
-	return cdsCtx
-
 }

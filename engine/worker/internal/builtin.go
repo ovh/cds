@@ -56,7 +56,7 @@ func (w *CurrentWorker) runBuiltin(ctx context.Context, a sdk.Action, secrets []
 func (w *CurrentWorker) runGRPCPlugin(ctx context.Context, a sdk.Action) sdk.Result {
 	log.Info(ctx, "running grpc plugin %q", a.Name)
 
-	pluginClient, err := plugin.NewClient(ctx, w, plugin.TypeAction, a.Name)
+	pluginClient, err := plugin.NewClient(ctx, w, plugin.TypeAction, a.Name, plugin.InputManagementDefault)
 	if err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Unable to start grpc plugin... Aborting (%v)", err)}
 	}

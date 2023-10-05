@@ -1,6 +1,8 @@
 module github.com/ovh/cds
 
-go 1.20
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1-0.20220530220844-359c771ce3d2
@@ -21,7 +23,7 @@ require (
 	github.com/eapache/go-resiliency v1.3.0
 	github.com/fatih/color v1.13.0
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.1.11-0.20220715092716-99f295919954
+	github.com/fsamin/go-repo v0.2.3
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/go-gorp/gorp v2.0.0+incompatible
@@ -48,7 +50,7 @@ require (
 	github.com/lib/pq v1.9.0
 	github.com/maruel/panicparse/v2 v2.2.2
 	github.com/mattn/go-sqlite3 v1.14.16
-	github.com/mattn/go-zglob v0.0.1
+	github.com/mattn/go-zglob v0.0.4
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 	github.com/mholt/archiver v3.1.1+incompatible

@@ -13,6 +13,11 @@ testcases:
   - script: gpg --import ./fixtures/gpg-ADMIN/key.priv
   - script: gpg --import ./fixtures/gpg-ADMIN/key.pub
   - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg-ADMIN/key.pub.json'
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project keys list ITCLIPRJVCS --format json
+    vars:
+      sshKeyPub:
+        from: result.systemoutjson.systemoutjson0.publickey
+  - script: 'curl -X POST {{.git.host}}/api/v1/user/keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d "{\"key\": \"{{.sshKeyPub}}\", \"read_only\": true, \"title\": \"mykey\"}"'
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/rbac_admin.yml --force
 
 - name: commitStep
@@ -90,13 +95,15 @@ testcases:
         - result.systemoutjson.status ShouldEqual "Success"
       retry: 30
       delay: 10
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow infos ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.systemoutjson0.workflow_name ShouldEqual "MyFirstWorkflow"
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1
-    - script: "cat *step-0 | grep \"Workflow: MyFirstWorkflow\""
+    - script: "cat *checkout"
+    - script: "cat *checkout | grep \"Checkout completed\""
     - script: "cat *customaction | grep \"Welcome in action test-parent-action\""
     - script: "cat *customaction | grep \"Hello Foo Doe from project ITCLIPRJVCS\""
     - script: "cat *step-2 | grep \"Thank you\""

@@ -8,7 +8,6 @@ import (
 
 // DEPRECATED - Only use on old workflow
 type NodeRunContext struct {
-	CDS  CDSContext        `json:"cds,omitempty"`
 	Git  GitContext        `json:"git,omitempty"`
 	Vars map[string]string `json:"vars,omitempty"`
 	Jobs JobsResultContext `json:"jobs,omitempty"`
@@ -58,45 +57,40 @@ type ActionContext struct {
 
 type CDSContext struct {
 	// Workflow
-	Event                map[string]interface{} `json:"event,omitempty"`
-	Version              string                 `json:"version,omitempty"`
-	ProjectKey           string                 `json:"project_key,omitempty"`
-	RunID                string                 `json:"run_id,omitempty"`
-	RunNumber            int64                  `json:"run_number,omitempty"`
-	RunAttempt           int64                  `json:"run_attempt,omitempty"`
-	Workflow             string                 `json:"workflow,omitempty"`
-	WorkflowRef          string                 `json:"workflow_ref,omitempty"`
-	WorkflowSha          string                 `json:"workflow_sha,omitempty"`
-	WorkflowVCSServer    string                 `json:"workflow_vcs_server,omitempty"`
-	WorkflowRepository   string                 `json:"workflow_repository,omitempty"`
-	WorkflowIntegrations map[string]interface{} `json:"integrations,omitempty"` // actual key: artifact_manager
-	TriggeringActor      string                 `json:"triggering_actor,omitempty"`
+	EventName          string                 `json:"event_name,omitempty"`
+	Event              map[string]interface{} `json:"event,omitempty"`
+	Version            string                 `json:"version,omitempty"`
+	ProjectKey         string                 `json:"project_key,omitempty"`
+	RunID              string                 `json:"run_id,omitempty"`
+	RunNumber          int64                  `json:"run_number,omitempty"`
+	RunAttempt         int64                  `json:"run_attempt,omitempty"`
+	Workflow           string                 `json:"workflow,omitempty"`
+	WorkflowRef        string                 `json:"workflow_ref,omitempty"`
+	WorkflowSha        string                 `json:"workflow_sha,omitempty"`
+	WorkflowVCSServer  string                 `json:"workflow_vcs_server,omitempty"`
+	WorkflowRepository string                 `json:"workflow_repository,omitempty"`
+	TriggeringActor    string                 `json:"triggering_actor,omitempty"`
 
 	// Job
 	Job   string `json:"job,omitempty"`
 	Stage string `json:"stage,omitempty"`
+
 	// Worker
-	Workspace         string `json:"workspace,omitempty"`
-	ActionRef         string `json:"action_ref,omitempty"`
-	ActionRespository string `json:"action_repository,omitempty"`
-	ActionStatus      string `json:"action_status,omitempty"`
+	Workspace string `json:"workspace,omitempty"`
+
+	// TODO
+	WorkflowIntegrations map[string]interface{} `json:"integrations,omitempty"` // actual key: artifact_manager
 }
 
 type GitContext struct {
-	Hash       string `json:"hash,omitempty"`
-	HashShort  string `json:"hash_short,omitempty"`
-	Repository string `json:"repository,omitempty"`
-	Branch     string `json:"branch,omitempty"`
-	Tag        string `json:"tag,omitempty"`
-	Author     string `json:"author,omitempty"`
-	Message    string `json:"message,omitempty"`
-	URL        string `json:"url,omitempty"`
-	Server     string `json:"server,omitempty"`
-	EventName  string `json:"event_name,omitempty"`
-	Connection string `json:"connection,omitempty"`
-	SSHKey     string `json:"ssh_key,omitempty"`
-	PGPKey     string `json:"pgp_key,omitempty"`
-	HttpUser   string `json:"http_user,omitempty"`
+	Server        string `json:"server,omitempty"`
+	Repository    string `json:"repository,omitempty"`
+	RepositoryURL string `json:"repositoryUrl,omitempty"`
+	Ref           string `json:"ref,omitempty"`
+	Sha           string `json:"sha,omitempty"`
+	Connection    string `json:"connection,omitempty"`
+	SSHKey        string `json:"ssh_key,omitempty"`
+	Username      string `json:"username,omitempty"`
 }
 
 type JobContext struct {

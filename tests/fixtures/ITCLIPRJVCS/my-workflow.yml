@@ -7,8 +7,8 @@ jobs:
     region: default
     worker_model: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
     steps:
-      - run: |-
-          echo "Workflow: ${{cds.workflow}}"
+      - uses: actions/checkout
+        id: checkout
       - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
         id: customaction
       - run: |-

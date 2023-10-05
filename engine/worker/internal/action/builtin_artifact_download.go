@@ -211,7 +211,7 @@ func GetArtifactFromIntegrationPlugin(ctx context.Context, wk workerruntime.Runt
 }
 
 func runGRPCIntegrationPlugin(ctx context.Context, wk workerruntime.Runtime, pluginName string, opts map[string]string) sdk.Result {
-	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, pluginName)
+	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, pluginName, plugin.InputManagementDefault)
 	if err != nil {
 		return sdk.Result{
 			Status: sdk.StatusFail,

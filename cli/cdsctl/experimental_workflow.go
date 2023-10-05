@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/spf13/cobra"
@@ -17,6 +18,7 @@ var experimentalWorkflowCmd = cli.Command{
 func experimentalWorkflow() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowRunCmd, workflowRunFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowRunInfosListCmd, workflowRunInfosListFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunJobsCmd, workflowRunJobsFunc, nil, withAllCommandModifiers()...),
@@ -24,6 +26,38 @@ func experimentalWorkflow() *cobra.Command {
 		cli.NewCommand(workflowRunStopJobCmd, workflowRunStopJobFunc, nil, withAllCommandModifiers()...),
 		experimentalWorkflowRunLogs(),
 	})
+}
+
+var workflowRunInfosListCmd = cli.Command{
+	Name:    "infos",
+	Aliases: []string{"i", "info"},
+	Short:   "List run informations",
+	Example: "cdsctl experimental workflow infos <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "proj_key"},
+		{Name: "vcs_identifier"},
+		{Name: "repo_identifier"},
+		{Name: "workflow_name"},
+		{Name: "run_number"},
+	},
+}
+
+func workflowRunInfosListFunc(v cli.Values) (cli.ListResult, error) {
+	projKey := v.GetString("proj_key")
+	vcsId := v.GetString("vcs_identifier")
+	repoId := v.GetString("repo_identifier")
+	wkfName := v.GetString("workflow_name")
+	runNumber, err := v.GetInt64("run_number")
+	if err != nil {
+		return nil, err
+	}
+
+	runInfos, err := client.WorkflowV2RunInfoList(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(runInfos), nil
 }
 
 var workflowRunHistoryCmd = cli.Command{
@@ -133,6 +167,9 @@ var workflowRunCmd = cli.Command{
 		{
 			Name: "branch",
 		},
+		{
+			Name: "data",
+		},
 	},
 }
 
@@ -142,8 +179,14 @@ func workflowRunFunc(v cli.Values) error {
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
 	branch := v.GetString("branch")
+	data := v.GetString("data")
 
-	run, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, cdsclient.WithQueryParameter("branch", branch))
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &payload); err != nil {
+		return fmt.Errorf("unable to read json data")
+	}
+
+	run, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload, cdsclient.WithQueryParameter("branch", branch))
 	if err != nil {
 		return err
 	}
