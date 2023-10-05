@@ -108,7 +108,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			api.GoRoutines.Exec(context.Background(), "operation-pooling-"+ope.UUID, func(ctx context.Context) {
+			api.GoRoutines.Exec(context.Background(), "operation-polling-"+ope.UUID, func(ctx context.Context) {
 				ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
 				if err != nil {
 					log.ErrorWithStackTrace(ctx, err)
