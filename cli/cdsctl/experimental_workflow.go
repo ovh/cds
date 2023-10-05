@@ -168,7 +168,8 @@ var workflowRunCmd = cli.Command{
 			Name: "branch",
 		},
 		{
-			Name: "data",
+			Name:    "data",
+			Default: "{}",
 		},
 	},
 }
