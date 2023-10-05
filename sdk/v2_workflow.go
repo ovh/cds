@@ -15,10 +15,22 @@ const (
 	WorkflowHookTypeWorkflow    = "Workflow"
 )
 
+type V2WorkflowRunHookRequest struct {
+	V2WorkflowRunRequest
+	UserID string `json:"user_id"`
+}
+
+type V2WorkflowRunRequest struct {
+	UserID string `json:"user_id"`
+	Branch string `json:"branch"`
+	Commit string `json:"commit"`
+}
+
 type V2Workflow struct {
 	Name       string                   `json:"name"`
 	Repository *WorkflowRepository      `json:"repository,omitempty"`
-	On         *WorkflowOn              `json:"on,omitempty"`
+	OnRaw      json.RawMessage          `json:"on,omitempty"`
+	On         *WorkflowOn              `json:"-" yaml:"-"`
 	Stages     map[string]WorkflowStage `json:"stages,omitempty"`
 	Jobs       map[string]V2Job         `json:"jobs"`
 }
@@ -46,6 +58,94 @@ type WorkflowOnWorkflowUpdate struct {
 type WorkflowRepository struct {
 	VCSServer string `json:"vcs,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Server that host the git repository"`
 	Name      string `json:"name,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Name of the git repository: <org>/<name>"`
+}
+
+func (w V2Workflow) MarshalJSON() ([]byte, error) {
+	type Alias V2Workflow // prevent recursion
+	workflowAlias := Alias(w)
+
+	// Check default value
+	if workflowAlias.On != nil {
+		keys := IsDefaultHooks(workflowAlias.On)
+		if len(keys) > 0 {
+			bts, _ := json.Marshal(keys)
+			workflowAlias.OnRaw = bts
+		} else {
+			onBts, err := json.Marshal(workflowAlias.On)
+			if err != nil {
+				return nil, WithStack(err)
+			}
+			workflowAlias.OnRaw = onBts
+		}
+	}
+	bts, err := json.Marshal(workflowAlias)
+	return bts, err
+}
+
+func IsDefaultHooks(on *WorkflowOn) []string {
+	hookKeys := make([]string, 0)
+	if on.Push != nil {
+		hookKeys = append(hookKeys, WorkflowHookEventPush)
+		if len(on.Push.Paths) > 0 || len(on.Push.Branches) > 0 {
+			return nil
+		}
+	}
+	if on.WorkflowUpdate != nil {
+		hookKeys = append(hookKeys, WorkflowHookEventWorkflowUpdate)
+		if on.WorkflowUpdate.TargetBranch != "" {
+			return nil
+		}
+	}
+	if on.ModelUpdate != nil {
+		hookKeys = append(hookKeys, WorkflowHookEventModelUpdate)
+		if on.ModelUpdate.TargetBranch != "" || len(on.ModelUpdate.Models) > 0 {
+			return nil
+		}
+	}
+	return hookKeys
+}
+
+func (w *V2Workflow) UnmarshalJSON(data []byte) error {
+	type Alias V2Workflow // prevent recursion
+	var workflowAlias Alias
+	if err := JSONUnmarshal(data, &workflowAlias); err != nil {
+		return WrapError(err, "unable to unmarshal workflow")
+	}
+	if workflowAlias.OnRaw != nil {
+		bts, _ := json.Marshal(workflowAlias.OnRaw)
+		var on WorkflowOn
+		if err := JSONUnmarshal(bts, &on); err != nil {
+			var onSlice []string
+			if err := JSONUnmarshal(bts, &onSlice); err != nil {
+				return WrapError(err, "unable to unmarshal On in Workflow")
+			}
+			if len(onSlice) > 0 {
+				workflowAlias.On = &WorkflowOn{}
+				for _, s := range onSlice {
+					switch s {
+					case WorkflowHookEventWorkflowUpdate:
+						workflowAlias.On.WorkflowUpdate = &WorkflowOnWorkflowUpdate{
+							TargetBranch: "", // empty for default branch
+						}
+					case WorkflowHookEventModelUpdate:
+						workflowAlias.On.ModelUpdate = &WorkflowOnModelUpdate{
+							TargetBranch: "",         // empty for default branch
+							Models:       []string{}, // empty for all model used on the workflow
+						}
+					case WorkflowHookEventPush:
+						workflowAlias.On.Push = &WorkflowOnPush{
+							Branches: []string{}, // trigger for all pushed branches
+							Paths:    []string{},
+						}
+					}
+				}
+			}
+		} else {
+			workflowAlias.On = &on
+		}
+	}
+	*w = V2Workflow(workflowAlias)
+	return nil
 }
 
 type WorkflowStage struct {

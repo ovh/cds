@@ -447,8 +447,8 @@ github.com/prometheus/procfs v0.0.0-20190507164030-5867b95ac084/go.mod h1:TjEm7z
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
 github.com/rockbears/log v0.7.0 h1:DM1rX/X+VsdRnsgVtydnHk47/4pP/mbI/dq2plFRAAc=
 github.com/rockbears/log v0.7.0/go.mod h1:rnSsmxtJcxoslHzIcHkCuSeAsxN46z/EOFIuiWuzefM=
-github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625 h1:HQAWw/D9RItCYSoWFs8E7IrGKrX9ivqAlCq47DM3IVU=
-github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625/go.mod h1:8cDJx2PWQJMtfGgsRCvHVbIB61SV3dvy8o6EGv2cIpg=
+github.com/rockbears/yaml v0.4.0 h1:Mvxo/KXPdZ2x3XOMM+xj0Vvm3sb6E2uh4jeoCtdHab4=
+github.com/rockbears/yaml v0.4.0/go.mod h1:8cDJx2PWQJMtfGgsRCvHVbIB61SV3dvy8o6EGv2cIpg=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=

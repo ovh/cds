@@ -23,6 +23,6 @@ func (d *dao) RepositoryEventCallbackQueueLen() (int, error) {
 	return d.store.QueueLen(repositoryEventCallbackQueue)
 }
 
-func (d *dao) EnqueueRepositoryEventCallback(_ context.Context, e sdk.HookAnalysisCallback) error {
+func (d *dao) EnqueueRepositoryEventCallback(_ context.Context, e sdk.HookEventCallback) error {
 	return d.store.Enqueue(repositoryEventCallbackQueue, e)
 }

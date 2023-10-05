@@ -11,7 +11,7 @@ require (
 	github.com/jfrog/jfrog-client-go v1.31.4
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/pkg/errors v0.9.1
-	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625
+	github.com/rockbears/yaml v0.4.0
 	github.com/stretchr/testify v1.8.4
 )
 

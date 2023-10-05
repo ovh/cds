@@ -9,6 +9,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/operation"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
@@ -18,6 +21,134 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 )
+
+func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.isHookService),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			var r sdk.HookRetrieveUserRequest
+			if err := service.UnmarshalBody(req, &r); err != nil {
+				return err
+			}
+
+			vcsProjectWithSecret, err := vcs.LoadVCSByProject(ctx, api.mustDB(), r.ProjectKey, r.VCSServerName, gorpmapping.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+
+			resp := sdk.HookRetrieveUserResponse{}
+			u, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
+			if err != nil {
+				return err
+			}
+			if u != nil {
+				resp.UserID = u.ID
+			}
+			return service.WriteJSON(w, resp, http.StatusOK)
+		}
+}
+
+func (api *API) getRetrieveSignKeyOperationHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.isHookService),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			uuid := vars["uuid"]
+
+			ope, err := operation.GetRepositoryOperation(ctx, api.mustDB(), uuid)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, ope, http.StatusOK)
+		}
+}
+
+func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.isHookService),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+
+			var hookRetrieveSignKey sdk.HookRetrieveSignKeyRequest
+			if err := service.UnmarshalRequest(ctx, req, &hookRetrieveSignKey); err != nil {
+				return err
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), hookRetrieveSignKey.ProjectKey, project.LoadOptions.WithKeys)
+			if err != nil {
+				return err
+			}
+
+			vcsProjectWithSecret, err := vcs.LoadVCSByProject(ctx, api.mustDB(), hookRetrieveSignKey.ProjectKey, hookRetrieveSignKey.VCSServerName, gorpmapping.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback() // nolint
+
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, hookRetrieveSignKey.ProjectKey, hookRetrieveSignKey.VCSServerName)
+			if err != nil {
+				return err
+			}
+			repo, err := vcsClient.RepoByFullname(ctx, hookRetrieveSignKey.RepositoryName)
+			if err != nil {
+				log.Info(ctx, "unable to get repository %s/%s for project %s", hookRetrieveSignKey.VCSServerName, hookRetrieveSignKey.RepositoryName, hookRetrieveSignKey.ProjectKey)
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
+			cloneURL := repo.SSHCloneURL
+			if vcsProjectWithSecret.Auth.SSHKeyName == "" {
+				cloneURL = repo.HTTPCloneURL
+			}
+			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, hookRetrieveSignKey.Commit, hookRetrieveSignKey.Branch)
+			if err != nil {
+				return err
+			}
+
+			api.GoRoutines.Exec(context.Background(), "operation-polling-"+ope.UUID, func(ctx context.Context) {
+				ope, err := operation.Poll(ctx, api.mustDB(), ope.UUID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					ope.Status = sdk.OperationStatusError
+					ope.Error = &sdk.OperationError{Message: fmt.Sprintf("%v", err)}
+				}
+
+				// Send result to hooks
+				srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				if len(srvs) < 1 {
+					log.ErrorWithStackTrace(ctx, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice"))
+					return
+				}
+				callback := sdk.HookEventCallback{
+					VCSServerType:      hookRetrieveSignKey.VCSServerType,
+					VCSServerName:      hookRetrieveSignKey.VCSServerName,
+					RepositoryName:     hookRetrieveSignKey.RepositoryName,
+					HookEventUUID:      hookRetrieveSignKey.HookEventUUID,
+					SigningKeyCallback: &sdk.HookSigninKeyCallback{},
+				}
+				if ope.Status == sdk.OperationStatusDone && ope.Setup.Checkout.Result.CommitVerified {
+					callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
+				} else if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
+					callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
+					callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg
+				} else {
+					callback.SigningKeyCallback.Error = ope.Error.Message
+				}
+				if _, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to  hook [HTTP: %d]", code))
+					return
+				}
+			})
+			return service.WriteJSON(w, ope, http.StatusOK)
+		}
+}
 
 func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.isHookService),

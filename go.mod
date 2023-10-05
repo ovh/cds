@@ -69,7 +69,7 @@ require (
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/log v0.7.0
-	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625
+	github.com/rockbears/yaml v0.4.0
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
 	github.com/sirupsen/logrus v1.9.0
