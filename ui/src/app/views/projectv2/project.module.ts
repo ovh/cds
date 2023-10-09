@@ -4,7 +4,6 @@ import { SharedModule } from 'app/shared/shared.module';
 import { projectV2Routing } from './project.routing';
 import { ProjectV2ShowComponent } from 'app/views/projectv2/project.component';
 import { ProjectV2TopMenuComponent } from 'app/views/projectv2/top-menu/project.top.menu.component';
-import { ProjectV2SidebarComponent } from 'app/views/projectv2/sidebar/sidebar.component';
 import {
     ProjectV2RepositoryAddComponent
 } from 'app/views/projectv2/vcs/repository/project.repository.add.component';
@@ -27,6 +26,11 @@ import {
     ProjectV2WorkflowJobsGraphComponent
 } from "./vcs/repository/workflow/show/graph/jobs-graph.component";
 import {ProjectWorkflowEntityComponent} from "./vcs/repository/workflow/show/entity/project.workflow.entity.component";
+import {ProjectV2WorkflowRunComponent} from "./run/project.run.component";
+import { ProjectV2SidebarComponent } from './sidebar/workspace/sidebar.component';
+import {ProjectV2SidebarRunComponent} from "./sidebar/run/sidebar.run.component";
+import {RunJobComponent} from "./run/run-job.component";
+import {RunJobLogsComponent} from "./run/run-job-logs.component";
 
 @NgModule({
     declarations: [
@@ -43,7 +47,12 @@ import {ProjectWorkflowEntityComponent} from "./vcs/repository/workflow/show/ent
         ProjectV2WorkflowJobNodeComponent,
         ProjectV2WorkflowStagesGraphComponent,
         ProjectV2WorkflowJobsGraphComponent,
-        ProjectWorkflowEntityComponent
+        ProjectWorkflowEntityComponent,
+
+        ProjectV2WorkflowRunComponent,
+        ProjectV2SidebarRunComponent,
+        RunJobComponent,
+        RunJobLogsComponent,
     ],
     imports: [
         SharedModule,

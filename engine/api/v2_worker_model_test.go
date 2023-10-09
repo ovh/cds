@@ -44,6 +44,7 @@ func TestGetWorkerModelV2Handler(t *testing.T) {
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
 		CloneURL:     "myurl",
+		ProjectKey:   p.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
@@ -136,6 +137,7 @@ func TestGetV2WorkerModelsHandler(t *testing.T) {
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
 		CloneURL:     "myurl",
+		ProjectKey:   p.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 

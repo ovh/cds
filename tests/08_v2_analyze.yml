@@ -71,10 +71,19 @@ testcases:
         - 'result.systemout ShouldContainSubstring "my-workflow.yml"'
         - 'result.systemout ShouldContainSubstring "docker-debian9.yml"'
         - 'result.systemout ShouldNotContainSubstring "error:"'
-
-- name: Run ascode workflow
+- name: Configure Webhooks
   steps:
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project repository hook-key ITCLIPRJVCS gitea my_vcs_server {{.git.user}}/myrepo --format json
+      vars:
+        hookSecret:
+          from: result.systemoutjson.hook_sign_key
+    - script: 'curl -H "Content-Type: application/json" -u "{{.git.user}}:{{.git.password}}" -X POST {{.git.host}}/api/v1/repos/{{.git.user}}/myrepo/hooks -d "{\"active\":true, \"type\":\"gitea\", \"config\": {\"secret\": \"{{.hookSecret}}\", \"content_type\": \"json\", \"url\": \"{{.gitea.hook.url}}/v2/webhook/repository/gitea/my_vcs_server\"}}"'
+      vars:
+        hookID:
+          from: result.systemoutjson.id
+    - script: cd /tmp/myrepo && echo 'coucou' > newfile && git add /tmp/myrepo/newfile && git commit . --gpg-sign=2B74B3591CEFB2F534265465E027B500E97E52E7 -m "add file and sign" && git push
+- name: Run ascode workflow from hook
+  steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 --format json
       assertions:
         - result.code ShouldEqual 0

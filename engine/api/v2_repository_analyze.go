@@ -28,8 +28,10 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
@@ -119,7 +121,7 @@ func (api *API) getProjectRepositoryAnalysesHandler() ([]service.RbacChecker, se
 }
 
 func (api *API) getProjectRepositoryAnalysisHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
+	return service.RBAC(api.analysisRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -181,7 +183,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 			defer tx.Rollback()
 
-			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit)
+			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit, analysis.HookEventUUID)
 			if err != nil {
 				return err
 			}
@@ -195,7 +197,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 		}
 }
 
-func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit string) (*sdk.AnalysisResponse, error) {
+func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit, hookEventUUID string) (*sdk.AnalysisResponse, error) {
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProject.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
@@ -207,7 +209,9 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		ProjectKey:          proj.Key,
 		Branch:              branch,
 		Commit:              commit,
-		Data:                sdk.ProjectRepositoryData{},
+		Data: sdk.ProjectRepositoryData{
+			HookEventUUID: hookEventUUID,
+		},
 	}
 
 	if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
@@ -290,7 +294,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 
-	vcsProjectWithSecret, err := vcs.LoadVCSByID(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
+	vcsProjectWithSecret, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), analysis.ProjectKey, analysis.VCSProjectID, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load vcs %s", analysis.VCSProjectID))
 	}
@@ -300,9 +304,17 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
 
+	entitiesToUpdate := make([]sdk.EntityWithObject, 0)
+	defer func() {
+		if err := sendAnalysisHookCallback(ctx, api.mustDB(), *analysis, entitiesToUpdate, vcsProjectWithSecret.Type, vcsProjectWithSecret.Name, repo.Name); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}()
+
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProjectWithSecret.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
+	// Check Commit Signature
 	var keyID, analysisError string
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab:
@@ -326,10 +338,11 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		analysis.Data.CommitCheck = true
 	}
 
+	// Retrieve committer and files content
 	var filesContent map[string][]byte
 	var userID string
 	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
-		u, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), *analysis, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
+		u, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
 		if err != nil {
 			return api.stopAnalysis(ctx, analysis, err)
 		}
@@ -361,24 +374,24 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		}
 	}
 
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
 	if len(filesContent) == 0 && analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 		analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 		analysis.Data.Error = "no cds files found"
 	}
 
 	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
 		if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
+			_ = tx.Rollback()
 			return sdk.WrapError(err, "unable to update analysis")
 		}
 		return sdk.WithStack(tx.Commit())
 	}
 
+	// Transform file content into entities
 	entities, multiErr := api.handleEntitiesFiles(ctx, filesContent, analysis)
 	if multiErr != nil {
 		return api.stopAnalysis(ctx, analysis, multiErr...)
@@ -386,6 +399,8 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	userRoles := make(map[string]bool)
 	skippedFiles := make(sdk.StringSlice, 0)
+
+	// For each entities, check user role for each entities
 skipEntity:
 	for i := range entities {
 		e := &entities[i]
@@ -417,22 +432,51 @@ skipEntity:
 				break
 			}
 		}
+		entitiesToUpdate = append(entitiesToUpdate, *e)
+	}
 
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
+
+	// Insert / Update entities
+	vcsAuthClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProjectWithSecret.Name)
+	if err != nil {
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve vcs_server %s on project %s", vcsProjectWithSecret.Name, analysis.ProjectKey))
+	}
+	defaultBranch, err := vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+	if err != nil {
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve default branch on repository %s", repo.Name))
+	}
+
+	for i := range entitiesToUpdate {
+		e := &entities[i]
 		existingEntity, err := entity.LoadByBranchTypeName(ctx, tx, e.ProjectRepositoryID, e.Branch, e.Type, e.Name)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on branch %s", e.Name, e.Type, e.Branch))
 		}
 		if existingEntity == nil {
-			if err := entity.Insert(ctx, tx, e); err != nil {
+			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
 			}
 		} else {
 			e.ID = existingEntity.ID
-			if err := entity.Update(ctx, tx, e); err != nil {
+			if err := entity.Update(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to update %s of type %s", e.Name, e.Type)))
 			}
 		}
+
+		// Insert workflow hook
+		if e.Type == sdk.EntityTypeWorkflow {
+			if err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch.DisplayID); err != nil {
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
+			}
+		}
 	}
+
+	// Update analysis
 	skippedFiles.Unique()
 	analysis.Data.Error = strings.Join(skippedFiles, "\n")
 	if len(skippedFiles) == len(analysis.Data.Entities) {
@@ -447,15 +491,189 @@ skipEntity:
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return sdk.WrapError(err, "unable to update analysis")
 	}
+
 	return sdk.WithStack(tx.Commit())
 }
 
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
+func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch string) error {
+	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
+	defer next()
+
+	// Remove existing hook for the current branch
+	if err := workflow_v2.DeleteWorkflowHooks(ctx, db, e.ID); err != nil {
+		return err
+	}
+
+	if e.Workflow.On == nil {
+		return nil
+	}
+
+	targetVCS := workflowDefVCSName
+	targetRepository := workflowDefRepositoryName
+	if e.Workflow.Repository != nil {
+		targetVCS = e.Workflow.Repository.VCSServer
+		targetRepository = strings.ToLower(e.Workflow.Repository.Name)
+	}
+
+	workflowSameRepo := true
+	if targetVCS != workflowDefVCSName || targetRepository != workflowDefRepositoryName {
+		workflowSameRepo = false
+	}
+
+	// Only save hook push if
+	// * workflow repo declaration == workflow.repository || default branch
+	if e.Workflow.On.Push != nil {
+		if workflowSameRepo || e.Branch == defaultBranch {
+			wh := sdk.V2WorkflowHook{
+				EntityID:       e.ID,
+				ProjectKey:     e.ProjectKey,
+				Type:           sdk.WorkflowHookTypeRepository,
+				Branch:         e.Branch,
+				Commit:         e.Commit,
+				WorkflowName:   e.Name,
+				VCSName:        workflowDefVCSName,
+				RepositoryName: workflowDefRepositoryName,
+				Data: sdk.V2WorkflowHookData{
+					RepositoryEvent: sdk.WorkflowHookEventPush,
+					VCSServer:       targetVCS,
+					RepositoryName:  targetRepository,
+					BranchFilter:    e.Workflow.On.Push.Branches,
+					PathFilter:      e.Workflow.On.Push.Paths,
+				},
+			}
+			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Only save workflow_update hook if :
+	// * workflow.repository declaration != workflow.repository && default branch
+	if e.Workflow.On.WorkflowUpdate != nil {
+		if !workflowSameRepo && e.Branch == defaultBranch {
+			wh := sdk.V2WorkflowHook{
+				VCSName:        workflowDefVCSName,
+				EntityID:       e.ID,
+				ProjectKey:     e.ProjectKey,
+				Type:           sdk.WorkflowHookTypeWorkflow,
+				Branch:         e.Branch,
+				Commit:         e.Commit,
+				WorkflowName:   e.Name,
+				RepositoryName: workflowDefRepositoryName,
+				Data: sdk.V2WorkflowHookData{
+					TargetBranch: e.Workflow.On.WorkflowUpdate.TargetBranch,
+				},
+			}
+			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Only save model_update hook if :
+	// * workflow and model on the same repo
+	// * workflow repo declaration != workflow.repository && default branch
+	if e.Workflow.On.ModelUpdate != nil {
+		for _, m := range e.Workflow.On.ModelUpdate.Models {
+			mSplit := strings.Split(m, "/")
+			var modelVCSName, modelRepoName, modelFullName string
+			switch len(mSplit) {
+			case 1:
+				modelVCSName = workflowDefVCSName
+				modelRepoName = workflowDefRepositoryName
+				modelFullName = fmt.Sprintf("%s/%s/%s/%s", e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, m)
+			case 3:
+				modelVCSName = workflowDefVCSName
+				modelRepoName = mSplit[0] + "/" + mSplit[1]
+				modelFullName = fmt.Sprintf("%s/%s/%s", e.ProjectKey, workflowDefVCSName, m)
+			case 4:
+				modelVCSName = mSplit[0]
+				modelRepoName = mSplit[1] + "/" + mSplit[2]
+				modelFullName = fmt.Sprintf("%s/%s", e.ProjectKey, m)
+			case 5:
+				modelVCSName = mSplit[1]
+				modelRepoName = mSplit[2] + "/" + mSplit[3]
+				modelFullName = fmt.Sprintf("%s", m)
+			}
+			// Default branch && workflow and model on the same repo && distant workflow
+			if e.Branch == defaultBranch &&
+				modelVCSName == workflowDefVCSName && modelRepoName == workflowDefRepositoryName &&
+				(workflowDefVCSName != e.Workflow.Repository.VCSServer || workflowDefRepositoryName != e.Workflow.Repository.Name) {
+				wh := sdk.V2WorkflowHook{
+					VCSName:        workflowDefVCSName,
+					EntityID:       e.ID,
+					ProjectKey:     e.ProjectKey,
+					Type:           sdk.WorkflowHookTypeWorkerModel,
+					Branch:         e.Branch,
+					Commit:         e.Commit,
+					WorkflowName:   e.Name,
+					RepositoryName: workflowDefRepositoryName,
+					Data: sdk.V2WorkflowHookData{
+						TargetBranch: e.Workflow.On.ModelUpdate.TargetBranch,
+						Model:        modelFullName,
+					},
+				}
+				if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, entities []sdk.EntityWithObject, vcsServerType, vcsServerName, repoName string) error {
+	// Remove hooks
+	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
+	if err != nil {
+		return err
+	}
+	if len(srvs) < 1 {
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+	}
+	callback := sdk.HookEventCallback{
+		RepositoryName: repoName,
+		VCSServerType:  vcsServerType,
+		VCSServerName:  vcsServerName,
+		HookEventUUID:  analysis.Data.HookEventUUID,
+		AnalysisCallback: &sdk.HookAnalysisCallback{
+			AnalysisStatus: analysis.Status,
+			AnalysisID:     analysis.ID,
+			Models:         make([]sdk.EntityFullName, 0),
+			Workflows:      make([]sdk.EntityFullName, 0),
+			UserID:         analysis.Data.CDSUserID,
+		},
+	}
+	for _, e := range entities {
+		ent := sdk.EntityFullName{
+			ProjectKey: e.ProjectKey,
+			VCSName:    vcsServerName,
+			RepoName:   repoName,
+			Name:       e.Name,
+			Branch:     e.Branch,
+		}
+		switch e.Type {
+		case sdk.EntityTypeWorkerModel:
+			callback.AnalysisCallback.Models = append(callback.AnalysisCallback.Models, ent)
+		case sdk.EntityTypeWorkflow:
+			callback.AnalysisCallback.Workflows = append(callback.AnalysisCallback.Workflows, ent)
+		}
+	}
+
+	if _, code, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
+		return sdk.WrapError(err, "unable to send analysis call to  hook [HTTP: %d]", code)
+	}
+	return nil
+}
+
+// findCommitter
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commit, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
 	publicKeyFound := false
 	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Name]
 	if has {
 		for _, k := range publicKeys {
-			if analysis.Data.SignKeyID == k.ID {
+			if signKeyID == k.ID {
 				publicKeyFound = true
 				break
 			}
@@ -463,12 +681,12 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 	}
 
 	if !publicKeyFound {
-		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, db, analysis.Data.SignKeyID)
+		gpgKey, err := user.LoadGPGKeyByKeyID(ctx, db, signKeyID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return nil, "", "", sdk.NewErrorFrom(err, "unable get gpg key: %s", analysis.Data.SignKeyID)
+				return nil, "", "", sdk.NewErrorFrom(err, "unable get gpg key: %s", signKeyID)
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("gpgkey %s not found", analysis.Data.SignKeyID), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("gpgkey %s not found", signKeyID), nil
 		}
 
 		cdsUser, err := user.LoadByID(ctx, db, gpgKey.AuthentifiedUserID)
@@ -489,7 +707,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 	}
 	defer tx.Rollback() // nolint
 
-	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, cache, analysis.ProjectKey, vcsProjectWithSecret.Name)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, cache, projKey, vcsProjectWithSecret.Name)
 	if err != nil {
 		return nil, "", "", sdk.WithStack(err)
 	}
@@ -498,7 +716,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
-		commit, err := client.Commit(ctx, repoName, analysis.Commit)
+		commit, err := client.Commit(ctx, repoName, commit)
 		if err != nil {
 			return nil, "", "", err
 		}
@@ -510,9 +728,9 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
 		}
 	case sdk.VCSTypeGithub:
-		pr, err := client.SearchPullRequest(ctx, repoName, analysis.Commit, "closed")
+		pr, err := client.SearchPullRequest(ctx, repoName, commit, "closed")
 		if err != nil {
-			return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to retrieve pull request with commit %s", analysis.Commit))
+			return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to retrieve pull request with commit %s", commit))
 		}
 
 		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, tx, vcsProjectWithSecret.Type, pr.MergeBy.ID)
@@ -548,12 +766,12 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, analy
 	return commitUser, "", "", nil
 }
 
-func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.Entity, []error) {
-	entities := make([]sdk.Entity, 0)
+func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.EntityWithObject, []error) {
+	entities := make([]sdk.EntityWithObject, 0)
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
 	for filePath, content := range filesContent {
 		dir, fileName := filepath.Split(filePath)
-		var es []sdk.Entity
+		var es []sdk.EntityWithObject
 		var err sdk.MultiError
 		switch {
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
@@ -634,38 +852,16 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 			return keyId, analyzeError, err
 		}
 
-		ope := &sdk.Operation{
-			VCSServer:    vcsProject.Name,
-			RepoFullName: repoWithSecret.Name,
-			URL:          repoWithSecret.CloneURL,
-			RepositoryStrategy: sdk.RepositoryStrategy{
-				SSHKey:   vcsProject.Auth.SSHKeyName,
-				User:     vcsProject.Auth.Username,
-				Password: vcsProject.Auth.Token,
-			},
-			Setup: sdk.OperationSetup{
-				Checkout: sdk.OperationCheckout{
-					Commit:         analysis.Commit,
-					Branch:         analysis.Branch,
-					CheckSignature: true,
-				},
-			},
+		ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, vcsProject, repoWithSecret.Name, repoWithSecret.CloneURL, analysis.Commit, analysis.Branch)
+		if err != nil {
+			return keyId, analyzeError, err
 		}
-		if vcsProject.Auth.SSHKeyName != "" {
-			ope.RepositoryStrategy.ConnectionType = "ssh"
-		} else {
-			ope.RepositoryStrategy.ConnectionType = "https"
-		}
+		analysis.Data.OperationUUID = ope.UUID
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return keyId, analyzeError, sdk.WithStack(err)
 		}
-
-		if err := operation.PostRepositoryOperation(ctx, tx, *proj, ope, nil); err != nil {
-			return keyId, analyzeError, err
-		}
-		analysis.Data.OperationUUID = ope.UUID
 
 		if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 			return keyId, analyzeError, err

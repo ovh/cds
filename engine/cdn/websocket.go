@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math/rand"
+	"strconv"
 	"sync"
 	"time"
 
@@ -72,14 +73,24 @@ func (s *Service) publishWSEvent(itemUnit sdk.CDNItemUnit) {
 	if s.WSEvents == nil {
 		s.WSEvents = make(map[string]sdk.CDNWSEvent)
 	}
+	var event sdk.CDNWSEvent
 	apiRefItem, _ := itemUnit.Item.GetCDNLogApiRef()
-	if apiRefItem == nil {
-		return
+	if apiRefItem != nil {
+		event = sdk.CDNWSEvent{
+			ItemType: itemUnit.Type,
+			JobRunID: strconv.FormatInt(apiRefItem.NodeRunJobID, 10),
+		}
+	} else {
+		apiRefLogItem, _ := itemUnit.Item.GetCDNLogApiRefV2()
+		if apiRefLogItem == nil {
+			return
+		}
+		event = sdk.CDNWSEvent{
+			ItemType: itemUnit.Type,
+			JobRunID: apiRefLogItem.RunJobID,
+		}
 	}
-	event := sdk.CDNWSEvent{
-		ItemType: itemUnit.Type,
-		JobRunID: apiRefItem.NodeRunJobID,
-	}
+
 	event.ItemUnitID = itemUnit.ID
 	s.WSEvents[itemUnit.ID] = event
 }

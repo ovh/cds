@@ -60,7 +60,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/rockbears/log v0.7.0 // indirect
-	github.com/rockbears/yaml v0.1.1-0.20220901090137-13dadb408625 // indirect
+	github.com/rockbears/yaml v0.4.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect

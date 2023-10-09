@@ -34,7 +34,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, repo *sdk.Proj
 }
 
 func Delete(db gorpmapper.SqlExecutorWithTx, vcsProjectID string, name string) error {
-	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND lower(name) = $2", vcsProjectID, strings.ToLower(name))
+	_, err := db.Exec("DELETE FROM project_repository WHERE vcs_project_id = $1 AND name = $2", vcsProjectID, strings.ToLower(name))
 	return sdk.WrapError(err, "cannot delete project_repository %s / %s", vcsProjectID, name)
 }
 
@@ -59,6 +59,28 @@ func getRepository(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Q
 	return &res.ProjectRepository, nil
 }
 
+func getRepositories(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectRepository, error) {
+	var res []dbProjectRepository
+	if err := gorpmapping.GetAll(ctx, db, query, &res, opts...); err != nil {
+		return nil, err
+	}
+
+	repos := make([]sdk.ProjectRepository, 0, len(res))
+	for _, r := range res {
+		isValid, err := gorpmapping.CheckSignature(r, r.Signature)
+		if err != nil {
+			return nil, err
+		}
+		if !isValid {
+			log.Error(ctx, "project_repository %d / %s data corrupted", r.ID, r.Name)
+			continue
+		}
+		repos = append(repos, r.ProjectRepository)
+	}
+
+	return repos, nil
+}
+
 func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID, repoID string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
 	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByVCSAndID")
 	defer next()
@@ -73,12 +95,23 @@ func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProje
 func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
 	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByName")
 	defer next()
-	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND lower(project_repository.name) = $2`).Args(vcsProjectID, strings.ToLower(repoName))
+	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, strings.ToLower(repoName))
 	repo, err := getRepository(ctx, db, query, opts...)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to get repository %s from vcs %s", repoName, vcsProjectID)
 	}
 	return repo, nil
+}
+
+func LoadByNameWithoutVCSServer(ctx context.Context, db gorp.SqlExecutor, repoName string) ([]sdk.ProjectRepository, error) {
+	ctx, next := telemetry.Span(ctx, "repository.LoadByNameWithoutVCSServer")
+	defer next()
+	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.name = $1`).Args(strings.ToLower(repoName))
+	repos, err := getRepositories(ctx, db, query)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get repositories %s", repoName)
+	}
+	return repos, nil
 }
 
 func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string) ([]sdk.ProjectRepository, error) {

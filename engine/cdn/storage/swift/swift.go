@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ncw/swift"
@@ -46,12 +47,14 @@ func (s *Swift) Init(_ context.Context, cfg interface{}) error {
 	s.config = *config
 	s.ConvergentEncryption = encryption.New(config.Encryption)
 	s.client = swift.Connection{
-		AuthUrl:  config.Address,
-		Region:   config.Region,
-		Tenant:   config.Tenant,
-		Domain:   config.Domain,
-		UserName: config.Username,
-		ApiKey:   config.Password,
+		AuthUrl:        config.Address,
+		Region:         config.Region,
+		Tenant:         config.Tenant,
+		Domain:         config.Domain,
+		UserName:       config.Username,
+		ApiKey:         config.Password,
+		ConnectTimeout: time.Minute * 1,
+		Timeout:        time.Minute * 10,
 	}
 	return sdk.WithStack(s.client.Authenticate())
 }

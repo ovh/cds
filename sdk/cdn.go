@@ -120,6 +120,7 @@ type CDNLogLinks struct {
 type CDNLogLinkData struct {
 	APIRef    string `json:"api_ref"`
 	StepOrder int64  `json:"step_order"`
+	StepName  string `json:"step_name"`
 }
 
 type CDNLogLink struct {
@@ -328,8 +329,8 @@ func (a *CDNLogAPIRef) ToFilename() string {
 }
 
 func (c CDNItem) GetCDNLogApiRefV2() (*CDNLogAPIRefV2, bool) {
-  apiRef, has := c.APIRef.(*CDNLogAPIRefV2)
-  return apiRef, has
+	apiRef, has := c.APIRef.(*CDNLogAPIRefV2)
+	return apiRef, has
 }
 
 func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
@@ -448,16 +449,16 @@ const (
 
 type CDNWSEvent struct {
 	ItemType   CDNItemType `json:"item_type"`
-	JobRunID   int64       `json:"job_run_id"`
+	JobRunID   string      `json:"job_run_id"`
 	ItemUnitID string      `json:"new_item_unit_id"`
 }
 
 type CDNStreamFilter struct {
-	JobRunID int64 `json:"job_run_id"`
+	JobRunID string `json:"job_run_id"`
 }
 
 func (f CDNStreamFilter) Validate() error {
-	if f.JobRunID == 0 {
+	if f.JobRunID == "0" || f.JobRunID == "" {
 		return NewErrorFrom(ErrWrongRequest, "invalid given job run identifier")
 	}
 	return nil

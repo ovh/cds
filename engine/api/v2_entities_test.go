@@ -84,6 +84,7 @@ func TestGetEntitiesHandler(t *testing.T) {
 		VCSProjectID: vcsProject.ID,
 		CreatedBy:    "me",
 		CloneURL:     "myurl",
+		ProjectKey:   p.Key,
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 

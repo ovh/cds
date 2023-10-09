@@ -16,6 +16,7 @@ import (
 
 func TestHatcheryOpenstack_CanSpawn(t *testing.T) {
 	h := &HatcheryOpenstack{}
+	h.cache = NewCache(1, 1)
 
 	// no model, no requirement, canSpawn must be true
 	canSpawn := h.CanSpawn(context.TODO(), sdk.WorkerStarterWorkerModel{}, "1", nil)
@@ -42,6 +43,7 @@ func TestHatcheryOpenstack_WorkerModelsEnabled(t *testing.T) {
 			DefaultFlavor: "b2-7",
 		},
 	}
+	h.cache = NewCache(1, 1)
 
 	ctrl := gomock.NewController(t)
 	mockClient := mock_cdsclient.NewMockInterface(ctrl)

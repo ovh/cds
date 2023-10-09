@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
@@ -54,8 +55,22 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 
 			// Load last running step
 			var iuID string
-			if filter.JobRunID > 0 {
-				iu, _ := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
+			jobRunInt, err := strconv.Atoi(filter.JobRunID)
+			if err == nil {
+				iu, err := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), int64(jobRunInt), sdk.CDNTypeItemStepLog)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				if iu != nil {
+					iuID = iu.ID
+				}
+			} else {
+				iu, err := storage.LoadLastItemUnitByRunJobIDUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemStepLog)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
 				if iu != nil {
 					iuID = iu.ID
 				}

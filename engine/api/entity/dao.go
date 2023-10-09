@@ -127,9 +127,9 @@ func LoadByBranchTypeName(ctx context.Context, db gorp.SqlExecutor, projectRepos
 
 // LoadByBranchTypeNameCommit loads an entity by its repository, branch, type, name and commit
 func LoadByBranchTypeNameCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, branch string, t string, name string, commit string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
-  ctx, next := telemetry.Span(ctx, "entity.LoadByBranchTypeNameCommit")
-  defer next()
-  query := gorpmapping.NewQuery(`
+	ctx, next := telemetry.Span(ctx, "entity.LoadByBranchTypeNameCommit")
+	defer next()
+	query := gorpmapping.NewQuery(`
 		SELECT * from entity
 		WHERE project_repository_id = $1 AND branch = $2 AND type = $3 AND name = $4 AND commit = $5`).Args(projectRepositoryID, branch, t, name, commit)
 	return getEntity(ctx, db, query, opts...)
@@ -183,6 +183,19 @@ func UnsafeLoadAllByTypeAndProjectKeys(_ context.Context, db gorp.SqlExecutor, t
 	var entities []sdk.EntityFullName
 	if _, err := db.Select(&entities, query, t, pq.StringArray(keys)); err != nil {
 		return nil, err
+	}
+	return entities, nil
+}
+
+func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, error) {
+	q := gorpmapping.NewQuery("SELECT * from entity")
+	var res []dbEntity
+	if err := gorpmapping.GetAll(ctx, db, q, &res); err != nil {
+		return nil, err
+	}
+	entities := make([]sdk.Entity, 0, len(res))
+	for _, r := range res {
+		entities = append(entities, r.Entity)
 	}
 	return entities, nil
 }

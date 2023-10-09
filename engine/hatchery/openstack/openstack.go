@@ -243,15 +243,12 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWor
 }
 
 func (h *HatcheryOpenstack) main(ctx context.Context) {
-	serverListTick := time.NewTicker(10 * time.Second).C
 	killAwolServersTick := time.NewTicker(30 * time.Second).C
 	killErrorServersTick := time.NewTicker(60 * time.Second).C
 	killDisabledWorkersTick := time.NewTicker(60 * time.Second).C
 
 	for {
 		select {
-		case <-serverListTick:
-			h.updateServerList(ctx)
 		case <-killAwolServersTick:
 			h.killAwolServers(ctx)
 		case <-killErrorServersTick:
@@ -265,29 +262,6 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 			return
 
 		}
-	}
-}
-
-func (h *HatcheryOpenstack) updateServerList(ctx context.Context) {
-	var out string
-	var total int
-	status := map[string]int{}
-
-	for _, s := range h.getServers(ctx) {
-		out += fmt.Sprintf("- [%s] %s:%s ", s.Updated, s.Status, s.Name)
-		if _, ok := status[s.Status]; !ok {
-			status[s.Status] = 0
-		}
-		status[s.Status]++
-		total++
-	}
-	var st string
-	for k, s := range status {
-		st += fmt.Sprintf("%d %s ", s, k)
-	}
-	log.Debug(ctx, "Got %d servers %s", total, st)
-	if total > 0 {
-		log.Debug(ctx, out)
 	}
 }
 
@@ -435,7 +409,9 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(ctx context.Context, wor
 			}
 		}
 
-		h.resetImagesCache()
+		if err := h.refreshImagesCache(ctx); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
 	}
 }
 

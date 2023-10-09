@@ -118,7 +118,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return nil
 	}
 
-	vcsServer, err := vcs.LoadVCSByID(ctx, api.mustDB(), run.ProjectKey, run.VCSServerID)
+	vcsServer, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), run.ProjectKey, run.VCSServerID)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       "unable to trigger workflow. Please contact an administrator",
+				Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
 			})
 		}
 		if msg != nil {
@@ -454,7 +454,7 @@ func buildRunContext(wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.Pr
 
 	// TODO manage git context
 	var gitContext sdk.GitContext
-	if wr.WorkflowData.Workflow.Repository.Name != "" {
+	if wr.WorkflowData.Workflow.Repository != nil {
 		gitContext = sdk.GitContext{
 			Hash:       "",
 			HashShort:  "",

@@ -97,7 +97,7 @@ func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, r
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM v2_workflow_run
-    WHERE project_key = $1 AND vcs_server_id = $2 AND repository_id = $3 AND workflow_name = $4
+    WHERE project_key = $1 AND vcs_server_id = $2 AND repository_id = $3 AND workflow_name = $4 ORDER BY run_number desc
     LIMIT 50`).Args(projKey, vcsProjectID, repoID, workflowName)
 	return getRuns(ctx, db, query)
 }
@@ -146,4 +146,18 @@ func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor) ([]s
 `).Args(sdk.StatusBuilding, pq.StringArray([]string{sdk.StatusBuilding, sdk.StatusScheduling, sdk.StatusWaiting}))
 
 	return getRuns(ctx, db, query)
+}
+
+func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun, error) {
+	query := gorpmapping.NewQuery(`SELECT * from v2_workflow_run`)
+	var dbWkfRuns []dbWorkflowRun
+	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRuns); err != nil {
+		return nil, err
+	}
+	runs := make([]sdk.V2WorkflowRun, 0, len(dbWkfRuns))
+	for _, dbWkfRun := range dbWkfRuns {
+		runs = append(runs, dbWkfRun.V2WorkflowRun)
+	}
+
+	return runs, nil
 }

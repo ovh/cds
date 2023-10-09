@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"net/http"
 	"net/url"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -69,6 +71,109 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 			}
 			return service.WriteJSON(w, runJobs, http.StatusOK)
 
+		}
+}
+
+func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+			jobName := vars["jobName"]
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			if err != nil {
+				return err
+			}
+
+			infos, err := workflow_v2.LoadRunJobInfosByRunJobID(ctx, api.mustDB(), runJob.ID)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, infos, http.StatusOK)
+		}
+}
+
+func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+			jobName := vars["jobName"]
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, runJob, http.StatusOK)
 		}
 }
 
@@ -195,7 +300,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				RunAttempt:   runJob.RunAttempt,
 			}
 
-			for k := range runJob.StepsContext {
+			for k := range runJob.StepsStatus {
 				stepOrder := -1
 				for i := range runJob.Job.Steps {
 					stepName := sdk.GetJobStepName(runJob.Job.Steps[i].ID, i)
@@ -223,6 +328,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				datas = append(datas, sdk.CDNLogLinkData{
 					APIRef:    apiRefHash,
 					StepOrder: r.StepOrder,
+					StepName:  r.StepName,
 				})
 			}
 
@@ -238,6 +344,55 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 			}, http.StatusOK)
 		}
 }
+
+func (api *API) getWorkflowRunInfoV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			infos, err := workflow_v2.LoadRunInfosByRunID(ctx, api.mustDB(), wr.ID)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, infos, http.StatusOK)
+		}
+}
+
 func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -282,7 +437,7 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 }
 
 func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.workflowTrigger),
+	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -396,8 +551,8 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 		}
 }
 
-func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.workflowTrigger),
+func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.isHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -459,54 +614,151 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
+			var runRequest sdk.V2WorkflowRunHookRequest
+			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
+				return err
+			}
+
+			u, err := user.LoadByID(ctx, api.mustDB(), runRequest.UserID)
+			if err != nil {
+				return err
+			}
+
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest.V2WorkflowRunRequest, u)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, wr, http.StatusOK)
+		}
+}
+
+func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.workflowTrigger),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			branch := QueryString(req, "branch")
+
+			var runRequest sdk.V2WorkflowRunRequest
+			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
+				return err
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			if branch == "" {
+				tx, err := api.mustDB().Begin()
+				if err != nil {
+					return err
+				}
+				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsProject.Name)
+				if err != nil {
+					_ = tx.Rollback()
+					return err
+				}
+				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					_ = tx.Rollback()
+					return err
+				}
+				if err := tx.Commit(); err != nil {
+					_ = tx.Rollback()
+					return err
+				}
+				branch = defaultBranch.DisplayID
+			}
+
+			workflowEntity, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkflow, workflowName)
+			if err != nil {
+				return err
+			}
+
+			var wk sdk.V2Workflow
+			if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
+				return err
+			}
+
 			u := getUserConsumer(ctx)
-
-			wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, u.AuthConsumerUser.AuthentifiedUser)
 			if err != nil {
 				return err
-			}
-
-			telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
-
-			wr := sdk.V2WorkflowRun{
-				ProjectKey:   proj.Key,
-				VCSServerID:  vcsProject.ID,
-				RepositoryID: repo.ID,
-				WorkflowName: wk.Name,
-				WorkflowRef:  workflowEntity.Branch,
-				WorkflowSha:  workflowEntity.Commit,
-				Status:       sdk.StatusCrafting,
-				RunNumber:    wrNumber,
-				RunAttempt:   0,
-				Started:      time.Now(),
-				LastModified: time.Now(),
-				ToDelete:     false,
-				WorkflowData: sdk.V2WorkflowRunData{Workflow: wk},
-				UserID:       u.AuthConsumerUser.AuthentifiedUserID,
-				Username:     u.AuthConsumerUser.AuthentifiedUser.Username,
-				Event:        sdk.V2WorkflowRunEvent{},
-			}
-
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-
-			wr.RunNumber = wrNumber
-			if err := workflow_v2.InsertRun(ctx, tx, &wr); err != nil {
-				return err
-			}
-
-			select {
-			case api.workflowRunCraftChan <- wr.ID:
-				log.Debug(ctx, "postWorkflowRunV2Handler: workflow run %s %d sent into chan", wr.WorkflowName, wr.RunNumber)
-			default:
-				// Default behaviour is made by a goroutine that call directly the database
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
 			}
 			return service.WriteJSON(w, wr, http.StatusCreated)
 		}
+}
+
+func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunRequest, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
+	// TODO: Get git context from runRequest
+
+	log.Debug(ctx, "Workflow started: %+v", runRequest)
+	wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsProject.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: wk.Name,
+		WorkflowRef:  wkEntity.Branch,
+		WorkflowSha:  wkEntity.Commit,
+		Status:       sdk.StatusCrafting,
+		RunNumber:    wrNumber,
+		RunAttempt:   0,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		ToDelete:     false,
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: wk},
+		UserID:       u.ID,
+		Username:     u.Username,
+		Event:        sdk.V2WorkflowRunEvent{},
+	}
+
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	defer tx.Rollback()
+
+	wr.RunNumber = wrNumber
+	if err := workflow_v2.InsertRun(ctx, tx, &wr); err != nil {
+		return nil, err
+	}
+
+	select {
+	case api.workflowRunCraftChan <- wr.ID:
+		log.Debug(ctx, "postWorkflowRunV2Handler: workflow run %s %d sent into chan", wr.WorkflowName, wr.RunNumber)
+	default:
+		// Default behaviour is made by a goroutine that call directly the database
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return &wr, nil
 }

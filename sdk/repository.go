@@ -15,14 +15,13 @@ const (
 )
 
 type ProjectRepository struct {
-	ID                string            `json:"id" db:"id"`
-	Name              string            `json:"name" db:"name" cli:"name,key"`
-	Created           time.Time         `json:"created" db:"created"`
-	CreatedBy         string            `json:"created_by" db:"created_by"`
-	VCSProjectID      string            `json:"-" db:"vcs_project_id"`
-	HookConfiguration HookConfiguration `json:"hook_configuration" db:"hook_configuration"`
-	HookSignKey       string            `json:"hook_sign_key" db:"hook_sign_key" gorpmapping:"encrypted,ID,VCSProjectID"`
-	CloneURL          string            `json:"clone_url" db:"clone_url"`
+	ID           string    `json:"id" db:"id"`
+	ProjectKey   string    `json:"project_key" db:"project_key"`
+	Name         string    `json:"name" db:"name" cli:"name,key"`
+	Created      time.Time `json:"created" db:"created"`
+	CreatedBy    string    `json:"created_by" db:"created_by"`
+	VCSProjectID string    `json:"-" db:"vcs_project_id"`
+	CloneURL     string    `json:"clone_url" db:"clone_url"`
 }
 
 type ProjectRepositoryAnalysis struct {
@@ -39,6 +38,7 @@ type ProjectRepositoryAnalysis struct {
 }
 
 type ProjectRepositoryData struct {
+	HookEventUUID string                        `json:"hook_event_uuid"`
 	OperationUUID string                        `json:"operation_uuid"`
 	CommitCheck   bool                          `json:"commit_check"`
 	SignKeyID     string                        `json:"sign_key_id"`

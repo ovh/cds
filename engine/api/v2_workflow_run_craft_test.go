@@ -34,7 +34,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsProject.ID, "my/repo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -106,7 +106,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsProject.ID, "my/repo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -195,7 +195,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsProject.ID, "my/repo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -311,10 +311,10 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	admin, _ := assets.InsertAdminUser(t, db)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
-	repo := assets.InsertTestProjectRepository(t, db, vcsProject.ID, "my/repo")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
 
-	repoAction1 := assets.InsertTestProjectRepository(t, db, vcsProject.ID, "my/repoAction1")
-	repoAction2 := assets.InsertTestProjectRepository(t, db, vcsProject.ID, "my/repoAction2")
+	repoAction1 := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repoAction1")
+	repoAction2 := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repoAction2")
 
 	wkName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
@@ -413,7 +413,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 
 	// ACTION 2: no branch specified, need to get the default branch. Call only once because for the third action it need to use cache
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repoAction2/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repoaction2/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				b := &sdk.VCSBranch{

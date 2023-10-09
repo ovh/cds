@@ -1,4 +1,5 @@
 name: MyFirstWorkflow
+on: [push]
 jobs:
   myFirstJob:
     name: This is my first job

@@ -1,0 +1,51 @@
+<ng-container *ngIf="selectedRun">
+    <div class="graph" [class.disableSelection]="resizing">
+        <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs"
+                          (onSelectJob)="selectJob($event)" #graph></app-stages-graph>
+
+
+        <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
+                             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
+
+            <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
+            <ng-container *ngIf="selectedTab.key === 'problems'">
+                <ul class="infos">
+                    <ng-container *ngFor="let info of selectedRunInfos">
+                        <li *ngIf="info.level === 'error'">
+                            <span class="error" nz-icon nzType="close-circle" nzTheme="fill"></span>
+                            <div class="content">
+                                {{info.message}}
+                            </div>
+                        </li>
+                    </ng-container>
+                    <ng-container *ngFor="let info of selectedRunInfos">
+                        <li *ngIf="info.level === 'warning'">
+                            <span class="warning" nz-icon nzType="warning" nzTheme="fill"></span>
+                            <div class="content">
+                                {{info.message}}
+                            </div>
+                        </li>
+                    </ng-container>
+                </ul>
+            </ng-container>
+            <ng-container *ngIf="selectedTab.key === 'infos'">
+                <ul class="infos">
+                    <ng-container *ngFor="let info of selectedRunInfos">
+                        <li *ngIf="info.level==='info'">
+                            <span class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
+                            <div class="content">
+                                {{info.message}}.
+                            </div>
+                        </li>
+                    </ng-container>
+                </ul>
+            </ng-container>
+        </app-resizable-panel>
+    </div>
+    <app-resizable-panel *ngIf="selectedJobRun" minSize="400" [initialSize]="jobPanelSize"
+                         (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
+        <app-run-job [workflowRun]="selectedRun" [jobRun]="selectedJobRun" [jobRunInfos]="selectedJobRunInfos"
+                     (onClickClose)="unselectJob()" #runJob></app-run-job>
+    </app-resizable-panel>
+</ng-container>
+

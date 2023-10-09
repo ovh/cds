@@ -374,7 +374,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err := json.Marshal(sdk.CDNStreamFilter{
-		JobRunID: signature.JobID,
+		JobRunID: strconv.FormatInt(signature.JobID, 10),
 	})
 	require.NoError(t, err)
 	chanMsgToSend <- buf
@@ -430,7 +430,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 		chanErrorReceived <- client.RequestWebsocket(ctx, sdk.NewGoRoutines(ctx), uri, chanMsgToSend, chanMsgReceived, chanErrorReceived)
 	}()
 	buf, err = json.Marshal(sdk.CDNStreamFilter{
-		JobRunID: signature.JobID,
+		JobRunID: strconv.FormatInt(signature.JobID, 10),
 	})
 	require.NoError(t, err)
 	chanMsgToSend <- buf

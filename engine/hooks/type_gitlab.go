@@ -26,14 +26,14 @@ type GitlabEvent struct {
 }
 
 type GitlabCommit struct {
-	ID        string        `json:"id"`
-	Message   string        `json:"message"`
-	Timestamp time.Time     `json:"timestamp"`
-	URL       string        `json:"url"`
-	Author    GitlabAuthor  `json:"author"`
-	Added     []string      `json:"added"`
-	Modified  []string      `json:"modified"`
-	Removed   []interface{} `json:"removed"`
+	ID        string       `json:"id"`
+	Message   string       `json:"message"`
+	Timestamp time.Time    `json:"timestamp"`
+	URL       string       `json:"url"`
+	Author    GitlabAuthor `json:"author"`
+	Added     []string     `json:"added"`
+	Modified  []string     `json:"modified"`
+	Removed   []string     `json:"removed"`
 }
 
 type GitlabAuthor struct {

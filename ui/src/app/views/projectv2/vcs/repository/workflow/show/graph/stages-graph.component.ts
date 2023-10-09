@@ -19,6 +19,7 @@ import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
 import {GraphNode, GraphNodeTypeJob, GraphNodeTypeStage, JobRun} from "./graph.model";
 import {GraphDirection, WorkflowV2Graph} from "./graph.lib";
 import {load, LoadOptions} from "js-yaml";
+import {V2WorkflowRunJob} from "../../../../../../../model/v2.workflow.run.model";
 
 export type WorkflowV2JobsGraphOrNodeComponent = ProjectV2WorkflowJobsGraphComponent |
     ProjectV2WorkflowForkJoinNodeComponent | ProjectV2WorkflowJobNodeComponent;
@@ -61,12 +62,10 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             Object.keys(workflow["jobs"]).forEach(k => {
                 let job = workflow.jobs[k];
                 let node = <GraphNode>{name: k, depends_on: job?.needs, type: GraphNodeTypeJob};
-                // TODO manage run
-                /*
                 if (this.jobRuns[k]) {
-                    node.run = this.jobRuns[k][0];
+                    node.run = this.jobRuns[k];
                 }
-                 */
+
                 if (job?.stage) {
                     for (let i = 0; i < this.nodes.length; i++) {
                         if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
@@ -83,14 +82,26 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         this._cd.markForCheck();
     }
 
-    jobRuns: { [name: string]: Array<JobRun> } = {};
+    jobRuns: { [name: string]: V2WorkflowRunJob } = {};
 
-    @Input() set workflowRun(data: any) {
+    @Input() set runJobs(data: Array<V2WorkflowRunJob>) {
         if (!data) {
+            this.jobRuns = {}
             return;
         }
-        this.jobRuns = data.job_runs;
-        this.workflow = data.resources.workflow;
+        this.jobRuns = {};
+        data.forEach(j => {
+            this.jobRuns[j.job_id] = j;
+        });
+
+        if (this.nodes) {
+            this.nodes.forEach(n => {
+                if (this.jobRuns[n.name]) {
+                    n.run = this.jobRuns[n.name];
+                }
+            })
+        }
+        this.initGraph();
     }
 
     @Output() onSelectJob = new EventEmitter<string>();

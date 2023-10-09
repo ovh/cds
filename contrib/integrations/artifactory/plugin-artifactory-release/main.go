@@ -173,7 +173,13 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 			if err := art.PromoteFile(artifactClient, rData, latestPromotion.FromMaturity, latestPromotion.ToMaturity, props, true); err != nil {
 				return fail("unable to promote file: %s: %v", rData.Name, err)
 			}
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
+			// artifactory does not manage virtual cargo repositories
+			if rData.RepoType == "cargo" {
+				repoParts := strings.Split(rData.RepoName, "-")
+				promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", strings.Join(repoParts[:len(repoParts)-1], "-"), latestPromotion.ToMaturity, rData.Path))
+			} else {
+				promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s/%s", rData.RepoName, latestPromotion.ToMaturity, rData.Path))
+			}
 		}
 	}
 

@@ -17,6 +17,7 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxWorker(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
+	h.cache = NewCache(1, 1)
 	h.Config.Provision.MaxWorker = 3
 	h.flavors = []flavors.Flavor{
 		{Name: "my-flavor", VCPUs: 2},
@@ -29,19 +30,19 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxWorker(t *testing.T) {
 		ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "my-flavor"},
 	}
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-30"}},
 		{Metadata: map[string]string{"flavor": "b2-60"}},
-	}
+	})
 
 	err := h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m})
 	require.NoError(t, err)
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-30"}},
 		{Metadata: map[string]string{"flavor": "b2-60"}},
 		{Metadata: map[string]string{"flavor": "b2-120"}},
-	}
+	})
 
 	err = h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m})
 	require.Error(t, err)
@@ -52,6 +53,7 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxCPUs(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
+	h.cache = NewCache(1, 1)
 	h.Config.Provision.MaxWorker = 10
 	h.Config.MaxCPUs = 6
 	h.flavors = []flavors.Flavor{
@@ -65,19 +67,19 @@ func TestHatcheryOpenstack_checkSpawnLimits_MaxCPUs(t *testing.T) {
 		ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "b2-7"},
 	}
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-7"}},
 		{Metadata: map[string]string{"flavor": "b2-7"}},
-	}
+	})
 
 	err := h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m})
 	require.NoError(t, err)
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-7"}},
 		{Metadata: map[string]string{"flavor": "b2-7"}},
 		{Metadata: map[string]string{"flavor": "b2-7"}},
-	}
+	})
 
 	err = h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m})
 	require.Error(t, err)
@@ -88,6 +90,7 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 	log.Factory = log.NewTestingWrapper(t)
 
 	h := &HatcheryOpenstack{}
+	h.cache = NewCache(1, 1)
 	h.Config.Provision.MaxWorker = 10
 	h.Config.MaxCPUs = 30
 	h.Config.CountSmallerFlavorToKeep = 2
@@ -116,17 +119,17 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 		ModelVirtualMachine: sdk.ModelVirtualMachine{Flavor: "b2-30"},
 	}
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-30"}},
-	}
+	})
 
 	err := h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m3})
 	require.NoError(t, err, "22 CPUs left (30-8) should be enough to start 8 CPUs flavor (8+4*2=16)")
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-30"}},
 		{Metadata: map[string]string{"flavor": "b2-30"}},
-	}
+	})
 
 	err = h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m3})
 	require.Error(t, err, "14 CPUs left (30-8*2) should be not be enough to start 8 CPUs flavor (8+4*2=16)")
@@ -135,19 +138,19 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 	err = h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m2})
 	require.NoError(t, err, "14 CPUs left (30-8*2) should be enough to start 4 CPUs flavor (4+2*2=8)")
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-30"}},
 		{Metadata: map[string]string{"flavor": "b2-30"}},
 		{Metadata: map[string]string{"flavor": "b2-15"}},
 		{Metadata: map[string]string{"flavor": "b2-15"}},
 		{Metadata: map[string]string{"flavor": "b2-7"}},
 		{Metadata: map[string]string{"flavor": "b2-7"}},
-	}
+	})
 
 	err = h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m1})
 	require.NoError(t, err, "2 CPUs left (30-8*2-4*2-2*2) should be enough to start the smallest flavor with 2 CPUs")
 
-	lservers.list = []servers.Server{
+	h.cache.SetServers([]servers.Server{
 		{Metadata: map[string]string{"flavor": "b2-30"}},
 		{Metadata: map[string]string{"flavor": "b2-30"}},
 		{Metadata: map[string]string{"flavor": "b2-15"}},
@@ -155,7 +158,7 @@ func TestHatcheryOpenstack_checkSpawnLimits_CountSmallerFlavorToKeep(t *testing.
 		{Metadata: map[string]string{"flavor": "b2-7"}},
 		{Metadata: map[string]string{"flavor": "b2-7"}},
 		{Metadata: map[string]string{"flavor": "b2-7"}},
-	}
+	})
 
 	err = h.checkSpawnLimits(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m1})
 	require.Error(t, err, "0 CPUs left to start new flavor")

@@ -22,7 +22,7 @@ func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsId
 	var vcsProject *sdk.VCSProject
 	var err error
 	if sdk.IsValidUUID(vcsIdentifier) {
-		vcsProject, err = vcs.LoadVCSByID(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
+		vcsProject, err = vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	} else {
 		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	}
@@ -206,7 +206,7 @@ func (api *API) getVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 				return err
 			}
 
-			vcsClear, err := vcs.LoadVCSByID(ctx, api.mustDB(), pKey, vcsProject.ID, gorpmapping.GetOptions.WithDecryption)
+			vcsClear, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), pKey, vcsProject.ID, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
 				return err
 			}

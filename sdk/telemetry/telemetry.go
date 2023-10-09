@@ -103,6 +103,7 @@ const (
 	TagHostname           = "hostname"
 	TagJob                = "job"
 	TagRepository         = "repository"
+	TagVCSServer          = "vcs_server"
 	TagPercentil          = "percentil"
 	TagPermission         = "permission"
 	TagPipeline           = "pipeline"
@@ -121,6 +122,7 @@ const (
 	TagWorkflowNodeRun    = "workflow_node_run"
 	TagWorkflowRun        = "workflow_run"
 	TagWorkflowRunNumber  = "run_number"
+	TagEventID            = "event_id"
 )
 
 func ContextWithTag(ctx context.Context, s ...interface{}) context.Context {

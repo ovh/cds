@@ -16,6 +16,7 @@ import {
 export interface MenuItem {
     name: string;
     route: string[];
+    action: () => {};
 }
 
 export interface SelectedItem {
@@ -39,7 +40,8 @@ export interface FlatNodeItem {
     iconTheme?: string;
     level: number;
     active: boolean;
-    loading?: boolean
+    branch: string;
+    loading?: boolean;
     menu: MenuItem[];
     select: FlatNodeItemSelect;
     onOpen: () => Observable<any>;
