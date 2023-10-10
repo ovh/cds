@@ -18,7 +18,7 @@ import (
 )
 
 // NewClient create a plugin client for the given plugin
-func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string) (Client, error) {
+func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string) (Client, error) {
 	// Create socket
 	pluginSocket, currentPlugin, err := createGRPCPluginSocket(ctx, pluginType, pluginName, wk)
 	if err != nil {
@@ -27,12 +27,13 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 
 	// Create plugin client
 	c := &client{
-		w:          wk,
-		socket:     pluginSocket,
-		done:       make(chan struct{}),
-		pluginType: pluginType,
-		grpcPlugin: currentPlugin,
-		pluginName: pluginName,
+		w:               wk,
+		socket:          pluginSocket,
+		done:            make(chan struct{}),
+		pluginType:      pluginType,
+		grpcPlugin:      currentPlugin,
+		pluginName:      pluginName,
+		inputManagement: inputManagement,
 	}
 
 	switch pluginType {
@@ -100,13 +101,24 @@ func (c *client) Manifest(ctx context.Context) error {
 }
 
 func (c *client) Run(ctx context.Context, opts map[string]string) *Result {
-	// FIXME - check input only for action v2
-	// inputs := c.getInputs(ctx, opts)
+	var inputs map[string]string
+	if c.inputManagement == InputManagementStrict {
+		var err error
+		inputs = c.getInputs(ctx, opts)
+		if err != nil {
+			return &Result{
+				Status:  sdk.StatusFail,
+				Details: fmt.Sprintf("unable to interpolate secrets: %v", err),
+			}
+		}
+	} else {
+		inputs = opts
+	}
 
 	if c.pluginType == TypeAction {
-		return c.runActionPlugin(ctx, actionplugin.ActionQuery{Options: opts})
+		return c.runActionPlugin(ctx, actionplugin.ActionQuery{Options: inputs})
 	}
-	return c.runIntegrationPlugin(ctx, integrationplugin.RunQuery{Options: opts})
+	return c.runIntegrationPlugin(ctx, integrationplugin.RunQuery{Options: inputs})
 }
 
 func (c *client) getInputs(ctx context.Context, opts map[string]string) map[string]string {
@@ -123,7 +135,6 @@ func (c *client) getInputs(ctx context.Context, opts map[string]string) map[stri
 			inputs[k] = v
 		}
 	}
-	log.Debug(ctx, "Plugin inputs: %v", inputs)
 	return inputs
 }
 

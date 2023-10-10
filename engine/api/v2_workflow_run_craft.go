@@ -12,8 +12,10 @@ import (
 	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -32,6 +34,7 @@ type WorkflowRunEntityFinder struct {
 	repoDefaultBranchCache map[string]string
 	actionsCache           map[string]sdk.V2Action
 	workerModelCache       map[string]sdk.V2WorkerModel
+	plugins                map[string]sdk.GRPCPlugin
 	run                    sdk.V2WorkflowRun
 	runVcsServer           sdk.VCSProject
 	runRepo                sdk.ProjectRepository
@@ -133,8 +136,15 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// Build run context
-	runContext := buildRunContext(*run, *vcsServer, *repo, *u)
-	run.Contexts = runContext
+	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u)
+	if err != nil {
+		return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("%v", err),
+		})
+	}
+	run.Contexts = *runContext
 
 	wref := WorkflowRunEntityFinder{
 		run:                    *run,
@@ -145,7 +155,16 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		repoCache:              make(map[string]sdk.ProjectRepository),
 		vcsServerCache:         make(map[string]sdk.VCSProject),
 		repoDefaultBranchCache: make(map[string]string),
+		plugins:                make(map[string]sdk.GRPCPlugin),
 		userName:               u.Username,
+	}
+
+	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
+	if err != nil {
+		return err
+	}
+	for _, p := range plugins {
+		wref.plugins[p.Name] = p
 	}
 
 	// Retrieve all deps
@@ -278,7 +297,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 		if has {
 			entityVCS = vcsFromCache
 		} else {
-			vcsDB, err := vcs.LoadVCSByName(ctx, db, projKey, vcsName)
+			vcsDB, err := vcs.LoadVCSByProject(ctx, db, projKey, vcsName)
 			if err != nil {
 				return "", nil, err
 			}
@@ -319,10 +338,12 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 				}
 				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, projKey, entityVCS.Name)
 				if err != nil {
+					_ = tx.Rollback()
 					return "", nil, err
 				}
 				b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{Default: true})
 				if err != nil {
+					_ = tx.Rollback()
 					return "", nil, err
 				}
 				if err := tx.Commit(); err != nil {
@@ -377,6 +398,8 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 			return "", nil, err
 		}
 		wref.workerModelCache[completePath] = wm
+	default:
+		return "", nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "entity %s not implemented", entityType)
 	}
 	return completePath, nil, nil
 }
@@ -392,21 +415,43 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 
 		if !strings.HasPrefix(step.Uses, "actions/") && !strings.HasPrefix(step.Uses, "./.cds/actions") {
 			msg := sdk.V2WorkflowRunInfo{
-				Message: fmt.Sprintf("Invalid action %s. Missing prefix 'actions/' or './cds/actions/", step.Uses),
+				WorkflowRunID: wref.run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("Invalid action %s. Missing prefix 'actions/' or './cds/actions/", step.Uses),
 			}
 			return &msg, nil
 		}
 
-		actionName := strings.TrimPrefix(step.Uses, "actions/")
-		completeName, msg, err := wref.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
-		if msg != nil || err != nil {
-			return msg, err
-		}
-		step.Uses = "actions/" + completeName
-		act := wref.actionsCache[completeName]
-		msg, err = searchActions(ctx, db, store, wref, act.Runs.Steps)
-		if msg != nil || err != nil {
-			return msg, err
+		if strings.HasPrefix(step.Uses, "actions/") {
+			actionName := strings.TrimPrefix(step.Uses, "actions/")
+			actionSplit := strings.Split(actionName, "/")
+			if len(actionSplit) == 1 {
+				// Check plugins
+				if _, has := wref.plugins[actionSplit[0]]; !has {
+					msg := sdk.V2WorkflowRunInfo{
+						WorkflowRunID: wref.run.ID,
+						Level:         sdk.WorkflowRunInfoLevelError,
+						Message:       fmt.Sprintf("Action %s doesn't exist", actionSplit[0]),
+					}
+					return &msg, nil
+				}
+				continue
+			} else {
+				completeName, msg, err := wref.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
+				if msg != nil || err != nil {
+					return msg, err
+				}
+				step.Uses = "actions/" + completeName
+				act := wref.actionsCache[completeName]
+				msg, err = searchActions(ctx, db, store, wref, act.Runs.Steps)
+				if msg != nil || err != nil {
+					return msg, err
+				}
+			}
+		} else {
+			// TODO manage local action
+			// local action:  ./cds/actions/monaction.yml
+			return nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "local action not implemented yet")
 		}
 	}
 	return nil, nil
@@ -434,9 +479,10 @@ func stopRun(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, msg *s
 	return sdk.WithStack(tx.Commit())
 }
 
-// TODO Manage run attempt + git context + vars context
-func buildRunContext(wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) sdk.WorkflowRunContext {
+func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
 	var runContext sdk.WorkflowRunContext
+
+	var ref, commit string
 
 	cdsContext := sdk.CDSContext{
 		ProjectKey:         wr.ProjectKey,
@@ -450,33 +496,108 @@ func buildRunContext(wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.Pr
 		WorkflowRepository: repo.Name,
 		Event:              nil,
 		TriggeringActor:    u.Username,
+		EventName:          "",
+	}
+	switch {
+	case wr.Event.Manual != nil:
+		cdsContext.EventName = "manual"
+		cdsContext.Event = wr.Event.Manual.Payload
+		if r, has := wr.Event.Manual.Payload[sdk.GitRefManualPayload]; has {
+			if refString, ok := r.(string); ok {
+				ref = refString
+			}
+		}
+		if c, has := wr.Event.Manual.Payload[sdk.GitCommitManualPayload]; has {
+			if commitString, ok := c.(string); ok {
+				commit = commitString
+			}
+		}
+	case wr.Event.GitTrigger != nil:
+		cdsContext.EventName = wr.Event.GitTrigger.EventName
+		cdsContext.Event = wr.Event.GitTrigger.Payload
+		ref = wr.Event.GitTrigger.Ref
+		commit = wr.Event.GitTrigger.Sha
+	case wr.Event.ModelUpdateTrigger != nil:
+		ref = wr.Event.ModelUpdateTrigger.Ref
+	case wr.Event.WorkflowUpdateTrigger != nil:
+		ref = wr.Event.WorkflowUpdateTrigger.Ref
+	default:
+		// TODO implement scheduler and webhooks
+		return nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "Event not implemented: %+v", wr.Event)
 	}
 
-	// TODO manage git context
-	var gitContext sdk.GitContext
+	// Reload VCS with decryption to have sshkey / git username
+	vcsName := vcsServer.Name
+	if wr.WorkflowData.Workflow.Repository != nil && wr.WorkflowData.Workflow.Repository.VCSServer != vcsServer.Name {
+		vcsName = wr.WorkflowData.Workflow.Repository.VCSServer
+	}
+	vcsTmp, err := vcs.LoadVCSByProject(ctx, db, wr.ProjectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+	workflowVCSServer := *vcsTmp
+
+	gitContext := sdk.GitContext{
+		Server:   workflowVCSServer.Name,
+		SSHKey:   workflowVCSServer.Auth.SSHKeyName,
+		Username: workflowVCSServer.Auth.Username,
+		Ref:      ref,
+		Sha:      commit,
+	}
+	if gitContext.SSHKey != "" {
+		gitContext.Connection = "ssh"
+	} else {
+		gitContext.Connection = "https"
+	}
+
 	if wr.WorkflowData.Workflow.Repository != nil {
-		gitContext = sdk.GitContext{
-			Hash:       "",
-			HashShort:  "",
-			Repository: "",
-			Branch:     "",
-			Tag:        "",
-			Author:     "",
-			Message:    "",
-			URL:        "",
-			Server:     "",
-			EventName:  "",
-			Connection: "",
-			SSHKey:     "",
-			PGPKey:     "",
-			HttpUser:   "",
+		gitContext.Repository = wr.WorkflowData.Workflow.Repository.Name
+	} else {
+		gitContext.Repository = repo.Name
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	defer tx.Rollback()
+	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, wr.ProjectKey, workflowVCSServer.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if gitContext.Repository == repo.Name {
+		gitContext.RepositoryURL = repo.CloneURL
+	} else {
+		vcsRepo, err := vcsClient.RepoByFullname(ctx, gitContext.Repository)
+		if err != nil {
+			return nil, err
 		}
+		if gitContext.SSHKey != "" {
+			gitContext.RepositoryURL = vcsRepo.SSHCloneURL
+		} else {
+			gitContext.RepositoryURL = vcsRepo.HTTPCloneURL
+		}
+	}
+	if gitContext.Ref == "" {
+		defaultBranch, err := vcsClient.Branch(ctx, gitContext.Repository, sdk.VCSBranchFilters{Default: true})
+		if err != nil {
+			return nil, err
+		}
+		gitContext.Ref = defaultBranch.DisplayID
+		if gitContext.Sha == "" {
+			gitContext.Sha = defaultBranch.LatestCommit
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WithStack(err)
 	}
 
 	runContext.CDS = cdsContext
 	runContext.Git = gitContext
 	runContext.Vars = nil
-	return runContext
+	return &runContext, nil
 }
 
 func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.Store, jobName, workerModel, reg, defaultRegion string) (string, *sdk.V2WorkflowRunInfo, error) {

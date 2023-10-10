@@ -154,12 +154,6 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	// NODE CONTEXT BUILD PARAMETER + NEW VARS CONTEXT
 	computeNodeContextBuildParameters(ctx, proj, wr, nr, n, runContext)
 
-	// NEW CDS CONTEXT
-	cdsContext := computeCDSContext(ctx, *wr, *nr)
-	workflowIntegrationsContext := computeWorkflowIntegrationSubContext(runContext)
-	cdsContext.WorkflowIntegrations = workflowIntegrationsContext
-	nr.Contexts.CDS = cdsContext
-
 	// PARENT BUILD PARAMETER WITH git.*
 	if len(parents) > 0 {
 		_, next := telemetry.Span(ctx, "workflow.getParentParameters")
@@ -428,30 +422,6 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	}
 	report.Merge(ctx, r1)
 	return report, true, nil
-}
-
-func computeWorkflowIntegrationSubContext(runContext nodeRunContext) map[string]interface{} {
-	workflowIntegrationContextes := make(map[string]interface{})
-	for _, integ := range runContext.WorkflowProjectIntegrations {
-		if !integ.ProjectIntegration.Model.ArtifactManager {
-			continue
-		}
-		artifactContext := make(map[string]string)
-		for k, c := range integ.ProjectIntegration.Config {
-			if c.Type != sdk.IntegrationConfigTypePassword {
-				artifactContext[k] = c.Value
-			}
-		}
-
-		for k, c := range integ.Config {
-			if c.Type != sdk.IntegrationConfigTypePassword {
-				artifactContext[k] = c.Value
-			}
-		}
-		prefix := sdk.GetIntegrationVariablePrefix(integ.ProjectIntegration.Model)
-		workflowIntegrationContextes[prefix] = artifactContext
-	}
-	return workflowIntegrationContextes
 }
 
 func getParentsStatus(wr *sdk.WorkflowRun, parents []*sdk.WorkflowNodeRun) string {

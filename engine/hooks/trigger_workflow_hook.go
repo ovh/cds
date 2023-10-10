@@ -56,6 +56,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 			Status:               sdk.HookEventWorkflowStatusScheduler,
 			Branch:               wh.Branch,
 			TargetBranch:         wh.Data.TargetBranch,
+			ModelFullName:        wh.Data.Model,
 		}
 		hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 	}

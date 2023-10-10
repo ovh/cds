@@ -524,7 +524,7 @@ func (loader *asCodeLoader) loadAsCodeActionStep(ctx context.Context, stepName s
 	vcsServer, has := loader.vcs[projKey+"/"+vcsName]
 	if !has {
 		var err error
-		vcsServer, err = vcs.LoadVCSByName(ctx, loader.db, projKey, vcsName)
+		vcsServer, err = vcs.LoadVCSByProject(ctx, loader.db, projKey, vcsName)
 		if err != nil {
 			return err
 		}

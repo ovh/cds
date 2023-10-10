@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/rockbears/log"
@@ -40,21 +41,40 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			return err
 		}
 	}
+	var event map[string]interface{}
+	if err := json.Unmarshal(hre.Body, &event); err != nil {
+		return err
+	}
 
 	if hre.UserID != "" {
 		allEnded := true
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
 			if wh.Status == sdk.HookEventWorkflowStatusScheduler {
+
 				targetCommit := "HEAD"
-				if wh.Type == sdk.WorkflowHookTypeRepository {
+
+				runRequest := sdk.V2WorkflowRunHookRequest{
+					UserID:    hre.UserID,
+					Ref:       wh.TargetBranch,
+					Sha:       targetCommit,
+					Payload:   event,
+					EventName: hre.EventName,
+					HookType:  wh.Type,
+				}
+
+				switch wh.Type {
+				case sdk.WorkflowHookTypeRepository:
 					targetCommit = hre.ExtractData.Commit
+					if runRequest.Ref == "" {
+						runRequest.Ref = hre.ExtractData.Branch
+					}
+				case sdk.WorkflowHookTypeWorkflow:
+					runRequest.EntityUpdated = wh.WorkflowName
+				case sdk.WorkflowHookTypeWorkerModel:
+					runRequest.EntityUpdated = wh.ModelFullName
 				}
-				runRequest := sdk.V2WorkflowRunRequest{
-					UserID: hre.UserID,
-					Branch: wh.TargetBranch,
-					Commit: targetCommit,
-				}
+
 				if _, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
 					runRequest, cdsclient.WithQueryParameter("branch", wh.Branch)); err != nil {
 					log.ErrorWithStackTrace(ctx, err)

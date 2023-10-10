@@ -9,6 +9,21 @@ import (
 	"github.com/rockbears/yaml"
 )
 
+const (
+	GitRefManualPayload    = "git.ref"
+	GitCommitManualPayload = "git.commit"
+)
+
+type V2WorkflowRunHookRequest struct {
+	UserID        string                 `json:"user_id"`
+	EventName     string                 `json:"event_name"`
+	Ref           string                 `json:"ref"`
+	Sha           string                 `json:"sha"`
+	Payload       map[string]interface{} `json:"payload"`
+	HookType      string                 `json:"hook_type"`
+	EntityUpdated string                 `json:"entity_updated"`
+}
+
 type V2WorkflowRun struct {
 	ID           string             `json:"id" db:"id"`
 	ProjectKey   string             `json:"project_key" db:"project_key"`
@@ -38,9 +53,10 @@ type WorkflowRunContext struct {
 
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
-	Jobs   JobsResultContext      `json:"jobs,omitempty"`
-	Inputs map[string]interface{} `json:"inputs,omitempty"`
-	Steps  StepsContext           `json:"steps,omitempty"`
+	Jobs    JobsResultContext      `json:"jobs"`
+	Inputs  map[string]interface{} `json:"inputs"`
+	Steps   StepsContext           `json:"steps"`
+	Secrets map[string]string      `json:"secrets"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -82,11 +98,13 @@ func (w *V2WorkflowRunData) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEvent struct {
-	Manual *ManualTrigger `json:"manual"`
+	Manual                *ManualTrigger         `json:"manual,omitempty"`
+	GitTrigger            *GitTrigger            `json:"git,omitempty"`
+	WorkflowUpdateTrigger *WorkflowUpdateTrigger `json:"workflow_update_trigger,omitempty"`
+	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model_update_trigger,omitempty"`
 
 	// TODO
 	Scheduler      *SchedulerTrigger `json:"scheduler"`
-	GitTrigger     *GitTrigger       `json:"git"`
 	WebHookTrigger *WebHookTrigger   `json:"webhook"`
 }
 
@@ -118,6 +136,18 @@ type SchedulerTrigger struct {
 type GitTrigger struct {
 	EventName string                 `json:"event_name"`
 	Payload   map[string]interface{} `json:"payload"`
+	Ref       string                 `json:"ref"`
+	Sha       string                 `json:"sha"`
+}
+
+type WorkflowUpdateTrigger struct {
+	WorkflowUpdated string `json:"workflow_updated"`
+	Ref             string `json:"ref"`
+}
+
+type ModelUpdateTrigger struct {
+	ModelUpdated string `json:"model_updated"`
+	Ref          string `json:"ref"`
 }
 
 type WebHookTrigger struct {
@@ -195,9 +225,9 @@ type V2WorkflowRunEnqueue struct {
 type V2WorkflowRunInfo struct {
 	ID            string    `json:"id" db:"id"`
 	WorkflowRunID string    `json:"workflow_run_id" db:"workflow_run_id"`
-	IssuedAt      time.Time `json:"issued_at" db:"issued_at"`
-	Level         string    `json:"level" db:"level"`
-	Message       string    `json:"message" db:"message"`
+	IssuedAt      time.Time `json:"issued_at" db:"issued_at" cli:"issue_at"`
+	Level         string    `json:"level" db:"level" cli:"level"`
+	Message       string    `json:"message" db:"message" cli:"message"`
 }
 
 type V2WorkflowRunJobInfo struct {

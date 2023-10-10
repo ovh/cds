@@ -489,7 +489,6 @@ jobLoop:
 
 		// Copy context from noderun
 		jobFullContext := sdk.JobRunContext{}
-		jobFullContext.CDS = nr.Contexts.CDS
 		jobFullContext.Vars = nr.Contexts.Vars
 		jobFullContext.Git = nr.Contexts.Git
 
@@ -500,8 +499,6 @@ jobLoop:
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
-		jobFullContext.CDS.Job = job.Action.Name
-		jobFullContext.CDS.Stage = stage.Name
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
 		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs, jobParams)

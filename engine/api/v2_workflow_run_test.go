@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -226,7 +227,6 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 	require.Equal(t, infos.ID, infoDB[0].ID)
 }
 
-// r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", nil, r.POSTv2(api.postJobRunStepHandler))
 func TestPostJobRunStepHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
@@ -615,4 +615,52 @@ func TestPostStopJobHandler(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, sdk.StatusStopped, rjDB.Status)
 
+}
+
+func TestPostWorkflowRunHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	e := sdk.Entity{
+		Name:                sdk.RandomString(10),
+		Type:                sdk.EntityTypeWorkflow,
+		ProjectKey:          proj.Key,
+		Branch:              "master",
+		Commit:              "123456",
+		ProjectRepositoryID: repo.ID,
+		Data: `name: MyFirstWorkflow
+jobs:
+  myFirstJob:
+    name: This is my first job
+    worker_model: buildpack-deps-buster
+    region: default
+    steps:
+      - run: |-
+          echo "It is my first step"`,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &e))
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             e.Name,
+	}
+
+	uri := api.Router.GetRouteV2("POST", api.postWorkflowRunV2Handler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri+"?branch=master", map[string]interface{}{
+		"branch": "main",
+	})
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 201, w.Code)
+
+	var wr sdk.V2WorkflowRun
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wr))
+	require.Equal(t, sdk.StatusCrafting, wr.Status)
 }

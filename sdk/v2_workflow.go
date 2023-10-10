@@ -15,17 +15,6 @@ const (
 	WorkflowHookTypeWorkflow    = "Workflow"
 )
 
-type V2WorkflowRunHookRequest struct {
-	V2WorkflowRunRequest
-	UserID string `json:"user_id"`
-}
-
-type V2WorkflowRunRequest struct {
-	UserID string `json:"user_id"`
-	Branch string `json:"branch"`
-	Commit string `json:"commit"`
-}
-
 type V2Workflow struct {
 	Name       string                   `json:"name"`
 	Repository *WorkflowRepository      `json:"repository,omitempty"`

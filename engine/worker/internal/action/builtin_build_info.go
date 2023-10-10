@@ -15,7 +15,7 @@ func PushBuildInfo(ctx context.Context, wk workerruntime.Runtime, _ sdk.Action, 
 		return sdk.Result{}, errors.New("unable to retrieve artifact manager integration... Aborting")
 	}
 
-	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, sdk.GRPCPluginBuildInfo)
+	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, sdk.GRPCPluginBuildInfo, plugin.InputManagementDefault)
 	if err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("unable to start GRPCPlugin: %v", err)}, nil
 	}

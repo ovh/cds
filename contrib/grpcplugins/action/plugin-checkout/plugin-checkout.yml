@@ -1,0 +1,34 @@
+name: checkout
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  This action execute a git checkout
+inputs:
+  git-url:
+    type: text
+    description: "The repository url to clone"
+    default: ${{git.repositoryUrl}}
+  ref:
+    type: text
+    description: "The branch, tag or SHA to checkout"
+    default: ${{git.ref}}
+  ssh-key:
+    type: text
+    description: "The ssh-key used to fetch the repository"
+    default: ${{secrets.GIT_SSH_KEY}}
+  path:
+    type: text
+    description: Relative path under $CD_WORKSPACE to place the repository
+    default: ${{cds.workspace}}
+  username:
+    type: text
+    description: Username use for https authentication
+    default: ${{git.username}}
+  token:
+    type: text
+    description: Token use for https authentication
+    default: ${{secrets.GIT_TOKEN}}
+  submodules:
+    type: text
+    description: "Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules"
+
