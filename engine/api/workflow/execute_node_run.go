@@ -1190,7 +1190,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	vcsInfos.HTTPUrl = repo.HTTPCloneURL
 
 	switch {
-	case vcsInfos.Branch == "" && vcsInfos.Hash == "":
+	case vcsInfos.Branch == "" && vcsInfos.Hash == "" && vcsInfos.Tag == "":
 		// Get default branch
 		defaultB, errD := repositoriesmanager.DefaultBranch(ctx, client, vcsInfos.Repository)
 		if errD != nil {
@@ -1198,6 +1198,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		}
 		vcsInfos.Branch = defaultB.DisplayID
 		vcsInfos.Hash = defaultB.LatestCommit
+
 	case vcsInfos.Hash == "" && vcsInfos.Branch != "":
 		// GET COMMIT INFO
 		branch, errB := client.Branch(ctx, vcsInfos.Repository, sdk.VCSBranchFilters{BranchName: vcsInfos.Branch})
@@ -1211,6 +1212,12 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 			vcsInfos.Branch = branch.DisplayID
 		}
 		vcsInfos.Hash = branch.LatestCommit
+	case vcsInfos.Hash == "" && vcsInfos.Tag != "":
+		tag, err := client.Tag(ctx, vcsInfos.Repository, vcsInfos.Tag)
+		if err != nil {
+			return nil, err
+		}
+		vcsInfos.Hash = tag.Hash
 	}
 
 	// Get commit info if needed
