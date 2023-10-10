@@ -55,7 +55,7 @@
                     </div>
                 </div>
                 <div class="line expand" *ngIf="step.lines.length + step.endLines.length < step.totalLinesCount"
-                    (click)="clickExpandStepDown(i)">
+                    (click)="clickExpandStepDown(i, $event)">
                     <div class="number">
                         <i nz-icon nzType="caret-down" nzTheme="fill"></i>
                         {{step.firstDisplayedLineNumber +
@@ -65,7 +65,7 @@
                 </div>
                 <div class="line expand"
                     *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
-                    (click)="clickExpandStepUp(i)">
+                    (click)="clickExpandStepUp(i, $event)">
                     <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(step.firstDisplayedLineNumber +
                         step.totalLinesCount) - step.endLines.length}}
                     </div>

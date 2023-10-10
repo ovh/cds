@@ -321,20 +321,34 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         return DurationService.duration(fromM.toDate(), to ? to.toDate() : moment().toDate());
     }
 
-    async clickExpandStepDown(index: number) {
+    async clickExpandStepDown(index: number, event: MouseEvent) {
         let step = this.steps[index];
+
+        let limit = `${this.expandLoadLinesCount}`;
+        if (event.shiftKey) {
+            limit = '0';
+        }
+
         let result = await this._workflowService.getLogLines(step.link,
-            { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` }
+            {offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: limit}
         ).toPromise();
         this.steps[index].totalLinesCount = result.totalCount;
         this.steps[index].lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
         this._cd.markForCheck();
     }
 
-    async clickExpandStepUp(index: number) {
+    async clickExpandStepUp(index: number, event: MouseEvent) {
         let step = this.steps[index];
+
+        let offset = `-${step.endLines.length + this.expandLoadLinesCount}`;
+        let limit = `${this.expandLoadLinesCount}`;
+        if (event.shiftKey) {
+            offset = `${step.lines[step.lines.length - 1].number + 1}`;
+            limit = '0';
+        }
+
         let result = await this._workflowService.getLogLines(step.link,
-            { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` }
+            { offset: offset, limit: limit }
         ).toPromise();
         this.steps[index].totalLinesCount = result.totalCount;
         this.steps[index].endLines = result.lines.filter(l => !step.lines.find(line => line.number === l.number)
