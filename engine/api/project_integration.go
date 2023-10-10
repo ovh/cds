@@ -158,8 +158,9 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 		var deletedIntegration sdk.ProjectIntegration
 		for _, plat := range p.Integrations {
 			if plat.Name == integrationName {
-				//If the integration model is public, it's forbidden to delete the integration
-				if plat.Model.Public {
+				//If the integration model is public
+				// it's forbidden to delete the integration if not admin
+				if plat.Model.Public && !isAdmin(ctx) {
 					return sdk.WithStack(sdk.ErrForbidden)
 				}
 

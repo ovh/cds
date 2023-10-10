@@ -18,6 +18,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, db)
+	u2, pass2 := assets.InsertLambdaUser(t, db)
 
 	integrationModel, err := integration.LoadModelByName(context.TODO(), db, sdk.KafkaIntegration.Name)
 	if err != nil {
@@ -69,6 +70,17 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
+
+	// DELETE integration with lamba user, forbidden
+	vars = map[string]string{}
+	vars["permProjectKeyWithHooksAllowed"] = proj.Key
+	vars["integrationName"] = pp.Name
+	uri = router.GetRoute("DELETE", api.deleteProjectIntegrationHandler, vars)
+	req = assets.NewAuthentifiedRequest(t, u2, pass2, "DELETE", uri, nil)
+
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 403, w.Code)
 
 	// DELETE integration
 	vars = map[string]string{}
