@@ -1127,7 +1127,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		report.Merge(ctx, r)
 		return report
 	}
-	workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
+	workflow.ResyncNodeRunsWithCommits(api.Router.Background, api.mustDBWithCtx(api.Router.Background), api.Cache, *p, report)
 
 	api.initWorkflowRunPurge(ctx, wf)
 
