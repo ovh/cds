@@ -25,17 +25,6 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 
 	for _, r := range reqs {
 		switch r.Type {
-		case sdk.BinaryRequirement:
-			exist := false
-			for _, e := range allBinaryReqs {
-				if e.Value == r.Value {
-					exist = true
-					break
-				}
-			}
-			if !exist {
-				return updateAllToCheckRegistration(db)
-			}
 		case sdk.OSArchRequirement:
 			nbOSArchReq++
 		case sdk.ModelRequirement:
