@@ -52,21 +52,6 @@ func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs sdk.Requirement
 	return nil
 }
 
-// updateAllToCheckRegistration is like need_registration but without exclusive mode
-func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
-	query := `UPDATE worker_model SET check_registration = $1`
-	res, err := db.Exec(query, true)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	log.Debug(context.Background(), "updateAllToCheckRegistration> %d worker model(s) check registration", rows)
-	return nil
-}
-
 // UpdateSpawnErrorWorkerModel updates worker model error registration
 func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError sdk.SpawnErrorForm) error {
 	spawnError.Error = sdk.RemoveNotPrintableChar(spawnError.Error)
