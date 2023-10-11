@@ -30,7 +30,7 @@ func (d *dao) RepositoryEventQueueLen() (int, error) {
 
 func (d *dao) SaveRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent) error {
 	e.LastUpdate = time.Now().UnixMilli()
-	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName)))
+	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerName, e.RepositoryName)))
 	return d.store.SetAdd(k, e.UUID, e)
 }
 
@@ -40,7 +40,7 @@ func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, e sdk
 
 func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
 	// Use to identify event in progress:
-	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerType, e.VCSServerName, e.RepositoryName), e.UUID))
+	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerName, e.RepositoryName), e.UUID))
 	log.Debug(ctx, "enqueue event: %s", k)
 
 	if err := d.RemoveRepositoryEventFromInProgressList(ctx, *e); err != nil {
@@ -55,17 +55,17 @@ func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryE
 	return d.store.Enqueue(repositoryEventQueue, k)
 }
 
-func (d *dao) getRepositoryEventLockKey(vcsType, vcsName, repoName, hookEventUUID string) string {
-	return strings.ToLower(cache.Key(repositoryEventLockRootKey, d.GetRepositoryMemberKey(vcsType, vcsName, repoName), hookEventUUID))
+func (d *dao) getRepositoryEventLockKey(vcsName, repoName, hookEventUUID string) string {
+	return strings.ToLower(cache.Key(repositoryEventLockRootKey, d.GetRepositoryMemberKey(vcsName, repoName), hookEventUUID))
 }
 
-func (d *dao) LockRepositoryEvent(vcsType, vcsName, repoName, hookEventUUID string) (bool, error) {
-	lockKey := d.getRepositoryEventLockKey(vcsType, vcsName, repoName, hookEventUUID)
+func (d *dao) LockRepositoryEvent(vcsName, repoName, hookEventUUID string) (bool, error) {
+	lockKey := d.getRepositoryEventLockKey(vcsName, repoName, hookEventUUID)
 	return d.store.Lock(lockKey, 30*time.Second, 200, 60)
 }
 
-func (d *dao) UnlockRepositoryEvent(vcsType, vcsName, repoName, hookEventUUID string) error {
-	lockKey := d.getRepositoryEventLockKey(vcsType, vcsName, repoName, hookEventUUID)
+func (d *dao) UnlockRepositoryEvent(vcsName, repoName, hookEventUUID string) error {
+	lockKey := d.getRepositoryEventLockKey(vcsName, repoName, hookEventUUID)
 	return d.store.Unlock(lockKey)
 }
 
@@ -89,4 +89,64 @@ func (d *dao) ListInProgressRepositoryEvent(ctx context.Context) ([]string, erro
 	}
 
 	return eventKeys, nil
+}
+
+func (d *dao) DeleteRepositoryEvent(ctx context.Context, vcsServer, repository, uuid string) error {
+	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(vcsServer, repository)))
+	if err := d.store.SetRemove(k, uuid, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *dao) GetRepositoryEvent(ctx context.Context, vcsServer, repository, uuid string) (*sdk.HookRepositoryEvent, error) {
+	k := cache.Key(repositoryEventRootKey, vcsServer+"-"+repository, uuid)
+	var e sdk.HookRepositoryEvent
+	found, err := d.store.Get(k, &e)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &e, nil
+}
+
+func (d *dao) DeleteAllRepositoryEvent(ctx context.Context, vcsServer, repoName string) error {
+  repoEvents, err := d.ListRepositoryEvents(ctx, vcsServer, repoName)
+  if err != nil {
+    return err
+  }
+  for _, re := range repoEvents {
+    if err := d.DeleteRepositoryEvent(ctx, re.VCSServerName, re.RepositoryName, re.UUID); err != nil {
+      return err
+    }
+  }
+  k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(vcsServer, repoName)))
+  if err := d.store.Delete(k); err != nil {
+    return err
+  }
+  return nil
+}
+
+func (d *dao) ListRepositoryEvents(ctx context.Context, vcsServer, repository string) ([]sdk.HookRepositoryEvent, error) {
+	k := cache.Key(repositoryEventRootKey, vcsServer+"-"+repository)
+
+	nbEvents, err := d.store.SetCard(k)
+	if err != nil {
+		return nil, err
+	}
+	log.Info(ctx, "%s", k)
+	events := make([]*sdk.HookRepositoryEvent, nbEvents)
+	for i := 0; i < nbEvents; i++ {
+		events[i] = &sdk.HookRepositoryEvent{}
+	}
+	if err := d.store.SetScan(ctx, k, sdk.InterfaceSlice(events)...); err != nil {
+		return nil, err
+	}
+	finalEvents := make([]sdk.HookRepositoryEvent, 0, len(events))
+	for _, e := range events {
+		finalEvents = append(finalEvents, *e)
+	}
+	return finalEvents, nil
 }

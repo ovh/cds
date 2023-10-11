@@ -46,8 +46,7 @@ func TestManageAnalysisCallback(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	repoKey := s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
-	_, err := s.Dao.CreateRepository(context.TODO(), repoKey, hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
 	callback := sdk.HookEventCallback{
@@ -63,7 +62,7 @@ func TestManageAnalysisCallback(t *testing.T) {
 
 	require.NoError(t, s.updateHookEventWithCallback(context.TODO(), callback))
 
-	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName), hr.UUID)
+	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID)
 	var hreUpdate sdk.HookRepositoryEvent
 	f, err := s.Cache.Get(k, &hreUpdate)
 	require.NoError(t, err)
@@ -102,8 +101,7 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	repoKey := s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
-	_, err := s.Dao.CreateRepository(context.TODO(), repoKey, hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().HookRepositoriesList(gomock.Any(), hr.VCSServerName, hr.RepositoryName).Return([]sdk.ProjectRepository{
@@ -115,7 +113,7 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ProjectRepositoryAnalysis(gomock.Any(), gomock.Any()).Times(1)
 
 	// Force dequeue
-	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName), hr.UUID)
+	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID)
 	require.NoError(t, s.manageRepositoryEvent(context.TODO(), k))
 }
 
@@ -146,8 +144,7 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	repoKey := s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
-	_, err := s.Dao.CreateRepository(context.TODO(), repoKey, hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ListWorkflowToTrigger(gomock.Any(), gomock.Any()).Return([]sdk.V2WorkflowHook{
@@ -163,6 +160,6 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().RetrieveHookEventUser(gomock.Any(), gomock.Any()).Return(sdk.HookRetrieveUserResponse{UserID: "bbb"}, nil)
 
 	// Force dequeue
-	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerType, hr.VCSServerName, hr.RepositoryName), hr.UUID)
+	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID)
 	require.NoError(t, s.manageRepositoryEvent(context.TODO(), k))
 }
