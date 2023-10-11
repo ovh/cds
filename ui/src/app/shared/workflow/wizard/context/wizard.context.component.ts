@@ -177,8 +177,11 @@ export class WorkflowWizardNodeContextComponent implements OnInit, OnDestroy {
             n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
         }
         n.context.application_id = this.node.context.application_id;
+        n.context.application_name = '';
         n.context.environment_id = this.node.context.environment_id;
+        n.context.environment_name = '';
         n.context.project_integration_id = this.node.context.project_integration_id;
+        n.context.project_integration_name = '';
         n.context.mutex = this.node.context.mutex;
 
         let previousName = n.name;

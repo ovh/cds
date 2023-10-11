@@ -648,6 +648,10 @@ export class WNodeContext {
     conditions: WorkflowNodeConditions;
     mutex: boolean;
 
+    application_name: string;
+    environment_name: string;
+    project_integration_name: string;
+
     constructor() {
         this.pipeline_id = 0;
         this.application_id = 0;
