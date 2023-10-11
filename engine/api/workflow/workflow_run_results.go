@@ -478,7 +478,15 @@ type ArtifactSignature map[string]string
 
 func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbMap) ([]int64, error) {
 	var results []int64
-	_, err := dbmap.Select(&results, "select distinct workflow_run_id from workflow_run_result where sync is NULL order by workflow_run_id asc limit 100")
+	query := `
+    select distinct workflow_run_result.workflow_run_id, workflow_node_run.status
+    from workflow_run_result
+    join workflow_node_run on workflow_node_run.id = workflow_run_result.workflow_node_run_id
+    where sync is NULL
+    and workflow_node_run.status in ('Success', 'Fail', 'Stopped')
+    order by workflow_run_result.workflow_run_id asc
+    limit 100`
+	_, err := dbmap.Select(&results, query)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
