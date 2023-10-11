@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk"
-	"github.com/spf13/cobra"
 	"net/url"
 	"time"
+
+	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var adminHooksRepositoryEventCmd = cli.Command{
@@ -26,7 +28,7 @@ func adminHooksRepositoryEvents() *cobra.Command {
 var adminHookRepoEventRestartCmd = cli.Command{
 	Name:    "restart",
 	Aliases: []string{"reboot"},
-	Short:   "Get event",
+	Short:   "Restart an event",
 	Args: []cli.Arg{
 		{Name: "vcs-server"},
 		{Name: "repository"},
@@ -82,7 +84,7 @@ func adminHooksRepoEventGetRun(v cli.Values) error {
 var adminHooksRepoEventListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"l", "ls"},
-	Short:   "List events",
+	Short:   "List repository events",
 	Args: []cli.Arg{
 		{Name: "vcs-server"},
 		{Name: "repository"},

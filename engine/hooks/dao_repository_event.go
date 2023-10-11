@@ -113,20 +113,20 @@ func (d *dao) GetRepositoryEvent(ctx context.Context, vcsServer, repository, uui
 }
 
 func (d *dao) DeleteAllRepositoryEvent(ctx context.Context, vcsServer, repoName string) error {
-  repoEvents, err := d.ListRepositoryEvents(ctx, vcsServer, repoName)
-  if err != nil {
-    return err
-  }
-  for _, re := range repoEvents {
-    if err := d.DeleteRepositoryEvent(ctx, re.VCSServerName, re.RepositoryName, re.UUID); err != nil {
-      return err
-    }
-  }
-  k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(vcsServer, repoName)))
-  if err := d.store.Delete(k); err != nil {
-    return err
-  }
-  return nil
+	repoEvents, err := d.ListRepositoryEvents(ctx, vcsServer, repoName)
+	if err != nil {
+		return err
+	}
+	for _, re := range repoEvents {
+		if err := d.DeleteRepositoryEvent(ctx, re.VCSServerName, re.RepositoryName, re.UUID); err != nil {
+			return err
+		}
+	}
+	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(vcsServer, repoName)))
+	if err := d.store.Delete(k); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *dao) ListRepositoryEvents(ctx context.Context, vcsServer, repository string) ([]sdk.HookRepositoryEvent, error) {
@@ -136,7 +136,6 @@ func (d *dao) ListRepositoryEvents(ctx context.Context, vcsServer, repository st
 	if err != nil {
 		return nil, err
 	}
-	log.Info(ctx, "%s", k)
 	events := make([]*sdk.HookRepositoryEvent, nbEvents)
 	for i := 0; i < nbEvents; i++ {
 		events[i] = &sdk.HookRepositoryEvent{}

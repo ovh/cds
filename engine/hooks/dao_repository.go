@@ -3,9 +3,10 @@ package hooks
 import (
 	"context"
 	"fmt"
-	"github.com/rockbears/log"
 	"regexp"
 	"strings"
+
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -73,7 +74,7 @@ func (d *dao) ListRepositories(ctx context.Context, filter string) ([]string, er
 	if err != nil {
 		return nil, err
 	}
-	log.Warn(ctx, "%s", filter)
+
 	if filter == "" {
 		for _, r := range repos {
 			filteredRepos = append(filteredRepos, strings.TrimPrefix(r, repositoryRootKey+":"))
@@ -87,7 +88,6 @@ func (d *dao) ListRepositories(ctx context.Context, filter string) ([]string, er
 	}
 	for _, r := range repos {
 		r = strings.TrimPrefix(r, repositoryRootKey+":")
-		log.Info(ctx, "%s", r)
 		if reg.MatchString(r) {
 			filteredRepos = append(filteredRepos, r)
 		}

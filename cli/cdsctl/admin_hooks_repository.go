@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/url"
+
+	"github.com/spf13/cobra"
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/spf13/cobra"
-	"net/url"
 )
 
 var adminHooksRepositoryCmd = cli.Command{
