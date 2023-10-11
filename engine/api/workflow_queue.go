@@ -516,9 +516,12 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			}
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *proj, report)
+		ctxbg := context.Background()
+		workflow.ResyncNodeRunsWithCommits(ctxbg, api.mustDBWithCtx(ctxbg), api.Cache, *proj, report)
 
-		go api.WorkflowSendEvent(context.Background(), *proj, report)
+		sdk.NewGoRoutines(ctx).Exec(ctxbg, "workflow-send-event", func(ctx context.Context) {
+			api.WorkflowSendEvent(ctx, *proj, report)
+		})
 
 		for i := range report.WorkflowRuns() {
 			run := &report.WorkflowRuns()[i]
