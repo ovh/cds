@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"net/http"
 	"net/url"
@@ -624,7 +625,30 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest.V2WorkflowRunRequest, u)
+			runEvent := sdk.V2WorkflowRunEvent{}
+			switch runRequest.HookType {
+			case sdk.WorkflowHookTypeWorkerModel:
+				runEvent.ModelUpdateTrigger = &sdk.ModelUpdateTrigger{
+					Ref:          runRequest.Ref,
+					ModelUpdated: runRequest.EntityUpdated,
+				}
+			case sdk.WorkflowHookTypeWorkflow:
+				runEvent.WorkflowUpdateTrigger = &sdk.WorkflowUpdateTrigger{
+					Ref:             runRequest.Ref,
+					WorkflowUpdated: runRequest.EntityUpdated,
+				}
+			case sdk.WorkflowHookTypeRepository:
+				runEvent.GitTrigger = &sdk.GitTrigger{
+					Payload:   runRequest.Payload,
+					EventName: runRequest.EventName,
+					Ref:       runRequest.Ref,
+					Sha:       runRequest.Sha,
+				}
+			default:
+				return sdk.WrapError(sdk.ErrWrongRequest, "unknown event: %v", runRequest)
+
+			}
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u)
 			if err != nil {
 				return err
 			}
@@ -648,8 +672,8 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			workflowName := vars["workflow"]
 			branch := QueryString(req, "branch")
 
-			var runRequest sdk.V2WorkflowRunRequest
-			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
+			var runRequest map[string]interface{}
+			if err := service.UnmarshalBody(req, &runRequest); err != nil {
 				return err
 			}
 
@@ -700,8 +724,14 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
+			runEvent := sdk.V2WorkflowRunEvent{
+				Manual: &sdk.ManualTrigger{
+					Payload: runRequest,
+				},
+			}
+
 			u := getUserConsumer(ctx)
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, u.AuthConsumerUser.AuthentifiedUser)
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u.AuthConsumerUser.AuthentifiedUser)
 			if err != nil {
 				return err
 			}
@@ -709,16 +739,21 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 		}
 }
 
-func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunRequest, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
-	// TODO: Get git context from runRequest
-
-	log.Debug(ctx, "Workflow started: %+v", runRequest)
-	wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
-	if err != nil {
-		return nil, err
+func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runEvent sdk.V2WorkflowRunEvent, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
+	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
+	var msg string
+	switch {
+	case runEvent.Manual != nil:
+		msg = fmt.Sprintf("Workflow was manually triggered by user %s", u.Username)
+	case runEvent.GitTrigger != nil:
+		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.GitTrigger.EventName, u.Username)
+	case runEvent.WorkflowUpdateTrigger != nil:
+		msg = fmt.Sprintf("Workflow was triggered by the workflow_update hook by user %s", u.Username)
+	case runEvent.ModelUpdateTrigger != nil:
+		msg = fmt.Sprintf("Workflow was triggered by the model_update hook by user %s", u.Username)
+	default:
+		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event not implemented")
 	}
-
-	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
 
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
@@ -728,7 +763,6 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		WorkflowRef:  wkEntity.Branch,
 		WorkflowSha:  wkEntity.Commit,
 		Status:       sdk.StatusCrafting,
-		RunNumber:    wrNumber,
 		RunAttempt:   0,
 		Started:      time.Now(),
 		LastModified: time.Now(),
@@ -736,8 +770,17 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: wk},
 		UserID:       u.ID,
 		Username:     u.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		Event:        runEvent,
+		Contexts:     sdk.WorkflowRunContext{},
 	}
+
+	wrNumber, err := workflow_v2.WorkflowRunNextNumber(api.mustDB(), repo.ID, wk.Name)
+	if err != nil {
+		return nil, err
+	}
+	wr.RunNumber = wrNumber
+
+	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
@@ -747,6 +790,17 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 
 	wr.RunNumber = wrNumber
 	if err := workflow_v2.InsertRun(ctx, tx, &wr); err != nil {
+		return nil, err
+	}
+
+	runInfo := sdk.V2WorkflowRunInfo{
+		WorkflowRunID: wr.ID,
+		Level:         sdk.WorkflowRunInfoLevelInfo,
+		IssuedAt:      time.Now(),
+	}
+
+	runInfo.Message = msg
+	if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 		return nil, err
 	}
 

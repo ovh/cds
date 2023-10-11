@@ -16,6 +16,6 @@ build-plugin:
 	--rm \
 	-e "GOOS=$(OS)" \
 	-e "GOARCH=$(ARCH)" \
-	golang:1.20 \
+	golang:1.21 \
 	/bin/bash -c \
 	"cd /go/src/github.com/ovh/cds/tests/fixtures/ITSCWRKFLW15 && go version && CGO_ENABLED=0 go build -installsuffix cgo -ldflags '-extldflags "-static"' -o plugin-simple-integ-$(OS)-$(ARCH) ."

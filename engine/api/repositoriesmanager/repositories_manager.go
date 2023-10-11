@@ -404,6 +404,22 @@ func (c *vcsClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VC
 	return repo, nil
 }
 
+func (c *vcsClient) Tag(ctx context.Context, fullname string, tagName string) (sdk.VCSTag, error) {
+	items, has := c.Cache().Get(fmt.Sprintf("/tags/%s/%s", tagName, fullname))
+	if has {
+		return items.(sdk.VCSTag), nil
+	}
+	var tag sdk.VCSTag
+	path := fmt.Sprintf("/vcs/%s/repos/%s/tags/%s", c.name, fullname, tagName)
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &tag); err != nil {
+		return tag, sdk.NewErrorFrom(err, "unable to get tag %s on repository %s from %s", tagName, fullname, c.name)
+	}
+
+	c.Cache().SetDefault(fmt.Sprintf("/tags/%s/%s", tagName, fullname), tag)
+
+	return tag, nil
+}
+
 func (c *vcsClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, error) {
 	items, has := c.Cache().Get("/tags/" + fullname)
 	if has {

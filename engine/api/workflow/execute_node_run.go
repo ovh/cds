@@ -489,7 +489,6 @@ jobLoop:
 
 		// Copy context from noderun
 		jobFullContext := sdk.JobRunContext{}
-		jobFullContext.CDS = nr.Contexts.CDS
 		jobFullContext.Vars = nr.Contexts.Vars
 		jobFullContext.Git = nr.Contexts.Git
 
@@ -500,8 +499,6 @@ jobLoop:
 		if err != nil {
 			spawnErrs.Join(*err)
 		}
-		jobFullContext.CDS.Job = job.Action.Name
-		jobFullContext.CDS.Stage = stage.Name
 
 		_, next = telemetry.Span(ctx, "workflow.processNodeJobRunRequirements")
 		jobRequirements, containsService, modelType, err := processNodeJobRunRequirements(ctx, store, db, proj.Key, *wr, job, nr, sdk.Groups(groups).ToIDs(), integrationPlugins, integrationConfigs, jobParams)
@@ -1190,7 +1187,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 	vcsInfos.HTTPUrl = repo.HTTPCloneURL
 
 	switch {
-	case vcsInfos.Branch == "" && vcsInfos.Hash == "":
+	case vcsInfos.Branch == "" && vcsInfos.Hash == "" && vcsInfos.Tag == "":
 		// Get default branch
 		defaultB, errD := repositoriesmanager.DefaultBranch(ctx, client, vcsInfos.Repository)
 		if errD != nil {
@@ -1198,6 +1195,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		}
 		vcsInfos.Branch = defaultB.DisplayID
 		vcsInfos.Hash = defaultB.LatestCommit
+
 	case vcsInfos.Hash == "" && vcsInfos.Branch != "":
 		// GET COMMIT INFO
 		branch, errB := client.Branch(ctx, vcsInfos.Repository, sdk.VCSBranchFilters{BranchName: vcsInfos.Branch})
@@ -1211,6 +1209,12 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 			vcsInfos.Branch = branch.DisplayID
 		}
 		vcsInfos.Hash = branch.LatestCommit
+	case vcsInfos.Hash == "" && vcsInfos.Tag != "":
+		tag, err := client.Tag(ctx, vcsInfos.Repository, vcsInfos.Tag)
+		if err != nil {
+			return nil, err
+		}
+		vcsInfos.Hash = tag.Hash
 	}
 
 	// Get commit info if needed

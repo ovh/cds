@@ -10,6 +10,29 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+func (b *bitbucketClient) Tag(ctx context.Context, fullname string, tagName string) (sdk.VCSTag, error) {
+	ctx, end := telemetry.Span(ctx, "bitbucketserver.GetTag", telemetry.Tag(telemetry.TagRepository, fullname))
+	defer end()
+
+	t := strings.Split(fullname, "/")
+	if len(t) != 2 {
+		return sdk.VCSTag{}, sdk.ErrRepoNotFound
+	}
+
+	var bitbucketTag Tag
+	path := fmt.Sprintf("/projects/%s/repos/%s/tags/%s", t[0], t[1], tagName)
+
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &bitbucketTag, nil); err != nil {
+		return sdk.VCSTag{}, sdk.WrapError(err, "Unable to get tag %s", path)
+	}
+
+	return sdk.VCSTag{
+		Tag:  bitbucketTag.DisplayID,
+		Sha:  bitbucketTag.Hash,
+		Hash: bitbucketTag.LatestCommit,
+	}, nil
+}
+
 // Tags retrieve tags
 func (b *bitbucketClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, error) {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.Tags", telemetry.Tag(telemetry.TagRepository, fullname))

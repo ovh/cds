@@ -11,6 +11,9 @@ import (
 const (
 	TypeAction      = "action"
 	TypeIntegration = "integration"
+
+	InputManagementStrict  = "strict"
+	InputManagementDefault = "default"
 )
 
 type clientSocket struct {
@@ -25,15 +28,16 @@ type Client interface {
 }
 
 type client struct {
-	ctx        context.Context
-	socket     *clientSocket
-	grpcClient interface{}
-	done       chan struct{}
-	stopLog    context.CancelFunc
-	w          workerruntime.Runtime
-	pluginType string
-	pluginName string
-	grpcPlugin *sdk.GRPCPlugin
+	ctx             context.Context
+	socket          *clientSocket
+	grpcClient      interface{}
+	done            chan struct{}
+	stopLog         context.CancelFunc
+	w               workerruntime.Runtime
+	pluginType      string
+	pluginName      string
+	grpcPlugin      *sdk.GRPCPlugin
+	inputManagement string
 }
 
 type Result struct {

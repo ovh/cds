@@ -274,7 +274,7 @@ func processNodeJobRunRequirementsGetModelV2(ctx context.Context, store cache.St
 		return nil, "", sdk.WrapError(sdk.ErrInvalidData, "unable to retrieve worker model data because the workflow root pipeline does not contain any vcs configuration")
 	}
 
-	vcs, err := vcs2.LoadVCSByName(ctx, db, workerProjKey, vcsName)
+	vcs, err := vcs2.LoadVCSByProject(ctx, db, workerProjKey, vcsName)
 	if err != nil {
 		return nil, "", err
 	}

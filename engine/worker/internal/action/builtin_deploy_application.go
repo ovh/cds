@@ -15,7 +15,7 @@ func RunDeployApplication(ctx context.Context, wk workerruntime.Runtime, _ sdk.A
 		return sdk.Result{}, errors.New("unable to retrieve deployment integration... Aborting")
 	}
 
-	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, sdk.GRPCPluginDeploymentIntegration)
+	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, sdk.GRPCPluginDeploymentIntegration, plugin.InputManagementDefault)
 	if err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("unable to start GRPCPlugin: %v", err)}, nil
 	}

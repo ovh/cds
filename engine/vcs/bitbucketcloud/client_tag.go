@@ -9,6 +9,30 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (client *bitbucketcloudClient) Tag(ctx context.Context, fullname string, tagName string) (sdk.VCSTag, error) {
+	var tag Tag
+	path := fmt.Sprintf("/repositories/%s/refs/tags/%s", fullname, tagName)
+	if err := client.do(ctx, "GET", "core", path, nil, nil, &tag); err != nil {
+		return sdk.VCSTag{}, sdk.WrapError(err, "Unable to get tags")
+	}
+
+	email := strings.Trim(rawEmailCommitRegexp.FindString(tag.Target.Author.Raw), "<>")
+	t := sdk.VCSTag{
+		Tag:     tag.Name,
+		Hash:    tag.Target.Hash,
+		Message: tag.Message,
+		Sha:     tag.Target.Hash,
+		Tagger: sdk.VCSAuthor{
+			Avatar:      tag.Target.Author.User.Links.Avatar.Href,
+			DisplayName: tag.Target.Author.User.DisplayName,
+			Email:       email,
+			Name:        tag.Target.Author.User.Nickname,
+			ID:          tag.Target.Author.User.UUID,
+		},
+	}
+	return t, nil
+}
+
 // Tags returns list of tags for a repo
 func (client *bitbucketcloudClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, error) {
 	var tags []Tag

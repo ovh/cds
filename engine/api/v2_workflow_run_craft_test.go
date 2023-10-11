@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -76,6 +77,14 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		Event: sdk.V2WorkflowRunEvent{
+			GitTrigger: &sdk.GitTrigger{
+				Payload:   nil,
+				Ref:       "main",
+				Sha:       "123456",
+				EventName: "push",
 			},
 		},
 	}
@@ -151,6 +160,14 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 				},
 			},
 		},
+		Event: sdk.V2WorkflowRunEvent{
+			GitTrigger: &sdk.GitTrigger{
+				Payload:   nil,
+				Ref:       "main",
+				Sha:       "123456",
+				EventName: "push",
+			},
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -221,7 +238,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",
-								Uses: fmt.Sprintf("actions/%s/%s/%s/myaction", proj.Key, vcsProject.Name, repo.Name),
+								Uses: fmt.Sprintf("actions/%s/%s/%s/myaction", proj.Key, vcsProject.Name, strings.ToUpper(repo.Name)),
 							},
 							{
 								ID:   "mysecondStep",
@@ -231,13 +248,17 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 								ID:   "mythirdStep",
 								Uses: fmt.Sprintf("actions/%s/myaction", repo.Name),
 							},
-							{
-								ID:   "myfourthStep",
-								Uses: fmt.Sprintf("actions/myaction"),
-							},
 						},
 					},
 				},
+			},
+		},
+		Event: sdk.V2WorkflowRunEvent{
+			GitTrigger: &sdk.GitTrigger{
+				Payload:   nil,
+				Ref:       "main",
+				Sha:       "123456",
+				EventName: "push",
 			},
 		},
 	}
@@ -289,6 +310,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
+	t.Logf("%+v", wrDB.WorkflowData.Actions)
 	require.Equal(t, sdk.StatusBuilding, wrDB.Status)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
@@ -353,6 +375,14 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		Event: sdk.V2WorkflowRunEvent{
+			GitTrigger: &sdk.GitTrigger{
+				Payload:   nil,
+				Ref:       "main",
+				Sha:       "123456",
+				EventName: "push",
 			},
 		},
 	}

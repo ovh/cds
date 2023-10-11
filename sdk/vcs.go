@@ -349,6 +349,7 @@ type VCSAuthorizedClientCommon interface {
 
 	//Tags
 	Tags(ctx context.Context, repo string) ([]VCSTag, error)
+	Tag(ctx context.Context, repo string, tagName string) (VCSTag, error)
 
 	//Commits
 	Commits(ctx context.Context, repo, branch, since, until string) ([]VCSCommit, error)

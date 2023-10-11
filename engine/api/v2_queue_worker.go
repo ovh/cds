@@ -14,6 +14,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -51,10 +54,21 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return err
 		}
 
+		projWithSecrets, err := project.Load(ctx, api.mustDB(), run.ProjectKey, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithClearKeys)
+		if err != nil {
+			return err
+		}
+		vcsWithSecrets, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), projWithSecrets.Key, run.VCSServerID, gorpmapping.GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+
 		contexts, err := computeRunJobContext(ctx, api.mustDB(), *run, *jobRun, *wk)
 		if err != nil {
 			return err
 		}
+		secrets := computeSecretsContext(ctx, *projWithSecrets, *vcsWithSecrets)
+		contexts.Secrets = secrets
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -98,6 +112,28 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		}
 		return service.WriteJSON(w, takeResponse, http.StatusOK)
 	}
+}
+
+func computeSecretsContext(ctx context.Context, projWithSecrets sdk.Project, vcsWithSecrets sdk.VCSProject) map[string]string {
+	secrets := make(map[string]string)
+
+	for _, v := range projWithSecrets.Variables {
+		if v.Type == sdk.SecretVariable {
+			secrets[strings.ToUpper(v.Name)] = v.Value
+		}
+	}
+	for _, k := range projWithSecrets.Keys {
+		if k.Name == vcsWithSecrets.Auth.SSHKeyName {
+			secrets["GIT_SSH_KEY"] = k.Private
+		} else {
+			secrets[strings.ToUpper(k.Name)] = k.Private
+		}
+	}
+	if vcsWithSecrets.Auth.Token != "" {
+		secrets["GIT_TOKEN"] = vcsWithSecrets.Auth.Token
+	}
+
+	return secrets
 }
 
 func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, error) {

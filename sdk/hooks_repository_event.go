@@ -92,7 +92,8 @@ type HookRepositoryEventWorkflow struct {
 	Branch               string `json:"branch"`
 	Type                 string `json:"type"`
 	Status               string `json:"status"`
-	TargetBranch         string `json:"target_branch"`
+	TargetBranch         string `json:"target_branch,omitempty"`
+	ModelFullName        string `json:"model,omitempty"`
 }
 
 type HookRepositoryEventExtractData struct {

@@ -52,7 +52,6 @@ type CurrentWorker struct {
 	actions       map[string]sdk.V2Action
 	currentJobV2  struct {
 		runJob           *sdk.V2WorkflowRunJob
-		secrets          map[string]string
 		runJobContext    sdk.WorkflowRunJobsContext
 		context          context.Context
 		currentStepIndex int

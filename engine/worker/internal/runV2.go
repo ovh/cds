@@ -191,21 +191,36 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\"", stepName))
 	}()
 
-	actionDef, found := w.actions[name]
-	if !found {
-		return w.failJob(ctx, fmt.Sprintf("action %s not found", name))
-	}
-
-	// Compute context for action
+	// Set action inputs
 	inputs := make(map[string]string)
-	for k, inp := range actionDef.Inputs {
-		inputs[k] = inp.Default
+	if len(actionPath) == 1 {
+		p := w.GetActionPlugin(actionPath[0])
+		if p == nil {
+			var err error
+			p, err = w.PluginGet(actionPath[0])
+			if err != nil {
+				return w.failJob(ctx, fmt.Sprintf("unable to retrieve plugin %s: %v", actionPath[0], err))
+			}
+			w.SetActionPlugin(p)
+		}
+		for k, inp := range p.Inputs {
+			inputs[k] = inp.Default
+		}
+	} else {
+		actionDef, found := w.actions[name]
+		if !found {
+			return w.failJob(ctx, fmt.Sprintf("action %s not found", name))
+		}
+		for k, inp := range actionDef.Inputs {
+			inputs[k] = inp.Default
+		}
 	}
 	for k, with := range inputWith {
 		if _, has := inputs[k]; has {
 			inputs[k] = with
 		}
 	}
+	// Compute context
 	actionContext, err := w.computeContextForAction(ctx, parentContext, inputs)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to compute context for action %s: %v", name, err))
@@ -213,18 +228,15 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 
 	switch len(actionPath) {
 	case 1:
-		// plugin
 		opts := make(map[string]string, 0)
 		for k, v := range actionContext.Inputs {
-			vString, ok := v.(string)
-			if !ok {
-				return w.failJob(ctx, fmt.Sprintf("input %s is not a string. Got %T", k, v))
+			if vString, ok := v.(string); ok {
+				opts[k] = vString
 			}
-			opts[k] = vString
 		}
 		return w.runPlugin(ctx, actionPath[0], opts)
 	case 5:
-		for stepIndex, step := range actionDef.Runs.Steps {
+		for stepIndex, step := range w.actions[name].Runs.Steps {
 			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, actionContext)
 			if stepRes.Status == sdk.StatusFail {
 				return stepRes
@@ -270,7 +282,7 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 }
 
 func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string) sdk.V2WorkflowRunJobResult {
-	pluginClient, err := plugin.NewClient(ctx, w, plugin.TypeAction, pluginName)
+	pluginClient, err := plugin.NewClient(ctx, w, plugin.TypeAction, pluginName, plugin.InputManagementStrict)
 	if pluginClient != nil {
 		defer pluginClient.Close(ctx)
 	}
