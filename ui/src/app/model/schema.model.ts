@@ -46,6 +46,14 @@ export class JSONSchema implements Schema {
                     let types = new Array<any>();
                     if (properties[k].oneOf) {
                         types = properties[k].oneOf.map(o => o.type).filter(o => o);
+                        properties[k].oneOf.forEach(v => {
+                            if (v.type) {
+                                types.push(v.type);
+                            } else if (v.$ref) {
+                                let newElt = v.$ref.replace(JSONSchema.refPrefix, '');
+                                JSONSchema.browse(schema, flatSchema, newElt, [...tree, k]);
+                            }
+                        })
                     }
                     if (defElt.allOf) {
                         defElt.allOf.forEach(ao => {
@@ -111,7 +119,14 @@ export class JSONSchema implements Schema {
                 else {
                     let types = new Array<any>();
                     if (properties[k].oneOf) {
-                        types = properties[k].oneOf.map(o => o.type).filter(o => o);
+                        properties[k].oneOf.forEach(v => {
+                            if (v.type) {
+                                types.push(v.type);
+                            }
+                            if (v.$ref) {
+                                types.push(v.$ref);
+                            }
+                        });
                     }
                     if (defElt.allOf) {
                         defElt.allOf.forEach(ao => {

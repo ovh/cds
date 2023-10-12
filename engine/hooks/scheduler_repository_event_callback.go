@@ -88,6 +88,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 	if callback.AnalysisCallback != nil {
 		if callback.AnalysisCallback.UserID != "" {
 			hre.UserID = callback.AnalysisCallback.UserID
+			hre.Username = callback.AnalysisCallback.Username
 		}
 		for i := range hre.Analyses {
 			a := &hre.Analyses[i]

@@ -4,6 +4,7 @@
             <img id="gifloader" height="24" width="24" src="./assets/images/loader.gif">
         </ng-container>
         <i *ngSwitchCase="pipelineStatusEnum.SUCCESS" nz-icon nzType="check" nzTheme="outline" class="green"></i>
+        <i *ngSwitchCase="'Done'" nz-icon nzType="check" nzTheme="outline" class="green"></i>
         <ng-container *ngSwitchCase="pipelineStatusEnum.FAIL">
             <i nz-icon nzType="close" nzTheme="outline" class="red" *ngIf="!optional"></i>
             <i nz-icon nzType="warning" nzTheme="outline" class="orange" *ngIf="optional"></i>

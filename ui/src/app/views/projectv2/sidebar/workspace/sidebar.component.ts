@@ -85,6 +85,8 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     }
                     break;
                 case EntityWorkerModel:
+                case EntityWorkflow:
+                case EntityAction:
                     switch (e.action) {
                         case 'select':
                             this.selectEntity(e);
@@ -110,9 +112,9 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                 id: e.parentIDs[1],
                 type: 'repository',
                 child: {
-                    id: EntityWorkerModel,
+                    id: e.nodeType,
                     type: 'folder',
-                    child: {id: e.nodeID, name: e.nodeName, action: 'select', type: EntityWorkerModel}
+                    child: {id: e.nodeID, name: e.nodeName, action: 'select', type: e.nodeType}
                 }
             }
         }
@@ -166,6 +168,8 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
 
     loadRepositories(key: string, vcs: string): Observable<Array<FlatNodeItem>> {
         return this._projectService.getVCSRepositories(key, vcs).pipe(map((repos) => {
+            this._cd.markForCheck();
+            this._cd.markForCheck();
             return repos.map(r => {
                 let nodeItem = <FlatNodeItem>{
                     name: r.name,
@@ -204,7 +208,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                     }));
                 }
                 return nodeItem;
-            })
+            });
         }));
     }
 

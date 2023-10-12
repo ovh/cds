@@ -37,6 +37,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			hre.LastError = fmt.Sprintf("User with key %s not found in CDS", hre.SignKey)
 		}
 		hre.UserID = r.UserID
+		hre.Username = r.Username
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}

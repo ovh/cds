@@ -60,6 +60,42 @@
                     </tbody>
                 </nz-table>
             </div>
+            <div class="hooks">
+                <h3>Hooks <i (click)="loadHookEvents()" nz-icon nzType="sync" [nzSpin]="loadingHooks" nzTheme="outline" class="pointing"></i> </h3>
+                <nz-table [nzLoading]="loadingHooks" [nzData]="hookEvents" [nzPageSize]="10" nzSize="small" #hooksTable>
+                    <thead>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>ID</th>
+                    <th>EventName</th>
+                    <th>Branch</th>
+                    <th>CDS User</th>
+                    <th>Workflows</th>
+                    <th>Error</th>
+                    </thead>
+                    <tbody>
+                    <tr *ngFor="let h of hooksTable.data">
+                        <td><app-status-icon [status]="h.status" nz-tooltip="{{h.status}}"></app-status-icon></td>
+                        <td><span nz-tooltip="{{h.created/1000000}}">{{h.created/1000000 | amTimeAgo}}</span></td>
+                        <td>{{h.uuid}}</td>
+                        <td>{{h.event_name}}</td>
+                        <td>{{h?.extracted_data?.branch}}</td>
+                        <td>{{h.username}}</td>
+                        <td>
+                            <ul>
+                                <li *ngFor="let w of h.workflows">
+                                    <span nz-tooltip nzTooltipTitle="{{w.project_key + ' / ' + w.vcs_identifier + ' / ' + w.repository_identifier}}">
+                                        <b>[{{w.type}}]</b>{{' ' + w.workflow_name}}
+                                    </span>
+
+                                </li>
+                            </ul>
+                        </td>
+                        <td>{{h.error}}</td>
+                    </tr>
+                    </tbody>
+                </nz-table>
+            </div>
         </div>
         <div class="footer">
             <div class="buttons">

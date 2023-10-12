@@ -63,12 +63,33 @@
 
 .controls {
     position: absolute;
-    bottom: 20px;
+    bottom: 65px;
     right: 20px;
     display: flex;
     flex-direction: row;
 
     button {
         margin-right: 15px;
+    }
+}
+
+.hooks {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    padding-right: 10px;
+
+    nz-avatar {
+        width: 45px;
+        height: 45px;
+        ::ng-deep {
+            i {
+                font-size: 1.3em;
+                padding-top: 10px;
+            }
+        }
+    }
+    nz-avatar.active {
+        background-color:#87d068;
     }
 }
