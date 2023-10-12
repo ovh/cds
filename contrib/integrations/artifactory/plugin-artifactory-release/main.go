@@ -11,7 +11,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/jfrog/jfrog-client-go/distribution/services"
-	distriUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
+	"github.com/jfrog/jfrog-client-go/utils/distribution"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
@@ -201,11 +201,11 @@ func (e *artifactoryReleasePlugin) Run(ctx context.Context, opts *integrationplu
 
 	fmt.Printf("Distribute Release %s %s\n", releaseName, releaseVersion)
 
-	distributionParams := services.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
-	distributionParams.DistributionRules = make([]*distriUtils.DistributionCommonParams, 0, len(edges))
+	distributionParams := distribution.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
+	distributionParams.DistributionRules = make([]*distribution.DistributionCommonParams, 0, len(edges))
 	for _, e := range edges {
 		fmt.Printf("Will be distributed to edge %s\n", e.Name)
-		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distriUtils.DistributionCommonParams{
+		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distribution.DistributionCommonParams{
 			SiteName:     e.SiteName,
 			CityName:     e.City.Name,
 			CountryCodes: []string{e.City.CountryCode},

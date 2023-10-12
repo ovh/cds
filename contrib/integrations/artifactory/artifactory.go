@@ -38,7 +38,8 @@ func CreateDistributionClient(ctx context.Context, url, token string) (DistribCl
 		SetThreads(1).
 		SetDryRun(false).
 		SetContext(ctx).
-		SetHttpTimeout(60 * time.Second).
+		SetDialTimeout(60 * time.Second).
+		SetOverallRequestTimeout(60 * time.Second).
 		SetHttpRetries(5).
 		Build()
 	if err != nil {
@@ -60,7 +61,8 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 		SetThreads(1).
 		SetDryRun(false).
 		SetContext(ctx).
-		SetHttpTimeout(60 * time.Second).
+		SetDialTimeout(60 * time.Second).
+		SetOverallRequestTimeout(60 * time.Second).
 		SetHttpRetries(5).
 		Build()
 	if err != nil {
@@ -70,7 +72,7 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 }
 
 func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
-  // artifactory does not manage virtual cargo repositories
+	// artifactory does not manage virtual cargo repositories
 	var srcRepo, targetRepo string
 	switch data.RepoType {
 	case "cargo":

@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/jfrog/jfrog-client-go/distribution/services"
-	distriUtils "github.com/jfrog/jfrog-client-go/distribution/services/utils"
+	"github.com/jfrog/jfrog-client-go/utils/distribution"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/contrib/integrations/artifactory/plugin-artifactory-release/edge"
@@ -83,11 +82,11 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 		return actionplugin.Fail("No destination available. Please check your credentials", err)
 	}
 
-	distributionParams := services.NewDistributeReleaseBundleParams(name, version)
-	distributionParams.DistributionRules = make([]*distriUtils.DistributionCommonParams, 0, len(edges))
+	distributionParams := distribution.NewDistributeReleaseBundleParams(name, version)
+	distributionParams.DistributionRules = make([]*distribution.DistributionCommonParams, 0, len(edges))
 	for _, e := range edges {
 		fmt.Printf("Distribute Release %s %s on %s\n", name, version, e.Name)
-		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distriUtils.DistributionCommonParams{
+		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distribution.DistributionCommonParams{
 			SiteName:     e.SiteName,
 			CityName:     e.City.Name,
 			CountryCodes: []string{e.City.CountryCode},
