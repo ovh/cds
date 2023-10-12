@@ -117,8 +117,10 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return err
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, *p, report)
-		go api.WorkflowSendEvent(context.Background(), *p, report)
+		workflow.ResyncNodeRunsWithCommits(api.Router.Background, api.mustDBWithCtx(api.Router.Background), api.Cache, *p, report)
+		api.GoRoutines.Exec(api.Router.Background, "workflow-send-event", func(ctx context.Context) {
+			api.WorkflowSendEvent(ctx, *p, report)
+		})
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
