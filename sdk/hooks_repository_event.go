@@ -51,6 +51,7 @@ type HookAnalysisCallback struct {
 	Models         []EntityFullName `json:"models"`
 	Workflows      []EntityFullName `json:"workflows"`
 	UserID         string           `json:"user_id"`
+	Username       string           `json:"username"`
 }
 
 type HookRepository struct {
@@ -79,6 +80,7 @@ type HookRepositoryEvent struct {
 	WorkflowUpdated     []EntityFullName               `json:"workflow_updated"`
 	WorkflowHooks       []HookRepositoryEventWorkflow  `json:"workflows"`
 	UserID              string                         `json:"user_id"`
+	Username            string                         `json:"username"`
 	SignKey             string                         `json:"sign_key"`
 	SigningKeyOperation string                         `json:"signing_key_operation"`
 }
@@ -137,7 +139,8 @@ type HookRetrieveUserRequest struct {
 }
 
 type HookRetrieveUserResponse struct {
-	UserID string `json:"user_id"`
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
 }
 
 type AnalysisRequest struct {

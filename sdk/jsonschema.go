@@ -103,6 +103,11 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 
 func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []string) *jsonschema.Schema {
 	workflowSchema := jsonschema.Reflect(&V2Workflow{})
+	workflowOn := jsonschema.Reflect(&WorkflowOn{
+		Push:           &WorkflowOnPush{},
+		ModelUpdate:    &WorkflowOnModelUpdate{},
+		WorkflowUpdate: &WorkflowOnWorkflowUpdate{},
+	})
 
 	jobSchema := GetJobJsonSchema(publicActionNames, regionNames, workerModelNames)
 	actionStepSchema := GetActionJsonSchema(publicActionNames)
@@ -123,6 +128,26 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 
 	workflowSchema.Definitions["ActionStep"] = actionStepSchema.Definitions["ActionStep"]
 	workflowSchema.Definitions["V2Job"] = jobSchema.Definitions["V2Job"]
+	workflowSchema.Definitions["WorkflowOn"] = workflowOn.Definitions["WorkflowOn"]
+	workflowSchema.Definitions["WorkflowOnPush"] = workflowOn.Definitions["WorkflowOnPush"]
+	workflowSchema.Definitions["WorkflowOnModelUpdate"] = workflowOn.Definitions["WorkflowOnModelUpdate"]
+	workflowSchema.Definitions["WorkflowOnWorkflowUpdate"] = workflowOn.Definitions["WorkflowOnWorkflowUpdate"]
+
+	// Prop On
+	propsOn := &jsonschema.Schema{
+		OneOf: []*jsonschema.Schema{
+			{
+				Ref: "#/$defs/WorkflowOn",
+			},
+			{
+				Type: "array",
+				Items: &jsonschema.Schema{
+					Type: "string",
+				},
+			},
+		},
+	}
+	workflowSchema.Definitions["V2Workflow"].Properties.Set("on", propsOn)
 
 	return workflowSchema
 }

@@ -634,6 +634,18 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
+	wrj11 := sdk.V2WorkflowRunJob{
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr.ID,
+		Outputs:       sdk.JobResultOutput{},
+		UserID:        admin.ID,
+		Username:      admin.Username,
+		ProjectKey:    wr.ProjectKey,
+		JobID:         sdk.RandomString(10),
+		Status:        sdk.StatusSuccess,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj11))
+
 	wr2 := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
@@ -659,7 +671,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
-		WorkflowRunID: wr.ID,
+		WorkflowRunID: wr2.ID,
 		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
@@ -668,6 +680,18 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		Status:        sdk.StatusSuccess,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
+
+	wrj3 := sdk.V2WorkflowRunJob{
+		Job:           sdk.V2Job{},
+		WorkflowRunID: wr2.ID,
+		Outputs:       sdk.JobResultOutput{},
+		UserID:        admin.ID,
+		Username:      admin.Username,
+		ProjectKey:    wr.ProjectKey,
+		JobID:         sdk.RandomString(10),
+		Status:        sdk.StatusSuccess,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj3))
 
 	wrs, err := workflow_v2.LoadBuildingRunWithEndedJobs(ctx, api.mustDB())
 	require.NoError(t, err)

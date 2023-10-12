@@ -129,7 +129,7 @@ func (s *Service) Serve(c context.Context) error {
 		})
 		// Delete old repository event
 		s.GoRoutines.RunWithRestart(ctx, "cleanRepositoryEvent", func(ctx context.Context) {
-
+			s.scheduleCleanOldRepositoryEvent(ctx)
 		})
 
 		//Start all the tasks

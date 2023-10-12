@@ -96,6 +96,7 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 
 		e.Status = sdk.HookEventWorkflowStatusScheduler
 		e.UserID = ""
+		e.Username = ""
 		e.SignKey = ""
 		e.SigningKeyOperation = ""
 		e.LastError = ""

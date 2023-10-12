@@ -19,7 +19,7 @@ import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
 import {GraphNode, GraphNodeTypeJob, GraphNodeTypeStage, JobRun} from "./graph.model";
 import {GraphDirection, WorkflowV2Graph} from "./graph.lib";
 import {load, LoadOptions} from "js-yaml";
-import {V2WorkflowRunJob} from "../../../../../../../model/v2.workflow.run.model";
+import {V2WorkflowRun, V2WorkflowRunJob} from "../../../../../../../model/v2.workflow.run.model";
 
 export type WorkflowV2JobsGraphOrNodeComponent = ProjectV2WorkflowJobsGraphComponent |
     ProjectV2WorkflowForkJoinNodeComponent | ProjectV2WorkflowJobNodeComponent;
@@ -36,6 +36,9 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     static minScale = 1 / 5;
 
     nodes: Array<GraphNode> = [];
+    hooks: Array<any> = [];
+    selectedHook: string;
+    hooksOn: any;
 
     @Input() set workflow(data: any) {
         let workflow: any;
@@ -78,6 +81,12 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                 }
             });
         }
+        this.hooks = [];
+        this.selectedHook = '';
+        if (workflow && workflow['on']) {
+            this.hooksOn = workflow['on'];
+            this.initHooks();
+        }
         this.changeDisplay();
         this._cd.markForCheck();
     }
@@ -104,6 +113,12 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         this.initGraph();
     }
 
+    _workflowRun: V2WorkflowRun
+    @Input() set workflowRun(data: V2WorkflowRun) {
+        this._workflowRun = data;
+        this.initHooks();
+    }
+
     @Output() onSelectJob = new EventEmitter<string>();
 
     direction: GraphDirection = GraphDirection.HORIZONTAL;
@@ -120,6 +135,28 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             this.onResize();
         });
         observer.observe(this.host.nativeElement);
+    }
+
+    initHooks(): void {
+        this.hooks = [];
+        this.selectedHook = '';
+        if (this.hooksOn) {
+            if(Object.prototype.toString.call(this.hooksOn) === '[object Array]') {
+                this.hooks = this.hooksOn;
+            } else {
+                this.hooks = Object.keys(this.hooksOn);
+            }
+
+            if (this._workflowRun) {
+                if (this._workflowRun.event.workflow_update) {
+                    this.selectedHook = 'workflow_update';
+                } else if (this._workflowRun.event.model_update) {
+                    this.selectedHook = 'model_update';
+                } else if (this._workflowRun.event.git) {
+                    this.selectedHook = this._workflowRun.event.git.event_name;
+                }
+            }
+        }
     }
 
     static isJobsGraph = (component: WorkflowV2JobsGraphOrNodeComponent): component is ProjectV2WorkflowJobsGraphComponent => {

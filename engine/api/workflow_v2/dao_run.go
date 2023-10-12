@@ -140,8 +140,8 @@ func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor) ([]s
   WHERE status = $1
   AND (
     SELECT count(1) FROM v2_workflow_run_job
-    WHERE v2_workflow_run_job.workflow_run_id = v2_workflow_run.id AND v2_workflow_run_job.status != ALL($2)
-) = 0
+    WHERE v2_workflow_run_job.workflow_run_id = v2_workflow_run.id AND v2_workflow_run_job.status = ANY($2)
+  ) = 0
   LIMIT 100;
 `).Args(sdk.StatusBuilding, pq.StringArray([]string{sdk.StatusBuilding, sdk.StatusScheduling, sdk.StatusWaiting}))
 

@@ -16,10 +16,14 @@ export class V2WorkflowRun {
     user_id: string;
     username: string;
     contexts: any;
+    event: WorkflowEvent;
 
-    // TODO with hooks
-    //event: WorkflowEvent;
+}
 
+export class WorkflowEvent {
+    workflow_update: {ref: string, workflow_updated: string};
+    model_update: {ref: string, workflow_updated: string};
+    git: {event_name: string, payload: string, ref: string, sha: string};
 }
 
 export class WorkflowData {

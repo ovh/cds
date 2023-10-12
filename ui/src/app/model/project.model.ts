@@ -92,3 +92,27 @@ export class ProjectRepository {
     created_by: string;
 }
 
+export class RepositoryHookEvent {
+    uuid: string;
+    created: number;
+    status: string;
+    event_name: string;
+    extracted_data: RepositoryHookEventExtractedData;
+    username: string;
+    error: string;
+    workflows: Array<RepositoryHookWorkflow>;
+}
+
+export class RepositoryHookEventExtractedData {
+    branch: string;
+    commit: string;
+}
+
+export class RepositoryHookWorkflow {
+    project_key: string;
+    vcs_identifier: string;
+    repository_identifier: string;
+    workflow_name: string;
+    type: string;
+}
+

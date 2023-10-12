@@ -107,7 +107,7 @@ func (d *dao) GetRepositoryEvent(ctx context.Context, vcsServer, repository, uui
 		return nil, err
 	}
 	if !found {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to find repository event for %s", k)
 	}
 	return &e, nil
 }

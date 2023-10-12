@@ -115,7 +115,7 @@ import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
 import {
-    AimOutline, ApartmentOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, EyeInvisibleOutline, ExpandOutline, ExportOutline, EyeOutline, FieldTimeOutline, FileOutline, FileTextOutline, FilterOutline, FolderOutline, FontColorsOutline, KeyOutline,
+    AimOutline, ApartmentOutline, ApiOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, EyeInvisibleOutline, ExpandOutline, ExportOutline, EyeOutline, FieldTimeOutline, FileOutline, FileTextOutline, FilterOutline, FolderOutline, FontColorsOutline, KeyOutline,
     GithubOutline, GitlabOutline, GlobalOutline, HomeOutline, HighlightFill, HistoryOutline, HourglassOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, MinusOutline, MoreOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, ProfileOutline, QuestionOutline, QuestionCircleOutline, RestOutline, RocketOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
     TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill
 } from '@ant-design/icons-angular/icons'
@@ -155,6 +155,7 @@ import { APIConfigGuard } from 'app/guard/api-config.guard';
 import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
 import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
 import { EditorInputComponent } from './input/editor/editor.input.component';
+import {NzAvatarModule} from "ng-zorro-antd/avatar";
 
 const ngZorroConfig: NzConfig = {
     notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
@@ -164,12 +165,13 @@ const ngZorroConfig: NzConfig = {
     }
 };
 
-const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, ExpandOutline, ExportOutline,
+const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, ExpandOutline, ExportOutline,
     EyeInvisibleOutline, EyeOutline, FileOutline, FileTextOutline, FieldTimeOutline, FilterOutline, FolderOutline, FontColorsOutline, KeyOutline, GithubOutline, GitlabOutline, GlobalOutline, HomeOutline, HighlightFill, HistoryOutline, HourglassOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, MinusOutline, MoreOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, ProfileOutline, QuestionOutline, QuestionCircleOutline,
     RestOutline, RocketOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill];
 
 @NgModule({
     imports: [
+        NzAvatarModule,
         NzAutocompleteModule,
         NzAlertModule,
         NzBadgeModule,
@@ -375,6 +377,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ArrowDownOutline,
         NgForNumber,
         NgxAutoScrollDirective,
         NzAlertModule,
+        NzAvatarModule,
         NzAutocompleteModule,
         NzBadgeModule,
         NzBreadCrumbModule,

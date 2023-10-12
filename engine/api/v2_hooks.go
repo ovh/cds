@@ -42,6 +42,7 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 			}
 			if u != nil {
 				resp.UserID = u.ID
+				resp.Username = u.Username
 			}
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
