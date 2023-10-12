@@ -87,13 +87,13 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, se
 		var err error
 		gitURL, auth, err = vcsStrategy(ctx, wk, wk.Parameters(), secrets)
 		if err != nil {
-			return sdk.Result{}, fmt.Errorf("Could not use VCS Auth Strategy from application: %v", err)
+			return sdk.Result{}, fmt.Errorf("could not use VCS Auth Strategy from application: %v", err)
 		}
 		key = &auth.PrivateKey
 	}
 
 	if gitURL == "" {
-		return sdk.Result{}, fmt.Errorf("Git repository URL is not set. Nothing to perform")
+		return sdk.Result{}, fmt.Errorf("git repository URL is not set. Nothing to perform")
 	}
 
 	//If url is not http(s), a key must be found
@@ -150,7 +150,7 @@ func RunGitClone(ctx context.Context, wk workerruntime.Runtime, a sdk.Action, se
 
 	workdir, err := workerruntime.WorkingDirectory(ctx)
 	if err != nil {
-		return sdk.Result{}, fmt.Errorf("Unable to find current working directory: %v", err)
+		return sdk.Result{}, fmt.Errorf("unable to find current working directory: %v", err)
 	}
 
 	workdirPath := workdir.Name()
@@ -173,6 +173,8 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 
 	//git.LogFunc = log.InfoWithoutCtx
 	//Perform the git clone
+	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("cloning repository %s", url))
+
 	userLogCommand, err := git.Clone(url, basedir, dir, auth, clone, output)
 
 	w.SendLog(ctx, workerruntime.LevelInfo, userLogCommand)
@@ -186,7 +188,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 	}
 
 	if err != nil {
-		return sdk.Result{}, fmt.Errorf("Unable to git clone: %s", err)
+		return sdk.Result{}, fmt.Errorf("unable to git clone: %s", err)
 	}
 
 	// extract info only if we git clone the same repo as current application linked to the pipeline
@@ -215,7 +217,7 @@ func gitClone(ctx context.Context, w workerruntime.Runtime, params []sdk.Paramet
 	}
 
 	if errTag != nil {
-		return sdk.Result{}, sdk.WithStack(fmt.Errorf("Unable to list tag for getting current version: %v", errTag))
+		return sdk.Result{}, sdk.WithStack(fmt.Errorf("unable to list tag for getting current version: %v", errTag))
 	}
 
 	return sdk.Result{Status: sdk.StatusSuccess, NewVariables: vars}, nil
@@ -277,10 +279,9 @@ func extractInfo(ctx context.Context, w workerruntime.Runtime, basedir, dir stri
 					Value: info.Branch,
 				}
 				res = append(res, gitBranch)
-
 				w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.branch: %s", info.Branch))
 			} else {
-				w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.branch: [empty]"))
+				w.SendLog(ctx, workerruntime.LevelInfo, "git.branch: [empty]")
 			}
 		} else if branch != "" && branch != "{{.git.branch}}" {
 			w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("git.branch: %s", branch))
