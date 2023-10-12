@@ -282,6 +282,14 @@ func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run s
 	vars := payload
 	varsFloats := make(map[string]float64)
 
+	// git_branch_exist var is often used in the default rule retention
+	// this will avoid
+	//  <string>:9: variable 'git_branch_exist' is not declared
+	// when it's not defined
+	if _, ok := vars[RunGitBranchExist]; !ok {
+		vars[RunGitBranchExist] = "false"
+	}
+
 	// If we have gerrit change id, check status
 	if changeID, ok := vars["gerrit.change.id"]; ok && vcsClient != nil {
 		ch, err := vcsClient.PullRequest(ctx, app.RepositoryFullname, changeID)
