@@ -109,7 +109,7 @@ func NewStep(act sdk.Action) Step {
 			}
 			tag := sdk.ParameterFind(act.Parameters, "tag")
 			if tag != nil && tag.Value != sdk.DefaultGitCloneParameterTagValue {
-				s.GitClone.Tag = tag.Value
+				s.GitClone.Tag = &tag.Value
 			}
 		case sdk.GitTagAction:
 			s.GitTag = &StepGitTag{}
@@ -287,16 +287,16 @@ type StepArtifactUpload struct {
 
 // StepGitClone represents exported git clone step.
 type StepGitClone struct {
-	Branch     string `json:"branch,omitempty" yaml:"branch,omitempty"`
-	Commit     string `json:"commit,omitempty" yaml:"commit,omitempty"`
-	Depth      string `json:"depth,omitempty" yaml:"depth,omitempty"`
-	Directory  string `json:"directory,omitempty" yaml:"directory,omitempty"`
-	Password   string `json:"password,omitempty" yaml:"password,omitempty"`
-	PrivateKey string `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
-	SubModules string `json:"submodules,omitempty" yaml:"submodules,omitempty"`
-	Tag        string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	URL        string `json:"url,omitempty" yaml:"url,omitempty" jsonschema:"required"`
-	User       string `json:"user,omitempty" yaml:"user,omitempty"`
+	Branch     string  `json:"branch,omitempty" yaml:"branch,omitempty"`
+	Commit     string  `json:"commit,omitempty" yaml:"commit,omitempty"`
+	Depth      string  `json:"depth,omitempty" yaml:"depth,omitempty"`
+	Directory  string  `json:"directory,omitempty" yaml:"directory,omitempty"`
+	Password   string  `json:"password,omitempty" yaml:"password,omitempty"`
+	PrivateKey string  `json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+	SubModules string  `json:"submodules,omitempty" yaml:"submodules,omitempty"`
+	Tag        *string `json:"tag,omitempty" yaml:"tag,omitempty"`
+	URL        string  `json:"url,omitempty" yaml:"url,omitempty" jsonschema:"required"`
+	User       string  `json:"user,omitempty" yaml:"user,omitempty"`
 }
 
 // StepPromote represents exported promote step.
