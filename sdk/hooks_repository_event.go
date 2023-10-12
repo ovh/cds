@@ -55,9 +55,9 @@ type HookAnalysisCallback struct {
 
 type HookRepository struct {
 	VCSServerType  string `json:"vcs_server_type"`
-	VCSServerName  string `json:"vcs_server_name"`
-	RepositoryName string `json:"repository_name"`
-	Stopped        bool   `json:"stopped" cli:"Stopped"`
+	VCSServerName  string `json:"vcs_server_name" cli:"vcs_server_name"`
+	RepositoryName string `json:"repository_name" cli:"repository_name"`
+	Stopped        bool   `json:"stopped" cli:"stopped"`
 }
 
 type HookRepositoryEvent struct {

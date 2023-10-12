@@ -59,6 +59,11 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if !sdk.IsURL(s.Cfg.URLPublic) {
 		return fmt.Errorf("Invalid hooks configuration, urlPublic configuration is mandatory")
 	}
+
+	if s.Cfg.RepositoryEventRetention == 0 {
+		s.Cfg.RepositoryEventRetention = 30
+	}
+
 	return nil
 }
 
@@ -118,8 +123,13 @@ func (s *Service) Serve(c context.Context) error {
 			s.dequeueRepositoryEventCallback(ctx)
 		})
 
+		// Reenqueue old repository event
 		s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
 			s.manageOldRepositoryEvent(ctx)
+		})
+		// Delete old repository event
+		s.GoRoutines.RunWithRestart(ctx, "cleanRepositoryEvent", func(ctx context.Context) {
+
 		})
 
 		//Start all the tasks

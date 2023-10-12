@@ -19,13 +19,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//RedisStore a redis client and a default ttl
+// RedisStore a redis client and a default ttl
 type RedisStore struct {
 	ttl    int
 	Client *redis.Client
 }
 
-//NewRedisStore initiate a new redisStore
+// NewRedisStore initiate a new redisStore
 func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error) {
 	var client *redis.Client
 

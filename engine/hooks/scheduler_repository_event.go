@@ -75,11 +75,11 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		telemetry.Tag(telemetry.TagRepository, hre.RepositoryName),
 		telemetry.Tag(telemetry.TagEventID, hre.UUID))
 
-	b, err := s.Dao.LockRepositoryEvent(hre.VCSServerType, hre.VCSServerName, hre.RepositoryName, hre.UUID)
+	b, err := s.Dao.LockRepositoryEvent(hre.VCSServerName, hre.RepositoryName, hre.UUID)
 	if err != nil {
 		return sdk.WrapError(err, "unable to lock hook event %s", hre.GetFullName())
 	}
-	defer s.Dao.UnlockRepositoryEvent(hre.VCSServerType, hre.VCSServerName, hre.RepositoryName, hre.UUID)
+	defer s.Dao.UnlockRepositoryEvent(hre.VCSServerName, hre.RepositoryName, hre.UUID)
 
 	if !b {
 		// reenqueue
@@ -97,7 +97,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 	}
 
 	// Load the repository
-	repoKey := s.Dao.GetRepositoryMemberKey(hre.VCSServerType, hre.VCSServerName, hre.RepositoryName)
+	repoKey := s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName)
 	repo := s.Dao.FindRepository(ctx, repoKey)
 	if repo == nil {
 		log.Error(ctx, "dequeueRepositoryEvent failed: Repository %s not found - deleting this event", repoKey)

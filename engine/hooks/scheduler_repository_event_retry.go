@@ -64,14 +64,14 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 		telemetry.Tag(telemetry.TagRepository, repoEventTmp.RepositoryName),
 		telemetry.Tag(telemetry.TagEventID, repoEventTmp.UUID))
 
-	b, err := s.Dao.LockRepositoryEvent(repoEventTmp.VCSServerType, repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
+	b, err := s.Dao.LockRepositoryEvent(repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 	if err != nil {
 		return sdk.WrapError(err, "unable to lock repository event %s", repoEventTmp.GetFullName())
 	}
 	if !b {
 		return nil
 	}
-	defer s.Dao.UnlockRepositoryEvent(repoEventTmp.VCSServerType, repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
+	defer s.Dao.UnlockRepositoryEvent(repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 
 	var hre sdk.HookRepositoryEvent
 	find, err = s.Cache.Get(repoEventKey, &hre)

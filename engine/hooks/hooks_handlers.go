@@ -108,11 +108,11 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 }
 
 func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, eventName string, event []byte) (*sdk.HookRepositoryEvent, error) {
-	repoKey := s.Dao.GetRepositoryMemberKey(vcsServerType, vcsServerName, repoName)
+	repoKey := s.Dao.GetRepositoryMemberKey(vcsServerName, repoName)
 	hr := s.Dao.FindRepository(ctx, repoKey)
 	if hr == nil {
 		var err error
-		hr, err = s.Dao.CreateRepository(ctx, repoKey, vcsServerType, vcsServerName, repoName)
+		hr, err = s.Dao.CreateRepository(ctx, vcsServerType, vcsServerName, repoName)
 		if err != nil {
 			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
 		}
