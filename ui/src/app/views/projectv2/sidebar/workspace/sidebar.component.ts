@@ -169,7 +169,6 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     loadRepositories(key: string, vcs: string): Observable<Array<FlatNodeItem>> {
         return this._projectService.getVCSRepositories(key, vcs).pipe(map((repos) => {
             this._cd.markForCheck();
-            this._cd.markForCheck();
             return repos.map(r => {
                 let nodeItem = <FlatNodeItem>{
                     name: r.name,
