@@ -264,3 +264,58 @@ func GetJobStepName(stepID string, stepIndex int) string {
 	return fmt.Sprintf("step-%d", stepIndex)
 
 }
+
+type WorkflowRunStages map[string]WorkflowRunStage
+
+func (wrs WorkflowRunStages) ComputeStatus() {
+	// Compute job status
+stageLoop:
+	for name := range wrs {
+		stage := wrs[name]
+		for _, status := range stage.Jobs {
+			if !StatusIsTerminated(status) {
+				stage.Ended = false
+				wrs[name] = stage
+				continue stageLoop
+			}
+		}
+		stage.Ended = true
+		wrs[name] = stage
+	}
+
+	// Compute stage needs
+	for name := range wrs {
+		stage := wrs[name]
+
+		canBeRun := true
+		for _, n := range stage.Needs {
+			if !wrs[n].Ended {
+				canBeRun = false
+				break
+			}
+		}
+		stage.CanBeRun = canBeRun
+		wrs[name] = stage
+	}
+}
+
+type WorkflowRunStage struct {
+	WorkflowStage
+	CanBeRun bool
+	Jobs     map[string]string
+	Ended    bool
+}
+
+func (w V2WorkflowRun) GetStages() WorkflowRunStages {
+	stages := WorkflowRunStages{}
+	for k, s := range w.WorkflowData.Workflow.Stages {
+		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]string)}
+	}
+	if len(stages) == 0 {
+		return stages
+	}
+	for jobID, job := range w.WorkflowData.Workflow.Jobs {
+		stages[job.Stage].Jobs[jobID] = ""
+	}
+	return stages
+}

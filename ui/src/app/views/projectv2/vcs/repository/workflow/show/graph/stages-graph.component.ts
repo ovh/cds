@@ -65,9 +65,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             Object.keys(workflow["jobs"]).forEach(k => {
                 let job = workflow.jobs[k];
                 let node = <GraphNode>{name: k, depends_on: job?.needs, type: GraphNodeTypeJob};
-                if (this.jobRuns[k]) {
-                    node.run = this.jobRuns[k];
-                }
+                node.run = this.jobRuns[k];
 
                 if (job?.stage) {
                     for (let i = 0; i < this.nodes.length; i++) {
@@ -102,11 +100,18 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         data.forEach(j => {
             this.jobRuns[j.job_id] = j;
         });
-
         if (this.nodes) {
             this.nodes.forEach(n => {
-                if (this.jobRuns[n.name]) {
-                    n.run = this.jobRuns[n.name];
+                if (this.hasStages) {
+                    n.sub_graph.forEach(sub => {
+                       if (this.jobRuns[sub.name]) {
+                           sub.run = this.jobRuns[sub.name];
+                       }
+                    });
+                } else {
+                    if (this.jobRuns[n.name]) {
+                        n.run = this.jobRuns[n.name];
+                    }
                 }
             })
         }

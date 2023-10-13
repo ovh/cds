@@ -258,9 +258,14 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 	errs := make([]error, 0)
 	if len(w.Stages) > 0 {
 		stages := make(map[string]WorkflowStage)
+		jobs := make(map[string]V2Job)
 		for k, v := range w.Stages {
 			stages[k] = v
 		}
+		for k, v := range w.Jobs {
+			jobs[k] = v
+		}
+		// Check stage needs
 		for k := range stages {
 			for _, n := range stages[k].Needs {
 				if _, exist := stages[n]; !exist {
@@ -268,15 +273,22 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 				}
 			}
 		}
+		// Check job needs
 		for k, j := range w.Jobs {
-			if len(j.Needs) > 0 {
-				errs = append(errs, NewErrorFrom(ErrInvalidData, "As you use stages, you can't add `needs` attribute on job %s", k))
-			}
 			if j.Stage == "" {
 				errs = append(errs, NewErrorFrom(ErrInvalidData, "Missing stage on job %s", k))
 			}
 			if _, stageExist := stages[j.Stage]; !stageExist {
 				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))
+			}
+			for _, n := range j.Needs {
+				jobNeed, exist := jobs[n]
+				if !exist {
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: needs not found %s", k, n))
+				}
+				if jobNeed.Stage != j.Stage {
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: need %s must be in the same stage", k, n))
+				}
 			}
 		}
 	} else {

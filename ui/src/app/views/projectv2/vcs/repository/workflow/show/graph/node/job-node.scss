@@ -39,6 +39,10 @@
             border-color: $darkTheme_blue;
         }
 
+        &.scheduling {
+            border-color: $darkTheme_blue;
+        }
+
         &.inactive {
             background-color: $darkTheme_night_grey;
             border-color: grey;
@@ -108,6 +112,10 @@
 
     &.building {
         background-color: $cds_color_light_teal;
+        border-color: $cds_color_teal;
+    }
+
+    &.scheduling {
         border-color: $cds_color_teal;
     }
 

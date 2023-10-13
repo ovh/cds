@@ -66,7 +66,7 @@ export class RunJobLogsComponent {
                 }
             });
         }
-        
+
         this.computeStepsDuration();
 
         this._cd.markForCheck();
@@ -104,7 +104,7 @@ export class RunJobLogsComponent {
         if (PipelineStatus.isDone(this.runJob.status)) {
             await this.loadFirstFailedOrLastStep();
         } else {
-            // TODO
+            // TODO WEBSOCKET
         }
 
         this._cd.markForCheck();
@@ -130,7 +130,6 @@ export class RunJobLogsComponent {
     computeStepsDuration(): void {
         if (this.steps) {
             this.steps.forEach(s => {
-                console.log(s, this._runJob.steps_status)
                 let stepStatus = this._runJob.steps_status[s.name];
                 if (!stepStatus) {
                     return;

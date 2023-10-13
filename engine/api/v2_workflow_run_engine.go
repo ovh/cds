@@ -23,7 +23,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-func (api *API) TriggerBlockedWorklowRuns(ctx context.Context) {
+func (api *API) TriggerBlockedWorkflowRuns(ctx context.Context) {
 	tickTrigger := time.NewTicker(1 * time.Minute)
 
 	for {
@@ -86,7 +86,6 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 
 // TODO Manage stage
 // TODO Manage job sub number
-// TODO manage git context
 // TODO manage vars context
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
@@ -280,17 +279,33 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	}
 
 	// Check jobs : Needs / Condition / User Right
+
+	currentJobRunStatus := computeJobRunStatus(runJobs)
+
+	stages := run.GetStages()
+	if len(stages) > 0 {
+		for k, j := range allrunJobsMap {
+			jobStage := run.WorkflowData.Workflow.Jobs[k].Stage
+			stages[jobStage].Jobs[k] = j.Status
+		}
+		stages.ComputeStatus()
+	}
+
 	for jobID, jobDef := range jobsToCheck {
+		if len(stages) > 0 && !stages[jobDef.Stage].CanBeRun {
+			continue
+		}
+
 		canBeQueued, infos, err := checkJob(ctx, db, *u, wrEnqueue, *run, jobsContext, jobID, &jobDef, defaultRegion)
 		runInfos = append(runInfos, infos...)
 		if err != nil {
 			return nil, runInfos, sdk.StatusFail, err
 		}
+
 		if canBeQueued {
 			jobToQueue[jobID] = jobDef
 		}
 	}
-	currentJobRunStatus := computeJobRunStatus(runJobs)
 
 	return jobToQueue, runInfos, currentJobRunStatus, nil
 }
@@ -364,7 +379,7 @@ func computeJobRunStatus(runJobs []sdk.V2WorkflowRunJob) string {
 		if (rj.Status == sdk.StatusFail || rj.Status == sdk.StatusStopped) && sdk.StatusIsTerminated(finalStatus) {
 			finalStatus = rj.Status
 		}
-		if rj.Status == sdk.StatusBuilding || rj.Status == sdk.StatusWaiting {
+		if !sdk.StatusIsTerminated(rj.Status) {
 			finalStatus = rj.Status
 		}
 	}

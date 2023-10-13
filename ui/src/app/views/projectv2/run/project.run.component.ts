@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild} from "@angular/core";
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {SidebarService} from "app/service/sidebar/sidebar.service";
-import {forkJoin, from, interval, of, race, Subject, Subscription, timer} from "rxjs";
+import {from, interval, Subscription} from "rxjs";
 import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo} from "app/model/v2.workflow.run.model";
 import {dump} from "js-yaml";
 import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
@@ -12,7 +12,7 @@ import {Tab} from "app/shared/tabs/tabs.component";
 import {ProjectV2WorkflowStagesGraphComponent} from "../vcs/repository/workflow/show/graph/stages-graph.component";
 import {CDNLine, CDNStreamFilter, PipelineStatus} from "../../../model/pipeline.model";
 import {webSocket, WebSocketSubject} from "rxjs/webSocket";
-import {concatMap, delay, mergeMap, repeat, retryWhen, takeUntil, tap} from "rxjs/operators";
+import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {Router} from "@angular/router";
 import {RunJobComponent} from "./run-job.component";
 
@@ -156,10 +156,14 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     selectJob(jobName: string): void {
         let jobRun = this.jobs.find(j => j.job_id === jobName);
-        if (this.selectedJobRun && PipelineStatus.isDone(this.selectedJobRun.status) && PipelineStatus.isDone((jobRun.status))) {
+        if (this.selectedJobRun && jobRun && jobRun.id === this.selectedJobRun.id) {
             return;
         }
         this.selectedJobRun = jobRun;
+        if (!this.selectedJobRun) {
+            this._cd.markForCheck();
+            return;
+        }
         if (!PipelineStatus.isDone(jobRun.status)) {
             this.startStreamingLogsForJob();
         }
