@@ -94,6 +94,17 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     @Input() set runJobs(data: Array<V2WorkflowRunJob>) {
         if (!data) {
             this.jobRuns = {}
+            if (this.nodes) {
+                this.nodes.forEach(n => {
+                    if (this.hasStages) {
+                        n.sub_graph.forEach(sub => {
+                            delete sub.run;
+                        });
+                    } else {
+                        delete n.run;
+                    }
+                })
+            }
             return;
         }
         this.jobRuns = {};

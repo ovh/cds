@@ -64,10 +64,14 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             delete this.selectedJobRun;
             delete this.selectedJobRunInfos;
             delete this.selectedRunInfos;
-            this.selectedRun = r;
             if (this.pollSubs) {
                 this.pollSubs.unsubscribe();
             }
+            if (r?.id !== this.selectedRun?.id) {
+                delete this.selectedRunInfos;
+                delete this.jobs;
+            }
+            this.selectedRun = r;
             if (r) {
                 this.loadJobs();
                 this.pollSubs = interval(5000)
