@@ -135,14 +135,14 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 			}
 
 			if strings.HasPrefix(pod.Name, "register-") {
-				secretName := h.getWorkerConfigSecretName(labels[LABEL_WORKER_NAME])
-				if err := h.deleteSecretByName(ctx, secretName); err != nil {
-					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secret (workerName) %s", secretName))
-				}
-			} else {
 				secretName := h.getWorkerRegistrySecretName(labels[LABEL_WORKER_MODEL_PATH])
 				if err := h.deleteSecretByName(ctx, secretName); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secret (modelPath) %s", secretName))
+				}
+			} else {
+				secretName := h.getWorkerConfigSecretName(labels[LABEL_WORKER_NAME])
+				if err := h.deleteSecretByName(ctx, secretName); err != nil {
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secret (workerName) %s", secretName))
 				}
 			}
 
