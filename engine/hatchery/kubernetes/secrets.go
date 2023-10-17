@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/docker/distribution/reference"
 	"github.com/rockbears/log"
@@ -29,6 +30,10 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	}
 
 	for _, secret := range secrets.Items {
+		// created last 10min, too young to delete it
+		if secret.GetCreationTimestamp().Add(10 * time.Minute).After(time.Now()) {
+			continue
+		}
 		secretLabels := secret.GetLabels()
 		if secretLabels == nil {
 			continue
@@ -59,11 +64,26 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	return nil
 }
 
+// deleteSecretByName deletes a secret. If the secret does not exit, return nil
+func (h *HatcheryKubernetes) deleteSecretByName(ctx context.Context, secretName string) error {
+	secrets, err := h.kubeClient.SecretList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
+	if err != nil {
+		return sdk.WrapError(err, "cannot get secrets")
+	}
+
+	for _, secret := range secrets.Items {
+		if secret.Name == secretName {
+			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
+				return sdk.WrapError(err, "cannot delete secret %s", secretName)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel) (string, error) {
-	secretName := slug.Convert("cds-worker-registry-" + model.GetPath())
-
-	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
-
+	secretName := h.getWorkerRegistrySecretName(model.GetPath())
 	registry := "https://index.docker.io/v1/"
 	if model.ModelV1 != nil && model.ModelV1.ModelDocker.Registry != "" {
 		registry = model.ModelV1.ModelDocker.Registry
@@ -97,9 +117,16 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 	return secretName, nil
 }
 
-func (h *HatcheryKubernetes) createConfigSecret(ctx context.Context, workerConfig workerruntime.WorkerConfig) (string, error) {
-	secretName := slug.Convert("cds-worker-config-" + workerConfig.Name)
+func (h *HatcheryKubernetes) getWorkerConfigSecretName(workerName string) string {
+	return slug.Convert("cds-worker-config-" + workerName)
+}
 
+func (h *HatcheryKubernetes) getWorkerRegistrySecretName(modelPath string) string {
+	return slug.Convert("cds-worker-registry-" + modelPath)
+}
+
+func (h *HatcheryKubernetes) createConfigSecret(ctx context.Context, workerConfig workerruntime.WorkerConfig) (string, error) {
+	secretName := h.getWorkerConfigSecretName(workerConfig.Name)
 	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
 
 	if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &apiv1.Secret{
