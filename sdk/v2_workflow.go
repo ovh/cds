@@ -150,10 +150,10 @@ type V2Job struct {
 	Stage       string            `json:"stage,omitempty" jsonschema_extras:"order=2"`
 	Region      string            `json:"region,omitempty" jsonschema_extras:"order=3"`
 	WorkerModel string            `json:"worker_model,omitempty" jsonschema_extras:"required,order=4,mode=split"`
+	Strategy    *V2JobStrategy    `json:"strategy,omitempty" jsonschema_extras:"order=2"`
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
-	Strategy    V2JobStrategy    `json:"-"`
 }
 
 func (w V2Job) Value() (driver.Value, error) {
@@ -167,7 +167,7 @@ func (w *V2Job) Scan(src interface{}) error {
 	}
 	source, ok := src.(string)
 	if !ok {
-		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2Job")
 }
@@ -212,6 +212,7 @@ func (w *V2WorkflowHookData) Scan(src interface{}) error {
 }
 
 type V2JobStrategy struct {
+	Matrix map[string][]string `json:"matrix"`
 }
 
 type V2JobConcurrency struct {

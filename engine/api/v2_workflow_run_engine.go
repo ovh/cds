@@ -136,16 +136,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	jobsToQueue, runMsgs, currentJobRunStatus, errRetrieveJobs := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
+	jobsToQueue, runMsgs, currentJobRunStatus, err := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
 	log.Debug(ctx, "workflowRunV2Trigger> jobs to queue: %+v", jobsToQueue)
-
-	tx, errTx := api.mustDB().Begin()
-	if errTx != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
-	if errRetrieveJobs != nil {
+	if err != nil {
+		tx, errTx := api.mustDB().Begin()
+		if errTx != nil {
+			return sdk.WithStack(errTx)
+		}
+		defer tx.Rollback()
 		for i := range runMsgs {
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runMsgs[i]); err != nil {
 				return err
@@ -158,34 +156,25 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 				return err
 			}
 		}
-		return errRetrieveJobs
+		if errTx := tx.Commit(); errTx != nil {
+			return sdk.WithStack(errTx)
+		}
+		return err
 	}
 
 	// Enqueue JOB
+	runJobs := prepareRunJobs(ctx, *run, wrEnqueue, jobsToQueue, *u)
 
-	runJobs := make([]sdk.V2WorkflowRunJob, 0, len(jobsToQueue))
-	for jobID, jobDef := range jobsToQueue {
-		runJob := sdk.V2WorkflowRunJob{
-			WorkflowRunID: run.ID,
-			Status:        sdk.StatusWaiting,
-			JobID:         jobID,
-			Job:           jobDef,
-			UserID:        wrEnqueue.UserID,
-			Username:      u.Username,
-			ProjectKey:    run.ProjectKey,
-			Region:        jobDef.Region,
-			WorkflowName:  run.WorkflowName,
-			RunNumber:     run.RunNumber,
-			RunAttempt:    0, // TODO manage rerun
-		}
+	tx, errTx := api.mustDB().Begin()
+	if errTx != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
 
-		if jobDef.WorkerModel != "" {
-			runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
-		}
-		if err := workflow_v2.InsertRunJob(ctx, tx, &runJob); err != nil {
+	for i := range runJobs {
+		if err := workflow_v2.InsertRunJob(ctx, tx, &runJobs[i]); err != nil {
 			return err
 		}
-		runJobs = append(runJobs, runJob)
 	}
 
 	// Save Run message
@@ -226,6 +215,89 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	return nil
+}
+
+func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
+	runJobs := make([]sdk.V2WorkflowRunJob, 0)
+	for jobID, jobDef := range jobsToQueue {
+		// Compute job matrix strategy
+		keys := make([]string, 0)
+		if jobDef.Strategy != nil {
+			for k := range jobDef.Strategy.Matrix {
+				keys = append(keys, k)
+			}
+		}
+
+		alls := make([]map[string]string, 0)
+		if jobDef.Strategy != nil {
+			generate(jobDef.Strategy.Matrix, keys, 0, make(map[string]string), &alls)
+		}
+
+		if len(alls) == 0 {
+			runJob := sdk.V2WorkflowRunJob{
+				WorkflowRunID: run.ID,
+				Status:        sdk.StatusWaiting,
+				JobID:         jobID,
+				Job:           jobDef,
+				UserID:        wrEnqueue.UserID,
+				Username:      u.Username,
+				ProjectKey:    run.ProjectKey,
+				Region:        jobDef.Region,
+				WorkflowName:  run.WorkflowName,
+				RunNumber:     run.RunNumber,
+				RunAttempt:    0, // TODO manage rerun
+				Matrix:        sdk.JobMatrix{},
+			}
+			if jobDef.WorkerModel != "" {
+				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
+			}
+			runJobs = append(runJobs, runJob)
+		} else {
+			for _, m := range alls {
+				runJob := sdk.V2WorkflowRunJob{
+					WorkflowRunID: run.ID,
+					Status:        sdk.StatusWaiting,
+					JobID:         jobID,
+					Job:           jobDef,
+					UserID:        wrEnqueue.UserID,
+					Username:      u.Username,
+					ProjectKey:    run.ProjectKey,
+					Region:        jobDef.Region,
+					WorkflowName:  run.WorkflowName,
+					RunNumber:     run.RunNumber,
+					RunAttempt:    0, // TODO manage rerun
+					Matrix:        sdk.JobMatrix{},
+				}
+				for k, v := range m {
+					runJob.Matrix[k] = v
+				}
+				if jobDef.WorkerModel != "" {
+					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
+				}
+				runJobs = append(runJobs, runJob)
+			}
+		}
+	}
+	return runJobs
+}
+
+func generate(matrix map[string][]string, keys []string, keyIndex int, current map[string]string, alls *[]map[string]string) {
+	if len(current) == len(keys) {
+		combinationCopy := make(map[string]string)
+		for k, v := range current {
+			combinationCopy[k] = v
+		}
+		*alls = append(*alls, current)
+		return
+	}
+
+	key := keys[keyIndex]
+	values := matrix[key]
+	for _, value := range values {
+		current[key] = value
+		generate(matrix, keys, keyIndex+1, current, alls)
+		delete(current, key)
+	}
 }
 
 // TODO manage re run
@@ -335,6 +407,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 		return false, runInfos, nil
 	}
 
+	// Check user right
 	hasRight, err := checkUserRight(ctx, db, jobDef, u, defaultRegion)
 	if err != nil {
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
@@ -353,6 +426,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 		return false, runInfos, nil
 	}
 
+	// check job condition
 	canRun, err := checkJobCondition(ctx, jobID, run.Contexts, jobsContext, *jobDef)
 	if err != nil {
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
@@ -468,15 +542,65 @@ func checkJobCondition(ctx context.Context, jobID string, runContext sdk.Workflo
 func buildJobsContext(runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
 	// Compute jobs context
 	jobsContext := sdk.JobsResultContext{}
+	matrixJobs := make(map[string][]sdk.JobResultContext)
 	for _, rj := range runJobs {
-		if sdk.StatusIsTerminated(rj.Status) {
+		if sdk.StatusIsTerminated(rj.Status) && len(rj.Matrix) == 0 {
 			result := sdk.JobResultContext{
 				Result:  rj.Status,
 				Outputs: rj.Outputs,
 			}
 			jobsContext[rj.JobID] = result
+		} else if len(rj.Matrix) > 0 {
+			jobs, has := matrixJobs[rj.JobID]
+			if !has {
+				jobs = make([]sdk.JobResultContext, 0)
+				jobs = append(jobs, sdk.JobResultContext{
+					Result:  rj.Status,
+					Outputs: rj.Outputs,
+				})
+				matrixJobs[rj.JobID] = jobs
+			} else {
+				matrixJobs[rj.JobID] = append(matrixJobs[rj.JobID], sdk.JobResultContext{
+					Result:  rj.Status,
+					Outputs: rj.Outputs,
+				})
+			}
 		}
 	}
+
+	// Manage matric jobs
+nextjob:
+	for k := range matrixJobs {
+		outputs := sdk.JobResultOutput{}
+		var finalStatus string
+		for _, rj := range matrixJobs[k] {
+			if !sdk.StatusIsTerminated(rj.Result) {
+				continue nextjob
+			}
+			for outputK, outputV := range rj.Outputs {
+				outputs[outputK] = outputV
+			}
+
+			switch finalStatus {
+			case "":
+				finalStatus = rj.Result
+			case sdk.StatusSuccess:
+				if rj.Result == sdk.StatusStopped || rj.Result == sdk.StatusFail {
+					finalStatus = rj.Result
+				}
+			case sdk.StatusFail:
+				if rj.Result == sdk.StatusStopped {
+					finalStatus = rj.Result
+				}
+			}
+		}
+		result := sdk.JobResultContext{
+			Result:  finalStatus,
+			Outputs: outputs,
+		}
+		jobsContext[k] = result
+	}
+
 	return jobsContext
 }
 
