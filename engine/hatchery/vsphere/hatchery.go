@@ -94,6 +94,15 @@ func (h *HatcheryVSphere) Status(ctx context.Context) *sdk.MonitoringStatus {
 		log.Warn(ctx, err.Error())
 	}
 	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(ws), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+
+	vms, err := h.vSphereClient.ListVirtualMachines(ctx)
+	if err != nil {
+		log.Error(ctx, "unable to get virtual machines: %v", err)
+		m.AddLine(sdk.MonitoringStatusLine{Component: "VirtualMachines", Value: "Error listing", Status: sdk.MonitoringStatusAlert})
+	} else {
+		m.AddLine(sdk.MonitoringStatusLine{Component: "VirtualMachines", Value: fmt.Sprintf("%d", len(vms)), Status: sdk.MonitoringStatusOK})
+	}
+
 	return m
 }
 
@@ -101,11 +110,11 @@ func (h *HatcheryVSphere) Status(ctx context.Context) *sdk.MonitoringStatus {
 func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
-		return sdk.WithStack(fmt.Errorf("Invalid hatchery vsphere configuration"))
+		return sdk.WithStack(fmt.Errorf("invalid hatchery vsphere configuration"))
 	}
 
 	if err := hconfig.Check(); err != nil {
-		return sdk.WithStack(fmt.Errorf("Invalid hatchery vsphere configuration: %v", err))
+		return sdk.WithStack(fmt.Errorf("invalid hatchery vsphere configuration: %v", err))
 	}
 
 	if hconfig.VSphereUser == "" {
