@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/docker/distribution/reference"
 	"github.com/rockbears/log"
@@ -29,6 +30,10 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	}
 
 	for _, secret := range secrets.Items {
+		// created last 10min, too young to delete it
+		if secret.GetCreationTimestamp().Add(10 * time.Minute).After(time.Now()) {
+			continue
+		}
 		secretLabels := secret.GetLabels()
 		if secretLabels == nil {
 			continue
