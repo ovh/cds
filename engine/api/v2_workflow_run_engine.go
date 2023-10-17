@@ -246,7 +246,6 @@ func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2
 				WorkflowName:  run.WorkflowName,
 				RunNumber:     run.RunNumber,
 				RunAttempt:    0, // TODO manage rerun
-				Matrix:        sdk.JobMatrix{},
 			}
 			if jobDef.WorkerModel != "" {
 				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
@@ -287,7 +286,7 @@ func generate(matrix map[string][]string, keys []string, keyIndex int, current m
 		for k, v := range current {
 			combinationCopy[k] = v
 		}
-		*alls = append(*alls, current)
+		*alls = append(*alls, combinationCopy)
 		return
 	}
 

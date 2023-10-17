@@ -177,7 +177,7 @@ type V2WorkflowRunJob struct {
 	Username      string          `json:"username" db:"username"`
 	Region        string          `json:"region,omitempty" db:"region"`
 	ModelType     string          `json:"model_type,omitempty" db:"model_type"`
-	Matrix        JobMatrix       `json:"matrix" db:"matrix"`
+	Matrix        JobMatrix       `json:"matrix,omitempty" db:"matrix"`
 }
 
 type JobStepsStatus map[string]JobStepStatus
@@ -190,20 +190,21 @@ type JobStepStatus struct {
 }
 
 type JobMatrix map[string]string
+
 func (jm JobMatrix) Value() (driver.Value, error) {
-  m, err := yaml.Marshal(jm)
-  return m, WrapError(err, "cannot marshal JobMatrix")
+	m, err := yaml.Marshal(jm)
+	return m, WrapError(err, "cannot marshal JobMatrix")
 }
 
 func (jm *JobMatrix) Scan(src interface{}) error {
-  if src == nil {
-    return nil
-  }
-  source, ok := src.(string)
-  if !ok {
-    return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
-  }
-  return WrapError(yaml.Unmarshal([]byte(source), jm), "cannot unmarshal JobMatrix")
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+	}
+	return WrapError(yaml.Unmarshal([]byte(source), jm), "cannot unmarshal JobMatrix")
 }
 
 func (sc JobStepsStatus) Value() (driver.Value, error) {
