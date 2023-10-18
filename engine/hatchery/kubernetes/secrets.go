@@ -16,6 +16,7 @@ import (
 )
 
 // Delete worker model registry and worker config secrets that are not used by any pods.
+// This is used as a "gc", in the nominal case, the deletion of secrets is done when removing workers with killAwolWorkers
 func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s,%s", LABEL_HATCHERY_NAME, h.Config.Name, LABEL_WORKER_NAME),
@@ -44,10 +45,6 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 			if podLabels == nil {
 				continue
 			}
-			if wm, ok := secretLabels[LABEL_WORKER_MODEL_PATH]; ok && podLabels[LABEL_WORKER_MODEL_PATH] == wm {
-				found = true
-				break
-			}
 			if w, ok := secretLabels[LABEL_WORKER_NAME]; ok && podLabels[LABEL_WORKER_NAME] == w {
 				found = true
 				break
@@ -65,25 +62,30 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 }
 
 // deleteSecretByName deletes a secret. If the secret does not exit, return nil
-func (h *HatcheryKubernetes) deleteSecretByName(ctx context.Context, secretName string) error {
+func (h *HatcheryKubernetes) deleteSecretByWorkerName(ctx context.Context, workerName string) error {
 	secrets, err := h.kubeClient.SecretList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
 	if err != nil {
 		return sdk.WrapError(err, "cannot get secrets")
 	}
 
 	for _, secret := range secrets.Items {
-		if secret.Name == secretName {
+		secretLabels := secret.GetLabels()
+		if secretLabels == nil {
+			continue
+		}
+		if _, ok := secretLabels[LABEL_WORKER_NAME]; ok {
 			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
-				return sdk.WrapError(err, "cannot delete secret %s", secretName)
+				return sdk.WrapError(err, "cannot delete secret %s from worker %s", secret.Name, secretLabels[LABEL_WORKER_NAME])
 			}
+			// no break, we can have two secrets used by a worker (registry and config secrets)
 		}
 	}
 
 	return nil
 }
 
-func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel) (string, error) {
-	secretName := h.getWorkerRegistrySecretName(model.GetPath())
+func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel, workerConfig workerruntime.WorkerConfig) (string, error) {
+	secretName := slug.Convert("cds-worker-registry-" + workerConfig.Name)
 	registry := "https://index.docker.io/v1/"
 	if model.ModelV1 != nil && model.ModelV1.ModelDocker.Registry != "" {
 		registry = model.ModelV1.ModelDocker.Registry
@@ -102,8 +104,8 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 			Name:      secretName,
 			Namespace: h.Config.Namespace,
 			Labels: map[string]string{
-				LABEL_HATCHERY_NAME:     h.Configuration().Name,
-				LABEL_WORKER_MODEL_PATH: slug.Convert(model.GetPath()),
+				LABEL_HATCHERY_NAME: h.Configuration().Name,
+				LABEL_WORKER_NAME:   workerConfig.Name,
 			},
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,
@@ -117,16 +119,8 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 	return secretName, nil
 }
 
-func (h *HatcheryKubernetes) getWorkerConfigSecretName(workerName string) string {
-	return slug.Convert("cds-worker-config-" + workerName)
-}
-
-func (h *HatcheryKubernetes) getWorkerRegistrySecretName(modelPath string) string {
-	return slug.Convert("cds-worker-registry-" + modelPath)
-}
-
 func (h *HatcheryKubernetes) createConfigSecret(ctx context.Context, workerConfig workerruntime.WorkerConfig) (string, error) {
-	secretName := h.getWorkerConfigSecretName(workerConfig.Name)
+	secretName := slug.Convert("cds-worker-config-" + workerConfig.Name)
 	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
 
 	if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &apiv1.Secret{

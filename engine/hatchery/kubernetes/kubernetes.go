@@ -24,7 +24,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/slug"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -332,9 +331,8 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Namespace:                  h.Config.Namespace,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
-				LABEL_HATCHERY_NAME:     h.Configuration().Name,
-				LABEL_WORKER_NAME:       workerConfig.Name,
-				LABEL_WORKER_MODEL_PATH: slug.Convert(spawnArgs.Model.GetPath()),
+				LABEL_HATCHERY_NAME: h.Configuration().Name,
+				LABEL_WORKER_NAME:   workerConfig.Name,
 			},
 			Annotations: map[string]string{},
 		},
@@ -371,9 +369,9 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	// Check here to add secret if needed
 	if spawnArgs.Model.IsPrivate() || (spawnArgs.Model.GetDockerUsername() != "" && spawnArgs.Model.GetDockerPassword() != "") {
-		secretRegistryName, err := h.createRegistrySecret(ctx, spawnArgs.Model)
+		secretRegistryName, err := h.createRegistrySecret(ctx, spawnArgs.Model, workerConfig)
 		if err != nil {
-			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.GetPath())
+			return sdk.WrapError(err, "cannot create registry secret for worker %s", workerConfig.Name)
 		}
 		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretRegistryName}}
 	}
@@ -496,6 +494,9 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
+	tickerSecrets := time.NewTicker(10 * time.Minute)
+	defer tickerSecrets.Stop()
+
 	for {
 		select {
 		case <-ticker.C:
@@ -511,6 +512,7 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 				}
 			})
 
+		case <-tickerSecrets.C:
 			h.GoRoutines.Exec(ctx, "deleteSecrets", func(ctx context.Context) {
 				if err := h.deleteSecrets(ctx); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secrets"))
