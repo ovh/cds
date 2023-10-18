@@ -230,7 +230,7 @@ func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2
 
 		alls := make([]map[string]string, 0)
 		if jobDef.Strategy != nil {
-			generate(jobDef.Strategy.Matrix, keys, 0, make(map[string]string), &alls)
+			generateMatrix(jobDef.Strategy.Matrix, keys, 0, make(map[string]string), &alls)
 		}
 
 		if len(alls) == 0 {
@@ -280,7 +280,7 @@ func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2
 	return runJobs
 }
 
-func generate(matrix map[string][]string, keys []string, keyIndex int, current map[string]string, alls *[]map[string]string) {
+func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, current map[string]string, alls *[]map[string]string) {
 	if len(current) == len(keys) {
 		combinationCopy := make(map[string]string)
 		for k, v := range current {
@@ -294,7 +294,7 @@ func generate(matrix map[string][]string, keys []string, keyIndex int, current m
 	values := matrix[key]
 	for _, value := range values {
 		current[key] = value
-		generate(matrix, keys, keyIndex+1, current, alls)
+		generateMatrix(matrix, keys, keyIndex+1, current, alls)
 		delete(current, key)
 	}
 }

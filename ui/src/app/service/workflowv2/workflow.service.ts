@@ -27,11 +27,11 @@ export class V2WorkflowRunService {
         return this._http.get<V2WorkflowRunJob>(`/v2/project/${r.project_key}/vcs/${r.vcs_server_id}/repository/${r.repository_id}/workflow/${r.workflow_name}/run/${r.run_number}/jobs/${jobName}`);
     }
 
-    getRunJobInfos(r: V2WorkflowRun, jobName: string): Observable<Array<WorkflowRunInfo>> {
-        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/vcs/${r.vcs_server_id}/repository/${r.repository_id}/workflow/${r.workflow_name}/run/${r.run_number}/jobs/${jobName}/infos`);
+    getRunJobInfos(r: V2WorkflowRun, jobIdentifier: string): Observable<Array<WorkflowRunInfo>> {
+        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/vcs/${r.vcs_server_id}/repository/${r.repository_id}/workflow/${r.workflow_name}/run/${r.run_number}/jobs/${jobIdentifier}/infos`);
     }
 
-    getAllStepsLinks(run: V2WorkflowRun, jobName: string): Observable<CDNLogLinks> {
-        return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/vcs/${run.vcs_server_id}/repository/${run.repository_id}/workflow/${run.workflow_name}/run/${run.run_number}/jobs/${jobName}/logs/links`);
+    getAllStepsLinks(run: V2WorkflowRun, jobIdentifier: string): Observable<CDNLogLinks> {
+        return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/vcs/${run.vcs_server_id}/repository/${run.repository_id}/workflow/${run.workflow_name}/run/${run.run_number}/jobs/${jobIdentifier}/logs/links`);
     }
 }

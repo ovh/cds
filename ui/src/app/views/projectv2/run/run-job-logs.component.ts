@@ -76,7 +76,7 @@ export class RunJobLogsComponent {
 
     async loadEndedSteps() {
         let links = await this._workflowRunService
-            .getAllStepsLinks(this.workflowRun, this.runJob.job_id).toPromise();
+            .getAllStepsLinks(this.workflowRun, this.runJob.id).toPromise();
         links.datas.forEach(d => {
             let step = this.steps.find(s => s.name === d.step_name)
             if (step) {

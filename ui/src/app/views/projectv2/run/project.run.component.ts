@@ -158,8 +158,8 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     ngOnDestroy(): void {
     }
 
-    selectJob(jobName: string): void {
-        let jobRun = this.jobs.find(j => j.job_id === jobName);
+    selectJob(runJobID: string): void {
+        let jobRun = this.jobs.find(j => j.id === runJobID);
         if (this.selectedJobRun && jobRun && jobRun.id === this.selectedJobRun.id) {
             return;
         }
@@ -172,7 +172,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this.startStreamingLogsForJob();
         }
 
-        this._workflowService.getRunJobInfos(this.selectedRun, jobName).subscribe(infos => {
+        this._workflowService.getRunJobInfos(this.selectedRun, jobRun.id).subscribe(infos => {
             this.selectedJobRunInfos = infos;
             this._cd.markForCheck();
         });
