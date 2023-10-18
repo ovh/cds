@@ -96,6 +96,7 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 			require.Equal(t, "666", podRequest.Labels[hatchery.LabelServiceJobID])
 			require.Equal(t, "999", podRequest.Labels[hatchery.LabelServiceNodeRunID])
 			require.Equal(t, "my-worker", podRequest.Labels[LABEL_WORKER_NAME])
+			require.Equal(t, "group-model1", podRequest.Labels[LABEL_WORKER_MODEL_PATH])
 
 			require.Equal(t, 2, len(podRequest.Spec.Containers))
 			require.Equal(t, "my-worker", podRequest.Spec.Containers[0].Name)

@@ -84,8 +84,8 @@ func (h *HatcheryKubernetes) deleteSecretByWorkerName(ctx context.Context, worke
 	return nil
 }
 
-func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel, workerConfig workerruntime.WorkerConfig) (string, error) {
-	secretName := slug.Convert("cds-worker-registry-" + workerConfig.Name)
+func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel, workerName string) (string, error) {
+	secretName := slug.Convert("cds-worker-registry-" + workerName)
 	registry := "https://index.docker.io/v1/"
 	if model.ModelV1 != nil && model.ModelV1.ModelDocker.Registry != "" {
 		registry = model.ModelV1.ModelDocker.Registry
@@ -105,7 +105,7 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 			Namespace: h.Config.Namespace,
 			Labels: map[string]string{
 				LABEL_HATCHERY_NAME: h.Configuration().Name,
-				LABEL_WORKER_NAME:   workerConfig.Name,
+				LABEL_WORKER_NAME:   workerName,
 			},
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,

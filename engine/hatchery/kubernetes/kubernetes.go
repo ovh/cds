@@ -496,7 +496,12 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	tickerSecrets := time.NewTicker(10 * time.Minute)
+	deleteSecretsInterval := 10 * time.Minute
+	if h.Config.DeleteSecretsInterval > 0 {
+		deleteSecretsInterval = time.Duration(h.Config.DeleteSecretsInterval) * time.Second
+	}
+
+	tickerSecrets := time.NewTicker(deleteSecretsInterval)
 	defer tickerSecrets.Stop()
 
 	for {
