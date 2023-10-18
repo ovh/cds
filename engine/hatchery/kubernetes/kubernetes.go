@@ -371,9 +371,9 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	// Check here to add secret if needed
 	if spawnArgs.Model.IsPrivate() || (spawnArgs.Model.GetDockerUsername() != "" && spawnArgs.Model.GetDockerPassword() != "") {
-		secretRegistryName, err := h.createRegistrySecret(ctx, spawnArgs.Model)
+		secretRegistryName, err := h.createRegistrySecret(ctx, spawnArgs.Model, workerConfig.Name)
 		if err != nil {
-			return sdk.WrapError(err, "cannot create secret for model %s", spawnArgs.Model.GetPath())
+			return sdk.WrapError(err, "cannot create registry secret for worker %s", workerConfig.Name)
 		}
 		podSchema.Spec.ImagePullSecrets = []apiv1.LocalObjectReference{{Name: secretRegistryName}}
 	}
@@ -496,6 +496,14 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
+	deleteSecretsInterval := 10 * time.Minute
+	if h.Config.DeleteSecretsInterval > 0 {
+		deleteSecretsInterval = time.Duration(h.Config.DeleteSecretsInterval) * time.Second
+	}
+
+	tickerSecrets := time.NewTicker(deleteSecretsInterval)
+	defer tickerSecrets.Stop()
+
 	for {
 		select {
 		case <-ticker.C:
@@ -511,6 +519,7 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 				}
 			})
 
+		case <-tickerSecrets.C:
 			h.GoRoutines.Exec(ctx, "deleteSecrets", func(ctx context.Context) {
 				if err := h.deleteSecrets(ctx); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secrets"))

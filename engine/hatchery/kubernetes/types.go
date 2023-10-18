@@ -52,6 +52,8 @@ type HatcheryConfiguration struct {
 	KubernetesClientKeyData string `mapstructure:"clientKeyData" toml:"clientKeyData" default:"" commented:"true" comment:"Client certificate data (content, not path and not base64 encoded) for tls kubernetes (optional if no tls needed)" json:"-"`
 	// CustomAnnotations that will be added to pods spawned by the hatchery
 	CustomAnnotations []CustomAnnotation `mapstructure:"customAnnotations" toml:"customAnnotations" default:"" commented:"true" comment:"CustomAnnotations that will be added to pods spawned by the hatchery" json:"-"`
+	// DeleteSecretsInterval used by deleteSecrets to clean secrets not used
+	DeleteSecretsInterval int `mapstructure:"deleteSecretsInterval" toml:"deleteSecretsInterval" commented:"true" comment:"Delete kubernetes worker secrets not used (seconds)" json:"deleteSecretsInterval"`
 }
 
 type CustomAnnotation struct {

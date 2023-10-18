@@ -133,6 +133,11 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 				globalErr = err
 				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}
+
+			if err := h.deleteSecretByWorkerName(ctx, labels[LABEL_WORKER_NAME]); err != nil {
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secret for worker %s", labels[LABEL_WORKER_NAME]))
+			}
+
 			log.Debug(ctx, "pod %s/%s killed", pod.Namespace, pod.Name)
 		}
 	}
