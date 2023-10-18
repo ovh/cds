@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/slug"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -331,8 +332,9 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			Namespace:                  h.Config.Namespace,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
-				LABEL_HATCHERY_NAME: h.Configuration().Name,
-				LABEL_WORKER_NAME:   workerConfig.Name,
+				LABEL_HATCHERY_NAME:     h.Configuration().Name,
+				LABEL_WORKER_NAME:       workerConfig.Name,
+				LABEL_WORKER_MODEL_PATH: slug.Convert(spawnArgs.Model.GetPath()),
 			},
 			Annotations: map[string]string{},
 		},
