@@ -57,6 +57,7 @@ type WorkflowRunJobsContext struct {
 	Inputs  map[string]interface{} `json:"inputs"`
 	Steps   StepsContext           `json:"steps"`
 	Secrets map[string]string      `json:"secrets"`
+	Matrix  map[string]string      `json:"matrix"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
