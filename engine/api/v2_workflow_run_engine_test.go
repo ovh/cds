@@ -894,7 +894,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 			},
 		}},
 	}
-	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
 
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
@@ -904,9 +904,9 @@ func TestWorkflowStageNeeds(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunNumber:     wr.RunNumber,
 	}
-	require.NoError(t, workflow_v2.InsertRunJob(context.Background(), db, &wrj))
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
-	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:  wr.ID,
 		UserID: admin.ID,
 		Jobs:   []string{},
@@ -996,7 +996,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 			},
 		}},
 	}
-	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
 
 	wrjFoo1 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
@@ -1009,7 +1009,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 			"foo": "foo1",
 		},
 	}
-	require.NoError(t, workflow_v2.InsertRunJob(context.Background(), db, &wrjFoo1))
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo1))
 
 	wrjFoo2 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
@@ -1022,9 +1022,9 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 			"foo": "foo2",
 		},
 	}
-	require.NoError(t, workflow_v2.InsertRunJob(context.Background(), db, &wrjFoo2))
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2))
 
-	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:  wr.ID,
 		UserID: admin.ID,
 		Jobs:   []string{},
@@ -1042,9 +1042,9 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 	// END Matrix 2 - It must trigger job 2
 
 	wrjFoo2.Status = sdk.StatusSuccess
-	require.NoError(t, workflow_v2.UpdateJobRun(context.Background(), db, &wrjFoo2))
+	require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &wrjFoo2))
 
-	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:  wr.ID,
 		UserID: admin.ID,
 		Jobs:   []string{},
@@ -1130,7 +1130,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 			},
 		}},
 	}
-	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
 
 	wrjFoo1 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
@@ -1143,7 +1143,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 			"foo": "foo1",
 		},
 	}
-	require.NoError(t, workflow_v2.InsertRunJob(context.Background(), db, &wrjFoo1))
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo1))
 
 	wrjFoo2 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
@@ -1156,9 +1156,9 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 			"foo": "foo2",
 		},
 	}
-	require.NoError(t, workflow_v2.InsertRunJob(context.Background(), db, &wrjFoo2))
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2))
 
-	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:  wr.ID,
 		UserID: admin.ID,
 		Jobs:   []string{},
@@ -1176,9 +1176,9 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 	// END Matrix 2 - It must trigger job 2
 
 	wrjFoo2.Status = sdk.StatusSuccess
-	require.NoError(t, workflow_v2.UpdateJobRun(context.Background(), db, &wrjFoo2))
+	require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &wrjFoo2))
 
-	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:  wr.ID,
 		UserID: admin.ID,
 		Jobs:   []string{},
