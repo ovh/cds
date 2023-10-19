@@ -27,7 +27,6 @@ func (r dbWorkflowRunJob) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{r.ID, r.WorkflowRunID, r.ProjectKey, r.JobID, r.Job, r.Outputs, r.UserID, r.Region, r.HatcheryName, r.Matrix}
 	return gorpmapper.CanonicalForms{
 		"{{.ID}}{{.WorkflowRunID}}{{.ProjectKey}}{{.JobID}}{{hash .Job}}{{hash .Outputs}}{{.UserID}}{{.Region}}{{.HatcheryName}}{{hash .Matrix}}",
-		"{{.ID}}{{.WorkflowRunID}}{{.ProjectKey}}{{.JobID}}{{hash .Job}}{{hash .Outputs}}{{.UserID}}{{.Region}}{{.HatcheryName}}",
 	}
 }
 
