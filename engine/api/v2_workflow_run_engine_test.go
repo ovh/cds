@@ -739,7 +739,6 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 }
 
 func TestWorkflowTriggerStage(t *testing.T) {
-	t.SkipNow()
 	api, db, _ := newTestAPI(t)
 
 	_, err := db.Exec("DELETE FROM rbac")
@@ -828,7 +827,6 @@ func TestWorkflowTriggerStage(t *testing.T) {
 }
 
 func TestWorkflowStageNeeds(t *testing.T) {
-	t.SkipNow()
 	api, db, _ := newTestAPI(t)
 
 	_, err := db.Exec("DELETE FROM rbac")
@@ -1024,7 +1022,9 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 			"foo": "foo2",
 		},
 	}
-	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2))
+	err = workflow_v2.InsertRunJob(context.TODO(), db, &wrjFoo2)
+	t.Logf("%+v", err)
+	require.NoError(t, err)
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
 		RunID:  wr.ID,
