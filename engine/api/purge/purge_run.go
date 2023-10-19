@@ -53,6 +53,9 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 		return err
 	}
 	for _, wf := range wfs {
+		ctx = context.WithValue(ctx, log.Field("action_metadata_project_key"), wf.ProjectKey)
+		ctx = context.WithValue(ctx, log.Field("action_metadata_workflow_name"), wf.Name)
+
 		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
 		if !enabled {
 			continue
@@ -281,14 +284,6 @@ func applyRetentionPolicyOnRun(ctx context.Context, db *gorp.DbMap, wf sdk.Workf
 func purgeComputeVariables(ctx context.Context, luaCheck *luascript.Check, run sdk.WorkflowRunSummary, payload map[string]string, branchesMap map[string]struct{}, app sdk.Application, vcsClient sdk.VCSAuthorizedClientService) error {
 	vars := payload
 	varsFloats := make(map[string]float64)
-
-	// git_branch_exist var is often used in the default rule retention
-	// this will avoid
-	//  <string>:9: variable 'git_branch_exist' is not declared
-	// when it's not defined
-	if _, ok := vars[RunGitBranchExist]; !ok {
-		vars[RunGitBranchExist] = "false"
-	}
 
 	// If we have gerrit change id, check status
 	if changeID, ok := vars["gerrit.change.id"]; ok && vcsClient != nil {

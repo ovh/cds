@@ -35,6 +35,7 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 		if time.Since(secret.GetCreationTimestamp().Time) > 10*time.Minute {
 			continue
 		}
+		log.Info(ctx, "deleting the secret %v with creationTimestamp %v", secret.Name, secret.GetCreationTimestamp().Time)
 		secretLabels := secret.GetLabels()
 		if secretLabels == nil {
 			continue
