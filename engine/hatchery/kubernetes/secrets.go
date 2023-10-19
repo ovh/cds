@@ -32,7 +32,7 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 
 	for _, secret := range secrets.Items {
 		// created last 10min, too young to delete it
-		if time.Since(secret.GetCreationTimestamp().Time) > 10*time.Minute {
+		if time.Since(secret.GetCreationTimestamp().Time) < 10*time.Minute {
 			continue
 		}
 		log.Info(ctx, "deleting the secret %v with creationTimestamp %v", secret.Name, secret.GetCreationTimestamp().Time)
