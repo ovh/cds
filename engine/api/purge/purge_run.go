@@ -53,6 +53,9 @@ func markWorkflowRunsToDelete(ctx context.Context, store cache.Store, db *gorp.D
 		return err
 	}
 	for _, wf := range wfs {
+		ctx = context.WithValue(ctx, log.Field("action_metadata_project_key"), wf.ProjectKey)
+		ctx = context.WithValue(ctx, log.Field("action_metadata_workflow_name"), wf.Name)
+
 		_, enabled := featureflipping.IsEnabled(ctx, gorpmapping.Mapper, db, sdk.FeaturePurgeName, map[string]string{"project_key": wf.ProjectKey})
 		if !enabled {
 			continue
