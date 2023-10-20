@@ -66,7 +66,6 @@ func TestHatcheryKubernetes_Status(t *testing.T) {
 		},
 	}
 
-	gock.New("http://lolcat.kube").Delete("/api/v1/namespaces/cds-workers/secrets/cds-worker-config-my-worker").Reply(http.StatusOK)
 	gock.New("http://lolcat.kube").Post("/api/v1/namespaces/cds-workers/secrets").Reply(http.StatusOK).JSON(v1.Pod{})
 	gock.New("http://lolcat.kube").Post("/api/v1/namespaces/cds-workers/pods").Reply(http.StatusOK).JSON(v1.Pod{})
 
