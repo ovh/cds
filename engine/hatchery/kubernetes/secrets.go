@@ -122,7 +122,6 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 
 func (h *HatcheryKubernetes) createConfigSecret(ctx context.Context, workerConfig workerruntime.WorkerConfig) (string, error) {
 	secretName := slug.Convert("cds-worker-config-" + workerConfig.Name)
-	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
 
 	if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
