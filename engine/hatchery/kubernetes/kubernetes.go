@@ -70,7 +70,7 @@ func (h *HatcheryKubernetes) WatchPodEvents(ctx context.Context) error {
 	for event := range watchCh {
 		switch x := event.Object.(type) {
 		case *corev1.Event:
-			log.Info(ctx, "object: %s, reason: %s, message: %s, component: %s, host: %s", x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
+			log.Info(ctx, "kubernetes event - time: %v, object: %s, reason: %s, message: %s, component: %s, host: %s", x.ObjectMeta.CreationTimestamp, x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
 		}
 	}
 	return nil
