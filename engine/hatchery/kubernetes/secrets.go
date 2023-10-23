@@ -74,7 +74,7 @@ func (h *HatcheryKubernetes) deleteSecretByWorkerName(ctx context.Context, worke
 		if secretLabels == nil {
 			continue
 		}
-		if _, ok := secretLabels[LABEL_WORKER_NAME]; ok {
+		if wname, ok := secretLabels[LABEL_WORKER_NAME]; ok && workerName == wname {
 			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
 				return sdk.WrapError(err, "cannot delete secret %s from worker %s", secret.Name, secretLabels[LABEL_WORKER_NAME])
 			}
