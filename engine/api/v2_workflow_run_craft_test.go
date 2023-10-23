@@ -134,10 +134,10 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 				Name: wkName,
 				Jobs: map[string]sdk.V2Job{
 					"job1": {
-						Name:        "My super job",
-						If:          "cds.workflow == 'toto'",
-						Region:      "build",
-						WorkerModel: "myworker-model",
+						Name:   "My super job",
+						If:     "cds.workflow == 'toto'",
+						Region: "build",
+						RunsOn: "myworker-model",
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",
@@ -231,10 +231,10 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 				Name: wkName,
 				Jobs: map[string]sdk.V2Job{
 					"job1": {
-						Name:        "My super job",
-						If:          "cds.workflow == 'toto'",
-						Region:      "build",
-						WorkerModel: "myworker-model",
+						Name:   "My super job",
+						If:     "cds.workflow == 'toto'",
+						Region: "build",
+						RunsOn: "myworker-model",
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",
@@ -316,7 +316,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos))
 
-	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].WorkerModel, "myworker-model@master")
+	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].RunsOn, "myworker-model@master")
 }
 
 func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
@@ -355,10 +355,10 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 				Name: wkName,
 				Jobs: map[string]sdk.V2Job{
 					"job1": {
-						Name:        "My super job",
-						If:          "cds.workflow == 'toto'",
-						Region:      "build",
-						WorkerModel: "myworker-model",
+						Name:   "My super job",
+						If:     "cds.workflow == 'toto'",
+						Region: "build",
+						RunsOn: "myworker-model",
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",

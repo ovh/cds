@@ -414,13 +414,13 @@ func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cache
 
 	// Check at least one worker model can match
 	hWithModels, isWithModels := h.(InterfaceWithModels)
-	if isWithModels && j.Job.WorkerModel == "" {
+	if isWithModels && j.Job.RunsOn == "" {
 		endTrace("no model")
 		return nil
 	}
 
 	if hWithModels != nil {
-		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, j.Job.WorkerModel)
+		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, j.Job.RunsOn)
 		if err != nil {
 			endTrace(fmt.Sprintf("%v", err.Error()))
 			return err

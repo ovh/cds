@@ -227,6 +227,10 @@ func (sc *JobStepsStatus) Scan(src interface{}) error {
 func (s JobStepsStatus) ToStepContext() StepsContext {
 	stepsContext := StepsContext{}
 	for k, v := range s {
+		// Do not include current step
+		if v.Conclusion == "" {
+			continue
+		}
 		stepsContext[k] = StepContext{
 			Conclusion: v.Conclusion,
 			Outcome:    v.Outcome,

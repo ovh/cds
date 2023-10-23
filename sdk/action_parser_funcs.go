@@ -132,7 +132,7 @@ func join(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interfac
 func toJSON(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
 	log.Debug(ctx, "function: toJSON with args: %v", inputs)
 	if len(inputs) != 1 {
-		return nil, NewErrorFrom(ErrInvalidData, "toJSON: you must one argument")
+		return nil, NewErrorFrom(ErrInvalidData, "toJSON: you must have one argument")
 	}
 	bts, err := json.MarshalIndent(inputs[0], "", "  ")
 	if err != nil {
@@ -149,18 +149,62 @@ func hashFiles(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{
 	return nil, NewErrorFrom(ErrNotImplemented, "hashFiles is not implemented yet")
 }
 
-func success(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+func success(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) > 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "success function must not have arguments")
+	}
+	// Check scope
+	if stepContext, has := a.contexts["steps"]; has {
+		var steps StepsContext
+		stepContextBts, _ := json.Marshal(stepContext)
+		if err := json.Unmarshal(stepContextBts, &steps); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
+		}
+		for _, v := range steps {
+			if v.Conclusion != StatusSuccess {
+				return false, nil
+			}
+		}
+		return true, nil
+	} else {
+		// TODO Check Job needs status
+	}
 	return nil, NewErrorFrom(ErrNotImplemented, "success is not implemented yet")
 }
 
-func always(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
-	return nil, NewErrorFrom(ErrNotImplemented, "always is not implemented yet")
+func always(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) > 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "always function must not have arguments")
+	}
+	return true, nil
 }
 
-func cancelled(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+func cancelled(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) > 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "cancelled function must not have arguments")
+	}
 	return nil, NewErrorFrom(ErrNotImplemented, "cancelled is not implemented yet")
 }
 
-func failure(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
+func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	if len(inputs) > 0 {
+		return nil, NewErrorFrom(ErrInvalidData, "failure function must not have arguments")
+	}
+	// Check scope
+	if stepContext, has := a.contexts["steps"]; has {
+		var steps StepsContext
+		stepContextBts, _ := json.Marshal(stepContext)
+		if err := json.Unmarshal(stepContextBts, &steps); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
+		}
+		for _, v := range steps {
+			if v.Conclusion == StatusFail {
+				return true, nil
+			}
+		}
+		return false, nil
+	} else {
+		// TODO Check Job needs status
+	}
 	return nil, NewErrorFrom(ErrNotImplemented, "failure is not implemented yet")
 }
