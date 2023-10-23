@@ -133,7 +133,6 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 	default:
 		return api.handleAuthMiddlewareUserConsumer(ctx, w, req, rc, session.ConsumerID)
 	}
-	return ctx, nil
 }
 
 func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig, consumerID string) (context.Context, error) {

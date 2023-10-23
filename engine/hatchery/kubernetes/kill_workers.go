@@ -46,7 +46,14 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 			errImagePull := (container.State.Waiting != nil && container.State.Waiting.Reason == "ErrImagePull")
 			if terminated || errImagePull {
 				toDelete = true
-				log.Debug(ctx, "pod %s/%s is terminated or in error", pod.Namespace, pod.Name)
+				var info string
+				if terminated {
+					info = fmt.Sprintf("container.State.Terminated.Reason: %v msg: %v", container.State.Terminated.Reason, container.State.Terminated.Message)
+				}
+				if errImagePull {
+					info += fmt.Sprintf("container.State.Waiting.Reason: %v msg: %v", container.State.Waiting.Reason, container.State.Waiting.Message)
+				}
+				log.Debug(ctx, "pod %s/%s is terminated or in error (terminated:%t errImagePull:%t) - info: %v", pod.Namespace, pod.Name, terminated, errImagePull, info)
 				break
 			}
 		}
@@ -133,6 +140,11 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 				globalErr = err
 				log.Error(ctx, "hatchery:kubernetes> killAwolWorkers> Cannot delete pod %s (%s)", pod.Name, err)
 			}
+
+			if err := h.deleteSecretByWorkerName(ctx, labels[LABEL_WORKER_NAME]); err != nil {
+				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete secret for worker %s", labels[LABEL_WORKER_NAME]))
+			}
+
 			log.Debug(ctx, "pod %s/%s killed", pod.Namespace, pod.Name)
 		}
 	}

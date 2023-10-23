@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -34,6 +35,48 @@ func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, rep
 		return nil, err
 	}
 	return repo, nil
+}
+
+func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			// Remove hooks
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+			if err != nil {
+				return err
+			}
+			if len(srvs) < 1 {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+			}
+			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProject.Name, url.PathEscape(repo.Name))
+			var repositoryEvents []sdk.HookRepositoryEvent
+			_, code, errHooks := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
+			if (errHooks != nil || code >= 400) && code != 404 {
+				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
+			}
+			return service.WriteJSON(w, repositoryEvents, http.StatusOK)
+		}
 }
 
 func (api *API) getProjectRepositoryHandler() ([]service.RbacChecker, service.Handler) {

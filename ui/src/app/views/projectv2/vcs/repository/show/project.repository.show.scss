@@ -35,6 +35,28 @@
             white-space: pre-line;
         }
     }
+      .hooks {
+          h3 {
+              margin-left: -30px;
+              i {
+                  margin-left: 10px;
+              }
+          }
+          padding-top: 20px;
+
+          .error {
+              width: 400px;
+              word-break: break-word;
+              white-space: pre-line;
+          }
+          ul {
+              list-style: none;
+              padding-left: 0;
+              li {
+
+              }
+          }
+      }
 
   }
 

@@ -11,8 +11,8 @@ import (
 
 const (
 	WorkflowHookTypeRepository  = "RepositoryWebHook"
-	WorkflowHookTypeWorkerModel = "WorkerModel"
-	WorkflowHookTypeWorkflow    = "Workflow"
+	WorkflowHookTypeWorkerModel = "WorkerModelUpdate"
+	WorkflowHookTypeWorkflow    = "WorkflowUpdate"
 )
 
 type V2Workflow struct {

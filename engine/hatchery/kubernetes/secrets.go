@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/docker/distribution/reference"
 	"github.com/rockbears/log"
@@ -15,6 +16,7 @@ import (
 )
 
 // Delete worker model registry and worker config secrets that are not used by any pods.
+// This is used as a "gc", in the nominal case, the deletion of secrets is done when removing workers with killAwolWorkers
 func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	pods, err := h.kubeClient.PodList(ctx, h.Config.Namespace, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s,%s", LABEL_HATCHERY_NAME, h.Config.Name, LABEL_WORKER_NAME),
@@ -29,6 +31,11 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	}
 
 	for _, secret := range secrets.Items {
+		// created last 10min, too young to delete it
+		if time.Since(secret.GetCreationTimestamp().Time) < 10*time.Minute {
+			continue
+		}
+		log.Info(ctx, "deleting the secret %v with creationTimestamp %v", secret.Name, secret.GetCreationTimestamp().Time)
 		secretLabels := secret.GetLabels()
 		if secretLabels == nil {
 			continue
@@ -38,10 +45,6 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 			podLabels := pod.GetLabels()
 			if podLabels == nil {
 				continue
-			}
-			if wm, ok := secretLabels[LABEL_WORKER_MODEL_PATH]; ok && podLabels[LABEL_WORKER_MODEL_PATH] == wm {
-				found = true
-				break
 			}
 			if w, ok := secretLabels[LABEL_WORKER_NAME]; ok && podLabels[LABEL_WORKER_NAME] == w {
 				found = true
@@ -59,11 +62,31 @@ func (h *HatcheryKubernetes) deleteSecrets(ctx context.Context) error {
 	return nil
 }
 
-func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel) (string, error) {
-	secretName := slug.Convert("cds-worker-registry-" + model.GetPath())
+// deleteSecretByName deletes a secret. If the secret does not exit, return nil
+func (h *HatcheryKubernetes) deleteSecretByWorkerName(ctx context.Context, workerName string) error {
+	secrets, err := h.kubeClient.SecretList(ctx, h.Config.Namespace, metav1.ListOptions{LabelSelector: LABEL_HATCHERY_NAME})
+	if err != nil {
+		return sdk.WrapError(err, "cannot get secrets")
+	}
 
-	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
+	for _, secret := range secrets.Items {
+		secretLabels := secret.GetLabels()
+		if secretLabels == nil {
+			continue
+		}
+		if _, ok := secretLabels[LABEL_WORKER_NAME]; ok {
+			if err := h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secret.Name, metav1.DeleteOptions{}); err != nil {
+				return sdk.WrapError(err, "cannot delete secret %s from worker %s", secret.Name, secretLabels[LABEL_WORKER_NAME])
+			}
+			// no break, we can have two secrets used by a worker (registry and config secrets)
+		}
+	}
 
+	return nil
+}
+
+func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk.WorkerStarterWorkerModel, workerName string) (string, error) {
+	secretName := slug.Convert("cds-worker-registry-" + workerName)
 	registry := "https://index.docker.io/v1/"
 	if model.ModelV1 != nil && model.ModelV1.ModelDocker.Registry != "" {
 		registry = model.ModelV1.ModelDocker.Registry
@@ -82,8 +105,8 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 			Name:      secretName,
 			Namespace: h.Config.Namespace,
 			Labels: map[string]string{
-				LABEL_HATCHERY_NAME:     h.Configuration().Name,
-				LABEL_WORKER_MODEL_PATH: slug.Convert(model.GetPath()),
+				LABEL_HATCHERY_NAME: h.Configuration().Name,
+				LABEL_WORKER_NAME:   workerName,
 			},
 		},
 		Type: apiv1.SecretTypeDockerConfigJson,
@@ -99,8 +122,6 @@ func (h *HatcheryKubernetes) createRegistrySecret(ctx context.Context, model sdk
 
 func (h *HatcheryKubernetes) createConfigSecret(ctx context.Context, workerConfig workerruntime.WorkerConfig) (string, error) {
 	secretName := slug.Convert("cds-worker-config-" + workerConfig.Name)
-
-	_ = h.kubeClient.SecretDelete(ctx, h.Config.Namespace, secretName, metav1.DeleteOptions{})
 
 	if _, err := h.kubeClient.SecretCreate(ctx, h.Config.Namespace, &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{

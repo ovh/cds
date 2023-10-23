@@ -1,3 +1,10 @@
+<div class="hooks">
+    <nz-avatar-group>
+        <ng-container *ngFor="let h of hooks">
+            <nz-avatar [class.active]="h === selectedHook" [nzIcon]="'api'" nz-tooltip nzTooltipTitle="{{h}}"></nz-avatar>
+        </ng-container>
+    </nz-avatar-group>
+</div>
 <div class="svg-wrapper" #svgGraph>
     <div class="controls">
         <button nz-button (click)="changeDirection()" nzSize="large">

@@ -67,21 +67,6 @@ export class ProjectV2ShowComponent implements OnInit, OnDestroy {
             });
         });
 
-
-        this.routeSub = this._route.params.subscribe(r => {
-            let projectKey = r['key'];
-            if (this.projSub) {
-                this.projSub.unsubscribe();
-            }
-            this.projSub = this._projectStore.getProjects(projectKey).subscribe((projCache) => {
-                let proj = projCache.get(projectKey);
-                if (proj) {
-                    this.project = proj;
-                    this._cd.markForCheck();
-                }
-            });
-        });
-
         this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ShowComponent.PANEL_KEY)) ?? '15%';
         this._cd.markForCheck();
     }

@@ -479,7 +479,7 @@ type ArtifactSignature map[string]string
 func FindOldestWorkflowRunsWithResultToSync(ctx context.Context, dbmap *gorp.DbMap) ([]int64, error) {
 	var results []int64
 	query := `
-    select distinct workflow_run_result.workflow_run_id, workflow_node_run.status
+    select distinct workflow_run_result.workflow_run_id
     from workflow_run_result
     join workflow_node_run on workflow_node_run.id = workflow_run_result.workflow_node_run_id
     where sync is NULL

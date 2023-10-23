@@ -387,7 +387,7 @@ func TestHatcheryVSphere_Status(t *testing.T) {
 		},
 	}
 
-	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+	c.EXPECT().ListVirtualMachines(gomock.Any()).Times(2).DoAndReturn(
 		func(ctx context.Context) ([]mo.VirtualMachine, error) {
 			return []mo.VirtualMachine{
 				{

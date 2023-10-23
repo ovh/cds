@@ -119,6 +119,30 @@ testcases:
       retry: 5
       delay: 5
 
+- name: hook-cli
+  steps:
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository list
+      assertions:
+        - result.code ShouldEqual 0
+        - 'result.systemout ShouldContainSubstring "my_vcs_server-{{.git.user}}/myrepo"'
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event list my_vcs_server {{.git.user}}/myrepo --format json
+      vars:
+        hookEventUUID:
+          from: result.systemoutjson.systemoutjson0.uuid
+      assertions:
+        - result.code ShouldEqual 0
+        - 'result.systemoutjson.systemoutjson0.event_name ShouldEqual "push"'
+        - 'result.systemoutjson.systemoutjson0.status ShouldEqual "Done"'
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event get my_vcs_server {{.git.user}}/myrepo {{.hookEventUUID}}
+      assertions:
+        - result.code ShouldEqual 0
+        - 'result.systemout ShouldContainSubstring "EventName: push"'
+        - 'result.systemout ShouldContainSubstring "Status: Done"'
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository rm my_vcs_server {{.git.user}}/myrepo --force
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository list
+      assertions:
+        - result.code ShouldEqual 0
+        - 'result.systemout ShouldNotContainSubstring "my_vcs_server-{{.git.user}}/myrepo"'
 - name: delete rbac on project
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac delete perm-test --force

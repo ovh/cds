@@ -51,13 +51,14 @@ type HookAnalysisCallback struct {
 	Models         []EntityFullName `json:"models"`
 	Workflows      []EntityFullName `json:"workflows"`
 	UserID         string           `json:"user_id"`
+	Username       string           `json:"username"`
 }
 
 type HookRepository struct {
 	VCSServerType  string `json:"vcs_server_type"`
-	VCSServerName  string `json:"vcs_server_name"`
-	RepositoryName string `json:"repository_name"`
-	Stopped        bool   `json:"stopped" cli:"Stopped"`
+	VCSServerName  string `json:"vcs_server_name" cli:"vcs_server_name"`
+	RepositoryName string `json:"repository_name" cli:"repository_name"`
+	Stopped        bool   `json:"stopped" cli:"stopped"`
 }
 
 type HookRepositoryEvent struct {
@@ -79,6 +80,7 @@ type HookRepositoryEvent struct {
 	WorkflowUpdated     []EntityFullName               `json:"workflow_updated"`
 	WorkflowHooks       []HookRepositoryEventWorkflow  `json:"workflows"`
 	UserID              string                         `json:"user_id"`
+	Username            string                         `json:"username"`
 	SignKey             string                         `json:"sign_key"`
 	SigningKeyOperation string                         `json:"signing_key_operation"`
 }
@@ -137,7 +139,8 @@ type HookRetrieveUserRequest struct {
 }
 
 type HookRetrieveUserResponse struct {
-	UserID string `json:"user_id"`
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
 }
 
 type AnalysisRequest struct {

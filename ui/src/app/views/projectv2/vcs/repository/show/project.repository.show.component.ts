@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Project, ProjectRepository, VCSProject } from 'app/model/project.model';
+import {Project, ProjectRepository, RepositoryHookEvent, VCSProject} from 'app/model/project.model';
 import { ProjectState } from 'app/store/project.state';
 import { finalize } from 'rxjs/operators';
 import { Store } from '@ngxs/store';
@@ -23,12 +23,14 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
 
     loading: boolean;
     loadingAnalysis: boolean;
+    loadingHooks : boolean;
     projectSubscriber: Subscription;
 
     project: Project;
     vcsProject: VCSProject;
     repository: ProjectRepository;
     repoAnalyses: Array<RepositoryAnalysis>;
+    hookEvents: Array<RepositoryHookEvent>;
 
     constructor(
         private _store: Store,
@@ -55,6 +57,7 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
                 let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', [this.vcsProject.id]);
                 this._sidebarService.sendEvent(selectEvent);
                 this.loadAnalyses();
+                this.loadHookEvents();
                 this._cd.markForCheck();
             });
         });
@@ -66,6 +69,20 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
                 this.loadAnalyses();
             }
         });
+    }
+
+    loadHookEvents(): void {
+        this.loadingHooks = true;
+        this._cd.markForCheck();
+        this._projectService.loadRepositoryHooks(this.project.key, this.vcsProject.name, this.repository.name)
+            .pipe(finalize(() => {
+                this.loadingHooks = false;
+                this._cd.markForCheck();
+            }))
+            .subscribe(hooks => {
+                this.hookEvents = hooks.reverse();
+                this._cd.markForCheck();
+            })
     }
 
     loadAnalyses(): void {

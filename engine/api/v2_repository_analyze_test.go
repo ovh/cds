@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
 	"github.com/ovh/cds/engine/api/workflow_v2"
 
 	"io"
@@ -32,7 +33,8 @@ import (
 func TestCleanAnalysis(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	t.Cleanup(cancel)
 
 	key1 := sdk.RandomString(10)
 	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
