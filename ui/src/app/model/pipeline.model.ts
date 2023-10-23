@@ -12,13 +12,14 @@ export class PipelineStatus {
     static SUCCESS = 'Success';
     static WAITING = 'Waiting';
     static DISABLED = 'Disabled';
+    static SCHEDULING = 'Scheduling';
     static SKIPPED = 'Skipped';
     static NEVER_BUILT = 'Never Built';
     static STOPPED = 'Stopped';
     static PENDING = 'Pending';
 
     static priority = [
-        PipelineStatus.NEVER_BUILT, PipelineStatus.PENDING, PipelineStatus.WAITING,
+        PipelineStatus.NEVER_BUILT, PipelineStatus.SCHEDULING, PipelineStatus.PENDING, PipelineStatus.WAITING,
         PipelineStatus.BUILDING, PipelineStatus.STOPPED,
         PipelineStatus.FAIL, PipelineStatus.SUCCESS, PipelineStatus.DISABLED, PipelineStatus.SKIPPED
     ];
@@ -28,7 +29,7 @@ export class PipelineStatus {
     }
 
     static isActive(status: string) {
-        return status === this.WAITING || status === this.BUILDING || status === this.PENDING;
+        return status === this.WAITING || status === this.BUILDING || status === this.PENDING || status === this.SCHEDULING;
     }
 
     static isDone(status: string) {

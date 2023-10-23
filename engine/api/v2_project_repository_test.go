@@ -97,8 +97,6 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w2.Body.Bytes(), &repositories))
 	require.Len(t, repositories, 1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/task/"+repositories[0].ID, gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
-
 	// Then Delete repository
 	varsDelete := vars
 	varsDelete["repositoryIdentifier"] = url.PathEscape("ovh/cds")

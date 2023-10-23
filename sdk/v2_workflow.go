@@ -150,10 +150,10 @@ type V2Job struct {
 	Stage       string            `json:"stage,omitempty" jsonschema_extras:"order=2"`
 	Region      string            `json:"region,omitempty" jsonschema_extras:"order=3"`
 	WorkerModel string            `json:"worker_model,omitempty" jsonschema_extras:"required,order=4,mode=split"`
+	Strategy    *V2JobStrategy    `json:"strategy,omitempty" jsonschema_extras:"order=2"`
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
-	Strategy    V2JobStrategy    `json:"-"`
 }
 
 func (w V2Job) Value() (driver.Value, error) {
@@ -167,7 +167,7 @@ func (w *V2Job) Scan(src interface{}) error {
 	}
 	source, ok := src.(string)
 	if !ok {
-		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2Job")
 }
@@ -212,6 +212,7 @@ func (w *V2WorkflowHookData) Scan(src interface{}) error {
 }
 
 type V2JobStrategy struct {
+	Matrix map[string][]string `json:"matrix"`
 }
 
 type V2JobConcurrency struct {
@@ -258,9 +259,14 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 	errs := make([]error, 0)
 	if len(w.Stages) > 0 {
 		stages := make(map[string]WorkflowStage)
+		jobs := make(map[string]V2Job)
 		for k, v := range w.Stages {
 			stages[k] = v
 		}
+		for k, v := range w.Jobs {
+			jobs[k] = v
+		}
+		// Check stage needs
 		for k := range stages {
 			for _, n := range stages[k].Needs {
 				if _, exist := stages[n]; !exist {
@@ -268,15 +274,22 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 				}
 			}
 		}
+		// Check job needs
 		for k, j := range w.Jobs {
-			if len(j.Needs) > 0 {
-				errs = append(errs, NewErrorFrom(ErrInvalidData, "As you use stages, you can't add `needs` attribute on job %s", k))
-			}
 			if j.Stage == "" {
 				errs = append(errs, NewErrorFrom(ErrInvalidData, "Missing stage on job %s", k))
 			}
 			if _, stageExist := stages[j.Stage]; !stageExist {
 				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))
+			}
+			for _, n := range j.Needs {
+				jobNeed, exist := jobs[n]
+				if !exist {
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: needs not found %s", k, n))
+				}
+				if jobNeed.Stage != j.Stage {
+					errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: need %s must be in the same stage", k, n))
+				}
 			}
 		}
 	} else {

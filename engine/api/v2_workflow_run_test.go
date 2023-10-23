@@ -211,7 +211,7 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		"repositoryIdentifier": repo.ID,
 		"workflow":             wr.WorkflowName,
 		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
-		"jobName":              wrj.JobID,
+		"jobIdentifier":        wrj.JobID,
 	}
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobInfosHandler, vars)
 	test.NotEmpty(t, uri)
@@ -392,7 +392,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		"repositoryIdentifier": repo.ID,
 		"workflow":             wr.WorkflowName,
 		"runNumber":            fmt.Sprintf("%d", wr.RunNumber),
-		"jobName":              wrj.JobID,
+		"jobIdentifier":        wrj.JobID,
 	}
 
 	// Then Get the region

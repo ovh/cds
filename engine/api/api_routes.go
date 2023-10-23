@@ -496,9 +496,9 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/stop", nil, r.POSTv2(api.postStopWorkflowRunHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs", nil, r.GETv2(api.getWorkflowRunJobsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobName}", nil, r.GETv2(api.getWorkflowRunJobHandler))
-	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobName}/infos", nil, r.GETv2(api.getWorkflowRunJobInfosHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobIdentifier}/infos", nil, r.GETv2(api.getWorkflowRunJobInfosHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobName}/stop", nil, r.POSTv2(api.postStopJobHandler))
-	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobName}/logs/links", nil, r.GETv2(api.getWorkflowRunJobLogsLinksV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run/{runNumber}/jobs/{jobIdentifier}/logs/links", nil, r.GETv2(api.getWorkflowRunJobLogsLinksV2Handler))
 
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))
