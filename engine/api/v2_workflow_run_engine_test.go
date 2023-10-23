@@ -14,6 +14,118 @@ import (
 	"time"
 )
 
+func TestJobConditionSuccess(t *testing.T) {
+	jobsContext := sdk.JobsResultContext{
+		"job1": {
+			Result: sdk.StatusFail,
+		},
+		"job2": {
+			Result: sdk.StatusSuccess,
+		},
+		"job3": {
+			Result: sdk.StatusFail,
+		},
+	}
+	allJobs := map[string]sdk.V2Job{
+		"job1": {
+			ContinueOnError: true,
+		},
+		"job2": {},
+		"job3": {},
+		"job4": {},
+	}
+
+	tests := []struct {
+		name      string
+		condition string
+		needs     []string
+		result    bool
+	}{
+		{
+			name:      "Test success()",
+			condition: "success()",
+			needs:     []string{"job1", "job2"},
+			result:    true,
+		},
+		{
+			name:      "Test success() with 1 fail",
+			condition: "success()",
+			needs:     []string{"job1", "job2", "job3"},
+			result:    false,
+		},
+		{
+			name:      "Test failure()",
+			condition: "failure()",
+			needs:     []string{"job3"},
+			result:    true,
+		},
+		{
+			name:      "Test always()",
+			condition: "always()",
+			needs:     []string{"job3"},
+			result:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			allJobs["job4"] = sdk.V2Job{
+				If:    tt.condition,
+				Needs: tt.needs,
+			}
+			b, err := checkJobCondition(context.TODO(), "job4", sdk.WorkflowRunContext{}, jobsContext, allJobs)
+			require.NoError(t, err)
+			require.Equal(t, tt.result, b)
+		})
+	}
+
+}
+
+func TestBuildCurrentJobContext(t *testing.T) {
+	allJobs := map[string]sdk.V2Job{
+		"job1": {
+			ContinueOnError: true,
+		},
+		"job2": {},
+		"job3": {
+			Needs: []string{"job1"},
+		},
+		"job4": {
+			Needs: []string{"job1"},
+		},
+		"job5": {
+			Needs: []string{"job3"},
+		},
+		"job6": {
+			Needs: []string{"job5"},
+		},
+	}
+
+	jobsContext := sdk.JobsResultContext{
+		"job1": {
+			Result: sdk.StatusFail,
+		},
+		"job2": {
+			Result: sdk.StatusSuccess,
+		},
+		"job3": {
+			Result: sdk.StatusSuccess,
+		},
+		"job4": {
+			Result: sdk.StatusFail,
+		},
+		"job5": {
+			Result: sdk.StatusFail,
+		},
+	}
+	currentJobContext := sdk.JobsResultContext{}
+	buildAncestorJobContext(allJobs, "job6", currentJobContext, jobsContext)
+
+	require.Equal(t, 3, len(currentJobContext))
+	require.Equal(t, sdk.StatusSuccess, currentJobContext["job1"].Result)
+	require.Equal(t, sdk.StatusFail, currentJobContext["job5"].Result)
+}
+
 func TestGenerateMatrix(t *testing.T) {
 	matrix := map[string][]string{
 		"foo": {"foo1", "foo2"},

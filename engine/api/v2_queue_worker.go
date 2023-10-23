@@ -158,6 +158,20 @@ func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Wo
 		}
 		contexts.Jobs[rj.JobID] = jobResult
 	}
+
+	contexts.Needs = sdk.NeedsContext{}
+	for _, n := range jobRun.Job.Needs {
+		if j, has := contexts.Jobs[n]; has {
+			needContext := sdk.NeedContext{
+				Result:  j.Result,
+				Outputs: j.Outputs,
+			}
+			if j.Result == sdk.StatusFail && run.WorkflowData.Workflow.Jobs[n].ContinueOnError {
+				needContext.Result = sdk.StatusSuccess
+			}
+			contexts.Needs[n] = needContext
+		}
+	}
 	return contexts, nil
 }
 

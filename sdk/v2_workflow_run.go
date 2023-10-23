@@ -54,6 +54,7 @@ type WorkflowRunContext struct {
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
 	Jobs    JobsResultContext      `json:"jobs"`
+	Needs   NeedsContext           `json:"needs"`
 	Inputs  map[string]interface{} `json:"inputs"`
 	Steps   StepsContext           `json:"steps"`
 	Secrets map[string]string      `json:"secrets"`

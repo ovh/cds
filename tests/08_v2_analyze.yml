@@ -102,7 +102,6 @@ testcases:
         - result.systemoutjson.systemoutjson0.workflow_name ShouldEqual "MyFirstWorkflow"
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1
-    - script: "cat *checkout"
     - script: "cat *checkout | grep \"Checkout completed\""
     - script: "cat *customaction | grep \"Welcome in action test-parent-action\""
     - script: "cat *customaction | grep \"Hello Foo Doe from project ITCLIPRJVCS\""
