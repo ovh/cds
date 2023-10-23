@@ -154,7 +154,7 @@ func success(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 		return nil, NewErrorFrom(ErrInvalidData, "success function must not have arguments")
 	}
 	// Check scope
-	if stepContext, has := a.contexts["steps"]; has {
+	if stepContext, has := a.contexts["steps"]; has && stepContext != nil {
 		var steps StepsContext
 		stepContextBts, _ := json.Marshal(stepContext)
 		if err := json.Unmarshal(stepContextBts, &steps); err != nil {
@@ -166,10 +166,20 @@ func success(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			}
 		}
 		return true, nil
-	} else {
-		// TODO Check Job needs status
+	} else if needsContext, has := a.contexts["needs"]; has && needsContext != nil {
+		var needs NeedsContext
+		needsCtxBts, _ := json.Marshal(needsContext)
+		if err := json.Unmarshal(needsCtxBts, &needs); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
+		}
+		for _, v := range needs {
+			if v.Result != StatusSuccess {
+				return false, nil
+			}
+		}
+		return true, nil
 	}
-	return nil, NewErrorFrom(ErrNotImplemented, "success is not implemented yet")
+	return nil, NewErrorFrom(ErrInvalidData, "missing steps and needs context")
 }
 
 func always(_ context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
@@ -191,7 +201,7 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 		return nil, NewErrorFrom(ErrInvalidData, "failure function must not have arguments")
 	}
 	// Check scope
-	if stepContext, has := a.contexts["steps"]; has {
+	if stepContext, has := a.contexts["steps"]; has && stepContext != nil {
 		var steps StepsContext
 		stepContextBts, _ := json.Marshal(stepContext)
 		if err := json.Unmarshal(stepContextBts, &steps); err != nil {
@@ -203,8 +213,18 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			}
 		}
 		return false, nil
-	} else {
-		// TODO Check Job needs status
+	} else if jobsContext, has := a.contexts["jobs"]; has && jobsContext != nil {
+		var jobs JobsResultContext
+		jobsCtxBts, _ := json.Marshal(jobsContext)
+		if err := json.Unmarshal(jobsCtxBts, &jobs); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read jobs context")
+		}
+		for _, v := range jobs {
+			if v.Result == StatusFail {
+				return true, nil
+			}
+		}
+		return false, nil
 	}
-	return nil, NewErrorFrom(ErrNotImplemented, "failure is not implemented yet")
+	return nil, NewErrorFrom(ErrInvalidData, "missing step and jobs contexts")
 }

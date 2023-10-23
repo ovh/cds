@@ -138,6 +138,12 @@ type StepContext struct {
 	Outputs    JobResultOutput `json:"outputs"`
 }
 
+type NeedsContext map[string]NeedContext
+type NeedContext struct {
+	Result  string          `json:"result"`
+	Outputs JobResultOutput `json:"outputs"`
+}
+
 func (sc StepsContext) Value() (driver.Value, error) {
 	j, err := json.Marshal(sc)
 	return j, WrapError(err, "cannot marshal StepsContext")

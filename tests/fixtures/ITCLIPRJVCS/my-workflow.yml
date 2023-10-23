@@ -5,12 +5,28 @@ jobs:
     name: This is my first job
     if: cds.workflow == 'MyFirstWorkflow'
     region: default
-    worker_model: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
+    runs-on: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
     steps:
       - uses: actions/checkout
         id: checkout
       - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
         id: customaction
       - run: |-
-          echo "Thank you"
+          echo 1
+        continue-on-error: true
+      - run: echo 'Thanks you'
+  mySecondJob:
+    name: This is my second job
+    region: default
+    runs-on: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
+    continue-on-error: true
+    steps:
+      - run: exit 1
+  myThirdJob:
+    name: This is my third job
+    needs: [mySecondJob]
+    region: default
+    runs-on: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
+    steps:
+      - run: echo 'End of workflow'
 

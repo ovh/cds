@@ -426,7 +426,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 	}
 
 	// check job condition
-	canRun, err := checkJobCondition(ctx, jobID, run.Contexts, jobsContext, *jobDef)
+	canRun, err := checkJobCondition(ctx, jobID, run.Contexts, jobsContext, run.WorkflowData.Workflow.Jobs)
 	if err != nil {
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -497,9 +497,15 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) (string,
 	return "", true
 }
 
-func checkJobCondition(ctx context.Context, jobID string, runContext sdk.WorkflowRunContext, jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) (bool, error) {
+func checkJobCondition(ctx context.Context, jobID string, runContext sdk.WorkflowRunContext, jobsContext sdk.JobsResultContext, allJobs map[string]sdk.V2Job) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkJobCondition")
 	defer next()
+
+	// On keep ancestor of the current job
+	currentJobContext := sdk.JobsResultContext{}
+	buildAncestorJobContext(allJobs, jobID, currentJobContext, jobsContext)
+
+	jobDef := allJobs[jobID]
 	if jobDef.If == "" {
 		return true, nil
 	}
@@ -510,7 +516,18 @@ func checkJobCondition(ctx context.Context, jobID string, runContext sdk.Workflo
 	conditionContext := sdk.WorkflowRunJobsContext{
 		WorkflowRunContext: runContext,
 		Jobs:               jobsContext,
+		Needs:              sdk.NeedsContext{},
 	}
+	for _, n := range jobDef.Needs {
+		if j, has := currentJobContext[n]; has {
+			needContext := sdk.NeedContext{
+				Result:  j.Result,
+				Outputs: j.Outputs,
+			}
+			conditionContext.Needs[n] = needContext
+		}
+	}
+
 	bts, err := json.Marshal(conditionContext)
 	if err != nil {
 		return false, sdk.WithStack(err)
@@ -536,6 +553,22 @@ func checkJobCondition(ctx context.Context, jobID string, runContext sdk.Workflo
 		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: if statement does not return a boolean. Got %s", jobID, interpolatedInput)
 	}
 	return booleanResult, nil
+}
+
+func buildAncestorJobContext(jobs map[string]sdk.V2Job, jobID string, currentJobContext sdk.JobsResultContext, jobsContext sdk.JobsResultContext) {
+	jobDef := jobs[jobID]
+	if len(jobDef.Needs) == 0 {
+		return
+	}
+	for _, n := range jobDef.Needs {
+		buildAncestorJobContext(jobs, n, currentJobContext, jobsContext)
+
+		jobCtx := jobsContext[n]
+		if jobs[n].ContinueOnError {
+			jobCtx.Result = sdk.StatusSuccess
+		}
+		currentJobContext[n] = jobCtx
+	}
 }
 
 func buildJobsContext(runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
