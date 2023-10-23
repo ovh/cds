@@ -1,19 +1,19 @@
 package internal
 
 import (
-	"context"
-	"crypto/tls"
-	"encoding/base64"
-	"fmt"
-	"net"
-	"strings"
-	"time"
+  "context"
+  "crypto/tls"
+  "encoding/base64"
+  "fmt"
+  "net"
+  "strings"
+  "time"
 
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/jws"
-	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
-	"github.com/rockbears/log"
+  "github.com/ovh/cds/sdk"
+  "github.com/ovh/cds/sdk/jws"
+  cdslog "github.com/ovh/cds/sdk/log"
+  "github.com/ovh/cds/sdk/log/hook"
+  "github.com/rockbears/log"
 )
 
 func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) error {

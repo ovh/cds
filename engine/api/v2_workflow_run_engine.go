@@ -247,8 +247,8 @@ func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2
 				RunNumber:     run.RunNumber,
 				RunAttempt:    0, // TODO manage rerun
 			}
-			if jobDef.WorkerModel != "" {
-				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
+			if jobDef.RunsOn != "" {
+				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn].Type
 			}
 			runJobs = append(runJobs, runJob)
 		} else {
@@ -270,8 +270,8 @@ func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2
 				for k, v := range m {
 					runJob.Matrix[k] = v
 				}
-				if jobDef.WorkerModel != "" {
-					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
+				if jobDef.RunsOn != "" {
+					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn].Type
 				}
 				runJobs = append(runJobs, runJob)
 			}

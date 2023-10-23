@@ -11,9 +11,10 @@ func TestUnmarshalV2WorkflowHooksDetailed(t *testing.T) {
   myFirstJob:
     name: This is my first  job
     region: build
+    runs-on: docker-debian
     steps:
-      - run: 'echo "Workflow: ${{cds.workflow}}"'
-    worker_model: docker-debian
+      - continue-on-error: false
+        run: 'echo "Workflow: ${{cds.workflow}}"'
 name: MyDistantWorkflow
 "on":
   model_update:
@@ -39,9 +40,10 @@ func TestUnmarshalV2WorkflowHooksShort(t *testing.T) {
   myFirstJob:
     name: This is my first  job
     region: build
+    runs-on: docker-debian
     steps:
-      - run: 'echo "Workflow: ${{cds.workflow}}"'
-    worker_model: docker-debian
+      - continue-on-error: false
+        run: 'echo "Workflow: ${{cds.workflow}}"'
 name: MyDistantWorkflow
 "on":
   - push

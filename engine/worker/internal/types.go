@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"io"
 	"os"
 	"strings"
@@ -50,6 +51,7 @@ type CurrentWorker struct {
 	signer        jose.Signer
 	actionPlugin  map[string]*sdk.GRPCPlugin
 	actions       map[string]sdk.V2Action
+	pluginFactory plugin.Factory
 	currentJobV2  struct {
 		runJob           *sdk.V2WorkflowRunJob
 		runJobContext    sdk.WorkflowRunJobsContext
@@ -102,6 +104,7 @@ func (wk *CurrentWorker) Init(cfg *workerruntime.WorkerConfig, workspace afero.F
 	} else {
 		wk.client = cdsclient.NewWorker(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*30, cfg.APIEndpointInsecure))
 	}
+  wk.pluginFactory = &plugin.PluginFactory{}
 	return nil
 }
 

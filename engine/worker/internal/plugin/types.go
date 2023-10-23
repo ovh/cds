@@ -45,3 +45,13 @@ type Result struct {
 	Details string
 	Outputs map[string]string
 }
+
+type Factory interface {
+	NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string) (Client, error)
+}
+
+type PluginFactory struct{}
+
+func (pf *PluginFactory) NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string) (Client, error) {
+	return NewClient(ctx, wk, pluginType, pluginName, inputManagement)
+}

@@ -279,6 +279,9 @@ func (a *ActionParser) parseFunctionCallContext(ctx context.Context, exp *parser
 			if err != nil {
 				return nil, err
 			}
+			if result == nil {
+				continue
+			}
 			args = append(args, result)
 		case *antlr.TerminalNodeImpl:
 			if t.GetText() != "(" && t.GetText() != ")" && t.GetText() != "," {

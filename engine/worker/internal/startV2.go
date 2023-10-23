@@ -1,14 +1,14 @@
 package internal
 
 import (
-	"context"
-	"strings"
-	"time"
+  "context"
+  "strings"
+  "time"
 
-	"github.com/pkg/errors"
-	"github.com/rockbears/log"
+  "github.com/pkg/errors"
+  "github.com/rockbears/log"
 
-	"github.com/ovh/cds/sdk"
+  "github.com/ovh/cds/sdk"
 )
 
 func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, region string) (mainError error) {

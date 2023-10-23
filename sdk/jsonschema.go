@@ -90,7 +90,7 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 		}
 	}
 
-	propWM, _ := jobSchema.Definitions["V2Job"].Properties.Get("worker_model")
+	propWM, _ := jobSchema.Definitions["V2Job"].Properties.Get("runs-on")
 	wmSchema := propWM.(*jsonschema.Schema)
 	if len(workerModels) > 0 {
 		for _, wmName := range workerModels {
