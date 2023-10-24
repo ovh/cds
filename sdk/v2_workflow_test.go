@@ -13,8 +13,7 @@ func TestUnmarshalV2WorkflowHooksDetailed(t *testing.T) {
     region: build
     runs-on: docker-debian
     steps:
-      - continue-on-error: false
-        run: 'echo "Workflow: ${{cds.workflow}}"'
+      - run: 'echo "Workflow: ${{cds.workflow}}"'
 name: MyDistantWorkflow
 "on":
   model_update:
@@ -42,8 +41,7 @@ func TestUnmarshalV2WorkflowHooksShort(t *testing.T) {
     region: build
     runs-on: docker-debian
     steps:
-      - continue-on-error: false
-        run: 'echo "Workflow: ${{cds.workflow}}"'
+      - run: 'echo "Workflow: ${{cds.workflow}}"'
 name: MyDistantWorkflow
 "on":
   - push

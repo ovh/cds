@@ -225,6 +225,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	}
 
 	if !booleanResult {
+		w.SendLog(ctx, workerruntime.LevelInfo, "not executed")
 		return sdk.V2WorkflowRunJobResult{
 			Status: sdk.StatusSkipped,
 			Time:   time.Now(),

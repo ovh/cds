@@ -21,10 +21,9 @@ func experimentalWorkflow() *cobra.Command {
 		cli.NewListCommand(workflowRunInfosListCmd, workflowRunInfosListFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
-		cli.NewListCommand(workflowRunJobsCmd, workflowRunJobsFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRunStopCmd, workflowRunStopFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(workflowRunStopJobCmd, workflowRunStopJobFunc, nil, withAllCommandModifiers()...),
 		experimentalWorkflowRunLogs(),
+		experimentalWorkflowJob(),
 	})
 }
 
@@ -192,71 +191,5 @@ func workflowRunFunc(v cli.Values) error {
 		return err
 	}
 	fmt.Printf("Worflow %s #%d started", run.WorkflowName, run.RunNumber)
-	return nil
-}
-
-var workflowRunJobsCmd = cli.Command{
-	Name:    "jobs",
-	Aliases: []string{"job"},
-	Short:   "Get the workflow run jobs status",
-	Example: "cdsctl experimental workflow run jobs status <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
-	Ctx:     []cli.Arg{},
-	Args: []cli.Arg{
-		{Name: "proj_key"},
-		{Name: "vcs_identifier"},
-		{Name: "repo_identifier"},
-		{Name: "workflow_name"},
-		{Name: "run-number"},
-	},
-}
-
-func workflowRunJobsFunc(v cli.Values) (cli.ListResult, error) {
-	projKey := v.GetString("proj_key")
-	vcsId := v.GetString("vcs_identifier")
-	repoId := v.GetString("repo_identifier")
-	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run-number")
-	if err != nil {
-		return nil, err
-	}
-
-	runJobs, err := client.WorkflowV2RunJobs(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
-	if err != nil {
-		return nil, err
-	}
-	return cli.AsListResult(runJobs), nil
-}
-
-var workflowRunStopJobCmd = cli.Command{
-	Name:    "stop-job",
-	Aliases: []string{""},
-	Short:   "Stop the workflow run job",
-	Example: "cdsctl experimental workflow job stop <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number> <job_name>",
-	Ctx:     []cli.Arg{},
-	Args: []cli.Arg{
-		{Name: "proj_key"},
-		{Name: "vcs_identifier"},
-		{Name: "repo_identifier"},
-		{Name: "workflow_name"},
-		{Name: "run-number"},
-		{Name: "job-name"},
-	},
-}
-
-func workflowRunStopJobFunc(v cli.Values) error {
-	projKey := v.GetString("proj_key")
-	vcsId := v.GetString("vcs_identifier")
-	repoId := v.GetString("repo_identifier")
-	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run-number")
-	jobName := v.GetString("job-name")
-	if err != nil {
-		return err
-	}
-
-	if err := client.WorkflowV2StopJob(context.Background(), projKey, vcsId, repoId, wkfName, runNumber, jobName); err != nil {
-		return err
-	}
-	fmt.Printf("Workflow run %d job %s has been stopped\n", runNumber, jobName)
 	return nil
 }
