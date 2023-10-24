@@ -1,19 +1,19 @@
 package main
 
 import (
-  "context"
-  "os"
-  "os/signal"
-  "syscall"
-  "time"
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-  "github.com/rockbears/log"
-  "github.com/sirupsen/logrus"
-  "github.com/spf13/cobra"
+	"github.com/rockbears/log"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
-  "github.com/ovh/cds/engine/worker/internal"
-  "github.com/ovh/cds/sdk"
-  cdslog "github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/worker/internal"
+	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func cmdRun() *cobra.Command {
