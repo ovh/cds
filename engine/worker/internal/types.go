@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"io"
 	"os"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/spf13/afero"
 	"gopkg.in/square/go-jose.v2"
 
+	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
@@ -104,7 +104,7 @@ func (wk *CurrentWorker) Init(cfg *workerruntime.WorkerConfig, workspace afero.F
 	} else {
 		wk.client = cdsclient.NewWorker(cfg.APIEndpoint, cfg.Name, cdsclient.NewHTTPClient(time.Second*30, cfg.APIEndpointInsecure))
 	}
-  wk.pluginFactory = &plugin.PluginFactory{}
+	wk.pluginFactory = &plugin.PluginFactory{}
 	return nil
 }
 
