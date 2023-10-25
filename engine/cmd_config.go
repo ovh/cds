@@ -283,7 +283,7 @@ var configEditCmd = &cobra.Command{
 		}
 
 		for _, vk := range args[1:] {
-			t := strings.Split(vk, "=")
+			t := strings.SplitN(vk, "=", 2)
 			if len(t) != 2 {
 				sdk.Exit("Invalid key=value: %v", vk)
 			}
