@@ -471,8 +471,8 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 		}
 
 		// Skip others requirement as we can't check it
-		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug(ctx, "job with service, plugin or memory requirement. Skip these check as we can't check it on hatchery routine")
+		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.FlavorRequirement {
+			log.Debug(ctx, "job with service, plugin, memory or flavor requirement. Skip these check as we can't check it on hatchery routine")
 			continue
 		}
 	}
@@ -521,17 +521,15 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 		},
 	}
 
-	preCmd := `
-    #!/bin/sh
-    if [ ! -z ` + "`which curl`" + ` ]; then
-      curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
-    elif [ ! -z ` + "`which wget`" + ` ]; then
-      wget "{{.API}}/download/worker/linux/$(uname -m)" -O worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
-    else
-      echo "Missing requirements to download CDS worker binary.";
-      exit 1;
-    fi
-  `
+	preCmd := `#!/bin/sh
+if [ ! -z ` + "`which curl`" + ` ]; then
+	curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+elif [ ! -z ` + "`which wget`" + ` ]; then
+	wget "{{.API}}/download/worker/linux/$(uname -m)" -O worker >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
+else
+	echo "Missing requirements to download CDS worker binary.";
+	exit 1;
+fi`
 
 	switch model.Type {
 	case sdk.WorkerModelTypeDocker:
@@ -575,7 +573,12 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 			PreCmd:  preCmd,
 			PostCmd: "sudo shutdown -h now",
 			Image:   openstackSpec.Image,
-			Flavor:  openstackSpec.Flavor,
+		}
+		for _, r := range j.requirements {
+			if r.Type == sdk.FlavorRequirement {
+				oldModel.ModelVirtualMachine.Flavor = r.Value
+				break
+			}
 		}
 	}
 
@@ -737,9 +740,15 @@ func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStar
 			return false
 		}
 
+		// flavor requirement is only supported by openstack model
+		if model.Type != sdk.Openstack && r.Type == sdk.FlavorRequirement {
+			log.Debug(ctx, "job with flavor requirement: only for model openstack. current model: %s", model.Type)
+			return false
+		}
+
 		// Skip other requirement as we can't check it
-		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
-			log.Debug(ctx, "job with service, plugin, network or memory requirement. Skip these check as we can't check it on hatchery routine")
+		if r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.FlavorRequirement {
+			log.Debug(ctx, "job with service, plugin, memory or flavor requirement. Skip these check as we can't check it on hatchery routine")
 			continue
 		}
 

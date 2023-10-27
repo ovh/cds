@@ -235,7 +235,7 @@ func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerM
 	}
 
 	for _, r := range requirements {
-		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
+		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.FlavorRequirement {
 			log.Debug(ctx, "CanSpawn false service or memory")
 			return false
 		}
