@@ -102,10 +102,11 @@ testcases:
         - result.systemoutjson.systemoutjson0.workflow_name ShouldEqual "MyFirstWorkflow"
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1
-    - script: "cat *checkout | grep \"Checkout completed\""
-    - script: "cat *customaction | grep \"Welcome in action test-parent-action\""
-    - script: "cat *customaction | grep \"Hello Foo Doe from project ITCLIPRJVCS\""
-    - script: "cat *step-2 | grep \"Thank you\""
+    - script: "cat MyFirstWorkflow-1-0-myFirstJob-checkout | grep \"Checkout completed\""
+    - script: "cat MyFirstWorkflow-1-0-myFirstJob-customaction | grep \"Welcome in action test-parent-action\""
+    - script: "cat MyFirstWorkflow-1-0-myFirstJob-customaction | grep \"Hello Foo Doe from project ITCLIPRJVCS\""
+    - script: cat MyFirstWorkflow-1-0-myFirstJob-step-2
+    - script: "cat MyFirstWorkflow-1-0-myFirstJob-step-2 | grep \"Thank you\""
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 --format json
       assertions:
         - result.systemoutjson ShouldHaveLength 5
@@ -128,7 +129,7 @@ testcases:
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "mySecondJob"
-        - result.systemoutjson.status ShouldEqual "Success"
+        - result.systemoutjson.status ShouldEqual "Fail"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 myThirdJob --format json
       assertions:
         - result.code ShouldEqual 0
