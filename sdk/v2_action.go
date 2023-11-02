@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	EntityActionInputKey = "^[a-zA-Z]{1,}$"
-	EntityActionStepID   = "^[a-zA-Z]{0,}$"
+	EntityActionInputKey = "^[a-zA-Z0-9]*$"
+	EntityActionStepID   = "^[a-zA-Z0-9]*$"
 )
 
 type V2Action struct {

@@ -5,10 +5,11 @@ import (
 )
 
 func GetWorkerModelJsonSchema() *jsonschema.Schema {
-	wmSchema := jsonschema.Reflect(&V2WorkerModel{})
-	wmDocker := jsonschema.Reflect(&V2WorkerModelDockerSpec{})
-	wmOpenstack := jsonschema.Reflect(&V2WorkerModelOpenstackSpec{})
-	wmVSphere := jsonschema.Reflect(&V2WorkerModelVSphereSpec{})
+	reflector := jsonschema.Reflector{Anonymous: true}
+	wmSchema := reflector.Reflect(&V2WorkerModel{})
+	wmDocker := reflector.Reflect(&V2WorkerModelDockerSpec{})
+	wmOpenstack := reflector.Reflect(&V2WorkerModelOpenstackSpec{})
+	wmVSphere := reflector.Reflect(&V2WorkerModelVSphereSpec{})
 
 	if wmSchema.Definitions == nil {
 		wmSchema.Definitions = make(map[string]*jsonschema.Schema)
@@ -31,7 +32,8 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 }
 
 func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
-	actionSchema := jsonschema.Reflect(&V2Action{})
+	reflector := jsonschema.Reflector{Anonymous: true}
+	actionSchema := reflector.Reflect(&V2Action{})
 
 	if actionSchema.Definitions == nil {
 		actionSchema.Definitions = make(map[string]*jsonschema.Schema)
@@ -70,7 +72,8 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 }
 
 func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerModels []string) *jsonschema.Schema {
-	jobSchema := jsonschema.Reflect(&V2Job{})
+	reflector := jsonschema.Reflector{Anonymous: true}
+	jobSchema := reflector.Reflect(&V2Job{})
 
 	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
 	stepUses := propStepUses.(*jsonschema.Schema)
@@ -102,8 +105,9 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 }
 
 func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []string) *jsonschema.Schema {
-	workflowSchema := jsonschema.Reflect(&V2Workflow{})
-	workflowOn := jsonschema.Reflect(&WorkflowOn{
+	reflector := jsonschema.Reflector{Anonymous: true}
+	workflowSchema := reflector.Reflect(&V2Workflow{})
+	workflowOn := reflector.Reflect(&WorkflowOn{
 		Push:           &WorkflowOnPush{},
 		ModelUpdate:    &WorkflowOnModelUpdate{},
 		WorkflowUpdate: &WorkflowOnWorkflowUpdate{},
