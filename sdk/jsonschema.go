@@ -5,7 +5,7 @@ import (
 )
 
 func GetWorkerModelJsonSchema() *jsonschema.Schema {
-	reflector := jsonschema.Reflector{Anonymous: true}
+	reflector := jsonschema.Reflector{Anonymous: false}
 	wmSchema := reflector.Reflect(&V2WorkerModel{})
 	wmDocker := reflector.Reflect(&V2WorkerModelDockerSpec{})
 	wmOpenstack := reflector.Reflect(&V2WorkerModelOpenstackSpec{})
@@ -32,7 +32,7 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 }
 
 func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
-	reflector := jsonschema.Reflector{Anonymous: true}
+	reflector := jsonschema.Reflector{Anonymous: false}
 	actionSchema := reflector.Reflect(&V2Action{})
 
 	if actionSchema.Definitions == nil {
@@ -72,7 +72,7 @@ func GetActionJsonSchema(publicActionNames []string) *jsonschema.Schema {
 }
 
 func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerModels []string) *jsonschema.Schema {
-	reflector := jsonschema.Reflector{Anonymous: true}
+	reflector := jsonschema.Reflector{Anonymous: false}
 	jobSchema := reflector.Reflect(&V2Job{})
 
 	propStepUses, _ := jobSchema.Definitions["ActionStep"].Properties.Get("uses")
@@ -105,7 +105,7 @@ func GetJobJsonSchema(publicActionNames []string, regionNames []string, workerMo
 }
 
 func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []string) *jsonschema.Schema {
-	reflector := jsonschema.Reflector{Anonymous: true}
+	reflector := jsonschema.Reflector{Anonymous: false}
 	workflowSchema := reflector.Reflect(&V2Workflow{})
 	workflowOn := reflector.Reflect(&WorkflowOn{
 		Push:           &WorkflowOnPush{},
