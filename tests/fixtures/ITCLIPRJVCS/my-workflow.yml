@@ -25,9 +25,6 @@ jobs:
         id: checkout
       - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
         id: customaction
-      - run: |-
-          echo 1
-        continue-on-error: true
       - run: echo 'Thanks you'
   mySecondJob:
     name: This is my second job
@@ -43,4 +40,3 @@ jobs:
     runs-on: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
     steps:
       - run: echo 'End of workflow'
-
