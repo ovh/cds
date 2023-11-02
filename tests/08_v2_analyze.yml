@@ -112,28 +112,28 @@ testcases:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 skipJob --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson.job_id ShouldEqual "skipJob"
-        - result.systemoutjson.systemoutjson.status ShouldEqual "Skipped"
+        - result.systemoutjson.job_id ShouldEqual "skipJob"
+        - result.systemoutjson.status ShouldEqual "Skipped"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 skipJob --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson.job_id ShouldEqual "skipJob"
-        - result.systemoutjson.systemoutjson.status ShouldEqual "Skipped"
+        - result.systemoutjson.job_id ShouldEqual "skipJob"
+        - result.systemoutjson.status ShouldEqual "Skipped"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 alwaysJob --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson.job_id ShouldEqual "alwaysJob"
-        - result.systemoutjson.systemoutjson.status ShouldEqual "Success"
+        - result.systemoutjson.job_id ShouldEqual "alwaysJob"
+        - result.systemoutjson.status ShouldEqual "Success"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 mySecondJob --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson.job_id ShouldEqual "mySecondJob"
-        - result.systemoutjson.systemoutjson.status ShouldEqual "Success"
+        - result.systemoutjson.job_id ShouldEqual "mySecondJob"
+        - result.systemoutjson.status ShouldEqual "Success"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 myThirdJob --format json
       assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson.job_id ShouldEqual "myThirdJob"
-        - result.systemoutjson.systemoutjson.status ShouldEqual "Success"
+        - result.systemoutjson.job_id ShouldEqual "myThirdJob"
+        - result.systemoutjson.status ShouldEqual "Success"
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental worker list --format json
       assertions:
         - result.code ShouldEqual 0
