@@ -459,7 +459,7 @@ func computeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, runID string)
 
 	finalStatus := sdk.StatusSuccess
 	for _, rj := range runJobs {
-		if rj.Status == sdk.StatusFail && finalStatus != sdk.StatusStopped && sdk.StatusIsTerminated(finalStatus) {
+		if rj.Status == sdk.StatusFail && finalStatus != sdk.StatusStopped && sdk.StatusIsTerminated(finalStatus) && !rj.Job.ContinueOnError {
 			finalStatus = rj.Status
 		}
 		if rj.Status == sdk.StatusStopped && sdk.StatusIsTerminated(finalStatus) {
