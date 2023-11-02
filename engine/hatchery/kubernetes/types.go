@@ -54,6 +54,8 @@ type HatcheryConfiguration struct {
 	CustomAnnotations []CustomAnnotation `mapstructure:"customAnnotations" toml:"customAnnotations" default:"" commented:"true" comment:"CustomAnnotations that will be added to pods spawned by the hatchery" json:"-"`
 	// DeleteSecretsInterval used by deleteSecrets to clean secrets not used
 	DeleteSecretsInterval int `mapstructure:"deleteSecretsInterval" toml:"deleteSecretsInterval" commented:"true" comment:"Delete kubernetes worker secrets not used (seconds)" json:"deleteSecretsInterval"`
+	// KillAwolWorkersInterval used by killAwolWorkers to remove unused workers
+	KillAwolWorkersInterval int `mapstructure:"killAwolWorkersInterval" toml:"killAwolWorkersInterval" commented:"true" comment:"Kill awol worker interval (seconds)" json:"killAwolWorkersInterval"`
 }
 
 type CustomAnnotation struct {
