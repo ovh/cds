@@ -105,7 +105,6 @@ testcases:
     - script: "cat MyFirstWorkflow-1-0-myFirstJob-checkout | grep \"Checkout completed\""
     - script: "cat MyFirstWorkflow-1-0-myFirstJob-customaction | grep \"Welcome in action test-parent-action\""
     - script: "cat MyFirstWorkflow-1-0-myFirstJob-customaction | grep \"Hello Foo Doe from project ITCLIPRJVCS\""
-    - script: cat MyFirstWorkflow-1-0-myFirstJob-step-2
     - script: "cat MyFirstWorkflow-1-0-myFirstJob-step-2 | grep \"Thank you\""
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 --format json
       assertions:
