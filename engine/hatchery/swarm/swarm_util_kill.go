@@ -33,46 +33,84 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 			return nil
 		}
 		log.Info(ctx, "hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
-	} else {
+	} else if strings.HasPrefix(container.Name, "/register-") {
 		// If its a worker "register", check registration before deleting it
-		if strings.HasPrefix(container.Name, "/register-") {
-			modelPath := container.Config.Labels[LabelWorkerModelPath]
+		modelPath := container.Config.Labels[LabelWorkerModelPath]
 
-			if err := hatchery.CheckWorkerModelRegister(ctx, h, modelPath); err != nil {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
-				defer cancel()
-				logsOpts := types.ContainerLogsOptions{
-					Details:    true,
-					ShowStderr: true,
-					ShowStdout: true,
-					Timestamps: true,
-					Since:      "10s",
-				}
-				var spawnErr = sdk.SpawnErrorForm{
-					Error: sdk.NewErrorFrom(err, "an error occurred when registering the model with container name: %s", container.Name).Error(),
-				}
+		if err := hatchery.CheckWorkerModelRegister(ctx, h, modelPath); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
+			defer cancel()
+			logsOpts := types.ContainerLogsOptions{
+				Details:    true,
+				ShowStderr: true,
+				ShowStdout: true,
+				Timestamps: true,
+				Since:      "10s",
+			}
+			var spawnErr = sdk.SpawnErrorForm{
+				Error: sdk.NewErrorFrom(err, "an error occurred when registering the model with container name: %s", container.Name).Error(),
+			}
 
-				logsReader, errL := dockerClient.ContainerLogs(ctx, container.ID, logsOpts)
-				if errL != nil {
-					log.Error(ctx, "hatchery> swarm> killAndRemove> cannot get logs from docker for containers service %s %v : %v", container.ID, container.Name, errL)
-					spawnErr.Logs = []byte(fmt.Sprintf("unable to get container logs: %v", errL))
-				} else if logsReader != nil {
-					defer logsReader.Close()
-					logs, errR := io.ReadAll(logsReader)
-					if errR != nil {
-						spawnErr.Logs = []byte(fmt.Sprintf("unable to get read container logs: %v", errR))
-					} else if logs != nil {
-						spawnErr.Logs = logs
-					}
-				}
-
-				tuple := strings.SplitN(modelPath, "/", 2)
-				if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-					log.Error(ctx, "hatchery> swarm> killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
+			logsReader, errL := dockerClient.ContainerLogs(ctx, container.ID, logsOpts)
+			if errL != nil {
+				log.Error(ctx, "hatchery> swarm> killAndRemove> cannot get logs from docker for containers service %s %v : %v", container.ID, container.Name, errL)
+				spawnErr.Logs = []byte(fmt.Sprintf("unable to get container logs: %v", errL))
+			} else if logsReader != nil {
+				defer logsReader.Close()
+				logs, errR := io.ReadAll(logsReader)
+				if errR != nil {
+					spawnErr.Logs = []byte(fmt.Sprintf("unable to get read container logs: %v", errR))
+				} else if logs != nil {
+					spawnErr.Logs = logs
 				}
 			}
-		}
 
+			tuple := strings.SplitN(modelPath, "/", 2)
+			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
+				log.Error(ctx, "hatchery> swarm> killAndRemove> error on call client.WorkerModelSpawnError on worker model %s for register: %s", modelPath, err)
+			}
+		}
+	} else if _, ok := container.Config.Labels[LabelJobID]; ok && sdk.IsValidUUID(container.Config.Labels[LabelJobID]) {
+
+		if container.State.ExitCode != 0 {
+			log.Debug(ctx, "getting logs from worker model v2 - container exit code: %+v", container.State)
+
+			logsOpts := types.ContainerLogsOptions{
+				Details:    true,
+				ShowStderr: true,
+				ShowStdout: true,
+				Timestamps: true,
+				Since:      "10s",
+			}
+			logsReader, errL := dockerClient.ContainerLogs(ctx, container.ID, logsOpts)
+
+			errmsg := fmt.Sprintf("an error occurred when running the model with container name: %s", container.Name)
+
+			var logs string
+			if errL != nil {
+				log.Error(ctx, "hatchery> swarm> killAndRemove> cannot get logs from docker for containers service %s %v : %v", container.ID, container.Name, errL)
+				logs = fmt.Sprintf("unable to get container logs: %v", errL)
+			} else if logsReader != nil {
+				defer logsReader.Close()
+				l, errR := io.ReadAll(logsReader)
+				if errR != nil {
+					logs = fmt.Sprintf("unable to get read container logs: %v", errR)
+				} else {
+					logs = string(l)
+				}
+			}
+
+			msg := fmt.Sprintf("Hatchery %v - error on exit container: %s logs: %v", h.Name(), errmsg, strings.ReplaceAll(logs, "\u0000", ""))
+			log.Error(ctx, "job info err: %v", msg)
+
+			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, h.Region, container.Config.Labels[LabelJobID], sdk.V2SendJobRunInfo{
+				Time:    time.Now(),
+				Level:   sdk.WorkflowRunInfoLevelError,
+				Message: msg,
+			}); err != nil {
+				log.Warn(ctx, "unable to send job info for job %s: %v", container.Config.Labels[LabelJobID], err)
+			}
+		}
 	}
 
 	if err := h.killAndRemoveContainer(ctx, dockerClient, ID); err != nil {

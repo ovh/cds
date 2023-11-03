@@ -122,6 +122,7 @@ type SpawnArguments struct {
 	WorkflowID   int64                        `json:"workflow_id"`
 	RunID        string                       `json:"run_id"`
 	Region       string                       `json:"region"`
+	Services     map[string]sdk.V2JobService  `json:"services,omitempty"`
 }
 
 func (s *SpawnArguments) ModelName() string {

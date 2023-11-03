@@ -89,7 +89,7 @@ func doStreamRequest(ctx context.Context, srvs []sdk.Service, method, path strin
 			srv := &srvs[i]
 			reader, headers, code, err := doStreamFromURL(ctx, srv, method, path, bytes.NewReader(b), mods...)
 			if err != nil {
-				lastErr = err
+				lastErr = sdk.WrapError(err, "service:%v", srv.Name)
 				lastCode = code
 				continue
 			}
