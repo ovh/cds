@@ -62,15 +62,6 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 
 		if len(srvs) > 0 {
 			// Get metrics
-			mVulnerability, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyVulnerability)
-			if err != nil {
-				return sdk.WrapError(err, "cannot list vulnerability metrics")
-			}
-			appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
-				Type:  sdk.MetricKeyVulnerability,
-				Datas: mVulnerability,
-			})
-
 			mTest, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyUnitTest)
 			if err != nil {
 				return sdk.WrapError(err, "cannot list Unit test metrics")

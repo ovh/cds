@@ -380,7 +380,6 @@ type WorkflowNodeRun struct {
 	BuildParameters        []Parameter                          `json:"build_parameters,omitempty"`
 	Contexts               NodeRunContext                       `json:"contexts,omitempty"`
 	Coverage               WorkflowNodeRunCoverage              `json:"coverage,omitempty"`
-	VulnerabilitiesReport  WorkflowNodeRunVulnerabilityReport   `json:"vulnerabilities_report,omitempty"`
 	Tests                  *TestsResults                        `json:"tests,omitempty"`
 	Commits                []VCSCommit                          `json:"commits,omitempty"`
 	TriggersRun            map[int64]WorkflowNodeTriggerRun     `json:"triggers_run,omitempty"`
@@ -422,21 +421,8 @@ type WorkflowNodeOutgoingHookRunCallback struct {
 	WorkflowRunNumber *int64    `json:"workflow_run_number"`
 }
 
-// WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run
-type WorkflowNodeRunVulnerabilityReport struct {
-	ID                int64                        `json:"id" db:"id"`
-	ApplicationID     int64                        `json:"application_id" db:"application_id"`
-	WorkflowID        int64                        `json:"workflow_id" db:"workflow_id"`
-	WorkflowRunID     int64                        `json:"workflow_run_id" db:"workflow_run_id"`
-	WorkflowNodeRunID int64                        `json:"workflow_node_run_id" db:"workflow_node_run_id"`
-	Num               int64                        `json:"num" db:"workflow_number"`
-	Branch            string                       `json:"branch" db:"branch"`
-	Report            WorkflowNodeRunVulnerability `json:"report" db:"-"`
-}
-
 // WorkflowNodeRunVulnerability content of the workflow node run vulnerability report
 type WorkflowNodeRunVulnerability struct {
-	Vulnerabilities      []Vulnerability  `json:"vulnerabilities"`
 	Summary              map[string]int64 `json:"summary"`
 	DefaultBranchSummary map[string]int64 `json:"default_branch_summary"`
 	PreviousRunSummary   map[string]int64 `json:"previous_run_summary"`

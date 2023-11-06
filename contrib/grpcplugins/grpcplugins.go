@@ -1,8 +1,6 @@
 package grpcplugins
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,34 +39,6 @@ func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
 		return nil, fmt.Errorf("unable to unmarshal response: %v", err)
 	}
 	return results, nil
-}
-
-// SendVulnerabilityReport call worker to send vulnerabiliry report to API
-func SendVulnerabilityReport(workerHTTPPort int32, report sdk.VulnerabilityWorkerReport) error {
-	if workerHTTPPort == 0 {
-		return nil
-	}
-
-	data, errD := json.Marshal(report)
-	if errD != nil {
-		return fmt.Errorf("unable to marshal report: %v", errD)
-	}
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/vulnerability", workerHTTPPort), bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("send report to worker /vulnerability: %v", err)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("cannot send report to worker /vulnerability: %v", err)
-	}
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("cannot send report to worker /vulnerability: HTTP %d", resp.StatusCode)
-	}
-
-	return nil
 }
 
 func GetWorkerDirectories(workerHTTPPort int32) (*sdk.WorkerDirectories, error) {

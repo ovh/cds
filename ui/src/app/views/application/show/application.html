@@ -59,9 +59,6 @@
                                 (event)="variableEvent($event)" auditContext="application" [project]="project"
                                 [applicationName]="readOnlyApplication.name"></app-variable>
                         </div>
-                        <div *ngSwitchCase="'vuln'">
-                            <app-vulnerabilities [edit]="project.permissions.writable"></app-vulnerabilities>
-                        </div>
 
                         <div *ngSwitchCase="'usage'">
                             <ng-container *ngIf="usageCount > 0">

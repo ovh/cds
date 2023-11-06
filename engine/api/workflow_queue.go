@@ -335,55 +335,6 @@ func (api *API) getWorkflowJobHandler() service.Handler {
 	}
 }
 
-func (api *API) postVulnerabilityReportHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if isWorker := isWorker(ctx); !isWorker {
-			return sdk.WithStack(sdk.ErrForbidden)
-		}
-
-		id, err := requestVarInt(r, "permJobID")
-		if err != nil {
-			return err
-		}
-
-		nr, err := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
-		})
-		if err != nil {
-			return sdk.WrapError(err, "unable to save vulnerability report")
-		}
-		if nr.ApplicationID == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "there is no application linked")
-		}
-
-		var report sdk.VulnerabilityWorkerReport
-		if err := service.UnmarshalBody(r, &report); err != nil {
-			return sdk.WrapError(err, "unable to read body")
-		}
-
-		p, err := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load project by nodeJobRunID: %d", id)
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "unable to start transaction")
-		}
-		defer tx.Rollback() // nolint
-
-		if err := workflow.SaveVulnerabilityReport(ctx, tx, api.Cache, *p, nr, report); err != nil {
-			return sdk.WrapError(err, "unable to handle report")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
-	}
-}
-
 func (api *API) postSpawnInfosWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, err := requestVarInt(r, "permJobID")
