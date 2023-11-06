@@ -258,6 +258,21 @@ func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun
 			if jobDef.WorkerModel != "" {
 				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
 			}
+			if !jobDef.Integrations.IsEmpty() {
+				runJob.Integrations = &sdk.V2WorkflowRunJobIntegrations{}
+				for i := range proj.Integrations {
+					integ := &proj.Integrations[i]
+					if integ.Name == jobDef.Integrations.Artifacts {
+						if integ.Model.ArtifactManager {
+							runJob.Integrations.ArtifactManager = integ
+						}
+						if integ.Model.Deployment {
+							runJob.Integrations.Deployment = integ
+						}
+						break
+					}
+				}
+			}
 			runJobs = append(runJobs, runJob)
 		} else {
 			for _, m := range alls {
