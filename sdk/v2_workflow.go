@@ -143,16 +143,16 @@ type WorkflowStage struct {
 }
 
 type V2Job struct {
-	Name         string            `json:"name" jsonschema_extras:"order=1,required" jsonschema_description:"Name of the job"`
-	If           string            `json:"if,omitempty" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
-	Inputs       map[string]string `json:"inputs,omitempty" jsonschema_extras:"order=7,mode=edit" jsonschema_description:"Input of thejob"`
-	Steps        []ActionStep      `json:"steps,omitempty" jsonschema_extras:"order=8" jsonschema_description:"List of steps"`
-	Needs        []string          `json:"needs,omitempty" jsonschema_extras:"order=6,mode=tags" jsonschema_description:"Job dependencies"`
-	Stage        string            `json:"stage,omitempty" jsonschema_extras:"order=2"`
-	Region       string            `json:"region,omitempty" jsonschema_extras:"order=3"`
-	WorkerModel  string            `json:"worker_model,omitempty" jsonschema_extras:"required,order=4,mode=split"`
-	Strategy     *V2JobStrategy    `json:"strategy,omitempty" jsonschema_extras:"order=2"`
-	Integrations V2JobIntegrations `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
+	Name         string             `json:"name" jsonschema_extras:"order=1,required" jsonschema_description:"Name of the job"`
+	If           string             `json:"if,omitempty" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
+	Inputs       map[string]string  `json:"inputs,omitempty" jsonschema_extras:"order=7,mode=edit" jsonschema_description:"Input of thejob"`
+	Steps        []ActionStep       `json:"steps,omitempty" jsonschema_extras:"order=8" jsonschema_description:"List of steps"`
+	Needs        []string           `json:"needs,omitempty" jsonschema_extras:"order=6,mode=tags" jsonschema_description:"Job dependencies"`
+	Stage        string             `json:"stage,omitempty" jsonschema_extras:"order=2"`
+	Region       string             `json:"region,omitempty" jsonschema_extras:"order=3"`
+	WorkerModel  string             `json:"worker_model,omitempty" jsonschema_extras:"required,order=4,mode=split"`
+	Strategy     *V2JobStrategy     `json:"strategy,omitempty" jsonschema_extras:"order=2"`
+	Integrations *V2JobIntegrations `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
@@ -179,7 +179,10 @@ type V2JobIntegrations struct {
 	Deployment string `json:"deployment,omitempty"`
 }
 
-func (v V2JobIntegrations) IsEmpty() bool {
+func (v *V2JobIntegrations) IsEmpty() bool {
+	if v == nil {
+		return true
+	}
 	return v.Artifacts == "" && v.Deployment == ""
 }
 
