@@ -504,6 +504,14 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	tickerSecrets := time.NewTicker(deleteSecretsInterval)
 	defer tickerSecrets.Stop()
 
+	killAwolWorkersInterval := 10 * time.Second
+	if h.Config.KillAwolWorkersInterval > 0 {
+		killAwolWorkersInterval = time.Duration(h.Config.KillAwolWorkersInterval) * time.Second
+	}
+
+	tickerKillAwolWorkers := time.NewTicker(killAwolWorkersInterval)
+	defer tickerKillAwolWorkers.Stop()
+
 	for {
 		select {
 		case <-ticker.C:
@@ -513,6 +521,7 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 				}
 			})
 
+		case <-tickerKillAwolWorkers.C:
 			h.GoRoutines.Exec(ctx, "killAwolWorker", func(ctx context.Context) {
 				if err := h.killAwolWorkers(ctx); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot delete awol worker"))

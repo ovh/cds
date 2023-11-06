@@ -408,6 +408,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                 return 'color-fail';
             case PipelineStatus.WAITING:
             case PipelineStatus.DISABLED:
+            case PipelineStatus.SCHEDULING:
             case PipelineStatus.BUILDING:
             case PipelineStatus.PENDING:
             case PipelineStatus.NEVER_BUILT:

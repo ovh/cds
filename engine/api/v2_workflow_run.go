@@ -94,7 +94,7 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 			if err != nil {
 				return err
 			}
-			jobName := vars["jobName"]
+			jobIdentifier := vars["jobIdentifier"]
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -116,7 +116,12 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			var runJob *sdk.V2WorkflowRunJob
+			if sdk.IsValidUUID(jobIdentifier) {
+				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+			} else {
+				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier)
+			}
 			if err != nil {
 				return err
 			}
@@ -263,7 +268,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 			if err != nil {
 				return err
 			}
-			jobName := vars["jobName"]
+			jobIdentifier := vars["jobIdentifier"]
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -285,7 +290,12 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				return err
 			}
 
-			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			var runJob *sdk.V2WorkflowRunJob
+			if sdk.IsValidUUID(jobIdentifier) {
+				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+			} else {
+				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier)
+			}
 			if err != nil {
 				return err
 			}

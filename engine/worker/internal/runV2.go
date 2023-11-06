@@ -119,6 +119,7 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to compute job context: %v", err))
 	}
+	actionContext.Matrix = w.currentJobV2.runJob.Matrix
 
 	// Init step context
 	stepsContext := sdk.StepsContext{}

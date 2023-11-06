@@ -37,7 +37,7 @@ minio_start: $(MINIO_RC)
 	$(info $(MINIO_CONFIG))
 
 minio_reset_bucket:
-	@docker run --rm --link minio1:minio --entrypoint sh minio/mc -c "\
+	@docker run --rm --link minio1:minio --entrypoint sh minio/mc:RELEASE.2023-10-14T01-57-03Z -c "\
 		microdnf update --nodocs; microdnf install nc --nodocs; \
 		while ! nc -z minio 9000; do echo 'Wait minio to startup...' && sleep 0.1; done; \
 		sleep 5 && \

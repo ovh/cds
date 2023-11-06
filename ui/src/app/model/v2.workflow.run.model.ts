@@ -55,6 +55,7 @@ export class V2WorkflowRunJob {
     username: string;
     region: string;
     model_type: string;
+    matrix: {[key:string]: string};
 }
 
 export class StepStatus {

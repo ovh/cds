@@ -57,6 +57,7 @@ type WorkflowRunJobsContext struct {
 	Inputs  map[string]interface{} `json:"inputs"`
 	Steps   StepsContext           `json:"steps"`
 	Secrets map[string]string      `json:"secrets"`
+	Matrix  map[string]string      `json:"matrix"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -177,6 +178,7 @@ type V2WorkflowRunJob struct {
 	Username      string          `json:"username" db:"username"`
 	Region        string          `json:"region,omitempty" db:"region"`
 	ModelType     string          `json:"model_type,omitempty" db:"model_type"`
+	Matrix        JobMatrix       `json:"matrix,omitempty" db:"matrix"`
 }
 
 type JobStepsStatus map[string]JobStepStatus
@@ -186,6 +188,24 @@ type JobStepStatus struct {
 	Outputs    JobResultOutput `json:"outputs"`
 	Started    time.Time       `json:"started"`
 	Ended      time.Time       `json:"ended"`
+}
+
+type JobMatrix map[string]string
+
+func (jm JobMatrix) Value() (driver.Value, error) {
+	m, err := yaml.Marshal(jm)
+	return m, WrapError(err, "cannot marshal JobMatrix")
+}
+
+func (jm *JobMatrix) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+	}
+	return WrapError(yaml.Unmarshal([]byte(source), jm), "cannot unmarshal JobMatrix")
 }
 
 func (sc JobStepsStatus) Value() (driver.Value, error) {
@@ -263,4 +283,59 @@ func GetJobStepName(stepID string, stepIndex int) string {
 	}
 	return fmt.Sprintf("step-%d", stepIndex)
 
+}
+
+type WorkflowRunStages map[string]WorkflowRunStage
+
+func (wrs WorkflowRunStages) ComputeStatus() {
+	// Compute job status
+stageLoop:
+	for name := range wrs {
+		stage := wrs[name]
+		for _, status := range stage.Jobs {
+			if !StatusIsTerminated(status) {
+				stage.Ended = false
+				wrs[name] = stage
+				continue stageLoop
+			}
+		}
+		stage.Ended = true
+		wrs[name] = stage
+	}
+
+	// Compute stage needs
+	for name := range wrs {
+		stage := wrs[name]
+
+		canBeRun := true
+		for _, n := range stage.Needs {
+			if !wrs[n].Ended {
+				canBeRun = false
+				break
+			}
+		}
+		stage.CanBeRun = canBeRun
+		wrs[name] = stage
+	}
+}
+
+type WorkflowRunStage struct {
+	WorkflowStage
+	CanBeRun bool
+	Jobs     map[string]string
+	Ended    bool
+}
+
+func (w V2WorkflowRun) GetStages() WorkflowRunStages {
+	stages := WorkflowRunStages{}
+	for k, s := range w.WorkflowData.Workflow.Stages {
+		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]string)}
+	}
+	if len(stages) == 0 {
+		return stages
+	}
+	for jobID, job := range w.WorkflowData.Workflow.Jobs {
+		stages[job.Stage].Jobs[jobID] = ""
+	}
+	return stages
 }

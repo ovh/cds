@@ -866,7 +866,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.StopDeadJobs(ctx)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "api.xx", func(ctx context.Context) {
-		a.TriggerBlockedWorklowRuns(ctx)
+		a.TriggerBlockedWorkflowRuns(ctx)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {

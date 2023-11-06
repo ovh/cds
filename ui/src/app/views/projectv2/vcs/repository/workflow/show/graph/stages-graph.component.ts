@@ -62,24 +62,65 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                 }));
         }
         if (workflow && workflow["jobs"] && Object.keys(workflow["jobs"]).length > 0) {
-            Object.keys(workflow["jobs"]).forEach(k => {
-                let job = workflow.jobs[k];
-                let node = <GraphNode>{name: k, depends_on: job?.needs, type: GraphNodeTypeJob};
-                if (this.jobRuns[k]) {
-                    node.run = this.jobRuns[k];
-                }
-
-                if (job?.stage) {
-                    for (let i = 0; i < this.nodes.length; i++) {
-                        if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
-                            this.nodes[i].sub_graph.push(node);
-                            break;
-                        }
-                    }
-                } else {
-                    this.nodes.push(node);
+            let matrixJobs = new Map<string, any[]>()
+            Object.keys(workflow["jobs"]).forEach(jobID => {
+                let job = workflow.jobs[jobID];
+                let expandMatrixJobs = new Array<string>();
+                if (job?.strategy?.matrix) {
+                    let keys = Object.keys(job.strategy.matrix);
+                    let alls = new Array<Map<string,string>>();
+                    this.generateMatrix(job.strategy.matrix, keys, 0, new Map<string,string>(), alls)
+                    alls.forEach(m => {
+                        let suffix = "";
+                        let mapKeys = Array.from(m.keys()).sort();
+                        mapKeys.forEach((k, index) => {
+                            if (index !== 0) {
+                                suffix += ',';
+                            }
+                            suffix += m.get(k);
+                        });
+                        let newJob = Object.assign({}, job);
+                        newJob.matrixName = jobID + '-' + suffix;
+                        expandMatrixJobs.push(newJob);
+                    });
+                    matrixJobs.set(jobID, expandMatrixJobs);
                 }
             });
+            Object.keys(workflow["jobs"]).forEach(k => {
+                let job = workflow.jobs[k];
+
+                if (matrixJobs.has(k)) {
+                    matrixJobs.get(k).forEach(j => {
+                        let node = <GraphNode>{name: j.matrixName, depends_on: this.getJobNeeds(j, matrixJobs), type: GraphNodeTypeJob};
+                        //node.run = this.jobRuns[k];
+                        if (job?.stage) {
+                            for (let i = 0; i < this.nodes.length; i++) {
+                                if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
+                                    this.nodes[i].sub_graph.push(node);
+                                    break;
+                                }
+                            }
+                        } else {
+                            this.nodes.push(node);
+                        }
+                    });
+                } else {
+                    let node = <GraphNode>{name: k, depends_on: this.getJobNeeds(job, matrixJobs), type: GraphNodeTypeJob};
+                    node.run = this.jobRuns[k];
+
+                    if (job?.stage) {
+                        for (let i = 0; i < this.nodes.length; i++) {
+                            if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
+                                this.nodes[i].sub_graph.push(node);
+                                break;
+                            }
+                        }
+                    } else {
+                        this.nodes.push(node);
+                    }
+                }
+            });
+            this.initRunJobs();
         }
         this.hooks = [];
         this.selectedHook = '';
@@ -96,20 +137,36 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     @Input() set runJobs(data: Array<V2WorkflowRunJob>) {
         if (!data) {
             this.jobRuns = {}
+            if (this.nodes) {
+                this.nodes.forEach(n => {
+                    if (this.hasStages) {
+                        n.sub_graph.forEach(sub => {
+                            delete sub.run;
+                        });
+                    } else {
+                        delete n.run;
+                    }
+                })
+            }
             return;
         }
         this.jobRuns = {};
         data.forEach(j => {
-            this.jobRuns[j.job_id] = j;
+            if (j.matrix && Object.keys(j.matrix).length > 0) {
+                let mapKeys = Object.keys(j.matrix).sort();
+                let suffix = "";
+                mapKeys.forEach((k, index) => {
+                    if (index !== 0) {
+                        suffix += ',';
+                    }
+                    suffix += j.matrix[k];
+                });
+                this.jobRuns[j.job_id + '-' + suffix] = j;
+            } else {
+                this.jobRuns[j.job_id] = j;
+            }
         });
-
-        if (this.nodes) {
-            this.nodes.forEach(n => {
-                if (this.jobRuns[n.name]) {
-                    n.run = this.jobRuns[n.name];
-                }
-            })
-        }
+        this.initRunJobs();
         this.initGraph();
     }
 
@@ -120,6 +177,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     }
 
     @Output() onSelectJob = new EventEmitter<string>();
+    @Output() onSelectJobRun = new EventEmitter<string>();
 
     direction: GraphDirection = GraphDirection.HORIZONTAL;
 
@@ -159,6 +217,23 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         }
     }
 
+    getJobNeeds(j: {}, matrixJobs: Map<string, Array<{}>>) {
+        if (!j['needs']) {
+            return [];
+        }
+        let needs = [];
+        <string[]>j['needs'].forEach(n => {
+            if (!matrixJobs.has(n)) {
+                needs.push(n);
+            } else {
+                matrixJobs.get(n).forEach(mj => {
+                    needs.push(mj['matrixName']);
+                });
+            }
+        });
+        return needs;
+    }
+
     static isJobsGraph = (component: WorkflowV2JobsGraphOrNodeComponent): component is ProjectV2WorkflowJobsGraphComponent => {
         if ((component as ProjectV2WorkflowJobsGraphComponent).direction) {
             return true;
@@ -188,6 +263,25 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             return;
         }
         this.initGraph();
+    }
+
+    initRunJobs(): void {
+        if (!this.jobRuns || !this.nodes) {
+            return;
+        }
+        this.nodes.forEach(n => {
+            if (this.hasStages) {
+                n.sub_graph.forEach(sub => {
+                    if (this.jobRuns[sub.name]) {
+                        sub.run = this.jobRuns[sub.name];
+                    }
+                });
+            } else {
+                if (this.jobRuns[n.name]) {
+                    n.run = this.jobRuns[n.name];
+                }
+            }
+        })
     }
 
     initGraph() {
@@ -288,7 +382,12 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
 
     nodeJobMouseEvent(type: string, n: GraphNode) {
         if (type === 'click') {
-            this.onSelectJob.emit(n.name);
+            if (n.run) {
+                this.onSelectJob.emit(n.run.id);
+            } else {
+                this.onSelectJob.emit(n.name);
+            }
+
         }
         this.graph.nodeMouseEvent(type, n.name);
     }
@@ -302,4 +401,24 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         this.direction = this.direction === GraphDirection.HORIZONTAL ? GraphDirection.VERTICAL : GraphDirection.HORIZONTAL;
         this.changeDisplay();
     }
+
+    generateMatrix(matrix: {[key: string]:string[] }, keys: string[], keyIndex: number, current: Map<string,string>, alls: Map<string,string>[]) {
+        if (current.size == keys.length) {
+            let combi = new Map<string, string>();
+            current.forEach((v, k) => {
+                combi.set(k, v);
+            });
+            alls.push(combi);
+            return;
+        }
+        let key = keys[keyIndex];
+        let values = matrix[key];
+        values.forEach(v => {
+            current.set(key, v);
+            this.generateMatrix(matrix, keys, keyIndex+1, current, alls);
+            current.delete(key);
+        });
+    }
 }
+
+
