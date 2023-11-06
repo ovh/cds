@@ -46,12 +46,8 @@ func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
 	return results, nil
 }
 
-func GetWorkerDirectories(workerHTTPPort int32, c *actionplugin.Common) (*sdk.WorkerDirectories, error) {
-	if workerHTTPPort == 0 {
-		return nil, errors.Errorf("worker port must not be 0")
-	}
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/directories", workerHTTPPort), nil)
+func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.WorkerDirectories, error) {
+	req, err := c.NewRequest(ctx, "GET", "/directories", nil)
 	if err != nil {
 		return nil, errors.Errorf("unable to create request to get directories: %v", err)
 	}
