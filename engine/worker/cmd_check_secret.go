@@ -6,13 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
-
-	"github.com/ovh/cds/engine/worker/internal"
 
 	"github.com/spf13/cobra"
 
@@ -55,15 +51,7 @@ The command will exit 0 if no variable of type password or key is found.
 
 func tmplCheckSecretCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
-		}
-
-		port, errPort := strconv.Atoi(portS)
-		if errPort != nil {
-			sdk.Exit("cannot parse '%s' as a port number", portS)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		if len(args) == 0 {
 			sdk.Exit("Wrong usage: Example: worker check-secret filea fileb filec*")

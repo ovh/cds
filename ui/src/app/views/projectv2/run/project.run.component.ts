@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewCh
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {SidebarService} from "app/service/sidebar/sidebar.service";
 import {from, interval, Subscription} from "rxjs";
-import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo} from "app/model/v2.workflow.run.model";
+import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult} from "app/model/v2.workflow.run.model";
 import {dump} from "js-yaml";
 import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
 import {PreferencesState} from "app/store/preferences.state";

@@ -175,7 +175,7 @@ type Configuration struct {
 			ClientID     string `toml:"clientId" json:"-" comment:"OIDC Client ID"`
 			ClientSecret string `toml:"clientSecret" json:"-" comment:"OIDC Client Secret"`
 		} `toml:"oidc" json:"oidc" comment:"#######\n CDS <-> Open ID Connect Auth. Documentation on https://ovh.github.io/cds/docs/integrations/openid-connect/ \n######"`
-	} `toml:"drivers" comment:"##############################\n CDS External drivers Settings\n############################# json:"drivers"`
+	} `toml:"drivers" comment:"##############################\n CDS External drivers Settings\n#############################" json:"drivers"`
 	Link struct {
 		Github struct {
 			Enabled bool `toml:"enabled" default:"false" json:"enabled"`

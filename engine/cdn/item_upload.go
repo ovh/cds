@@ -21,14 +21,29 @@ func (s *Service) postUploadHandler() service.Handler {
 		if signature.Worker == nil {
 			return sdk.WrapError(sdk.ErrWrongRequest, "request is invalid. Missing worker data")
 		}
-		workerData, err := s.getWorker(ctx, signature.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
-		if err != nil {
-			return err
+
+		var privateKey []byte
+
+		switch {
+		case signature.JobID != 0:
+			var err error
+			workerData, err := s.getWorker(ctx, signature.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+			if err != nil {
+				return err
+			}
+			privateKey = workerData.PrivateKey
+		case signature.RunJobID != "":
+			var err error
+			workerDataV2, err := s.getWorkerV2(ctx, signature.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+			if err != nil {
+				return err
+			}
+			privateKey = workerDataV2.PrivateKey
 		}
 
 		// Verify Signature
-		if err := jws.Verify(workerData.PrivateKey, signatureString, &signature); err != nil {
-			return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
+		if err := jws.Verify(privateKey, signatureString, &signature); err != nil {
+			return sdk.WrapError(err, "worker key: %d", len(privateKey))
 		}
 
 		if err := s.storeFile(ctx, signature, r.Body, StoreFileOptions{}); err != nil {

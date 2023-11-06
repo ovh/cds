@@ -7,6 +7,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -26,6 +27,8 @@ type StoreFileOptions struct {
 func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.ReadCloser, storeFileOptions StoreFileOptions) error {
 	var itemType sdk.CDNItemType
 	switch {
+	case sig.Worker.RunResultName != "":
+		itemType = sdk.CDNTypeItemRunResultV2
 	case sig.Worker.FileName != "":
 		itemType = sdk.CDNTypeItemRunResult
 	case sig.Worker.CacheTag != "":
@@ -63,6 +66,19 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 
 	if !storeFileOptions.DisableApiRunResult {
 		switch itemType {
+		case sdk.CDNTypeItemRunResultV2:
+			runResultV2ApiRef, _ := it.GetCDNRunResultApiRefV2()
+
+			// Call CDS API to check if we can upload the run result
+			runResult, err := s.Client.V2QueueJobRunResultGet(ctx, runResultV2ApiRef.RunJobRegion, runResultV2ApiRef.RunJobID, runResultV2ApiRef.RunResultID)
+			if err != nil {
+				return sdk.WrapError(err, "unable to get run result from API")
+			}
+
+			if runResult.Status != sdk.V2WorkflowRunResultStatusPending {
+				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("run result %q must be PENDING and was %q", runResult.ID, runResult.Status))
+			}
+
 		case sdk.CDNTypeItemRunResult:
 			// Call CDS API to check if we can upload the run result
 			runResultApiRef, _ := it.GetCDNRunResultApiRef()

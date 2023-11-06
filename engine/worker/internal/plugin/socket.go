@@ -3,10 +3,12 @@ package plugin
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/kardianos/osext"
 	"github.com/rockbears/log"
 	"github.com/spf13/afero"
 
@@ -16,6 +18,7 @@ import (
 )
 
 func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName string, w workerruntime.Runtime) (*clientSocket, *sdk.GRPCPlugin, error) {
+	log.Info(ctx, "create socket for plugin %q", pluginName)
 	currentOS := strings.ToLower(sdk.GOOS)
 	currentARCH := strings.ToLower(sdk.GOARCH)
 
@@ -110,16 +113,22 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 		dir = workdir.Name()
 	}
 
-	envVars := os.Environ()
-	envs := make([]string, 0, len(envVars))
-	for _, env := range envVars {
-		if strings.HasPrefix(env, "CDS_") {
-			continue
-		}
-		envs = append(envs, env)
-	}
+	envs := w.Environ()
 
 	c := clientSocket{}
+
+	workerpath, err := osext.Executable()
+	if err != nil {
+		return nil, nil, sdk.WrapError(err, "unable to get current executable path")
+	}
+
+	log.Debug(ctx, "runScriptAction> Worker binary path: %s", path.Dir(workerpath))
+	for i := range envs {
+		if strings.HasPrefix(envs[i], "PATH") {
+			envs[i] = fmt.Sprintf("%s:%s", envs[i], path.Dir(workerpath))
+			break
+		}
+	}
 
 	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)

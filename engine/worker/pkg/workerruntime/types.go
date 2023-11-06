@@ -16,6 +16,20 @@ import (
 	"github.com/spf13/afero"
 )
 
+type V2RunResultRequest struct {
+	RunResult *sdk.V2WorkflowRunResult
+}
+
+type V2AddResultResponse struct {
+	RunResult  *sdk.V2WorkflowRunResult
+	Signature  string
+	CDNAddress string
+}
+
+type V2UpdateResultResponse struct {
+	RunResult *sdk.V2WorkflowRunResult
+}
+
 type WorkerConfig struct {
 	Name                     string            `json:"name"`
 	Basedir                  string            `json:"basedir"`
@@ -121,7 +135,8 @@ type Runtime interface {
 	Parameters() []sdk.Parameter
 	PluginGet(pluginName string) (*sdk.GRPCPlugin, error)
 	PluginGetBinary(name, os, arch string, w io.Writer) error
-
+	V2AddRunResult(ctx context.Context, req V2RunResultRequest) (*V2AddResultResponse, error)
+	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
 }
 
 func JobID(ctx context.Context) (int64, error) {

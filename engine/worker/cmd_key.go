@@ -7,14 +7,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
@@ -84,15 +81,7 @@ So that, you can use custom git commands the previous installed SSH key.
 
 func keyInstallCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("Error: worker key install > %s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
-		}
-
-		port, errPort := strconv.Atoi(portS)
-		if errPort != nil {
-			sdk.Exit("Error: worker key install > Cannot parse '%s' as a port number : %s\n", portS, errPort)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		if len(args) < 1 || len(args) > 1 {
 			sdk.Exit("Error: worker key install > Wrong usage: Example : worker key install proj-key\n")

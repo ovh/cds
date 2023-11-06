@@ -29,6 +29,9 @@ func cmdRun() *cobra.Command {
 
 func runCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
+		if isCI() {
+			log.Fatal(context.Background(), "unable to start worker in CI mode") // user should not use this command directly
+		}
 		var w = new(internal.CurrentWorker)
 
 		// Initialize context

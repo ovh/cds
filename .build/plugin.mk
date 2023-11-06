@@ -55,7 +55,7 @@ $(PLUGIN_CONF):
 mk_go_build_plugin: $(CROSS_COMPILED_PLUGIN_CONF) $(PLUGIN_CONF) $(CROSS_COMPILED_BINARIES)
 
 mk_plugin_publish:
-	@echo "Updating plugin $(TARGET_NAME)..."
+	@echo "Updating plugin $(TARGET_NAME) for $(TARGET_OS), $(TARGET_ARCH)..."
 	cdsctl admin plugins import $(TARGET_DIST)/$(TARGET_NAME).yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
@@ -74,7 +74,7 @@ mk_plugin_package:
 	tar czf $(TARGET_DIST)/cds-$(TARGET_NAME)-all.tar.gz $(TARGET_DIST)/$(TARGET_NAME)*
 
 mk_v2_plugin_publish:
-	@echo "Updating plugin $(PLUGIN_CDS_NAME)..."
+	@echo "Updating plugin $(PLUGIN_CDS_NAME) for $(TARGET_OS) $(TARGET_ARCH)..."
 	cdsctl experimental plugin import $(TARGET_DIST)/$(TARGET_NAME).yml --force
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \

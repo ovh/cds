@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/ovh/symmecrypt/keyloader"
 
 	"github.com/ovh/symmecrypt/ciphers/aesgcm"
@@ -31,6 +32,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 )
 
@@ -247,4 +249,131 @@ func TestPostUploadHandler(t *testing.T) {
 	uiRead.Close()
 
 	require.Equal(t, string(fileContent), buf.String())
+}
+
+func TestPostUploadHandler_WorkflowV2(t *testing.T) {
+	s, db := newTestService(t)
+
+	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
+	// Start CDN
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
+	require.NoError(t, err)
+
+	tmpDir2, err := os.MkdirTemp("", t.Name()+"-cdn-2-*")
+	require.NoError(t, err)
+
+	cdnUnits, err := storage.Init(ctx, s.Mapper, s.Cache, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
+		SyncSeconds:     1,
+		SyncNbElements:  1000,
+		PurgeNbElements: 1000,
+		PurgeSeconds:    30,
+		HashLocatorSalt: "thisismysalt",
+		Buffers: map[string]storage.BufferConfiguration{
+			"refis_buffer": {
+				Redis: &storage.RedisBufferConfiguration{
+					Host:     cfg["redisHost"],
+					Password: cfg["redisPassword"],
+					DbIndex:  0,
+				},
+				BufferType: storage.CDNBufferTypeLog,
+			},
+			"local_buffer": {
+				Local: &storage.LocalBufferConfiguration{
+					Path: tmpDir,
+					Encryption: []*keyloader.KeyConfig{
+						{
+							Key:        "iamakey.iamakey.iamakey.iamakey.",
+							Cipher:     aesgcm.CipherName,
+							Identifier: "local-bukker-id",
+						},
+					},
+				},
+				BufferType: storage.CDNBufferTypeFile,
+			},
+		},
+		Storages: map[string]storage.StorageConfiguration{
+			"local_storage": {
+				SyncParallel:  10,
+				SyncBandwidth: int64(1024 * 1024),
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir2,
+					Encryption: []convergent.ConvergentEncryptionConfig{
+						{
+							Cipher:      aesgcm.CipherName,
+							LocatorSalt: "secret_locator_salt",
+							SecretValue: "secret_value",
+						},
+					},
+				},
+			},
+		},
+	})
+
+	require.NoError(t, err)
+	s.Units = cdnUnits
+	cdnUnits.Start(ctx, sdk.NewGoRoutines(ctx))
+
+	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
+	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
+	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(func() { ctrl.Finish() })
+	mockCDSClient := mock_cdsclient.NewMockInterface(ctrl)
+	s.Client = mockCDSClient
+
+	workerKey, err := jws.NewRandomSymmetricKey(32)
+	require.NoError(t, err)
+
+	mockCDSClient.EXPECT().V2WorkerGet(gomock.Any(), "wk.Name()", gomock.Any()).Return(
+		&sdk.V2Worker{
+			Name:       "wk.Name()",
+			PrivateKey: []byte(base64.StdEncoding.EncodeToString(workerKey)),
+		}, nil,
+	)
+
+	mockCDSClient.EXPECT().V2QueueJobRunResultGet(gomock.Any(), "region", "wk.currentJobV2.runJob.ID", "runResult.ID").Return(
+		&sdk.V2WorkflowRunResult{
+			Status: sdk.V2WorkflowRunResultStatusPending,
+		}, nil,
+	)
+
+	vars := map[string]string{}
+	uri := s.Router.GetRoute("POST", s.postUploadHandler, vars)
+	require.NotEmpty(t, uri)
+
+	sig := cdn.Signature{
+		JobName:       "wk.currentJobV2.runJob.Job.Name",
+		RunJobID:      "wk.currentJobV2.runJob.ID",
+		Region:        "region",
+		ProjectKey:    "wk.currentJobV2.runJob.ProjectKey",
+		WorkflowName:  "wk.currentJobV2.runJob.WorkflowName",
+		WorkflowRunID: "wk.currentJobV2.runJob.WorkflowRunID",
+		RunNumber:     1,
+		RunAttempt:    0,
+		Timestamp:     time.Now().UnixNano(),
+		Worker: &cdn.SignatureWorker{
+			WorkerID:      "wk.id",
+			WorkerName:    "wk.Name()",
+			RunResultID:   "runResult.ID",
+			RunResultName: "runResult.Name()",
+			RunResultType: "runResult.Typ()",
+		},
+	}
+
+	signer, err := jws.NewHMacSigner(workerKey)
+	require.NoError(t, err)
+
+	signature, err := jws.Sign(signer, sig)
+	require.NoError(t, err)
+
+	moreHeaders := map[string]string{
+		"X-CDS-WORKER-SIGNATURE": signature,
+	}
+
+	req := assets.NewUploadFileRequest(t, "POST", uri, bytes.NewBufferString("foo bar"), moreHeaders)
+	rec := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
 }

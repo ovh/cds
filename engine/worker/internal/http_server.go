@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -61,6 +62,8 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/run-result/add/artifact-manager", LogMiddleware(addRunResultArtifactManagerHandler(c, w)))
 	r.HandleFunc("/run-result/add/static-file", LogMiddleware(addRunResultStaticFileHandler(c, w)))
 	r.HandleFunc("/version", LogMiddleware(setVersionHandler(c, w)))
+
+	r.HandleFunc("/v2/result", LogMiddleware(workerruntime.V2_runResultHandler(c, w)))
 
 	srv := &http.Server{
 		Handler: r,

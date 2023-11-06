@@ -7,3 +7,4 @@ inputs:
   content:
     type: text
     description: The script to execute
+    required: true

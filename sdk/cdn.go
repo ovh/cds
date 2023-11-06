@@ -173,6 +173,20 @@ type CDNLogAPIRef struct {
 	RequirementServiceName string `json:"service_name,omitempty"`
 }
 
+type CDNRunResultAPIRefV2 struct {
+	ProjectKey    string `json:"project_key"`
+	WorkflowName  string `json:"workflow_name"`
+	RunID         string `json:"run_id"`
+	RunJobRegion  string `json:"run_job_region"`
+	RunJobID      string `json:"run_job_id"`
+	RunJobName    string `json:"run_job_name"`
+	RunNumber     int64  `json:"run_number"`
+	RunAttempt    int64  `json:"run_attempt"`
+	RunResultID   string `json:"run_result_id"`
+	RunResultName string `json:"run_result_name"`
+	RunResultType string `json:"run_result_type"`
+}
+
 type CDNRunResultAPIRef struct {
 	ProjectKey    string                `json:"project_key"`
 	WorkflowName  string                `json:"workflow_name"`
@@ -202,6 +216,8 @@ func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
 		return NewCDNWorkerCacheApiRef(signature), nil
 	case CDNTypeItemJobStepLog:
 		return NewCDNLogApiRefV2(signature), nil
+	case CDNTypeItemRunResultV2:
+		return NewCDNRunResultApiRefV2(signature), nil
 	}
 	return nil, WrapError(ErrInvalidData, "item type unknown")
 }
@@ -215,16 +231,35 @@ func NewCDNWorkerCacheApiRef(signature cdn.Signature) CDNApiRef {
 	return &apiRef
 }
 
+func NewCDNRunResultApiRefV2(signature cdn.Signature) CDNApiRef {
+	// Build cds api ref
+	apiRef := CDNRunResultAPIRefV2{
+		ProjectKey:    signature.ProjectKey,
+		WorkflowName:  signature.WorkflowName,
+		RunID:         signature.WorkflowRunID,
+		RunJobRegion:  signature.Region,
+		RunJobID:      signature.RunJobID,
+		RunJobName:    signature.NodeRunName,
+		RunNumber:     signature.RunNumber,
+		RunAttempt:    signature.RunAttempt,
+		RunResultID:   signature.Worker.RunResultID,
+		RunResultName: signature.Worker.RunResultName,
+		RunResultType: signature.Worker.RunResultType,
+	}
+	return &apiRef
+}
+
 func NewCDNRunResultApiRef(signature cdn.Signature) CDNApiRef {
 	// Build cds api ref
 	apiRef := CDNRunResultAPIRef{
-		ProjectKey:    signature.ProjectKey,
-		WorkflowName:  signature.WorkflowName,
-		WorkflowID:    signature.WorkflowID,
-		RunID:         signature.RunID,
-		RunNodeID:     signature.NodeRunID,
-		RunJobName:    signature.JobName,
-		RunJobID:      signature.JobID,
+		ProjectKey:   signature.ProjectKey,
+		WorkflowName: signature.WorkflowName,
+		WorkflowID:   signature.WorkflowID,
+		RunID:        signature.RunID,
+		RunNodeID:    signature.NodeRunID,
+		RunJobName:   signature.JobName,
+		RunJobID:     signature.JobID,
+
 		ArtifactName:  signature.Worker.FileName,
 		Perm:          signature.Worker.FilePerm,
 		RunResultType: WorkflowRunResultType(signature.Worker.RunResultType),
@@ -308,6 +343,18 @@ func (a *CDNLogAPIRefV2) ToFilename() string {
 	)
 }
 
+func (a *CDNRunResultAPIRefV2) ToHash() (string, error) {
+	hashRefU, err := hashstructure.Hash(a, nil)
+	if err != nil {
+		return "", WithStack(err)
+	}
+	return strconv.FormatUint(hashRefU, 10), nil
+}
+
+func (a *CDNRunResultAPIRefV2) ToFilename() string {
+	return a.RunResultID
+}
+
 func (a *CDNLogAPIRef) ToFilename() string {
 	jobName := strings.Replace(a.NodeRunJobName, " ", "", -1)
 
@@ -340,6 +387,11 @@ func (c CDNItem) GetCDNLogApiRef() (*CDNLogAPIRef, bool) {
 
 func (c CDNItem) GetCDNRunResultApiRef() (*CDNRunResultAPIRef, bool) {
 	apiRef, has := c.APIRef.(*CDNRunResultAPIRef)
+	return apiRef, has
+}
+
+func (c CDNItem) GetCDNRunResultApiRefV2() (*CDNRunResultAPIRefV2, bool) {
+	apiRef, has := c.APIRef.(*CDNRunResultAPIRefV2)
 	return apiRef, has
 }
 
@@ -435,6 +487,7 @@ const (
 	CDNTypeItemJobStepLog  CDNItemType = "job-step-log"
 	CDNTypeItemServiceLog  CDNItemType = "service-log"
 	CDNTypeItemRunResult   CDNItemType = "run-result"
+	CDNTypeItemRunResultV2 CDNItemType = "run-result-v2"
 	CDNTypeItemWorkerCache CDNItemType = "worker-cache"
 	CDNStatusItemIncoming              = "Incoming"
 	CDNStatusItemCompleted             = "Completed"

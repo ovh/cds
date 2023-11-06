@@ -7,12 +7,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"strconv"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -126,15 +123,7 @@ func addArtifactManagerRunResultCmd() func(cmd *cobra.Command, args []string) {
 }
 
 func addRunResult(data []byte, stype sdk.WorkflowRunResultType) {
-	portS := os.Getenv(internal.WorkerServerPort)
-	if portS == "" {
-		sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
-	}
-
-	port, errPort := strconv.Atoi(portS)
-	if errPort != nil {
-		sdk.Exit("cannot parse '%s' as a port number", portS)
-	}
+	port := MustGetWorkerHTTPPort()
 
 	req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/run-result/add/%s", port, stype), bytes.NewBuffer(data))
 	if errRequest != nil {

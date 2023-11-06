@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -23,6 +24,7 @@ func (api *API) jobRunList(ctx context.Context, auth *sdk.AuthUserConsumer, stor
 func (api *API) jobRunRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	hatchConsumer := getHatcheryConsumer(ctx)
 	work := getWorker(ctx)
+	isCDN := isCDN(ctx)
 	switch {
 	// Hatchery
 	case hatchConsumer != nil && work == nil:
@@ -32,6 +34,8 @@ func (api *API) jobRunRead(ctx context.Context, auth *sdk.AuthUserConsumer, stor
 		if work.JobRunID == vars["runJobID"] {
 			return nil
 		}
+	case isCDN:
+		return nil
 	}
 	return sdk.WithStack(sdk.ErrForbidden)
 }
