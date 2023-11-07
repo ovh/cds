@@ -32,7 +32,7 @@ var workflowRunJobsCmd = cli.Command{
 		{Name: "vcs_identifier"},
 		{Name: "repo_identifier"},
 		{Name: "workflow_name"},
-		{Name: "run-number"},
+		{Name: "run_number"},
 	},
 }
 
@@ -41,7 +41,7 @@ func workflowRunJobsFunc(v cli.Values) (cli.ListResult, error) {
 	vcsId := v.GetString("vcs_identifier")
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run-number")
+	runNumber, err := v.GetInt64("run_number")
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ var workflowRunJobCmd = cli.Command{
 		{Name: "vcs_identifier"},
 		{Name: "repo_identifier"},
 		{Name: "workflow_name"},
-		{Name: "run-number"},
+		{Name: "run_number"},
 		{Name: "job_identifier"},
 	},
 }
@@ -75,7 +75,7 @@ func workflowRunJobFunc(v cli.Values) (interface{}, error) {
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
 	jobIdentifier := v.GetString("job_identifier")
-	runNumber, err := v.GetInt64("run-number")
+	runNumber, err := v.GetInt64("run_number")
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +97,8 @@ var workflowRunStopJobCmd = cli.Command{
 		{Name: "vcs_identifier"},
 		{Name: "repo_identifier"},
 		{Name: "workflow_name"},
-		{Name: "run-number"},
-		{Name: "job-name"},
+		{Name: "run_number"},
+		{Name: "job_name"},
 	},
 }
 
@@ -107,8 +107,8 @@ func workflowRunStopJobFunc(v cli.Values) error {
 	vcsId := v.GetString("vcs_identifier")
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run-number")
-	jobName := v.GetString("job-name")
+	runNumber, err := v.GetInt64("run_number")
+	jobName := v.GetString("job_name")
 	if err != nil {
 		return err
 	}
