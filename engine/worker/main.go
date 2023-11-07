@@ -19,7 +19,6 @@ func main() {
 			cmd.AddCommand(cmdTag())
 			cmd.AddCommand(cmdRun())
 			cmd.AddCommand(cmdExit())
-			cmd.AddCommand(cmdRegister())
 			cmd.AddCommand(cmdCache())
 			cmd.AddCommand(cmdKey())
 			cmd.AddCommand(cmdJunitParser())
@@ -29,6 +28,7 @@ func main() {
 			cmd.AddCommand(CmdResult())
 		}
 	} else {
+		cmd.AddCommand(cmdRegister())
 		// last command: doc, this command is hidden
 		cmd.AddCommand(cmdDoc(cmd))
 	}
