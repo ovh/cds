@@ -73,7 +73,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	//Start the server
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			log.Error(c, "%v", err)
+			log.Warn(c, "%v", err)
 		}
 	}()
 
