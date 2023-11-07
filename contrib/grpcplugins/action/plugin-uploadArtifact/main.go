@@ -25,18 +25,18 @@ import (
 /* Inside contrib/grpcplugins/action
  */
 
-type runActionUploadArtifactlugin struct {
+type runActionUploadArtifactPlugin struct {
 	actionplugin.Common
 }
 
 func main() {
-	actPlugin := runActionUploadArtifactlugin{}
+	actPlugin := runActionUploadArtifactPlugin{}
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
 }
 
-func (actPlugin *runActionUploadArtifactlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
+func (actPlugin *runActionUploadArtifactPlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
 		Name:        "uploadArtifact",
 		Author:      "François SAMIN <francois.samin@corp.ovh.com>",
@@ -45,7 +45,7 @@ func (actPlugin *runActionUploadArtifactlugin) Manifest(_ context.Context, _ *em
 	}, nil
 }
 
-func (actPlugin *runActionUploadArtifactlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	res := &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}
