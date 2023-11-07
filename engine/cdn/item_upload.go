@@ -25,13 +25,6 @@ func (s *Service) postUploadHandler() service.Handler {
 		var privateKey []byte
 
 		switch {
-		case signature.JobID != 0:
-			var err error
-			workerData, err := s.getWorker(ctx, signature.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
-			if err != nil {
-				return err
-			}
-			privateKey = workerData.PrivateKey
 		case signature.RunJobID != "":
 			var err error
 			workerDataV2, err := s.getWorkerV2(ctx, signature.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
@@ -39,6 +32,13 @@ func (s *Service) postUploadHandler() service.Handler {
 				return err
 			}
 			privateKey = workerDataV2.PrivateKey
+		default:
+			var err error
+			workerData, err := s.getWorker(ctx, signature.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+			if err != nil {
+				return err
+			}
+			privateKey = workerData.PrivateKey
 		}
 
 		// Verify Signature
