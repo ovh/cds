@@ -6,7 +6,7 @@ description: |
 inputs:
   path:
     type: string
-    description: A file, directory or wildcard pattern that describes what to upload
+    description: A file, directory or wildcard pattern that describes what to upload.
     required: true
   if-no-files-found:
     type: string

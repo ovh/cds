@@ -164,7 +164,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		hatcheryTakeInfo := sdk.V2SendJobRunInfo{
 			Level:   sdk.WorkflowRunInfoLevelInfo,
 			Time:    time.Now(),
-			Message: fmt.Sprintf("Hatchery %s is starting worker %s with model %s", h.Name(), arg.WorkerName, modelName),
+			Message: fmt.Sprintf("Hatchery %q is starting the worker %q from model %q", h.Name(), arg.WorkerName, modelName),
 		}
 		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, jobRun.Region, jobRun.ID, hatcheryTakeInfo); err != nil {
 			log.ErrorWithStackTrace(ctx, err)

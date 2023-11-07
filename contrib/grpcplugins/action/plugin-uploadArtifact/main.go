@@ -159,7 +159,7 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 		}
 
 		// Upload the file to an artifactory or CDN
-		reader, ok := openFiles[r.Path].(io.ReadSeekCloser)
+		reader, ok := openFiles[r.Path].(io.ReadSeeker)
 		var d time.Duration
 		if ok {
 			d, err = CDNItemUpload(ctx, c, response.CDNAddress, response.Signature, reader)

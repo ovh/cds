@@ -89,8 +89,6 @@ func WithRunResults(ctx context.Context, mapper *gorpmapper.Mapper, db gorp.SqlE
 func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id string) (*sdk.V2WorkflowRunResult, error) {
 	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where id = $1 AND workflow_run_job_id = $2`).Args(id, runJobID)
 	var result dbV2WorkflowRunResult
-	log.Error(ctx, "request => %s", query.String())
-
 	found, err := gorpmapping.Get(ctx, db, query, &result)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to load run result %v", id)

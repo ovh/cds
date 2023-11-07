@@ -2,6 +2,7 @@ package glob
 
 import (
 	"io/fs"
+	"sort"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
@@ -38,6 +39,10 @@ type Results []Result
 
 func (results *Results) String() string {
 	var buf strings.Builder
+	sort.Slice(*results, func(i, j int) bool {
+		return (*results)[i].Path < (*results)[j].Path
+	})
+
 	for i, r := range *results {
 		if i > 0 {
 			buf.WriteString(", ")
