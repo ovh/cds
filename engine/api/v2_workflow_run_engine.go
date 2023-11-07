@@ -225,6 +225,24 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	return nil
 }
 
+func prepareRunJobIntegration(proj sdk.Project, jobDef sdk.V2Job, runJob *sdk.V2WorkflowRunJob) {
+	if !jobDef.Integrations.IsEmpty() {
+		runJob.Integrations = &sdk.V2WorkflowRunJobIntegrations{}
+		for i := range proj.Integrations {
+			integ := &proj.Integrations[i]
+			if integ.Name == jobDef.Integrations.Artifacts {
+				if integ.Model.ArtifactManager {
+					runJob.Integrations.ArtifactManager = integ
+				}
+				if integ.Model.Deployment {
+					runJob.Integrations.Deployment = integ
+				}
+				break
+			}
+		}
+	}
+}
+
 func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	for jobID, jobDef := range jobsToQueue {
@@ -258,21 +276,7 @@ func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun
 			if jobDef.WorkerModel != "" {
 				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
 			}
-			if !jobDef.Integrations.IsEmpty() {
-				runJob.Integrations = &sdk.V2WorkflowRunJobIntegrations{}
-				for i := range proj.Integrations {
-					integ := &proj.Integrations[i]
-					if integ.Name == jobDef.Integrations.Artifacts {
-						if integ.Model.ArtifactManager {
-							runJob.Integrations.ArtifactManager = integ
-						}
-						if integ.Model.Deployment {
-							runJob.Integrations.Deployment = integ
-						}
-						break
-					}
-				}
-			}
+			prepareRunJobIntegration(proj, jobDef, &runJob)
 			runJobs = append(runJobs, runJob)
 		} else {
 			for _, m := range alls {
@@ -296,22 +300,7 @@ func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun
 				if jobDef.WorkerModel != "" {
 					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
 				}
-
-				if !jobDef.Integrations.IsEmpty() {
-					runJob.Integrations = &sdk.V2WorkflowRunJobIntegrations{}
-					for i := range proj.Integrations {
-						integ := &proj.Integrations[i]
-						if integ.Name == jobDef.Integrations.Artifacts {
-							if integ.Model.ArtifactManager {
-								runJob.Integrations.ArtifactManager = integ
-							}
-							if integ.Model.Deployment {
-								runJob.Integrations.Deployment = integ
-							}
-							break
-						}
-					}
-				}
+				prepareRunJobIntegration(proj, jobDef, &runJob)
 				runJobs = append(runJobs, runJob)
 			}
 		}

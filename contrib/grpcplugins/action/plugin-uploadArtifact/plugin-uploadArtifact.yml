@@ -5,10 +5,11 @@ description: |
   This uploads artifacts from your workflow allowing you to share data between jobs and store data once a workflow is complete.
 inputs:
   path:
-    type: text
+    type: string
     description: A file, directory or wildcard pattern that describes what to upload
     required: true
   if-no-files-found:
+    type: string
     description: >
       The desired behavior if no files are found using the provided path.
 
