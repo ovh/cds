@@ -191,6 +191,103 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 		}
 }
 
+func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunUpdate),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			jobRunID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+			if err != nil {
+				return err
+			}
+
+			var runResult sdk.V2WorkflowRunResult
+			if err := service.UnmarshalBody(req, &runResult); err != nil {
+				return err
+			}
+
+			runResult.ID = sdk.UUID()
+			runResult.WorkflowRunJobID = runJob.ID
+			runResult.WorkflowRunID = runJob.WorkflowRunID
+			if runJob.Integrations != nil {
+				runResult.ArtifactManagerIntegration = runJob.Integrations.ArtifactManager
+			}
+
+			if runResult.Status == "" {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
+
+			if err := workflow_v2.InsertRunResult(ctx, api.mustDB(), &runResult); err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, runResult, http.StatusCreated)
+		}
+}
+
+func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunUpdate),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			jobRunID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+			if err != nil {
+				return err
+			}
+
+			var runResult sdk.V2WorkflowRunResult
+			if err := service.UnmarshalBody(req, &runResult); err != nil {
+				return err
+			}
+
+			oldRunResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResult.ID)
+			if err != nil {
+				return err
+			}
+
+			// Check consistency
+			if oldRunResult.WorkflowRunID != runResult.WorkflowRunID ||
+				oldRunResult.WorkflowRunJobID != runResult.WorkflowRunJobID ||
+				runResult.WorkflowRunJobID != runJob.ID {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
+
+			if runResult.Status == "" {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
+
+			if err := workflow_v2.UpdateRunResult(ctx, api.mustDB(), &runResult); err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, runResult, http.StatusCreated)
+		}
+}
+
+func (api *API) getJobRunResultHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			runJobID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), runJobID)
+			if err != nil {
+				return err
+			}
+
+			runResultID := vars["runResultID"]
+
+			runResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResultID)
+			if err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, runResult, http.StatusCreated)
+		}
+}
+
 func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.jobRunUpdate, api.isHatchery),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

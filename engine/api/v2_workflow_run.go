@@ -439,7 +439,7 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber, workflow_v2.WithRunResults)
 			if err != nil {
 				return err
 			}
@@ -477,7 +477,7 @@ func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			runs, err := workflow_v2.LoadRuns(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName)
+			runs, err := workflow_v2.LoadRuns(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, workflow_v2.WithRunResults)
 			if err != nil {
 				return err
 			}

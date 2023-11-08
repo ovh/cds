@@ -17,7 +17,7 @@ export class V2WorkflowRun {
     username: string;
     contexts: any;
     event: WorkflowEvent;
-
+    results: Array<WorkflowRunResult>;
 }
 
 export class WorkflowEvent {
@@ -72,4 +72,15 @@ export class WorkflowRunInfo {
     issued_at: string;
     level: string;
     message: string;
+}
+
+export class WorkflowRunResult {
+    id: string;
+    type: string;
+    detail: WorkflowRunResultDetail;
+}
+
+export class WorkflowRunResultDetail {
+    Data: any;
+    Type: string;
 }

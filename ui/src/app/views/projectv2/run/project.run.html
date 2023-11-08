@@ -40,6 +40,31 @@
                     </ng-container>
                 </ul>
             </ng-container>
+            <ng-container *ngIf="selectedTab.key === 'results'">
+                <nz-table #basicTable [nzData]="selectedRun.results">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let result of selectedRun.results">
+                            <td>
+                                <span class="info" nz-icon nzType="file" nzTheme="fill"></span>
+                                {{result.id}}
+                            </td>
+                            <td>
+                                {{result.type}}
+                            </td>
+                            <td>
+                                {{result.detail.Data.name}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </nz-table>
+            </ng-container>
         </app-resizable-panel>
     </div>
     <app-resizable-panel *ngIf="selectedJobRun" minSize="400" [initialSize]="jobPanelSize"

@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go.opencensus.io/trace"
 	"strconv"
 	"strings"
 	"time"
+
+	"go.opencensus.io/trace"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/user"
@@ -121,6 +123,11 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WrapError(err, "unable to load workflow run %s", wrEnqueue.RunID)
 	}
 
+	proj, err := project.Load(ctx, api.mustDB(), run.ProjectKey, project.LoadOptions.WithIntegrations)
+	if err != nil {
+		return err
+	}
+
 	telemetry.Current(ctx).AddAttributes(
 		trace.StringAttribute(telemetry.TagProjectKey, run.ProjectKey),
 		trace.StringAttribute(telemetry.TagWorkflow, run.WorkflowName),
@@ -163,7 +170,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	// Enqueue JOB
-	runJobs := prepareRunJobs(ctx, *run, wrEnqueue, jobsToQueue, *u)
+	runJobs := prepareRunJobs(ctx, *proj, *run, wrEnqueue, jobsToQueue, *u)
 
 	tx, errTx := api.mustDB().Begin()
 	if errTx != nil {
@@ -172,7 +179,8 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	defer tx.Rollback() // nolint
 
 	for i := range runJobs {
-		if err := workflow_v2.InsertRunJob(ctx, tx, &runJobs[i]); err != nil {
+		runJob := &runJobs[i]
+		if err := workflow_v2.InsertRunJob(ctx, tx, runJob); err != nil {
 			return err
 		}
 	}
@@ -217,7 +225,25 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	return nil
 }
 
-func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
+func prepareRunJobIntegration(proj sdk.Project, jobDef sdk.V2Job, runJob *sdk.V2WorkflowRunJob) {
+	if !jobDef.Integrations.IsEmpty() {
+		runJob.Integrations = &sdk.V2WorkflowRunJobIntegrations{}
+		for i := range proj.Integrations {
+			integ := &proj.Integrations[i]
+			if integ.Name == jobDef.Integrations.Artifacts {
+				if integ.Model.ArtifactManager {
+					runJob.Integrations.ArtifactManager = integ
+				}
+				if integ.Model.Deployment {
+					runJob.Integrations.Deployment = integ
+				}
+				break
+			}
+		}
+	}
+}
+
+func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	for jobID, jobDef := range jobsToQueue {
 		// Compute job matrix strategy
@@ -250,6 +276,7 @@ func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2
 			if jobDef.WorkerModel != "" {
 				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
 			}
+			prepareRunJobIntegration(proj, jobDef, &runJob)
 			runJobs = append(runJobs, runJob)
 		} else {
 			for _, m := range alls {
@@ -273,6 +300,7 @@ func prepareRunJobs(ctx context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2
 				if jobDef.WorkerModel != "" {
 					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.WorkerModel].Type
 				}
+				prepareRunJobIntegration(proj, jobDef, &runJob)
 				runJobs = append(runJobs, runJob)
 			}
 		}

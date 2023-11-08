@@ -282,6 +282,7 @@ func (wk *CurrentWorker) prepareLog(ctx context.Context, level workerruntime.Lev
 			RunNumber:     wk.currentJobV2.runJob.RunNumber,
 			RunAttempt:    wk.currentJobV2.runJob.RunAttempt,
 			JobName:       wk.currentJobV2.runJob.JobID,
+			Region:        wk.currentJobV2.runJob.Region,
 		}
 	default:
 		return res, "", sdk.WithStack(fmt.Errorf("job is nil"))
@@ -329,6 +330,10 @@ func (wk *CurrentWorker) PluginGet(pluginName string) (*sdk.GRPCPlugin, error) {
 func (wk *CurrentWorker) Environ() []string {
 	env := os.Environ()
 	newEnv := []string{"CI=1"}
+	if sdk.IsValidUUID(wk.cfg.RunJobID) {
+		newEnv = append(newEnv, "CDS_LEGACY_MODE=false")
+	}
+
 	// filter technical env variables
 	for _, e := range env {
 		if e == "" {
@@ -345,14 +350,6 @@ func (wk *CurrentWorker) Environ() []string {
 	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSApiUrl, wk.cfg.APIEndpoint))
 	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSCDNUrl, wk.cfg.CDNEndpoint))
 
-	if wk.currentJob.wJob != nil {
-		data := []byte(wk.currentJob.wJob.Job.Job.Action.Name)
-		suffix := fmt.Sprintf("%x", md5.Sum(data))
-		newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir+"/"+suffix)
-	} else {
-		newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir)
-	}
-
 	newEnv = append(newEnv, "HATCHERY_NAME="+wk.cfg.HatcheryName)
 	newEnv = append(newEnv, "HATCHERY_WORKER="+wk.cfg.Name)
 	if wk.cfg.Region != "" {
@@ -368,31 +365,41 @@ func (wk *CurrentWorker) Environ() []string {
 		newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 	}
 
-	//set up environment variables from pipeline build job parameters
-	for _, p := range wk.currentJob.params {
-		// avoid put private key in environment var as it's a binary value
-		if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
-			continue
+	if !sdk.IsValidUUID(wk.cfg.RunJobID) {
+		if wk.currentJob.wJob != nil {
+			data := []byte(wk.currentJob.wJob.Job.Job.Action.Name)
+			suffix := fmt.Sprintf("%x", md5.Sum(data))
+			newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir+"/"+suffix)
+		} else {
+			newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir)
 		}
 
-		newEnv = append(newEnv, sdk.EnvVartoENV(p)...)
+		//set up environment variables from pipeline build job parameters
+		for _, p := range wk.currentJob.params {
+			// avoid put private key in environment var as it's a binary value
+			if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
+				continue
+			}
 
-		envName := strings.Replace(p.Name, ".", "_", -1)
-		envName = strings.Replace(envName, "-", "_", -1)
-		envName = strings.ToUpper(envName)
-		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
-	}
+			newEnv = append(newEnv, sdk.EnvVartoENV(p)...)
 
-	for _, p := range wk.currentJob.newVariables {
-		envName := strings.Replace(p.Name, ".", "_", -1)
-		envName = strings.Replace(envName, "-", "_", -1)
-		envName = strings.ToUpper(envName)
-		newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
-	}
+			envName := strings.Replace(p.Name, ".", "_", -1)
+			envName = strings.Replace(envName, "-", "_", -1)
+			envName = strings.ToUpper(envName)
+			newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
+		}
 
-	//Set env variables from hooks
-	for k, v := range wk.currentJob.envFromHooks {
-		newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
+		for _, p := range wk.currentJob.newVariables {
+			envName := strings.Replace(p.Name, ".", "_", -1)
+			envName = strings.Replace(envName, "-", "_", -1)
+			envName = strings.ToUpper(envName)
+			newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
+		}
+
+		//Set env variables from hooks
+		for k, v := range wk.currentJob.envFromHooks {
+			newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
+		}
 	}
 	return newEnv
 }
@@ -425,4 +432,76 @@ func (wk *CurrentWorker) SetSecrets(secrets []sdk.Variable) error {
 	wk.blur = b
 
 	return nil
+}
+
+func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
+	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
+	var runResult = req.RunResult
+
+	// Create the run result on API side
+	if err := wk.clientV2.V2QueueJobRunResultCreate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
+		return nil, sdk.NewError(sdk.ErrUnknownError, err)
+	}
+
+	// Generate a worker signature
+	sig := cdn.Signature{
+		JobName:       wk.currentJobV2.runJob.Job.Name,
+		RunJobID:      wk.currentJobV2.runJob.ID,
+		ProjectKey:    wk.currentJobV2.runJob.ProjectKey,
+		WorkflowName:  wk.currentJobV2.runJob.WorkflowName,
+		WorkflowRunID: wk.currentJobV2.runJob.WorkflowRunID,
+		RunNumber:     wk.currentJobV2.runJob.RunNumber,
+		RunAttempt:    wk.currentJobV2.runJob.RunAttempt,
+		Region:        wk.currentJobV2.runJob.Region,
+
+		Timestamp: time.Now().UnixNano(),
+
+		Worker: &cdn.SignatureWorker{
+			WorkerID:      wk.id,
+			WorkerName:    wk.Name(),
+			RunResultName: runResult.Name(),
+			RunResultType: runResult.Typ(),
+			RunResultID:   runResult.ID,
+		},
+	}
+
+	signature, err := jws.Sign(wk.signer, sig)
+	if err != nil {
+		return nil, sdk.NewError(sdk.ErrUnknownError, err)
+	}
+
+	// Returns the signature and CDN info
+
+	response := workerruntime.V2AddResultResponse{
+		RunResult:  runResult,
+		Signature:  signature,
+		CDNAddress: wk.CDNHttpURL(),
+	}
+
+	return &response, nil
+}
+
+var _ workerruntime.Runtime = new(CurrentWorker)
+
+func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
+	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
+	var runResult = req.RunResult
+
+	runResult.Status = sdk.V2WorkflowRunResultStatusCompleted
+
+	log.Info(ctx, "updating run result %s to status completed", runResult.ID)
+
+	// Update the run result on API side
+	if err := wk.clientV2.V2QueueJobRunResultUpdate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
+		return nil, sdk.NewError(sdk.ErrUnknownError, err)
+	}
+
+	duration := time.Since(runResult.IssuedAt)
+	wk.clientV2.V2QueuePushJobInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2SendJobRunInfo{
+		Level:   sdk.WorkflowRunInfoLevelInfo,
+		Message: fmt.Sprintf("Job %q issued a new result %q in %.3f seconds", wk.currentJobV2.runJob.JobID, runResult.Name(), duration.Seconds()),
+		Time:    time.Now(),
+	})
+
+	return &workerruntime.V2UpdateResultResponse{RunResult: runResult}, nil
 }

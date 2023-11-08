@@ -161,6 +161,7 @@ func configBootstrap(args []string) Configuration {
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
 			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS()
+			conf.Repositories.Basedir = "/var/lib/cds-engine/repositories"
 			conf.Repositories.HTTP.Port = 8085
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}

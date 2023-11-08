@@ -910,7 +910,7 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 		return nil, sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
 	}
 	for _, c := range contents {
-		if c.IsFile && strings.HasSuffix(c.Name, ".yml") {
+		if c.IsFile && (strings.HasSuffix(c.Name, ".yml") || strings.HasSuffix(c.Name, ".yaml")) {
 			filePath := directory + "/" + c.Name
 			vcsContent, err := client.GetContent(ctx, repoName, commit, filePath)
 			if err != nil {
@@ -975,7 +975,7 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 		}
 
 		dir, fileName := filepath.Split(hdr.Name)
-		if !strings.HasSuffix(fileName, ".yml") {
+		if !strings.HasSuffix(fileName, ".yml") && !strings.HasSuffix(fileName, ".yaml") {
 			continue
 		}
 		buff := new(bytes.Buffer)

@@ -513,7 +513,7 @@ func (api *API) checkUserPublicPermissions(ctx context.Context, w http.ResponseW
 		return nil
 	}
 
-	log.Debug(ctx, "checkUserPermissions> %s is not authorized to %s", getUserConsumer(ctx).ID, u.ID)
+	log.Debug(ctx, "checkUserPermissions> %s is not authorized to %s", getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser.Fullname, u.ID)
 	return sdk.WrapError(sdk.ErrForbidden, "not authorized for user %s", username)
 }
 

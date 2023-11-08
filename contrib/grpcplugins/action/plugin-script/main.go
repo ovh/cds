@@ -60,7 +60,7 @@ func (actPlugin *runActionScriptPlugin) Run(ctx context.Context, q *actionplugin
 
 	content := q.GetOptions()["content"]
 
-	workDirs, err := grpcplugins.GetWorkerDirectories(actPlugin.HTTPPort)
+	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &actPlugin.Common)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get working directory: %v", err)
 	}

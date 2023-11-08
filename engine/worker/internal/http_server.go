@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -62,6 +63,8 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/run-result/add/static-file", LogMiddleware(addRunResultStaticFileHandler(c, w)))
 	r.HandleFunc("/version", LogMiddleware(setVersionHandler(c, w)))
 
+	r.HandleFunc("/v2/result", LogMiddleware(workerruntime.V2_runResultHandler(c, w)))
+
 	srv := &http.Server{
 		Handler: r,
 		Addr:    "127.0.0.1:0",
@@ -70,7 +73,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	//Start the server
 	go func() {
 		if err := srv.Serve(listener); err != nil {
-			log.Error(c, "%v", err)
+			log.Warn(c, "%v", err)
 		}
 	}()
 

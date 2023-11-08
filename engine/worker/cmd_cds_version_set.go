@@ -6,13 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 )
@@ -32,15 +29,7 @@ func cdsVersionSetCmd() func(cmd *cobra.Command, args []string) {
 			sdk.Exit("invalid given value for CDS version")
 		}
 
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?", internal.WorkerServerPort)
-		}
-
-		port, err := strconv.Atoi(portS)
-		if err != nil {
-			sdk.Exit("cannot parse '%s' as a port number", portS)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		a := workerruntime.CDSVersionSet{
 			Value: args[0],

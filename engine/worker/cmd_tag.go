@@ -5,14 +5,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -44,15 +41,7 @@ You can select the tags displayed on the sidebar Workflow → Advanced → "Tags
 
 func tagCmd() func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		portS := os.Getenv(internal.WorkerServerPort)
-		if portS == "" {
-			sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
-		}
-
-		port, errPort := strconv.Atoi(portS)
-		if errPort != nil {
-			sdk.Exit("cannot parse '%s' as a port number", portS)
-		}
+		port := MustGetWorkerHTTPPort()
 
 		if len(args) == 0 {
 			sdk.Exit("Wrong usage: Example : worker tag <key>=<value>")
