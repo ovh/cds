@@ -214,6 +214,12 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
 		return
 	}
+
+	if isReadinessServices, _ := workerruntime.IsReadinessServices(ctx); isReadinessServices {
+		log.Info(ctx, msg.Value)
+		return
+	}
+
 	wk.gelfLogger.logger.
 		WithField(cdslog.ExtraFieldSignature, sign).
 		WithField(cdslog.ExtraFieldLine, wk.stepLogLine).

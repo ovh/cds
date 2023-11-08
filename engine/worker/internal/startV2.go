@@ -98,5 +98,4 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 	log.Info(ctx, "Job is done. Unregistering...")
 	endFunc()
 	return nil
-
 }

@@ -191,9 +191,16 @@ func (v *V2JobIntegrations) IsEmpty() bool {
 }
 
 type V2JobService struct {
-	Image   string            `json:"image" jsonschema_description:"Docker Image"`
-	Env     map[string]string `json:"env,omitempty" jsonschema_description:"Environment variables"`
-	Options string            `json:"options,omitempty" jsonschema_description:"Service option"`
+	Image     string                `json:"image" jsonschema_description:"Docker Image"`
+	Env       map[string]string     `json:"env,omitempty" jsonschema_description:"Environment variables"`
+	Readiness V2JobServiceReadiness `json:"readiness,omitempty" jsonschema_description:"Service readiness"`
+}
+
+type V2JobServiceReadiness struct {
+	Command  string `json:"command" jsonschema_extras:"order=1,required" jsonschema_description:"Command executed to check if the service is ready"`
+	Interval string `json:"interval" jsonschema_extras:"order=2,required" jsonschema_description:"Internal, example: 10s"`
+	Timeout  string `json:"timeout" jsonschema_extras:"order=3,required" jsonschema_description:"Timeout, example: 3s"`
+	Retries  int    `json:"retries" jsonschema_extras:"order=4,required" jsonschema_description:"Nb of retries, example: 5"`
 }
 
 type V2WorkflowHook struct {
