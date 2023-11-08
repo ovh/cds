@@ -165,6 +165,8 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		arg.ProjectKey = jobRun.ProjectKey
 		arg.JobName = jobRun.JobID
 		arg.Services = jobRun.Job.Services
+		arg.RunNumber = jobRun.RunNumber
+		arg.RunAttempt = jobRun.RunAttempt
 
 		hatcheryTakeInfo := sdk.V2SendJobRunInfo{
 			Level:   sdk.WorkflowRunInfoLevelInfo,

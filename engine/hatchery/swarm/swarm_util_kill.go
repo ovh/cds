@@ -9,10 +9,8 @@ import (
 
 	types "github.com/docker/docker/api/types"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -148,33 +146,15 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 				c := containers.GetByID(id)
 				if c != nil {
 					// Send final logs before deleting service container
-					jobIdentifiers := h.GetIdentifiersFromLabels(*c)
+					jobIdentifiers := hatchery.GetServiceIdentifiersFromLabels(c.Labels)
 					if jobIdentifiers == nil {
 						log.Error(ctx, "killAwolWorker> unable to get identifiers from containers labels")
 						continue
 					}
-					endLog := cdslog.Message{
-						Level: logrus.InfoLevel,
-						Value: string("End of Job"),
-						Signature: cdn.Signature{
-							Service: &cdn.SignatureService{
-								HatcheryID:      h.Service().ID,
-								HatcheryName:    h.ServiceName(),
-								RequirementID:   jobIdentifiers.ServiceID,
-								RequirementName: c.Labels[hatchery.LabelServiceReqName],
-								WorkerName:      c.Labels[LabelServiceWorker],
-							},
-							ProjectKey:   c.Labels[hatchery.LabelServiceProjectKey],
-							WorkflowName: c.Labels[hatchery.LabelServiceWorkflowName],
-							WorkflowID:   jobIdentifiers.WorkflowID,
-							RunID:        jobIdentifiers.RunID,
-							NodeRunName:  c.Labels[hatchery.LabelServiceNodeRunName],
-							JobName:      c.Labels[hatchery.LabelServiceJobName],
-							JobID:        jobIdentifiers.JobID,
-							NodeRunID:    jobIdentifiers.NodeRunID,
-							Timestamp:    time.Now().UnixNano(),
-						},
-					}
+					endLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, c.Labels)
+					endLog.Value = string("End of Job")
+					endLog.Signature.Timestamp = time.Now().UnixNano()
+
 					h.Common.SendServiceLog(ctx, []cdslog.Message{endLog}, sdk.StatusTerminated)
 				}
 

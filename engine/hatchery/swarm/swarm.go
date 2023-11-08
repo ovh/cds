@@ -17,12 +17,10 @@ import (
 	"github.com/docker/go-connections/tlsconfig"
 	docker "github.com/moby/moby/client"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -331,10 +329,9 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 				//labels are used to make container cleanup easier. We "link" the service to its worker this way.
 				labels := map[string]string{
-					LabelServiceWorker: spawnArgs.WorkerName,
-					LabelServiceName:   serviceName,
-					LabelHatchery:      h.Config.Name,
-					LabelJobID:         spawnArgs.JobID,
+					LabelServiceName: serviceName,
+					LabelHatchery:    h.Config.Name,
+					LabelJobID:       spawnArgs.JobID,
 				}
 
 				if spawnArgs.JobID != "0" {
@@ -349,6 +346,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
 					labels[hatchery.LabelServiceReqName] = r.Name
 					labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion1
+					labels[hatchery.LabelServiceWorker] = spawnArgs.WorkerName
 				}
 
 				//Start the services
@@ -511,10 +509,9 @@ func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *do
 
 	// labels are used to make container cleanup easier. We "link" the service to its worker this way.
 	labels := map[string]string{
-		LabelServiceWorker: spawnArgs.WorkerName,
-		LabelServiceName:   serviceName,
-		LabelHatchery:      h.Config.Name,
-		LabelJobID:         spawnArgs.JobID,
+		LabelServiceName: serviceName,
+		LabelHatchery:    h.Config.Name,
+		LabelJobID:       spawnArgs.JobID,
 	}
 
 	if spawnArgs.JobID != "0" {
@@ -526,6 +523,11 @@ func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *do
 		labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
 		labels[hatchery.LabelServiceReqName] = sName
 		labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion2
+		labels[hatchery.LabelServiceWorker] = spawnArgs.WorkerName
+
+		labels[hatchery.LabelServiceRunNumber] = strconv.FormatInt(spawnArgs.RunNumber, 10)
+		labels[hatchery.LabelServiceRunAttempt] = strconv.FormatInt(spawnArgs.RunAttempt, 10)
+		labels[hatchery.LabelServiceRegion] = spawnArgs.Region
 	}
 
 	args := containerArgs{
@@ -751,46 +753,29 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 		// Checking services
 		for _, c := range containers {
 			// checks if the container is a service based on its labels
-			if c.Labels[LabelServiceWorker] == "" {
+			if c.Labels[hatchery.LabelServiceWorker] == "" {
 				continue
 			}
 			// if the worker associated to this service is still alive do not kill the service
-			if _, workerStillAlive := mContainers[c.Labels[LabelServiceWorker]]; workerStillAlive {
+			if _, workerStillAlive := mContainers[c.Labels[hatchery.LabelServiceWorker]]; workerStillAlive {
 				continue
 			}
 
 			if !strings.Contains(c.Status, "Exited") && time.Now().Add(-3*time.Minute).Unix() < c.Created {
-				log.Debug(ctx, "hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels[LabelServiceWorker])
+				log.Debug(ctx, "hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels[hatchery.LabelServiceWorker])
 				continue
 			}
 
 			// Send final logs before deleting service container
-			jobIdentifiers := h.GetIdentifiersFromLabels(c)
+			jobIdentifiers := hatchery.GetServiceIdentifiersFromLabels(c.Labels)
 			if jobIdentifiers == nil {
 				continue
 			}
-			endLog := cdslog.Message{
-				Level: logrus.InfoLevel,
-				Value: string("End of Job"),
-				Signature: cdn.Signature{
-					Service: &cdn.SignatureService{
-						HatcheryID:      h.Service().ID,
-						HatcheryName:    h.ServiceName(),
-						RequirementID:   jobIdentifiers.ServiceID,
-						RequirementName: c.Labels[hatchery.LabelServiceReqName],
-						WorkerName:      c.Labels[LabelServiceWorker],
-					},
-					ProjectKey:   c.Labels[hatchery.LabelServiceProjectKey],
-					WorkflowName: c.Labels[hatchery.LabelServiceWorkflowName],
-					WorkflowID:   jobIdentifiers.WorkflowID,
-					RunID:        jobIdentifiers.RunID,
-					NodeRunName:  c.Labels[hatchery.LabelServiceNodeRunName],
-					JobName:      c.Labels[hatchery.LabelServiceJobName],
-					JobID:        jobIdentifiers.JobID,
-					NodeRunID:    jobIdentifiers.NodeRunID,
-					Timestamp:    time.Now().UnixNano(),
-				},
-			}
+
+			endLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, c.Labels)
+			endLog.Value = string("End of Job")
+			endLog.Signature.Timestamp = time.Now().UnixNano()
+
 			h.Common.SendServiceLog(ctx, []cdslog.Message{endLog}, sdk.StatusTerminated)
 
 			log.Debug(ctx, "hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)

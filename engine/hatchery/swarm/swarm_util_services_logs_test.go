@@ -51,7 +51,7 @@ func Test_serviceLogs(t *testing.T) {
 			Names: []string{"swarmy-model1-w1"},
 			Labels: map[string]string{
 				LabelHatchery:                     "swarmy",
-				LabelServiceWorker:                "swarmy-model1-w1",
+				hatchery.LabelServiceWorker:       "swarmy-model1-w1",
 				hatchery.LabelServiceNodeRunID:    "999",
 				hatchery.LabelServiceJobID:        "666",
 				hatchery.LabelServiceID:           "1",
