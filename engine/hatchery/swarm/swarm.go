@@ -348,6 +348,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
 					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
 					labels[hatchery.LabelServiceReqName] = r.Name
+					labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion1
 				}
 
 				//Start the services
@@ -374,6 +375,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		}
 	}
 
+	// Create services V2
 	for sName, service := range spawnArgs.Services {
 		//Create a network if not already created
 		if network == "" {
@@ -386,77 +388,11 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 			}
 		}
 
-		serviceMemory := int64(1024)
-		if sm, ok := service.Env["CDS_SERVICE_MEMORY"]; ok {
-			i, err := strconv.ParseUint(sm, 10, 32)
-			if err != nil {
-				log.Warn(ctx, "SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
-			} else {
-				// too low values are checked in HatcherySwarm.createAndStartContainer() below
-				serviceMemory = int64(i)
-			}
-		}
-		serviceMemorySwap := int64(-1)
-		if h.Config.DisableMemorySwap {
-			serviceMemorySwap = 0
-		}
-
-		var cmdArgs []string
-		if sa, ok := service.Env["CDS_SERVICE_ARGS"]; ok {
-			cmdArgs = hatchery.ParseArgs(sa)
-		}
-		if cmdArgs == nil {
-			cmdArgs = []string{}
-		}
-
-		env := make([]string, 0, len(service.Env))
-		for key, val := range service.Env {
-			env = append(env, key+"="+val)
-		}
-
-		serviceName := sName + "-" + spawnArgs.WorkerName
-
-		//labels are used to make container cleanup easier. We "link" the service to its worker this way.
-		labels := map[string]string{
-			LabelServiceWorker: spawnArgs.WorkerName,
-			LabelServiceName:   serviceName,
-			LabelHatchery:      h.Config.Name,
-			LabelJobID:         spawnArgs.JobID,
-		}
-
-		if spawnArgs.JobID != "0" {
-			labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
-			labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
-			labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
-			labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
-			labels[hatchery.LabelServiceNodeRunID] = fmt.Sprintf("%d", spawnArgs.NodeRunID)
-			labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
-			labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
-			labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
-			labels[hatchery.LabelServiceID] = sName
-			labels[hatchery.LabelServiceReqName] = sName
-		}
-
-		args := containerArgs{
-			name:         serviceName,
-			image:        service.Image,
-			network:      network,
-			networkAlias: sName,
-			cmd:          cmdArgs,
-			env:          env,
-			labels:       labels,
-			memory:       serviceMemory,
-			memorySwap:   serviceMemorySwap,
-			entryPoint:   nil,
-		}
-
-		if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Warn(ctx, "unable to start required container on %s: %s", dockerClient.name, err)
+		serviceName, err := h.SpawnWorkerService(ctx, dockerClient, spawnArgs, sName, service, network)
+		if err != nil {
 			return err
 		}
 		services = append(services, serviceName)
-
 	}
 
 	var cmd = spawnArgs.Model.GetCmd()
@@ -465,7 +401,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		memory = hatchery.MemoryRegisterContainer
 	}
 
-	//labels are used to make container cleanup easier
+	// labels are used to make container cleanup easier
 	labels := map[string]string{
 		LabelWorkerModelPath:    spawnArgs.Model.GetFullPath(),
 		LabelWorkerName:         spawnArgs.WorkerName,
@@ -540,6 +476,78 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	return nil
+}
+
+func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *dockerClient, spawnArgs hatchery.SpawnArguments, sName string, service sdk.V2JobService, network string) (string, error) {
+	serviceMemory := int64(1024)
+	if sm, ok := service.Env["CDS_SERVICE_MEMORY"]; ok {
+		i, err := strconv.ParseUint(sm, 10, 32)
+		if err != nil {
+			log.Warn(ctx, "SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
+		} else {
+			// too low values are checked in HatcherySwarm.createAndStartContainer() below
+			serviceMemory = int64(i)
+		}
+	}
+	serviceMemorySwap := int64(-1)
+	if h.Config.DisableMemorySwap {
+		serviceMemorySwap = 0
+	}
+
+	var cmdArgs []string
+	if sa, ok := service.Env["CDS_SERVICE_ARGS"]; ok {
+		cmdArgs = hatchery.ParseArgs(sa)
+	}
+	if cmdArgs == nil {
+		cmdArgs = []string{}
+	}
+
+	env := make([]string, 0, len(service.Env))
+	for key, val := range service.Env {
+		env = append(env, key+"="+val)
+	}
+
+	serviceName := sName + "-" + spawnArgs.WorkerName
+
+	// labels are used to make container cleanup easier. We "link" the service to its worker this way.
+	labels := map[string]string{
+		LabelServiceWorker: spawnArgs.WorkerName,
+		LabelServiceName:   serviceName,
+		LabelHatchery:      h.Config.Name,
+		LabelJobID:         spawnArgs.JobID,
+	}
+
+	if spawnArgs.JobID != "0" {
+		labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+		labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+		labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+		labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
+		labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+		labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
+		labels[hatchery.LabelServiceReqName] = sName
+		labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion2
+	}
+
+	args := containerArgs{
+		name:         serviceName,
+		image:        service.Image,
+		network:      network,
+		networkAlias: sName,
+		cmd:          cmdArgs,
+		env:          env,
+		labels:       labels,
+		memory:       serviceMemory,
+		memorySwap:   serviceMemorySwap,
+		entryPoint:   nil,
+	}
+
+	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "unable to start required container on %s: %s", dockerClient.name, err)
+		return serviceName, err
+	}
+
+	return serviceName, nil
 }
 
 // ModelType returns type of hatchery

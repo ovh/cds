@@ -131,6 +131,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 }
 
 func (h *HatcherySwarm) GetIdentifiersFromLabels(cnt types.Container) *hatchery.JobIdentifiers {
+
 	serviceIDStr, ok := cnt.Labels[hatchery.LabelServiceID]
 	if !ok {
 		return nil

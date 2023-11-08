@@ -24,6 +24,10 @@ const (
 	LabelServiceJobName      = "CDS_JOB_NAME"
 	LabelServiceID           = "CDS_SERVICE_ID"
 	LabelServiceReqName      = "CDS_SERVICE_NAME"
+	LabelServiceVersion      = "CDS_SERVICE_VERSION"
+
+	ValueLabelServiceVersion1 = "service_v1"
+	ValueLabelServiceVersion2 = "service_v2"
 )
 
 var (
