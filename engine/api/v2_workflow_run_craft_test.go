@@ -3,6 +3,11 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/entity"
@@ -15,10 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestCraftWorkflowRunNoHatchery(t *testing.T) {
@@ -53,7 +54,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
 				Jobs: map[string]sdk.V2Job{
-					"job1": {
+					"My super job": {
 						Name:   "My super job",
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
