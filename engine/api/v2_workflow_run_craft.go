@@ -170,7 +170,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	// Retrieve all deps
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
-		j.Name = jobID
 		completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.WorkerModel, j.Region, api.Config.Workflow.JobDefaultRegion)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)

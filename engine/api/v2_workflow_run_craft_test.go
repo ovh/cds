@@ -54,7 +54,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
 				Jobs: map[string]sdk.V2Job{
-					"My super job": {
+					"job1": {
 						Name:   "My super job",
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
