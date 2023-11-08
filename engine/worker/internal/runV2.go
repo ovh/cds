@@ -106,7 +106,7 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 }
 
 func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobResult {
-	log.Info(ctx, "runJob> start job %s (%d)", w.currentJobV2.runJob.JobID, w.currentJobV2.runJob.ID)
+	log.Info(ctx, "runJob> start job %s (%s)", w.currentJobV2.runJob.JobID, w.currentJobV2.runJob.ID)
 	var jobResult = sdk.V2WorkflowRunJobResult{
 		Status: sdk.StatusSuccess,
 	}

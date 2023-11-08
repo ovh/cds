@@ -94,7 +94,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			IssuedAt:         time.Now(),
 			WorkflowRunJobID: jobRun.ID,
 			WorkflowRunID:    jobRun.WorkflowRunID,
-			Message:          fmt.Sprintf("Worker %s starts working on job %s", wk.Name, jobRun.JobID),
+			Message:          fmt.Sprintf("Worker %q is starting for job %q", wk.Name, jobRun.JobID),
 		}
 		if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
 			return err

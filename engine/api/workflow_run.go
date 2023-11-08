@@ -798,7 +798,6 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		}
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
 			WithTests:           true,
-			WithVulnerabilities: true,
 		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")

@@ -114,12 +114,3 @@ func PublishApplicationRepositoryDelete(ctx context.Context, projKey string, app
 	}
 	publishApplicationEvent(ctx, e, projKey, appName, u)
 }
-
-// PublishApplicationVulnerabilityUpdate publishes an event when updating a vulnerability
-func PublishApplicationVulnerabilityUpdate(ctx context.Context, projKey string, appName string, oldV sdk.Vulnerability, newV sdk.Vulnerability, u sdk.Identifiable) {
-	e := sdk.EventApplicationVulnerabilityUpdate{
-		OldVulnerability: oldV,
-		NewVulnerability: newV,
-	}
-	publishApplicationEvent(ctx, e, projKey, appName, u)
-}

@@ -297,6 +297,9 @@ type V2QueueClient interface {
 	V2QueueGetJobRun(ctx context.Context, regionName string, id string) (*sdk.V2WorkflowRunJob, error)
 	V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
 	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
+	V2QueueJobRunResultGet(ctx context.Context, regionName string, jobRunID string, runResultID string) (*sdk.V2WorkflowRunResult, error)
+	V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
+	V2QueueJobRunResultUpdate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
 	V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error
 	V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error)
 	V2QueueJobStepUpdate(ctx context.Context, regionName string, id string, stepsStatus sdk.JobStepsStatus) error
@@ -313,7 +316,6 @@ type QueueClient interface {
 	QueueJobInfo(ctx context.Context, id string) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(ctx context.Context, id string, in []sdk.SpawnInfo) error
 	QueueSendUnitTests(ctx context.Context, id int64, report sdk.JUnitTestsSuites) error
-	QueueSendVulnerability(ctx context.Context, id int64, report sdk.VulnerabilityWorkerReport) error
 	QueueSendStepResult(ctx context.Context, id int64, res sdk.StepStatus) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
@@ -508,6 +510,7 @@ type Interface interface {
 	Version() (*sdk.Version, error)
 	TemplateClient
 	WebsocketClient
+	V2QueueClient
 }
 
 type V2WorkerInterface interface {

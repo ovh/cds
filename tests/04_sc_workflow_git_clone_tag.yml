@@ -16,7 +16,6 @@ testcases:
           {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
       fi
 
-
 - name: import pipeline
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} pipeline import --force ITSCWRKFLW6 ./fixtures/ITSCWRKFLW6/clone.pip.yml
@@ -28,6 +27,16 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow import --force ITSCWRKFLW6 ./fixtures/ITSCWRKFLW6/ITSCWRKFLW6.yml
     assertions:
     - result.code ShouldEqual 0
+
+- name: check worker model registration
+  steps:
+  - script: |-
+      {{.cdsctl}} -f {{.cdsctl.config}}  worker model list --filter name=shared.infra/buildpack-deps --format json --fields need_registration | jq  '.[0]'
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.need_registration ShouldEqual false
+    retry: 30
+    delay: 10
 
 - name: run workflow
   steps:

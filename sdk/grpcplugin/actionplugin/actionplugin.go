@@ -3,12 +3,16 @@ package actionplugin
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/grpcplugin"
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc"
 )
@@ -16,8 +20,9 @@ import (
 // Common is the common struct of actionplugin
 type Common struct {
 	grpcplugin.Common
-	conn     *grpc.ClientConn //nolint
-	HTTPPort int32
+	conn       *grpc.ClientConn //nolint
+	HTTPPort   int32
+	HTTPClient cdsclient.HTTPClient
 }
 
 // Start is useful to start grpcplugin
@@ -66,4 +71,28 @@ func Fail(format string, args ...interface{}) (*ActionResult, error) {
 		Details: msg,
 		Status:  "Fail",
 	}, nil
+}
+
+func (c *Common) NewRequest(ctx context.Context, method, path string, body io.Reader) (*http.Request, error) {
+	if c.HTTPPort == 0 {
+		return nil, errors.Errorf("worker port must not be 0")
+	}
+
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	req, err := http.NewRequest(method, fmt.Sprintf("http://127.0.0.1:%d%s", c.HTTPPort, path), body)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return req.WithContext(ctx), nil
+}
+
+func (c *Common) DoRequest(req *http.Request) (*http.Response, error) {
+	if c.HTTPClient == nil {
+		c.HTTPClient = http.DefaultClient
+	}
+	return c.HTTPClient.Do(req)
 }

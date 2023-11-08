@@ -791,30 +791,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	lastrun, err := workflow.LoadLastRun(context.Background(), api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithTests: true})
 	require.NoError(t, err)
 
-	vuln := sdk.Vulnerability{
-		ApplicationID: app.ID,
-		Ignored:       false,
-		Component:     "lodash",
-		CVE:           "",
-		Description:   "",
-		FixIn:         "",
-		Origin:        "",
-		Severity:      "high",
-		Title:         "",
-		Version:       "",
-		Link:          "",
-	}
-	report := sdk.WorkflowNodeRunVulnerabilityReport{
-		ApplicationID:     app.ID,
-		WorkflowRunID:     lastrun.ID,
-		WorkflowNodeRunID: lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID,
-		Num:               lastrun.Number,
-		Report: sdk.WorkflowNodeRunVulnerability{
-			Vulnerabilities: []sdk.Vulnerability{vuln},
-		},
-	}
-	assert.NoError(t, workflow.InsertVulnerabilityReport(db, &report))
-
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -833,7 +809,6 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	var nr sdk.WorkflowNodeRun
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &nr))
-	assert.Equal(t, 1, len(nr.VulnerabilitiesReport.Report.Vulnerabilities))
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {

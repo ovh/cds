@@ -120,7 +120,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		withUsage := service.FormBool(r, "withUsage")
 		withIcon := service.FormBool(r, "withIcon")
 		withDeploymentStrategies := service.FormBool(r, "withDeploymentStrategies")
-		withVulnerabilities := service.FormBool(r, "withVulnerabilities")
 
 		loadOptions := []application.LoadOptionFunc{
 			application.LoadOptions.WithVariables,
@@ -130,9 +129,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 		if withDeploymentStrategies {
 			loadOptions = append(loadOptions, application.LoadOptions.WithDeploymentStrategies)
-		}
-		if withVulnerabilities {
-			loadOptions = append(loadOptions, application.LoadOptions.WithVulnerabilities)
 		}
 		if withIcon {
 			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)

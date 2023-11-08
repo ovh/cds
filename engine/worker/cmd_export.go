@@ -5,12 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/engine/worker/internal"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -41,15 +38,7 @@ You can use the build variable in :
 }
 
 func exportCmd(cmd *cobra.Command, args []string) {
-	portS := os.Getenv(internal.WorkerServerPort)
-	if portS == "" {
-		sdk.Exit("%s not found, are you running inside a CDS worker job?\n", internal.WorkerServerPort)
-	}
-
-	port, err := strconv.Atoi(portS)
-	if err != nil {
-		sdk.Exit("cannot parse '%s' as a port number", portS)
-	}
+	port := MustGetWorkerHTTPPort()
 
 	if len(args) != 2 {
 		sdk.Exit("Wrong usage: See '%s'\n", cmd.Short)

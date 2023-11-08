@@ -51,7 +51,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	workerConfig.Basedir = basedir
 
 	// Prefix the command with the directory where the worker binary has been downloaded
-	log.Debug(ctx, "Command exec: %v", workerBinary)
+	log.Info(ctx, "Command exec: %v", workerBinary)
 	var cmd *exec.Cmd
 	if spawnArgs.RegisterOnly {
 		cmd = h.LocalWorkerRunner.NewCmd(context.Background(), workerBinary, "register", "--config", workerConfig.EncodeBase64())

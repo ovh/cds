@@ -195,7 +195,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/variable/audit", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariablesAuditInApplicationHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/variable/{name}", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/variable/{name}/audit", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getVariableAuditInApplicationHandler))
-	r.Handle("/project/{permProjectKey}/application/{applicationName}/vulnerability/{id}", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postVulnerabilityHandler))
 	// Application deployment
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/deployment/config/{integration}", Scope(sdk.AuthConsumerScopeProject), r.POST(api.postApplicationDeploymentStrategyConfigHandler), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
 	r.Handle("/project/{permProjectKey}/application/{applicationName}/deployment/config", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
@@ -322,7 +321,6 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permJobID}/cache/{tag}/links", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkerCacheLinkHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/book", Scope(sdk.AuthConsumerScopeRunExecution), r.POST(api.postBookWorkflowJobHandler, MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.GET(api.getWorkflowJobHandler, MaintenanceAware()))
-	r.Handle("/queue/workflows/{permJobID}/vulnerability", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postVulnerabilityReportHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/spawn/infos", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postSpawnInfosWorkflowJobHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/result", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowJobResultHandler, MaintenanceAware()))
 	r.Handle("/queue/workflows/{permJobID}/run/results", Scope(sdk.AuthConsumerScopeRunExecution), r.POSTEXECUTE(api.postWorkflowRunResultsHandler))
@@ -512,6 +510,9 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signout", nil, r.POSTv2(api.postV2UnregisterWorkerHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/hatchery/take", nil, r.POSTv2(api.postHatcheryTakeJobRunHandler), r.DELETEv2(api.deleteHatcheryReleaseJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult", nil, r.POSTv2(api.postJobRunResultHandler), r.PUTv2(api.putJobRunResultHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult/{runResultID}", nil, r.GETv2(api.getJobRunResultHandler))
+
 	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedHandler))
 
 	r.Handle("/v2/worker", nil, r.GETv2(api.getWorkersV2Handler))

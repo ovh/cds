@@ -48,7 +48,6 @@ workflow_run.header
 type LoadRunOptions struct {
 	WithTests               bool
 	WithLightTests          bool
-	WithVulnerabilities     bool
 	WithDeleted             bool
 	DisableDetailledNodeRun bool
 }

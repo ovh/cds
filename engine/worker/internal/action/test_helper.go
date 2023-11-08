@@ -164,6 +164,14 @@ func (w *TestWorker) InstallKeyTo(key sdk.Variable, destinationPath string) (*wo
 	}, nil
 }
 
+func (w *TestWorker) V2AddRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
+	return nil, nil
+}
+
+func (w *TestWorker) V2UpdateRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
+	return nil, nil
+}
+
 var _ workerruntime.Runtime = new(TestWorker)
 
 func SetupTest(t *testing.T) (*TestWorker, context.Context) {

@@ -72,9 +72,3 @@ type EventApplicationRepositoryDelete struct {
 	VCSServer  string `json:"vcs_server"`
 	Repository string `json:"repository"`
 }
-
-// EventApplicationVulnerabilityUpdate represents the event when updating a vulnerability
-type EventApplicationVulnerabilityUpdate struct {
-	OldVulnerability Vulnerability `json:"old_vulnerability"`
-	NewVulnerability Vulnerability `json:"new_vulnerability"`
-}

@@ -1,6 +1,5 @@
 // WorkflowRun is an execution instance of a run
 import { WithKey } from 'app/shared/table/data-table.component';
-import { Vulnerability } from './application.model';
 import { Event } from './event.model';
 import { Job } from './job.model';
 import { Parameter } from './parameter.model';
@@ -114,7 +113,6 @@ export class WorkflowNodeRun implements WithKey {
     build_parameters: Array<Parameter>;
     tests: Tests;
     commits: Array<Commit>;
-    vulnerabilities_report: WorkflowNodeRunVulnerabilityReport;
     can_be_run: boolean;
     uuid: string;
     outgoinghook: WNodeOutgoingHook;
@@ -227,22 +225,4 @@ export class WorkflowNodeRunManual {
     user: User;
     resync: boolean;
     only_failed_jobs: boolean;
-}
-
-export class WorkflowNodeRunVulnerabilityReport {
-    id: number;
-    application_id: number;
-    workflow_id: number;
-    workflow_run_id: number;
-    workflow_node_run_id: number;
-    num: number;
-    branch: string;
-    report: WorkflowNodeRunVulnerability;
-}
-
-export class WorkflowNodeRunVulnerability {
-    vulnerabilities: Array<Vulnerability>;
-    summary: { [key: string]: number };
-    default_branch_summary: { [key: string]: number };
-    previous_run_summary: { [key: string]: number };
 }

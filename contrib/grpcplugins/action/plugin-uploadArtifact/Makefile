@@ -1,5 +1,5 @@
-
-TARGET_NAME 			= plugin-npm-audit-parser
+PLUGIN_NAME		= uploadArtifact
+TARGET_NAME		= plugin-uploadArtifact
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 
@@ -11,9 +11,8 @@ build: mk_go_build_plugin ## build action plugin and prepare configuration for p
 
 clean: mk_go_clean ## clean binary and tests results
 
-test:  ## run unit tests
-	@echo "No test for $(TARGET_NAME)"
+test: mk_go_test ## run unit tests
 
-publish: mk_plugin_publish ## publish the plugin on CDS. This use your cdsctl default context and commands cdsctl admin plugins import / binary-add.
+publish: mk_v2_plugin_publish ## publish the plugin on CDS. This use your cdsctl default context and commands cdsctl admin plugins import / binary-add.
 
 package: mk_plugin_package ## prepare the tar.gz file, with all binaries / conf files

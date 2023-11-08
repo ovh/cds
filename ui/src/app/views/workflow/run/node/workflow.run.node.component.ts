@@ -36,7 +36,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     artifactLength = 0;
     historyLength = 0;
     nodeRunTests: Tests;
-    hasVulnerability = false;
 
     pipelineName = '';
 
@@ -46,9 +45,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     // tabs
     tabs: Array<Tab>;
     selectedTab: Tab;
-
-    nbVuln = 0;
-    deltaVul = 0;
 
     paramsSub: Subscription;
 
@@ -139,18 +135,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
                     this.nodeRunTests = nr.tests;
                     refresh = true;
                 }
-                if (nr.vulnerabilities_report && nr.vulnerabilities_report.id !== 0) {
-                    this.hasVulnerability = true;
-                    let result = this.initVulnerabilitySummary(nr);
-                    if (this.nbVuln !== result['nbVuln']) {
-                        this.nbVuln = result['nbVuln'];
-                        refresh = true;
-                    }
-                    if (this.deltaVul !== result['deltaVuln']) {
-                        this.deltaVul = result['deltaVuln'];
-                        refresh = true;
-                    }
-                }
                 if (wr.tags) {
                     let branch = wr.tags.find((tag) => tag.tag === 'git.branch');
                     if (branch) {
@@ -224,30 +208,5 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
 
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
-    }
-
-    initVulnerabilitySummary(nodeRun: WorkflowNodeRun): any[] {
-        let result = [];
-        result['nbVuln'] = 0;
-        result['deltaVuln'] = 0;
-        if (nodeRun && nodeRun.vulnerabilities_report && nodeRun.vulnerabilities_report.report) {
-            if (nodeRun.vulnerabilities_report.report.summary) {
-                Object.keys(nodeRun.vulnerabilities_report.report.summary).forEach(k => {
-                    result['nbVuln'] += nodeRun.vulnerabilities_report.report.summary[k];
-                });
-            }
-            let previousNb = 0;
-            if (nodeRun.vulnerabilities_report.report.previous_run_summary) {
-                Object.keys(nodeRun.vulnerabilities_report.report.previous_run_summary).forEach(k => {
-                    previousNb += nodeRun.vulnerabilities_report.report.previous_run_summary[k];
-                });
-            } else if (nodeRun.vulnerabilities_report.report.default_branch_summary) {
-                Object.keys(nodeRun.vulnerabilities_report.report.default_branch_summary).forEach(k => {
-                    previousNb += nodeRun.vulnerabilities_report.report.default_branch_summary[k];
-                });
-            }
-            result['deltaVuln'] = this.nbVuln - previousNb;
-        }
-        return result;
     }
 }
