@@ -307,28 +307,28 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 			report.Merge(ctx, r1)
 		}
 
-		// Delete the line in workflow_node_run_job
-		if err := DeleteNodeJobRuns(db, workflowNodeRun.ID); err != nil {
-			// Checking the error:
-			// pq: update or delete on table "workflow_node_run_job" violates foreign key constraint "fk_worker_workflow_node_run_job" on table "worker")
-			type WorkerInfo struct {
-				WorkerID             string `db:"worker_id"`
-				WorkerName           string `db:"worker_name"`
-				WorkflowNodeRunJobID string `db:"workflow_node_run_job_id"`
-			}
-
-			var workers []WorkerInfo
-			if _, errSelect := db.Select(&workers, `
+		// Temporary debug:
+		// Listing worker for node run that block the job deletion
+		type WorkerInfo struct {
+			WorkerID             string `db:"worker_id"`
+			WorkerName           string `db:"worker_name"`
+			WorkflowNodeRunJobID string `db:"workflow_node_run_job_id"`
+		}
+		var blockingWorkers []WorkerInfo
+		if _, err := db.Select(&blockingWorkers, `
         SELECT worker.id as worker_id, worker.name as worker_name, workflow_node_run_job.id as workflow_node_run_job_id FROM worker
         JOIN workflow_node_run_job ON workflow_node_run_job.worker_id = worker.id
         WHERE workflow_node_run_job.workflow_node_run_id = $1
-      `, workflowNodeRun.ID); errSelect != nil {
-				log.ErrorWithStackTrace(ctx, sdk.WrapError(errSelect, "unable to get worker list for node run with id %d", workflowNodeRun.ID))
-			} else {
-				buf, _ := json.Marshal(workers)
-				log.Error(ctx, "list of workers for node run %d that block jobs deletion (len:%d): %q", workflowNodeRun.ID, len(workers), string(buf))
-			}
+      `, workflowNodeRun.ID); err != nil {
+			log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get worker list for node run with id %d", workflowNodeRun.ID))
+		} else if len(blockingWorkers) > 0 {
+			buf, _ := json.Marshal(blockingWorkers)
+			log.Info(ctx, "list of workers for node run %d that could block jobs deletion (len:%d): %q", workflowNodeRun.ID, len(blockingWorkers), string(buf))
+		}
+		// End of temporary debug
 
+		// Delete the line in workflow_node_run_job
+		if err := DeleteNodeJobRuns(db, workflowNodeRun.ID); err != nil {
 			return nil, sdk.WrapError(err, "unable to delete node %d job runs", workflowNodeRun.ID)
 		}
 
