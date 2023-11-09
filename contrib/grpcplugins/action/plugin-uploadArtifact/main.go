@@ -90,15 +90,15 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 	if len(results) == 0 {
 		switch strings.ToUpper(ifNoFilesFound) {
 		case "ERROR":
-			Error(message)
+			grpcplugins.Error(message)
 			return errors.New("no files were found")
 		case "WARN":
-			Warn(message)
+			grpcplugins.Warn(message)
 		default:
-			Log(message)
+			grpcplugins.Log(message)
 		}
 	} else {
-		Log(message)
+		grpcplugins.Log(message)
 	}
 
 	var files []string
@@ -109,12 +109,12 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 		files = append(files, r.Path)
 		f, err := dirFS.Open(r.Path)
 		if err != nil {
-			Error(fmt.Sprintf("unable to open file %q: %v", r.Path, err))
+			grpcplugins.Errorf("unable to open file %q: %v", r.Path, err)
 			continue
 		}
 		stat, err := f.Stat()
 		if err != nil {
-			Error(fmt.Sprintf("unable to stat file %q: %v", r.Path, err))
+			grpcplugins.Errorf("unable to stat file %q: %v", r.Path, err)
 			f.Close()
 			continue
 		}
@@ -131,7 +131,7 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 
 	for _, r := range results {
 		message = fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sh1: %s, SHA256: %s, Mode: %v", r.Path, r.Result, sizes[r.Path], checksums[r.Path].md5, checksums[r.Path].sha1, checksums[r.Path].sha256, permissions[r.Path])
-		Log(message)
+		grpcplugins.Log(message)
 
 		// Create run result at status "pending"
 		var runResultRequest = workerruntime.V2RunResultRequest{
@@ -154,17 +154,18 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 
 		response, err := grpcplugins.CreateRunResult(ctx, c, &runResultRequest)
 		if err != nil {
-			Error(err.Error())
+			grpcplugins.Error(err.Error())
 			return err
 		}
 
 		// Upload the file to an artifactory or CDN
 		reader, ok := openFiles[r.Path].(io.ReadSeeker)
 		var d time.Duration
+		var item *sdk.CDNItem
 		if ok {
-			d, err = CDNItemUpload(ctx, c, response.CDNAddress, response.Signature, reader)
+			item, d, err = CDNItemUpload(ctx, c, response.CDNAddress, response.CDNSignature, reader)
 			if err != nil {
-				Error("An error occured during file upload upload: " + err.Error())
+				grpcplugins.Error("An error occured during file upload upload: " + err.Error())
 				continue
 			}
 
@@ -175,42 +176,25 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 
 		// Update the run result status
 		runResultRequest = workerruntime.V2RunResultRequest{RunResult: response.RunResult}
+		runResultRequest.RunResult.ArtifactManagerMetadata = sdk.V2WorkflowRunResultArtifactManagerMetadataFromCDNItemLink(sdk.CDNItemLink{CDNHttpURL: response.CDNAddress, Item: *item})
 		updateResponse, err := grpcplugins.UpdateRunResult(ctx, c, &runResultRequest)
 		if err != nil {
-			Error(err.Error())
+			grpcplugins.Error(err.Error())
 			return err
 		}
 
-		Log(fmt.Sprintf("  %d bytes uploaded in %.3fs", sizes[r.Path], d.Seconds()))
+		grpcplugins.Logf("  %d bytes uploaded in %.3fs", sizes[r.Path], d.Seconds())
 
 		if _, err := updateResponse.RunResult.GetDetail(); err != nil {
-			Error(err.Error())
+			grpcplugins.Error(err.Error())
 			return err
 		}
 
-		Log(fmt.Sprintf("  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID))
+		grpcplugins.Logf("  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID)
 	}
 
 	return nil
 }
-
-func Log(s string) {
-	fmt.Println(s)
-}
-
-func Warn(s string) {
-	Log(WarnColor + "Warning: " + NoColor + s)
-}
-
-func Error(s string) {
-	Log(ErrColor + "Error: " + NoColor + s)
-}
-
-const (
-	WarnColor = "\033[1;33m"
-	ErrColor  = "\033[1;31m"
-	NoColor   = "\033[0m"
-)
 
 type checksumResult struct {
 	md5    string
@@ -227,7 +211,7 @@ func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]check
 	go func() {
 		for _, p := range path {
 			if err := pipe.Add(p); err != nil {
-				Error(p)
+				grpcplugins.Error(p)
 			}
 		}
 		pipe.Close()
@@ -238,17 +222,17 @@ func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]check
 	for out := range pipe.Out() {
 		md5, err := out.Sum(checksum.MD5)
 		if err != nil {
-			Error(err.Error())
+			grpcplugins.Error(err.Error())
 			continue
 		}
 		sha1, err := out.Sum(checksum.SHA1)
 		if err != nil {
-			Error(err.Error())
+			grpcplugins.Error(err.Error())
 			continue
 		}
 		sha256, err := out.Sum(checksum.SHA256)
 		if err != nil {
-			Error(err.Error())
+			grpcplugins.Error(err.Error())
 			continue
 		}
 		result[out.Path()] = checksumResult{
@@ -261,7 +245,7 @@ func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]check
 	return result, nil
 }
 
-func CDNItemUpload(ctx context.Context, c *actionplugin.Common, cdnAddr string, signature string, reader io.ReadSeeker) (time.Duration, error) {
+func CDNItemUpload(ctx context.Context, c *actionplugin.Common, cdnAddr string, signature string, reader io.ReadSeeker) (*sdk.CDNItem, time.Duration, error) {
 	t0 := time.Now()
 
 	for i := 0; i < 3; i++ {
@@ -269,30 +253,38 @@ func CDNItemUpload(ctx context.Context, c *actionplugin.Common, cdnAddr string, 
 
 		req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/item/upload", cdnAddr), reader)
 		if err != nil {
-			return time.Since(t0), err
+			return nil, time.Since(t0), err
 		}
 		req.Header.Set("X-CDS-WORKER-SIGNATURE", signature)
 
 		resp, err := c.HTTPClient.Do(req)
 		if err != nil {
-			return time.Since(t0), err
+			return nil, time.Since(t0), err
 		}
 
 		if resp.StatusCode >= 200 && resp.StatusCode <= 204 {
-			return time.Since(t0), nil
+			btes, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, time.Since(t0), err
+			}
+			var item sdk.CDNItem
+			if err := sdk.JSONUnmarshal(btes, &item); err != nil {
+				return nil, time.Since(t0), err
+			}
+			return &item, time.Since(t0), nil
 		} else {
 			bts, err := io.ReadAll(resp.Body)
 			if err != nil {
-				Error(err.Error())
+				grpcplugins.Error(err.Error())
 			}
 			if err := sdk.DecodeError(bts); err != nil {
-				Error(err.Error())
+				grpcplugins.Error(err.Error())
 			}
-			Error(fmt.Sprintf("HTTP %d", resp.StatusCode))
+			grpcplugins.Error(fmt.Sprintf("HTTP %d", resp.StatusCode))
 		}
 
-		Log("retrying file upload...")
+		grpcplugins.Log("retrying file upload...")
 	}
 
-	return time.Since(t0), nil
+	return nil, time.Since(t0), errors.New("unable to upload artifact")
 }

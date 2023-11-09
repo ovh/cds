@@ -61,6 +61,36 @@ func (r *Result) String() string {
 	return r.Path
 }
 
+func (g *Globber) MatchString(s string) (*Result, error) {
+	var res *Result
+	for _, p := range g.patterns {
+		if p.isExclude {
+			continue
+		}
+		result, err := p.Match(s)
+		if err != nil {
+			return nil, err
+		}
+		if result == "" {
+			continue
+		}
+		res = &Result{Path: s, Result: result}
+	}
+	for _, p := range g.patterns {
+		if !p.isExclude {
+			continue
+		}
+		result, err := p.Match(s)
+		if err != nil {
+			return nil, err
+		}
+		if result != "" && res != nil {
+			res = nil
+		}
+	}
+	return res, nil
+}
+
 func (g *Globber) Match(s ...string) ([]Result, error) {
 	var final = map[string]Result{}
 	for _, s := range s {

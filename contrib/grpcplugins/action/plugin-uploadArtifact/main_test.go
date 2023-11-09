@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -83,7 +84,9 @@ func Test_perform(t *testing.T) {
 			btes, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			require.True(t, strings.HasPrefix(string(btes), "package main"))
-			return &http.Response{StatusCode: http.StatusNoContent, Body: io.NopCloser(new(bytes.Buffer))}, nil
+			item := sdk.CDNItem{ID: sdk.UUID(), APIRefHash: sdk.RandomString(10), Type: sdk.CDNTypeItemRunResultV2}
+			btes, _ = json.Marshal(item)
+			return &http.Response{StatusCode: http.StatusNoContent, Body: io.NopCloser(bytes.NewBuffer(btes))}, nil
 		},
 	)
 

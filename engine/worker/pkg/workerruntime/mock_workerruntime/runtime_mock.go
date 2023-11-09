@@ -392,6 +392,21 @@ func (mr *MockRuntimeMockRecorder) V2AddRunResult(ctx, req interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2AddRunResult", reflect.TypeOf((*MockRuntime)(nil).V2AddRunResult), ctx, req)
 }
 
+// V2GetRunResult mocks base method.
+func (m *MockRuntime) V2GetRunResult(ctx context.Context, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2GetRunResult", ctx, filter)
+	ret0, _ := ret[0].(*workerruntime.V2GetResultResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2GetRunResult indicates an expected call of V2GetRunResult.
+func (mr *MockRuntimeMockRecorder) V2GetRunResult(ctx, filter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetRunResult", reflect.TypeOf((*MockRuntime)(nil).V2GetRunResult), ctx, filter)
+}
+
 // V2UpdateRunResult mocks base method.
 func (m *MockRuntime) V2UpdateRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
 	m.ctrl.T.Helper()

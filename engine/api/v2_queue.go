@@ -288,6 +288,26 @@ func (api *API) getJobRunResultHandler() ([]service.RbacChecker, service.Handler
 		}
 }
 
+func (api *API) getJobRunResultsHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			runJobID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), runJobID)
+			if err != nil {
+				return err
+			}
+
+			runResults, err := workflow_v2.LoadRunResults(ctx, api.mustDB(), runJob.WorkflowRunID)
+			if err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, runResults, http.StatusCreated)
+		}
+}
+
 func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.jobRunUpdate, api.isHatchery),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

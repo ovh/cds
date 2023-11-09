@@ -41,6 +41,15 @@ func (c *client) V2QueueJobRunResultGet(ctx context.Context, regionName string, 
 	return &result, nil
 }
 
+func (c *client) V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+	var result []sdk.V2WorkflowRunResult
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult", regionName, jobRunID)
+	if _, err := c.GetJSON(ctx, path, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (c *client) V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult", regionName, jobRunID)
 	if _, err := c.PostJSON(ctx, path, result, result); err != nil {
