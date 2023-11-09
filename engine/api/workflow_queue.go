@@ -596,10 +596,16 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	}
 	// ^ build variables are now updated on job run and on node
 
+	var reloadedWorker *sdk.Worker
 	if wr != nil {
 		//Update worker status
 		if err := worker.SetStatus(ctx, tx, wr.ID, sdk.StatusWaiting); err != nil {
 			return nil, sdk.WrapError(err, "cannot update worker %s status", wr.ID)
+		}
+		var err error
+		reloadedWorker, err = worker.LoadByID(ctx, tx, wr.ID)
+		if err != nil {
+			log.Error(ctx, "unable to reload worker %q: %v", wr.ID, err)
 		}
 	}
 
@@ -611,11 +617,9 @@ func (api *API) postJobResult(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		// pq: update or delete on table "workflow_node_run_job" violates foreign key constraint "fk_worker_workflow_node_run_job" on table "worker")
 		if wr != nil && strings.Contains(err.Error(), "fk_worker_workflow_node_run_job") {
 			log.ErrorWithStackTrace(ctx, err)
-			statusFromDB, err := tx.SelectNullStr("select status from worker where id = $1", wr.ID)
-			if err != nil {
-				log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to get worker %q status in db with id %q", wr.Name, wr.ID))
+			if reloadedWorker != nil {
+				log.Error(ctx, "reloaded worker %s (%s) status is %q", reloadedWorker.Name, reloadedWorker.ID, reloadedWorker.Status)
 			}
-			log.Error(ctx, "worker %q status is %q (%q in DB)", wr.Name, wr.Status, statusFromDB)
 		}
 		return nil, sdk.WrapError(err, "cannot update NodeJobRun %d status", job.ID)
 	}
