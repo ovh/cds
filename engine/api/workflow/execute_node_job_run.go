@@ -138,13 +138,13 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		return nil, sdk.WrapError(err, "Cannot select status from workflow_node_run_job node job run %d", job.ID)
 	}
 
-	log.Info(ctx, "job %d current status %q, new status %q", job.ID, status, currentStatus)
+	log.Info(ctx, "job %d current status %q, new status %q", job.ID, currentStatus, status)
 
 	switch status {
 	case sdk.StatusBuilding:
 		if currentStatus != sdk.StatusWaiting {
 			return nil, sdk.WithStack(fmt.Errorf("cannot update status of WorkflowNodeJobRun %d to %s, expected current status %s, got %s",
-				job.ID, status, sdk.StatusWaiting, currentStatus))
+				job.ID, status, sdk.StatusWaiting, status))
 		}
 		job.Start = time.Now()
 		job.Status = status
