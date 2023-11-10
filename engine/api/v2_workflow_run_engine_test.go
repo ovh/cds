@@ -1310,7 +1310,8 @@ func TestWorkflowSkippedJob(t *testing.T) {
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, 0, len(runInfos))
+	require.Equal(t, 1, len(runInfos))
+	require.Equal(t, "Job job2: The condition is not satisfied.", runInfos[0].Message)
 
 	runjobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID)
 	require.NoError(t, err)
