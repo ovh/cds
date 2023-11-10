@@ -87,7 +87,6 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 }
 
 // TODO Manage job sub number
-// TODO manage vars context
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
 	defer next()

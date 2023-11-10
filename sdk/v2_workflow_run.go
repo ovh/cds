@@ -56,6 +56,7 @@ type WorkflowRunContext struct {
 	Git          GitContext        `json:"git,omitempty"`
 	Vars         map[string]string `json:"vars,omitempty"`
 	Integrations map[string]string `json:"integrations,omitempty"`
+	Env          map[string]string `json:"env,omitempty"`
 }
 
 type WorkflowRunJobsContext struct {

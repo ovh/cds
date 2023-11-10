@@ -1,5 +1,7 @@
 name: MyFirstWorkflow
 on: [push]
+env:
+  myvar: workflowValue
 jobs:
   skipJob:
     name: This is a skipped job
@@ -25,7 +27,12 @@ jobs:
         id: checkout
       - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
         id: customaction
-      - run: echo 'Thank you'
+      - run: echo ${{ env.myvar }}
+        id: workflowEnv
+      - run: echo ${{ env.myvar }}
+        id: stepEnv
+        env:
+          myvar: stepValue
   mySecondJob:
     name: This is my second job
     region: default
@@ -37,6 +44,9 @@ jobs:
     name: This is my third job
     needs: [mySecondJob]
     region: default
+    env:
+      myvar: jobValue
     runs-on: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
     steps:
-      - run: echo 'End of workflow'
+      - run: "echo 'End of workflow: ${{ env.myvar }}'"
+        id: jobEnv

@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/plugin"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -135,8 +136,13 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
+	p, err := project.Load(ctx, api.mustDB(), run.ProjectKey, project.LoadOptions.WithVariables)
+	if err != nil {
+		return err
+	}
+
 	// Build run context
-	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u)
+	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *p, *run, *vcsServer, *repo, *u)
 	if err != nil {
 		return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -478,7 +484,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, msg *s
 	return sdk.WithStack(tx.Commit())
 }
 
-func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
+func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p sdk.Project, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
 	var runContext sdk.WorkflowRunContext
 
 	var ref, commit string
@@ -593,9 +599,26 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		return nil, sdk.WithStack(err)
 	}
 
+	// VARS context
+	vars := make(map[string]string, 0)
+	for _, v := range p.Variables {
+		if sdk.NeedPlaceholder(v.Type) {
+			continue
+		}
+		vName := strings.Replace(v.Name, ".", "_", -1)
+		vars[vName] = v.Value
+	}
+
+	// Env context
+	envs := make(map[string]string)
+	for k, v := range wr.WorkflowData.Workflow.Env {
+		envs[k] = v
+	}
+
 	runContext.CDS = cdsContext
 	runContext.Git = gitContext
-	runContext.Vars = nil
+	runContext.Vars = vars
+	runContext.Env = envs
 	return &runContext, nil
 }
 

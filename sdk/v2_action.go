@@ -35,11 +35,12 @@ type ActionOutput struct {
 
 type ActionStep struct {
 	ID              string            `json:"id,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Identifier of the step"`
-	Uses            string            `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=3,onchange=loadentity,prefix=actions/" jsonschema_description:"Sub action to call"`
-	Run             string            `json:"run,omitempty" jsonschema:"oneof_required=run" jsonschema_extras:"order=3,code=true" jsonschema_description:"Script to execute"`
-	With            map[string]string `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=4,mode=use" jsonschema_description:"Action parameters"`
+	Uses            string            `json:"uses,omitempty" jsonschema:"oneof_required=uses" jsonschema_extras:"order=4,onchange=loadentity,prefix=actions/" jsonschema_description:"Sub action to call"`
+	Run             string            `json:"run,omitempty" jsonschema:"oneof_required=run" jsonschema_extras:"order=4,code=true" jsonschema_description:"Script to execute"`
+	With            map[string]string `json:"with,omitempty" jsonschema:"oneof_not_required=run" jsonschema_extras:"order=5,mode=use" jsonschema_description:"Action parameters"`
 	If              string            `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute/skip the step"`
 	ContinueOnError bool              `json:"continue-on-error,omitempty" jsonschema_extras:"order=2"  jsonschema_description:"Allow a job to continue when this step fails"`
+	Env             map[string]string `json:"env,omitempty" jsonschema_extras:"order=3,mode=edit" jsonschema_description:"Environment variable available in the step"`
 }
 
 type ActionStepUsesWith map[string]string

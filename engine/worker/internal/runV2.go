@@ -116,11 +116,13 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		log.Info(ctx, "runJob> end of job %s (%s)", w.currentJobV2.runJob.JobID, w.currentJobV2.runJob.ID)
 	}()
 
+	// Interpolate job context
 	actionContext, err := w.computeContextForAction(ctx, w.currentJobV2.runJobContext, w.currentJobV2.runJob.Job.Inputs)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to compute job context: %v", err))
 	}
 	actionContext.Matrix = w.currentJobV2.runJob.Matrix
+	w.currentJobV2.runJobContext = actionContext
 
 	// Init step context
 	w.currentJobV2.runJob.StepsStatus = sdk.JobStepsStatus{}
@@ -140,12 +142,23 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName] = currentStepStatus
 		actionContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 
+		currentStepContext := actionContext
+		currentStepContext.Env = make(map[string]string)
+		for k, v := range actionContext.Env {
+			currentStepContext.Env[k] = v
+		}
+		for k, v := range step.Env {
+			currentStepContext.Env[k] = v
+		}
+
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
 
+		// Override env context from step configuration
+
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepName))
-		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, actionContext)
+		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, currentStepContext)
 		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepName))
 		w.gelfLogger.hook.Flush()
 
@@ -410,6 +423,5 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		}
 		actionContext.Inputs[k] = interpolatedInput
 	}
-	w.currentJobV2.runJobContext = actionContext
 	return actionContext, nil
 }
