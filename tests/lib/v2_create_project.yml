@@ -1,0 +1,16 @@
+executor: v2_create_project
+input:
+  cdsctl_command: ""
+  project: ""
+
+steps:
+  - script: >
+      {{.input.cdsctl_command}} project remove --force {{.input.project}}
+  - script: >
+      {{.input.cdsctl_command}} group remove --force {{.input.project}}
+  - script: >
+      {{.input.cdsctl_command}} group add {{.input.project}}
+  - script: >
+      {{.input.cdsctl_command}} project create {{.input.project}} "Test Project {{.input.project}}" {{.input.project}}
+
+output: {}
