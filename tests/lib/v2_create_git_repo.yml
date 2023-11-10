@@ -1,0 +1,14 @@
+executor: v2_create_git_repo
+input:
+  host: ""
+  repo: ""
+  user: ""
+  password: ""
+
+steps:
+  - script: >
+      curl -X DELETE "{{.input.host}}/api/v1/repos/{{.input.user}}/{{.input.repo}}" -u "{{.input.user}}:{{.input.password}}"
+  - script: >
+      curl  -X POST --fail "{{.input.host}}/api/v1/user/repos" -u "{{.input.user}}:{{.input.password}}" -d "{\"name\": \"{{.input.repo}}\", \"auto_init\": true, \"default_branch\": \"master\"}" -H "Content-Type: application/json"'
+
+output: {}

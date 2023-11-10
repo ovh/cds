@@ -2,14 +2,20 @@ name: Project Analyze testSuite
 testcases:
 - name: prepare test
   steps:
+  - type: v2_create_git_repo
+    host: "{{.git.host}}"
+    repo: "myrepo"
+    user: "{{.git.user}}"
+    password: "{{.git.password}}"
+
   - script: gpg --batch --yes --delete-secret-key 2B74B3591CEFB2F534265465E027B500E97E52E7 || true
   - script: gpg --batch --yes --delete-key 2B74B3591CEFB2F534265465E027B500E97E52E7 || true
-  - script: curl -X DELETE "{{.git.host}}/api/v1/repos/{{.git.user}}/myrepo" -u "{{.git.user}}:{{.git.password}}"
+  # - script: curl -X DELETE "{{.git.host}}/api/v1/repos/{{.git.user}}/myrepo" -u "{{.git.user}}:{{.git.password}}"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project remove --force ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group remove ITCLIPRJVCS --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} group add ITCLIPRJVCS
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project create ITCLIPRJVCS "Test Project" ITCLIPRJVCS
-  - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true, \"default_branch\": \"master\"}" -H "Content-Type: application/json"'
+  # - script: 'curl --fail -X POST "{{.git.host}}/api/v1/user/repos" -u "{{.git.user}}:{{.git.password}}" -d "{\"name\": \"myrepo\", \"auto_init\": true, \"default_branch\": \"master\"}" -H "Content-Type: application/json"'
   - script: gpg --import ./fixtures/gpg-ADMIN/key.priv
   - script: gpg --import ./fixtures/gpg-ADMIN/key.pub
   - script: 'curl -X POST {{.git.host}}/api/v1/user/gpg_keys -u "{{.git.user}}:{{.git.password}}" -H "Content-type: application/json" -d @./fixtures/gpg-ADMIN/key.pub.json'
