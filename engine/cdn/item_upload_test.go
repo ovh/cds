@@ -190,7 +190,7 @@ func TestPostUploadHandler(t *testing.T) {
 		t.Logf("PENDING: %s \n", r.Request().URLStruct.String())
 	}
 	f.Close()
-	require.Equal(t, 204, rec.Code)
+	require.Equal(t, 202, rec.Code)
 	require.True(t, gock.IsDone())
 
 	its, err := item.LoadAll(ctx, s.Mapper, db, 1, gorpmapper.GetOptions.WithDecryption)
