@@ -301,6 +301,7 @@ type V2QueueClient interface {
 	V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error)
 	V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
 	V2QueueJobRunResultUpdate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
+	V2QueuePushRunInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2WorkflowRunInfo) error
 	V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error
 	V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error)
 	V2QueueJobStepUpdate(ctx context.Context, regionName string, id string, stepsStatus sdk.JobStepsStatus) error

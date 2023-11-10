@@ -16,6 +16,15 @@ func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jo
 	}
 	return nil
 }
+
+func (c *client) V2QueuePushRunInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2WorkflowRunInfo) error {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/runinfo", regionName, jobRunID)
+	if _, err := c.PostJSON(ctx, path, msg, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/info", regionName, jobRunID)
 	if _, err := c.PostJSON(ctx, path, msg, nil); err != nil {

@@ -58,6 +58,35 @@ func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler)
 	}
 }
 
+func (api *API) postRunInfoHandler() ([]service.RbacChecker, service.Handler) {
+	return []service.RbacChecker{api.jobRunUpdate}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		jobRunID := vars["runJobID"]
+
+		var runInfo sdk.V2WorkflowRunInfo
+		if err := service.UnmarshalBody(r, &runInfo); err != nil {
+			return err
+		}
+
+		runjob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+		if err != nil {
+			return err
+		}
+
+		runInfo.WorkflowRunID = runjob.WorkflowRunID
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		defer tx.Rollback() // nolint
+		if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
+			return err
+		}
+		return sdk.WithStack(tx.Commit())
+	}
+}
+
 func (api *API) postJobRunInfoHandler() ([]service.RbacChecker, service.Handler) {
 	return []service.RbacChecker{api.jobRunUpdate}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

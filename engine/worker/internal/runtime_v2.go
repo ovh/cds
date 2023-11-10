@@ -85,6 +85,11 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 		Time:    time.Now(),
 	})
 
+	wk.clientV2.V2QueuePushRunInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2WorkflowRunInfo{
+		Level:   sdk.WorkflowRunInfoLevelInfo,
+		Message: fmt.Sprintf("Job %q issued a new result %q in %.3f seconds", wk.currentJobV2.runJob.JobID, runResult.Name(), duration.Seconds()),
+	})
+
 	return &workerruntime.V2UpdateResultResponse{RunResult: runResult}, nil
 }
 
