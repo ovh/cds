@@ -234,7 +234,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	return nil
 }
 
-
 func prepareRunJobIntegration(proj sdk.Project, jobDef sdk.V2Job, runJob *sdk.V2WorkflowRunJob) {
 	if !jobDef.Integrations.IsEmpty() {
 		runJob.Integrations = &sdk.V2WorkflowRunJobIntegrations{}
@@ -475,6 +474,13 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 			Message:       fmt.Sprintf("%v", err),
 		})
 		return false, runInfos, err
+	}
+	if !canRun {
+		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelInfo,
+			Message:       fmt.Sprintf("Job %s: The condition is not satisfied.", jobID),
+		})
 	}
 	return canRun, runInfos, nil
 }
