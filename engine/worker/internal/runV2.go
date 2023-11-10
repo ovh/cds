@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -122,7 +123,6 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 	actionContext.Matrix = w.currentJobV2.runJob.Matrix
 
 	// Init step context
-	stepsContext := sdk.StepsContext{}
 	w.currentJobV2.runJob.StepsStatus = sdk.JobStepsStatus{}
 
 	for jobStepIndex, step := range w.currentJobV2.runJob.Job.Steps {
@@ -138,7 +138,6 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 			Started: time.Now(),
 		}
 		w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName] = currentStepStatus
-		stepsContext[w.currentJobV2.currentStepName] = sdk.StepContext{}
 		actionContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
@@ -152,24 +151,87 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 
 		currentStepStatus.Ended = time.Now()
 		currentStepStatus.Outcome = stepRes.Status
-		// FIXME - continue-on-error
-		currentStepStatus.Conclusion = stepRes.Status
+
+		if stepRes.Status == sdk.StatusFail && jobResult.Status != sdk.StatusFail && !step.ContinueOnError {
+			jobResult.Status = sdk.StatusFail
+			jobResult.Error = stepRes.Error
+		}
+
+		if step.ContinueOnError {
+			currentStepStatus.Conclusion = sdk.StatusSuccess
+		} else {
+			currentStepStatus.Conclusion = currentStepStatus.Outcome
+		}
 
 		w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName] = currentStepStatus
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
-
-		if stepRes.Status == sdk.StatusFail {
-			return stepRes
-		}
 	}
 	return jobResult
 }
 
 func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, stepName string, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
-	// TODO manage step if condition
+	if step.If == "" {
+		step.If = "${{ success() }}"
+	}
+
+	if !strings.HasPrefix(step.If, "${{") {
+		step.If = fmt.Sprintf("${{ %s }}", step.If)
+	}
+	bts, err := json.Marshal(runJobContext)
+	if err != nil {
+		return sdk.V2WorkflowRunJobResult{
+			Status: sdk.StatusFail,
+			Time:   time.Now(),
+			Error:  fmt.Sprintf("unable to parse step %s condition expression: %v", stepName, err),
+		}
+	}
+	var mapContexts map[string]interface{}
+	if err := json.Unmarshal(bts, &mapContexts); err != nil {
+		return sdk.V2WorkflowRunJobResult{
+			Status: sdk.StatusFail,
+			Time:   time.Now(),
+			Error:  fmt.Sprintf("unable to parse step %s condition expression: %v", stepName, err),
+		}
+	}
+
+	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+	interpolatedInput, err := ap.Interpolate(ctx, step.If)
+	if err != nil {
+		return sdk.V2WorkflowRunJobResult{
+			Status: sdk.StatusFail,
+			Time:   time.Now(),
+			Error:  fmt.Sprintf("unable to interpolate step condition %s: %v", step.If, err),
+		}
+	}
+
+	if _, ok := interpolatedInput.(string); !ok {
+		return sdk.V2WorkflowRunJobResult{
+			Status: sdk.StatusFail,
+			Time:   time.Now(),
+			Error:  fmt.Sprintf("step %s: if statement does not return a string. Got %v", stepName, interpolatedInput),
+		}
+	}
+
+	booleanResult, err := strconv.ParseBool(interpolatedInput.(string))
+	if err != nil {
+		return sdk.V2WorkflowRunJobResult{
+			Status: sdk.StatusFail,
+			Time:   time.Now(),
+			Error:  fmt.Sprintf("step %s: if statement does not return a boolean. Got %v", stepName, interpolatedInput),
+		}
+	}
+
+	if !booleanResult {
+		w.SendLog(ctx, workerruntime.LevelInfo, "not executed")
+		return sdk.V2WorkflowRunJobResult{
+			Status: sdk.StatusSkipped,
+			Time:   time.Now(),
+		}
+	}
+
 	var result sdk.V2WorkflowRunJobResult
 	switch {
 	case step.Uses != "":
@@ -283,7 +345,7 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 }
 
 func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string) sdk.V2WorkflowRunJobResult {
-	pluginClient, err := plugin.NewClient(ctx, w, plugin.TypeAction, pluginName, plugin.InputManagementStrict)
+	pluginClient, err := w.pluginFactory.NewClient(ctx, w, plugin.TypeAction, pluginName, plugin.InputManagementStrict)
 	if pluginClient != nil {
 		defer pluginClient.Close(ctx)
 	}

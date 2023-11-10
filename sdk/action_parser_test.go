@@ -749,6 +749,111 @@ func TestParserFuncJoin(t *testing.T) {
 	}
 }
 
+func TestParserSuccess(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       bool
+		containError string
+	}{
+		{
+			name:   "Success - true",
+			input:  "${{ success() }}",
+			result: true,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": "Success",
+					},
+				},
+			},
+		},
+		{
+			name:   "Success - false",
+			input:  "${{ success() }}",
+			result: false,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": "Skipped",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
+}
+
+func TestParserFailure(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       bool
+		containError string
+	}{
+		{
+			name:   "Failure - true",
+			input:  "${{ failure() }}",
+			result: true,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": "Fail",
+					},
+				},
+			},
+		},
+		{
+			name:   "Failure - false",
+			input:  "${{ success() }}",
+			result: false,
+			context: map[string]interface{}{
+				"steps": map[string]interface{}{
+					"step1": map[string]string{
+						"conclusion": "Fail",
+					},
+					"step2": map[string]string{
+						"conclusion": "Skipped",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
+			}
+		})
+	}
+}
+
 func TestParserFuncToJSON(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)

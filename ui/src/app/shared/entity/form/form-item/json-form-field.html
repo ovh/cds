@@ -210,7 +210,12 @@
             <textarea nz-input [pattern]="field.pattern" [name]="field.name" [disabled]="disabled"
                       [ngModel]="currentModel[field.name]" (ngModelChange)="onValueChanged($event)"></textarea>
         </ng-container>
-        <ng-container *ngIf="!field.enum && !field.code && !field.textarea">
+        <ng-container *ngIf="field.type === 'boolean'">
+            <label nz-checkbox [name]="field.name" [disabled]="disabled"
+                   [ngModel]="currentModel[field.name]" (ngModelChange)="onValueChanged($event)"></label>
+        </ng-container>
+        <ng-container *ngIf="!field.enum && !field.code && !field.textarea && field.type !== 'boolean'">
+
             <input nz-input [pattern]="field.pattern" [name]="field.name" [disabled]="disabled"
                    [ngModel]="currentModel[field.name]" (ngModelChange)="onValueChanged($event)">
         </ng-container>

@@ -170,7 +170,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	// Retrieve all deps
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
-		completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.WorkerModel, j.Region, api.Config.Workflow.JobDefaultRegion)
+		completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
@@ -182,7 +182,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		if msg != nil {
 			return stopRun(ctx, api.mustDB(), run, msg)
 		}
-		j.WorkerModel = completeName
+		j.RunsOn = completeName
 
 		// Get actions and sub actions
 		msg, err = searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)

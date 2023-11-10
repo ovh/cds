@@ -82,7 +82,7 @@ func InsertWorker(t *testing.T, ctx context.Context, db gorpmapper.SqlExecutorWi
 	spawnaargs := sdkhatch.SpawnArgumentsJWTV2{
 		WorkerName: workerName,
 		RunJobID:   jobRun.ID,
-		ModelName:  jobRun.Job.WorkerModel,
+		ModelName:  jobRun.Job.RunsOn,
 	}
 	wk, err := worker_v2.RegisterWorker(ctx, db, spawnaargs, hatch, workerConsumer, sdk.WorkerRegistrationForm{Arch: "amd64", OS: "linux"})
 	require.NoError(t, err)

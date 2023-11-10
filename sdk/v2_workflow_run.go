@@ -61,6 +61,7 @@ type WorkflowRunContext struct {
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
 	Jobs    JobsResultContext      `json:"jobs"`
+	Needs   NeedsContext           `json:"needs"`
 	Inputs  map[string]interface{} `json:"inputs"`
 	Steps   StepsContext           `json:"steps"`
 	Secrets map[string]string      `json:"secrets"`
@@ -264,6 +265,10 @@ func (sc *JobStepsStatus) Scan(src interface{}) error {
 func (s JobStepsStatus) ToStepContext() StepsContext {
 	stepsContext := StepsContext{}
 	for k, v := range s {
+		// Do not include current step
+		if v.Conclusion == "" {
+			continue
+		}
 		stepsContext[k] = StepContext{
 			Conclusion: v.Conclusion,
 			Outcome:    v.Outcome,
