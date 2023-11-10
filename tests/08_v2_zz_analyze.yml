@@ -12,6 +12,7 @@ testcases:
   - type: v2_create_project
     cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
     project: "ITCLIPRJVCS"
+    git_host: "{{.git.host}}"
 
   - script: gpg --batch --yes --delete-secret-key 2B74B3591CEFB2F534265465E027B500E97E52E7 || true
   - script: gpg --batch --yes --delete-key 2B74B3591CEFB2F534265465E027B500E97E52E7 || true
@@ -46,12 +47,12 @@ testcases:
 
 - name: import / export vcs server
   steps:
-  - script: export PROJECT_KEY=ITCLIPRJVCS && envsubst < ./fixtures/ITCLIPRJVCS/my_vcs_project.yml > ./fixtures/ITCLIPRJVCS/my_vcs_project_replaced.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs import ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/my_vcs_project_replaced.yml
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs list ITCLIPRJVCS --format json
-    assertions:
-    - result.code ShouldEqual 0
-    - result.systemoutjson.systemoutjson0.name ShouldEqual "my_vcs_server"
+  #- script: export PROJECT_KEY=ITCLIPRJVCS && envsubst < ./fixtures/ITCLIPRJVCS/my_vcs_project.yml > ./fixtures/ITCLIPRJVCS/my_vcs_project_replaced.yml
+  #- script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs import ITCLIPRJVCS ./fixtures/ITCLIPRJVCS/my_vcs_project_replaced.yml
+  #- script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs list ITCLIPRJVCS --format json
+  #  assertions:
+  #  - result.code ShouldEqual 0
+  #  - result.systemoutjson.systemoutjson0.name ShouldEqual "my_vcs_server"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental project vcs export ITCLIPRJVCS my_vcs_server > my_vcs_project_exported.yml
   - script: grep 'my_vcs_server' my_vcs_project_exported.yml
 

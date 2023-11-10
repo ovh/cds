@@ -1,0 +1,16 @@
+name: Workflow V2 generic artifacts on CDN
+testcases:
+- name: prepare test
+  steps:
+
+  - type: v2_create_git_repo
+    host: "{{.git.host}}"
+    repo: "myrepo"
+    user: "{{.git.user}}"
+    password: "{{.git.password}}"
+
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    project: "ITCLIPRJVCS"
+    git_host: "{{.git.host}}"
+

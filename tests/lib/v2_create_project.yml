@@ -2,6 +2,7 @@ executor: v2_create_project
 input:
   cdsctl_command: ""
   project: ""
+  git_host: ""
 
 steps:
   - script: >
@@ -12,5 +13,31 @@ steps:
       {{.input.cdsctl_command}} group add {{.input.project}}
   - script: >
       {{.input.cdsctl_command}} project create {{.input.project}} "Test Project {{.input.project}}" {{.input.project}}
+  - script: >
+     {{.input.cdsctl_command}}  project keys list {{.input.project}} --format json
+    vars:
+      sshKeyPub:
+        from: result.systemoutjson.systemoutjson0.publickey
+      sshKeyName:
+        from: result.systemoutjson.systemoutjson0.name
+  - script: >
+      cat << EOF > /tmp/project_vcs.yml
+      version: v1.0
+      name: my_vcs_server
+      type: gitea
+      description: "it's the test vcs server on project"
+      url: "{{.input.git_host}}"
+      auth:
+        username: gituser
+        token: gitpwd
+        sshKeyName: {{.sshKeyName}}
+      EOF
+  - script: >
+      {{.input.cdsctl_command}} experimental project vcs import {{.input.project}} /tmp/project_vcs.yml
+  - script: >
+      {{.input.cdsctl_command}} experimental project vcs list {{.input.project}} --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.systemoutjson0.name ShouldEqual "my_vcs_server"
 
 output: {}
