@@ -20,9 +20,8 @@ steps:
         from: result.systemoutjson.systemoutjson0.publickey
       sshKeyName:
         from: result.systemoutjson.systemoutjson0.name
-  - script: >
-      #! /bin/bash
-      cat << EOF > /tmp/project_vcs.yml
+  - script: |-
+      /bin/bash -c cat <<- EOF > /tmp/project_vcs.yml
       version: v1.0
       name: my_vcs_server
       type: gitea
