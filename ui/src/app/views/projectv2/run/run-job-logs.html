@@ -21,7 +21,7 @@
                     <div *ngIf="logBlock.disabled">Disabled</div>
                     <div class="red" *ngIf="logBlock.failed && !logBlock.optional">Failed</div>
                 </div>
-                <div class="action" *ngIf="i>0">
+                <div class="action">
                     <a *ngIf="logBlock?.link"
                        [href]="'./cdscdn/item/' + logBlock.link.item_type + '/' + logBlock.link.api_ref + '/download?refresh=5'"
                        target="_blank" rel="noopener noreferrer" title="Share/download the step"

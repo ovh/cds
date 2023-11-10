@@ -5,7 +5,7 @@
             <div class="title">
                 <a [routerLink]="['/', 'projectv2', this.project.key, 'vcs', this.currentVCSName, 'repository', this.currentRepoName, 'workflow', this.currentWorkflowName]">{{currentWorkflowName}}</a>
                 <span *ngIf="runs">
-                    {{ ': ' + runs?.length + ' '}}runs
+                    {{ ': ' + runs?.length + ' '}}{{ runs?.length == 1 ? 'run' : 'runs'}}
                 </span>
             </div>
         </div>

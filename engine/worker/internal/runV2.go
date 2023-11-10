@@ -160,14 +160,15 @@ func (w *CurrentWorker) runJobServiceReadiness(ctx context.Context, serviceName 
 		cancel()
 
 		info := sdk.V2SendJobRunInfo{
-			Message: fmt.Sprintf("Readiness service %s: %s", serviceName, result.Status),
-			Time:    time.Now(),
+			Time: time.Now(),
 		}
 
 		if result.Status == sdk.StatusSuccess {
 			info.Level = sdk.WorkflowRunInfoLevelInfo
+			info.Message = fmt.Sprintf("service %s is ready", serviceName)
 		} else {
 			info.Level = sdk.WorkflowRunInfoLevelWarning
+			info.Message = fmt.Sprintf("service %s is not ready (%s)", serviceName, result.Status)
 		}
 
 		if err := w.ClientV2().V2QueuePushJobInfo(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, info); err != nil {
@@ -182,7 +183,7 @@ func (w *CurrentWorker) runJobServiceReadiness(ctx context.Context, serviceName 
 	}
 
 	info := sdk.V2SendJobRunInfo{
-		Message: fmt.Sprintf("Readiness service %s: Failed", serviceName),
+		Message: fmt.Sprintf("service %s fails to be ready", serviceName),
 		Level:   sdk.WorkflowRunInfoLevelError,
 		Time:    time.Now(),
 	}
