@@ -9,24 +9,29 @@ import (
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-func PrepareCommonLogMessage(hatcheryServiceName string, hatcherytServiceID int64, jobIdentifiers JobIdentifiers, labels map[string]string) cdslog.Message {
+func PrepareCommonLogMessage(hatcheryServiceName string, hatcheryServiceID int64, jobIdentifiers JobIdentifiers, labels map[string]string) cdslog.Message {
 	commonMessage := cdslog.Message{}
 	if jobIdentifiers.IsJobV2() {
+		runNumber, _ := strconv.ParseInt(labels[LabelServiceRunNumber], 10, 64)
+		runAttempt, _ := strconv.ParseInt(labels[LabelServiceRunAttempt], 10, 64)
+
 		commonMessage = cdslog.Message{
 			Level: logrus.InfoLevel,
 			Signature: cdn.Signature{
 				ProjectKey:    labels[LabelServiceProjectKey],
 				WorkflowName:  labels[LabelServiceWorkflowName],
 				JobName:       labels[LabelServiceJobName],
-				RunJobID:      jobIdentifiers.JobIdentifiersV2.RunID,
+				RunJobID:      jobIdentifiers.JobIdentifiersV2.RunJobID,
 				WorkflowRunID: labels[LabelServiceRunID],
+				RunNumber:     runNumber,
+				RunAttempt:    runAttempt,
 			},
 		}
 
 		if v, ok := labels[LabelServiceReqName]; ok && v != "" {
 			commonMessage.Signature.HatcheryService = &cdn.SignatureHatcheryService{
 				HatcheryName: hatcheryServiceName,
-				WorkerName:   labels[LabelServiceWorker],
+				HatcheryID:   strconv.FormatInt(hatcheryServiceID, 10),
 				ServiceName:  labels[LabelServiceReqName],
 			}
 		}
@@ -46,7 +51,7 @@ func PrepareCommonLogMessage(hatcheryServiceName string, hatcherytServiceID int6
 		}
 		if v, ok := labels[LabelServiceReqName]; ok && v != "" {
 			commonMessage.Signature.Service = &cdn.SignatureService{
-				HatcheryID:      hatcherytServiceID,
+				HatcheryID:      hatcheryServiceID,
 				HatcheryName:    hatcheryServiceName,
 				RequirementID:   jobIdentifiers.JobIdentifiersV1.ServiceID,
 				RequirementName: labels[LabelServiceReqName],
@@ -63,6 +68,10 @@ func GetServiceIdentifiersFromLabels(labels map[string]string) *JobIdentifiers {
 		if !ok {
 			return nil
 		}
+		serviceRunJobID, ok := labels[LabelServiceRunJobID]
+		if !ok {
+			return nil
+		}
 
 		runID, ok := labels[LabelServiceRunID]
 		if !ok {
@@ -71,8 +80,9 @@ func GetServiceIdentifiersFromLabels(labels map[string]string) *JobIdentifiers {
 
 		return &JobIdentifiers{
 			JobIdentifiersV2: JobIdentifiersV2{
-				JobID: serviceJobID,
-				RunID: runID,
+				JobID:    serviceJobID,
+				RunJobID: serviceRunJobID,
+				RunID:    runID,
 			},
 		}
 	}

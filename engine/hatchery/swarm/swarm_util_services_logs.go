@@ -37,16 +37,21 @@ func (h *HatcherySwarm) getServicesLogs() error {
 
 		servicesLogs := make([]cdslog.Message, 0, len(containers))
 		for _, cnt := range containers {
-			if _, has := cnt.Labels[hatchery.LabelServiceID]; !has {
-				continue
+			_, has := cnt.Labels[hatchery.LabelServiceID]
+			serviceVersion, hasv2 := cnt.Labels[hatchery.LabelServiceVersion]
+			if !has && !hasv2 {
+				continue // not a service
 			}
 
-			workerName := cnt.Labels[hatchery.LabelServiceWorker]
-			// Check if there is a known worker in CDS api results for given worker name
-			// If not we skip sending logs as the worker is not ready.
-			// This will avoid problems validating log signature by the CDN service.
-			if _, ok := apiWorkerNames[workerName]; !ok {
-				continue
+			// check only for worker model v1
+			if !hasv2 && serviceVersion != hatchery.ValueLabelServiceVersion2 {
+				workerName := cnt.Labels[hatchery.LabelServiceWorker]
+				// Check if there is a known worker in CDS api results for given worker name
+				// If not we skip sending logs as the worker is not ready.
+				// This will avoid problems validating log signature by the CDN service.
+				if _, ok := apiWorkerNames[workerName]; !ok {
+					continue
+				}
 			}
 
 			ctxLogs, cancelLogs := context.WithTimeout(ctx, time.Minute*2)

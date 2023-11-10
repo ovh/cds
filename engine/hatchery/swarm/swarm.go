@@ -519,6 +519,7 @@ func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *do
 		labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
 		labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
 		labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
+		labels[hatchery.LabelServiceRunJobID] = spawnArgs.RunJobID
 		labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
 		labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
 		labels[hatchery.LabelServiceReqName] = sName

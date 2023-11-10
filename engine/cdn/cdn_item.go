@@ -81,7 +81,7 @@ func (s *Service) downloadItem(ctx context.Context, t sdk.CDNItemType, apiRefHas
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, apiRefHash)
 
 	switch t {
-	case sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemStepLog, sdk.CDNTypeItemJobStepLog:
+	case sdk.CDNTypeItemServiceLog, sdk.CDNTypeItemStepLog, sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 		if err := s.downloadLog(ctx, t, apiRefHash, w, opts); err != nil {
 			return err
 		}
@@ -156,7 +156,6 @@ type getItemLogOptions struct {
 }
 
 type getItemFileOptions struct {
-	cacheClean  bool
 	cacheSource string
 }
 

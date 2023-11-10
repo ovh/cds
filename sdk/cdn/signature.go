@@ -36,7 +36,6 @@ type SignatureWorker struct {
 type SignatureHatcheryService struct {
 	HatcheryID   string
 	HatcheryName string
-	WorkerName   string
 	ServiceName  string
 }
 

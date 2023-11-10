@@ -1,36 +1,36 @@
 <div *ngIf="runJob" class="job">
-    <!-- Display job steps -->
+    <!-- Display job services and steps -->
     <ng-container *ngIf="currentTabIndex === 0">
-        <div class="step" *ngFor="let step of steps; trackBy: trackStepElement; let i = index">
-            <div class="line info" (click)="clickOpen(step)">
+        <div class="step" *ngFor="let logBlock of logBlocks; trackBy: trackStepElement; let i = index">
+            <div class="line info" (click)="clickOpen(logBlock)">
                 <div class="number">
-                    <span *ngIf="step.totalLinesCount > 0 && !step.loading && !step.open" nz-icon nzType="caret-right"
+                    <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && !logBlock.open" nz-icon nzType="caret-right"
                           nzTheme="fill"></span>
-                    <span *ngIf="step.totalLinesCount > 0 && !step.loading && step.open" nz-icon nzType="caret-down"
+                    <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && logBlock.open" nz-icon nzType="caret-down"
                           nzTheme="fill"></span>
-                    <span nz-icon [nzType]="'loading'" *ngIf="step.lines.length === 0 && step.loading"></span>
-                    {{step.firstDisplayedLineNumber ? step.firstDisplayedLineNumber : ''}}
+                    <span nz-icon [nzType]="'loading'" *ngIf="logBlock.lines.length === 0 && logBlock.loading"></span>
+                    {{logBlock.firstDisplayedLineNumber ? logBlock.firstDisplayedLineNumber : ''}}
                 </div>
-                <div class="value">{{step.name}}</div>
+                <div class="value">{{logBlock.name}}</div>
                 <div class="extra">
-                    <div *ngIf="step.startDate && !step.duration">
-                        {{step.startDate | amTimeAgo: true : formatDuration }}
+                    <div *ngIf="logBlock.startDate && !logBlock.duration">
+                        {{logBlock.startDate | amTimeAgo: true : formatDuration }}
                     </div>
-                    <div *ngIf="step.duration" title="Step duration">{{step.duration}}</div>
-                    <div [class.orange]="step.optional && step.failed" *ngIf="step.optional">Optional</div>
-                    <div *ngIf="step.disabled">Disabled</div>
-                    <div class="red" *ngIf="step.failed && !step.optional">Failed</div>
+                    <div *ngIf="logBlock.duration" title="Step duration">{{logBlock.duration}}</div>
+                    <div [class.orange]="logBlock.optional && logBlock.failed" *ngIf="logBlock.optional">Optional</div>
+                    <div *ngIf="logBlock.disabled">Disabled</div>
+                    <div class="red" *ngIf="logBlock.failed && !logBlock.optional">Failed</div>
                 </div>
                 <div class="action" *ngIf="i>0">
-                    <a *ngIf="step?.link"
-                       [href]="'./cdscdn/item/' + step.link.item_type + '/' + step.link.api_ref + '/download?refresh=5'"
+                    <a *ngIf="logBlock?.link"
+                       [href]="'./cdscdn/item/' + logBlock.link.item_type + '/' + logBlock.link.api_ref + '/download?refresh=5'"
                        target="_blank" rel="noopener noreferrer" title="Share/download the step"
                        (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
                 </div>
             </div>
-            <ng-container *ngIf="step.open">
-                <div class="line" *ngFor="let line of step.lines; trackBy: trackLineElement; let j = index">
-                    <div class="number">{{step.firstDisplayedLineNumber + j + 1}}</div>
+            <ng-container *ngIf="logBlock.open">
+                <div class="line" *ngFor="let line of logBlock.lines; trackBy: trackLineElement; let j = index">
+                    <div class="number">{{logBlock.firstDisplayedLineNumber + j + 1}}</div>
                     <div class="value">
                         <pre [innerHTML]="line.value | ansi: false | safeHtml"></pre>
                         <div class="since" *ngIf="line.since" title="Duration since step start">{{line.since |
@@ -41,27 +41,27 @@
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
                     </div>
                 </div>
-                <div class="line expand" *ngIf="step.lines.length + step.endLines.length < step.totalLinesCount"
-                     (click)="clickExpandStepDown(step.name)">
+                <div class="line expand" *ngIf="logBlock.lines.length + logBlock.endLines.length < logBlock.totalLinesCount"
+                     (click)="clickExpandStepDown(logBlock.name)">
                     <div class="number">
                         <i nz-icon nzType="caret-down" nzTheme="fill"></i>
-                        {{step.firstDisplayedLineNumber +
-                    step.lines.length + 1}}
+                        {{logBlock.firstDisplayedLineNumber +
+                    logBlock.lines.length + 1}}
                     </div>
                     <div class="value">…</div>
                 </div>
                 <div class="line expand"
-                     *ngIf="step.lines.length + step.endLines.length < (step.totalLinesCount - expandLoadLinesCount) - 1"
-                     (click)="clickExpandStepUp(step.name)">
+                     *ngIf="logBlock.lines.length + logBlock.endLines.length < (logBlock.totalLinesCount - expandLoadLinesCount) - 1"
+                     (click)="clickExpandStepUp(logBlock.name)">
                     <div class="number"><i nz-icon nzType="caret-up"
-                                           nzTheme="fill"></i>{{(step.firstDisplayedLineNumber +
-                        step.totalLinesCount) - step.endLines.length}}
+                                           nzTheme="fill"></i>{{(logBlock.firstDisplayedLineNumber +
+                        logBlock.totalLinesCount) - logBlock.endLines.length}}
                     </div>
                     <div class="value">…</div>
                 </div>
-                <div class="line" *ngFor="let line of step.endLines; trackBy: trackLineElement; let j = index">
+                <div class="line" *ngFor="let line of logBlock.endLines; trackBy: trackLineElement; let j = index">
                     <div class="number">
-                        {{((step.firstDisplayedLineNumber + step.totalLinesCount) - step.endLines.length) + j + 1}}
+                        {{((logBlock.firstDisplayedLineNumber + logBlock.totalLinesCount) - logBlock.endLines.length) + j + 1}}
                     </div>
                     <div class="value">
                         <pre [innerHTML]="line.value | ansi: false | safeHtml"></pre>

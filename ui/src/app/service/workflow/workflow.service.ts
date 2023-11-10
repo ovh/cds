@@ -73,16 +73,17 @@ export class WorkflowService {
         return this._http.get<CDNLogLinks>(`/project/${projectKey}/workflows/${workflowName}/nodes/${nodeRunID}/job/${jobRunID}/links`);
     }
 
-    getLogsLinesCount(links: CDNLogLinks, limit: number): Observable<Array<CDNLogsLines>> {
+    getLogsLinesCount(links: CDNLogLinks, limit: number, item_type: string): Observable<Array<CDNLogsLines>> {
         let params = new HttpParams();
         links.datas.map(l => l.api_ref).forEach(ref => {
             params = params.append('apiRefHash', ref);
         });
         params.append('limit', limit.toString());
-        return this._http.get<Array<CDNLogsLines>>(`./cdscdn/item/${links.item_type}/lines`, { params });
+        return this._http.get<Array<CDNLogsLines>>(`./cdscdn/item/${item_type}/lines`, { params });
     }
 
     getLogLines(link: CDNLogLink, params?: { [key: string]: string }): Observable<CDNLinesResponse> {
+        console.log('getLogLines', `./cdscdn/item/${link.item_type}/${link.api_ref}/lines`);
         return this._http.get(`./cdscdn/item/${link.item_type}/${link.api_ref}/lines`, { params, observe: 'response' })
             .pipe(map(res => {
                 let headers: HttpHeaders = res.headers;

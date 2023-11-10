@@ -15,6 +15,7 @@ import (
 
 const (
 	LabelServiceJobID        = "CDS_JOB_ID"
+	LabelServiceRunJobID     = "CDS_RUN_JOB_ID"
 	LabelServiceProjectKey   = "CDS_PROJECT_KEY"
 	LabelServiceWorkflowName = "CDS_WORKFLOW_NAME"
 	LabelServiceWorkflowID   = "CDS_WORKFLOW_ID"
@@ -129,6 +130,7 @@ type SpawnArguments struct {
 	WorkflowName string                       `json:"workflow_name"`
 	WorkflowID   int64                        `json:"workflow_id"`
 	RunID        string                       `json:"run_id"`
+	RunJobID     string                       `json:"run_job_id"`
 	Region       string                       `json:"region"`
 	Services     map[string]sdk.V2JobService  `json:"services,omitempty"`
 	RunNumber    int64                        `json:"run_number"`
@@ -206,8 +208,9 @@ type JobIdentifiersV1 struct {
 }
 
 type JobIdentifiersV2 struct {
-	JobID string
-	RunID string
+	JobID    string
+	RunID    string
+	RunJobID string
 }
 
 func (j JobIdentifiers) IsJobV2() bool {

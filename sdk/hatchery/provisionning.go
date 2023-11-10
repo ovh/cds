@@ -2,9 +2,10 @@ package hatchery
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/telemetry"
 	"sync/atomic"
 	"time"
+
+	"github.com/ovh/cds/sdk/telemetry"
 
 	"github.com/rockbears/log"
 
@@ -19,7 +20,7 @@ func checkCapacities(ctx context.Context, h Interface) bool {
 	ctx, end := telemetry.Span(ctx, "hatchery.checkCapacities")
 	defer end()
 	t := time.Now()
-	defer log.Debug(ctx, "hatchery> checkCapacities> %.3f seconds elapsed", time.Since(t).Seconds())
+	defer func() { log.Debug(ctx, "hatchery> checkCapacities> %.3f seconds elapsed", time.Since(t).Seconds()) }()
 
 	workerPool, err := WorkerPool(ctx, h, sdk.StatusChecking, sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusWorkerPending, sdk.StatusWorkerRegistering)
 	if err != nil {

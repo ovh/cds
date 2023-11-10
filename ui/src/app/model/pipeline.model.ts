@@ -218,12 +218,13 @@ export class CDNLogLinks {
     datas: Array<CDNLogLinkData>;
 }
 
-
 export class CDNLogLinkData {
     api_ref: string
     step_order: number
     step_name: string
+    service_name: string
     requirement_id: number
+    item_type: string;
 }
 
 export class CDNLinesResponse {

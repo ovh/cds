@@ -14,7 +14,6 @@ import (
 	"github.com/rockbears/log"
 
 	apiv1 "k8s.io/api/core/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -69,7 +68,7 @@ func (h *HatcheryKubernetes) WatchPodEvents(ctx context.Context) error {
 	defer watcher.Stop()
 	for event := range watchCh {
 		switch x := event.Object.(type) {
-		case *corev1.Event:
+		case *apiv1.Event:
 			log.Info(ctx, "kubernetes event - time: %v, object: %s, reason: %s, message: %s, component: %s, host: %s", x.ObjectMeta.CreationTimestamp, x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
 		}
 	}
@@ -456,6 +455,8 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
+		// TODO yesnault
+		// jobRun.ID
 		podSchema.ObjectMeta.Labels[hatchery.LabelServiceNodeRunName] = spawnArgs.NodeRunName
 		podSchema.ObjectMeta.Annotations[hatchery.LabelServiceJobName] = spawnArgs.JobName
 

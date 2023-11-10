@@ -226,7 +226,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             this.steps[d.step_order + 1].link = <CDNLogLink>{ api_ref: d.api_ref, item_type: links.item_type };
         });
 
-        let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount).toPromise();
+        let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount, links.item_type).toPromise();
         if (results) {
             results.forEach(r => {
                 let steporder = links?.datas?.find(d => d.api_ref === r.api_ref)?.step_order + 1;

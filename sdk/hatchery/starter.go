@@ -161,6 +161,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			return false
 		}
 		arg.RunID = jobRun.WorkflowRunID
+		arg.RunJobID = jobRun.ID
 		arg.WorkflowName = jobRun.WorkflowName
 		arg.ProjectKey = jobRun.ProjectKey
 		arg.JobName = jobRun.JobID
