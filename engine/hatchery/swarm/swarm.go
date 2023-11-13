@@ -476,6 +476,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	return nil
 }
 
+// v2
 func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *dockerClient, spawnArgs hatchery.SpawnArguments, sName string, service sdk.V2JobService, network string) (string, error) {
 	serviceMemory := int64(1024)
 	if sm, ok := service.Env["CDS_SERVICE_MEMORY"]; ok {

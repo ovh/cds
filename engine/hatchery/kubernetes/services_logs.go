@@ -37,6 +37,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 	}
 
 	servicesLogs := make([]cdslog.Message, 0, len(pods.Items))
+
 	for _, pod := range pods.Items {
 		podName := pod.GetName()
 		labels := pod.GetLabels()
@@ -52,15 +53,26 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 		labels[hatchery.LabelServiceJobName] = annotations[hatchery.LabelServiceJobName]
 
 		workerName := pod.ObjectMeta.Name
-		// Check if there is a known worker in CDS api results for given worker name
-		// If not we skip sending logs as the worker is not ready.
-		// This will avoid problems validating log signature by the CDN service.
-		if _, ok := apiWorkerNames[workerName]; !ok {
-			continue
-		}
 
 		var sinceSeconds int64 = 10
 		for _, container := range pod.Spec.Containers {
+			_, has := labels[hatchery.LabelServiceID]
+			serviceVersion, hasv2 := labels[hatchery.LabelServiceVersion]
+			if !has && !hasv2 {
+				continue // not a service
+			}
+
+			// check only for worker model v1
+			if !hasv2 && serviceVersion != hatchery.ValueLabelServiceVersion2 {
+				workerName := labels[hatchery.LabelServiceWorker]
+				// Check if there is a known worker in CDS api results for given worker name
+				// If not we skip sending logs as the worker is not ready.
+				// This will avoid problems validating log signature by the CDN service.
+				if _, ok := apiWorkerNames[workerName]; !ok {
+					continue
+				}
+			}
+
 			subsStr := containerServiceNameRegexp.FindAllStringSubmatch(container.Name, -1)
 			if len(subsStr) < 1 {
 				continue
@@ -95,7 +107,7 @@ func (h *HatcheryKubernetes) getServicesLogs(ctx context.Context) error {
 				}
 				msg := commonMessage
 				msg.Signature.Timestamp = time.Now().UnixNano()
-				msg.Value = logsSplitted[i]
+				msg.Value = sdk.RemoveNotPrintableChar(logsSplitted[i])
 				servicesLogs = append(servicesLogs, msg)
 			}
 		}
