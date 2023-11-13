@@ -20,8 +20,9 @@ func adminUsersGPG() *cobra.Command {
 }
 
 var adminUserDeleteGPGKeyCmd = cli.Command{
-	Name:  "list",
-	Short: "List CDS users gpg keys",
+	Name:    "delete",
+	Aliases: []string{"remove", "rm"},
+	Short:   "Delete CDS users gpg key",
 	Args: []cli.Arg{
 		{
 			Name: "username",
