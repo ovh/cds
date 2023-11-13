@@ -24,6 +24,7 @@ var requirementCheckFuncs = map[string]func(w *CurrentWorker, r sdk.Requirement)
 	sdk.OSArchRequirement:   checkOSArchRequirement,
 	sdk.RegionRequirement:   checkRegionRequirement,
 	sdk.SecretRequirement:   checkSecretRequirement,
+	sdk.FlavorRequirement:   checkFlavorRequirement,
 }
 
 func checkRequirements(ctx context.Context, w *CurrentWorker, a *sdk.Action) (bool, []sdk.Requirement) {
@@ -167,6 +168,10 @@ func checkRegionRequirement(_ *CurrentWorker, _ sdk.Requirement) (bool, error) {
 
 // secret is checked by api only
 func checkSecretRequirement(_ *CurrentWorker, _ sdk.Requirement) (bool, error) {
+	return true, nil
+}
+
+func checkFlavorRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 

@@ -28,8 +28,7 @@ type V2WorkerModelDockerSpec struct {
 }
 
 type V2WorkerModelOpenstackSpec struct {
-	Image  string `json:"image" jsonschema_description:"Name of the openstack image"`
-	Flavor string `json:"flavor" jsonschema_description:"Openstack flavor used by the worker model"`
+	Image string `json:"image" jsonschema_description:"Name of the openstack image"`
 }
 
 type V2WorkerModelVSphereSpec struct {

@@ -87,15 +87,22 @@ func (w WorkerStarterWorkerModel) GetName() string {
 	}
 }
 
-func (w WorkerStarterWorkerModel) GetFlavor() string {
+func (w WorkerStarterWorkerModel) GetFlavor(reqs RequirementList, defaultFlavor string) string {
 	switch {
 	case w.ModelV1 != nil:
-		return w.ModelV1.ModelVirtualMachine.Flavor
+		if w.ModelV1.ModelVirtualMachine.Flavor != "" {
+			return w.ModelV1.ModelVirtualMachine.Flavor
+		}
 	case w.ModelV2 != nil:
-		return w.OpenstackSpec.Flavor
+		for _, r := range reqs {
+			if r.Type == FlavorRequirement && r.Value != "" {
+				return r.Value
+			}
+		}
 	}
-	return ""
+	return defaultFlavor
 }
+
 func (w WorkerStarterWorkerModel) GetOpenstackImage() string {
 	switch {
 	case w.ModelV1 != nil:
@@ -105,6 +112,7 @@ func (w WorkerStarterWorkerModel) GetOpenstackImage() string {
 	}
 	return ""
 }
+
 func (w WorkerStarterWorkerModel) GetDockerImage() string {
 	switch {
 	case w.ModelV1 != nil:

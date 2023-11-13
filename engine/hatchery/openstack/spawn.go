@@ -30,14 +30,14 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		return sdk.WithStack(fmt.Errorf("no job ID and no register"))
 	}
 
-	if err := h.checkSpawnLimits(ctx, spawnArgs.Model); err != nil {
+	if err := h.checkSpawnLimits(ctx, spawnArgs); err != nil {
 		ctx = sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, err.Error())
 		return nil
 	}
 
 	// Get flavor for target model
-	flavor, err := h.flavor(spawnArgs.Model.GetFlavor())
+	flavor, err := h.flavor(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		"worker":                     spawnArgs.WorkerName,
 		"hatchery_name":              h.Name(),
 		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
-		"flavor":                     spawnArgs.Model.GetFlavor(),
+		"flavor":                     spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor),
 		"model":                      spawnArgs.Model.GetOpenstackImage(),
 		"worker_model_path":          spawnArgs.Model.GetFullPath(),
 		"worker_model_last_modified": spawnArgs.Model.GetLastModified(),
@@ -170,14 +170,14 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 	return nil
 }
 
-func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.WorkerStarterWorkerModel) error {
+func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
 	existingServers := h.getServers(ctx)
 	if len(existingServers) >= h.Configuration().Provision.MaxWorker {
 		return sdk.WithStack(fmt.Errorf("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker))
 	}
 
 	// Get flavor for target model
-	flavor, err := h.flavor(model.GetFlavor())
+	flavor, err := h.flavor(spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor))
 	if err != nil {
 		return err
 	}
@@ -207,10 +207,10 @@ func (h *HatcheryOpenstack) checkSpawnLimits(ctx context.Context, model sdk.Work
 			countCPUsLeft := int(math.Max(.0, float64(h.Config.MaxCPUs-totalCPUsUsed))) // Set zero as min value in case that the limit changed and count of used greater than max count
 			if minCPUsNeededToStart > countCPUsLeft {
 				return sdk.WithStack(fmt.Errorf("CountSmallerFlavorToKeep limit reached, can't start model %s with flavor %s that requires %d CPUs. Smaller flavor is %s and need %d CPUs. There are currently %d/%d left CPUs",
-					model.GetFullPath(), flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
+					spawnArgs.Model.GetFullPath(), flavor.Name, flavor.VCPUs, smallerFlavor.Name, smallerFlavor.VCPUs, countCPUsLeft, h.Config.MaxCPUs))
 			}
 			log.Debug(ctx, "checkSpawnLimits> %d/%d CPUs left is enough to start model %s with flavor %s that require %d CPUs",
-				countCPUsLeft, h.Config.MaxCPUs, model.GetFullPath(), flavor.Name, flavor.VCPUs)
+				countCPUsLeft, h.Config.MaxCPUs, spawnArgs.Model.GetFullPath(), flavor.Name, flavor.VCPUs)
 		}
 	}
 

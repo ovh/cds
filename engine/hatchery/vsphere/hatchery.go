@@ -154,6 +154,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		if r.Type == sdk.ServiceRequirement ||
 			r.Type == sdk.MemoryRequirement ||
 			r.Type == sdk.HostnameRequirement ||
+			r.Type == sdk.FlavorRequirement ||
 			model.GetCmd() == "" {
 			return false
 		}

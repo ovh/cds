@@ -3,6 +3,7 @@ package openstack
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -237,6 +238,11 @@ func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWor
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement || r.Type == sdk.HostnameRequirement {
 			return false
+		}
+		if r.Type == sdk.FlavorRequirement && len(h.Config.AllowedFlavors) > 0 {
+			if !slices.Contains(h.Config.AllowedFlavors, r.Value) {
+				return false
+			}
 		}
 	}
 	return true
