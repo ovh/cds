@@ -146,7 +146,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 // This has to be called by the signin handler
 func (api *API) hatcheryRegister(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, consumer sdk.AuthHatcheryConsumer, sessionID string, h *sdk.Hatchery, signInRequest sdk.AuthConsumerHatcherySigninRequest) error {
 	if signInRequest.Name != h.Name {
-		return sdk.NewError(sdk.ErrForbidden, errors.Errorf("wrong token. name (from hatchery configuration):%s != name (from token):%s", signInRequest.Name, h.Name))
+		return sdk.NewError(sdk.ErrForbidden, errors.Errorf("wrong token. name (from hatchery configuration):%s != name (from token):%s", h.Name, signInRequest.Name))
 	}
 	h.HTTPURL = signInRequest.HTTPURL
 	h.Config = signInRequest.Config
