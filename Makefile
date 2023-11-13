@@ -7,8 +7,8 @@ GIT_DESCRIBE := $(shell git describe --tags)
 GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE:v%=%},0.0.0-0-snapshot)
 SHA512 := $(if ifeq ${UNAME} "Darwin",shasum -a 512,sha512sum)
 
-TARGET_ENGINE = $(if ${TARGET_ENGINE},${TARGET_ENGINE},cdsctl)
-TARGET_WORKER = $(if ${TARGET_WORKER},${TARGET_WORKER},engine)
+TARGET_ENGINE = $(if ${TARGET_ENGINE},${TARGET_ENGINE},engine)
+TARGET_WORKER = $(if ${TARGET_WORKER},${TARGET_WORKER},worker)
 TARGET_CDSCTL = $(if ${TARGET_CDSCTL},${TARGET_CDSCTL},cdsctl)
 
 doc:
