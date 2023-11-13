@@ -29,15 +29,14 @@ func userGpg() *cobra.Command {
 var userGpgKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS users gpg keys",
-	Args: []cli.Arg{
-		{
-			Name: "username",
-		},
-	},
 }
 
 func userGpgKeyList(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.UserGpgKeyList(context.Background(), v.GetString("username"))
+	u, err := client.UserGetMe(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	keys, err := client.UserGpgKeyList(context.Background(), u.Username)
 	if err != nil {
 		return nil, err
 	}

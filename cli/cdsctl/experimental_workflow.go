@@ -4,10 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/sdk/cdsclient"
+	"os"
+	"strings"
+
+	"github.com/rockbears/yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var experimentalWorkflowCmd = cli.Command{
@@ -22,9 +27,60 @@ func experimentalWorkflow() *cobra.Command {
 		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRunStopCmd, workflowRunStopFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowLintCmd, workflowLintFunc, nil, withAllCommandModifiers()...),
 		experimentalWorkflowRunLogs(),
 		experimentalWorkflowJob(),
 	})
+}
+
+var workflowLintCmd = cli.Command{
+	Name:    "lint",
+	Short:   "Lint workflow files",
+	Example: "cdsctl experimental workflow lint <cds_workflow_directory>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "cds_workflow_directory"},
+	},
+}
+
+func workflowLintFunc(v cli.Values) error {
+	files, err := os.ReadDir(v.GetString("cds_workflow_directory"))
+	if err != nil {
+		return err
+	}
+
+	hasErrors := false
+	for _, f := range files {
+		bts, err := os.ReadFile(fmt.Sprintf("%s/%s", strings.TrimSuffix(v.GetString("cds_workflow_directory"), "/"), f.Name()))
+		if err != nil {
+			return err
+		}
+		var wf sdk.V2Workflow
+		if err := yaml.Unmarshal(bts, &wf); err != nil {
+			fmt.Printf("File %s: unable to unmarshal yaml: %v\n", f.Name(), err)
+			hasErrors = true
+			continue
+		}
+		resp, err := client.EntityLint(context.Background(), sdk.EntityTypeWorkflow, wf)
+		if err != nil {
+			fmt.Printf("File %s: unable to check file: %v\n", f.Name(), err)
+			hasErrors = true
+			continue
+		}
+		if len(resp.Messages) == 0 {
+			fmt.Printf("File %s: workflow OK\n", f.Name())
+			continue
+		}
+		fmt.Printf("File %s: %d errors found\n", f.Name(), len(resp.Messages))
+		for _, e := range resp.Messages {
+			fmt.Printf("    %s\n", e)
+		}
+		hasErrors = true
+	}
+	if hasErrors {
+		cli.OSExit(1)
+	}
+	return nil
 }
 
 var workflowRunInfosListCmd = cli.Command{
