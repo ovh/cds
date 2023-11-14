@@ -9,14 +9,16 @@ input:
   git_password: ""
 
 steps:
-  # Delete the repo in gitea
+  # Delete the repo in gitea if exists
   - type: http
     method: DELETE
     url: "{{.input.git_host}}/api/v1/repos/{{.input.git_user}}/{{.input.git_repo}}"
     basic_auth_user: "{{.input.git_user}}"
     basic_auth_password: "{{.input.git_password}}"
     assertions:
-    - result.statuscode ShouldEqual 204
+    - or:
+      - result.statuscode ShouldEqual 204
+      - result.statuscode ShouldEqual 404
 
   # Create the repo in gitea
   - type: http
@@ -28,7 +30,7 @@ steps:
       Content-Type: application/json
     body: >
       {
-        "name": {{.input.git_repo | quote}},
+        "name": "{{.input.git_repo}}",
         "auto_init": true,
         "default_branch": "master"
       }

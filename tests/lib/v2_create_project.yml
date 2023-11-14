@@ -2,30 +2,26 @@ executor: v2_create_project
 input:
   cdsctl_command: ""
   cds_project: ""
-  cds_region: "default"
+  cds_region: ""
   git_host: ""
   git_user: ""
   git_password: ""
 
 steps:
-  - script: >
-      {{.input.cdsctl_command}} user me --format json
+  - script: "{{.input.cdsctl_command}} user me --format json"
     vars:
       cds_user:
         from: result.systemoutjson
-  - script: >
-      {{.input.cdsctl_command}} project remove --force {{.input.cds_project}}
-  - script: >
-      {{.input.cdsctl_command}} group remove --force {{.input.cds_project}}
-  - script: >
-      {{.input.cdsctl_command}} group add {{.input.cds_project}}
+  - script: "{{.input.cdsctl_command}} project remove --force {{.input.cds_project}}"
+  - script: "{{.input.cdsctl_command}} group remove --force {{.input.cds_project}}"
+  - script: "{{.input.cdsctl_command}} group add {{.input.cds_project}}"
 
   # Create the project
   - script: >
       {{.input.cdsctl_command}} project create {{.input.cds_project}} "Test Project {{.input.cds_project}}" {{.input.cds_project}}
    # Get SSH Key info from project
   - script: >
-     {{.input.cdsctl_command}}  project keys list {{.input.cds_project}} --format json
+     {{.input.cdsctl_command}} project keys list {{.input.cds_project}} --format json
     vars:
       sshKeyPub:
         from: result.systemoutjson.systemoutjson0.publickey
@@ -92,8 +88,7 @@ steps:
         - role: manage-permission
           users: [{{.cds_user.username}}]
       EOF
-  - script: >
-      {{.input.cdsctl_command}} experimental rbac import /tmp/project_rbac.yml --force
+  - script: "{{.input.cdsctl_command}} experimental rbac import /tmp/project_rbac.yml --force"
 
   # Put the project ssh key as SSH Key on gitea
   - type: http
@@ -105,7 +100,7 @@ steps:
       Content-Type: application/json
     body: >
       {
-        "key": {{.sshKeyPub | quote}},
+        "key": "{{.sshKeyPub}}",
         "read_only": true,
         "title": "{{.sshKeyName}}"
       }
