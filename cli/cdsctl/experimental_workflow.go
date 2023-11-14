@@ -36,7 +36,7 @@ func experimentalWorkflow() *cobra.Command {
 var workflowLintCmd = cli.Command{
 	Name:    "lint",
 	Short:   "Lint workflow files",
-	Example: "cdsctl experimental workflow lint <cds_workflow_directory>",
+	Example: "cdsctl experimental workflow lint .cds/workflows",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "cds_workflow_directory"},

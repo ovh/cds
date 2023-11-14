@@ -9,7 +9,7 @@ import (
 var adminUsersGPGCmd = cli.Command{
 	Name:    "gpg",
 	Aliases: []string{"pgp"},
-	Short:   "Manage CDS GPG keys",
+	Short:   "Manage GPG keys",
 }
 
 func adminUsersGPG() *cobra.Command {
@@ -22,7 +22,7 @@ func adminUsersGPG() *cobra.Command {
 var adminUserDeleteGPGKeyCmd = cli.Command{
 	Name:    "delete",
 	Aliases: []string{"remove", "rm"},
-	Short:   "Delete CDS users gpg key",
+	Short:   "Delete a user's GPG key",
 	Args: []cli.Arg{
 		{
 			Name: "username",
@@ -42,7 +42,7 @@ func adminUserDeleteGPGKey(v cli.Values) error {
 
 var adminUserGpgKeyListCmd = cli.Command{
 	Name:  "list",
-	Short: "List CDS users gpg keys",
+	Short: "List user's gpg keys",
 	Args: []cli.Arg{
 		{
 			Name: "username",
