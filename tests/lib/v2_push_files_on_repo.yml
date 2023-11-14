@@ -1,0 +1,25 @@
+executor: v2_push_files_on_repo
+input:
+  git_host: ""
+  git_repo: ""
+  git_user: ""
+  git_password: ""
+  files: ""
+  gpg_key_id: ""
+
+steps:
+  # Git clone the repo
+  - script: mkdir -p /tmp/repos/ && rm -rf /tmp/repos/{{.input.git_repo}}
+  - script: git clone http://{{.input.git_user}}:{{.input.git_password}}@localhost:3000/{{.input.git_user}}/{{.input.git_repo}}.git /tmp/repos/{{.input.git_repo}}
+  - script: mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/{workflows,actions,worker-models}
+  - range: {{.input.files}}
+    script: |-
+      /bin/bash -c cat | yq -P <<- EOF > /tmp/repos/{{.input.git_repo}}/.cds/{{.key}}
+      {{.value}}
+      EOF
+  - script: cd /tmp/repos/{{.input.git_repo}} && git config --local user.name {{.input.git_user}}
+  - script: cd /tmp/repos/{{.input.git_repo}} && git add --all
+  - script: cd /tmp/repos/{{.input.git_repo}} && git commit --gpg-sign={{.input.gpg_key_id}} -m "add file and sign"
+  - script: cd /tmp/repos/{{.input.git_repo}} && git push
+
+output: {}

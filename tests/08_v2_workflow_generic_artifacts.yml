@@ -1,16 +1,95 @@
-name: Workflow V2 generic artifacts on CDN
-testcases:
-- name: prepare test
-  steps:
+name: Upload and Download generic artifacts from Workflow as code v2
+vars:
+  cdsctl_command: |-
+    {{.cdsctl | default "cdsctl"}} -f {{.cdsctl.config | default "$HOME/.cdsrc"}}
+  cds_project: "ITV2ARTIFACTSGENERIC"
+  cds_region: "default"
+  cds_hook_url: |-
+    {{.gitea.hook.url | default "http://localhost:8083"}}
+  git_host: |-
+    {{.git.host | default "http://localhost:3000"}}
+  git_user: |-
+    {{.git.user | default "gituser"}}
+  git_password: |-
+    {{.git.password | default "giteapassword"}}
+  git_repo: "it_v2_artifacts_generic"
+  gpg_key_id: "{{.gpg.key_id}}"
 
-  - type: v2_create_git_repo
-    host: "{{.git.host}}"
-    repo: "myrepo"
-    user: "{{.git.user}}"
-    password: "{{.git.password}}"
+testcases:
+- name: Prepare test
+  steps:
+  - name: "Verify cdsctl configuration"
+    script: "{{.cdsctl_command}} user me"
 
   - type: v2_create_project
-    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
-    project: "ITCLIPRJVCS"
-    git_host: "{{.git.host}}"
+    cdsctl_command: "{{.cdsctl_command}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git_host}}"
+    git_user: "{{.git_user}}"
+    git_password: "{{.git_password}}"
+    cds_region: "local"
 
+  - type: v2_add_git_repo
+    cdsctl_command: "cdsctl"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.cds_hook_url}}"
+    git_host: "{{.git_host}}"
+    git_user: "{{.git_user}}"
+    git_password: "{{.git_password}}"
+    git_repo: "{{.git_repo}}"
+
+  - type: v2_install_gpg_key
+    gpg_key_id: "{{.gpg_key_id}}"
+    git_host: "{{.git_host}}"
+    git_user: "{{.git_user}}"
+    git_password: "{{.git_password}}"
+
+- name: Push workflow file
+  steps:
+  - type: v2_push_files_on_repo
+    git_repo: "{{.git_repo}}"
+    git_host: "{{.git_host}}"
+    git_user: "{{.git_user}}"
+    git_password: "{{.git_password}}"
+    gpg_key_id: "{{.gpg_key_id}}"
+    files:
+      workflows/workflowA.yaml:
+        name: WorkflowA
+        on: [push]
+        jobs:
+          First-Job:
+            steps:
+              - run: |-
+                  #!/bin/bash -x
+                  env > env.txt
+                  echo "foobar" > foo.txt
+              - uses: actions/uploadArtifact
+                with:
+                  path: "*.txt"
+          Second-Job:
+            needs: [First-Job]
+            steps:
+              - uses: actions/downloadArtifact
+              - run: |-
+                  #!/bin/bash
+                  ls -l
+                  cat env.txt
+                  cat foo.txt
+                  grep foobar foo.txt
+
+  - name: Check CDS project analyses status
+    script: cdsctl experimental project analysis list {{.cds_project}} my_vcs_server {{.git_user}}/{{.git_repo}} --format json
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 2
+    delay: 10
+
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: cdsctl experimental workflow history {{.cds_project}} my_vcs_server {{.git_user}}/{{.git_repo}} WorkflowA --format json
+    assertions:
+    - result.systemoutjson ShouldHaveLength 1
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+    retry: 2
+    delay: 30
