@@ -264,7 +264,6 @@ for target in $@; do
             cli_tests;;
         workflow)
             workflow_tests;;
-            echo noop;;
         workflow_with_integration)
             export AWS_DEFAULT_REGION
             export S3_BUCKET
@@ -273,15 +272,12 @@ for target in $@; do
             export AWS_ENDPOINT_URL
             workflow_with_integration_tests
             admin_tests;;
-            echo noop;;
         workflow_with_third_parties)
             export CDS_MODEL_REQ
             export CDS_REGION_REQ
             workflow_with_third_parties;;
-            echo noop;;
         admin)
             admin_tests;;
-            echo noop;;
         v2)
             cds_v2_tests;;
         *) echo -e "${RED}Error: unknown target: $target${NOCOLOR}"
