@@ -39,7 +39,7 @@ func TestRunJobContinueOnError(t *testing.T) {
 			},
 		},
 	}
-	w.SetContextForTestJobV2(ctx)
+	w.SetContextForTestJobV2(t, ctx)
 	w.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
 
 	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
@@ -92,7 +92,7 @@ func TestRunJobContinueAlways(t *testing.T) {
 			},
 		},
 	}
-	w.SetContextForTestJobV2(ctx)
+	w.SetContextForTestJobV2(t, ctx)
 	w.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
 
 	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
@@ -190,7 +190,7 @@ func TestCurrentWorker_runJobServicesReadinessWithServiceWithCommand(t *testing.
 	require.NoError(t, err)
 	w.signer = signer
 
-	w.SetContextForTestJobV2(ctx)
+	w.SetContextForTestJobV2(t, ctx)
 
 	ctrl := gomock.NewController(t)
 	mockClient := mock_cdsclient.NewMockV2WorkerInterface(ctrl)

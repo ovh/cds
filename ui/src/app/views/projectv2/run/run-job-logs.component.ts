@@ -230,8 +230,6 @@ export class RunJobLogsComponent {
             return;
         }
 
-        console.log('clickOpen: logBlock', logBlock);
-        console.log('clickOpen: logBlock.link', logBlock.link);
         logBlock.loading = true;
         let results = await Promise.all([
             this._workflowService.getLogLines(logBlock.link, {limit: `${this.initLoadLinesCount}`}).toPromise(),

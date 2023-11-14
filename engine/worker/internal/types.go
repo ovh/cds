@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/rockbears/log"
@@ -119,11 +120,8 @@ func (wk *CurrentWorker) GetContext() context.Context {
 	return wk.currentJobV2.context
 }
 
-func (wk *CurrentWorker) SetContextForTestJobV1(c context.Context) {
-	wk.currentJob.context = c
-}
-
-func (wk *CurrentWorker) SetContextForTestJobV2(c context.Context) {
+// used into unit tests only
+func (wk *CurrentWorker) SetContextForTestJobV2(t *testing.T, c context.Context) {
 	wk.currentJobV2.context = c
 }
 

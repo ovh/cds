@@ -162,7 +162,7 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			}
 			defer tx.Rollback() // nolint
 
-			hatcheryPermission, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatch.ID)
+			hatcheryPermission, err := rbac.LoadRBACByHatcheryID(ctx, tx, hatch.ID)
 			if err != nil {
 				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return err
