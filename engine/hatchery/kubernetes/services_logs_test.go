@@ -51,6 +51,9 @@ func Test_serviceLogs(t *testing.T) {
 						hatchery.LabelServiceProjectKey:   "KEY",
 						hatchery.LabelServiceRunID:        "1",
 						hatchery.LabelServiceNodeRunName:  "Mypip",
+						hatchery.LabelServiceReqName:      "myService",
+						hatchery.LabelServiceID:           "myServiceID",
+						hatchery.LabelServiceWorker:       "pod-name",
 					},
 					Annotations: map[string]string{
 						hatchery.LabelServiceJobName: "MyJob",
@@ -86,7 +89,7 @@ func Test_serviceLogs(t *testing.T) {
 	assert.NoError(t, h.getServicesLogs(context.TODO()))
 
 	for _, p := range gock.Pending() {
-		t.Logf("%+v", p.Request().URLStruct.String())
+		t.Logf("pending: %+v - p:%+v", p.Request().URLStruct.String(), p.Request().Response.Mock)
 	}
 	require.True(t, gock.IsDone())
 	require.Equal(t, 1, loggerCall)

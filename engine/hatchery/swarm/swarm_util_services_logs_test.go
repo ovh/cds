@@ -61,6 +61,7 @@ func Test_serviceLogs(t *testing.T) {
 				hatchery.LabelServiceRunID:        "1",
 				hatchery.LabelServiceNodeRunName:  "Mypip",
 				hatchery.LabelServiceJobName:      "MyJob",
+				hatchery.LabelServiceReqName:      "myService",
 			},
 		},
 	}
