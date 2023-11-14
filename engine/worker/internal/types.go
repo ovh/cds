@@ -119,8 +119,12 @@ func (wk *CurrentWorker) GetContext() context.Context {
 	return wk.currentJobV2.context
 }
 
-func (wk *CurrentWorker) SetContext(c context.Context) {
+func (wk *CurrentWorker) SetContextForTestJobV1(c context.Context) {
 	wk.currentJob.context = c
+}
+
+func (wk *CurrentWorker) SetContextForTestJobV2(c context.Context) {
+	wk.currentJobV2.context = c
 }
 
 func (wk *CurrentWorker) SetGelfLogger(h *loghook.Hook, l *logrus.Logger) {

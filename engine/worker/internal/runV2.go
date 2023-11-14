@@ -119,12 +119,15 @@ func (w *CurrentWorker) runJobServicesReadiness(ctx context.Context) sdk.V2Workf
 	if w.currentJobV2.runJob.Job.Services == nil {
 		return result
 	}
+
 	for serviceName, service := range w.currentJobV2.runJob.Job.Services {
 		if service.Readiness.Command == "" {
 			continue
 		}
 
 		if err := w.runJobServiceReadiness(ctx, serviceName, service); err != nil {
+			result.Error = fmt.Sprintf("failed on check service readiness: %v", err.Error())
+			result.Status = sdk.StatusFail
 			return result
 		}
 	}
@@ -442,6 +445,7 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 	if !ok {
 		return w.failJob(ctx, fmt.Sprintf("interpolated script content is not a string. Got %T", interpolatedInput))
 	}
+
 	env, err := w.GetEnvVariable(runJobContext)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("%v", err))
