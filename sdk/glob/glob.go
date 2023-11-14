@@ -76,6 +76,9 @@ func (g *Globber) MatchString(s string) (*Result, error) {
 		}
 		res = &Result{Path: s, Result: result}
 	}
+	if res == nil {
+		return nil, nil
+	}
 	for _, p := range g.patterns {
 		if !p.isExclude {
 			continue
