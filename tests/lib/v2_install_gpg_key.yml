@@ -24,11 +24,15 @@ steps:
       {{.gpgPubKey | quote | b64enc}}
       EOF
 
+  - script: base64 -d /tmp/{{.input.gpg_key_id}}.gpg.pub.b64 > /tmp/{{.input.gpg_key_id}}.gpg.pub.quoted
+
+  - script: cat /tmp/{{.input.gpg_key_id}}.gpg.pub.quoted
+
   # Prepare the json payload from the base64 encoded public key
   - script: |-
       /bin/bash -c cat <<- EOF > /tmp/{{.input.gpg_key_id}}.gpg.pub.json
       {
-        "armored_public_key" : $(base64 -d /tmp/{{.input.gpg_key_id}}.gpg.pub.b64)
+        "armored_public_key" : $(cat /tmp/{{.input.gpg_key_id}}.gpg.pub.quoted)
       }
       EOF
 
