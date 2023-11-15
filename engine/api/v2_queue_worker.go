@@ -141,10 +141,17 @@ func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Wo
 	contexts.CDS = run.Contexts.CDS
 	contexts.CDS.Job = jobRun.JobID
 	contexts.CDS.Stage = jobRun.Job.Stage
-
 	contexts.Vars = run.Contexts.Vars
-
 	contexts.Git = run.Contexts.Git
+
+	contexts.Env = make(map[string]string)
+	for k, v := range run.Contexts.Env {
+		contexts.Env[k] = v
+	}
+	// override with job env
+	for k, v := range jobRun.Job.Env {
+		contexts.Env[k] = v
+	}
 
 	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped})
 	if err != nil {
