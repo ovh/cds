@@ -4,7 +4,7 @@ vars:
     {{.cdsctl | default "cdsctl"}} -f {{.cdsctl.config | default "$HOME/.cdsrc"}}
   cds_project: "ITV2ARTIFACTSGENERIC"
   cds_region: |-
-    {{.cds_region | default "local"}}
+    {{.cds_region}}
   cds_hook_url: |-
     {{.gitea.hook.url | default "http://localhost:8083"}}
   git_host: |-
@@ -26,7 +26,7 @@ testcases:
         from: result.systemoutjson.username
 
   - name: "Display username"
-    info: Connected CDS user is {{.cdsUser}}
+    info: "Connected CDS user is {{.cdsUser}}"
 
   - type: v2_create_project
     cdsctl_command: "{{.cdsctl_command}}"
