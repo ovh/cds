@@ -187,6 +187,11 @@ func UnsafeLoadAllByTypeAndProjectKeys(_ context.Context, db gorp.SqlExecutor, t
 	return entities, nil
 }
 
+func LoadEntityByPath(ctx context.Context, db gorp.SqlExecutor, repositoryID string, path string) (*sdk.Entity, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM entity WHERE project_repository_id = $1 AND file_path = $2").Args(repositoryID, path)
+  return getEntity(ctx, db, q)
+}
+
 func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, error) {
 	q := gorpmapping.NewQuery("SELECT * from entity")
 	var res []dbEntity

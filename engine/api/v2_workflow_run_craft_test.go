@@ -203,8 +203,8 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	db.Exec("DELETE FROM region")
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
 
 	reg := sdk.Region{Name: "build"}
 	require.NoError(t, region.Insert(ctx, db, &reg))
@@ -324,8 +324,8 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	db.Exec("DELETE FROM region")
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
 
 	reg := sdk.Region{Name: "build"}
 	require.NoError(t, region.Insert(ctx, db, &reg))

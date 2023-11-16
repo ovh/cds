@@ -1,28 +1,29 @@
 package api
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"strings"
-	"time"
+  "context"
+  "encoding/json"
+  "fmt"
+  "strconv"
+  "strings"
+  "time"
 
-	"go.opencensus.io/trace"
+  "go.opencensus.io/trace"
 
-	"github.com/go-gorp/gorp"
-	"github.com/rockbears/log"
-
-	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/rbac"
-	"github.com/ovh/cds/engine/api/region"
-	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/engine/api/workflow_v2"
-	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/sdk"
-	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/telemetry"
+  "github.com/go-gorp/gorp"
+  "github.com/ovh/cds/engine/api/event"
+  "github.com/ovh/cds/engine/api/project"
+  "github.com/ovh/cds/engine/api/rbac"
+  "github.com/ovh/cds/engine/api/region"
+  "github.com/ovh/cds/engine/api/repository"
+  "github.com/ovh/cds/engine/api/user"
+  "github.com/ovh/cds/engine/api/vcs"
+  "github.com/ovh/cds/engine/api/workflow_v2"
+  "github.com/ovh/cds/engine/cache"
+  "github.com/ovh/cds/sdk"
+  cdslog "github.com/ovh/cds/sdk/log"
+  "github.com/ovh/cds/sdk/telemetry"
+  "github.com/rockbears/log"
 )
 
 func (api *API) TriggerBlockedWorkflowRuns(ctx context.Context) {
@@ -125,6 +126,15 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	if err != nil {
 		return err
 	}
+	vcsServer, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), run.ProjectKey, run.VCSServerID)
+	if err != nil {
+		return sdk.WrapError(err, "unable to load vcs server%s", run.VCSServerID)
+	}
+
+	repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), run.RepositoryID)
+	if err != nil {
+		return sdk.WrapError(err, "unable to load repository %s", run.RepositoryID)
+	}
 
 	telemetry.Current(ctx).AddAttributes(
 		trace.StringAttribute(telemetry.TagProjectKey, run.ProjectKey),
@@ -169,6 +179,23 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	// Enqueue JOB
 	runJobs := prepareRunJobs(ctx, *proj, *run, wrEnqueue, jobsToQueue, sdk.StatusWaiting, *u)
+
+	// Compute worker model on runJobs if needed
+	wref := WorkflowRunEntityFinder{
+		run:              *run,
+		runRepo:          *repo,
+		runVcsServer:     *vcsServer,
+		workerModelCache: make(map[string]sdk.V2WorkerModel),
+		userName:         u.Username,
+		repoCache: map[string]sdk.ProjectRepository{
+			vcsServer.Name + "/" + repo.Name: *repo,
+		},
+		vcsServerCache: map[string]sdk.VCSProject{
+			vcsServer.Name: *vcsServer,
+		},
+	}
+	runJobsInfos := computeRunJobsWorkerModel(ctx, api.mustDB(), api.Cache, &wref, run, runJobs)
+
 	runJobs = append(runJobs, prepareRunJobs(ctx, *proj, *run, wrEnqueue, skippedJobs, sdk.StatusSkipped, *u)...)
 
 	tx, errTx := api.mustDB().Begin()
@@ -178,9 +205,15 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	defer tx.Rollback() // nolint
 
 	for i := range runJobs {
-		runJob := &runJobs[i]
-		if err := workflow_v2.InsertRunJob(ctx, tx, runJob); err != nil {
+		rj := &runJobs[i]
+		if err := workflow_v2.InsertRunJob(ctx, tx, rj); err != nil {
 			return err
+		}
+		if info, has := runJobsInfos[rj.JobID]; has {
+			info.WorkflowRunJobID = rj.ID
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -250,6 +283,94 @@ func prepareRunJobIntegration(proj sdk.Project, jobDef sdk.V2Job, runJob *sdk.V2
 			}
 		}
 	}
+}
+
+func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob) map[string]sdk.V2WorkflowRunJobInfo {
+	runJobInfos := make(map[string]sdk.V2WorkflowRunJobInfo)
+	for i := range runJobs {
+		rj := &runJobs[i]
+		if !strings.HasPrefix(rj.Job.RunsOn, "${{") {
+			continue
+		}
+		computeModelCtx := sdk.WorkflowRunJobsContext{
+			WorkflowRunContext: run.Contexts,
+			Matrix:             rj.Matrix,
+		}
+		bts, _ := json.Marshal(computeModelCtx)
+
+		var mapContexts map[string]interface{}
+		if err := json.Unmarshal(bts, &mapContexts); err != nil {
+			rj.Status = sdk.StatusFail
+			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				IssuedAt:      time.Now(),
+				Message:       fmt.Sprintf("Job %s: unable to build context to compute worker model: %v", rj.JobID, err),
+			}
+			continue
+		}
+
+		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+		interpolatedInput, err := ap.Interpolate(ctx, rj.Job.RunsOn)
+		if err != nil {
+			rj.Status = sdk.StatusFail
+			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    run.ID,
+				Level:            sdk.WorkflowRunInfoLevelError,
+				WorkflowRunJobID: rj.ID,
+				IssuedAt:         time.Now(),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate %s: %v", rj.JobID, rj.Job.RunsOn, err),
+			}
+			continue
+		}
+
+		model, ok := interpolatedInput.(string)
+		if !ok {
+			rj.Status = sdk.StatusFail
+			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    run.ID,
+				Level:            sdk.WorkflowRunInfoLevelError,
+				WorkflowRunJobID: rj.ID,
+				IssuedAt:         time.Now(),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate %s, it's not a string: %v", rj.JobID, rj.Job.RunsOn, interpolatedInput),
+			}
+			continue
+		}
+
+		completeName, msg, err := wref.checkWorkerModel(ctx, db, store, rj.JobID, model, rj.Region, "")
+		if err != nil {
+			rj.Status = sdk.StatusFail
+			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    run.ID,
+				Level:            sdk.WorkflowRunInfoLevelError,
+				WorkflowRunJobID: rj.ID,
+				IssuedAt:         time.Now(),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate %s, it's not a string: %v", rj.JobID, model, interpolatedInput),
+			}
+			continue
+		}
+		if msg != nil {
+			rj.Status = sdk.StatusFail
+			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    run.ID,
+				Level:            sdk.WorkflowRunInfoLevelError,
+				WorkflowRunJobID: rj.ID,
+				IssuedAt:         time.Now(),
+				Message:          msg.Message,
+			}
+			continue
+		}
+
+		if strings.HasPrefix(model, ".cds/worker-models/") {
+			log.Warn(ctx, ">>>%s %+v", completeName, wref.localWorkerModelCache)
+			rj.ModelType = wref.localWorkerModelCache[model].Type
+		} else {
+			log.Warn(ctx, ">>>%s %+v", completeName, wref.workerModelCache)
+			rj.ModelType = wref.workerModelCache[completeName].Type
+		}
+		rj.Job.RunsOn = completeName
+	}
+	return runJobInfos
 }
 
 func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, jobStatus string, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {

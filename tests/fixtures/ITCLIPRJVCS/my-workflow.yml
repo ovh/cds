@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout
         id: checkout
-      - uses: actions/ITCLIPRJVCS/my_vcs_server/gituser/myrepo/test-parent-action@master
+      - uses: .cds/actions/my-parent-action.yml
         id: customaction
       - run: echo ${{ env.myvar }}
         id: workflowEnv
