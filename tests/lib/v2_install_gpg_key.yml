@@ -35,6 +35,7 @@ steps:
         "armored_public_key" : $(cat /tmp/{{.input.gpg_key_id}}.gpg.pub.quoted)
       }
       EOF
+      cat /tmp/{{.input.gpg_key_id}}.gpg.pub.json
 
   # Get exiting gpg key for users
   - type: http
