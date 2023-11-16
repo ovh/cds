@@ -151,7 +151,7 @@ func TestPutWorkflowRun(t *testing.T) {
 	}()
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "PUT", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(2)
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(2)
 
 	vars := map[string]string{
 		"projectKey":           proj.Key,
@@ -367,7 +367,7 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
-		RunAttempt:   0,
+		RunAttempt:   1,
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
@@ -393,6 +393,7 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
+		RunAttempt:    wr.RunAttempt,
 		JobID:         sdk.RandomString(10),
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
@@ -403,7 +404,7 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		"repositoryIdentifier": repo.ID,
 		"workflow":             wr.WorkflowName,
 		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
-		"jobName":              wrj.JobID,
+		"jobIdentifier":        wrj.JobID,
 	}
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobHandler, vars)
 	test.NotEmpty(t, uri)
@@ -433,7 +434,7 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
-		RunAttempt:   0,
+		RunAttempt:   1,
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
@@ -459,6 +460,7 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
+		RunAttempt:    wr.RunAttempt,
 		JobID:         sdk.RandomString(10),
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
@@ -617,7 +619,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
-		RunAttempt:   0,
+		RunAttempt:   1,
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
@@ -643,6 +645,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
+		RunAttempt:    wr.RunAttempt,
 		JobID:         sdk.RandomString(10),
 		StepsStatus: sdk.JobStepsStatus{
 			"step1": {
@@ -691,7 +694,7 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
-		RunAttempt:   0,
+		RunAttempt:   1,
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
@@ -717,6 +720,7 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
+		RunAttempt:    wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -826,7 +830,7 @@ func TestPostStopJobHandler(t *testing.T) {
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
-		RunAttempt:   0,
+		RunAttempt:   1,
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
@@ -854,6 +858,7 @@ func TestPostStopJobHandler(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		Status:        sdk.StatusBuilding,
+		RunAttempt:    wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -863,7 +868,7 @@ func TestPostStopJobHandler(t *testing.T) {
 		"repositoryIdentifier": repo.ID,
 		"workflow":             wr.WorkflowName,
 		"runNumber":            fmt.Sprintf("%d", wr.RunNumber),
-		"jobName":              wrj.JobID,
+		"jobIdentifier":        wrj.JobID,
 	}
 	// Then Get the region
 	uri := api.Router.GetRouteV2("POST", api.postStopJobHandler, vars)
