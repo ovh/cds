@@ -14,7 +14,7 @@ jobs:
     name: This is my first job
     if: always()
     region: default
-    runs-on: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
+    runs-on: .cds/worker-models/docker-debian9.yml
     steps:
       - run: echo 'Always job'
   myFirstJob:

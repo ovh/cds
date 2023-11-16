@@ -438,7 +438,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			// Find action from path
 			localAct, has := wref.localActionsCache[step.Uses]
 			if !has {
-				actionEntity, err := entity.LoadEntityByPath(ctx, db, wref.runRepo.ID, step.Uses)
+				actionEntity, err := entity.LoadEntityByPathAndBranch(ctx, db, wref.runRepo.ID, step.Uses, wref.run.WorkflowRef)
 				if err != nil {
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: wref.run.ID,
@@ -674,7 +674,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			// Find action from path
 			localWM, has := wref.localWorkerModelCache[workerModel]
 			if !has {
-				wmEntity, err := entity.LoadEntityByPath(ctx, db, wref.runRepo.ID, workerModel)
+				wmEntity, err := entity.LoadEntityByPathAndBranch(ctx, db, wref.runRepo.ID, workerModel, wref.run.WorkflowRef)
 				if err != nil {
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: wref.run.ID,

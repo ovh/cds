@@ -362,10 +362,8 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 		}
 
 		if strings.HasPrefix(model, ".cds/worker-models/") {
-			log.Warn(ctx, ">>>%s %+v", completeName, wref.localWorkerModelCache)
 			rj.ModelType = wref.localWorkerModelCache[model].Type
 		} else {
-			log.Warn(ctx, ">>>%s %+v", completeName, wref.workerModelCache)
 			rj.ModelType = wref.workerModelCache[completeName].Type
 		}
 		rj.Job.RunsOn = completeName
