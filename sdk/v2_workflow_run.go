@@ -280,9 +280,8 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID  string   `json:"run_id"`
-	Jobs   []string `json:"jobs"`
-	UserID string   `json:"user_id"`
+	RunID  string `json:"run_id"`
+	UserID string `json:"user_id"`
 }
 
 type V2WorkflowRunInfo struct {

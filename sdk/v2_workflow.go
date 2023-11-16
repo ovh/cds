@@ -1,10 +1,9 @@
 package sdk
 
 import (
-	"fmt"
-
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 
 	"github.com/rockbears/yaml"
 	"github.com/xeipuuv/gojsonschema"
@@ -325,4 +324,15 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 		return errs
 	}
 	return nil
+}
+
+func WorkflowJobParents(w V2Workflow, jobID string) []string {
+	parents := make([]string, 0)
+	currentJob := w.Jobs[jobID]
+	for _, n := range currentJob.Needs {
+		needParents := WorkflowJobParents(w, n)
+		parents = append(parents, needParents...)
+		parents = append(parents, n)
+	}
+	return parents
 }

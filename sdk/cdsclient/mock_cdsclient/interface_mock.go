@@ -5093,6 +5093,26 @@ func (m *MockWorkflowV2Client) EXPECT() *MockWorkflowV2ClientMockRecorder {
 	return m.recorder
 }
 
+// WorkflowV2ReRun mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2ReRun(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runNumber}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2ReRun", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2ReRun indicates an expected call of WorkflowV2ReRun.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2ReRun(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runNumber interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runNumber}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2ReRun", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2ReRun), varargs...)
+}
+
 // WorkflowV2Run mocks base method.
 func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload map[string]interface{}, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -10872,6 +10892,26 @@ func (m *MockInterface) WorkflowUpdate(projectKey, name string, wf *sdk.Workflow
 func (mr *MockInterfaceMockRecorder) WorkflowUpdate(projectKey, name, wf interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowUpdate", reflect.TypeOf((*MockInterface)(nil).WorkflowUpdate), projectKey, name, wf)
+}
+
+// WorkflowV2ReRun mocks base method.
+func (m *MockInterface) WorkflowV2ReRun(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runNumber}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2ReRun", varargs...)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2ReRun indicates an expected call of WorkflowV2ReRun.
+func (mr *MockInterfaceMockRecorder) WorkflowV2ReRun(ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runNumber interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, runNumber}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2ReRun", reflect.TypeOf((*MockInterface)(nil).WorkflowV2ReRun), varargs...)
 }
 
 // WorkflowV2Run mocks base method.

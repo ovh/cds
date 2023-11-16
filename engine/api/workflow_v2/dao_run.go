@@ -99,6 +99,19 @@ func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id
 	return &result.V2WorkflowRunResult, nil
 }
 
+func LoadRunResultsByRunJobID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunResult, error) {
+	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where workflow_run_job_id = $1`).Args(runJobID)
+	var result []dbV2WorkflowRunResult
+	if err := gorpmapping.GetAll(ctx, db, query, &result); err != nil {
+		return nil, sdk.WrapError(err, "unable to load run results for run job %s", runJobID)
+	}
+	runResults := make([]sdk.V2WorkflowRunResult, 0, len(result))
+	for _, r := range result {
+		runResults = append(runResults, r.V2WorkflowRunResult)
+	}
+	return runResults, nil
+}
+
 func InsertRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2WorkflowRunResult) error {
 	entity := dbV2WorkflowRunResult{*runResult}
 	if err := gorpmapping.Insert(db, &entity); err != nil {
@@ -186,6 +199,7 @@ func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	wr.ID = sdk.UUID()
 	wr.Started = time.Now()
 	wr.LastModified = time.Now()
+	wr.RunAttempt = 1
 
 	dbWkfRun := &dbWorkflowRun{V2WorkflowRun: *wr}
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfRun); err != nil {

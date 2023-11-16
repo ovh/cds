@@ -18,6 +18,7 @@ var experimentalWorkflowCmd = cli.Command{
 func experimentalWorkflow() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowRunCmd, workflowRunFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowReRunCmd, workflowReRunFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunInfosListCmd, workflowRunInfosListFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
@@ -191,5 +192,37 @@ func workflowRunFunc(v cli.Values) error {
 		return err
 	}
 	fmt.Printf("Worflow %s #%d started", run.WorkflowName, run.RunNumber)
+	return nil
+}
+
+var workflowReRunCmd = cli.Command{
+	Name:    "rerun",
+	Short:   "Re run a new workflow",
+	Example: "cdsctl workflow run <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "proj_key"},
+		{Name: "vcs_identifier"},
+		{Name: "repo_identifier"},
+		{Name: "workflow_name"},
+		{Name: "run_number"},
+	},
+}
+
+func workflowReRunFunc(v cli.Values) error {
+	projKey := v.GetString("proj_key")
+	vcsId := v.GetString("vcs_identifier")
+	repoId := v.GetString("repo_identifier")
+	wkfName := v.GetString("workflow_name")
+	runNumber, err := v.GetInt64("run_number")
+	if err != nil {
+		return err
+	}
+
+	run, err := client.WorkflowV2ReRun(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Worflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
 	return nil
 }

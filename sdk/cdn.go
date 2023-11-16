@@ -522,3 +522,8 @@ type CDNUnitHandlerRequest struct {
 	Name    string `json:"name" cli:"name"`
 	NbItems int64  `json:"nb_items" cli:"nb_items"`
 }
+
+type CDNDuplicateItemRequest struct {
+	FromJob string `json:"from_job"`
+	ToJob   string `json:"to_job"`
+}
