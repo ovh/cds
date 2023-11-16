@@ -80,7 +80,7 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 
 		for _, link := range links.Data {
 			fileName := getFileName(rj, rj.Job.Steps[link.StepOrder].ID, link.StepOrder)
-			data, err := client.WorkflowLogDownload(context.Background(), sdk.CDNLogLink{APIRef: link.APIRef, ItemType: links.ItemType})
+			data, err := client.WorkflowLogDownload(context.Background(), sdk.CDNLogLink{APIRef: link.APIRef, ItemType: link.ItemType})
 			if err != nil {
 				if strings.Contains(err.Error(), "resource not found") {
 					continue
