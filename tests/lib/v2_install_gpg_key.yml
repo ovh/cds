@@ -62,15 +62,18 @@ steps:
     - result.statuscode ShouldEqual 204
 
   # Upload the key
-  - type: http
-    method: POST
-    url: "{{.input.git_host}}/api/v1/user/gpg_keys"
-    bodyFile: "/tmp/{{.input.gpg_key_id}}.gpg.pub.json"
-    headers:
-      Content-Type: "application/json"
-    basic_auth_user: "{{.input.git_user}}"
-    basic_auth_password: "{{.input.git_password}}"
-    assertions:
-    - result.statuscode ShouldEqual 201
+  #- type: http
+  #  method: POST
+  #  url: "{{.input.git_host}}/api/v1/user/gpg_keys"
+  #  bodyFile: "/tmp/{{.input.gpg_key_id}}.gpg.pub.json"
+  #  headers:
+  #    Content-Type: "application/json"
+  #  basic_auth_user: "{{.input.git_user}}"
+  #  basic_auth_password: "{{.input.git_password}}"
+  #  assertions:
+  #  - result.statuscode ShouldEqual 201
+
+  - script: 'curl --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
+
 
 output: {}
