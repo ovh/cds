@@ -188,7 +188,7 @@ mainLoop:
 			jobs, err := workflow.LoadAndLockTerminatedNodeJobRun(ctx, tx, limit)
 			if err != nil {
 				log.Error(ctx, "WorkflowRunJobDeletion> unable to start tx: %v", err)
-				tx.Rollback()
+				_ = tx.Rollback()
 				continue
 			}
 			for i := range jobs {
@@ -196,7 +196,7 @@ mainLoop:
 				node, err := workflow.LoadNodeRunByID(ctx, tx, j.WorkflowNodeRunID, workflow.LoadRunOptions{})
 				if err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to load NodeRun %d", j.WorkflowNodeRunID))
-					tx.Rollback()
+					_ = tx.Rollback()
 					continue mainLoop
 				}
 
@@ -206,13 +206,13 @@ mainLoop:
 
 				if err := workflow.DeleteNodeJobRun(tx, j.ID); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to delete WorkflowNodeJobRun %d", j.ID))
-					tx.Rollback()
+					_ = tx.Rollback()
 					continue mainLoop
 				}
 			}
 			if err := tx.Commit(); err != nil {
 				log.Error(ctx, "WorkflowRunJobDeletion> unable to commit tx: %v", err)
-				tx.Rollback()
+				_ = tx.Rollback()
 				continue
 			}
 		}
