@@ -2,7 +2,7 @@
 
 @import "common";
 
-@import "~@fontsource/lato/scss/mixins";
+@import "@fontsource/lato/scss/mixins";
 
 @include fontFace($style: italic, $weight: 400);
 

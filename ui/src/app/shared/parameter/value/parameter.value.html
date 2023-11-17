@@ -58,9 +58,11 @@
             placeholder="{{'parameter_git_url' | translate }}">
     </ng-container>
     <div *ngSwitchDefault>
-        <input nz-input auto-complete autocomplete="off" type="text" [(ngModel)]="editableValue" (change)="valueChanged()"
-            (keydown)="sendValueChanged()" name="value" [source]="suggest" [min-chars]="3"
-            [no-match-found-text]="false">
+        <input nz-input [nzAutocomplete]="auto" type="text" [(ngModel)]="editableValue" (change)="valueChanged()"
+            (keydown)="sendValueChanged()" name="value" (ngModelChange)="onInput($event)">
+        <nz-autocomplete nzBackfill #auto>
+            <nz-auto-option *ngFor="let option of suggestFiltered" [nzValue]="option">{{ option }}</nz-auto-option>
+        </nz-autocomplete>
     </div>
 </ng-container>
 <ng-container [ngSwitch]="type" *ngIf="!edit">

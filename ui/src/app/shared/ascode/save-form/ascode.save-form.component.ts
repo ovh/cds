@@ -27,6 +27,7 @@ export class AsCodeSaveFormComponent implements OnInit, OnDestroy {
     selectedBranch: string;
     commitMessage: string;
     branches: Array<string>;
+    branchesFiltered: string[];
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -54,6 +55,7 @@ export class AsCodeSaveFormComponent implements OnInit, OnDestroy {
             .subscribe(vcsinfos => {
                 if (vcsinfos && vcsinfos.branches) {
                     this.branches = vcsinfos.branches.filter(b => !b.default).map(b => b.display_id);
+                    this._cd.markForCheck();
                 }
             });
     }
@@ -63,5 +65,15 @@ export class AsCodeSaveFormComponent implements OnInit, OnDestroy {
             branch_name: this.selectedBranch,
             commit_message: this.commitMessage
         });
+    }
+
+    onInput(event: Event): void {
+        const value = (event.target as HTMLInputElement).value;
+        if (value.length < 3) {
+            this.branchesFiltered = [];
+        } else {
+            this.branchesFiltered = this.branches.filter(b => b.indexOf(value) === 0)
+        }
+        this._cd.markForCheck();
     }
 }

@@ -94,6 +94,7 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
     themeSubscription: Subscription;
     _keys: AllKeys;
     allKeys: Key[];
+    suggestFiltered: string[];
 
     constructor(
         private _repoManagerService: RepoManagerService,
@@ -222,6 +223,14 @@ export class ParameterValueComponent implements OnInit, AfterViewChecked, OnDest
                 }, () => {
                     this.loadingRepos = false;
                 });
+        }
+    }
+
+    onInput(value: string): void {
+        if (value.indexOf("{{") === 0) {
+            this.suggestFiltered = this.suggest.filter(s => s.indexOf(value) === 0);
+        } else {
+            this.suggestFiltered = [];
         }
     }
 

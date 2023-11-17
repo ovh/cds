@@ -42,6 +42,5 @@ const routes: Routes = [
 
 export const routing: ModuleWithProviders<AppModule> = RouterModule.forRoot(routes, {
     initialNavigation: 'enabledNonBlocking',
-    preloadingStrategy: PreloadAllModules,
-    relativeLinkResolution: 'legacy'
+    preloadingStrategy: PreloadAllModules
 });
