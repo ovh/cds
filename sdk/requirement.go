@@ -21,6 +21,8 @@ const (
 	RegionRequirement = "region"
 	// SecretRequirement is needed to ask for a project's secret when it's not automatically injected (ex: when using SkipProjectSecretsOnRegion)
 	SecretRequirement = "secret"
+	// FlavorRequirement set flavor for a virtual machine
+	FlavorRequirement = "flavor"
 )
 
 // RequirementList is a list of requirement
@@ -113,6 +115,7 @@ var (
 		RegionRequirement,
 		ServiceRequirement,
 		SecretRequirement,
+		FlavorRequirement,
 	}
 
 	// OSArchRequirementValues comes from go tool dist list

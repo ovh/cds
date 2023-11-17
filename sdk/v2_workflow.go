@@ -23,6 +23,7 @@ type V2Workflow struct {
 	On         *WorkflowOn              `json:"-" yaml:"-"`
 	Stages     map[string]WorkflowStage `json:"stages,omitempty"`
 	Jobs       map[string]V2Job         `json:"jobs"`
+	Env        map[string]string        `json:"env,omitempty"`
 }
 
 type WorkflowOn struct {
@@ -154,6 +155,7 @@ type V2Job struct {
 	RunsOn          string             `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split"`
 	Strategy        *V2JobStrategy     `json:"strategy,omitempty" jsonschema_extras:"order=7"`
 	Integrations    *V2JobIntegrations `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
+	Env             map[string]string  `json:"env,omitempty"  jsonschema_extras:"order=11,mode=edit" jsonschema_description:"Environment variable available in the job"`
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`

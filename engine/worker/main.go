@@ -29,9 +29,9 @@ func main() {
 		}
 	} else {
 		cmd.AddCommand(cmdRegister())
-		// last command: doc, this command is hidden
-		cmd.AddCommand(cmdDoc(cmd))
 	}
+  // last command: doc, this command is hidden
+	cmd.AddCommand(cmdDoc(cmd))
 
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
