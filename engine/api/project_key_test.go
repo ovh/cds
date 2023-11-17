@@ -31,7 +31,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	if err != nil {
 		t.Fatal(err)
 	}

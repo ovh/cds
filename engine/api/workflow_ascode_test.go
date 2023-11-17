@@ -1200,7 +1200,7 @@ hooks:
 	// Import Application
 	var eapp exportentities.Application
 	require.NoError(t, err, yaml.Unmarshal([]byte(app), &eapp))
-	appDB, _, _, err := application.ParseAndImport(context.TODO(), db, api.Cache, *proj, &eapp, application.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"}, nil, u)
+	appDB, _, _, err := application.ParseAndImport(context.TODO(), db, api.Cache, *proj, &eapp, application.ImportOptions{Force: true, FromRepository: "https://github.com/fsamin/go-repo.git"}, nil, u, nil)
 	require.NoError(t, err)
 	require.Equal(t, appDB.FromRepository, "https://github.com/fsamin/go-repo.git")
 
@@ -1222,7 +1222,7 @@ hooks:
 	c := sdk.AuthUserConsumer{
 		AuthConsumerUser: sdk.AuthUserConsumerData{AuthentifiedUser: u},
 	}
-	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, c, project.DecryptWithBuiltinKey)
+	_, _, err = workflow.CreateFromRepository(context.TODO(), api.mustDB(), api.Cache, proj, workflowInserted, opts, c, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 	require.NoError(t, err)
 }
 

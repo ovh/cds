@@ -241,9 +241,10 @@ type Configuration struct {
 		CustomServiceJobBookDelay map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery (in seconds)" json:"customServiceJobBookDelay" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	Project struct {
-		CreationDisabled      bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
-		InfoCreationDisabled  string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
-		VCSManagementDisabled bool   `toml:"vcsManagementDisabled" comment:"Disable VCS management on project for CDS non admin users." json:"vcsManagementDisabled" default:"false" commented:"true"`
+		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
+		InfoCreationDisabled       string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
+		VCSManagementDisabled      bool   `toml:"vcsManagementDisabled" comment:"Disable VCS management on project for CDS non admin users." json:"vcsManagementDisabled" default:"false" commented:"true"`
+		GPGKeyEmailAddressTemplate string `toml:"gpgKeyEmailAddressTemplate" comment:"Template for GPG Keys email address" json:"gpgKeyEmailAddressTemplate" default:"noreply+cds-{{.ProjectKey}}-{{.KeyName}}@localhost.local" commented:"true"`
 	} `toml:"project" comment:"######################\n 'Project' global configuration \n######################" json:"project"`
 	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
 	VCS      struct {
@@ -376,7 +377,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 
 	if ok, err := sdk.DirectoryExists(aConfig.Download.Directory); !ok {
 		if err := os.MkdirAll(aConfig.Download.Directory, os.FileMode(0700)); err != nil {
-			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Download.Directory, err)
+			return fmt.Errorf("unable to create directory %s: %v", aConfig.Download.Directory, err)
 		}
 		log.Info(context.Background(), "Directory %s has been created", aConfig.Download.Directory)
 	} else if err != nil {
@@ -395,7 +396,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		}
 		if ok, err := sdk.DirectoryExists(aConfig.Artifact.Local.BaseDirectory); !ok {
 			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0700)); err != nil {
-				return fmt.Errorf("Unable to create directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
+				return fmt.Errorf("unable to create directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 			}
 			log.Info(context.Background(), "Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
 		} else if err != nil {
@@ -411,7 +412,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if (aConfig.DefaultOS == "" && aConfig.DefaultArch != "") || (aConfig.DefaultOS != "" && aConfig.DefaultArch == "") {
-		return fmt.Errorf("You can't specify just defaultArch without defaultOS in your configuration and vice versa")
+		return fmt.Errorf("you can't specify just defaultArch without defaultOS in your configuration and vice versa")
 	}
 
 	if aConfig.Auth.RSAPrivateKey == "" && len(aConfig.Auth.RSAPrivateKeys) == 0 {

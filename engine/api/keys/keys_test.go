@@ -35,7 +35,7 @@ func TestGenerateSSHKeyPair(t *testing.T) {
 }
 
 func TestGenerateGPGKeyPair(t *testing.T) {
-	k, err := GeneratePGPKeyPair("mykey")
+	k, err := GeneratePGPKeyPair("mykey", "this is a test key", "email@localhost.local")
 	if err != nil {
 		t.Fatalf("cannot generate keypair: %s\n", err)
 	}

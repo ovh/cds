@@ -23,7 +23,7 @@ type ImportOptions struct {
 }
 
 // ParseAndImport parse an exportentities.Application and insert or update the application in database
-func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, proj sdk.Project, eapp *exportentities.Application, opts ImportOptions, decryptFunc keys.DecryptFunc, u sdk.Identifiable, emailFunc keys.EmailFunc) (*sdk.Application, []sdk.Variable, []sdk.Message, error) {
 	log.Info(ctx, "ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, opts.Force)
 	msgList := []sdk.Message{}
 
@@ -124,7 +124,15 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 			keepOldValue = true
 		}
 
-		kk, err := keys.Parse(ctx, db, proj.ID, kname, kval, decryptFunc)
+		var gpgEmail string
+		if kval.Type == sdk.KeyPGPParameter {
+			gpgEmail, err = emailFunc(ctx, proj.Key, kname)
+			if err != nil {
+				return app, nil, msgList, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
+			}
+		}
+
+		kk, err := keys.Parse(ctx, db, proj.ID, kname, kval, decryptFunc, gpgEmail)
 		if err != nil {
 			return app, nil, msgList, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to parse key %s", kname)
 		}
