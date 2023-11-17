@@ -2,27 +2,27 @@ package api
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/api/link"
-	"github.com/ovh/cds/engine/api/organization"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/rockbears/log"
-	"github.com/stretchr/testify/require"
-
 	"github.com/ovh/cds/engine/api/authentication/builtin"
 	"github.com/ovh/cds/engine/api/authentication/local"
 	authdrivertest "github.com/ovh/cds/engine/api/authentication/test"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/link"
+	"github.com/ovh/cds/engine/api/organization"
 	apiTest "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+
+	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, *Router) {
@@ -63,7 +63,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 		// Clean all the pending crafting workflow runs
 		lockKey := cache.Key("api:workflowRunCraft")
 		require.NoError(t, store.DeleteAll(lockKey))
-		ids, _ := workflow.LoadCratingWorkflowRunIDs(api.mustDB())
+		ids, _ := workflow.LoadCraftingWorkflowRunIDs(api.mustDB())
 		for _, id := range ids {
 			require.NoError(t, workflow.UpdateCraftedWorkflowRun(api.mustDB(), id))
 		}
