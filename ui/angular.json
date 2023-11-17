@@ -211,7 +211,6 @@
       "projectType": "application"
     }
   },
-  "defaultProject": "ui-ng2",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
@@ -220,5 +219,8 @@
     "@schematics/angular:directive": {
       "prefix": "app"
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }
