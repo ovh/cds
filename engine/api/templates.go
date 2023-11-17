@@ -429,7 +429,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			return service.Write(w, buf, http.StatusOK, "application/tar")
 		}
 
-		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
+		msgs, wkf, oldWkf, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 		if err != nil {
 			return sdk.WrapError(err, "cannot push generated workflow")
 		}

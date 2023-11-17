@@ -46,7 +46,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 		Type:          sdk.KeyTypePGP,
 		EnvironmentID: env.ID,
 	}
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	test.NoError(t, err)
 
 	k.Public = kpgp.Public

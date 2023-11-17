@@ -1271,7 +1271,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, w
 
 // Push push a workflow from cds files
 func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, data exportentities.WorkflowComponents,
-	opts *PushOption, consumer *sdk.AuthUserConsumer, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
+	opts *PushOption, consumer *sdk.AuthUserConsumer, decryptFunc keys.DecryptFunc, emailFunc keys.EmailFunc) ([]sdk.Message, *sdk.Workflow, *sdk.Workflow, *PushSecrets, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.Push")
 	defer end()
 	if data.Workflow == nil {
@@ -1327,7 +1327,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		EnvironmentdSecrets: make(map[int64][]sdk.Variable),
 	}
 	for _, app := range data.Applications {
-		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
+		appDB, appSecrets, msgList, err := application.ParseAndImport(ctx, tx, store, *proj, &app, application.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer, emailFunc)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
 			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import application %s/%s", proj.Key, app.Name)
@@ -1337,7 +1337,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	}
 
 	for _, env := range data.Environments {
-		envDB, envsSecrets, msgList, err := environment.ParseAndImport(ctx, tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer)
+		envDB, envsSecrets, msgList, err := environment.ParseAndImport(ctx, tx, *proj, env, environment.ImportOptions{Force: true, FromRepository: fromRepo}, decryptFunc, consumer, emailFunc)
 		allMsg = append(allMsg, msgList...)
 		if err != nil {
 			return allMsg, nil, nil, nil, sdk.ErrorWithFallback(err, sdk.ErrWrongRequest, "unable to import environment %s/%s", proj.Key, env.Name)

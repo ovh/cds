@@ -157,7 +157,7 @@ func Insert(db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) error {
 	}
 	*proj = sdk.Project(dbProj)
 
-	k, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
+	k, err := keys.GeneratePGPKeyPair(BuiltinGPGKey, "builtin gpg key", proj.Name+"-builtin"+"@cds")
 	if err != nil {
 		return sdk.WrapError(err, "Unable to generate PGPKeyPair: %v", err)
 	}

@@ -111,7 +111,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
@@ -219,7 +219,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
@@ -383,7 +383,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		ApplicationID: app.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k1.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k1.Name, "", "test@cds")
 	require.NoError(t, err)
 	k1.Public = kpgp.Public
 	k1.Private = kpgp.Private

@@ -334,7 +334,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, consumer, project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, oldWrkflw, _, err := workflow.Push(ctx, db, api.Cache, proj, data, pushOptions, consumer, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return err

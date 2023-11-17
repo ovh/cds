@@ -1798,7 +1798,7 @@ vcs_ssh_key: proj-blabla
 `
 	var eapp = new(exportentities.Application)
 	assert.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u)
+	app, _, _, globalError := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{Force: true}, nil, u, nil)
 	assert.NoError(t, globalError)
 
 	proj.Applications = append(proj.Applications, *app)
@@ -2067,7 +2067,7 @@ vcs_ssh_key: proj-blabla`
 
 	var eapp = new(exportentities.Application)
 	require.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u)
+	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u, nil)
 	require.NotNil(t, app)
 	require.NoError(t, err)
 
@@ -2080,7 +2080,7 @@ values:
 
 	var eEnv = new(exportentities.Environment)
 	require.NoError(t, yaml.Unmarshal([]byte(envS), eEnv))
-	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u)
+	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u, nil)
 	require.NotNil(t, env)
 	require.NoError(t, err)
 
@@ -2262,7 +2262,7 @@ vcs_ssh_key: proj-blabla`
 
 	var eapp = new(exportentities.Application)
 	require.NoError(t, yaml.Unmarshal([]byte(appS), eapp))
-	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u)
+	app, _, _, err := application.ParseAndImport(context.Background(), db, cache, *proj, eapp, application.ImportOptions{FromRepository: "from/my-repo"}, nil, u, nil)
 	require.NotNil(t, app)
 	require.NoError(t, err)
 
@@ -2275,7 +2275,7 @@ values:
 
 	var eEnv = new(exportentities.Environment)
 	require.NoError(t, yaml.Unmarshal([]byte(envS), eEnv))
-	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u)
+	env, _, _, err := environment.ParseAndImport(ctx, db, *proj, *eEnv, environment.ImportOptions{FromRepository: "from/my-repo"}, project.DecryptWithBuiltinKey, u, nil)
 	require.NotNil(t, env)
 	require.NoError(t, err)
 
