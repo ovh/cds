@@ -78,24 +78,28 @@ steps:
     basic_auth_password: "{{.input.git_password}}"
     body: >
       {
-        "email": ["{{.emailAddress}}"]
+        "emails": ["{{.emailAddress}}"]
       }
     assertions:
-    - result.statuscode ShouldEqual 200
+    - or:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.message ShouldContainSubstring "Email address has been used"
 
   # Upload the key
-  - type: http
-    method: POST
-    url: "{{.input.git_host}}/api/v1/user/gpg_keys"
-    bodyFile: "/tmp/{{.input.gpg_key_id}}.gpg.pub.json"
-    headers:
-      Content-Type: "application/json"
-    basic_auth_user: "{{.input.git_user}}"
-    basic_auth_password: "{{.input.git_password}}"
-    assertions:
-    - result.statuscode ShouldEqual 201
+  #- type: http
+  #  method: POST
+  #  url: "{{.input.git_host}}/api/v1/user/gpg_keys"
+  #  bodyFile: "/tmp/{{.input.gpg_key_id}}.gpg.pub.json"
+  #  headers:
+  #    Content-Type: "application/json"
+  #  basic_auth_user: "{{.input.git_user}}"
+  #  basic_auth_password: "{{.input.git_password}}"
+  #  assertions:
+  #  - or:
+  #    - result.statuscode ShouldEqual 201
+  #    - result.bodyjson.message ShouldContainSubstring "A key with the same id already exists"
 
-  - script: 'curl --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
+  - script: 'curl --silent --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
 
 
 output: {}

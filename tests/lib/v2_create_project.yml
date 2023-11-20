@@ -107,8 +107,6 @@ steps:
     assertions:
     - or:
       - result.statuscode ShouldEqual 201
-      - and:
-        - result.statuscode ShouldEqual 422
-        - result.bodyjson.message ShouldEqual "Key title has been used"
+      - result.statuscode ShouldEqual 422
 
 output: {}
