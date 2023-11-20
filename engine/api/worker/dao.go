@@ -149,7 +149,7 @@ func SetStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx, workerID st
 		return err
 	}
 	w.Status = status
-	if status == sdk.StatusBuilding || status == sdk.StatusWaiting {
+	if status == sdk.StatusBuilding || status == sdk.StatusWaiting || status == sdk.StatusDisabled {
 		w.JobRunID = nil
 	}
 	dbData := &dbWorker{Worker: *w}
