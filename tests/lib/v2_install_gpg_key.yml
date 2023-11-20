@@ -62,7 +62,8 @@ steps:
     - result.statuscode ShouldEqual 204
 
   # Get the email address associated with the gpg key
-  - script: "gpg --list-secret-keys | grep {{.input.gpg_key_id}} -A 1 | tail -n 1 | grep --only-matching --extended-regexp "<(.*)>" | head -n 1 | cut -c2- | rev | cut -c2- | rev"
+  - script: >
+      gpg --list-secret-keys | grep {{.input.gpg_key_id}} -A 1 | tail -n 1 | grep --only-matching --extended-regexp "<.*>" | head -n 1 | cut -c2- | rev | cut -c2- | rev
     vars:
       emailAddress:
         from: result.systemout
@@ -83,16 +84,16 @@ steps:
     - result.statuscode ShouldEqual 200
 
   # Upload the key
-  #- type: http
-  #  method: POST
-  #  url: "{{.input.git_host}}/api/v1/user/gpg_keys"
-  #  bodyFile: "/tmp/{{.input.gpg_key_id}}.gpg.pub.json"
-  #  headers:
-  #    Content-Type: "application/json"
-  #  basic_auth_user: "{{.input.git_user}}"
-  #  basic_auth_password: "{{.input.git_password}}"
-  #  assertions:
-  #  - result.statuscode ShouldEqual 201
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/gpg_keys"
+    bodyFile: "/tmp/{{.input.gpg_key_id}}.gpg.pub.json"
+    headers:
+      Content-Type: "application/json"
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    assertions:
+    - result.statuscode ShouldEqual 201
 
   - script: 'curl --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
 
