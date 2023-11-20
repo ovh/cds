@@ -37,6 +37,10 @@ testcases:
     git_host: "{{.git.host}}"
     git_user: "{{.git.user}}"
     git_password: "{{.git.password}}"
+    vars:
+      emailAddress:
+        from: result.emailAddress
+
 
 - name: Push workflow file
   steps:
@@ -44,6 +48,7 @@ testcases:
     git_repo: "{{.git_repo}}"
     git_host: "{{.git.host}}"
     git_user: "{{.git.user}}"
+    git_email: "{{.emailAddress}}"
     git_password: "{{.git.password}}"
     gpg_key_id: "{{.gpg.key_id}}"
     files:
