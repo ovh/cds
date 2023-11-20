@@ -114,7 +114,7 @@ export class VariableComponent {
             nzWidth: '900px',
             nzTitle: 'Variable audit',
             nzContent: VariableAuditComponent,
-            nzComponentParams: {
+            nzData: {
                 audits: audits
             }
         });

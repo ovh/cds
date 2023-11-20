@@ -7,7 +7,7 @@ import {
     OnInit,
     Output
 } from '@angular/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -36,7 +36,6 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
 
 
     workflowrun: WorkflowRun;
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;
 
     noderun: WorkflowNodeRun;
@@ -60,7 +59,7 @@ export class WorkflowWNodeMenuEditComponent implements OnInit, OnDestroy {
         this.node = state.node;
 
 
-        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+        this.workflowRunSub = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr) {
                return;
             }

@@ -1,6 +1,6 @@
 
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { FetchApplication } from 'app/store/applications.action';
@@ -11,7 +11,7 @@ import { catchError, flatMap } from 'rxjs/operators';
 
 
 @Injectable()
-export class ApplicationResolver implements Resolve<Application> {
+export class ApplicationResolver  {
 
     constructor(private store: Store) { }
 
@@ -26,7 +26,7 @@ export class ApplicationResolver implements Resolve<Application> {
 }
 
 @Injectable()
-export class ApplicationQueryParamResolver implements Resolve<Application> {
+export class ApplicationQueryParamResolver  {
 
     constructor(private store: Store) { }
 

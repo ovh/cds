@@ -268,7 +268,7 @@ export class EnvironmentShowComponent implements OnInit, OnDestroy {
                 nzWidth: '900px',
                 nzTitle: 'Save environment as code',
                 nzContent: AsCodeSaveModalComponent,
-                nzComponentParams: {
+                nzData: {
                     dataToSave: this.environment,
                     dataType: 'environment',
                     project: this.project,

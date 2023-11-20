@@ -5,9 +5,9 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es5",
+    "target": "es2022",
     "lib": [
-      "es2016",
+      "ES2022",
       "dom"
     ],
     "outDir": "../out-tsc/app",
@@ -18,7 +18,8 @@
         "../node_modules/url"
       ],
     },
-    "types": []
+    "types": [],
+    "allowSyntheticDefaultImports": true,
   },
   "include": [
     "**/*.ts",

@@ -272,7 +272,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 nzWidth: '900px',
                 nzTitle: 'Save application as code',
                 nzContent: AsCodeSaveModalComponent,
-                nzComponentParams: {
+                nzData: {
                     dataToSave: this.application,
                     dataType: 'application',
                     project: this.project,

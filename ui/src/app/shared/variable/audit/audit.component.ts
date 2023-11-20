@@ -1,6 +1,11 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, Input} from '@angular/core';
 import { VariableAudit } from 'app/model/variable.model';
 import { Table } from 'app/shared/table/table';
+import {NZ_MODAL_DATA, NzModalRef} from "ng-zorro-antd/modal";
+
+interface IModalData {
+    audits: Array<VariableAudit>;
+}
 
 @Component({
     selector: 'app-variable-audit',
@@ -10,7 +15,7 @@ import { Table } from 'app/shared/table/table';
 })
 export class VariableAuditComponent extends Table<VariableAudit> {
 
-    @Input() audits: Array<VariableAudit>;
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor() {
         super();
@@ -18,6 +23,6 @@ export class VariableAuditComponent extends Table<VariableAudit> {
     }
 
     getData(): Array<VariableAudit> {
-        return this.audits;
+        return this.nzModalData.audits;
     }
 }
