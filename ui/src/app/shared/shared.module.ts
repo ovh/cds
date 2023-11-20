@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
@@ -213,7 +212,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         CodemirrorModule,
         ReactiveFormsModule,
         MarkdownModule.forRoot(),
-        NguiAutoCompleteModule,
         RouterModule,
         InfiniteScrollModule,
         NgxChartsModule
