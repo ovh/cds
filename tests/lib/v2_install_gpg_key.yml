@@ -61,6 +61,27 @@ steps:
     assertions:
     - result.statuscode ShouldEqual 204
 
+  # Get the email address associated with the gpg key
+  script: "gpg --list-secret-keys | grep {{.input.gpg_key_id}} -A 1 | tail -n 1 | grep --only-matching --extended-regexp "<(.*)>" | head -n 1 | cut -c2- | rev | cut -c2- | rev"
+  vars:
+    emailAddress:
+      from: result.systemout
+
+  # Add the emailAddress on the gitea user
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/emails"
+    headers:
+      Content-Type: application/json
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    body: >
+      {
+        "email": ["{{.emailAddress}}"]
+      }
+    assertions:
+    - result.statuscode ShouldEqual 200
+
   # Upload the key
   #- type: http
   #  method: POST
