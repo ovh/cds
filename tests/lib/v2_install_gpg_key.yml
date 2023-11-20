@@ -82,7 +82,7 @@ steps:
       }
     assertions:
     - or:
-      - result.statuscode ShouldEqual 200
+      - result.statuscode ShouldEqual 201
       - result.bodyjson.message ShouldContainSubstring "Email address has been used"
 
   # Upload the key
