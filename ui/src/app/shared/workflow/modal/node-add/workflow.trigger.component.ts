@@ -67,7 +67,6 @@ export class WorkflowTriggerComponent implements OnInit {
     selectedType: string;
     isParent: boolean;
 
-    readonly #modal = inject(NzModalRef);
     readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor(private _pipService: PipelineService, private _store: Store, private _toast: ToastService, private _modal: NzModalRef,

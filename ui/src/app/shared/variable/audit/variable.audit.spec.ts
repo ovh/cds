@@ -7,6 +7,7 @@ import {VariableAudit} from '../../../model/variable.model';
 import {SharedModule} from '../../shared.module';
 import {VariableAuditComponent} from './audit.component';
 import {NgxsModule} from "@ngxs/store";
+import {NZ_MODAL_DATA, NzModalModule, NzModalRef, NzModalService} from "ng-zorro-antd/modal";
 
 describe('CDS: Variable Audit Component', () => {
 
@@ -15,6 +16,20 @@ describe('CDS: Variable Audit Component', () => {
             declarations: [
             ],
             providers: [
+                {
+                    provide: NzModalRef,
+                    useValue: {
+                        getInstance: () => {
+                            return {
+                                setFooterWithTemplate: () => {}
+                            };
+                        }
+                    }
+                },
+                {
+                    provide: NZ_MODAL_DATA,
+                    useValue: {}
+                },
                 SharedService,
                 TranslateService,
                 TranslateLoader,

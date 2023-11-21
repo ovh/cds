@@ -37,7 +37,6 @@ export class WorkflowDeleteNodeComponent implements OnInit {
     deleteAll = 'only';
     isRoot = false;
 
-    readonly #modal = inject(NzModalRef);
     readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor(public _modal: NzModalRef, private _store: Store, private _cd: ChangeDetectorRef,

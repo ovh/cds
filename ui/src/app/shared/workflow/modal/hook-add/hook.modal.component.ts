@@ -47,7 +47,6 @@ export class WorkflowHookModalComponent implements OnInit, OnDestroy {
         this.editMode = this._store.selectSnapshot(WorkflowState).editMode;
     }
 
-    readonly #modal = inject(NzModalRef);
     readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     ngOnInit() {

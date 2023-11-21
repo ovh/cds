@@ -17,7 +17,7 @@ export class VariableAuditComponent extends Table<VariableAudit> {
 
     readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
-    constructor() {
+    constructor(private _modal: NzModalRef) {
         super();
         this.nbElementsByPage = 8;
     }
