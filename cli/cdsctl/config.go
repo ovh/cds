@@ -79,10 +79,10 @@ func loadConfig(cmd *cobra.Command) (string, *cdsclient.Config, error) {
 
 		if contextName != "" {
 			if cdsctx, err = internal.GetContext(f, contextName); err != nil {
-				return "", nil, cli.NewError("unable to load the current context from %s", contextName)
+				return "", nil, cli.NewError("unable to load the current context name %s", contextName)
 			}
 		} else if cdsctx, err = internal.GetCurrentContext(f); err != nil {
-			return "", nil, cli.NewError("unable to load the current context from %s", configFile)
+			return "", nil, cli.NewError("unable to load the current context file %s err:%v", configFile, err)
 		}
 
 		if verbose {

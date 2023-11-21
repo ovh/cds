@@ -31,11 +31,11 @@ testcases:
     - result.err ShouldEqual ""
     vars:
       md5sum_fixtures_template_simple_workflow-detached_first-environment:
-        from: result.md5sum.fixtures_template_simple_workflow-detached_first-environment.env.yml
+        from: result.md5sum.fixtures_template_simple_workflow-detached_First-environment.env.yml
       md5sum_fixtures_template_simple_workflow-detached_first-pipeline:
-        from: result.md5sum.fixtures_template_simple_workflow-detached_first-pipeline.pip.yml
+        from: result.md5sum.fixtures_template_simple_workflow-detached_First-pipeline.pip.yml
       md5sum_fixtures_template_simple_workflow-detached_second-pipeline:
-        from: result.md5sum.fixtures_template_simple_workflow-detached_second-pipeline.pip.yml
+        from: result.md5sum.fixtures_template_simple_workflow-detached_Second-pipeline.pip.yml
       md5sum_fixtures_template_simple_workflow-detached_itcliwkf:
         from: result.md5sum.fixtures_template_simple_workflow-detached_itcliwkf.yml
 
