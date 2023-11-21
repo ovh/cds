@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { TestBed, tick, fakeAsync, flush } from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
@@ -59,7 +57,6 @@ describe('CDS: Requirement Form Component', () => {
 
         let compiled = fixture.debugElement.nativeElement;
         spyOn(fixture.componentInstance.event, 'emit');
-        console.log(compiled);
         compiled.querySelector('button[name="addBtn"]').click();
 
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(new RequirementEvent('add', r));

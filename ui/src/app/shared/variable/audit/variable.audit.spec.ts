@@ -6,6 +6,7 @@ import {SharedService} from '../../shared.service';
 import {VariableAudit} from '../../../model/variable.model';
 import {SharedModule} from '../../shared.module';
 import {VariableAuditComponent} from './audit.component';
+import {NgxsModule} from "@ngxs/store";
 
 describe('CDS: Variable Audit Component', () => {
 
@@ -23,7 +24,8 @@ describe('CDS: Variable Audit Component', () => {
             imports : [
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                NgxsModule.forRoot()
             ]
         }).compileComponents();
 
