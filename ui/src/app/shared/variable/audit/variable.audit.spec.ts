@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {TestBed, fakeAsync, tick} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
@@ -36,7 +35,7 @@ describe('CDS: Variable Audit Component', () => {
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        fixture.componentInstance.audits = new Array<VariableAudit>();
+        fixture.componentInstance.nzModalData.audits = new Array<VariableAudit>();
         let vac = new VariableAudit();
         vac.type = 'add';
 
