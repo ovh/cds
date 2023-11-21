@@ -37,7 +37,7 @@ testcases:
       md5sum_fixtures_template_simple_workflow-detached_second-pipeline:
         from: result.md5sum.fixtures_template_simple_workflow-detached_Second-pipeline.pip.yml
       md5sum_fixtures_template_simple_workflow-detached_itcliwkf:
-        from: result.md5sum.fixtures_template_simple_workflow-detached_itcliwkf.yml
+        from: result.md5sum.fixtures_template_simple_workflow-detached_ITCLIWKF.yml
 
 - name: compare generated files with source
   steps:
