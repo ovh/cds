@@ -16,7 +16,8 @@ jobs:
     region: default
     runs-on: ITCLIPRJVCS/my_vcs_server/gituser/myrepo/docker-debian@master
     steps:
-      - run: echo 'Always job'
+      - run: echo "I am ${CDS_JOB}"
+        id: mystep
   myFirstJob:
     name: This is my first job
     if: cds.workflow == 'MyFirstWorkflow'

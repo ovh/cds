@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -310,7 +311,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 				opts[k] = vString
 			}
 		}
-		return w.runPlugin(ctx, actionPath[0], opts)
+		return w.runPlugin(ctx, actionPath[0], opts, nil)
 	case 5:
 		for stepIndex, step := range w.actions[name].Runs.Steps {
 			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, actionContext)
@@ -352,13 +353,17 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 	if !ok {
 		return w.failJob(ctx, fmt.Sprintf("interpolated script content is not a string. Got %T", interpolatedInput))
 	}
+	env, err := w.GetEnvVariable(runJobContext)
+	if err != nil {
+		return w.failJob(ctx, fmt.Sprintf("%v", err))
+	}
 	return w.runPlugin(ctx, "script", map[string]string{
 		"content": contentString,
-	})
+	}, env)
 }
 
-func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string) sdk.V2WorkflowRunJobResult {
-	pluginClient, err := w.pluginFactory.NewClient(ctx, w, plugin.TypeAction, pluginName, plugin.InputManagementStrict)
+func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string, env map[string]string) sdk.V2WorkflowRunJobResult {
+	pluginClient, err := w.pluginFactory.NewClient(ctx, w, plugin.TypeAction, pluginName, plugin.InputManagementStrict, env)
 	if pluginClient != nil {
 		defer pluginClient.Close(ctx)
 	}
@@ -424,4 +429,46 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		actionContext.Inputs[k] = interpolatedInput
 	}
 	return actionContext, nil
+}
+
+func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map[string]string, error) {
+	newEnvVar := make(map[string]string)
+
+	var mapCDS map[string]interface{}
+	btsCDS, _ := json.Marshal(contexts.CDS)
+	if err := json.Unmarshal(btsCDS, &mapCDS); err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal cds context: %v", err)
+	}
+	for k, v := range mapCDS {
+		switch reflect.ValueOf(v).Kind() {
+		case reflect.Map, reflect.Slice:
+			s, _ := json.Marshal(v)
+			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = string(s)
+		default:
+			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = fmt.Sprintf("%q", v)
+		}
+
+	}
+
+	var mapGIT map[string]interface{}
+	btsGIT, _ := json.Marshal(contexts.Git)
+	if err := json.Unmarshal(btsGIT, &mapGIT); err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal git context")
+	}
+	for k, v := range mapGIT {
+		newEnvVar[fmt.Sprintf("GIT_%s", strings.ToUpper(k))] = fmt.Sprintf("%q", v)
+	}
+
+	var mapEnv map[string]interface{}
+	btsEnv, _ := json.Marshal(contexts.Env)
+	if err := json.Unmarshal(btsEnv, &mapEnv); err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal env context")
+	}
+	for k, v := range mapEnv {
+		if strings.HasPrefix(k, "CDS_") || strings.HasPrefix(k, "GIT_") {
+			continue
+		}
+		newEnvVar[strings.ToUpper(k)] = fmt.Sprintf("%q", v)
+	}
+	return newEnvVar, nil
 }

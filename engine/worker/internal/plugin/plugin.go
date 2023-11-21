@@ -18,9 +18,9 @@ import (
 )
 
 // NewClient create a plugin client for the given plugin
-func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string) (Client, error) {
+func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string, env map[string]string) (Client, error) {
 	// Create socket
-	pluginSocket, currentPlugin, err := createGRPCPluginSocket(ctx, pluginType, pluginName, wk)
+	pluginSocket, currentPlugin, err := createGRPCPluginSocket(ctx, pluginType, pluginName, wk, env)
 	if err != nil {
 		return nil, errors.Errorf("unable to start GRPCPlugin %s: %v", pluginName, err)
 	}

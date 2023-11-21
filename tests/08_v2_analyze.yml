@@ -108,6 +108,7 @@ testcases:
     - script: "cat MyFirstWorkflow-1-0-myFirstJob-workflowEnv | grep \"workflowValue\""
     - script: "cat MyFirstWorkflow-1-0-myFirstJob-stepEnv | grep \"stepValue\""
     - script: "cat MyFirstWorkflow-1-0-myThirdJob-jobEnv | grep \"jobValue\""
+    - script: "cat MyFirstWorkflow-1-0-alwaysJob-mystep | grep \"alwaysJob\""
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status ITCLIPRJVCS my_vcs_server {{.git.user}}/myrepo MyFirstWorkflow 1 --format json
       assertions:
         - result.systemoutjson ShouldHaveLength 5

@@ -47,11 +47,11 @@ type Result struct {
 }
 
 type Factory interface {
-	NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string) (Client, error)
+	NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string, env map[string]string) (Client, error)
 }
 
 type PluginFactory struct{}
 
-func (pf *PluginFactory) NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string) (Client, error) {
-	return NewClient(ctx, wk, pluginType, pluginName, inputManagement)
+func (pf *PluginFactory) NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string, env map[string]string) (Client, error) {
+	return NewClient(ctx, wk, pluginType, pluginName, inputManagement, env)
 }
