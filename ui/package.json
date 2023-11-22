@@ -103,7 +103,7 @@
     "@angular-eslint/template-parser": "16.3.1",
     "@angular/cli": "16.2.10",
     "@angular/compiler-cli": "16.2.12",
-    "@commitlint/cli": "13.2.1",
+    "@commitlint/cli": "18.4.3",
     "@commitlint/config-conventional": "13.2.0",
     "@compodoc/compodoc": "1.1.19",
     "@sentry/cli": "1.37.4",
