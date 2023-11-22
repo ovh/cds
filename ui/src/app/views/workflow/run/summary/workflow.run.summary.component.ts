@@ -10,18 +10,16 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import * as AU from 'ansi_up';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -49,11 +47,9 @@ export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
 
     workflowName: string;
 
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRun: WorkflowRun;
     subWorkflowRun: Subscription;
 
-    @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
     subWorkflow: Subscription;
     canExecute: boolean;
 
@@ -78,7 +74,7 @@ export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
+        this.subWorkflowRun = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr) {
                 return;
             }
@@ -111,7 +107,7 @@ export class WorkflowRunSummaryComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-        this.subWorkflow = this.workflow$.subscribe(w => {
+        this.subWorkflow = this._store.select(WorkflowState.getWorkflow()).subscribe(w => {
             if (!w) {
                 return;
             }

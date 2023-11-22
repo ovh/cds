@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
@@ -23,10 +23,8 @@ import { finalize } from 'rxjs/operators';
 @AutoUnsubscribe()
 export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy {
 
-    @Select(WorkflowState.getEditModal()) editModal$: Observable<boolean>;
     editModalSub: Subscription;
 
-    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     node: WNode;
     nodeSub: Subscription;
 
@@ -61,7 +59,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
-        this.nodeSub = this.node$.subscribe(n => {
+        this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
             if (!n) {
                 return;
             }
@@ -74,7 +72,7 @@ export class WorkflowNodeEditModalComponent implements AfterViewInit, OnDestroy 
             this.groups = cloneDeep(stateSnap.node.groups);
             this._cd.markForCheck();
         });
-        this.editModalSub = this.editModal$.subscribe(b => {
+        this.editModalSub = this._store.select(WorkflowState.getEditModal()).subscribe(b => {
             let stateSnap: WorkflowStateModel = this._store.selectSnapshot(WorkflowState);
             if (!b) {
                 this.currentNodeName = '';

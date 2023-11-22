@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { APP_BASE_HREF } from '@angular/common';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -57,7 +55,6 @@ describe('CDS: Step Form Component', () => {
 
         let compiled = fixture.debugElement.nativeElement;
         let button = compiled.querySelector('button[name="addStepMenuBtn"]');
-        console.log(button);
         expect(button).toBeTruthy('Add step menu btn must be displayed');
         button.click();
 
@@ -68,7 +65,6 @@ describe('CDS: Step Form Component', () => {
         fixture.changeDetectorRef.markForCheck();
         tick(200);
 
-        console.log(compiled);
         expect(compiled.querySelector('button[name="addStepBtn"]')).toBeTruthy('Add step button must be displayed');
         compiled.querySelector('button[name="addStepBtn"]').click();
 

@@ -1,7 +1,7 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component,
+    Component, inject,
     Input, OnInit,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,8 +15,12 @@ import { Column, ColumnType, Filter } from 'app/shared/table/data-table.componen
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
 import * as moment from 'moment';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
 
+interface IModalData {
+    user: AuthentifiedUser;
+    consumer: AuthConsumer;
+}
 
 export enum CloseEventType {
     CHILD_DETAILS = 'CHILD_DETAILS',
@@ -56,6 +60,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
     regenConsumerSigninToken: string;
     warningText: string;
     columnsValidityPeriods: Array<Column<AuthConsumerValidityPeriod>>;
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor(
         private _modal: NzModalRef,
@@ -185,6 +191,8 @@ export class ConsumerDetailsModalComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.consumer = this.nzModalData.consumer;
+        this.user = this.nzModalData.user;
         if (!this.consumer) {
             return;
         }

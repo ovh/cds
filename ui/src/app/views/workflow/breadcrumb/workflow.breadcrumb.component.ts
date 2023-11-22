@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Select } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-breadcrumb',
@@ -34,18 +34,17 @@ export class WorkflowBreadCrumbComponent implements OnInit, OnDestroy {
         return this._workflow;
     }
 
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     workflowRunSub: Subscription;
     workflowRun: WorkflowRun;
 
     path: Array<PathItem>;
 
-    constructor(private _cd: ChangeDetectorRef) { }
+    constructor(private _cd: ChangeDetectorRef, private _store: Store) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.workflowRunSub = this.workflowRun$.subscribe(wr => {
+        this.workflowRunSub = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr && !this.workflowRun) {
                 return;
             }

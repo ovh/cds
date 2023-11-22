@@ -230,7 +230,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             nzTitle: 'Delete ' + this.node.name,
             nzWidth: '900px',
             nzContent: WorkflowDeleteNodeComponent,
-            nzComponentParams: {
+            nzData: {
                 project: this.project,
                 node: this.node,
                 workflow: this.workflow
@@ -248,7 +248,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
                 nzTitle: title,
                 nzWidth: '1300px',
                 nzContent: WorkflowTriggerComponent,
-                nzComponentParams: {
+                nzData: {
                     project: this.project,
                     workflow: this.workflow,
                     source: this.node,
@@ -265,7 +265,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
                 nzTitle: 'Hook creation',
                 nzWidth: '900px',
                 nzContent: WorkflowHookModalComponent,
-                nzComponentParams: {
+                nzData: {
                     project: this.project,
                     workflow: this.workflow,
                     node: this.node
@@ -327,7 +327,6 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
             nzWidth: '900px',
             nzTitle: 'Run worklow',
             nzContent: WorkflowNodeRunParamComponent,
-            nzComponentParams: {}
         });
     }
 }

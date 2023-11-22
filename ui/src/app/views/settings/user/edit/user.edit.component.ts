@@ -395,7 +395,7 @@ export class UserEditComponent implements OnInit {
             nzTitle: this.modalTitleTmpl,
             nzWidth: '900px',
             nzContent: ConsumerDetailsModalComponent,
-            nzComponentParams: {
+            nzData: {
                 consumer: this.selectedConsumer,
                 user: this.user,
             },
@@ -456,7 +456,7 @@ export class UserEditComponent implements OnInit {
             nzTitle: 'Create a new consumer',
             nzWidth: '900px',
             nzContent: ConsumerCreateModalComponent,
-            nzComponentParams: {
+            nzData: {
                 user: this.user
             },
             nzOnOk: () => {

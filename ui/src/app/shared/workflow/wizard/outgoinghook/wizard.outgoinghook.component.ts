@@ -10,7 +10,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { IdName, Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
 import { WNode, WNodeHook, WNodeOutgoingHook, WNodeType, Workflow } from 'app/model/workflow.model';
@@ -23,7 +23,7 @@ import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 
 @Component({
@@ -42,7 +42,6 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
     @Output() outgoinghookEvent = new EventEmitter<WNode>();
     @Output() outgoinghookChange = new EventEmitter<boolean>();
 
-    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     outgoingHook: WNode;
     nodeSub: Subscription;
 
@@ -87,7 +86,7 @@ export class WorkflowWizardOutgoingHookComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         if (this.mode !== 'create') {
-            this.nodeSub = this.node$.subscribe(n => {
+            this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
                 this.outgoingHook = cloneDeep(n);
                 this._cd.markForCheck();
             });

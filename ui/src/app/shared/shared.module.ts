@@ -19,7 +19,7 @@ import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/
 import { WorkflowRunJobVariableComponent } from 'app/views/workflow/run/node/pipeline/variables/job.variables.component';
 import { WorkflowRunJobComponent } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
-import { DragulaModule } from 'ng2-dragula-sgu';
+import { DragulaModule } from 'ng2-dragula';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';

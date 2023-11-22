@@ -5,7 +5,7 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2020",
+    "target": "es2022",
     "lib": [
       "es2016",
       "dom"
@@ -16,7 +16,8 @@
     "types": [
       "jasmine",
       "node"
-    ]
+    ],
+    "allowSyntheticDefaultImports": true
   },
   "files": [
     "test.ts",
