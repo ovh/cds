@@ -1,12 +1,15 @@
 name: plugin initialization
 
+vars:
+  plugins:
+    - script
+    - checkout
+    - uploadArtifact
+    - downloadArtifact
+
 testcases:
-  - name: install script plugin
+  - name: install plugins
+    range: "{{.plugins}}"
     steps:
-      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/plugin-script.yml
-      - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add script {{.dist}}/plugin-script-linux-amd64.yml {{.dist}}/plugin-script-linux-amd64
-      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/plugin-checkout.yml
-      - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add checkout {{.dist}}/plugin-checkout-linux-amd64.yml {{.dist}}/plugin-checkout-linux-amd64
-
-
-
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/{{.value}}.yml
+      - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add script {{.dist}}/{{.value}}-linux-amd64.yml {{.dist}}/{{.value}}-linux-amd64
