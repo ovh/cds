@@ -9,7 +9,7 @@ vars:
 
 testcases:
   - name: install plugins
-    range: "{{.plugins}}"
+    range: '{{.plugins}}'
     steps:
       - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/{{.value}}.yml
       - script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add script {{.dist}}/{{.value}}-linux-amd64.yml {{.dist}}/{{.value}}-linux-amd64
