@@ -1,5 +1,5 @@
-PLUGIN_NAME		= script
-TARGET_NAME		= plugin-script
+PLUGIN_NAME		= uploadArtifact
+TARGET_NAME		= uploadArtifact
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 

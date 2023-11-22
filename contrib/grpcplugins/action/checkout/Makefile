@@ -1,5 +1,5 @@
 PLUGIN_NAME		= checkout
-TARGET_NAME		= plugin-checkout
+TARGET_NAME		= checkout
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 

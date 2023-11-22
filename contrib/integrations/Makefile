@@ -1,22 +1,22 @@
 build: $(TARGET_DIST)
-	$(MAKE) build -C arsenal/plugin-arsenal OS="$(OS)" ARCH="$(ARCH)"
-	$(MAKE) build -C artifactory/plugin-artifactory-build-info OS="$(OS)" ARCH="$(ARCH)"
-	$(MAKE) build -C artifactory/plugin-artifactory-download-artifact OS="$(OS)" ARCH="$(ARCH)"
-	$(MAKE) build -C artifactory/plugin-artifactory-promote OS="$(OS)" ARCH="$(ARCH)"
-	$(MAKE) build -C artifactory/plugin-artifactory-release OS="$(OS)" ARCH="$(ARCH)"
-	$(MAKE) build -C artifactory/plugin-artifactory-upload-artifact OS="$(OS)" ARCH="$(ARCH)"
-	$(MAKE) build -C kubernetes/plugin-kubernetes OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C arsenal/arsenal-deployment-plugin OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C artifactory/artifactory-build-info-plugin OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C artifactory/artifactory-download-artifact-plugin OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C artifactory/artifactory-promote-plugin OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C artifactory/artifactory-release-plugin OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C artifactory/artifactory-upload-artifact-plugin OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C kubernetes/plugin-kubernetes-deployment OS="$(OS)" ARCH="$(ARCH)"
 
 clean:
-	$(MAKE) clean -C arsenal/plugin-arsenal
-	$(MAKE) clean -C artifactory/plugin-artifactory-build-info
-	$(MAKE) clean -C artifactory/plugin-artifactory-download-artifact
-	$(MAKE) clean -C artifactory/plugin-artifactory-promote
-	$(MAKE) clean -C artifactory/plugin-artifactory-release
-	$(MAKE) clean -C artifactory/plugin-artifactory-upload-artifact
-	$(MAKE) clean -C kubernetes/plugin-kubernetes
+	$(MAKE) clean -C arsenal/arsenal-deployment-plugin
+	$(MAKE) clean -C artifactory/artifactory-build-info-plugin
+	$(MAKE) clean -C artifactory/artifactory-download-artifact-plugin
+	$(MAKE) clean -C artifactory/artifactory-promote-plugin
+	$(MAKE) clean -C artifactory/artifactory-release-plugin
+	$(MAKE) clean -C artifactory/artifactory-upload-artifact-plugin
+	$(MAKE) clean -C kubernetes/plugin-kubernetes-deployment
 
-ALL_PLUGINS = arsenal/plugin-arsenal artifactory/plugin-artifactory-build-info artifactory/plugin-artifactory-download-artifact artifactory/plugin-artifactory-promote artifactory/plugin-artifactory-release artifactory/plugin-artifactory-upload-artifact kubernetes/plugin-kubernetes
+ALL_PLUGINS = arsenal/arsenal-deployment-plugin artifactory/artifactory-build-info-plugin artifactory/artifactory-download-artifact-plugin artifactory/artifactory-promote-plugin artifactory/artifactory-release-plugin artifactory/artifactory-upload-artifact-plugin kubernetes/plugin-kubernetes-deployment
 publish:
 	@for P in $(ALL_PLUGINS); do \
 		$(MAKE) publish -C $$P; \

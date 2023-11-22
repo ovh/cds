@@ -6,7 +6,7 @@ BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 CDSCTL := $(if ${CDSCTL},${CDSCTL},cdsctl)
 
 TARGET_DIR = ./dist
-TARGET_NAME = plugin-artifactory-promote
+TARGET_NAME = $(shell cat *.yml | yq .name)
 
 define PLUGIN_MANIFEST_BINARY
 os: %os%
@@ -17,7 +17,7 @@ export PLUGIN_MANIFEST_BINARY
 
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_NAME)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm64)
 
 GO_BUILD = go build
 
@@ -39,10 +39,10 @@ build: $(TARGET_DIR)
 			echo Compiling $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
 			FILENAME=$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 			GOOS=$$GOOS GOARCH=$$GOARCH CGO_ENABLED=0 $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$$FILENAME || exit 1; \
-			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/plugin-artifactory-promote-$$GOOS-$$GOARCH.yml; \
-			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/plugin-artifactory-promote-$$GOOS-$$GOARCH.yml; \
-			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/plugin-artifactory-promote-$$GOOS-$$GOARCH.yml; \
-			perl -pi -e s,%filename%,$$FILENAME,g $(TARGET_DIR)/plugin-artifactory-promote-$$GOOS-$$GOARCH.yml; \
+			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%os%,$$GOOS,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%arch%,$$GOARCH,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
+			perl -pi -e s,%filename%,$$FILENAME,g $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml; \
 		done; \
 	done
 
@@ -54,6 +54,6 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			$(CDSCTL) admin plugins binary-add artifactory-promote-plugin $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			$(CDSCTL) admin plugins binary-add $(TARGET_NAME) $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done

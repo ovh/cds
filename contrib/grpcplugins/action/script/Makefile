@@ -1,5 +1,5 @@
-PLUGIN_NAME		= downloadArtifact
-TARGET_NAME		= plugin-downloadArtifact
+PLUGIN_NAME		= script
+TARGET_NAME		= script
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 
