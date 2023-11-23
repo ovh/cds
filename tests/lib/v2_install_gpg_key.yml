@@ -102,4 +102,4 @@ steps:
   - script: 'curl --silent --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
 
 output:
-  emailAddress: "{{.emailAddress}}"
+  emailAddress: "{{.emailaddress}}"
