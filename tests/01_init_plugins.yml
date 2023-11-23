@@ -13,4 +13,4 @@ testcases:
     - range: '{{.plugins}}'
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental plugin import {{.dist}}/{{.value}}.yml
     - range: '{{.plugins}}'
-      script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add script {{.dist}}/{{.value}}-linux-amd64.yml {{.dist}}/{{.value}}-linux-amd64
+      script: {{.cdsctl}} -f {{.cdsctl.config}} admin plugin binary-add {{.value}} {{.dist}}/{{.value}}-linux-amd64.yml {{.dist}}/{{.value}}-linux-amd64
