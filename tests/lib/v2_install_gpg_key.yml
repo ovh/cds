@@ -65,10 +65,10 @@ steps:
   - script: >
       gpg --list-secret-keys | grep {{.input.gpg_key_id}} -A 1 | tail -n 1 | grep --only-matching --extended-regexp "<.*>" | head -n 1 | cut -c2- | rev | cut -c2- | rev
     vars:
-      emailAddress:
+      emailaddress:
         from: result.systemout
 
-  # Add the emailAddress on the gitea user
+  # Add the emailaddress on the gitea user
   - type: http
     method: POST
     url: "{{.input.git_host}}/api/v1/user/emails"
@@ -78,7 +78,7 @@ steps:
     basic_auth_password: "{{.input.git_password}}"
     body: >
       {
-        "emails": ["{{.emailAddress}}"]
+        "emails": ["{{.emailaddress}}"]
       }
     assertions:
     - or:
@@ -102,4 +102,4 @@ steps:
   - script: 'curl --silent --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
 
 output:
-  emailAddress: "{{.emailaddress}}"
+  emailaddress: "{{.emailaddress}}"
