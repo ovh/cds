@@ -1,7 +1,7 @@
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
-    Component,
+    Component, inject,
     Input, OnInit,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,8 +14,11 @@ import { UserService } from 'app/service/user/user.service';
 import { Column, Select } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
 
+interface IModalData {
+    user: AuthentifiedUser;
+}
 export enum CloseEventType {
     CREATED = 'CREATED',
     CLOSED = 'CLOSED'
@@ -38,6 +41,9 @@ export enum FormStepName {
 export class ConsumerCreateModalComponent implements OnInit {
 
     @Input() user: AuthentifiedUser;
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
 
     newConsumer: AuthConsumer = new AuthConsumer();
     signinToken: string;
@@ -83,6 +89,8 @@ export class ConsumerCreateModalComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.user = this.nzModalData.user;
+
         this.newConsumer = new AuthConsumer();
         this.newConsumer.validity_periods = new Array<AuthConsumerValidityPeriod>();
         // Init a default validity period of 15 days

@@ -327,10 +327,7 @@ func executeNodeRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		}
 		// End of temporary debug
 
-		// Delete the line in workflow_node_run_job
-		if err := DeleteNodeJobRuns(db, workflowNodeRun.ID); err != nil {
-			return nil, sdk.WrapError(err, "unable to delete node %d job runs", workflowNodeRun.ID)
-		}
+		// Delete the line in workflow_node_run_job is done asynchronously in a goroutine at api level
 
 		// If current node has a mutex, we want to trigger another node run that can be waiting for the mutex
 		node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)

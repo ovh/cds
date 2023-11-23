@@ -511,6 +511,7 @@ type Interface interface {
 	TemplateClient
 	WebsocketClient
 	V2QueueClient
+	EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error)
 }
 
 type V2WorkerInterface interface {

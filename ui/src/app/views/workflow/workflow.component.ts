@@ -44,7 +44,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
 
     project: Project;
 
-    @Select(WorkflowState.getWorkflow()) workflow$: Observable<Workflow>;
     workflow: Workflow;
     workflowSubscription: Subscription;
 
@@ -147,7 +146,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         });
 
         this._store.dispatch(new CleanWorkflowState());
-        this.workflowSubscription = this.workflow$.subscribe(w => {
+        this._store.select(WorkflowState.getWorkflow()).subscribe(w => {
             if (!w) {
                 return;
             }
@@ -215,7 +214,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             nzTitle: 'Update workflow from template',
             nzWidth: '1100px',
             nzContent: WorkflowTemplateApplyModalComponent,
-            nzComponentParams: {
+            nzData: {
                 projectIn: this.project,
                 workflowIn: this.workflow
             },
@@ -253,7 +252,7 @@ export class WorkflowComponent implements OnInit, OnDestroy {
             nzTitle: 'Migrate as code',
             nzWidth: '900px',
             nzContent: AsCodeSaveModalComponent,
-            nzComponentParams: {
+            nzData: {
                 dataToSave: null,
                 dataType: 'workflow',
                 project: this.project,

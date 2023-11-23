@@ -596,7 +596,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	return nil
 }
 
-func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]int64, error) {
+func LoadCraftingWorkflowRunIDs(db gorp.SqlExecutor) ([]int64, error) {
 	query := `
 		SELECT id
 		FROM workflow_run

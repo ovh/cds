@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowHookModel } from 'app/model/workflow.hook.model';
@@ -13,7 +13,6 @@ import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -33,11 +32,9 @@ export class WorkflowNodeHookFormComponent implements OnInit, OnDestroy {
 
     @ViewChild('textareaCodeMirror') codemirror: any;
 
-    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     node: WNode;
     nodeSub: Subscription;
 
-    @Select(WorkflowState.getSelectedHook()) hook$: Observable<WNodeHook>;
     hook: WNodeHook;
     hookSub: Subscription;
 
@@ -74,11 +71,11 @@ export class WorkflowNodeHookFormComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeSub = this.node$.subscribe(n => {
+        this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
             this.node = n;
             this._cd.markForCheck();
         });
-        this.hookSub = this.hook$.subscribe(h => {
+        this.hookSub = this._store.select(WorkflowState.getSelectedHook()).subscribe(h => {
             if (!h) {
                 return;
             }

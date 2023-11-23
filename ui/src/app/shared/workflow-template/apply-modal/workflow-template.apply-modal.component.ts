@@ -2,7 +2,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
+    EventEmitter, inject,
     Input,
     OnChanges, OnInit,
     Output,
@@ -17,8 +17,15 @@ import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
 import { ToastService } from 'app/shared/toast/ToastService';
+
+interface IModalData {
+    workflowTemplateIn: WorkflowTemplate;
+    workflowTemplateInstanceIn: WorkflowTemplateInstance
+    projectIn: Project;
+    workflowIn: Workflow;
+}
 
 @Component({
     selector: 'app-workflow-template-apply-modal',
@@ -37,6 +44,8 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
     // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('workflowTemplateInstance') workflowTemplateInstanceIn: WorkflowTemplateInstance;
     @Output() close = new EventEmitter();
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     diffVisible: boolean;
     diffItems: Array<Item>;
@@ -61,6 +70,10 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
+        this.workflowTemplateIn = this.nzModalData.workflowTemplateIn;
+        this.workflowTemplateInstanceIn = this.nzModalData.workflowTemplateInstanceIn;
+        this.projectIn = this.nzModalData.projectIn;
+        this.workflowIn = this.nzModalData.workflowIn;
         if (this.workflowTemplateIn && this.workflowTemplateInstanceIn) {
             this.workflowTemplate = this.workflowTemplateIn;
             this.workflowTemplateInstance = this.workflowTemplateInstanceIn;

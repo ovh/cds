@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { CDNLine, CDNStreamFilter, PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
@@ -12,7 +12,7 @@ import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workflow-run-job.component';
@@ -25,15 +25,12 @@ import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workfl
 })
 @AutoUnsubscribe()
 export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
-    readonly initLoadLinesCount = 10;
 
     @ViewChild('scrollContent') scrollContent: ElementRef;
     @ViewChild('runjobComponent') runjobComponent: WorkflowRunJobComponent;
 
-    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
-    @Select(WorkflowState.getSelectedWorkflowNodeJobRun()) nodeJobRun$: Observable<WorkflowNodeJobRun>;
     nodeJobRunSubs: Subscription;
 
     project: Project;
@@ -46,7 +43,6 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     mapJobStatus: Map<number, { status: string, warnings: number, start: string, done: string }>
         = new Map<number, { status: string, warnings: number, start: string, done: string }>();
 
-    queryParamsSub: Subscription;
     pipelineStatusEnum = PipelineStatus;
 
     currentNodeRunID: number;
@@ -73,7 +69,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.nodeJobRunSubs = this.nodeJobRun$.subscribe(rj => {
+        this.nodeJobRunSubs = this._store.select(WorkflowState.getSelectedWorkflowNodeJobRun()).subscribe(rj => {
             if (!rj && !this.currentNodeJobRun) {
                 this.stopWebsocketSubscription();
                 return;
@@ -102,7 +98,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
 
-        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+        this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
             if (!nr) {
                 return;
             }
@@ -137,7 +133,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
         if (!this.websocket) {
             const protocol = window.location.protocol.replace('http', 'ws');
             const host = window.location.host;
-            const href = this._router['location']._baseHref;
+            const href = this._router['location']._basePath;
             this.websocket = webSocket({
                 url: `${protocol}//${host}${href}/cdscdn/item/stream`,
                 openObserver: {

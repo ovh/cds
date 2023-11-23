@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-//GetOpenPGPEntity returns a single entity from an armored entity list
+// GetOpenPGPEntity returns a single entity from an armored entity list
 func GetOpenPGPEntity(r io.Reader) (*openpgp.Entity, error) {
 	entityList, err := openpgp.ReadArmoredKeyRing(r)
 	if err != nil {
@@ -31,9 +31,9 @@ func GetOpenPGPEntity(r io.Reader) (*openpgp.Entity, error) {
 	return entityList[0], nil
 }
 
-//NewOpenPGPEntity create an openpgp Entity
-func NewOpenPGPEntity(keyname string) (*openpgp.Entity, error) {
-	key, errE := openpgp.NewEntity(keyname, keyname, keyname+"@cds", nil)
+// NewOpenPGPEntity create an openpgp Entity
+func NewOpenPGPEntity(keyname, comment, email string) (*openpgp.Entity, error) {
+	key, errE := openpgp.NewEntity(keyname, comment, email, nil)
 	if errE != nil {
 		return nil, sdk.WrapError(errE, "NewOpenPGPEntity> Cannot create new entity")
 	}
@@ -88,12 +88,12 @@ func generatePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
 }
 
 // GeneratePGPKeyPair generates a private / public PGP key
-func GeneratePGPKeyPair(name string) (sdk.Key, error) {
+func GeneratePGPKeyPair(name, comment, email string) (sdk.Key, error) {
 	k := sdk.Key{
 		Name: name,
 		Type: sdk.KeyTypePGP,
 	}
-	key, err := NewOpenPGPEntity(name)
+	key, err := NewOpenPGPEntity(name, comment, email)
 	if err != nil {
 		return k, err
 	}

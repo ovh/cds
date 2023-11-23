@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NguiAutoCompleteModule } from '@sgu/auto-complete';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { AuthenticationGuard } from 'app/guard/authentication.guard';
@@ -20,7 +19,7 @@ import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/
 import { WorkflowRunJobVariableComponent } from 'app/views/workflow/run/node/pipeline/variables/job.variables.component';
 import { WorkflowRunJobComponent } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
-import { DragulaModule } from 'ng2-dragula-sgu';
+import { DragulaModule } from 'ng2-dragula';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { MarkdownModule } from 'ngx-markdown';
@@ -213,7 +212,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         CodemirrorModule,
         ReactiveFormsModule,
         MarkdownModule.forRoot(),
-        NguiAutoCompleteModule,
         RouterModule,
         InfiniteScrollModule,
         NgxChartsModule

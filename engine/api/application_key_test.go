@@ -39,7 +39,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	pgpK, err := keys.GeneratePGPKeyPair(k.Name)
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,13 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/project"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/project"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
@@ -54,7 +55,7 @@ func Test_crudVCSOnProjectLambdaUserOK(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	user1, pass := assets.InsertLambdaUser(t, db)
 
-	newKey, err := keys.GenerateKey("mykey", sdk.KeyTypeSSH)
+	newKey, err := keys.GenerateSSHKey("mykey")
 	require.NoError(t, err)
 	k := sdk.ProjectKey{
 		Private:   newKey.Private,
@@ -139,7 +140,7 @@ func Test_crudVCSOnProjectAdminOk(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
-	newKey, err := keys.GenerateKey("mykey", sdk.KeyTypeSSH)
+	newKey, err := keys.GenerateSSHKey("mykey")
 	require.NoError(t, err)
 	k := sdk.ProjectKey{
 		Private:   newKey.Private,
@@ -255,7 +256,7 @@ func Test_crudVCSOnPublicProject(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	user1, pass := assets.InsertLambdaUser(t, db)
 
-	newKey, err := keys.GenerateKey("mykey", sdk.KeyTypeSSH)
+	newKey, err := keys.GenerateSSHKey("mykey")
 	require.NoError(t, err)
 	k := sdk.ProjectKey{
 		Private:   newKey.Private,

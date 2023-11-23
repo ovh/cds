@@ -78,7 +78,16 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 	for i := range proj.Keys {
 		k := &proj.Keys[i]
 		k.ProjectID = proj.ID
-		newKey, err := keys.GenerateKey(k.Name, k.Type)
+
+		var newKey sdk.Key
+		var err error
+		switch k.Type {
+		case sdk.KeyTypePGP:
+			newKey, err = keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
+		case sdk.KeyTypeSSH:
+			newKey, err = keys.GenerateSSHKey(k.Name)
+		}
+
 		require.NoError(t, err)
 		k.Private = newKey.Private
 		k.Public = newKey.Public
@@ -151,7 +160,7 @@ func testRunWorkflowForProject(t *testing.T, api *API, router *Router, proj *sdk
 		ApplicationID: app.ID,
 	}
 
-	pgpK, err := keys.GeneratePGPKeyPair(k.Name)
+	pgpK, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 
 	k.Public = pgpK.Public
@@ -173,7 +182,7 @@ func testRunWorkflowForProject(t *testing.T, api *API, router *Router, proj *sdk
 		EnvironmentID: env.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(envk.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(envk.Name, "", "test@cds")
 	require.NoError(t, err)
 
 	envk.Public = kpgp.Public

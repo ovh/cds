@@ -7040,6 +7040,21 @@ func (mr *MockInterfaceMockRecorder) DownloadURLFromAPI(name, os, arch, variant 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadURLFromAPI", reflect.TypeOf((*MockInterface)(nil).DownloadURLFromAPI), name, os, arch, variant)
 }
 
+// EntityLint mocks base method.
+func (m *MockInterface) EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityLint", ctx, entityType, data)
+	ret0, _ := ret[0].(*sdk.EntityCheckResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityLint indicates an expected call of EntityLint.
+func (mr *MockInterfaceMockRecorder) EntityLint(ctx, entityType, data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityLint", reflect.TypeOf((*MockInterface)(nil).EntityLint), ctx, entityType, data)
+}
+
 // EnvironmentCreate mocks base method.
 func (m *MockInterface) EnvironmentCreate(projectKey string, env *sdk.Environment) error {
 	m.ctrl.T.Helper()

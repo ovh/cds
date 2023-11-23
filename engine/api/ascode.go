@@ -193,7 +193,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getUserConsumer(ctx), project.DecryptWithBuiltinKey)
+		msgPush, wrkflw, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, data, opt, getUserConsumer(ctx), project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 		allMsg = append(allMsg, msgPush...)
 		if err != nil {
 			return sdk.WrapError(err, "unable to push workflow")

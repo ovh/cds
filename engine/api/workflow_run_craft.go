@@ -31,7 +31,7 @@ func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 			}
 			return
 		case <-ticker.C:
-			ids, err := workflow.LoadCratingWorkflowRunIDs(api.mustDB())
+			ids, err := workflow.LoadCraftingWorkflowRunIDs(api.mustDB())
 			if err != nil {
 				log.Error(ctx, "WorkflowRunCraft> unable to start tx: %v", err)
 				continue
@@ -165,4 +165,56 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 	log.Info(ctx, "api.workflowRunCraft> workflow %s/%s #%d.%d (%d) crafted", proj.Key, wf.Name, run.Number, run.LastSubNumber, run.ID)
 
 	return workflow.UpdateCraftedWorkflowRun(api.mustDB(), run.ID)
+}
+
+func (api *API) WorkflowRunJobDeletion(ctx context.Context, tick time.Duration, limit int) {
+	ticker := time.NewTicker(tick)
+	defer ticker.Stop()
+
+mainLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
+		case <-ticker.C:
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				continue
+			}
+			jobs, err := workflow.LoadAndLockTerminatedNodeJobRun(ctx, tx, limit)
+			if err != nil {
+				log.Error(ctx, "WorkflowRunJobDeletion> unable to start tx: %v", err)
+				_ = tx.Rollback()
+				continue
+			}
+			for i := range jobs {
+				j := &jobs[i]
+				node, err := workflow.LoadNodeRunByID(ctx, tx, j.WorkflowNodeRunID, workflow.LoadRunOptions{})
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to load NodeRun %d", j.WorkflowNodeRunID))
+					_ = tx.Rollback()
+					continue mainLoop
+				}
+
+				if !sdk.StatusIsTerminated(node.Status) {
+					continue
+				}
+
+				if err := workflow.DeleteNodeJobRun(tx, j.ID); err != nil {
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to delete WorkflowNodeJobRun %d", j.ID))
+					_ = tx.Rollback()
+					continue mainLoop
+				}
+			}
+			if err := tx.Commit(); err != nil {
+				log.Error(ctx, "WorkflowRunJobDeletion> unable to commit tx: %v", err)
+				_ = tx.Rollback()
+				continue
+			}
+		}
+	}
 }

@@ -61,7 +61,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		newApp, _, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, *proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getUserConsumer(ctx))
+		newApp, _, msgList, globalError := application.ParseAndImport(ctx, tx, api.Cache, *proj, eapp, application.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getUserConsumer(ctx), api.gpgKeyEmailAddress)
 		msgListString := translate(msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)

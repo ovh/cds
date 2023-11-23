@@ -40,7 +40,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		EnvironmentID: env.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	if err != nil {
 		t.Fatal(err)
 	}

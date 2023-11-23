@@ -105,7 +105,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 		EnvironmentID: env.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private
@@ -222,7 +222,7 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 		EnvironmentID: env.ID,
 	}
 
-	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 	k.Public = kpgp.Public
 	k.Private = kpgp.Private

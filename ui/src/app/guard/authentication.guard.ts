@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, NavigationExtras, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationExtras, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { FetchCurrentAuth } from 'app/store/authentication.action';
 import { AuthenticationState } from 'app/store/authentication.state';
@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
-export class AuthenticationGuard implements CanActivate, CanActivateChild {
+export class AuthenticationGuard  {
 
     constructor(
         private _store: Store,

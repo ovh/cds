@@ -797,7 +797,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, id, workflow.LoadRunOptions{
-			WithTests:           true,
+			WithTests: true,
 		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
@@ -1065,7 +1065,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 			log.Debug(ctx, "workflow.CreateFromRepository> %s", wf.Name)
 			oldWf := *wf
 			var asCodeInfosMsg []sdk.Message
-			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey)
+			workflowSecrets, asCodeInfosMsg, err = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, p1, wf, opts, *c, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 			infos := make([]sdk.SpawnMsg, len(asCodeInfosMsg))
 			for i, msg := range asCodeInfosMsg {
 				infos[i] = msg.ToSpawnMsg()

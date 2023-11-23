@@ -80,13 +80,26 @@
               "node_modules/prismjs/prism.js"
             ],
             "allowedCommonJsDependencies": [
-              "raven-js",
+              "@icholy/duration",
+              "ansi_up",
+              "dagre-d3",
+              "diff",
               "dragula",
+              "fast-json-patch",
+              "jsrsasign",
               "js-yaml",
               "jsonschema",
-              "dagre-d3",
-              "ansi_up",
-              "fast-json-patch",
+              "moment",
+              "!../../../../../../../style-loader/dist/runtime/injectStylesIntoStyleTag.js",
+              "!../../../../../../../style-loader/dist/runtime/insertBySelector.js",
+              "!../../../../../../../style-loader/dist/runtime/styleTagTransform.js",
+              "!../../../../../../../style-loader/dist/runtime/setAttributesWithoutAttributes.js",
+              "!../../../../../../../style-loader/dist/runtime/styleDomAPI.js",
+              "!../../../../../../../style-loader/dist/runtime/insertStyleElement.js",
+              "raven-js",
+              "rfdc",
+              "sanitize-html",
+              "style-loader",
               "zxcvbn"
             ]
           },
@@ -147,8 +160,11 @@
           }
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular-builders/custom-webpack:karma",
           "options": {
+            "customWebpackConfig": {
+              "path": "./extra-webpack.config.js"
+            },
             "main": "src/test.ts",
             "karmaConfig": "./karma.conf.js",
             "polyfills": "src/polyfills.ts",
@@ -211,7 +227,6 @@
       "projectType": "application"
     }
   },
-  "defaultProject": "ui-ng2",
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
@@ -220,5 +235,8 @@
     "@schematics/angular:directive": {
       "prefix": "app"
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }
