@@ -122,7 +122,6 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -188,7 +187,6 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -294,7 +292,6 @@ hatcheries:
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -372,7 +369,6 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -446,7 +442,6 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -511,7 +506,6 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -582,7 +576,6 @@ func TestPostStopJobHandler(t *testing.T) {
 		JobID:         sdk.RandomString(10),
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,

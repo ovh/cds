@@ -39,6 +39,18 @@ func (m *MockRuntime) EXPECT() *MockRuntimeMockRecorder {
 	return m.recorder
 }
 
+// AddStepOutput mocks base method.
+func (m *MockRuntime) AddStepOutput(ctx context.Context, outputName, outputValue string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddStepOutput", ctx, outputName, outputValue)
+}
+
+// AddStepOutput indicates an expected call of AddStepOutput.
+func (mr *MockRuntimeMockRecorder) AddStepOutput(ctx, outputName, outputValue interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStepOutput", reflect.TypeOf((*MockRuntime)(nil).AddStepOutput), ctx, outputName, outputValue)
+}
+
 // BaseDir mocks base method.
 func (m *MockRuntime) BaseDir() afero.Fs {
 	m.ctrl.T.Helper()

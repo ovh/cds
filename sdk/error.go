@@ -183,7 +183,7 @@ var (
 	ErrRepositoryUsedByHook                          = Error{ID: 177, Status: http.StatusForbidden}
 	ErrResourceNotInProject                          = Error{ID: 178, Status: http.StatusForbidden}
 	ErrEnvironmentNotFound                           = Error{ID: 179, Status: http.StatusBadRequest}
-	ErrIntegrationtNotFound                          = Error{ID: 180, Status: http.StatusBadRequest}
+	ErrIntegrationNotFound                           = Error{ID: 180, Status: http.StatusBadRequest}
 	ErrBadBrokerConfiguration                        = Error{ID: 181, Status: http.StatusBadRequest}
 	ErrSignupDisabled                                = Error{ID: 182, Status: http.StatusForbidden}
 	ErrUsernamePresent                               = Error{ID: 183, Status: http.StatusBadRequest}
@@ -368,7 +368,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrRepositoryUsedByHook.ID:                          "There is still a repository webhook on this repository",
 	ErrResourceNotInProject.ID:                          "The resource is not attached to the project",
 	ErrEnvironmentNotFound.ID:                           "Environment not found ",
-	ErrIntegrationtNotFound.ID:                          "Integration %q not found",
+	ErrIntegrationNotFound.ID:                           "Integration not found",
 	ErrSignupDisabled.ID:                                "Sign up is disabled for target consumer type",
 	ErrBadBrokerConfiguration.ID:                        "Cannot connect to the broker of your event integration. Check your configuration",
 	ErrInvalidJobRequirementNetworkAccess.ID:            "Invalid job requirement: network requirement must contains ':'. Example: golang.org:http, golang.org:443",

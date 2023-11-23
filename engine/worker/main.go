@@ -26,11 +26,12 @@ func main() {
 			cmd.AddCommand(cmdRunResult())
 		} else {
 			cmd.AddCommand(CmdResult())
+			cmd.AddCommand(CmdOutput())
 		}
 	} else {
 		cmd.AddCommand(cmdRegister())
 	}
-  // last command: doc, this command is hidden
+	// last command: doc, this command is hidden
 	cmd.AddCommand(cmdDoc(cmd))
 
 	if err := cmd.Execute(); err != nil {

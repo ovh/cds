@@ -5,10 +5,59 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 )
+
+func V2_outputHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		btes, err := io.ReadAll(r.Body)
+		if err != nil {
+			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
+			return
+		}
+
+		var output OutputRequest
+		if err := sdk.JSONUnmarshal(btes, &output); err != nil {
+			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
+			return
+		}
+
+		// Create step output
+		wk.AddStepOutput(ctx, output.Name, output.Value)
+
+		// Create run result
+		if !output.StepOnly {
+			result := V2RunResultRequest{
+				RunResult: &sdk.V2WorkflowRunResult{
+					IssuedAt:         time.Now(),
+					Status:           sdk.StatusSuccess,
+					WorkflowRunID:    output.WorkflowRunID,
+					WorkflowRunJobID: output.WorkflowRunJobID,
+					Type:             sdk.V2WorkflowRunResultTypeVariable,
+					Detail: sdk.V2WorkflowRunResultDetail{
+						Data: sdk.V2WorkflowRunResultVariableDetail{
+							Name:  output.Name,
+							Value: output.Value,
+						},
+					},
+				},
+			}
+
+			response, err := wk.V2AddRunResult(ctx, result)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			log.Info(ctx, "run result %s created", response.RunResult.ID)
+		}
+
+		writeJSON(w, nil, http.StatusNoContent)
+	}
+}
 
 func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +106,7 @@ func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 	_, _ = w.Write(b)
 }
 
-func writeError(w http.ResponseWriter, r *http.Request, err error) {
+func writeError(w http.ResponseWriter, _ *http.Request, err error) {
 	writePlainText(w, err.Error(), 500)
 }
 

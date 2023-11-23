@@ -113,7 +113,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}()
 
 	// Load run by id
-	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), wrEnqueue.RunID)
+	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), wrEnqueue.RunID, workflow_v2.WithRunResults)
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil
 	}
@@ -368,7 +368,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	}
 
 	// Compute run context
-	jobsContext := buildJobsContext(runJobs)
+	jobsContext := buildJobsContext(*run, runJobs)
 
 	// Select jobs to check ( all workflow or list of jobs from enqueue request )
 	jobsToCheck := make(map[string]sdk.V2Job)
@@ -618,7 +618,21 @@ func buildAncestorJobContext(jobs map[string]sdk.V2Job, jobID string, currentJob
 	}
 }
 
-func buildJobsContext(runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
+func buildJobsContext(run sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
+	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
+	for _, rr := range run.Results {
+		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
+			continue
+		}
+		detail := rr.Detail.Data.(*sdk.V2WorkflowRunResultVariableDetail)
+		jobResults, has := runResultMap[rr.WorkflowRunJobID]
+		if !has {
+			jobResults = make([]sdk.V2WorkflowRunResultVariableDetail, 0)
+		}
+		jobResults = append(jobResults, *detail)
+		runResultMap[rr.WorkflowRunJobID] = jobResults
+	}
+
 	// Compute jobs context
 	jobsContext := sdk.JobsResultContext{}
 	matrixJobs := make(map[string][]sdk.JobResultContext)
@@ -626,24 +640,31 @@ func buildJobsContext(runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
 		if sdk.StatusIsTerminated(rj.Status) && len(rj.Matrix) == 0 {
 			result := sdk.JobResultContext{
 				Result:  rj.Status,
-				Outputs: rj.Outputs,
+				Outputs: sdk.JobResultOutput{},
+			}
+			if rr, has := runResultMap[rj.ID]; has {
+				for _, r := range rr {
+					result.Outputs[r.Name] = r.Value
+				}
 			}
 			jobsContext[rj.JobID] = result
 		} else if len(rj.Matrix) > 0 {
 			jobs, has := matrixJobs[rj.JobID]
 			if !has {
 				jobs = make([]sdk.JobResultContext, 0)
-				jobs = append(jobs, sdk.JobResultContext{
-					Result:  rj.Status,
-					Outputs: rj.Outputs,
-				})
-				matrixJobs[rj.JobID] = jobs
-			} else {
-				matrixJobs[rj.JobID] = append(matrixJobs[rj.JobID], sdk.JobResultContext{
-					Result:  rj.Status,
-					Outputs: rj.Outputs,
-				})
 			}
+			jobResultContext := sdk.JobResultContext{
+				Result:  rj.Status,
+				Outputs: sdk.JobResultOutput{},
+			}
+			rr, has := runResultMap[rj.ID]
+			if has {
+				for _, r := range rr {
+					jobResultContext.Outputs[r.Name] = r.Value
+				}
+			}
+			jobs = append(jobs, jobResultContext)
+			matrixJobs[rj.JobID] = jobs
 		}
 	}
 

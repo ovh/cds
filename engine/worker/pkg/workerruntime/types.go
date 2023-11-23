@@ -71,6 +71,14 @@ type FilePath struct {
 	Path string `json:"path"`
 }
 
+type OutputRequest struct {
+	Name             string `json:"name"`
+	Value            string `json:"value"`
+	StepOnly         bool   `json:"step_only"`
+	WorkflowRunID    string `json:"workflow_run_id"`
+	WorkflowRunJobID string `json:"workflow_run_job_id"`
+}
+
 type KeyResponse struct {
 	PKey    string      `json:"pkey"`
 	Type    sdk.KeyType `json:"type"`
@@ -137,6 +145,7 @@ type Runtime interface {
 	PluginGetBinary(name, os, arch string, w io.Writer) error
 	V2AddRunResult(ctx context.Context, req V2RunResultRequest) (*V2AddResultResponse, error)
 	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
+	AddStepOutput(ctx context.Context, outputName string, outputValue string)
 }
 
 func JobID(ctx context.Context) (int64, error) {

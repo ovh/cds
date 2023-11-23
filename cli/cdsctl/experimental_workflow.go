@@ -190,6 +190,6 @@ func workflowRunFunc(v cli.Values) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Worflow %s #%d started", run.WorkflowName, run.RunNumber)
+	fmt.Printf("Workflow %s #%d started", run.WorkflowName, run.RunNumber)
 	return nil
 }

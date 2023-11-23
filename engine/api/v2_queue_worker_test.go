@@ -214,6 +214,36 @@ hatcheries:
 	hatchConsumer, err := authentication.NewConsumerHatchery(ctx, db, hatch)
 	require.NoError(t, err)
 
+	jobRunSuccess := sdk.V2WorkflowRunJob{
+		ProjectKey:    proj.Key,
+		UserID:        admin.ID,
+		Status:        sdk.StatusSuccess,
+		JobID:         "myjob",
+		ModelType:     "docker",
+		Region:        "default",
+		WorkflowRunID: wr.ID,
+		HatcheryName:  hatch.Name,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRunSuccess))
+
+	// Add run result
+	rr := sdk.V2WorkflowRunResult{
+		ID:               sdk.UUID(),
+		WorkflowRunJobID: jobRunSuccess.ID,
+		WorkflowRunID:    jobRunSuccess.WorkflowRunID,
+		IssuedAt:         time.Now(),
+		Status:           sdk.StatusSuccess,
+		Type:             sdk.V2WorkflowRunResultTypeVariable,
+		Detail: sdk.V2WorkflowRunResultDetail{
+			Type: "V2WorkflowRunResultVariableDetail",
+			Data: sdk.V2WorkflowRunResultVariableDetail{
+				Name:  "foo",
+				Value: "bar",
+			},
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRunResult(ctx, db, &rr))
+
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
@@ -244,6 +274,12 @@ hatcheries:
 	wkDB, err := worker_v2.LoadByID(ctx, db, wkr.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.StatusBuilding, wkDB.Status)
+
+	require.Equal(t, 1, len(takeJob.Contexts.Jobs))
+	jc, has := takeJob.Contexts.Jobs[jobRunSuccess.JobID]
+	require.True(t, has)
+	require.Equal(t, 1, len(jc.Outputs))
+	require.Equal(t, "bar", jc.Outputs["foo"])
 }
 
 func TestWorkerRegister(t *testing.T) {
