@@ -840,6 +840,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 					duplicatedRunResult := r
 					duplicatedRunResult.ID = ""
 					duplicatedRunResult.WorkflowRunJobID = duplicatedRJ.ID
+					duplicatedRunResult.RunAttempt = duplicatedRJ.RunAttempt
 					if err := workflow_v2.InsertRunResult(ctx, tx, &duplicatedRunResult); err != nil {
 						return err
 					}

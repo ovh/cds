@@ -15,25 +15,28 @@ import (
 	"github.com/rockbears/log"
 )
 
-func WithRunResults(ctx context.Context, mapper *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
+func WithRunResults(ctx context.Context, _ *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 	switch target := i.(type) {
 	case *[]dbWorkflowRun:
 		var ids []string
 		for _, r := range *target {
 			ids = append(ids, r.ID)
 		}
-		results, err := loadRunResultsByRunIDs(ctx, db, ids...)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, ids...)
 		if err != nil {
 			return err
 		}
 		for i := range *target {
 			r := &(*target)[i]
-			if results, has := results[r.ID]; has {
-				var runResult []sdk.V2WorkflowRunResult
-				for _, r := range results {
-					runResult = append(runResult, r.V2WorkflowRunResult)
+			if results, has := allResults[r.ID]; has {
+				var runResults []sdk.V2WorkflowRunResult
+				for _, runResult := range results {
+					if r.RunAttempt != runResult.RunAttempt {
+						continue
+					}
+					runResults = append(runResults, runResult.V2WorkflowRunResult)
 				}
-				r.Results = runResult
+				r.Results = runResults
 			}
 		}
 	case []sdk.V2WorkflowRun:
@@ -41,40 +44,49 @@ func WithRunResults(ctx context.Context, mapper *gorpmapper.Mapper, db gorp.SqlE
 		for _, r := range target {
 			ids = append(ids, r.ID)
 		}
-		results, err := loadRunResultsByRunIDs(ctx, db, ids...)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, ids...)
 		if err != nil {
 			return err
 		}
 		for i := range target {
 			r := &target[i]
-			if results, has := results[r.ID]; has {
-				var runResult []sdk.V2WorkflowRunResult
-				for _, r := range results {
-					runResult = append(runResult, r.V2WorkflowRunResult)
+			if results, has := allResults[r.ID]; has {
+				var runResults []sdk.V2WorkflowRunResult
+				for _, runResult := range results {
+					if r.RunAttempt != runResult.RunAttempt {
+						continue
+					}
+					runResults = append(runResults, runResult.V2WorkflowRunResult)
 				}
-				r.Results = runResult
+				r.Results = runResults
 			}
 		}
 	case *sdk.V2WorkflowRun:
-		results, err := loadRunResultsByRunIDs(ctx, db, target.ID)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, target.ID)
 		if err != nil {
 			return err
 		}
-		if results, has := results[target.ID]; has {
-			var runResult []sdk.V2WorkflowRunResult
+		if results, has := allResults[target.ID]; has {
+			var runResults []sdk.V2WorkflowRunResult
 			for _, r := range results {
-				runResult = append(runResult, r.V2WorkflowRunResult)
+				if target.RunAttempt != r.RunAttempt {
+					continue
+				}
+				runResults = append(runResults, r.V2WorkflowRunResult)
 			}
-			target.Results = runResult
+			target.Results = runResults
 		}
 	case *dbWorkflowRun:
-		results, err := loadRunResultsByRunIDs(ctx, db, target.ID)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, target.ID)
 		if err != nil {
 			return err
 		}
-		if results, has := results[target.ID]; has {
+		if results, has := allResults[target.ID]; has {
 			var runResult []sdk.V2WorkflowRunResult
 			for _, r := range results {
+				if target.RunAttempt != r.RunAttempt {
+					continue
+				}
 				runResult = append(runResult, r.V2WorkflowRunResult)
 			}
 			target.Results = runResult
