@@ -77,7 +77,7 @@ testcases:
                   grep foobar foo.txt
 
   - name: Check CDS project analyses status
-    script: cdsctl experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
     - result.systemoutjson ShouldHaveLength 2
     - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
@@ -86,7 +86,7 @@ testcases:
     delay: 10
 
   - name: Check that the CDS workflow has at least one execution and is Success
-    script: cdsctl experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
     assertions:
     - result.systemoutjson ShouldHaveLength 1
     - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
