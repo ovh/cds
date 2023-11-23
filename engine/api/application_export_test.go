@@ -46,7 +46,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		Type:          sdk.KeyTypePGP,
 		ApplicationID: app.ID,
 	}
-	kk, err := keys.GeneratePGPKeyPair(k.Name)
+	kk, err := keys.GeneratePGPKeyPair(k.Name, "", "test@cds")
 	require.NoError(t, err)
 
 	k.Public = kk.Public

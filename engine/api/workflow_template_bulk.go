@@ -322,7 +322,7 @@ func (api *API) workflowTemplateBulkOperation(ctx context.Context, op WorkflowTe
 		return
 	}
 
-	_, wkf, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey)
+	_, wkf, _, _, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, data, nil, consumer, project.DecryptWithBuiltinKey, api.gpgKeyEmailAddress)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrEnvironmentExist) {
 			err = sdk.NewErrorFrom(err, "conflict when creating an environment with same name on multiple workflow")

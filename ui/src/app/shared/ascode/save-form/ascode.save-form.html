@@ -4,7 +4,10 @@
             <nz-form-item>
                 <nz-form-label>{{ 'ascode_modal_label_branch' | translate }}</nz-form-label>
                 <nz-form-control>
-                    <input nz-input type="text" [(ngModel)]="selectedBranch" (keyup)="changeParam()" auto-complete [source]="branches" [min-chars]="1" name="branch" />
+                    <input nz-input type="text" [(ngModel)]="selectedBranch" (keyup)="changeParam()" [nzAutocomplete]="auto" name="branch" (input)="onInput($event)" />
+                    <nz-autocomplete nzBackfill #auto>
+                        <nz-auto-option *ngFor="let option of branchesFiltered" [nzValue]="option">{{ option }}</nz-auto-option>
+                    </nz-autocomplete>
                 </nz-form-control>
             </nz-form-item>
             <nz-form-item>

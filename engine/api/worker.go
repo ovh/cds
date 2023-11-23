@@ -303,14 +303,14 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize in
 		// Worker is awol while building !
 		// We need to restart this action
 		wNodeJob, err := workflow.LoadNodeJobRun(ctx, db, nil, jobID.Int64)
-		if err == nil && wNodeJob.Retry < 3 {
+		if err == nil && wNodeJob.Retry < 3 && !sdk.StatusIsTerminated(wNodeJob.Status) {
 			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob, maxLogSize); err != nil {
 				log.Warn(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
 			} else {
 				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
 			}
+			log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
 		}
-		log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
 	}
 	return nil
 }

@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
 import { Project } from 'app/model/project.model';
 import { RunToKeep } from 'app/model/purge.model';
@@ -32,8 +32,8 @@ import {
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
-import { DragulaService } from 'ng2-dragula-sgu';
-import { forkJoin, Observable, Subscription } from 'rxjs';
+import { DragulaService } from 'ng2-dragula';
+import { forkJoin, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { APIConfig } from 'app/model/config.service';
@@ -108,13 +108,9 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
     themeSubscription: Subscription;
 
     // Dry run datas
-    @Select(WorkflowState.getRetentionDryRunResults()) dryRunResults$: Observable<Array<RunToKeep>>;
     dryRunsSubs: Subscription;
-    @Select(WorkflowState.getRetentionStatus()) dryRunStatus$: Observable<string>;
     dryRunsStatusSubs: Subscription;
-    @Select(WorkflowState.getRetentionProgress()) dryRunProgress$: Observable<number>;
     dryRunProgressSub: Subscription;
-    @Select(WorkflowState.getRetentionDryRunWarnings()) dryRunWarnings$: Observable<string[]>
     dryRunWarningsSub: Subscription;
     dryRunColumns = [];
     dryRunDatas: Array<RunToKeep>;
@@ -277,7 +273,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
         });
 
         // Subscribe to dry run result update
-        this.dryRunsSubs = this.dryRunResults$.subscribe(rs => {
+        this.dryRunsSubs = this._store.select(WorkflowState.getRetentionDryRunResults()).subscribe(rs => {
             if (!this.dryRunDatas) {
                 this.dryRunDatas = new Array<RunToKeep>();
             }
@@ -288,7 +284,7 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             this._cd.markForCheck();
         });
         // Subscribe to dry run result status
-        this.dryRunsStatusSubs = this.dryRunStatus$.subscribe(s => {
+        this.dryRunsStatusSubs = this._store.select(WorkflowState.getRetentionStatus()).subscribe(s => {
             if (s === this.dryRunStatus) {
                 return;
             }
@@ -298,14 +294,14 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
             }
             this._cd.markForCheck();
         });
-        this.dryRunProgressSub = this.dryRunProgress$.subscribe(nb => {
+        this.dryRunProgressSub = this._store.select(WorkflowState.getRetentionProgress()).subscribe(nb => {
             if (nb === this.dryRunAnalyzedRuns) {
                 return;
             }
             this.dryRunAnalyzedRuns = nb;
             this._cd.markForCheck();
         });
-        this.dryRunWarningsSub = this.dryRunWarnings$.subscribe(ws => {
+        this.dryRunWarningsSub = this._store.select(WorkflowState.getRetentionDryRunWarnings()).subscribe(ws => {
            this.dryRunWarnings = ws;
            this._cd.markForCheck();
         });

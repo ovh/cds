@@ -367,7 +367,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
             nzTitle: 'Workflow template apply bulk request',
             nzWidth: '1100px',
             nzContent: WorkflowTemplateBulkModalComponent,
-            nzComponentParams: {
+            nzData: {
                 workflowTemplate: this.workflowTemplate
             }
         });
@@ -380,7 +380,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
             nzTitle: 'Update workflow from template',
             nzWidth: '1100px',
             nzContent: WorkflowTemplateApplyModalComponent,
-            nzComponentParams: {
+            nzData: {
                 workflowTemplateIn: this.workflowTemplate,
                 workflowTemplateInstanceIn: this.selectedWorkflowTemplateInstance
             },

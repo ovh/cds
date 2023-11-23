@@ -327,7 +327,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 nzWidth: '900px',
                 nzTitle: 'Save pipeline as code',
                 nzContent: AsCodeSaveModalComponent,
-                nzComponentParams: {
+                nzData: {
                     dataToSave: this.pipeline,
                     dataType: 'pipeline',
                     project: this.project,

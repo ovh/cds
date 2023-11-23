@@ -1,10 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnInit} from '@angular/core';
 import { Store } from '@ngxs/store';
 import { Label, Project } from 'app/model/project.model';
 import { SaveLabelsInProject } from 'app/store/project.action';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { finalize } from 'rxjs/operators';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    project: Project;
+}
 
 @Component({
     selector: 'app-labels-edit',
@@ -12,21 +16,14 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
     styleUrls: ['./labels.edit.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LabelsEditComponent {
-    _project: Project;
-    @Input() set project(data: Project) {
-        this._project = data;
-        if (this._project) {
-            this.labels = cloneDeep(this.project.labels);
-        }
-    }
-    get project() {
-        return this._project;
-    }
+export class LabelsEditComponent implements OnInit {
+    project: Project;
 
     labels: Label[];
     newLabel: Label = new Label();
     loading = false;
+
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
 
     constructor(
         public _modal: NzModalRef,
@@ -34,6 +31,13 @@ export class LabelsEditComponent {
         private _cd: ChangeDetectorRef
 
     ) { }
+
+    ngOnInit() {
+        this.project = this.nzModalData.project;
+        if (this.project) {
+            this.labels = cloneDeep(this.project.labels);
+        }
+    }
 
     deleteLabel(label: Label) {
         this.labels = this.labels.filter((lbl) => lbl.name !== label.name);

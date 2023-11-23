@@ -1,7 +1,8 @@
 module.exports = {
     root: true,
     ignorePatterns: [
-        "projects/**/*"
+        "projects/**/*",
+        "extra-webpack.config.js"
     ],
     overrides: [
         {

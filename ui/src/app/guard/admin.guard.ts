@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { AuthSummary } from 'app/model/user.model';
 import { AuthenticationState } from 'app/store/authentication.state';
@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
-export class MaintainerGuard implements CanActivate, CanActivateChild {
+export class MaintainerGuard  {
 
     constructor(
         private _store: Store,

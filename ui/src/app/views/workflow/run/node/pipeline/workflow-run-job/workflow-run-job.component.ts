@@ -496,7 +496,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             nzWidth: '900px',
             nzTitle: 'Job variables',
             nzContent: WorkflowRunJobVariableComponent,
-            nzComponentParams: {
+            nzData: {
                 variables: this._nodeJobRun?.parameters
             }
         })

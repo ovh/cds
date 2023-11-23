@@ -88,7 +88,7 @@ export class ProjectWorkflowListComponent implements OnInit {
                 nzTitle: 'Labels',
                 nzWidth: '900px',
                 nzContent: LabelsEditComponent,
-                nzComponentParams: {
+                nzData: {
                     project: this.project
                 }
             });

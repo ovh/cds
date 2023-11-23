@@ -280,7 +280,6 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
                     nzWidth: '900px',
                     nzTitle: 'Run worklow',
                     nzContent: WorkflowNodeRunParamComponent,
-                    nzComponentParams: {}
                 })
             });
         }
@@ -308,7 +307,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             nzWidth: '900px',
             nzTitle: 'Save workflow as code',
             nzContent: AsCodeSaveModalComponent,
-            nzComponentParams: {
+            nzData: {
                 dataToSave: this.detailedWorkflow,
                 dataType: 'workflow',
                 project: this.project,

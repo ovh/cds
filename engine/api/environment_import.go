@@ -58,7 +58,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		_, _, msgList, globalError := environment.ParseAndImport(ctx, tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getUserConsumer(ctx))
+		_, _, msgList, globalError := environment.ParseAndImport(ctx, tx, *proj, data, environment.ImportOptions{Force: force}, project.DecryptWithBuiltinKey, getUserConsumer(ctx), api.gpgKeyEmailAddress)
 		msgListString := translate(msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", data.Name)

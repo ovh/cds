@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { FeatureEnabledResponse } from 'app/model/feature.model';
 import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
 import { Observable } from 'rxjs';
 import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
-export class FeatureGuard implements CanActivate {
+export class FeatureGuard  {
     constructor(
         private _router: Router,
         private _featureService: FeatureService

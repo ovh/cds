@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { ProjectIntegration } from 'app/model/integration.model';
 import {
     UIArtifact,
-    WorkflowNodeRun,
     WorkflowRunResult
 } from 'app/model/workflow.run.model';
 import { WorkflowHelper } from 'app/service/workflow/workflow.helper';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-artifact-list',
@@ -20,7 +19,6 @@ import { Observable, Subscription } from 'rxjs';
 })
 @AutoUnsubscribe()
 export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
-    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
     runResult: Array<WorkflowRunResult>
@@ -66,7 +64,7 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+        this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
             if (!nr) {
                 return;
             }
@@ -76,7 +74,6 @@ export class WorkflowRunArtifactListComponent implements OnInit, OnDestroy {
                 computeArtifact = true;
             }
             if (computeArtifact) {
-                let uiArtifacts: Array<UIArtifact>;
                 let uiRunResults: Array<UIArtifact>;
                 this.uiArtifacts = new Array<UIArtifact>();
                 if (nr.results) {

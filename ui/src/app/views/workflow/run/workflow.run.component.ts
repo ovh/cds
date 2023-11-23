@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { PipelineStatus, SpawnInfo } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WorkflowRun } from 'app/model/workflow.run.model';
@@ -13,7 +13,7 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { ChangeToRunView, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ErrorMessageMap, WarningMessageMap } from './errors';
 
 @Component({
@@ -27,7 +27,6 @@ export class WorkflowRunComponent implements OnInit, OnDestroy {
 
     project: Project;
 
-    @Select(WorkflowState.getSelectedWorkflowRun()) workflowRun$: Observable<WorkflowRun>;
     subWorkflowRun: Subscription;
 
     workflowName: string;
@@ -81,7 +80,7 @@ export class WorkflowRunComponent implements OnInit, OnDestroy {
 
 
         // Subscribe to workflow Run
-        this.subWorkflowRun = this.workflowRun$.subscribe(wr => {
+        this.subWorkflowRun = this._store.select(WorkflowState.getSelectedWorkflowRun()).subscribe(wr => {
             if (!wr) {
                 return;
             }
