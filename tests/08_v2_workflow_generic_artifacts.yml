@@ -102,6 +102,14 @@ testcases:
     assertions:
     - result.systemoutjson.status ShouldEqual "Success"
 
+  - name: Sleep
+    script: sleep 60
+
+  - name: Download logs
+    script: "mkdir -p logs; cd logs; {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1"
+  - script: "ls -l logs/*"
+  - script: "cat logs/*"
+
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
     assertions:
