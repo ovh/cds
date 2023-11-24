@@ -8,7 +8,7 @@ input:
 
 steps:
   # Export the gpg public key in armor format and save it in a variable
-  - script: gpg --export --armor {{.input.gpg_key_id}}
+  - script: gpg --export --armor {{.input.gpg_key_id}} | tee /tmp/{{.input.gpg_key_id}}.gpg.out.pub
     vars:
       gpgPubKey:
         from: result.systemout
@@ -103,7 +103,11 @@ steps:
   - script: 'curl --silent --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
 
   # Add the GPG key on cd CDS user
-  - script: "{{.input.cdsctl_command}} user gpg import --pub-key-file /tmp/{{.input.gpg_key_id}}.gpg.pub"
+  - script: "{{.input.cdsctl_command}} user gpg import --pub-key-file /tmp/{{.input.gpg_key_id}}.gpg.out.pub"
+    assertions:
+    - or:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring "Data conflict"
 
 output:
   emailaddress: "{{.emailaddress}}"
