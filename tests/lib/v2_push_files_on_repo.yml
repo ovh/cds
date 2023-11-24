@@ -23,7 +23,7 @@ steps:
       EOF
   - script: cd /tmp/repos/{{.input.git_repo}} && git config user.name {{.input.git_user}} && git config user.email {{.input.git_email}}
   - script: cd /tmp/repos/{{.input.git_repo}} && git add --all
-  - script: cd /tmp/repos/{{.input.git_repo}} && git commit --gpg-sign={{.input.gpg_key_id}} -m "add file and sign"
+  - script: cd /tmp/repos/{{.input.git_repo}} && git commit --gpg-sign={{.input.gpg_key_id}} -m "add file and sign" --author "{{.input.git_user}} <{{.input.git_email}}>"
   - script: cd /tmp/repos/{{.input.git_repo}} && git push
 
 output: {}
