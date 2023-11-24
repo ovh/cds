@@ -52,11 +52,19 @@ testcases:
     git_password: "{{.git.password}}"
     gpg_key_id: "{{.gpg.key_id}}"
     files:
+      worker-models/debian.yaml:
+        name: docker-debian
+        description: my debian worker model
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
       workflows/workflowA.yaml:
         name: WorkflowA
         on: [push]
         jobs:
           First-Job:
+            runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
             steps:
               - run: |-
                   #!/bin/bash -x
@@ -66,6 +74,7 @@ testcases:
                 with:
                   path: "*.txt"
           Second-Job:
+            runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
             needs: [First-Job]
             steps:
               - uses: actions/downloadArtifact
