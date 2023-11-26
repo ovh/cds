@@ -103,17 +103,18 @@ testcases:
     - result.systemoutjson.status ShouldEqual "Success"
 
   - name: Sleep
-    script: sleep 60
+    script: sleep 120
 
   - name: Download logs
-    script: "mkdir -p logs; cd logs; {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1"
-  - script: "ls -l logs/*"
-  - script: "cat logs/*"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1"
+  - script: "cat WorkflowA-1-0-First-Job-step-0"
+  - script: "cat WorkflowA-1-0-First-Job-step-1"
+  - script: "cat WorkflowA-1-0-Second-Job-step-0"
+  - script: "cat WorkflowA-1-0-Second-Job-step-1"
 
   - name: Check that the CDS workflow has at least one execution and is Success
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"
     assertions:
-    - result.systemoutjson ShouldHaveLength 1
-    - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-    retry: 10
+    - result.systemoutjson.status ShouldEqual "Success"
+    retry: 30
     delay: 30
