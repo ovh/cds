@@ -97,6 +97,9 @@ testcases:
         from:
           result.systemoutjson.systemoutjson1.id
 
+  - name: Sleep
+    script: sleep 60
+
   - name: Get CDS project analysis
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
     assertions:
@@ -116,5 +119,5 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"
     assertions:
     - result.systemoutjson.status ShouldEqual "Success"
-    retry: 30
-    delay: 30
+    retry: 10
+    delay: 60
