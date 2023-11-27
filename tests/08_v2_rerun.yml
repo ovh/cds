@@ -1,8 +1,8 @@
-name: Sub Actions
+name: Checkout plugin
 vars:
-  cds_project: "ITV2SUBACTION"
-  git_repo: "it_v2_subaction"
-  cds_workflow: "WorkflowSubAction"
+  cds_project: "ITV2RERUN"
+  git_repo: "it_v2_rerun"
+  cds_workflow: "WorkflowRerun"
 testcases:
 - name: Prepare test
   steps:
@@ -56,39 +56,18 @@ testcases:
           type: docker
           spec:
             image: buildpack-deps:buster
-        actions/parent-action.yaml:
-          name: parent-action
-          runs:
-            steps:
-              - run: |-
-                  echo "Welcome in action parent-action"
-              - uses: actions/{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/child-action@master
-                with:
-                  projectName: \${{ cds.project_key }}
-                  name: 'Foo'
-        actions/child-action.yaml:
-          name: child-action
-          inputs:
-            projectName:
-              description: project name
-            name:
-              description: name of the person to greet
-              default: Steven
-            lastname:
-              description: lastname of the person to greet
-              default: Doe
-          runs:
-            steps:
-              - run: echo "Hello ${{ inputs.name }} ${{ inputs.lastname }} from project ${{ inputs.projectName }}"
-        workflows/sub-action.yaml:
+        workflows/rerun.yaml:
           name: {{.cds_workflow}}
           on: [push]
           jobs:
             init:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
-                - uses: actions/parent-action
-                  id: action
+                - run: |-
+                    #!/bin/bash
+                    if [ "${{cds.run_attempt}}" == "1" ]; then
+                      exit 1
+                    fi
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -99,18 +78,21 @@ testcases:
       retry: 2
       delay: 10
 
-    - name: Check that the CDS workflow has at least one execution and is Success
+    - name: Check that the CDS workflow has at least one execution and is Fail
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Fail"
+      retry: 10
+      delay: 12
+
+    - name: Rerun failed job
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow rerun {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1"
+
+    - name: Check that the CDS workflow is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
       retry: 10
       delay: 12
-
-    - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
-
-    - name: Check log content
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Welcome in action parent-action\""
-    - name: Check log in sub action
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Hello Foo Doe from project {{.cds_project}}\""

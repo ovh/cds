@@ -253,7 +253,7 @@ func workflowRunFunc(v cli.Values) error {
 
 var workflowReRunCmd = cli.Command{
 	Name:    "rerun",
-	Short:   "Re run a new workflow",
+	Short:   "Re run workflow failed jobs",
 	Example: "cdsctl workflow run <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{

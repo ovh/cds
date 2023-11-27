@@ -112,8 +112,8 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 2
-      delay: 30
+      retry: 20
+      delay: 12
 
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1 stepIgnoreError --format json
       assertions:
