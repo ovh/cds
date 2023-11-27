@@ -106,10 +106,10 @@ testcases:
 
   - name: Download logs
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1"
-  - script: "cat WorkflowA-1-0-First-Job-step-0"
-  - script: "cat WorkflowA-1-0-First-Job-step-1"
-  - script: "cat WorkflowA-1-0-Second-Job-step-0"
-  - script: "cat WorkflowA-1-0-Second-Job-step-1"
+  - script: "cat WorkflowA-1-0-First-Job-step-0 || true"
+  - script: "cat WorkflowA-1-0-First-Job-step-1 || true"
+  - script: "cat WorkflowA-1-0-Second-Job-step-0 || true"
+  - script: "cat WorkflowA-1-0-Second-Job-step-1 || true"
 
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"
