@@ -86,6 +86,21 @@ func WithRunResults(ctx context.Context, mapper *gorpmapper.Mapper, db gorp.SqlE
 	return nil
 }
 
+func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunResult, error) {
+	results, err := loadRunResultsByRunIDs(ctx, db, runID)
+	if err != nil {
+		return nil, err
+	}
+	if results, has := results[runID]; has {
+		var runResults []sdk.V2WorkflowRunResult
+		for _, r := range results {
+			runResults = append(runResults, r.V2WorkflowRunResult)
+		}
+		return runResults, nil
+	}
+	return nil, nil
+}
+
 func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id string) (*sdk.V2WorkflowRunResult, error) {
 	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where id = $1 AND workflow_run_job_id = $2`).Args(id, runJobID)
 	var result dbV2WorkflowRunResult

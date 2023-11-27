@@ -8,7 +8,7 @@ TARGET_DIR = ./dist
 TARGET_BINARY = debpacker
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_BINARY)"
 TARGET_OS = linux
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm64)
 
 GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter

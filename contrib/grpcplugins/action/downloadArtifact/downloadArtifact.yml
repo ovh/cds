@@ -1,0 +1,18 @@
+name: downloadArtifact
+type: action
+author: "François SAMIN <francois.samin@corp.ovh.com>"
+description: |
+  Download a build artifact that was previously uploaded in the workflow by the upload-artifact action.
+inputs:
+  name:
+    type: string
+    description: >
+      Artifact name or wilcard pattern.
+
+      If empty, all the artifacts identifed as "generic" result previously uploaded in the workflow will be downloaded.
+  path:
+    type: string
+    description: >
+      Destination path
+
+      If empty, all the artifacts will be downloadded in the job workspace.

@@ -17,17 +17,28 @@ import (
 )
 
 type V2RunResultRequest struct {
-	RunResult *sdk.V2WorkflowRunResult
+	RunResult   *sdk.V2WorkflowRunResult
+	CDNItemLink sdk.CDNItemLink // TODO
 }
 
 type V2AddResultResponse struct {
-	RunResult  *sdk.V2WorkflowRunResult
-	Signature  string
-	CDNAddress string
+	RunResult    *sdk.V2WorkflowRunResult
+	CDNSignature string
+	CDNAddress   string
+}
+
+type V2GetResultResponse struct {
+	RunResults   []sdk.V2WorkflowRunResult
+	CDNSignature string
 }
 
 type V2UpdateResultResponse struct {
 	RunResult *sdk.V2WorkflowRunResult
+}
+
+type V2FilterRunResult struct {
+	Pattern string
+	Type    sdk.V2WorkflowRunResultType
 }
 
 type WorkerConfig struct {
@@ -137,6 +148,7 @@ type Runtime interface {
 	PluginGetBinary(name, os, arch string, w io.Writer) error
 	V2AddRunResult(ctx context.Context, req V2RunResultRequest) (*V2AddResultResponse, error)
 	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
+	V2GetRunResult(ctx context.Context, filter V2FilterRunResult) (*V2GetResultResponse, error)
 }
 
 func JobID(ctx context.Context) (int64, error) {
