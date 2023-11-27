@@ -39,6 +39,7 @@ CDSCTL_CONFIG="${CDSCTL_CONFIG:-.cdsrc}"
 CDS_ENGINE_CTL="${CDS_ENGINE_CTL:-`which cds-engine`}"
 CDS_ENGINE_CONFIG="${CDS_ENGINE_CONFIG:-cds-engine.toml}"
 CDS_HATCHERY_NAME="${CDS_HATCHERY_NAME:-hatchery-swarm}"
+CDS_REGION="${CDS_REGION:-default}"
 SMTP_MOCK_URL="${SMTP_MOCK_URL:-http://localhost:2024}"
 INIT_TOKEN="${INIT_TOKEN:-}"
 GITEA_USER="${GITEA_USER:-gituser}"
@@ -239,7 +240,7 @@ cds_v2_tests() {
     curl --fail -I -X GET ${GITEA_HOST}/api/swagger
     echo "Running CDS v2 tests:"
     for f in $(ls -1 08_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME} --var gpg.key_id=${GPG_KEY_ID} --var cds.region=default"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME} --var gpg.key_id=${GPG_KEY_ID} --var cds.region=${CDS_REGION}"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
