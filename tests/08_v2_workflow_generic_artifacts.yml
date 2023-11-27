@@ -97,16 +97,12 @@ testcases:
         from:
           result.systemoutjson.systemoutjson1.id
 
-  - name: Sleep
-    script: sleep 60
-
   - name: Get CDS project analysis
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
     assertions:
     - 'result.systemout ShouldContainSubstring "status: Success"'
-
-  - name: Sleep
-    script: sleep 120
+    retry: 2
+    delay: 10
 
   - name: Download logs
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1"
@@ -119,5 +115,5 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"
     assertions:
     - result.systemoutjson.status ShouldEqual "Success"
-    retry: 10
-    delay: 60
+    retry: 100
+    delay: 10
