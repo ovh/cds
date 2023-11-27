@@ -101,9 +101,9 @@ testcases:
     script: sleep 60
 
   - name: Get CDS project analysis
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}} --format json"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
     assertions:
-    - result.systemoutjson.status ShouldEqual "Success"
+    - 'result.systemout ShouldContainSubstring "status: Success"'
 
   - name: Sleep
     script: sleep 120
