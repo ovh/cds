@@ -1,4 +1,5 @@
 import {
+    AfterViewInit,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
@@ -51,7 +52,7 @@ declare let CodeMirror: any;
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class WorkflowAdminComponent implements OnInit, OnDestroy {
+export class WorkflowAdminComponent implements OnInit, OnDestroy, AfterViewInit {
 
     _project: Project;
     @Input()
@@ -250,6 +251,10 @@ export class WorkflowAdminComponent implements OnInit, OnDestroy {
                 }
             });
         }
+    }
+
+    ngAfterViewInit() {
+       this.codemirror.instance.refresh();
     }
 
     initExistingtags(): void {

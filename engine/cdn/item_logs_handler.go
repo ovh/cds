@@ -140,7 +140,7 @@ func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Cli
 				return err
 			}
 
-			if err := s.itemAccessCheck(ctx, *iu.Item); err != nil {
+			if err := s.itemAccessCheck(ctx, &http.Request{}, *iu.Item); err != nil {
 				var projectKey, workflow string
 				logRef, has := iu.Item.GetCDNLogApiRef()
 				if has {

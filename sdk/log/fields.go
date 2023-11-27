@@ -49,6 +49,7 @@ const (
 	NodeRunID          = log.Field("node_run_id")
 	PermJobID          = log.Field("permJobID")
 	Workflow           = log.Field("workflow")
+	Component          = log.Field("component")
 )
 
 func init() {
@@ -65,6 +66,7 @@ func init() {
 		AuthSessionIAT,
 		AuthSessionTokenID,
 		Commit,
+		Component,
 		Deprecated,
 		Duration,
 		Goroutine,
@@ -92,7 +94,7 @@ func init() {
 		AnalyzeID,
 		NodeRunID,
 		PermJobID,
-    Workflow,
+		Workflow,
 	)
 }
 

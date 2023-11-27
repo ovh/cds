@@ -403,11 +403,29 @@ func (r *V2WorkflowRunResult) GetDetail() (any, error) {
 	return r.Detail.Data, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2WorkflowRunResultGenericDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultGenericDetail)
+	if !ok {
+		var ii V2WorkflowRunResultGenericDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultGenericDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultGenericDetail")
+	}
+	return i, nil
+}
+
 func (r *V2WorkflowRunResult) Name() string {
 	switch r.Type {
 	case V2WorkflowRunResultTypeGeneric:
-		detail, ok := r.Detail.Data.(*V2WorkflowRunResultGenericDetail)
-		if ok {
+		detail, err := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+		if err == nil {
 			return string(r.Type) + ":" + detail.Name
 		}
 	}
@@ -428,6 +446,15 @@ const (
 
 type V2WorkflowRunResultArtifactManagerMetadata map[string]string
 
+func V2WorkflowRunResultArtifactManagerMetadataFromCDNItemLink(i CDNItemLink) *V2WorkflowRunResultArtifactManagerMetadata {
+	return &V2WorkflowRunResultArtifactManagerMetadata{
+		"cdn_http_url":     i.CDNHttpURL,
+		"cdn_id":           i.Item.ID,
+		"cdn_type":         string(i.Item.Type),
+		"cdn_api_ref_hash": i.Item.APIRefHash,
+	}
+}
+
 func (x V2WorkflowRunResultArtifactManagerMetadata) Value() (driver.Value, error) {
 	j, err := json.Marshal(x)
 	return j, WrapError(err, "cannot marshal V2WorkflowRunResultArtifactManagerMetadata")
@@ -437,9 +464,9 @@ func (x *V2WorkflowRunResultArtifactManagerMetadata) Scan(src interface{}) error
 	if src == nil {
 		return nil
 	}
-	source, ok := src.(string)
+	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(JSONUnmarshal([]byte(source), x), "cannot unmarshal V2WorkflowRunResultArtifactManagerMetadata")
 }
@@ -529,10 +556,10 @@ func (s *V2WorkflowRunResultDetail) Scan(src interface{}) error {
 type V2WorkflowRunResultType string
 
 const (
-	V2WorkflowRunResultTypeCoverage = "coverage"
-	V2WorkflowRunResultTypeTest     = "tests"
-	V2WorkflowRunResultTypeRelease  = "release"
-	V2WorkflowRunResultTypeGeneric  = "generic"
+	V2WorkflowRunResultTypeCoverage V2WorkflowRunResultType = "coverage"
+	V2WorkflowRunResultTypeTest                             = "tests"
+	V2WorkflowRunResultTypeRelease                          = "release"
+	V2WorkflowRunResultTypeGeneric                          = "generic"
 	// Other values may be instancited from Artifactory Manager repository type
 )
 

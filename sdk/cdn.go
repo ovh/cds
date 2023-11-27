@@ -37,6 +37,11 @@ type CDNItemLinks struct {
 	Items      []CDNItem `json:"items"`
 }
 
+type CDNItemLink struct {
+	CDNHttpURL string  `json:"cdn_http_url"`
+	Item       CDNItem `json:"item"`
+}
+
 func (c CDNItem) MarshalJSON() ([]byte, error) {
 	type Alias CDNItem // prevent recursion
 	itemalias := Alias(c)
@@ -468,7 +473,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemJobStepLog:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemJobStepLog, CDNTypeItemRunResultV2:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")

@@ -10,7 +10,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/utils/distribution"
 	"github.com/jfrog/jfrog-client-go/utils/log"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
-	"github.com/ovh/cds/contrib/integrations/artifactory/plugin-artifactory-release/edge"
+	"github.com/ovh/cds/sdk/artifact_manager/artifactory/edge"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
