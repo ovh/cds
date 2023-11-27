@@ -165,6 +165,9 @@ func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http
 		return ctx, err
 	}
 	ctx = context.WithValue(ctx, contextWorker, work)
+	if work != nil {
+		SetTracker(w, cdslog.AuthWorkerName, work.Name)
+	}
 
 	ctx = context.WithValue(ctx, cdslog.AuthServiceName, currentHatchery.Name)
 	SetTracker(w, cdslog.AuthServiceName, currentHatchery.Name)

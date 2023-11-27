@@ -87,7 +87,7 @@ testcases:
             init:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
-                - uses: actions/parent-action
+                - uses: actions/{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/parent-action
                   id: action
 
     - name: Check CDS project analyses status
