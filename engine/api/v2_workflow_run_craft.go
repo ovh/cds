@@ -684,7 +684,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 					return "", &msg, nil
 				}
 				if err := yaml.Unmarshal([]byte(wmEntity.Data), &localWM); err != nil {
-					return "", nil, err
+					return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read worker model %s: %v", workerModel, err)
 				}
 				wref.localWorkerModelCache[workerModel] = localWM
 			}
