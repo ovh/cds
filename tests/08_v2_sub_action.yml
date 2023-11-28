@@ -109,7 +109,8 @@ testcases:
 
     - name: Download logs
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
-
+    - name: Display log
+      script: cat {{.cds_workflow}}-1-1-init-action
     - name: Check log content
       script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Welcome in action parent-action\""
     - name: Check log in sub action
