@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin"
 )
 
-func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName string, w workerruntime.Runtime) (*clientSocket, *sdk.GRPCPlugin, error) {
+func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName string, w workerruntime.Runtime, env map[string]string) (*clientSocket, *sdk.GRPCPlugin, error) {
 	log.Info(ctx, "create socket for plugin %q", pluginName)
 	currentOS := strings.ToLower(sdk.GOOS)
 	currentARCH := strings.ToLower(sdk.GOARCH)
@@ -114,6 +114,13 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 	}
 
 	envs := w.Environ()
+
+	// Add jobv2 env variable
+	if env != nil {
+		for k, v := range env {
+			envs = append(envs, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
 
 	c := clientSocket{}
 
