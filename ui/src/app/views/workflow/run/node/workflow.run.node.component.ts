@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Tests } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { RouterService } from 'app/service/router/router.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectState } from 'app/store/project.state';
 import { GetWorkflowNodeRun, GetWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Tab } from 'app/shared/tabs/tabs.component';
 
 @Component({
@@ -21,12 +20,10 @@ import { Tab } from 'app/shared/tabs/tabs.component';
 })
 @AutoUnsubscribe()
 export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
-    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
     // Context info
     project: Project;
-    project$: Subscription;
     workflowName: string;
 
     // data of the view
@@ -38,9 +35,6 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     nodeRunTests: Tests;
 
     pipelineName = '';
-
-    // History
-    nodeRunsHistory = new Array<WorkflowNodeRun>();
 
     // tabs
     tabs: Array<Tab>;
@@ -95,7 +89,7 @@ export class WorkflowNodeRunComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {} // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+        this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
             let w = this._store.selectSnapshot(WorkflowState.workflowSnapshot);
             let wr = (<WorkflowStateModel>this._store.selectSnapshot(WorkflowState)).workflowRun;
             if (!w || this.workflowName !== w.name) {

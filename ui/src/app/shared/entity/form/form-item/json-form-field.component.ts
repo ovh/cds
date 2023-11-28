@@ -19,7 +19,7 @@ import {ProjectState} from "../../../../store/project.state";
 import {Store} from "@ngxs/store";
 import {load, LoadOptions} from 'js-yaml'
 import {PluginService} from "../../../../service/plugin.service";
-import {DragulaService} from "ng2-dragula-sgu";
+import {DragulaService} from "ng2-dragula";
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {Subscription} from "rxjs";
 import {PreferencesState} from "app/store/preferences.state";

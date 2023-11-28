@@ -5,10 +5,11 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es5",
+    "target": "es2022",
     "lib": [
-      "es2016",
-      "dom"
+      "ES2022",
+      "dom",
+      "ES2021.String"
     ],
     "outDir": "../out-tsc/app",
     "module": "esnext",
@@ -16,9 +17,10 @@
     "paths": {
       "url": [
         "../node_modules/url"
-      ],
+      ]
     },
-    "types": []
+    "types": [],
+    "allowSyntheticDefaultImports": true,
   },
   "include": [
     "**/*.ts",

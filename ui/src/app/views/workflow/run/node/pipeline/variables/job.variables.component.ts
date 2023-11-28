@@ -1,6 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnInit} from '@angular/core';
 import { Parameter } from 'app/model/parameter.model';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+
+interface IModalData {
+    variables: Array<Parameter>;
+}
 
 @Component({
     selector: 'app-workflow-run-job-variable',
@@ -23,12 +27,15 @@ export class WorkflowRunJobVariableComponent implements OnInit {
     varParent: Array<Parameter>;
     varWorkflow: Array<Parameter>;
 
+    readonly nzModalData: IModalData = inject(NZ_MODAL_DATA);
+
     constructor(
         private _modal: NzModalRef,
         private _cd: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
+        this.variables = this.nzModalData.variables;
         this.varGit = new Array<Parameter>();
         this.varCDS = new Array<Parameter>();
         this.varBuild = new Array<Parameter>();

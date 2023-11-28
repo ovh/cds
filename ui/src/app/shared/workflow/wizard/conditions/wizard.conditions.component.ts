@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 // eslint-disable-next-line max-len
@@ -15,7 +15,6 @@ import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
-import { Observable } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -34,11 +33,9 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
 
     @ViewChild('textareaCodeMirror') codemirror: any;
 
-    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     editableNode: WNode;
     nodeSub: Subscription;
 
-    @Select(WorkflowState.getSelectedHook()) hook$: Observable<WNodeHook>;
     editableHook: WNodeHook;
     hookSub: Subscription;
 
@@ -73,7 +70,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
     }
 
     ngOnInit(): void {
-        this.nodeSub = this.node$.subscribe(n => {
+        this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
             if (n && !this._store.selectSnapshot(WorkflowState).hook) {
                 this.editableNode = cloneDeep(n);
                 delete this.editableHook;
@@ -96,7 +93,7 @@ export class WorkflowWizardNodeConditionComponent extends Table<WorkflowNodeCond
             }
             this._cd.markForCheck();
         });
-        this.hookSub = this.hook$.subscribe(h => {
+        this.hookSub = this._store.select(WorkflowState.getSelectedHook()).subscribe(h => {
             if (h) {
                 this.editableHook = cloneDeep(h);
                 delete this.editableNode;

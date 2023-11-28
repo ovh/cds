@@ -1,5 +1,5 @@
 // eslint-disable-next-line max-len
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
 import { WorkflowCoreService } from 'app/service/workflow/workflow.core.service';
@@ -63,7 +63,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     svg: any;
 
     constructor(
-        private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore,
         private _workflowCore: WorkflowCoreService,
@@ -118,10 +117,10 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
         this.zoom = d3.zoom().scaleExtent([
             WorkflowGraphComponent.minScale,
             WorkflowGraphComponent.maxScale
-        ]).on('zoom', () => {
-            if (d3.event.transform && d3.event.transform.x && d3.event.transform.x !== Number.POSITIVE_INFINITY
-                && d3.event.transform.y && d3.event.transform.y !== Number.POSITIVE_INFINITY) {
-                g.attr('transform', d3.event.transform);
+        ]).on('zoom', (event) => {
+            if (event.transform && event.transform.x && event.transform.x !== Number.POSITIVE_INFINITY
+                && event.transform.y && event.transform.y !== Number.POSITIVE_INFINITY) {
+                g.attr('transform', event.transform);
             }
         });
 
@@ -168,8 +167,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
             let hookId = h.uuid;
             let componentRef = this.hooksComponent.get(hookId);
             if (!componentRef) {
-                let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
-                componentRef = this.svgContainer.createComponent<WorkflowNodeHookComponent>(hookComponent);
+                componentRef = this.svgContainer.createComponent(WorkflowNodeHookComponent);
             }
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
@@ -254,8 +252,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnDestroy {
     }
 
     createNodeComponent(node: WNode): ComponentRef<WorkflowWNodeComponent> {
-        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowWNodeComponent);
-        const componentRef = this.svgContainer.createComponent<WorkflowWNodeComponent>(nodeComponentFactory);
+        const componentRef = this.svgContainer.createComponent(WorkflowWNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;

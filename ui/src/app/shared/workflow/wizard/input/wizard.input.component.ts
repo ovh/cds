@@ -10,7 +10,7 @@ import {
     ViewChild
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Application } from 'app/model/application.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
@@ -27,7 +27,6 @@ import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Observable } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -52,7 +51,6 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
     editMode: boolean;
     noderun: WorkflowNodeRun;
 
-    @Select(WorkflowState.getSelectedNode()) node$: Observable<WNode>;
     editableNode: WNode;
     nodeSub: Subscription;
 
@@ -86,7 +84,7 @@ export class WorkflowWizardNodeInputComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.noderun = this._store.selectSnapshot(WorkflowState).workflowNodeRun;
-        this.nodeSub = this.node$.subscribe(n => {
+        this.nodeSub = this._store.select(WorkflowState.getSelectedNode()).subscribe(n => {
             this.editableNode = cloneDeep(n);
             if (this.editableNode) {
                 this.init();

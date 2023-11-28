@@ -15,6 +15,36 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
+func Logf(s string, i ...any) {
+	fmt.Println(fmt.Sprintf(s, i...))
+}
+
+func Log(s string) {
+	fmt.Println(s)
+}
+
+func Warnf(s string, i ...any) {
+	Logf(WarnColor+"Warning: "+NoColor+s, i...)
+}
+
+func Warn(s string) {
+	Log(WarnColor + "Warning: " + NoColor + s)
+}
+
+func Errorf(s string, i ...any) {
+	Logf(ErrColor+"Error: "+NoColor+s, i...)
+}
+
+func Error(s string) {
+	Log(ErrColor + "Error: " + NoColor + s)
+}
+
+const (
+	WarnColor = "\033[1;33m"
+	ErrColor  = "\033[1;31m"
+	NoColor   = "\033[0m"
+)
+
 func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
 	if workerHTTPPort == 0 {
 		return nil, nil
@@ -46,6 +76,38 @@ func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
 	return results, nil
 }
 
+func GetV2RunResults(ctx context.Context, c *actionplugin.Common, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
+	btes, err := json.Marshal(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := c.NewRequest(ctx, "GET", "/v2/result", bytes.NewReader(btes))
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.DoRequest(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get run results")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read body on get run result /v2/result: %v", err)
+	}
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot get run result /v2/result: HTTP %d", resp.StatusCode)
+	}
+
+	var result workerruntime.V2GetResultResponse
+	if err := sdk.JSONUnmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response: %v", err)
+	}
+	return &result, nil
+}
+
 func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.WorkerDirectories, error) {
 	req, err := c.NewRequest(ctx, "GET", "/directories", nil)
 	if err != nil {
@@ -59,7 +121,7 @@ func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.Wor
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Errorf("unable to read body on get run result /working-directory: %v", err)
+		return nil, errors.Errorf("unable to read body on get /working-directory: %v", err)
 	}
 
 	if resp.StatusCode >= 300 {

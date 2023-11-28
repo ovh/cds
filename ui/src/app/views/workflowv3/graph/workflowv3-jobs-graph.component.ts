@@ -3,7 +3,6 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    ComponentFactoryResolver,
     ComponentRef,
     Input,
     OnDestroy,
@@ -49,7 +48,6 @@ export class WorkflowV3JobsGraphComponent implements AfterViewInit, OnDestroy {
     graph: WorkflowV3Graph<WorkflowV3NodeComponent>;
 
     constructor(
-        private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef
     ) { }
 
@@ -120,8 +118,7 @@ export class WorkflowV3JobsGraphComponent implements AfterViewInit, OnDestroy {
     }
 
     createJobNodeComponent(node: GraphNode): ComponentRef<WorkflowV3JobNodeComponent> {
-        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowV3JobNodeComponent);
-        const componentRef = this.svgContainer.createComponent<WorkflowV3JobNodeComponent>(nodeComponentFactory);
+        const componentRef = this.svgContainer.createComponent(WorkflowV3JobNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
@@ -129,8 +126,7 @@ export class WorkflowV3JobsGraphComponent implements AfterViewInit, OnDestroy {
     }
 
     createForkJoinNodeComponent(nodes: Array<GraphNode>, type: string): ComponentRef<WorkflowV3ForkJoinNodeComponent> {
-        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowV3ForkJoinNodeComponent);
-        const componentRef = this.svgContainer.createComponent<WorkflowV3ForkJoinNodeComponent>(nodeComponentFactory);
+        const componentRef = this.svgContainer.createComponent(WorkflowV3ForkJoinNodeComponent);
         componentRef.instance.nodes = nodes;
         componentRef.instance.type = type;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);

@@ -5,10 +5,11 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2020",
+    "target": "es2022",
     "lib": [
       "es2016",
-      "dom"
+      "dom",
+      "ES2021.String"
     ],
     "outDir": "../out-tsc/spec",
     "module": "es2020",
@@ -16,7 +17,8 @@
     "types": [
       "jasmine",
       "node"
-    ]
+    ],
+    "allowSyntheticDefaultImports": true
   },
   "files": [
     "test.ts",

@@ -17,3 +17,12 @@ func (c *client) EntityGet(ctx context.Context, projKey string, vcsIdentifier st
 	}
 	return &e, nil
 }
+
+func (c *client) EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error) {
+	path := fmt.Sprintf("/v2/entity/%s/check", entityType)
+	var resp sdk.EntityCheckResponse
+	if _, err := c.PostJSON(ctx, path, data, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}

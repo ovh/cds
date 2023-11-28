@@ -8,7 +8,7 @@ import (
 
 var experimentalCmd = cli.Command{
 	Name:    "experimental",
-	Aliases: []string{"exp"},
+	Aliases: []string{"exp", "X"},
 	Short:   "CDS Experimental commands",
 }
 

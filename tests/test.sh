@@ -45,6 +45,7 @@ GITEA_USER="${GITEA_USER:-gituser}"
 GITEA_PASSWORD="${GITEA_PASSWORD:-gitpwd}"
 GITEA_HOST="${GITEA_HOST:-http://localhost:3000}"
 GITEA_CDS_HOOKS_URL="${GITEA_CDS_HOOKS_URL:-http://localhost:8083}"
+GPG_KEY_ID="${GPG_KEY_ID:-`gpg --list-secret-keys | grep --only-matching --extended-regexp "[[:xdigit:]]{40}" | head -n 1`}"
 
 PLUGINS_DIRECTORY="${PLUGINS_DIRECTORY:-dist}"
 
@@ -74,6 +75,7 @@ echo -e "  CDS_UI_URL=${CYAN}${CDS_UI_URL}${NOCOLOR}"
 echo -e "  CDS_HATCHERY_URL=${CYAN}${CDS_HATCHERY_URL}${NOCOLOR}"
 echo -e "  CDSCTL=${CYAN}${CDSCTL}${NOCOLOR}"
 echo -e "  CDSCTL_CONFIG=${CYAN}${CDSCTL_CONFIG}${NOCOLOR}"
+echo -e "  GPG_KEY_ID=${CYAN}${GPG_KEY_ID}${NOCOLOR}"
 echo ""
 
 check_failure() {
@@ -237,7 +239,7 @@ cds_v2_tests() {
     curl --fail -I -X GET ${GITEA_HOST}/api/swagger
     echo "Running CDS v2 tests:"
     for f in $(ls -1 08_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME}"
+        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME} --var gpg.key_id=${GPG_KEY_ID} --var cds.region=default"
         echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
         START="$(date +%s)"
         ${CMD} >${f}.output 2>&1
