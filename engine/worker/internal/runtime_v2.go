@@ -75,6 +75,8 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 
 	// Update the run result on API side
 	if err := wk.clientV2.V2QueueJobRunResultUpdate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
+		ctx := log.ContextWithStackTrace(ctx, err)
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to update run result %s", wk.currentJobV2.runJob.ID))
 		return nil, sdk.NewError(sdk.ErrUnknownError, err)
 	}
 
