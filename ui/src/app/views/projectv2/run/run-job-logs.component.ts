@@ -194,10 +194,8 @@ export class RunJobLogsComponent {
     async clickExpandStepDown(stepName: string) {
         let step = this.logBlocks.find(s => s.name === stepName);
         if (!step) {
-            console.log('clickExpandStepDown: step not found');
             return;
         }
-        console.log('clickExpandStepDown: step found');
 
         let result = await this._workflowService.getLogLines(step.link,
             {offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}`}
@@ -211,10 +209,8 @@ export class RunJobLogsComponent {
     async clickExpandStepUp(stepName: string) {
         let step = this.logBlocks.find(s => s.name === stepName);
         if (!step) {
-            console.log('clickExpandStepUp: step not found');
             return;
         }
-        console.log('clickExpandStepUp: step found');
         let result = await this._workflowService.getLogLines(step.link,
             {offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}`}
         ).toPromise();

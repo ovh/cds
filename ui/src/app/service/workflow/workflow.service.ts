@@ -83,7 +83,6 @@ export class WorkflowService {
     }
 
     getLogLines(link: CDNLogLink, params?: { [key: string]: string }): Observable<CDNLinesResponse> {
-        console.log('getLogLines', `./cdscdn/item/${link.item_type}/${link.api_ref}/lines`);
         return this._http.get(`./cdscdn/item/${link.item_type}/${link.api_ref}/lines`, { params, observe: 'response' })
             .pipe(map(res => {
                 let headers: HttpHeaders = res.headers;
