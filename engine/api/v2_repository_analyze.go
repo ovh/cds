@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -767,10 +768,44 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commi
 	return commitUser, "", "", nil
 }
 
+func sortEntitiesFiles(filesContent map[string][]byte) []string {
+	keys := make([]string, 0, len(filesContent))
+	for k := range filesContent {
+		keys = append(keys, k)
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		switch {
+		case strings.HasPrefix(keys[i], ".cds/worker-models/"):
+			if strings.HasPrefix(keys[j], ".cds/worker-models/") {
+				return keys[i] < keys[j]
+			}
+			return true
+		case strings.HasPrefix(keys[i], ".cds/workflows"):
+			if strings.HasPrefix(keys[j], ".cds/workflows/") {
+				return keys[i] < keys[j]
+			}
+			return false
+		case strings.HasPrefix(keys[i], ".cds/actions"):
+			if strings.HasPrefix(keys[j], ".cds/worker-models/") {
+				return false
+			}
+			if strings.HasPrefix(keys[j], ".cds/workflows/") {
+				return true
+			}
+			return keys[i] < keys[j]
+		}
+		return keys[i] < keys[j]
+	})
+	return keys
+}
+
 func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.EntityWithObject, []error) {
+	sortedKeys := sortEntitiesFiles(filesContent)
+
 	entities := make([]sdk.EntityWithObject, 0)
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-	for filePath, content := range filesContent {
+	for _, filePath := range sortedKeys {
+		content := filesContent[filePath]
 		dir, fileName := filepath.Split(filePath)
 		var es []sdk.EntityWithObject
 		var err sdk.MultiError

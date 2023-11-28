@@ -8,7 +8,8 @@
     "target": "es2022",
     "lib": [
       "ES2022",
-      "dom"
+      "dom",
+      "ES2021.String"
     ],
     "outDir": "../out-tsc/app",
     "module": "esnext",
@@ -16,7 +17,7 @@
     "paths": {
       "url": [
         "../node_modules/url"
-      ],
+      ]
     },
     "types": [],
     "allowSyntheticDefaultImports": true,

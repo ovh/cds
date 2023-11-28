@@ -80,7 +80,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                             suffix += m.get(k);
                         });
                         let newJob = Object.assign({}, job);
-                        newJob.matrixName = jobID + '-' + suffix;
+                        newJob.matrixName = jobID + '-' + suffix.replaceAll('/', '-');
                         expandMatrixJobs.push(newJob);
                     });
                     matrixJobs.set(jobID, expandMatrixJobs);
@@ -161,7 +161,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                     }
                     suffix += j.matrix[k];
                 });
-                this.jobRuns[j.job_id + '-' + suffix] = j;
+                this.jobRuns[j.job_id + '-' + suffix.replaceAll('/', '-')] = j;
             } else {
                 this.jobRuns[j.job_id] = j;
             }
@@ -227,7 +227,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                 needs.push(n);
             } else {
                 matrixJobs.get(n).forEach(mj => {
-                    needs.push(mj['matrixName']);
+                    needs.push(mj['matrixName'].replaceAll('/', '-'));
                 });
             }
         });
