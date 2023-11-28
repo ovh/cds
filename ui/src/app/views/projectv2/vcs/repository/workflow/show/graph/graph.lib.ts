@@ -190,11 +190,11 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         this.render(this.g, <any>this.graph);
 
         if (withZoom) {
-            this.zoom = d3.zoom().scaleExtent([this.minScale, this.maxScale]).on('zoom', () => {
-                if (d3.event.transform && d3.event.transform.x && d3.event.transform.x !== Number.POSITIVE_INFINITY
-                    && d3.event.transform.y && d3.event.transform.y !== Number.POSITIVE_INFINITY) {
-                    this.g.attr('transform', d3.event.transform);
-                    this.transformed = d3.event.transform;
+            this.zoom = d3.zoom().scaleExtent([this.minScale, this.maxScale]).on('zoom', (event) => {
+                if (event.transform && event.transform.x && event.transform.x !== Number.POSITIVE_INFINITY
+                    && event.transform.y && event.transform.y !== Number.POSITIVE_INFINITY) {
+                    this.g.attr('transform', event.transform);
+                    this.transformed = event.transform;
                 }
             });
             this.svg.call(this.zoom);

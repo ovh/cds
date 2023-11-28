@@ -7,3 +7,5 @@ cdsctl
 *.args.file
 cdsctl.test
 *.cover.out
+*.dump.json
+*.prof

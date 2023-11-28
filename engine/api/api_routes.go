@@ -503,6 +503,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}", nil, r.GETv2(api.getJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/info", nil, r.POSTv2(api.postJobRunInfoHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runinfo", nil, r.POSTv2(api.postRunInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", nil, r.POSTv2(api.postJobRunStepHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/take", nil, r.POSTv2(api.postV2WorkerTakeJobHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/refresh", nil, r.POSTv2(api.postV2RefreshWorkerHandler))
@@ -510,7 +511,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/signout", nil, r.POSTv2(api.postV2UnregisterWorkerHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/hatchery/take", nil, r.POSTv2(api.postHatcheryTakeJobRunHandler), r.DELETEv2(api.deleteHatcheryReleaseJobRunHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/result", nil, r.POSTv2(api.postJobResultHandler))
-	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult", nil, r.POSTv2(api.postJobRunResultHandler), r.PUTv2(api.putJobRunResultHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult", nil, r.GETv2(api.getJobRunResultsHandler), r.POSTv2(api.postJobRunResultHandler), r.PUTv2(api.putJobRunResultHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult/{runResultID}", nil, r.GETv2(api.getJobRunResultHandler))
 
 	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedHandler))

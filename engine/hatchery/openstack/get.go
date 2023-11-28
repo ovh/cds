@@ -11,6 +11,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // Find image ID from image name
@@ -53,7 +54,7 @@ func (h *HatcheryOpenstack) getSmallerFlavorThan(flavor flavors.Flavor) flavors.
 
 func (h *HatcheryOpenstack) getImages(ctx context.Context) []images.Image {
 	t := time.Now()
-	defer log.Debug(ctx, "getImages(): %fs", time.Since(t).Seconds())
+	defer func() { log.Debug(ctx, "getImages(): %fs", time.Since(t).Seconds()) }()
 
 	is, expired := h.cache.Getimages()
 	if len(is) > 0 && !expired {
@@ -91,7 +92,7 @@ func (h *HatcheryOpenstack) refreshImagesCache(ctx context.Context) error {
 
 func (h *HatcheryOpenstack) getServers(ctx context.Context) []servers.Server {
 	t := time.Now()
-	defer log.Debug(ctx, "getServers() : %fs", time.Since(t).Seconds())
+	defer func() { log.Debug(ctx, "getServers() : %fs", time.Since(t).Seconds()) }()
 
 	srvs, expired := h.cache.GetServers()
 	if len(srvs) > 0 && !expired {
@@ -107,6 +108,7 @@ func (h *HatcheryOpenstack) getServers(ctx context.Context) []servers.Server {
 }
 
 func (h *HatcheryOpenstack) refreshServersCache(ctx context.Context) error {
+	ctx = context.WithValue(ctx, cdslog.Component, "refreshServersCache")
 	all, err := servers.List(h.openstackClient, nil).AllPages()
 	if err != nil {
 		return sdk.WrapError(err, "cannot list openstack servers")
@@ -125,6 +127,7 @@ func (h *HatcheryOpenstack) refreshServersCache(ctx context.Context) error {
 		if workerHatcheryName == "" || workerHatcheryName != h.Name() {
 			continue
 		}
+		log.Info(ctx, "worker %q (status=%s) IP %q", s.Name, s.Status, s.AccessIPv4)
 		filteredServerList = append(filteredServerList, s)
 	}
 

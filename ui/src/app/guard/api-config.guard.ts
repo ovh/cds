@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivateChild, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { FetchAPIConfig } from 'app/store/config.action';
 import { ConfigState } from 'app/store/config.state';
@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
-export class APIConfigGuard implements CanActivateChild {
+export class APIConfigGuard  {
 
     constructor(
         private _store: Store

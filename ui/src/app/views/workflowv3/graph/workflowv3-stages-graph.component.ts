@@ -3,7 +3,6 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    ComponentFactoryResolver,
     ComponentRef,
     EventEmitter,
     HostListener,
@@ -85,7 +84,6 @@ export class WorkflowV3StagesGraphComponent implements AfterViewInit, OnDestroy 
     graph: WorkflowV3Graph<WorkflowV3JobsGraphOrNodeComponent>;
 
     constructor(
-        private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef
     ) { }
 
@@ -174,8 +172,7 @@ export class WorkflowV3StagesGraphComponent implements AfterViewInit, OnDestroy 
     }
 
     createJobNodeComponent(node: GraphNode): ComponentRef<WorkflowV3JobNodeComponent> {
-        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowV3JobNodeComponent);
-        const componentRef = this.svgContainer.createComponent<WorkflowV3JobNodeComponent>(nodeComponentFactory);
+        const componentRef = this.svgContainer.createComponent(WorkflowV3JobNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
@@ -183,8 +180,7 @@ export class WorkflowV3StagesGraphComponent implements AfterViewInit, OnDestroy 
     }
 
     createForkJoinNodeComponent(nodes: Array<GraphNode>, type: string): ComponentRef<WorkflowV3ForkJoinNodeComponent> {
-        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowV3ForkJoinNodeComponent);
-        const componentRef = this.svgContainer.createComponent<WorkflowV3ForkJoinNodeComponent>(nodeComponentFactory);
+        const componentRef = this.svgContainer.createComponent(WorkflowV3ForkJoinNodeComponent);
         componentRef.instance.nodes = nodes;
         componentRef.instance.type = type;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
@@ -193,8 +189,7 @@ export class WorkflowV3StagesGraphComponent implements AfterViewInit, OnDestroy 
     }
 
     createSubGraphComponent(node: GraphNode): ComponentRef<WorkflowV3JobsGraphComponent> {
-        const nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowV3JobsGraphComponent);
-        const componentRef = this.svgContainer.createComponent<WorkflowV3JobsGraphComponent>(nodeComponentFactory);
+        const componentRef = this.svgContainer.createComponent(WorkflowV3JobsGraphComponent);
         componentRef.instance.graphNode = node;
         componentRef.instance.direction = this.direction;
         componentRef.instance.centerCallback = this.centerSubGraph.bind(this);

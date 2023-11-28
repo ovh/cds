@@ -185,7 +185,7 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
         if (!this.websocket) {
             const protocol = window.location.protocol.replace('http', 'ws');
             const host = window.location.host;
-            const href = this._router['location']._baseHref;
+            const href = this._router['location']._basePath;
             this.websocket = webSocket({
                 url: `${protocol}//${host}${href}/cdscdn/item/stream`,
                 openObserver: {

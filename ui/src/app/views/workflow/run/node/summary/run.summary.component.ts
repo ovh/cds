@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { WNode, Workflow } from 'app/model/workflow.model';
-import { WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
@@ -27,7 +26,6 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
 
     duration: string;
 
-    @Select(WorkflowState.getSelectedNodeRun()) nodeRun$: Observable<WorkflowNodeRun>;
     nodeRunSubs: Subscription;
 
     workflow: Workflow;
@@ -60,7 +58,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.nodeRunSubs = this.nodeRun$.subscribe(nr => {
+        this.nodeRunSubs = this._store.select(WorkflowState.getSelectedNodeRun()).subscribe(nr => {
             if (!nr) {
                 return;
             }
@@ -107,7 +105,6 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
             nzWidth: '900px',
             nzTitle: 'Run worklow',
             nzContent: WorkflowNodeRunParamComponent,
-            nzComponentParams: {}
         });
     }
 }

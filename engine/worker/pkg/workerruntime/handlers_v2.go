@@ -17,16 +17,31 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 			return
 		}
-
-		var runResultRequest V2RunResultRequest
-		if err := sdk.JSONUnmarshal(btes, &runResultRequest); err != nil {
-			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
-			return
-		}
+		defer r.Body.Close()
 
 		switch r.Method {
+		case http.MethodGet:
+			var filter V2FilterRunResult
+			if err := sdk.JSONUnmarshal(btes, &filter); err != nil {
+				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
+				return
+			}
+			if filter.Type == "" {
+				writeError(w, r, sdk.ErrWrongRequest)
+				return
+			}
+			response, err := wk.V2GetRunResult(ctx, filter)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			writeJSON(w, response, http.StatusOK)
 		case http.MethodPost:
-			log.Info(ctx, "processing request for run result creation %+v", runResultRequest)
+			var runResultRequest V2RunResultRequest
+			if err := sdk.JSONUnmarshal(btes, &runResultRequest); err != nil {
+				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
+				return
+			}
 			response, err := wk.V2AddRunResult(ctx, runResultRequest)
 			if err != nil {
 				writeError(w, r, err)
@@ -35,13 +50,16 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			log.Info(ctx, "run result %s created", response.RunResult.ID)
 			writeJSON(w, response, http.StatusCreated)
 		case http.MethodPut:
-			log.Info(ctx, "processing request for run result update %+v", runResultRequest.RunResult)
+			var runResultRequest V2RunResultRequest
+			if err := sdk.JSONUnmarshal(btes, &runResultRequest); err != nil {
+				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
+				return
+			}
 			response, err := wk.V2UpdateRunResult(ctx, runResultRequest)
 			if err != nil {
 				writeError(w, r, err)
 				return
 			}
-			log.Info(ctx, "=> %+v", response)
 			log.Info(ctx, "run result %s updated", response.RunResult.ID)
 			writeJSON(w, response, http.StatusOK)
 		default:
