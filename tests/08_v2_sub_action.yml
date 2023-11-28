@@ -85,9 +85,9 @@ testcases:
           on: [push]
           jobs:
             init:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              runs-on: .cds/worker-models/debian.yml
               steps:
-                - uses: actions/{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/parent-action
+                - uses: .cds/actions/parent-action.yaml
                   id: action
 
     - name: Check CDS project analyses status

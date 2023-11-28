@@ -34,6 +34,8 @@ type WorkflowRunEntityFinder struct {
 	repoCache              map[string]sdk.ProjectRepository
 	repoDefaultBranchCache map[string]string
 	actionsCache           map[string]sdk.V2Action
+	localActionsCache      map[string]sdk.V2Action
+	localWorkerModelCache  map[string]sdk.V2WorkerModel
 	workerModelCache       map[string]sdk.V2WorkerModel
 	plugins                map[string]sdk.GRPCPlugin
 	run                    sdk.V2WorkflowRun
@@ -157,7 +159,9 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		runRepo:                *repo,
 		runVcsServer:           *vcsServer,
 		actionsCache:           make(map[string]sdk.V2Action),
+		localActionsCache:      make(map[string]sdk.V2Action),
 		workerModelCache:       make(map[string]sdk.V2WorkerModel),
+		localWorkerModelCache:  make(map[string]sdk.V2WorkerModel),
 		repoCache:              make(map[string]sdk.ProjectRepository),
 		vcsServerCache:         make(map[string]sdk.VCSProject),
 		repoDefaultBranchCache: make(map[string]string),
@@ -176,22 +180,9 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	// Retrieve all deps
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
-		completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
-		if err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-			})
-		}
-		if msg != nil {
-			return stopRun(ctx, api.mustDB(), run, msg)
-		}
-		j.RunsOn = completeName
 
 		// Get actions and sub actions
-		msg, err = searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)
+		msg, err := searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
@@ -203,6 +194,23 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		if msg != nil {
 			return stopRun(ctx, api.mustDB(), run, msg)
 		}
+
+		if !strings.HasPrefix(j.RunsOn, "${{") {
+			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
+					WorkflowRunID: run.ID,
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+				})
+			}
+			if msg != nil {
+				return stopRun(ctx, api.mustDB(), run, msg)
+			}
+			j.RunsOn = completeName
+		}
+
 		run.WorkflowData.Workflow.Jobs[jobID] = j
 	}
 
@@ -210,9 +218,17 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	for k, v := range wref.actionsCache {
 		run.WorkflowData.Actions[k] = v
 	}
+	for _, v := range wref.localActionsCache {
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, v.Name, wref.run.WorkflowRef)
+		run.WorkflowData.Actions[completeName] = v
+	}
 	run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
 	for k, v := range wref.workerModelCache {
 		run.WorkflowData.WorkerModels[k] = v
+	}
+	for _, v := range wref.localWorkerModelCache {
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, v.Name, wref.run.WorkflowRef)
+		run.WorkflowData.WorkerModels[completeName] = v
 	}
 
 	tx, err := api.mustDB().Begin()
@@ -418,19 +434,35 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			continue
 		}
 
-		if !strings.HasPrefix(step.Uses, "actions/") && !strings.HasPrefix(step.Uses, "./.cds/actions") {
-			msg := sdk.V2WorkflowRunInfo{
-				WorkflowRunID: wref.run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("Invalid action %s. Missing prefix 'actions/' or './cds/actions/", step.Uses),
+		if strings.HasPrefix(step.Uses, ".cds/actions/") {
+			// Find action from path
+			localAct, has := wref.localActionsCache[step.Uses]
+			if !has {
+				actionEntity, err := entity.LoadEntityByPathAndBranch(ctx, db, wref.runRepo.ID, step.Uses, wref.run.WorkflowRef)
+				if err != nil {
+					msg := sdk.V2WorkflowRunInfo{
+						WorkflowRunID: wref.run.ID,
+						Level:         sdk.WorkflowRunInfoLevelError,
+						Message:       fmt.Sprintf("Unable to find action %s", step.Uses),
+					}
+					return &msg, nil
+				}
+				if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct); err != nil {
+					return nil, err
+				}
+				wref.localActionsCache[step.Uses] = localAct
+				msg, err := searchActions(ctx, db, store, wref, localAct.Runs.Steps)
+				if msg != nil || err != nil {
+					return msg, err
+				}
 			}
-			return &msg, nil
-		}
-
-		if strings.HasPrefix(step.Uses, "actions/") {
+			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, localAct.Name, wref.run.WorkflowRef)
+			step.Uses = "actions/" + completeName
+		} else {
 			actionName := strings.TrimPrefix(step.Uses, "actions/")
 			actionSplit := strings.Split(actionName, "/")
-			if len(actionSplit) == 1 {
+			// If plugins
+			if strings.HasPrefix(step.Uses, "actions/") && len(actionSplit) == 1 {
 				// Check plugins
 				if _, has := wref.plugins[actionSplit[0]]; !has {
 					msg := sdk.V2WorkflowRunInfo{
@@ -446,6 +478,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 				if msg != nil || err != nil {
 					return msg, err
 				}
+				// rewrite step with full path
 				step.Uses = "actions/" + completeName
 				act := wref.actionsCache[completeName]
 				msg, err = searchActions(ctx, db, store, wref, act.Runs.Steps)
@@ -453,11 +486,8 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 					return msg, err
 				}
 			}
-		} else {
-			// TODO manage local action
-			// local action:  ./cds/actions/monaction.yml
-			return nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "local action not implemented yet")
 		}
+
 	}
 	return nil, nil
 }
@@ -638,16 +668,40 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 
 	modelCompleteName := ""
 	modelType := ""
+
 	if workerModel != "" {
-		completeName, msg, err := wref.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
-		if err != nil {
-			return "", nil, err
+		if strings.HasPrefix(workerModel, ".cds/worker-models/") {
+			// Find action from path
+			localWM, has := wref.localWorkerModelCache[workerModel]
+			if !has {
+				wmEntity, err := entity.LoadEntityByPathAndBranch(ctx, db, wref.runRepo.ID, workerModel, wref.run.WorkflowRef)
+				if err != nil {
+					msg := sdk.V2WorkflowRunInfo{
+						WorkflowRunID: wref.run.ID,
+						Level:         sdk.WorkflowRunInfoLevelError,
+						Message:       fmt.Sprintf("Unable to find worker model %s", workerModel),
+					}
+					return "", &msg, nil
+				}
+				if err := yaml.Unmarshal([]byte(wmEntity.Data), &localWM); err != nil {
+					return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read worker model %s: %v", workerModel, err)
+				}
+				wref.localWorkerModelCache[workerModel] = localWM
+			}
+			modelCompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, localWM.Name, wref.run.WorkflowRef)
+			modelType = localWM.Type
+		} else {
+			completeName, msg, err := wref.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
+			if err != nil {
+				return "", nil, err
+			}
+			if msg != nil {
+				return "", msg, nil
+			}
+			modelType = wref.workerModelCache[completeName].Type
+			modelCompleteName = completeName
 		}
-		if msg != nil {
-			return "", msg, nil
-		}
-		modelType = wref.workerModelCache[completeName].Type
-		modelCompleteName = completeName
+
 	}
 
 	for _, h := range hatcheries {

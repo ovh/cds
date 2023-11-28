@@ -137,7 +137,7 @@ func uploadArtifactByIntegrationPlugin(path string, ctx context.Context, wk work
 		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve artifact manager integration... Aborting")
 	}
 
-	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, pluginName, plugin.InputManagementDefault)
+	pluginClient, err := plugin.NewClient(ctx, wk, plugin.TypeIntegration, pluginName, plugin.InputManagementDefault, nil)
 	if err != nil {
 		return fmt.Errorf("unable to start GRPCPlugin: %v", err)
 	}

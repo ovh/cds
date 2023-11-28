@@ -73,6 +73,8 @@ testcases:
                   id: stepEnv
                 - run: "echo ${{ env.foo }}"
                   id: jobEnv
+                - run: "echo $CDS_WORKFLOW"
+                  id: globEnv
             init:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
@@ -105,3 +107,5 @@ testcases:
       script: "cat {{.cds_workflow}}-1-1-overrideEnv-jobEnv | grep \"barJob\""
     - name: Check stepEnv log content
       script: "cat {{.cds_workflow}}-1-1-overrideEnv-stepEnv | grep \"barStep\""
+    - name: Check globEnv log content
+      script: "cat {{.cds_workflow}}-1-1-overrideEnv-globEnv | grep \"{{.cds_workflow}}\""

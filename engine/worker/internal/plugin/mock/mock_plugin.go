@@ -11,7 +11,7 @@ type MockFactory struct {
 	Index  int
 }
 
-func (pf *MockFactory) NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string) (plugin.Client, error) {
+func (pf *MockFactory) NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string, pluginName string, inputManagement string, env map[string]string) (plugin.Client, error) {
 	c, err := NewMockClient(pf.Result[pf.Index])
 	pf.Index++
 	return c, err

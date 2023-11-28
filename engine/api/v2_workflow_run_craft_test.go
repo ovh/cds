@@ -26,8 +26,8 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	db.Exec("DELETE FROM region")
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
 
 	reg := sdk.Region{Name: "build"}
 	require.NoError(t, region.Insert(ctx, db, &reg))
@@ -58,24 +58,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 						Name:   "My super job",
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
-						Steps: []sdk.ActionStep{
-							{
-								ID:   "myfirstStep",
-								Uses: fmt.Sprintf("actions/%s/%s/%s/myaction", proj.Key, vcsProject.Name, repo.Name),
-							},
-							{
-								ID:   "mysecondStep",
-								Uses: fmt.Sprintf("actions/%s/%s/myaction", vcsProject.Name, repo.Name),
-							},
-							{
-								ID:   "mythirdStep",
-								Uses: fmt.Sprintf("actions/%s/myaction", repo.Name),
-							},
-							{
-								ID:   "myfourthStep",
-								Uses: fmt.Sprintf("actions/myaction"),
-							},
-						},
+						Steps:  []sdk.ActionStep{},
 					},
 				},
 			},
@@ -106,8 +89,8 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	db.Exec("DELETE FROM region")
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
 
 	reg := sdk.Region{Name: "build"}
 	require.NoError(t, region.Insert(ctx, db, &reg))
@@ -139,24 +122,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
 						RunsOn: "myworker-model",
-						Steps: []sdk.ActionStep{
-							{
-								ID:   "myfirstStep",
-								Uses: fmt.Sprintf("actions/%s/%s/%s/myaction", proj.Key, vcsProject.Name, repo.Name),
-							},
-							{
-								ID:   "mysecondStep",
-								Uses: fmt.Sprintf("actions/%s/%s/myaction", vcsProject.Name, repo.Name),
-							},
-							{
-								ID:   "mythirdStep",
-								Uses: fmt.Sprintf("actions/%s/myaction", repo.Name),
-							},
-							{
-								ID:   "myfourthStep",
-								Uses: fmt.Sprintf("actions/myaction"),
-							},
-						},
+						Steps:  []sdk.ActionStep{},
 					},
 				},
 			},
@@ -203,8 +169,8 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	db.Exec("DELETE FROM region")
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
 
 	reg := sdk.Region{Name: "build"}
 	require.NoError(t, region.Insert(ctx, db, &reg))
@@ -324,8 +290,8 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	db.Exec("DELETE FROM region")
 	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
 
 	reg := sdk.Region{Name: "build"}
 	require.NoError(t, region.Insert(ctx, db, &reg))
