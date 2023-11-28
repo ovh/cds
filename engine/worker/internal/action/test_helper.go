@@ -31,6 +31,10 @@ type TestWorker struct {
 	logBuffer        bytes.Buffer
 }
 
+func (*TestWorker) V2GetRunResult(ctx context.Context, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
+	panic("unimplemented")
+}
+
 func (w *TestWorker) ClientV2() cdsclient.V2WorkerInterface {
 	return nil
 }

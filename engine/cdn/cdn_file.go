@@ -24,7 +24,7 @@ type StoreFileOptions struct {
 	DisableApiRunResult bool
 }
 
-func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.ReadCloser, storeFileOptions StoreFileOptions) error {
+func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.ReadCloser, storeFileOptions StoreFileOptions) (*sdk.CDNItem, error) {
 	var itemType sdk.CDNItemType
 	switch {
 	case sig.Worker.RunResultName != "":
@@ -34,27 +34,27 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	case sig.Worker.CacheTag != "":
 		itemType = sdk.CDNTypeItemWorkerCache
 	default:
-		return sdk.WrapError(sdk.ErrWrongRequest, "invalid item type")
+		return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid item type")
 	}
 	bufferUnit := s.Units.FileBuffer()
 
 	// Item and ItemUnit creation
 	apiRef, err := sdk.NewCDNApiRef(itemType, sig)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	hashRef, err := apiRef.ToHash()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Check Item unicity
 	_, err = item.LoadByAPIRefHashAndType(ctx, s.Mapper, s.mustDBWithCtx(ctx), hashRef, itemType)
 	if err == nil {
-		return sdk.NewErrorFrom(sdk.ErrInvalidData, "cannot upload the same file twice: %s", apiRef.ToFilename())
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "cannot upload the same file twice: %s", apiRef.ToFilename())
 	}
 	if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return err
+		return nil, err
 	}
 
 	it := &sdk.CDNItem{
@@ -72,11 +72,11 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 			// Call CDS API to check if we can upload the run result
 			runResult, err := s.Client.V2QueueJobRunResultGet(ctx, runResultV2ApiRef.RunJobRegion, runResultV2ApiRef.RunJobID, runResultV2ApiRef.RunResultID)
 			if err != nil {
-				return sdk.WrapError(err, "unable to get run result from API")
+				return nil, sdk.WrapError(err, "unable to get run result from API")
 			}
 
 			if runResult.Status != sdk.V2WorkflowRunResultStatusPending {
-				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("run result %q must be PENDING and was %q", runResult.ID, runResult.Status))
+				return nil, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("run result %q must be PENDING and was %q", runResult.ID, runResult.Status))
 			}
 
 		case sdk.CDNTypeItemRunResult:
@@ -93,25 +93,25 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 			code, err := s.Client.QueueWorkflowRunResultCheck(ctx, sig.JobID, runResultCheck)
 			if err != nil {
 				if code == http.StatusConflict {
-					return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice: %s", runResultApiRef.ToFilename())
+					return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to upload the same file twice: %s", runResultApiRef.ToFilename())
 				}
 				if code == http.StatusForbidden {
-					return sdk.NewErrorFrom(sdk.ErrForbidden, err.Error())
+					return nil, sdk.NewErrorFrom(sdk.ErrForbidden, err.Error())
 				}
-				return err
+				return nil, err
 			}
 		}
 	}
 
 	iu, err := s.Units.NewItemUnit(ctx, bufferUnit, it)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Create Destination Writer
 	writer, err := bufferUnit.NewWriter(ctx, *iu)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Compute md5 and sha512
@@ -132,10 +132,10 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	if err := bufferUnit.Write(*iu, teeReader, writer); err != nil {
 		_ = reader.Close()
 		_ = writer.Close()
-		return sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
 	if err := reader.Close(); err != nil {
-		return sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
 	sha512S := hex.EncodeToString(sha512Hash.Sum(nil))
 	md5S := hex.EncodeToString(md5Hash.Sum(nil))
@@ -148,19 +148,19 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	// Insert Item and ItemUnit in database
 	tx, err := s.mustDBWithCtx(ctx).Begin()
 	if err != nil {
-		return sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
 	defer tx.Rollback() //nolint
 
 	// Insert Item
 	if err := item.Insert(ctx, s.Mapper, tx, it); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Insert Item Unit
 	iu.ItemID = iu.Item.ID
 	if err := storage.InsertItemUnit(ctx, s.Mapper, tx, iu); err != nil {
-		return err
+		return nil, err
 	}
 
 	if !storeFileOptions.DisableApiRunResult {
@@ -193,7 +193,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 
 			bts, err := json.Marshal(result)
 			if err != nil {
-				return sdk.WithStack(err)
+				return nil, sdk.WithStack(err)
 			}
 			wrResult := sdk.WorkflowRunResult{
 				WorkflowRunID:     sig.RunID,
@@ -203,13 +203,13 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 				DataRaw:           json.RawMessage(bts),
 			}
 			if err := s.Client.QueueWorkflowRunResultsAdd(ctx, sig.JobID, wrResult); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
+		return nil, sdk.WithStack(err)
 	}
 
 	s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
@@ -218,20 +218,20 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	if itemType == sdk.CDNTypeItemWorkerCache {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
-			return sdk.WithStack(err)
+			return nil, sdk.WithStack(err)
 		}
 		defer tx.Rollback() //nolint
 
 		if err := s.cleanPreviousCachedData(ctx, tx, sig, apiRef.ToFilename()); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
+			return nil, sdk.WithStack(err)
 		}
 	}
 
-	return nil
+	return it, nil
 }
 
 // Mark to delete all items for given cache tag except the most recent one.

@@ -16,6 +16,15 @@ func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jo
 	}
 	return nil
 }
+
+func (c *client) V2QueuePushRunInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2WorkflowRunInfo) error {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/runinfo", regionName, jobRunID)
+	if _, err := c.PostJSON(ctx, path, msg, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/info", regionName, jobRunID)
 	if _, err := c.PostJSON(ctx, path, msg, nil); err != nil {
@@ -39,6 +48,15 @@ func (c *client) V2QueueJobRunResultGet(ctx context.Context, regionName string, 
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (c *client) V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+	var result []sdk.V2WorkflowRunResult
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult", regionName, jobRunID)
+	if _, err := c.GetJSON(ctx, path, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (c *client) V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error {

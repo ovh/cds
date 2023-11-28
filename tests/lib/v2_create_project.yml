@@ -1,0 +1,112 @@
+executor: v2_create_project
+input:
+  cdsctl_command: ""
+  cds_project: ""
+  cds_region: ""
+  git_host: ""
+  git_user: ""
+  git_password: ""
+
+steps:
+  - script: "{{.input.cdsctl_command}} user me --format json"
+    vars:
+      cds_user:
+        from: result.systemoutjson
+  - script: "{{.input.cdsctl_command}} project remove --force {{.input.cds_project}}"
+  - script: "{{.input.cdsctl_command}} group remove --force {{.input.cds_project}}"
+  - script: "{{.input.cdsctl_command}} group add {{.input.cds_project}}"
+
+  # Create the project
+  - script: >
+      {{.input.cdsctl_command}} project create {{.input.cds_project}} "Test Project {{.input.cds_project}}" {{.input.cds_project}}
+   # Get SSH Key info from project
+  - script: >
+     {{.input.cdsctl_command}} project keys list {{.input.cds_project}} --format json
+    vars:
+      sshKeyPub:
+        from: result.systemoutjson.systemoutjson0.publickey
+      sshKeyName:
+        from: result.systemoutjson.systemoutjson0.name
+
+  # Prepare VCS Server configuration for the project
+  - script: |-
+      /bin/bash -c cat <<- EOF > /tmp/project_vcs.yml
+      version: v1.0
+      name: my_vcs_server
+      type: gitea
+      description: "it's the test vcs server on project"
+      url: "{{.input.git_host}}"
+      auth:
+        username: "{{.input.git_user}}"
+        token: "{{.input.git_password}}"
+        sshKeyName: "{{.sshKeyName}}"
+      EOF
+  # Import VCS Server configuration on the project
+  - script: >
+      {{.input.cdsctl_command}} experimental project vcs import {{.input.cds_project}} /tmp/project_vcs.yml
+  # Assert the project has the VCS Server
+  - script: >
+      {{.input.cdsctl_command}} experimental project vcs list {{.input.cds_project}} --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.systemoutjson0.name ShouldEqual "my_vcs_server"
+  # Assert the project has the VCS Server
+  - script: >
+      {{.input.cdsctl_command}} experimental project vcs export {{.input.cds_project}} my_vcs_server | grep my_vcs_server
+
+  # Setup RBAC on project
+  - script: |-
+      /bin/bash -c cat <<- EOF > /tmp/project_rbac.yml
+      name: perm-{{.input.cds_project}}
+      projects:
+        - role: read
+          projects: [{{.input.cds_project}}]
+          users: [ {{.cds_user.username}} ]
+        - role: manage
+          projects: [{{.input.cds_project}}]
+          users: [{{.cds_user.username}}]
+        - role: manage-worker-model
+          projects: [{{.input.cds_project}}]
+          users: [{{.cds_user.username}}]
+        - role: manage-action
+          projects: [{{.input.cds_project}}]
+          users: [{{.cds_user.username}}]
+        - role: manage-workflow
+          projects: [{{.input.cds_project}}]
+          users: [{{.cds_user.username}}]
+      workflows:
+        - role: trigger
+          all_users: true
+          all_workflows: true
+          project: {{.input.cds_project}}
+      regions:
+        - role: execute
+          all_users: true
+          organizations: [default]
+          region: {{.input.cds_region}}
+      globals:
+        - role: manage-permission
+          users: [{{.cds_user.username}}]
+      EOF
+  - script: "{{.input.cdsctl_command}} experimental rbac import /tmp/project_rbac.yml --force"
+
+  # Put the project ssh key as SSH Key on gitea
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/keys"
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    headers:
+      Content-Type: application/json
+    body: >
+      {
+        "key": "{{.sshKeyPub}}",
+        "read_only": true,
+        "title": "{{.sshKeyName}}"
+      }
+    assertions:
+    - or:
+      - result.statuscode ShouldEqual 201
+      - result.statuscode ShouldEqual 422
+
+output: {}

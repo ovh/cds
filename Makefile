@@ -1,7 +1,7 @@
 .PHONY: clean doc modclean mod goinstall build dist deb
 
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386 arm64)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm64)
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 GIT_DESCRIBE := $(shell git describe --tags)
 GIT_VERSION := $(if ${GIT_DESCRIBE},${GIT_DESCRIBE:v%=%},0.0.0-0-snapshot)
@@ -48,6 +48,7 @@ build:
 	$(MAKE) build_cli -j4
 	$(MAKE) build_contrib -j4
 	$(MAKE) package -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
+	$(MAKE) archive -C contrib TARGET_DIST="$(abspath $(TARGET_DIR))"
 
 build_ui:
 	$(MAKE) build -C ui
