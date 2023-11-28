@@ -64,7 +64,7 @@ testcases:
                   echo "Welcome in action parent-action"
               - uses: actions/{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/child-action@master
                 with:
-                  projectName: \${{ cds.project_key }}
+                  projectName: ${{ cds.project_key }}
                   name: 'Foo'
         actions/child-action.yaml:
           name: child-action
