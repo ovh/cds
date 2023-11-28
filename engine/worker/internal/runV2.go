@@ -445,7 +445,7 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 			s, _ := json.Marshal(v)
 			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = string(s)
 		default:
-			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = fmt.Sprintf("%q", v)
+			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = fmt.Sprintf("%v", v)
 		}
 
 	}
@@ -456,7 +456,7 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal git context")
 	}
 	for k, v := range mapGIT {
-		newEnvVar[fmt.Sprintf("GIT_%s", strings.ToUpper(k))] = fmt.Sprintf("%q", v)
+		newEnvVar[fmt.Sprintf("GIT_%s", strings.ToUpper(k))] = fmt.Sprintf("%v", v)
 	}
 
 	var mapEnv map[string]interface{}
@@ -468,7 +468,7 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 		if strings.HasPrefix(k, "CDS_") || strings.HasPrefix(k, "GIT_") {
 			continue
 		}
-		newEnvVar[strings.ToUpper(k)] = fmt.Sprintf("%q", v)
+		newEnvVar[strings.ToUpper(k)] = fmt.Sprintf("%v", v)
 	}
 	return newEnvVar, nil
 }
