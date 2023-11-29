@@ -50,6 +50,7 @@ const (
 	PermJobID          = log.Field("permJobID")
 	Workflow           = log.Field("workflow")
 	Component          = log.Field("component")
+	Project            = log.Field("project")
 )
 
 func init() {
@@ -76,6 +77,7 @@ func init() {
 		Latency,
 		LatencyNum,
 		Method,
+		Project,
 		RbackCheckerName,
 		Repository,
 		RbacRole,

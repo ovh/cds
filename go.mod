@@ -104,7 +104,7 @@ require (
 	google.golang.org/grpc v1.56.3
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/AlecAivazis/survey.v1 v1.7.1
-	gopkg.in/h2non/gock.v1 v1.0.14
+	gopkg.in/h2non/gock.v1 v1.1.2
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/spacemonkeygo/httpsig.v0 v0.0.0-20170228231032-6732593ec966
 	gopkg.in/square/go-jose.v2 v2.3.1

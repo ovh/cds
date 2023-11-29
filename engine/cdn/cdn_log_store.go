@@ -28,9 +28,8 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 				itemType = sdk.CDNTypeItemStepLog
 			}
 		} else {
-			// FIXME manage new service log
-			if hm.Signature.Service != nil {
-				itemType = sdk.CDNTypeItemServiceLog
+			if hm.Signature.HatcheryService != nil {
+				itemType = sdk.CDNTypeItemServiceLogV2
 			} else {
 				itemType = sdk.CDNTypeItemJobStepLog
 			}

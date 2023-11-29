@@ -12,7 +12,6 @@ import (
 const (
 	LabelHatchery           = "hatchery"
 	LabelWorkerName         = "worker_name"
-	LabelServiceWorker      = "service_worker"
 	LabelServiceName        = "service_name"
 	LabelWorkerRequirements = "worker_requirements"
 	LabelWorkerModelPath    = "worker_model_path"

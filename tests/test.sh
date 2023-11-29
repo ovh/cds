@@ -49,8 +49,6 @@ GPG_KEY_ID="${GPG_KEY_ID:-`gpg --list-secret-keys | grep --only-matching --exten
 
 PLUGINS_DIRECTORY="${PLUGINS_DIRECTORY:-dist}"
 
-# If you want to run some tests with a specific model requirements, set CDS_MODEL_REQ
-CDS_MODEL_REQ="${CDS_MODEL_REQ:-buildpack-deps}"
 # If you want to run some tests with a specific region requirement, set CDS_REGION_REQ
 CDS_REGION_REQ="${CDS_REGION_REQ:-""}"
 
@@ -204,7 +202,6 @@ workflow_with_third_parties() {
     check_failure $? 01_queue_stopall.yml.output
     mv_results ${f}
 
-    if [ -z "$CDS_MODEL_REQ" ]; then echo "missing CDS_MODEL_REQ variable"; exit 1; fi
     if [ -z "$CDS_REGION_REQ" ]; then echo "missing CDS_REGION_REQ variable"; exit 1; fi
     if [ -z "$VENOM_VAR_projectKey" ]; then echo "missing VENOM_VAR_projectKey variable"; exit 1; fi
     if [ -z "$VENOM_VAR_integrationName" ]; then echo "missing VENOM_VAR_integrationName variable"; exit 1; fi
@@ -273,7 +270,6 @@ for target in $@; do
             workflow_with_integration_tests
             admin_tests;;
         workflow_with_third_parties)
-            export CDS_MODEL_REQ
             export CDS_REGION_REQ
             workflow_with_third_parties;;
         admin)

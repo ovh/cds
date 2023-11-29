@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"strconv"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -16,10 +21,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
-	"net/http/httptest"
-	"strconv"
-	"testing"
-	"time"
 )
 
 func TestGetWorkflowRunInfoV2Handler(t *testing.T) {

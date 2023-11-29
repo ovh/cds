@@ -17,6 +17,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -151,7 +152,7 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 					}
 
 					var workerName string
-					if v, ok := c.Config.Labels[LabelServiceWorker]; ok {
+					if v, ok := c.Config.Labels[hatchery.LabelServiceWorker]; ok {
 						workerName = v
 					} else {
 						workerName = c.Config.Labels[LabelWorkerName]

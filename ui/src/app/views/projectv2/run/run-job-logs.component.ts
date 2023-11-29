@@ -12,7 +12,7 @@ import {V2WorkflowRun, V2WorkflowRunJob} from "app/model/v2.workflow.run.model";
 import {LogBlock, ScrollTarget} from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
 import * as moment from "moment/moment";
 import {DurationService} from "app/shared/duration/duration.service";
-import {CDNLine, CDNLogLink, PipelineStatus} from "app/model/pipeline.model";
+import {CDNLine, CDNLogLink, CDNLogLinkData, CDNLogLinks, PipelineStatus} from "app/model/pipeline.model";
 import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
 import {WorkflowService} from "app/service/workflow/workflow.service";
 
@@ -41,15 +41,22 @@ export class RunJobLogsComponent {
 
     @Output() onScroll = new EventEmitter<ScrollTarget>();
 
-    steps: Array<LogBlock>;
+    logBlocks: Array<LogBlock>;
     currentTabIndex = 0;
 
     constructor(private ref: ElementRef, private _cd: ChangeDetectorRef, private _workflowRunService: V2WorkflowRunService, private _workflowService: WorkflowService) {
     }
 
     async changeRunJob(data: V2WorkflowRunJob) {
-        this.steps = new Array<LogBlock>();
+        this.logBlocks = new Array<LogBlock>();
         this._runJob = data;
+
+        if (this._runJob.job['services']) {
+            for (const serviceName in this._runJob.job['services']){
+                let block = new LogBlock('service ' + serviceName);
+                this.logBlocks.push(block);
+            }
+        }
 
         if (this._runJob.job['steps']) {
             this._runJob.job['steps'].forEach((v, index) => {
@@ -62,7 +69,7 @@ export class RunJobLogsComponent {
                     if (this._runJob.steps_status[v['id']].conclusion === PipelineStatus.SUCCESS && this._runJob.steps_status[v['id']].conclusion !== this._runJob.steps_status[v['id']].outcome) {
                         block.optional = true
                     }
-                    this.steps.push(block);
+                    this.logBlocks.push(block);
                 }
             });
         }
@@ -75,29 +82,46 @@ export class RunJobLogsComponent {
     }
 
     async loadEndedSteps() {
+        let types = new Map<string, Array<CDNLogLinkData>>();
+        let linksServices = new Array<CDNLogLinkData>();
+        let linksSteps = new Array<CDNLogLinkData>();
         let links = await this._workflowRunService
-            .getAllStepsLinks(this.workflowRun, this.runJob.id).toPromise();
-        links.datas.forEach(d => {
-            let step = this.steps.find(s => s.name === d.step_name)
-            if (step) {
-                step.link = <CDNLogLink>{api_ref: d.api_ref, item_type: links.item_type};
+            .getAllLogsLinks(this.workflowRun, this.runJob.id).toPromise();
+        links.datas.forEach(link => {
+            let logBlockStep = this.logBlocks.find(s => s.name === link.step_name)
+            if (logBlockStep) {
+                logBlockStep.link = <CDNLogLinkData>{api_ref: link.api_ref, item_type: link.item_type};
+                linksSteps.push(link);
+                types.set(link.item_type, linksSteps);
+            }
+            let logBlockService = this.logBlocks.find(s => s.name === 'service '+link.service_name)
+            if (logBlockService) {
+                logBlockService.link = <CDNLogLinkData>{api_ref: link.api_ref, item_type: link.item_type};
+                linksServices.push(link);
+                types.set(link.item_type, linksServices);
             }
         });
 
         if (links?.datas?.length > 0) {
-            let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount).toPromise();
-            if (results) {
-                results.forEach(r => {
-                    let step = this.steps.find(s => s.link.api_ref === r.api_ref);
-                    if (step) {
-                        step.totalLinesCount = r.lines_count;
-                        step.open = false;
-                        step.loading = false;
-                    }
-                });
-            }
+            for (let type of Array.from(types.entries())) {
+                let itemType = type[0];
+                let itemLinks = type[1];
+                let links = new CDNLogLinks();
+                links.item_type = itemType;
+                links.datas = itemLinks;
+                let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount, itemType).toPromise();
+                if (results) {
+                    results.forEach(r => {
+                        let logBlock = this.logBlocks.find(s => s.link.api_ref === r.api_ref);
+                        if (logBlock) {
+                            logBlock.totalLinesCount = r.lines_count;
+                            logBlock.open = false;
+                            logBlock.loading = false;
+                        }
+                    });
+                }    
+            };
         }
-
 
         this.computeStepFirstLineNumbers();
 
@@ -111,16 +135,16 @@ export class RunJobLogsComponent {
     }
 
     async loadFirstFailedOrLastStep() {
-        if (this.steps.length <= 1) {
+        if (this.logBlocks.length <= 1) {
             return;
         }
         if (PipelineStatus.SUCCESS === this.runJob.status) {
-            await this.clickOpen(this.steps[this.steps.length - 1]);
+            await this.clickOpen(this.logBlocks[this.logBlocks.length - 1]);
             return;
         }
-        for (let i = 1; i < this.steps.length; i++) {
-            if (this.steps[i].failed) {
-                await this.clickOpen(this.steps[i]);
+        for (let i = 1; i < this.logBlocks.length; i++) {
+            if (this.logBlocks[i].failed) {
+                await this.clickOpen(this.logBlocks[i]);
                 return;
             }
         }
@@ -128,8 +152,8 @@ export class RunJobLogsComponent {
 
 
     computeStepsDuration(): void {
-        if (this.steps) {
-            this.steps.forEach(s => {
+        if (this.logBlocks) {
+            this.logBlocks.forEach(s => {
                 let stepStatus = this._runJob.steps_status[s.name];
                 if (!stepStatus) {
                     return;
@@ -145,9 +169,9 @@ export class RunJobLogsComponent {
 
     computeStepFirstLineNumbers(): void {
         let nextFirstLineNumber = 1;
-        for (let i = 0; i < this.steps.length; i++) {
-            this.steps[i].firstDisplayedLineNumber = nextFirstLineNumber;
-            nextFirstLineNumber += this.steps[i].totalLinesCount + 1; // add one more line for step name
+        for (let i = 0; i < this.logBlocks.length; i++) {
+            this.logBlocks[i].firstDisplayedLineNumber = nextFirstLineNumber;
+            nextFirstLineNumber += this.logBlocks[i].totalLinesCount + 1; // add one more line for step name
         }
     }
 
@@ -168,10 +192,11 @@ export class RunJobLogsComponent {
     }
 
     async clickExpandStepDown(stepName: string) {
-        let step = this.steps.find(s => s.name === stepName);
+        let step = this.logBlocks.find(s => s.name === stepName);
         if (!step) {
             return;
         }
+
         let result = await this._workflowService.getLogLines(step.link,
             {offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}`}
         ).toPromise();
@@ -182,7 +207,7 @@ export class RunJobLogsComponent {
     }
 
     async clickExpandStepUp(stepName: string) {
-        let step = this.steps.find(s => s.name === stepName);
+        let step = this.logBlocks.find(s => s.name === stepName);
         if (!step) {
             return;
         }
@@ -195,28 +220,28 @@ export class RunJobLogsComponent {
         this._cd.markForCheck();
     }
 
-    async clickOpen(step: LogBlock) {
-        if (step?.lines?.length > 0 || step.open) {
-            step.clickOpen();
+    async clickOpen(logBlock: LogBlock) {
+        if (logBlock?.lines?.length > 0 || logBlock.open) {
+            logBlock.clickOpen();
             return;
         }
 
-        step.loading = true;
+        logBlock.loading = true;
         let results = await Promise.all([
-            this._workflowService.getLogLines(step.link, {limit: `${this.initLoadLinesCount}`}).toPromise(),
-            this._workflowService.getLogLines(step.link, {offset: `-${this.initLoadLinesCount}`}).toPromise()
+            this._workflowService.getLogLines(logBlock.link, {limit: `${this.initLoadLinesCount}`}).toPromise(),
+            this._workflowService.getLogLines(logBlock.link, {offset: `-${this.initLoadLinesCount}`}).toPromise()
         ]);
-        step.lines = results[0].lines;
-        step.endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
-        step.totalLinesCount = results[0].totalCount;
-        step.open = true;
-        step.loading = false;
+        logBlock.lines = results[0].lines;
+        logBlock.endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
+        logBlock.totalLinesCount = results[0].totalCount;
+        logBlock.open = true;
+        logBlock.loading = false;
         this._cd.markForCheck();
     }
 
     receiveLogs(l: CDNLine): void {
-        if (this.steps) {
-            this.steps.forEach(v => {
+        if (this.logBlocks) {
+            this.logBlocks.forEach(v => {
                 if (v?.link?.api_ref === l.api_ref_hash) {
                     if (!v.lines.find(line => line.number === l.number)
                         && !v.endLines.find(line => line.number === l.number)) {

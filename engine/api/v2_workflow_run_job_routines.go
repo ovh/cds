@@ -183,7 +183,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	info := sdk.V2WorkflowRunJobInfo{
 		Level:            sdk.WorkflowRunInfoLevelError,
 		WorkflowRunJobID: runJob.ID,
-		Message:          fmt.Sprintf("worker %s don't respond anymore.", runJob.WorkerName),
+		Message:          fmt.Sprintf("worker %q doesn't respond anymore.", runJob.WorkerName),
 		IssuedAt:         time.Now(),
 		WorkflowRunID:    runJob.WorkflowRunID,
 	}

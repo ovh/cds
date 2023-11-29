@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/rockbears/log"
@@ -119,8 +120,9 @@ func (wk *CurrentWorker) GetContext() context.Context {
 	return wk.currentJobV2.context
 }
 
-func (wk *CurrentWorker) SetContext(c context.Context) {
-	wk.currentJob.context = c
+// used into unit tests only
+func (wk *CurrentWorker) SetContextForTestJobV2(t *testing.T, c context.Context) {
+	wk.currentJobV2.context = c
 }
 
 func (wk *CurrentWorker) SetGelfLogger(h *loghook.Hook, l *logrus.Logger) {
@@ -214,6 +216,12 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
 		return
 	}
+
+	if isReadinessServices, _ := workerruntime.IsReadinessServices(ctx); isReadinessServices {
+		log.Info(ctx, msg.Value)
+		return
+	}
+
 	wk.gelfLogger.logger.
 		WithField(cdslog.ExtraFieldSignature, sign).
 		WithField(cdslog.ExtraFieldLine, wk.stepLogLine).

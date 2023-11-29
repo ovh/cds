@@ -22,6 +22,9 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 		return sdk.WrapError(err, "Unable to take job %s", jobRunID)
 	}
 
+	ctx = context.WithValue(ctx, cdslog.Workflow, info.RunJob.WorkflowName)
+	ctx = context.WithValue(ctx, cdslog.Project, info.RunJob.ProjectKey)
+
 	log.Info(ctx, "takeWorkflowJob> Job %s taken", jobRunID)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -81,7 +84,7 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	}
 	w.SetGelfLogger(h, l)
 
-	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
+	// This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, runJobID string, tick *time.Ticker) {
 		defer tick.Stop()
@@ -128,7 +131,7 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 		}
 	}(cancel, jobRunID, tick)
 
-	//Run !
+	// Run !
 	res := w.V2ProcessJob()
 	res.Time = time.Now()
 
