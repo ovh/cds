@@ -71,12 +71,20 @@ func adminHooksRepoEventGetRun(v cli.Values) error {
 	fmt.Printf("Created: %s\n", time.Unix(0, event.Created))
 	fmt.Printf("Last Update%s\n", time.Unix(0, event.LastUpdate))
 	fmt.Printf("EventName: %s\n", event.EventName)
+	fmt.Printf("VCS: %s\n", event.VCSServerName)
+	fmt.Printf("Repository: %s\n", event.RepositoryName)
+	fmt.Printf("Extracted Branch: %s\n", event.ExtractData.Branch)
+	fmt.Printf("Extracted Commit: %s\n", event.ExtractData.Commit)
+	fmt.Printf("Extracted Path: %v \n", event.ExtractData.Paths)
 	fmt.Printf("Event: %s\n", string(event.Body))
 	fmt.Printf("Status: %s\n", event.Status)
+	fmt.Printf("User: %s %s\n", event.UserID, event.Username)
 	for _, a := range event.Analyses {
 		fmt.Printf("Analyze %s: %s\n", a.AnalyzeID, a.Status)
 	}
-	fmt.Printf("User: %s\n", event.UserID)
+	for _, h := range event.WorkflowHooks {
+		fmt.Printf("Hooks on workflow %s\n", h.WorkflowName)
+	}
 
 	return nil
 }
