@@ -63,7 +63,7 @@ testcases:
             foo: barWorkflow
           jobs:
             myjob:
-              runs-on: ASCOD/stash-build/yes/ascode/golang@master
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               services:
                 foofoo:
                   image: postgres
