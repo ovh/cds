@@ -1,4 +1,4 @@
-name: Env context
+name: Job Service
 vars:
   cds_project: "ITV2SERVICELOG"
   git_repo: "it_v2_service_log"
@@ -108,4 +108,4 @@ testcases:
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
 
     - name: Check workflowEnv log content
-      script: "cat {{.cds_workflow}}-1-0-myjob-step-0 | grep \"PostgreSQL 1\""
+      script: "cat {{.cds_workflow}}-*-myjob* | grep \"PostgreSQL 1\""
