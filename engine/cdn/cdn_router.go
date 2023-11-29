@@ -13,7 +13,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.SetHeaderFunc = service.DefaultHeaders
 	r.Middlewares = append(r.Middlewares, service.TracingMiddlewareFunc(s), s.jwtMiddleware)
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
-	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares)
 	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))

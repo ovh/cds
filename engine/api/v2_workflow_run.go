@@ -308,7 +308,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 			}
 			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
 			if err != nil {
-				return sdk.WithStack(err)
+				return sdk.NewError(sdk.ErrWrongRequest, err)
 			}
 			workflowName := vars["workflow"]
 			runNumberS := vars["runNumber"]
@@ -368,6 +368,13 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				RunAttempt:   runJob.RunAttempt,
 			}
 
+			for serviceName := range runJob.Job.Services {
+				ref := apiRef
+				ref.ServiceName = serviceName
+				ref.ItemType = sdk.CDNTypeItemServiceLogV2
+				refs = append(refs, ref)
+			}
+
 			for k := range runJob.StepsStatus {
 				stepOrder := -1
 				for i := range runJob.Job.Steps {
@@ -384,6 +391,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				ref := apiRef
 				ref.StepName = sdk.GetJobStepName(k, stepOrder)
 				ref.StepOrder = int64(stepOrder)
+				ref.ItemType = sdk.CDNTypeItemJobStepLog
 				refs = append(refs, ref)
 			}
 			datas := make([]sdk.CDNLogLinkData, 0, len(refs))
@@ -394,9 +402,11 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				}
 				apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 				datas = append(datas, sdk.CDNLogLinkData{
-					APIRef:    apiRefHash,
-					StepOrder: r.StepOrder,
-					StepName:  r.StepName,
+					APIRef:      apiRefHash,
+					StepOrder:   r.StepOrder,
+					StepName:    r.StepName,
+					ServiceName: r.ServiceName,
+					ItemType:    r.ItemType,
 				})
 			}
 
@@ -406,9 +416,8 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 			}
 
 			return service.WriteJSON(w, sdk.CDNLogLinks{
-				CDNURL:   httpURL,
-				ItemType: sdk.CDNTypeItemJobStepLog,
-				Data:     datas,
+				CDNURL: httpURL,
+				Data:   datas,
 			}, http.StatusOK)
 		}
 }

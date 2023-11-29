@@ -17,12 +17,10 @@ import (
 	"github.com/docker/go-connections/tlsconfig"
 	docker "github.com/moby/moby/client"
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
@@ -331,10 +329,9 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 				//labels are used to make container cleanup easier. We "link" the service to its worker this way.
 				labels := map[string]string{
-					LabelServiceWorker: spawnArgs.WorkerName,
-					LabelServiceName:   serviceName,
-					LabelHatchery:      h.Config.Name,
-					LabelJobID:         spawnArgs.JobID,
+					LabelServiceName: serviceName,
+					LabelHatchery:    h.Config.Name,
+					LabelJobID:       spawnArgs.JobID,
 				}
 
 				if spawnArgs.JobID != "0" {
@@ -348,6 +345,8 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
 					labels[hatchery.LabelServiceID] = fmt.Sprintf("%d", r.ID)
 					labels[hatchery.LabelServiceReqName] = r.Name
+					labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion1
+					labels[hatchery.LabelServiceWorker] = spawnArgs.WorkerName
 				}
 
 				//Start the services
@@ -374,13 +373,33 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		}
 	}
 
+	// Create services V2
+	for sName, service := range spawnArgs.Services {
+		//Create a network if not already created
+		if network == "" {
+			network = spawnArgs.WorkerName + "-net"
+			networkAlias = "worker"
+			if err := h.createNetwork(ctx, dockerClient, network); err != nil {
+				log.Warn(ctx, "hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
+				next()
+				return err
+			}
+		}
+
+		serviceName, err := h.SpawnWorkerService(ctx, dockerClient, spawnArgs, sName, service, network)
+		if err != nil {
+			return err
+		}
+		services = append(services, serviceName)
+	}
+
 	var cmd = spawnArgs.Model.GetCmd()
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
 	}
 
-	//labels are used to make container cleanup easier
+	// labels are used to make container cleanup easier
 	labels := map[string]string{
 		LabelWorkerModelPath:    spawnArgs.Model.GetFullPath(),
 		LabelWorkerName:         spawnArgs.WorkerName,
@@ -455,6 +474,84 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	return nil
+}
+
+// v2
+func (h *HatcherySwarm) SpawnWorkerService(ctx context.Context, dockerClient *dockerClient, spawnArgs hatchery.SpawnArguments, sName string, service sdk.V2JobService, network string) (string, error) {
+	serviceMemory := int64(1024)
+	if sm, ok := service.Env["CDS_SERVICE_MEMORY"]; ok {
+		i, err := strconv.ParseUint(sm, 10, 32)
+		if err != nil {
+			log.Warn(ctx, "SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
+		} else {
+			// too low values are checked in HatcherySwarm.createAndStartContainer() below
+			serviceMemory = int64(i)
+		}
+	}
+	serviceMemorySwap := int64(-1)
+	if h.Config.DisableMemorySwap {
+		serviceMemorySwap = 0
+	}
+
+	var cmdArgs []string
+	if sa, ok := service.Env["CDS_SERVICE_ARGS"]; ok {
+		cmdArgs = hatchery.ParseArgs(sa)
+	}
+	if cmdArgs == nil {
+		cmdArgs = []string{}
+	}
+
+	env := make([]string, 0, len(service.Env))
+	for key, val := range service.Env {
+		env = append(env, key+"="+val)
+	}
+
+	serviceName := sName + "-" + spawnArgs.WorkerName
+
+	// labels are used to make container cleanup easier. We "link" the service to its worker this way.
+	labels := map[string]string{
+		LabelServiceName: serviceName,
+		LabelHatchery:    h.Config.Name,
+		LabelJobID:       spawnArgs.JobID,
+	}
+
+	if spawnArgs.JobID != "0" {
+		labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+		labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+		labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+		labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
+		labels[hatchery.LabelServiceRunJobID] = spawnArgs.RunJobID
+		labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+		labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
+		labels[hatchery.LabelServiceReqName] = sName
+		labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion2
+		labels[hatchery.LabelServiceWorker] = spawnArgs.WorkerName
+
+		labels[hatchery.LabelServiceRunNumber] = strconv.FormatInt(spawnArgs.RunNumber, 10)
+		labels[hatchery.LabelServiceRunAttempt] = strconv.FormatInt(spawnArgs.RunAttempt, 10)
+		labels[hatchery.LabelServiceRegion] = spawnArgs.Region
+	}
+
+	args := containerArgs{
+		name:         serviceName,
+		image:        service.Image,
+		network:      network,
+		networkAlias: sName,
+		cmd:          cmdArgs,
+		env:          env,
+		labels:       labels,
+		memory:       serviceMemory,
+		memorySwap:   serviceMemorySwap,
+		entryPoint:   nil,
+	}
+
+	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "unable to start required container on %s: %s", dockerClient.name, err)
+		return serviceName, err
+	}
+
+	return serviceName, nil
 }
 
 // ModelType returns type of hatchery
@@ -658,46 +755,29 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 		// Checking services
 		for _, c := range containers {
 			// checks if the container is a service based on its labels
-			if c.Labels[LabelServiceWorker] == "" {
+			if c.Labels[hatchery.LabelServiceWorker] == "" {
 				continue
 			}
 			// if the worker associated to this service is still alive do not kill the service
-			if _, workerStillAlive := mContainers[c.Labels[LabelServiceWorker]]; workerStillAlive {
+			if _, workerStillAlive := mContainers[c.Labels[hatchery.LabelServiceWorker]]; workerStillAlive {
 				continue
 			}
 
 			if !strings.Contains(c.Status, "Exited") && time.Now().Add(-3*time.Minute).Unix() < c.Created {
-				log.Debug(ctx, "hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels[LabelServiceWorker])
+				log.Debug(ctx, "hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels[hatchery.LabelServiceWorker])
 				continue
 			}
 
 			// Send final logs before deleting service container
-			jobIdentifiers := h.GetIdentifiersFromLabels(c)
+			jobIdentifiers := hatchery.GetServiceIdentifiersFromLabels(c.Labels)
 			if jobIdentifiers == nil {
 				continue
 			}
-			endLog := cdslog.Message{
-				Level: logrus.InfoLevel,
-				Value: string("End of Job"),
-				Signature: cdn.Signature{
-					Service: &cdn.SignatureService{
-						HatcheryID:      h.Service().ID,
-						HatcheryName:    h.ServiceName(),
-						RequirementID:   jobIdentifiers.ServiceID,
-						RequirementName: c.Labels[hatchery.LabelServiceReqName],
-						WorkerName:      c.Labels[LabelServiceWorker],
-					},
-					ProjectKey:   c.Labels[hatchery.LabelServiceProjectKey],
-					WorkflowName: c.Labels[hatchery.LabelServiceWorkflowName],
-					WorkflowID:   jobIdentifiers.WorkflowID,
-					RunID:        jobIdentifiers.RunID,
-					NodeRunName:  c.Labels[hatchery.LabelServiceNodeRunName],
-					JobName:      c.Labels[hatchery.LabelServiceJobName],
-					JobID:        jobIdentifiers.JobID,
-					NodeRunID:    jobIdentifiers.NodeRunID,
-					Timestamp:    time.Now().UnixNano(),
-				},
-			}
+
+			endLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, c.Labels)
+			endLog.Value = string("End of Job")
+			endLog.Signature.Timestamp = time.Now().UnixNano()
+
 			h.Common.SendServiceLog(ctx, []cdslog.Message{endLog}, sdk.StatusTerminated)
 
 			log.Debug(ctx, "hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)

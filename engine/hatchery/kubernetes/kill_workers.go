@@ -3,16 +3,13 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/rockbears/log"
-	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/hatchery"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -73,9 +70,9 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		}
 
 		if toDelete {
-			// If no job identifiers, no services on pod
-			jobIdentifiers := getJobIdentiers(labels)
-			if jobIdentifiers != nil {
+			// If no annotation LabelServiceJobName, no services on pod
+			if annotations[hatchery.LabelServiceJobName] != "" {
+				labels[hatchery.LabelServiceJobName] = annotations[hatchery.LabelServiceJobName]
 				// Browse container to send end log for each service
 				servicesLogs := make([]cdslog.Message, 0)
 				for _, container := range pod.Spec.Containers {
@@ -87,29 +84,20 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 						log.Error(ctx, "getServiceLogs> cannot find service id in the container name (%s) : %v", container.Name, subsStr)
 						continue
 					}
-					reqServiceID, _ := strconv.ParseInt(subsStr[0][1], 10, 64)
-					finalLog := cdslog.Message{
-						Level: logrus.InfoLevel,
-						Value: "End of Job",
-						Signature: cdn.Signature{
-							Service: &cdn.SignatureService{
-								HatcheryID:      h.Service().ID,
-								HatcheryName:    h.ServiceName(),
-								RequirementID:   reqServiceID,
-								RequirementName: subsStr[0][2],
-								WorkerName:      pod.ObjectMeta.Name,
-							},
-							ProjectKey:   labels[hatchery.LabelServiceProjectKey],
-							WorkflowName: labels[hatchery.LabelServiceWorkflowName],
-							WorkflowID:   jobIdentifiers.WorkflowID,
-							RunID:        jobIdentifiers.RunID,
-							NodeRunName:  labels[hatchery.LabelServiceNodeRunName],
-							JobName:      annotations[hatchery.LabelServiceJobName],
-							JobID:        jobIdentifiers.JobID,
-							NodeRunID:    jobIdentifiers.NodeRunID,
-							Timestamp:    time.Now().UnixNano(),
-						},
+					labels[hatchery.LabelServiceID] = subsStr[0][1]
+					labels[hatchery.LabelServiceReqName] = subsStr[0][2]
+					labels[hatchery.LabelServiceWorker] = pod.ObjectMeta.Name
+
+					// If no job identifier, no service on the pod
+					jobIdentifiers := hatchery.GetServiceIdentifiersFromLabels(labels)
+					if jobIdentifiers == nil {
+						continue
 					}
+
+					finalLog := hatchery.PrepareCommonLogMessage(h.ServiceName(), h.Service().ID, *jobIdentifiers, labels)
+					finalLog.Value = "End of Job"
+					finalLog.Signature.Timestamp = time.Now().UnixNano()
+
 					servicesLogs = append(servicesLogs, finalLog)
 				}
 				if len(servicesLogs) > 0 {

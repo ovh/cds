@@ -15,6 +15,7 @@ import (
 
 const (
 	LabelServiceJobID        = "CDS_JOB_ID"
+	LabelServiceRunJobID     = "CDS_RUN_JOB_ID"
 	LabelServiceProjectKey   = "CDS_PROJECT_KEY"
 	LabelServiceWorkflowName = "CDS_WORKFLOW_NAME"
 	LabelServiceWorkflowID   = "CDS_WORKFLOW_ID"
@@ -24,6 +25,14 @@ const (
 	LabelServiceJobName      = "CDS_JOB_NAME"
 	LabelServiceID           = "CDS_SERVICE_ID"
 	LabelServiceReqName      = "CDS_SERVICE_NAME"
+	LabelServiceWorker       = "service_worker"
+	LabelServiceVersion      = "CDS_SERVICE_VERSION"
+	LabelServiceRunNumber    = "CDS_SERVICE_RUN_NUMBER"
+	LabelServiceRunAttempt   = "CDS_SERVICE_RUN_ATTEMPT"
+	LabelServiceRegion       = "CDS_SERVICE_REGION"
+
+	ValueLabelServiceVersion1 = "service_v1"
+	ValueLabelServiceVersion2 = "service_v2"
 )
 
 var (
@@ -121,7 +130,11 @@ type SpawnArguments struct {
 	WorkflowName string                       `json:"workflow_name"`
 	WorkflowID   int64                        `json:"workflow_id"`
 	RunID        string                       `json:"run_id"`
+	RunJobID     string                       `json:"run_job_id"`
 	Region       string                       `json:"region"`
+	Services     map[string]sdk.V2JobService  `json:"services,omitempty"`
+	RunNumber    int64                        `json:"run_number"`
+	RunAttempt   int64                        `json:"run_attempt"`
 }
 
 func (s *SpawnArguments) ModelName() string {
@@ -182,9 +195,24 @@ type Metrics struct {
 }
 
 type JobIdentifiers struct {
+	JobIdentifiersV1 JobIdentifiersV1
+	JobIdentifiersV2 JobIdentifiersV2
+}
+
+type JobIdentifiersV1 struct {
 	ServiceID  int64
 	JobID      int64
 	NodeRunID  int64
 	RunID      int64
 	WorkflowID int64
+}
+
+type JobIdentifiersV2 struct {
+	JobID    string
+	RunID    string
+	RunJobID string
+}
+
+func (j JobIdentifiers) IsJobV2() bool {
+	return j.JobIdentifiersV2.JobID != ""
 }

@@ -118,6 +118,7 @@ const (
 	keysDir
 	tmpDir
 	runJobID
+	readiness
 )
 
 type Runtime interface {
@@ -146,6 +147,7 @@ type Runtime interface {
 	Parameters() []sdk.Parameter
 	PluginGet(pluginName string) (*sdk.GRPCPlugin, error)
 	PluginGetBinary(name, os, arch string, w io.Writer) error
+
 	V2AddRunResult(ctx context.Context, req V2RunResultRequest) (*V2AddResultResponse, error)
 	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
 	V2GetRunResult(ctx context.Context, filter V2FilterRunResult) (*V2GetResultResponse, error)
@@ -182,6 +184,19 @@ func StepOrder(ctx context.Context) (int, error) {
 		return -1, fmt.Errorf("unable to get step order: got %v", stepOrder)
 	}
 	return stepOrder, nil
+}
+
+func IsReadinessServices(ctx context.Context) (bool, error) {
+	readinessStr := ctx.Value(readiness)
+	readiness, ok := readinessStr.(bool)
+	if !ok {
+		return false, fmt.Errorf("unable to get readiness service: got %v", readiness)
+	}
+	return readiness, nil
+}
+
+func SetIsReadinessServices(ctx context.Context, i bool) context.Context {
+	return context.WithValue(ctx, readiness, i)
 }
 
 func SetStepOrder(ctx context.Context, i int) context.Context {
