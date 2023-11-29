@@ -436,7 +436,3 @@ func (wk *CurrentWorker) SetSecrets(secrets []sdk.Variable) error {
 
 	return nil
 }
-
-var _ workerruntime.Runtime = new(CurrentWorker)
-
-
