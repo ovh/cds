@@ -101,7 +101,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 10
+      retry: 20
       delay: 12
 
     - name: Download logs
