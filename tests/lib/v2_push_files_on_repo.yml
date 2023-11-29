@@ -18,7 +18,7 @@ steps:
       mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/worker-models
   - range: {{.input.files}}
     script: |-
-      /bin/bash -c cat | yq -P <<- EOF > /tmp/repos/{{.input.git_repo}}/.cds/{{.key}}
+      /bin/bash -c cat | yq -P <<- 'EOF' > /tmp/repos/{{.input.git_repo}}/.cds/{{.key}}
       {{.value}}
       EOF
   - script: cd /tmp/repos/{{.input.git_repo}} && git config user.name {{.input.git_user}} && git config user.email {{.input.git_email}}
