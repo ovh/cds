@@ -23,7 +23,7 @@ var experimentalWorkflowCmd = cli.Command{
 func experimentalWorkflow() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowRunCmd, workflowRunFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(workflowReRunCmd, workflowReRunFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowRestartCmd, workflowRestartFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunInfosListCmd, workflowRunInfosListFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
@@ -251,10 +251,10 @@ func workflowRunFunc(v cli.Values) error {
 	return nil
 }
 
-var workflowReRunCmd = cli.Command{
-	Name:    "rerun",
-	Short:   "Re run workflow failed jobs",
-	Example: "cdsctl workflow run <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+var workflowRestartCmd = cli.Command{
+	Name:    "restart",
+	Short:   "Restart workflow failed jobs",
+	Example: "cdsctl workflow restart <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
@@ -265,7 +265,7 @@ var workflowReRunCmd = cli.Command{
 	},
 }
 
-func workflowReRunFunc(v cli.Values) error {
+func workflowRestartFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
 	vcsId := v.GetString("vcs_identifier")
 	repoId := v.GetString("repo_identifier")
@@ -275,7 +275,7 @@ func workflowReRunFunc(v cli.Values) error {
 		return err
 	}
 
-	run, err := client.WorkflowV2ReRun(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	run, err := client.WorkflowV2Restart(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
 	if err != nil {
 		return err
 	}

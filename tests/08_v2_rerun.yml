@@ -1,8 +1,8 @@
-name: Checkout plugin
+name: Restart failed jobs
 vars:
-  cds_project: "ITV2RERUN"
-  git_repo: "it_v2_rerun"
-  cds_workflow: "WorkflowRerun"
+  cds_project: "ITV2RESTART"
+  git_repo: "it_v2_restart"
+  cds_workflow: "WorkflowRestart"
 testcases:
 - name: Prepare test
   steps:
@@ -56,7 +56,7 @@ testcases:
           type: docker
           spec:
             image: buildpack-deps:buster
-        workflows/rerun.yaml:
+        workflows/restart.yaml:
           name: {{.cds_workflow}}
           on: [push]
           jobs:
@@ -86,8 +86,8 @@ testcases:
       retry: 10
       delay: 12
 
-    - name: Rerun failed job
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow rerun {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1"
+    - name: Restart failed job
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow restart {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1"
 
     - name: Check that the CDS workflow is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
