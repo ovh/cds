@@ -186,6 +186,7 @@ func TestWorkerTakeJobHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		RunAttempt:   1,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -223,6 +224,7 @@ hatcheries:
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
+		RunAttempt:    wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRunSuccess))
 
@@ -234,6 +236,7 @@ hatcheries:
 		IssuedAt:         time.Now(),
 		Status:           sdk.StatusSuccess,
 		Type:             sdk.V2WorkflowRunResultTypeVariable,
+		RunAttempt:       wr.RunAttempt,
 		Detail: sdk.V2WorkflowRunResultDetail{
 			Type: "V2WorkflowRunResultVariableDetail",
 			Data: sdk.V2WorkflowRunResultVariableDetail{
@@ -252,6 +255,7 @@ hatcheries:
 		Region:        "default",
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
+		RunAttempt:    wr.RunAttempt,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 
