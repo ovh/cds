@@ -46,6 +46,8 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
+			attemptS := FormString(req, "attempt")
+
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
@@ -66,7 +68,15 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
-			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID)
+			attempt := wr.RunAttempt
+			if attemptS != "" {
+				attempt, err = strconv.ParseInt(attemptS, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, attempt)
 			if err != nil {
 				return err
 			}
@@ -95,6 +105,7 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 				return err
 			}
 			jobIdentifier := vars["jobIdentifier"]
+			attemptS := FormString(req, "attempt")
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -116,11 +127,19 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
+			attempt := wr.RunAttempt
+			if attemptS != "" {
+				attempt, err = strconv.ParseInt(attemptS, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+
 			var runJob *sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
 				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
 			} else {
-				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier)
+				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
 			}
 			if err != nil {
 				return err
@@ -153,7 +172,9 @@ func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handl
 			if err != nil {
 				return err
 			}
-			jobName := vars["jobName"]
+			jobIdentifier := vars["jobIdentifier"]
+
+			attemptS := FormString(req, "attempt")
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -175,7 +196,20 @@ func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			attempt := wr.RunAttempt
+			if attemptS != "" {
+				attempt, err = strconv.ParseInt(attemptS, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+
+			var runJob *sdk.V2WorkflowRunJob
+			if sdk.IsValidUUID(jobIdentifier) {
+				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+			} else {
+				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
+			}
 			if err != nil {
 				return err
 			}
@@ -202,7 +236,8 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			if err != nil {
 				return err
 			}
-			jobName := vars["jobName"]
+			jobIdentifier := vars["jobIdentifier"]
+			attemptS := FormString(req, "attempt")
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -224,7 +259,20 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 
-			runJob, err := workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobName)
+			attempt := wr.RunAttempt
+			if attemptS != "" {
+				attempt, err = strconv.ParseInt(attemptS, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+
+			var runJob *sdk.V2WorkflowRunJob
+			if sdk.IsValidUUID(jobIdentifier) {
+				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+			} else {
+				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
+			}
 			if err != nil {
 				return err
 			}
@@ -269,6 +317,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				return err
 			}
 			jobIdentifier := vars["jobIdentifier"]
+			attemptS := FormString(req, "attempt")
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -290,11 +339,19 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				return err
 			}
 
+			attempt := wr.RunAttempt
+			if attemptS != "" {
+				attempt, err = strconv.ParseInt(attemptS, 10, 64)
+				if err != nil {
+					return err
+				}
+			}
+
 			var runJob *sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
 				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
 			} else {
-				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier)
+				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
 			}
 			if err != nil {
 				return err
@@ -671,6 +728,149 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			if err != nil {
 				return err
 			}
+			return service.WriteJSON(w, wr, http.StatusOK)
+		}
+}
+
+func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.workflowTrigger),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			workflowName := vars["workflow"]
+			runNumberS := vars["runNumber"]
+			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			if err != nil {
+				return err
+			}
+
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			if err != nil {
+				return err
+			}
+
+			if !sdk.StatusIsTerminated(wr.Status) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to rerun a running workflow")
+			}
+
+			u := getUserConsumer(ctx)
+
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				return err
+			}
+			runJobsMap := make(map[string]sdk.V2WorkflowRunJob)
+			for _, rj := range runJobs {
+				runJobsMap[rj.JobID] = rj
+			}
+
+			wr.RunAttempt++
+			wr.Status = sdk.StatusBuilding
+			wr.Contexts.CDS.RunAttempt = wr.RunAttempt
+
+			runJobsToKeep := make(map[string]sdk.V2WorkflowRunJob)
+			hasFailedJobs := false
+			// Identify all runjobs to keep and duplicate it when a run.RunAttempt
+			for k, rj := range runJobsMap {
+				if rj.Status == sdk.StatusFail || rj.Status == sdk.StatusStopped {
+					hasFailedJobs = true
+				}
+				if _, has := runJobsToKeep[k]; has {
+					continue
+				}
+				ancestors := sdk.WorkflowJobParents(wr.WorkflowData.Workflow, rj.JobID)
+				globalAncestorStatus := sdk.StatusSuccess
+				for _, a := range ancestors {
+					if runJobsMap[a].Status == sdk.StatusFail || runJobsMap[a].Status == sdk.StatusStopped {
+						globalAncestorStatus = sdk.StatusFail
+					}
+				}
+
+				if globalAncestorStatus == sdk.StatusSuccess && rj.Status != sdk.StatusFail && rj.Status != sdk.StatusStopped {
+					for _, a := range ancestors {
+						runJobsToKeep[a] = runJobsMap[a]
+					}
+					runJobsToKeep[k] = rj
+				}
+			}
+
+			if !hasFailedJobs {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow doesn't contains failed jobs")
+			}
+
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeCDN)
+			if err != nil {
+				return err
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback() // nolint
+
+			// Duplicate runJob to keep
+			for _, rj := range runJobsToKeep {
+				duplicatedRJ := rj
+				duplicatedRJ.ID = ""
+				duplicatedRJ.RunAttempt = wr.RunAttempt
+				if err := workflow_v2.InsertRunJob(ctx, tx, &duplicatedRJ); err != nil {
+					return err
+				}
+
+				runResults, err := workflow_v2.LoadRunResultsByRunJobID(ctx, tx, rj.ID)
+				if err != nil {
+					return err
+				}
+				for _, r := range runResults {
+					duplicatedRunResult := r
+					duplicatedRunResult.ID = ""
+					duplicatedRunResult.WorkflowRunJobID = duplicatedRJ.ID
+					duplicatedRunResult.RunAttempt = duplicatedRJ.RunAttempt
+					if err := workflow_v2.InsertRunResult(ctx, tx, &duplicatedRunResult); err != nil {
+						return err
+					}
+				}
+				req := sdk.CDNDuplicateItemRequest{FromJob: rj.ID, ToJob: duplicatedRJ.ID}
+				_, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
+				if err != nil || code >= 400 {
+					return fmt.Errorf("unable to duplicate cdn item for runjob %s. Code result %d: %v", rj.ID, code, err)
+				}
+			}
+
+			if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
+			// Then continue the workflow
+			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
 		}
 }

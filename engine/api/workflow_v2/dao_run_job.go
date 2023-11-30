@@ -59,7 +59,9 @@ func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRunJob", trace.StringAttribute(telemetry.TagJob, wrj.JobID))
 	defer next()
 	wrj.ID = sdk.UUID()
-	wrj.Queued = time.Now()
+	if wrj.Queued.IsZero() {
+		wrj.Queued = time.Now()
+	}
 	dbWkfRunJob := &dbWorkflowRunJob{V2WorkflowRunJob: *wrj}
 
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfRunJob); err != nil {
@@ -80,10 +82,10 @@ func UpdateJobRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 	return nil
 }
 
-func LoadRunJobsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunJob, error) {
+func LoadRunJobsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempt int64) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRunJobsByRunID")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1").Args(runID)
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND run_attempt = $2").Args(runID, runAttempt)
 	return getAllRunJobs(ctx, db, query)
 }
 
@@ -94,10 +96,10 @@ func LoadRunJobByID(ctx context.Context, db gorp.SqlExecutor, jobRunID string) (
 	return getRunJob(ctx, db, query)
 }
 
-func LoadRunJobByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jobName string) (*sdk.V2WorkflowRunJob, error) {
+func LoadRunJobByName(ctx context.Context, db gorp.SqlExecutor, wrID string, jobName string, runAttempt int64) (*sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByName")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND job_id = $2").Args(wrID, jobName)
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND job_id = $2 AND run_attempt = $3").Args(wrID, jobName, runAttempt)
 	return getRunJob(ctx, db, query)
 }
 

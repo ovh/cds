@@ -280,9 +280,8 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID  string   `json:"run_id"`
-	Jobs   []string `json:"jobs"`
-	UserID string   `json:"user_id"`
+	RunID  string `json:"run_id"`
+	UserID string `json:"user_id"`
 }
 
 type V2WorkflowRunInfo struct {
@@ -387,6 +386,7 @@ type V2WorkflowRunResult struct {
 	ID                         string                                      `json:"id" db:"id"`
 	WorkflowRunID              string                                      `json:"workflow_run_id" db:"workflow_run_id"`
 	WorkflowRunJobID           string                                      `json:"workflow_run_job_id" db:"workflow_run_job_id"`
+	RunAttempt                 int64                                       `json:"run_attempt" db:"run_attempt"`
 	IssuedAt                   time.Time                                   `json:"issued_at" db:"issued_at"`
 	Type                       V2WorkflowRunResultType                     `json:"type" db:"type"`
 	ArtifactManagerIntegration *ProjectIntegration                         `json:"artifact_manager_integration" db:"-"`
