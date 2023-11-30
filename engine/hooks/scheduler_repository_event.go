@@ -2,11 +2,13 @@ package hooks
 
 import (
 	"context"
+
 	"time"
 
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
@@ -69,6 +71,9 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 	if !find {
 		return nil
 	}
+	ctx = context.WithValue(ctx, cdslog.HookEventID, hre.UUID)
+	ctx = context.WithValue(ctx, cdslog.VCSServer, hre.VCSServerName)
+	ctx = context.WithValue(ctx, cdslog.Repository, hre.RepositoryName)
 
 	telemetry.Current(ctx,
 		telemetry.Tag(telemetry.TagVCSServer, hre.VCSServerName),
@@ -168,7 +173,6 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 			}
 		} else {
 			hre.Status = sdk.HookEventStatusWorkflowHooks
-			log.Info(ctx, "triggering workflow hooks for event [%s] %s", hre.EventName, hre.GetFullName())
 			if err := s.triggerWorkflowHooks(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger workflow hooks")
 			}
