@@ -216,7 +216,7 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 			for _, h := range filteredWorkflowHooks {
 				if !hookRequest.AnayzedProjectKeys.Contains(h.ProjectKey) {
 					// Check project right
-					vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, h.ProjectKey, h.VCSName)
+					vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, h.ProjectKey, hookRequest.VCSName)
 					if err != nil {
 						return err
 					}

@@ -74,6 +74,7 @@ func init() {
 		Goroutine,
 		GpgKey,
 		Handler,
+		HookEventID,
 		IPAddress,
 		Latency,
 		LatencyNum,
