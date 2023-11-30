@@ -320,6 +320,9 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 		} else {
 			vcsDB, err := vcs.LoadVCSByProject(ctx, db, projKey, vcsName)
 			if err != nil {
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("vcs %s not found on project %s", vcsName, projKey)}, nil
+				}
 				return "", nil, err
 			}
 			entityVCS = *vcsDB
@@ -337,6 +340,9 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 		} else {
 			repoDB, err := repository.LoadRepositoryByName(ctx, db, entityVCS.ID, repoName)
 			if err != nil {
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("repository %s not found on vcs %s into project %s", repoName, vcsName, projKey)}, nil
+				}
 				return "", nil, err
 			}
 			entityRepo = *repoDB
@@ -663,7 +669,16 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 
 	currentRegion, err := region.LoadRegionByName(ctx, db, reg)
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			msg := &sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wref.run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("region %s not found", reg),
+			}
+			return "", msg, nil
+		}
 		return "", nil, err
+
 	}
 
 	modelCompleteName := ""
