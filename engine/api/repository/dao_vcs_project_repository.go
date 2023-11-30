@@ -2,15 +2,17 @@ package repository
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/telemetry"
 	"strings"
 	"time"
+
+	"github.com/rockbears/log"
+	"go.opencensus.io/trace"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/rockbears/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, repo *sdk.ProjectRepository) error {
@@ -82,7 +84,7 @@ func getRepositories(ctx context.Context, db gorp.SqlExecutor, query gorpmapping
 }
 
 func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProjectID, repoID string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
-	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByVCSAndID")
+	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByVCSAndID", trace.StringAttribute(telemetry.TagVCSServerID, vcsProjectID), trace.StringAttribute(telemetry.TagRepositoryID, repoID))
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.id = $2`).Args(vcsProjectID, repoID)
 	repo, err := getRepository(ctx, db, query, opts...)
@@ -93,7 +95,7 @@ func LoadRepositoryByVCSAndID(ctx context.Context, db gorp.SqlExecutor, vcsProje
 }
 
 func LoadRepositoryByName(ctx context.Context, db gorp.SqlExecutor, vcsProjectID string, repoName string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
-	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByName")
+	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByName", trace.StringAttribute(telemetry.TagVCSServerID, vcsProjectID), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE project_repository.vcs_project_id = $1 AND project_repository.name = $2`).Args(vcsProjectID, strings.ToLower(repoName))
 	repo, err := getRepository(ctx, db, query, opts...)
@@ -137,7 +139,7 @@ func LoadAllRepositoriesByVCSProjectID(ctx context.Context, db gorp.SqlExecutor,
 }
 
 func LoadRepositoryByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectRepository, error) {
-	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByID")
+	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryByID", trace.StringAttribute(telemetry.TagRepositoryID, id))
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT project_repository.* FROM project_repository WHERE id = $1`).Args(id)
 	repo, err := getRepository(ctx, db, query, opts...)

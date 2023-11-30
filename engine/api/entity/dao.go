@@ -188,6 +188,9 @@ func UnsafeLoadAllByTypeAndProjectKeys(_ context.Context, db gorp.SqlExecutor, t
 }
 
 func LoadEntityByPathAndBranch(ctx context.Context, db gorp.SqlExecutor, repositoryID string, path string, branch string) (*sdk.Entity, error) {
+	ctx, next := telemetry.Span(ctx, "entity.LoadEntityByPathAndBranch")
+	defer next()
+
 	q := gorpmapping.NewQuery("SELECT * FROM entity WHERE project_repository_id = $1 AND file_path = $2 AND branch = $3").Args(repositoryID, path, branch)
 	return getEntity(ctx, db, q)
 }

@@ -2,10 +2,11 @@ package region
 
 import (
 	"context"
-	"github.com/lib/pq"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
+	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -76,7 +77,7 @@ func LoadAllRegions(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Region, err
 }
 
 func LoadRegionByName(ctx context.Context, db gorp.SqlExecutor, name string) (*sdk.Region, error) {
-	ctx, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName")
+	ctx, next := telemetry.Span(ctx, "checkUserRight.LoadRegionByName", trace.StringAttribute(telemetry.TagRegion, name))
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT region.* FROM region WHERE region.name = $1`).Args(name)
 	return getRegion(ctx, db, query)

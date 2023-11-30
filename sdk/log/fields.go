@@ -50,6 +50,7 @@ const (
 	NodeRunID          = log.Field("node_run_id")
 	PermJobID          = log.Field("permJobID")
 	Workflow           = log.Field("workflow")
+	WorkflowRunID      = log.Field("workflow_run_id")
 	Component          = log.Field("component")
 	Project            = log.Field("project")
 )
@@ -98,6 +99,7 @@ func init() {
 		NodeRunID,
 		PermJobID,
 		Workflow,
+		WorkflowRunID,
 	)
 }
 

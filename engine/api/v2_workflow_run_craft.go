@@ -26,6 +26,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -89,6 +90,7 @@ func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	ctx, next := telemetry.Span(ctx, "api.craftWorkflowRunV2")
 	defer next()
+	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, id)
 
 	_, next = telemetry.Span(ctx, "api.craftWorkflowRunV2.lock")
 	lockKey := cache.Key("api:craftWorkflowRunV2", id)
@@ -119,6 +121,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		trace.StringAttribute(telemetry.TagProjectKey, run.ProjectKey),
 		trace.StringAttribute(telemetry.TagWorkflow, run.WorkflowName),
 		trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(run.RunNumber, 10)))
+	ctx = context.WithValue(ctx, cdslog.Project, run.ProjectKey)
+	ctx = context.WithValue(ctx, cdslog.Workflow, run.WorkflowName)
 
 	if run.Status != sdk.StatusCrafting {
 		return nil
@@ -653,6 +657,9 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 }
 
 func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.Store, jobName, workerModel, reg, defaultRegion string) (string, *sdk.V2WorkflowRunInfo, error) {
+	ctx, next := telemetry.Span(ctx, "wref.checkWorkerModel", trace.StringAttribute(telemetry.TagWorkerModel, workerModel))
+	defer next()
+
 	hatcheries, err := hatchery.LoadHatcheries(ctx, db)
 	if err != nil {
 		return "", nil, err
