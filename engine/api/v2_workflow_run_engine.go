@@ -141,7 +141,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		trace.StringAttribute(telemetry.TagWorkflow, run.WorkflowName),
 		trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(run.RunNumber, 10)))
 
-	if sdk.StatusIsTerminated(run.Status) && len(wrEnqueue.Jobs) == 0 {
+	if sdk.StatusIsTerminated(run.Status) {
 		log.Debug(ctx, "workflow run already on a final state")
 		return nil
 	}
@@ -226,7 +226,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	// End workflow if there is no more job to handle,  no running jobs and current status is not terminated
 	if len(jobsToQueue) == 0 && len(skippedJobs) == 0 && !sdk.StatusIsTerminated(run.Status) {
-		finalStatus, err := computeJobRunStatus(ctx, tx, run.ID)
+		finalStatus, err := computeJobRunStatus(ctx, tx, run.ID, run.RunAttempt)
 		if err != nil {
 			return err
 		}
@@ -399,7 +399,7 @@ func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun
 				Region:        jobDef.Region,
 				WorkflowName:  run.WorkflowName,
 				RunNumber:     run.RunNumber,
-				RunAttempt:    0, // TODO manage rerun
+				RunAttempt:    run.RunAttempt,
 			}
 			if jobDef.RunsOn != "" {
 				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn].Type
@@ -464,20 +464,9 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	jobToQueue := make(map[string]sdk.V2Job)
 
 	// Load run_jobs
-	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, run.ID)
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, run.ID, run.RunAttempt)
 	if err != nil {
 		return nil, nil, nil, sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
-	}
-
-	// If jobs has already been queue and wr not terminated and user want to trigger some job => error
-	if !sdk.StatusIsTerminated(run.Status) && len(wrEnqueue.Jobs) > 0 && len(runJobs) > 0 {
-		info := sdk.V2WorkflowRunInfo{
-			WorkflowRunID: run.ID,
-			Level:         sdk.WorkflowRunInfoLevelWarning,
-			Message:       "unable to start a job on a running workflow",
-		}
-		runInfos = append(runInfos, info)
-		return nil, nil, runInfos, nil
 	}
 
 	// all current runJobs Status
@@ -491,18 +480,11 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 
 	// Select jobs to check ( all workflow or list of jobs from enqueue request )
 	jobsToCheck := make(map[string]sdk.V2Job)
-	if len(wrEnqueue.Jobs) == 0 {
-		for jobID, jobDef := range run.WorkflowData.Workflow.Jobs {
-			// Do not enqueue jobs that have already a run
-			if _, has := allrunJobsMap[jobID]; !has {
-				jobsToCheck[jobID] = jobDef
-			}
-		}
-	} else {
-		for _, jobID := range wrEnqueue.Jobs {
-			if jobDef, has := run.WorkflowData.Workflow.Jobs[jobID]; has {
-				jobsToCheck[jobID] = jobDef
-			}
+
+	for jobID, jobDef := range run.WorkflowData.Workflow.Jobs {
+		// Do not enqueue jobs that have already a run
+		if _, has := allrunJobsMap[jobID]; !has {
+			jobsToCheck[jobID] = jobDef
 		}
 	}
 
@@ -524,16 +506,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 		}
 
 		// Check jobs needs
-		requiredJob, ok := checkJobNeeds(jobsContext, jobDef)
-		if !ok {
-			// If not ok , and ask to run it => send message
-			if len(wrEnqueue.Jobs) > 0 {
-				runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-					WorkflowRunID: run.ID,
-					Level:         sdk.WorkflowRunInfoLevelWarning,
-					Message:       fmt.Sprintf("job %s: missing some required job: %s", jobID, requiredJob),
-				})
-			}
+		if ok := checkJobNeeds(jobsContext, jobDef); !ok {
 			continue
 		}
 
@@ -604,8 +577,8 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 	return canRun, runInfos, nil
 }
 
-func computeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, runID string) (string, error) {
-	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, runID)
+func computeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempt int64) (string, error) {
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, runID, runAttempt)
 	if err != nil {
 		return "", err
 	}
@@ -651,16 +624,16 @@ func checkUserRight(ctx context.Context, db gorp.SqlExecutor, jobDef *sdk.V2Job,
 	return false, nil
 }
 
-func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) (string, bool) {
+func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) bool {
 	if len(jobDef.Needs) == 0 {
-		return "", true
+		return true
 	}
 	for _, need := range jobDef.Needs {
 		if _, has := jobsContext[need]; !has {
-			return need, false
+			return false
 		}
 	}
-	return "", true
+	return true
 }
 
 func checkJobCondition(ctx context.Context, jobID string, runContext sdk.WorkflowRunContext, jobsContext sdk.JobsResultContext, allJobs map[string]sdk.V2Job) (bool, error) {
@@ -673,7 +646,7 @@ func checkJobCondition(ctx context.Context, jobID string, runContext sdk.Workflo
 
 	jobDef := allJobs[jobID]
 	if jobDef.If == "" {
-		return true, nil
+		jobDef.If = "${{success()}}"
 	}
 	if !strings.HasPrefix(jobDef.If, "${{") {
 		jobDef.If = fmt.Sprintf("${{ %s }}", jobDef.If)
@@ -850,7 +823,7 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 	}
 
 	// Search last userID that trigger a job in this run
-	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID)
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
 	if err != nil {
 		return err
 	}

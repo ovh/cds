@@ -15,25 +15,28 @@ import (
 	"github.com/rockbears/log"
 )
 
-func WithRunResults(ctx context.Context, mapper *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
+func WithRunResults(ctx context.Context, _ *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
 	switch target := i.(type) {
 	case *[]dbWorkflowRun:
 		var ids []string
 		for _, r := range *target {
 			ids = append(ids, r.ID)
 		}
-		results, err := loadRunResultsByRunIDs(ctx, db, ids...)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, ids...)
 		if err != nil {
 			return err
 		}
 		for i := range *target {
 			r := &(*target)[i]
-			if results, has := results[r.ID]; has {
-				var runResult []sdk.V2WorkflowRunResult
-				for _, r := range results {
-					runResult = append(runResult, r.V2WorkflowRunResult)
+			if results, has := allResults[r.ID]; has {
+				var runResults []sdk.V2WorkflowRunResult
+				for _, runResult := range results {
+					if r.RunAttempt != runResult.RunAttempt {
+						continue
+					}
+					runResults = append(runResults, runResult.V2WorkflowRunResult)
 				}
-				r.Results = runResult
+				r.Results = runResults
 			}
 		}
 	case []sdk.V2WorkflowRun:
@@ -41,40 +44,49 @@ func WithRunResults(ctx context.Context, mapper *gorpmapper.Mapper, db gorp.SqlE
 		for _, r := range target {
 			ids = append(ids, r.ID)
 		}
-		results, err := loadRunResultsByRunIDs(ctx, db, ids...)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, ids...)
 		if err != nil {
 			return err
 		}
 		for i := range target {
 			r := &target[i]
-			if results, has := results[r.ID]; has {
-				var runResult []sdk.V2WorkflowRunResult
-				for _, r := range results {
-					runResult = append(runResult, r.V2WorkflowRunResult)
+			if results, has := allResults[r.ID]; has {
+				var runResults []sdk.V2WorkflowRunResult
+				for _, runResult := range results {
+					if r.RunAttempt != runResult.RunAttempt {
+						continue
+					}
+					runResults = append(runResults, runResult.V2WorkflowRunResult)
 				}
-				r.Results = runResult
+				r.Results = runResults
 			}
 		}
 	case *sdk.V2WorkflowRun:
-		results, err := loadRunResultsByRunIDs(ctx, db, target.ID)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, target.ID)
 		if err != nil {
 			return err
 		}
-		if results, has := results[target.ID]; has {
-			var runResult []sdk.V2WorkflowRunResult
+		if results, has := allResults[target.ID]; has {
+			var runResults []sdk.V2WorkflowRunResult
 			for _, r := range results {
-				runResult = append(runResult, r.V2WorkflowRunResult)
+				if target.RunAttempt != r.RunAttempt {
+					continue
+				}
+				runResults = append(runResults, r.V2WorkflowRunResult)
 			}
-			target.Results = runResult
+			target.Results = runResults
 		}
 	case *dbWorkflowRun:
-		results, err := loadRunResultsByRunIDs(ctx, db, target.ID)
+		allResults, err := loadRunResultsByRunIDs(ctx, db, target.ID)
 		if err != nil {
 			return err
 		}
-		if results, has := results[target.ID]; has {
+		if results, has := allResults[target.ID]; has {
 			var runResult []sdk.V2WorkflowRunResult
 			for _, r := range results {
+				if target.RunAttempt != r.RunAttempt {
+					continue
+				}
 				runResult = append(runResult, r.V2WorkflowRunResult)
 			}
 			target.Results = runResult
@@ -112,6 +124,19 @@ func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id
 		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to run load result id=%s workflow_run_job_id=%s", id, runJobID)
 	}
 	return &result.V2WorkflowRunResult, nil
+}
+
+func LoadRunResultsByRunJobID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunResult, error) {
+	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where workflow_run_job_id = $1`).Args(runJobID)
+	var result []dbV2WorkflowRunResult
+	if err := gorpmapping.GetAll(ctx, db, query, &result); err != nil {
+		return nil, sdk.WrapError(err, "unable to load run results for run job %s", runJobID)
+	}
+	runResults := make([]sdk.V2WorkflowRunResult, 0, len(result))
+	for _, r := range result {
+		runResults = append(runResults, r.V2WorkflowRunResult)
+	}
+	return runResults, nil
 }
 
 func InsertRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2WorkflowRunResult) error {
@@ -201,6 +226,7 @@ func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	wr.ID = sdk.UUID()
 	wr.Started = time.Now()
 	wr.LastModified = time.Now()
+	wr.RunAttempt = 1
 
 	dbWkfRun := &dbWorkflowRun{V2WorkflowRun: *wr}
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfRun); err != nil {

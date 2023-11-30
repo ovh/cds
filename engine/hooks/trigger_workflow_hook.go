@@ -14,6 +14,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 
 	log.Info(ctx, "triggering workflow hooks for event [%s] %s", hre.EventName, hre.GetFullName())
 	request := sdk.HookListWorkflowRequest{
+		HookEventUUID:       hre.UUID,
 		Branch:              hre.ExtractData.Branch,
 		Models:              hre.ModelUpdated,
 		Workflows:           hre.WorkflowUpdated,

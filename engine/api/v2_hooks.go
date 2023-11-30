@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/rockbears/log"
 )
 
@@ -65,11 +66,12 @@ func (api *API) getRetrieveSignKeyOperationHandler() ([]service.RbacChecker, ser
 func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.isHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-
 			var hookRetrieveSignKey sdk.HookRetrieveSignKeyRequest
 			if err := service.UnmarshalRequest(ctx, req, &hookRetrieveSignKey); err != nil {
 				return err
 			}
+
+			ctx = context.WithValue(ctx, cdslog.HookEventID, hookRetrieveSignKey.HookEventUUID)
 
 			proj, err := project.Load(ctx, api.mustDB(), hookRetrieveSignKey.ProjectKey, project.LoadOptions.WithKeys)
 			if err != nil {
@@ -160,6 +162,8 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 				return err
 			}
 
+			ctx = context.WithValue(ctx, cdslog.HookEventID, hookRequest.HookEventUUID)
+
 			uniqueWorkflowMap := make(map[string]struct{})
 			filteredWorkflowHooks := make([]sdk.V2WorkflowHook, 0)
 
@@ -217,7 +221,7 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 						return err
 					}
 					if _, err := vcsClient.RepoByFullname(ctx, hookRequest.RepositoryName); err != nil {
-						log.Info(ctx, "hook %s/s on  %s/%s has no right on repository %s/%s", h.ID, h.Type, h.ProjectKey, h.WorkflowName, hookRequest.VCSName, hookRequest.RepositoryName)
+						log.Info(ctx, "hook %s of type %s on project %s workflow %s has no right on repository %s/%s: %v", h.ID, h.Type, h.ProjectKey, h.WorkflowName, hookRequest.VCSName, hookRequest.RepositoryName, err)
 						continue
 					}
 				}

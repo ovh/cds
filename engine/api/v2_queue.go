@@ -239,6 +239,7 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 			runResult.ID = sdk.UUID()
 			runResult.WorkflowRunJobID = runJob.ID
 			runResult.WorkflowRunID = runJob.WorkflowRunID
+			runResult.RunAttempt = runJob.RunAttempt
 			if runJob.Integrations != nil {
 				runResult.ArtifactManagerIntegration = runJob.Integrations.ArtifactManager
 			}

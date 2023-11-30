@@ -121,15 +121,15 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 
 // Handle Message: Worker/Hatchery
 func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
-	m := hook.Message{}
-	if err := m.UnmarshalJSON(messageReceived); err != nil {
+	msg := hook.Message{}
+	if err := msg.UnmarshalJSON(messageReceived); err != nil {
 		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
 	}
 
 	// Extract Signature
-	sig, ok := m.Extra["_"+cdslog.ExtraFieldSignature]
+	sig, ok := msg.Extra["_"+cdslog.ExtraFieldSignature]
 	if !ok || sig == "" {
-		return sdk.WithStack(fmt.Errorf("signature not found on log message: %+v", m))
+		return sdk.WithStack(fmt.Errorf("signature not found on log message: %+v", msg))
 	}
 
 	// Unsafe parse of signature to get datas
@@ -141,17 +141,20 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 	switch {
 	case signature.Worker != nil:
 		telemetry.Record(ctx, s.Metrics.tcpServerStepLogCount, 1)
-		return s.handleWorkerLog(ctx, signature, sig, m)
+		return s.handleWorkerLog(ctx, signature, sig, msg)
 	case signature.Service != nil:
 		telemetry.Record(ctx, s.Metrics.tcpServerServiceLogCount, 1)
-		return s.handleServiceLog(ctx, signature.Service.HatcheryID, signature.Service.HatcheryName, signature.Service.WorkerName, sig, m)
+		return s.handleServiceLog(ctx, signature, sig, msg)
+	case signature.HatcheryService != nil:
+		telemetry.Record(ctx, s.Metrics.tcpServerServiceLogCount, 1)
+		return s.handleServiceLog(ctx, signature, sig, msg)
 	default:
 		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 }
 
 // Handle Message from worker (job logs). Enqueue in Redis
-func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, m hook.Message) error {
+func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, msg hook.Message) error {
 	var signature cdn.Signature
 
 	switch {
@@ -183,12 +186,12 @@ func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 		}
 	}
 
-	terminatedI := m.Extra["_"+cdslog.ExtraFieldTerminated]
+	terminatedI := msg.Extra["_"+cdslog.ExtraFieldTerminated]
 	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
 		Signature:    signature,
-		Msg:          m,
+		Msg:          msg,
 		IsTerminated: terminated,
 	}
 
@@ -235,23 +238,36 @@ func buildMessage(hm handledMessage) string {
 	if !strings.HasSuffix(val, "\n") {
 		val += "\n"
 	}
-	return fmt.Sprintf("%s", val)
+	return val
 }
 
-func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatcheryName string, workerName string, sig interface{}, m hook.Message) error {
+func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, msg hook.Message) error {
 	var signature cdn.Signature
 	var pk *rsa.PublicKey
 
+	var hatcheryID, hatcheryName, serviceName string
+	if unsafeSign.JobID != 0 {
+		hatcheryID = strconv.FormatInt(unsafeSign.Service.HatcheryID, 10)
+		hatcheryName = unsafeSign.Service.HatcheryName
+		serviceName = unsafeSign.Service.RequirementName
+	} else if unsafeSign.RunJobID != "" {
+		hatcheryID = unsafeSign.HatcheryService.HatcheryID
+		hatcheryName = unsafeSign.HatcheryService.HatcheryName
+		serviceName = unsafeSign.HatcheryService.ServiceName
+	} else {
+		return sdk.WrapError(sdk.ErrForbidden, "invalid signature %v", unsafeSign)
+	}
+
 	// Get hatchery public key from cache
-	cacheData, ok := runCache.Get(fmt.Sprintf("hatchery-key-%d", hatcheryID))
+	cacheData, ok := runCache.Get(fmt.Sprintf("hatchery-key-%s", hatcheryID))
 	if !ok {
 		// Refresh hatcheries cache
 		if err := s.refreshHatcheriesPK(ctx); err != nil {
 			return err
 		}
-		cacheData, ok = runCache.Get(fmt.Sprintf("hatchery-key-%d", hatcheryID))
+		cacheData, ok = runCache.Get(fmt.Sprintf("hatchery-key-%s", hatcheryID))
 		if !ok {
-			return sdk.WrapError(sdk.ErrForbidden, "unable to find hatchery %d/%s", hatcheryID, hatcheryName)
+			return sdk.WrapError(sdk.ErrForbidden, "unable to find hatchery %s/%s", hatcheryID, hatcheryName)
 		}
 	}
 	pk = cacheData.(*rsa.PublicKey)
@@ -261,30 +277,38 @@ func (s *Service) handleServiceLog(ctx context.Context, hatcheryID int64, hatche
 		return err
 	}
 
-	// Get worker + check hatchery ID
-	w, err := s.getWorker(ctx, workerName, GetWorkerOptions{NeedPrivateKey: false})
-	if err != nil {
-		return err
-	}
-	if w.HatcheryID == nil {
-		return sdk.WrapError(sdk.ErrWrongRequest, "hatchery %d cannot send service log for worker %s started by %s that is no more linked to an hatchery", signature.Service.HatcheryID, w.ID, w.HatcheryName)
-	}
-	if *w.HatcheryID != signature.Service.HatcheryID {
-		return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log for worker %s from hatchery (expected: %d/actual: %d)", w.ID, *w.HatcheryID, signature.Service.HatcheryID)
+	var key string
+	switch {
+	case signature.JobID != 0:
+		// Get worker + check hatchery ID
+		w, err := s.getWorker(ctx, signature.Service.WorkerName, GetWorkerOptions{NeedPrivateKey: false})
+		if err != nil {
+			return err
+		}
+		if w.HatcheryID == nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery %d cannot send service log for worker %s started by %s that is no more linked to an hatchery", signature.Service.HatcheryID, w.ID, w.HatcheryName)
+		}
+		if *w.HatcheryID != signature.Service.HatcheryID {
+			return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log (%s) for worker %s from hatchery (expected: %d / actual: %d)", serviceName, w.ID, *w.HatcheryID, signature.Service.HatcheryID)
+		}
+
+		key = fmt.Sprintf("%d-%d", signature.JobID, signature.Service.RequirementID)
+
+	case signature.RunJobID != "":
+		key = fmt.Sprintf("%s-%s", signature.RunJobID, signature.HatcheryService.ServiceName)
 	}
 
-	terminatedI := m.Extra["_"+cdslog.ExtraFieldTerminated]
+	terminatedI := msg.Extra["_"+cdslog.ExtraFieldTerminated]
 	terminated := cast.ToBool(terminatedI)
 
 	hm := handledMessage{
 		Signature:    signature,
-		Msg:          m,
+		Msg:          msg,
 		IsTerminated: terminated,
 	}
 
-	reqKey := fmt.Sprintf("%d-%d", signature.JobID, signature.Service.RequirementID)
-	sizeQueueKey := cache.Key(keyJobLogSize, reqKey)
-	jobQueue := cache.Key(keyJobLogQueue, reqKey)
+	sizeQueueKey := cache.Key(keyJobLogSize, key)
+	jobQueue := cache.Key(keyJobLogQueue, key)
 
 	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
 		return err

@@ -184,12 +184,12 @@ func UpdateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 		return nil, errors.WithStack(err)
 	}
 	if resp.StatusCode >= 300 {
-		return nil, errors.Wrapf(err, "unable to update run result (status code %d) %v", resp.StatusCode, string(body))
+		return nil, errors.Errorf("unable to update run result (status code %d) %v", resp.StatusCode, string(body))
 	}
 
 	var response workerruntime.V2UpdateResultResponse
 	if err := sdk.JSONUnmarshal(body, &response); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unable to parse run result response")
 	}
 	return &response, nil
 }

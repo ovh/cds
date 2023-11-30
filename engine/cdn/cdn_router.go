@@ -13,7 +13,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.SetHeaderFunc = service.DefaultHeaders
 	r.Middlewares = append(r.Middlewares, service.TracingMiddlewareFunc(s), s.jwtMiddleware)
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
-	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares)
 	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -28,6 +27,7 @@ func (s *Service) initRouter(ctx context.Context) {
 
 	r.Handle("/bulk/item/delete", nil, r.POST(s.bulkDeleteItemsHandler))
 
+	r.Handle("/item/duplicate", nil, r.POST(s.postDuplicateItemForJobHandler))
 	r.Handle("/item/upload", nil, r.POST(s.postUploadHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/item/stream", nil, r.GET(s.getItemLogsStreamHandler, service.OverrideAuth(s.validJWTMiddleware)))
 	r.Handle("/item/{type}", nil, r.GET(s.getItemsHandler))

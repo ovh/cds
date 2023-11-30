@@ -118,6 +118,7 @@ func Test_cachePushPullHandler(t *testing.T) {
 			f, err := fs.Open(path)
 			require.NoError(t, err)
 			bodyBytes, err = io.ReadAll(f)
+			require.NoError(t, err)
 			require.NotEqual(t, 0, len(bodyBytes))
 			return time.Since(t0), nil
 		},

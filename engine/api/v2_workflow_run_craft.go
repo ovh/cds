@@ -523,7 +523,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		ProjectKey:         wr.ProjectKey,
 		RunID:              wr.ID,
 		RunNumber:          wr.RunNumber,
-		RunAttempt:         0, // TODO manage run attempt
+		RunAttempt:         1,
 		Workflow:           wr.WorkflowName,
 		WorkflowRef:        wr.WorkflowRef,
 		WorkflowSha:        wr.WorkflowSha,

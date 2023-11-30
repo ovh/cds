@@ -11,6 +11,7 @@ import (
 )
 
 type HookListWorkflowRequest struct {
+	HookEventUUID       string           `json:"hook_event_uuid"`
 	VCSName             string           `json:"vcs_name"`
 	RepositoryName      string           `json:"repository_name"`
 	Branch              string           `json:"branch"`

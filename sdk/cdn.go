@@ -69,7 +69,7 @@ func (c *CDNItem) UnmarshalJSON(data []byte) error {
 			return WithStack(err)
 		}
 		itemAlias.APIRef = &apiRef
-	case CDNTypeItemJobStepLog:
+	case CDNTypeItemJobStepLog, CDNTypeItemServiceLogV2:
 		var apiRef CDNLogAPIRefV2
 		if err := JSONUnmarshal(itemAlias.APIRefRaw, &apiRef); err != nil {
 			return WithStack(err)
@@ -118,14 +118,16 @@ type CDNLogsLines struct {
 
 type CDNLogLinks struct {
 	CDNURL   string           `json:"cdn_url,omitempty"`
-	ItemType CDNItemType      `json:"item_type"`
+	ItemType CDNItemType      `json:"item_type,omitempty"` // workflow v2: it's empty
 	Data     []CDNLogLinkData `json:"datas"`
 }
 
 type CDNLogLinkData struct {
-	APIRef    string `json:"api_ref"`
-	StepOrder int64  `json:"step_order"`
-	StepName  string `json:"step_name"`
+	APIRef      string      `json:"api_ref"`
+	StepOrder   int64       `json:"step_order"`
+	StepName    string      `json:"step_name"`
+	ServiceName string      `json:"service_name"`
+	ItemType    CDNItemType `json:"item_type"`
 }
 
 type CDNLogLink struct {
@@ -143,20 +145,21 @@ type CDNApiRef interface {
 }
 
 type CDNLogAPIRefV2 struct {
-	ProjectKey   string `json:"project_key"`
-	WorkflowName string `json:"workflow_name"`
-	RunID        string `json:"run_id"`
-	RunJobID     string `json:"run_job_id"`
-	RunJobName   string `json:"run_job_name"`
-	RunNumber    int64  `json:"run_number"`
-	RunAttempt   int64  `json:"run_attempt"`
+	ProjectKey   string      `json:"project_key"`
+	WorkflowName string      `json:"workflow_name"`
+	RunID        string      `json:"run_id"`
+	RunJobID     string      `json:"run_job_id"`
+	RunJobName   string      `json:"run_job_name"`
+	RunNumber    int64       `json:"run_number"`
+	RunAttempt   int64       `json:"run_attempt"`
+	ItemType     CDNItemType `json:"item_type"`
 
 	// for workers
 	StepOrder int64  `json:"step_order"`
 	StepName  string `json:"step_name,omitempty"`
 
 	// for hatcheries
-	RequirementServiceName string `json:"service_name,omitempty"`
+	ServiceName string `json:"service_name,omitempty"`
 }
 
 type CDNLogAPIRef struct {
@@ -219,7 +222,7 @@ func NewCDNApiRef(t CDNItemType, signature cdn.Signature) (CDNApiRef, error) {
 		return NewCDNRunResultApiRef(signature), nil
 	case CDNTypeItemWorkerCache:
 		return NewCDNWorkerCacheApiRef(signature), nil
-	case CDNTypeItemJobStepLog:
+	case CDNTypeItemJobStepLog, CDNTypeItemServiceLogV2:
 		return NewCDNLogApiRefV2(signature), nil
 	case CDNTypeItemRunResultV2:
 		return NewCDNRunResultApiRefV2(signature), nil
@@ -286,9 +289,11 @@ func NewCDNLogApiRefV2(signature cdn.Signature) CDNApiRef {
 	if signature.Worker != nil {
 		apiRef.StepName = signature.Worker.StepName
 		apiRef.StepOrder = signature.Worker.StepOrder
+		apiRef.ItemType = CDNTypeItemJobStepLog
 	}
-	if signature.Service != nil {
-		apiRef.RequirementServiceName = signature.Service.RequirementName
+	if signature.HatcheryService != nil {
+		apiRef.ServiceName = signature.HatcheryService.ServiceName
+		apiRef.ItemType = CDNTypeItemServiceLogV2
 	}
 	return &apiRef
 }
@@ -332,10 +337,10 @@ func (a *CDNLogAPIRefV2) ToHash() (string, error) {
 func (a *CDNLogAPIRefV2) ToFilename() string {
 	jobName := strings.Replace(a.RunJobName, " ", "", -1)
 
-	isService := a.RequirementServiceName != ""
+	isService := a.ServiceName != ""
 	var suffix string
 	if isService {
-		suffix = fmt.Sprintf("service.%s", a.RequirementServiceName)
+		suffix = fmt.Sprintf("service.%s", a.ServiceName)
 	} else {
 		suffix = fmt.Sprintf("step.%d", a.StepOrder)
 	}
@@ -473,7 +478,7 @@ type CDNItemType string
 
 func (t CDNItemType) Validate() error {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemJobStepLog, CDNTypeItemRunResultV2:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemRunResult, CDNTypeItemWorkerCache, CDNTypeItemJobStepLog, CDNTypeItemRunResultV2, CDNTypeItemServiceLogV2:
 		return nil
 	}
 	return NewErrorFrom(ErrWrongRequest, "invalid item type")
@@ -481,21 +486,22 @@ func (t CDNItemType) Validate() error {
 
 func (t CDNItemType) IsLog() bool {
 	switch t {
-	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemJobStepLog:
+	case CDNTypeItemStepLog, CDNTypeItemServiceLog, CDNTypeItemJobStepLog, CDNTypeItemServiceLogV2:
 		return true
 	}
 	return false
 }
 
 const (
-	CDNTypeItemStepLog     CDNItemType = "step-log"
-	CDNTypeItemJobStepLog  CDNItemType = "job-step-log"
-	CDNTypeItemServiceLog  CDNItemType = "service-log"
-	CDNTypeItemRunResult   CDNItemType = "run-result"
-	CDNTypeItemRunResultV2 CDNItemType = "run-result-v2"
-	CDNTypeItemWorkerCache CDNItemType = "worker-cache"
-	CDNStatusItemIncoming              = "Incoming"
-	CDNStatusItemCompleted             = "Completed"
+	CDNTypeItemStepLog      CDNItemType = "step-log"
+	CDNTypeItemJobStepLog   CDNItemType = "job-step-log" // v2
+	CDNTypeItemServiceLog   CDNItemType = "service-log"
+	CDNTypeItemServiceLogV2 CDNItemType = "service-log-v2"
+	CDNTypeItemRunResult    CDNItemType = "run-result"
+	CDNTypeItemRunResultV2  CDNItemType = "run-result-v2"
+	CDNTypeItemWorkerCache  CDNItemType = "worker-cache"
+	CDNStatusItemIncoming               = "Incoming"
+	CDNStatusItemCompleted              = "Completed"
 )
 
 type CDNReaderFormat string
@@ -526,4 +532,9 @@ type CDNUnitHandlerRequest struct {
 	ID      string `json:"id" cli:"id"`
 	Name    string `json:"name" cli:"name"`
 	NbItems int64  `json:"nb_items" cli:"nb_items"`
+}
+
+type CDNDuplicateItemRequest struct {
+	FromJob string `json:"from_job"`
+	ToJob   string `json:"to_job"`
 }

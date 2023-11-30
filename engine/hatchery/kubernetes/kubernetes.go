@@ -14,7 +14,6 @@ import (
 	"github.com/rockbears/log"
 
 	apiv1 "k8s.io/api/core/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -69,7 +68,7 @@ func (h *HatcheryKubernetes) WatchPodEvents(ctx context.Context) error {
 	defer watcher.Stop()
 	for event := range watchCh {
 		switch x := event.Object.(type) {
-		case *corev1.Event:
+		case *apiv1.Event:
 			log.Info(ctx, "kubernetes event - time: %v, object: %s, reason: %s, message: %s, component: %s, host: %s", x.ObjectMeta.CreationTimestamp, x.ObjectMeta.Name, x.Reason, x.Message, x.Source.Component, x.Source.Host)
 		}
 	}
@@ -288,10 +287,10 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	}
 
 	envs := make([]apiv1.EnvVar, len(envsWm))
-	i := 0
+	nEnv := 0
 	for envName, envValue := range envsWm {
-		envs[i] = apiv1.EnvVar{Name: envName, Value: envValue}
-		i++
+		envs[nEnv] = apiv1.EnvVar{Name: envName, Value: envValue}
+		nEnv++
 	}
 
 	// Create secret for worker config
@@ -406,7 +405,8 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		serviceEphemeralStorage = "512Mi"
 	}
 
-	for i, serv := range services {
+	// services job v1
+	for nService, serv := range services {
 		//name= <alias> => the name of the host put in /etc/hosts of the worker
 		//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
 		img, envm := hatchery.ParseRequirementModel(serv.Value)
@@ -460,12 +460,95 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		podSchema.ObjectMeta.Annotations[hatchery.LabelServiceJobName] = spawnArgs.JobName
 
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
-		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
+		podSchema.Spec.HostAliases[0].Hostnames[nService+1] = strings.ToLower(serv.Name)
+	}
+
+	// Create services V2
+	var nService int
+	if len(spawnArgs.Services) > 0 {
+		podSchema.Spec.HostAliases = make([]apiv1.HostAlias, 1)
+		podSchema.Spec.HostAliases[0] = apiv1.HostAlias{IP: "127.0.0.1", Hostnames: make([]string, len(spawnArgs.Services)+1)}
+		podSchema.Spec.HostAliases[0].Hostnames[0] = "worker"
+	}
+
+	for sName, service := range spawnArgs.Services {
+		serviceContainer, err := h.SpawnWorkerService(ctx, spawnArgs, &podSchema, nService, sName, service)
+		if err != nil {
+			return err
+		}
+		podSchema.Spec.Containers = append(podSchema.Spec.Containers, serviceContainer)
+		podSchema.Spec.HostAliases[0].Hostnames[nService+1] = strings.ToLower(sName)
+		nService++
 	}
 
 	_, err = h.kubeClient.PodCreate(ctx, h.Config.Namespace, &podSchema, metav1.CreateOptions{})
 	log.Debug(ctx, "hatchery> kubernetes> SpawnWorker> %s > Pod created", spawnArgs.WorkerName)
 	return sdk.WithStack(err)
+}
+
+func (h *HatcheryKubernetes) SpawnWorkerService(ctx context.Context, spawnArgs hatchery.SpawnArguments, podSchema *apiv1.Pod, nService int, sName string, service sdk.V2JobService) (apiv1.Container, error) {
+	serviceMemory := int64(1024)
+	if sm, ok := service.Env["CDS_SERVICE_MEMORY"]; ok {
+		i, err := strconv.ParseUint(sm, 10, 32)
+		if err != nil {
+			log.Warn(ctx, "SpawnWorker> Unable to parse service option CDS_SERVICE_MEMORY=%s : %s", sm, err)
+		} else {
+			serviceMemory = int64(i)
+		}
+	}
+
+	serviceCPU := h.Config.DefaultServiceCPU
+	if serviceCPU == "" {
+		serviceCPU = "256m"
+	}
+
+	serviceEphemeralStorage := h.Config.DefaultServiceEphemeralStorage
+	if serviceEphemeralStorage == "" {
+		serviceEphemeralStorage = "512Mi"
+	}
+
+	serviceContainer := apiv1.Container{
+		// this name is used into service logs get, see containerServiceNameRegexp
+		Name:  fmt.Sprintf("service-%d-%s", nService, strings.ToLower(sName)),
+		Image: service.Image,
+		Resources: apiv1.ResourceRequirements{
+			Requests: apiv1.ResourceList{
+				apiv1.ResourceCPU:              resource.MustParse(serviceCPU),
+				apiv1.ResourceMemory:           *resource.NewScaledQuantity(serviceMemory, resource.Mega),
+				apiv1.ResourceEphemeralStorage: resource.MustParse(serviceEphemeralStorage),
+			},
+			Limits: apiv1.ResourceList{
+				apiv1.ResourceCPU:              resource.MustParse(serviceCPU),
+				apiv1.ResourceMemory:           *resource.NewScaledQuantity(serviceMemory, resource.Mega),
+				apiv1.ResourceEphemeralStorage: resource.MustParse(serviceEphemeralStorage),
+			},
+		},
+	}
+
+	if len(service.Env) > 0 {
+		serviceContainer.Env = make([]apiv1.EnvVar, 0, len(service.Env))
+		for key, val := range service.Env {
+			serviceContainer.Env = append(serviceContainer.Env, apiv1.EnvVar{Name: key, Value: val})
+		}
+	}
+
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceProjectKey] = spawnArgs.ProjectKey
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowName] = spawnArgs.WorkflowName
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorkflowID] = fmt.Sprintf("%d", spawnArgs.WorkflowID)
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunID] = spawnArgs.RunID
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunJobID] = spawnArgs.RunJobID
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobName] = spawnArgs.JobName
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceJobID] = spawnArgs.JobID
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceReqName] = sName
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceVersion] = hatchery.ValueLabelServiceVersion2
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceWorker] = spawnArgs.WorkerName
+	podSchema.ObjectMeta.Annotations[hatchery.LabelServiceJobName] = spawnArgs.JobName
+
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunNumber] = strconv.FormatInt(spawnArgs.RunNumber, 10)
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceRunAttempt] = strconv.FormatInt(spawnArgs.RunAttempt, 10)
+	podSchema.ObjectMeta.Labels[hatchery.LabelServiceRegion] = spawnArgs.Region
+
+	return serviceContainer, nil
 }
 
 // WorkersStarted returns the number of instances started but

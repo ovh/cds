@@ -25,6 +25,7 @@ const (
 	Duration           = log.Field("duration_milliseconds_num")
 	Goroutine          = log.Field("goroutine")
 	Handler            = log.Field("handler")
+	HookEventID        = log.Field("hook_event_id")
 	IPAddress          = log.Field("ip_address")
 	Latency            = log.Field("latency")
 	LatencyNum         = log.Field("latency_num")
@@ -50,6 +51,7 @@ const (
 	PermJobID          = log.Field("permJobID")
 	Workflow           = log.Field("workflow")
 	Component          = log.Field("component")
+	Project            = log.Field("project")
 )
 
 func init() {
@@ -76,6 +78,7 @@ func init() {
 		Latency,
 		LatencyNum,
 		Method,
+		Project,
 		RbackCheckerName,
 		Repository,
 		RbacRole,

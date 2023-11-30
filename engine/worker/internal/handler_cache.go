@@ -223,7 +223,6 @@ func cachePullHandler(ctx context.Context, wk *CurrentWorker) http.HandlerFunc {
 			writeError(w, req, e)
 			return
 		}
-		return
 	}
 }
 

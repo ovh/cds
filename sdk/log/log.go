@@ -136,7 +136,10 @@ type Message struct {
 }
 
 func (m Message) ServiceKey() string {
-	return fmt.Sprintf("%d-%d", m.Signature.NodeRunID, m.Signature.Service.RequirementID)
+	if m.Signature.Service != nil {
+		return fmt.Sprintf("%d-%d", m.Signature.NodeRunID, m.Signature.Service.RequirementID)
+	}
+	return fmt.Sprintf("%s-%s", m.Signature.RunJobID, m.Signature.HatcheryService.ServiceName)
 }
 
 func New(ctx context.Context, graylogcfg *hook.Config) (*logrus.Logger, *hook.Hook, error) {

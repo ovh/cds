@@ -105,7 +105,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item s
 		logRef, _ := item.GetCDNLogApiRef()
 		projectKey = logRef.ProjectKey
 		workflowID = logRef.WorkflowID
-	case sdk.CDNTypeItemJobStepLog:
+	case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 		logRef, _ := item.GetCDNLogApiRefV2()
 		projectKey = logRef.ProjectKey
 	case sdk.CDNTypeItemRunResult:
@@ -145,7 +145,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item s
 		if err := s.Client.ProjectAccess(ctx, projectKey, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}
-	case sdk.CDNTypeItemJobStepLog:
+	case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 		if err := s.Client.HasProjectRole(ctx, projectKey, sessionID, sdk.ProjectRoleRead); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}

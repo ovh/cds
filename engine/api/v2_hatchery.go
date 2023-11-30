@@ -156,16 +156,23 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 				return err
 			}
 
-			hatcheryPermission, err := rbac.LoadRBACByHatcheryID(ctx, api.mustDB(), hatch.ID)
-			if err != nil {
-				return err
-			}
-
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
 			}
 			defer tx.Rollback() // nolint
+
+			hatcheryPermission, err := rbac.LoadRBACByHatcheryID(ctx, tx, hatch.ID)
+			if err != nil {
+				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+				// here, no rbac found, just delete the hatchery
+				if err := hatchery.Delete(tx, hatch.ID); err != nil {
+					return err
+				}
+				return sdk.WithStack(tx.Commit())
+			}
 
 			// Remove all permissions on this hatchery
 			rbacHatcheries := make([]sdk.RBACHatchery, 0)

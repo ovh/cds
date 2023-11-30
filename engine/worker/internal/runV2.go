@@ -42,11 +42,16 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, w.currentJobV2.runJob.JobID)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
-		return w.failJob(ctx, fmt.Sprintf("Error: unable to setup workfing directory: %v", err))
+		return w.failJob(ctx, fmt.Sprintf("Error: unable to setup working directory: %v", err))
 	}
 	w.workingDirAbs = wdAbs
 	ctx = workerruntime.SetWorkingDirectory(ctx, wdFile)
 	log.Debug(ctx, "Setup workspace - %s", wdFile.Name())
+
+	// Manage services readiness
+	if result := w.runJobServicesReadiness(ctx); result.Status != sdk.StatusSuccess {
+		return w.failJob(ctx, fmt.Sprintf("Error: readiness service command failed: %v", result.Error))
+	}
 
 	kdFile, _, err := w.setupKeysDirectory(ctx, w.currentJobV2.runJob.JobID)
 	if err != nil {
@@ -104,6 +109,93 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 		log.Error(ctx, "Cannot remove basedir content: %s", err)
 	}
 	return res
+}
+
+func (w *CurrentWorker) runJobServicesReadiness(ctx context.Context) sdk.V2WorkflowRunJobResult {
+	ctx = workerruntime.SetIsReadinessServices(ctx, true)
+	defer workerruntime.SetIsReadinessServices(ctx, false)
+
+	result := sdk.V2WorkflowRunJobResult{Status: sdk.StatusSuccess}
+	if w.currentJobV2.runJob.Job.Services == nil {
+		return result
+	}
+
+	for serviceName, service := range w.currentJobV2.runJob.Job.Services {
+		if service.Readiness.Command == "" {
+			continue
+		}
+
+		if err := w.runJobServiceReadiness(ctx, serviceName, service); err != nil {
+			result.Error = fmt.Sprintf("failed on check service readiness: %v", err.Error())
+			result.Status = sdk.StatusFail
+			return result
+		}
+	}
+	return result
+}
+
+func (w *CurrentWorker) runJobServiceReadiness(ctx context.Context, serviceName string, service sdk.V2JobService) error {
+	step := sdk.ActionStep{
+		Run: service.Readiness.Command,
+	}
+	runJobContext := sdk.WorkflowRunJobsContext{
+		WorkflowRunContext: sdk.WorkflowRunContext{
+			Vars: service.Env,
+		},
+	}
+
+	interval, err := time.ParseDuration(service.Readiness.Interval)
+	if err != nil {
+		return fmt.Errorf("unable to parse interval %q", interval)
+	}
+	timeout, err := time.ParseDuration(service.Readiness.Timeout)
+	if err != nil {
+		return fmt.Errorf("unable to parse timeout %q", timeout)
+	}
+
+	if service.Readiness.Retries <= 0 {
+		return fmt.Errorf("retries value must be > 0 (current: %d)", service.Readiness.Retries)
+	}
+
+	for i := 0; i < service.Readiness.Retries; i++ {
+		ctxA, cancel := context.WithTimeout(ctx, timeout)
+		result := w.runJobStepScript(ctxA, step, runJobContext)
+		cancel()
+
+		info := sdk.V2SendJobRunInfo{
+			Time: time.Now(),
+		}
+
+		if result.Status == sdk.StatusSuccess {
+			info.Level = sdk.WorkflowRunInfoLevelInfo
+			info.Message = fmt.Sprintf("service %s is ready", serviceName)
+		} else {
+			info.Level = sdk.WorkflowRunInfoLevelWarning
+			info.Message = fmt.Sprintf("service %s is not ready (%s)", serviceName, result.Status)
+		}
+
+		if err := w.ClientV2().V2QueuePushJobInfo(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, info); err != nil {
+			log.Error(ctx, "runJobServiceReadiness> Unable to send spawn info: %v", err)
+		}
+
+		if result.Status == sdk.StatusSuccess {
+			return nil
+		}
+
+		time.Sleep(interval)
+	}
+
+	info := sdk.V2SendJobRunInfo{
+		Message: fmt.Sprintf("service %s fails to be ready", serviceName),
+		Level:   sdk.WorkflowRunInfoLevelError,
+		Time:    time.Now(),
+	}
+
+	if err := w.ClientV2().V2QueuePushJobInfo(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, info); err != nil {
+		log.Error(ctx, "runJobServiceReadiness> Unable to send spawn info: %v", err)
+	}
+
+	return fmt.Errorf("readiness service %s: Failed after %d retries", serviceName, service.Readiness.Retries)
 }
 
 func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobResult {
@@ -354,6 +446,7 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 	if !ok {
 		return w.failJob(ctx, fmt.Sprintf("interpolated script content is not a string. Got %T", interpolatedInput))
 	}
+
 	env, err := w.GetEnvVariable(runJobContext)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("%v", err))
@@ -374,7 +467,7 @@ func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts m
 
 	pluginResult := pluginClient.Run(ctx, opts)
 	if err != nil {
-		return w.failJob(ctx, fmt.Sprintf("error runnning artifact %s: %v", pluginName, err))
+		return w.failJob(ctx, fmt.Sprintf("error running plugin %s: %v", pluginName, err))
 	}
 
 	if pluginResult.Status == sdk.StatusFail {
