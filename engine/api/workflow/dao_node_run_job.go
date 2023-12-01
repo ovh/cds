@@ -19,13 +19,14 @@ import (
 
 // QueueFilter contains all criteria used to fetch queue
 type QueueFilter struct {
-	ModelType []string
-	Rights    int
-	Since     *time.Time
-	Until     *time.Time
-	Limit     *int
-	Statuses  []string
-	Regions   []string
+	ModelType  []string
+	Rights     int
+	Since      *time.Time
+	Until      *time.Time
+	Limit      *int
+	Statuses   []string
+	Regions    []string
+	SkipBooked bool
 }
 
 func NewQueueFilter() QueueFilter {
@@ -101,7 +102,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		pq.StringArray(filter.Regions),   // $5
 	)
 
-	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
+	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit, filter.SkipBooked)
 }
 
 // LoadNodeJobRunQueueByGroupIDs load all workflow_node_run_job accessible
@@ -179,10 +180,10 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 		filter.Rights,                          // $7
 		pq.StringArray(filter.Regions),         // $8
 	)
-	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit)
+	return loadNodeJobRunQueue(ctx, db, store, query, filter.Limit, filter.SkipBooked)
 }
 
-func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query gorpmapping.Query, limit *int) ([]sdk.WorkflowNodeJobRun, error) {
+func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, query gorpmapping.Query, limit *int, skipBooked bool) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := telemetry.Span(ctx, "workflow.loadNodeJobRunQueue")
 	defer end()
 
@@ -199,6 +200,10 @@ func loadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	jobs := make([]sdk.WorkflowNodeJobRun, 0, len(sqlJobs))
 	for i := range sqlJobs {
 		getHatcheryInfo(ctx, store, &sqlJobs[i])
+		if skipBooked && sqlJobs[i].BookedBy.ID != 0 {
+			log.Info(ctx, "LoadNodeJobRunQueue> WorkflowNodeRunJob %d skipped (booked by %q)", sqlJobs[i].ID, sqlJobs[i].BookedBy.Name)
+			continue
+		}
 		jr, err := sqlJobs[i].WorkflowNodeRunJob()
 		if err != nil {
 			log.Error(ctx, "LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
