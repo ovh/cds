@@ -14,10 +14,10 @@ import (
 func CmdOutput() *cobra.Command {
 	var stepFlag bool
 	c := &cobra.Command{
-		Use:   "output",
-		Short: "worker output <output_name> <output_value>",
-		Long:  `Inside a job, create an output available through the jobs and steps contexts`,
-
+		Use:     "output",
+		Aliases: []string{"export"},
+		Short:   "worker output <output_name> <output_value>",
+		Long:    `Inside a job, create an output available through the jobs and steps contexts`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
 				sdk.Exit("wrong number of arguments. Need 2, Got [%d]", len(args))
