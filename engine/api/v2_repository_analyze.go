@@ -324,7 +324,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
 		}
 	case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
-		keyID, analysisError, err = api.analyzeCommitSignatureThroughVcsAPI(ctx, analysis, *vcsProjectWithSecret, *repo)
+		keyID, analysisError, err = api.analyzeCommitSignatureThroughVcsAPI(ctx, *analysis, *vcsProjectWithSecret, *repo)
 		if err != nil {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
 		}
@@ -836,7 +836,7 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 }
 
 // analyzeCommitSignatureThroughVcsAPI analyzes commit.
-func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) (string, string, error) {
+func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) (string, string, error) {
 	var keyID, analyzesError string
 
 	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
