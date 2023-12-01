@@ -104,6 +104,7 @@ func NewEventJobSummary(wr sdk.WorkflowRun, noderun sdk.WorkflowNodeRun, jobrun 
 		WorkflowRunNumber:    int(noderun.Number),
 		WorkflowRunSubNumber: int(noderun.SubNumber),
 		Created:              &jobrun.Queued,
+		CreatedHour:          jobrun.Queued.Hour(),
 		Pipeline:             noderun.WorkflowNodeName,
 		Job:                  jobrun.Job.Action.Name,
 		GitVCS:               noderun.VCSServer,

@@ -159,6 +159,7 @@ type EventJobSummary struct {
 	InQueueDuration      int        `json:"in_queue_duration"`
 	BuildDuration        int        `json:"build_duration"`
 	TotalDuration        int        `json:"total_duration"`
+	CreatedHour          int        `json:"created_hour"`
 	WorkerModel          string     `json:"worker_model"`
 	WorkerModelType      string     `json:"worker_model_type"`
 	Worker               string     `json:"worker"`
