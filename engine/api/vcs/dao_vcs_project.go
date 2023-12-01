@@ -2,14 +2,16 @@ package vcs
 
 import (
 	"context"
-	"github.com/ovh/cds/sdk/telemetry"
 	"time"
+
+	"github.com/rockbears/log"
+	"go.opencensus.io/trace"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
-	"github.com/rockbears/log"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, vcsProject *sdk.VCSProject) error {
@@ -106,14 +108,14 @@ func LoadAllVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey st
 }
 
 func LoadVCSByProject(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsName string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
-	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByProject")
+	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByProject", trace.StringAttribute(telemetry.TagProjectKey, projectKey), trace.StringAttribute(telemetry.TagVCSServer, vcsName))
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.name = $2`).Args(projectKey, vcsName)
 	return getVCSProject(ctx, db, query, opts...)
 }
 
 func LoadVCSByIDAndProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string, vcsID string, opts ...gorpmapping.GetOptionFunc) (*sdk.VCSProject, error) {
-	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByIDAndProjectKey")
+	ctx, next := telemetry.Span(ctx, "vcs.LoadVCSByIDAndProjectKey", trace.StringAttribute(telemetry.TagProjectKey, projectKey), trace.StringAttribute(telemetry.TagVCSServerID, vcsID))
 	defer next()
 	query := gorpmapping.NewQuery(`SELECT vcs_project.* FROM vcs_project JOIN project ON project.id = vcs_project.project_id WHERE project.projectkey = $1 AND vcs_project.id = $2`).Args(projectKey, vcsID)
 	return getVCSProject(ctx, db, query, opts...)

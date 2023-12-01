@@ -91,6 +91,7 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
 	defer next()
+	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, wrEnqueue.RunID)
 
 	_, next = telemetry.Span(ctx, "api.workflowRunV2Trigger.lock")
 	lockKey := cache.Key("api:workflow:engine", wrEnqueue.RunID)
@@ -122,6 +123,13 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WrapError(err, "unable to load workflow run %s", wrEnqueue.RunID)
 	}
 
+	telemetry.Current(ctx).AddAttributes(
+		trace.StringAttribute(telemetry.TagProjectKey, run.ProjectKey),
+		trace.StringAttribute(telemetry.TagWorkflow, run.WorkflowName),
+		trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(run.RunNumber, 10)))
+	ctx = context.WithValue(ctx, cdslog.Project, run.ProjectKey)
+	ctx = context.WithValue(ctx, cdslog.Workflow, run.WorkflowName)
+
 	proj, err := project.Load(ctx, api.mustDB(), run.ProjectKey, project.LoadOptions.WithIntegrations)
 	if err != nil {
 		return err
@@ -135,11 +143,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	if err != nil {
 		return sdk.WrapError(err, "unable to load repository %s", run.RepositoryID)
 	}
-
-	telemetry.Current(ctx).AddAttributes(
-		trace.StringAttribute(telemetry.TagProjectKey, run.ProjectKey),
-		trace.StringAttribute(telemetry.TagWorkflow, run.WorkflowName),
-		trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(run.RunNumber, 10)))
 
 	if sdk.StatusIsTerminated(run.Status) {
 		log.Debug(ctx, "workflow run already on a final state")
