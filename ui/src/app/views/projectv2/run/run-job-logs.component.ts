@@ -154,15 +154,16 @@ export class RunJobLogsComponent {
     computeStepsDuration(): void {
         if (this.logBlocks) {
             this.logBlocks.forEach(s => {
-                let stepStatus = this._runJob.steps_status[s.name];
-                if (!stepStatus) {
-                    return;
+                if (this._runJob.steps_status && this._runJob.steps_status[s.name]) {
+                    let stepStatus = this._runJob.steps_status[s.name];
+                    if (!stepStatus) {
+                        return;
+                    }
+                    s.startDate = moment(stepStatus.started);
+                    if (stepStatus.ended && stepStatus.ended !== '0001-01-01T00:00:00Z') {
+                        s.duration = DurationService.duration(s.startDate.toDate(), moment(stepStatus.ended).toDate());
+                    }
                 }
-                s.startDate = moment(stepStatus.started);
-                if (stepStatus.ended && stepStatus.ended !== '0001-01-01T00:00:00Z') {
-                    s.duration = DurationService.duration(s.startDate.toDate(), moment(stepStatus.ended).toDate());
-                }
-
             });
         }
     }
