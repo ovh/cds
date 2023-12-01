@@ -20,7 +20,7 @@ var adminHooksRepositoryEventCmd = cli.Command{
 func adminHooksRepositoryEvents() *cobra.Command {
 	return cli.NewCommand(adminHooksRepositoryEventCmd, nil, []*cobra.Command{
 		cli.NewListCommand(adminHooksRepoEventListCmd, adminHooksRepoEventListRun, nil),
-		cli.NewCommand(adminHooksRepoEventGetCmd, adminHooksRepoEventGetRun, nil),
+		cli.NewGetCommand(adminHooksRepoEventGetCmd, adminHooksRepoEventGetRun, nil),
 		cli.NewCommand(adminHookRepoEventRestartCmd, adminHookRepoEventRestartRun, nil),
 	})
 }
@@ -55,38 +55,67 @@ var adminHooksRepoEventGetCmd = cli.Command{
 	},
 }
 
-func adminHooksRepoEventGetRun(v cli.Values) error {
+func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 	path := fmt.Sprintf("/v2/repository/event/%s/%s/%s", url.PathEscape(v.GetString("vcs-server")), url.PathEscape(v.GetString("repository")), v.GetString("event-id"))
 	btes, err := client.ServiceCallGET("hooks", path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var event sdk.HookRepositoryEvent
 	if err := sdk.JSONUnmarshal(btes, &event); err != nil {
-		return err
+		return nil, err
 	}
 
-	fmt.Printf("ID: %s\n", event.UUID)
-	fmt.Printf("Created: %s\n", time.Unix(0, event.Created))
-	fmt.Printf("Last Update%s\n", time.Unix(0, event.LastUpdate))
-	fmt.Printf("EventName: %s\n", event.EventName)
-	fmt.Printf("VCS: %s\n", event.VCSServerName)
-	fmt.Printf("Repository: %s\n", event.RepositoryName)
-	fmt.Printf("Extracted Branch: %s\n", event.ExtractData.Branch)
-	fmt.Printf("Extracted Commit: %s\n", event.ExtractData.Commit)
-	fmt.Printf("Extracted Path: %v \n", event.ExtractData.Paths)
-	fmt.Printf("Event: %s\n", string(event.Body))
-	fmt.Printf("Status: %s\n", event.Status)
-	fmt.Printf("User: %s %s\n", event.UserID, event.Username)
-	for _, a := range event.Analyses {
-		fmt.Printf("Analyze %s: %s\n", a.AnalyzeID, a.Status)
-	}
-	for _, h := range event.WorkflowHooks {
-		fmt.Printf("Hooks on workflow %s\n", h.WorkflowName)
+	type HookEventCLI struct {
+		ID                  string                            `cli:"id"`
+		Created             time.Time                         `cli:"created"`
+		LastUpdate          time.Time                         `cli:"last_update"`
+		EventName           string                            `cli:"event_name"`
+		VCSServerName       string                            `cli:"vcs_server_name"`
+		RepositoryName      string                            `cli:"repository_name"`
+		Branch              string                            `cli:"branch"`
+		Commit              string                            `cli:"commit"`
+		Path                []string                          `cli:"path"`
+		Event               string                            `cli:"event"`
+		Status              string                            `cli:"status"`
+		Error               string                            `cli:"last_error"`
+		NbErrors            int64                             `cli:"nb_errors"`
+		Analyses            []sdk.HookRepositoryEventAnalysis `cli:"analyses"`
+		WorkflowHooks       []string                          `cli:"hooks"`
+		UserID              string                            `cli:"user_id"`
+		Username            string                            `cli:"username"`
+		SignKey             string                            `cli:"sign_key"`
+		SigningKeyOperation string                            `cli:"signing_key_operation"`
 	}
 
-	return nil
+	cli := HookEventCLI{
+		ID:                  event.UUID,
+		Created:             time.Unix(0, event.Created),
+		LastUpdate:          time.Unix(0, event.LastUpdate),
+		EventName:           event.EventName,
+		VCSServerName:       event.VCSServerName,
+		RepositoryName:      event.RepositoryName,
+		Branch:              event.ExtractData.Branch,
+		Commit:              event.ExtractData.Commit,
+		Path:                event.ExtractData.Paths,
+		Event:               string(event.Body),
+		Status:              event.Status,
+		Error:               event.LastError,
+		NbErrors:            event.NbErrors,
+		UserID:              event.UserID,
+		Username:            event.Username,
+		Analyses:            event.Analyses,
+		WorkflowHooks:       make([]string, 0, len(event.WorkflowHooks)),
+		SignKey:             event.SignKey,
+		SigningKeyOperation: event.SigningKeyOperation,
+	}
+
+	for _, w := range event.WorkflowHooks {
+		cli.WorkflowHooks = append(cli.WorkflowHooks, fmt.Sprintf("%s - %s - %s - %s", w.ProjectKey, w.VCSIdentifier, w.RepositoryIdentifier, w.WorkflowName))
+	}
+
+	return cli, nil
 }
 
 var adminHooksRepoEventListCmd = cli.Command{

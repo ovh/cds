@@ -241,9 +241,6 @@ func (v VCSProject) Lint(prj Project) error {
 		if v.Auth.Token == "" {
 			return NewErrorFrom(ErrInvalidData, "missing auth token")
 		}
-		if v.Auth.SSHKeyName == "" {
-			return NewErrorFrom(ErrInvalidData, "missing auth ssh key name")
-		}
 	}
 
 	found := false
