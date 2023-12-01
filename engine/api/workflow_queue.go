@@ -848,6 +848,9 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		if modelType != "" {
 			filter.ModelType = []string{modelType}
 		}
+		if ok, _ := isHatchery(ctx); ok {
+			filter.SkipBooked = true
+		}
 
 		// If the consumer is a hatchery or a non maintainer user, filter the job by its groups
 		if isS || !isMaintainer(ctx) {
