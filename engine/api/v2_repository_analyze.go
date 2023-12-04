@@ -733,41 +733,28 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commi
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
 		}
 	case sdk.VCSTypeGithub:
-		var externalUserID, externalUserName string
-		pr, err := client.SearchPullRequest(ctx, repoName, commit, "closed")
+		commit, err := client.Commit(ctx, repoName, commit)
 		if err != nil {
-			return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to retrieve pull request with commit %s", commit))
-		}
-		externalUserID = pr.MergeBy.ID
-		externalUserName = pr.MergeBy.Slug
-
-		if externalUserID == "" {
-			// If not coming from a PR, try to get commit
-			commit, err := client.Commit(ctx, repoName, commit)
-			if err != nil {
-				return nil, "", "", err
-			}
-			externalUserID = commit.Committer.ID
-			externalUserName = commit.Committer.Name
+			return nil, "", "", err
 		}
 
-		if externalUserID == "" {
+		if commit.Committer.ID == "" {
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", commit), nil
 		}
 
 		// Retrieve user link by external ID
-		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, tx, vcsProjectWithSecret.Type, externalUserID)
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, tx, vcsProjectWithSecret.Type, commit.Committer.ID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, pr.MergeBy.Slug), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, commit.Committer.Name), nil
 		}
 
 		// Check if username changed
-		if userLink.Username != externalUserName {
+		if userLink.Username != commit.Committer.Name {
 			// Update user link
-			userLink.Username = externalUserName
+			userLink.Username = commit.Committer.Name
 			if err := link.Update(ctx, tx, userLink); err != nil {
 				return nil, "", "", err
 			}
@@ -779,7 +766,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commi
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", externalUserName), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Name), nil
 		}
 	}
 
