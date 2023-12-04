@@ -905,6 +905,7 @@ GDFkaTe3nUJdYV4=
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			pr := &sdk.VCSPullRequest{
 				MergeBy: sdk.VCSAuthor{
+					ID:   "1234",
 					Slug: githubUsername,
 				},
 			}
