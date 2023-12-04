@@ -52,7 +52,6 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -65,7 +64,6 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -133,7 +131,6 @@ func TestStopDeadJobs(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -154,7 +151,6 @@ func TestStopDeadJobs(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,

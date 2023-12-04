@@ -181,7 +181,6 @@ type V2WorkflowRunJob struct {
 	WorkerID      string                        `json:"worker_id,omitempty" db:"worker_id"`
 	WorkerName    string                        `json:"worker_name" db:"worker_name"`
 	HatcheryName  string                        `json:"hatchery_name" db:"hatchery_name"`
-	Outputs       JobResultOutput               `json:"outputs" db:"outputs"`
 	StepsStatus   JobStepsStatus                `json:"steps_status" db:"steps_status"`
 	UserID        string                        `json:"user_id" db:"user_id"`
 	Username      string                        `json:"username" db:"username"`
@@ -428,6 +427,11 @@ func (r *V2WorkflowRunResult) Name() string {
 		if err == nil {
 			return string(r.Type) + ":" + detail.Name
 		}
+	case V2WorkflowRunResultTypeVariable:
+		detail, ok := r.Detail.Data.(*V2WorkflowRunResultVariableDetail)
+		if ok {
+			return string(r.Type) + ":" + detail.Name
+		}
 	}
 	return string(r.Type) + ":" + r.ID
 }
@@ -482,6 +486,13 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		var detail = new(V2WorkflowRunResultGenericDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultGenericDetail")
+		}
+		s.Data = detail
+		return nil
+	case "V2WorkflowRunResultVariableDetail":
+		var detail = new(V2WorkflowRunResultVariableDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultVariableDetail")
 		}
 		s.Data = detail
 		return nil
@@ -556,11 +567,12 @@ func (s *V2WorkflowRunResultDetail) Scan(src interface{}) error {
 type V2WorkflowRunResultType string
 
 const (
-	V2WorkflowRunResultTypeCoverage V2WorkflowRunResultType = "coverage"
-	V2WorkflowRunResultTypeTest                             = "tests"
-	V2WorkflowRunResultTypeRelease                          = "release"
-	V2WorkflowRunResultTypeGeneric                          = "generic"
-	// Other values may be instancited from Artifactory Manager repository type
+	V2WorkflowRunResultTypeCoverage = "coverage"
+	V2WorkflowRunResultTypeTest     = "tests"
+	V2WorkflowRunResultTypeRelease  = "release"
+	V2WorkflowRunResultTypeGeneric  = "generic"
+	V2WorkflowRunResultTypeVariable = "variable"
+	// Other values may be instantiated from Artifactory Manager repository type
 )
 
 type V2WorkflowRunResultGenericDetail struct {
@@ -570,4 +582,9 @@ type V2WorkflowRunResultGenericDetail struct {
 	MD5    string      `json:"md5" mapstructure:"md5"`
 	SHA1   string      `json:"sha1" mapstructure:"sha1"`
 	SHA256 string      `json:"sha256" mapstructure:"sha256"`
+}
+
+type V2WorkflowRunResultVariableDetail struct {
+	Name  string `json:"name" mapstructure:"name"`
+	Value string `json:"value" mapstructure:"value"`
 }

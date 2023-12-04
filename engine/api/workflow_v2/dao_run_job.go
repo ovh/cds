@@ -89,6 +89,15 @@ func LoadRunJobsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string, 
 	return getAllRunJobs(ctx, db, query)
 }
 
+func UnsafeLoadAllRunJobs(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRunJob, error) {
+	query := "SELECT * from v2_workflow_run_job"
+	var runJobs []sdk.V2WorkflowRunJob
+	if _, err := db.Select(&runJobs, query); err != nil {
+		return nil, err
+	}
+	return runJobs, nil
+}
+
 func LoadRunJobByID(ctx context.Context, db gorp.SqlExecutor, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByID")
 	defer next()

@@ -248,13 +248,14 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
 
-		// Override env context from step configuration
-
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepName))
+
 		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, currentStepContext)
 		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepName))
 		w.gelfLogger.hook.Flush()
 
+		// retrieve from runJob,  it may have been updated with `worker output` cmd
+		currentStepStatus = w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName]
 		currentStepStatus.Ended = time.Now()
 		currentStepStatus.Outcome = stepRes.Status
 

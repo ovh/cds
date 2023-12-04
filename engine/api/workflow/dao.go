@@ -1135,7 +1135,7 @@ func checkProjectIntegration(proj sdk.Project, w *sdk.Workflow, n *sdk.Node) err
 			}
 		}
 		if ppProj.ID == 0 {
-			return sdk.WithData(sdk.ErrIntegrationtNotFound, n.Context.ProjectIntegrationName)
+			return sdk.NewErrorFrom(sdk.ErrIntegrationNotFound, "unknown integration "+n.Context.ProjectIntegrationName)
 		}
 		w.ProjectIntegrations[ppProj.ID] = ppProj
 		n.Context.ProjectIntegrationID = ppProj.ID
@@ -1161,7 +1161,7 @@ func checkIntegration(proj sdk.Project, w *sdk.Workflow) error {
 			}
 		}
 		if !found {
-			return sdk.WithData(sdk.ErrIntegrationtNotFound, workflowIntegration.ProjectIntegration.Name)
+			return sdk.NewErrorFrom(sdk.ErrIntegrationNotFound, "unknown integration "+workflowIntegration.ProjectIntegration.Name)
 		}
 		if workflowIntegration.ProjectIntegration.Model.ArtifactManager {
 			countArtifactManagerIntegration++

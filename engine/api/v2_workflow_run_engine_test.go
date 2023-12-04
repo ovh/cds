@@ -440,7 +440,6 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -453,7 +452,6 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 	wrj11 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -489,7 +487,6 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 	wrj2 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr2.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
@@ -502,7 +499,6 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 	wrj3 := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr2.ID,
-		Outputs:       sdk.JobResultOutput{},
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,

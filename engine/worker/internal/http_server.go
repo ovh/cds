@@ -36,7 +36,6 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	t := strings.Split(listener.Addr().String(), ":")
 	port, err := strconv.ParseInt(t[1], 10, 64)
 	if err != nil {
@@ -63,6 +62,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/run-result/add/static-file", LogMiddleware(addRunResultStaticFileHandler(c, w)))
 	r.HandleFunc("/version", LogMiddleware(setVersionHandler(c, w)))
 
+	r.HandleFunc("/v2/output", LogMiddleware(workerruntime.V2_outputHandler(c, w)))
 	r.HandleFunc("/v2/result", LogMiddleware(workerruntime.V2_runResultHandler(c, w)))
 
 	srv := &http.Server{

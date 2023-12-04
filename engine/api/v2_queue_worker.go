@@ -49,7 +49,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "unable take the job %s, current status %s", jobRunID, jobRun.Status)
 		}
 
-		run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
+		run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID, workflow_v2.WithRunResults)
 		if err != nil {
 			return err
 		}
@@ -153,6 +153,20 @@ func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Wo
 		contexts.Env[k] = v
 	}
 
+	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
+	for _, rr := range run.Results {
+		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
+			continue
+		}
+		detail := rr.Detail.Data.(*sdk.V2WorkflowRunResultVariableDetail)
+		jobResults, has := runResultMap[rr.WorkflowRunJobID]
+		if !has {
+			jobResults = make([]sdk.V2WorkflowRunResultVariableDetail, 0)
+		}
+		jobResults = append(jobResults, *detail)
+		runResultMap[rr.WorkflowRunJobID] = jobResults
+	}
+
 	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped})
 	if err != nil {
 		return nil, err
@@ -161,7 +175,13 @@ func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Wo
 	for _, rj := range runJobs {
 		jobResult := sdk.JobResultContext{
 			Result:  rj.Status,
-			Outputs: rj.Outputs,
+			Outputs: sdk.JobResultOutput{},
+		}
+		// Set jobs context output
+		if runResults, has := runResultMap[rj.ID]; has {
+			for _, r := range runResults {
+				jobResult.Outputs[r.Name] = r.Value
+			}
 		}
 		contexts.Jobs[rj.JobID] = jobResult
 	}
@@ -171,7 +191,7 @@ func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Wo
 		if j, has := contexts.Jobs[n]; has {
 			needContext := sdk.NeedContext{
 				Result:  j.Result,
-				Outputs: j.Outputs,
+				Outputs: contexts.Jobs[n].Outputs,
 			}
 			if j.Result == sdk.StatusFail && run.WorkflowData.Workflow.Jobs[n].ContinueOnError {
 				needContext.Result = sdk.StatusSuccess

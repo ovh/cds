@@ -155,3 +155,13 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 
 	return &result, nil
 }
+
+func (wk *CurrentWorker) AddStepOutput(ctx context.Context, outputName string, outputValue string) {
+	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
+	stepStatus := wk.currentJobV2.runJob.StepsStatus[wk.currentJobV2.currentStepName]
+	if stepStatus.Outputs == nil {
+		stepStatus.Outputs = sdk.JobResultOutput{}
+	}
+	stepStatus.Outputs[outputName] = outputValue
+	wk.currentJobV2.runJob.StepsStatus[wk.currentJobV2.currentStepName] = stepStatus
+}

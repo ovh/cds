@@ -176,6 +176,10 @@ func (w *TestWorker) V2UpdateRunResult(ctx context.Context, req workerruntime.V2
 	return nil, nil
 }
 
+func (w *TestWorker) AddStepOutput(ctx context.Context, outputName string, outputValue string) {
+	return
+}
+
 var _ workerruntime.Runtime = new(TestWorker)
 
 func SetupTest(t *testing.T) (*TestWorker, context.Context) {
