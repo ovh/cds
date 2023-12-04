@@ -87,7 +87,6 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 	}
 }
 
-// TODO Manage job sub number
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
 	defer next()
@@ -422,7 +421,7 @@ func prepareRunJobs(ctx context.Context, proj sdk.Project, run sdk.V2WorkflowRun
 					Region:        jobDef.Region,
 					WorkflowName:  run.WorkflowName,
 					RunNumber:     run.RunNumber,
-					RunAttempt:    0, // TODO manage rerun
+					RunAttempt:    run.RunAttempt,
 					Matrix:        sdk.JobMatrix{},
 				}
 				for k, v := range m {
@@ -458,7 +457,6 @@ func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, cur
 	}
 }
 
-// TODO manage re run
 // Return jobToQueue, skippedJob, runInfos, error
 func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]sdk.V2Job, map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, error) {
 	ctx, next := telemetry.Span(ctx, "retrieveJobToQueue")
@@ -534,7 +532,6 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 	ctx, next := telemetry.Span(ctx, "checkJob", trace.StringAttribute(telemetry.TagJob, jobID))
 	defer next()
 
-	// TODO manage re run
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	if _, has := jobsContext[jobID]; has {
 		log.Debug(ctx, "job %s: already executed, skip it", jobID)
