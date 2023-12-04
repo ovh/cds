@@ -143,6 +143,8 @@ func adminHooksRepoEventListRun(v cli.Values) (cli.ListResult, error) {
 		Created   time.Time `cli:"created"`
 		EventName string    `cli:"event_name"`
 		Status    string    `cli:"status"`
+		Branch    string    `cli:"branch"`
+		Commit    string    `cli:"commit"`
 	}
 	rs := make([]Result, 0, len(events))
 	for _, e := range events {
@@ -151,6 +153,8 @@ func adminHooksRepoEventListRun(v cli.Values) (cli.ListResult, error) {
 			Status:    e.Status,
 			EventName: e.EventName,
 			Created:   time.Unix(0, e.Created),
+			Branch:    e.ExtractData.Branch,
+			Commit:    e.ExtractData.Commit,
 		})
 	}
 	return cli.AsListResult(rs), nil

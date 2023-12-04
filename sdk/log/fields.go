@@ -80,6 +80,7 @@ func init() {
 		Latency,
 		LatencyNum,
 		Method,
+		Operation,
 		Project,
 		RbackCheckerName,
 		Repository,

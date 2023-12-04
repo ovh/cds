@@ -62,7 +62,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 						hre.SignKey = ope.Setup.Checkout.Result.SignKeyID
 						if !ope.Setup.Checkout.Result.CommitVerified {
 							hre.Status = sdk.HookEventStatusSkipped
-							hre.LastError = fmt.Sprintf("User with key %s not found in CDS", hre.SignKey)
+							hre.LastError = fmt.Sprintf("User with key '%s' not found in CDS", hre.SignKey)
 							if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 								return err
 							}

@@ -282,6 +282,13 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 		URL:       c.HTMLURL,
 		Verified:  c.Commit.Verification.Verified,
 		Signature: c.Commit.Verification.Signature,
+		Committer: sdk.VCSAuthor{
+			DisplayName: c.Commit.Author.Name,
+			Email:       c.Commit.Author.Email,
+			Name:        c.Author.Login,
+			Avatar:      c.Author.AvatarURL,
+			ID:          strconv.Itoa(c.Author.ID),
+		},
 	}
 
 	return commit, nil
