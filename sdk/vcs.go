@@ -243,18 +243,19 @@ func (v VCSProject) Lint(prj Project) error {
 		}
 	}
 
-	found := false
 	if v.Auth.SSHKeyName != "" {
+		found := false
 		for _, k := range prj.Keys {
 			if k.Name == v.Auth.SSHKeyName {
 				found = true
 				break
 			}
 		}
+		if !found {
+			return NewErrorFrom(ErrNotFound, "unable to find ssh key %s on project", v.Auth.SSHKeyName)
+		}
 	}
-	if !found {
-		return NewErrorFrom(ErrNotFound, "unable to find ssh key %s on project", v.Auth.SSHKeyName)
-	}
+
 	return nil
 }
 
