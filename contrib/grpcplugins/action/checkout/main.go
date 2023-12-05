@@ -26,6 +26,7 @@ func (actPlugin *checkoutPlugin) Manifest(_ context.Context, _ *empty.Empty) (*a
 func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	gitURL := q.GetOptions()["git-url"]
 	ref := q.GetOptions()["ref"]
+	sha := q.GetOptions()["sha"]
 	sshKey := q.GetOptions()["ssh-key"]
 	path := q.GetOptions()["path"]
 	authUsername := q.GetOptions()["username"]
@@ -48,6 +49,21 @@ func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.Action
 
 	if err := clonedRepo.Checkout(ctx, ref); err != nil {
 		return nil, fmt.Errorf("unable to git checkout on ref %s: %v", ref, err)
+	}
+
+	// Check commit
+	if sha != "" {
+		currentCommit, err := clonedRepo.LatestCommit(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get current commit: %v", err)
+		}
+		if currentCommit.LongHash != sha {
+			// Not the same commit, reset HARD the commit
+			fmt.Printf("Reset to commit %s\n", sha)
+			if err := clonedRepo.ResetHard(ctx, sha); err != nil {
+				return nil, fmt.Errorf("unable to reset hard commit %s: %v", sha, err)
+			}
+		}
 	}
 
 	if submodules == "true" || submodules == "recursive" {

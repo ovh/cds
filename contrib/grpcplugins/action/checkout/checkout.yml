@@ -10,8 +10,12 @@ inputs:
     default: ${{git.repositoryUrl}}
   ref:
     type: text
-    description: "The branch, tag or SHA to checkout"
+    description: "The branch, tag to checkout"
     default: ${{git.ref}}
+  sha:
+    type: text
+    description: "The commit sha to checkout"
+    default: ${{git.sha}}
   ssh-key:
     type: text
     description: "The ssh-key used to fetch the repository"

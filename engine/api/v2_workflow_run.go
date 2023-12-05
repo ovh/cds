@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-
 	"net/http"
 	"net/url"
 	"strconv"
@@ -23,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -644,6 +644,13 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			workflowName := vars["workflow"]
 			branch := QueryString(req, "branch")
 
+			var runRequest sdk.V2WorkflowRunHookRequest
+			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
+				return err
+			}
+
+			ctx = context.WithValue(ctx, cdslog.HookEventID, runRequest.HookEventID)
+
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
@@ -688,11 +695,6 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 
 			var wk sdk.V2Workflow
 			if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
-				return err
-			}
-
-			var runRequest sdk.V2WorkflowRunHookRequest
-			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
 				return err
 			}
 

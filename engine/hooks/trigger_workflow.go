@@ -57,12 +57,13 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				targetCommit := "HEAD"
 
 				runRequest := sdk.V2WorkflowRunHookRequest{
-					UserID:    hre.UserID,
-					Ref:       wh.TargetBranch,
-					Sha:       targetCommit,
-					Payload:   event,
-					EventName: hre.EventName,
-					HookType:  wh.Type,
+					HookEventID: hre.UUID,
+					UserID:      hre.UserID,
+					Ref:         wh.TargetBranch,
+					Sha:         targetCommit,
+					Payload:     event,
+					EventName:   hre.EventName,
+					HookType:    wh.Type,
 				}
 
 				switch wh.Type {

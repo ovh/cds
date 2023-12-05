@@ -19,6 +19,7 @@ const (
 )
 
 type V2WorkflowRunHookRequest struct {
+	HookEventID   string                 `json:"hook_event_id"`
 	UserID        string                 `json:"user_id"`
 	EventName     string                 `json:"event_name"`
 	Ref           string                 `json:"ref"`
