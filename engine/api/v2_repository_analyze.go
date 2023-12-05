@@ -670,7 +670,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 }
 
 // findCommitter
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commit, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
 	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
 	defer next()
 
@@ -721,7 +721,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commi
 
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
-		commit, err := client.Commit(ctx, repoName, commit)
+		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, "", "", err
 		}
@@ -733,13 +733,13 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commi
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
 		}
 	case sdk.VCSTypeGithub:
-		commit, err := client.Commit(ctx, repoName, commit)
+		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, "", "", err
 		}
 
 		if commit.Committer.ID == "" {
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", commit), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
 		}
 
 		// Retrieve user link by external ID
