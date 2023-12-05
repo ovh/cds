@@ -2,8 +2,6 @@ module github.com/ovh/cds
 
 go 1.21
 
-toolchain go1.21.1
-
 require (
 	code.gitea.io/sdk/gitea v0.15.1-0.20220530220844-359c771ce3d2
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
@@ -88,18 +86,18 @@ require (
 	github.com/urfave/cli v1.20.0
 	github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b
 	github.com/vmware/govmomi v0.23.0
-	github.com/whilp/git-urls v0.0.0-20160530060445-31bac0d230fa
+	github.com/whilp/git-urls v1.0.0
 	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
 	go.opencensus.io v0.24.0
-	golang.org/x/crypto v0.14.0
-	golang.org/x/net v0.17.0
+	golang.org/x/crypto v0.16.0
+	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.13.0
-	golang.org/x/sys v0.13.0
-	golang.org/x/text v0.13.0
+	golang.org/x/sys v0.15.0
+	golang.org/x/text v0.14.0
 	golang.org/x/time v0.3.0
 	google.golang.org/grpc v1.56.3
 	google.golang.org/protobuf v1.31.0
@@ -275,7 +273,7 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect

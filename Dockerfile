@@ -1,5 +1,5 @@
-FROM alpine:3.18
-RUN apk update && apk update && \
+FROM alpine:edge
+RUN apk update && \
     apk --no-cache add curl && \
     apk --no-cache add gpg && \
     apk --no-cache add git && \
