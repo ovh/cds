@@ -110,14 +110,14 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 	if callback.SigningKeyCallback != nil {
 		if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
 			// event on error commit unverified
-			hre.Status = sdk.HookEventStatusError
+			hre.Status = sdk.HookEventStatusSkipped
 			hre.LastError = callback.SigningKeyCallback.Error
 			hre.NbErrors++
 		} else if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error == "" {
 			// commit verified
 			hre.SignKey = callback.SigningKeyCallback.SignKey
 		} else if callback.SigningKeyCallback.Error != "" {
-			hre.LastError = callback.SigningKeyCallback.Error
+			hre.LastError = "Unable to get signing key: " + callback.SigningKeyCallback.Error
 			hre.NbErrors++
 		}
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {

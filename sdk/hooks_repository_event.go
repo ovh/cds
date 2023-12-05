@@ -136,6 +136,7 @@ type HookRetrieveUserRequest struct {
 	Commit         string `json:"commit"`
 	Branch         string `json:"branch"`
 	SignKey        string `json:"sign_key"`
+	HookEventUUID  string `json:"hook_event_uuid"`
 }
 
 type HookRetrieveUserResponse struct {

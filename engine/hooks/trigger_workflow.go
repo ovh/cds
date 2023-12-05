@@ -28,6 +28,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			Commit:         hre.ExtractData.Commit,
 			Branch:         hre.ExtractData.Branch,
 			SignKey:        hre.SignKey,
+			HookEventUUID:  hre.UUID,
 		})
 		if err != nil {
 			return err

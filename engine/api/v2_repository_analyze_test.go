@@ -901,14 +901,15 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/search/pullrequest?commit=abcdef&state=closed", gomock.Any(), gomock.Any(), gomock.Any()).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			pr := &sdk.VCSPullRequest{
-				MergeBy: sdk.VCSAuthor{
-					Slug: githubUsername,
+			commit := &sdk.VCSCommit{
+				Committer: sdk.VCSAuthor{
+					Name: githubUsername,
+					ID:   "1234",
 				},
 			}
-			*(out.(*sdk.VCSPullRequest)) = *pr
+			*(out.(*sdk.VCSCommit)) = *commit
 			return nil, 200, nil
 		},
 		).MaxTimes(1)
@@ -1068,11 +1069,15 @@ spec:
 					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
 					Verified:  true,
 					Hash:      "abcdef",
+					Committer: sdk.VCSAuthor{
+						Name: githubUsername,
+						ID:   ul.ExternalID,
+					},
 				}
 				*(out.(*sdk.VCSCommit)) = *commit
 				return nil, 200, nil
 			},
-		).MaxTimes(1)
+		).MaxTimes(2)
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
@@ -1116,18 +1121,6 @@ spec:
 				*(out.(*sdk.VCSContent)) = content
 				return nil, 200, nil
 			},
-		).MaxTimes(1)
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/search/pullrequest?commit=abcdef&state=closed", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			pr := &sdk.VCSPullRequest{
-				MergeBy: sdk.VCSAuthor{
-					Slug: githubUsername,
-					ID:   ul.ExternalID,
-				},
-			}
-			*(out.(*sdk.VCSPullRequest)) = *pr
-			return nil, 200, nil
-		},
 		).MaxTimes(1)
 
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)

@@ -680,7 +680,7 @@ func checkJobCondition(ctx context.Context, jobID string, runContext sdk.Workflo
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 	interpolatedInput, err := ap.Interpolate(ctx, jobDef.If)
 	if err != nil {
-		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: unable to parse if statement", jobID)
+		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: unable to parse if statement: %v", jobID, err)
 	}
 
 	if _, ok := interpolatedInput.(string); !ok {

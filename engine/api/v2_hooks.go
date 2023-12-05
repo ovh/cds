@@ -30,6 +30,7 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 			if err := service.UnmarshalBody(req, &r); err != nil {
 				return err
 			}
+			ctx = context.WithValue(ctx, cdslog.HookEventID, r.HookEventUUID)
 
 			vcsProjectWithSecret, err := vcs.LoadVCSByProject(ctx, api.mustDB(), r.ProjectKey, r.VCSServerName, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
@@ -72,6 +73,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 			}
 
 			ctx = context.WithValue(ctx, cdslog.HookEventID, hookRetrieveSignKey.HookEventUUID)
+			ctx = context.WithValue(ctx, cdslog.Project, hookRetrieveSignKey.ProjectKey)
 
 			proj, err := project.Load(ctx, api.mustDB(), hookRetrieveSignKey.ProjectKey, project.LoadOptions.WithKeys)
 			if err != nil {

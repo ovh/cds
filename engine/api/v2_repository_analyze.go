@@ -670,7 +670,10 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 }
 
 // findCommitter
-func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commit, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
+func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, signKeyID, projKey string, vcsProjectWithSecret sdk.VCSProject, repoName string, vcsPublicKeys map[string][]GPGKey) (*sdk.AuthentifiedUser, string, string, error) {
+	ctx, next := telemetry.Span(ctx, "findCommitter", trace.StringAttribute(telemetry.TagProjectKey, projKey), trace.StringAttribute(telemetry.TagVCSServer, vcsProjectWithSecret.Name), trace.StringAttribute(telemetry.TagRepository, repoName))
+	defer next()
+
 	publicKeyFound := false
 	publicKeys, has := vcsPublicKeys[vcsProjectWithSecret.Name]
 	if has {
@@ -718,7 +721,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commi
 
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
-		commit, err := client.Commit(ctx, repoName, commit)
+		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, "", "", err
 		}
@@ -730,34 +733,40 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, commi
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Slug), nil
 		}
 	case sdk.VCSTypeGithub:
-		pr, err := client.SearchPullRequest(ctx, repoName, commit, "closed")
+		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
-			return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to retrieve pull request with commit %s", commit))
+			return nil, "", "", err
 		}
 
-		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, tx, vcsProjectWithSecret.Type, pr.MergeBy.ID)
+		if commit.Committer.ID == "" {
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
+		}
+
+		// Retrieve user link by external ID
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, tx, vcsProjectWithSecret.Type, commit.Committer.ID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, pr.MergeBy.Slug), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, commit.Committer.Name), nil
 		}
 
-		//
-		if userLink.Username != pr.MergeBy.Slug {
+		// Check if username changed
+		if userLink.Username != commit.Committer.Name {
 			// Update user link
-			userLink.Username = pr.MergeBy.Slug
+			userLink.Username = commit.Committer.Name
 			if err := link.Update(ctx, tx, userLink); err != nil {
 				return nil, "", "", err
 			}
 		}
 
+		// Load user
 		commitUser, err = user.LoadByID(ctx, tx, userLink.AuthentifiedUserID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrUserNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", pr.MergeBy.Slug), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %s not found in CDS", commit.Committer.Name), nil
 		}
 	}
 
