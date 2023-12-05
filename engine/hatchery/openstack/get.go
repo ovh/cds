@@ -127,8 +127,8 @@ func (h *HatcheryOpenstack) refreshServersCache(ctx context.Context) error {
 		if workerHatcheryName == "" || workerHatcheryName != h.Name() {
 			continue
 		}
-		log.Info(ctx, "worker %q (status=%s) IP %q", s.Name, s.Status, s.AccessIPv4)
 		filteredServerList = append(filteredServerList, s)
+		log.Info(ctx, "worker %q (ID=%s, IP=%s) status=%s", s.Name, s.ID, s.AccessIPv4, s.Status)
 	}
 
 	h.cache.SetServers(filteredServerList)
