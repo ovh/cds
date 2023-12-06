@@ -47,3 +47,9 @@ clean: mk_go_clean ## clean binary and tests results
 	@for P in $(ALL_PLUGINS); do \
 		$(MAKE) clean -C $$P; \
 	done;
+
+tidy:
+	@for P in $(ALL_PLUGINS); do \
+		echo "Running tidy on $$P"; \
+		(cd $$P && go mod tidy); \
+	done;

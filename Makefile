@@ -105,15 +105,15 @@ target/cds-engine.tar.gz: $(TARGET_DIR)/config.toml.sample $(TARGET_DIR)/tmpl-co
 	mkdir -p target
 	tar -czvf target/cds-engine.tar.gz -C $(TARGET_DIR) .
 
-PLUGINS := `ls -d contrib/grpcplugins/action/plugin-*`
-
 tidy:
 	@echo "Running tidy on cds main project"
 	@go mod tidy
-	@for P in $(PLUGINS); do \
-		echo "Running tidy on $$P"; \
-		(cd $$P && go mod tidy); \
-	done;
+	@echo "Running tidy on contrib/grpcplugins/action/"
+	$(MAKE) tidy -C contrib/grpcplugins/action
+
+	@echo "Running tidy on contrib/integrations/"
+	$(MAKE) tidy -C contrib/integrations
+
 	@echo "Running tidy on tests/fixtures/04SCWorkflowRunSimplePlugin"
 	@(cd tests/fixtures/04SCWorkflowRunSimplePlugin && go mod tidy)
 	@(cd sdk/interpolate && go mod tidy)
