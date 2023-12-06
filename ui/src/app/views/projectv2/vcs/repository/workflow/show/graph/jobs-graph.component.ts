@@ -140,7 +140,12 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
 
     nodeMouseEvent(type: string, n: GraphNode) {
         if (type === 'click' && this.selectJobCallback) {
-            this.selectJobCallback(n.name);
+            if (n.run) {
+                this.selectJobCallback(n.run.id);
+            } else {
+                this.selectJobCallback(n.name);
+            }
+
         }
         this.graph.nodeMouseEvent(type, `${this.node.name}-${n.name}`);
     }

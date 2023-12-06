@@ -75,7 +75,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 			ctx = context.WithValue(ctx, cdslog.HookEventID, hookRetrieveSignKey.HookEventUUID)
 			ctx = context.WithValue(ctx, cdslog.Project, hookRetrieveSignKey.ProjectKey)
 
-			proj, err := project.Load(ctx, api.mustDB(), hookRetrieveSignKey.ProjectKey, project.LoadOptions.WithKeys)
+			proj, err := project.Load(ctx, api.mustDB(), hookRetrieveSignKey.ProjectKey, project.LoadOptions.WithClearKeys)
 			if err != nil {
 				return err
 			}

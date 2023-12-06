@@ -82,7 +82,6 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 		Error               string                            `cli:"last_error"`
 		NbErrors            int64                             `cli:"nb_errors"`
 		Analyses            []sdk.HookRepositoryEventAnalysis `cli:"analyses"`
-		WorkflowHooks       []string                          `cli:"hooks"`
 		UserID              string                            `cli:"user_id"`
 		Username            string                            `cli:"username"`
 		SignKey             string                            `cli:"sign_key"`
@@ -92,7 +91,7 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 	cli := HookEventCLI{
 		ID:                  event.UUID,
 		Created:             time.Unix(0, event.Created),
-		LastUpdate:          time.Unix(0, event.LastUpdate),
+		LastUpdate:          time.Unix(event.LastUpdate, 0),
 		EventName:           event.EventName,
 		VCSServerName:       event.VCSServerName,
 		RepositoryName:      event.RepositoryName,
@@ -106,13 +105,8 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 		UserID:              event.UserID,
 		Username:            event.Username,
 		Analyses:            event.Analyses,
-		WorkflowHooks:       make([]string, 0, len(event.WorkflowHooks)),
 		SignKey:             event.SignKey,
 		SigningKeyOperation: event.SigningKeyOperation,
-	}
-
-	for _, w := range event.WorkflowHooks {
-		cli.WorkflowHooks = append(cli.WorkflowHooks, fmt.Sprintf("%s - %s - %s - %s", w.ProjectKey, w.VCSIdentifier, w.RepositoryIdentifier, w.WorkflowName))
 	}
 
 	return cli, nil
