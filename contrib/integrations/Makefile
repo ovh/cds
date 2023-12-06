@@ -21,3 +21,9 @@ publish:
 	@for P in $(ALL_PLUGINS); do \
 		$(MAKE) publish -C $$P; \
 	done;
+
+tidy:
+	@for P in $(ALL_PLUGINS); do \
+		echo "Running tidy on $$P"; \
+		(cd $$P && go mod tidy); \
+	done;
