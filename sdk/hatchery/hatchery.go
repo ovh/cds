@@ -26,7 +26,6 @@ var (
 	defaultMaxProvisioning                = 10
 	models                                []sdk.Model
 	defaultMaxAttemptsNumberBeforeFailure = 5
-	CacheSpawnIDsTTL                      = 10 * time.Second
 	CacheNbAttemptsIDsTTL                 = 1 * time.Hour
 )
 
@@ -86,9 +85,6 @@ func Create(ctx context.Context, h Interface) error {
 	v2Runjobs := make(chan sdk.V2WorkflowRunJob, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
 
-	// Create a cache to keep in memory the jobID processed in the last 10s.
-	cacheSpawnIDs := cache.New(CacheSpawnIDsTTL, 2*CacheSpawnIDsTTL)
-
 	// Create a cache to only process each jobID only a number of attempts before force to fail the job
 	cacheNbAttemptsIDs := &CacheNbAttemptsJobIDs{
 		cache: cache.New(CacheNbAttemptsIDsTTL, 2*CacheNbAttemptsIDsTTL),
@@ -98,7 +94,7 @@ func Create(ctx context.Context, h Interface) error {
 		h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
 			log.Debug(ctx, "starting v2 queue polling")
 
-			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.GetGoRoutines(), v2Runjobs, errs, 20*time.Second); err != nil {
+			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.GetGoRoutines(), h.GetMapPendingWorkerCreation(), v2Runjobs, errs, 20*time.Second); err != nil {
 				log.Error(ctx, "V2 Queues polling stopped: %v", err)
 			}
 		})
@@ -120,7 +116,7 @@ func Create(ctx context.Context, h Interface) error {
 			ms = append(ms, cdsclient.Region(regions...))
 		}
 
-		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, ms...); err != nil {
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), h.GetMapPendingWorkerCreation(), wjobs, errs, 20*time.Second, ms...); err != nil {
 			log.Error(ctx, "Queues polling stopped: %v", err)
 		}
 	})
@@ -215,16 +211,6 @@ func Create(ctx context.Context, h Interface) error {
 					stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
 				}
 
-				//Check if the jobs is concerned by a pending worker creation
-				if _, exist := cacheSpawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
-					log.Debug(currentCtx, "job %d already spawned in previous routine", j.ID)
-					endTrace("already spawned")
-					continue
-				}
-
-				//Before doing anything, push in cache
-				cacheSpawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
-
 				//Check bookedBy current hatchery
 				if j.BookedBy.ID != 0 {
 					log.Debug(currentCtx, "hatchery> job %d is already booked", j.ID)
@@ -270,7 +256,6 @@ func Create(ctx context.Context, h Interface) error {
 					log.Debug(currentCtx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
 					canTakeJob = false
 				} else if isWithModels {
-
 					// Test ascode model
 					modelPath := strings.Split(jobModel, "/")
 					if len(modelPath) >= 5 {
@@ -360,7 +345,7 @@ func Create(ctx context.Context, h Interface) error {
 	return nil
 }
 
-func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
+func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	ctx = telemetry.New(ctx, h, "hatchery.V2JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 	ctx, end := telemetry.Span(ctx, "hatchery.V2JobReceive", telemetry.Tag(telemetry.TagWorkflow, j.WorkflowName),

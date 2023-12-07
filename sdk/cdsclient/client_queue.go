@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 // shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
@@ -42,7 +43,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -86,6 +87,14 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				// push the job in the channel
 				if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
 					job.Header["WS"] = "true"
+
+					id := strconv.FormatInt(job.ID, 10)
+					if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
+						log.Debug(ctx, "skipping job %s", id)
+						continue
+					}
+					pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+
 					jobs <- *job
 				}
 			}
@@ -115,8 +124,19 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 				fmt.Println("Jobs Queue size: ", len(queue))
 			}
 
-			shrinkQueue(&queue, cap(jobs))
-			for _, j := range queue {
+			queueFiltered := sdk.WorkflowQueue{}
+			for _, job := range queue {
+				id := strconv.FormatInt(job.ID, 10)
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
+					log.Debug(ctx, "skipping job %s", id)
+					continue
+				}
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+				queueFiltered = append(queueFiltered, job)
+			}
+
+			shrinkQueue(&queueFiltered, cap(jobs))
+			for _, j := range queueFiltered {
 				jobs <- j
 			}
 		}

@@ -171,6 +171,7 @@ type Interface interface {
 	Serve(ctx context.Context) error
 	GetPrivateKey() *rsa.PrivateKey
 	GetGoRoutines() *sdk.GoRoutines
+	GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation
 	GetRegion() string
 }
 

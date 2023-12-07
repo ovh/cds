@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jobRunID string, stepsStatus sdk.JobStepsStatus) error {
@@ -103,7 +104,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the Websocket
@@ -135,6 +136,11 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			}
 			// push the job in the channel
 			if j.Status == sdk.StatusWaiting {
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(wsEvent.Event.JobRunID) {
+					log.Debug(ctx, "skipping job %s", wsEvent.Event.JobRunID)
+					continue
+				}
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
 				jobs <- *j
 			}
 		case <-jobsTicker.C:
@@ -161,14 +167,23 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				fmt.Println("Jobs Queue size: ", len(queue))
 			}
 
-			max := cap(jobs) * 2
-			if len(queue) < max {
-				max = len(queue)
-			}
-			for i := 0; i < max; i++ {
-				jobs <- queue[i]
+			queueFiltered := []sdk.V2WorkflowRunJob{}
+			for _, job := range queue {
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(job.ID) {
+					log.Debug(ctx, "skipping job %s", job.ID)
+					continue
+				}
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
+				queueFiltered = append(queueFiltered, job)
 			}
 
+			max := cap(jobs) * 2
+			if len(queueFiltered) < max {
+				max = len(queueFiltered)
+			}
+			for i := 0; i < max; i++ {
+				jobs <- queueFiltered[i]
+			}
 		}
 	}
 }
