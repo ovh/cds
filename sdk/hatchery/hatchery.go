@@ -26,7 +26,6 @@ var (
 	defaultMaxProvisioning                = 10
 	models                                []sdk.Model
 	defaultMaxAttemptsNumberBeforeFailure = 5
-	CacheSpawnIDsTTL                      = 10 * time.Second
 	CacheNbAttemptsIDsTTL                 = 1 * time.Hour
 )
 
@@ -85,9 +84,6 @@ func Create(ctx context.Context, h Interface) error {
 	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
 	v2Runjobs := make(chan sdk.V2WorkflowRunJob, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
-
-	// Create a cache to keep in memory the jobID processed in the last 10s.
-	cacheSpawnIDs := cache.New(CacheSpawnIDsTTL, 2*CacheSpawnIDsTTL)
 
 	// Create a cache to only process each jobID only a number of attempts before force to fail the job
 	cacheNbAttemptsIDs := &CacheNbAttemptsJobIDs{
@@ -154,7 +150,7 @@ func Create(ctx context.Context, h Interface) error {
 					log.Error(ctx, "error on h.WorkerModelsEnabled(): %v", errwm)
 				}
 			case j := <-v2Runjobs:
-				if err := handleJobV2(ctx, h, j, cacheNbAttemptsIDs, workersStartChan); err != nil {
+				if err := handleJobV2(h, j, cacheNbAttemptsIDs, workersStartChan); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			case j := <-wjobs:
@@ -216,14 +212,11 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				//Check if the jobs is concerned by a pending worker creation
-				if _, exist := cacheSpawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
+				if h.IsJobAlreadyPendingWorkerCreation(strconv.FormatInt(j.ID, 10)) {
 					log.Debug(currentCtx, "job %d already spawned in previous routine", j.ID)
-					endTrace("already spawned")
+					endTrace("already in worker creation process")
 					continue
 				}
-
-				//Before doing anything, push in cache
-				cacheSpawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 				//Check bookedBy current hatchery
 				if j.BookedBy.ID != 0 {
@@ -270,7 +263,6 @@ func Create(ctx context.Context, h Interface) error {
 					log.Debug(currentCtx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
 					canTakeJob = false
 				} else if isWithModels {
-
 					// Test ascode model
 					modelPath := strings.Split(jobModel, "/")
 					if len(modelPath) >= 5 {
@@ -349,6 +341,7 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				logStepInfo(currentCtx, "processed", j.Queued)
+				h.SetJobInPendingWorkerCreation(strconv.FormatInt(j.ID, 10))
 				workersStartChan <- workerRequest
 			case <-chanRegister:
 				if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
@@ -360,7 +353,7 @@ func Create(ctx context.Context, h Interface) error {
 	return nil
 }
 
-func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
+func handleJobV2(h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	ctx = telemetry.New(ctx, h, "hatchery.V2JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 	ctx, end := telemetry.Span(ctx, "hatchery.V2JobReceive", telemetry.Tag(telemetry.TagWorkflow, j.WorkflowName),
@@ -401,6 +394,13 @@ func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cache
 	if !checkCapacities(ctx, h) {
 		log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
 		endTrace("no capacities")
+	}
+
+	//Check if the jobs is concerned by a pending worker creation
+	if h.IsJobAlreadyPendingWorkerCreation(j.ID) {
+		log.Debug(ctx, "job %d already spawned in previous routine", j.ID)
+		endTrace("already in worker creation process")
+		return nil
 	}
 
 	workerRequest := workerStarterRequest{
@@ -453,6 +453,7 @@ func handleJobV2(ctx context.Context, h Interface, j sdk.V2WorkflowRunJob, cache
 	}
 
 	logStepInfo(ctx, "processed", j.Queued)
+	h.SetJobInPendingWorkerCreation(j.ID)
 	workersStartChan <- workerRequest
 	return nil
 }

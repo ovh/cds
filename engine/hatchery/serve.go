@@ -32,6 +32,8 @@ type Common struct {
 	Clientv2                      cdsclient.HatcheryServiceClient
 	mapServiceNextLineNumberMutex sync.Mutex
 	mapServiceNextLineNumber      map[string]int64
+	mapSpawnJobRequest            map[string]bool
+	mapSpawnJobRequestMutex       *sync.Mutex
 }
 
 func (c *Common) MaxHeartbeat() int {
@@ -63,6 +65,25 @@ func (c *Common) GetRegion() string {
 // GetGoRoutines returns the goRoutines manager
 func (c *Common) GetGoRoutines() *sdk.GoRoutines {
 	return c.GoRoutines
+}
+
+func (c *Common) SetJobInPendingWorkerCreation(id string) {
+	c.mapSpawnJobRequestMutex.Lock()
+	c.mapSpawnJobRequest[id] = true
+	c.mapSpawnJobRequestMutex.Unlock()
+}
+
+func (c *Common) RemoveJobFromPendingWorkerCreation(id string) {
+	c.mapSpawnJobRequestMutex.Lock()
+	delete(c.mapSpawnJobRequest, id)
+	c.mapSpawnJobRequestMutex.Unlock()
+}
+
+func (c *Common) IsJobAlreadyPendingWorkerCreation(id string) bool {
+	c.mapSpawnJobRequestMutex.Lock()
+	res := c.mapSpawnJobRequest[id]
+	c.mapSpawnJobRequestMutex.Unlock()
+	return res
 }
 
 // CommonServe start the HatcheryLocal server
@@ -230,6 +251,9 @@ func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
 			c.CDNConfig.TCPURLEnableTLS = cfg.TCPURLEnableTLS
 		}
 	}
+
+	c.mapSpawnJobRequest = make(map[string]bool)
+	c.mapSpawnJobRequestMutex = new(sync.Mutex)
 
 	return c.initServiceLogger(ctx)
 }
