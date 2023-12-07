@@ -67,6 +67,10 @@ func (c *Common) GetGoRoutines() *sdk.GoRoutines {
 }
 
 func (c *Common) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
+	if c.mapPendingWorkerCreation == nil {
+		c.mapPendingWorkerCreation = &sdk.HatcheryPendingWorkerCreation{}
+		c.mapPendingWorkerCreation.Init()
+	}
 	return c.mapPendingWorkerCreation
 }
 
@@ -235,9 +239,6 @@ func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
 			c.CDNConfig.TCPURLEnableTLS = cfg.TCPURLEnableTLS
 		}
 	}
-
-	c.mapPendingWorkerCreation = &sdk.HatcheryPendingWorkerCreation{}
-	c.mapPendingWorkerCreation.Init()
 
 	return c.initServiceLogger(ctx)
 }

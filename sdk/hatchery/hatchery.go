@@ -150,7 +150,7 @@ func Create(ctx context.Context, h Interface) error {
 					log.Error(ctx, "error on h.WorkerModelsEnabled(): %v", errwm)
 				}
 			case j := <-v2Runjobs:
-				if err := handleJobV2(h, j, cacheNbAttemptsIDs, workersStartChan); err != nil {
+				if err := handleJobV2(ctx, h, j, cacheNbAttemptsIDs, workersStartChan); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			case j := <-wjobs:

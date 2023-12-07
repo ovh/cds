@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jobRunID string, stepsStatus sdk.JobStepsStatus) error {
@@ -161,12 +162,22 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				fmt.Println("Jobs Queue size: ", len(queue))
 			}
 
+			queueFiltered := []sdk.V2WorkflowRunJob{}
+			for _, job := range queue {
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(job.ID) {
+					log.Debug(ctx, "skipping job %s", job.ID)
+					continue
+				}
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
+				queueFiltered = append(queueFiltered, job)
+			}
+
 			max := cap(jobs) * 2
-			if len(queue) < max {
-				max = len(queue)
+			if len(queueFiltered) < max {
+				max = len(queueFiltered)
 			}
 			for i := 0; i < max; i++ {
-				jobs <- queue[i]
+				jobs <- queueFiltered[i]
 			}
 
 		}

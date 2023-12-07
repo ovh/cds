@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 // shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
@@ -115,13 +116,19 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 				fmt.Println("Jobs Queue size: ", len(queue))
 			}
 
-			shrinkQueue(&queue, cap(jobs))
-			for _, j := range queue {
-				id := strconv.FormatInt(j.ID, 10)
+			queueFiltered := sdk.WorkflowQueue{}
+			for _, job := range queue {
+				id := strconv.FormatInt(job.ID, 10)
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
+					log.Debug(ctx, "skipping job %s", id)
 					continue
 				}
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+				queueFiltered = append(queueFiltered, job)
+			}
+
+			shrinkQueue(&queueFiltered, cap(jobs))
+			for _, j := range queueFiltered {
 				jobs <- j
 			}
 		}
