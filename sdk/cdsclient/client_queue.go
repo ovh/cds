@@ -42,7 +42,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -117,6 +117,11 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 
 			shrinkQueue(&queue, cap(jobs))
 			for _, j := range queue {
+				id := strconv.FormatInt(j.ID, 10)
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
+					continue
+				}
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 				jobs <- j
 			}
 		}

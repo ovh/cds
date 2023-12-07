@@ -103,7 +103,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the Websocket

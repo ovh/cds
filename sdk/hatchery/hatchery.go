@@ -94,7 +94,7 @@ func Create(ctx context.Context, h Interface) error {
 		h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
 			log.Debug(ctx, "starting v2 queue polling")
 
-			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.GetGoRoutines(), v2Runjobs, errs, 20*time.Second); err != nil {
+			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.GetGoRoutines(), h.GetMapPendingWorkerCreation(), v2Runjobs, errs, 20*time.Second); err != nil {
 				log.Error(ctx, "V2 Queues polling stopped: %v", err)
 			}
 		})
@@ -116,7 +116,7 @@ func Create(ctx context.Context, h Interface) error {
 			ms = append(ms, cdsclient.Region(regions...))
 		}
 
-		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, ms...); err != nil {
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), h.GetMapPendingWorkerCreation(), wjobs, errs, 20*time.Second, ms...); err != nil {
 			log.Error(ctx, "Queues polling stopped: %v", err)
 		}
 	})
@@ -212,7 +212,7 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				//Check if the jobs is concerned by a pending worker creation
-				if h.IsJobAlreadyPendingWorkerCreation(strconv.FormatInt(j.ID, 10)) {
+				if h.GetMapPendingWorkerCreation().IsJobAlreadyPendingWorkerCreation(strconv.FormatInt(j.ID, 10)) {
 					log.Debug(currentCtx, "job %d already spawned in previous routine", j.ID)
 					endTrace("already in worker creation process")
 					continue
@@ -341,7 +341,6 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				logStepInfo(currentCtx, "processed", j.Queued)
-				h.SetJobInPendingWorkerCreation(strconv.FormatInt(j.ID, 10))
 				workersStartChan <- workerRequest
 			case <-chanRegister:
 				if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
@@ -397,7 +396,7 @@ func handleJobV2(h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAtte
 	}
 
 	//Check if the jobs is concerned by a pending worker creation
-	if h.IsJobAlreadyPendingWorkerCreation(j.ID) {
+	if h.GetMapPendingWorkerCreation().IsJobAlreadyPendingWorkerCreation(j.ID) {
 		log.Debug(ctx, "job %d already spawned in previous routine", j.ID)
 		endTrace("already in worker creation process")
 		return nil
@@ -453,7 +452,7 @@ func handleJobV2(h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAtte
 	}
 
 	logStepInfo(ctx, "processed", j.Queued)
-	h.SetJobInPendingWorkerCreation(j.ID)
+	h.GetMapPendingWorkerCreation().SetJobInPendingWorkerCreation(j.ID)
 	workersStartChan <- workerRequest
 	return nil
 }

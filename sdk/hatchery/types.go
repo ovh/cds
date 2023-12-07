@@ -171,9 +171,7 @@ type Interface interface {
 	Serve(ctx context.Context) error
 	GetPrivateKey() *rsa.PrivateKey
 	GetGoRoutines() *sdk.GoRoutines
-	SetJobInPendingWorkerCreation(id string)
-	IsJobAlreadyPendingWorkerCreation(id string) bool
-	RemoveJobFromPendingWorkerCreation(id string)
+	GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation
 	GetRegion() string
 }
 

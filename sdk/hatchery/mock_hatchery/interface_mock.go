@@ -109,6 +109,20 @@ func (mr *MockInterfaceMockRecorder) GetGoRoutines() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterface)(nil).GetGoRoutines))
 }
 
+// GetMapPendingWorkerCreation mocks base method.
+func (m *MockInterface) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMapPendingWorkerCreation")
+	ret0, _ := ret[0].(*sdk.HatcheryPendingWorkerCreation)
+	return ret0
+}
+
+// GetMapPendingWorkerCreation indicates an expected call of GetMapPendingWorkerCreation.
+func (mr *MockInterfaceMockRecorder) GetMapPendingWorkerCreation() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMapPendingWorkerCreation", reflect.TypeOf((*MockInterface)(nil).GetMapPendingWorkerCreation))
+}
+
 // GetPrivateKey mocks base method.
 func (m *MockInterface) GetPrivateKey() *rsa.PrivateKey {
 	m.ctrl.T.Helper()
@@ -151,20 +165,6 @@ func (mr *MockInterfaceMockRecorder) InitHatchery(ctx interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitHatchery", reflect.TypeOf((*MockInterface)(nil).InitHatchery), ctx)
 }
 
-// IsJobAlreadyPendingWorkerCreation mocks base method.
-func (m *MockInterface) IsJobAlreadyPendingWorkerCreation(id string) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsJobAlreadyPendingWorkerCreation", id)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsJobAlreadyPendingWorkerCreation indicates an expected call of IsJobAlreadyPendingWorkerCreation.
-func (mr *MockInterfaceMockRecorder) IsJobAlreadyPendingWorkerCreation(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsJobAlreadyPendingWorkerCreation", reflect.TypeOf((*MockInterface)(nil).IsJobAlreadyPendingWorkerCreation), id)
-}
-
 // Name mocks base method.
 func (m *MockInterface) Name() string {
 	m.ctrl.T.Helper()
@@ -177,18 +177,6 @@ func (m *MockInterface) Name() string {
 func (mr *MockInterfaceMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockInterface)(nil).Name))
-}
-
-// RemoveJobFromPendingWorkerCreation mocks base method.
-func (m *MockInterface) RemoveJobFromPendingWorkerCreation(id string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RemoveJobFromPendingWorkerCreation", id)
-}
-
-// RemoveJobFromPendingWorkerCreation indicates an expected call of RemoveJobFromPendingWorkerCreation.
-func (mr *MockInterfaceMockRecorder) RemoveJobFromPendingWorkerCreation(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveJobFromPendingWorkerCreation", reflect.TypeOf((*MockInterface)(nil).RemoveJobFromPendingWorkerCreation), id)
 }
 
 // Serve mocks base method.
@@ -217,18 +205,6 @@ func (m *MockInterface) Service() *sdk.Service {
 func (mr *MockInterfaceMockRecorder) Service() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Service", reflect.TypeOf((*MockInterface)(nil).Service))
-}
-
-// SetJobInPendingWorkerCreation mocks base method.
-func (m *MockInterface) SetJobInPendingWorkerCreation(id string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetJobInPendingWorkerCreation", id)
-}
-
-// SetJobInPendingWorkerCreation indicates an expected call of SetJobInPendingWorkerCreation.
-func (mr *MockInterfaceMockRecorder) SetJobInPendingWorkerCreation(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetJobInPendingWorkerCreation", reflect.TypeOf((*MockInterface)(nil).SetJobInPendingWorkerCreation), id)
 }
 
 // SpawnWorker mocks base method.
@@ -367,6 +343,20 @@ func (mr *MockInterfaceWithModelsMockRecorder) GetGoRoutines() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetGoRoutines))
 }
 
+// GetMapPendingWorkerCreation mocks base method.
+func (m *MockInterfaceWithModels) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMapPendingWorkerCreation")
+	ret0, _ := ret[0].(*sdk.HatcheryPendingWorkerCreation)
+	return ret0
+}
+
+// GetMapPendingWorkerCreation indicates an expected call of GetMapPendingWorkerCreation.
+func (mr *MockInterfaceWithModelsMockRecorder) GetMapPendingWorkerCreation() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMapPendingWorkerCreation", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetMapPendingWorkerCreation))
+}
+
 // GetPrivateKey mocks base method.
 func (m *MockInterfaceWithModels) GetPrivateKey() *rsa.PrivateKey {
 	m.ctrl.T.Helper()
@@ -407,20 +397,6 @@ func (m *MockInterfaceWithModels) InitHatchery(ctx context.Context) error {
 func (mr *MockInterfaceWithModelsMockRecorder) InitHatchery(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitHatchery", reflect.TypeOf((*MockInterfaceWithModels)(nil).InitHatchery), ctx)
-}
-
-// IsJobAlreadyPendingWorkerCreation mocks base method.
-func (m *MockInterfaceWithModels) IsJobAlreadyPendingWorkerCreation(id string) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsJobAlreadyPendingWorkerCreation", id)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsJobAlreadyPendingWorkerCreation indicates an expected call of IsJobAlreadyPendingWorkerCreation.
-func (mr *MockInterfaceWithModelsMockRecorder) IsJobAlreadyPendingWorkerCreation(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsJobAlreadyPendingWorkerCreation", reflect.TypeOf((*MockInterfaceWithModels)(nil).IsJobAlreadyPendingWorkerCreation), id)
 }
 
 // ModelType mocks base method.
@@ -465,18 +441,6 @@ func (mr *MockInterfaceWithModelsMockRecorder) NeedRegistration(ctx, model inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NeedRegistration", reflect.TypeOf((*MockInterfaceWithModels)(nil).NeedRegistration), ctx, model)
 }
 
-// RemoveJobFromPendingWorkerCreation mocks base method.
-func (m *MockInterfaceWithModels) RemoveJobFromPendingWorkerCreation(id string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RemoveJobFromPendingWorkerCreation", id)
-}
-
-// RemoveJobFromPendingWorkerCreation indicates an expected call of RemoveJobFromPendingWorkerCreation.
-func (mr *MockInterfaceWithModelsMockRecorder) RemoveJobFromPendingWorkerCreation(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveJobFromPendingWorkerCreation", reflect.TypeOf((*MockInterfaceWithModels)(nil).RemoveJobFromPendingWorkerCreation), id)
-}
-
 // Serve mocks base method.
 func (m *MockInterfaceWithModels) Serve(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -503,18 +467,6 @@ func (m *MockInterfaceWithModels) Service() *sdk.Service {
 func (mr *MockInterfaceWithModelsMockRecorder) Service() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Service", reflect.TypeOf((*MockInterfaceWithModels)(nil).Service))
-}
-
-// SetJobInPendingWorkerCreation mocks base method.
-func (m *MockInterfaceWithModels) SetJobInPendingWorkerCreation(id string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetJobInPendingWorkerCreation", id)
-}
-
-// SetJobInPendingWorkerCreation indicates an expected call of SetJobInPendingWorkerCreation.
-func (mr *MockInterfaceWithModelsMockRecorder) SetJobInPendingWorkerCreation(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetJobInPendingWorkerCreation", reflect.TypeOf((*MockInterfaceWithModels)(nil).SetJobInPendingWorkerCreation), id)
 }
 
 // SpawnWorker mocks base method.

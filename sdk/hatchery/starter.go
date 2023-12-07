@@ -122,7 +122,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 
 	logStepInfo(ctx, "starting-worker", j.queued)
 
-	h.RemoveJobFromPendingWorkerCreation(j.id)
+	h.GetMapPendingWorkerCreation().RemoveJobFromPendingWorkerCreation(j.id)
 
 	maxProv := h.Configuration().Provision.MaxConcurrentProvisioning
 	if maxProv < 1 {

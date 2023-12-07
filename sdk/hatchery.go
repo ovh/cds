@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -44,6 +45,35 @@ type Hatchery struct {
 
 	// On signup / regen
 	Token string `json:"token,omitempty" db:"-" cli:"token,omitempty"`
+}
+
+type HatcheryPendingWorkerCreation struct {
+	mapSpawnJobRequest      map[string]bool
+	mapSpawnJobRequestMutex *sync.Mutex
+}
+
+func (c *HatcheryPendingWorkerCreation) Init() {
+	c.mapSpawnJobRequest = make(map[string]bool)
+	c.mapSpawnJobRequestMutex = new(sync.Mutex)
+}
+
+func (c *HatcheryPendingWorkerCreation) SetJobInPendingWorkerCreation(id string) {
+	c.mapSpawnJobRequestMutex.Lock()
+	c.mapSpawnJobRequest[id] = true
+	c.mapSpawnJobRequestMutex.Unlock()
+}
+
+func (c *HatcheryPendingWorkerCreation) RemoveJobFromPendingWorkerCreation(id string) {
+	c.mapSpawnJobRequestMutex.Lock()
+	delete(c.mapSpawnJobRequest, id)
+	c.mapSpawnJobRequestMutex.Unlock()
+}
+
+func (c *HatcheryPendingWorkerCreation) IsJobAlreadyPendingWorkerCreation(id string) bool {
+	c.mapSpawnJobRequestMutex.Lock()
+	res := c.mapSpawnJobRequest[id]
+	c.mapSpawnJobRequestMutex.Unlock()
+	return res
 }
 
 type HatcheryConfig map[string]interface{}
