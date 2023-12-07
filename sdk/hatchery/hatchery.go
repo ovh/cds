@@ -158,6 +158,10 @@ func Create(ctx context.Context, h Interface) error {
 					continue
 				}
 				currentCtx, currentCancel := context.WithTimeout(context.Background(), 10*time.Minute)
+				currentCtx = telemetry.ContextWithTag(currentCtx,
+					telemetry.TagServiceName, h.Name(),
+					telemetry.TagServiceType, h.Type(),
+				)
 				fields := log.FieldValues(ctx)
 				for k, v := range fields {
 					currentCtx = context.WithValue(currentCtx, k, v)
@@ -347,6 +351,10 @@ func Create(ctx context.Context, h Interface) error {
 
 func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx = telemetry.ContextWithTag(ctx,
+		telemetry.TagServiceName, h.Name(),
+		telemetry.TagServiceType, h.Type(),
+	)
 	ctx = telemetry.New(ctx, h, "hatchery.V2JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 	ctx, end := telemetry.Span(ctx, "hatchery.V2JobReceive", telemetry.Tag(telemetry.TagWorkflow, j.WorkflowName),
 		telemetry.Tag(telemetry.TagWorkflowRunNumber, j.RunNumber),
