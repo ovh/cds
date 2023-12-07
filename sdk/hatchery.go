@@ -48,18 +48,18 @@ type Hatchery struct {
 }
 
 type HatcheryPendingWorkerCreation struct {
-	mapSpawnJobRequest      map[string]bool
+	mapSpawnJobRequest      map[string]struct{}
 	mapSpawnJobRequestMutex *sync.Mutex
 }
 
 func (c *HatcheryPendingWorkerCreation) Init() {
-	c.mapSpawnJobRequest = make(map[string]bool)
+	c.mapSpawnJobRequest = make(map[string]struct{})
 	c.mapSpawnJobRequestMutex = new(sync.Mutex)
 }
 
 func (c *HatcheryPendingWorkerCreation) SetJobInPendingWorkerCreation(id string) {
 	c.mapSpawnJobRequestMutex.Lock()
-	c.mapSpawnJobRequest[id] = true
+	c.mapSpawnJobRequest[id] = struct{}{}
 	c.mapSpawnJobRequestMutex.Unlock()
 }
 
@@ -71,9 +71,9 @@ func (c *HatcheryPendingWorkerCreation) RemoveJobFromPendingWorkerCreation(id st
 
 func (c *HatcheryPendingWorkerCreation) IsJobAlreadyPendingWorkerCreation(id string) bool {
 	c.mapSpawnJobRequestMutex.Lock()
-	res := c.mapSpawnJobRequest[id]
+	_, has := c.mapSpawnJobRequest[id]
 	c.mapSpawnJobRequestMutex.Unlock()
-	return res
+	return has
 }
 
 type HatcheryConfig map[string]interface{}
