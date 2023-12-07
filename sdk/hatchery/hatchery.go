@@ -438,7 +438,6 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 	}
 
 	logStepInfo(ctx, "processed", j.Queued)
-	h.GetMapPendingWorkerCreation().SetJobInPendingWorkerCreation(j.ID)
 	workersStartChan <- workerRequest
 	return nil
 }
