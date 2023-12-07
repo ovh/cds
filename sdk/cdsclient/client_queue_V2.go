@@ -136,6 +136,11 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			}
 			// push the job in the channel
 			if j.Status == sdk.StatusWaiting {
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(wsEvent.Event.JobRunID) {
+					log.Debug(ctx, "skipping job %s", wsEvent.Event.JobRunID)
+					continue
+				}
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
 				jobs <- *j
 			}
 		case <-jobsTicker.C:
@@ -179,7 +184,6 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			for i := 0; i < max; i++ {
 				jobs <- queueFiltered[i]
 			}
-
 		}
 	}
 }

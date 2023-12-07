@@ -87,6 +87,14 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 				// push the job in the channel
 				if job.Status == sdk.StatusWaiting && job.BookedBy.Name == "" {
 					job.Header["WS"] = "true"
+
+					id := strconv.FormatInt(job.ID, 10)
+					if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
+						log.Debug(ctx, "skipping job %s", id)
+						continue
+					}
+					pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+
 					jobs <- *job
 				}
 			}
