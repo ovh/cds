@@ -211,13 +211,6 @@ func Create(ctx context.Context, h Interface) error {
 					stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
 				}
 
-				//Check if the jobs is concerned by a pending worker creation
-				if h.GetMapPendingWorkerCreation().IsJobAlreadyPendingWorkerCreation(strconv.FormatInt(j.ID, 10)) {
-					log.Debug(currentCtx, "job %d already spawned in previous routine", j.ID)
-					endTrace("already in worker creation process")
-					continue
-				}
-
 				//Check bookedBy current hatchery
 				if j.BookedBy.ID != 0 {
 					log.Debug(currentCtx, "hatchery> job %d is already booked", j.ID)
@@ -352,7 +345,7 @@ func Create(ctx context.Context, h Interface) error {
 	return nil
 }
 
-func handleJobV2(h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
+func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	ctx = telemetry.New(ctx, h, "hatchery.V2JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 	ctx, end := telemetry.Span(ctx, "hatchery.V2JobReceive", telemetry.Tag(telemetry.TagWorkflow, j.WorkflowName),
@@ -393,13 +386,6 @@ func handleJobV2(h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAtte
 	if !checkCapacities(ctx, h) {
 		log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
 		endTrace("no capacities")
-	}
-
-	//Check if the jobs is concerned by a pending worker creation
-	if h.GetMapPendingWorkerCreation().IsJobAlreadyPendingWorkerCreation(j.ID) {
-		log.Debug(ctx, "job %d already spawned in previous routine", j.ID)
-		endTrace("already in worker creation process")
-		return nil
 	}
 
 	workerRequest := workerStarterRequest{
