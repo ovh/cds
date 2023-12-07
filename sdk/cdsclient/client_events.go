@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -16,6 +18,11 @@ func (c *client) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRo
 	goRoutines.Exec(ctx, "WebsocketEventsListen", func(ctx context.Context) {
 		for {
 			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					log.ErrorWithStackTrace(ctx, ctx.Err())
+				}
+				return
 			case f := <-chanFilterToSend:
 				m, err := json.Marshal(f)
 				if err != nil {
