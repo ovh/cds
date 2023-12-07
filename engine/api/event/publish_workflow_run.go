@@ -233,7 +233,9 @@ func PublishEventJobSummary(ctx context.Context, e sdk.EventJobSummary, integrat
 		CDSName:             cdsname,
 		EventType:           fmt.Sprintf("%T", e),
 		Payload:             bts,
+		ProjectKey:          e.ProjectKey,
 		EventIntegrationsID: eventIntegrationsID,
+		WorkflowName:        e.Workflow,
 	}
 	_ = publishEvent(ctx, event)
 }
