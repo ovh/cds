@@ -94,7 +94,7 @@ func Create(ctx context.Context, h Interface) error {
 		h.GetGoRoutines().Run(ctx, "V2QueuePolling", func(ctx context.Context) {
 			log.Debug(ctx, "starting v2 queue polling")
 
-			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.GetGoRoutines(), h.GetMapPendingWorkerCreation(), v2Runjobs, errs, 20*time.Second); err != nil {
+			if err := h.CDSClientV2().V2QueuePolling(ctx, h.GetRegion(), h.GetGoRoutines(), GetMetrics(), h.GetMapPendingWorkerCreation(), v2Runjobs, errs, 20*time.Second); err != nil {
 				log.Error(ctx, "V2 Queues polling stopped: %v", err)
 			}
 		})
@@ -116,7 +116,7 @@ func Create(ctx context.Context, h Interface) error {
 			ms = append(ms, cdsclient.Region(regions...))
 		}
 
-		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), h.GetMapPendingWorkerCreation(), wjobs, errs, 20*time.Second, ms...); err != nil {
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), GetMetrics(), h.GetMapPendingWorkerCreation(), wjobs, errs, 20*time.Second, ms...); err != nil {
 			log.Error(ctx, "Queues polling stopped: %v", err)
 		}
 	})
@@ -338,6 +338,7 @@ func Create(ctx context.Context, h Interface) error {
 				}
 
 				logStepInfo(currentCtx, "processed", j.Queued)
+				stats.Record(currentCtx, GetMetrics().JobsProcessed.M(1))
 				workersStartChan <- workerRequest
 			case <-chanRegister:
 				if err := workerRegister(ctx, hWithModels, workersStartChan); err != nil {
@@ -446,6 +447,7 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 	}
 
 	logStepInfo(ctx, "processed", j.Queued)
+	stats.Record(ctx, GetMetrics().JobsProcessed.M(1))
 	workersStartChan <- workerRequest
 	return nil
 }

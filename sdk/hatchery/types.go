@@ -6,7 +6,6 @@ import (
 
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/rockbears/log"
-	"go.opencensus.io/stats"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -181,18 +180,6 @@ type InterfaceWithModels interface {
 	NeedRegistration(ctx context.Context, model *sdk.Model) bool
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModelSecretList(sdk.Model) (sdk.WorkerModelSecrets, error)
-}
-
-type Metrics struct {
-	Jobs               *stats.Int64Measure
-	JobsWebsocket      *stats.Int64Measure
-	SpawnedWorkers     *stats.Int64Measure
-	PendingWorkers     *stats.Int64Measure
-	RegisteringWorkers *stats.Int64Measure
-	CheckingWorkers    *stats.Int64Measure
-	WaitingWorkers     *stats.Int64Measure
-	BuildingWorkers    *stats.Int64Measure
-	DisabledWorkers    *stats.Int64Measure
 }
 
 type JobIdentifiers struct {

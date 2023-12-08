@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"go.opencensus.io/stats"
 )
 
 type AuthConsumerHatcherySigninRequest struct {
@@ -45,6 +47,25 @@ type Hatchery struct {
 
 	// On signup / regen
 	Token string `json:"token,omitempty" db:"-" cli:"token,omitempty"`
+}
+
+type HatcheryMetrics struct {
+	Jobs                          *stats.Int64Measure
+	JobsWebsocket                 *stats.Int64Measure
+	JobsProcessed                 *stats.Int64Measure
+	SpawningWorkers               *stats.Int64Measure
+	SpawnedWorkers                *stats.Int64Measure
+	SpawningWorkersErrors         *stats.Int64Measure
+	JobReceivedInQueuePollingWSv1 *stats.Int64Measure
+	JobReceivedInQueuePollingWSv2 *stats.Int64Measure
+	ChanJobAdd                    *stats.Int64Measure
+	ChanJobPop                    *stats.Int64Measure
+	PendingWorkers                *stats.Int64Measure
+	RegisteringWorkers            *stats.Int64Measure
+	CheckingWorkers               *stats.Int64Measure
+	WaitingWorkers                *stats.Int64Measure
+	BuildingWorkers               *stats.Int64Measure
+	DisabledWorkers               *stats.Int64Measure
 }
 
 type HatcheryPendingWorkerCreation struct {

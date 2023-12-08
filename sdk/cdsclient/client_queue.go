@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
 
@@ -43,7 +44,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -94,15 +95,11 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 						continue
 					}
 					pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
-
+					telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
 					jobs <- *job
 				}
 			}
 		case <-jobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("jobsTicker")
-			}
-
 			if jobs == nil {
 				continue
 			}
@@ -117,12 +114,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 				cancel()
 				continue
 			}
-
 			cancel()
-
-			if c.config.Verbose {
-				fmt.Println("Jobs Queue size: ", len(queue))
-			}
 
 			queueFiltered := sdk.WorkflowQueue{}
 			for _, job := range queue {
@@ -134,9 +126,11 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 				queueFiltered = append(queueFiltered, job)
 			}
+			log.Debug(ctx, "job_queue_from_api: %v job_queue_filtered: %v", len(queue), len(queueFiltered))
 
 			shrinkQueue(&queueFiltered, cap(jobs))
 			for _, j := range queueFiltered {
+				telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
 				jobs <- j
 			}
 		}

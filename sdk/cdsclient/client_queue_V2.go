@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
 
@@ -104,7 +105,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the Websocket
@@ -125,6 +126,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			if jobs == nil {
 				continue
 			}
+			telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv1, 1)
 			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Event.Region, wsEvent.Event.JobRunID)
 			// Do not log the error if the job does not exist
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -141,13 +143,10 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 					continue
 				}
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
+				telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
 				jobs <- *j
 			}
 		case <-jobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("jobsTicker")
-			}
-
 			if jobs == nil {
 				continue
 			}
@@ -163,9 +162,6 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				continue
 			}
 			cancel()
-			if c.config.Verbose {
-				fmt.Println("Jobs Queue size: ", len(queue))
-			}
 
 			queueFiltered := []sdk.V2WorkflowRunJob{}
 			for _, job := range queue {
@@ -177,11 +173,14 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				queueFiltered = append(queueFiltered, job)
 			}
 
+			log.Debug(ctx, "job_queue_from_api: %v job_queue_filtered: %v", len(queue), len(queueFiltered))
+
 			max := cap(jobs) * 2
 			if len(queueFiltered) < max {
 				max = len(queueFiltered)
 			}
 			for i := 0; i < max; i++ {
+				telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
 				jobs <- queueFiltered[i]
 			}
 		}
