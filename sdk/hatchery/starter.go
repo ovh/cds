@@ -47,10 +47,17 @@ func startWorkerStarters(ctx context.Context, h Interface) chan<- workerStarterR
 
 func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-chan workerStarterRequest) {
 	for j := range jobs {
+		telemetry.Record(ctx, GetMetrics().ChanWorkerStarterPop, 1)
 		// Start a worker for a job
 		m := j.registerWorkerModel
 		if m == nil {
-			_ = spawnWorkerForJob(j.ctx, h, j)
+			telemetry.Record(ctx, GetMetrics().SpawningWorkers, 1)
+			spawned := spawnWorkerForJob(j.ctx, h, j)
+			if spawned {
+				telemetry.Record(ctx, GetMetrics().SpawnedWorkers, 1)
+			} else {
+				telemetry.Record(ctx, GetMetrics().SpawningWorkersErrors, 1)
+			}
 			j.cancel() // call to EndTrace for observability
 			continue
 		}
@@ -106,7 +113,6 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 		}
 		atomic.AddInt64(&nbWorkerToStart, -1)
 		j.cancel() // call to EndTrace for observability
-
 	}
 }
 
@@ -118,7 +124,6 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 		telemetry.TagServiceName, h.Name(),
 		telemetry.TagServiceType, h.Type(),
 	)
-	telemetry.Record(ctx, GetMetrics().SpawnedWorkers, 1)
 
 	logStepInfo(ctx, "starting-worker", j.queued)
 

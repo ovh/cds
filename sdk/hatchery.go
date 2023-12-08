@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"go.opencensus.io/stats"
 )
 
 type AuthConsumerHatcherySigninRequest struct {
@@ -47,6 +49,26 @@ type Hatchery struct {
 	Token string `json:"token,omitempty" db:"-" cli:"token,omitempty"`
 }
 
+type HatcheryMetrics struct {
+	Jobs                          *stats.Int64Measure
+	JobsWebsocket                 *stats.Int64Measure
+	JobsProcessed                 *stats.Int64Measure
+	SpawningWorkers               *stats.Int64Measure
+	SpawnedWorkers                *stats.Int64Measure
+	SpawningWorkersErrors         *stats.Int64Measure
+	JobReceivedInQueuePollingWSv1 *stats.Int64Measure
+	JobReceivedInQueuePollingWSv2 *stats.Int64Measure
+	ChanV1JobAdd                  *stats.Int64Measure
+	ChanV2JobAdd                  *stats.Int64Measure
+	ChanWorkerStarterPop          *stats.Int64Measure
+	PendingWorkers                *stats.Int64Measure
+	RegisteringWorkers            *stats.Int64Measure
+	CheckingWorkers               *stats.Int64Measure
+	WaitingWorkers                *stats.Int64Measure
+	BuildingWorkers               *stats.Int64Measure
+	DisabledWorkers               *stats.Int64Measure
+}
+
 type HatcheryPendingWorkerCreation struct {
 	mapSpawnJobRequest      map[string]struct{}
 	mapSpawnJobRequestMutex *sync.Mutex
@@ -57,10 +79,12 @@ func (c *HatcheryPendingWorkerCreation) Init() {
 	c.mapSpawnJobRequestMutex = new(sync.Mutex)
 }
 
-func (c *HatcheryPendingWorkerCreation) SetJobInPendingWorkerCreation(id string) {
+func (c *HatcheryPendingWorkerCreation) SetJobInPendingWorkerCreation(id string) int {
 	c.mapSpawnJobRequestMutex.Lock()
 	c.mapSpawnJobRequest[id] = struct{}{}
+	size := len(c.mapSpawnJobRequest)
 	c.mapSpawnJobRequestMutex.Unlock()
+	return size
 }
 
 func (c *HatcheryPendingWorkerCreation) RemoveJobFromPendingWorkerCreation(id string) {

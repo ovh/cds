@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
 
@@ -43,7 +44,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
@@ -69,6 +70,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 				continue
 			}
 			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
+				telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv1, 1)
 				var jobEvent sdk.EventRunWorkflowJob
 				if err := sdk.JSONUnmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
 					errs <- newError(fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err))
@@ -93,16 +95,13 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 						log.Debug(ctx, "skipping job %s", id)
 						continue
 					}
-					pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
-
+					lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+					log.Debug(ctx, "v1_len_queue: %v", lenqueue)
+					telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 					jobs <- *job
 				}
 			}
 		case <-jobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("jobsTicker")
-			}
-
 			if jobs == nil {
 				continue
 			}
@@ -117,26 +116,24 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, p
 				cancel()
 				continue
 			}
-
 			cancel()
 
-			if c.config.Verbose {
-				fmt.Println("Jobs Queue size: ", len(queue))
-			}
-
 			queueFiltered := sdk.WorkflowQueue{}
+			var lenqueue int
 			for _, job := range queue {
 				id := strconv.FormatInt(job.ID, 10)
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
 					log.Debug(ctx, "skipping job %s", id)
 					continue
 				}
-				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+				lenqueue = pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 				queueFiltered = append(queueFiltered, job)
 			}
+			log.Debug(ctx, "v1_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), lenqueue)
 
 			shrinkQueue(&queueFiltered, cap(jobs))
 			for _, j := range queueFiltered {
+				telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 				jobs <- j
 			}
 		}

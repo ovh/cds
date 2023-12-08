@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
 
@@ -104,7 +105,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the Websocket
@@ -125,6 +126,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			if jobs == nil {
 				continue
 			}
+			telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv2, 1)
 			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Event.Region, wsEvent.Event.JobRunID)
 			// Do not log the error if the job does not exist
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -140,14 +142,12 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 					log.Debug(ctx, "skipping job %s", wsEvent.Event.JobRunID)
 					continue
 				}
-				pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
+				lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
+				log.Debug(ctx, "v2_len_queue: %v", lenqueue)
+				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- *j
 			}
 		case <-jobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("jobsTicker")
-			}
-
 			if jobs == nil {
 				continue
 			}
@@ -163,25 +163,26 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				continue
 			}
 			cancel()
-			if c.config.Verbose {
-				fmt.Println("Jobs Queue size: ", len(queue))
-			}
 
 			queueFiltered := []sdk.V2WorkflowRunJob{}
+			var lenqueue int
 			for _, job := range queue {
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(job.ID) {
 					log.Debug(ctx, "skipping job %s", job.ID)
 					continue
 				}
-				pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
+				lenqueue = pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
 				queueFiltered = append(queueFiltered, job)
 			}
+
+			log.Debug(ctx, "v2_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), lenqueue)
 
 			max := cap(jobs) * 2
 			if len(queueFiltered) < max {
 				max = len(queueFiltered)
 			}
 			for i := 0; i < max; i++ {
+				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- queueFiltered[i]
 			}
 		}
