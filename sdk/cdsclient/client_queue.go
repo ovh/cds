@@ -95,7 +95,8 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 						log.Debug(ctx, "skipping job %s", id)
 						continue
 					}
-					pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+					lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+					log.Debug(ctx, "v1_len_queue: %v", lenqueue)
 					telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 					jobs <- *job
 				}
@@ -118,16 +119,17 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 			cancel()
 
 			queueFiltered := sdk.WorkflowQueue{}
+			var lenqueue int
 			for _, job := range queue {
 				id := strconv.FormatInt(job.ID, 10)
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
 					log.Debug(ctx, "skipping job %s", id)
 					continue
 				}
-				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
+				lenqueue = pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 				queueFiltered = append(queueFiltered, job)
 			}
-			log.Debug(ctx, "job_queue_from_api: %v job_queue_filtered: %v", len(queue), len(queueFiltered))
+			log.Debug(ctx, "v1_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), lenqueue)
 
 			shrinkQueue(&queueFiltered, cap(jobs))
 			for _, j := range queueFiltered {

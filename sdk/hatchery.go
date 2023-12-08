@@ -79,10 +79,12 @@ func (c *HatcheryPendingWorkerCreation) Init() {
 	c.mapSpawnJobRequestMutex = new(sync.Mutex)
 }
 
-func (c *HatcheryPendingWorkerCreation) SetJobInPendingWorkerCreation(id string) {
+func (c *HatcheryPendingWorkerCreation) SetJobInPendingWorkerCreation(id string) int {
 	c.mapSpawnJobRequestMutex.Lock()
 	c.mapSpawnJobRequest[id] = struct{}{}
+	size := len(c.mapSpawnJobRequest)
 	c.mapSpawnJobRequestMutex.Unlock()
+	return size
 }
 
 func (c *HatcheryPendingWorkerCreation) RemoveJobFromPendingWorkerCreation(id string) {

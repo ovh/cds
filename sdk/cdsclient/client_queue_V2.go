@@ -142,7 +142,8 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 					log.Debug(ctx, "skipping job %s", wsEvent.Event.JobRunID)
 					continue
 				}
-				pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
+				lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
+				log.Debug(ctx, "v2_len_queue: %v", lenqueue)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- *j
 			}
@@ -164,16 +165,17 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			cancel()
 
 			queueFiltered := []sdk.V2WorkflowRunJob{}
+			var lenqueue int
 			for _, job := range queue {
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(job.ID) {
 					log.Debug(ctx, "skipping job %s", job.ID)
 					continue
 				}
-				pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
+				lenqueue = pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
 				queueFiltered = append(queueFiltered, job)
 			}
 
-			log.Debug(ctx, "job_queue_from_api: %v job_queue_filtered: %v", len(queue), len(queueFiltered))
+			log.Debug(ctx, "v2_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), lenqueue)
 
 			max := cap(jobs) * 2
 			if len(queueFiltered) < max {
