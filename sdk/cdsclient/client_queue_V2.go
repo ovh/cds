@@ -126,7 +126,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			if jobs == nil {
 				continue
 			}
-			telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv1, 1)
+			telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv2, 1)
 			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Event.Region, wsEvent.Event.JobRunID)
 			// Do not log the error if the job does not exist
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
