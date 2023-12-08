@@ -23,6 +23,8 @@ type publishWorkflowRunData struct {
 	workflowRunTags   []sdk.WorkflowRunTag
 	eventIntegrations []sdk.WorkflowProjectIntegration
 	workflowNodeRunID int64
+	modelType         string
+	region            string
 }
 
 func publishRunWorkflow(ctx context.Context, payload interface{}, data publishWorkflowRunData) {
@@ -49,6 +51,8 @@ func publishRunWorkflow(ctx context.Context, payload interface{}, data publishWo
 		Status:              data.status,
 		Tags:                data.workflowRunTags,
 		EventIntegrationsID: eventIntegrationsID,
+		Region:              data.region,
+		ModelType:           data.modelType,
 	}
 	_ = publishEvent(ctx, event)
 }
@@ -207,6 +211,10 @@ func PublishWorkflowNodeJobRun(ctx context.Context, pkey string, wr sdk.Workflow
 	if sdk.StatusIsTerminated(jr.Status) {
 		e.Done = jr.Done.Unix()
 	}
+	var region = ""
+	if jr.Region != nil {
+		region = *jr.Region
+	}
 	data := publishWorkflowRunData{
 		projectKey:        pkey,
 		workflowName:      wr.Workflow.Name,
@@ -216,6 +224,8 @@ func PublishWorkflowNodeJobRun(ctx context.Context, pkey string, wr sdk.Workflow
 		workflowRunTags:   wr.Tags,
 		eventIntegrations: wr.Workflow.GetEventIntegration(),
 		workflowNodeRunID: jr.WorkflowNodeRunID,
+		modelType:         jr.ModelType,
+		region:            region,
 	}
 	publishRunWorkflow(ctx, e, data)
 }

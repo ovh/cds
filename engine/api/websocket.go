@@ -14,7 +14,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/websocket"
@@ -162,14 +161,6 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 		}
 
 		if isHatchery && event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
-			var jobEvent sdk.EventRunWorkflowJob
-			if err := sdk.JSONUnmarshal(event.Payload, &jobEvent); err != nil {
-				return false, err
-			}
-			runJob, err := workflow.LoadNodeJobRun(ctx, db, cache, jobEvent.ID)
-			if err != nil {
-				return false, err
-			}
 
 			var hatcheryType string
 			var region string
@@ -181,11 +172,16 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 					region = f.Region
 				}
 			}
-			if runJob.ModelType != "" && runJob.ModelType != hatcheryType {
-				return false, err
+			if event.ModelType != "" && event.ModelType != hatcheryType {
+				return false, nil
 			}
 
-			if region != *runJob.Region {
+			ignoreJobWithNoRegion := true
+			if c.AuthConsumer.AuthConsumerUser.Service.IgnoreJobWithNoRegion != nil {
+				ignoreJobWithNoRegion = *c.AuthConsumer.AuthConsumerUser.Service.IgnoreJobWithNoRegion
+			}
+
+			if event.Region != region && (event.Region != "" || ignoreJobWithNoRegion) {
 				return false, nil
 			}
 
