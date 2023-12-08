@@ -70,6 +70,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 				continue
 			}
 			if wsEvent.Event.EventType == "sdk.EventRunWorkflowJob" && wsEvent.Event.Status == sdk.StatusWaiting {
+				telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv2, 1)
 				var jobEvent sdk.EventRunWorkflowJob
 				if err := sdk.JSONUnmarshal(wsEvent.Event.Payload, &jobEvent); err != nil {
 					errs <- newError(fmt.Errorf("unable to unmarshal job %v: %v", wsEvent.Event.Payload, err))
