@@ -96,7 +96,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 						continue
 					}
 					pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
-					telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
+					telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 					jobs <- *job
 				}
 			}
@@ -131,7 +131,7 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 
 			shrinkQueue(&queueFiltered, cap(jobs))
 			for _, j := range queueFiltered {
-				telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
+				telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 				jobs <- j
 			}
 		}

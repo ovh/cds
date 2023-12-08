@@ -58,8 +58,9 @@ type HatcheryMetrics struct {
 	SpawningWorkersErrors         *stats.Int64Measure
 	JobReceivedInQueuePollingWSv1 *stats.Int64Measure
 	JobReceivedInQueuePollingWSv2 *stats.Int64Measure
-	ChanJobAdd                    *stats.Int64Measure
-	ChanJobPop                    *stats.Int64Measure
+	ChanV1JobAdd                  *stats.Int64Measure
+	ChanV2JobAdd                  *stats.Int64Measure
+	ChanWorkerStarterPop          *stats.Int64Measure
 	PendingWorkers                *stats.Int64Measure
 	RegisteringWorkers            *stats.Int64Measure
 	CheckingWorkers               *stats.Int64Measure

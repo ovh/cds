@@ -34,8 +34,9 @@ func InitMetrics(ctx context.Context) error {
 		metrics.SpawningWorkers = stats.Int64("cds/spawning_workers", "number of spawning workers", stats.UnitDimensionless)
 		metrics.JobReceivedInQueuePollingWSv1 = stats.Int64("cds/job_received_in_queue_polling_ws_v1", "number of job received in queue polling v1 ws", stats.UnitDimensionless)
 		metrics.JobReceivedInQueuePollingWSv2 = stats.Int64("cds/job_received_in_queue_polling_ws_v2", "number of job received in queue polling v2 ws", stats.UnitDimensionless)
-		metrics.ChanJobAdd = stats.Int64("cds/chan_job_add", "number of add into chan jobs", stats.UnitDimensionless)
-		metrics.ChanJobPop = stats.Int64("cds/chan_job_pop", "number of pop from chan jobs", stats.UnitDimensionless)
+		metrics.ChanV1JobAdd = stats.Int64("cds/chan_v1_job_add", "number of add into chan jobs v1", stats.UnitDimensionless)
+		metrics.ChanV2JobAdd = stats.Int64("cds/chan_v2_job_add", "number of add into chan jobs v2", stats.UnitDimensionless)
+		metrics.ChanWorkerStarterPop = stats.Int64("cds/chan_worker_starter_job_pop", "number of pop from chan in a worker starter func", stats.UnitDimensionless)
 		metrics.PendingWorkers = stats.Int64("cds/pending_workers", "number of pending workers", stats.UnitDimensionless)
 		metrics.RegisteringWorkers = stats.Int64("cds/registering_workers", "number of registering workers", stats.UnitDimensionless)
 		metrics.WaitingWorkers = stats.Int64("cds/waiting_workers", "number of waiting workers", stats.UnitDimensionless)
@@ -51,8 +52,9 @@ func InitMetrics(ctx context.Context) error {
 			telemetry.NewViewCount("cds/hatchery/spawned_worker_count", metrics.SpawnedWorkers, tags),
 			telemetry.NewViewCount("cds/hatchery/spawning_worker_count", metrics.SpawningWorkers, tags),
 			telemetry.NewViewCount("cds/hatchery/spawning_worker_errors_count", metrics.SpawningWorkersErrors, tags),
-			telemetry.NewViewCount("cds/hatchery/chan_job_add_count", metrics.ChanJobAdd, tags),
-			telemetry.NewViewCount("cds/hatchery/chan_job_pop_count", metrics.ChanJobPop, tags),
+			telemetry.NewViewCount("cds/hatchery/chan_v1_job_add_count", metrics.ChanV1JobAdd, tags),
+			telemetry.NewViewCount("cds/hatchery/chan_v2_job_add_count", metrics.ChanV2JobAdd, tags),
+			telemetry.NewViewCount("cds/hatchery/chan_worker_starter_job_pop", metrics.ChanWorkerStarterPop, tags),
 			telemetry.NewViewCount("cds/hatchery/job_received_in_queue_polling_ws_v1_count", metrics.JobReceivedInQueuePollingWSv1, tags),
 			telemetry.NewViewCount("cds/hatchery/job_received_in_queue_polling_ws_v2_count", metrics.JobReceivedInQueuePollingWSv2, tags),
 			telemetry.NewViewLast("cds/hatchery/pending_workers", metrics.PendingWorkers, tags),

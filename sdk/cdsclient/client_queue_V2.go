@@ -143,7 +143,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 					continue
 				}
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
-				telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
+				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- *j
 			}
 		case <-jobsTicker.C:
@@ -180,7 +180,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				max = len(queueFiltered)
 			}
 			for i := 0; i < max; i++ {
-				telemetry.Record(ctx, hatcheryMetrics.ChanJobAdd, 1)
+				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- queueFiltered[i]
 			}
 		}
