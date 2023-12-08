@@ -120,7 +120,14 @@ func Create(ctx context.Context, h Interface) error {
 			ms = append(ms, cdsclient.Region(regions...))
 		}
 
-		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, 20*time.Second, ms...); err != nil {
+		filters := []sdk.WebsocketFilter{
+			{
+				HatcheryType: modelType,
+				Region:       region,
+				Type:         sdk.WebsocketFilterTypeQueue,
+			},
+		}
+		if err := h.CDSClient().QueuePolling(ctx, h.GetGoRoutines(), wjobs, errs, filters, 20*time.Second, ms...); err != nil {
 			log.Error(ctx, "Queues polling stopped: %v", err)
 		}
 	})

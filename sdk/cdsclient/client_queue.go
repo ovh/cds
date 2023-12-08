@@ -42,7 +42,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...RequestModifier) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -51,14 +51,12 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, j
 	// This goroutine call the SSE route
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
+
 	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
 		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, errs)
 		cancel()
 	})
-	chanMessageToSend <- []sdk.WebsocketFilter{{
-		Type: sdk.WebsocketFilterTypeQueue,
-	}}
-
+	chanMessageToSend <- filters
 	for {
 		select {
 		case <-ctx.Done():

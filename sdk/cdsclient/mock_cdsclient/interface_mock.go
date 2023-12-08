@@ -4120,9 +4120,9 @@ func (mr *MockQueueClientMockRecorder) QueueJobTag(ctx, jobID, tags interface{})
 }
 
 // QueuePolling mocks base method.
-func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, goRoutines, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -4132,9 +4132,9 @@ func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRo
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), varargs...)
 }
 
@@ -8892,9 +8892,9 @@ func (mr *MockInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interface{}) *
 }
 
 // QueuePolling mocks base method.
-func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, goRoutines, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -8904,9 +8904,9 @@ func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRout
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), varargs...)
 }
 
@@ -11890,9 +11890,9 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interfac
 }
 
 // QueuePolling mocks base method.
-func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, goRoutines, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -11902,9 +11902,9 @@ func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), varargs...)
 }
 
