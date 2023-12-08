@@ -163,13 +163,9 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 		if isHatchery && event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
 
 			var hatcheryType string
-			var region string
 			for _, f := range c.filters {
 				if f.HatcheryType != "" {
 					hatcheryType = f.HatcheryType
-				}
-				if f.Region != "" {
-					region = f.Region
 				}
 			}
 			if event.ModelType != "" && event.ModelType != hatcheryType {
@@ -181,7 +177,14 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 				ignoreJobWithNoRegion = *c.AuthConsumer.AuthConsumerUser.Service.IgnoreJobWithNoRegion
 			}
 
-			if event.Region != region && (event.Region != "" || ignoreJobWithNoRegion) {
+			var region = ""
+			if c.AuthConsumer.AuthConsumerUser.Service.Region != nil {
+				region = *c.AuthConsumer.AuthConsumerUser.Service.Region
+			}
+
+			regCond := event.Region == region || (event.Region == "" && !ignoreJobWithNoRegion)
+
+			if !regCond {
 				return false, nil
 			}
 

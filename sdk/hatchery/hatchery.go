@@ -119,7 +119,6 @@ func Create(ctx context.Context, h Interface) error {
 		filters := []sdk.WebsocketFilter{
 			{
 				HatcheryType: modelType,
-				Region:       region,
 				Type:         sdk.WebsocketFilterTypeQueue,
 			},
 		}
