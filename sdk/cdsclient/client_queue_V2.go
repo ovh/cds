@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rockbears/log"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"

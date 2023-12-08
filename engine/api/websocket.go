@@ -197,7 +197,6 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 		if err != nil {
 			return false, err
 		}
-		log.Error(ctx, ">>>> %v", perms.Level(event.WorkflowName) >= sdk.PermissionRead)
 		return perms.Level(event.WorkflowName) >= sdk.PermissionRead, nil
 	}
 
