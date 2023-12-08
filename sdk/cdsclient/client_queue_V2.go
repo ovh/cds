@@ -9,6 +9,8 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 )
 
 func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jobRunID string, stepsStatus sdk.JobStepsStatus) error {
@@ -105,7 +107,7 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -128,6 +130,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			if jobs == nil {
 				continue
 			}
+			telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv2, 1)
 			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Event.Region, wsEvent.Event.JobRunID)
 			// Do not log the error if the job does not exist
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -139,13 +142,16 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			}
 			// push the job in the channel
 			if j.Status == sdk.StatusWaiting {
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(wsEvent.Event.JobRunID) {
+					log.Debug(ctx, "skipping job %s", wsEvent.Event.JobRunID)
+					continue
+				}
+				lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
+				log.Debug(ctx, "v2_len_queue: %v", lenqueue)
+				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- *j
 			}
 		case <-jobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("jobsTicker")
-			}
-
 			if jobs == nil {
 				continue
 			}
@@ -161,18 +167,28 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				continue
 			}
 			cancel()
-			if c.config.Verbose {
-				fmt.Println("Jobs Queue size: ", len(queue))
+
+			queueFiltered := []sdk.V2WorkflowRunJob{}
+			var lenqueue int
+			for _, job := range queue {
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(job.ID) {
+					log.Debug(ctx, "skipping job %s", job.ID)
+					continue
+				}
+				lenqueue = pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
+				queueFiltered = append(queueFiltered, job)
 			}
+
+			log.Debug(ctx, "v2_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), lenqueue)
 
 			max := cap(jobs) * 2
-			if len(queue) < max {
-				max = len(queue)
+			if len(queueFiltered) < max {
+				max = len(queueFiltered)
 			}
 			for i := 0; i < max; i++ {
-				jobs <- queue[i]
+				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
+				jobs <- queueFiltered[i]
 			}
-
 		}
 	}
 }

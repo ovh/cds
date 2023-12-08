@@ -2820,9 +2820,9 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regio
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, region, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -2832,9 +2832,9 @@ func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region s
 }
 
 // V2QueuePolling indicates an expected call of V2QueuePolling.
-func (mr *MockHatcheryServiceClientMockRecorder) V2QueuePolling(ctx, region, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, region, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueuePolling), varargs...)
 }
 
@@ -3934,9 +3934,9 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, i
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, region, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -3946,9 +3946,9 @@ func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, g
 }
 
 // V2QueuePolling indicates an expected call of V2QueuePolling.
-func (mr *MockV2QueueClientMockRecorder) V2QueuePolling(ctx, region, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockV2QueueClientMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, region, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueuePolling), varargs...)
 }
 
@@ -4120,9 +4120,9 @@ func (mr *MockQueueClientMockRecorder) QueueJobTag(ctx, jobID, tags interface{})
 }
 
 // QueuePolling mocks base method.
-func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, filters, delay}
+	varargs := []interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -4132,9 +4132,9 @@ func (m *MockQueueClient) QueuePolling(ctx context.Context, goRoutines *sdk.GoRo
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockQueueClientMockRecorder) QueuePolling(ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, filters, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockQueueClient)(nil).QueuePolling), varargs...)
 }
 
@@ -8892,9 +8892,9 @@ func (mr *MockInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interface{}) *
 }
 
 // QueuePolling mocks base method.
-func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, filters, delay}
+	varargs := []interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -8904,9 +8904,9 @@ func (m *MockInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRout
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) QueuePolling(ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, filters, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockInterface)(nil).QueuePolling), varargs...)
 }
 
@@ -9901,9 +9901,9 @@ func (mr *MockInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, s
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, region, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -9913,9 +9913,9 @@ func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, goRou
 }
 
 // V2QueuePolling indicates an expected call of V2QueuePolling.
-func (mr *MockInterfaceMockRecorder) V2QueuePolling(ctx, region, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, region, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockInterface)(nil).V2QueuePolling), varargs...)
 }
 
@@ -11458,9 +11458,9 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionNam
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, region, goRoutines, jobs, errs, delay}
+	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -11470,9 +11470,9 @@ func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region strin
 }
 
 // V2QueuePolling indicates an expected call of V2QueuePolling.
-func (mr *MockV2WorkerInterfaceMockRecorder) V2QueuePolling(ctx, region, goRoutines, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueuePolling(ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, region, goRoutines, jobs, errs, delay}, ms...)
+	varargs := append([]interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueuePolling", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueuePolling), varargs...)
 }
 
@@ -11890,9 +11890,9 @@ func (mr *MockWorkerInterfaceMockRecorder) QueueJobTag(ctx, jobID, tags interfac
 }
 
 // QueuePolling mocks base method.
-func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, goRoutines, jobs, errs, filters, delay}
+	varargs := []interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}
 	for _, a := range ms {
 		varargs = append(varargs, a)
 	}
@@ -11902,9 +11902,9 @@ func (m *MockWorkerInterface) QueuePolling(ctx context.Context, goRoutines *sdk.
 }
 
 // QueuePolling indicates an expected call of QueuePolling.
-func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
+func (mr *MockWorkerInterfaceMockRecorder) QueuePolling(ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay interface{}, ms ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, goRoutines, jobs, errs, filters, delay}, ms...)
+	varargs := append([]interface{}{ctx, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, filters, delay}, ms...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueuePolling", reflect.TypeOf((*MockWorkerInterface)(nil).QueuePolling), varargs...)
 }
 

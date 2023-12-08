@@ -109,6 +109,20 @@ func (mr *MockInterfaceMockRecorder) GetGoRoutines() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterface)(nil).GetGoRoutines))
 }
 
+// GetMapPendingWorkerCreation mocks base method.
+func (m *MockInterface) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMapPendingWorkerCreation")
+	ret0, _ := ret[0].(*sdk.HatcheryPendingWorkerCreation)
+	return ret0
+}
+
+// GetMapPendingWorkerCreation indicates an expected call of GetMapPendingWorkerCreation.
+func (mr *MockInterfaceMockRecorder) GetMapPendingWorkerCreation() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMapPendingWorkerCreation", reflect.TypeOf((*MockInterface)(nil).GetMapPendingWorkerCreation))
+}
+
 // GetPrivateKey mocks base method.
 func (m *MockInterface) GetPrivateKey() *rsa.PrivateKey {
 	m.ctrl.T.Helper()
@@ -327,6 +341,20 @@ func (m *MockInterfaceWithModels) GetGoRoutines() *sdk.GoRoutines {
 func (mr *MockInterfaceWithModelsMockRecorder) GetGoRoutines() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoRoutines", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetGoRoutines))
+}
+
+// GetMapPendingWorkerCreation mocks base method.
+func (m *MockInterfaceWithModels) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMapPendingWorkerCreation")
+	ret0, _ := ret[0].(*sdk.HatcheryPendingWorkerCreation)
+	return ret0
+}
+
+// GetMapPendingWorkerCreation indicates an expected call of GetMapPendingWorkerCreation.
+func (mr *MockInterfaceWithModelsMockRecorder) GetMapPendingWorkerCreation() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMapPendingWorkerCreation", reflect.TypeOf((*MockInterfaceWithModels)(nil).GetMapPendingWorkerCreation))
 }
 
 // GetPrivateKey mocks base method.

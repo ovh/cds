@@ -219,7 +219,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
 				if err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "Event.DequeueEvent> cannot get broker %q for project %q and user %q : %v", projInt.Config["broker url"].Value, e.ProjectKey, projInt.Config["username"].Value, err)
+					log.Error(ctx, "Event.DequeueEvent> cannot get broker %q for project %q and user %q - eventIntegrationID: %d: %v", projInt.Config["broker url"].Value, e.ProjectKey, projInt.Config["username"].Value, eventIntegrationID, err)
 					continue
 				}
 				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {

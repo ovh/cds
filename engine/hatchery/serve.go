@@ -32,6 +32,7 @@ type Common struct {
 	Clientv2                      cdsclient.HatcheryServiceClient
 	mapServiceNextLineNumberMutex sync.Mutex
 	mapServiceNextLineNumber      map[string]int64
+	mapPendingWorkerCreation      *sdk.HatcheryPendingWorkerCreation
 }
 
 func (c *Common) MaxHeartbeat() int {
@@ -63,6 +64,14 @@ func (c *Common) GetRegion() string {
 // GetGoRoutines returns the goRoutines manager
 func (c *Common) GetGoRoutines() *sdk.GoRoutines {
 	return c.GoRoutines
+}
+
+func (c *Common) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreation {
+	if c.mapPendingWorkerCreation == nil {
+		c.mapPendingWorkerCreation = &sdk.HatcheryPendingWorkerCreation{}
+		c.mapPendingWorkerCreation.Init()
+	}
+	return c.mapPendingWorkerCreation
 }
 
 // CommonServe start the HatcheryLocal server
