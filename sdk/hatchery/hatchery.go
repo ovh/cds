@@ -267,11 +267,13 @@ func Create(ctx context.Context, h Interface) error {
 					modelPath := strings.Split(jobModel, "/")
 					if len(modelPath) >= 5 {
 						if h.CDSClientV2() == nil {
+							endTrace("no clientv2", strconv.FormatInt(j.ID, 10))
 							continue
 						}
 						chosenModel, err = canRunJobWithModelV2(currentCtx, hWithModels, workerRequest, jobModel)
 						if err != nil {
 							log.Error(currentCtx, "%v", err)
+							endTrace("err on chosenModel", strconv.FormatInt(j.ID, 10))
 							continue
 						}
 					} else {
@@ -310,6 +312,7 @@ func Create(ctx context.Context, h Interface) error {
 					// Interpolate model secrets
 					if err := ModelInterpolateSecrets(hWithModels, chosenModel); err != nil {
 						log.Error(currentCtx, "%v", err)
+						endTrace("error on secret interpolation", strconv.FormatInt(j.ID, 10))
 						continue
 					}
 				}
@@ -365,7 +368,10 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 		telemetry.Tag(telemetry.TagProjectKey, j.ProjectKey),
 		telemetry.Tag(telemetry.TagJob, j.JobID))
 
-	endTrace := func(reason string) {
+	endTrace := func(reason string, jobID string) {
+		if jobID != "" {
+			h.GetMapPendingWorkerCreation().RemoveJobFromPendingWorkerCreation(jobID)
+		}
 		if cancel != nil {
 			cancel()
 		}
@@ -381,7 +387,7 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 	}
 	go func() {
 		<-ctx.Done()
-		endTrace(ctx.Err().Error())
+		endTrace(ctx.Err().Error(), "")
 	}()
 
 	fields := log.FieldValues(ctx)
@@ -397,7 +403,7 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 	//Check if hatchery is able to start a new worker
 	if !checkCapacities(ctx, h) {
 		log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
-		endTrace("no capacities")
+		endTrace("no capacities", j.JobID)
 	}
 
 	workerRequest := workerStarterRequest{
@@ -412,19 +418,19 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 	// Check at least one worker model can match
 	hWithModels, isWithModels := h.(InterfaceWithModels)
 	if isWithModels && j.Job.RunsOn == "" {
-		endTrace("no model")
+		endTrace("no model", j.JobID)
 		return nil
 	}
 
 	if hWithModels != nil {
 		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, j.Job.RunsOn)
 		if err != nil {
-			endTrace(fmt.Sprintf("%v", err.Error()))
+			endTrace(fmt.Sprintf("%v", err.Error()), j.JobID)
 			return err
 		}
 		workerRequest.model = *workerModel
 		if !h.CanSpawn(ctx, *workerModel, j.ID, nil) {
-			endTrace("cannot spawn")
+			endTrace("cannot spawn", j.JobID)
 			return nil
 		}
 	}
@@ -444,7 +450,7 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 				return err
 			}
 			log.Info(ctx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure)
-			endTrace("maximum attempts")
+			endTrace("maximum attempts", j.JobID)
 			return nil
 		}
 	}
