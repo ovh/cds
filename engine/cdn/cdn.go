@@ -121,7 +121,7 @@ func (s *Service) Start(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing database connection...")
-	// Intialize database
+	// Initialize database
 	s.DBConnectionFactory, err = database.Init(ctx, s.Cfg.Database)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to database")

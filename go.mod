@@ -86,7 +86,6 @@ require (
 	github.com/urfave/cli v1.20.0
 	github.com/vmware/go-nfs-client v0.0.0-20190605212624-d43b92724c1b
 	github.com/vmware/govmomi v0.23.0
-	github.com/whilp/git-urls v1.0.0
 	github.com/xanzy/go-gitlab v0.15.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yesnault/go-toml v0.0.0-20191205182532-f5ef6cee7945
