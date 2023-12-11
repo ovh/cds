@@ -190,7 +190,10 @@ func Create(ctx context.Context, h Interface) error {
 						)
 					}
 				}
-				endTrace := func(reason string) {
+				endTrace := func(reason string, jobID string) {
+					if jobID != "" {
+						h.GetMapPendingWorkerCreation().RemoveJobFromPendingWorkerCreation(jobID)
+					}
 					if currentCancel != nil {
 						currentCancel()
 					}
@@ -206,7 +209,7 @@ func Create(ctx context.Context, h Interface) error {
 				}
 				go func() {
 					<-currentCtx.Done()
-					endTrace(currentCtx.Err().Error())
+					endTrace(currentCtx.Err().Error(), "")
 				}()
 
 				stats.Record(currentCtx, GetMetrics().Jobs.M(1))
@@ -215,17 +218,17 @@ func Create(ctx context.Context, h Interface) error {
 					stats.Record(currentCtx, GetMetrics().JobsWebsocket.M(1))
 				}
 
-				//Check bookedBy current hatchery
+				// Check bookedBy current hatchery
 				if j.BookedBy.ID != 0 {
 					log.Debug(currentCtx, "hatchery> job %d is already booked", j.ID)
-					endTrace("booked by someone")
+					endTrace("booked by someone", strconv.FormatInt(j.ID, 10))
 					continue
 				}
 
 				//Check if hatchery is able to start a new worker
 				if !checkCapacities(currentCtx, h) {
 					log.Info(currentCtx, "hatchery %s is not able to provision new worker", h.Service().Name)
-					endTrace("no capacities")
+					endTrace("no capacities", strconv.FormatInt(j.ID, 10))
 					continue
 				}
 
@@ -283,7 +286,7 @@ func Create(ctx context.Context, h Interface) error {
 					// No model has been found, let's send a failing result
 					if chosenModel == nil {
 						log.Debug(currentCtx, "hatchery> no model")
-						endTrace("no model")
+						endTrace("no model", strconv.FormatInt(j.ID, 10))
 						continue
 					}
 					canTakeJob = true
@@ -296,7 +299,7 @@ func Create(ctx context.Context, h Interface) error {
 
 				if !canTakeJob {
 					log.Info(currentCtx, "hatchery %s is not able to run the job %d", h.Name(), j.ID)
-					endTrace("cannot run job")
+					endTrace("cannot run job", strconv.FormatInt(j.ID, 10))
 					continue
 				}
 
@@ -332,7 +335,7 @@ func Create(ctx context.Context, h Interface) error {
 							log.ErrorWithStackTrace(currentCtx, err)
 						}
 						log.Info(currentCtx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure)
-						endTrace("maximum attempts")
+						endTrace("maximum attempts", strconv.FormatInt(j.ID, 10))
 						continue
 					}
 				}

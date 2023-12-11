@@ -61,6 +61,7 @@ type HatcheryMetrics struct {
 	ChanV1JobAdd                  *stats.Int64Measure
 	ChanV2JobAdd                  *stats.Int64Measure
 	ChanWorkerStarterPop          *stats.Int64Measure
+	WorkerStarterRunning          *stats.Int64Measure
 	PendingWorkers                *stats.Int64Measure
 	RegisteringWorkers            *stats.Int64Measure
 	CheckingWorkers               *stats.Int64Measure

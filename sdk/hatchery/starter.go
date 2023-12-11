@@ -48,72 +48,77 @@ func startWorkerStarters(ctx context.Context, h Interface) chan<- workerStarterR
 func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-chan workerStarterRequest) {
 	for j := range jobs {
 		telemetry.Record(ctx, GetMetrics().ChanWorkerStarterPop, 1)
-		// Start a worker for a job
-		m := j.registerWorkerModel
-		if m == nil {
-			telemetry.Record(ctx, GetMetrics().SpawningWorkers, 1)
-			spawned := spawnWorkerForJob(j.ctx, h, j)
-			if spawned {
-				telemetry.Record(ctx, GetMetrics().SpawnedWorkers, 1)
-			} else {
-				telemetry.Record(ctx, GetMetrics().SpawningWorkersErrors, 1)
-			}
-			j.cancel() // call to EndTrace for observability
-			continue
-		}
-
-		// Start a worker for registering
-		log.Debug(ctx, "Spawning worker for register model %s", m.Name)
-		if atomic.LoadInt64(&nbWorkerToStart) > int64(h.Configuration().Provision.MaxConcurrentProvisioning) {
-			j.cancel() // call to EndTrace for observability
-			continue
-		}
-
-		workerName := namesgenerator.GenerateWorkerName(m.Name, "register")
-
-		atomic.AddInt64(&nbWorkerToStart, 1)
-		// increment nbRegisteringWorkerModels, but no decrement.
-		// this counter is reset with func workerRegister
-		atomic.AddInt64(&nbRegisteringWorkerModels, 1)
-		arg := SpawnArguments{
-			WorkerName:   workerName,
-			Model:        sdk.WorkerStarterWorkerModel{ModelV1: m},
-			RegisterOnly: true,
-			JobID:        "0",
-			HatcheryName: h.Service().Name,
-		}
-
-		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, arg.WorkerName)
-		log.Info(ctx, "starting worker %q from model %q (register:%v)", arg.WorkerName, m.Name, arg.RegisterOnly)
-
-		// Get a JWT to authentified the worker
-		jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
-		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			var spawnError = sdk.SpawnErrorForm{
-				Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
-			}
-			if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
-				log.Error(ctx, "workerStarter> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
-			}
-			j.cancel() // call to EndTrace for observability
-			continue
-		}
-		arg.WorkerToken = jwt
-
-		if err := h.SpawnWorker(j.ctx, arg); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Warn(ctx, "workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
-			var spawnError = sdk.SpawnErrorForm{
-				Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
-			}
-			if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
-				log.Error(ctx, "workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
-			}
-		}
-		atomic.AddInt64(&nbWorkerToStart, -1)
-		j.cancel() // call to EndTrace for observability
+		telemetry.Record(ctx, GetMetrics().WorkerStarterRunning, 1)
+		workerStarterRunning(ctx, h, workerNum, j)
+		telemetry.Record(ctx, GetMetrics().WorkerStarterRunning, -1)
 	}
+}
+
+func workerStarterRunning(ctx context.Context, h Interface, workerNum string, j workerStarterRequest) {
+	m := j.registerWorkerModel
+	if m == nil { // Start a worker for a job
+		telemetry.Record(ctx, GetMetrics().SpawningWorkers, 1)
+		spawned := spawnWorkerForJob(j.ctx, h, j)
+		if spawned {
+			telemetry.Record(ctx, GetMetrics().SpawnedWorkers, 1)
+		} else {
+			telemetry.Record(ctx, GetMetrics().SpawningWorkersErrors, 1)
+		}
+		j.cancel() // call to EndTrace for observability
+		return
+	}
+
+	// Start a worker for registering
+	log.Debug(ctx, "Spawning worker for register model %s", m.Name)
+	if atomic.LoadInt64(&nbWorkerToStart) > int64(h.Configuration().Provision.MaxConcurrentProvisioning) {
+		j.cancel() // call to EndTrace for observability
+		return
+	}
+
+	workerName := namesgenerator.GenerateWorkerName(m.Name, "register")
+
+	atomic.AddInt64(&nbWorkerToStart, 1)
+	// increment nbRegisteringWorkerModels, but no decrement.
+	// this counter is reset with func workerRegister
+	atomic.AddInt64(&nbRegisteringWorkerModels, 1)
+	arg := SpawnArguments{
+		WorkerName:   workerName,
+		Model:        sdk.WorkerStarterWorkerModel{ModelV1: m},
+		RegisterOnly: true,
+		JobID:        "0",
+		HatcheryName: h.Service().Name,
+	}
+
+	ctx = context.WithValue(ctx, cdslog.AuthWorkerName, arg.WorkerName)
+	log.Info(ctx, "starting worker %q from model %q (register:%v)", arg.WorkerName, m.Name, arg.RegisterOnly)
+
+	// Get a JWT to authentified the worker
+	jwt, err := NewWorkerToken(h.Service().Name, h.GetPrivateKey(), time.Now().Add(1*time.Hour), arg)
+	if err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		var spawnError = sdk.SpawnErrorForm{
+			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
+		}
+		if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
+			log.Error(ctx, "workerStarter> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
+		}
+		j.cancel() // call to EndTrace for observability
+		return
+	}
+	arg.WorkerToken = jwt
+
+	if err := h.SpawnWorker(j.ctx, arg); err != nil {
+		ctx = sdk.ContextWithStacktrace(ctx, err)
+		log.Warn(ctx, "workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
+		var spawnError = sdk.SpawnErrorForm{
+			Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
+		}
+		if err := h.CDSClient().WorkerModelSpawnError(m.Group.Name, m.Name, spawnError); err != nil {
+			log.Error(ctx, "workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
+		}
+	}
+	atomic.AddInt64(&nbWorkerToStart, -1)
+	j.cancel() // call to EndTrace for observability
 }
 
 func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
