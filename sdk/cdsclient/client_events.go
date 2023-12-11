@@ -46,5 +46,6 @@ func (c *client) WebsocketEventsListen(ctx context.Context, goRoutines *sdk.GoRo
 			chanErrorReceived <- newError(fmt.Errorf("websocket error: %v", err))
 		}
 		time.Sleep(1 * time.Second)
+
 	}
 }

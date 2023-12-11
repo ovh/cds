@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/gorilla/websocket"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -53,10 +56,29 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 	// This goroutine call the SSE route
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
+	chanWsError := make(chan error, 10)
 
 	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
-		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, errs)
+		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, chanWsError)
 		cancel()
+	})
+	goRoutines.Exec(ctx, "WebsocketError", func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					log.ErrorWithStackTrace(ctx, ctx.Err())
+				}
+			case e := <-chanWsError:
+				if strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseGoingAway)) || strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseAbnormalClosure)) {
+					log.ErrorWithStackTrace(ctx, e)
+					log.Debug(ctx, "QueuePolling: send websocket filter")
+					chanMessageToSend <- filters
+					continue
+				}
+				errs <- e
+			}
+		}
 	})
 	chanMessageToSend <- filters
 	for {

@@ -172,7 +172,7 @@ func (c *websocketClientData) checkEventPermission(ctx context.Context, db gorp.
 				return false, nil
 			}
 
-			ignoreJobWithNoRegion := true
+			ignoreJobWithNoRegion := false
 			if c.AuthConsumer.AuthConsumerUser.Service.IgnoreJobWithNoRegion != nil {
 				ignoreJobWithNoRegion = *c.AuthConsumer.AuthConsumerUser.Service.IgnoreJobWithNoRegion
 			}
