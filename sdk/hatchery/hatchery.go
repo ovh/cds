@@ -157,6 +157,7 @@ func Create(ctx context.Context, h Interface) error {
 				if j.ID == 0 {
 					continue
 				}
+
 				currentCtx, currentCancel := context.WithTimeout(context.Background(), 10*time.Minute)
 				currentCtx = telemetry.ContextWithTag(currentCtx,
 					telemetry.TagServiceName, h.Name(),
@@ -227,7 +228,7 @@ func Create(ctx context.Context, h Interface) error {
 
 				//Check if hatchery is able to start a new worker
 				if !checkCapacities(currentCtx, h) {
-					log.Info(currentCtx, "hatchery %s is not able to provision new worker", h.Service().Name)
+					log.Info(currentCtx, "hatchery %s is not able to provision new worker for job %v", h.Service().Name)
 					endTrace("no capacities", strconv.FormatInt(j.ID, 10))
 					continue
 				}
