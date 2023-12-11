@@ -48,9 +48,7 @@ func startWorkerStarters(ctx context.Context, h Interface) chan<- workerStarterR
 func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-chan workerStarterRequest) {
 	for j := range jobs {
 		telemetry.Record(ctx, GetMetrics().ChanWorkerStarterPop, 1)
-		telemetry.Record(ctx, GetMetrics().WorkerStarterRunning, 1)
 		workerStarterRunning(ctx, h, workerNum, j)
-		telemetry.Record(ctx, GetMetrics().WorkerStarterRunning, -1)
 	}
 }
 
