@@ -30,6 +30,8 @@ type Event struct {
 	Status              string           `json:"status,omitempty"`
 	Tags                []WorkflowRunTag `json:"tag,omitempty"`
 	EventIntegrationsID []int64          `json:"event_integrations_id"`
+	Region              string           `json:"region,omitempty"`
+	ModelType           string           `json:"model_type,omitempty"`
 }
 
 // EventFilter represents filters when getting events
