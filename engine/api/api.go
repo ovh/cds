@@ -506,7 +506,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return sdk.WrapError(err, "unable to initialize the JWT Layer")
 	}
 
-	// Intialize service mesh httpclient
+	// Initialize service mesh httpclient
 	if a.Config.InternalServiceMesh.RequestSecondsTimeout == 0 {
 		a.Config.InternalServiceMesh.RequestSecondsTimeout = 60
 	}
@@ -583,7 +583,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	log.Info(ctx, "Initializing database connection...")
-	//Intialize database
+	// Initialize database
 	a.DBConnectionFactory, err = database.Init(ctx, a.Config.Database)
 	if err != nil {
 		return fmt.Errorf("cannot connect to database: %v", err)
@@ -647,9 +647,9 @@ func (a *API) Serve(ctx context.Context) error {
 		return migrate.MigrateRunJobSignature(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 	}})
 
-	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
-	if errF != nil {
-		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
+	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
+	if err != nil {
+		return sdk.WrapError(err, "Unable to check if it's a fresh installation of CDS")
 	}
 
 	if isFreshInstall {
@@ -658,9 +658,9 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	} else {
 		if sdk.VersionCurrent().Version != "" && !strings.HasPrefix(sdk.VersionCurrent().Version, "snapshot") {
-			major, minor, _, errV := version.MaxVersion(a.mustDB())
-			if errV != nil {
-				return sdk.WrapError(errV, "Cannot fetch max version of CDS already started")
+			major, minor, _, err := version.MaxVersion(a.mustDB())
+			if err != nil {
+				return sdk.WrapError(err, "Cannot fetch max version of CDS already started")
 			}
 			if major != 0 || minor != 0 {
 				minSemverCompatible, _ := semver.Parse(migrate.MinCompatibleRelease)
@@ -696,7 +696,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error(ctx, "unable to init api metrics: %v", err)
 	}
 
-	// Intialize notification package
+	// Initialize notification package
 	notification.Init(a.Config.URL.UI)
 
 	log.Info(ctx, "Initializing Authentication drivers...")

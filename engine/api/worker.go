@@ -202,7 +202,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 		if err := DisableWorker(ctx, api.mustDB(), id, api.Config.Log.StepMaxSize); err != nil {
 			cause := sdk.Cause(err)
 			if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
-				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
+				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exist", id)
 			}
 			return sdk.WrapError(err, "cannot update worker status")
 		}
@@ -290,7 +290,7 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize in
 	if err := worker.SetStatus(ctx, tx, id, sdk.StatusDisabled); err != nil {
 		cause := sdk.Cause(err)
 		if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
-			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exists", id)
+			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exist", id)
 		}
 		return sdk.WrapError(err, "cannot update worker status")
 	}

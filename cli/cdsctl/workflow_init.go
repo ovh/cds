@@ -13,7 +13,6 @@ import (
 
 	repo "github.com/fsamin/go-repo"
 	"github.com/rockbears/log"
-	giturls "github.com/whilp/git-urls"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -101,7 +100,6 @@ func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, e
 func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, error) {
 	switch len(proj.VCSServers) {
 	case 0:
-		//TODO ask to link the project
 		return "", cli.NewError("your CDS project must be linked to a repositories manager to perform this operation")
 	case 1:
 		return proj.VCSServers[0].Name, nil
@@ -110,12 +108,10 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 		if err != nil {
 			return "", cli.WrapError(err, "Unable to get remote URL")
 		}
-
-		originURL, err := giturls.Parse(fetchURL)
-		if err != nil {
-			return "", cli.WrapError(err, "Unable to parse remote URL")
+		if !strings.HasPrefix(fetchURL, "https://") && !strings.HasPrefix(fetchURL, "ssh://") {
+			return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
 		}
-		originHost := strings.TrimSpace(strings.SplitN(originURL.Host, ":", 2)[0])
+		originHost := strings.TrimSpace(strings.SplitN(fetchURL, ":", 2)[0])
 
 		vcsConf, err := client.VCSConfiguration()
 		if err != nil {

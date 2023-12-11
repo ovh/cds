@@ -21,7 +21,7 @@ func (g gorpLogger) Printf(format string, v ...interface{}) {
 	log.Debug(context.Background(), format, v...)
 }
 
-// DBMap returns a propor intialized gorp.DBMap pointer
+// DBMap returns a proper Initialized gorp.DBMap pointer
 func DBMap(m *gorpmapper.Mapper, db *sql.DB) *gorp.DbMap {
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}, TypeConverter: new(TypeConverter)}
 
