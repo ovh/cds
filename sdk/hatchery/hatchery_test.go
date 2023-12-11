@@ -153,7 +153,7 @@ func TestCreate(t *testing.T) {
 
 	m := &sdk.HatcheryPendingWorkerCreation{}
 	m.Init()
-	mockHatchery.EXPECT().GetMapPendingWorkerCreation().Return(m).Times(3) // Thred calls: call to QueuePolling and two RemoveJobFromPendingWorkerCreation() in spawnWorkerForJob
+	mockHatchery.EXPECT().GetMapPendingWorkerCreation().Return(m).Times(5) // Five calls: call to QueuePolling, two RemoveJobFromPendingWorkerCreation() in spawnWorkerForJob, 2 in main.routine endTrace
 
 	// This calls are expected for each job received in the channel
 	mockCDSClient.EXPECT().WorkerList(gomock.Any()).Return(nil, nil).AnyTimes()
