@@ -3,8 +3,10 @@ package websocket
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/rockbears/log"
@@ -17,12 +19,16 @@ var Upgrader = websocket.Upgrader{
 }
 
 func NewServer() *Server {
-	return &Server{clients: make(map[string]Client)}
+	return &Server{
+		clients: make(map[string]Client),
+		rand:    rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
 }
 
 type Server struct {
 	mutex   sync.RWMutex
 	clients map[string]Client
+	rand    *rand.Rand
 }
 
 func (s *Server) AddClient(c Client) {
@@ -51,6 +57,7 @@ func (s *Server) ClientIDs() []string {
 	for k := range s.clients {
 		ids = append(ids, k)
 	}
+	s.rand.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
 	return ids
 }
 
