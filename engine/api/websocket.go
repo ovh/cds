@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
@@ -296,6 +297,7 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 	}
 
 	clientIDs := a.WSServer.server.ClientIDs()
+	rand.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
 
 	for _, id := range clientIDs {
 		// Copy idx for goroutine
