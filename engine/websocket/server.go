@@ -17,7 +17,9 @@ var Upgrader = websocket.Upgrader{
 }
 
 func NewServer() *Server {
-	return &Server{clients: make(map[string]Client)}
+	return &Server{
+		clients: make(map[string]Client),
+	}
 }
 
 type Server struct {

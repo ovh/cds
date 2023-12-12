@@ -296,10 +296,9 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 		return
 	}
 
-	// Randomize the order of client to prevent the old client to always received new events in priority
 	clientIDs := a.WSServer.server.ClientIDs()
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	r.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
+	// Randomize the order of client to prevent the old client to always received new events in priority
+	rand.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
 
 	for _, id := range clientIDs {
 		// Copy idx for goroutine
