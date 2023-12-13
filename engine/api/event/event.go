@@ -215,6 +215,10 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 					continue
 				}
 
+				if !projInt.Model.Event {
+					continue
+				}
+
 				kafkaCfg := getKafkaConfig(projInt.Config)
 				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
 				if err != nil {
