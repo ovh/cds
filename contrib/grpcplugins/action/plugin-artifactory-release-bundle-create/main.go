@@ -43,11 +43,10 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) PrepareSpecFiles(ctx cont
 	var content = []byte(specification)
 	var specFiles speccore.SpecFiles
 	if err := yaml.Unmarshal(content, &specFiles); err != nil {
-		return nil, errors.Errorf("invalid given spec files: %v", err)
+		return nil, errors.Wrapf(err, "invalid given spec files")
 	}
 
-	err := spec.ValidateSpec(specFiles.Files, true, true, false)
-	if err != nil {
+	if err := spec.ValidateSpec(specFiles.Files, false, true, false); err != nil {
 		return nil, err
 	}
 
