@@ -11356,6 +11356,21 @@ func (mr *MockV2WorkerInterfaceMockRecorder) PluginsList() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsList", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginsList))
 }
 
+// ProjectIntegrationWorkerHookGet mocks base method.
+func (m *MockV2WorkerInterface) ProjectIntegrationWorkerHookGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectIntegrationWorkerHookGet", projectKey, integrationName)
+	ret0, _ := ret[0].(*sdk.WorkerHookProjectIntegrationModel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectIntegrationWorkerHookGet indicates an expected call of ProjectIntegrationWorkerHookGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationWorkerHookGet(projectKey, integrationName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHookGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationWorkerHookGet), projectKey, integrationName)
+}
+
 // V2QueueGetJobRun mocks base method.
 func (m *MockV2WorkerInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error) {
 	m.ctrl.T.Helper()

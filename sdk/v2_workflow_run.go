@@ -53,21 +53,10 @@ type V2WorkflowRun struct {
 }
 
 type WorkflowRunContext struct {
-	CDS          CDSContext        `json:"cds,omitempty"`
-	Git          GitContext        `json:"git,omitempty"`
-	Vars         map[string]string `json:"vars,omitempty"`
-	Integrations map[string]string `json:"integrations,omitempty"`
-	Env          map[string]string `json:"env,omitempty"`
-}
-
-type WorkflowRunJobsContext struct {
-	WorkflowRunContext
-	Jobs    JobsResultContext      `json:"jobs"`
-	Needs   NeedsContext           `json:"needs"`
-	Inputs  map[string]interface{} `json:"inputs"`
-	Steps   StepsContext           `json:"steps"`
-	Secrets map[string]string      `json:"secrets"`
-	Matrix  map[string]string      `json:"matrix"`
+	CDS  CDSContext        `json:"cds,omitempty"`
+	Git  GitContext        `json:"git,omitempty"`
+	Vars map[string]string `json:"vars,omitempty"`
+	Env  map[string]string `json:"env,omitempty"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -84,6 +73,17 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), m), "cannot unmarshal WorkflowRunContext")
+}
+
+type WorkflowRunJobsContext struct {
+	WorkflowRunContext
+	Jobs         JobsResultContext       `json:"jobs"`
+	Needs        NeedsContext            `json:"needs"`
+	Inputs       map[string]interface{}  `json:"inputs"`
+	Steps        StepsContext            `json:"steps"`
+	Secrets      map[string]string       `json:"secrets"`
+	Matrix       map[string]string       `json:"matrix"`
+	Integrations *JobIntegrationsContext `json:"integrations,omitempty"`
 }
 
 type V2WorkflowRunData struct {
@@ -166,58 +166,44 @@ type WebHookTrigger struct {
 }
 
 type V2WorkflowRunJob struct {
-	ID            string                        `json:"id" db:"id"`
-	JobID         string                        `json:"job_id" db:"job_id" cli:"job_id"`
-	WorkflowRunID string                        `json:"workflow_run_id" db:"workflow_run_id"`
-	ProjectKey    string                        `json:"project_key" db:"project_key"`
-	WorkflowName  string                        `json:"workflow_name" db:"workflow_name"`
-	RunNumber     int64                         `json:"run_number" db:"run_number"`
-	RunAttempt    int64                         `json:"run_attempt" db:"run_attempt"`
-	Status        string                        `json:"status" db:"status" cli:"status"`
-	Queued        time.Time                     `json:"queued" db:"queued"`
-	Scheduled     time.Time                     `json:"scheduled" db:"scheduled"`
-	Started       time.Time                     `json:"started" db:"started"`
-	Ended         time.Time                     `json:"ended" db:"ended"`
-	Job           V2Job                         `json:"job" db:"job"`
-	WorkerID      string                        `json:"worker_id,omitempty" db:"worker_id"`
-	WorkerName    string                        `json:"worker_name" db:"worker_name"`
-	HatcheryName  string                        `json:"hatchery_name" db:"hatchery_name"`
-	StepsStatus   JobStepsStatus                `json:"steps_status" db:"steps_status"`
-	UserID        string                        `json:"user_id" db:"user_id"`
-	Username      string                        `json:"username" db:"username"`
-	Region        string                        `json:"region,omitempty" db:"region"`
-	ModelType     string                        `json:"model_type,omitempty" db:"model_type"`
-	Matrix        JobMatrix                     `json:"matrix,omitempty" db:"matrix"`
-	Integrations  *V2WorkflowRunJobIntegrations `json:"integrations,omitempty" db:"integrations"`
+	ID            string         `json:"id" db:"id"`
+	JobID         string         `json:"job_id" db:"job_id" cli:"job_id"`
+	WorkflowRunID string         `json:"workflow_run_id" db:"workflow_run_id"`
+	ProjectKey    string         `json:"project_key" db:"project_key"`
+	WorkflowName  string         `json:"workflow_name" db:"workflow_name"`
+	RunNumber     int64          `json:"run_number" db:"run_number"`
+	RunAttempt    int64          `json:"run_attempt" db:"run_attempt"`
+	Status        string         `json:"status" db:"status" cli:"status"`
+	Queued        time.Time      `json:"queued" db:"queued"`
+	Scheduled     time.Time      `json:"scheduled" db:"scheduled"`
+	Started       time.Time      `json:"started" db:"started"`
+	Ended         time.Time      `json:"ended" db:"ended"`
+	Job           V2Job          `json:"job" db:"job"`
+	WorkerID      string         `json:"worker_id,omitempty" db:"worker_id"`
+	WorkerName    string         `json:"worker_name" db:"worker_name"`
+	HatcheryName  string         `json:"hatchery_name" db:"hatchery_name"`
+	StepsStatus   JobStepsStatus `json:"steps_status" db:"steps_status"`
+	UserID        string         `json:"user_id" db:"user_id"`
+	Username      string         `json:"username" db:"username"`
+	Region        string         `json:"region,omitempty" db:"region"`
+	ModelType     string         `json:"model_type,omitempty" db:"model_type"`
+	Matrix        JobMatrix      `json:"matrix,omitempty" db:"matrix"`
 }
 
-type V2WorkflowRunJobIntegrations struct {
+type JobIntegrationsContext struct {
 	ArtifactManager *ProjectIntegration `json:"artifact_manager,omitempty"`
 	Deployment      *ProjectIntegration `json:"deployment,omitempty"`
-	// Here will sits other integration (arsenal)
 }
 
-func (sc V2WorkflowRunJobIntegrations) Value() (driver.Value, error) {
-	// Blur secrets if any, before serialization
-	if sc.ArtifactManager != nil {
-		sc.ArtifactManager.Blur()
+func (c JobIntegrationsContext) All() []ProjectIntegration {
+	var res []ProjectIntegration
+	if c.ArtifactManager != nil {
+		res = append(res, *c.ArtifactManager)
 	}
-	if sc.Deployment != nil {
-		sc.Deployment.Blur()
+	if c.Deployment != nil {
+		res = append(res, *c.Deployment)
 	}
-	j, err := json.Marshal(sc)
-	return j, WrapError(err, "cannot marshal V2WorkflowRunJobIntegrations")
-}
-
-func (sc *V2WorkflowRunJobIntegrations) Scan(src interface{}) error {
-	if src == nil {
-		return nil
-	}
-	source, ok := src.(string)
-	if !ok {
-		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
-	}
-	return WrapError(JSONUnmarshal([]byte(source), sc), "cannot unmarshal V2WorkflowRunJobIntegrations")
+	return res
 }
 
 type JobStepsStatus map[string]JobStepStatus
