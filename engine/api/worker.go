@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -199,7 +200,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 		trackSudo(ctx, w)
 
-		if err := DisableWorker(ctx, api.mustDB(), id, api.Config.Log.StepMaxSize); err != nil {
+		if err := DisableWorker(ctx, api.mustDB(), api.Cache, id, api.Config.Log.StepMaxSize); err != nil {
 			cause := sdk.Cause(err)
 			if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exist", id)
@@ -230,7 +231,7 @@ func (api *API) postUnregisterWorkerHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 		wk := getUserConsumer(ctx).AuthConsumerUser.Worker
-		if err := DisableWorker(ctx, api.mustDB(), wk.ID, api.Config.Log.StepMaxSize); err != nil {
+		if err := DisableWorker(ctx, api.mustDB(), api.Cache, wk.ID, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WrapError(err, "cannot delete worker %s", wk.Name)
 		}
 		return nil
@@ -272,10 +273,10 @@ func (api *API) workerWaitingHandler() service.Handler {
 // the package workflow
 
 // DisableWorker disable a worker
-func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize int64) error {
-	tx, errb := db.Begin()
-	if errb != nil {
-		return fmt.Errorf("DisableWorker> Cannot start tx: %v", errb)
+func DisableWorker(ctx context.Context, db *gorp.DbMap, store cache.Store, id string, maxLogSize int64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("DisableWorker> Cannot start tx: %v", err)
 	}
 	defer tx.Rollback() // nolint
 
@@ -300,16 +301,16 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, id string, maxLogSize in
 	}
 
 	if st == sdk.StatusBuilding && jobID.Valid {
-		// Worker is awol while building !
-		// We need to restart this action
+		log.Info(ctx, "DisableWorker> set job %v to fail", jobID.Int64)
 		wNodeJob, err := workflow.LoadNodeJobRun(ctx, db, nil, jobID.Int64)
-		if err == nil && wNodeJob.Retry < 3 && !sdk.StatusIsTerminated(wNodeJob.Status) {
-			if err := workflow.RestartWorkflowNodeJob(context.TODO(), db, *wNodeJob, maxLogSize); err != nil {
-				log.Warn(ctx, "DisableWorker[%s]> Cannot restart workflow node run: %v", name, err)
-			} else {
-				log.Info(ctx, "DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
-			}
-			log.Info(ctx, "DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
+		if err != nil {
+			return sdk.WrapError(err, "DisableWorker> Cannot LoadNodeJobRun node run job %d", jobID.Int64)
+		}
+		if _, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, wNodeJob, sdk.StatusFail); err != nil {
+			return sdk.WrapError(err, "DisableWorker> Cannot update node run job %d", jobID.Int64)
+		}
+		if err := workflow.DeleteNodeJobRun(tx, jobID.Int64); err != nil {
+			return sdk.WrapError(err, "DisableWorker> Cannot delete node run job %d", jobID.Int64)
 		}
 	}
 	return nil
