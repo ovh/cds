@@ -407,6 +407,7 @@ type WorkflowV2Client interface {
 	WorkflowV2RunStatus(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64) (*sdk.V2WorkflowRun, error)
 	WorkflowV2RunJobs(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64) ([]sdk.V2WorkflowRunJob, error)
 	WorkflowV2RunJob(ctx context.Context, projKey, vcsId, repoId, wkfName, jobIdentifier string, runNumber int64) (*sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJobInfoList(ctx context.Context, projKey, vcsId, repoId, wkfName, jobIdentifier string, runNumber int64) ([]sdk.V2WorkflowRunJobInfo, error)
 	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64, jobName string) (sdk.CDNLogLinks, error)
 	WorkflowV2Stop(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64) error
 	WorkflowV2StopJob(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64, jobName string) error

@@ -282,9 +282,9 @@ type V2WorkflowRunJobInfo struct {
 	ID               string    `json:"id" db:"id"`
 	WorkflowRunID    string    `json:"workflow_run_id" db:"workflow_run_id"`
 	WorkflowRunJobID string    `json:"workflow_run_job_id" db:"workflow_run_job_id"`
-	IssuedAt         time.Time `json:"issued_at" db:"issued_at"`
-	Level            string    `json:"level" db:"level"`
-	Message          string    `json:"message" db:"message"`
+	IssuedAt         time.Time `json:"issued_at" db:"issued_at" cli:"date"`
+	Level            string    `json:"level" db:"level" cli:"level"`
+	Message          string    `json:"message" db:"message" cli:"message"`
 }
 
 const (

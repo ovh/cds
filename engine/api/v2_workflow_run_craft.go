@@ -203,7 +203,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 
 		if !strings.HasPrefix(j.RunsOn, "${{") {
-			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
+			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, jobID, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				return stopRun(ctx, api.mustDB(), run, sdk.V2WorkflowRunInfo{

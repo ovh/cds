@@ -112,3 +112,11 @@ func (c *client) WorkflowV2StopJob(ctx context.Context, projKey, vcsIdentifier, 
 	}
 	return nil
 }
+func (c *client) WorkflowV2RunJobInfoList(ctx context.Context, projKey, vcsId, repoId, wkfName, jobIdentifier string, runNumber int64) ([]sdk.V2WorkflowRunJobInfo, error) {
+	var infos []sdk.V2WorkflowRunJobInfo
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run/%d/jobs/%s/infos", projKey, url.PathEscape(vcsId), url.PathEscape(repoId), wkfName, runNumber, jobIdentifier)
+	if _, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &infos); err != nil {
+		return nil, err
+	}
+	return infos, nil
+}
