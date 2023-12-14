@@ -1,6 +1,7 @@
 <ng-container *ngIf="selectedRun">
     <div class="graph" [class.disableSelection]="resizing">
         <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="selectedRun"
+                          (onSelectJobGate)="selectJobGate($event)"
                           (onSelectJob)="selectJob($event)" #graph></app-stages-graph>
 
 

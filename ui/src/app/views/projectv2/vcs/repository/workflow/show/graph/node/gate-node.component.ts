@@ -48,6 +48,12 @@ export class ProjectV2WorkflowGateNodeComponent implements OnInit, OnDestroy {
         }
     }
 
+    onMouseClick(): void {
+        if (this.mouseCallback) {
+            this.mouseCallback('click', this.node);
+        }
+    }
+
     setHighlight(active: boolean): void {
         this.highlight = active;
         this._cd.markForCheck();

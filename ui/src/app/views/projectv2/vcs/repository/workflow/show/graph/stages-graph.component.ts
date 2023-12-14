@@ -5,7 +5,6 @@ import {
     Component,
     ComponentRef, ElementRef,
     EventEmitter,
-    HostListener,
     Input,
     OnDestroy,
     Output,
@@ -89,9 +88,9 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             });
             Object.keys(workflow["jobs"]).forEach(k => {
                 let job = workflow.jobs[k];
-                let graphNode = undefined;
+                let gateNode = undefined;
                 if (job?.gate && job.gate !== '') {
-                    graphNode = <GraphNode>{name: `${job.gate}-${k}`, type: GraphNodeTypeGate, gateChild: k}
+                    gateNode = <GraphNode>{name: `${job.gate}-${k}`, type: GraphNodeTypeGate, gateChild: k, gateName: `${job.gate}`}
                 }
                 if (matrixJobs.has(k)) {
                     matrixJobs.get(k).forEach(j => {
@@ -100,16 +99,16 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                             for (let i = 0; i < this.nodes.length; i++) {
                                 if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
                                     this.nodes[i].sub_graph.push(node);
-                                    if (graphNode) {
-                                        this.nodes[i].sub_graph.push(graphNode);
+                                    if (gateNode) {
+                                        this.nodes[i].sub_graph.push(gateNode);
                                     }
                                     break;
                                 }
                             }
                         } else {
                             this.nodes.push(node);
-                            if (graphNode) {
-                                this.nodes.push(graphNode);
+                            if (gateNode) {
+                                this.nodes.push(gateNode);
                             }
                         }
                     });
@@ -120,16 +119,16 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                         for (let i = 0; i < this.nodes.length; i++) {
                             if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
                                 this.nodes[i].sub_graph.push(node);
-                                if (graphNode) {
-                                    this.nodes[i].sub_graph.push(graphNode);
+                                if (gateNode) {
+                                    this.nodes[i].sub_graph.push(gateNode);
                                 }
                                 break;
                             }
                         }
                     } else {
                         this.nodes.push(node);
-                        if (graphNode) {
-                            this.nodes.push(graphNode);
+                        if (gateNode) {
+                            this.nodes.push(gateNode);
                         }
                     }
                 }
@@ -191,6 +190,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     }
 
     @Output() onSelectJob = new EventEmitter<string>();
+    @Output() onSelectJobGate = new EventEmitter<GraphNode>();
     @Output() onSelectJobRun = new EventEmitter<string>();
 
     direction: GraphDirection = GraphDirection.HORIZONTAL;
@@ -364,7 +364,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     createGateNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowGateNodeComponent> {
         const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowGateNodeComponent);
         componentRef.instance.node = node;
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -412,6 +412,9 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
 
     nodeJobMouseEvent(type: string, n: GraphNode) {
         if (type === 'click') {
+            if (n.gateName && n.gateName !== '') {
+                this.onSelectJobGate.emit(n);
+            }
             if (n.run) {
                 this.onSelectJob.emit(n.run.id);
             } else {
