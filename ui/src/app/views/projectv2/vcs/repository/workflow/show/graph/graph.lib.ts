@@ -5,8 +5,12 @@ import * as dagreD3 from 'dagre-d3';
 import {GraphNode} from "./graph.model";
 import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
 import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
+import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
 
-export type WorkflowNodeComponent = ProjectV2WorkflowForkJoinNodeComponent | ProjectV2WorkflowJobNodeComponent;
+export type WorkflowNodeComponent =
+    ProjectV2WorkflowForkJoinNodeComponent
+    | ProjectV2WorkflowJobNodeComponent
+    | ProjectV2WorkflowGateNodeComponent;
 
 export enum GraphDirection {
     HORIZONTAL = 'horizontal',
@@ -27,6 +31,14 @@ export class Node {
     key: string;
     width: number;
     height: number;
+    type: string;
+}
+
+export class Gate {
+    key: string;
+    width: number;
+    height: number;
+    child: string;
 }
 
 export class Edge {
@@ -45,6 +57,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
 
     nodesComponent = new Map<string, ComponentRef<T>>();
     nodes = new Array<Node>();
+    gates = new Array<Gate>();
     edges = new Array<Edge>();
     direction: string;
     zoom: d3.ZoomBehavior<Element, {}>;
@@ -260,6 +273,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                 class: n.key
             });
         });
+
+        this.gates.forEach(n => {
+            this.createGGate(`gate-${n.key}`, this.nodesComponent.get(`gate-${n.key}`), n.width, n.height, {
+                class: n.key
+            });
+        })
     }
 
     uniqueStrings(a: Array<string>): Array<string> {
@@ -398,6 +417,17 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             });
         });
 
+        // Gate edge
+        if (this.gates) {
+            this.gates.forEach( g => {
+                let e = <Edge>{from: `gate-${g.key}`, to: `node-${g.child}`};
+                let options = {};
+                options['class'] += ' ' + this.nodeStatusToColor(this.nodeStatus[e.from]);
+                options['style'] = 'stroke-width: 2px;';
+                e.options = options
+                this.createGEdge(e);
+            });
+        }
     }
 
     nodeStatusToColor(s: string): string {
@@ -419,7 +449,26 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         }
     }
 
-    createNode(key: string, componentRef: ComponentRef<T>, status: string,
+    createGate(graphNode: GraphNode, type: string, componentRef: ComponentRef<T>, status: string,
+               width: number = 40, height: number = 40): void {
+        let key = graphNode.name;
+        let child = graphNode.gateChild;
+        this.gates.push(<Gate>{key, width, height, child});
+        this.nodesComponent.set(`gate-${key}`, componentRef);
+    }
+
+    createGGate(name: string, componentRef: ComponentRef<T>, width: number, height: number, options: {}): void {
+        this.graph.setNode(name, <any>{
+            shape: 'customCircle',
+            label: () => componentRef.location.nativeElement,
+            labelStyle: `width: ${width}px;height: ${height}px;`,
+            width,
+            height,
+            ...options
+        });
+    }
+
+    createNode(key: string, type: string, componentRef: ComponentRef<T>, status: string,
                width: number = 130, height: number = 40): void {
         this.nodes.push(<Node>{key, width, height});
         this.nodesComponent.set(`node-${key}`, componentRef);
@@ -459,7 +508,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         });
     }
 
-    createEdge(from: string, to: string): void {
+    createEdge(from: string, to: string, opts?): void {
         this.edges.push(<Edge>{from, to});
     }
 

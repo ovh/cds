@@ -10,10 +10,11 @@ import {
     ViewContainerRef
 } from '@angular/core';
 import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {GraphNode} from "./graph.model";
+import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob} from "./graph.model";
 import {GraphDirection, WorkflowNodeComponent, WorkflowV2Graph} from "./graph.lib";
 import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
 import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
+import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
 
 @Component({
     selector: 'app-jobs-graph',
@@ -103,8 +104,15 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
         }
 
         this.nodes.forEach(n => {
-            this.graph.createNode(`${this.node.name}-${n.name}`, this.createJobNodeComponent(n),
-                n.run ? n.run.status : null);
+            switch (n.type) {
+                case GraphNodeTypeGate:
+                    this.graph.createNode(`${this.node.name}-${n.name}`, GraphNodeTypeGate, this.createGateNodeComponent(n),
+                        n.run ? n.run.status : null, 20, 20);
+                    break;
+                default:
+                    this.graph.createNode(`${this.node.name}-${n.name}`, GraphNodeTypeJob, this.createJobNodeComponent(n),
+                        n.run ? n.run.status : null);
+            }
         });
 
         this.nodes.forEach(n => {
@@ -121,6 +129,13 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
         this._cd.markForCheck();
     }
 
+    createGateNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowGateNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowGateNodeComponent);
+        componentRef.instance.node = node;
+        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.changeDetectorRef.detectChanges();
+        return componentRef;
+    }
     createJobNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowJobNodeComponent> {
         const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowJobNodeComponent);
         componentRef.instance.node = node;

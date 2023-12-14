@@ -73,7 +73,7 @@ func TestJobConditionSuccess(t *testing.T) {
 				If:    tt.condition,
 				Needs: tt.needs,
 			}
-			b, err := checkJobCondition(context.TODO(), "job4", sdk.WorkflowRunContext{}, jobsContext, allJobs)
+			b, err := checkJobCondition(context.TODO(), sdk.V2Workflow{}, "job4", sdk.WorkflowRunContext{}, jobsContext, allJobs)
 			require.NoError(t, err)
 			require.Equal(t, tt.result, b)
 		})

@@ -16,13 +16,14 @@ import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
 import {ProjectV2WorkflowJobsGraphComponent} from "./jobs-graph.component";
 import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
 import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
-import {GraphNode, GraphNodeTypeJob, GraphNodeTypeStage, JobRun} from "./graph.model";
+import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob, GraphNodeTypeStage} from "./graph.model";
 import {GraphDirection, WorkflowV2Graph} from "./graph.lib";
 import {load, LoadOptions} from "js-yaml";
-import {V2WorkflowRun, V2WorkflowRunJob} from "../../../../../../../model/v2.workflow.run.model";
+import {V2WorkflowRun, V2WorkflowRunJob} from "app/model/v2.workflow.run.model";
+import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
 
 export type WorkflowV2JobsGraphOrNodeComponent = ProjectV2WorkflowJobsGraphComponent |
-    ProjectV2WorkflowForkJoinNodeComponent | ProjectV2WorkflowJobNodeComponent;
+    ProjectV2WorkflowForkJoinNodeComponent | ProjectV2WorkflowJobNodeComponent | ProjectV2WorkflowGateNodeComponent;
 
 @Component({
     selector: 'app-stages-graph',
@@ -88,35 +89,48 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             });
             Object.keys(workflow["jobs"]).forEach(k => {
                 let job = workflow.jobs[k];
-
+                let graphNode = undefined;
+                if (job?.gate && job.gate !== '') {
+                    graphNode = <GraphNode>{name: `${job.gate}-${k}`, type: GraphNodeTypeGate, gateChild: k}
+                }
                 if (matrixJobs.has(k)) {
                     matrixJobs.get(k).forEach(j => {
                         let node = <GraphNode>{name: j.matrixName, depends_on: this.getJobNeeds(j, matrixJobs), type: GraphNodeTypeJob};
-                        //node.run = this.jobRuns[k];
                         if (job?.stage) {
                             for (let i = 0; i < this.nodes.length; i++) {
                                 if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
                                     this.nodes[i].sub_graph.push(node);
+                                    if (graphNode) {
+                                        this.nodes[i].sub_graph.push(graphNode);
+                                    }
                                     break;
                                 }
                             }
                         } else {
                             this.nodes.push(node);
+                            if (graphNode) {
+                                this.nodes.push(graphNode);
+                            }
                         }
                     });
                 } else {
                     let node = <GraphNode>{name: k, depends_on: this.getJobNeeds(job, matrixJobs), type: GraphNodeTypeJob};
                     node.run = this.jobRuns[k];
-
                     if (job?.stage) {
                         for (let i = 0; i < this.nodes.length; i++) {
                             if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
                                 this.nodes[i].sub_graph.push(node);
+                                if (graphNode) {
+                                    this.nodes[i].sub_graph.push(graphNode);
+                                }
                                 break;
                             }
                         }
                     } else {
                         this.nodes.push(node);
+                        if (graphNode) {
+                            this.nodes.push(graphNode);
+                        }
                     }
                 }
             });
@@ -294,13 +308,21 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
                 ProjectV2WorkflowStagesGraphComponent.maxScale);
         }
 
+
         this.nodes.forEach(n => {
             if (this.hasStages) {
-                this.graph.createNode(n.name, this.createSubGraphComponent(n),
+                this.graph.createNode(n.name, GraphNodeTypeStage, this.createSubGraphComponent(n),
                     null, 300, 169);
             } else {
-                this.graph.createNode(n.name, this.createJobNodeComponent(n),
-                    n.run ? n.run.status : null);
+                switch (n.type) {
+                    case GraphNodeTypeGate:
+                        this.graph.createGate(n, GraphNodeTypeGate, this.createGateNodeComponent(n),
+                            n.run ? n.run.status : null);
+                        break;
+                    default:
+                        this.graph.createNode(n.name, GraphNodeTypeJob, this.createJobNodeComponent(n),
+                            n.run ? n.run.status : null);
+                }
             }
         });
 
@@ -337,6 +359,14 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             return;
         }
         this.graph.center(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
+    }
+
+    createGateNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowGateNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowGateNodeComponent);
+        componentRef.instance.node = node;
+        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.changeDetectorRef.detectChanges();
+        return componentRef;
     }
 
     createJobNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowJobNodeComponent> {

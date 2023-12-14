@@ -48,7 +48,8 @@ type V2WorkflowRun struct {
 	Username     string             `json:"username" db:"username" cli:"username"`
 	Contexts     WorkflowRunContext `json:"contexts" db:"contexts"`
 	Event        V2WorkflowRunEvent `json:"event" db:"event"`
-	// Aggegations
+
+	// Aggregations
 	Results []V2WorkflowRunResult `json:"results" db:"-"`
 }
 
@@ -68,6 +69,7 @@ type WorkflowRunJobsContext struct {
 	Steps   StepsContext           `json:"steps"`
 	Secrets map[string]string      `json:"secrets"`
 	Matrix  map[string]string      `json:"matrix"`
+	Gate    map[string]interface{} `json:"gate"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -188,6 +190,7 @@ type V2WorkflowRunJob struct {
 	Region        string                        `json:"region,omitempty" db:"region"`
 	ModelType     string                        `json:"model_type,omitempty" db:"model_type"`
 	Matrix        JobMatrix                     `json:"matrix,omitempty" db:"matrix"`
+	GateInputs    GateInputs                    `json:"gate_inputs,omitempty" db:"gate_inputs"`
 	Integrations  *V2WorkflowRunJobIntegrations `json:"integrations,omitempty" db:"integrations"`
 }
 
@@ -227,6 +230,24 @@ type JobStepStatus struct {
 	Outputs    JobResultOutput `json:"outputs"`
 	Started    time.Time       `json:"started"`
 	Ended      time.Time       `json:"ended"`
+}
+
+type GateInputs map[string]interface{}
+
+func (gi GateInputs) Value() (driver.Value, error) {
+	m, err := yaml.Marshal(gi)
+	return m, WrapError(err, "cannot marshal GateInputs")
+}
+
+func (gi *GateInputs) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+	}
+	return WrapError(yaml.Unmarshal([]byte(source), gi), "cannot unmarshal GateInputs")
 }
 
 type JobMatrix map[string]string
@@ -280,8 +301,14 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID  string `json:"run_id"`
-	UserID string `json:"user_id"`
+	RunID  string                   `json:"run_id"`
+	UserID string                   `json:"user_id"`
+	Gate   V2WorkflowRunEnqueueGate `json:"gate"`
+}
+
+type V2WorkflowRunEnqueueGate struct {
+	JobID  string                 `json:"job_id"`
+	Inputs map[string]interface{} `json:"inputs"`
 }
 
 type V2WorkflowRunInfo struct {
