@@ -421,8 +421,8 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         if (this.gates) {
             this.gates.forEach( g => {
                 let e = <Edge>{from: `gate-${g.key}`, to: `node-${g.child}`};
-                let options = {};
-                options['class'] += ' ' + this.nodeStatusToColor(this.nodeStatus[e.from]);
+                let options = { class: `${g.key} ${g.child}`};
+                options['class'] += ` ` + this.nodeStatusToColor(this.nodeStatus[e.from]);
                 options['style'] = 'stroke-width: 2px;';
                 e.options = options
                 this.createGEdge(e);
@@ -557,6 +557,9 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         let selectionEdgeMarkers = d3.selectAll(`.${key} > defs > marker > path`);
         if (selectionEdgeMarkers.size() > 0) {
             selectionEdgeMarkers.attr('class', active ? 'highlight' : '');
+        }
+        if (this.nodesComponent.has(`gate-${key}`)) {
+            this.nodesComponent.get(`gate-${key}`).instance.setHighlight(active);
         }
         if (this.nodesComponent.has(`node-${key}`)) {
             this.nodesComponent.get(`node-${key}`).instance.setHighlight(active);
