@@ -12,7 +12,7 @@ const (
 	SignHeaderVCSName   = "X-Cds-Hooks-Vcs-Name"
 	SignHeaderRepoName  = "X-Cds-Hooks-Repo-Name"
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
-	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
+	SignHeaderEventName = "X-Cds-Hooks-RunEvent-Name"
 
 	WorkflowHookEventWorkflowUpdate = "workflow_update"
 	WorkflowHookEventModelUpdate    = "model_update"

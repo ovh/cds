@@ -63,7 +63,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",
@@ -127,7 +127,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",
@@ -220,7 +220,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",
@@ -344,7 +344,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",

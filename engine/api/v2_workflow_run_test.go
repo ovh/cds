@@ -49,7 +49,7 @@ func TestPutWorkflowRun(t *testing.T) {
 		Status:       sdk.StatusFail,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -215,7 +215,7 @@ func TestPutWorkflowRun_BuildingRun(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -264,7 +264,7 @@ func TestPutWorkflowRun_NoFailingJob(t *testing.T) {
 		Status:       sdk.StatusSuccess,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -313,7 +313,7 @@ func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -376,7 +376,7 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -442,7 +442,7 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -523,7 +523,7 @@ func TestPostJobRunStepHandler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -625,7 +625,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -699,7 +699,7 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -764,7 +764,7 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -833,7 +833,7 @@ func TestPostStopJobHandler(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},

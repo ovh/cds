@@ -58,7 +58,7 @@ func (s *SaramaLoger) Println(v ...interface{}) {
 	log.Debug(ctx, "%v", v...)
 }
 
-// ConsumeKafka consume CDS Event from a kafka topic
+// ConsumeKafka consume CDS RunEvent from a kafka topic
 func ConsumeKafka(ctx context.Context, goroutines *sdk.GoRoutines, kafkaConfig KafkaConsumerConfig, messageType interface{}, processEventFunc ProcessEventFunc, logErrorFunc LogErrorFunc) error {
 	ctx = context.WithValue(ctx, cdslog.KafkaBroker, kafkaConfig.BrokerAddresses)
 	ctx = context.WithValue(ctx, cdslog.KafkaTopic, kafkaConfig.Topic)

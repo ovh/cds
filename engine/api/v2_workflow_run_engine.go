@@ -560,7 +560,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 	}
 
 	// check job condition
-	canRun, err := checkJobCondition(ctx, run.WorkflowData.Workflow, jobID, jobDef, currentJobContext)
+	canRun, err := checkJobCondition(ctx, run, jobID, jobDef, currentJobContext)
 	if err != nil {
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -638,18 +638,18 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) bool {
 	return true
 }
 
-func checkJobCondition(ctx context.Context, w sdk.V2Workflow, jobID string, jobDef *sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext) (bool, error) {
+func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string, jobDef *sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkJobCondition")
 	defer next()
 
 	// On keep ancestor of the current job
-
 	var jobCondition string
 
 	if jobDef.Gate != "" {
+		jobCondition = run.WorkflowData.Workflow.Gates[jobDef.Gate].If
 		// Create empty input context to be able to interpolate gate condition.
 		currentJobContext.Gate = make(map[string]interface{})
-		for k, v := range w.Gates[jobDef.Gate].Inputs {
+		for k, v := range run.WorkflowData.Workflow.Gates[jobDef.Gate].Inputs {
 			switch v.Type {
 			case "boolean":
 				currentJobContext.Gate[k] = false
@@ -659,7 +659,23 @@ func checkJobCondition(ctx context.Context, w sdk.V2Workflow, jobID string, jobD
 				currentJobContext.Gate[k] = ""
 			}
 		}
-		jobCondition = w.Gates[jobDef.Gate].If
+
+		// Check if there is an event
+		for _, je := range run.RunJobEvent {
+			if je.RunAttempt != run.RunAttempt {
+				continue
+			}
+			if je.JobID != jobID {
+				continue
+			}
+
+			// Ovveride with value sent by user
+			for k, v := range je.Inputs {
+				if _, has := currentJobContext.Gate[k]; has {
+					currentJobContext.Gate[k] = v
+				}
+			}
+		}
 	} else {
 		if jobDef.If == "" {
 			jobDef.If = "${{success()}}"
@@ -669,6 +685,7 @@ func checkJobCondition(ctx context.Context, w sdk.V2Workflow, jobID string, jobD
 		}
 		jobCondition = jobDef.If
 	}
+
 	bts, err := json.Marshal(currentJobContext)
 	if err != nil {
 		return false, sdk.WithStack(err)

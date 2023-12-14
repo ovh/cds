@@ -57,7 +57,7 @@ var (
 			},
 			"topic": IntegrationConfigValue{
 				Type:        IntegrationConfigTypeString,
-				Description: "This is mandatory only if you want to use Event Integration",
+				Description: "This is mandatory only if you want to use RunEvent Integration",
 			},
 		},
 		Disabled: false,

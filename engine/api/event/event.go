@@ -162,7 +162,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 		e := sdk.Event{}
 		if err := store.DequeueWithContext(ctx, "events", 250*time.Millisecond, &e); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "Event.DequeueEvent> store.DequeueWithContext err: %v", err)
+			log.Error(ctx, "RunEvent.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
 		}
 		if err := ctx.Err(); err != nil {
@@ -211,7 +211,7 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				projInt, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, eventIntegrationID)
 				if err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "Event.DequeueEvent> Cannot load project integration for project %s and id %d and type event: %v", e.ProjectKey, eventIntegrationID, err)
+					log.Error(ctx, "RunEvent.DequeueEvent> Cannot load project integration for project %s and id %d and type event: %v", e.ProjectKey, eventIntegrationID, err)
 					continue
 				}
 
@@ -219,12 +219,12 @@ func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 				kafkaBroker, err := getBroker(ctx, "kafka", kafkaCfg)
 				if err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "Event.DequeueEvent> cannot get broker %q for project %q and user %q - eventIntegrationID: %d: %v", projInt.Config["broker url"].Value, e.ProjectKey, projInt.Config["username"].Value, eventIntegrationID, err)
+					log.Error(ctx, "RunEvent.DequeueEvent> cannot get broker %q for project %q and user %q - eventIntegrationID: %d: %v", projInt.Config["broker url"].Value, e.ProjectKey, projInt.Config["username"].Value, eventIntegrationID, err)
 					continue
 				}
 				if err := brokersConnectionCache.Add(brokerConnectionKey, kafkaBroker, gocache.DefaultExpiration); err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "Event.DequeueEvent> cannot add broker in cache for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
+					log.Error(ctx, "RunEvent.DequeueEvent> cannot add broker in cache for %q and user %q : %v", projInt.Config["broker url"].Value, projInt.Config["username"].Value, err)
 					continue
 				}
 				brokerConnection = kafkaBroker
@@ -264,7 +264,7 @@ func Close(ctx context.Context) {
 	}
 }
 
-// Status returns Event status
+// Status returns RunEvent status
 func Status(ctx context.Context) sdk.MonitoringStatusLine {
 	var o string
 	var isAlert bool
@@ -284,5 +284,5 @@ func Status(ctx context.Context) sdk.MonitoringStatusLine {
 		status = sdk.MonitoringStatusAlert
 	}
 
-	return sdk.MonitoringStatusLine{Component: "Event Broker", Value: o, Status: status}
+	return sdk.MonitoringStatusLine{Component: "RunEvent Broker", Value: o, Status: status}
 }

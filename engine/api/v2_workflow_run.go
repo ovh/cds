@@ -1023,6 +1023,15 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			if err := restartWorkflowRun(ctx, tx, wr, runJobsToKeep); err != nil {
 				return err
 			}
+      wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
+        Inputs: gateInputs,
+        UserID: u.AuthConsumerUser.AuthentifiedUserID,
+        JobID: jobToRun.JobID,
+        RunAttempt: wr.RunAttempt,
+      })
+      if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
+        return err
+      }
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
@@ -1148,7 +1157,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: wk},
 		UserID:       u.ID,
 		Username:     u.Username,
-		Event:        runEvent,
+		RunEvent:     runEvent,
 		Contexts:     sdk.WorkflowRunContext{},
 	}
 

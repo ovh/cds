@@ -295,7 +295,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 	// Compute required filter(s) key for given event
 	var keys []string
 
-	// Event that match global filter
+	// RunEvent that match global filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventFake{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type: sdk.WebsocketFilterTypeGlobal,
@@ -306,14 +306,14 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			Type: sdk.WebsocketFilterTypeGlobal,
 		}.Key())
 	}
-	// Event that match project filter
+	// RunEvent that match project filter
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:       sdk.WebsocketFilterTypeProject,
 			ProjectKey: event.ProjectKey,
 		}.Key())
 	}
-	// Event that match Purge Filter
+	// RunEvent that match Purge Filter
 	if strings.HasPrefix(event.EventType, "sdk.EventRetentionWorkflowDryRun") {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:         sdk.WebsocketFilterTypeDryRunRetentionWorkflow,
@@ -321,7 +321,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			WorkflowName: event.WorkflowName,
 		}.Key())
 	}
-	// Event that match workflow filter
+	// RunEvent that match workflow filter
 	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:         sdk.WebsocketFilterTypeWorkflow,
@@ -329,7 +329,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			WorkflowName: event.WorkflowName,
 		}.Key())
 	}
-	// Event that match workflow run filter
+	// RunEvent that match workflow run filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflow{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:              sdk.WebsocketFilterTypeWorkflowRun,
@@ -346,7 +346,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			WorkflowRunNumber: event.WorkflowRunNum,
 		}.Key())
 	}
-	// Event that match workflow node run filter
+	// RunEvent that match workflow node run filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:              sdk.WebsocketFilterTypeWorkflowNodeRun,
@@ -355,7 +355,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			WorkflowNodeRunID: event.WorkflowNodeRunID,
 		}.Key())
 	}
-	// Event that match pipeline filter
+	// RunEvent that match pipeline filter
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:         sdk.WebsocketFilterTypePipeline,
@@ -363,7 +363,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			PipelineName: event.PipelineName,
 		}.Key())
 	}
-	// Event that match application filter
+	// RunEvent that match application filter
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:            sdk.WebsocketFilterTypeApplication,
@@ -371,7 +371,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			ApplicationName: event.ApplicationName,
 		}.Key())
 	}
-	// Event that match environment filter
+	// RunEvent that match environment filter
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:            sdk.WebsocketFilterTypeEnvironment,
@@ -379,13 +379,13 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			EnvironmentName: event.EnvironmentName,
 		}.Key())
 	}
-	// Event that match queue filter
+	// RunEvent that match queue filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowJob{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type: sdk.WebsocketFilterTypeQueue,
 		}.Key())
 	}
-	// Event that match operation filter
+	// RunEvent that match operation filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventOperation{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:          sdk.WebsocketFilterTypeOperation,
@@ -393,7 +393,7 @@ func (a *API) websocketComputeEventKeys(event sdk.Event) []string {
 			OperationUUID: event.OperationUUID,
 		}.Key())
 	}
-	// Event that match as code event filter
+	// RunEvent that match as code event filter
 	if event.EventType == fmt.Sprintf("%T", sdk.EventAsCodeEvent{}) {
 		keys = append(keys, sdk.WebsocketFilter{
 			Type:         sdk.WebsocketFilterTypeAscodeEvent,

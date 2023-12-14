@@ -103,6 +103,11 @@ func buildContextForJob(_ context.Context, allJobs map[string]sdk.V2Job, runJobs
 				Result:  j.Result,
 				Outputs: j.Outputs,
 			}
+			// override result if job has continue-on-error
+			if allJobs[n].ContinueOnError && j.Result == sdk.StatusFail {
+				needContext.Result = sdk.StatusSuccess
+			}
+
 			needsContext[n] = needContext
 		}
 	}

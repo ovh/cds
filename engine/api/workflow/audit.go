@@ -43,7 +43,7 @@ func (a addWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e sd
 
 	return InsertAudit(db, &sdk.AuditWorkflow{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			EventType:   strings.Replace(e.EventType, "sdk.RunEvent", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
 		},
@@ -82,7 +82,7 @@ func (u updateWorkflowAudit) Compute(ctx context.Context, db gorp.SqlExecutor, e
 
 	return InsertAudit(db, &sdk.AuditWorkflow{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			EventType:   strings.Replace(e.EventType, "sdk.RunEvent", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
 		},
@@ -109,7 +109,7 @@ func (a addWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlExec
 
 	return InsertAudit(db, &sdk.AuditWorkflow{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			EventType:   strings.Replace(e.EventType, "sdk.RunEvent", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
 		},
@@ -140,7 +140,7 @@ func (u updateWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlE
 
 	return InsertAudit(db, &sdk.AuditWorkflow{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			EventType:   strings.Replace(e.EventType, "sdk.RunEvent", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
 		},
@@ -167,7 +167,7 @@ func (a deleteWorkflowPermissionAudit) Compute(ctx context.Context, db gorp.SqlE
 
 	return InsertAudit(db, &sdk.AuditWorkflow{
 		AuditCommon: sdk.AuditCommon{
-			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			EventType:   strings.Replace(e.EventType, "sdk.RunEvent", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
 		},
