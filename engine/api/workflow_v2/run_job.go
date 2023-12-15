@@ -32,7 +32,7 @@ allJobsLoop:
 		}
 
 		// Keep this job and all ancestors
-		runJobsToKeep[runJobID] = runJob
+		runJobsToKeep[runJob.ID] = runJob
 		for _, a := range parentJobs {
 			for _, rj := range runJobsMap {
 				if rj.JobID == a {

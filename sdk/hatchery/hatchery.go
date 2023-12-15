@@ -363,21 +363,21 @@ func Create(ctx context.Context, h Interface) error {
 	return nil
 }
 
-func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
+func handleJobV2(_ context.Context, h Interface, runJob sdk.V2WorkflowRunJob, cacheAttempts *CacheNbAttemptsJobIDs, workersStartChan chan<- workerStarterRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	ctx = telemetry.ContextWithTag(ctx,
 		telemetry.TagServiceName, h.Name(),
 		telemetry.TagServiceType, h.Type(),
 	)
 	ctx = telemetry.New(ctx, h, "hatchery.V2JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
-	ctx, end := telemetry.Span(ctx, "hatchery.V2JobReceive", telemetry.Tag(telemetry.TagWorkflow, j.WorkflowName),
-		telemetry.Tag(telemetry.TagWorkflowRunNumber, j.RunNumber),
-		telemetry.Tag(telemetry.TagProjectKey, j.ProjectKey),
-		telemetry.Tag(telemetry.TagJob, j.JobID))
+	ctx, end := telemetry.Span(ctx, "hatchery.V2JobReceive", telemetry.Tag(telemetry.TagWorkflow, runJob.WorkflowName),
+		telemetry.Tag(telemetry.TagWorkflowRunNumber, runJob.RunNumber),
+		telemetry.Tag(telemetry.TagProjectKey, runJob.ProjectKey),
+		telemetry.Tag(telemetry.TagJob, runJob.ID))
 
-	endTrace := func(reason string, jobID string) {
-		if jobID != "" {
-			h.GetMapPendingWorkerCreation().RemoveJobFromPendingWorkerCreation(jobID)
+	endTrace := func(reason string, runJobID string) {
+		if runJobID != "" {
+			h.GetMapPendingWorkerCreation().RemoveJobFromPendingWorkerCreation(runJobID)
 		}
 		if cancel != nil {
 			cancel()
@@ -394,50 +394,50 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 	}
 	go func() {
 		<-ctx.Done()
-		endTrace(ctx.Err().Error(), "")
+		endTrace(ctx.Err().Error(), runJob.ID)
 	}()
 
 	fields := log.FieldValues(ctx)
 	for k, v := range fields {
 		ctx = context.WithValue(ctx, k, v)
 	}
-	ctx = context.WithValue(ctx, LogFieldJobID, j.ID)
-	ctx = context.WithValue(ctx, LogFieldProject, j.ProjectKey)
-	logStepInfo(ctx, "dequeue", j.Queued)
+	ctx = context.WithValue(ctx, LogFieldJobID, runJob.ID)
+	ctx = context.WithValue(ctx, LogFieldProject, runJob.ProjectKey)
+	logStepInfo(ctx, "dequeue", runJob.Queued)
 
 	stats.Record(ctx, GetMetrics().Jobs.M(1))
 
 	//Check if hatchery is able to start a new worker
 	if !checkCapacities(ctx, h) {
 		log.Info(ctx, "hatchery %s is not able to provision new worker", h.Service().Name)
-		endTrace("no capacities", j.JobID)
+		endTrace("no capacities", runJob.ID)
 	}
 
 	workerRequest := workerStarterRequest{
 		ctx:          ctx,
 		cancel:       cancel,
-		id:           j.ID,
-		region:       j.Region,
+		id:           runJob.ID,
+		region:       runJob.Region,
 		requirements: nil,
-		queued:       j.Queued,
+		queued:       runJob.Queued,
 	}
 
 	// Check at least one worker model can match
 	hWithModels, isWithModels := h.(InterfaceWithModels)
-	if isWithModels && j.Job.RunsOn == "" {
-		endTrace("no model", j.JobID)
+	if isWithModels && runJob.Job.RunsOn == "" {
+		endTrace("no model", runJob.ID)
 		return nil
 	}
 
 	if hWithModels != nil {
-		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, j.Job.RunsOn)
+		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, runJob.Job.RunsOn)
 		if err != nil {
-			endTrace(fmt.Sprintf("%v", err.Error()), j.JobID)
+			endTrace(fmt.Sprintf("%v", err.Error()), runJob.ID)
 			return err
 		}
 		workerRequest.model = *workerModel
-		if !h.CanSpawn(ctx, *workerModel, j.ID, nil) {
-			endTrace("cannot spawn", j.JobID)
+		if !h.CanSpawn(ctx, *workerModel, runJob.ID, nil) {
+			endTrace("cannot spawn", runJob.ID)
 			return nil
 		}
 	}
@@ -445,24 +445,24 @@ func handleJobV2(_ context.Context, h Interface, j sdk.V2WorkflowRunJob, cacheAt
 	// Check if we already try to start a worker for this job
 	maxAttemptsNumberBeforeFailure := h.Configuration().Provision.MaxAttemptsNumberBeforeFailure
 	if maxAttemptsNumberBeforeFailure > -1 {
-		nbAttempts := cacheAttempts.NewAttempt(j.ID)
+		nbAttempts := cacheAttempts.NewAttempt(runJob.ID)
 		if maxAttemptsNumberBeforeFailure == 0 {
 			maxAttemptsNumberBeforeFailure = defaultMaxAttemptsNumberBeforeFailure
 		}
 		if nbAttempts > maxAttemptsNumberBeforeFailure {
-			if err := h.CDSClientV2().V2QueueJobResult(ctx, j.Region, j.ID, sdk.V2WorkflowRunJobResult{
+			if err := h.CDSClientV2().V2QueueJobResult(ctx, runJob.Region, runJob.ID, sdk.V2WorkflowRunJobResult{
 				Status: sdk.StatusFail,
 				Error:  fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure),
 			}); err != nil {
 				return err
 			}
 			log.Info(ctx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure)
-			endTrace("maximum attempts", j.JobID)
+			endTrace("maximum attempts", runJob.ID)
 			return nil
 		}
 	}
 
-	logStepInfo(ctx, "processed", j.Queued)
+	logStepInfo(ctx, "processed", runJob.Queued)
 	stats.Record(ctx, GetMetrics().JobsProcessed.M(1))
 	workersStartChan <- workerRequest
 	return nil

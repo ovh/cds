@@ -835,14 +835,12 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 
 	// Duplicate runJob to keep
 	for _, rj := range runJobsToKeep {
-
 		duplicatedRJ := rj
 		duplicatedRJ.ID = ""
 		duplicatedRJ.RunAttempt = wr.RunAttempt
 		if err := workflow_v2.InsertRunJob(ctx, tx, &duplicatedRJ); err != nil {
 			return err
 		}
-
 		runResults, err := workflow_v2.LoadRunResultsByRunJobID(ctx, tx, rj.ID)
 		if err != nil {
 			return err
@@ -891,7 +889,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			jobIdentifier := vars["jobIdentifier"]
 
 			var gateInputs map[string]interface{}
-			if err := service.UnmarshalBody(req, gateInputs); err != nil {
+			if err := service.UnmarshalBody(req, &gateInputs); err != nil {
 				return err
 			}
 
@@ -962,6 +960,9 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 					}
 				}
 			}
+			if !reviewersChecked {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "you are not part of the reviewers")
+			}
 
 			inputs := make(map[string]interface{})
 			for k, v := range gate.Inputs {
@@ -1009,7 +1010,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 
 			runJobsMap := make(map[string]sdk.V2WorkflowRunJob)
 			for _, rj := range runJobs {
-				runJobsMap[rj.JobID] = rj
+				runJobsMap[rj.ID] = rj
 			}
 
 			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, map[string]sdk.V2WorkflowRunJob{jobToRun.ID: *jobToRun})
@@ -1023,15 +1024,25 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			if err := restartWorkflowRun(ctx, tx, wr, runJobsToKeep); err != nil {
 				return err
 			}
-      wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
-        Inputs: gateInputs,
-        UserID: u.AuthConsumerUser.AuthentifiedUserID,
-        JobID: jobToRun.JobID,
-        RunAttempt: wr.RunAttempt,
-      })
-      if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
-        return err
-      }
+			wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
+				Inputs:     gateInputs,
+				UserID:     u.AuthConsumerUser.AuthentifiedUserID,
+				JobID:      jobToRun.JobID,
+				RunAttempt: wr.RunAttempt,
+			})
+			if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
+				return err
+			}
+
+			runMsg := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wr.ID,
+				Level:         sdk.WorkflowRunInfoLevelInfo,
+				IssuedAt:      time.Now(),
+				Message:       fmt.Sprintf("%s manually trigger the job %s", u.GetFullname(), jobToRun.JobID),
+			}
+			if err := workflow_v2.InsertRunInfo(ctx, tx, &runMsg); err != nil {
+				return err
+			}
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)

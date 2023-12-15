@@ -169,9 +169,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 				return err
 			}
-			if err := tx.Commit(); err != nil {
-				return err
-			}
 		}
 		if errTx := tx.Commit(); errTx != nil {
 			return sdk.WithStack(errTx)
@@ -208,12 +205,35 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	for i := range runJobs {
 		rj := &runJobs[i]
+		// Check gate inputs
+		for _, jobEvent := range run.RunJobEvent {
+			if jobEvent.RunAttempt != run.RunAttempt {
+				continue
+			}
+			if jobEvent.JobID != rj.JobID {
+				continue
+			}
+			rj.GateInputs = jobEvent.Inputs
+		}
+
 		if err := workflow_v2.InsertRunJob(ctx, tx, rj); err != nil {
 			return err
 		}
 		if info, has := runJobsInfos[rj.JobID]; has {
 			info.WorkflowRunJobID = rj.ID
 			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+				return err
+			}
+		}
+		if rj.GateInputs != nil {
+			jobInfo := sdk.V2WorkflowRunJobInfo{
+				WorkflowRunID:    rj.WorkflowRunID,
+				Level:            sdk.WorkflowRunInfoLevelInfo,
+				IssuedAt:         time.Now(),
+				WorkflowRunJobID: rj.ID,
+				Message:          u.GetFullname() + " triggers manually this job",
+			}
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &jobInfo); err != nil {
 				return err
 			}
 		}

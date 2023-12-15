@@ -27,6 +27,532 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestRunManualJob_WrongGateReviewer(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Type: "boolean",
+						},
+					},
+					Reviewers: sdk.V2JobGateReviewers{
+						Users: []string{"foo.bar"},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Gate:  "preprod",
+					Needs: []string{"job1"},
+				},
+				"job3": {
+					Needs: []string{"job1"},
+				},
+				"job4": {
+					Needs: []string{"job2"},
+				},
+				"job5": {
+					Needs: []string{"job3"},
+				},
+				"job6": {
+					Needs: []string{"job4", "job5"},
+				},
+				"job7": {
+					Needs: []string{"job6"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	wrjJob2 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job2",
+		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
+
+	wrjJob3 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job3",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
+
+	wrjJob4 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job4",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
+
+	wrjJob5 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusFail,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job5",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
+
+	wrjJob6 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusFail,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job6",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
+
+	wrjJob7 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job7",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
+		"jobIdentifier":        "job2",
+	}
+	rr := map[string]interface{}{
+		"approve": true,
+	}
+	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, rr)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 403, w.Code)
+}
+
+func TestRunManualJob_WrongGateCondition(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Type: "boolean",
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Gate:  "preprod",
+					Needs: []string{"job1"},
+				},
+				"job3": {
+					Needs: []string{"job1"},
+				},
+				"job4": {
+					Needs: []string{"job2"},
+				},
+				"job5": {
+					Needs: []string{"job3"},
+				},
+				"job6": {
+					Needs: []string{"job4", "job5"},
+				},
+				"job7": {
+					Needs: []string{"job6"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	wrjJob2 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job2",
+		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
+
+	wrjJob3 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job3",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
+
+	wrjJob4 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job4",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
+
+	wrjJob5 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusFail,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job5",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
+
+	wrjJob6 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusFail,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job6",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
+
+	wrjJob7 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job7",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
+		"jobIdentifier":        "job2",
+	}
+	rr := map[string]interface{}{
+		"approve": false,
+	}
+	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, rr)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 403, w.Code)
+}
+
+func TestRunManualJob(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("delete from region where name = 'build-test'")
+	require.NoError(t, err)
+
+	reg := sdk.Region{Name: "build-test"}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		RepositoryID: repo.ID,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Gates: map[string]sdk.V2JobGate{
+				"preprod": {
+					If: "${{gate.approve}}",
+					Inputs: map[string]sdk.V2JobGateInput{
+						"approve": {
+							Type: "boolean",
+						},
+					},
+				},
+			},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {},
+				"job2": {
+					Gate:   "preprod",
+					Region: "build-test",
+					Needs:  []string{"job1"},
+				},
+				"job3": {
+					Needs: []string{"job1"},
+				},
+				"job4": {
+					Needs: []string{"job2"},
+				},
+				"job5": {
+					Needs: []string{"job3"},
+				},
+				"job6": {
+					Needs: []string{"job4", "job5"},
+				},
+				"job7": {
+					Needs: []string{"job6"},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	wrjJob1 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job1",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob1))
+
+	wrjJob2 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSkipped,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job2",
+		Job:           wr.WorkflowData.Workflow.Jobs["job2"],
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob2))
+
+	wrjJob3 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job3",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob3))
+
+	wrjJob4 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job4",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob4))
+
+	wrjJob5 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusFail,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job5",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob5))
+
+	wrjJob6 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusFail,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job6",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob6))
+
+	wrjJob7 := sdk.V2WorkflowRunJob{
+		Status:        sdk.StatusSuccess,
+		WorkflowRunID: wr.ID,
+		ProjectKey:    proj.Key,
+		JobID:         "job7",
+		RunAttempt:    wr.RunAttempt,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrjJob7))
+
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
+
+	vars := map[string]string{
+		"projectKey":           proj.Key,
+		"vcsIdentifier":        vcsServer.ID,
+		"repositoryIdentifier": repo.ID,
+		"workflow":             wr.WorkflowName,
+		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
+		"jobIdentifier":        "job2",
+	}
+	rr := map[string]interface{}{
+		"approve": true,
+	}
+	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, rr)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	// trigger jobs
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
+		RunID:  wr.ID,
+		UserID: admin.ID,
+	}))
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.StatusBuilding, wrDB.Status)
+	require.Equal(t, int64(2), wrDB.RunAttempt)
+
+	runjobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wrDB.ID, wrDB.RunAttempt)
+	require.NoError(t, err)
+	require.Equal(t, 4, len(runjobs))
+
+	mapJob := make(map[string]sdk.V2WorkflowRunJob)
+	for _, rj := range runjobs {
+		mapJob[rj.JobID] = rj
+	}
+
+	rJob1, has := mapJob["job1"]
+	require.True(t, has)
+	require.Equal(t, int64(2), rJob1.RunAttempt)
+
+	rJob3, has := mapJob["job3"]
+	require.True(t, has)
+	require.Equal(t, int64(2), rJob3.RunAttempt)
+
+	rJob5, has := mapJob["job5"]
+	require.True(t, has)
+	require.Equal(t, int64(2), rJob5.RunAttempt)
+
+	rJob2, has := mapJob["job2"]
+	require.True(t, has)
+	require.Equal(t, 1, len(rJob2.GateInputs))
+	v, has := rJob2.GateInputs["approve"]
+	require.True(t, has)
+	require.Equal(t, "true", fmt.Sprintf("%v", v))
+}
+
 func TestPutWorkflowRun(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
