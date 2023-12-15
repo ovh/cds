@@ -48,7 +48,7 @@ type V2WorkflowRun struct {
 	Username     string                 `json:"username" db:"username" cli:"username"`
 	Contexts     WorkflowRunContext     `json:"contexts" db:"contexts"`
 	RunEvent     V2WorkflowRunEvent     `json:"event" db:"event"`
-	RunJobEvent  V2WorkflowRunJobEvents `json:"job_event" db:"job_event"`
+	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
 
 	// Aggregations
 	Results []V2WorkflowRunResult `json:"results" db:"-"`
@@ -113,6 +113,7 @@ func (w *V2WorkflowRunData) Scan(src interface{}) error {
 
 type V2WorkflowRunJobEvent struct {
 	UserID     string                 `json:"user_id"`
+	Username   string                 `json:"username"`
 	JobID      string                 `json:"job_id"`
 	Inputs     map[string]interface{} `json:"inputs"`
 	RunAttempt int64                  `json:"run_attempt"`

@@ -17,8 +17,15 @@ export class V2WorkflowRun {
     username: string;
     contexts: any;
     event: WorkflowEvent;
+    job_events: V2WorkflowRunJobEvent[];
     results: Array<WorkflowRunResult>;
 }
+ export class V2WorkflowRunJobEvent {
+    username: string;
+    job_id: string;
+    inputs: {[key:string]:any};
+    run_attempt: number;
+ }
 
 export class WorkflowEvent {
     workflow_update: {ref: string, workflow_updated: string};

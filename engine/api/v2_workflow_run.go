@@ -1037,6 +1037,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
 				Inputs:     gateInputs,
 				UserID:     u.AuthConsumerUser.AuthentifiedUserID,
+				Username:   u.GetUsername(),
 				JobID:      jobToRun.JobID,
 				RunAttempt: wr.RunAttempt,
 			})

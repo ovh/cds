@@ -1,9 +1,9 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit} from "@angular/core";
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {finalize, first} from "rxjs/operators";
-import {Gate, V2WorkflowRun} from "../../../../model/v2.workflow.run.model";
-import {V2WorkflowRunService} from "../../../../service/workflowv2/workflow.service";
-import {ToastService} from "../../../../shared/toast/ToastService";
+import {Gate, V2WorkflowRun, V2WorkflowRunJobEvent} from "app/model/v2.workflow.run.model";
+import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
+import {ToastService} from "app/shared/toast/ToastService";
 
 @Component({
     selector: 'app-run-gate',
@@ -18,6 +18,7 @@ export class RunGateComponent implements OnInit {
     @Input() gateNode: { gate, job };
 
     currentGate: Gate;
+    jobEvent: V2WorkflowRunJobEvent;
     request : {[key:string]: any};
     loading: boolean;
 
@@ -44,6 +45,13 @@ export class RunGateComponent implements OnInit {
             }
 
         });
+        if (this.run.job_events) {
+            this.run.job_events.forEach(je => {
+                if (je.job_id === this.gateNode.job) {
+                    this.jobEvent = je;
+                }
+            });
+        }
         this._cd.markForCheck();
     }
 
