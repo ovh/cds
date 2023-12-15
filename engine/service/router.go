@@ -29,8 +29,8 @@ func DefaultHeaders() map[string]string {
 	return map[string]string{
 		"Access-Control-Allow-Origin":              "*",
 		"Access-Control-Allow-Methods":             "GET,OPTIONS,PUT,POST,DELETE",
-		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-RunEvent-Id, If-Modified-Since, Content-Disposition, " + strings.Join(headers, ", "),
-		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-RunEvent-Id, ETag, Content-Disposition, " + strings.Join(headers, ", "),
+		"Access-Control-Allow-Headers":             "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition, " + strings.Join(headers, ", "),
+		"Access-Control-Expose-Headers":            "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition, " + strings.Join(headers, ", "),
 		cdsclient.ResponseAPINanosecondsTimeHeader: fmt.Sprintf("%d", now.UnixNano()),
 		cdsclient.ResponseAPITimeHeader:            now.Format(time.RFC3339),
 		cdsclient.ResponseEtagHeader:               fmt.Sprintf("%d", now.Unix()),

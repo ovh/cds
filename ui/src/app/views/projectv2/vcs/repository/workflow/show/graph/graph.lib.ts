@@ -6,6 +6,7 @@ import {GraphNode} from "./graph.model";
 import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
 import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
 import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
+import {curveBasisClosed} from "d3-shape";
 
 export type WorkflowNodeComponent =
     ProjectV2WorkflowForkJoinNodeComponent

@@ -45,7 +45,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 		return nil
 	}
 	if err != nil {
-		return sdk.WrapError(err, "Cannot process RunEvent")
+		return sdk.WrapError(err, "Cannot process Event")
 	}
 
 	if data.status == "" {

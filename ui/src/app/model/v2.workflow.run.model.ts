@@ -32,6 +32,22 @@ export class WorkflowData {
     actions:  {[key:string]: { }};
 }
 
+export class Gate {
+    inputs: {[key:string]:GateInput};
+    reviewers: GateReviewers;
+}
+
+export class GateInput {
+    type: string;
+    default: any;
+    values: string;
+}
+
+export class GateReviewers {
+    groups: string[];
+    users: string[];
+}
+
 export class V2WorkflowRunJob {
     id: string;
     job_id: string;

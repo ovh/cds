@@ -119,7 +119,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 	}
 
 	if repo.Stopped {
-		hre.LastError = "RunEvent skipped. Repository hook has been stopped."
+		hre.LastError = "Event skipped. Repository hook has been stopped."
 		hre.NbErrors++
 		hre.Status = sdk.HookEventStatusSkipped
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
@@ -131,7 +131,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		return nil
 	}
 	if hre.NbErrors >= s.Cfg.RetryError {
-		log.Info(ctx, "dequeueRepositoryEvent> RunEvent %s stopped: to many errors:%d lastError:%s", hre.GetFullName(), hre.NbErrors, hre.LastError)
+		log.Info(ctx, "dequeueRepositoryEvent> Event %s stopped: to many errors:%d lastError:%s", hre.GetFullName(), hre.NbErrors, hre.LastError)
 		hre.Status = sdk.HookEventStatusError
 		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 			return sdk.WrapError(err, "maxerror > unable to save repository event %s", hre.GetFullName())

@@ -48,7 +48,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event, disableSt
 		return nil
 	}
 	if err != nil {
-		return sdk.WrapError(err, "Cannot process RunEvent")
+		return sdk.WrapError(err, "Cannot process Event")
 	}
 
 	if data.status == "" {

@@ -414,13 +414,13 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         if (type === 'click') {
             if (n.gateName && n.gateName !== '') {
                 this.onSelectJobGate.emit(n);
-            }
-            if (n.run) {
-                this.onSelectJob.emit(n.run.id);
             } else {
-                this.onSelectJob.emit(n.name);
+                if (n.run) {
+                    this.onSelectJob.emit(n.run.id);
+                } else {
+                    this.onSelectJob.emit(n.name);
+                }
             }
-
         }
         this.graph.nodeMouseEvent(type, n.name);
     }

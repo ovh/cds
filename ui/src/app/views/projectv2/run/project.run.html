@@ -4,7 +4,6 @@
                           (onSelectJobGate)="selectJobGate($event)"
                           (onSelectJob)="selectJob($event)" #graph></app-stages-graph>
 
-
         <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
                              (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
 
@@ -68,10 +67,19 @@
             </ng-container>
         </app-resizable-panel>
     </div>
-    <app-resizable-panel *ngIf="selectedJobRun" minSize="400" [initialSize]="jobPanelSize"
-                         (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
-        <app-run-job [workflowRun]="selectedRun" [jobRun]="selectedJobRun" [jobRunInfos]="selectedJobRunInfos"
-                     (onClickClose)="unselectJob()" #runJob></app-run-job>
-    </app-resizable-panel>
+
+    <!--  RIGHT PANELS -->
+
+        <app-resizable-panel *ngIf="selectedJobRun || selectedJobGate" minSize="400" [initialSize]="jobPanelSize"
+                             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
+            <ng-container *ngIf="selectedJobRun">
+                <app-run-job [workflowRun]="selectedRun" [jobRun]="selectedJobRun" [jobRunInfos]="selectedJobRunInfos"
+                (onClickClose)="unselectJob()" #runJob></app-run-job>
+            </ng-container>
+            <ng-container *ngIf="selectedJobGate">
+                <app-run-gate [gateNode]="selectedJobGate" [run]="selectedRun"></app-run-gate>
+            </ng-container>
+        </app-resizable-panel>
+
 </ng-container>
 

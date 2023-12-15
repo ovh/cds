@@ -247,7 +247,7 @@ type Configuration struct {
 		VCSManagementDisabled      bool   `toml:"vcsManagementDisabled" comment:"Disable VCS management on project for CDS non admin users." json:"vcsManagementDisabled" default:"false" commented:"true"`
 		GPGKeyEmailAddressTemplate string `toml:"gpgKeyEmailAddressTemplate" comment:"Template for GPG Keys email address" json:"gpgKeyEmailAddressTemplate" default:"noreply+cds-{{.ProjectKey}}-{{.KeyName}}@localhost.local" commented:"true"`
 	} `toml:"project" comment:"######################\n 'Project' global configuration \n######################" json:"project"`
-	EventBus event.Config `toml:"events" comment:"######################\n RunEvent bus configuration \n######################" json:"events" mapstructure:"events"`
+	EventBus event.Config `toml:"events" comment:"######################\n Event bus configuration \n######################" json:"events" mapstructure:"events"`
 	VCS      struct {
 		GPGKeys map[string][]GPGKey `toml:"gpgKeys" comment:"map of public gpg keys from vcs server" json:"gpgKeys"`
 	} `toml:"vcs" json:"vcs"`

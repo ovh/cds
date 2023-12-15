@@ -30,25 +30,25 @@ type V2WorkflowRunHookRequest struct {
 }
 
 type V2WorkflowRun struct {
-	ID           string                  `json:"id" db:"id"`
-	ProjectKey   string                  `json:"project_key" db:"project_key"`
-	VCSServerID  string                  `json:"vcs_server_id" db:"vcs_server_id"`
-	RepositoryID string                  `json:"repository_id" db:"repository_id"`
-	WorkflowName string                  `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
-	WorkflowSha  string                  `json:"workflow_sha" db:"workflow_sha"`
-	WorkflowRef  string                  `json:"workflow_ref" db:"workflow_ref"`
-	Status       string                  `json:"status" db:"status" cli:"status"`
-	RunNumber    int64                   `json:"run_number" db:"run_number" cli:"run_number"`
-	RunAttempt   int64                   `json:"run_attempt" db:"run_attempt"`
-	Started      time.Time               `json:"started" db:"started" cli:"started"`
-	LastModified time.Time               `json:"last_modified" db:"last_modified" cli:"last_modified"`
-	ToDelete     bool                    `json:"to_delete" db:"to_delete"`
-	WorkflowData V2WorkflowRunData       `json:"workflow_data" db:"workflow_data"`
-	UserID       string                  `json:"user_id" db:"user_id"`
-	Username     string                  `json:"username" db:"username" cli:"username"`
-	Contexts     WorkflowRunContext      `json:"contexts" db:"contexts"`
-	RunEvent     V2WorkflowRunEvent      `json:"event" db:"event"`
-	RunJobEvent  []V2WorkflowRunJobEvent `json:"job_event" db:"job_event"`
+	ID           string                 `json:"id" db:"id"`
+	ProjectKey   string                 `json:"project_key" db:"project_key"`
+	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
+	RepositoryID string                 `json:"repository_id" db:"repository_id"`
+	WorkflowName string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
+	WorkflowSha  string                 `json:"workflow_sha" db:"workflow_sha"`
+	WorkflowRef  string                 `json:"workflow_ref" db:"workflow_ref"`
+	Status       string                 `json:"status" db:"status" cli:"status"`
+	RunNumber    int64                  `json:"run_number" db:"run_number" cli:"run_number"`
+	RunAttempt   int64                  `json:"run_attempt" db:"run_attempt"`
+	Started      time.Time              `json:"started" db:"started" cli:"started"`
+	LastModified time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
+	ToDelete     bool                   `json:"to_delete" db:"to_delete"`
+	WorkflowData V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
+	UserID       string                 `json:"user_id" db:"user_id"`
+	Username     string                 `json:"username" db:"username" cli:"username"`
+	Contexts     WorkflowRunContext     `json:"contexts" db:"contexts"`
+	RunEvent     V2WorkflowRunEvent     `json:"event" db:"event"`
+	RunJobEvent  V2WorkflowRunJobEvents `json:"job_event" db:"job_event"`
 
 	// Aggregations
 	Results []V2WorkflowRunResult `json:"results" db:"-"`
@@ -118,12 +118,14 @@ type V2WorkflowRunJobEvent struct {
 	RunAttempt int64                  `json:"run_attempt"`
 }
 
-func (w V2WorkflowRunJobEvent) Value() (driver.Value, error) {
+type V2WorkflowRunJobEvents []V2WorkflowRunJobEvent
+
+func (w V2WorkflowRunJobEvents) Value() (driver.Value, error) {
 	j, err := json.Marshal(w)
-	return j, WrapError(err, "cannot marshal V2WorkflowRunJobEvent")
+	return j, WrapError(err, "cannot marshal V2WorkflowRunJobEvents")
 }
 
-func (w *V2WorkflowRunJobEvent) Scan(src interface{}) error {
+func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
@@ -131,7 +133,7 @@ func (w *V2WorkflowRunJobEvent) Scan(src interface{}) error {
 	if !ok {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal V2WorkflowRunJobEvent")
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal V2WorkflowRunJobEvents")
 }
 
 type V2WorkflowRunEvent struct {

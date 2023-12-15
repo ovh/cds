@@ -47,7 +47,7 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event, disabl
 	}
 
 	if err != nil {
-		return sdk.WrapError(err, "bitbucketClient.SetStatus: Cannot process RunEvent")
+		return sdk.WrapError(err, "bitbucketClient.SetStatus: Cannot process Event")
 	}
 
 	state := getBitbucketStateFromStatus(statusData.status)
