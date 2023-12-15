@@ -813,6 +813,16 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
+			runInfo := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wr.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Message:       u.GetFullname() + " restarted all failed jobs",
+			}
+			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
+				return err
+			}
+
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}

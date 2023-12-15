@@ -139,7 +139,6 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 				if err != nil {
 					return err
 				}
-				log.Error(ctx, ">>>> QUEUE: %d  %s %s", len(jobs), regionName, hatch.ModelType)
 				return service.WriteJSON(w, jobs, http.StatusOK)
 			case u != nil:
 				// TODO
