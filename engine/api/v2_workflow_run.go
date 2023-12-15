@@ -951,7 +951,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			gate := wr.WorkflowData.Workflow.Gates[jobToRun.Job.Gate]
 			reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
 			if len(gate.Reviewers.Users) > 0 {
-				if sdk.IsInArray(u.GetFullname(), gate.Reviewers.Users) {
+				if sdk.IsInArray(u.GetUsername(), gate.Reviewers.Users) {
 					reviewersChecked = true
 				}
 			}
@@ -963,7 +963,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 						return err
 					}
 					for _, m := range grp.Members {
-						if m.Username == u.GetFullname() {
+						if m.Username == u.GetUsername() {
 							reviewersChecked = true
 							break groupLoop
 						}

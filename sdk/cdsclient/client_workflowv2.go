@@ -58,6 +58,16 @@ func (c *client) WorkflowV2Restart(ctx context.Context, projectKey, vcsIdentifie
 	return &run, nil
 }
 
+func (c *client) WorkflowV2JobStart(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64, jobName string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
+	var run sdk.V2WorkflowRun
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run/%d/jobs/%s/run", projectKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName, runNumber, jobName)
+	_, _, _, err := c.RequestJSON(ctx, "PUT", path, payload, &run, mods...)
+	if err != nil {
+		return nil, err
+	}
+	return &run, nil
+}
+
 func (c *client) WorkflowV2RunStatus(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
 	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run/%d", projectKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName, runNumber)
