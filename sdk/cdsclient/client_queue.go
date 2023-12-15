@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/gorilla/websocket"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -44,19 +47,40 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, filters []sdk.WebsocketFilter, delay time.Duration, ms ...RequestModifier) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	jobsTicker := time.NewTicker(delay)
 
 	// This goroutine call the SSE route
 	chanMessageReceived := make(chan sdk.WebsocketEvent, 10)
 	chanMessageToSend := make(chan []sdk.WebsocketFilter, 10)
-	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
-		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, errs)
-	})
-	chanMessageToSend <- []sdk.WebsocketFilter{{
-		Type: sdk.WebsocketFilterTypeQueue,
-	}}
+	chanWsError := make(chan error, 10)
 
+	goRoutines.Exec(ctx, "RequestWebsocket", func(ctx context.Context) {
+		c.WebsocketEventsListen(ctx, goRoutines, chanMessageToSend, chanMessageReceived, chanWsError)
+		cancel()
+	})
+	goRoutines.Exec(ctx, "WebsocketError", func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					log.ErrorWithStackTrace(ctx, ctx.Err())
+				}
+			case e := <-chanWsError:
+				if strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseGoingAway)) || strings.Contains(e.Error(), "websocket: close "+strconv.Itoa(websocket.CloseAbnormalClosure)) {
+					log.ErrorWithStackTrace(ctx, e)
+					log.Debug(ctx, "QueuePolling: send websocket filter")
+					chanMessageToSend <- filters
+					continue
+				}
+				errs <- e
+			}
+		}
+	})
+	chanMessageToSend <- filters
 	for {
 		select {
 		case <-ctx.Done():
@@ -119,20 +143,20 @@ func (c *client) QueuePolling(ctx context.Context, goRoutines *sdk.GoRoutines, h
 			cancel()
 
 			queueFiltered := sdk.WorkflowQueue{}
-			var lenqueue int
 			for _, job := range queue {
 				id := strconv.FormatInt(job.ID, 10)
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(id) {
 					log.Debug(ctx, "skipping job %s", id)
 					continue
 				}
-				lenqueue = pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 				queueFiltered = append(queueFiltered, job)
 			}
-			log.Debug(ctx, "v1_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), lenqueue)
+			log.Debug(ctx, "v1_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), pendingWorkerCreation.NbJobInPendingWorkerCreation())
 
 			shrinkQueue(&queueFiltered, cap(jobs))
 			for _, j := range queueFiltered {
+				id := strconv.FormatInt(j.ID, 10)
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(id)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV1JobAdd, 1)
 				jobs <- j
 			}

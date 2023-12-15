@@ -87,6 +87,13 @@ func (c *HatcheryPendingWorkerCreation) SetJobInPendingWorkerCreation(id string)
 	return size
 }
 
+func (c *HatcheryPendingWorkerCreation) NbJobInPendingWorkerCreation() int {
+	c.mapSpawnJobRequestMutex.Lock()
+	size := len(c.mapSpawnJobRequest)
+	c.mapSpawnJobRequestMutex.Unlock()
+	return size
+}
+
 func (c *HatcheryPendingWorkerCreation) RemoveJobFromPendingWorkerCreation(id string) {
 	c.mapSpawnJobRequestMutex.Lock()
 	delete(c.mapSpawnJobRequest, id)

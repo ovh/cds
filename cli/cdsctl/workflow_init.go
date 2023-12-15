@@ -111,7 +111,14 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 		if !strings.HasPrefix(fetchURL, "https://") && !strings.HasPrefix(fetchURL, "ssh://") {
 			return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
 		}
-		originHost := strings.TrimSpace(strings.SplitN(fetchURL, ":", 2)[0])
+
+		// example: ssh://git@foo.bar.net:7999/foo/bar.git
+		// originHost is foo.bar.net
+		fetchURLParsed, err := url.Parse(fetchURL)
+		if err != nil {
+			return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
+		}
+		originHost := fetchURLParsed.Hostname()
 
 		vcsConf, err := client.VCSConfiguration()
 		if err != nil {
@@ -123,7 +130,7 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 			if err != nil {
 				return "", cli.WrapError(err, "Unable to get VCS Configuration")
 			}
-			rmHost := strings.TrimSpace(strings.SplitN(rmURL.Host, ":", 2)[0])
+			rmHost := rmURL.Hostname()
 			if originHost == rmHost {
 				fmt.Printf(" * using repositories manager %s (%s)", cli.Magenta(rmName), cli.Magenta(rmURL.String()))
 				fmt.Println()

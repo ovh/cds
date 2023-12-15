@@ -2,8 +2,6 @@ module github.com/ovh/cds/contrib/grpcplugins/action/artifactoryreleasebundlecre
 
 go 1.21
 
-toolchain go1.21.1
-
 replace github.com/ovh/cds => ../../../../
 
 require (

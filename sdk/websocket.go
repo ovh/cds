@@ -50,6 +50,7 @@ type WebsocketFilter struct {
 	WorkflowRunNumber int64               `json:"workflow_run_num"`
 	WorkflowNodeRunID int64               `json:"workflow_node_run_id"`
 	OperationUUID     string              `json:"operation_uuid"`
+	HatcheryType      string              `json:"hatchery_type"`
 }
 
 type WebsocketHatcheryFilter struct {

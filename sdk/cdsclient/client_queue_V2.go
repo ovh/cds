@@ -107,11 +107,13 @@ func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*
 
 func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
+	ctx, cancel := context.WithCancel(ctx)
 
 	// This goroutine call the Websocket
 	chanMessageReceived := make(chan sdk.WebsocketHatcheryEvent, 10)
 	goRoutines.Exec(ctx, "RequestWebsocketHatchery", func(ctx context.Context) {
 		c.WebsocketHatcheryJobQueuedListen(ctx, goRoutines, chanMessageReceived, errs)
+		cancel()
 	})
 
 	for {
@@ -165,23 +167,22 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			cancel()
 
 			queueFiltered := []sdk.V2WorkflowRunJob{}
-			var lenqueue int
 			for _, job := range queue {
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(job.ID) {
 					log.Debug(ctx, "skipping job %s", job.ID)
 					continue
 				}
-				lenqueue = pendingWorkerCreation.SetJobInPendingWorkerCreation(job.ID)
 				queueFiltered = append(queueFiltered, job)
 			}
 
-			log.Debug(ctx, "v2_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), lenqueue)
+			log.Debug(ctx, "v2_job_queue_from_api: %v job_queue_filtered: %v len_queue: %v", len(queue), len(queueFiltered), pendingWorkerCreation.NbJobInPendingWorkerCreation())
 
 			max := cap(jobs) * 2
 			if len(queueFiltered) < max {
 				max = len(queueFiltered)
 			}
 			for i := 0; i < max; i++ {
+				pendingWorkerCreation.SetJobInPendingWorkerCreation(queueFiltered[i].ID)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- queueFiltered[i]
 			}
@@ -194,6 +195,11 @@ func (c *client) WebsocketHatcheryJobQueuedListen(ctx context.Context, goRoutine
 	goRoutines.Exec(ctx, "WebsocketHatcheryJobQueuedListen", func(ctx context.Context) {
 		for {
 			select {
+			case <-ctx.Done():
+				if ctx.Err() != nil {
+					log.ErrorWithStackTrace(ctx, ctx.Err())
+				}
+				return
 			case m := <-chanMsgReceived:
 				var wsEvent sdk.WebsocketHatcheryEvent
 				if err := sdk.JSONUnmarshal(m, &wsEvent); err != nil {
