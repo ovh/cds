@@ -165,8 +165,8 @@ type V2Job struct {
 
 type V2JobGate struct {
 	If        string                    `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute the gate"`
-	Inputs    map[string]V2JobGateInput `json:"inputs" jsonschema_extras:"order=2,mode=edit" jsonschema_description:"Gate inputs to fill for manual triggering"`
-	Reviewers V2JobGateReviewers        `json:"reviewers" jsonschema_extras:"order=3" jsonschema_description:"Restrict the gate to a list of reviewers"`
+	Inputs    map[string]V2JobGateInput `json:"inputs,omitempty" jsonschema_extras:"order=2,mode=edit" jsonschema_description:"Gate inputs to fill for manual triggering"`
+	Reviewers V2JobGateReviewers        `json:"reviewers,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Restrict the gate to a list of reviewers"`
 }
 
 type V2JobGateInput struct {
@@ -176,8 +176,8 @@ type V2JobGateInput struct {
 }
 
 type V2JobGateReviewers struct {
-	Groups []string `json:"groups"`
-	Users  []string `json:"users"`
+	Groups []string `json:"groups,omitempty"`
+	Users  []string `json:"users,omitempty"`
 }
 
 func (w V2Job) Value() (driver.Value, error) {
