@@ -32,10 +32,19 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 				_ = tx.Rollback()
 				continue
 			}
-			if err := DeleteNodeJobRun(tx, deadJob.ID); err != nil {
-				log.Error(ctx, "manageDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
-				_ = tx.Rollback()
-				continue
+			nodeRun, err := LoadAndLockNodeRunByID(ctx, tx, deadJob.WorkflowNodeRunID)
+			if err != nil {
+				return sdk.WrapError(err, "manageDeadJob> cannot load node run: %d", deadJob.WorkflowNodeRunID)
+			}
+			sync, err := SyncNodeRunRunJob(ctx, tx, nodeRun, deadJob)
+			if err != nil {
+				return sdk.WrapError(err, "manageDeadJob> unable to sync nodeJobRun. JobID on handler: %d", deadJob.ID)
+			}
+			if !sync {
+				log.Warn(ctx, "manageDeadJob> sync doesn't find a nodeJobRun. JobID on handler: %d", deadJob.ID)
+			}
+			if err := UpdateNodeRun(tx, nodeRun); err != nil {
+				return sdk.WrapError(err, "manageDeadJob> cannot update node run. JobID on handler: %d", deadJob.ID)
 			}
 		} else if sdk.StatusIsTerminated(deadJob.Status) {
 			if err := DeleteNodeJobRun(tx, deadJob.ID); err != nil {

@@ -296,22 +296,33 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, store cache.Store, id st
 		return sdk.WrapError(err, "cannot update worker status")
 	}
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
-	}
-
 	if st == sdk.StatusBuilding && jobID.Valid {
 		log.Info(ctx, "DisableWorker> set job %v to fail", jobID.Int64)
-		wNodeJob, err := workflow.LoadNodeJobRun(ctx, db, nil, jobID.Int64)
+		wNodeJob, err := workflow.LoadNodeJobRun(ctx, tx, nil, jobID.Int64)
 		if err != nil {
 			return sdk.WrapError(err, "DisableWorker> Cannot LoadNodeJobRun node run job %d", jobID.Int64)
 		}
 		if _, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, wNodeJob, sdk.StatusFail); err != nil {
 			return sdk.WrapError(err, "DisableWorker> Cannot update node run job %d", jobID.Int64)
 		}
-		if err := workflow.DeleteNodeJobRun(tx, jobID.Int64); err != nil {
-			return sdk.WrapError(err, "DisableWorker> Cannot delete node run job %d", jobID.Int64)
+		nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, wNodeJob.WorkflowNodeRunID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load node run: %d", wNodeJob.WorkflowNodeRunID)
 		}
+		sync, err := workflow.SyncNodeRunRunJob(ctx, tx, nodeRun, *wNodeJob)
+		if err != nil {
+			return sdk.WrapError(err, "unable to sync nodeJobRun. JobID on handler: %d", jobID.Int64)
+		}
+		if !sync {
+			log.Warn(ctx, "DisableWorker> sync doesn't find a nodeJobRun. JobID on handler: %d", jobID.Int64)
+		}
+		if err := workflow.UpdateNodeRun(tx, nodeRun); err != nil {
+			return sdk.WrapError(err, "DisableWorker> cannot update node run. JobID on handler: %d", jobID.Int64)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
 	}
 	return nil
 }
