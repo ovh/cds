@@ -26,7 +26,7 @@ export class ProjectV2WorkflowGateNodeComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        //this.status = PipelineStatus.sum(this.nodes.map(n => n.run ? n.run.status : null));
+        this.status = this.node.gateStatus;
     }
 
     getNodes() {

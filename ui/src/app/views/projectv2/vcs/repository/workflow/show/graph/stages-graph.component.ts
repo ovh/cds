@@ -141,6 +141,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             this.hooksOn = workflow['on'];
             this.initHooks();
         }
+        this.initGate();
         this.changeDisplay();
         this._cd.markForCheck();
     }
@@ -187,6 +188,7 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
     @Input() set workflowRun(data: V2WorkflowRun) {
         this._workflowRun = data;
         this.initHooks();
+        this.initGate();
     }
 
     @Output() onSelectJob = new EventEmitter<string>();
@@ -277,6 +279,34 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
             return;
         }
         this.initGraph();
+    }
+
+    initGate(): void {
+        if (!this._workflowRun || !this.nodes) {
+            return;
+        }
+        if (!this._workflowRun.job_events || this._workflowRun.job_events.length === 0) {
+            return;
+        }
+        this.nodes.forEach(n => {
+            if (this.hasStages) {
+                n.sub_graph.forEach(subN => {
+                    if (subN.gateName !== '') {
+                        let je = this._workflowRun.job_events.filter(je => je.job_id === subN.gateChild);
+                        if (je) {
+                            subN.gateStatus = 'Success';
+                        }
+                    }
+                });
+            } else {
+                if (n.gateName !== '') {
+                    let je = this._workflowRun.job_events.filter(je => je.job_id === n.gateChild);
+                    if (je) {
+                        n.gateStatus = 'Success';
+                    }
+                }
+            }
+        });
     }
 
     initRunJobs(): void {

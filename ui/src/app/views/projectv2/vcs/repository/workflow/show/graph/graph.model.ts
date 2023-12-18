@@ -18,6 +18,7 @@ export class GraphNode {
     sub_graph: Array<GraphNode>;
     gateChild: string;
     gateName: string;
+    gateStatus: string;
     run: V2WorkflowRunJob;
     type: string;
 }
