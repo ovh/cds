@@ -91,7 +91,7 @@ testcases:
           from: result.systemoutjson.systemoutjson1.id
 
     - name: Display analysis result
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.Check-analyses.analysisID}}"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
 
     - name: Check that the CDS workflow has at least one execution
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
