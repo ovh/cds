@@ -102,6 +102,9 @@ var (
 	MsgSpawnInfoWorkerHookSetup             = &Message{"MsgSpawnInfoWorkerHookSetup", trad{EN: "Setting up worker hook %q"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookRun               = &Message{"MsgSpawnInfoWorkerHookRun", trad{EN: "Running worker hook %q"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoWorkerHookRunTeardown       = &Message{"MsgSpawnInfoWorkerHookRunTeardown", trad{EN: "Running worker hook %q teardown"}, nil, RunInfoTypInfo}
+	MsgSpawnInfoWorkerDisabledByHatchery    = &Message{"MsgSpawnInfoWorkerDisabledByHatchery", trad{EN: "The worker (not responding) %s was disabled by hatchery"}, nil, RunInfoTypeWarning}
+	MsgSpawnInfoWorkerDisabledByAdmin       = &Message{"MsgSpawnInfoWorkerDisabledByAdmin", trad{EN: "The worker %s was disabled by an administrator"}, nil, RunInfoTypeWarning}
+	MsgSpawnInfoJobFailedCauseByWorkerLost  = &Message{"MsgSpawnInfoJobFailedCauseByWorkerLost", trad{EN: "The job %s was set to failed due to lost connection with the worker"}, nil, RunInfoTypeWarning}
 )
 
 // Messages contains all sdk Messages
@@ -188,6 +191,9 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoWorkerHookSetup.ID:             MsgSpawnInfoWorkerHookSetup,
 	MsgSpawnInfoWorkerHookRun.ID:               MsgSpawnInfoWorkerHookRun,
 	MsgSpawnInfoWorkerHookRunTeardown.ID:       MsgSpawnInfoWorkerHookRunTeardown,
+	MsgSpawnInfoWorkerDisabledByHatchery.ID:    MsgSpawnInfoWorkerDisabledByHatchery,
+	MsgSpawnInfoWorkerDisabledByAdmin.ID:       MsgSpawnInfoWorkerDisabledByAdmin,
+	MsgSpawnInfoJobFailedCauseByWorkerLost.ID:  MsgSpawnInfoJobFailedCauseByWorkerLost,
 }
 
 // Message represent a struc format translated messages

@@ -36,6 +36,12 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 			if err != nil {
 				return sdk.WrapError(err, "manageDeadJob> cannot load node run: %d", deadJob.WorkflowNodeRunID)
 			}
+			infos := []sdk.SpawnInfo{{
+				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobFailedCauseByWorkerLost.ID, Args: []interface{}{deadJob.ID}},
+			}}
+			if err := AddSpawnInfosNodeJobRun(tx, deadJob.WorkflowNodeRunID, deadJob.ID, infos); err != nil {
+				return sdk.WrapError(err, "cannot save spawn info on node job run %d", deadJob.ID)
+			}
 			sync, err := SyncNodeRunRunJob(ctx, tx, nodeRun, deadJob)
 			if err != nil {
 				return sdk.WrapError(err, "manageDeadJob> unable to sync nodeJobRun. JobID on handler: %d", deadJob.ID)

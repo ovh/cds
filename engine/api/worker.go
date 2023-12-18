@@ -183,9 +183,6 @@ func (api *API) disableWorkerHandler() service.Handler {
 		}
 
 		if !isAdmin(ctx) {
-			if wk.Status == sdk.StatusBuilding {
-				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wk.Status)
-			}
 			hatcherySrv, err := services.LoadByConsumerID(ctx, api.mustDB(), getUserConsumer(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker from this hatchery: %v", err)
@@ -273,7 +270,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 // the package workflow
 
 // DisableWorker disable a worker
-func DisableWorker(ctx context.Context, db *gorp.DbMap, store cache.Store, id string, maxLogSize int64) error {
+func DisableWorker(ctx context.Context, db *gorp.DbMap, store cache.Store, workerID string, maxLogSize int64) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return fmt.Errorf("DisableWorker> Cannot start tx: %v", err)
@@ -281,17 +278,17 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, store cache.Store, id st
 	defer tx.Rollback() // nolint
 
 	query := `SELECT name, status, job_run_id FROM worker WHERE id = $1 FOR UPDATE`
-	var st, name string
+	var st, workerName string
 	var jobID sql.NullInt64
-	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID); err != nil {
-		log.Debug(ctx, "DisableWorker[%s]> Cannot lock worker: %v", id, err)
+	if err := tx.QueryRow(query, workerID).Scan(&workerName, &st, &jobID); err != nil {
+		log.Debug(ctx, "DisableWorker[%s]> Cannot lock worker: %v", workerID, err)
 		return nil
 	}
 
-	if err := worker.SetStatus(ctx, tx, id, sdk.StatusDisabled); err != nil {
+	if err := worker.SetStatus(ctx, tx, workerID, sdk.StatusDisabled); err != nil {
 		cause := sdk.Cause(err)
 		if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
-			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exist", id)
+			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exist", workerID)
 		}
 		return sdk.WrapError(err, "cannot update worker status")
 	}
@@ -302,22 +299,33 @@ func DisableWorker(ctx context.Context, db *gorp.DbMap, store cache.Store, id st
 		if err != nil {
 			return sdk.WrapError(err, "DisableWorker> Cannot LoadNodeJobRun node run job %d", jobID.Int64)
 		}
-		if _, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, wNodeJob, sdk.StatusFail); err != nil {
-			return sdk.WrapError(err, "DisableWorker> Cannot update node run job %d", jobID.Int64)
-		}
-		nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, wNodeJob.WorkflowNodeRunID)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load node run: %d", wNodeJob.WorkflowNodeRunID)
-		}
-		sync, err := workflow.SyncNodeRunRunJob(ctx, tx, nodeRun, *wNodeJob)
-		if err != nil {
-			return sdk.WrapError(err, "unable to sync nodeJobRun. JobID on handler: %d", jobID.Int64)
-		}
-		if !sync {
-			log.Warn(ctx, "DisableWorker> sync doesn't find a nodeJobRun. JobID on handler: %d", jobID.Int64)
-		}
-		if err := workflow.UpdateNodeRun(tx, nodeRun); err != nil {
-			return sdk.WrapError(err, "DisableWorker> cannot update node run. JobID on handler: %d", jobID.Int64)
+		if !sdk.StatusIsTerminated(wNodeJob.Status) {
+			infos := []sdk.SpawnInfo{{
+				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerDisabledByHatchery.ID, Args: []interface{}{workerName}},
+			}}
+			if isAdmin(ctx) {
+				infos = []sdk.SpawnInfo{{Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerDisabledByAdmin.ID, Args: []interface{}{workerName}}}}
+			}
+			if err := workflow.AddSpawnInfosNodeJobRun(tx, wNodeJob.WorkflowNodeRunID, jobID.Int64, infos); err != nil {
+				return sdk.WrapError(err, "cannot save spawn info on node job run %d", jobID.Int64)
+			}
+			if _, err := workflow.UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, wNodeJob, sdk.StatusFail); err != nil {
+				return sdk.WrapError(err, "DisableWorker> Cannot update node run job %d", jobID.Int64)
+			}
+			nodeRun, err := workflow.LoadAndLockNodeRunByID(ctx, tx, wNodeJob.WorkflowNodeRunID)
+			if err != nil {
+				return sdk.WrapError(err, "cannot load node run: %d", wNodeJob.WorkflowNodeRunID)
+			}
+			sync, err := workflow.SyncNodeRunRunJob(ctx, tx, nodeRun, *wNodeJob)
+			if err != nil {
+				return sdk.WrapError(err, "unable to sync nodeJobRun. JobID on handler: %d", jobID.Int64)
+			}
+			if !sync {
+				log.Warn(ctx, "DisableWorker> sync doesn't find a nodeJobRun. JobID on handler: %d", jobID.Int64)
+			}
+			if err := workflow.UpdateNodeRun(tx, nodeRun); err != nil {
+				return sdk.WrapError(err, "DisableWorker> cannot update node run. JobID on handler: %d", jobID.Int64)
+			}
 		}
 	}
 
