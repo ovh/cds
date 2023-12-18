@@ -83,15 +83,9 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Error"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
       retry: 10
       delay: 12
-      vars:
-        analysisID:
-          from: result.systemoutjson.systemoutjson1.id
-
-    - name: Display analysis result
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
 
     - name: Check that the CDS workflow has at least one execution
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
@@ -116,6 +110,6 @@ testcases:
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
 
     - name: Check log content
-      script: "cat {{.cds_workflow}}-1-1-manual-step2 | grep \"World\""
+      script: "cat {{.cds_workflow}}-1-2-manual-step2 | grep \"World\""
 
 
