@@ -34,7 +34,7 @@ func publish(ctx context.Context, store cache.Store, event sdk.EventV2) {
 func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines *sdk.GoRoutines) {
 	for {
 		e := sdk.EventV2{}
-		if err := store.DequeueWithContext(ctx, eventQueue, 250*time.Millisecond, &e); err != nil {
+		if err := store.DequeueWithContext(ctx, eventQueue, 50*time.Millisecond, &e); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "EventV2.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
@@ -43,8 +43,8 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		wg := sync.WaitGroup{}
 
 		// Push to elasticsearch
+		wg.Add(1)
 		goroutines.Exec(ctx, "event.pushToElasticSearch", func(ctx context.Context) {
-			wg.Add(1)
 			defer wg.Done()
 			if err := pushToElasticSearch(ctx, db, e); err != nil {
 				log.Error(ctx, "EventV2.pushToElasticSearch: %v", err)
@@ -52,22 +52,22 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		})
 
 		// Create audit
+		wg.Add(1)
 		goroutines.Exec(ctx, "event.audit", func(ctx context.Context) {
-			wg.Add(1)
 			defer wg.Done()
 			// TODO Audit
 		})
 
 		// Push to websockets channels
+		wg.Add(1)
 		goroutines.Exec(ctx, "event.websockets", func(ctx context.Context) {
-			wg.Add(1)
 			defer wg.Done()
 			pushToWebsockets(ctx, store, e)
 		})
 
 		// Project notifications
+		wg.Add(1)
 		goroutines.Exec(ctx, "event.notifications", func(ctx context.Context) {
-			wg.Add(1)
 			defer wg.Done()
 			if err := pushNotifications(ctx, db, e); err != nil {
 				log.Error(ctx, "EventV2.pushNotifications: %v", err)
