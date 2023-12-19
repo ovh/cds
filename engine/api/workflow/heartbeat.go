@@ -10,8 +10,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const maxRetry = 3
-
 // manageDeadJob restart all jobs which are building but without worker
 func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store, maxLogSize int64) error {
 	db := DBFunc()
@@ -21,31 +19,38 @@ func manageDeadJob(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 	}
 
 	for _, deadJob := range deadJobs {
-		tx, errTx := db.Begin()
-		if errTx != nil {
-			log.Error(ctx, "manageDeadJob> Cannot create transaction : %v", errTx)
+		tx, err := db.Begin()
+		if err != nil {
+			log.Error(ctx, "manageDeadJob> Cannot create transaction : %v", err)
 			continue
 		}
 
 		if deadJob.Status == sdk.StatusBuilding {
-			if deadJob.Retry >= maxRetry {
-				if _, err := UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, &deadJob, sdk.StatusStopped); err != nil {
-					log.Error(ctx, "manageDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
-					_ = tx.Rollback()
-					continue
-				}
-
-				if err := DeleteNodeJobRun(tx, deadJob.ID); err != nil {
-					log.Error(ctx, "manageDeadJob> Cannot delete node run job %d : %v", deadJob.ID, err)
-					_ = tx.Rollback()
-					continue
-				}
-			} else {
-				if err := RestartWorkflowNodeJob(ctx, tx, deadJob, maxLogSize); err != nil {
-					log.Warn(ctx, "manageDeadJob> Cannot restart node job run %d: %v", deadJob.ID, err)
-					_ = tx.Rollback()
-					continue
-				}
+			log.Info(ctx, "manageDeadJob> set job %v to fail", deadJob.ID)
+			if _, err := UpdateNodeJobRunStatus(ctx, tx, store, sdk.Project{}, &deadJob, sdk.StatusFail); err != nil {
+				log.Error(ctx, "manageDeadJob> Cannot update node run job %d : %v", deadJob.ID, err)
+				_ = tx.Rollback()
+				continue
+			}
+			nodeRun, err := LoadAndLockNodeRunByID(ctx, tx, deadJob.WorkflowNodeRunID)
+			if err != nil {
+				return sdk.WrapError(err, "manageDeadJob> cannot load node run: %d", deadJob.WorkflowNodeRunID)
+			}
+			infos := []sdk.SpawnInfo{{
+				Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobFailedCauseByWorkerLost.ID, Args: []interface{}{deadJob.ID}},
+			}}
+			if err := AddSpawnInfosNodeJobRun(tx, deadJob.WorkflowNodeRunID, deadJob.ID, infos); err != nil {
+				return sdk.WrapError(err, "cannot save spawn info on node job run %d", deadJob.ID)
+			}
+			sync, err := SyncNodeRunRunJob(ctx, tx, nodeRun, deadJob)
+			if err != nil {
+				return sdk.WrapError(err, "manageDeadJob> unable to sync nodeJobRun. JobID on handler: %d", deadJob.ID)
+			}
+			if !sync {
+				log.Warn(ctx, "manageDeadJob> sync doesn't find a nodeJobRun. JobID on handler: %d", deadJob.ID)
+			}
+			if err := UpdateNodeRun(tx, nodeRun); err != nil {
+				return sdk.WrapError(err, "manageDeadJob> cannot update node run. JobID on handler: %d", deadJob.ID)
 			}
 		} else if sdk.StatusIsTerminated(deadJob.Status) {
 			if err := DeleteNodeJobRun(tx, deadJob.ID); err != nil {
