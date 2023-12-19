@@ -635,7 +635,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, rj)
 			}
 
-			return sdk.WithStack(tx.Commit())
+			return nil
 		}
 }
 
