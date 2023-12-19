@@ -98,7 +98,7 @@ require (
 	golang.org/x/sys v0.15.0
 	golang.org/x/text v0.14.0
 	golang.org/x/time v0.3.0
-	google.golang.org/grpc v1.56.3
+	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/AlecAivazis/survey.v1 v1.7.1
 	gopkg.in/h2non/gock.v1 v1.1.2
@@ -113,11 +113,11 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.110.2 // indirect
-	cloud.google.com/go/compute v1.20.1 // indirect
+	cloud.google.com/go v0.110.10 // indirect
+	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/firestore v1.9.0 // indirect
-	cloud.google.com/go/longrunning v0.4.1 // indirect
+	cloud.google.com/go/firestore v1.14.0 // indirect
+	cloud.google.com/go/longrunning v0.5.4 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.18 // indirect
@@ -170,12 +170,11 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
-	github.com/google/s2a-go v0.1.4 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
-	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
+	github.com/google/s2a-go v0.1.7 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
+	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/hashicorp/consul/api v1.12.0 // indirect
@@ -271,15 +270,15 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	google.golang.org/api v0.126.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
+	google.golang.org/api v0.149.0 // indirect
+	google.golang.org/appengine v1.6.8 // indirect
+	google.golang.org/genproto v0.0.0-20231211222908-989df2bf70f3 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/gorp.v1 v1.7.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
