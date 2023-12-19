@@ -22,7 +22,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
-	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/link"
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/project"
@@ -184,7 +184,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 			defer tx.Rollback()
 
-			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit, analysis.HookEventUUID)
+			a, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit, analysis.HookEventUUID)
 			if err != nil {
 				return err
 			}
@@ -193,12 +193,17 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			event.PublishProjectRepositoryAnalyze(ctx, proj.Key, vcsProject.ID, repo.ID, analyzeReponse.AnalysisID, analyzeReponse.Status)
-			return service.WriteJSON(w, analyzeReponse, http.StatusCreated)
+			response := sdk.AnalysisResponse{
+				AnalysisID: a.ID,
+				Status:     a.Status,
+			}
+
+			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProject.Name, repo.Name, a)
+			return service.WriteJSON(w, response, http.StatusCreated)
 		}
 }
 
-func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit, hookEventUUID string) (*sdk.AnalysisResponse, error) {
+func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit, hookEventUUID string) (*sdk.ProjectRepositoryAnalysis, error) {
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProject.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
@@ -219,12 +224,7 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		return nil, err
 	}
 
-	response := sdk.AnalysisResponse{
-		AnalysisID: repoAnalysis.ID,
-		Status:     repoAnalysis.Status,
-	}
-
-	return &response, nil
+	return &repoAnalysis, nil
 }
 
 func (api *API) repositoryAnalysisPoller(ctx context.Context, tick time.Duration) {
@@ -283,10 +283,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	if sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil
 	}
-	defer func() {
-		event.PublishProjectRepositoryAnalyze(ctx, analysis.ProjectKey, analysis.VCSProjectID, analysis.ProjectRepositoryID, analysis.ID, analysis.Status)
-	}()
-
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load analyze %s", analysis.ID))
 	}
@@ -304,6 +300,10 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
+
+	defer func() {
+		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis)
+	}()
 
 	entitiesToUpdate := make([]sdk.EntityWithObject, 0)
 	defer func() {

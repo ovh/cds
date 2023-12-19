@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/worker_v2"
@@ -110,6 +111,8 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			SigningKey:    base64.StdEncoding.EncodeToString(workerKey),
 			Contexts:      *contexts,
 		}
+
+		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobBuilding, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
 		return service.WriteJSON(w, takeResponse, http.StatusOK)
 	}
 }
