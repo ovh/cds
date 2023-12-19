@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
@@ -222,7 +223,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
-			analyzeReponse, err := api.createAnalyze(ctx, tx, *proj, *vcsProjectWithSecret, repoDB, defaultBranch.DisplayID, defaultBranch.LatestCommit, "")
+			a, err := api.createAnalyze(ctx, tx, *proj, *vcsProjectWithSecret, repoDB, defaultBranch.DisplayID, defaultBranch.LatestCommit, "")
 			if err != nil {
 				return err
 			}
@@ -232,7 +233,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 			}
 
 			event.PublishAddProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProjectWithSecret.ID, Name: vcsProjectWithSecret.Name}, repoDB, getUserConsumer(ctx))
-			event.PublishProjectRepositoryAnalyze(ctx, proj.Key, vcsProjectWithSecret.ID, repoDB.ID, analyzeReponse.AnalysisID, analyzeReponse.Status)
+			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a)
 
 			return service.WriteMarshal(w, req, repoDB, http.StatusCreated)
 		}

@@ -22,5 +22,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	r.Handle("/events", nil, r.GET(s.getEventsHandler), r.POST(s.postEventHandler))
+	r.Handle("/v2/events", nil, r.POST(s.postEventV2Handler))
 	r.Handle("/metrics", nil, r.GET(s.getMetricsHandler), r.POST(s.postMetricsHandler))
 }

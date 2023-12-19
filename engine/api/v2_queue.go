@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,7 +11,7 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
-	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -216,6 +215,16 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			}
 
 			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.UserID, jobRun.WorkflowName, jobRun.RunNumber)
+
+			api.GoRoutines.Exec(ctx, "postJobResultHandler.event", func(ctx context.Context) {
+				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+			})
+
 			return nil
 		}
 }
@@ -384,19 +393,14 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 			}
 
 			// Enqueue the job
-			runJobEvent := sdk.WebsocketJobQueueEvent{
-				Region:       jobRun.Region,
-				ModelType:    jobRun.ModelType,
-				JobRunID:     jobRun.ID,
-				RunNumber:    jobRun.RunNumber,
-				WorkflowName: jobRun.WorkflowName,
-				ProjectKey:   jobRun.ProjectKey,
-				JobID:        jobRun.JobID,
-			}
-			bts, _ := json.Marshal(runJobEvent)
-			if err := api.Cache.Publish(ctx, event.JobQueuedPubSubKey, string(bts)); err != nil {
-				log.Error(ctx, "%v", err)
-			}
+			api.GoRoutines.Exec(ctx, "deleteHatcheryReleaseJobRunHandler.event", func(ctx context.Context) {
+				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+			})
 			return nil
 		}
 }
@@ -478,6 +482,14 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
+			api.GoRoutines.Exec(ctx, "postHatcheryTakeJobRunHandler", func(ctx context.Context) {
+				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobScheduled, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+			})
 			return service.WriteJSON(w, jobRun, http.StatusOK)
 
 		}

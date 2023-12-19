@@ -15,6 +15,7 @@ import (
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -292,7 +293,9 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, *runJob)
 			api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber)
+
 			return nil
 		}
 }
@@ -624,7 +627,15 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			return sdk.WithStack(tx.Commit())
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
+			for _, rj := range runJobs {
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, rj)
+			}
+
+			return nil
 		}
 }
 
