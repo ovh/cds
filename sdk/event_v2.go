@@ -4,10 +4,12 @@ const (
 	EventAnalysisStart = "AnalysisStart"
 	EventAnalysisDone  = "AnalysisDone"
 
-	EventRunJobEnqueued  = "RunJobEnqueued"
-	EventRunJobScheduled = "RunJobScheduled"
-	EventRunJobBuilding  = "RunJobBuilding"
-	EventRunJobEnded     = "RunJobEnded"
+	EventRunJobEnqueued         = "RunJobEnqueued"
+	EventRunJobScheduled        = "RunJobScheduled"
+	EventRunJobBuilding         = "RunJobBuilding"
+	EventRunJobRunResultAdded   = "RunJobRunResultAdded"
+	EventRunJobRunResultUpdated = "RunJobRunResultUpdated"
+	EventRunJobEnded            = "RunJobEnded"
 )
 
 type EventV2 struct {
@@ -24,6 +26,7 @@ type EventV2 struct {
 	WorkflowRunID string      `json:"workflow_run_id,omitempty"`
 	RunJobID      string      `json:"run_job_id,omitempty"`
 	JobID         string      `json:"job_id,omitempty"`
+	RunResultName string      `json:"run_result_name,omitempty"`
 	Type          string      `json:"type,omitempty"`
 	Status        string      `json:"status"`
 	Payload       interface{} `json:"payload,omitempty"`
