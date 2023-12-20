@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
@@ -150,7 +151,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	// Build run context
 	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *p, *run, *vcsServer, *repo, *u)
 	if err != nil {
-		return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
+		return stopRun(ctx, api.mustDB(), api.Cache, run, &sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			Message:       fmt.Sprintf("%v", err),
@@ -189,28 +190,28 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		msg, err := searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, &sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("unable to retrieve job[%s] definition. Please contact an administrator", jobID),
 			})
 		}
 		if msg != nil {
-			return stopRun(ctx, api.mustDB(), run, msg)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, msg)
 		}
 
 		if !strings.HasPrefix(j.RunsOn, "${{") {
 			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
-				return stopRun(ctx, api.mustDB(), run, &sdk.V2WorkflowRunInfo{
+				return stopRun(ctx, api.mustDB(), api.Cache, run, &sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
 				})
 			}
 			if msg != nil {
-				return stopRun(ctx, api.mustDB(), run, msg)
+				return stopRun(ctx, api.mustDB(), api.Cache, run, msg)
 			}
 			j.RunsOn = completeName
 		}
@@ -249,6 +250,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(tx.Commit())
 	}
+
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run)
 
 	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
 	return nil
@@ -502,7 +505,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 	return nil, nil
 }
 
-func stopRun(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, msg *sdk.V2WorkflowRunInfo) error {
+func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, msg *sdk.V2WorkflowRunInfo) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -521,7 +524,13 @@ func stopRun(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, msg *s
 		return err
 	}
 
-	return sdk.WithStack(tx.Commit())
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	event_v2.PublishRunEvent(ctx, store, sdk.EventRunEnded, *run)
+
+	return nil
 }
 
 func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p sdk.Project, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {

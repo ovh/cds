@@ -51,3 +51,20 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType, vcsNa
 	}
 	publish(ctx, store, e)
 }
+
+func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun) {
+	e := sdk.EventV2{
+		ID:            sdk.UUID(),
+		ProjectKey:    wr.ProjectKey,
+		VCSName:       wr.Contexts.Git.Server,
+		Repository:    wr.Contexts.Git.Repository,
+		Workflow:      wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Type:          eventType,
+		Status:        wr.Status,
+		Payload:       wr,
+		WorkflowRunID: wr.ID,
+	}
+	publish(ctx, store, e)
+}

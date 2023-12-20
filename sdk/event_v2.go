@@ -10,6 +10,11 @@ const (
 	EventRunJobRunResultAdded   = "RunJobRunResultAdded"
 	EventRunJobRunResultUpdated = "RunJobRunResultUpdated"
 	EventRunJobEnded            = "RunJobEnded"
+
+	EventRunCrafted          = "RunCrafted"
+	EventRunBuilding         = "RunBuilding"
+	EventRunEnded            = "RunEnded"
+	EventRunRestartFailedJob = "RunRestartFailedJob"
 )
 
 type EventV2 struct {

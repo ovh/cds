@@ -634,6 +634,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			for _, rj := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, rj)
 			}
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr)
 
 			return nil
 		}
@@ -882,6 +883,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr)
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
@@ -1036,6 +1038,12 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, err
 	}
 
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr)
+
 	select {
 	case api.workflowRunCraftChan <- wr.ID:
 		log.Debug(ctx, "postWorkflowRunV2Handler: workflow run %s %d sent into chan", wr.WorkflowName, wr.RunNumber)
@@ -1043,8 +1051,5 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		// Default behaviour is made by a goroutine that call directly the database
 	}
 
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WithStack(err)
-	}
 	return &wr, nil
 }
