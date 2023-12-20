@@ -14,7 +14,7 @@ import { AuthenticationState } from 'app/store/authentication.state';
 import { EventState } from 'app/store/event.state';
 import { AddOrUpdateJob, RemoveJob, SetJobs, SetJobUpdating } from 'app/store/queue.action';
 import { QueueState } from 'app/store/queue.state';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 

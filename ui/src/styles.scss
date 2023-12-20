@@ -2,107 +2,109 @@
 
 @import "common";
 
-@import "@fontsource/lato/scss/mixins";
-
-@include fontFace($style: italic, $weight: 400);
-
-@include fontFace($style: italic, $weight: 700);
-
-@include fontFace($style: normal, $weight: 400);
-
-@include fontFace($style: normal, $weight: 700);
+@import "@fontsource/lato";
+@import "@fontsource/lato/400.css";
+@import "@fontsource/lato/400-italic.css";
+@import "@fontsource/lato/700.css";
+@import "@fontsource/lato/700-italic.css";
 
 html,
 body {
     overflow-y: hidden;
 }
-.app-loader {
-  position: absolute;
-  top: 50%;
-  width: 100%;
-  text-align: center;
-  font-size: 3em;
 
-  .anticon {
-    margin-right: 15px;
-  }
+.app-loader {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    text-align: center;
+    font-size: 3em;
+
+    .anticon {
+        margin-right: 15px;
+    }
 }
 
 textarea:read-only {
-  color: rgba(0,0,0,.85);
-  opacity: 0.45;
+    color: rgba(0, 0, 0, .85);
+    opacity: 0.45;
 }
 
 .entity-card {
-  width: 100%;
-  height: 100px;
-  padding: 1em;
-  border-radius: 3px;
-  border: 1px solid #d4d4d5;
-  background: #fff;
+    width: 100%;
+    height: 100px;
+    padding: 1em;
+    border-radius: 3px;
+    border: 1px solid #d4d4d5;
+    background: #fff;
 }
+
 .entity-card:hover {
-  margin-top: -2px;
+    margin-top: -2px;
 }
 
 nz-collapse.fullheight {
-  .ant-collapse-content {
-    overflow-y: auto;
-  }
+    .ant-collapse-content {
+        overflow-y: auto;
+    }
 }
 
 .nzSegment {
-  display: flex;
-  flex: auto;
-  flex-direction: column;
-  min-height: 0;
-  border: 1px solid rgba(34,36,38,.15);
-  border-radius: 2px;
+    display: flex;
+    flex: auto;
+    flex-direction: column;
+    min-height: 0;
+    border: 1px solid rgba(34, 36, 38, .15);
+    border-radius: 2px;
 }
 
 nz-breadcrumb-item {
-  font-size: 1.2em;
+    font-size: 1.2em;
 }
 
 i.info {
-  color: $cds_color_teal;
+    color: $cds_color_teal;
 }
 
 nz-card.redTitle {
-  .ant-card-head {
-    min-height: 44px;
-    background-color: #ff4d4f;
-    color: white;
+    .ant-card-head {
+        min-height: 44px;
+        background-color: #ff4d4f;
+        color: white;
 
-  }
-  .ant-card-head-title {
-    padding: 8px 0;
-  }
+    }
+
+    .ant-card-head-title {
+        padding: 8px 0;
+    }
 }
-nz-card.coloredTitle {
-  .ant-card-head {
-    min-height: 44px;
-    background-color: #EEEEEE;
 
-  }
-  .ant-card-head-title {
-    padding: 8px 0;
-  }
+nz-card.coloredTitle {
+    .ant-card-head {
+        min-height: 44px;
+        background-color: #EEEEEE;
+
+    }
+
+    .ant-card-head-title {
+        padding: 8px 0;
+    }
 }
 
 .inner-content {
-  background-color: #fff;
+    background-color: #fff;
 }
 
 .ant-layout-header {
-  padding: 0 !important;
+    padding: 0 !important;
 }
 
 input[type=radio]:read-only {
-  opacity: 0;
+    opacity: 0;
 }
+
 input[type=checkbox]:read-only {
-  opacity: 0;
+    opacity: 0;
 }
 
 a.disabled {
@@ -156,7 +158,7 @@ app-workflow-admin .CodeMirror-scroll {
 }
 
 .CodeMirror-wrap pre.CodeMirror-line {
-  word-break: break-all;
+    word-break: break-all;
 }
 
 
@@ -256,8 +258,9 @@ body ::-webkit-scrollbar-thumb {
 
 // icon
 i.warning {
-  color: $cds_color_red !important;
+    color: $cds_color_red !important;
 }
+
 .ui {
     i.icon.blue {
         color: $cds_color_teal !important;
@@ -559,5 +562,5 @@ foreignObject {
 }
 
 [ng-reflect-router-link] {
-  cursor: pointer;
+    cursor: pointer;
 }

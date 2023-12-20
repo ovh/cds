@@ -12,7 +12,7 @@ import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import * as moment from 'moment';
+import moment from 'moment';
 import { forkJoin } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
 import { ConsumerCreateModalComponent } from '../consumer-create-modal/consumer-create-modal.component';

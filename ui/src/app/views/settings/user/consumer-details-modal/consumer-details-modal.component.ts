@@ -14,7 +14,7 @@ import { UserService } from 'app/service/user/user.service';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import * as moment from 'moment';
+import moment from 'moment';
 import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
 
 interface IModalData {

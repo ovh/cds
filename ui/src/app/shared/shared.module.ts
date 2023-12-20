@@ -18,7 +18,6 @@ import { WorkflowWizardNodeConditionComponent } from 'app/shared/workflow/wizard
 import { WorkflowWizardOutgoingHookComponent } from 'app/shared/workflow/wizard/outgoinghook/wizard.outgoinghook.component';
 import { WorkflowRunJobVariableComponent } from 'app/views/workflow/run/node/pipeline/variables/job.variables.component';
 import { WorkflowRunJobComponent } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
-import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaModule } from 'ng2-dragula';
 import { ClipboardModule } from 'ngx-clipboard';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
@@ -152,7 +151,8 @@ import { APIConfigGuard } from 'app/guard/api-config.guard';
 import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
 import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
 import { EditorInputComponent } from './input/editor/editor.input.component';
-import {NzAvatarModule} from "ng-zorro-antd/avatar";
+import { NzAvatarModule } from "ng-zorro-antd/avatar";
+import { CodemirrorComponent } from './codemirror';
 
 const ngZorroConfig: NzConfig = {
     notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
@@ -209,7 +209,6 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         TranslateModule,
         DragulaModule.forRoot(),
         MomentModule,
-        CodemirrorModule,
         ReactiveFormsModule,
         MarkdownModule.forRoot(),
         RouterModule,
@@ -232,6 +231,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         CallbackPipe,
         CardComponent,
         ChartComponentComponent,
+        CodemirrorComponent,
         CommitListComponent,
         ConditionsComponent,
         CutPipe,
@@ -344,7 +344,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         CardComponent,
         ChartComponentComponent,
         ClipboardModule,
-        CodemirrorModule,
+        CodemirrorComponent,
         CommitListComponent,
         CommonModule,
         ConditionsComponent,
@@ -371,8 +371,8 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NgForNumber,
         NgxAutoScrollDirective,
         NzAlertModule,
-        NzAvatarModule,
         NzAutocompleteModule,
+        NzAvatarModule,
         NzBadgeModule,
         NzBreadCrumbModule,
         NzButtonModule,
