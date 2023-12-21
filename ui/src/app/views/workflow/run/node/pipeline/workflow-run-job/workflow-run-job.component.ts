@@ -6,7 +6,7 @@ import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DurationService } from 'app/shared/duration/duration.service';
-import * as moment from 'moment';
+import moment from 'moment';
 import { from, interval, Subject, Subscription } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
