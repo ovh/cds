@@ -239,6 +239,7 @@ func TestPostUploadHandler(t *testing.T) {
 	}
 
 	iu, err := storage.LoadItemUnitByID(ctx, s.Mapper, db, iuID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
 	buf = &bytes.Buffer{}
 
 	uiRead, err := s.Units.Storages[0].NewReader(ctx, *iu)
