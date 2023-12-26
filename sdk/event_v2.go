@@ -26,6 +26,10 @@ const (
 
 	EventRepositoryCreated = "RepositoryCreated"
 	EventRepositoryDeleted = "RepositoryDeleted"
+
+	EventPermissionCreated = "PermissionCreated"
+	EventPermissionUpdated = "PermissionUpdated"
+	EventPermissionDeleted = "PermissionDeleted"
 )
 
 type EventV2 struct {
@@ -37,6 +41,7 @@ type EventV2 struct {
 	RunNumber     int64       `json:"run_number,omitempty"`
 	RunAttempt    int64       `json:"run_attempt,omitempty"`
 	Hatchery      string      `json:"hatchery,omitempty"`
+	Permission    string      `json:"permission,omitempty"`
 	Region        string      `json:"region,omitempty"`
 	ModelType     string      `json:"model_type,omitempty"`
 	WorkflowRunID string      `json:"workflow_run_id,omitempty"`

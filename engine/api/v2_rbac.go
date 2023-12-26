@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/organization"
@@ -96,6 +97,7 @@ func (api *API) deleteRBACHandler() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+			event_v2.PublishPermissionDeleteEvent(ctx, api.Cache, *perm, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, nil, http.StatusOK)
 		}
 }
@@ -141,6 +143,12 @@ func (api *API) postImportRBACHandler() ([]service.RbacChecker, service.Handler)
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
+			}
+
+			if existingRule == nil {
+				event_v2.PublishPermissionCreateEvent(ctx, api.Cache, rbacRule, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			} else {
+				event_v2.PublishPermissionUpdatedEvent(ctx, api.Cache, *existingRule, rbacRule, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			}
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}
