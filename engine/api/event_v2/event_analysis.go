@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis) {
+func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u *sdk.AuthentifiedUser) {
 	e := sdk.EventV2{
 		ID:         sdk.UUID(),
 		ProjectKey: a.ProjectKey,
@@ -17,10 +17,14 @@ func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoN
 		Type:       sdk.EventAnalysisStart,
 		Payload:    *a,
 	}
+	if u != nil {
+		e.UserID = u.ID
+		e.Username = u.Username
+	}
 	publish(ctx, store, e)
 }
 
-func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis) {
+func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u *sdk.AuthentifiedUser) {
 	e := sdk.EventV2{
 		ID:         sdk.UUID(),
 		ProjectKey: a.ProjectKey,
@@ -29,6 +33,10 @@ func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoNa
 		Status:     a.Status,
 		Type:       sdk.EventAnalysisDone,
 		Payload:    *a,
+	}
+	if u != nil {
+		e.UserID = u.ID
+		e.Username = u.Username
 	}
 	publish(ctx, store, e)
 }

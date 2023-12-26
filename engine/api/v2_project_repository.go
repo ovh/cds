@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -147,7 +146,7 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 				return sdk.WithStack(err)
 			}
 
-			event.PublishRemoveProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProject.ID, Name: vcsProject.Name}, *repo, getUserConsumer(ctx))
+			event_v2.PublishRepositoryDeleteEvent(ctx, api.Cache, pKey, vcsProject.Name, *repo, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, vcsProject, http.StatusOK)
 		}
 }
@@ -232,8 +231,8 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return sdk.WithStack(err)
 			}
 
-			event.PublishAddProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProjectWithSecret.ID, Name: vcsProjectWithSecret.Name}, repoDB, getUserConsumer(ctx))
-			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a)
+			event_v2.PublishRepositoryCreateEvent(ctx, api.Cache, pKey, vcsProjectWithSecret.Name, repoDB, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 
 			return service.WriteMarshal(w, req, repoDB, http.StatusCreated)
 		}

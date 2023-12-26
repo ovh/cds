@@ -174,7 +174,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		if errTx := tx.Commit(); errTx != nil {
 			return sdk.WithStack(errTx)
 		}
-		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run)
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, u)
 		return err
 	}
 
@@ -244,7 +244,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	if sdk.StatusIsTerminated(run.Status) {
-		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run)
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, u)
 	}
 
 	if len(skippedJobs) > 0 {

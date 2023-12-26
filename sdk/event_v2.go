@@ -15,6 +15,17 @@ const (
 	EventRunBuilding         = "RunBuilding"
 	EventRunEnded            = "RunEnded"
 	EventRunRestartFailedJob = "RunRestartFailedJob"
+
+	EventEntityCreated = "EntityCreated"
+	EventEntityUpdated = "EntityUpdated"
+	EventEntityDeleted = "EntityDeleted"
+
+	EventVCSCreated = "VCSCreated"
+	EventVCSUpdated = "VCSUpdated"
+	EventVCSDeleted = "VCSDeleted"
+
+	EventRepositoryCreated = "RepositoryCreated"
+	EventRepositoryDeleted = "RepositoryDeleted"
 )
 
 type EventV2 struct {
@@ -31,8 +42,12 @@ type EventV2 struct {
 	WorkflowRunID string      `json:"workflow_run_id,omitempty"`
 	RunJobID      string      `json:"run_job_id,omitempty"`
 	JobID         string      `json:"job_id,omitempty"`
+	Entity        string      `json:"entity,omitempty"`
 	RunResultName string      `json:"run_result_name,omitempty"`
 	Type          string      `json:"type,omitempty"`
 	Status        string      `json:"status"`
+	Previous      interface{} `json:"previous,omitempty"`
+	UserID        string      `json:"user_id,omitempty"`
+	Username      string      `json:"username,omitempty"`
 	Payload       interface{} `json:"payload,omitempty"`
 }

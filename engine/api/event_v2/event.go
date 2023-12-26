@@ -39,6 +39,7 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 			log.Error(ctx, "EventV2.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
 		}
+		log.Debug(ctx, "event received: %s", e.Type)
 
 		wg := sync.WaitGroup{}
 

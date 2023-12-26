@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
@@ -78,6 +79,8 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishVCSCreateEvent(ctx, api.Cache, pKey, vcsProject, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+
 			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
 		}
 }
@@ -131,6 +134,8 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishVCSUpdatedEvent(ctx, api.Cache, proj.Key, *vcsOld, vcsProject, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+
 			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
 		}
 }
@@ -169,6 +174,8 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			event_v2.PublishVCSDeleteEvent(ctx, api.Cache, project.Key, *vcsProject, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 
 			return nil
 		}

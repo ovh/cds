@@ -634,7 +634,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			for _, rj := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, rj)
 			}
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 
 			return nil
 		}
@@ -883,7 +883,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
@@ -1042,7 +1042,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, sdk.WithStack(err)
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 
 	select {
 	case api.workflowRunCraftChan <- wr.ID:

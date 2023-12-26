@@ -52,7 +52,7 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType, vcsNa
 	publish(ctx, store, e)
 }
 
-func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun) {
+func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, u *sdk.AuthentifiedUser) {
 	e := sdk.EventV2{
 		ID:            sdk.UUID(),
 		ProjectKey:    wr.ProjectKey,
@@ -65,6 +65,10 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, w
 		Status:        wr.Status,
 		Payload:       wr,
 		WorkflowRunID: wr.ID,
+	}
+	if u != nil {
+		e.UserID = u.ID
+		e.Username = u.Username
 	}
 	publish(ctx, store, e)
 }
