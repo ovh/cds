@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/service"
@@ -47,6 +48,7 @@ func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+			event_v2.PublishRegionCreateEvent(ctx, api.Cache, reg, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}
 }
@@ -119,7 +121,10 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			defer tx.Rollback() // nolint
 
-			for _, rbacPerm := range rbacRegions {
+			deletedPermission := make([]sdk.RBAC, 0)
+			updatedPermission := make([][]sdk.RBAC, 0)
+
+			for i, rbacPerm := range rbacRegions {
 				rbacPermRegions := make([]sdk.RBACRegion, 0)
 				for _, r := range rbacPerm.Regions {
 					if r.RegionID != reg.ID {
@@ -140,16 +145,32 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 					if err := rbac.Delete(ctx, tx, rbacPerm); err != nil {
 						return err
 					}
+					deletedPermission = append(deletedPermission, rbacPerm)
 				} else {
 					if err := rbac.Update(ctx, tx, &rbacPerm); err != nil {
 						return err
 					}
+					updatedPermission = append(updatedPermission, []sdk.RBAC{rbacRegions[i], rbacPerm})
 				}
 			}
 
 			if err := region.Delete(tx, reg.ID); err != nil {
 				return err
 			}
-			return sdk.WithStack(tx.Commit())
+
+			if err := tx.Commit(); err != nil {
+				sdk.WithStack(tx.Commit())
+			}
+
+			event_v2.PublishRegionDeleteEvent(ctx, api.Cache, *reg, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+
+			for _, p := range deletedPermission {
+				event_v2.PublishPermissionDeleteEvent(ctx, api.Cache, p, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			}
+			for _, p := range updatedPermission {
+				event_v2.PublishPermissionUpdatedEvent(ctx, api.Cache, p[0], p[1], getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			}
+
+			return nil
 		}
 }

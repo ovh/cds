@@ -24,8 +24,18 @@ const (
 	EventVCSUpdated = "VCSUpdated"
 	EventVCSDeleted = "VCSDeleted"
 
+	EventHatcheryCreated = "HatcheryCreated"
+	EventHatcheryUpdated = "HatcheryUpdated"
+	EventHatcheryDeleted = "HatcheryDeleted"
+
 	EventRepositoryCreated = "RepositoryCreated"
 	EventRepositoryDeleted = "RepositoryDeleted"
+
+	EventOrganizationCreated = "OrganizationCreated"
+	EventOrganizationDeleted = "OrganizationDeleted"
+
+	EventRegionCreated = "RegionCreated"
+	EventRegionDeleted = "RegionDeleted"
 
 	EventPermissionCreated = "PermissionCreated"
 	EventPermissionUpdated = "PermissionUpdated"
@@ -41,6 +51,7 @@ type EventV2 struct {
 	RunNumber     int64       `json:"run_number,omitempty"`
 	RunAttempt    int64       `json:"run_attempt,omitempty"`
 	Hatchery      string      `json:"hatchery,omitempty"`
+	Organization  string      `json:"organization,omitempty"`
 	Permission    string      `json:"permission,omitempty"`
 	Region        string      `json:"region,omitempty"`
 	ModelType     string      `json:"model_type,omitempty"`

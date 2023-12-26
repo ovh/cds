@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -46,6 +47,8 @@ func (api *API) postOrganizationHandler() ([]service.RbacChecker, service.Handle
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			event_v2.PublishOrganizationCreateEvent(ctx, api.Cache, org, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}
 }
@@ -95,6 +98,7 @@ func (api *API) deleteOrganizationHandler() ([]service.RbacChecker, service.Hand
 			if err := organization.Delete(tx, orga.ID); err != nil {
 				return err
 			}
+			event_v2.PublishOrganizationDeleteEvent(ctx, api.Cache, *orga, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return sdk.WithStack(tx.Commit())
 		}
 }
