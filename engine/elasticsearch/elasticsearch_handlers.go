@@ -48,6 +48,24 @@ func (s *Service) getEventsHandler() service.Handler {
 	}
 }
 
+func (s *Service) postEventV2Handler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if s.Cfg.ElasticSearch.IndexEventsV2 == "" {
+			return sdk.WrapError(sdk.ErrNotFound, "No events v2 index found")
+		}
+
+		var e sdk.EventV2
+		if err := service.UnmarshalBody(r, &e); err != nil {
+			return sdk.WrapError(err, "Unable to read body")
+		}
+
+		if _, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexEventsV2, fmt.Sprintf("%T", sdk.EventV2{}), "", e); err != nil {
+			return sdk.WrapError(err, "Unable to insert event v2")
+		}
+		return nil
+	}
+}
+
 func (s *Service) postEventHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if s.Cfg.ElasticSearch.IndexEvents == "" {

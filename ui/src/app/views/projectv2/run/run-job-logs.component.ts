@@ -7,14 +7,14 @@ import {
     Input,
     Output
 } from "@angular/core";
-import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
-import {V2WorkflowRun, V2WorkflowRunJob} from "app/model/v2.workflow.run.model";
-import {LogBlock, ScrollTarget} from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
-import * as moment from "moment/moment";
-import {DurationService} from "app/shared/duration/duration.service";
-import {CDNLine, CDNLogLink, CDNLogLinkData, CDNLogLinks, PipelineStatus} from "app/model/pipeline.model";
-import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
-import {WorkflowService} from "app/service/workflow/workflow.service";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { V2WorkflowRun, V2WorkflowRunJob } from "app/model/v2.workflow.run.model";
+import { LogBlock, ScrollTarget } from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
+import moment from "moment";
+import { DurationService } from "app/shared/duration/duration.service";
+import { CDNLine, CDNLogLinkData, CDNLogLinks, PipelineStatus } from "app/model/pipeline.model";
+import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
+import { WorkflowService } from "app/service/workflow/workflow.service";
 
 @Component({
     selector: 'app-run-job-logs',
@@ -52,7 +52,7 @@ export class RunJobLogsComponent {
         this._runJob = data;
 
         if (this._runJob.job['services']) {
-            for (const serviceName in this._runJob.job['services']){
+            for (const serviceName in this._runJob.job['services']) {
                 let block = new LogBlock('service ' + serviceName);
                 this.logBlocks.push(block);
             }
@@ -90,13 +90,13 @@ export class RunJobLogsComponent {
         links.datas.forEach(link => {
             let logBlockStep = this.logBlocks.find(s => s.name === link.step_name)
             if (logBlockStep) {
-                logBlockStep.link = <CDNLogLinkData>{api_ref: link.api_ref, item_type: link.item_type};
+                logBlockStep.link = <CDNLogLinkData>{ api_ref: link.api_ref, item_type: link.item_type };
                 linksSteps.push(link);
                 types.set(link.item_type, linksSteps);
             }
-            let logBlockService = this.logBlocks.find(s => s.name === 'service '+link.service_name)
+            let logBlockService = this.logBlocks.find(s => s.name === 'service ' + link.service_name)
             if (logBlockService) {
-                logBlockService.link = <CDNLogLinkData>{api_ref: link.api_ref, item_type: link.item_type};
+                logBlockService.link = <CDNLogLinkData>{ api_ref: link.api_ref, item_type: link.item_type };
                 linksServices.push(link);
                 types.set(link.item_type, linksServices);
             }
@@ -119,7 +119,7 @@ export class RunJobLogsComponent {
                             logBlock.loading = false;
                         }
                     });
-                }    
+                }
             };
         }
 
@@ -199,7 +199,7 @@ export class RunJobLogsComponent {
         }
 
         let result = await this._workflowService.getLogLines(step.link,
-            {offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}`}
+            { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` }
         ).toPromise();
         step.totalLinesCount = result.totalCount;
         step.lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
@@ -213,7 +213,7 @@ export class RunJobLogsComponent {
             return;
         }
         let result = await this._workflowService.getLogLines(step.link,
-            {offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}`}
+            { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` }
         ).toPromise();
         step.totalLinesCount = result.totalCount;
         step.endLines = result.lines.filter(l => !step.lines.find(line => line.number === l.number)
@@ -229,8 +229,8 @@ export class RunJobLogsComponent {
 
         logBlock.loading = true;
         let results = await Promise.all([
-            this._workflowService.getLogLines(logBlock.link, {limit: `${this.initLoadLinesCount}`}).toPromise(),
-            this._workflowService.getLogLines(logBlock.link, {offset: `-${this.initLoadLinesCount}`}).toPromise()
+            this._workflowService.getLogLines(logBlock.link, { limit: `${this.initLoadLinesCount}` }).toPromise(),
+            this._workflowService.getLogLines(logBlock.link, { offset: `-${this.initLoadLinesCount}` }).toPromise()
         ]);
         logBlock.lines = results[0].lines;
         logBlock.endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));

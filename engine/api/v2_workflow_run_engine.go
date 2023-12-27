@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"go.opencensus.io/trace"
 
-	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -271,19 +271,13 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	// Send to websocket
 	for _, rj := range runJobs {
-		runJobEvent := sdk.WebsocketJobQueueEvent{
-			Region:       rj.Region,
-			ModelType:    rj.ModelType,
-			JobRunID:     rj.ID,
-			RunNumber:    run.RunNumber,
-			WorkflowName: run.WorkflowName,
-			ProjectKey:   rj.ProjectKey,
-			JobID:        rj.JobID,
+		switch rj.Status {
+		case sdk.StatusFail:
+			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
+		default:
+			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
 		}
-		bts, _ := json.Marshal(runJobEvent)
-		if err := api.Cache.Publish(ctx, event.JobQueuedPubSubKey, string(bts)); err != nil {
-			log.Error(ctx, "%v", err)
-		}
+
 	}
 
 	return nil

@@ -12,7 +12,7 @@ import { interval, of, zip } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/internal-compatibility';
 import { concatMap, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
-import * as format from 'string-format-obj';
+import format from 'string-format-obj';
 import { AppService } from './app.service';
 import { AuthSummary } from './model/user.model';
 import { NotificationService } from './service/notification/notification.service';

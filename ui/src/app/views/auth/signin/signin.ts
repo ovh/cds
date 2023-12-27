@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthDriverManifest } from 'app/model/authentication.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { finalize } from 'rxjs/operators';
-import * as zxcvbn from 'zxcvbn';
+import zxcvbn from 'zxcvbn';
 
 @Component({
     selector: 'app-auth-signin',

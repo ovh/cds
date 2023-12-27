@@ -110,7 +110,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 	ctx, cancel := context.WithCancel(ctx)
 
 	// This goroutine call the Websocket
-	chanMessageReceived := make(chan sdk.WebsocketHatcheryEvent, 10)
+	chanMessageReceived := make(chan sdk.WebsocketJobQueueEvent, 10)
 	goRoutines.Exec(ctx, "RequestWebsocketHatchery", func(ctx context.Context) {
 		c.WebsocketHatcheryJobQueuedListen(ctx, goRoutines, chanMessageReceived, errs)
 		cancel()
@@ -129,22 +129,22 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				continue
 			}
 			telemetry.Record(ctx, hatcheryMetrics.JobReceivedInQueuePollingWSv2, 1)
-			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Event.Region, wsEvent.Event.JobRunID)
+			j, err := c.V2QueueGetJobRun(ctx, wsEvent.Region, wsEvent.JobRunID)
 			// Do not log the error if the job does not exist
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
 				continue
 			}
 			if err != nil {
-				errs <- newError(fmt.Errorf("unable to get job %s info: %v", wsEvent.Event.JobRunID, err))
+				errs <- newError(fmt.Errorf("unable to get job %s info: %v", wsEvent.JobRunID, err))
 				continue
 			}
 			// push the job in the channel
 			if j.Status == sdk.StatusWaiting {
-				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(wsEvent.Event.JobRunID) {
-					log.Debug(ctx, "skipping job %s", wsEvent.Event.JobRunID)
+				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(wsEvent.JobRunID) {
+					log.Debug(ctx, "skipping job %s", wsEvent.JobRunID)
 					continue
 				}
-				lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.Event.JobRunID)
+				lenqueue := pendingWorkerCreation.SetJobInPendingWorkerCreation(wsEvent.JobRunID)
 				log.Debug(ctx, "v2_len_queue: %v", lenqueue)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
 				jobs <- *j
@@ -190,7 +190,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 	}
 }
 
-func (c *client) WebsocketHatcheryJobQueuedListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanEventReceived chan<- sdk.WebsocketHatcheryEvent, chanErrorReceived chan<- error) {
+func (c *client) WebsocketHatcheryJobQueuedListen(ctx context.Context, goRoutines *sdk.GoRoutines, chanEventReceived chan<- sdk.WebsocketJobQueueEvent, chanErrorReceived chan<- error) {
 	chanMsgReceived := make(chan json.RawMessage)
 	goRoutines.Exec(ctx, "WebsocketHatcheryJobQueuedListen", func(ctx context.Context) {
 		for {
@@ -201,7 +201,7 @@ func (c *client) WebsocketHatcheryJobQueuedListen(ctx context.Context, goRoutine
 				}
 				return
 			case m := <-chanMsgReceived:
-				var wsEvent sdk.WebsocketHatcheryEvent
+				var wsEvent sdk.WebsocketJobQueueEvent
 				if err := sdk.JSONUnmarshal(m, &wsEvent); err != nil {
 					chanErrorReceived <- newError(fmt.Errorf("unable to unmarshal message: %s: %v", string(m), err))
 					continue

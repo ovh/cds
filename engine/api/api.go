@@ -36,6 +36,7 @@ import (
 	corpsso2 "github.com/ovh/cds/engine/api/driver/corpsso"
 	ldap2 "github.com/ovh/cds/engine/api/driver/ldap"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/link"
 	githublink "github.com/ovh/cds/engine/api/link/github"
@@ -684,7 +685,7 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
 		return err
 	}
-	if err := a.initHatcheryWebsocket(event.JobQueuedPubSubKey); err != nil {
+	if err := a.initHatcheryWebsocket(event_v2.EventHatcheryWS); err != nil {
 		return err
 	}
 	if err := InitRouterMetrics(ctx, a); err != nil {
@@ -803,6 +804,10 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.GoRoutines.RunWithRestart(ctx, "event.dequeue", func(ctx context.Context) {
 		event.DequeueEvent(ctx, a.mustDB())
+	})
+
+	a.GoRoutines.RunWithRestart(ctx, "event_v2.dequeue", func(ctx context.Context) {
+		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines)
 	})
 
 	log.Info(ctx, "Initializing internal routines...")

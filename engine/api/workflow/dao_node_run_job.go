@@ -405,18 +405,3 @@ func getHatcheryInfo(ctx context.Context, store cache.Store, j *JobRun) {
 		}
 	}
 }
-
-// replaceWorkflowJobRunInQueue restart workflow node job
-func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
-	query := "UPDATE workflow_node_run_job SET status = $1, retry = $2, worker_id = NULL WHERE id = $3"
-	if _, err := db.Exec(query, sdk.StatusWaiting, wNodeJob.Retry+1, wNodeJob.ID); err != nil {
-		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting)
-	}
-
-	query = "UPDATE worker SET status = $2, job_run_id = NULL where job_run_id = $1"
-	if _, err := db.Exec(query, wNodeJob.ID, sdk.StatusDisabled); err != nil {
-		return sdk.WrapError(err, "Unable to set workers")
-	}
-
-	return nil
-}

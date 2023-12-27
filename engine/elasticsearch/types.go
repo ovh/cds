@@ -59,6 +59,7 @@ type Configuration struct {
 		URL             string `toml:"url" json:"url"`
 		Username        string `toml:"username" json:"username"`
 		Password        string `toml:"password" json:"-"`
+		IndexEventsV2   string `toml:"indexEventsV2" commented:"true" comment:"index to store CDS events v2" json:"indexEventsV2"`
 		IndexEvents     string `toml:"indexEvents" commented:"true" comment:"index to store CDS events" json:"indexEvents"`
 		IndexMetrics    string `toml:"indexMetrics" commented:"true" comment:"index to store CDS metrics" json:"indexMetrics"`
 		IndexJobSummary string `toml:"indexJobSummary" commented:"true" comment:"index to store CDS jobs summaries" json:"indexJobSummary"`

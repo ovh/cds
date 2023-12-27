@@ -32,7 +32,6 @@ import {
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { DragulaService } from 'ng2-dragula';
 import { forkJoin, Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
@@ -42,6 +41,7 @@ import { WorkflowDeleteModalComponent } from './delete-modal/delete-modal.compon
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ConfigState } from 'app/store/config.state';
 import { PreferencesState } from 'app/store/preferences.state';
+import { CodemirrorComponent } from 'app/shared/codemirror';
 
 declare let CodeMirror: any;
 

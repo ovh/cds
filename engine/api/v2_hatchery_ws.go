@@ -103,7 +103,7 @@ func (api *API) initHatcheryWebsocket(pubSubKey string) error {
 	api.WSHatcheryBroker = websocket.NewBroker()
 	api.WSHatcheryBroker.OnMessage(func(m []byte) {
 		telemetry.Record(api.Router.Background, WebSocketEvents, 1)
-		var e sdk.WebsocketJobQueueEvent
+		var e sdk.EventV2
 		if err := sdk.JSONUnmarshal(m, &e); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
 			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
@@ -116,7 +116,7 @@ func (api *API) initHatcheryWebsocket(pubSubKey string) error {
 	return nil
 }
 
-func (a *API) websocketHatcheryOnMessage(e sdk.WebsocketJobQueueEvent) {
+func (a *API) websocketHatcheryOnMessage(e sdk.EventV2) {
 	currentRegion := e.Region
 	currentModel := e.ModelType
 
@@ -124,6 +124,16 @@ func (a *API) websocketHatcheryOnMessage(e sdk.WebsocketJobQueueEvent) {
 	clientIDs := a.WSHatcheryServer.server.ClientIDs()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	r.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
+
+	wsHatcheryEvent := sdk.WebsocketJobQueueEvent{
+		Region:       e.Region,
+		WorkflowName: e.Workflow,
+		ProjectKey:   e.ProjectKey,
+		JobID:        e.JobID,
+		RunNumber:    e.RunNumber,
+		JobRunID:     e.RunJobID,
+		ModelType:    e.ModelType,
+	}
 
 	for _, id := range clientIDs {
 		// Copy idx for goroutine
@@ -143,10 +153,8 @@ func (a *API) websocketHatcheryOnMessage(e sdk.WebsocketJobQueueEvent) {
 				return
 			}
 			log.Debug(ctx, "api.websocketHatcheryOnMessage> send data to client %s for hatchery %s", clientID, c.AuthConsumer.AuthConsumerHatchery.HatcheryID)
-			if err := a.WSHatcheryServer.server.SendToClient(clientID, sdk.WebsocketHatcheryEvent{
-				Status: "OK",
-				Event:  e,
-			}); err != nil {
+
+			if err := a.WSHatcheryServer.server.SendToClient(clientID, wsHatcheryEvent); err != nil {
 				log.Debug(ctx, "websocketOnMessage> can't send to client %s it will be removed: %+v", clientID, err)
 				a.WSHatcheryServer.RemoveClient(clientID)
 			}

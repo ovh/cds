@@ -17,8 +17,7 @@ import { calculateWorkflowTemplateDiff } from 'app/shared/diff/diff';
 import { Item } from 'app/shared/diff/list/diff.list.component';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
-import { ToastService } from 'app/shared/toast/ToastService';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 
 interface IModalData {
     workflowTemplateIn: WorkflowTemplate;
@@ -61,8 +60,7 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
         private _projectService: ProjectService,
         private _workflowService: WorkflowService,
         private _templateService: WorkflowTemplateService,
-        private _cd: ChangeDetectorRef,
-        private _toast: ToastService
+        private _cd: ChangeDetectorRef
     ) { }
 
     ngOnChanges() {
@@ -118,12 +116,11 @@ export class WorkflowTemplateApplyModalComponent implements OnInit, OnChanges {
     }
 
     onApply() {
-        this._workflowService.getWorkflow(this.workflowTemplateInstance.project.key,
+        this._workflowService.getWorkflow(this.workflowTemplateInstance.request.project_key,
             this.workflowTemplateInstance.workflow_name).subscribe(w => {
                 this.workflowTemplateInstance = Object.assign({}, w.template_instance);
                 this._cd.markForCheck();
             });
-
     }
 
     loadAudits() {

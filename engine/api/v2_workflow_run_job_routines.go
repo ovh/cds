@@ -2,13 +2,12 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -120,19 +119,11 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	}
 
 	// Enqueue the job
-	runJobEvent := sdk.WebsocketJobQueueEvent{
-		Region:       runJob.Region,
-		ModelType:    runJob.ModelType,
-		JobRunID:     runJob.ID,
-		RunNumber:    runJob.RunNumber,
-		WorkflowName: runJob.WorkflowName,
-		ProjectKey:   runJob.ProjectKey,
-		JobID:        runJob.JobID,
+	run, err := workflow_v2.LoadRunByID(ctx, db, runJob.WorkflowRunID)
+	if err != nil {
+		return err
 	}
-	bts, _ := json.Marshal(runJobEvent)
-	if err := store.Publish(ctx, event.JobQueuedPubSubKey, string(bts)); err != nil {
-		log.Error(ctx, "%v", err)
-	}
+	event_v2.PublishRunJobEvent(ctx, store, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob)
 	return nil
 }
 
@@ -157,6 +148,11 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	}()
 
 	runJob, err := workflow_v2.LoadRunJobByID(ctx, db, runJobID)
+	if err != nil {
+		return err
+	}
+
+	run, err := workflow_v2.LoadRunByID(ctx, db, runJob.WorkflowRunID)
 	if err != nil {
 		return err
 	}
@@ -197,6 +193,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	}
 
 	// Trigger workflow
+	event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob)
 	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber)
 	return nil
 }

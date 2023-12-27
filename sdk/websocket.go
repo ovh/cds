@@ -134,12 +134,6 @@ type WebsocketEvent struct {
 	Event  Event  `json:"event"`
 }
 
-type WebsocketHatcheryEvent struct {
-	Status string                 `json:"status"`
-	Error  string                 `json:"error"`
-	Event  WebsocketJobQueueEvent `json:"event"`
-}
-
 type WebsocketJobQueueEvent struct {
 	JobRunID     string `json:"job_run_id"`
 	Region       string `json:"region"`
