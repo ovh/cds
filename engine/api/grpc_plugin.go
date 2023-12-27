@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/plugin"
@@ -176,7 +177,13 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "unable to delete plugin")
 		}
 
-		return sdk.WithStack(tx.Commit())
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		event_v2.PublishPluginDeleteEvent(ctx, api.Cache, *old, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+
+		return nil
 	}
 }
 

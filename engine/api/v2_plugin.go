@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -69,6 +70,13 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			if oldP == nil {
+				event_v2.PublishPluginCreateEvent(ctx, api.Cache, p, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			} else {
+				event_v2.PublishPluginUpdateEvent(ctx, api.Cache, *oldP, p, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			}
+
 			return service.WriteJSON(w, p, http.StatusOK)
 		}
 }

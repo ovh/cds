@@ -9,6 +9,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -131,6 +132,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		ctx = context.WithValue(ctx, cdslog.AuthUsername, userInfo.Username)
 		SetTracker(w, cdslog.AuthUsername, userInfo.Username)
 
+		userCreated := false
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -235,6 +237,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 						if err := user.Insert(ctx, tx, u); err != nil {
 							return err
 						}
+						userCreated = true
 
 						// Insert the primary contact for the new user in database
 						if err := user.InsertContact(ctx, tx, &sdk.UserContact{
@@ -315,6 +318,10 @@ func (api *API) postAuthSigninHandler() service.Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
+		}
+
+		if userCreated {
+			event_v2.PublishUserCreateEvent(ctx, api.Cache, *usr)
 		}
 
 		// Set a cookie with the jwt token

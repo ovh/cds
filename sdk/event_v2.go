@@ -40,6 +40,14 @@ const (
 	EventPermissionCreated = "PermissionCreated"
 	EventPermissionUpdated = "PermissionUpdated"
 	EventPermissionDeleted = "PermissionDeleted"
+
+	EventUserCreated = "UserCreated"
+	EventUserUpdated = "UserUpdated"
+	EventUserDeleted = "UserDeleted"
+
+	EventPluginCreated = "PluginCreated"
+	EventPluginUpdated = "PluginUpdated"
+	EventPluginDeleted = "PluginDeleted"
 )
 
 type EventV2 struct {
@@ -51,6 +59,7 @@ type EventV2 struct {
 	RunNumber     int64       `json:"run_number,omitempty"`
 	RunAttempt    int64       `json:"run_attempt,omitempty"`
 	Hatchery      string      `json:"hatchery,omitempty"`
+	Plugin        string      `json:"plugin,omitempty"`
 	Organization  string      `json:"organization,omitempty"`
 	Permission    string      `json:"permission,omitempty"`
 	Region        string      `json:"region,omitempty"`
