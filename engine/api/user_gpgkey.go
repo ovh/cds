@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -82,6 +83,7 @@ func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler
 			if err := tx.Commit(); err != nil {
 				return err
 			}
+			event_v2.PublishUserGPGCreateEvent(ctx, api.Cache, gpgKey, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return service.WriteJSON(w, gpgKey, http.StatusOK)
 		}
 }
@@ -119,6 +121,7 @@ func (api *API) deleteUserGPGKey() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return err
 			}
+			event_v2.PublishUserGPGDeleteEvent(ctx, api.Cache, *gpgKey, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return nil
 		}
 }

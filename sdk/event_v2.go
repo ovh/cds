@@ -41,9 +41,11 @@ const (
 	EventPermissionUpdated = "PermissionUpdated"
 	EventPermissionDeleted = "PermissionDeleted"
 
-	EventUserCreated = "UserCreated"
-	EventUserUpdated = "UserUpdated"
-	EventUserDeleted = "UserDeleted"
+	EventUserCreated       = "UserCreated"
+	EventUserUpdated       = "UserUpdated"
+	EventUserDeleted       = "UserDeleted"
+	EventUserGPGKeyCreated = "UserGPGKeyCreated"
+	EventUserGPGKeyDeleted = "UserGPGKeyDeleted"
 
 	EventPluginCreated = "PluginCreated"
 	EventPluginUpdated = "PluginUpdated"
@@ -67,6 +69,7 @@ type EventV2 struct {
 	WorkflowRunID string      `json:"workflow_run_id,omitempty"`
 	RunJobID      string      `json:"run_job_id,omitempty"`
 	JobID         string      `json:"job_id,omitempty"`
+	GPGKey        string      `json:"gpg_key,omitempty"`
 	Entity        string      `json:"entity,omitempty"`
 	RunResultName string      `json:"run_result_name,omitempty"`
 	Type          string      `json:"type,omitempty"`
