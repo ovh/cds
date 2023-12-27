@@ -2,12 +2,14 @@ package event_v2
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
 func PublishEntityDeleteEvent(ctx context.Context, store cache.Store, vcsName, repoName string, ent sdk.Entity, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(ent)
 	e := sdk.EventV2{
 		ID:         sdk.UUID(),
 		ProjectKey: ent.ProjectKey,
@@ -15,7 +17,7 @@ func PublishEntityDeleteEvent(ctx context.Context, store cache.Store, vcsName, r
 		Repository: repoName,
 		Entity:     ent.Name,
 		Type:       sdk.EventEntityDeleted,
-		Payload:    ent,
+		Payload:    bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
@@ -25,6 +27,7 @@ func PublishEntityDeleteEvent(ctx context.Context, store cache.Store, vcsName, r
 }
 
 func PublishEntityCreateEvent(ctx context.Context, store cache.Store, vcsName, repoName string, ent sdk.Entity, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(ent)
 	e := sdk.EventV2{
 		ID:         sdk.UUID(),
 		ProjectKey: ent.ProjectKey,
@@ -32,7 +35,7 @@ func PublishEntityCreateEvent(ctx context.Context, store cache.Store, vcsName, r
 		Repository: repoName,
 		Entity:     ent.Name,
 		Type:       sdk.EventEntityCreated,
-		Payload:    ent,
+		Payload:    bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
@@ -42,6 +45,8 @@ func PublishEntityCreateEvent(ctx context.Context, store cache.Store, vcsName, r
 }
 
 func PublishEntityUpdateEvent(ctx context.Context, store cache.Store, vcsName, repoName string, previousEnt, ent sdk.Entity, u *sdk.AuthentifiedUser) {
+	previousBts, _ := json.Marshal(previousEnt)
+	bts, _ := json.Marshal(ent)
 	e := sdk.EventV2{
 		ID:         sdk.UUID(),
 		ProjectKey: ent.ProjectKey,
@@ -49,8 +54,8 @@ func PublishEntityUpdateEvent(ctx context.Context, store cache.Store, vcsName, r
 		Repository: repoName,
 		Entity:     ent.Name,
 		Type:       sdk.EventEntityUpdated,
-		Previous:   previousEnt,
-		Payload:    ent,
+		Previous:   previousBts,
+		Payload:    bts,
 	}
 	if u != nil {
 		e.UserID = u.ID

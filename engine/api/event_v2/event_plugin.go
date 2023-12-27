@@ -2,17 +2,19 @@ package event_v2
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
 func PublishPluginCreateEvent(ctx context.Context, store cache.Store, p sdk.GRPCPlugin, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(p)
 	e := sdk.EventV2{
 		ID:      sdk.UUID(),
 		Type:    sdk.EventPluginCreated,
 		Plugin:  p.Name,
-		Payload: p,
+		Payload: bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
@@ -22,12 +24,14 @@ func PublishPluginCreateEvent(ctx context.Context, store cache.Store, p sdk.GRPC
 }
 
 func PublishPluginUpdateEvent(ctx context.Context, store cache.Store, pOld, p sdk.GRPCPlugin, u *sdk.AuthentifiedUser) {
+	previousBts, _ := json.Marshal(pOld)
+	bts, _ := json.Marshal(p)
 	e := sdk.EventV2{
 		ID:       sdk.UUID(),
 		Type:     sdk.EventPluginUpdated,
 		Plugin:   p.Name,
-		Previous: pOld,
-		Payload:  p,
+		Previous: previousBts,
+		Payload:  bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
@@ -37,11 +41,12 @@ func PublishPluginUpdateEvent(ctx context.Context, store cache.Store, pOld, p sd
 }
 
 func PublishPluginDeleteEvent(ctx context.Context, store cache.Store, p sdk.GRPCPlugin, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(p)
 	e := sdk.EventV2{
 		ID:      sdk.UUID(),
 		Type:    sdk.EventPluginDeleted,
 		Plugin:  p.Name,
-		Payload: p,
+		Payload: bts,
 	}
 	if u != nil {
 		e.UserID = u.ID

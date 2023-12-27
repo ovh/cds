@@ -2,16 +2,18 @@ package event_v2
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
 func PublishUserCreateEvent(ctx context.Context, store cache.Store, u sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(u)
 	e := sdk.EventV2{
 		ID:       sdk.UUID(),
 		Type:     sdk.EventUserCreated,
-		Payload:  u,
+		Payload:  bts,
 		UserID:   u.ID,
 		Username: u.Username,
 	}
@@ -19,10 +21,11 @@ func PublishUserCreateEvent(ctx context.Context, store cache.Store, u sdk.Authen
 }
 
 func PublishUserUpdateEvent(ctx context.Context, store cache.Store, u sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(u)
 	e := sdk.EventV2{
 		ID:       sdk.UUID(),
 		Type:     sdk.EventUserUpdated,
-		Payload:  u,
+		Payload:  bts,
 		UserID:   u.ID,
 		Username: u.Username,
 	}
@@ -30,10 +33,11 @@ func PublishUserUpdateEvent(ctx context.Context, store cache.Store, u sdk.Authen
 }
 
 func PublishUserDeleteEvent(ctx context.Context, store cache.Store, u sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(u)
 	e := sdk.EventV2{
 		ID:       sdk.UUID(),
 		Type:     sdk.EventUserDeleted,
-		Payload:  u,
+		Payload:  bts,
 		UserID:   u.ID,
 		Username: u.Username,
 	}
@@ -41,11 +45,12 @@ func PublishUserDeleteEvent(ctx context.Context, store cache.Store, u sdk.Authen
 }
 
 func PublishUserGPGCreateEvent(ctx context.Context, store cache.Store, g sdk.UserGPGKey, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(g)
 	e := sdk.EventV2{
 		ID:      sdk.UUID(),
 		GPGKey:  g.KeyID,
 		Type:    sdk.EventUserGPGKeyCreated,
-		Payload: g,
+		Payload: bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
@@ -55,11 +60,12 @@ func PublishUserGPGCreateEvent(ctx context.Context, store cache.Store, g sdk.Use
 }
 
 func PublishUserGPGDeleteEvent(ctx context.Context, store cache.Store, g sdk.UserGPGKey, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(g)
 	e := sdk.EventV2{
 		ID:      sdk.UUID(),
 		GPGKey:  g.KeyID,
 		Type:    sdk.EventUserGPGKeyDeleted,
-		Payload: g,
+		Payload: bts,
 	}
 	if u != nil {
 		e.UserID = u.ID

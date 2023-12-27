@@ -2,17 +2,19 @@ package event_v2
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
 func PublishHatcheryCreateEvent(ctx context.Context, store cache.Store, h sdk.Hatchery, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(h)
 	e := sdk.EventV2{
 		ID:       sdk.UUID(),
 		Hatchery: h.Name,
 		Type:     sdk.EventHatcheryCreated,
-		Payload:  h,
+		Payload:  bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
@@ -22,12 +24,14 @@ func PublishHatcheryCreateEvent(ctx context.Context, store cache.Store, h sdk.Ha
 }
 
 func PublishHatcheryUpdatedEvent(ctx context.Context, store cache.Store, previousHatchery, h sdk.Hatchery, u *sdk.AuthentifiedUser) {
+	previousH, _ := json.Marshal(previousHatchery)
+	bts, _ := json.Marshal(h)
 	e := sdk.EventV2{
 		ID:       sdk.UUID(),
 		Hatchery: h.Name,
 		Type:     sdk.EventHatcheryUpdated,
-		Previous: previousHatchery,
-		Payload:  h,
+		Previous: previousH,
+		Payload:  bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
@@ -37,11 +41,12 @@ func PublishHatcheryUpdatedEvent(ctx context.Context, store cache.Store, previou
 }
 
 func PublishHatcheryDeleteEvent(ctx context.Context, store cache.Store, h sdk.Hatchery, u *sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(h)
 	e := sdk.EventV2{
 		ID:       sdk.UUID(),
 		Hatchery: h.Name,
 		Type:     sdk.EventHatcheryDeleted,
-		Payload:  h,
+		Payload:  bts,
 	}
 	if u != nil {
 		e.UserID = u.ID
