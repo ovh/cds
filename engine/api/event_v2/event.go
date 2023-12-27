@@ -27,12 +27,17 @@ func publish(ctx context.Context, store cache.Store, event sdk.EventV2) {
 		log.Error(ctx, "EventV2.publish: %s", err)
 		return
 	}
-	return
 }
 
 // Dequeue runs in a goroutine and dequeue event from cache
 func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines *sdk.GoRoutines) {
 	for {
+		if err := ctx.Err(); err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "EventV2.DequeueEvent> Exiting: %v", err)
+			return
+		}
+
 		e := sdk.EventV2{}
 		if err := store.DequeueWithContext(ctx, eventQueue, 50*time.Millisecond, &e); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
@@ -75,12 +80,6 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		})
 
 		wg.Wait()
-
-		if err := ctx.Err(); err != nil {
-			ctx := sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "EventV2.DequeueEvent> Exiting : %v", err)
-			continue
-		}
 	}
 }
 
