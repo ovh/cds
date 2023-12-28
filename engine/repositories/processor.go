@@ -13,6 +13,9 @@ import (
 
 func (s *Service) processor(ctx context.Context) error {
 	for {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		var uuid string
 		if err := s.dao.store.DequeueWithContext(ctx, processorKey, 250*time.Millisecond, &uuid); err != nil {
 			log.Error(ctx, "repositories > processor > store.DequeueWithContext err: %v", err)
@@ -35,9 +38,6 @@ func (s *Service) processor(ctx context.Context) error {
 					log.Error(ctx, "repositories > processor > %v", err)
 				}
 			}
-		}
-		if ctx.Err() != nil {
-			return ctx.Err()
 		}
 	}
 }

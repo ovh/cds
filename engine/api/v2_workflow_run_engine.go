@@ -70,19 +70,19 @@ func (api *API) V2WorkflowRunEngineChan(ctx context.Context) {
 
 func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 	for {
+		if err := ctx.Err(); err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "V2WorkflowRunEngine> Exiting: %v", err)
+			return
+		}
+
 		var wrEnqueue sdk.V2WorkflowRunEnqueue
 		if err := api.Cache.DequeueWithContext(ctx, workflow_v2.WorkflowEngineKey, 250*time.Millisecond, &wrEnqueue); err != nil {
-			log.Error(ctx, "V2WorkflowRunEngine > DequeueWithContext err: %v", err)
+			log.Error(ctx, "V2WorkflowRunEngine> DequeueWithContext err: %v", err)
 			continue
 		}
 		if err := api.workflowRunV2Trigger(ctx, wrEnqueue); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-		}
-		if ctx.Err() != nil {
-			if ctx.Err() != nil {
-				log.Error(ctx, "%v", ctx.Err())
-			}
-			return
 		}
 	}
 }
@@ -115,10 +115,10 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	// Load run by id
 	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), wrEnqueue.RunID, workflow_v2.WithRunResults)
-	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return nil
-	}
 	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil
+		}
 		return sdk.WrapError(err, "unable to load workflow run %s", wrEnqueue.RunID)
 	}
 
