@@ -5,14 +5,9 @@ package namesgenerator
 import (
 	"fmt"
 	"math/rand"
-	"time"
 
 	"github.com/ovh/cds/sdk/slug"
 )
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 var (
 	left = [...]string{

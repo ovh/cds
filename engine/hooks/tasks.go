@@ -382,15 +382,19 @@ func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 	}
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka, TypeWorkflowHook:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeWorkflowHook:
 		log.Debug(ctx, "Hooks> Tasks %s has been stopped", t.UUID)
+		return nil
+	case TypeKafka:
+		s.stopKafkaHook(t)
+		log.Debug(ctx, "Hooks> Kafka Task %s has been stopped", t.UUID)
 		return nil
 	case TypeGerrit:
 		s.stopGerritHookTask(t)
 		log.Debug(ctx, "Hooks> Gerrit Task %s has been stopped", t.UUID)
 		return nil
 	default:
-		return fmt.Errorf("Unsupported task type %s", t.Type)
+		return fmt.Errorf("unsupported task type %s", t.Type)
 	}
 }
 

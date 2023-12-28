@@ -9,6 +9,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/fsamin/go-dump"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -27,6 +28,10 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 		NbErrors:  nbError,
 	}
 	s.Dao.SaveTaskExecution(exec)
+}
+
+func (s *Service) stopKafkaHook(t *sdk.Task) {
+	s.GoRoutines.Stop("kafka-consume-" + t.UUID)
 }
 
 func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
@@ -96,12 +101,12 @@ func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 		dao:  &s.Dao,
 	}
 
-	s.GoRoutines.Exec(context.Background(), "kafka-consume-"+topic, func(ctx context.Context) {
+	s.GoRoutines.Run(s.Router.Background, "kafka-consume-"+t.UUID, func(ctx context.Context) {
 		atomic.AddInt64(&nbKafkaConsumers, 1)
 		defer atomic.AddInt64(&nbKafkaConsumers, -1)
-		for {
+		for ctx.Err() == nil {
 			if err := consumerGroup.Consume(ctx, []string{topic}, h); err != nil {
-				log.Error(ctx, "error on consume:%s", err)
+				log.ErrorWithStackTrace(ctx, errors.WithMessage(err, "error on consume"))
 			}
 		}
 	})
