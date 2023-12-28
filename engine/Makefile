@@ -46,8 +46,17 @@ TEST_REDIS_PASS = $(if ${CDS_CACHE_REDIS_PASS},${CDS_CACHE_REDIS_PASS},)
 TEST_REDIS_DBINDEX = 0
 TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis:5
 
-TEST_KAFKA_START_DOCKER = docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST=localhost --env ADVERTISED_PORT=9092 --name kafka-cds spotify/kafka
-
+TEST_KAFKA_START_DOCKER = docker run -d --name kafka-cds --hostname kafka-cds \
+	-p 9092:9092 \
+	-e KAFKA_CFG_NODE_ID=0 \
+	-e KAFKA_CFG_PROCESS_ROLES=controller,broker \
+	-e KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
+	-e KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+	-e KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-cds:9093 \
+	-e KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+	-e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+	bitnami/kafka:latest
+		
 TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
