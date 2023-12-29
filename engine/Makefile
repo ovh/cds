@@ -46,17 +46,6 @@ TEST_REDIS_PASS = $(if ${CDS_CACHE_REDIS_PASS},${CDS_CACHE_REDIS_PASS},)
 TEST_REDIS_DBINDEX = 0
 TEST_REDIS_START_DOCKER = docker run -d -p $(TEST_REDIS_PORT):6379 --name redis-cds redis:5
 
-TEST_KAFKA_START_DOCKER = docker run -d --name kafka-cds --hostname kafka-cds \
-	-p 9092:9092 \
-	-e KAFKA_CFG_NODE_ID=0 \
-	-e KAFKA_CFG_PROCESS_ROLES=controller,broker \
-	-e KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
-	-e KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
-	-e KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-cds:9093 \
-	-e KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER \
-	-e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
-	bitnami/kafka:latest
-		
 TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
@@ -122,8 +111,41 @@ build_test_engine:
 test-redis-start-docker:
 	$(TEST_REDIS_START_DOCKER)
 
+test-kafka-stop-docker:
+	docker network rm -f kafka-cds-network; \
+	docker rm -f kafka-cds-zookeeper kafka-cds kafka-cds-schema-registry;
+
 test-kafka-start-docker:
-	$(TEST_KAFKA_START_DOCKER)
+	docker network create --driver bridge kafka-cds-network; \
+	docker run -d --name kafka-cds-zookeeper \
+		--network kafka-cds-network \
+		-p 2181 \
+		-e ZOOKEEPER_CLIENT_PORT=2181 \
+		-e ZOOKEEPER_TICK_TIME=2000 \
+		confluentinc/cp-zookeeper:7.4.3; \
+	docker run -d --name kafka-cds \
+		--network kafka-cds-network \
+		-p 127.0.0.1:9092:9092 \
+		-p 9101 \
+		-p 29092 \
+		-e KAFKA_ZOOKEEPER_CONNECT=kafka-cds-zookeeper:2181 \
+		-e KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT \
+		-e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-cds:29092,PLAINTEXT_HOST://localhost:9092 \
+		-e KAFKA_BROKER_ID=1 \
+		-e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+		-e CONFLUENT_SUPPORT_CUSTOMER_ID=c0 \
+		-e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+		-e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+		-e KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 \
+		-e KAFKA_JMX_PORT=9101 \
+		-e KAFKA_JMX_HOSTNAME=localhost \
+		confluentinc/cp-kafka:7.4.3; \
+	docker run -d --name kafka-cds-schema-registry \
+		--network kafka-cds-network \
+		-p 8081 \
+		-e SCHEMA_REGISTRY_HOST_NAME=kafka-cds-schema-registry \
+		-e SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=kafka-cds:29092 \
+		confluentinc/cp-schema-registry:7.4.3;
 
 test-db-stop-docker:
 	$(TEST_DB_STOP_DOCKER)
