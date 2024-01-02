@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/fsamin/go-dump"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
@@ -78,8 +78,6 @@ func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 			return fmt.Errorf("error parsing Kafka version %v err:%s", kafkaVersion, err)
 		}
 		config.Version = kafkaVersion
-	} else {
-		config.Version = sarama.V0_10_2_0
 	}
 
 	var group = fmt.Sprintf("%s.%s", config.Net.SASL.User, t.UUID)

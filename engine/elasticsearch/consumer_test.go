@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/elasticsearch/mock_elasticsearch"
 	"github.com/ovh/cds/engine/test"
