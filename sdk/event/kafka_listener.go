@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/IBM/sarama"
+	"github.com/Shopify/sarama"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -85,6 +85,8 @@ func ConsumeKafka(ctx context.Context, goroutines *sdk.GoRoutines, kafkaConfig K
 			return sdk.WrapError(err, "error parsing Kafka version %v", kafkaConfig.Version)
 		}
 		config.Version = kafkaVersion
+	} else {
+		config.Version = sarama.V0_10_2_0
 	}
 
 	log.Info(ctx, "creating consumer group %q", kafkaConfig.ConsumerGroup)

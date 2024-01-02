@@ -81,7 +81,7 @@ test-docker-compose:
 
 merge-coverage:
 	@docker run -v `pwd`:/workspace golang:1.21 sh -c "\
-			go install github.com/wadey/gocovmerge@latest && \
+			go get -u github.com/wadey/gocovmerge && \
 			cd /workspace && \
       gocovmerge $(COVER_FILES) > /workspace/cdsctl.cover.out \
 		"

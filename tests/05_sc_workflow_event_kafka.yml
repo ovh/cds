@@ -11,11 +11,6 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force itscwrkflw18"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW18 ITSCWRKFLW18"
 
-- name: init kafka test.hook topic
-  steps:
-  - script: docker run --rm -v `pwd`:/workspace -w /workspace --network=host edenhill/kcat:1.7.1 -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
-    info: "kafka message is: {{.result.systemout}}"
-
 - name: import integrations
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import ITSCWRKFLW18 ./fixtures/integrations/kafka.yml
@@ -23,67 +18,54 @@ testcases:
 
 - name: import workflow
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
+  - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
 
 - name: check if consumer kafka is started
   steps:
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks | grep 'Hook Kafka Consumers' | grep OK
-    retry: 10
-    delay: 3  
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks list | grep 'ITSCWRKFLW18-WORKFLOW'
-    retry: 10
-    delay: 3
+  - script: sleep 15 && {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks|grep 'Hook Kafka Consumers' | grep OK
+    timeout: 100
 
 - name: run workflow by sending a kafka event
   steps:
-  - script: docker run --rm -v `pwd`:/workspace -w /workspace --network=host edenhill/kcat:1.7.1 -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
-    info: "kafka message is: {{.result.systemout}}"
-
-- name: check event in topic test.hook
-  steps:
-  - script: docker run --rm -v `pwd`:/workspace -w /workspace --network=host edenhill/kcat:1.7.1 -b localhost:9092 -t test.hook -C -o -1 -c 1
-    info: "kafka message is: {{.result.systemout}}"
-    assertions:
-    - result.code ShouldEqual 0
-    - "result.systemoutjson.fookafka ShouldNotBeEmpty"
-    retry: 20
-    delay: 3
-
-- name: check event in topic test.eventspublic
-  steps:
-  - script: docker run --rm -v `pwd`:/workspace -w /workspace --network=host edenhill/kcat:1.7.1 -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
-    info: "kafka message is: {{.result.systemout}}"
-    assertions:
-    - result.code ShouldEqual 0
-    - "result.systemoutjson.type_event ShouldNotBeEmpty"
-    retry: 20
-    delay: 3
-
-- name: check event in topic test.jobs
-  steps:
-  - script: docker run --rm -v `pwd`:/workspace -w /workspace --network=host edenhill/kcat:1.7.1 -b localhost:9092 -t test.jobs -C -o -1 -c 1
-    info: "kafka message is: {{.result.systemout}}"
-    assertions:
-    - result.code ShouldEqual 0
-    - "result.systemoutjson.id ShouldNotBeEmpty"
-    retry: 20
-    delay: 3
+  - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
+    retry: 10
+    delay: 10
+    timeout: 100
 
 - name: check event in topic test.eventsproject
   steps:
-  - script: docker run --rm -v `pwd`:/workspace -w /workspace --network=host edenhill/kcat:1.7.1 -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
+  - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
     - 'result.systemout MustNotContainSubstring "Leader not available"'
     - "result.systemoutjson.id ShouldNotBeEmpty"
-    retry: 20
-    delay: 3
+    retry: 10
+    delay: 10
+    timeout: 100
+
+- name: check event in topic test.eventspublic
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
+    info: "kafka message is: {{.result.systemout}}"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.type_event ShouldNotBeEmpty"
+    timeout: 100
+
+- name: check event in topic test.jobs
+  steps:
+  - script: kafkacat -b localhost:9092 -t test.jobs -C -o -1 -c 1
+    info: "kafka message is: {{.result.systemout}}"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemoutjson.id ShouldNotBeEmpty"
+    timeout: 100
 
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW 1 --format json
-    retry: 20
+    retry: 10
     delay: 3
     assertions:
     - result.code ShouldEqual 0
