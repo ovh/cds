@@ -39,6 +39,14 @@ type logger struct {
 	logger *logrus.Logger
 }
 
+type CurrentJobV2 struct {
+	runJob           *sdk.V2WorkflowRunJob
+	runJobContext    sdk.WorkflowRunJobsContext
+	context          context.Context
+	currentStepIndex int
+	currentStepName  string
+}
+
 type CurrentWorker struct {
 	cfg           *workerruntime.WorkerConfig
 	id            string
@@ -53,14 +61,8 @@ type CurrentWorker struct {
 	actionPlugin  map[string]*sdk.GRPCPlugin
 	actions       map[string]sdk.V2Action
 	pluginFactory plugin.Factory
-	currentJobV2  struct {
-		runJob           *sdk.V2WorkflowRunJob
-		runJobContext    sdk.WorkflowRunJobsContext
-		context          context.Context
-		currentStepIndex int
-		currentStepName  string
-	}
-	currentJob struct {
+	currentJobV2  CurrentJobV2
+	currentJob    struct {
 		wJob             *sdk.WorkflowNodeJobRun
 		newVariables     []sdk.Variable
 		params           []sdk.Parameter

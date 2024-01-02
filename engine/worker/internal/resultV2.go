@@ -15,9 +15,6 @@ type ResultAddRequest struct {
 func (w *CurrentWorker) ResultAdd(ctx context.Context, req ResultAddRequest) error {
 	// Check if there is a artifactory integration on the run
 	var withArtifactory bool
-	if _, has := w.currentJobV2.runJobContext.Integrations[sdk.ArtifactoryIntegrationModelName]; has {
-		withArtifactory = true
-	}
 
 	var runResult sdk.V2WorkflowRunResult
 

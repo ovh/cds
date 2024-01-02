@@ -85,10 +85,10 @@ func workflowLintFunc(v cli.Values) error {
 }
 
 var workflowRunInfosListCmd = cli.Command{
-	Name:    "infos",
-	Aliases: []string{"i", "info"},
+	Name:    "info",
+	Aliases: []string{"i", "infos"},
 	Short:   "List run informations",
-	Example: "cdsctl experimental workflow infos <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Example: "cdsctl experimental workflow info <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},

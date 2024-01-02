@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
@@ -16,6 +15,7 @@ import (
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event_v2"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/worker_v2"
@@ -64,18 +64,18 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return err
 		}
 
-		contexts, err := computeRunJobContext(ctx, api.mustDB(), *run, *jobRun, *wk)
-		if err != nil {
-			return err
-		}
-		secrets := computeSecretsContext(ctx, *projWithSecrets, *vcsWithSecrets)
-		contexts.Secrets = secrets
-
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
+
+		contexts, err := computeRunJobContext(ctx, tx, projWithSecrets, *run, *jobRun, *wk)
+		if err != nil {
+			return err
+		}
+		secrets := computeSecretsContext(ctx, *projWithSecrets, *vcsWithSecrets)
+		contexts.Secrets = secrets
 
 		// Change worker status
 		wrkWithSecret.Status = sdk.StatusBuilding
@@ -139,7 +139,7 @@ func computeSecretsContext(ctx context.Context, projWithSecrets sdk.Project, vcs
 	return secrets
 }
 
-func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, error) {
+func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
 	contexts.CDS.Job = jobRun.JobID
@@ -202,6 +202,67 @@ func computeRunJobContext(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Wo
 			contexts.Needs[n] = needContext
 		}
 	}
+
+	contexts.Integrations = &sdk.JobIntegrationsContext{}
+	integs, err := integration.LoadIntegrationsByProjectIDWithClearPassword(ctx, db, proj.ID)
+	if err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
+	}
+
+	// this private function is called on job integrations to set the integration on the context, and then on the workflow integration
+	// the job integration are always predominant on workflow integration
+	var matchIntegration = func(i string) error {
+		var integ *sdk.ProjectIntegration
+		for j := range integs {
+			if integs[j].Name == i {
+				integ = &integs[j]
+				break
+			}
+		}
+		if integ == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not found", i)
+		}
+		switch {
+		case integ.Model.ArtifactManager:
+			if contexts.Integrations.ArtifactManager != nil {
+				return nil // If it's already set, it's by job integration
+			}
+			contexts.Integrations.ArtifactManager = integ
+		case integ.Model.Deployment:
+			if contexts.Integrations.Deployment != nil {
+				return nil // If it's already set, it's by job integration
+			}
+			contexts.Integrations.Deployment = integ
+		default:
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not supported", i)
+		}
+		if err := workflow_v2.InsertRunJobInfo(ctx, db, &sdk.V2WorkflowRunJobInfo{
+			IssuedAt:         time.Now(),
+			Level:            sdk.WorkflowRunInfoLevelInfo,
+			WorkflowRunID:    run.ID,
+			WorkflowRunJobID: jobRun.ID,
+			Message:          fmt.Sprintf("Integration %q enabled on job %q", integ.Name, jobRun.JobID),
+		}); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Load integration from the job level
+	// This must be done before the workflow level
+	for _, i := range jobRun.Job.Integrations {
+		if err := matchIntegration(i); err != nil {
+			return nil, err
+		}
+	}
+
+	// Load integration from the workflow level
+	for _, i := range run.WorkflowData.Workflow.Integrations {
+		if err := matchIntegration(i); err != nil {
+			return nil, err
+		}
+	}
+
 	return contexts, nil
 }
 
