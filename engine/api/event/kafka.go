@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IBM/sarama"
-	"github.com/ovh/cds/sdk"
+	"github.com/Shopify/sarama"
 	"github.com/ovh/cds/sdk/event"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/pkg/errors"
@@ -71,12 +70,8 @@ func (c *KafkaClient) initProducer() error {
 		config.Net.SASL.User = c.options.User
 		config.Net.SASL.Password = c.options.Password
 	}
-	if c.options.Version != "" {
-		kafkaVersion, err := sarama.ParseKafkaVersion(c.options.Version)
-		if err != nil {
-			return sdk.WrapError(err, "error parsing Kafka version %v", c.options.Version)
-		}
-		config.Version = kafkaVersion
+	if c.options.Version == "" {
+		config.Version = sarama.V0_10_2_0
 	}
 
 	config.ClientID = c.options.ClientID
