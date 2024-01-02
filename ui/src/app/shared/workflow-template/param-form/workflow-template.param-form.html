@@ -10,12 +10,12 @@
     <nz-col [nzSpan]="12">
         <div [ngSwitch]="parameter.type">
             <input nz-input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}"
-                [ngModel]="parameterValues[parameter.key]" (change)="changeParam(parameter.key, $event)">
+                [ngModel]="parameterValues[parameter.key]" (ngModelChange)="changeParam(parameter.key, $event)">
             <label *ngSwitchCase="'boolean'" nz-checkbox name="parameter-{{parameter.key}}"
                 [ngModel]="parameterValues[parameter.key]" (ngModelChange)="changeParam(parameter.key, $event)"></label>
             <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}"
                 [ngModel]="parameterValues[parameter.key]" [config]="codeMirrorConfig"
-                (change)="changeParam(parameter.key, $event)" #codemirror>
+                (ngModelChange)="changeParam(parameter.key, $event)" #codemirror>
             </codemirror>
             <nz-select *ngSwitchCase="'repository'" name="parameter-{{parameter.key}}" nzShowSearch
                 nzPlaceHolder="{{'workflow_wizard_select_repo_man' | translate}}"
@@ -24,7 +24,7 @@
             </nz-select>
             <nz-select *ngSwitchCase="'ssh-key'" name="parameter-{{parameter.key}}" nzShowSearch
                 nzPlaceHolder="{{'workflow_template_param_select_key' | translate}}"
-                (ngModelChange)="changeParam(parameter.key, $event)" (ngModel]="parameterValues[parameter.key]">
+                (ngModelChange)="changeParam(parameter.key, $event)" [ngModel]="parameterValues[parameter.key]">
                 <nz-option *ngFor="let key of sshKeys" [nzValue]="key" [nzLabel]="key"></nz-option>
             </nz-select>
             <nz-select *ngSwitchCase="'pgp-key'" name="parameter-{{parameter.key}}" nzShowSearch
