@@ -16,9 +16,13 @@ export class GraphNode {
     name: string;
     depends_on: Array<string>;
     sub_graph: Array<GraphNode>;
+    gateChild: string;
+    gateName: string;
+    gateStatus: string;
     run: V2WorkflowRunJob;
     type: string;
 }
 
 export const GraphNodeTypeJob = "job";
 export const GraphNodeTypeStage = "stage";
+export const GraphNodeTypeGate = "gate";

@@ -34,4 +34,8 @@ export class V2WorkflowRunService {
     getAllLogsLinks(run: V2WorkflowRun, jobIdentifier: string): Observable<CDNLogLinks> {
         return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/vcs/${run.vcs_server_id}/repository/${run.repository_id}/workflow/${run.workflow_name}/run/${run.run_number}/jobs/${jobIdentifier}/logs/links`);
     }
+
+    triggerJob(run: V2WorkflowRun, jobIdentifier: string, inputs: {}): Observable<V2WorkflowRun> {
+        return this._http.put<V2WorkflowRun>(`/v2/project/${run.project_key}/vcs/${run.vcs_server_id}/repository/${run.repository_id}/workflow/${run.workflow_name}/run/${run.run_number}/jobs/${jobIdentifier}/run`, inputs);
+    }
 }

@@ -1,0 +1,33 @@
+<h1>Trigger {{gateNode.job}}</h1>
+<div nz-form nzLayout="horizontal" *ngIf="!jobEvent">
+    <ng-container *ngFor="let k of request | keys">
+        <nz-form-item>
+            <nz-form-label [nzSpan]="4">{{k}}</nz-form-label>
+                <ng-container [ngSwitch]="currentGate.inputs[k].type">
+                    <nz-form-control *ngSwitchCase="'number'">
+                        <input nz-input [(ngModel)]="request[k]" type="number" />
+                    </nz-form-control>
+                    <nz-form-control *ngSwitchCase="'boolean'">
+                        <label nz-checkbox [(ngModel)]="request[k]"></label>
+                    </nz-form-control>
+                    <nz-form-control *ngSwitchCase="'enum'">
+                        <nz-select [(ngModel)]="request[k]">
+                            <nz-option *ngFor="let o of currentGate.inputs[k].values" [nzValue]="o" [nzLabel]="o"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                    <nz-form-control *ngSwitchDefault>
+                        <input nz-input [(ngModel)]="request[k]" type="text" />
+                    </nz-form-control>
+                </ng-container>
+        </nz-form-item>
+    </ng-container>
+    <ng-container *ngIf="!jobEvent">
+        <button nz-button nzBlock [nzLoading]="loading" nzType="primary" (click)="triggerJob()">Run {{gateNode.job}}</button>
+    </ng-container>
+</div>
+<div *ngIf="jobEvent">
+    Payload sent by {{jobEvent.username}}:
+    <pre>
+        <p>{{jobEvent.inputs | json}}</p>
+    </pre>
+</div>

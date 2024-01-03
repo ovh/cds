@@ -15,6 +15,7 @@ import {webSocket, WebSocketSubject} from "rxjs/webSocket";
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {Router} from "@angular/router";
 import {RunJobComponent} from "./run-job.component";
+import {GraphNode} from "../vcs/repository/workflow/show/graph/graph.model";
 
 
 @Component({
@@ -31,6 +32,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     selectedRun: V2WorkflowRun;
     selectedJobRun: V2WorkflowRunJob;
+    selectedJobGate: {gate: string, job: string};
     selectedJobRunInfos: Array<WorkflowRunInfo>;
     jobs: Array<V2WorkflowRunJob>;
     selectedRunInfos: Array<WorkflowRunInfo>;
@@ -61,6 +63,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             if (r?.id === this.selectedRun?.id && r?.status === this.selectedRun?.status) {
                 return;
             }
+            delete this.selectedJobGate;
             delete this.selectedJobRun;
             delete this.selectedJobRunInfos;
             delete this.selectedRunInfos;
@@ -158,11 +161,18 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     ngOnDestroy(): void {
     }
 
+    selectJobGate(gateNode: GraphNode): void {
+        delete this.selectedJobRun;
+        this.selectedJobGate = {gate: gateNode.gateName, job: gateNode.gateChild};
+        this._cd.markForCheck();
+    }
+
     selectJob(runJobID: string): void {
         let jobRun = this.jobs.find(j => j.id === runJobID);
         if (this.selectedJobRun && jobRun && jobRun.id === this.selectedJobRun.id) {
             return;
         }
+        delete this.selectedJobGate;
         this.selectedJobRun = jobRun;
         if (!this.selectedJobRun) {
             this._cd.markForCheck();
