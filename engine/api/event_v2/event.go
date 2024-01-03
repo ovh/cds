@@ -1,10 +1,8 @@
 package event_v2
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"net/http"
 	"sync"
 	"time"
 
@@ -112,15 +110,6 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) e
 		}
 		log.Debug(ctx, "Sending notification on project %s", proj.Key)
 		// TODO send notification
-		bts, _ := json.Marshal(e)
-		resp, err := http.Post("http://localhost:9191/event", "image/jpeg", bytes.NewBuffer(bts))
-		if err != nil {
-			return err
-		}
-		if resp.StatusCode >= 400 {
-			return sdk.NewErrorFrom(sdk.ErrUnknownError, "http return %d", resp.StatusCode)
-		}
-		log.Info(ctx, ">>>>Event sent")
 	}
 	return nil
 }
