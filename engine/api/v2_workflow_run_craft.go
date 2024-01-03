@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -32,6 +33,7 @@ import (
 )
 
 type WorkflowRunEntityFinder struct {
+	project                sdk.Project
 	vcsServerCache         map[string]sdk.VCSProject
 	repoCache              map[string]sdk.ProjectRepository
 	repoDefaultBranchCache map[string]string
@@ -151,15 +153,16 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	// Build run context
 	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *p, *run, *vcsServer, *repo, *u)
 	if err != nil {
-		return stopRun(ctx, api.mustDB(), api.Cache, run, &sdk.V2WorkflowRunInfo{
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			Message:       fmt.Sprintf("%v", err),
-		}, *u)
+		})
 	}
 	run.Contexts = *runContext
 
 	wref := WorkflowRunEntityFinder{
+		project:                *p,
 		run:                    *run,
 		runRepo:                *repo,
 		runVcsServer:           *vcsServer,
@@ -190,28 +193,28 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		msg, err := searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
-			return stopRun(ctx, api.mustDB(), api.Cache, run, &sdk.V2WorkflowRunInfo{
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("unable to retrieve job[%s] definition. Please contact an administrator", jobID),
-			}, *u)
+			})
 		}
 		if msg != nil {
-			return stopRun(ctx, api.mustDB(), api.Cache, run, msg, *u)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
 		}
 
 		if !strings.HasPrefix(j.RunsOn, "${{") {
-			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, j.Name, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
+			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, jobID, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
-				return stopRun(ctx, api.mustDB(), api.Cache, run, &sdk.V2WorkflowRunInfo{
+				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-				}, *u)
+				})
 			}
 			if msg != nil {
-				return stopRun(ctx, api.mustDB(), api.Cache, run, msg, *u)
+				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
 			}
 			j.RunsOn = completeName
 		}
@@ -234,6 +237,19 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	for _, v := range wref.localWorkerModelCache {
 		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, v.Name, wref.run.WorkflowRef)
 		run.WorkflowData.WorkerModels[completeName] = v
+	}
+
+	infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+		})
+	}
+	if len(infos) > 0 {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
 	}
 
 	tx, err := api.mustDB().Begin()
@@ -505,21 +521,26 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 	return nil, nil
 }
 
-func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, msg *sdk.V2WorkflowRunInfo, u sdk.AuthentifiedUser) error {
+func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, u sdk.AuthentifiedUser, messages ...sdk.V2WorkflowRunInfo) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	defer tx.Rollback() // nolint
 
-	if err := workflow_v2.InsertRunInfo(ctx, tx, msg); err != nil {
-		return err
+	var status = sdk.StatusSkipped
+
+	for _, msg := range messages {
+		if err := workflow_v2.InsertRunInfo(ctx, tx, &msg); err != nil {
+			return err
+		}
+		if msg.Level != sdk.WorkflowRunInfoLevelWarning && status == sdk.StatusSkipped {
+			status = sdk.StatusFail
+		}
 	}
-	if msg.Level == sdk.WorkflowRunInfoLevelWarning {
-		run.Status = sdk.StatusSkipped
-	} else {
-		run.Status = sdk.StatusFail
-	}
+
+	run.Status = status
+
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
 	}
@@ -553,31 +574,31 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		EventName:          "",
 	}
 	switch {
-	case wr.Event.Manual != nil:
+	case wr.RunEvent.Manual != nil:
 		cdsContext.EventName = "manual"
-		cdsContext.Event = wr.Event.Manual.Payload
-		if r, has := wr.Event.Manual.Payload[sdk.GitRefManualPayload]; has {
+		cdsContext.Event = wr.RunEvent.Manual.Payload
+		if r, has := wr.RunEvent.Manual.Payload[sdk.GitRefManualPayload]; has {
 			if refString, ok := r.(string); ok {
 				ref = refString
 			}
 		}
-		if c, has := wr.Event.Manual.Payload[sdk.GitCommitManualPayload]; has {
+		if c, has := wr.RunEvent.Manual.Payload[sdk.GitCommitManualPayload]; has {
 			if commitString, ok := c.(string); ok {
 				commit = commitString
 			}
 		}
-	case wr.Event.GitTrigger != nil:
-		cdsContext.EventName = wr.Event.GitTrigger.EventName
-		cdsContext.Event = wr.Event.GitTrigger.Payload
-		ref = wr.Event.GitTrigger.Ref
-		commit = wr.Event.GitTrigger.Sha
-	case wr.Event.ModelUpdateTrigger != nil:
-		ref = wr.Event.ModelUpdateTrigger.Ref
-	case wr.Event.WorkflowUpdateTrigger != nil:
-		ref = wr.Event.WorkflowUpdateTrigger.Ref
+	case wr.RunEvent.GitTrigger != nil:
+		cdsContext.EventName = wr.RunEvent.GitTrigger.EventName
+		cdsContext.Event = wr.RunEvent.GitTrigger.Payload
+		ref = wr.RunEvent.GitTrigger.Ref
+		commit = wr.RunEvent.GitTrigger.Sha
+	case wr.RunEvent.ModelUpdateTrigger != nil:
+		ref = wr.RunEvent.ModelUpdateTrigger.Ref
+	case wr.RunEvent.WorkflowUpdateTrigger != nil:
+		ref = wr.RunEvent.WorkflowUpdateTrigger.Ref
 	default:
 		// TODO implement scheduler and webhooks
-		return nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "Event not implemented: %+v", wr.Event)
+		return nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "RunEvent not implemented: %+v", wr.RunEvent)
 	}
 
 	// Reload VCS with decryption to have sshkey / git username
@@ -755,6 +776,63 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 		WorkflowRunID: wref.run.ID,
 		Level:         sdk.WorkflowRunInfoLevelError,
 		IssuedAt:      time.Now(),
-		Message:       fmt.Sprintf("wrong configuration on job %s. No hatchery can run it", jobName),
+		Message:       fmt.Sprintf("wrong configuration on job %q. No hatchery can run it", jobName),
 	}, nil
+}
+
+func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *gorp.DbMap) ([]sdk.V2WorkflowRunInfo, error) {
+	availableIntegrations, err := integration.LoadIntegrationsByProjectID(ctx, db, wref.project.ID)
+	if err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
+	}
+
+	var infos []sdk.V2WorkflowRunInfo
+
+	for i := range wref.run.WorkflowData.Workflow.Integrations {
+		var found bool
+		for j := range availableIntegrations {
+			if wref.run.WorkflowData.Workflow.Integrations[i] == availableIntegrations[j].Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			infos = append(infos, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wref.run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				IssuedAt:      time.Now(),
+				Message:       fmt.Sprintf("wrong workflow configuration. Integration %s does not exist", wref.run.WorkflowData.Workflow.Integrations[i]),
+			})
+		}
+	}
+
+	for jobID, job := range wref.run.WorkflowData.Workflow.Jobs {
+		for _, integ := range job.Integrations {
+			var found bool
+			for j := range availableIntegrations {
+				if integ == availableIntegrations[j].Name {
+					found = true
+					if availableIntegrations[j].Model.ArtifactManager {
+						infos = append(infos, sdk.V2WorkflowRunInfo{
+							WorkflowRunID: wref.run.ID,
+							Level:         sdk.WorkflowRunInfoLevelError,
+							IssuedAt:      time.Now(),
+							Message:       fmt.Sprintf("wrong configuration on job %q. Integration %q cannot be used at the job level", jobID, integ),
+						})
+					}
+					break
+				}
+			}
+			if !found {
+				infos = append(infos, sdk.V2WorkflowRunInfo{
+					WorkflowRunID: wref.run.ID,
+					Level:         sdk.WorkflowRunInfoLevelError,
+					IssuedAt:      time.Now(),
+					Message:       fmt.Sprintf("wrong configuration on job %q. Integration %q does not exist", jobID, integ),
+				})
+			}
+		}
+	}
+
+	return infos, nil
 }

@@ -30,44 +30,35 @@ type V2WorkflowRunHookRequest struct {
 }
 
 type V2WorkflowRun struct {
-	ID           string             `json:"id" db:"id"`
-	ProjectKey   string             `json:"project_key" db:"project_key"`
-	VCSServerID  string             `json:"vcs_server_id" db:"vcs_server_id"`
-	RepositoryID string             `json:"repository_id" db:"repository_id"`
-	WorkflowName string             `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
-	WorkflowSha  string             `json:"workflow_sha" db:"workflow_sha"`
-	WorkflowRef  string             `json:"workflow_ref" db:"workflow_ref"`
-	Status       string             `json:"status" db:"status" cli:"status"`
-	RunNumber    int64              `json:"run_number" db:"run_number" cli:"run_number"`
-	RunAttempt   int64              `json:"run_attempt" db:"run_attempt"`
-	Started      time.Time          `json:"started" db:"started" cli:"started"`
-	LastModified time.Time          `json:"last_modified" db:"last_modified" cli:"last_modified"`
-	ToDelete     bool               `json:"to_delete" db:"to_delete"`
-	WorkflowData V2WorkflowRunData  `json:"workflow_data" db:"workflow_data"`
-	UserID       string             `json:"user_id" db:"user_id"`
-	Username     string             `json:"username" db:"username" cli:"username"`
-	Contexts     WorkflowRunContext `json:"contexts" db:"contexts"`
-	Event        V2WorkflowRunEvent `json:"event" db:"event"`
-	// Aggegations
+	ID           string                 `json:"id" db:"id"`
+	ProjectKey   string                 `json:"project_key" db:"project_key"`
+	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
+	RepositoryID string                 `json:"repository_id" db:"repository_id"`
+	WorkflowName string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
+	WorkflowSha  string                 `json:"workflow_sha" db:"workflow_sha"`
+	WorkflowRef  string                 `json:"workflow_ref" db:"workflow_ref"`
+	Status       string                 `json:"status" db:"status" cli:"status"`
+	RunNumber    int64                  `json:"run_number" db:"run_number" cli:"run_number"`
+	RunAttempt   int64                  `json:"run_attempt" db:"run_attempt"`
+	Started      time.Time              `json:"started" db:"started" cli:"started"`
+	LastModified time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
+	ToDelete     bool                   `json:"to_delete" db:"to_delete"`
+	WorkflowData V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
+	UserID       string                 `json:"user_id" db:"user_id"`
+	Username     string                 `json:"username" db:"username" cli:"username"`
+	Contexts     WorkflowRunContext     `json:"contexts" db:"contexts"`
+	RunEvent     V2WorkflowRunEvent     `json:"event" db:"event"`
+	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
+
+	// Aggregations
 	Results []V2WorkflowRunResult `json:"results" db:"-"`
 }
 
 type WorkflowRunContext struct {
-	CDS          CDSContext        `json:"cds,omitempty"`
-	Git          GitContext        `json:"git,omitempty"`
-	Vars         map[string]string `json:"vars,omitempty"`
-	Integrations map[string]string `json:"integrations,omitempty"`
-	Env          map[string]string `json:"env,omitempty"`
-}
-
-type WorkflowRunJobsContext struct {
-	WorkflowRunContext
-	Jobs    JobsResultContext      `json:"jobs"`
-	Needs   NeedsContext           `json:"needs"`
-	Inputs  map[string]interface{} `json:"inputs"`
-	Steps   StepsContext           `json:"steps"`
-	Secrets map[string]string      `json:"secrets"`
-	Matrix  map[string]string      `json:"matrix"`
+	CDS  CDSContext        `json:"cds,omitempty"`
+	Git  GitContext        `json:"git,omitempty"`
+	Vars map[string]string `json:"vars,omitempty"`
+	Env  map[string]string `json:"env,omitempty"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -84,6 +75,18 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), m), "cannot unmarshal WorkflowRunContext")
+}
+
+type WorkflowRunJobsContext struct {
+	WorkflowRunContext
+	Jobs         JobsResultContext       `json:"jobs"`
+	Needs        NeedsContext            `json:"needs"`
+	Inputs       map[string]interface{}  `json:"inputs"`
+	Steps        StepsContext            `json:"steps"`
+	Secrets      map[string]string       `json:"secrets"`
+	Matrix       map[string]string       `json:"matrix"`
+	Integrations *JobIntegrationsContext `json:"integrations,omitempty"`
+	Gate         map[string]interface{}  `json:"gate"`
 }
 
 type V2WorkflowRunData struct {
@@ -106,6 +109,32 @@ func (w *V2WorkflowRunData) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2WorkflowRunData")
+}
+
+type V2WorkflowRunJobEvent struct {
+	UserID     string                 `json:"user_id"`
+	Username   string                 `json:"username"`
+	JobID      string                 `json:"job_id"`
+	Inputs     map[string]interface{} `json:"inputs"`
+	RunAttempt int64                  `json:"run_attempt"`
+}
+
+type V2WorkflowRunJobEvents []V2WorkflowRunJobEvent
+
+func (w V2WorkflowRunJobEvents) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal V2WorkflowRunJobEvents")
+}
+
+func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal V2WorkflowRunJobEvents")
 }
 
 type V2WorkflowRunEvent struct {
@@ -166,58 +195,45 @@ type WebHookTrigger struct {
 }
 
 type V2WorkflowRunJob struct {
-	ID            string                        `json:"id" db:"id"`
-	JobID         string                        `json:"job_id" db:"job_id" cli:"job_id"`
-	WorkflowRunID string                        `json:"workflow_run_id" db:"workflow_run_id"`
-	ProjectKey    string                        `json:"project_key" db:"project_key"`
-	WorkflowName  string                        `json:"workflow_name" db:"workflow_name"`
-	RunNumber     int64                         `json:"run_number" db:"run_number"`
-	RunAttempt    int64                         `json:"run_attempt" db:"run_attempt"`
-	Status        string                        `json:"status" db:"status" cli:"status"`
-	Queued        time.Time                     `json:"queued" db:"queued"`
-	Scheduled     time.Time                     `json:"scheduled" db:"scheduled"`
-	Started       time.Time                     `json:"started" db:"started"`
-	Ended         time.Time                     `json:"ended" db:"ended"`
-	Job           V2Job                         `json:"job" db:"job"`
-	WorkerID      string                        `json:"worker_id,omitempty" db:"worker_id"`
-	WorkerName    string                        `json:"worker_name" db:"worker_name"`
-	HatcheryName  string                        `json:"hatchery_name" db:"hatchery_name"`
-	StepsStatus   JobStepsStatus                `json:"steps_status" db:"steps_status"`
-	UserID        string                        `json:"user_id" db:"user_id"`
-	Username      string                        `json:"username" db:"username"`
-	Region        string                        `json:"region,omitempty" db:"region"`
-	ModelType     string                        `json:"model_type,omitempty" db:"model_type"`
-	Matrix        JobMatrix                     `json:"matrix,omitempty" db:"matrix"`
-	Integrations  *V2WorkflowRunJobIntegrations `json:"integrations,omitempty" db:"integrations"`
+	ID            string         `json:"id" db:"id"`
+	JobID         string         `json:"job_id" db:"job_id" cli:"job_id"`
+	WorkflowRunID string         `json:"workflow_run_id" db:"workflow_run_id"`
+	ProjectKey    string         `json:"project_key" db:"project_key"`
+	WorkflowName  string         `json:"workflow_name" db:"workflow_name"`
+	RunNumber     int64          `json:"run_number" db:"run_number"`
+	RunAttempt    int64          `json:"run_attempt" db:"run_attempt"`
+	Status        string         `json:"status" db:"status" cli:"status"`
+	Queued        time.Time      `json:"queued" db:"queued"`
+	Scheduled     time.Time      `json:"scheduled" db:"scheduled"`
+	Started       time.Time      `json:"started" db:"started"`
+	Ended         time.Time      `json:"ended" db:"ended"`
+	Job           V2Job          `json:"job" db:"job"`
+	WorkerID      string         `json:"worker_id,omitempty" db:"worker_id"`
+	WorkerName    string         `json:"worker_name" db:"worker_name"`
+	HatcheryName  string         `json:"hatchery_name" db:"hatchery_name"`
+	StepsStatus   JobStepsStatus `json:"steps_status" db:"steps_status"`
+	UserID        string         `json:"user_id" db:"user_id"`
+	Username      string         `json:"username" db:"username"`
+	Region        string         `json:"region,omitempty" db:"region"`
+	ModelType     string         `json:"model_type,omitempty" db:"model_type"`
+	Matrix        JobMatrix      `json:"matrix,omitempty" db:"matrix"`
+	GateInputs    GateInputs     `json:"gate_inputs,omitempty" db:"gate_inputs"`
 }
 
-type V2WorkflowRunJobIntegrations struct {
+type JobIntegrationsContext struct {
 	ArtifactManager *ProjectIntegration `json:"artifact_manager,omitempty"`
 	Deployment      *ProjectIntegration `json:"deployment,omitempty"`
-	// Here will sits other integration (arsenal)
 }
 
-func (sc V2WorkflowRunJobIntegrations) Value() (driver.Value, error) {
-	// Blur secrets if any, before serialization
-	if sc.ArtifactManager != nil {
-		sc.ArtifactManager.Blur()
+func (c JobIntegrationsContext) All() []ProjectIntegration {
+	var res []ProjectIntegration
+	if c.ArtifactManager != nil {
+		res = append(res, *c.ArtifactManager)
 	}
-	if sc.Deployment != nil {
-		sc.Deployment.Blur()
+	if c.Deployment != nil {
+		res = append(res, *c.Deployment)
 	}
-	j, err := json.Marshal(sc)
-	return j, WrapError(err, "cannot marshal V2WorkflowRunJobIntegrations")
-}
-
-func (sc *V2WorkflowRunJobIntegrations) Scan(src interface{}) error {
-	if src == nil {
-		return nil
-	}
-	source, ok := src.(string)
-	if !ok {
-		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
-	}
-	return WrapError(JSONUnmarshal([]byte(source), sc), "cannot unmarshal V2WorkflowRunJobIntegrations")
+	return res
 }
 
 type JobStepsStatus map[string]JobStepStatus
@@ -227,6 +243,24 @@ type JobStepStatus struct {
 	Outputs    JobResultOutput `json:"outputs"`
 	Started    time.Time       `json:"started"`
 	Ended      time.Time       `json:"ended"`
+}
+
+type GateInputs map[string]interface{}
+
+func (gi GateInputs) Value() (driver.Value, error) {
+	m, err := yaml.Marshal(gi)
+	return m, WrapError(err, "cannot marshal GateInputs")
+}
+
+func (gi *GateInputs) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.(string)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+	}
+	return WrapError(yaml.Unmarshal([]byte(source), gi), "cannot unmarshal GateInputs")
 }
 
 type JobMatrix map[string]string
@@ -280,8 +314,14 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID  string `json:"run_id"`
-	UserID string `json:"user_id"`
+	RunID  string                   `json:"run_id"`
+	UserID string                   `json:"user_id"`
+	Gate   V2WorkflowRunEnqueueGate `json:"gate"`
+}
+
+type V2WorkflowRunEnqueueGate struct {
+	JobID  string                 `json:"job_id"`
+	Inputs map[string]interface{} `json:"inputs"`
 }
 
 type V2WorkflowRunInfo struct {
@@ -296,9 +336,9 @@ type V2WorkflowRunJobInfo struct {
 	ID               string    `json:"id" db:"id"`
 	WorkflowRunID    string    `json:"workflow_run_id" db:"workflow_run_id"`
 	WorkflowRunJobID string    `json:"workflow_run_job_id" db:"workflow_run_job_id"`
-	IssuedAt         time.Time `json:"issued_at" db:"issued_at"`
-	Level            string    `json:"level" db:"level"`
-	Message          string    `json:"message" db:"message"`
+	IssuedAt         time.Time `json:"issued_at" db:"issued_at" cli:"date"`
+	Level            string    `json:"level" db:"level" cli:"level"`
+	Message          string    `json:"message" db:"message" cli:"message"`
 }
 
 const (

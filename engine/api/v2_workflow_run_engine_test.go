@@ -35,6 +35,14 @@ func TestJobConditionSuccess(t *testing.T) {
 		"job4": {},
 	}
 
+	run := sdk.V2WorkflowRun{
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Jobs: allJobs,
+			},
+		},
+	}
+
 	tests := []struct {
 		name      string
 		condition string
@@ -69,11 +77,13 @@ func TestJobConditionSuccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			allJobs["job4"] = sdk.V2Job{
+			run.WorkflowData.Workflow.Jobs["job4"] = sdk.V2Job{
 				If:    tt.condition,
 				Needs: tt.needs,
 			}
-			b, err := checkJobCondition(context.TODO(), "job4", sdk.WorkflowRunContext{}, jobsContext, allJobs)
+			jobDef := run.WorkflowData.Workflow.Jobs["job4"]
+			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow.Jobs, jobsContext, sdk.WorkflowRunContext{}, "job4")
+			b, err := checkJobCondition(context.TODO(), run, "job4", &jobDef, currentJobContext)
 			require.NoError(t, err)
 			require.Equal(t, tt.result, b)
 		})
@@ -118,11 +128,12 @@ func TestBuildCurrentJobContext(t *testing.T) {
 			Result: sdk.StatusFail,
 		},
 	}
+
 	currentJobContext := sdk.JobsResultContext{}
-	buildAncestorJobContext(allJobs, "job6", currentJobContext, jobsContext)
+	buildAncestorJobContext("job6", allJobs, jobsContext, currentJobContext)
 
 	require.Equal(t, 3, len(currentJobContext))
-	require.Equal(t, sdk.StatusSuccess, currentJobContext["job1"].Result)
+	require.Equal(t, sdk.StatusFail, currentJobContext["job1"].Result)
 	require.Equal(t, sdk.StatusFail, currentJobContext["job5"].Result)
 }
 
@@ -209,7 +220,7 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -289,7 +300,7 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		Contexts: sdk.WorkflowRunContext{
 			CDS: sdk.CDSContext{
 				Workflow: wkfName,
@@ -375,7 +386,7 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
@@ -428,7 +439,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -475,7 +486,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -570,7 +581,7 @@ func TestWorkflowTriggerStage(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Stages: map[string]sdk.WorkflowStage{
 				"stage1": {},
@@ -657,7 +668,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Stages: map[string]sdk.WorkflowStage{
 				"stage1": {},
@@ -761,7 +772,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
@@ -889,7 +900,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Stages: map[string]sdk.WorkflowStage{
 				"stage1": {},
@@ -1023,7 +1034,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},

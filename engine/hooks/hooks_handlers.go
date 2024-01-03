@@ -547,9 +547,9 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		for uuid := range hooks {
+		for _, h := range hooks {
 			//Load the task
-			t := s.Dao.FindTask(ctx, uuid)
+			t := s.Dao.FindTask(ctx, h.UUID)
 			if t == nil {
 				continue
 			}

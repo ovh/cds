@@ -276,7 +276,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 				break
 			}
 		case <-c.Done():
-			return nil
+			return c.Err()
 		}
 	}
 	if elem != "" {

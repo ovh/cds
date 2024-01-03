@@ -16,13 +16,15 @@ const (
 )
 
 type V2Workflow struct {
-	Name       string                   `json:"name"`
-	Repository *WorkflowRepository      `json:"repository,omitempty"`
-	OnRaw      json.RawMessage          `json:"on,omitempty"`
-	On         *WorkflowOn              `json:"-" yaml:"-"`
-	Stages     map[string]WorkflowStage `json:"stages,omitempty"`
-	Jobs       map[string]V2Job         `json:"jobs"`
-	Env        map[string]string        `json:"env,omitempty"`
+	Name         string                   `json:"name"`
+	Repository   *WorkflowRepository      `json:"repository,omitempty"`
+	OnRaw        json.RawMessage          `json:"on,omitempty"`
+	On           *WorkflowOn              `json:"-" yaml:"-"`
+	Stages       map[string]WorkflowStage `json:"stages,omitempty"`
+	Gates        map[string]V2JobGate     `json:"gates,omitempty"`
+	Jobs         map[string]V2Job         `json:"jobs"`
+	Env          map[string]string        `json:"env,omitempty"`
+	Integrations []string                 `json:"integrations,omitempty"`
 }
 
 type WorkflowOn struct {
@@ -145,6 +147,7 @@ type WorkflowStage struct {
 type V2Job struct {
 	Name            string                  `json:"name" jsonschema_extras:"order=1,required" jsonschema_description:"Name of the job"`
 	If              string                  `json:"if,omitempty" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
+	Gate            string                  `json:"gate,omitempty" jsonschema_extras:"order=5" jsonschema_description:"Gate allows to trigger manually a job"`
 	Inputs          map[string]string       `json:"inputs,omitempty" jsonschema_extras:"order=8,mode=edit" jsonschema_description:"Input of thejob"`
 	Steps           []ActionStep            `json:"steps,omitempty" jsonschema_extras:"order=10" jsonschema_description:"List of steps"`
 	Needs           []string                `json:"needs,omitempty" jsonschema_extras:"order=6,mode=tags" jsonschema_description:"Job dependencies"`
@@ -153,12 +156,29 @@ type V2Job struct {
 	ContinueOnError bool                    `json:"continue-on-error,omitempty" jsonschema_extras:"order=4"`
 	RunsOn          string                  `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split"`
 	Strategy        *V2JobStrategy          `json:"strategy,omitempty" jsonschema_extras:"order=7"`
-	Integrations    *V2JobIntegrations      `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
+	Integrations    []string                `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
 	Env             map[string]string       `json:"env,omitempty"  jsonschema_extras:"order=11,mode=edit" jsonschema_description:"Environment variable available in the job"`
 	Services        map[string]V2JobService `json:"services,omitempty"`
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
+}
+
+type V2JobGate struct {
+	If        string                    `json:"if,omitempty" jsonschema_extras:"order=1,textarea=true" jsonschema_description:"Condition to execute the gate"`
+	Inputs    map[string]V2JobGateInput `json:"inputs,omitempty" jsonschema_extras:"order=2,mode=edit" jsonschema_description:"Gate inputs to fill for manual triggering"`
+	Reviewers V2JobGateReviewers        `json:"reviewers,omitempty" jsonschema_extras:"order=3" jsonschema_description:"Restrict the gate to a list of reviewers"`
+}
+
+type V2JobGateInput struct {
+	Type    string      `json:"type"`
+	Default interface{} `json:"default,omitempty"`
+	Values  []string    `json:"values,omitempty"`
+}
+
+type V2JobGateReviewers struct {
+	Groups []string `json:"groups,omitempty"`
+	Users  []string `json:"users,omitempty"`
 }
 
 func (w V2Job) Value() (driver.Value, error) {
@@ -175,18 +195,6 @@ func (w *V2Job) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2Job")
-}
-
-type V2JobIntegrations struct {
-	Artifacts  string `json:"artifacts,omitempty"`
-	Deployment string `json:"deployment,omitempty"`
-}
-
-func (v *V2JobIntegrations) IsEmpty() bool {
-	if v == nil {
-		return true
-	}
-	return v.Artifacts == "" && v.Deployment == ""
 }
 
 type V2JobService struct {
@@ -255,6 +263,11 @@ func (w V2Workflow) GetName() string {
 func (w V2Workflow) Lint() []error {
 	errs := w.CheckStageAndJobNeeds()
 
+	errGates := w.CheckGates()
+	if len(errGates) > 0 {
+		errs = append(errs, errGates...)
+	}
+
 	workflowSchema := GetWorkflowJsonSchema(nil, nil, nil)
 	workflowSchemaS, err := workflowSchema.MarshalJSON()
 	if err != nil {
@@ -281,6 +294,27 @@ func (w V2Workflow) Lint() []error {
 		return errs
 	}
 	return nil
+}
+
+func (w V2Workflow) CheckGates() []error {
+	errs := make([]error, 0)
+	for jobID, j := range w.Jobs {
+		if j.If != "" && j.Gate != "" {
+			errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: if and gate cannot be set together", jobID))
+		}
+		if j.Gate != "" {
+			if _, has := w.Gates[j.Gate]; !has {
+				errs = append(errs, NewErrorFrom(ErrInvalidData, "Job %s: gate %s not found", jobID, j.Gate))
+			}
+		}
+	}
+
+	for gateName, g := range w.Gates {
+		if g.If == "" {
+			errs = append(errs, NewErrorFrom(ErrInvalidData, "Gate %s: if cannot be empty", gateName))
+		}
+	}
+	return errs
 }
 
 func (w V2Workflow) CheckStageAndJobNeeds() []error {

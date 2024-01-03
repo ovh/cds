@@ -2,6 +2,7 @@ name: Upload and Download generic artifacts from Workflow as code v2
 vars:
   cds_project: "ITV2ARTIFACTSGENERIC"
   git_repo: "it_v2_artifacts_generic"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
 
 testcases:
 - name: Prepare test
@@ -65,7 +66,7 @@ testcases:
         on: [push]
         jobs:
           First-Job:
-            runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+            runs-on: "{{.worker_model}}"
             steps:
               - run: |-
                   #!/bin/bash -x
@@ -75,7 +76,7 @@ testcases:
                 with:
                   path: "*.txt"
           Second-Job:
-            runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+            runs-on: "{{.worker_model}}"
             needs: [First-Job]
             steps:
               - uses: actions/downloadArtifact
@@ -103,13 +104,6 @@ testcases:
     - 'result.systemout ShouldContainSubstring "status: Success"'
     retry: 2
     delay: 10
-
-  - name: Download logs
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1"
-  - script: "cat WorkflowA-1-0-First-Job-step-0 || true"
-  - script: "cat WorkflowA-1-0-First-Job-step-1 || true"
-  - script: "cat WorkflowA-1-0-Second-Job-step-0 || true"
-  - script: "cat WorkflowA-1-0-Second-Job-step-1 || true"
 
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"

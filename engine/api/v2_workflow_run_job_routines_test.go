@@ -37,7 +37,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},
@@ -110,7 +110,7 @@ func TestStopDeadJobs(t *testing.T) {
 		Status:       sdk.StatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
-		Event:        sdk.V2WorkflowRunEvent{},
+		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
 				"job1": {},

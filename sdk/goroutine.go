@@ -25,10 +25,12 @@ import (
 
 type GoRoutine struct {
 	ctx     context.Context
+	cancel  func()
 	Name    string
 	Func    func(ctx context.Context)
 	Restart bool
 	Active  bool
+	mutex   sync.RWMutex
 }
 
 // GoRoutines contains list of routines that have to stay up
@@ -48,6 +50,20 @@ func (m *GoRoutines) GoRoutine(name string) *GoRoutine {
 	return nil
 }
 
+func (m *GoRoutines) Stop(name string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	for i, g := range m.status {
+		if g.Name == name {
+			if g.cancel != nil {
+				g.cancel()
+			}
+			m.status = append(m.status[:i], m.status[i+1:]...)
+			break
+		}
+	}
+}
+
 // NewGoRoutines instanciates a new GoRoutineManager
 func NewGoRoutines(ctx context.Context) *GoRoutines {
 	m := &GoRoutines{}
@@ -63,6 +79,12 @@ func (m *GoRoutines) restartGoRoutines(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			for _, g := range m.status {
+				if g.cancel != nil {
+					g.cancel()
+				}
+			}
+			m.status = nil
 			return
 		case <-t.C:
 			m.runRestartGoRoutines(ctx)
@@ -74,7 +96,10 @@ func (m *GoRoutines) runRestartGoRoutines(ctx context.Context) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	for _, g := range m.status {
-		if !g.Active && g.Restart {
+		g.mutex.RLock()
+		active := g.Active
+		g.mutex.RUnlock()
+		if !active && g.Restart {
 			log.Info(ctx, "restarting goroutine %q", g.Name)
 			m.exec(g)
 		}
@@ -83,10 +108,12 @@ func (m *GoRoutines) runRestartGoRoutines(ctx context.Context) {
 
 // Run runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
 func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Context)) {
+	ctx, cancel := context.WithCancel(c)
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	g := &GoRoutine{
-		ctx:     c,
+		ctx:     ctx,
+		cancel:  cancel,
 		Name:    name,
 		Func:    fn,
 		Active:  true,
@@ -99,10 +126,12 @@ func (m *GoRoutines) Run(c context.Context, name string, fn func(ctx context.Con
 // RunWithRestart runs the function within a goroutine with a panic recovery, and keep GoRoutine status.
 // if the goroutine is stopped, it will ne restarted
 func (m *GoRoutines) RunWithRestart(c context.Context, name string, fn func(ctx context.Context)) {
+	ctx, cancel := context.WithCancel(c)
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	g := &GoRoutine{
-		ctx:     c,
+		ctx:     ctx,
+		cancel:  cancel,
 		Name:    name,
 		Func:    fn,
 		Active:  true,
@@ -121,10 +150,12 @@ func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
 	for _, g := range m.status {
 		status := MonitoringStatusAlert
 		value := "NOT running"
+		g.mutex.RLock()
 		if g.Active {
 			status = MonitoringStatusOK
 			value = "Running"
 		}
+		g.mutex.RUnlock()
 		lines[i] = MonitoringStatusLine{
 			Status:    status,
 			Component: "goroutine/" + g.Name,
@@ -137,6 +168,7 @@ func (m *GoRoutines) GetStatus() []MonitoringStatusLine {
 
 func (m *GoRoutines) exec(g *GoRoutine) {
 	hostname, _ := os.Hostname()
+
 	go func(ctx context.Context) {
 		ctx = context.WithValue(ctx, cdslog.Goroutine, g.Name)
 
@@ -155,10 +187,14 @@ func (m *GoRoutines) exec(g *GoRoutine) {
 				ctx = context.WithValue(ctx, cdslog.Stacktrace, string(buf))
 				log.Error(ctx, "[PANIC][%s] %s failed", hostname, g.Name)
 			}
+			g.mutex.Lock()
 			g.Active = false
+			g.mutex.Unlock()
 		}()
 
+		g.mutex.Lock()
 		g.Active = true
+		g.mutex.Unlock()
 		g.Func(goroutineCtx)
 	}(g.ctx)
 }

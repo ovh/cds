@@ -31,6 +31,8 @@ import { ProjectV2SidebarComponent } from './sidebar/workspace/sidebar.component
 import {ProjectV2SidebarRunComponent} from "./sidebar/run/sidebar.run.component";
 import {RunJobComponent} from "./run/run-job.component";
 import {RunJobLogsComponent} from "./run/run-job-logs.component";
+import {ProjectV2WorkflowGateNodeComponent} from "./vcs/repository/workflow/show/graph/node/gate-node.component";
+import {RunGateComponent} from "./run/gate/gate.component";
 
 @NgModule({
     declarations: [
@@ -44,6 +46,7 @@ import {RunJobLogsComponent} from "./run/run-job-logs.component";
         ProjectV2WorkflowShowComponent,
 
         ProjectV2WorkflowForkJoinNodeComponent,
+        ProjectV2WorkflowGateNodeComponent,
         ProjectV2WorkflowJobNodeComponent,
         ProjectV2WorkflowStagesGraphComponent,
         ProjectV2WorkflowJobsGraphComponent,
@@ -51,6 +54,7 @@ import {RunJobLogsComponent} from "./run/run-job-logs.component";
 
         ProjectV2WorkflowRunComponent,
         ProjectV2SidebarRunComponent,
+        RunGateComponent,
         RunJobComponent,
         RunJobLogsComponent,
     ],

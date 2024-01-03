@@ -18,15 +18,15 @@
       "jasmine",
       "node"
     ],
-    "allowSyntheticDefaultImports": true
-  },
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },  
   "files": [
     "test.ts",
     "polyfills.ts"
   ],
   "include": [
-    "**/*.spec.ts",
-    "../node_modules/ng2-codemirror-typescript/**/*.ts"
+    "**/*.spec.ts"
   ],
   "exclude": [
     "../node_modules/angular2-prettyjson/node_modules/**/*.ts",

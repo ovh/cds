@@ -21,10 +21,14 @@
     },
     "types": [],
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
+  "files": [
+    "main.ts",
+    "polyfills.ts"
+  ],
   "include": [
     "**/*.ts",
-    "../node_modules/ng2-codemirror-typescript/**/*.ts"
   ],
   "exclude": [
     "test.ts",

@@ -1,59 +1,59 @@
- <div class="content scrolling">
-     <nz-row>
-         <nz-col [nzSpan]="24">
-             <nz-steps [nzCurrent]="currentStep">
-                 <nz-step nzTitle="Select instances"></nz-step>
-                 <nz-step nzTitle="Fill parameters"></nz-step>
-                 <nz-step nzTitle="Run"></nz-step>
-             </nz-steps>
-         </nz-col>
-     </nz-row>
-     <nz-row *ngIf="currentStep === 0">
-         <nz-col [nzSpan]="24">
-             <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)"
-                             [withPagination]="10" [columns]="columnsInstances" [data]="instances"
-                             [loading]="loadingInstances"></app-data-table>
-         </nz-col>
-     </nz-row>
-     <nz-row *ngIf="currentStep === 1">
-         <nz-col [nzSpan]="24">
-             <div *ngIf="withAsCodeWorkflow">
-                 <nz-alert nzType="info" nzMessage="Some selected instances refer to ascode workflow. A pull request will be made on each workflow's repository. Please fill the branch and commit message to proceed."></nz-alert>
-                 <app-ascode-save-form (paramChange)="onAsCodeParamChange($event)">
-                 </app-ascode-save-form>
-             </div>
-         </nz-col>
-         <nz-col [nzSpan]="24">
-             <nz-collapse nzAccordion>
-                <nz-collapse-panel *ngFor="let instance of selectedInstances;let i = index" [nzActive]="accordionOpenedIndex === i" [nzHeader]="instance.request.workflow_name" (click)="accordionOpen($event, i)">
-                    <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i"
-                                                      [project]="instance.project" [workflowTemplate]="workflowTemplate"
-                                                      [workflowTemplateInstance]="instance"
-                                                      [parameters]="parameters[instance.id] ? parameters[instance.id] : null"
-                                                      (paramChange)="changeParam(instance.id, $event)">
+<div class="content scrolling">
+    <nz-row>
+        <nz-col [nzSpan]="24">
+            <nz-steps [nzCurrent]="currentStep">
+                <nz-step nzTitle="Select instances"></nz-step>
+                <nz-step nzTitle="Fill parameters"></nz-step>
+                <nz-step nzTitle="Run"></nz-step>
+            </nz-steps>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="currentStep === 0">
+        <nz-col [nzSpan]="24">
+            <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)" [withPagination]="10"
+                [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="currentStep === 1">
+        <nz-col [nzSpan]="24">
+            <div *ngIf="withAsCodeWorkflow">
+                <nz-alert nzType="info"
+                    nzMessage="Some selected instances refer to ascode workflow. A pull request will be made on each workflow's repository. Please fill the branch and commit message to proceed."></nz-alert>
+                <app-ascode-save-form (paramChange)="onAsCodeParamChange($event)">
+                </app-ascode-save-form>
+            </div>
+        </nz-col>
+        <nz-col [nzSpan]="24">
+            <nz-collapse nzAccordion>
+                <nz-collapse-panel *ngFor="let instance of selectedInstances;let i = index"
+                    [nzHeader]="instance.request.workflow_name">
+                    <app-workflow-template-param-form [project]="instance.project" [workflowTemplate]="workflowTemplate"
+                        [workflowTemplateInstance]="instance"
+                        [parameters]="parameters[instance.id] ? parameters[instance.id] : null"
+                        (paramChange)="changeParam(instance.id, $event)">
                     </app-workflow-template-param-form>
                 </nz-collapse-panel>
-             </nz-collapse>
-         </nz-col>
-     </nz-row>
-     <nz-row *ngIf="currentStep === 2">
-         <nz-col [nzSpan]="24">
-             <app-data-table *ngIf="response" [withPagination]="10" [columns]="columnsOperations"
-                             [data]="response.operations"></app-data-table>
-         </nz-col>
-     </nz-row>
- </div>
- <div *nzModalFooter>
-     <ng-container *ngIf="currentStep === 0">
-         <button nz-button nzType="primary" [disabled]="selectedInstanceKeys.length === 0"
-                 (click)="clickGoToParam()">Next</button>
-     </ng-container>
-     <ng-container *ngIf="currentStep === 1">
-         <button nz-button nzType="primary"  (click)="clickGoToInstance()">Back</button>
-         <button nz-button nzType="primary" [disabled]="!validFields" (click)="clickRunBulk()">Run bulk update</button>
-     </ng-container>
-     <ng-container *ngIf="currentStep === 2">
-         <button nz-button nzType="primary"  (click)="clickGoToInstanceReset()">Back</button>
-         <button nz-button (click)="clickClose()">Close</button>
-     </ng-container>
- </div>
+            </nz-collapse>
+        </nz-col>
+    </nz-row>
+    <nz-row *ngIf="currentStep === 2">
+        <nz-col [nzSpan]="24">
+            <app-data-table *ngIf="response" [withPagination]="10" [columns]="columnsOperations"
+                [data]="response.operations"></app-data-table>
+        </nz-col>
+    </nz-row>
+</div>
+<div *nzModalFooter>
+    <ng-container *ngIf="currentStep === 0">
+        <button nz-button nzType="primary" [disabled]="selectedInstanceKeys.length === 0"
+            (click)="clickGoToParam()">Next</button>
+    </ng-container>
+    <ng-container *ngIf="currentStep === 1">
+        <button nz-button nzType="primary" (click)="clickGoToInstance()">Back</button>
+        <button nz-button nzType="primary" [disabled]="!validFields" (click)="clickRunBulk()">Run bulk update</button>
+    </ng-container>
+    <ng-container *ngIf="currentStep === 2">
+        <button nz-button nzType="primary" (click)="clickGoToInstanceReset()">Back</button>
+        <button nz-button (click)="clickClose()">Close</button>
+    </ng-container>
+</div>

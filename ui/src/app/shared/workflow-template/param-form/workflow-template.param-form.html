@@ -10,44 +10,42 @@
     <nz-col [nzSpan]="12">
         <div [ngSwitch]="parameter.type">
             <input nz-input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}"
-                   [(ngModel)]="parameterValues[parameter.key]" (change)="changeParam()">
-            <label *ngSwitchCase="'boolean'" nz-checkbox name="parameter-{{parameter.key}}" [(ngModel)]="parameterValues[parameter.key]"
-                   (ngModelChange)="changeParam()"></label>
+                [ngModel]="parameterValues[parameter.key]" (ngModelChange)="changeParam(parameter.key, $event)">
+            <label *ngSwitchCase="'boolean'" nz-checkbox name="parameter-{{parameter.key}}"
+                [ngModel]="parameterValues[parameter.key]" (ngModelChange)="changeParam(parameter.key, $event)"></label>
             <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}"
-                        [(ngModel)]="parameterValues[parameter.key]" [config]="codeMirrorConfig"
-                        (change)="changeParam()" #codemirror>
+                [ngModel]="parameterValues[parameter.key]" [config]="codeMirrorConfig"
+                (ngModelChange)="changeParam(parameter.key, $event)" #codemirror>
             </codemirror>
             <nz-select *ngSwitchCase="'repository'" name="parameter-{{parameter.key}}" nzShowSearch
-                       nzPlaceHolder="{{'workflow_wizard_select_repo_man' | translate}}"
-                       [(ngModel)]="parameterValues[parameter.key]" (ngModelChange)="fetchRepos(parameter.key, $event)">
+                nzPlaceHolder="{{'workflow_wizard_select_repo_man' | translate}}"
+                [ngModel]="parameterValues[parameter.key]" (ngModelChange)="fetchRepos(parameter.key, $event)">
                 <nz-option *ngFor="let vcs of vcsNames" [nzValue]="vcs" [nzLabel]="vcs"></nz-option>
             </nz-select>
             <nz-select *ngSwitchCase="'ssh-key'" name="parameter-{{parameter.key}}" nzShowSearch
-                        nzPlaceHolder="{{'workflow_template_param_select_key' | translate}}"
-                        (ngModelChange)="changeParam()"
-                        [(ngModel)]="parameterValues[parameter.key]">
+                nzPlaceHolder="{{'workflow_template_param_select_key' | translate}}"
+                (ngModelChange)="changeParam(parameter.key, $event)" [ngModel]="parameterValues[parameter.key]">
                 <nz-option *ngFor="let key of sshKeys" [nzValue]="key" [nzLabel]="key"></nz-option>
             </nz-select>
             <nz-select *ngSwitchCase="'pgp-key'" name="parameter-{{parameter.key}}" nzShowSearch
-                        nzPlaceHolder="{{'workflow_template_param_select_key' | translate}}"
-                        (ngModelChange)="changeParam()"
-                        [(ngModel)]="parameterValues[parameter.key]" #select>
+                nzPlaceHolder="{{'workflow_template_param_select_key' | translate}}"
+                (ngModelChange)="changeParam(parameter.key, $event)" [ngModel]="parameterValues[parameter.key]" #select>
                 <nz-option *ngFor="let key of pgpKeys" [nzValue]="key" [nzLabel]="key"></nz-option>
             </nz-select>
             <nz-row *ngIf="parameter.type === 'repository'">
                 <nz-col [nzSpan]="18">
                     <nz-select name="parameter-{{parameter.key}}-repo" nzShowSearch
-                                [(ngModel)]="parameterValues[parameter.key + '-repository']"
-                               (nzFocus)="focusRepo(parameter.key)"
-                               (nzOnSearch)="filterRepo($event)" (ngModelChange)="changeParam()">
-                        <nz-option *ngFor="let repository of filteredRepo"
-                                           [nzValue]="repository" [nzLabel]="repository">
+                        [ngModel]="parameterValues[parameter.key + '-repository']" (nzFocus)="focusRepo(parameter.key)"
+                        (nzOnSearch)="filterRepo($event)"
+                        (ngModelChange)="changeParam(parameter.key + '-repository', $event)">
+                        <nz-option *ngFor="let repository of filteredRepo" [nzValue]="repository"
+                            [nzLabel]="repository">
                         </nz-option>
                     </nz-select>
                 </nz-col>
                 <nz-col [nzSpan]="6">
-                    <button nz-button  nzType="primary" name="resync" type="button" [nzLoading]="loading"
-                            [disabled]="loading" (click)="resyncRepos(parameter.key)">
+                    <button nz-button nzType="primary" name="resync" type="button" [nzLoading]="loading"
+                        [disabled]="loading" (click)="resyncRepos(parameter.key)">
                         Resynchronize
                     </button>
                 </nz-col>

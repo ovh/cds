@@ -63,7 +63,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",
@@ -82,7 +82,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(wrInfos))
-	require.Equal(t, "wrong configuration on job My super job. No hatchery can run it", wrInfos[0].Message)
+	require.Equal(t, "wrong configuration on job \"job1\". No hatchery can run it", wrInfos[0].Message)
 }
 
 func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
@@ -127,7 +127,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",
@@ -220,7 +220,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",
@@ -344,7 +344,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 				},
 			},
 		},
-		Event: sdk.V2WorkflowRunEvent{
+		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
 				Ref:       "main",

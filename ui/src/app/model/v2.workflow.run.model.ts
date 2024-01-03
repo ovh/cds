@@ -17,8 +17,15 @@ export class V2WorkflowRun {
     username: string;
     contexts: any;
     event: WorkflowEvent;
+    job_events: V2WorkflowRunJobEvent[];
     results: Array<WorkflowRunResult>;
 }
+ export class V2WorkflowRunJobEvent {
+    username: string;
+    job_id: string;
+    inputs: {[key:string]:any};
+    run_attempt: number;
+ }
 
 export class WorkflowEvent {
     workflow_update: {ref: string, workflow_updated: string};
@@ -30,6 +37,22 @@ export class WorkflowData {
     workflow: any;
     worker_models: {[key:string]: { }};
     actions:  {[key:string]: { }};
+}
+
+export class Gate {
+    inputs: {[key:string]:GateInput};
+    reviewers: GateReviewers;
+}
+
+export class GateInput {
+    type: string;
+    default: any;
+    values: string;
+}
+
+export class GateReviewers {
+    groups: string[];
+    users: string[];
 }
 
 export class V2WorkflowRunJob {

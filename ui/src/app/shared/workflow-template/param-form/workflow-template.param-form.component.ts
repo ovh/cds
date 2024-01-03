@@ -85,7 +85,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.initProject();
-        this.changeParam();
+        this.emitParam();
     }
 
     initProject() {
@@ -124,7 +124,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
                     let existingRepo = repoNames.find(n => n === selectedRepo);
                     if (existingRepo) {
                         this.parameterValues[parameterKey + '-repository'] = existingRepo;
-                        this.changeParam();
+                        this.emitParam();
                     }
                 }
             }
@@ -175,7 +175,7 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
         }
 
         if (this.workflowTemplate) {
-            this.changeParam();
+            this.emitParam();
         }
     }
 
@@ -194,7 +194,12 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
         this._cd.markForCheck()
     }
 
-    changeParam() {
+    changeParam(key: string, value: any): void {
+        this.parameterValues[key] = value;
+        this.emitParam();
+    }
+
+    emitParam(): void {
         let parameters = new ParamData();
 
         this.workflowTemplate.parameters.forEach(parameter => {

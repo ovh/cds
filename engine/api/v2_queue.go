@@ -249,9 +249,10 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 			runResult.WorkflowRunJobID = runJob.ID
 			runResult.WorkflowRunID = runJob.WorkflowRunID
 			runResult.RunAttempt = runJob.RunAttempt
-			if runJob.Integrations != nil {
+			// TODO handle integration
+			/*if runJob.Integrations != nil {
 				runResult.ArtifactManagerIntegration = runJob.Integrations.ArtifactManager
-			}
+			}*/
 
 			if runResult.Status == "" {
 				return sdk.WithStack(sdk.ErrWrongRequest)

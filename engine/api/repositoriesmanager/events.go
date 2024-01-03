@@ -13,17 +13,18 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//ReceiveEvents has to be launched as a goroutine.
+// ReceiveEvents has to be launched as a goroutine.
 func ReceiveEvents(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
+		if err := ctx.Err(); err != nil {
+			log.Error(ctx, "repositoriesmanager.ReceiveEvents> exiting: %v", err)
+			return
+		}
+
 		e := sdk.Event{}
 		if err := store.DequeueWithContext(ctx, "events_repositoriesmanager", 250*time.Millisecond, &e); err != nil {
 			log.Error(ctx, "repositoriesmanager.ReceiveEvents > store.DequeueWithContext err: %v", err)
 			continue
-		}
-		if err := ctx.Err(); err != nil {
-			log.Error(ctx, "Exiting repositoriesmanager.ReceiveEvents: %v", err)
-			return
 		}
 
 		db := DBFunc()
@@ -50,7 +51,7 @@ func ReceiveEvents(ctx context.Context, DBFunc func() *gorp.DbMap, store cache.S
 	}
 }
 
-//RetryEvent retries the events
+// RetryEvent retries the events
 func RetryEvent(e *sdk.Event, err error, store cache.Store) error {
 	e.Attempts++
 	if e.Attempts > 2 {

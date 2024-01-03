@@ -223,6 +223,9 @@ func (c *Common) Init(ctx context.Context, h hatchery.Interface) error {
 		var cfg sdk.CDNConfig
 		var err error
 		for {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			cfg, err = c.Client.ConfigCDN()
 			if err == nil {
 				break
