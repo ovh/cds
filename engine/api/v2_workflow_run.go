@@ -1025,7 +1025,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement does not return a boolean. Got %s", jobToRun.JobID, interpolatedInput)
 			}
 			if !booleanResult {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "gate condition are not satisfied")
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "gate conditions are not satisfied")
 			}
 			//////////
 
