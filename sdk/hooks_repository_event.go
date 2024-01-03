@@ -5,6 +5,7 @@ import (
 
 	"crypto/sha512"
 	"encoding/base64"
+
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -41,8 +42,10 @@ type HookEventCallback struct {
 }
 
 type HookSigninKeyCallback struct {
-	SignKey string `json:"sign_key"`
-	Error   string `json:"error"`
+	SignKey       string `json:"sign_key"`
+	SemverCurrent string `json:"semver_current"`
+	SemverNext    string `json:"semver_next"`
+	Error         string `json:"error"`
 }
 
 type HookAnalysisCallback struct {
@@ -50,8 +53,6 @@ type HookAnalysisCallback struct {
 	AnalysisStatus string           `json:"analysis_status"`
 	Models         []EntityFullName `json:"models"`
 	Workflows      []EntityFullName `json:"workflows"`
-	UserID         string           `json:"user_id"`
-	Username       string           `json:"username"`
 }
 
 type HookRepository struct {
@@ -83,6 +84,8 @@ type HookRepositoryEvent struct {
 	Username            string                         `json:"username"`
 	SignKey             string                         `json:"sign_key"`
 	SigningKeyOperation string                         `json:"signing_key_operation"`
+	SemverCurrent       string                         `json:"semver_current"`
+	SemverNext          string                         `json:"semver_next"`
 }
 
 type HookRepositoryEventWorkflow struct {

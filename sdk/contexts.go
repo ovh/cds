@@ -91,6 +91,8 @@ type GitContext struct {
 	Connection    string `json:"connection,omitempty"`
 	SSHKey        string `json:"ssh_key,omitempty"`
 	Username      string `json:"username,omitempty"`
+	SemverCurrent string `json:"semver_current,omitempty"`
+	SemverNext    string `json:"semver_next,omitempty"`
 }
 
 type JobContext struct {

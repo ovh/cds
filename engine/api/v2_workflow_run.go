@@ -731,10 +731,12 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				}
 			case sdk.WorkflowHookTypeRepository:
 				runEvent.GitTrigger = &sdk.GitTrigger{
-					Payload:   runRequest.Payload,
-					EventName: runRequest.EventName,
-					Ref:       runRequest.Ref,
-					Sha:       runRequest.Sha,
+					Payload:       runRequest.Payload,
+					EventName:     runRequest.EventName,
+					Ref:           runRequest.Ref,
+					Sha:           runRequest.Sha,
+					SemverCurrent: runRequest.SemverCurrent,
+					SemverNext:    runRequest.SemverNext,
 				}
 			default:
 				return sdk.WrapError(sdk.ErrWrongRequest, "unknown event: %v", runRequest)
@@ -1144,7 +1146,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			runEvent := sdk.V2WorkflowRunEvent{
+			runEvent := sdk.V2WorkflowRunEvent{ // TODO handler semver ?
 				Manual: &sdk.ManualTrigger{
 					Payload: runRequest,
 				},

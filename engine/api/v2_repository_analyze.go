@@ -643,8 +643,6 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 			AnalysisID:     analysis.ID,
 			Models:         make([]sdk.EntityFullName, 0),
 			Workflows:      make([]sdk.EntityFullName, 0),
-			UserID:         analysis.Data.CDSUserID,
-			Username:       analysis.Data.CDSUserName,
 		},
 	}
 	for _, e := range entities {

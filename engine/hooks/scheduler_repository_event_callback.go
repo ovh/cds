@@ -81,48 +81,52 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		return nil
 	}
 
-	if hre.Status != sdk.HookEventStatusAnalysis && hre.Status != sdk.HookEventStatusSignKey {
+	switch hre.Status {
+	case sdk.HookEventStatusAnalysis:
+		if callback.AnalysisCallback != nil {
+			for i := range hre.Analyses {
+				a := &hre.Analyses[i]
+				if a.AnalyzeID == callback.AnalysisCallback.AnalysisID {
+					if a.Status == sdk.RepositoryAnalysisStatusInProgress {
+						a.Status = callback.AnalysisCallback.AnalysisStatus
+						hre.ModelUpdated = append(hre.ModelUpdated, callback.AnalysisCallback.Models...)
+						hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.AnalysisCallback.Workflows...)
+						if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
+							return err
+						}
+						break
+					}
+				}
+			}
+		} else {
+			return sdk.Errorf("missing analysis callback data")
+		}
+
+	case sdk.HookEventStatusSignKey:
+		if callback.SigningKeyCallback != nil {
+			hre.SemverCurrent = callback.SigningKeyCallback.SemverCurrent
+			hre.SemverNext = callback.SigningKeyCallback.SemverNext
+			if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
+				// event on error commit unverified
+				hre.Status = sdk.HookEventStatusSkipped
+				hre.LastError = callback.SigningKeyCallback.Error
+				hre.NbErrors++
+			} else if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error == "" {
+				// commit verified
+				hre.SignKey = callback.SigningKeyCallback.SignKey
+			} else if callback.SigningKeyCallback.Error != "" {
+				hre.LastError = "Unable to get signing key: " + callback.SigningKeyCallback.Error
+				hre.NbErrors++
+			}
+		} else {
+			return sdk.Errorf("missing analysis callback data")
+		}
+	default:
 		return nil
 	}
 
-	if callback.AnalysisCallback != nil {
-		if callback.AnalysisCallback.UserID != "" {
-			hre.UserID = callback.AnalysisCallback.UserID
-			hre.Username = callback.AnalysisCallback.Username
-		}
-		for i := range hre.Analyses {
-			a := &hre.Analyses[i]
-			if a.AnalyzeID == callback.AnalysisCallback.AnalysisID {
-				if a.Status == sdk.RepositoryAnalysisStatusInProgress {
-					a.Status = callback.AnalysisCallback.AnalysisStatus
-					hre.ModelUpdated = append(hre.ModelUpdated, callback.AnalysisCallback.Models...)
-					hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.AnalysisCallback.Workflows...)
-					if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
-						return err
-					}
-					break
-				}
-			}
-		}
-	}
-
-	// Manage signinKey
-	if callback.SigningKeyCallback != nil {
-		if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
-			// event on error commit unverified
-			hre.Status = sdk.HookEventStatusSkipped
-			hre.LastError = callback.SigningKeyCallback.Error
-			hre.NbErrors++
-		} else if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error == "" {
-			// commit verified
-			hre.SignKey = callback.SigningKeyCallback.SignKey
-		} else if callback.SigningKeyCallback.Error != "" {
-			hre.LastError = "Unable to get signing key: " + callback.SigningKeyCallback.Error
-			hre.NbErrors++
-		}
-		if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
-			return err
-		}
+	if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
+		return err
 	}
 
 	if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {

@@ -27,6 +27,8 @@ type V2WorkflowRunHookRequest struct {
 	Payload       map[string]interface{} `json:"payload"`
 	HookType      string                 `json:"hook_type"`
 	EntityUpdated string                 `json:"entity_updated"`
+	SemverCurrent string                 `json:"semver_current"`
+	SemverNext    string                 `json:"semver_next"`
 }
 
 type V2WorkflowRun struct {
@@ -174,10 +176,12 @@ type SchedulerTrigger struct {
 }
 
 type GitTrigger struct {
-	EventName string                 `json:"event_name"`
-	Payload   map[string]interface{} `json:"payload"`
-	Ref       string                 `json:"ref"`
-	Sha       string                 `json:"sha"`
+	EventName     string                 `json:"event_name"`
+	Payload       map[string]interface{} `json:"payload"`
+	Ref           string                 `json:"ref"`
+	Sha           string                 `json:"sha"`
+	SemverCurrent string                 `json:"semver_current"`
+	SemverNext    string                 `json:"sember_next"`
 }
 
 type WorkflowUpdateTrigger struct {
@@ -491,6 +495,17 @@ const (
 
 type V2WorkflowRunResultArtifactManagerMetadata map[string]string
 
+func (m *V2WorkflowRunResultArtifactManagerMetadata) Set(k, v string) {
+	(*m)[k] = v
+}
+
+func (m *V2WorkflowRunResultArtifactManagerMetadata) Get(k string) string {
+	if m == nil {
+		return ""
+	}
+	return (*m)[k]
+}
+
 func V2WorkflowRunResultArtifactManagerMetadataFromCDNItemLink(i CDNItemLink) *V2WorkflowRunResultArtifactManagerMetadata {
 	return &V2WorkflowRunResultArtifactManagerMetadata{
 		"cdn_http_url":     i.CDNHttpURL,
@@ -613,6 +628,8 @@ const (
 	V2WorkflowRunResultTypeRelease  = "release"
 	V2WorkflowRunResultTypeGeneric  = "generic"
 	V2WorkflowRunResultTypeVariable = "variable"
+	V2WorkflowRunResultTypeDocker   = "docker"
+	V2WorkflowRunResultTypeHelm     = "helm"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 

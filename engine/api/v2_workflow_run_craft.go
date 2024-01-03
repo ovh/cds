@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
@@ -548,7 +549,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, messag
 func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p sdk.Project, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
 	var runContext sdk.WorkflowRunContext
 
-	var ref, commit string
+	var ref, commit, semverNext, semverCurrent string
 
 	cdsContext := sdk.CDSContext{
 		ProjectKey:         wr.ProjectKey,
@@ -583,6 +584,29 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		cdsContext.Event = wr.RunEvent.GitTrigger.Payload
 		ref = wr.RunEvent.GitTrigger.Ref
 		commit = wr.RunEvent.GitTrigger.Sha
+
+		semverNext = wr.RunEvent.GitTrigger.SemverNext
+
+		// Compute current semver version with CDS metadata
+		currentVersion, _ := semver.NewVersion(wr.RunEvent.GitTrigger.SemverCurrent)
+		if currentVersion != nil {
+			suffix := currentVersion.Metadata()
+			splittedSuffix := strings.Split(suffix, ".")
+			metadataStr := strconv.FormatInt(wr.RunNumber, 10)
+			if len(splittedSuffix) >= 2 {
+				metadataStr += "." + splittedSuffix[0] + ".sha." + splittedSuffix[1]
+			}
+			for i := 2; i < len(splittedSuffix); i++ {
+				metadataStr += "." + splittedSuffix[i]
+			}
+
+			v, _ := currentVersion.SetMetadata(metadataStr)
+			semverCurrent = v.String()
+		} else {
+			// If no semver found, compute it from 0.1.0
+			semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha." + commit
+		}
+
 	case wr.RunEvent.ModelUpdateTrigger != nil:
 		ref = wr.RunEvent.ModelUpdateTrigger.Ref
 	case wr.RunEvent.WorkflowUpdateTrigger != nil:
@@ -604,12 +628,17 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 	workflowVCSServer := *vcsTmp
 
 	gitContext := sdk.GitContext{
-		Server:   workflowVCSServer.Name,
-		SSHKey:   workflowVCSServer.Auth.SSHKeyName,
-		Username: workflowVCSServer.Auth.Username,
-		Ref:      ref,
-		Sha:      commit,
+		Server:        workflowVCSServer.Name,
+		SSHKey:        workflowVCSServer.Auth.SSHKeyName,
+		Username:      workflowVCSServer.Auth.Username,
+		Ref:           ref,
+		Sha:           commit,
+		SemverCurrent: semverCurrent,
+		SemverNext:    semverNext,
 	}
+
+	log.Warn(ctx, "git context: %+v", gitContext)
+
 	if gitContext.SSHKey != "" {
 		gitContext.Connection = "ssh"
 	} else {
