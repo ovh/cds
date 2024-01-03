@@ -13,7 +13,7 @@ CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform writ
 
 
 ## Intuitive UI
-CDS provides an intuitive UI that allows you to build complex workflows, run them, and dig into the logs when needed.
+CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
 
 <p align="center">
   <kbd>
@@ -167,7 +167,7 @@ With CDS, You can use a deployment pipeline on your preproduction environment an
 
 #### Enterprise-grade permissions / Support of ACLs delegation
 
-Users are free to create groups and manage users in their groups. A group can have the right to read, write, and execute their projects and their workflows. You can also restrict the execution of some pipelines to some groups if you wish.
+Users are free to create groups and manage users in their groups. A group can have the right to read, write and execute their projects and their workflows. You can also restrict the execution of some pipelines to some groups if you wish.
 
 #### Build Artifacts Cloud
 
@@ -188,7 +188,7 @@ CDS projects are isolated from one another, but the same group may have access r
 #### Execution Environment Customization
 
 A worker model is a worker execution context. Let's say, you need to run a job that requires GoLang v1.11.5. In CDS, you just need to create a Go worker model, containing a go in version 1.11.5.
-A worker model can be a docker image, an OpenStack image, or a VSphere image.
+A worker model can be a docker image, an OpenStack image or a VSphere image.
 Although CDS administrators can offer shared worker models, users can create their own template workers if they wish.
 
 #### Self-Service User’s Integrations
@@ -202,7 +202,7 @@ After reading the previous points, you've understood: self-service is everywhere
 
 #### Command Line Interface (cdsctl): 100% of features supported
 
-All you can do with the UI is available via the Command-Line Interface (CLI), named "cdsctl". cdsctl is available on all the OS: Darwin, FreeBSD, Linux, OpenBSD... cdsctl will allow you to create, launch, export, import your workflows, monitor your CDS, and navigate through your projects, and workflows.
+All you can do with the UI is available via the Command-Line Interface (CLI), named "cdsctl". cdsctl is available on all the OS: Darwin, FreeBSD, Linux, OpenBSD... cdsctl will allow you to create, launch, export, import your workflows, monitor your CDS and navigate through your projects and workflows.
 No need to go to the UI of CDS or your repository manager to check the status of your commit, `git push && cdsctl workflow --track` will display your workflow in your command line.
 
 #### REST API & SDK
