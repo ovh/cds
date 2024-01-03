@@ -590,18 +590,28 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		// Compute current semver version with CDS metadata
 		currentVersion, _ := semver.NewVersion(wr.RunEvent.GitTrigger.SemverCurrent)
 		if currentVersion != nil {
-			suffix := currentVersion.Metadata()
-			splittedSuffix := strings.Split(suffix, ".")
-			metadataStr := strconv.FormatInt(wr.RunNumber, 10)
-			if len(splittedSuffix) >= 2 {
-				metadataStr += "." + splittedSuffix[0] + ".sha." + splittedSuffix[1]
+			if currentVersion.Metadata() == "" { // Tags doesn't have metadata
+				semverCurrent = wr.Event.GitTrigger.SemverCurrent
+			} else {
+				suffix := currentVersion.Metadata()
+				splittedSuffix := strings.Split(suffix, ".")
+				var metadataStr string
+				if len(splittedSuffix) >= 2 {
+					metadataStr += splittedSuffix[0] + ".sha." + splittedSuffix[1]
+				}
+				for i := 2; i < len(splittedSuffix); i++ {
+					metadataStr += "." + splittedSuffix[i]
+				}
+				preRelease := currentVersion.Prerelease()
+				var v = *currentVersion
+				if preRelease != "" {
+					v, _ = currentVersion.SetPrerelease(preRelease + "-" + strconv.FormatInt(wr.RunNumber, 10))
+				} else {
+					v, _ = currentVersion.SetPrerelease(strconv.FormatInt(wr.RunNumber, 10))
+				}
+				v, _ = v.SetMetadata(metadataStr)
+				semverCurrent = v.String()
 			}
-			for i := 2; i < len(splittedSuffix); i++ {
-				metadataStr += "." + splittedSuffix[i]
-			}
-
-			v, _ := currentVersion.SetMetadata(metadataStr)
-			semverCurrent = v.String()
 		} else {
 			// If no semver found, compute it from 0.1.0
 			semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha." + commit
