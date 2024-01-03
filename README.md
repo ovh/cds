@@ -13,7 +13,7 @@ CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform writ
 
 
 ## Intuitive UI
-CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
+CDS provides an intuitive UI that allows you to build complex workflows, run them, and dig into the logs when needed.
 
 <p align="center">
   <kbd>
@@ -84,9 +84,9 @@ Ability to run multiple jobs simultaneously while keeping an isolation between t
 
 #### Workflow
 
-A Workflow makes it possible to chain the pipelines. This is a key Feature of CDS. You can create workflows using one or more pipelines, pipelines that can be linked together with joins or forks.
+A Workflow makes it possible to chain the pipelines. This is a key feature of CDS. You can create workflows using one or more pipelines, pipelines that can be linked together with joins or forks.
 
-You can imagine having only one workflow builder and deploying your entire microservice stack. The same pipeline can be used several times in a workflow, you can associate an application, an environment.
+You can imagine having only one workflow builder and deploying your entire microservice stack. The same pipeline can be used several times in a workflow, you can associate an application or an environment.
 You will only have one deployment pipeline and one build pipeline to maintain, even if you have hundreds of applications.
 
 #### Workflow templates
@@ -103,12 +103,12 @@ You can configure everything with the web UI. Even if you have complex use cases
 
 #### Configuration on Git Repository
 
-Pipeline as code is a well-known concept of CI / CD tools. CDS goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is particularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
+Pipeline as code is a well-known concept of CI / CD tools. CDS goes a step further and offers workflow as code. This is done by git-pushing using .yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is particularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
 
 
 #### Configuration as code on UI
 
-You can modify your workflow with the UI, you can also modify the configuration by editing the yaml directly in the UI if you wish. This is an excellent way to learn how to use the workflow-as-code feature.
+You can modify your workflow with the UI, you can also modify the configuration by editing the .yaml file directly in the UI if you wish. This is an excellent way to learn how to use the workflow-as-code feature.
 
 #### Native Git branching
 
@@ -120,12 +120,12 @@ Note that CDS's default behavior is to launch the whole workflow on every git co
 
 2-way integration with most popular git-based products.
 
-1. Ability to get notified and start a build when a change is pushed .
+1. Ability to get notified and start a build when a change is pushed.
 2. Ability to notify the git-based tool of the success/failure of the build.
 
-CDS natively supports GitHub, GitLab, Bitbucket Server and Gerrit.
+CDS natively supports GitHub, GitLab, Bitbucket Server, and Gerrit.
 The link between your git repo and CDS is via a CDS application: 1 Git repository == a CDS application.
-Through this integration, CDS will push build status of your commits : Building, Success or Failed.
+Through this integration, CDS will push the build status of your commits : Building, Success, or Failed.
 
 #### Multiple VCS Support in Pipeline/Job
 
@@ -137,8 +137,8 @@ Ability to start ephemeral services (a database, a web server, etc.) to support 
 
 In CDS these services are called Service Prerequisites. You just need to specify the corresponding docker image and run params.
 
-Take a simple example: you have a pipeline that builds a docker image containing your application. Your application needs a redis and a postgreSQL to work. You can, in a CDS job, put three prerequisite services: a redis, a postgreSQL and your application. CDS will take care of making a private network between its services so that they can communicate with each other.
-Your CDS job can thus perform integration tests on your application started with a real database and a real cache.
+Take a simple example: you have a pipeline that builds a docker image containing your application. Your application needs a redis and a PostgreSQL to work. You can, in a CDS job, put three prerequisite services: a redis, a PostgreSQL, and your application. CDS will take care of making a private network between its services so that they can communicate with each other.
+Your CDS job can thus perform integration tests on your application starting with a real database and a real cache.
 
 Please read: https://ovh.github.io/cds/docs/concepts/requirement/requirement_service/
 
@@ -156,18 +156,18 @@ This event flow can then feed other services (reporting, notifications, etc., ).
 #### Built-in Hooks
 
 Ability to launch a workflow manually or with git pushes or via a scheduler or via a webhook.
-In addition to the above, CDS can also be triggered using an event bus to (kafka or RabbitMQ).
+In addition to the above, CDS can also be triggered using an event bus (kafka or RabbitMQ).
 
 #### Continuous Deployment & Environment Support
 
 Ability to manage multiple environments (e.g. dev/prod/staging) in a secure way with segregated access rights.
-In practice, an environment is a just set of variables that you can use within your workflows.
+In practice, an environment is a set of variables that you can use within your workflows.
 
 With CDS, You can use a deployment pipeline on your preproduction environment and use that same deployment pipeline on your production environment. The ability to deploy to production can be limited to a pre-established group of users.
 
 #### Enterprise-grade permissions / Support of ACLs delegation
 
-Users are free to create groups and manage users in their groups. A group can have the rights to read, write, execute on their projects and their workflows. You can also restrict the execution of some pipelines to some groups if you wish.
+Users are free to create groups and manage users in their groups. A group can have the right to read, write, and execute their projects and their workflows. You can also restrict the execution of some pipelines to some groups if you wish.
 
 #### Build Artifacts Cloud
 
@@ -188,36 +188,36 @@ CDS projects are isolated from one another, but the same group may have access r
 #### Execution Environment Customization
 
 A worker model is a worker execution context. Let's say, you need to run a job that requires GoLang v1.11.5. In CDS, you just need to create a Go worker model, containing a go in version 1.11.5.
-A worker model can be a docker image, an openstack image, a VSphere image.
+A worker model can be a docker image, an OpenStack image, or a VSphere image.
 Although CDS administrators can offer shared worker models, users can create their own template workers if they wish.
 
-#### Self Service User’s Integrations
+#### Self-Service User’s Integrations
 
-On a CDS project, you can add integrations like openstack, kubernetes, etc ... This will offer you features within your workflows. For example, with the Kubernetes integration, you can add your own cluster to your CDS project and thus be able to use the Deploy Application action to deploy your newly built application on your cluster, in helm format if you wish.
+On a CDS project, you can add integrations like OpenStack, Kubernetes, etc ... This will offer you features within your workflows. For example, with the Kubernetes integration, you can add your own cluster to your CDS project and thus be able to use the Deploy Application action to deploy your newly built application on your cluster, in helm format if you wish.
 You can of course develop your own integrations.
 
 #### Multi-Tenancy
 
-After reading the previous points, you've understood: self-service everywhere. All users can create their project / workflow / worker models / workflow templates / actions ... And run Jobs in a totally isolated environment. CDS projects are builders, on which you can add integrations. All this allows you to have only one instance of CDS for your entire company.
+After reading the previous points, you've understood: self-service is everywhere. All users can create their project/workflow/ worker models/workflow templates/actions... And run Jobs in a totally isolated environment. CDS projects are builders, on which you can add integrations. All this allows you to have only one instance of CDS for your entire company.
 
-#### Command Line Interface (cdsctl): 100% features supported
+#### Command Line Interface (cdsctl): 100% of features supported
 
-All you can do with the UI is available via the Command-Line Interface (CLI), named "cdsctl". cdsctl is available on all the OS: darwin, freebsd, linux, openbsd ... cdsctl will allow you to create, launch, export, import your workflows, monitor your CDS, navigate through your projects, workflows.
+All you can do with the UI is available via the Command-Line Interface (CLI), named "cdsctl". cdsctl is available on all the OS: Darwin, FreeBSD, Linux, OpenBSD... cdsctl will allow you to create, launch, export, import your workflows, monitor your CDS, and navigate through your projects, and workflows.
 No need to go to the UI of CDS or your repository manager to check the status of your commit, `git push && cdsctl workflow --track` will display your workflow in your command line.
 
 #### REST API & SDK
 
-Do you have even more advanced automation needs, or the desire to develop an application that queries CDS? the [REST API](https://ovh.github.io/cds/development/rest/) and the [SDK](https://ovh.github.io/cds/development/sdk/golang/) will allow you to easily develop your software.
+Do you have even more advanced automation needs, or the desire to develop an application that queries CDS? The [REST API](https://ovh.github.io/cds/development/rest/) and the [SDK](https://ovh.github.io/cds/development/sdk/golang/) will allow you to easily develop your software.
 
 ### CDS Administration features
 
 #### Self-Hosting
 
-CDS is open-source since October 2016. You can install it freely in your company or at home. Some tutorials are available to help you start a CDS, [docker-compose](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/), [Install with binaries](https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/).
+CDS has been open-source since October 2016. You can install it freely in your company or at home. Some tutorials are available to help you start a CDS, [docker-compose](https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/), [Install with binaries](https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/).
 
 #### High Availability / Scalability / Upgrade without User Downtime
 
-High availability is a very important point for a CI / CD tool. CDS is stateless, nothing is stored on the filesystem. This makes it possible to launch several CDS APIs behind a load balancer. Thus, you can scale the API of CDS to your needs. It also allows upgrades of CDS in full day without impact for users.
+High availability is a very important point for a CI / CD tool. CDS is stateless, nothing is stored on the filesystem. This makes it possible to launch several CDS APIs behind a load balancer. Thus, you can scale the API of CDS to your needs. It also allows upgrades of CDS in a full day without impact on users.
 In production @OVH, CDS can be updated several times a day, without impacting users or stopping CDS workers.
 Asking your users to stop working while updating the Continuous Delivery tool would be ironic, isn't it? ;-)
 
@@ -228,22 +228,22 @@ CDS natively exposes monitoring data. You will be able to feed your instance [pr
 
 #### Extensibility Plugins
 
-A CDS job consists of steps. Each step is a built-in type action (script, checkoutApplication, Artifact upload / download ...). You can create your own actions, using existing actions - or develop your own action as a plugin. All languages are supported, as long as the language supports GRPC.
+A CDS job consists of steps. Each step is a built-in type action (script, checkoutApplication, Artifact upload/download...). You can create your actions, using existing actions - or develop your action as a plugin. All languages are supported, as long as the language supports GRPC.
 
 #### OS/Arch Compatibility
 
-CDS is agnostic to languages and platforms. Users can launch Jobs on linux, windows, freebsd, osx, raspberry ... in a Virtual Machine spawn on demand, in a docker container, on a dedicated host.
+CDS is agnostic to languages and platforms. Users can launch Jobs on Linux, Windows, FreeBSD, OS X, Raspberry ... in a Virtual Machine spawn on demand, in a docker container, on a dedicated host.
 
 So, if your company uses multiple technologies, CDS will not be a blocker for building and deploying your internal software.
 
 #### Auto-Scale OnDemand multi-cloud
 
-One of the initial objectives of CDS at OVH: build and deploy 150 applications as a container in less than 7 minutes. This has become reality since 2015. What is the secret key?
+One of the initial objectives of CDS at OVH: build and deploy 150 applications as a container in less than 7 minutes. This has become a reality since 2015. What is the secret key?
 Auto-Scale on Demand!
 
 Thus, you can have hundreds of worker models and when necessary, CDS will start the workers using the hatcheries.
 
-A [hatchery](https://ovh.github.io/cds/docs/components/hatchery/) is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
+A [hatchery](https://ovh.github.io/cds/docs/components/hatchery/) is like an incubator, it gives birth to the CDS Workers and the right to life and death over them.
 
 Several types of hatchery are available:
 
