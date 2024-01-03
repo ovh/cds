@@ -16,14 +16,15 @@ const (
 )
 
 type V2Workflow struct {
-	Name       string                   `json:"name"`
-	Repository *WorkflowRepository      `json:"repository,omitempty"`
-	OnRaw      json.RawMessage          `json:"on,omitempty"`
-	On         *WorkflowOn              `json:"-" yaml:"-"`
-	Stages     map[string]WorkflowStage `json:"stages,omitempty"`
-	Gates      map[string]V2JobGate     `json:"gates,omitempty"`
-	Jobs       map[string]V2Job         `json:"jobs"`
-	Env        map[string]string        `json:"env,omitempty"`
+	Name         string                   `json:"name"`
+	Repository   *WorkflowRepository      `json:"repository,omitempty"`
+	OnRaw        json.RawMessage          `json:"on,omitempty"`
+	On           *WorkflowOn              `json:"-" yaml:"-"`
+	Stages       map[string]WorkflowStage `json:"stages,omitempty"`
+	Gates        map[string]V2JobGate     `json:"gates,omitempty"`
+	Jobs         map[string]V2Job         `json:"jobs"`
+	Env          map[string]string        `json:"env,omitempty"`
+	Integrations []string                 `json:"integrations,omitempty"`
 }
 
 type WorkflowOn struct {
@@ -155,7 +156,7 @@ type V2Job struct {
 	ContinueOnError bool                    `json:"continue-on-error,omitempty" jsonschema_extras:"order=4"`
 	RunsOn          string                  `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split"`
 	Strategy        *V2JobStrategy          `json:"strategy,omitempty" jsonschema_extras:"order=7"`
-	Integrations    *V2JobIntegrations      `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
+	Integrations    []string                `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
 	Env             map[string]string       `json:"env,omitempty"  jsonschema_extras:"order=11,mode=edit" jsonschema_description:"Environment variable available in the job"`
 	Services        map[string]V2JobService `json:"services,omitempty"`
 
@@ -194,18 +195,6 @@ func (w *V2Job) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2Job")
-}
-
-type V2JobIntegrations struct {
-	Artifacts  string `json:"artifacts,omitempty"`
-	Deployment string `json:"deployment,omitempty"`
-}
-
-func (v *V2JobIntegrations) IsEmpty() bool {
-	if v == nil {
-		return true
-	}
-	return v.Artifacts == "" && v.Deployment == ""
 }
 
 type V2JobService struct {

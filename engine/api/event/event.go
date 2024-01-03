@@ -159,16 +159,17 @@ func Subscribe(ch chan<- sdk.Event) {
 // DequeueEvent runs in a goroutine and dequeue event from cache
 func DequeueEvent(ctx context.Context, db *gorp.DbMap) {
 	for {
+		if err := ctx.Err(); err != nil {
+			ctx := sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "Exiting event.DequeueEvent : %v", err)
+			return
+		}
+
 		e := sdk.Event{}
 		if err := store.DequeueWithContext(ctx, "events", 250*time.Millisecond, &e); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "Event.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
-		}
-		if err := ctx.Err(); err != nil {
-			ctx := sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, "Exiting event.DequeueEvent : %v", err)
-			return
 		}
 
 		// Filter "EventJobSummary" for globalKafka Broker

@@ -4,17 +4,23 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/engine/worker/internal/plugin"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
@@ -74,7 +80,10 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 		return w.failJob(ctx, fmt.Sprintf("Error: unable to setup hooks directory: %v", err))
 	}
 
-	// TODO w.setupHooks
+	if err := w.setupHooksV2(ctx, w.currentJobV2, w.basedir, hdFile.Name()); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return w.failJob(ctx, fmt.Sprintf("Error: unable to setup hooks: %v", err))
+	}
 
 	w.currentJobV2.context = ctx
 	w.currentJobV2.runJobContext.CDS.Workspace = wdAbs
@@ -565,4 +574,96 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 		newEnvVar[strings.ToUpper(k)] = fmt.Sprintf("%v", v)
 	}
 	return newEnvVar, nil
+}
+
+func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV2, fs afero.Fs, workingDir string) error {
+	log.Debug(ctx, "Setup hooks")
+	if err := fs.MkdirAll(path.Join(workingDir, "setup"), os.FileMode(0700)); err != nil {
+		return errors.WithStack(err)
+	}
+	if err := fs.MkdirAll(path.Join(workingDir, "teardown"), os.FileMode(0700)); err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Iterate over the integration given on "takeJob"
+	if currentJob.runJobContext.Integrations == nil {
+		log.Info(ctx, "no integration available for this job")
+		return nil
+	}
+	for _, it := range currentJob.runJobContext.Integrations.All() {
+		integrationName := it.Name
+		log.Info(ctx, "Getting integration %q hooks for project %q", integrationName, currentJob.runJob.ProjectKey)
+		hook, err := w.clientV2.ProjectIntegrationWorkerHookGet(currentJob.runJob.ProjectKey, integrationName)
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			log.Info(ctx, "no hook found for integration %q", integrationName)
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if hook.Disable {
+			continue
+		}
+		if w.cfg.Region != "" {
+			if sdk.IsInArray(w.cfg.Region, hook.Configuration.DisableOnRegions) {
+				continue
+			}
+		}
+
+		for capa, hookConfig := range hook.Configuration.ByCapabilities {
+			// check is the capabilities exist on the current worker
+			if _, err := exec.LookPath(capa); err != nil {
+				// The error contains 'Executable file not found', the capa is not on the worker
+				continue
+			}
+
+			hookFilename := fmt.Sprintf("%d-%s-%s", hookConfig.Priority, integrationName, slug.Convert(hookConfig.Label))
+
+			w.hooks = append(w.hooks, workerHook{
+				Config:       hookConfig,
+				SetupPath:    path.Join(workingDir, "setup", hookFilename),
+				TeardownPath: path.Join(workingDir, "teardown", hookFilename),
+			})
+		}
+
+		for _, h := range w.hooks {
+
+			info := sdk.V2SendJobRunInfo{
+				Message: fmt.Sprintf("Setting up worker hook %q", h.Config.Label),
+				Level:   sdk.WorkflowRunInfoLevelInfo,
+				Time:    time.Now(),
+			}
+
+			if err := w.ClientV2().V2QueuePushJobInfo(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, info); err != nil {
+				log.Error(ctx, "runJobServiceReadiness> Unable to send spawn info: %v", err)
+			}
+
+			log.Info(ctx, "setting up hook at %q", h.SetupPath)
+
+			hookFile, err := fs.Create(h.SetupPath)
+			if err != nil {
+				return errors.Errorf("unable to open hook file %q in %q: %v", h.SetupPath, w.basedir.Name(), err)
+			}
+			if _, err := hookFile.WriteString(h.Config.Setup); err != nil {
+				_ = hookFile.Close
+				return errors.Errorf("unable to setup hook %q: %v", h.SetupPath, err)
+			}
+			if err := hookFile.Close(); err != nil {
+				return errors.Errorf("unable to setup hook %q: %v", h.SetupPath, err)
+			}
+
+			hookFile, err = fs.Create(h.TeardownPath)
+			if err != nil {
+				return errors.Errorf("unable to open hook file %q: %v", h.TeardownPath, err)
+			}
+			if _, err := hookFile.WriteString(h.Config.Teardown); err != nil {
+				_ = hookFile.Close
+				return errors.Errorf("unable to setup hook %q: %v", h.TeardownPath, err)
+			}
+			if err := hookFile.Close(); err != nil {
+				return errors.Errorf("unable to setup hook %q: %v", h.TeardownPath, err)
+			}
+		}
+	}
+	return nil
 }
