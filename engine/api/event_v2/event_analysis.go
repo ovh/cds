@@ -10,15 +10,19 @@ import (
 
 func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u *sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(a)
-	e := sdk.EventV2{
-		ID:         sdk.UUID(),
-		ProjectKey: a.ProjectKey,
+	e := sdk.AnalysisEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       sdk.EventAnalysisStart,
+			Payload:    bts,
+			ProjectKey: a.ProjectKey,
+		},
 		VCSName:    vcsName,
 		Repository: repoName,
 		Status:     a.Status,
-		Type:       sdk.EventAnalysisStart,
-		Payload:    bts,
 	}
+
+	// No user if we came from hook. User is resolved later during analysis process.
 	if u != nil {
 		e.UserID = u.ID
 		e.Username = u.Username
@@ -26,20 +30,20 @@ func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoN
 	publish(ctx, store, e)
 }
 
-func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u *sdk.AuthentifiedUser) {
+func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(a)
-	e := sdk.EventV2{
-		ID:         sdk.UUID(),
-		ProjectKey: a.ProjectKey,
+	e := sdk.AnalysisEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       sdk.EventAnalysisStart,
+			Payload:    bts,
+			ProjectKey: a.ProjectKey,
+		},
 		VCSName:    vcsName,
 		Repository: repoName,
 		Status:     a.Status,
-		Type:       sdk.EventAnalysisDone,
-		Payload:    bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
+		UserID:     u.ID,
+		Username:   u.Username,
 	}
 	publish(ctx, store, e)
 }

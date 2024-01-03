@@ -83,7 +83,7 @@ func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler
 			if err := tx.Commit(); err != nil {
 				return err
 			}
-			event_v2.PublishUserGPGCreateEvent(ctx, api.Cache, gpgKey, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishUserGPGEvent(ctx, api.Cache, sdk.EventUserGPGKeyCreated, gpgKey, *u)
 			return service.WriteJSON(w, gpgKey, http.StatusOK)
 		}
 }
@@ -121,7 +121,7 @@ func (api *API) deleteUserGPGKey() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return err
 			}
-			event_v2.PublishUserGPGDeleteEvent(ctx, api.Cache, *gpgKey, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishUserGPGEvent(ctx, api.Cache, sdk.EventUserGPGKeyDeleted, *gpgKey, *u)
 			return nil
 		}
 }

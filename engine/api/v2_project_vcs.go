@@ -39,6 +39,11 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
@@ -79,7 +84,7 @@ func (api *API) postVCSProjectHandler() ([]service.RbacChecker, service.Handler)
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishVCSCreateEvent(ctx, api.Cache, pKey, vcsProject, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishVCSEvent(ctx, api.Cache, sdk.EventVCSCreated, pKey, vcsProject, *u.AuthConsumerUser.AuthentifiedUser)
 
 			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
 		}
@@ -90,6 +95,11 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey, project.LoadOptions.WithKeys)
 			if err != nil {
@@ -134,7 +144,7 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishVCSUpdatedEvent(ctx, api.Cache, proj.Key, *vcsOld, vcsProject, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishVCSEvent(ctx, api.Cache, sdk.EventVCSUpdated, proj.Key, vcsProject, *u.AuthConsumerUser.AuthentifiedUser)
 
 			return service.WriteMarshal(w, req, vcsProject, http.StatusCreated)
 		}
@@ -145,6 +155,11 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
@@ -175,7 +190,7 @@ func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishVCSDeleteEvent(ctx, api.Cache, project.Key, *vcsProject, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishVCSEvent(ctx, api.Cache, sdk.EventVCSDeleted, project.Key, *vcsProject, *u.AuthConsumerUser.AuthentifiedUser)
 
 			return nil
 		}

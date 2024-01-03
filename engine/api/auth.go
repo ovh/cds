@@ -321,7 +321,7 @@ func (api *API) postAuthSigninHandler() service.Handler {
 		}
 
 		if userCreated {
-			event_v2.PublishUserCreateEvent(ctx, api.Cache, *usr)
+			event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserCreated, *usr)
 		}
 
 		// Set a cookie with the jwt token

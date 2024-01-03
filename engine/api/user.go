@@ -150,7 +150,7 @@ func (api *API) putUserHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event_v2.PublishUserUpdateEvent(ctx, api.Cache, newUser)
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserUpdated, newUser)
 
 		if err := user.LoadOptions.WithOrganization(ctx, api.mustDBWithCtx(ctx), &newUser); err != nil {
 			return err
@@ -280,7 +280,7 @@ func (api *API) deleteUserHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event_v2.PublishUserDeleteEvent(ctx, api.Cache, *u)
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserDeleted, *u)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

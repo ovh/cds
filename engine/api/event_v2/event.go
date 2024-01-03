@@ -1,8 +1,10 @@
 package event_v2
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
 	"sync"
 	"time"
 
@@ -22,7 +24,7 @@ const (
 )
 
 // Enqueue event into cache
-func publish(ctx context.Context, store cache.Store, event sdk.EventV2) {
+func publish(ctx context.Context, store cache.Store, event interface{}) {
 	if err := store.Enqueue(eventQueue, event); err != nil {
 		log.Error(ctx, "EventV2.publish: %s", err)
 		return
@@ -33,13 +35,13 @@ func publish(ctx context.Context, store cache.Store, event sdk.EventV2) {
 // Dequeue runs in a goroutine and dequeue event from cache
 func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines *sdk.GoRoutines) {
 	for {
-		e := sdk.EventV2{}
+		var e sdk.FullEventV2
 		if err := store.DequeueWithContext(ctx, eventQueue, 50*time.Millisecond, &e); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "EventV2.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
 		}
-		log.Debug(ctx, "event received: %s", e.Type)
+		log.Debug(ctx, "event received: %v", e.Type)
 
 		wg := sync.WaitGroup{}
 
@@ -85,7 +87,7 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 	}
 }
 
-func pushToWebsockets(ctx context.Context, store cache.Store, e sdk.EventV2) {
+func pushToWebsockets(ctx context.Context, store cache.Store, e sdk.FullEventV2) {
 	msg, err := json.Marshal(e)
 	if err != nil {
 		log.Error(ctx, "EventV2.pushToWebsockets: unable to marshal event: %v", err)
@@ -102,7 +104,7 @@ func pushToWebsockets(ctx context.Context, store cache.Store, e sdk.EventV2) {
 	}
 }
 
-func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.EventV2) error {
+func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) error {
 	if e.ProjectKey != "" {
 		proj, err := project.Load(ctx, db, e.ProjectKey)
 		if err != nil {
@@ -110,12 +112,20 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.EventV2) error
 		}
 		log.Debug(ctx, "Sending notification on project %s", proj.Key)
 		// TODO send notification
-
+		bts, _ := json.Marshal(e)
+		resp, err := http.Post("http://localhost:9191/event", "image/jpeg", bytes.NewBuffer(bts))
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode >= 400 {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "http return %d", resp.StatusCode)
+		}
+		log.Info(ctx, ">>>>Event sent")
 	}
 	return nil
 }
 
-func pushToElasticSearch(ctx context.Context, db *gorp.DbMap, e sdk.EventV2) error {
+func pushToElasticSearch(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) error {
 	esServices, err := services.LoadAllByType(ctx, db, sdk.TypeElasticsearch)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load elasticsearch service")

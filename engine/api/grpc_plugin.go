@@ -156,6 +156,11 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := mux.Vars(r)["name"]
 
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		old, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load old plugin")
@@ -181,7 +186,7 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event_v2.PublishPluginDeleteEvent(ctx, api.Cache, *old, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+		event_v2.PublishPluginEvent(ctx, api.Cache, sdk.EventPluginDeleted, *old, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return nil
 	}

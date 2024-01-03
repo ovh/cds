@@ -30,6 +30,12 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 	return service.RBAC(api.globalPluginManage),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			force := service.FormBool(r, "force")
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			var p sdk.GRPCPlugin
 			db := api.mustDB()
 			if err := service.UnmarshalBody(r, &p); err != nil {
@@ -72,9 +78,9 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 			}
 
 			if oldP == nil {
-				event_v2.PublishPluginCreateEvent(ctx, api.Cache, p, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+				event_v2.PublishPluginEvent(ctx, api.Cache, sdk.EventPluginCreated, p, *u.AuthConsumerUser.AuthentifiedUser)
 			} else {
-				event_v2.PublishPluginUpdateEvent(ctx, api.Cache, *oldP, p, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+				event_v2.PublishPluginEvent(ctx, api.Cache, sdk.EventPluginUpdated, p, *u.AuthConsumerUser.AuthentifiedUser)
 			}
 
 			return service.WriteJSON(w, p, http.StatusOK)

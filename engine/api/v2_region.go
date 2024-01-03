@@ -30,6 +30,10 @@ func (api *API) getRegionByIdentifier(ctx context.Context, regionIdentifier stri
 func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.globalRegionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			var reg sdk.Region
 			if err := service.UnmarshalBody(req, &reg); err != nil {
@@ -48,7 +52,7 @@ func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
-			event_v2.PublishRegionCreateEvent(ctx, api.Cache, reg, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRegionEvent(ctx, api.Cache, sdk.EventRegionCreated, reg, *u.AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}
 }
@@ -105,6 +109,11 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 			vars := mux.Vars(req)
 			regionIdentifier := vars["regionIdentifier"]
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			reg, err := api.getRegionByIdentifier(ctx, regionIdentifier)
 			if err != nil {
 				return err
@@ -122,9 +131,9 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 			defer tx.Rollback() // nolint
 
 			deletedPermission := make([]sdk.RBAC, 0)
-			updatedPermission := make([][]sdk.RBAC, 0)
+			updatedPermission := make([]sdk.RBAC, 0)
 
-			for i, rbacPerm := range rbacRegions {
+			for _, rbacPerm := range rbacRegions {
 				rbacPermRegions := make([]sdk.RBACRegion, 0)
 				for _, r := range rbacPerm.Regions {
 					if r.RegionID != reg.ID {
@@ -150,7 +159,7 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 					if err := rbac.Update(ctx, tx, &rbacPerm); err != nil {
 						return err
 					}
-					updatedPermission = append(updatedPermission, []sdk.RBAC{rbacRegions[i], rbacPerm})
+					updatedPermission = append(updatedPermission, rbacPerm)
 				}
 			}
 
@@ -162,13 +171,13 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 				sdk.WithStack(tx.Commit())
 			}
 
-			event_v2.PublishRegionDeleteEvent(ctx, api.Cache, *reg, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRegionEvent(ctx, api.Cache, sdk.EventRegionDeleted, *reg, *u.AuthConsumerUser.AuthentifiedUser)
 
 			for _, p := range deletedPermission {
-				event_v2.PublishPermissionDeleteEvent(ctx, api.Cache, p, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionDeleted, p, *u.AuthConsumerUser.AuthentifiedUser)
 			}
 			for _, p := range updatedPermission {
-				event_v2.PublishPermissionUpdatedEvent(ctx, api.Cache, p[0], p[1], getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, p, *u.AuthConsumerUser.AuthentifiedUser)
 			}
 
 			return nil

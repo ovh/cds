@@ -45,10 +45,6 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 			if err != nil {
 				return err
 			}
-			hOld, err := hatch.LoadHatcheryByID(ctx, api.mustDB(), consumer.AuthConsumerHatchery.HatcheryID)
-			if err != nil {
-				return err
-			}
 
 			rbacHatchery, err := rbac.LoadRBACHatcheryByHatcheryID(ctx, api.mustDB(), h.ID)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -136,7 +132,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishHatcheryUpdatedEvent(ctx, api.Cache, *hOld, *h, nil)
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryUpdated, *h, nil)
 
 			pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
 			if err != nil {

@@ -90,6 +90,10 @@ func (api *API) getHatcheryByIdentifier(ctx context.Context, hatcheryIdentifier 
 func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.globalHatcheryManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			var h sdk.Hatchery
 			if err := service.UnmarshalBody(req, &h); err != nil {
@@ -119,7 +123,7 @@ func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
-			event_v2.PublishHatcheryCreateEvent(ctx, api.Cache, h, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryCreated, h, u.AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, h, http.StatusCreated)
 		}
 }
@@ -155,6 +159,11 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			vars := mux.Vars(req)
 			hatcheryIdentifier := vars["hatcheryIdentifier"]
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			hatch, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
 			if err != nil {
 				return err
@@ -174,7 +183,6 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 				}
 				rbacFound = false
 			}
-			oldPerm := *hatcheryPermission
 			if rbacFound {
 				// Remove all permissions on this hatchery
 				rbacHatcheries := make([]sdk.RBACHatchery, 0)
@@ -203,12 +211,12 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
-			event_v2.PublishHatcheryDeleteEvent(ctx, api.Cache, *hatch, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryDeleted, *hatch, u.AuthConsumerUser.AuthentifiedUser)
 
 			if hatcheryPermission.IsEmpty() {
-				event_v2.PublishPermissionDeleteEvent(ctx, api.Cache, *hatcheryPermission, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionDeleted, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
 			} else {
-				event_v2.PublishPermissionUpdatedEvent(ctx, api.Cache, oldPerm, *hatcheryPermission, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
 			}
 			return nil
 		}

@@ -10,9 +10,13 @@ import (
 
 func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType, vcsName, repoName string, rj sdk.V2WorkflowRunJob, rr sdk.V2WorkflowRunResult) {
 	bts, _ := json.Marshal(rr)
-	e := sdk.EventV2{
-		ID:            sdk.UUID(),
-		ProjectKey:    rj.ProjectKey,
+	e := sdk.WorkflowRunJobRunResultEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       eventType,
+			Payload:    bts,
+			ProjectKey: rj.ProjectKey,
+		},
 		VCSName:       vcsName,
 		Repository:    repoName,
 		Workflow:      rj.WorkflowName,
@@ -24,19 +28,23 @@ func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType, v
 		Hatchery:      rj.HatcheryName,
 		ModelType:     rj.ModelType,
 		JobID:         rj.JobID,
-		Type:          eventType,
-		RunResultName: rr.Name(),
+		RunResult:     rr.Name(),
 		Status:        rr.Status,
-		Payload:       bts,
+		UserID:        rj.UserID,
+		Username:      rj.Username,
 	}
 	publish(ctx, store, e)
 }
 
 func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType, vcsName, repoName string, rj sdk.V2WorkflowRunJob) {
 	bts, _ := json.Marshal(rj)
-	e := sdk.EventV2{
-		ID:            sdk.UUID(),
-		ProjectKey:    rj.ProjectKey,
+	e := sdk.WorkflowRunJobEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       eventType,
+			Payload:    bts,
+			ProjectKey: rj.ProjectKey,
+		},
 		VCSName:       vcsName,
 		Repository:    repoName,
 		Workflow:      rj.WorkflowName,
@@ -48,31 +56,31 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType, vcsNa
 		Hatchery:      rj.HatcheryName,
 		ModelType:     rj.ModelType,
 		JobID:         rj.JobID,
-		Type:          eventType,
 		Status:        rj.Status,
-		Payload:       bts,
+		UserID:        rj.UserID,
+		Username:      rj.Username,
 	}
 	publish(ctx, store, e)
 }
 
-func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, u *sdk.AuthentifiedUser) {
+func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(wr)
-	e := sdk.EventV2{
-		ID:            sdk.UUID(),
-		ProjectKey:    wr.ProjectKey,
+	e := sdk.WorkflowRunEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       eventType,
+			Payload:    bts,
+			ProjectKey: wr.ProjectKey,
+		},
 		VCSName:       wr.Contexts.Git.Server,
 		Repository:    wr.Contexts.Git.Repository,
 		Workflow:      wr.WorkflowName,
 		RunNumber:     wr.RunNumber,
 		RunAttempt:    wr.RunAttempt,
-		Type:          eventType,
 		Status:        wr.Status,
-		Payload:       bts,
 		WorkflowRunID: wr.ID,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
+		UserID:        u.ID,
+		Username:      u.Username,
 	}
 	publish(ctx, store, e)
 }

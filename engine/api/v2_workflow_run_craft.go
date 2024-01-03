@@ -155,7 +155,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
 			Message:       fmt.Sprintf("%v", err),
-		}, u)
+		}, *u)
 	}
 	run.Contexts = *runContext
 
@@ -194,10 +194,10 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("unable to retrieve job[%s] definition. Please contact an administrator", jobID),
-			}, u)
+			}, *u)
 		}
 		if msg != nil {
-			return stopRun(ctx, api.mustDB(), api.Cache, run, msg, u)
+			return stopRun(ctx, api.mustDB(), api.Cache, run, msg, *u)
 		}
 
 		if !strings.HasPrefix(j.RunsOn, "${{") {
@@ -208,10 +208,10 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-				}, u)
+				}, *u)
 			}
 			if msg != nil {
-				return stopRun(ctx, api.mustDB(), api.Cache, run, msg, u)
+				return stopRun(ctx, api.mustDB(), api.Cache, run, msg, *u)
 			}
 			j.RunsOn = completeName
 		}
@@ -251,7 +251,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return sdk.WithStack(tx.Commit())
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, u)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, *u)
 
 	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
 	return nil
@@ -505,7 +505,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 	return nil, nil
 }
 
-func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, msg *sdk.V2WorkflowRunInfo, u *sdk.AuthentifiedUser) error {
+func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, msg *sdk.V2WorkflowRunInfo, u sdk.AuthentifiedUser) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)

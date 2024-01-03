@@ -197,7 +197,6 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				AnalysisID: a.ID,
 				Status:     a.Status,
 			}
-
 			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProject.Name, repo.Name, a, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
 			return service.WriteJSON(w, response, http.StatusCreated)
 		}
@@ -301,7 +300,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
 
-	var user *sdk.AuthentifiedUser
+	var user sdk.AuthentifiedUser
 
 	defer func() {
 		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis, user)
@@ -353,7 +352,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.Error = analysisError
 		}
 		if u != nil {
-			user = u
+			user = *u
 			analysis.Data.CDSUserID = u.ID
 			analysis.Data.CDSUserName = u.Username
 
@@ -454,7 +453,7 @@ skipEntity:
 	}
 
 	eventInsertedEntities := make([]sdk.Entity, 0)
-	eventUpdatedEntities := make([][]sdk.Entity, 0)
+	eventUpdatedEntities := make([]sdk.Entity, 0)
 	for i := range entitiesToUpdate {
 		e := &entities[i]
 		existingEntity, err := entity.LoadByBranchTypeName(ctx, tx, e.ProjectRepositoryID, e.Branch, e.Type, e.Name)
@@ -471,7 +470,7 @@ skipEntity:
 			if err := entity.Update(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to update %s of type %s", e.Name, e.Type)))
 			}
-			eventUpdatedEntities = append(eventUpdatedEntities, []sdk.Entity{*existingEntity, e.Entity})
+			eventUpdatedEntities = append(eventUpdatedEntities, e.Entity)
 		}
 
 		// Insert workflow hook
@@ -502,10 +501,10 @@ skipEntity:
 		return sdk.WithStack(tx.Commit())
 	}
 	for _, e := range eventInsertedEntities {
-		event_v2.PublishEntityCreateEvent(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, e, user)
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityCreated, repo.Name, repo.Name, e, &user)
 	}
 	for _, eUpdated := range eventUpdatedEntities {
-		event_v2.PublishEntityUpdateEvent(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, eUpdated[0], eUpdated[1], user)
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityUpdated, vcsProjectWithSecret.Name, repo.Name, eUpdated, &user)
 	}
 
 	return nil

@@ -8,32 +8,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishRegionCreateEvent(ctx context.Context, store cache.Store, reg sdk.Region, u *sdk.AuthentifiedUser) {
+func PublishRegionEvent(ctx context.Context, store cache.Store, typeEvent string, reg sdk.Region, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(reg)
-	e := sdk.EventV2{
-		ID:      sdk.UUID(),
-		Region:  reg.Name,
-		Type:    sdk.EventRegionCreated,
-		Payload: bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
-	}
-	publish(ctx, store, e)
-}
-
-func PublishRegionDeleteEvent(ctx context.Context, store cache.Store, reg sdk.Region, u *sdk.AuthentifiedUser) {
-	bts, _ := json.Marshal(reg)
-	e := sdk.EventV2{
-		ID:      sdk.UUID(),
-		Region:  reg.Name,
-		Type:    sdk.EventRegionDeleted,
-		Payload: bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
+	e := sdk.RegionEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:      sdk.UUID(),
+			Type:    typeEvent,
+			Payload: bts,
+		},
+		Region:   reg.Name,
+		UserID:   u.ID,
+		Username: u.Username,
 	}
 	publish(ctx, store, e)
 }

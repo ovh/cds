@@ -183,7 +183,7 @@ func (c *EntitiesCleaner) cleanEntitiesByBranch(ctx context.Context, db *gorp.Db
 	}
 
 	for _, e := range deletedEntities {
-		event_v2.PublishEntityDeleteEvent(ctx, store, c.vcsName, c.repoName, e, nil)
+		event_v2.PublishEntityEvent(ctx, store, sdk.EventEntityDeleted, c.vcsName, c.repoName, e, nil)
 	}
 	return nil
 }

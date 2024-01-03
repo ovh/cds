@@ -419,7 +419,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		event_v2.PublishUserCreateEvent(ctx, api.Cache, *usr)
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserCreated, *usr)
 
 		local.CleanVerifyConsumerToken(api.Cache, consumer.ID)
 

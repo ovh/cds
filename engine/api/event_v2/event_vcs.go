@@ -8,52 +8,18 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishVCSCreateEvent(ctx context.Context, store cache.Store, projectKey string, vcs sdk.VCSProject, u *sdk.AuthentifiedUser) {
+func PublishVCSEvent(ctx context.Context, store cache.Store, eventType string, projectKey string, vcs sdk.VCSProject, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(vcs)
-	e := sdk.EventV2{
-		ID:         sdk.UUID(),
-		ProjectKey: projectKey,
-		VCSName:    vcs.Name,
-		Type:       sdk.EventVCSCreated,
-		Payload:    bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
-	}
-	publish(ctx, store, e)
-}
-
-func PublishVCSUpdatedEvent(ctx context.Context, store cache.Store, projectKey string, previousVCS, vcs sdk.VCSProject, u *sdk.AuthentifiedUser) {
-	previousBts, _ := json.Marshal(previousVCS)
-	bts, _ := json.Marshal(vcs)
-	e := sdk.EventV2{
-		ID:         sdk.UUID(),
-		ProjectKey: projectKey,
-		VCSName:    vcs.Name,
-		Type:       sdk.EventVCSDeleted,
-		Previous:   previousBts,
-		Payload:    bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
-	}
-	publish(ctx, store, e)
-}
-
-func PublishVCSDeleteEvent(ctx context.Context, store cache.Store, projectKey string, vcs sdk.VCSProject, u *sdk.AuthentifiedUser) {
-	bts, _ := json.Marshal(vcs)
-	e := sdk.EventV2{
-		ID:         sdk.UUID(),
-		ProjectKey: projectKey,
-		VCSName:    vcs.Name,
-		Type:       sdk.EventVCSDeleted,
-		Payload:    bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
+	e := sdk.VCSEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       sdk.EventVCSCreated,
+			Payload:    bts,
+			ProjectKey: projectKey,
+		},
+		VCSName:  vcs.Name,
+		UserID:   u.ID,
+		Username: u.Username,
 	}
 	publish(ctx, store, e)
 }

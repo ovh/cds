@@ -8,32 +8,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishOrganizationCreateEvent(ctx context.Context, store cache.Store, org sdk.Organization, u *sdk.AuthentifiedUser) {
+func PublishOrganizationEvent(ctx context.Context, store cache.Store, eventType string, org sdk.Organization, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(org)
-	e := sdk.EventV2{
-		ID:           sdk.UUID(),
+	e := sdk.OrganizationEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:      sdk.UUID(),
+			Type:    eventType,
+			Payload: bts,
+		},
 		Organization: org.Name,
-		Type:         sdk.EventOrganizationCreated,
-		Payload:      bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
-	}
-	publish(ctx, store, e)
-}
-
-func PublishOrganizationDeleteEvent(ctx context.Context, store cache.Store, org sdk.Organization, u *sdk.AuthentifiedUser) {
-	bts, _ := json.Marshal(org)
-	e := sdk.EventV2{
-		ID:           sdk.UUID(),
-		Organization: org.Name,
-		Type:         sdk.EventOrganizationDeleted,
-		Payload:      bts,
-	}
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
+		UserID:       u.ID,
+		Username:     u.Username,
 	}
 	publish(ctx, store, e)
 }
