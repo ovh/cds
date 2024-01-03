@@ -795,7 +795,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 			}
 
 			u := getUserConsumer(ctx)
-			if u != nil {
+			if u == nil {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
