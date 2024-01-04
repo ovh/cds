@@ -3,6 +3,8 @@ vars:
   cds_project: "ITV2CHECKOUT"
   git_repo: "it_v2_checkout"
   cds_workflow: "WorkflowCheckout"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+
 testcases:
 - name: Prepare test
   steps:
@@ -61,7 +63,7 @@ testcases:
           on: [push]
           jobs:
             init:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              runs-on: "{{.worker_model}}"
               steps:
                 - id: checkout
                   uses: actions/checkout
