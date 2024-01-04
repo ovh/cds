@@ -65,7 +65,7 @@ testcases:
               steps:
                 - id: checkout
                   uses: actions/checkout
-                - id: git-variables
+                - id: gitvariables
                   run: |-
                     #!/bin/bash -x
                     env | grep GIT
@@ -93,7 +93,7 @@ testcases:
     - name: Check checkout log content
       script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
 
-    - name: Check git-variables log content to check SEMVER variables are available
-      script: "cat {{.cds_workflow}}-1-1-init-git-variables | grep SEMVER"
+    - name: Check gitvariables log content to check SEMVER variables are available
+      script: "cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER"
 
 
