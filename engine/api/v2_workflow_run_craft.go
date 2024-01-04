@@ -647,8 +647,6 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		SemverNext:    semverNext,
 	}
 
-	log.Warn(ctx, "git context: %+v", gitContext)
-
 	if gitContext.SSHKey != "" {
 		gitContext.Connection = "ssh"
 	} else {
