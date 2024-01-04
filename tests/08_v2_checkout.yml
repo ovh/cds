@@ -63,8 +63,12 @@ testcases:
             init:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
-                - uses: actions/checkout
-                  id: checkout
+                - id: checkout
+                  uses: actions/checkout
+                - id: git-variables
+                  run: |-
+                    #!/bin/bash -x
+                    env | grep GIT
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -86,7 +90,10 @@ testcases:
     - name: Download logs
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
 
-    - name: Check log content
+    - name: Check checkout log content
       script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
+
+    - name: Check git-variables log content to check SEMVER variables are available
+      script: "cat {{.cds_workflow}}-1-1-init-git-variables | grep SEMVER"
 
 
