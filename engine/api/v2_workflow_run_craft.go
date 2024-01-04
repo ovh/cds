@@ -591,7 +591,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		currentVersion, _ := semver.NewVersion(wr.RunEvent.GitTrigger.SemverCurrent)
 		if currentVersion != nil {
 			if currentVersion.Metadata() == "" { // Tags doesn't have metadata
-				semverCurrent = wr.Event.GitTrigger.SemverCurrent
+				semverCurrent = wr.RunEvent.GitTrigger.SemverCurrent
 			} else {
 				suffix := currentVersion.Metadata()
 				splittedSuffix := strings.Split(suffix, ".")
