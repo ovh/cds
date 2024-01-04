@@ -54,6 +54,10 @@ const (
 	EventPluginCreated = "PluginCreated"
 	EventPluginUpdated = "PluginUpdated"
 	EventPluginDeleted = "PluginDeleted"
+
+	EventNotificationCreated = "NotificationCreated"
+	EventNotificationUpdated = "NotificationUpdated"
+	EventNotificationDeleted = "NotificationDeleted"
 )
 
 // FullEventV2 uses to process event
@@ -82,6 +86,7 @@ type FullEventV2 struct {
 	Permission    string          `json:"permission,omitempty"`
 	Plugin        string          `json:"plugin,omitempty"`
 	GPGKey        string          `json:"gpg_key,omitempty"`
+	Notification  string          `json:"notification"`
 }
 
 type GlobalEventV2 struct {
@@ -165,6 +170,13 @@ type VCSEvent struct {
 	VCSName  string `json:"vcs_name"`
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
+}
+
+type NotificationEvent struct {
+	ProjectEventV2
+	Notification string `json:"notification"`
+	UserID       string `json:"user_id"`
+	Username     string `json:"username"`
 }
 
 type UserEvent struct {

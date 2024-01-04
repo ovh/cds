@@ -16,5 +16,6 @@ func experimentalProject() *cobra.Command {
 		projectVCS(),
 		projectRepository(),
 		projectRepositoryAnalysis(),
+		projectNotification(),
 	})
 }

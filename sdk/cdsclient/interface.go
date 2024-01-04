@@ -233,6 +233,15 @@ type HatcheryServiceClient interface {
 	V2QueueClient
 }
 
+// ProjectClientV2 exposes project related functions
+type ProjectClientV2 interface {
+	ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error
+	ProjectNotificationUpdate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error
+	ProjectNotificationDelete(ctx context.Context, pKey string, notifName string) error
+	ProjectNotificationGet(ctx context.Context, pKey string, notifName string) (*sdk.ProjectNotification, error)
+	ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error)
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project) error
@@ -496,6 +505,7 @@ type Interface interface {
 	PipelineClient
 	IntegrationClient
 	ProjectClient
+	ProjectClientV2
 	RBACClient
 	OrganizationClient
 	RegionClient
