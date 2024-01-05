@@ -3,8 +3,9 @@ package hooks
 import (
 	"context"
 	"fmt"
-	"github.com/rockbears/log"
 	"time"
+
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -60,6 +61,8 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 					}
 					if ope.Status == sdk.OperationStatusDone {
 						hre.SignKey = ope.Setup.Checkout.Result.SignKeyID
+						hre.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
+						hre.SemverNext = ope.Setup.Checkout.Result.Semver.Next
 						if !ope.Setup.Checkout.Result.CommitVerified {
 							hre.Status = sdk.HookEventStatusSkipped
 							hre.LastError = fmt.Sprintf("User with key '%s' not found in CDS", hre.SignKey)
