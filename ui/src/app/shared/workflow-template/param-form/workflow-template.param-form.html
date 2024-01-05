@@ -35,11 +35,11 @@
             <nz-row *ngIf="parameter.type === 'repository'">
                 <nz-col [nzSpan]="18">
                     <nz-select name="parameter-{{parameter.key}}-repo" nzShowSearch
-                        [ngModel]="parameterValues[parameter.key + '-repository']" (nzFocus)="focusRepo(parameter.key)"
-                        (nzOnSearch)="filterRepo($event)"
+                        [ngModel]="parameterValues[parameter.key + '-repository']"
+                        (nzOnSearch)="filterRepo(parameter.key, $event)"
                         (ngModelChange)="changeParam(parameter.key + '-repository', $event)">
-                        <nz-option *ngFor="let repository of filteredRepo" [nzValue]="repository"
-                            [nzLabel]="repository">
+                        <nz-option *ngFor="let repository of parameterValues[parameter.key + '-repositories-filtered']"
+                            [nzValue]="repository" [nzLabel]="repository">
                         </nz-option>
                     </nz-select>
                 </nz-col>
