@@ -87,10 +87,15 @@ type OperationCheckout struct {
 	Branch         string `json:"branch,omitempty"`
 	Commit         string `json:"commit,omitempty"`
 	CheckSignature bool   `json:"check_signature,omitempty"`
+	ProcessSemver  bool   `json:"process_semver,omitempty"`
 	Result         struct {
 		SignKeyID      string `json:"sign_key_id"`
 		CommitVerified bool   `json:"verified"`
 		Msg            string `json:"msg"`
+		Semver         struct {
+			Current string `json:"current"`
+			Next    string `json:"next"`
+		} `json:"semver"`
 	} `json:"result"`
 }
 

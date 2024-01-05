@@ -3,6 +3,8 @@ vars:
   cds_project: "ITV2CHECKOUT"
   git_repo: "it_v2_checkout"
   cds_workflow: "WorkflowCheckout"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+
 testcases:
 - name: Prepare test
   steps:
@@ -61,10 +63,14 @@ testcases:
           on: [push]
           jobs:
             init:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              runs-on: "{{.worker_model}}"
               steps:
-                - uses: actions/checkout
-                  id: checkout
+                - id: checkout
+                  uses: actions/checkout
+                - id: gitvariables
+                  run: |-
+                    #!/bin/bash -x
+                    env | grep GIT
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -80,13 +86,16 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 2
+      retry: 5
       delay: 30
 
     - name: Download logs
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
 
-    - name: Check log content
+    - name: Check checkout log content
       script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
+
+    - name: Check gitvariables log content to check SEMVER variables are available
+      script: "cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER"
 
 

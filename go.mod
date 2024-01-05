@@ -6,6 +6,7 @@ require (
 	code.gitea.io/sdk/gitea v0.15.1-0.20220530220844-359c771ce3d2
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
+	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/Shopify/sarama v1.36.0
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230321174746-8dcc6526cfb1
@@ -21,7 +22,7 @@ require (
 	github.com/eapache/go-resiliency v1.3.0
 	github.com/fatih/color v1.13.0
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.2.3
+	github.com/fsamin/go-repo v0.3.0
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/go-gorp/gorp v2.0.0+incompatible

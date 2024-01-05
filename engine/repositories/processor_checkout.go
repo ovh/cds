@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -65,6 +66,18 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			log.Debug(ctx, "processCheckout> resetting commit %s", op.Setup.Checkout.Commit)
 			if err := gitRepo.ResetHard(ctx, op.Setup.Checkout.Commit); err != nil {
 				return sdk.WithStack(err)
+			}
+		}
+	}
+
+	if op.Setup.Checkout.ProcessSemver {
+		describe, err := gitRepo.Describe(ctx, nil)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, errors.Wrap(err, "git describe failed"))
+		} else {
+			if describe.Semver != nil {
+				op.Setup.Checkout.Result.Semver.Current = describe.SemverString
+				op.Setup.Checkout.Result.Semver.Next = describe.Semver.IncMinor().String()
 			}
 		}
 	}

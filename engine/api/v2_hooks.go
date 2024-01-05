@@ -138,14 +138,20 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 					HookEventUUID:      hookRetrieveSignKey.HookEventUUID,
 					SigningKeyCallback: &sdk.HookSigninKeyCallback{},
 				}
-				if ope.Status == sdk.OperationStatusDone && ope.Setup.Checkout.Result.CommitVerified {
-					callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
-				} else if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
-					callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
-					callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg
+				if ope.Status == sdk.OperationStatusDone {
+					callback.SigningKeyCallback.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
+					callback.SigningKeyCallback.SemverNext = ope.Setup.Checkout.Result.Semver.Next
+
+					if ope.Setup.Checkout.Result.CommitVerified {
+						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
+					} else {
+						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
+						callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg
+					}
 				} else {
 					callback.SigningKeyCallback.Error = ope.Error.Message
 				}
+
 				if _, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to  hook [HTTP: %d]", code))
 					return
