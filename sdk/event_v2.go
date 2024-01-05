@@ -86,7 +86,7 @@ type FullEventV2 struct {
 	Permission    string          `json:"permission,omitempty"`
 	Plugin        string          `json:"plugin,omitempty"`
 	GPGKey        string          `json:"gpg_key,omitempty"`
-	Notification  string          `json:"notification"`
+	Notification  string          `json:"notification,omitempty"`
 }
 
 type GlobalEventV2 struct {
