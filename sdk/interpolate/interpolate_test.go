@@ -447,6 +447,42 @@ func TestDo(t *testing.T) {
 			enable: true,
 		},
 		{
+			name: "sub",
+			args: args{
+				input: "my value {{.cds.app.value | sub 1}} {{ sub 5 1 }}",
+				vars:  map[string]string{"cds.app.value": "5"},
+			},
+			want:   "my value 4 4",
+			enable: true,
+		},
+		{
+			name: "mul",
+			args: args{
+				input: "my value {{.cds.app.value | mul 2}} {{ mul 2 2 }}",
+				vars:  map[string]string{"cds.app.value": "2"},
+			},
+			want:   "my value 4 4",
+			enable: true,
+		},
+		{
+			name: "div",
+			args: args{
+				input: "my value {{.cds.app.value | div 2}} {{ div 8 2 }}",
+				vars:  map[string]string{"cds.app.value": "8"},
+			},
+			want:   "my value 4 4",
+			enable: true,
+		},
+		{
+			name: "mod",
+			args: args{
+				input: "my value {{.cds.app.value | mod 6}} {{ mod 10 6 }}",
+				vars:  map[string]string{"cds.app.value": "10"},
+			},
+			want:   "my value 4 4",
+			enable: true,
+		},
+		{
 			name: "dirname",
 			args: args{
 				input: "{{.path | dirname}}",
