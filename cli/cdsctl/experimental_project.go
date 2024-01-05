@@ -13,7 +13,6 @@ var experimentalProjectCmd = cli.Command{
 
 func experimentalProject() *cobra.Command {
 	return cli.NewCommand(experimentalProjectCmd, nil, []*cobra.Command{
-		projectVCS(),
 		projectRepository(),
 		projectRepositoryAnalysis(),
 	})

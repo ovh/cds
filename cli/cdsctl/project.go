@@ -28,6 +28,7 @@ func projectCommands() []*cobra.Command {
 		cli.NewCommand(projectFavoriteCmd, projectFavoriteRun, nil, withAllCommandModifiers()...),
 		projectKey(),
 		projectVariable(),
+		projectVCS(),
 		projectIntegration(),
 		projectRepositoryManager(),
 	}
