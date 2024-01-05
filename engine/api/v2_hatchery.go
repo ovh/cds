@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	hatch_auth "github.com/ovh/cds/engine/api/authentication/hatchery"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
@@ -66,6 +67,8 @@ func (api *API) postHatcheryHeartbeatHandler() ([]service.RbacChecker, service.H
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			// No update event on heartbeat
 			return nil
 		}
 }
@@ -87,6 +90,10 @@ func (api *API) getHatcheryByIdentifier(ctx context.Context, hatcheryIdentifier 
 func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.globalHatcheryManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			var h sdk.Hatchery
 			if err := service.UnmarshalBody(req, &h); err != nil {
@@ -116,6 +123,7 @@ func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryCreated, h, u.AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, h, http.StatusCreated)
 		}
 }
@@ -151,6 +159,11 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			vars := mux.Vars(req)
 			hatcheryIdentifier := vars["hatcheryIdentifier"]
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			hatch, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
 			if err != nil {
 				return err
@@ -162,40 +175,49 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			}
 			defer tx.Rollback() // nolint
 
+			rbacFound := true
 			hatcheryPermission, err := rbac.LoadRBACByHatcheryID(ctx, tx, hatch.ID)
 			if err != nil {
 				if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return err
 				}
-				// here, no rbac found, just delete the hatchery
-				if err := hatchery.Delete(tx, hatch.ID); err != nil {
-					return err
-				}
-				return sdk.WithStack(tx.Commit())
+				rbacFound = false
 			}
+			if rbacFound {
+				// Remove all permissions on this hatchery
+				rbacHatcheries := make([]sdk.RBACHatchery, 0)
 
-			// Remove all permissions on this hatchery
-			rbacHatcheries := make([]sdk.RBACHatchery, 0)
-			for _, h := range hatcheryPermission.Hatcheries {
-				if h.HatcheryID != hatch.ID {
-					rbacHatcheries = append(rbacHatcheries, h)
+				for _, h := range hatcheryPermission.Hatcheries {
+					if h.HatcheryID != hatch.ID {
+						rbacHatcheries = append(rbacHatcheries, h)
+					}
 				}
-			}
-			hatcheryPermission.Hatcheries = rbacHatcheries
+				hatcheryPermission.Hatcheries = rbacHatcheries
 
-			if hatcheryPermission.IsEmpty() {
-				if err := rbac.Delete(ctx, tx, *hatcheryPermission); err != nil {
-					return err
-				}
-			} else {
-				if err := rbac.Update(ctx, tx, hatcheryPermission); err != nil {
-					return err
+				if hatcheryPermission.IsEmpty() {
+					if err := rbac.Delete(ctx, tx, *hatcheryPermission); err != nil {
+						return err
+					}
+				} else {
+					if err := rbac.Update(ctx, tx, hatcheryPermission); err != nil {
+						return err
+					}
 				}
 			}
 
 			if err := hatchery.Delete(tx, hatch.ID); err != nil {
 				return err
 			}
-			return sdk.WithStack(tx.Commit())
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryDeleted, *hatch, u.AuthConsumerUser.AuthentifiedUser)
+
+			if hatcheryPermission.IsEmpty() {
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionDeleted, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
+			} else {
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
+			}
+			return nil
 		}
 }

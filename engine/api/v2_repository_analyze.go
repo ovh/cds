@@ -197,7 +197,6 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				AnalysisID: a.ID,
 				Status:     a.Status,
 			}
-
 			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProject.Name, repo.Name, a)
 			return service.WriteJSON(w, response, http.StatusCreated)
 		}
@@ -301,8 +300,10 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
 
+	var user sdk.AuthentifiedUser
+
 	defer func() {
-		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis)
+		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis, user)
 	}()
 
 	entitiesToUpdate := make([]sdk.EntityWithObject, 0)
@@ -341,7 +342,6 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	// Retrieve committer and files content
 	var filesContent map[string][]byte
-	var userID string
 	if analysis.Status == sdk.RepositoryAnalysisStatusInProgress {
 		u, analysisStatus, analysisError, err := findCommitter(ctx, api.Cache, api.mustDB(), analysis.Commit, analysis.Data.SignKeyID, analysis.ProjectKey, *vcsProjectWithSecret, repo.Name, api.Config.VCS.GPGKeys)
 		if err != nil {
@@ -352,7 +352,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			analysis.Data.Error = analysisError
 		}
 		if u != nil {
-			userID = u.ID
+			user = *u
 			analysis.Data.CDSUserID = u.ID
 			analysis.Data.CDSUserName = u.Username
 
@@ -412,7 +412,7 @@ skipEntity:
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}
-			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, userID, analysis.ProjectKey)
+			b, err := rbac.HasRoleOnProjectAndUserID(ctx, api.mustDB(), roleName, user.ID, analysis.ProjectKey)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
 			}
@@ -452,6 +452,8 @@ skipEntity:
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve default branch on repository %s", repo.Name))
 	}
 
+	eventInsertedEntities := make([]sdk.Entity, 0)
+	eventUpdatedEntities := make([]sdk.Entity, 0)
 	for i := range entitiesToUpdate {
 		e := &entities[i]
 		existingEntity, err := entity.LoadByBranchTypeName(ctx, tx, e.ProjectRepositoryID, e.Branch, e.Type, e.Name)
@@ -462,11 +464,13 @@ skipEntity:
 			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
 			}
+			eventInsertedEntities = append(eventInsertedEntities, e.Entity)
 		} else {
 			e.ID = existingEntity.ID
 			if err := entity.Update(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to update %s of type %s", e.Name, e.Type)))
 			}
+			eventUpdatedEntities = append(eventUpdatedEntities, e.Entity)
 		}
 
 		// Insert workflow hook
@@ -493,7 +497,17 @@ skipEntity:
 		return sdk.WrapError(err, "unable to update analysis")
 	}
 
-	return sdk.WithStack(tx.Commit())
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(tx.Commit())
+	}
+	for _, e := range eventInsertedEntities {
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityCreated, repo.Name, repo.Name, e, &user)
+	}
+	for _, eUpdated := range eventUpdatedEntities {
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityUpdated, vcsProjectWithSecret.Name, repo.Name, eUpdated, &user)
+	}
+
+	return nil
 }
 
 func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch string) error {

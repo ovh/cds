@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -133,6 +132,11 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 				return err
 			}
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return sdk.WithStack(err)
@@ -147,7 +151,7 @@ func (api *API) deleteProjectRepositoryHandler() ([]service.RbacChecker, service
 				return sdk.WithStack(err)
 			}
 
-			event.PublishRemoveProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProject.ID, Name: vcsProject.Name}, *repo, getUserConsumer(ctx))
+			event_v2.PublishRepositoryEvent(ctx, api.Cache, sdk.EventRepositoryDeleted, pKey, vcsProject.Name, *repo, *u.AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, vcsProject, http.StatusOK)
 		}
 }
@@ -158,6 +162,11 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
@@ -232,9 +241,9 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return sdk.WithStack(err)
 			}
 
-			event.PublishAddProjectRepository(ctx, pKey, sdk.VCSProject{ID: vcsProjectWithSecret.ID, Name: vcsProjectWithSecret.Name}, repoDB, getUserConsumer(ctx))
-			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a)
+			event_v2.PublishRepositoryEvent(ctx, api.Cache, sdk.EventRepositoryCreated, pKey, vcsProjectWithSecret.Name, repoDB, *u.AuthConsumerUser.AuthentifiedUser)
 
+			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a)
 			return service.WriteMarshal(w, req, repoDB, http.StatusCreated)
 		}
 }

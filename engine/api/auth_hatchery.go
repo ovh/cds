@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/hatchery"
+	"github.com/ovh/cds/engine/api/event_v2"
 	hatch "github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -130,6 +131,8 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryUpdated, *h, nil)
 
 			pubKey, err := jws.ExportPublicKey(authentication.GetSigningKey())
 			if err != nil {

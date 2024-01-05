@@ -103,7 +103,7 @@ func (api *API) initHatcheryWebsocket(pubSubKey string) error {
 	api.WSHatcheryBroker = websocket.NewBroker()
 	api.WSHatcheryBroker.OnMessage(func(m []byte) {
 		telemetry.Record(api.Router.Background, WebSocketEvents, 1)
-		var e sdk.EventV2
+		var e sdk.FullEventV2
 		if err := sdk.JSONUnmarshal(m, &e); err != nil {
 			err = sdk.WrapError(err, "cannot parse event from WS broker")
 			ctx := sdk.ContextWithStacktrace(context.TODO(), err)
@@ -116,7 +116,7 @@ func (api *API) initHatcheryWebsocket(pubSubKey string) error {
 	return nil
 }
 
-func (a *API) websocketHatcheryOnMessage(e sdk.EventV2) {
+func (a *API) websocketHatcheryOnMessage(e sdk.FullEventV2) {
 	currentRegion := e.Region
 	currentModel := e.ModelType
 

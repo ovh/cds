@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/organization"
@@ -78,6 +79,11 @@ func (api *API) deleteRBACHandler() ([]service.RbacChecker, service.Handler) {
 			vars := mux.Vars(req)
 			rbacIdentifier := vars["rbacIdentifier"]
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			perm, err := api.getRBACByIdentifier(ctx, rbacIdentifier)
 			if err != nil {
 				return err
@@ -96,6 +102,7 @@ func (api *API) deleteRBACHandler() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+			event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionDeleted, *perm, *u.AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, nil, http.StatusOK)
 		}
 }
@@ -104,6 +111,11 @@ func (api *API) postImportRBACHandler() ([]service.RbacChecker, service.Handler)
 	return service.RBAC(api.globalPermissionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			force := service.FormBool(req, "force")
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			var rbacRule sdk.RBAC
 			if err := service.UnmarshalRequest(ctx, req, &rbacRule); err != nil {
@@ -141,6 +153,12 @@ func (api *API) postImportRBACHandler() ([]service.RbacChecker, service.Handler)
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
+			}
+
+			if existingRule == nil {
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionCreated, rbacRule, *u.AuthConsumerUser.AuthentifiedUser)
+			} else {
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, rbacRule, *u.AuthConsumerUser.AuthentifiedUser)
 			}
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
@@ -125,7 +126,7 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			}
 
 			for branchName, branchEntities := range entitiesByBranch {
-				if err := cleaner.cleanEntitiesByBranch(ctx, db, branchName, branchEntities); err != nil {
+				if err := cleaner.cleanEntitiesByBranch(ctx, db, store, branchName, branchEntities); err != nil {
 					return err
 				}
 			}
@@ -158,7 +159,9 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 	return sdk.WithStack(tx.Commit())
 }
 
-func (c *EntitiesCleaner) cleanEntitiesByBranch(ctx context.Context, db *gorp.DbMap, branchName string, entitiesByBranch []sdk.Entity) error {
+func (c *EntitiesCleaner) cleanEntitiesByBranch(ctx context.Context, db *gorp.DbMap, store cache.Store, branchName string, entitiesByBranch []sdk.Entity) error {
+	deletedEntities := make([]sdk.Entity, 0)
+
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -171,8 +174,16 @@ func (c *EntitiesCleaner) cleanEntitiesByBranch(ctx context.Context, db *gorp.Db
 			if err := entity.Delete(ctx, tx, &e); err != nil {
 				return err
 			}
+			deletedEntities = append(deletedEntities, e)
 		}
 	}
 
-	return sdk.WithStack(tx.Commit())
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(tx.Commit())
+	}
+
+	for _, e := range deletedEntities {
+		event_v2.PublishEntityEvent(ctx, store, sdk.EventEntityDeleted, c.vcsName, c.repoName, e, nil)
+	}
+	return nil
 }

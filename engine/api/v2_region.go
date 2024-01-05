@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/service"
@@ -29,6 +30,10 @@ func (api *API) getRegionByIdentifier(ctx context.Context, regionIdentifier stri
 func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.globalRegionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			var reg sdk.Region
 			if err := service.UnmarshalBody(req, &reg); err != nil {
@@ -47,6 +52,7 @@ func (api *API) postRegionHandler() ([]service.RbacChecker, service.Handler) {
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+			event_v2.PublishRegionEvent(ctx, api.Cache, sdk.EventRegionCreated, reg, *u.AuthConsumerUser.AuthentifiedUser)
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}
 }
@@ -103,6 +109,11 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 			vars := mux.Vars(req)
 			regionIdentifier := vars["regionIdentifier"]
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			reg, err := api.getRegionByIdentifier(ctx, regionIdentifier)
 			if err != nil {
 				return err
@@ -118,6 +129,9 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 			defer tx.Rollback() // nolint
+
+			deletedPermission := make([]sdk.RBAC, 0)
+			updatedPermission := make([]sdk.RBAC, 0)
 
 			for _, rbacPerm := range rbacRegions {
 				rbacPermRegions := make([]sdk.RBACRegion, 0)
@@ -140,16 +154,32 @@ func (api *API) deleteRegionHandler() ([]service.RbacChecker, service.Handler) {
 					if err := rbac.Delete(ctx, tx, rbacPerm); err != nil {
 						return err
 					}
+					deletedPermission = append(deletedPermission, rbacPerm)
 				} else {
 					if err := rbac.Update(ctx, tx, &rbacPerm); err != nil {
 						return err
 					}
+					updatedPermission = append(updatedPermission, rbacPerm)
 				}
 			}
 
 			if err := region.Delete(tx, reg.ID); err != nil {
 				return err
 			}
-			return sdk.WithStack(tx.Commit())
+
+			if err := tx.Commit(); err != nil {
+				sdk.WithStack(tx.Commit())
+			}
+
+			event_v2.PublishRegionEvent(ctx, api.Cache, sdk.EventRegionDeleted, *reg, *u.AuthConsumerUser.AuthentifiedUser)
+
+			for _, p := range deletedPermission {
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionDeleted, p, *u.AuthConsumerUser.AuthentifiedUser)
+			}
+			for _, p := range updatedPermission {
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, p, *u.AuthConsumerUser.AuthentifiedUser)
+			}
+
+			return nil
 		}
 }

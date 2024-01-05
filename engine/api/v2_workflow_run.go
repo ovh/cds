@@ -577,6 +577,11 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
@@ -615,6 +620,18 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 					return err
 				}
 
+				runJobInfo := sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    rj.WorkflowRunID,
+					WorkflowRunJobID: rj.ID,
+					IssuedAt:         time.Now(),
+					Level:            sdk.WorkflowRunInfoLevelInfo,
+					Message:          fmt.Sprintf("User %s stopped the job", u.GetUsername()),
+				}
+				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &runJobInfo); err != nil {
+					_ = tx.Rollback()
+					return err
+				}
+
 				if err := tx.Commit(); err != nil {
 					return sdk.WithStack(err)
 				}
@@ -630,6 +647,16 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
+			runInfo := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: wr.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelInfo,
+				Message:       fmt.Sprintf("User %s stopped the workflow", u.GetUsername()),
+			}
+			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
+				return err
+			}
+
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
@@ -637,6 +664,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			for _, rj := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, rj)
 			}
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, *u.AuthConsumerUser.AuthentifiedUser)
 
 			return nil
 		}
@@ -755,6 +783,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
+
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 			if err != nil {
 				return sdk.NewError(sdk.ErrWrongRequest, err)
@@ -768,6 +797,11 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
 			if err != nil {
 				return err
+			}
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
@@ -794,9 +828,6 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to rerun a running workflow")
 			}
 
-			u := getUserConsumer(ctx)
-
-			// Get all run jobs
 			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
 			if err != nil {
 				return err
@@ -1072,6 +1103,8 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
@@ -1226,6 +1259,12 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, err
 	}
 
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, *u)
+
 	select {
 	case api.workflowRunCraftChan <- wr.ID:
 		log.Debug(ctx, "postWorkflowRunV2Handler: workflow run %s %d sent into chan", wr.WorkflowName, wr.RunNumber)
@@ -1233,8 +1272,5 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		// Default behaviour is made by a goroutine that call directly the database
 	}
 
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WithStack(err)
-	}
 	return &wr, nil
 }

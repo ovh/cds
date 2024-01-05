@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/plugin"
@@ -155,6 +156,11 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := mux.Vars(r)["name"]
 
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		old, err := plugin.LoadByName(ctx, api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load old plugin")
@@ -176,7 +182,13 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "unable to delete plugin")
 		}
 
-		return sdk.WithStack(tx.Commit())
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		event_v2.PublishPluginEvent(ctx, api.Cache, sdk.EventPluginDeleted, *old, *u.AuthConsumerUser.AuthentifiedUser)
+
+		return nil
 	}
 }
 

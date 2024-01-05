@@ -2,9 +2,11 @@ package api
 
 import (
 	"context"
-	localdriver "github.com/ovh/cds/engine/api/driver/local"
 	"net/http"
 	"time"
+
+	localdriver "github.com/ovh/cds/engine/api/driver/local"
+	"github.com/ovh/cds/engine/api/event_v2"
 
 	"github.com/rockbears/log"
 
@@ -416,6 +418,8 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserCreated, *usr)
 
 		local.CleanVerifyConsumerToken(api.Cache, consumer.ID)
 

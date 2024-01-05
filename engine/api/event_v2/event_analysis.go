@@ -2,33 +2,42 @@ package event_v2
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
 
 func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis) {
-	e := sdk.EventV2{
-		ID:         sdk.UUID(),
-		ProjectKey: a.ProjectKey,
+	bts, _ := json.Marshal(a)
+	e := sdk.AnalysisEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       sdk.EventAnalysisStart,
+			Payload:    bts,
+			ProjectKey: a.ProjectKey,
+		},
 		VCSName:    vcsName,
 		Repository: repoName,
 		Status:     a.Status,
-		Type:       sdk.EventAnalysisStart,
-		Payload:    *a,
 	}
 	publish(ctx, store, e)
 }
 
-func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis) {
-	e := sdk.EventV2{
-		ID:         sdk.UUID(),
-		ProjectKey: a.ProjectKey,
+func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(a)
+	e := sdk.AnalysisEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       sdk.EventAnalysisStart,
+			Payload:    bts,
+			ProjectKey: a.ProjectKey,
+		},
 		VCSName:    vcsName,
 		Repository: repoName,
 		Status:     a.Status,
-		Type:       sdk.EventAnalysisDone,
-		Payload:    *a,
+		UserID:     u.ID,
+		Username:   u.Username,
 	}
 	publish(ctx, store, e)
 }

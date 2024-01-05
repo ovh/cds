@@ -9,6 +9,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/user"
@@ -149,6 +150,8 @@ func (api *API) putUserHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserUpdated, newUser)
+
 		if err := user.LoadOptions.WithOrganization(ctx, api.mustDBWithCtx(ctx), &newUser); err != nil {
 			return err
 		}
@@ -276,6 +279,8 @@ func (api *API) deleteUserHandler() service.Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserDeleted, *u)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

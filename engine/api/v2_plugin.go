@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -29,6 +30,12 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 	return service.RBAC(api.globalPluginManage),
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			force := service.FormBool(r, "force")
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			var p sdk.GRPCPlugin
 			db := api.mustDB()
 			if err := service.UnmarshalBody(r, &p); err != nil {
@@ -69,6 +76,13 @@ func (api *API) postImportPluginHandler() ([]service.RbacChecker, service.Handle
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			if oldP == nil {
+				event_v2.PublishPluginEvent(ctx, api.Cache, sdk.EventPluginCreated, p, *u.AuthConsumerUser.AuthentifiedUser)
+			} else {
+				event_v2.PublishPluginEvent(ctx, api.Cache, sdk.EventPluginUpdated, p, *u.AuthConsumerUser.AuthentifiedUser)
+			}
+
 			return service.WriteJSON(w, p, http.StatusOK)
 		}
 }

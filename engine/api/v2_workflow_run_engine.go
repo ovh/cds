@@ -165,14 +165,15 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runMsgs[i]); err != nil {
 				return err
 			}
-			run.Status = sdk.StatusFail
-			if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
-				return err
-			}
+		}
+		run.Status = sdk.StatusFail
+		if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
+			return err
 		}
 		if errTx := tx.Commit(); errTx != nil {
 			return sdk.WithStack(errTx)
 		}
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
 		return err
 	}
 
@@ -264,6 +265,10 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WithStack(tx.Commit())
 	}
 
+	if sdk.StatusIsTerminated(run.Status) {
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
+	}
+
 	if len(skippedJobs) > 0 {
 		// Re enqueue workflow to trigger job after
 		api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
@@ -277,7 +282,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		default:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
 		}
-
 	}
 
 	return nil

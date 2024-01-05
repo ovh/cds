@@ -262,6 +262,15 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
+			api.GoRoutines.Exec(ctx, "postJobRunResultHandler-"+runResult.ID, func(ctx context.Context) {
+				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), runJob.WorkflowRunID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				event_v2.PublishRunJobRunResult(ctx, api.Cache, sdk.EventRunJobRunResultAdded, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob, runResult)
+			})
+
 			return service.WriteJSON(w, runResult, http.StatusCreated)
 		}
 }
@@ -301,6 +310,15 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 			if err := workflow_v2.UpdateRunResult(ctx, api.mustDB(), &runResult); err != nil {
 				return err
 			}
+
+			api.GoRoutines.Exec(ctx, "putJobRunResultHandler-"+runResult.ID, func(ctx context.Context) {
+				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), runJob.WorkflowRunID)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				event_v2.PublishRunJobRunResult(ctx, api.Cache, sdk.EventRunJobRunResultUpdated, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob, runResult)
+			})
 
 			return service.WriteJSON(w, runResult, http.StatusCreated)
 		}
