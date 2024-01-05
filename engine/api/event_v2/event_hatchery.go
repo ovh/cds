@@ -19,6 +19,7 @@ func PublishHatcheryEvent(ctx context.Context, store cache.Store, eventType stri
 		Hatchery: h.Name,
 	}
 
+	// User is nil for update event, because the hatchery updates itself
 	if u != nil {
 		e.Username = u.Username
 		e.ID = u.ID

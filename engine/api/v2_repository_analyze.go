@@ -197,7 +197,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				AnalysisID: a.ID,
 				Status:     a.Status,
 			}
-			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProject.Name, repo.Name, a, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProject.Name, repo.Name, a)
 			return service.WriteJSON(w, response, http.StatusCreated)
 		}
 }

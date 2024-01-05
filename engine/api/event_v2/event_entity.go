@@ -21,6 +21,7 @@ func PublishEntityEvent(ctx context.Context, store cache.Store, eventType string
 		Repository: repoName,
 		Entity:     ent.Name,
 	}
+	// User is nil for deletion (entity deletion is initiated by CDS itself)
 	if u != nil {
 		e.UserID = u.ID
 		e.Username = u.Username

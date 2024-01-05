@@ -13,7 +13,7 @@ func PublishVCSEvent(ctx context.Context, store cache.Store, eventType string, p
 	e := sdk.VCSEvent{
 		ProjectEventV2: sdk.ProjectEventV2{
 			ID:         sdk.UUID(),
-			Type:       sdk.EventVCSCreated,
+			Type:       eventType,
 			Payload:    bts,
 			ProjectKey: projectKey,
 		},

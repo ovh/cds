@@ -158,7 +158,7 @@ func (api *API) postImportRBACHandler() ([]service.RbacChecker, service.Handler)
 			if existingRule == nil {
 				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionCreated, rbacRule, *u.AuthConsumerUser.AuthentifiedUser)
 			} else {
-				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionCreated, rbacRule, *u.AuthConsumerUser.AuthentifiedUser)
+				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, rbacRule, *u.AuthConsumerUser.AuthentifiedUser)
 			}
 			return service.WriteMarshal(w, req, nil, http.StatusCreated)
 		}

@@ -243,11 +243,7 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 
 			event_v2.PublishRepositoryEvent(ctx, api.Cache, sdk.EventRepositoryCreated, pKey, vcsProjectWithSecret.Name, repoDB, *u.AuthConsumerUser.AuthentifiedUser)
 
-			if u != nil {
-				event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a, u.AuthConsumerUser.AuthentifiedUser)
-			} else {
-				event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a, nil)
-			}
+			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProjectWithSecret.Name, repoDB.Name, a)
 			return service.WriteMarshal(w, req, repoDB, http.StatusCreated)
 		}
 }
