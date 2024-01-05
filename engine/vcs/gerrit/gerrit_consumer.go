@@ -13,20 +13,26 @@ func (g *gerritConsumer) AuthorizeRedirect(ctx context.Context) (string, string,
 	return "", "", nil
 }
 
-//AuthorizeToken returns the authorized token (and its secret)
-//from the request token and the verifier got on authorize url
+// AuthorizeToken returns the authorized token (and its secret)
+// from the request token and the verifier got on authorize url
 func (g *gerritConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
 	// Not implemented for gerrit
 	return "", "", nil
 }
 
-//GetAuthorized returns an authorized client
+// GetAuthorized returns an authorized client
 func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
 	client, err := ger.NewClient(g.URL, nil)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to create gerrit client")
+		return nil, sdk.WrapError(err, "unable to create gerrit client on url %q", g.URL)
 	}
-	client.Authentication.SetBasicAuth(vcsAuth.AccessToken, vcsAuth.AccessTokenSecret)
+
+	if vcsAuth.Type != "" {
+		client.Authentication.SetBasicAuth(vcsAuth.Username, vcsAuth.Token)
+	} else {
+		// DEPRECATED VCS
+		client.Authentication.SetBasicAuth(vcsAuth.AccessToken, vcsAuth.AccessTokenSecret)
+	}
 
 	c := &gerritClient{
 		client:               client,
