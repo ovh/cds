@@ -138,6 +138,9 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) e
 					log.Error(ctx, "unable to create request for notification %s for project %s: %v", n.Name, n.ProjectKey, err)
 					continue
 				}
+				for k, v := range n.Auth.Headers {
+					req.Header.Set(k, v)
+				}
 				resp, err := httpClient.Do(req)
 				if err != nil {
 					log.Error(ctx, "unable to send notification %s for project %s: %v", n.Name, n.ProjectKey, err)
