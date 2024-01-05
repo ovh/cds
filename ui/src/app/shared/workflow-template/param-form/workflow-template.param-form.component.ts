@@ -54,8 +54,6 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     result: WorkflowTemplateApplyResult;
     codeMirrorConfig: any;
     themeSubscription: Subscription;
-    focusParam: string;
-    filteredRepo: any[] = [];
 
     constructor(
         private _repoManagerService: RepoManagerService,
@@ -111,24 +109,26 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
     }
 
     fetchRepos(parameterKey: string, repoMan: string): void {
-        this._repoManagerService.getRepositories(this.project.key, repoMan, false).subscribe(rs => {
-            let repoNames = rs.map(r => r.fullname);
+        this.parameterValues[parameterKey] = repoMan;
+        this.emitParam();
 
-            this.parameterValues[parameterKey + '-repositories'] = repoNames;
+        this._repoManagerService.getRepositories(this.project.key, repoMan, false).subscribe(rs => {
+            this.parameterValues[parameterKey + '-repositories'] = rs.map(r => r.fullname);
+            this.parameterValues[parameterKey + '-repositories-filtered'] = rs.map(r => r.fullname).splice(0, 100);
+            this._cd.markForCheck()
 
             if (this.workflowTemplateInstance && this.workflowTemplateInstance.request.parameters[parameterKey]) {
                 let v = this.workflowTemplateInstance.request.parameters[parameterKey];
                 let s = v.split('/');
                 if (s.length > 1) {
                     let selectedRepo = s.splice(1, s.length - 1).join('/');
-                    let existingRepo = repoNames.find(n => n === selectedRepo);
+                    let existingRepo = rs.map(r => r.fullname).find(n => n === selectedRepo);
                     if (existingRepo) {
                         this.parameterValues[parameterKey + '-repository'] = existingRepo;
                         this.emitParam();
                     }
                 }
             }
-            this._cd.markForCheck();
         });
     }
 
@@ -142,6 +142,8 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
                 }))
                 .subscribe(rs => {
                     this.parameterValues[parameterKey + '-repositories'] = rs.map(r => r.fullname);
+                    this.parameterValues[parameterKey + '-repositories-filtered'] = rs.map(r => r.fullname).splice(0, 100);
+                    this._cd.markForCheck()
                 });
         }
     }
@@ -179,18 +181,14 @@ export class WorkflowTemplateParamFormComponent implements OnInit, OnDestroy {
         }
     }
 
-    focusRepo(key: string) {
-        this.focusParam = key;
-        this.filteredRepo = this.parameterValues[this.focusParam + '-repositories'].splice(0, 100);
-        this._cd.markForCheck();
-    }
-
-    filterRepo(query: string): void {
+    filterRepo(parameterKey: string, query: string): void {
         if (!query || query.length < 3) {
+            this.parameterValues[parameterKey + '-repositories-filtered'] = [].concat(this.parameterValues[parameterKey + '-repositories']);
+            this._cd.markForCheck()
             return;
         }
         let queryLowerCase = query.toLowerCase();
-        this.filteredRepo = this.parameterValues[this.focusParam + '-repositories'].filter(name => name.toLowerCase().indexOf(queryLowerCase) !== -1)
+        this.parameterValues[parameterKey + '-repositories-filtered'] = this.parameterValues[parameterKey + '-repositories'].filter(name => name.toLowerCase().indexOf(queryLowerCase) !== -1);
         this._cd.markForCheck()
     }
 

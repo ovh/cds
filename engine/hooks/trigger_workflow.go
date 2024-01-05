@@ -54,21 +54,21 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			wh := &hre.WorkflowHooks[i]
 			if wh.Status == sdk.HookEventWorkflowStatusScheduler {
 
-				targetCommit := "HEAD"
-
 				runRequest := sdk.V2WorkflowRunHookRequest{
-					HookEventID: hre.UUID,
-					UserID:      hre.UserID,
-					Ref:         wh.TargetBranch,
-					Sha:         targetCommit,
-					Payload:     event,
-					EventName:   hre.EventName,
-					HookType:    wh.Type,
+					HookEventID:   hre.UUID,
+					UserID:        hre.UserID,
+					Ref:           wh.TargetBranch,
+					Sha:           "HEAD",
+					Payload:       event,
+					EventName:     hre.EventName,
+					HookType:      wh.Type,
+					SemverCurrent: hre.SemverCurrent,
+					SemverNext:    hre.SemverNext,
 				}
 
 				switch wh.Type {
 				case sdk.WorkflowHookTypeRepository:
-					targetCommit = hre.ExtractData.Commit
+					runRequest.Sha = hre.ExtractData.Commit
 					if runRequest.Ref == "" {
 						runRequest.Ref = hre.ExtractData.Branch
 					}

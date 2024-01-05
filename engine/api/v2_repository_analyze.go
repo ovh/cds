@@ -197,7 +197,11 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				AnalysisID: a.ID,
 				Status:     a.Status,
 			}
+<<<<<<< HEAD
 			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProject.Name, repo.Name, a, getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUser)
+=======
+			event_v2.PublishAnalysisStart(ctx, api.Cache, vcsProject.Name, repo.Name, a)
+>>>>>>> master
 			return service.WriteJSON(w, response, http.StatusCreated)
 		}
 }
@@ -657,8 +661,6 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 			AnalysisID:     analysis.ID,
 			Models:         make([]sdk.EntityFullName, 0),
 			Workflows:      make([]sdk.EntityFullName, 0),
-			UserID:         analysis.Data.CDSUserID,
-			Username:       analysis.Data.CDSUserName,
 		},
 	}
 	for _, e := range entities {

@@ -21,7 +21,7 @@ steps:
       {{.input.cdsctl_command}} project create {{.input.cds_project}} "Test Project {{.input.cds_project}}" {{.input.cds_project}}
    # Get SSH Key info from project
   - script: >
-     {{.input.cdsctl_command}} project keys list {{.input.cds_project}} --format json
+     {{.input.cdsctl_command}} project keys list {{.input.cds_project}} --filter type=ssh --format json
     vars:
       sshKeyPub:
         from: result.systemoutjson.systemoutjson0.publickey

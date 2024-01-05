@@ -154,9 +154,7 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) e
 				}
 				log.Debug(ctx, "notification %s - %s send on event %s", n.ProjectKey, n.Name, e.Type)
 			}
-
 		}
-
 	}
 	return nil
 }

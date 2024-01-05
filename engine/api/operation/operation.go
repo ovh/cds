@@ -194,31 +194,32 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 }
 
 func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, vcsWithSecret sdk.VCSProject, repoName, repoCloneURL string, commit, branch string) (*sdk.Operation, error) {
-  ope := &sdk.Operation{
-    VCSServer:    vcsWithSecret.Name,
-    RepoFullName: repoName,
-    URL:          repoCloneURL,
-    RepositoryStrategy: sdk.RepositoryStrategy{
-      SSHKey:   vcsWithSecret.Auth.SSHKeyName,
-      User:     vcsWithSecret.Auth.Username,
-      Password: vcsWithSecret.Auth.Token,
-    },
-    Setup: sdk.OperationSetup{
-      Checkout: sdk.OperationCheckout{
-        Commit:         commit,
-        Branch:         branch,
-        CheckSignature: true,
-      },
-    },
-  }
-  if vcsWithSecret.Auth.SSHKeyName != "" {
-    ope.RepositoryStrategy.ConnectionType = "ssh"
-  } else {
-    ope.RepositoryStrategy.ConnectionType = "https"
-  }
+	ope := &sdk.Operation{
+		VCSServer:    vcsWithSecret.Name,
+		RepoFullName: repoName,
+		URL:          repoCloneURL,
+		RepositoryStrategy: sdk.RepositoryStrategy{
+			SSHKey:   vcsWithSecret.Auth.SSHKeyName,
+			User:     vcsWithSecret.Auth.Username,
+			Password: vcsWithSecret.Auth.Token,
+		},
+		Setup: sdk.OperationSetup{
+			Checkout: sdk.OperationCheckout{
+				Commit:         commit,
+				Branch:         branch,
+				CheckSignature: true,
+				ProcessSemver:  true,
+			},
+		},
+	}
+	if vcsWithSecret.Auth.SSHKeyName != "" {
+		ope.RepositoryStrategy.ConnectionType = "ssh"
+	} else {
+		ope.RepositoryStrategy.ConnectionType = "https"
+	}
 
-  if err := PostRepositoryOperation(ctx, db, proj, ope, nil); err != nil {
-    return nil, err
-  }
-  return ope, nil
+	if err := PostRepositoryOperation(ctx, db, proj, ope, nil); err != nil {
+		return nil, err
+	}
+	return ope, nil
 }

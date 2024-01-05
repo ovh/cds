@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u *sdk.AuthentifiedUser) {
+func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis) {
 	bts, _ := json.Marshal(a)
 	e := sdk.AnalysisEvent{
 		ProjectEventV2: sdk.ProjectEventV2{
@@ -20,12 +20,6 @@ func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoN
 		VCSName:    vcsName,
 		Repository: repoName,
 		Status:     a.Status,
-	}
-
-	// No user if we came from hook. User is resolved later during analysis process.
-	if u != nil {
-		e.UserID = u.ID
-		e.Username = u.Username
 	}
 	publish(ctx, store, e)
 }
