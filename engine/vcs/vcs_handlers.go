@@ -1245,7 +1245,7 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 }
 
 func (s *Service) statusHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return func(ctx context.Context, w http.ResponseWriter, _ *http.Request) error {
 		var status = http.StatusOK
 		return service.WriteJSON(w, s.Status(ctx), status)
 	}

@@ -218,7 +218,7 @@ type VCSAuthProject struct {
 	Token      string `json:"token,omitempty" db:"-"`
 	SSHKeyName string `json:"sshKeyName,omitempty" db:"-"`
 
-	// Use for gerrit
+	// Used by gerrit
 	SSHUsername   string `json:"sshUsername,omitempty" db:"-"`
 	SSHPort       int    `json:"sshPort,omitempty" db:"-"`
 	SSHPrivateKey string `json:"sshPrivateKey,omitempty" db:"-"`

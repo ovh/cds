@@ -57,8 +57,8 @@
         <ng-container *ngIf="addRepoResponse?.auth_type === 'basic'">
             <button nz-button nzType="primary" name="validationbtn" [nzLoading]="verificationLoading" (click)="sendBasicAuth()">Validate</button>
         </ng-container>
-        <ng-container *ngIf="selectedRepoId != null">
-            <button nz-button nzType="primary" name="validationbtn" [nzLoading]="verificationLoading" (click)="sendVerificationCode()">Validate</button>
+        <ng-container *ngIf="addRepoResponse?.auth_type === 'oauth' && selectedRepoId != null">
+            <button nz-button nzType="primary" name="validationbtn" [nzLoading]="verificationLoading" (click)="sendVerificationCode()">Validate Verification Code</button>
         </ng-container>
     </div>
 </nz-modal>
