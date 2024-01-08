@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
@@ -216,6 +217,11 @@ func (api *API) updateProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
 
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		proj := &sdk.Project{}
 		if err := service.UnmarshalBody(r, proj); err != nil {
 			return sdk.WrapError(err, "Unmarshall error")
@@ -245,6 +251,7 @@ func (api *API) updateProjectHandler() service.Handler {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 		event.PublishUpdateProject(ctx, proj, p, getUserConsumer(ctx))
+		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectUpdated, *proj, *u.AuthConsumerUser.AuthentifiedUser)
 
 		proj.Permissions.Readable = true
 		proj.Permissions.Writable = true
@@ -446,6 +453,9 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 func (api *API) postProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		consumer := getUserConsumer(ctx)
+		if consumer == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		if api.Config.Project.CreationDisabled && !isAdmin(ctx) {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "project creation is disabled")
@@ -597,9 +607,11 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load integration models")
 		}
 
+		var created, updated []sdk.ProjectIntegration
 		for i := range integrationModels {
 			pf := &integrationModels[i]
-			if err := propagatePublicIntegrationModelOnProject(ctx, tx, api.Cache, *pf, p, consumer); err != nil {
+			created, updated, err = propagatePublicIntegrationModelOnProject(ctx, tx, api.Cache, *pf, p, consumer)
+			if err != nil {
 				return sdk.WithStack(err)
 			}
 		}
@@ -609,6 +621,19 @@ func (api *API) postProjectHandler() service.Handler {
 		}
 
 		event.PublishAddProject(ctx, &p, consumer)
+		for _, pp := range created {
+			event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationCreated, permProjectKey, pp, *consumer.AuthConsumerUser.AuthentifiedUser)
+		}
+		for _, pp := range updated {
+			event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationUpdated, permProjectKey, pp, *consumer.AuthConsumerUser.AuthentifiedUser)
+		}
+		for _, k := range p.Keys {
+			event_v2.PublishProjectKeyEvent(ctx, api.Cache, p.Key, sdk.EventKeyCreated, k, *consumer.AuthConsumerUser.AuthentifiedUser)
+		}
+		for _, v := range p.Variables {
+			event_v2.PublishVariableEvent(ctx, api.Cache, sdk.EventVariableCreated, p.Key, v, *consumer.AuthConsumerUser.AuthentifiedUser)
+		}
+		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectCreated, p, *consumer.AuthConsumerUser.AuthentifiedUser)
 
 		proj, err := project.Load(ctx, api.mustDB(), p.Key,
 			project.LoadOptions.WithLabels,
@@ -633,6 +658,11 @@ func (api *API) deleteProjectHandler() service.Handler {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		p, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if err != nil {
@@ -664,6 +694,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 		}
 
 		event.PublishDeleteProject(ctx, p, getUserConsumer(ctx))
+		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectDeleted, *p, *u.AuthConsumerUser.AuthentifiedUser)
 		return nil
 	}
 }

@@ -36,6 +36,29 @@ func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType, v
 	publish(ctx, store, e)
 }
 
+func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, jobID string, gateInputs map[string]interface{}, u sdk.AuthentifiedUser) {
+	bts, _ := json.Marshal(gateInputs)
+	e := sdk.WorkflowRunJobManualEvent{
+		ProjectEventV2: sdk.ProjectEventV2{
+			ID:         sdk.UUID(),
+			Type:       eventType,
+			Payload:    bts,
+			ProjectKey: wr.ProjectKey,
+		},
+		VCSName:       wr.Contexts.Git.Server,
+		Repository:    wr.Contexts.Git.Repository,
+		Workflow:      wr.WorkflowName,
+		RunNumber:     wr.RunNumber,
+		RunAttempt:    wr.RunAttempt,
+		Status:        wr.Status,
+		WorkflowRunID: wr.ID,
+		UserID:        u.ID,
+		Username:      u.Username,
+		JobID:         jobID,
+	}
+	publish(ctx, store, e)
+}
+
 func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType, vcsName, repoName string, rj sdk.V2WorkflowRunJob) {
 	bts, _ := json.Marshal(rj)
 	e := sdk.WorkflowRunJobEvent{
