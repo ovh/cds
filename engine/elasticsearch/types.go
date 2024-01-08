@@ -24,6 +24,7 @@ type ESClient interface {
 	IndexDoc(ctx context.Context, index, docType, id string, body interface{}) (*elastic.IndexResponse, error)
 	SearchDoc(ctx context.Context, indices []string, docType string, query elastic.Query, sorts []elastic.Sorter, from, size int) (*elastic.SearchResult, error)
 	Ping(ctx context.Context, url string) (*elastic.PingResult, int, error)
+	IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*elastic.IndexResponse, error)
 }
 
 type esClient struct {
@@ -35,6 +36,13 @@ func (c *esClient) IndexDoc(ctx context.Context, index, docType, id string, body
 		c.client.Index().Index(index).Type(docType).BodyJson(body).Do(ctx)
 	}
 	return c.client.Index().Index(index).Type(docType).Id(id).BodyJson(body).Do(ctx)
+}
+
+func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*elastic.IndexResponse, error) {
+	if id == "" {
+		c.client.Index().Index(index).BodyJson(body).Do(ctx)
+	}
+	return c.client.Index().Index(index).Id(id).BodyJson(body).Do(ctx)
 }
 
 func (c *esClient) SearchDoc(ctx context.Context, indices []string, docType string, query elastic.Query, sorts []elastic.Sorter, from, size int) (*elastic.SearchResult, error) {

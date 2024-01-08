@@ -50,6 +50,21 @@ func (mr *MockESClientMockRecorder) IndexDoc(ctx, index, docType, id, body inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexDoc", reflect.TypeOf((*MockESClient)(nil).IndexDoc), ctx, index, docType, id, body)
 }
 
+// IndexDocWithoutType mocks base method.
+func (m *MockESClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*elastic.IndexResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IndexDocWithoutType", ctx, index, id, body)
+	ret0, _ := ret[0].(*elastic.IndexResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IndexDocWithoutType indicates an expected call of IndexDocWithoutType.
+func (mr *MockESClientMockRecorder) IndexDocWithoutType(ctx, index, id, body interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexDocWithoutType", reflect.TypeOf((*MockESClient)(nil).IndexDocWithoutType), ctx, index, id, body)
+}
+
 // Ping mocks base method.
 func (m *MockESClient) Ping(ctx context.Context, url string) (*elastic.PingResult, int, error) {
 	m.ctrl.T.Helper()
