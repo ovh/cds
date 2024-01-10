@@ -3,11 +3,14 @@ title: "Project roles"
 weight: 2
 ---
 
-These roles allow users/groups to manage a project
+These roles allow users/groups to manage resources on a project
 
 * `read`: Allow users/groups to list all resources defined inside a project
 * `manage`: Allow users/groups to manage VCS and repository on a project
 * `manage-worker-model`: Allow users/groups to create/update/delete a worker model
+* `manage-action`: Allow users/groups to create/update/delete an action
+* `manage-workflow`: Allow users/groups to create/update/delete a workflow
+
 
 Yaml example:
 ```yaml

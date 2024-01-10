@@ -3,13 +3,23 @@ title: "Global roles"
 weight: 1
 ---
 
-These roles allow users/groups to manage global CDS configuration:
+The `global` section allow users/groups  to manage global CDS configuration:
+
+* users
+* groups
+* organization
+* region
+* hatcheries
+* project creation
+
+
+Available roles: 
 
 * `manage-permission`: Allow users/groups to create/update/delete an permission
 * `manage-organization`: Allow users/groups to create/delete an organization
 * `manage-region`: Allow users/groups to create/delete a region
 * `manage-hatchery`: Allow users/groups to create/update/delete a hatchery
-* `create-project`: Allow users/groups to create/delete a project
+* `create-project`: Allow users/groups to create a project
 
 Yaml example:
 ```yaml

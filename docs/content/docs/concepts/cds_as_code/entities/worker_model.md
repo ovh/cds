@@ -1,5 +1,5 @@
 ---
-title: "[Experimental] Ascode Worker Model"
+title: "Worker Model"
 weight: 3
 ---
 
@@ -7,12 +7,15 @@ weight: 3
 
 Worker model can be defined ascode. That's mean the definition of the worker model will be in a git repository, and each time you will push something, CDS will update it.
 
-# Prerequisite
-* You must use the new CDS permission system [RBAC]({{< relref "/docs/concepts/cds_as_code/rbac/_index.md" >}})
+# As Code directory
+
+A workflow is described directly on your repository inside the directory `.cds/worker-models`
+
+# Permission
+
+To be able to manage a workflow you will need the permission `manage-worker-model` on your project
 
 # Files 
-
-To be detected by CDS, your worker model files must be in this directory `.cds/worker-models/` 
 
 <span style="color:red">*</span>: mandatory field
 
@@ -51,7 +54,6 @@ type: openstack
 osarch: linux/amd64
 spec: 
   image: Ubuntu
-  flavor: "b2-4"
 ```
 
 Fields:
@@ -61,7 +63,6 @@ Fields:
 * <span style="color:red">*</span>`osarch`: OS and architecture of the model
 * <span style="color:red">*</span>`type`: Type of worker model
 * <span style="color:red">*</span>`spec.image`: Openstack image name
-* <span style="color:red">*</span>`spec.flavor`: Openstack flavor to use
 
 
 ## vSphere

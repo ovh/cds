@@ -59,7 +59,6 @@ type CDSContext struct {
 	// Workflow
 	EventName          string                 `json:"event_name,omitempty"`
 	Event              map[string]interface{} `json:"event,omitempty"`
-	Version            string                 `json:"version,omitempty"`
 	ProjectKey         string                 `json:"project_key,omitempty"`
 	RunID              string                 `json:"run_id,omitempty"`
 	RunNumber          int64                  `json:"run_number,omitempty"`
