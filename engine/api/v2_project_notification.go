@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	"github.com/gorilla/mux"
 
@@ -84,6 +85,15 @@ func (api *API) postProjectNotificationHandler() ([]service.RbacChecker, service
 
 			n.ProjectKey = p.Key
 
+			// Check regexp filters
+			for _, f := range n.Filters {
+				for _, e := range f.Events {
+					if _, err := regexp.Compile(e); err != nil {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid regexp %s: %v", e, err)
+					}
+				}
+			}
+
 			tx, err := api.mustDBWithCtx(ctx).Begin()
 			if err != nil {
 				return sdk.WithStack(err)
@@ -128,6 +138,15 @@ func (api *API) putProjectNotificationHandler() ([]service.RbacChecker, service.
 			oldNotif, err := notification_v2.LoadByName(ctx, api.mustDB(), pKey, notifName)
 			if err != nil {
 				return err
+			}
+
+			// Check regexp filters
+			for _, f := range n.Filters {
+				for _, e := range f.Events {
+					if _, err := regexp.Compile(e); err != nil {
+						return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid regexp %s: %v", e, err)
+					}
+				}
 			}
 
 			tx, err := api.mustDBWithCtx(ctx).Begin()

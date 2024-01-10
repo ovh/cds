@@ -99,8 +99,8 @@ func projectNotificationImportFunc(v cli.Values) error {
 
 var projectNotificationExportCmd = cli.Command{
 	Name:    "export",
-	Short:   "Export a notification from a project to stdout",
-	Example: "cdsctl notification export MY-PROJECT MY-VCS-SERVER-NAME > file.yaml",
+	Short:   "Export notification settings from a project",
+	Example: "cdsctl notification export MY-PROJECT",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
