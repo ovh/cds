@@ -23,12 +23,6 @@ cards:
 - name: concept_authentication
   title: "Authentication"
   description: "Understand CDS authentication concepts."
-#- name: concept_permission
-#  description: "Understand the new permission system"
-#  title: "Permission - RBAC"
-#- name: as_code_resources
-#  description: "New CDS as code resources"
-#  title: "As code resources"  
 - name: cds_as_code
   description: "Permission, As-code entities, contexts"
   title: "[Beta] New CDS asCode"  

@@ -13,7 +13,7 @@ Contexts are a way to access information inside a workflow run. Data can be acce
 ${{ <contextName>.data }}
 ```
 
-Context available in the whole workflow run:
+Contexts available:
 
 * `cds`: contains all the information about the workflow run
 * `git`: contains the git information

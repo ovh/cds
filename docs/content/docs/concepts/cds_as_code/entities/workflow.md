@@ -81,7 +81,7 @@ on:
     paths: [src/**/*.java]
   model_update:
     models: [MYPROJ/github/ovh/resources/mymodel]
-	target_branch: main
+	  target_branch: main
   workflow_update:
     target_branch: main
 ```
