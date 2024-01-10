@@ -57,7 +57,7 @@ func projectNotificationDeleteFunc(v cli.Values) error {
 
 var projectNotificationImportCmd = cli.Command{
 	Name:    "import",
-	Short:   "Import a notification on a project from a yaml file",
+	Short:   "Import notification settings on a project from a yaml file",
 	Example: "cdsctl project notification import MY-PROJECT file.yml",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
