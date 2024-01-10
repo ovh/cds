@@ -24,7 +24,7 @@ Contexts available:
 * `inputs`: contains all job inputs
 * `steps`: contains all previous step status
 * `matrix`: contains the curent value for each [matrix](../entities/workflow/#strategy) variable
-* `integrations`: contains 
+* `integrations`: contains data of integration linked to the current job
 * `gate`: contains all gate inputs
 * `secrets`: contains the secrets
 
