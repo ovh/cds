@@ -43,16 +43,16 @@ steps:
       EOF
   # Import VCS Server configuration on the project
   - script: >
-      {{.input.cdsctl_command}} experimental project vcs import {{.input.cds_project}} /tmp/project_vcs.yml
+      {{.input.cdsctl_command}} project vcs import {{.input.cds_project}} /tmp/project_vcs.yml
   # Assert the project has the VCS Server
   - script: >
-      {{.input.cdsctl_command}} experimental project vcs list {{.input.cds_project}} --format json
+      {{.input.cdsctl_command}} project vcs list {{.input.cds_project}} --format json
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.systemoutjson0.name ShouldEqual "my_vcs_server"
   # Assert the project has the VCS Server
   - script: >
-      {{.input.cdsctl_command}} experimental project vcs export {{.input.cds_project}} my_vcs_server | grep my_vcs_server
+      {{.input.cdsctl_command}} project vcs export {{.input.cds_project}} my_vcs_server | grep my_vcs_server
 
   # Setup RBAC on project
   - script: |-
