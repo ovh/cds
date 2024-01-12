@@ -2,6 +2,10 @@ package api
 
 import (
 	"context"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/entity"
@@ -12,9 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func Test_cleanAsCodeEntities(t *testing.T) {
@@ -49,7 +50,7 @@ func Test_cleanAsCodeEntities(t *testing.T) {
 	etoDelete := sdk.Entity{
 		Name:                "model1",
 		Commit:              "123456",
-		Branch:              "temp",
+		Ref:                 "refs/heads/temp",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
@@ -64,7 +65,7 @@ spec:
 	etoKeep := sdk.Entity{
 		Name:                "model2",
 		Commit:              "987654",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
@@ -107,10 +108,10 @@ spec:
 	err = workerCleanProject(context.TODO(), db.DbMap, api.Cache, p.Key)
 	require.NoError(t, err)
 
-	_, err = entity.LoadByBranchTypeName(context.TODO(), db, repo.ID, "temp", sdk.EntityTypeWorkerModel, "model1")
+	_, err = entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/temp", sdk.EntityTypeWorkerModel, "model1")
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
-	e, err := entity.LoadByBranchTypeName(context.TODO(), db, repo.ID, "master", sdk.EntityTypeWorkerModel, "model2")
+	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "model2")
 	require.NoError(t, err)
 	require.Equal(t, etoKeep.ID, e.ID)
 }

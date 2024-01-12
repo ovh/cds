@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/fsamin/go-repo"
 	"github.com/golang/protobuf/ptypes/empty"
 
@@ -44,26 +46,38 @@ func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.Action
 
 	clonedRepo, err := repo.Clone(ctx, path, gitURL, authOption)
 	if err != nil {
-		return nil, fmt.Errorf("unable to clone the repository %s: %v\n", gitURL, err)
+		return nil, fmt.Errorf("unable to clone the repository %s: %v", gitURL, err)
 	}
 
-	if err := clonedRepo.Checkout(ctx, ref); err != nil {
-		return nil, fmt.Errorf("unable to git checkout on ref %s: %v", ref, err)
-	}
-
-	// Check commit
-	if sha != "" {
-		currentCommit, err := clonedRepo.LatestCommit(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get current commit: %v", err)
+	switch {
+	case strings.HasPrefix(ref, sdk.GitRefTagPrefix):
+		tag := strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
+		fmt.Printf("Checkout on tag %s\n", tag)
+		if err := clonedRepo.FetchRemoteTag(ctx, "origin", tag); err != nil {
+			return nil, fmt.Errorf("unable to get tag %s: %v", tag, err)
 		}
-		if currentCommit.LongHash != sha {
-			// Not the same commit, reset HARD the commit
-			fmt.Printf("Reset to commit %s\n", sha)
-			if err := clonedRepo.ResetHard(ctx, sha); err != nil {
-				return nil, fmt.Errorf("unable to reset hard commit %s: %v", sha, err)
+	default:
+		branch := strings.TrimPrefix(ref, sdk.GitRefBranchPrefix)
+		fmt.Printf("Checkout on branch %s\n", branch)
+		if err := clonedRepo.Checkout(ctx, branch); err != nil {
+			return nil, fmt.Errorf("unable to git checkout on branch %s: %v", branch, err)
+		}
+
+		// Check commit
+		if sha != "" {
+			currentCommit, err := clonedRepo.LatestCommit(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get current commit: %v", err)
+			}
+			if currentCommit.LongHash != sha {
+				// Not the same commit, reset HARD the commit
+				fmt.Printf("Reset to commit %s\n", sha)
+				if err := clonedRepo.ResetHard(ctx, sha); err != nil {
+					return nil, fmt.Errorf("unable to reset hard commit %s: %v", sha, err)
+				}
 			}
 		}
+
 	}
 
 	if submodules == "true" || submodules == "recursive" {

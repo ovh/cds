@@ -122,7 +122,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -190,7 +190,7 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -267,7 +267,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -402,7 +402,7 @@ GDFkaTe3nUJdYV4=
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -528,7 +528,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -663,7 +663,7 @@ GDFkaTe3nUJdYV4=
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -767,7 +767,7 @@ GDFkaTe3nUJdYV4=
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
-	e, err := entity.LoadByBranchTypeName(context.TODO(), db, repo.ID, "master", sdk.EntityTypeWorkerModel, "docker-debian")
+	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/head/master", sdk.EntityTypeWorkerModel, "docker-debian")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 }
@@ -868,7 +868,7 @@ GDFkaTe3nUJdYV4=
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -1030,7 +1030,7 @@ GDFkaTe3nUJdYV4=
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 	}
 	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
@@ -1138,7 +1138,7 @@ spec:
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
-	e, err := entity.LoadByBranchTypeName(context.TODO(), db, repo.ID, "master", sdk.EntityTypeWorkerModel, "docker-debian")
+	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 }
@@ -1235,7 +1235,7 @@ GDFkaTe3nUJdYV4=
 		ProjectRepositoryID: repo.ID,
 		Created:             time.Now(),
 		LastModified:        time.Now(),
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		VCSProjectID:        vcsProject.ID,
 		Data: sdk.ProjectRepositoryData{
 			OperationUUID: sdk.UUID(),
@@ -1375,7 +1375,7 @@ GDFkaTe3nUJdYV4=
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
-	e, err := entity.LoadByBranchTypeName(context.TODO(), db, repo.ID, "master", sdk.EntityTypeWorkerModel, "docker-debian")
+	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 }
@@ -1395,7 +1395,7 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 		Entity: sdk.Entity{
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
-			Branch:              "master",
+			Ref:                 "refs/heads/master",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),
@@ -1447,7 +1447,7 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 		Entity: sdk.Entity{
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
-			Branch:              "main",
+			Ref:                 "refs/heads/main",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),
@@ -1500,7 +1500,7 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 		Entity: sdk.Entity{
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
-			Branch:              "main",
+			Ref:                 "refs/heads/main",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),
@@ -1553,7 +1553,7 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 		Entity: sdk.Entity{
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
-			Branch:              "test",
+			Ref:                 "refs/heads/test",
 			Type:                sdk.EntityTypeWorkflow,
 			Commit:              "123456",
 			Name:                sdk.RandomString(10),

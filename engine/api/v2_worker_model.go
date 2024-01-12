@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -29,7 +28,6 @@ func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 			workerModelName := vars["workerModelName"]
-			branch := QueryString(req, "branch")
 
 			// Secret only available for the hatchery
 			withCreds := QueryBool(req, "withSecrets")
@@ -52,35 +50,18 @@ func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			if branch == "" {
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsProject.Name)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				branch = defaultBranch.DisplayID
+			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			if err != nil {
+				return err
 			}
 
 			var workerModel sdk.V2WorkerModel
-			ent, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkerModel, workerModelName)
+			ent, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkerModel, workerModelName)
 			if err != nil {
 				return err
 			}
 			if err := yaml.Unmarshal([]byte(ent.Data), &workerModel); err != nil {
-				return sdk.WrapError(err, "unable to read %s / %s @ %s", repo.ID, workerModelName, branch)
+				return sdk.WrapError(err, "unable to read %s / %s @ %s", repo.ID, workerModelName, ref)
 			}
 			// Only hatchery can ask for cred
 			if withCreds && getHatcheryConsumer(ctx) != nil {
@@ -107,6 +88,11 @@ func (api *API) getWorkerModelsV2Handler() ([]service.RbacChecker, service.Handl
 			}
 
 			branch := QueryString(req, "branch")
+			tag := QueryString(req, "tag")
+
+			if tag != "" && branch != "" {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Query param tag and branch cannot be used together")
+			}
 
 			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
@@ -119,10 +105,16 @@ func (api *API) getWorkerModelsV2Handler() ([]service.RbacChecker, service.Handl
 			}
 
 			var entities []sdk.Entity
-			if branch == "" {
+			if branch == "" && tag == "" {
 				entities, err = entity.LoadByRepositoryAndType(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel)
 			} else {
-				entities, err = entity.LoadByTypeAndBranch(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel, branch)
+				var ref string
+				if tag != "" {
+					ref = sdk.GitRefTagPrefix + tag
+				} else {
+					ref = sdk.GitRefBranchPrefix + branch
+				}
+				entities, err = entity.LoadByTypeAndRef(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel, ref)
 			}
 			if err != nil {
 				return err

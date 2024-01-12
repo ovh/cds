@@ -17,17 +17,17 @@ const (
 
 type EntityFullName struct {
 	Name       string `json:"name" db:"name"`
-	Branch     string `json:"branch" db:"branch"`
+	Ref        string `json:"ref" db:"ref"`
 	VCSName    string `json:"vcs_name" db:"vcs_name"`
 	RepoName   string `json:"repo_name" db:"repo_name"`
 	ProjectKey string `json:"project_key" db:"project_key"`
 }
 
 type ShortEntity struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Branch string `json:"branch"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Ref  string `json:"ref"`
 }
 
 type Entity struct {
@@ -37,8 +37,8 @@ type Entity struct {
 	Type                string    `json:"type" db:"type"`
 	FilePath            string    `json:"file_path" db:"file_path"`
 	Name                string    `json:"name" db:"name"`
-	Branch              string    `json:"branch" db:"branch"`
 	Commit              string    `json:"commit" db:"commit"`
+	Ref                 string    `json:"ref" db:"ref"`
 	LastUpdate          time.Time `json:"last_update" db:"last_update"`
 	Data                string    `json:"data" db:"data"`
 }
@@ -85,7 +85,7 @@ func ReadEntityFile[T Lintable](directory, fileName string, content []byte, out 
 			Entity: Entity{
 				Data:                string(content),
 				Name:                o.GetName(),
-				Branch:              analysis.Branch,
+				Ref:                 analysis.Ref,
 				Commit:              analysis.Commit,
 				ProjectKey:          analysis.ProjectKey,
 				ProjectRepositoryID: analysis.ProjectRepositoryID,

@@ -30,7 +30,8 @@ func (s *Service) extractDataFromGiteaRequest(body []byte) (string, sdk.HookRepo
 	}
 
 	repoName := request.Repository.FullName
-	extractedData.Branch = strings.TrimPrefix(request.Ref, "refs/heads/")
+	extractedData.Ref = request.Ref
+
 	extractedData.Commit = request.After
 
 	return repoName, extractedData, nil
@@ -48,7 +49,7 @@ func (s *Service) extractDataFromGitlabRequest(body []byte) (string, sdk.HookRep
 	if request.Project != nil {
 		repoName = request.Project.PathWithNamespace
 	}
-	extractedData.Branch = strings.TrimPrefix(request.Ref, "refs/heads/")
+	extractedData.Ref = request.Ref
 	extractedData.Commit = request.After
 
 	for _, c := range request.Commits {
@@ -74,7 +75,7 @@ func (s *Service) extractDataFromGithubRequest(body []byte) (string, sdk.HookRep
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
 		return "", extractedData, sdk.WrapError(err, "unable ro read github request: %s", string(body))
 	}
-	extractedData.Branch = strings.TrimPrefix(request.Ref, "refs/heads/")
+	extractedData.Ref = request.Ref
 	extractedData.Commit = request.After
 
 	var repoName string
@@ -83,15 +84,9 @@ func (s *Service) extractDataFromGithubRequest(body []byte) (string, sdk.HookRep
 	}
 
 	for _, c := range request.Commits {
-		for _, p := range c.Added {
-			extractedData.Paths = append(extractedData.Paths, p)
-		}
-		for _, p := range c.Modified {
-			extractedData.Paths = append(extractedData.Paths, p)
-		}
-		for _, p := range c.Removed {
-			extractedData.Paths = append(extractedData.Paths, p)
-		}
+		extractedData.Paths = append(extractedData.Paths, c.Added...)
+		extractedData.Paths = append(extractedData.Paths, c.Modified...)
+		extractedData.Paths = append(extractedData.Paths, c.Removed...)
 	}
 	return repoName, extractedData, nil
 }
@@ -110,7 +105,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 	if len(request.Changes) == 0 {
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to know branch and commit: %s", string(body))
 	}
-	extractedData.Branch = strings.TrimPrefix(request.Changes[0].RefID, "refs/heads/")
+	extractedData.Ref = request.Changes[0].RefID
 	extractedData.Commit = request.Changes[0].ToHash
 	return repoName, extractedData, nil
 }

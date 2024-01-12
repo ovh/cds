@@ -12,6 +12,11 @@ const (
 	RepositoryAnalysisStatusSucceed    = "Success"
 	RepositoryAnalysisStatusError      = "Error"
 	RepositoryAnalysisStatusSkipped    = "Skipped"
+
+	GitRefTagPrefix    = "refs/tags/"
+	GitRefBranchPrefix = "refs/heads/"
+	GitRefTypeBranch   = "branch"
+	GitRefTypeTag      = "tag"
 )
 
 type ProjectRepository struct {
@@ -32,7 +37,7 @@ type ProjectRepositoryAnalysis struct {
 	VCSProjectID        string                `json:"vcs_project_id" db:"vcs_project_id"`
 	ProjectKey          string                `json:"project_key" db:"project_key"`
 	Status              string                `json:"status" db:"status" cli:"status"`
-	Branch              string                `json:"branch" db:"branch" cli:"branch"`
+	Ref                 string                `json:"ref" db:"ref" cli:"ref"`
 	Commit              string                `json:"commit" db:"commit" cli:"commit"`
 	Data                ProjectRepositoryData `json:"data" db:"data"`
 }

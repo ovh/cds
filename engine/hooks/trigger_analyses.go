@@ -82,7 +82,7 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 	ctx, next := telemetry.Span(ctx, "s.runAnalysis")
 	defer next()
 
-	if hre.ExtractData.Branch == "" || hre.ExtractData.Commit == "" {
+	if hre.ExtractData.Ref == "" || hre.ExtractData.Commit == "" {
 		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to find branch and commit from payload: %s", string(hre.Body))
 	}
 
@@ -90,7 +90,7 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 		RepoName:      hre.RepositoryName,
 		VcsName:       hre.VCSServerName,
 		ProjectKey:    analysis.ProjectKey,
-		Branch:        hre.ExtractData.Branch,
+		Ref:           hre.ExtractData.Ref,
 		Commit:        hre.ExtractData.Commit,
 		HookEventUUID: hre.UUID,
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -14,6 +15,48 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) getEntityRefFromQueryParams(ctx context.Context, req *http.Request, projKey string, vcsName string, repoName string) (string, error) {
+	branch := QueryString(req, "branch")
+	tag := QueryString(req, "tag")
+	ref := QueryString(req, "ref")
+
+	if ref != "" && (strings.HasPrefix(ref, sdk.GitRefBranchPrefix) || strings.HasPrefix(ref, sdk.GitRefTagPrefix)) {
+		return ref, nil
+	}
+
+	if branch != "" && tag != "" {
+		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "Query params branch and tag cannot be used together")
+	}
+
+	if branch == "" {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return "", err
+		}
+		vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projKey, vcsName)
+		if err != nil {
+			_ = tx.Rollback()
+			return "", err
+		}
+		defaultBranch, err := vcsClient.Branch(ctx, repoName, sdk.VCSBranchFilters{Default: true})
+		if err != nil {
+			_ = tx.Rollback()
+			return "", err
+		}
+		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
+			return "", err
+		}
+		ref = defaultBranch.ID
+	} else if tag != "" {
+		ref = sdk.GitRefTagPrefix + tag
+	} else {
+		ref = sdk.GitRefBranchPrefix + branch
+	}
+	return ref, nil
+
+}
 
 func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler) {
 	return nil, func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -113,8 +156,6 @@ func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Hand
 				return sdk.WithStack(err)
 			}
 
-			branch := QueryString(req, "branch")
-
 			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
 				return err
@@ -125,39 +166,22 @@ func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Hand
 				return err
 			}
 
-			if branch == "" {
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				branch = defaultBranch.DisplayID
+			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			if err != nil {
+				return err
 			}
 
-			entities, err := entity.LoadByRepositoryAndBranch(ctx, api.mustDB(), repo.ID, branch)
+			entities, err := entity.LoadByRepositoryAndRef(ctx, api.mustDB(), repo.ID, ref)
 			if err != nil {
 				return err
 			}
 			result := make([]sdk.ShortEntity, 0, len(entities))
 			for _, e := range entities {
 				result = append(result, sdk.ShortEntity{
-					ID:     e.ID,
-					Name:   e.Name,
-					Type:   e.Type,
-					Branch: e.Branch,
+					ID:   e.ID,
+					Name: e.Name,
+					Type: e.Type,
+					Ref:  e.Ref,
 				})
 			}
 			return service.WriteJSON(w, result, http.StatusOK)
@@ -180,8 +204,6 @@ func (api *API) getProjectEntityHandler() ([]service.RbacChecker, service.Handle
 			entityType := vars["entityType"]
 			entityName := vars["entityName"]
 
-			branch := QueryString(req, "branch")
-
 			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
 			if err != nil {
 				return err
@@ -192,29 +214,12 @@ func (api *API) getProjectEntityHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			if branch == "" {
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				branch = defaultBranch.DisplayID
+			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			if err != nil {
+				return err
 			}
 
-			entity, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, entityType, entityName)
+			entity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, entityType, entityName)
 			if err != nil {
 				return err
 			}

@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	GitRefManualPayload    = "git.ref"
+	GitBranchManualPayload = "git.branch"
 	GitCommitManualPayload = "git.commit"
+	GitTagManualPayload    = "git.tag"
 )
 
 type V2WorkflowRunHookRequest struct {

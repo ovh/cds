@@ -540,7 +540,8 @@ func (loader *asCodeLoader) loadAsCodeActionStep(ctx context.Context, stepName s
 		loader.repo[projKey+"/"+vcsName+"/"+repoName] = repo
 	}
 	var currentAction sdk.V2Action
-	if err := entity.LoadAndUnmarshalByBranchTypeName(ctx, loader.db, repo.ID, branch, sdk.EntityTypeAction, actionName, &currentAction); err != nil {
+	// For old workflow only manage entities on branch
+	if err := entity.LoadAndUnmarshalByRefTypeName(ctx, loader.db, repo.ID, sdk.GitRefBranchPrefix+branch, sdk.EntityTypeAction, actionName, &currentAction); err != nil {
 		return err
 	}
 	loader.action[stepName] = currentAction

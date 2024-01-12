@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk/telemetry"
@@ -193,7 +194,7 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 	}
 }
 
-func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, vcsWithSecret sdk.VCSProject, repoName, repoCloneURL string, commit, branch string) (*sdk.Operation, error) {
+func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, vcsWithSecret sdk.VCSProject, repoName, repoCloneURL string, commit, ref string) (*sdk.Operation, error) {
 	ope := &sdk.Operation{
 		VCSServer:    vcsWithSecret.Name,
 		RepoFullName: repoName,
@@ -206,11 +207,15 @@ func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj 
 		Setup: sdk.OperationSetup{
 			Checkout: sdk.OperationCheckout{
 				Commit:         commit,
-				Branch:         branch,
 				CheckSignature: true,
 				ProcessSemver:  true,
 			},
 		},
+	}
+	if strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
+		ope.Setup.Checkout.Tag = strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
+	} else {
+		ope.Setup.Checkout.Branch = strings.TrimPrefix(ref, sdk.GitRefBranchPrefix)
 	}
 	if vcsWithSecret.Auth.SSHKeyName != "" {
 		ope.RepositoryStrategy.ConnectionType = "ssh"

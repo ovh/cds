@@ -48,7 +48,7 @@ func TestGetV2ActionHandler(t *testing.T) {
 	e := sdk.Entity{
 		Name:                "test-action",
 		Commit:              "123456",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeAction,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,

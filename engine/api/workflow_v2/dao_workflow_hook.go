@@ -2,6 +2,7 @@ package workflow_v2
 
 import (
 	"context"
+
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 	"github.com/rockbears/log"
@@ -55,8 +56,8 @@ func getAllHooks(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 }
 
 func DeleteWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, entityID string) error {
-  _, err := db.Exec("DELETE FROM v2_workflow_hook WHERE entity_id = $1", entityID)
-  return sdk.WithStack(err)
+	_, err := db.Exec("DELETE FROM v2_workflow_hook WHERE entity_id = $1", entityID)
+	return sdk.WithStack(err)
 }
 
 func InsertWorkflowHook(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h *sdk.V2WorkflowHook) error {
@@ -66,6 +67,18 @@ func InsertWorkflowHook(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h 
 	dbWkfHooks := &dbWorkflowHook{V2WorkflowHook: *h}
 
 	if err := gorpmapping.InsertAndSign(ctx, db, dbWkfHooks); err != nil {
+		return err
+	}
+	*h = dbWkfHooks.V2WorkflowHook
+	return nil
+}
+
+func UpdateWorkflowHook(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h *sdk.V2WorkflowHook) error {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.UpdateWorkflowHook")
+	defer next()
+	dbWkfHooks := &dbWorkflowHook{V2WorkflowHook: *h}
+
+	if err := gorpmapping.UpdateAndSign(ctx, db, dbWkfHooks); err != nil {
 		return err
 	}
 	*h = dbWkfHooks.V2WorkflowHook
@@ -96,4 +109,18 @@ func LoadHooksByModelUpdated(ctx context.Context, db gorp.SqlExecutor, models []
     type = $1 AND
     data->>'model'::text = ANY($2)`).Args(sdk.WorkflowHookTypeWorkerModel, pq.StringArray(models))
 	return getAllHooks(ctx, db, q)
+}
+
+func LoadAllHooksUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowHook, error) {
+	query := gorpmapping.NewQuery(`SELECT * from v2_workflow_hook`)
+	var dbHooks []dbWorkflowHook
+	if err := gorpmapping.GetAll(ctx, db, query, &dbHooks); err != nil {
+		return nil, err
+	}
+	runs := make([]sdk.V2WorkflowHook, 0, len(dbHooks))
+	for _, dbHook := range dbHooks {
+		runs = append(runs, dbHook.V2WorkflowHook)
+	}
+
+	return runs, nil
 }

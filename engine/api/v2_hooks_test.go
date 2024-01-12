@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/entity"
@@ -15,10 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 func TestPostRetrieveEventUserHandler(t *testing.T) {
@@ -35,7 +36,6 @@ func TestPostRetrieveEventUserHandler(t *testing.T) {
 		VCSServerName:  vcs.Name,
 		RepositoryName: "myrepo",
 		Commit:         "123",
-		Branch:         "master",
 		VCSServerType:  "github",
 		SignKey:        "AZERTY",
 	}
@@ -112,7 +112,7 @@ func TestPostHookEventRetrieveSignKeyHandler(t *testing.T) {
 		VCSServerName:  vcs.Name,
 		RepositoryName: "myrepo",
 		Commit:         "123",
-		Branch:         "master",
+		Ref:            "refs/heads/master",
 		HookEventUUID:  "123456",
 		VCSServerType:  "github",
 	}
@@ -143,7 +143,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 		ProjectKey:          p.Key,
 		ProjectRepositoryID: repo.ID,
 		Commit:              "123456",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
@@ -153,7 +153,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 		EntityID:     e.ID,
 		WorkflowName: sdk.RandomString(10),
 		Commit:       "123456",
-		Branch:       "master",
+		Ref:          "refs/heads/master",
 		Type:         sdk.WorkflowHookTypeRepository,
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
@@ -201,7 +201,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 		ProjectKey:          p.Key,
 		ProjectRepositoryID: repo.ID,
 		Commit:              "123456",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
@@ -211,7 +211,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 		EntityID:     e.ID,
 		WorkflowName: sdk.RandomString(10),
 		Commit:       "123456",
-		Branch:       "master",
+		Ref:          "refs/heads/master",
 		Type:         sdk.WorkflowHookTypeWorkerModel,
 		Data: sdk.V2WorkflowHookData{
 			Model: fmt.Sprintf("%s/%s/%s/%s", p.Key, vcs.Name, repo.Name, "MyModel"),
@@ -222,7 +222,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 	r := sdk.HookListWorkflowRequest{
 		RepositoryName:      repo.Name,
 		VCSName:             vcs.Name,
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		RepositoryEventName: sdk.WorkflowHookEventPush,
 		AnayzedProjectKeys:  []string{p.Key},
 		Models: []sdk.EntityFullName{
@@ -231,21 +231,21 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 				VCSName:    vcs.Name,
 				RepoName:   repo.Name,
 				ProjectKey: p.Key,
-				Branch:     "master",
+				Ref:        "refs/heads/master",
 			},
 			{
 				Name:       "MyUnusedModel",
 				VCSName:    vcs.Name,
 				RepoName:   repo.Name,
 				ProjectKey: p.Key,
-				Branch:     "master",
+				Ref:        "refs/heads/master",
 			},
 			{
 				Name:       "MyModel",
 				VCSName:    vcs.Name,
 				RepoName:   repo.Name,
 				ProjectKey: p.Key,
-				Branch:     "master",
+				Ref:        "refs/heads/master",
 			},
 		},
 	}
