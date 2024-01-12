@@ -571,9 +571,6 @@ func TestAnalyzeGithubAddWorkerModel(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
-	_, err := db.Exec("DELETE FROM service")
-	require.NoError(t, err)
-
 	// Create project
 	key1 := sdk.RandomString(10)
 	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
