@@ -571,6 +571,9 @@ func TestAnalyzeGithubAddWorkerModel(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
+	_, err := db.Exec("DELETE FROM service")
+	require.NoError(t, err)
+
 	// Create project
 	key1 := sdk.RandomString(10)
 	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
@@ -767,7 +770,7 @@ GDFkaTe3nUJdYV4=
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
-	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/head/master", sdk.EntityTypeWorkerModel, "docker-debian")
+	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 }
@@ -1467,7 +1470,7 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "refs/heads/main"))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
@@ -1520,7 +1523,7 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "refs/heads/main"))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)

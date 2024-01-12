@@ -35,7 +35,7 @@ type WorkflowOn struct {
 
 type WorkflowOnPush struct {
 	Branches []string `json:"branches,omitempty"`
-	Tags     []string `json:"branches,omitempty"`
+	Tags     []string `json:"tags,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
 }
 

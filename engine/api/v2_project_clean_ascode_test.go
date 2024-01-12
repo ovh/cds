@@ -97,6 +97,7 @@ spec:
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				branches := []sdk.VCSBranch{
 					{
+						ID:        "refs/heads/master",
 						DisplayID: "master",
 					},
 				}
@@ -104,6 +105,8 @@ spec:
 				return nil, 200, nil
 			},
 		).MaxTimes(1)
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/the-name/repos/myrepo/tags", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
 
 	err = workerCleanProject(context.TODO(), db.DbMap, api.Cache, p.Key)
 	require.NoError(t, err)

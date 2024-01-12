@@ -510,7 +510,7 @@ skipEntity:
 	return nil
 }
 
-func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch string) error {
+func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, ref string) error {
 	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
 	defer next()
 
@@ -538,7 +538,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Only save hook push if
 	// * workflow repo declaration == workflow.repository || default branch
 	if e.Workflow.On.Push != nil {
-		if workflowSameRepo || e.Ref == defaultBranch {
+		if workflowSameRepo || e.Ref == ref {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
 				ProjectKey:     e.ProjectKey,
@@ -566,7 +566,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Only save workflow_update hook if :
 	// * workflow.repository declaration != workflow.repository && default branch
 	if e.Workflow.On.WorkflowUpdate != nil {
-		if !workflowSameRepo && e.Ref == defaultBranch {
+		if !workflowSameRepo && e.Ref == ref {
 			wh := sdk.V2WorkflowHook{
 				VCSName:        workflowDefVCSName,
 				EntityID:       e.ID,
@@ -612,7 +612,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				modelFullName = fmt.Sprintf("%s", m)
 			}
 			// Default branch && workflow and model on the same repo && distant workflow
-			if e.Ref == defaultBranch &&
+			if e.Ref == ref &&
 				modelVCSName == workflowDefVCSName && modelRepoName == workflowDefRepositoryName &&
 				(workflowDefVCSName != e.Workflow.Repository.VCSServer || workflowDefRepositoryName != e.Workflow.Repository.Name) {
 				wh := sdk.V2WorkflowHook{

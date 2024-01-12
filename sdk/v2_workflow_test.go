@@ -1,9 +1,10 @@
 package sdk
 
 import (
+	"testing"
+
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestUnmarshalV2WorkflowHooksDetailed(t *testing.T) {
@@ -32,6 +33,7 @@ name: MyDistantWorkflow
 	require.NoError(t, err)
 
 	require.Equal(t, src, string(bts))
+
 }
 
 func TestUnmarshalV2WorkflowHooksShort(t *testing.T) {
