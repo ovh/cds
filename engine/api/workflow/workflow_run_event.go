@@ -314,7 +314,7 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		EnvironmentName: envName,
 	}
 
-	if err := e.vcsClient.SetStatus(ctx, evt, e.vcsClient.IsDisableStatusDetails(ctx)); err != nil {
+	if err := e.vcsClient.SetStatus(ctx, evt, false); err != nil {
 		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
 			return err2
 		}

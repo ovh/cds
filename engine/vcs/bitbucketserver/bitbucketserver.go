@@ -1,7 +1,6 @@
 package bitbucketserver
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -14,14 +13,11 @@ type bitbucketClient struct {
 	username string
 	token    string
 
-	proxyURL          string
-	consumer          bitbucketConsumer // DEPRECATED VCS
-	accessToken       string            // DEPRECATED VCS
-	accessTokenSecret string            // DEPRECATED VCS
+	proxyURL string
+	consumer bitbucketConsumer
 }
 
-// DEPRECATED VCS
-//bitbucketConsumer implements vcs.Server and it's used to instantiate a bitbucketClient
+// bitbucketConsumer implements vcs.Server and it's used to instantiate a bitbucketClient
 type bitbucketConsumer struct {
 	ConsumerKey      string `json:"consumer_key"`
 	PrivateKey       []byte `json:"-"`
@@ -39,7 +35,7 @@ type bitbucketConsumer struct {
 	token            string
 }
 
-//New creates a new bitbucket Consumer
+// New creates a new bitbucket Consumer
 func New(URL, apiURL, uiURL, proxyURL string, store cache.Store, username, token string) sdk.VCSServer {
 	return &bitbucketConsumer{
 		URL:      URL,
@@ -52,26 +48,6 @@ func New(URL, apiURL, uiURL, proxyURL string, store cache.Store, username, token
 	}
 }
 
-// DEPRECATED VCS
-func NewDeprecated(consumerKey string, privateKey []byte, URL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus bool) sdk.VCSServer {
-	return &bitbucketConsumer{
-		ConsumerKey:      consumerKey,
-		PrivateKey:       privateKey,
-		URL:              URL,
-		apiURL:           apiURL,
-		uiURL:            uiURL,
-		proxyURL:         proxyURL,
-		cache:            store,
-		requestTokenURL:  URL + "/plugins/servlet/oauth/request-token",
-		authorizationURL: URL + "/plugins/servlet/oauth/authorize",
-		accessTokenURL:   URL + "/plugins/servlet/oauth/access-token",
-		callbackURL:      oauth1OOB,
-		disableStatus:    disableStatus,
-		username:         username,
-		token:            token,
-	}
-}
-
 func getRepo(fullname string) (string, string, error) {
 	t := strings.Split(fullname, "/")
 	if len(t) != 2 {
@@ -80,8 +56,4 @@ func getRepo(fullname string) (string, string, error) {
 	project := t[0]
 	slug := t[1]
 	return project, slug, nil
-}
-
-func (b *bitbucketClient) GetAccessToken(_ context.Context) string {
-	return b.accessToken
 }

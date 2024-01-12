@@ -162,7 +162,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string, opts s
 // PullRequestComment push a new comment on a pull request
 func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prReq sdk.VCSPullRequestCommentRequest) error {
 	if g.DisableStatus {
-		log.Warn(ctx, "github.PullRequestComment>  ⚠ Github statuses are disabled")
+		log.Warn(ctx, "github.PullRequestComment> ⚠ Github statuses are disabled")
 		return nil
 	}
 

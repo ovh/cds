@@ -23,7 +23,7 @@ type githubClient struct {
 	token                string
 }
 
-//GithubConsumer implements vcs.Server and it's used to instantiate a githubClient
+// GithubConsumer implements vcs.Server and it's used to instantiate a githubClient
 type githubConsumer struct {
 	ClientID             string `json:"client-id"`
 	ClientSecret         string `json:"-"`
@@ -39,7 +39,7 @@ type githubConsumer struct {
 	token                string
 }
 
-//New creates a new GithubConsumer
+// New creates a new GithubConsumer
 func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
 	//Github const
 	const (
@@ -61,36 +61,6 @@ func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.St
 		apiURL:       apiURL,
 		uiURL:        uiURL,
 		proxyURL:     proxyURL,
-	}
-}
-
-func NewDeprecated(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetails bool) sdk.VCSServer {
-	//Github const
-	const (
-		publicURL    = "https://github.com"
-		publicAPIURL = "https://api.github.com"
-	)
-	// if the githubURL is passed as an empty string default it to public GitHub
-	if githubURL == "" {
-		githubURL = publicURL
-	}
-	// if the githubAPIURL is passed as an empty string default it to public GitHub
-	if githubAPIURL == "" {
-		githubAPIURL = publicAPIURL
-	}
-	return &githubConsumer{
-		ClientID:             ClientID,
-		ClientSecret:         ClientSecret,
-		GitHubURL:            githubURL,
-		GitHubAPIURL:         githubAPIURL,
-		Cache:                store,
-		apiURL:               apiURL,
-		uiURL:                uiURL,
-		proxyURL:             proxyURL,
-		disableStatus:        disableStatus,
-		disableStatusDetails: disableStatusDetails,
-		username:             username,
-		token:                token,
 	}
 }
 

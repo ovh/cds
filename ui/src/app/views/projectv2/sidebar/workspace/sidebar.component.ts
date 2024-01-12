@@ -17,13 +17,14 @@ import {
     TreeEvent
 } from 'app/shared/tree/tree.component';
 import {ProjectService} from 'app/service/project/project.service';
-import {Project, VCSProject} from 'app/model/project.model';
+import {Project} from 'app/model/project.model';
 import {Observable, of, Subscription} from 'rxjs';
 import {map} from 'rxjs/operators';
 import {Router} from '@angular/router';
 import {SidebarEvent, SidebarService} from 'app/service/sidebar/sidebar.service';
 import {AnalysisService} from "app/service/analysis/analysis.service";
 import {Entity, EntityAction, EntityWorkerModel, EntityWorkflow} from "app/model/entity.model";
+import { VCSProject } from 'app/model/vcs.model';
 
 @Component({
     selector: 'app-projectv2-sidebar',

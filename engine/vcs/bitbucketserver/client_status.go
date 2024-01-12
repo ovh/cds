@@ -23,17 +23,12 @@ type statusData struct {
 	description string
 }
 
-// DEPRECATED VCS
-func (b *bitbucketClient) IsDisableStatusDetails(ctx context.Context) bool {
-	return false
-}
-
 func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.SetStatus")
 	defer end()
 
 	if b.consumer.disableStatus {
-		log.Warn(ctx, "bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
+		log.Warn(ctx, "bitbucketClient.SetStatus> ⚠ Bitbucket statuses are disabled")
 		return nil
 	}
 
@@ -66,7 +61,7 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event, disabl
 
 	log.Info(ctx, "sending build status for %s : %s %s - %s", statusData.hash, status.Key, status.Name, state)
 
-	if err := b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil); err != nil {
+	if err := b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil); err != nil {
 		return sdk.WrapError(err, "Unable to post build-status name:%s status:%s", status.Name, state)
 	}
 	return nil
@@ -88,7 +83,7 @@ func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref str
 		}
 
 		var response ResponseStatus
-		if err := b.do(ctx, "GET", "build-status", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "build-status", path, params, nil, &response); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get statuses")
 		}
 

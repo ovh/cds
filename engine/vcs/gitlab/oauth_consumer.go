@@ -29,7 +29,7 @@ type Error struct {
 	Description string `json:"error_description"`
 }
 
-//AuthorizeRedirect returns the request token, the Authorize URL
+// AuthorizeRedirect returns the request token, the Authorize URL
 func (g *gitlabConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	_, end := telemetry.Span(ctx, "gitlab.AuthorizeRedirect")
 	defer end()
@@ -87,8 +87,8 @@ func (g *gitlabConsumer) postForm(path string, data url.Values, headers map[stri
 	return res.StatusCode, resBody, nil
 }
 
-//AuthorizeToken returns the authorized token (and its secret)
-//from the request token and the verifier got on authorize url
+// AuthorizeToken returns the authorized token (and its secret)
+// from the request token and the verifier got on authorize url
 func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
 	log.Debug(ctx, "GitlabDriver.AuthorizeToken: state:%s code:%s", state, code)
 
@@ -119,30 +119,17 @@ func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string)
 	return glResponse.AccessToken, state, nil
 }
 
-//GetAuthorized returns an authorized client
+// GetAuthorized returns an authorized client
 func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
 	httpClient := &http.Client{
 		Timeout: 60 * time.Second,
 	}
-	if vcsAuth.Type != "" {
-		gclient := gitlab.NewClient(httpClient, vcsAuth.Token)
-		c := &gitlabClient{
-			client:   gclient,
-			uiURL:    g.uiURL,
-			proxyURL: g.proxyURL,
-		}
-		c.client.SetBaseURL(g.URL + "/api/v4")
-		return c, nil
-	}
 
-	// DEPRECATED VCS
-	gclient := gitlab.NewOAuthClient(httpClient, vcsAuth.AccessToken)
+	gclient := gitlab.NewClient(httpClient, vcsAuth.Token)
 	c := &gitlabClient{
-		client:               gclient,
-		uiURL:                g.uiURL,
-		disableStatus:        g.disableStatus,
-		disableStatusDetails: g.disableStatusDetails,
-		proxyURL:             g.proxyURL,
+		client:   gclient,
+		uiURL:    g.uiURL,
+		proxyURL: g.proxyURL,
 	}
 	c.client.SetBaseURL(g.URL + "/api/v4")
 	return c, nil

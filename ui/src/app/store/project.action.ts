@@ -8,6 +8,7 @@ import { Label, LoadOpts, Project } from 'app/model/project.model';
 import { Variable } from 'app/model/variable.model';
 import { Workflow } from 'app/model/workflow.model';
 import { Environment } from 'app/model/environment.model';
+import { VCSProject } from 'app/model/vcs.model';
 
 // Use to load fetched Project in our app
 export class LoadProject {

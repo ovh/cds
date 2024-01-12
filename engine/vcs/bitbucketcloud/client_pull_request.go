@@ -94,7 +94,7 @@ type BitbucketCloudPullRequestComment struct {
 // PullRequestComment push a new comment on a pull request
 func (client *bitbucketcloudClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
 	if client.DisableStatus {
-		log.Warn(ctx, "bitbucketcloud.PullRequestComment>  ⚠ bitbucketcloud statuses are disabled")
+		log.Warn(ctx, "bitbucketcloud.PullRequestComment> ⚠ bitbucketcloud statuses are disabled")
 		return nil
 	}
 

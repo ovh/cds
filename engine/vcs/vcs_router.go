@@ -2,6 +2,7 @@ package vcs
 
 import (
 	"context"
+
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
@@ -23,12 +24,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics", nil, r.GET(service.GetPrometheustMetricsHandler(s), service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/metrics/all", nil, r.GET(service.GetMetricsHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-
-	r.Handle("/vcs", nil, r.GET(s.getAllVCSServersHandler))
-	r.Handle("/vcsgerrit", nil, r.GET(s.getVCSGerritHandler))
-	r.Handle("/vcs/{name}", nil, r.GET(s.getVCSServersHandler))
-	r.Handle("/vcs/{name}/webhooks", nil, r.GET(s.getVCSServersHooksHandler))
-	r.Handle("/vcs/{name}/polling", nil, r.GET(s.getVCSServersPollingHandler))
 
 	r.Handle("/vcs/{name}/authorize", nil, r.GET(s.getAuthorizeHandler), r.POST(s.postAuthorizeHandler))
 

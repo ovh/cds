@@ -76,10 +76,10 @@ export class ProjectRepoManagerComponent implements OnInit {
             projectKey: this.project.key,
             repoManager: this.repoNameToDelete
         }))
-            .pipe(finalize(() => {
-                this.deleteLoading = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(() => this._toast.success('', this._translate.instant('repoman_delete_msg_ok')));
+        .pipe(finalize(() => {
+            this.deleteLoading = false;
+            this._cd.markForCheck();
+        }))
+        .subscribe(() => this._toast.success('', this._translate.instant('repoman_delete_msg_ok')));
     }
 }

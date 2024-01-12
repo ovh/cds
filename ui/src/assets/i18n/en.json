@@ -279,7 +279,6 @@
   "repoman_verif_msg_ok": "The repository manager is now connected to CDS.",
   "repoman_modal_verif_code_placeholder": "Verification code",
   "repoman_modal_verif_text": "Click on the following link to finalize the link between CDS and the repository manager: ",
-  "repoman_modal_verif_title": "Repository manager authorization",
   "requirement_type": "Type",
   "requirement_help_binary_0": "Requirement type 'binary': CDS will choose a worker with this binary in his path.",
   "requirement_help_hostname_0": "Requirement type 'hostname': This Job will be take by a worker hosted on this host",

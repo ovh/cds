@@ -67,11 +67,7 @@ func (b *bitbucketClient) getFullAPIURL(api string) string {
 	return url
 }
 
-type options struct {
-	asUser bool
-}
-
-func (b *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}, opts *options) error {
+func (b *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}) error {
 	ctx, end := telemetry.Span(ctx, "bitbucketserver.do_http")
 	defer end()
 
@@ -112,18 +108,9 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	var cacheKey string
-	if b.accessToken == "" && b.token != "" {
+	if b.token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.token))
 		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), b.username)
-	} else if opts != nil && opts.asUser && b.token != "" { // DEPRECATED VCS
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", b.token))
-		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(b.token))
-	} else { // DEPRECATED VCS
-		accessToken := NewAccessToken(b.accessToken, b.accessTokenSecret, nil)
-		cacheKey = cache.Key("vcs", "bitbucket", "request", req.URL.String(), sdk.Hash512(accessToken.token))
-		if err := b.consumer.Sign(req, accessToken); err != nil {
-			return err
-		}
 	}
 
 	// ensure the appropriate content-type is set for POST,

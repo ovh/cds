@@ -337,21 +337,12 @@ func (api *API) InitRouter() {
 	r.Handle("/notification/type", ScopeNone(), r.GET(api.getUserNotificationTypeHandler))
 	r.Handle("/notification/state", ScopeNone(), r.GET(api.getUserNotificationStateValueHandler))
 
-	// RepositoriesManager
-	r.Handle("/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerHandler))
-	r.Handle("/repositories_manager/oauth2/callback", Scope(sdk.AuthConsumerScopeProject), r.GET(api.repositoriesManagerOAuthCallbackHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-
 	// RepositoriesManager for projects
 	r.Handle("/project/{permProjectKey}/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerForProjectHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize", Scope(sdk.AuthConsumerScopeProject), r.POST(api.repositoriesManagerAuthorizeHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/callback", Scope(sdk.AuthConsumerScopeProject), r.POST(api.repositoriesManagerAuthorizeCallbackHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/basicauth", Scope(sdk.AuthConsumerScopeProject), r.POST(api.repositoriesManagerAuthorizeBasicHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepoFromRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getReposFromRepositoriesManagerHandler))
 
 	// RepositoriesManager for applications
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/applications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerLinkedApplicationsHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/attach", Scope(sdk.AuthConsumerScopeProject), r.POST(api.attachRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/detach", Scope(sdk.AuthConsumerScopeProject), r.POST(api.detachRepositoriesManagerHandler))
 
@@ -364,7 +355,6 @@ func (api *API) InitRouter() {
 
 	// config
 	r.Handle("/config/user", ScopeNone(), r.GET(api.configUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/config/vcs", ScopeNone(), r.GET(api.configVCShandler))
 	r.Handle("/config/vcsgerrit", ScopeNone(), r.GET(api.configVCSGerritHandler))
 	r.Handle("/config/cdn", ScopeNone(), r.GET(api.configCDNHandler))
 	r.Handle("/config/api", ScopeNone(), r.GET(api.configAPIHandler))

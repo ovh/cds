@@ -15,7 +15,7 @@ const (
 	bitbucketCloudAccessTokenURL = "https://bitbucket.org/site/oauth2/access_token"
 )
 
-//AuthorizeRedirect returns the request token, the Authorize Bitbucket cloud
+// AuthorizeRedirect returns the request token, the Authorize Bitbucket cloud
 func (consumer *bitbucketcloudConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	_, end := telemetry.Span(ctx, "bitbucketcloud.AuthorizeRedirect")
 	defer end()
@@ -34,8 +34,8 @@ func (consumer *bitbucketcloudConsumer) AuthorizeRedirect(ctx context.Context) (
 	return requestToken, authorizeURL, nil
 }
 
-//AuthorizeToken returns the authorized token (and its refresh_token)
-//from the request token and the verifier got on authorize url
+// AuthorizeToken returns the authorized token (and its refresh_token)
+// from the request token and the verifier got on authorize url
 func (consumer *bitbucketcloudConsumer) AuthorizeToken(ctx context.Context, _, code string) (string, string, error) {
 	_, end := telemetry.Span(ctx, "bitbucketcloud.AuthorizeToken")
 	defer end()
@@ -65,7 +65,7 @@ func (consumer *bitbucketcloudConsumer) AuthorizeToken(ctx context.Context, _, c
 	return resp.AccessToken, resp.RefreshToken, nil
 }
 
-//RefreshToken returns the refreshed authorized token
+// RefreshToken returns the refreshed authorized token
 func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refreshToken string) (string, string, error) {
 	params := url.Values{}
 	params.Add("refresh_token", refreshToken)
@@ -91,41 +91,15 @@ func (consumer *bitbucketcloudConsumer) RefreshToken(ctx context.Context, refres
 	return resp.AccessToken, resp.RefreshToken, nil
 }
 
-//GetAuthorized returns an authorized client
+// GetAuthorized returns an authorized client
 func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.Type != "" {
-		c := &bitbucketcloudClient{
-			appPassword: vcsAuth.Token,
-			username:    vcsAuth.Username,
-			Cache:       consumer.Cache,
-			apiURL:      consumer.apiURL,
-			uiURL:       consumer.uiURL,
-			proxyURL:    consumer.proxyURL,
-		}
-		return c, nil
-	}
-
-	// DEPRECATED VCS
-	var newAccessToken string
-	if vcsAuth.AccessToken != "" {
-		var err error
-		newAccessToken, _, err = consumer.RefreshToken(ctx, vcsAuth.AccessTokenSecret)
-		if err != nil {
-			return nil, sdk.WrapError(err, "cannot refresh token")
-		}
-	}
-
 	c := &bitbucketcloudClient{
-		ClientID:             consumer.ClientID,
-		OAuthToken:           newAccessToken,
-		RefreshToken:         vcsAuth.AccessTokenSecret,
-		Cache:                consumer.Cache,
-		apiURL:               consumer.apiURL,
-		uiURL:                consumer.uiURL,
-		DisableStatus:        consumer.disableStatus,
-		DisableStatusDetails: consumer.disableStatusDetails,
-		proxyURL:             consumer.proxyURL,
+		appPassword: vcsAuth.Token,
+		username:    vcsAuth.Username,
+		Cache:       consumer.Cache,
+		apiURL:      consumer.apiURL,
+		uiURL:       consumer.uiURL,
+		proxyURL:    consumer.proxyURL,
 	}
-
 	return c, nil
 }

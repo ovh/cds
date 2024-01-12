@@ -25,16 +25,11 @@ type statusData struct {
 	context      string
 }
 
-// DEPRECATED VCS
-func (client *githubClient) IsDisableStatusDetails(ctx context.Context) bool {
-	return client.DisableStatusDetails
-}
-
 // SetStatus Users with push access can create commit statuses for a given ref:
 // https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
 	if g.DisableStatus {
-		log.Warn(ctx, "github.SetStatus>  ⚠ Github statuses are disabled")
+		log.Warn(ctx, "github.SetStatus> ⚠ Github statuses are disabled")
 		return nil
 	}
 

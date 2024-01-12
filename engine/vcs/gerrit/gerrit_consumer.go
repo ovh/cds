@@ -27,12 +27,7 @@ func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VC
 		return nil, sdk.WrapError(err, "unable to create gerrit client on url %q", g.URL)
 	}
 
-	if vcsAuth.Type != "" {
-		client.Authentication.SetBasicAuth(vcsAuth.Username, vcsAuth.Token)
-	} else {
-		// DEPRECATED VCS
-		client.Authentication.SetBasicAuth(vcsAuth.AccessToken, vcsAuth.AccessTokenSecret)
-	}
+	client.Authentication.SetBasicAuth(vcsAuth.Username, vcsAuth.Token)
 
 	c := &gerritClient{
 		client:               client,

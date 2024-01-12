@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-//Github http var
+// Github http var
 var (
 	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 )
@@ -67,9 +67,6 @@ func (client *bitbucketcloudClient) setAuth(ctx context.Context, req *http.Reque
 	if client.appPassword != "" && client.username != "" {
 		req.SetBasicAuth(client.username, client.appPassword)
 		log.Debug(ctx, "Bitbucketcloud API>> Request with basicAuth url:%s username:%v len:%d", req.URL.String(), client.username, len(client.appPassword))
-	} else if client.OAuthToken != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", client.OAuthToken))
-		log.Debug(ctx, "Bitbucketcloud API>> Request with OAuthToken url:%s len: %d", req.URL.String(), len(client.OAuthToken))
 	} else {
 		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid configuration - bitbucketcloud authentication"))
 	}

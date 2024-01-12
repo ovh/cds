@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/service"
@@ -22,35 +21,13 @@ func (api *API) configUserHandler() service.Handler {
 	}
 }
 
-// ConfigVCShandler return the configuration of vcs server
-func (api *API) configVCShandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vcsServers, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
-		if err != nil {
-			return err
-		}
-		return service.WriteJSON(w, vcsServers, http.StatusOK)
-	}
-}
-
 func (api *API) configVCSGerritHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !isHooks(ctx) {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
-		// deprecated vcs
-		srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeVCS)
-		if err != nil {
-			return err
-		}
-
 		vcsGerritConfigurationServers := make(map[string]sdk.VCSGerritConfiguration)
-
-		if _, _, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, "GET", "/vcsgerrit", nil, &vcsGerritConfigurationServers); err != nil {
-			return err
-		}
-		// end deprecated vcs
 
 		vcsGerritProjects, err := vcs.LoadAllVCSGerrit(ctx, api.mustDB(), gorpmapping.GetOptions.WithDecryption)
 		if err != nil {

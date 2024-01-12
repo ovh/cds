@@ -25,7 +25,7 @@ func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id strin
 	params := url.Values{}
 
 	var response sdk.BitbucketServerPullRequest
-	if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to get pullrequest")
 	}
 
@@ -68,7 +68,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string, opts sd
 		}
 
 		var response PullRequestResponse
-		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get repos")
 		}
 
@@ -122,7 +122,7 @@ func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, p
 			return err
 		}
 	}
-	return b.do(ctx, "POST", "core", path, nil, values, nil, &options{asUser: true})
+	return b.do(ctx, "POST", "core", path, nil, values, nil)
 }
 
 func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
@@ -172,7 +172,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 	values, _ := json.Marshal(request)
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests", project, slug)
 
-	if err := b.do(ctx, "POST", "core", path, nil, values, &request, &options{asUser: true}); err != nil {
+	if err := b.do(ctx, "POST", "core", path, nil, values, &request); err != nil {
 		return pr, sdk.WithStack(err)
 	}
 

@@ -23,10 +23,6 @@ const (
 	HeaderXVCSSSHPort       = "X-CDS-VCS-SSH-PORT"
 	HeaderXVCSSSHPrivateKey = "X-CDS-VCS-SSH-PRIVATE-KEY"
 
-	HeaderXAccessToken        = "X-CDS-ACCESS-TOKEN"         // DEPRECATED
-	HeaderXAccessTokenCreated = "X-CDS-ACCESS-TOKEN-CREATED" // DEPRECATED
-	HeaderXAccessTokenSecret  = "X-CDS-ACCESS-TOKEN-SECRET"  // DEPRECATED
-
 	VCSTypeGitea           = "gitea"
 	VCSTypeGerrit          = "gerrit"
 	VCSTypeGitlab          = "gitlab"
@@ -303,10 +299,6 @@ type VCSAuth struct {
 
 	SSHUsername string
 	SSHPort     int
-
-	AccessToken        string // DEPRECATED
-	AccessTokenSecret  string // DEPRECATED
-	AccessTokenCreated int64  // DEPRECATED
 }
 
 // VCSServer is an interface for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient.
@@ -374,7 +366,6 @@ type VCSAuthorizedClientCommon interface {
 
 	// Set build status on repository
 	SetStatus(ctx context.Context, event Event, disableStatusDetails bool) error
-	IsDisableStatusDetails(ctx context.Context) bool
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
 	// Release
@@ -386,9 +377,6 @@ type VCSAuthorizedClientCommon interface {
 
 	// Permissions
 	GrantWritePermission(ctx context.Context, repo string) error
-
-	// Access Token
-	GetAccessToken(ctx context.Context) string
 
 	// File
 	GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error)

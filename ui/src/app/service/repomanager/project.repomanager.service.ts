@@ -10,7 +10,6 @@ import { Observable } from 'rxjs';
 @Injectable()
 export class RepoManagerService {
 
-
     constructor(private _http: HttpClient) {
     }
 
@@ -19,6 +18,7 @@ export class RepoManagerService {
      *
      * @returns
      */
+    // DEPRECATED VCS
     getAll(): Observable<string[]> {
         return this._http.get<string[]>('/repositories_manager');
     }

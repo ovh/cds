@@ -11,13 +11,13 @@ import (
 	"github.com/rockbears/log"
 )
 
-//Github const
+// Github const
 var (
 	requestedScope = []string{"user:email", "repo", "admin:repo_hook"} //https://developer.github.com/v3/oauth/#scopes
 )
 
-//AuthorizeRedirect returns the request token, the Authorize GitHubURL
-//doc: https://developer.github.com/v3/oauth/#web-application-flow
+// AuthorizeRedirect returns the request token, the Authorize GitHubURL
+// doc: https://developer.github.com/v3/oauth/#web-application-flow
 func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	_, end := telemetry.Span(ctx, "github.AuthorizeRedirect")
 	defer end()
@@ -39,8 +39,8 @@ func (g *githubConsumer) AuthorizeRedirect(ctx context.Context) (string, string,
 	return requestToken, authorizeURL, nil
 }
 
-//AuthorizeToken returns the authorized token (and its secret)
-//from the request token and the verifier got on authorize url
+// AuthorizeToken returns the authorized token (and its secret)
+// from the request token and the verifier got on authorize url
 func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
 	_, end := telemetry.Span(ctx, "github.AuthorizeToken")
 	defer end()
@@ -82,37 +82,17 @@ func (g *githubConsumer) AuthorizeToken(ctx context.Context, state, code string)
 	return ghResponse["access_token"], state, nil
 }
 
-//GetAuthorized returns an authorized client
+// GetAuthorized returns an authorized client
 func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.Type != "" {
-		c := &githubClient{
-			GitHubURL:    g.GitHubURL,    // default value of this field is computed in github.New() func
-			GitHubAPIURL: g.GitHubAPIURL, // default value of this field is computed in github.New() func
-			Cache:        g.Cache,
-			uiURL:        g.uiURL,
-			apiURL:       g.apiURL,
-			proxyURL:     g.proxyURL,
-			username:     vcsAuth.Username,
-			token:        vcsAuth.Token,
-		}
-
-		return c, c.RateLimit(ctx)
-	}
-
-	// DEPRECATED VCS
 	c := &githubClient{
-		ClientID:             g.ClientID,
-		OAuthToken:           vcsAuth.AccessToken, // DEPRECATED
-		GitHubURL:            g.GitHubURL,
-		GitHubAPIURL:         g.GitHubAPIURL,
-		Cache:                g.Cache,
-		uiURL:                g.uiURL,
-		DisableStatus:        g.disableStatus,
-		DisableStatusDetails: g.disableStatusDetails,
-		apiURL:               g.apiURL,
-		proxyURL:             g.proxyURL,
-		username:             g.username, // used by a "cds user on github" to write comment on PR
-		token:                g.token,    // used by a "cds user on github" to write comment on PR
+		GitHubURL:    g.GitHubURL,    // default value of this field is computed in github.New() func
+		GitHubAPIURL: g.GitHubAPIURL, // default value of this field is computed in github.New() func
+		Cache:        g.Cache,
+		uiURL:        g.uiURL,
+		apiURL:       g.apiURL,
+		proxyURL:     g.proxyURL,
+		username:     vcsAuth.Username,
+		token:        vcsAuth.Token,
 	}
 
 	return c, c.RateLimit(ctx)

@@ -1,3 +1,26 @@
+export class VCSProject {
+    id: string;
+    name: string;
+    auth: VCSProjectAuth;
+    type: string;
+	created: string;
+	lastModified: string;
+	createdBy: string;
+	description: string;
+	url: string;
+}
+
+export class VCSProjectAuth {
+    username: string;
+    token: string;
+    sshKeyName: string;
+
+    // Use for gerrit
+    sshUsername:   string;
+    sshPort:       number;
+    sshPrivateKey: string;
+}
+
 export class VCSStrategy {
     connection_type: string;
     user: string;

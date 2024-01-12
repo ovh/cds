@@ -5155,21 +5155,6 @@ func (mr *MockHookClientMockRecorder) RetrieveHookEventUser(ctx, req interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventUser", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventUser), ctx, req)
 }
 
-// VCSConfiguration mocks base method.
-func (m *MockHookClient) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VCSConfiguration indicates an expected call of VCSConfiguration.
-func (mr *MockHookClientMockRecorder) VCSConfiguration() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockHookClient)(nil).VCSConfiguration))
-}
-
 // VCSGerritConfiguration mocks base method.
 func (m *MockHookClient) VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error) {
 	m.ctrl.T.Helper()
@@ -10197,21 +10182,6 @@ func (m *MockInterface) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error
 func (mr *MockInterfaceMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockInterface)(nil).V2WorkerList), ctx)
-}
-
-// VCSConfiguration mocks base method.
-func (m *MockInterface) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VCSConfiguration indicates an expected call of VCSConfiguration.
-func (mr *MockInterfaceMockRecorder) VCSConfiguration() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockInterface)(nil).VCSConfiguration))
 }
 
 // VCSGerritConfiguration mocks base method.

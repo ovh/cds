@@ -14,7 +14,7 @@ import (
 
 const oauth1OOB = "oob"
 
-//AuthorizeRedirect returns the request token, the Authorize URL
+// AuthorizeRedirect returns the request token, the Authorize URL
 func (g *bitbucketConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	_, end := telemetry.Span(ctx, "bitbucketserver.AuthorizeRedirect")
 	defer end()
@@ -41,8 +41,8 @@ func (g *bitbucketConsumer) AuthorizeRedirect(ctx context.Context) (string, stri
 	return requestToken.Token(), u, nil
 }
 
-//AuthorizeToken returns the authorized token (and its secret)
-//from the request token and the verifier got on authorize url
+// AuthorizeToken returns the authorized token (and its secret)
+// from the request token and the verifier got on authorize url
 func (g *bitbucketConsumer) AuthorizeToken(ctx context.Context, token, verifier string) (string, string, error) {
 	_, end := telemetry.Span(ctx, "bitbucketserver.AuthorizeToken")
 	defer end()
@@ -71,22 +71,12 @@ func (g *bitbucketConsumer) AuthorizeToken(ctx context.Context, token, verifier 
 	return accessToken.Token(), accessToken.Secret(), nil
 }
 
-//GetAuthorized returns an authorized client
+// GetAuthorized returns an authorized client
 func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
-	if vcsAuth.Type != "" {
-		return &bitbucketClient{
-			consumer: *g,
-			proxyURL: g.proxyURL,
-			username: g.username,
-			token:    g.token,
-		}, nil
-	}
 	return &bitbucketClient{
-		consumer:          *g,
-		accessToken:       vcsAuth.AccessToken,
-		accessTokenSecret: vcsAuth.AccessTokenSecret,
-		token:             g.token,
-		username:          g.username,
-		proxyURL:          g.proxyURL,
+		consumer: *g,
+		proxyURL: g.proxyURL,
+		username: g.username,
+		token:    g.token,
 	}, nil
 }

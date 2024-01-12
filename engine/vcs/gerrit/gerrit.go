@@ -42,18 +42,6 @@ func New(URL string, store cache.Store, sshUsername string, sshPort int, reviewe
 	}
 }
 
-// DEPRECATED VCS
-func NewDeprecated(URL string, store cache.Store, disableStatusDetails bool, sshPort int, reviewerName, reviewerToken string) sdk.VCSServer {
-	return &gerritConsumer{
-		URL:                  URL,
-		cache:                store,
-		disableStatusDetails: disableStatusDetails,
-		sshPort:              sshPort,
-		reviewerName:         reviewerName,
-		reviewerToken:        reviewerToken,
-	}
-}
-
 func (c *gerritClient) GetAccessToken(_ context.Context) string {
 	return c.sshUsername
 }

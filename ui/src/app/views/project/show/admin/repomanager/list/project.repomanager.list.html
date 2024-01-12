@@ -20,7 +20,7 @@
                         {{r.auth.sshKeyName}}</span>
                 </td>
                 <td class="rightAlign">
-                    <button *ngIf="r.type === '' && apiConfig && !apiConfig.project_vcs_management_disabled" nz-button
+                    <button *ngIf="apiConfig && !apiConfig.project_vcs_management_disabled" nz-button
                         nzDanger nzType="primary" [nzLoading]="deleteLoading"
                         (click)="clickDeleteButton(r.name)">Remove</button>
                 </td>

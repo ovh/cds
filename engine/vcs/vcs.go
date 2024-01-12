@@ -83,131 +83,61 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
-	if vcsAuth.Type != "" {
-		switch vcsAuth.Type {
-		case sdk.VCSTypeGitea:
-			return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),
-				s.Cfg.API.HTTP.URL,
-				s.UI.HTTP.URL,
-				s.Cfg.ProxyWebhook,
-				s.Cache,
-				vcsAuth.Username,
-				vcsAuth.Token,
-			), nil
-		case sdk.VCSTypeBitbucketCloud:
-			return bitbucketcloud.New(
-				strings.TrimSuffix(vcsAuth.URL, "/"),
-				s.UI.HTTP.URL,
-				s.Cfg.ProxyWebhook,
-				s.Cache,
-			), nil
-		case sdk.VCSTypeBitbucketServer:
-			return bitbucketserver.New(
-				strings.TrimSuffix(vcsAuth.URL, "/"),
-				s.Cfg.API.HTTP.URL,
-				s.UI.HTTP.URL,
-				s.Cfg.ProxyWebhook,
-				s.Cache,
-				vcsAuth.Username,
-				vcsAuth.Token,
-			), nil
-		case sdk.VCSTypeGerrit:
-			return gerrit.New(
-				vcsAuth.URL,
-				s.Cache,
-				vcsAuth.SSHUsername,
-				vcsAuth.SSHPort,
-				vcsAuth.Username,
-				vcsAuth.Token,
-			), nil
-		case sdk.VCSTypeGithub:
-			return github.New(
-				vcsAuth.URL,
-				vcsAuth.URLApi,
-				s.Cfg.API.HTTP.URL,
-				s.UI.HTTP.URL,
-				s.Cfg.ProxyWebhook,
-				s.Cache,
-			), nil
-		case sdk.VCSTypeGitlab:
-			return gitlab.New(
-				vcsAuth.URL,
-				s.UI.HTTP.URL,
-				s.Cfg.ProxyWebhook,
-				s.Cache,
-				vcsAuth.Username,
-				vcsAuth.Token,
-			), nil
-		}
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
 
-	// DEPRECATED VCS
-	serverCfg, has := s.Cfg.Servers[name]
-	if !has {
-		return nil, sdk.WithStack(sdk.ErrNotFound)
-	}
-
-	if serverCfg.Github != nil {
-		return github.NewDeprecated(
-			serverCfg.Github.ClientID,
-			serverCfg.Github.ClientSecret,
-			serverCfg.URL,
-			serverCfg.Github.APIURL,
+	switch vcsAuth.Type {
+	case sdk.VCSTypeGitea:
+		return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),
 			s.Cfg.API.HTTP.URL,
 			s.UI.HTTP.URL,
-			serverCfg.Github.ProxyWebhook,
-			serverCfg.Github.Username,
-			serverCfg.Github.Token,
+			s.Cfg.ProxyWebhook,
 			s.Cache,
-			serverCfg.Github.Status.Disable,
-			!serverCfg.Github.Status.ShowDetail,
+			vcsAuth.Username,
+			vcsAuth.Token,
 		), nil
-	}
-	if serverCfg.Bitbucket != nil {
-		return bitbucketserver.NewDeprecated(serverCfg.Bitbucket.ConsumerKey,
-			[]byte(serverCfg.Bitbucket.PrivateKey),
-			strings.TrimSuffix(serverCfg.URL, "/"),
+	case sdk.VCSTypeBitbucketCloud:
+		return bitbucketcloud.New(
+			strings.TrimSuffix(vcsAuth.URL, "/"),
+			s.UI.HTTP.URL,
+			s.Cfg.ProxyWebhook,
+			s.Cache,
+		), nil
+	case sdk.VCSTypeBitbucketServer:
+		return bitbucketserver.New(
+			strings.TrimSuffix(vcsAuth.URL, "/"),
 			s.Cfg.API.HTTP.URL,
 			s.UI.HTTP.URL,
-			serverCfg.Bitbucket.ProxyWebhook,
-			serverCfg.Bitbucket.Username,
-			serverCfg.Bitbucket.Token,
+			s.Cfg.ProxyWebhook,
 			s.Cache,
-			serverCfg.Bitbucket.Status.Disable,
+			vcsAuth.Username,
+			vcsAuth.Token,
 		), nil
-	}
-	if serverCfg.BitbucketCloud != nil {
-		return bitbucketcloud.NewDeprecated(serverCfg.BitbucketCloud.ClientID,
-			serverCfg.BitbucketCloud.ClientSecret,
-			serverCfg.URL,
+	case sdk.VCSTypeGerrit:
+		return gerrit.New(
+			vcsAuth.URL,
+			s.Cache,
+			vcsAuth.SSHUsername,
+			vcsAuth.SSHPort,
+			vcsAuth.Username,
+			vcsAuth.Token,
+		), nil
+	case sdk.VCSTypeGithub:
+		return github.New(
+			vcsAuth.URL,
+			vcsAuth.URLApi,
+			s.Cfg.API.HTTP.URL,
 			s.UI.HTTP.URL,
-			serverCfg.BitbucketCloud.ProxyWebhook,
+			s.Cfg.ProxyWebhook,
 			s.Cache,
-			serverCfg.BitbucketCloud.Status.Disable,
-			!serverCfg.BitbucketCloud.Status.ShowDetail,
 		), nil
-	}
-	if serverCfg.Gitlab != nil {
-		return gitlab.NewDeprecated(serverCfg.Gitlab.AppID,
-			serverCfg.Gitlab.Secret,
-			serverCfg.URL,
-			serverCfg.Gitlab.CallbackURL,
+	case sdk.VCSTypeGitlab:
+		return gitlab.New(
+			vcsAuth.URL,
 			s.UI.HTTP.URL,
-			serverCfg.Gitlab.ProxyWebhook,
+			s.Cfg.ProxyWebhook,
 			s.Cache,
-			serverCfg.Gitlab.Status.Disable,
-			serverCfg.Gitlab.Status.ShowDetail,
+			vcsAuth.Username,
+			vcsAuth.Token,
 		), nil
-	}
-	if serverCfg.Gerrit != nil {
-		return gerrit.NewDeprecated(
-			serverCfg.URL,
-			s.Cache,
-			serverCfg.Gerrit.Status.ShowDetail,
-			serverCfg.Gerrit.SSHPort,
-			serverCfg.Gerrit.Reviewer.User,
-			serverCfg.Gerrit.Reviewer.Token), nil
 	}
 	return nil, sdk.WithStack(sdk.ErrNotFound)
 }

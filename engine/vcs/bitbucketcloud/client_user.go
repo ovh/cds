@@ -34,7 +34,7 @@ func (client *bitbucketcloudClient) User(ctx context.Context, username string) (
 func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, error) {
 	var user User
 	url := "/user"
-	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", sdk.Hash512(client.OAuthToken+client.username), url)
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", sdk.Hash512(client.username), url)
 
 	find, err := client.Cache.Get(cacheKey, &user)
 	if err != nil {
@@ -66,7 +66,7 @@ func (client *bitbucketcloudClient) Workspaces(ctx context.Context) (Workspaces,
 	var workspaces Workspaces
 	url := "/workspaces?role=member"
 
-	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "workspaces", sdk.Hash512(client.OAuthToken+client.username), url)
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "workspaces", sdk.Hash512(client.username), url)
 
 	find, err := client.Cache.Get(cacheKey, &workspaces)
 	if err != nil {

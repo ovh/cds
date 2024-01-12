@@ -2,15 +2,14 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@a
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
-import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { VCSProject } from 'app/model/vcs.model';
+import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import {
     CallbackRepositoryManagerBasicAuthInProject,
-    CallbackRepositoryManagerInProject,
-    ConnectRepositoryManagerInProject
+    CallbackRepositoryManagerInProject
 } from 'app/store/project.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { finalize, flatMap } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-repomanager-form',
@@ -19,11 +18,10 @@ import { finalize, flatMap } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RepoManagerFormComponent {
-
-    // project
     @Input() project: Project;
     @Input() disableLabel: boolean = false;
 
+    loading: boolean;
     public ready = false;
     public connectLoading = false;
     public verificationLoading = false;
@@ -31,6 +29,7 @@ export class RepoManagerFormComponent {
     // Repo manager form data
     reposManagerList: string[];
     selectedRepoId: number;
+    selectedRepoType: string;
 
     // Repo manager validation
     public addRepoResponse: any;
@@ -40,40 +39,42 @@ export class RepoManagerFormComponent {
     basicPassword: string;
 
     repoModalVisible: boolean;
+    addingVCSProject: boolean;
+
+    vcsProject: VCSProject;
 
     constructor(
-        private _repoManService: RepoManagerService,
         private _toast: ToastService,
         public _translate: TranslateService,
+        private _toastService: ToastService,
         private _cd: ChangeDetectorRef,
+        private _projectService: ProjectService,
         private store: Store) {
-        this._repoManService.getAll()
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe(res => {
-                this.ready = true;
-                this.reposManagerList = res;
-            });
+            this.reposManagerList = ["bitbucketcloud", "bitbucketserver", "github", "gitlab", "gitea", "gerrit"];
     }
 
     create(): void {
-        if (this.selectedRepoId && this.reposManagerList[this.selectedRepoId]) {
-
-            this.connectLoading = true;
-            this.store.dispatch(new ConnectRepositoryManagerInProject({
-                projectKey: this.project.key,
-                repoManager: this.reposManagerList[this.selectedRepoId]
-            })).pipe(
-                flatMap(() => this.store.selectOnce(ProjectState)),
-                finalize(() => {
-                    this.connectLoading = false;
-                    this._cd.markForCheck();
-                })
-            ).subscribe((projState: ProjectStateModel) => {
-                this.addRepoResponse = projState.repoManager;
-                this.repoModalVisible = true;
-            });
-
+        this.vcsProject = new VCSProject();
+        if (this.reposManagerList[this.selectedRepoId]) {
+            this.repoModalVisible = true;
+            this.selectedRepoType = this.reposManagerList[this.selectedRepoId];
         }
+    }
+
+    saveVCSProject(): void {
+        if (!this.reposManagerList[this.selectedRepoId]) {
+            return;
+        }
+        
+        this.loading = true;
+        this._cd.markForCheck();
+        this._projectService.addVCSProject(this.project.key, this.vcsProject).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(r => {
+            this._toastService.success('Repository Manager updated', '');
+            this.repoModalVisible = false;
+        });
     }
 
     sendBasicAuth(): void {
@@ -107,9 +108,8 @@ export class RepoManagerFormComponent {
             this.verificationLoading = false;
             this.repoModalVisible = false;
             this._cd.markForCheck();
-        }))
-            .subscribe(() => {
-                this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
-            });
+        })).subscribe(() => {
+            this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
+        });
     }
 }

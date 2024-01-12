@@ -4,12 +4,13 @@ import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Schema } from 'app/model/json-schema.model';
 import { Key } from 'app/model/keys.model';
-import {LoadOpts, Project, ProjectRepository, RepositoryHookEvent, VCSProject} from 'app/model/project.model';
+import {LoadOpts, Project, ProjectRepository, RepositoryHookEvent} from 'app/model/project.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RepositoryAnalysis } from "../../model/analysis.model";
 import { Branch } from "../../model/repositories.model";
 import {Entity} from "../../model/entity.model";
+import { VCSProject } from 'app/model/vcs.model';
 
 /**
  * Service to access Project from API.
@@ -108,6 +109,14 @@ export class ProjectService {
 
     getVCSProject(key: string, vcsName: string): Observable<VCSProject> {
         return this._http.get<VCSProject>(`/v2/project/${key}/vcs/${vcsName}`);
+    }
+
+    addVCSProject(key: string, vcsProject: VCSProject): Observable<VCSProject> {
+        return this._http.post<VCSProject>(`/v2/project/${key}/vcs`, vcsProject);
+    }
+
+    deleteVCSProject(key: string, vcsName: string): Observable<any> {
+        return this._http.delete(`/v2/project/${key}/vcs/${vcsName}/${vcsName}`);
     }
 
     getVCSRepository(key: string, vcsName: string, repoName: string): Observable<ProjectRepository> {
