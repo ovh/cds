@@ -101,7 +101,7 @@ testcases:
       script: "cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER"
 
     - name: Create and push a tag
-      script: cd /tmp/repos/{{.git_repo}} && git tag -s v0.1.0 --gpg-sign={{.gpg.key_id}} && git push --tags
+      script: cd /tmp/repos/{{.git_repo}} && git tag -s -u {{.gpg.key_id}} v0.1.0 && git push --tags
 
     - name: Check CDS project analyses status for tag
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
