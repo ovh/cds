@@ -52,13 +52,13 @@ func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.Action
 	switch {
 	case strings.HasPrefix(ref, sdk.GitRefTagPrefix):
 		tag := strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
-		fmt.Printf("Checkout on tag %s\n", tag)
+		fmt.Printf("Checkout tag %s\n", tag)
 		if err := clonedRepo.FetchRemoteTag(ctx, "origin", tag); err != nil {
 			return nil, fmt.Errorf("unable to get tag %s: %v", tag, err)
 		}
 	default:
 		branch := strings.TrimPrefix(ref, sdk.GitRefBranchPrefix)
-		fmt.Printf("Checkout on branch %s\n", branch)
+		fmt.Printf("Checkout branch %s\n", branch)
 		if err := clonedRepo.Checkout(ctx, branch); err != nil {
 			return nil, fmt.Errorf("unable to git checkout on branch %s: %v", branch, err)
 		}

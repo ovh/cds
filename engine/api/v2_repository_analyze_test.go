@@ -680,10 +680,10 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer func() {
+	defer t.Cleanup(func() {
 		_ = services.Delete(db, s)
 		services.NewClient = services.NewDefaultClient
-	}()
+	})
 
 	model := `
     name: docker-debian

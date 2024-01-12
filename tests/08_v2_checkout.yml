@@ -70,7 +70,7 @@ testcases:
                 - id: gitvariables
                   run: |-
                     #!/bin/bash -x
-                    env | grep GIT
+                    env | grep GIT        
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -94,8 +94,41 @@ testcases:
 
     - name: Check checkout log content
       script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
+    - name: Check checkout log content 2
+      script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout branch main\""  
 
     - name: Check gitvariables log content to check SEMVER variables are available
       script: "cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER"
+
+    - name: Create and push a tag
+      script: cd /tmp/repos/{{.git_repo}} && git tag -s v0.1.0 --gpg-sign={{.gpg.key_id}} && git push --tags
+
+    - name: Check CDS project analyses status for tag
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+      retry: 10
+      delay: 12   
+
+    - name: Check that the CDS workflow has 2 executions and are Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 5
+      delay: 30
+
+    - name: Download logs
+      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 2
+
+    - name: Check checkout tag log content
+      script: "cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout completed\""
+    - name: Check checkout tag log content 2
+      script: "cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout tag v0.1.0\""     
+
 
 
