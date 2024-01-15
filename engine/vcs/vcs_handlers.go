@@ -27,75 +27,6 @@ func QueryString(r *http.Request, s string) string {
 	return r.FormValue(s)
 }
 
-func (s *Service) getAllVCSServersHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		servers := make(map[string]sdk.VCSConfiguration, len(s.Cfg.Servers))
-		for k, v := range s.Cfg.Servers {
-			var vcsType string
-			if v.Gerrit != nil {
-				vcsType = "gerrit"
-			} else if v.Bitbucket != nil {
-				vcsType = "bitbucket"
-			} else if v.Github != nil {
-				vcsType = "github"
-			} else if v.Gitlab != nil {
-				vcsType = "gitlab"
-			}
-
-			servers[k] = sdk.VCSConfiguration{
-				Type: vcsType,
-				URL:  v.URL,
-			}
-		}
-		return service.WriteJSON(w, servers, http.StatusOK)
-	}
-}
-
-func (s *Service) getAuthorizeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		name := muxVar(r, "name")
-		consumer, err := s.getConsumer(name, sdk.VCSAuth{})
-		if err != nil {
-			return sdk.WrapError(err, "VCS server unavailable %s", name)
-		}
-
-		token, url, err := consumer.AuthorizeRedirect(ctx)
-		if err != nil {
-			return sdk.WrapError(err, "%s", name)
-		}
-
-		return service.WriteJSON(w, map[string]string{
-			"token": token,
-			"url":   url,
-		}, http.StatusOK)
-	}
-}
-
-func (s *Service) postAuthorizeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		name := muxVar(r, "name")
-		consumer, err := s.getConsumer(name, sdk.VCSAuth{})
-		if err != nil {
-			return sdk.WrapError(err, "VCS server unavailable")
-		}
-
-		body := map[string]string{}
-		if err := service.UnmarshalBody(r, &body); err != nil {
-			return err
-		}
-
-		token, secret, err := consumer.AuthorizeToken(ctx, body["token"], body["secret"])
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, map[string]string{
-			"token":  token,
-			"secret": secret,
-		}, http.StatusOK)
-	}
-}
-
 func (s *Service) getReposHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
@@ -519,7 +450,7 @@ func (s *Service) postPullRequestsHandler() service.Handler {
 }
 
 func (s *Service) postPullRequestCommentHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return func(ctx context.Context, _ http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
@@ -658,7 +589,7 @@ func (s *Service) postFilterEventsHandler() service.Handler {
 }
 
 func (s *Service) postStatusHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return func(ctx context.Context, _ http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 
 		evt := sdk.Event{}
@@ -736,7 +667,7 @@ func (s *Service) postReleaseHandler() service.Handler {
 }
 
 func (s *Service) postUploadReleaseFileHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return func(ctx context.Context, _ http.ResponseWriter, r *http.Request) error {
 		defer r.Body.Close() // nolint
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -882,7 +813,7 @@ func (s *Service) postHookHandler() service.Handler {
 }
 
 func (s *Service) deleteHookHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return func(ctx context.Context, _ http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
@@ -988,13 +919,7 @@ func (s *Service) getListForks() service.Handler {
 
 // Status returns sdk.MonitoringStatus, implements interface service.Service
 func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
-	m := s.NewMonitoringStatus()
-
-	if s.Cfg.Servers["github"].URL != "" {
-		m.AddLine(github.GetStatus()...)
-	}
-
-	return m
+	return s.NewMonitoringStatus()
 }
 
 func (s *Service) statusHandler() service.Handler {
@@ -1109,35 +1034,6 @@ func (s *Service) archiveHandler() service.Handler {
 		if _, err := io.Copy(w, reader); err != nil {
 			return err
 		}
-		return nil
-	}
-}
-
-func (s *Service) postRepoGrantHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		name := muxVar(r, "name")
-		owner := muxVar(r, "owner")
-		repo := muxVar(r, "repo")
-
-		vcsAuth, err := getVCSAuth(ctx)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
-		}
-
-		consumer, err := s.getConsumer(name, vcsAuth)
-		if err != nil {
-			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
-		}
-
-		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
-		}
-
-		if err := client.GrantWritePermission(ctx, owner+"/"+repo); err != nil {
-			return sdk.WrapError(err, "unable to grant %s/%s on %s", owner, repo, name)
-		}
-
 		return nil
 	}
 }

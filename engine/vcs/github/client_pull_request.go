@@ -166,16 +166,6 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prRe
 		return nil
 	}
 
-	canWrite, err := g.UserHasWritePermission(ctx, repo)
-	if err != nil {
-		return err
-	}
-	if !canWrite {
-		if err := g.GrantWritePermission(ctx, repo); err != nil {
-			return err
-		}
-	}
-
 	path := fmt.Sprintf("/repos/%s/issues/%d/comments", repo, prReq.ID)
 	payload := map[string]string{
 		"body": prReq.Message,
@@ -203,16 +193,6 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, prRe
 }
 
 func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
-	canWrite, err := g.UserHasWritePermission(ctx, repo)
-	if err != nil {
-		return sdk.VCSPullRequest{}, err
-	}
-	if !canWrite {
-		if err := g.GrantWritePermission(ctx, repo); err != nil {
-			return sdk.VCSPullRequest{}, err
-		}
-	}
-
 	path := fmt.Sprintf("/repos/%s/pulls", repo)
 	payload := map[string]string{
 		"title": pr.Title,

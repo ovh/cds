@@ -143,20 +143,3 @@ func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo strin
 	}
 	return false, nil
 }
-
-func (b *bitbucketClient) GrantWritePermission(ctx context.Context, repo string) error {
-	if b.username == "" {
-		return nil
-	}
-
-	project, slug, err := getRepo(repo)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	path := fmt.Sprintf("/projects/%s/repos/%s/permissions/users", project, slug)
-	params := url.Values{}
-	params.Add("name", b.username)
-	params.Add("permission", "REPO_WRITE")
-
-	return b.do(ctx, "PUT", "core", path, params, nil, nil)
-}

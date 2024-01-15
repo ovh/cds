@@ -22,8 +22,3 @@ func TestRepoByFullname(t *testing.T) {
 	test.NoError(t, err)
 	t.Logf("repo: %+v", repo)
 }
-
-func TestGrantWritePermission(t *testing.T) {
-	client := getAuthorizedClient(t)
-	test.NoError(t, client.GrantWritePermission(context.Background(), "CDS/demo"))
-}

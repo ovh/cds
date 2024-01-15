@@ -116,7 +116,7 @@ export class ProjectService {
     }
 
     deleteVCSProject(key: string, vcsName: string): Observable<any> {
-        return this._http.delete(`/v2/project/${key}/vcs/${vcsName}/${vcsName}`);
+        return this._http.delete(`/v2/project/${key}/vcs/${vcsName}`);
     }
 
     getVCSRepository(key: string, vcsName: string, repoName: string): Observable<ProjectRepository> {

@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Repos returns the list of accessible repositories
+// Repos returns the list of accessible repositories
 func (c *gerritClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	repos, _, err := c.client.Projects.ListProjects(nil)
 	if err != nil {
@@ -28,17 +28,13 @@ func (c *gerritClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	return vcsRepos, nil
 }
 
-//RepoByFullname returns the repo from its fullname
+// RepoByFullname returns the repo from its fullname
 func (c *gerritClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
 	repo, _, err := c.client.Projects.GetProject(fullname)
 	if err != nil || repo == nil {
 		return sdk.VCSRepo{}, sdk.WrapError(err, "unable to get repository")
 	}
 	return c.ToVCSRepo(fullname, *repo), nil
-}
-
-func (c *gerritClient) GrantWritePermission(ctx context.Context, repo string) error {
-	return nil
 }
 
 func (c *gerritClient) ToVCSRepo(name string, repo gg.ProjectInfo) sdk.VCSRepo {

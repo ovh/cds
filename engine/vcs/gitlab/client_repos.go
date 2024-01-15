@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Repos returns the list of accessible repositories
+// Repos returns the list of accessible repositories
 func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	var repos []sdk.VCSRepo
 
@@ -66,7 +66,7 @@ func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	return repos, nil
 }
 
-//RepoByFullname returns the repo from its fullname
+// RepoByFullname returns the repo from its fullname
 func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
 	repo := sdk.VCSRepo{}
 
@@ -83,8 +83,4 @@ func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 	repo.SSHCloneURL = p.SSHURLToRepo
 
 	return repo, nil
-}
-
-func (c *gitlabClient) GrantWritePermission(ctx context.Context, repo string) error {
-	return nil
 }

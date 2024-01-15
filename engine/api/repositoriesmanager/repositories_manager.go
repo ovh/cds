@@ -549,14 +549,6 @@ func (c *vcsClient) ListStatuses(ctx context.Context, repo string, ref string) (
 	return statuses, nil
 }
 
-func (c *vcsClient) GrantWritePermission(ctx context.Context, repo string) error {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/grant", c.name, repo)
-	if _, err := c.doJSONRequest(ctx, "POST", path, nil, nil); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
-}
-
 func (c *vcsClient) GetAccessToken(_ context.Context) string {
 	return ""
 }

@@ -113,15 +113,6 @@ func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, p
 
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prRequest.ID)
 
-	canWrite, err := b.UserHasWritePermission(ctx, repo)
-	if err != nil {
-		return err
-	}
-	if !canWrite {
-		if err := b.GrantWritePermission(ctx, repo); err != nil {
-			return err
-		}
-	}
 	return b.do(ctx, "POST", "core", path, nil, values, nil)
 }
 
@@ -129,16 +120,6 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return pr, sdk.WithStack(err)
-	}
-
-	canWrite, err := b.UserHasWritePermission(ctx, repo)
-	if err != nil {
-		return pr, err
-	}
-	if !canWrite {
-		if err := b.GrantWritePermission(ctx, repo); err != nil {
-			return pr, err
-		}
 	}
 
 	request := sdk.BitbucketServerPullRequest{

@@ -284,11 +284,6 @@ type VCSGerritConfiguration struct {
 	SSHPort       int    `json:"sshport"`
 }
 
-type VCSServerCommon interface {
-	AuthorizeRedirect(context.Context) (string, string, error)
-	AuthorizeToken(context.Context, string, string) (string, string, error)
-}
-
 // VCSAuth contains tokens (oauth2 tokens or personalAccessToken)
 type VCSAuth struct {
 	Type     string
@@ -303,12 +298,10 @@ type VCSAuth struct {
 
 // VCSServer is an interface for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient.
 type VCSServer interface {
-	VCSServerCommon
 	GetAuthorizedClient(context.Context, VCSAuth) (VCSAuthorizedClient, error)
 }
 
 type VCSServerService interface {
-	VCSServerCommon
 	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClientService, error)
 }
 
@@ -374,9 +367,6 @@ type VCSAuthorizedClientCommon interface {
 
 	// Forks
 	ListForks(ctx context.Context, repo string) ([]VCSRepo, error)
-
-	// Permissions
-	GrantWritePermission(ctx context.Context, repo string) error
 
 	// File
 	GetArchive(ctx context.Context, repo string, dir string, format string, commit string) (io.Reader, http.Header, error)

@@ -2,12 +2,21 @@ export class VCSProject {
     id: string;
     name: string;
     auth: VCSProjectAuth;
+    options: VCSProjectOptions;
     type: string;
 	created: string;
 	lastModified: string;
 	createdBy: string;
 	description: string;
 	url: string;
+}
+
+export class VCSProjectOptions {
+	disableWebhooks: boolean;
+	disableStatus: boolean;
+	disableStatusDetails: boolean;
+	disablePolling: boolean;
+	urlAPI: string;
 }
 
 export class VCSProjectAuth {
