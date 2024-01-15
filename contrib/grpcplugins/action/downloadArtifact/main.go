@@ -66,7 +66,7 @@ func perform(ctx context.Context, c *actionplugin.Common, name, path string) err
 		return err
 	}
 
-	response, err := grpcplugins.GetV2RunResults(ctx, c, workerruntime.V2FilterRunResult{Pattern: name, Type: sdk.V2WorkflowRunResultTypeGeneric})
+	response, err := grpcplugins.GetV2RunResults(ctx, c, workerruntime.V2FilterRunResult{Pattern: name, Type: sdk.V2WorkflowRunResultTypeGeneric, WithClearIntegration: true})
 	if err != nil {
 		return err
 	}
@@ -79,90 +79,29 @@ func perform(ctx context.Context, c *actionplugin.Common, name, path string) err
 	var hasError bool
 
 	grpcplugins.Logf("Total number of files that will be downloaded: %d", len(response.RunResults))
+
 	for _, r := range response.RunResults {
 		t0 := time.Now()
 
-		if r.ArtifactManagerIntegration == nil && r.ArtifactManagerMetadata != nil { // download from CDN
-			cdnApirefhash, has := (*r.ArtifactManagerMetadata)["cdn_api_ref_hash"]
-			if !has {
-				grpcplugins.Errorf("unable to download artifact %q (caused by: missing cdn_api_ref_hash property")
-				hasError = true
-				continue
-			}
-
-			cdnType, has := (*r.ArtifactManagerMetadata)["cdn_type"]
-			if !has {
-				grpcplugins.Errorf("unable to download artifact %q (caused by: missing cdn_type property")
-				hasError = true
-				continue
-			}
-
-			cdnAddr, has := (*r.ArtifactManagerMetadata)["cdn_http_url"]
-			if !has {
-				grpcplugins.Errorf("unable to download artifact %q (caused by: missing cdn_http_url property")
-				hasError = true
-				continue
-			}
-
-			req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, cdnType, cdnApirefhash), nil)
+		switch {
+		case r.ArtifactManagerIntegration == nil: // download from CDN
+			x, destinationFile, n, err := downloadFromCDN(ctx, c, r, response.CDNSignature, *workDirs, path)
 			if err != nil {
 				grpcplugins.Errorf(err.Error())
 				hasError = true
 				continue
 			}
-
-			req.Header.Set("X-CDS-WORKER-SIGNATURE", response.CDNSignature)
-
-			resp, err := c.HTTPClient.Do(req)
+			grpcplugins.Logf("Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
+		case r.ArtifactManagerIntegration != nil: // download from artifactory
+			x, destinationFile, n, err := downloadFromArtifactory(ctx, c, r, *workDirs, path)
 			if err != nil {
 				grpcplugins.Errorf(err.Error())
 				hasError = true
 				continue
 			}
-
-			if resp.StatusCode > 200 {
-				grpcplugins.Errorf("unable to download file (HTTP %d)", resp.StatusCode)
-				hasError = true
-				continue
-			}
-
-			switch r.Detail.Type {
-			case "V2WorkflowRunResultGenericDetail":
-				x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
-				var destinationDir string
-				if path != "" && filepath.IsAbs(path) {
-					destinationDir = path
-				} else if path != "" {
-					destinationDir = filepath.Join(workDirs.WorkingDir, path)
-				} else {
-					destinationDir = workDirs.WorkingDir
-				}
-				destinationFile := filepath.Join(destinationDir, x.Name)
-				destinationDir = filepath.Dir(destinationFile)
-				if err := os.MkdirAll(destinationDir, os.FileMode(0750)); err != nil {
-					grpcplugins.Errorf("unable to create directory %q :%v", destinationDir, err.Error())
-					hasError = true
-					continue
-				}
-
-				fi, err := os.OpenFile(destinationFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, x.Mode)
-				if err != nil {
-					grpcplugins.Errorf("unable to create file %q: %v", destinationFile, err.Error())
-					hasError = true
-					continue
-				}
-
-				n, err := io.Copy(fi, resp.Body)
-				if err != nil {
-					grpcplugins.Errorf("unable to write file %q: %v", destinationFile, err.Error())
-					hasError = true
-					continue
-				}
-				_ = resp.Body.Close()
-				grpcplugins.Logf("Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
-				nbSuccess++
-			}
+			grpcplugins.Logf("Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
 		}
+		nbSuccess++
 	}
 
 	if hasError {
@@ -172,4 +111,101 @@ func perform(ctx context.Context, c *actionplugin.Common, name, path string) err
 	grpcplugins.Logf("There were %d artifacts downloaded", nbSuccess)
 
 	return nil
+}
+
+func downloadFromArtifactory(ctx context.Context, c *actionplugin.Common, r sdk.V2WorkflowRunResult, workDirs sdk.WorkerDirectories, path string) (*sdk.V2WorkflowRunResultGenericDetail, string, int64, error) {
+	downloadURI := r.ArtifactManagerMetadata.Get("downloadURI")
+	if downloadURI == "" {
+		return nil, "", 0, sdk.Errorf("no downloadURI specified")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", downloadURI, nil)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	rtToken := r.ArtifactManagerIntegration.Config[sdk.ArtifactoryConfigToken].Value
+	req.Header.Set("Authorization", "Bearer "+rtToken)
+
+	grpcplugins.Logf("Downloading file from %s...", downloadURI)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	if resp.StatusCode > 200 {
+		return nil, "", 0, sdk.Errorf("unable to download file (HTTP %d)", resp.StatusCode)
+	}
+
+	return bodyToFile(resp, r, workDirs, path)
+}
+
+func bodyToFile(resp *http.Response, r sdk.V2WorkflowRunResult, workDirs sdk.WorkerDirectories, path string) (*sdk.V2WorkflowRunResultGenericDetail, string, int64, error) {
+	switch r.Detail.Type {
+	case "V2WorkflowRunResultGenericDetail":
+		x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+		var destinationDir string
+		if path != "" && filepath.IsAbs(path) {
+			destinationDir = path
+		} else if path != "" {
+			destinationDir = filepath.Join(workDirs.WorkingDir, path)
+		} else {
+			destinationDir = workDirs.WorkingDir
+		}
+		destinationFile := filepath.Join(destinationDir, x.Name)
+		destinationDir = filepath.Dir(destinationFile)
+		if err := os.MkdirAll(destinationDir, os.FileMode(0750)); err != nil {
+			return nil, "", 0, sdk.Errorf("unable to create directory %q :%v", destinationDir, err.Error())
+		}
+
+		fi, err := os.OpenFile(destinationFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, x.Mode)
+		if err != nil {
+			return nil, "", 0, sdk.Errorf("unable to create file %q: %v", destinationFile, err.Error())
+		}
+
+		n, err := io.Copy(fi, resp.Body)
+		if err != nil {
+			return nil, "", 0, sdk.Errorf("unable to write file %q: %v", destinationFile, err.Error())
+		}
+		_ = resp.Body.Close()
+		return x, destinationFile, n, nil
+	}
+
+	return nil, "", 0, sdk.Errorf("unsupported run result")
+}
+
+func downloadFromCDN(ctx context.Context, c *actionplugin.Common, r sdk.V2WorkflowRunResult, CDNSignature string, workDirs sdk.WorkerDirectories, path string) (*sdk.V2WorkflowRunResultGenericDetail, string, int64, error) {
+	cdnApirefhash, has := (*r.ArtifactManagerMetadata)["cdn_api_ref_hash"]
+	if !has {
+		return nil, "", 0, sdk.Errorf("unable to download artifact %q (caused by: missing cdn_api_ref_hash property", r.Name())
+	}
+
+	cdnType, has := (*r.ArtifactManagerMetadata)["cdn_type"]
+	if !has {
+		return nil, "", 0, sdk.Errorf("unable to download artifact %q (caused by: missing cdn_type property", r.Name())
+	}
+
+	cdnAddr, has := (*r.ArtifactManagerMetadata)["cdn_http_url"]
+	if !has {
+		return nil, "", 0, sdk.Errorf("unable to download artifact %q (caused by: missing cdn_http_url property", r.Name())
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, cdnType, cdnApirefhash), nil)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	req.Header.Set("X-CDS-WORKER-SIGNATURE", CDNSignature)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, "", 0, err
+	}
+
+	if resp.StatusCode > 200 {
+		return nil, "", 0, sdk.Errorf("unable to download file (HTTP %d)", resp.StatusCode)
+	}
+
+	return bodyToFile(resp, r, workDirs, path)
 }

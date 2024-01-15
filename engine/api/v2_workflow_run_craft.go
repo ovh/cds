@@ -240,7 +240,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.WorkerModels[completeName] = v
 	}
 
-	infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
@@ -252,6 +252,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	if len(infos) > 0 {
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
 	}
+	run.WorkflowData.Integrations = integrations
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
@@ -866,18 +867,30 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 	}, nil
 }
 
-func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *gorp.DbMap) ([]sdk.V2WorkflowRunInfo, error) {
+func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *gorp.DbMap) (map[string]sdk.ProjectIntegration, []sdk.V2WorkflowRunInfo, error) {
 	availableIntegrations, err := integration.LoadIntegrationsByProjectID(ctx, db, wref.project.ID)
 	if err != nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
 	}
 
 	var infos []sdk.V2WorkflowRunInfo
+	var integrations = map[string]sdk.ProjectIntegration{}
 
 	for i := range wref.run.WorkflowData.Workflow.Integrations {
 		var found bool
 		for j := range availableIntegrations {
 			if wref.run.WorkflowData.Workflow.Integrations[i] == availableIntegrations[j].Name {
+				if availableIntegrations[j].Model.ArtifactManager {
+					if exiting, has := integrations[wref.run.WorkflowData.Workflow.Integrations[i]]; has && wref.run.WorkflowData.Workflow.Integrations[i] != exiting.Name {
+						infos = append(infos, sdk.V2WorkflowRunInfo{
+							WorkflowRunID: wref.run.ID,
+							Level:         sdk.WorkflowRunInfoLevelError,
+							IssuedAt:      time.Now(),
+							Message:       fmt.Sprintf("wrong workflow configuration. Only one artifact manager Integration %s is allowed", wref.run.WorkflowData.Workflow.Integrations[i]),
+						})
+					}
+					integrations[wref.run.WorkflowData.Workflow.Integrations[i]] = availableIntegrations[j]
+				}
 				found = true
 				break
 			}
@@ -906,6 +919,7 @@ func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *
 							Message:       fmt.Sprintf("wrong configuration on job %q. Integration %q cannot be used at the job level", jobID, integ),
 						})
 					}
+					integrations[integ] = availableIntegrations[j]
 					break
 				}
 			}
@@ -920,5 +934,5 @@ func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *
 		}
 	}
 
-	return infos, nil
+	return integrations, infos, nil
 }

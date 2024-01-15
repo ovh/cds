@@ -149,6 +149,34 @@ func (mr *MockRuntimeMockRecorder) FeatureEnabled(featureName interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FeatureEnabled", reflect.TypeOf((*MockRuntime)(nil).FeatureEnabled), featureName)
 }
 
+// V2GetJobContext mocks base method.
+func (m *MockRuntime) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2GetJobContext", ctx)
+	ret0, _ := ret[0].(*sdk.WorkflowRunJobsContext)
+	return ret0
+}
+
+// V2GetJobContext indicates an expected call of V2GetJobContext.
+func (mr *MockRuntimeMockRecorder) V2GetJobContext(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetJobContext", reflect.TypeOf((*MockRuntime)(nil).V2GetJobContext), ctx)
+}
+
+// V2GetJobRun mocks base method.
+func (m *MockRuntime) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2GetJobRun", ctx)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	return ret0
+}
+
+// V2GetJobRun indicates an expected call of V2GetJobRun.
+func (mr *MockRuntimeMockRecorder) V2GetJobRun(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetJobRun", reflect.TypeOf((*MockRuntime)(nil).V2GetJobRun), ctx)
+}
+
 // GetActionPlugin mocks base method.
 func (m *MockRuntime) GetActionPlugin(pluginName string) *sdk.GRPCPlugin {
 	m.ctrl.T.Helper()
@@ -402,6 +430,20 @@ func (m *MockRuntime) V2AddRunResult(ctx context.Context, req workerruntime.V2Ru
 func (mr *MockRuntimeMockRecorder) V2AddRunResult(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2AddRunResult", reflect.TypeOf((*MockRuntime)(nil).V2AddRunResult), ctx, req)
+}
+
+// V2GetIntegrationByName mocks base method.
+func (m *MockRuntime) V2GetIntegrationByName(ctx context.Context, name string) *sdk.ProjectIntegration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2GetIntegrationByName", ctx, name)
+	ret0, _ := ret[0].(*sdk.ProjectIntegration)
+	return ret0
+}
+
+// V2GetIntegrationByName indicates an expected call of V2GetIntegrationByName.
+func (mr *MockRuntimeMockRecorder) V2GetIntegrationByName(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetIntegrationByName", reflect.TypeOf((*MockRuntime)(nil).V2GetIntegrationByName), ctx, name)
 }
 
 // V2GetRunResult mocks base method.

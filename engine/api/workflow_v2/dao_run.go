@@ -9,6 +9,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -98,22 +99,45 @@ func WithRunResults(ctx context.Context, _ *gorpmapper.Mapper, db gorp.SqlExecut
 	return nil
 }
 
-func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) ([]sdk.V2WorkflowRunResult, error) {
+func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string, opt *integration.ProjectIntegrationByIDsLoader) ([]sdk.V2WorkflowRunResult, error) {
 	results, err := loadRunResultsByRunIDs(ctx, db, runID)
 	if err != nil {
 		return nil, err
 	}
+	var integrationsID []int64
 	if results, has := results[runID]; has {
 		var runResults []sdk.V2WorkflowRunResult
 		for _, r := range results {
+			if r.ArtifactManagerIntegrationID != nil {
+				integrationsID = append(integrationsID, *r.ArtifactManagerIntegrationID)
+			}
 			runResults = append(runResults, r.V2WorkflowRunResult)
 		}
+
+		if opt != nil {
+			integrationMap, err := (*opt)(ctx, db, integrationsID...)
+			if err != nil {
+				return nil, err
+			}
+			for i := range runResults {
+				runResult := runResults[i]
+				if runResult.ArtifactManagerIntegrationID != nil {
+					integ, has := integrationMap[*runResult.ArtifactManagerIntegrationID]
+					if !has {
+						return nil, sdk.Errorf("unable to find project integration %d", runResult.ArtifactManagerIntegration.ID)
+					}
+					runResult.ArtifactManagerIntegration = &integ
+					runResults[i] = runResult
+				}
+			}
+		}
+
 		return runResults, nil
 	}
 	return nil, nil
 }
 
-func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id string) (*sdk.V2WorkflowRunResult, error) {
+func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id string, opt *integration.ProjectIntegrationByIDsLoader) (*sdk.V2WorkflowRunResult, error) {
 	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where id = $1 AND workflow_run_job_id = $2`).Args(id, runJobID)
 	var result dbV2WorkflowRunResult
 	found, err := gorpmapping.Get(ctx, db, query, &result)
@@ -123,6 +147,19 @@ func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id
 	if !found {
 		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to run load result id=%s workflow_run_job_id=%s", id, runJobID)
 	}
+
+	if opt != nil && result.ArtifactManagerIntegrationID != nil {
+		integrationMap, err := (*opt)(ctx, db, *result.ArtifactManagerIntegrationID)
+		if err != nil {
+			return nil, err
+		}
+		integ, has := integrationMap[*result.ArtifactManagerIntegrationID]
+		if !has {
+			return nil, sdk.Errorf("unable to find project integration %d", result.ArtifactManagerIntegration.ID)
+		}
+		result.ArtifactManagerIntegration = &integ
+	}
+
 	return &result.V2WorkflowRunResult, nil
 }
 
@@ -140,6 +177,11 @@ func LoadRunResultsByRunJobID(ctx context.Context, db gorp.SqlExecutor, runJobID
 }
 
 func InsertRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2WorkflowRunResult) error {
+	if runResult.ArtifactManagerIntegration != nil {
+		runResult.ArtifactManagerIntegrationID = &runResult.ArtifactManagerIntegration.ID
+	} else {
+		runResult.ArtifactManagerIntegrationID = nil
+	}
 	entity := dbV2WorkflowRunResult{*runResult}
 	if err := gorpmapping.Insert(db, &entity); err != nil {
 		return err
@@ -149,6 +191,11 @@ func InsertRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2
 }
 
 func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2WorkflowRunResult) error {
+	if runResult.ArtifactManagerIntegration != nil {
+		runResult.ArtifactManagerIntegrationID = &runResult.ArtifactManagerIntegration.ID
+	} else {
+		runResult.ArtifactManagerIntegrationID = nil
+	}
 	entity := dbV2WorkflowRunResult{*runResult}
 	return gorpmapping.Update(db, &entity)
 }

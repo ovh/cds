@@ -212,6 +212,7 @@ type BuildInfoRequest struct {
 	GitHash                  string
 	DefaultLowMaturitySuffix string
 	RunResults               []sdk.WorkflowRunResult
+	RunResultsV2             []sdk.V2WorkflowRunResult
 }
 
 func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
@@ -255,11 +256,20 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 		version:                  r.Version,
 		projectKey:               r.ProjectKey,
 	}
-	modules, err := computeBuildInfoModules(ctx, artiClient, execContext, r.RunResults)
-	if err != nil {
-		return nil, err
+
+	if len(r.RunResults) > 0 {
+		modules, err := computeBuildInfoModules(ctx, artiClient, execContext, r.RunResults)
+		if err != nil {
+			return nil, err
+		}
+		buildInfoRequest.Modules = modules
+	} else if len(r.RunResultsV2) > 0 {
+		modules, err := computeBuildInfoModulesV2(ctx, artiClient, execContext, r.RunResultsV2)
+		if err != nil {
+			return nil, err
+		}
+		buildInfoRequest.Modules = modules
 	}
-	buildInfoRequest.Modules = modules
 
 	return buildInfoRequest, nil
 }
@@ -354,6 +364,97 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 	return modules, nil
 }
 
+func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.V2WorkflowRunResult) ([]buildinfo.Module, error) {
+	ctx, end := telemetry.Span(ctx, "artifactory.computeBuildInfoModules")
+	defer end()
+	modules := make([]buildinfo.Module, 0)
+
+	for _, r := range runResults {
+		if r.ArtifactManagerIntegration == nil {
+			continue
+		}
+
+		var (
+			repoName = r.ArtifactManagerMetadata.Get("repository")
+			name     = r.ArtifactManagerMetadata.Get("name")
+			path     = r.ArtifactManagerMetadata.Get("path")
+			repoType = r.ArtifactManagerMetadata.Get("type")
+			md5      = r.ArtifactManagerMetadata.Get("md5")
+		)
+
+		mod := buildinfo.Module{
+			Id:           fmt.Sprintf("%s:%s", repoType, name),
+			Artifacts:    make([]buildinfo.Artifact, 0),
+			Dependencies: nil,
+		}
+
+		switch repoType {
+		case "docker":
+			mod.Type = buildinfo.Docker
+			modProps := make(map[string]string)
+			parsedUrl, err := url.Parse(artiClient.GetURL())
+			if err != nil {
+				return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]", artiClient.GetURL())
+			}
+			urlArtifactory := parsedUrl.Host
+			if parsedUrl.Port() != "" {
+				urlArtifactory += ":" + parsedUrl.Port()
+			}
+			modProps["docker.image.tag"] = fmt.Sprintf("%s.%s/%s", repoName, urlArtifactory, name)
+			mod.Properties = modProps
+
+			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName, strings.TrimSuffix(path, "/"))
+			searchResults, err := artiClient.Search(ctx, query)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, sr := range searchResults {
+				currentArtifact := buildinfo.Artifact{
+					Name: sr.Name,
+					Type: strings.TrimPrefix(filepath.Ext(sr.Name), "."),
+					Checksum: buildinfo.Checksum{
+						Md5: sr.ActualMD5,
+					},
+				}
+				mod.Artifacts = append(mod.Artifacts, currentArtifact)
+			}
+		default:
+			_, objectName := filepath.Split(path)
+			currentArtifact := buildinfo.Artifact{
+				Name: objectName,
+				Type: strings.TrimPrefix(filepath.Ext(objectName), "."),
+				Checksum: buildinfo.Checksum{
+					Md5: md5,
+				},
+			}
+			mod.Artifacts = append(mod.Artifacts, currentArtifact)
+		}
+		modules = append(modules, mod)
+
+		var currentMaturity string
+		if r.DataSync != nil {
+			latestPromotion := r.DataSync.LatestPromotionOrRelease()
+			if latestPromotion != nil {
+				currentMaturity = latestPromotion.ToMaturity
+			}
+		}
+		if currentMaturity == "" {
+			currentMaturity = execContext.defaultLowMaturitySuffix
+		}
+		props := utils.NewProperties()
+		props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
+		props.AddProperty("build.number", execContext.version)
+		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
+
+		if err := SetPropertiesRecursive(ctx, artiClient, repoType, repoName, currentMaturity, path, props); err != nil {
+			return nil, err
+		}
+
+	}
+	return modules, nil
+}
+
 func SetPropertiesRecursive(ctx context.Context, client artifact_manager.ArtifactManager, repoType string, repoName string, maturity string, path string, props *utils.Properties) error {
 	ctx, end := telemetry.Span(ctx, "artifactory.SetPropertiesRecursive")
 	defer end()
@@ -364,7 +465,7 @@ func SetPropertiesRecursive(ctx context.Context, client artifact_manager.Artifac
 	repoSrc := repoName
 	if repoType == "cargo" {
 		repoParts := strings.Split(repoName, "-")
-		repoSrc = fmt.Sprintf("%s", strings.Join(repoParts[:len(repoParts)-1], "-"))
+		repoSrc = strings.Join(repoParts[:len(repoParts)-1], "-")
 	}
 	repoSrc += "-" + maturity
 

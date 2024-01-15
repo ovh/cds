@@ -93,9 +93,10 @@ type WorkflowRunJobsContext struct {
 }
 
 type V2WorkflowRunData struct {
-	Workflow     V2Workflow               `json:"workflow"`
-	WorkerModels map[string]V2WorkerModel `json:"worker_models"`
-	Actions      map[string]V2Action      `json:"actions"`
+	Workflow     V2Workflow                    `json:"workflow"`
+	WorkerModels map[string]V2WorkerModel      `json:"worker_models"`
+	Actions      map[string]V2Action           `json:"actions"`
+	Integrations map[string]ProjectIntegration `json:"integrations"`
 }
 
 func (w V2WorkflowRunData) Value() (driver.Value, error) {
@@ -428,17 +429,18 @@ func (w V2WorkflowRun) GetStages() WorkflowRunStages {
 }
 
 type V2WorkflowRunResult struct {
-	ID                         string                                      `json:"id" db:"id"`
-	WorkflowRunID              string                                      `json:"workflow_run_id" db:"workflow_run_id"`
-	WorkflowRunJobID           string                                      `json:"workflow_run_job_id" db:"workflow_run_job_id"`
-	RunAttempt                 int64                                       `json:"run_attempt" db:"run_attempt"`
-	IssuedAt                   time.Time                                   `json:"issued_at" db:"issued_at"`
-	Type                       V2WorkflowRunResultType                     `json:"type" db:"type"`
-	ArtifactManagerIntegration *ProjectIntegration                         `json:"artifact_manager_integration" db:"-"`
-	ArtifactManagerMetadata    *V2WorkflowRunResultArtifactManagerMetadata `json:"artifact_manager_metadata" db:"artifact_manager_metadata"`
-	Detail                     V2WorkflowRunResultDetail                   `json:"detail" db:"artifact_manager_detail"`
-	DataSync                   *WorkflowRunResultSync                      `json:"sync,omitempty" db:"sync"`
-	Status                     string                                      `json:"status" db:"status"`
+	ID                           string                                      `json:"id" db:"id"`
+	WorkflowRunID                string                                      `json:"workflow_run_id" db:"workflow_run_id"`
+	WorkflowRunJobID             string                                      `json:"workflow_run_job_id" db:"workflow_run_job_id"`
+	RunAttempt                   int64                                       `json:"run_attempt" db:"run_attempt"`
+	IssuedAt                     time.Time                                   `json:"issued_at" db:"issued_at"`
+	Type                         V2WorkflowRunResultType                     `json:"type" db:"type"`
+	ArtifactManagerIntegrationID *int64                                      `json:"artifact_manager_integration_id" db:"artifact_manager_integration_id"`
+	ArtifactManagerIntegration   *ProjectIntegration                         `json:"artifact_manager_integration" db:"-"`
+	ArtifactManagerMetadata      *V2WorkflowRunResultArtifactManagerMetadata `json:"artifact_manager_metadata" db:"artifact_manager_metadata"`
+	Detail                       V2WorkflowRunResultDetail                   `json:"detail" db:"artifact_manager_detail"`
+	DataSync                     *WorkflowRunResultSync                      `json:"sync,omitempty" db:"sync"`
+	Status                       string                                      `json:"status" db:"status"`
 }
 
 func (r *V2WorkflowRunResult) GetDetail() (any, error) {
@@ -505,15 +507,6 @@ func (m *V2WorkflowRunResultArtifactManagerMetadata) Get(k string) string {
 		return ""
 	}
 	return (*m)[k]
-}
-
-func V2WorkflowRunResultArtifactManagerMetadataFromCDNItemLink(i CDNItemLink) *V2WorkflowRunResultArtifactManagerMetadata {
-	return &V2WorkflowRunResultArtifactManagerMetadata{
-		"cdn_http_url":     i.CDNHttpURL,
-		"cdn_id":           i.Item.ID,
-		"cdn_type":         string(i.Item.Type),
-		"cdn_api_ref_hash": i.Item.APIRefHash,
-	}
 }
 
 func (x V2WorkflowRunResultArtifactManagerMetadata) Value() (driver.Value, error) {

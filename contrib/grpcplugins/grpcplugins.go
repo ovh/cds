@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/pkg/errors"
 
@@ -192,4 +193,30 @@ func UpdateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 		return nil, errors.Wrap(err, "unable to parse run result response")
 	}
 	return &response, nil
+}
+
+func GetIntegrationByModel(ctx context.Context, c *actionplugin.Common, model string) (*sdk.ProjectIntegration, error) {
+	req, err := c.NewRequest(ctx, http.MethodGet, fmt.Sprintf("/v2/integrations/%s", url.QueryEscape(model)), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.DoRequest(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get integration")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	if resp.StatusCode >= 300 {
+		return nil, errors.Errorf("unable to get integration (status code %d) %v", resp.StatusCode, string(body))
+	}
+
+	var response sdk.ProjectIntegration
+	if err := sdk.JSONUnmarshal(body, &response); err != nil {
+		return nil, errors.Wrap(err, "unable to parse response")
+	}
+	return &response, nil
+
 }

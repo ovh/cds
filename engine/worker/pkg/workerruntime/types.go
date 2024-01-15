@@ -37,8 +37,9 @@ type V2UpdateResultResponse struct {
 }
 
 type V2FilterRunResult struct {
-	Pattern string
-	Type    sdk.V2WorkflowRunResultType
+	Pattern              string
+	Type                 sdk.V2WorkflowRunResultType
+	WithClearIntegration bool
 }
 
 type WorkerConfig struct {
@@ -160,6 +161,9 @@ type Runtime interface {
 	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
 	AddStepOutput(ctx context.Context, outputName string, outputValue string)
 	V2GetRunResult(ctx context.Context, filter V2FilterRunResult) (*V2GetResultResponse, error)
+	V2GetIntegrationByName(ctx context.Context, name string) *sdk.ProjectIntegration
+	V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob
+	V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext
 }
 
 func JobID(ctx context.Context) (int64, error) {

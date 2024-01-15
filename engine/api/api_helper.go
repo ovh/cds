@@ -70,6 +70,9 @@ func isService(ctx context.Context) bool {
 }
 
 func isWorker(ctx context.Context) bool {
+	if getWorker(ctx) != nil {
+		return true
+	}
 	c := getUserConsumer(ctx)
 	if c == nil {
 		return false
@@ -143,15 +146,15 @@ func getHatcheryConsumer(ctx context.Context) *sdk.AuthHatcheryConsumer {
 }
 
 func getWorker(ctx context.Context) *sdk.V2Worker {
-  i := ctx.Value(contextWorker)
-  if i == nil {
-    return nil
-  }
-  w, ok := i.(*sdk.V2Worker)
-  if !ok {
-    return nil
-  }
-  return w
+	i := ctx.Value(contextWorker)
+	if i == nil {
+		return nil
+	}
+	w, ok := i.(*sdk.V2Worker)
+	if !ok {
+		return nil
+	}
+	return w
 }
 
 func getUserConsumer(ctx context.Context) *sdk.AuthUserConsumer {
