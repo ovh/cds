@@ -95,13 +95,13 @@ testcases:
     - name: Check checkout log content
       script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
     - name: Check checkout log content 2
-      script: "cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout branch main\""  
+      script: "cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout branch master\""  
 
     - name: Check gitvariables log content to check SEMVER variables are available
       script: "cat {{.cds_workflow}}-1-1-init-gitvariables | grep SEMVER"
 
     - name: Create and push a tag
-      script: cd /tmp/repos/{{.git_repo}} && git tag -s -u {{.gpg.key_id}} v0.1.0 -m \"Creating tag v.0.1.0\" && git push --tags
+      script: cd /tmp/repos/{{.git_repo}} && git tag -s -u {{.gpg.key_id}} v0.1.0 -m "Creating tag v.0.1.0" && git push --tags
 
     - name: Check CDS project analyses status for tag
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -128,7 +128,7 @@ testcases:
     - name: Check checkout tag log content
       script: "cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout completed\""
     - name: Check checkout tag log content 2
-      script: "cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout tag v0.1.0\""     
+      script: "cat {{.cds_workflow}}-2-1-init-checkout && cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout tag v0.1.0\""     
 
 
 
