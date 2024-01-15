@@ -29,7 +29,7 @@ func (g *giteaClient) Branches(ctx context.Context, fullname string, filters sdk
 	vcsBranches := make([]sdk.VCSBranch, 0, len(branches))
 	for _, b := range branches {
 		vcsB := sdk.VCSBranch{
-			ID:        b.Name,
+			ID:        sdk.GitRefBranchPrefix + b.Name,
 			DisplayID: b.Name,
 			Default:   b.Name == repository.DefaultBranch,
 		}
@@ -61,7 +61,7 @@ func (g *giteaClient) Branch(ctx context.Context, fullname string, filters sdk.V
 		return nil, err
 	}
 	vcsBranch := sdk.VCSBranch{
-		ID:        b.Name,
+		ID:        sdk.GitRefBranchPrefix + b.Name,
 		DisplayID: b.Name,
 		Default:   filters.BranchName == repository.DefaultBranch,
 	}
