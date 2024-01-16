@@ -9,7 +9,7 @@ import (
 
 func TestListStatuses(t *testing.T) {
 	client := getAuthorizedClient(t)
-	statuses, err := client.ListStatuses(context.Background(), "CDS/images", "9c4df9d61d85beb096715ace90acefb697f1e4d8")
+	statuses, err := client.ListStatuses(context.Background(), "CDS/tests", "0b6d50472e9b2c03d72a422ea11bf3faa570d0bd")
 	test.NoError(t, err)
 	t.Logf("%+v", statuses)
 }

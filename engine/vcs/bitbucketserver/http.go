@@ -85,7 +85,7 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 		return sdk.WithStack(err)
 	}
 
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		uri.RawQuery = params.Encode()
 	}
 
@@ -101,7 +101,7 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 
 	log.Info(ctx, "%s %s", req.Method, req.URL.String())
 
-	if values != nil && len(values) > 0 {
+	if len(values) > 0 {
 		buf := bytes.NewBuffer(values)
 		req.Body = io.NopCloser(buf)
 		req.ContentLength = int64(buf.Len())

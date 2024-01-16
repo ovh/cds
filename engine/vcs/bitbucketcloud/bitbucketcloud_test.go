@@ -43,6 +43,11 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	bitbucketCloudUsername := cfg["bitbucketCloudUsername"]
 	bitbucketCloudToken := cfg["bitbucketCloudToken"]
 
+	if bitbucketCloudUsername == "" && bitbucketCloudToken == "" {
+		t.Logf("Unable to read bitbucketcloud configuration. Skipping this tests.")
+		t.SkipNow()
+	}
+
 	cache, err := cache.New(redisHost, redisPassword, 0, 30)
 	if err != nil {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)

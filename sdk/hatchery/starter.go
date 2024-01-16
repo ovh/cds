@@ -211,6 +211,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			ID: sdk.MsgSpawnInfoHatcheryStarts.ID,
 			Args: []interface{}{
 				h.Service().Name,
+				arg.WorkerName,
 				modelName,
 			},
 		})
