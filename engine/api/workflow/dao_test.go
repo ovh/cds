@@ -31,6 +31,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -1614,13 +1615,12 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	srvs, err := services.LoadAll(context.Background(), db)
 	require.NoError(t, err)
@@ -2030,13 +2030,12 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 	)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Add pipeline
 	pipS := `version: v1.0
@@ -2225,13 +2224,12 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 	)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Add pipeline
 	pipS := `version: v1.0

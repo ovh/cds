@@ -196,18 +196,6 @@ func Test_getCommitHandler(t *testing.T) {
 	s, err := newTestService(t)
 	require.NoError(t, err)
 
-	checkConfigGithub(cfg, t)
-
-	err = s.addServerConfiguration("github", ServerConfiguration{
-		URL: cfg["githubURL"],
-		Github: &GithubServerConfiguration{
-			APIURL:       cfg["githubAPIURL"],
-			ClientID:     cfg["githubClientID"],
-			ClientSecret: cfg["githubClientSecret"],
-		},
-	})
-	require.NoError(t, err)
-
 	//Prepare request
 	vars := map[string]string{
 		"name":   "github",
@@ -219,14 +207,13 @@ func Test_getCommitHandler(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
-	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(sdk.HeaderXVCSToken, token)
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(cfg["githubToken"])))
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(sdk.VCSTypeGithub)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(cfg["githubUsername"])))
 
-	//Do the request
 	rec := httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 
-	//Asserts
 	assert.Equal(t, 200, rec.Code)
 }
 
@@ -247,15 +234,14 @@ func Test_getCommitStatusHandler(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
-	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(sdk.HeaderXVCSToken, token)
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(cfg["githubToken"])))
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(sdk.VCSTypeGithub)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(cfg["githubUsername"])))
 
-	//Do the request
 	rec := httptest.NewRecorder()
 	s.Router.Mux.ServeHTTP(rec, req)
 
 	t.Logf("Status: %v", rec.Body.String())
 
-	//Asserts
 	assert.Equal(t, 200, rec.Code)
 }

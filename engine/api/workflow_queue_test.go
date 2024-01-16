@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/sdk/cdsclient"
 
@@ -25,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -95,13 +95,12 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, optsF ...testRunWor
 		require.NoError(t, project.InsertKey(db, k))
 	}
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	require.NoError(t, db.Commit())
 

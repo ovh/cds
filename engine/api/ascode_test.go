@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/ascode"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -60,14 +61,11 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	a, _ := assets.InsertService(t, db, "Test_postImportAsCodeHandler", sdk.TypeRepositories)
 	b, _ := assets.InsertService(t, db, "Test_VCSService", sdk.TypeVCS)
@@ -143,13 +141,11 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	//Insert Project
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	a, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_Repo", sdk.TypeRepositories)
 	b, _ := assets.InsertService(t, db, "Test_postPerformImportAsCodeHandler_VCS", sdk.TypeVCS)
@@ -286,13 +282,11 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	pkey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Add application
 	appS := `version: v1.0

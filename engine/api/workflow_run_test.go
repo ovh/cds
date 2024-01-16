@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/featureflipping"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -1212,13 +1213,12 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	require.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	//First pipeline
 	pip := sdk.Pipeline{

@@ -30,6 +30,7 @@ import (
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
@@ -468,13 +469,12 @@ func createProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API) *sdk
 	// Create Project
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	return proj
 }
@@ -555,13 +555,12 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, prjKey, prjKey)
 	u, pass := assets.InsertLambdaUser(t, db, &proj.ProjectGroups[0].Group)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Perform a "import as-code operation" to create a new workflow
 	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
@@ -978,13 +977,12 @@ hooks:
 	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	UUID := sdk.UUID()
 
@@ -1261,13 +1259,12 @@ func Test_WorkflowAsCodeWithPermissions(t *testing.T) {
 
 	proj, _ = project.LoadByID(db, proj.ID, project.LoadOptions.WithGroups)
 
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Perform a "import as-code operation" to create a new workflow
 	ope := `{"repo_fullname":"fsamin/go-repo",  "vcs_server": "github", "url":"https://github.com/fsamin/go-repo.git","strategy":{"connection_type":"https","ssh_key":"","user":"","password":"","branch":"","default_branch":"master","pgp_key":""},"setup":{"checkout":{"branch":"master"}}}`
