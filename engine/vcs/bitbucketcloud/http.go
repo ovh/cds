@@ -3,12 +3,10 @@ package bitbucketcloud
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/rockbears/log"
@@ -18,45 +16,7 @@ import (
 )
 
 // Github http var
-var (
-	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
-)
-
-func (consumer *bitbucketcloudConsumer) postForm(url string, data url.Values, headers map[string][]string) (int, []byte, error) {
-	body := strings.NewReader(data.Encode())
-
-	req, err := http.NewRequest(http.MethodPost, url, body)
-	if err != nil {
-		return 0, nil, err
-	}
-	req.SetBasicAuth(consumer.ClientID, consumer.ClientSecret)
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	for k, h := range headers {
-		for i := range h {
-			req.Header.Add(k, h[i])
-		}
-	}
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return 0, nil, err
-	}
-	defer res.Body.Close()
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return res.StatusCode, nil, err
-	}
-
-	if res.StatusCode > 400 {
-		var errBb Error
-		if err := sdk.JSONUnmarshal(resBody, &errBb); err == nil {
-			return res.StatusCode, resBody, errBb
-		}
-	}
-
-	return res.StatusCode, resBody, nil
-}
+var httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 
 type postOptions struct {
 	skipDefaultBaseURL bool
@@ -67,10 +27,9 @@ func (client *bitbucketcloudClient) setAuth(ctx context.Context, req *http.Reque
 	if client.appPassword != "" && client.username != "" {
 		req.SetBasicAuth(client.username, client.appPassword)
 		log.Debug(ctx, "Bitbucketcloud API>> Request with basicAuth url:%s username:%v len:%d", req.URL.String(), client.username, len(client.appPassword))
-	} else {
-		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid configuration - bitbucketcloud authentication"))
+		return nil
 	}
-	return nil
+	return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid configuration - bitbucketcloud authentication username:%v lenPassword:%d", client.username, len(client.appPassword)))
 }
 
 func (client *bitbucketcloudClient) post(ctx context.Context, path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
@@ -167,7 +126,7 @@ func (client *bitbucketcloudClient) delete(ctx context.Context, path string) err
 	}
 
 	if res.StatusCode != 204 {
-		return fmt.Errorf("Bitbucket cloud>delete wrong status code %d on url %s", res.StatusCode, path)
+		return fmt.Errorf("bitbucketcloud>delete wrong status code %d on url %s", res.StatusCode, path)
 	}
 	return nil
 }
@@ -179,7 +138,7 @@ func (client *bitbucketcloudClient) do(ctx context.Context, method, api, path st
 		return sdk.WithStack(err)
 	}
 
-	if params != nil && len(params) > 0 {
+	if len(params) > 0 {
 		uri.RawQuery = params.Encode()
 	}
 

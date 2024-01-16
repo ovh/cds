@@ -40,6 +40,8 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
+	bitbucketCloudUsername := cfg["bitbucketCloudUsername"]
+	bitbucketCloudToken := cfg["bitbucketCloudToken"]
 
 	cache, err := cache.New(redisHost, redisPassword, 0, 30)
 	if err != nil {
@@ -48,7 +50,9 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 
 	bbConsumer := New("http://localhost", "", "", cache)
 	vcsAuth := sdk.VCSAuth{
-		Type: sdk.VCSTypeBitbucketCloud,
+		Type:     sdk.VCSTypeBitbucketCloud,
+		Username: bitbucketCloudUsername,
+		Token:    bitbucketCloudToken,
 	}
 	cli, err := bbConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	if err != nil {
@@ -76,7 +80,7 @@ func TestRepoByFullname(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	repo, err := bbClient.RepoByFullname(context.Background(), "bnjjj/test")
+	repo, err := bbClient.RepoByFullname(context.Background(), "yesnault/testr")
 	require.NoError(t, err)
 	assert.NotNil(t, repo)
 }
@@ -85,7 +89,7 @@ func TestBranches(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	branches, err := bbClient.Branches(context.Background(), "bnjjj/test", sdk.VCSBranchesFilter{})
+	branches, err := bbClient.Branches(context.Background(), "yesnault/testr", sdk.VCSBranchesFilter{})
 	require.NoError(t, err)
 	assert.NotEmpty(t, branches)
 }
@@ -94,7 +98,7 @@ func TestBranch(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	branch, err := bbClient.Branch(context.Background(), "bnjjj/test", sdk.VCSBranchFilters{BranchName: "master"})
+	branch, err := bbClient.Branch(context.Background(), "yesnault/testr", sdk.VCSBranchFilters{BranchName: "master"})
 	require.NoError(t, err)
 	assert.NotNil(t, branch)
 }
@@ -103,7 +107,7 @@ func TestCommits(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	commits, err := bbClient.Commits(context.Background(), "bnjjj/test", "master", "HEAD", "HEAD")
+	commits, err := bbClient.Commits(context.Background(), "yesnault/testr", "master", "HEAD", "HEAD")
 	require.NoError(t, err)
 	assert.NotNil(t, commits)
 }

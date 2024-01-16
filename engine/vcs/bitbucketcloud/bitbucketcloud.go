@@ -21,14 +21,10 @@ type bitbucketcloudClient struct {
 
 // bitbucketcloudConsumer implements vcs.Server and it's used to instantiate a githubClient
 type bitbucketcloudConsumer struct {
-	ClientID             string `json:"client-id"`
-	ClientSecret         string `json:"-"`
-	Cache                cache.Store
-	uiURL                string
-	apiURL               string
-	proxyURL             string
-	disableStatus        bool
-	disableStatusDetails bool
+	Cache    cache.Store
+	uiURL    string
+	apiURL   string
+	proxyURL string
 }
 
 // New creates a new GithubConsumer
