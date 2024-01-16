@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -41,6 +42,11 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		key := vars[permProjectKey]
 		keyName := vars["name"]
 
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
+
 		p, errP := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
@@ -67,6 +73,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		}
 
 		event.PublishDeleteProjectKey(ctx, p, deletedKey, getUserConsumer(ctx))
+		event_v2.PublishProjectKeyEvent(ctx, api.Cache, p.Key, sdk.EventKeyDeleted, deletedKey, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -99,6 +106,11 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars[permProjectKey]
+
+		u := getUserConsumer(ctx)
+		if u == nil {
+			return sdk.WithStack(sdk.ErrForbidden)
+		}
 
 		var newKey sdk.ProjectKey
 		if err := service.UnmarshalBody(r, &newKey); err != nil {
@@ -157,6 +169,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 		}
 
 		event.PublishAddProjectKey(ctx, p, newKey, getUserConsumer(ctx))
+		event_v2.PublishProjectKeyEvent(ctx, api.Cache, p.Key, sdk.EventKeyCreated, newKey, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

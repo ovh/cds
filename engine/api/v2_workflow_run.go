@@ -871,6 +871,8 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
@@ -992,6 +994,10 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			}
 			// Check gate reviewers
 			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			gate := wr.WorkflowData.Workflow.Gates[jobToRun.Job.Gate]
 			reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
 			if len(gate.Reviewers.Users) > 0 {
@@ -1103,7 +1109,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRun.JobID, gateInputs, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
