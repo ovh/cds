@@ -3376,6 +3376,63 @@ func (mr *MockProjectClientMockRecorder) ProjectRepositoryManagerList(projectKey
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerList", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryManagerList), projectKey)
 }
 
+// ProjectSecretAdd mocks base method.
+func (m *MockProjectClient) ProjectSecretAdd(ctx context.Context, projectKey string, secret sdk.ProjectSecret) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretAdd", ctx, projectKey, secret)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectSecretAdd indicates an expected call of ProjectSecretAdd.
+func (mr *MockProjectClientMockRecorder) ProjectSecretAdd(ctx, projectKey, secret interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretAdd", reflect.TypeOf((*MockProjectClient)(nil).ProjectSecretAdd), ctx, projectKey, secret)
+}
+
+// ProjectSecretDelete mocks base method.
+func (m *MockProjectClient) ProjectSecretDelete(ctx context.Context, projectKey, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretDelete", ctx, projectKey, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectSecretDelete indicates an expected call of ProjectSecretDelete.
+func (mr *MockProjectClientMockRecorder) ProjectSecretDelete(ctx, projectKey, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectSecretDelete), ctx, projectKey, name)
+}
+
+// ProjectSecretList mocks base method.
+func (m *MockProjectClient) ProjectSecretList(ctx context.Context, projectKey string) ([]sdk.ProjectSecret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretList", ctx, projectKey)
+	ret0, _ := ret[0].([]sdk.ProjectSecret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectSecretList indicates an expected call of ProjectSecretList.
+func (mr *MockProjectClientMockRecorder) ProjectSecretList(ctx, projectKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretList", reflect.TypeOf((*MockProjectClient)(nil).ProjectSecretList), ctx, projectKey)
+}
+
+// ProjectSecretUpdate mocks base method.
+func (m *MockProjectClient) ProjectSecretUpdate(ctx context.Context, projectKey string, secret sdk.ProjectSecret) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretUpdate", ctx, projectKey, secret)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectSecretUpdate indicates an expected call of ProjectSecretUpdate.
+func (mr *MockProjectClientMockRecorder) ProjectSecretUpdate(ctx, projectKey, secret interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretUpdate", reflect.TypeOf((*MockProjectClient)(nil).ProjectSecretUpdate), ctx, projectKey, secret)
+}
+
 // ProjectUpdate mocks base method.
 func (m *MockProjectClient) ProjectUpdate(key string, project *sdk.Project) error {
 	m.ctrl.T.Helper()
@@ -8791,6 +8848,63 @@ func (m *MockInterface) ProjectRepositoryManagerList(projectKey string) ([]sdk.P
 func (mr *MockInterfaceMockRecorder) ProjectRepositoryManagerList(projectKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerList", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryManagerList), projectKey)
+}
+
+// ProjectSecretAdd mocks base method.
+func (m *MockInterface) ProjectSecretAdd(ctx context.Context, projectKey string, secret sdk.ProjectSecret) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretAdd", ctx, projectKey, secret)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectSecretAdd indicates an expected call of ProjectSecretAdd.
+func (mr *MockInterfaceMockRecorder) ProjectSecretAdd(ctx, projectKey, secret interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretAdd", reflect.TypeOf((*MockInterface)(nil).ProjectSecretAdd), ctx, projectKey, secret)
+}
+
+// ProjectSecretDelete mocks base method.
+func (m *MockInterface) ProjectSecretDelete(ctx context.Context, projectKey, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretDelete", ctx, projectKey, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectSecretDelete indicates an expected call of ProjectSecretDelete.
+func (mr *MockInterfaceMockRecorder) ProjectSecretDelete(ctx, projectKey, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretDelete", reflect.TypeOf((*MockInterface)(nil).ProjectSecretDelete), ctx, projectKey, name)
+}
+
+// ProjectSecretList mocks base method.
+func (m *MockInterface) ProjectSecretList(ctx context.Context, projectKey string) ([]sdk.ProjectSecret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretList", ctx, projectKey)
+	ret0, _ := ret[0].([]sdk.ProjectSecret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectSecretList indicates an expected call of ProjectSecretList.
+func (mr *MockInterfaceMockRecorder) ProjectSecretList(ctx, projectKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretList", reflect.TypeOf((*MockInterface)(nil).ProjectSecretList), ctx, projectKey)
+}
+
+// ProjectSecretUpdate mocks base method.
+func (m *MockInterface) ProjectSecretUpdate(ctx context.Context, projectKey string, secret sdk.ProjectSecret) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectSecretUpdate", ctx, projectKey, secret)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectSecretUpdate indicates an expected call of ProjectSecretUpdate.
+func (mr *MockInterfaceMockRecorder) ProjectSecretUpdate(ctx, projectKey, secret interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectSecretUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectSecretUpdate), ctx, projectKey, secret)
 }
 
 // ProjectUpdate mocks base method.

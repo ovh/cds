@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
@@ -743,6 +744,14 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			u, err := user.LoadByID(ctx, api.mustDB(), runRequest.UserID)
 			if err != nil {
 				return err
+			}
+
+			hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, workflowName)
+			if err != nil {
+				return err
+			}
+			if !hasRole {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
 			runEvent := sdk.V2WorkflowRunEvent{}

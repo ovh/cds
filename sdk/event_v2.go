@@ -58,6 +58,10 @@ const (
 	EventNotificationCreated = "NotificationCreated"
 	EventNotificationUpdated = "NotificationUpdated"
 	EventNotificationDeleted = "NotificationDeleted"
+
+	EventSecretCreated = "SecretCreated"
+	EventSecretUpdated = "SecretUpdated"
+	EventSecretDeleted = "SecretDeleted"
 )
 
 // FullEventV2 uses to process event
@@ -87,6 +91,7 @@ type FullEventV2 struct {
 	Plugin        string          `json:"plugin,omitempty"`
 	GPGKey        string          `json:"gpg_key,omitempty"`
 	Notification  string          `json:"notification,omitempty"`
+	Secret        string          `json:"secret,omitempty"`
 }
 
 type GlobalEventV2 struct {
@@ -114,12 +119,18 @@ type AnalysisEvent struct {
 
 type EntityEvent struct {
 	ProjectEventV2
-	ProjectKey string `json:"project_key"`
 	VCSName    string `json:"vcs_name"`
 	Repository string `json:"repository"`
 	Entity     string `json:"entity"`
 	UserID     string `json:"user_id,omitempty"`
 	Username   string `json:"username,omitempty"`
+}
+
+type ProjectSecretEvent struct {
+	ProjectEventV2
+	SecretName string `json:"secret"`
+	UserID     string `json:"user_id"`
+	Username   string `json:"username"`
 }
 
 type HatcheryEvent struct {

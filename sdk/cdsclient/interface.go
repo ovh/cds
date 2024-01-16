@@ -273,6 +273,11 @@ type ProjectClient interface {
 	ProjectRepositoryAnalysis(ctx context.Context, analysis sdk.AnalysisRequest) (sdk.AnalysisResponse, error)
 	ProjectRepositoryAnalysisList(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string) ([]sdk.ProjectRepositoryAnalysis, error)
 	ProjectRepositoryAnalysisGet(ctx context.Context, projectKey string, vcsIdentifier string, repositoryIdentifier string, analysisID string) (sdk.ProjectRepositoryAnalysis, error)
+
+	ProjectSecretAdd(ctx context.Context, projectKey string, secret sdk.ProjectSecret) error
+	ProjectSecretUpdate(ctx context.Context, projectKey string, secret sdk.ProjectSecret) error
+	ProjectSecretDelete(ctx context.Context, projectKey string, name string) error
+	ProjectSecretList(ctx context.Context, projectKey string) ([]sdk.ProjectSecret, error)
 }
 
 type RBACClient interface {
@@ -481,6 +486,8 @@ type IntegrationClient interface {
 
 // Interface is the main interface for cdsclient package
 // generate mock with "mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface" from directory ${GOPATH}/src/github.com/ovh/cds/sdk/cdsclient
+//
+//go:generate mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go
 type Interface interface {
 	Raw
 	AuthClient
