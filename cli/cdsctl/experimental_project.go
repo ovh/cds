@@ -15,5 +15,6 @@ func experimentalProject() *cobra.Command {
 	return cli.NewCommand(experimentalProjectCmd, nil, []*cobra.Command{
 		projectRepository(),
 		projectRepositoryAnalysis(),
+		projectNotification(),
 	})
 }
