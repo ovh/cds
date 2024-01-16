@@ -1,6 +1,6 @@
 -- +migrate Up
 CREATE TABLE project_secret (
-  id              uuid  PRIMARY KEY,
+  id              VARCHAR(36)  PRIMARY KEY,
   project_key     VARCHAR(255) NOT NULL,
   name            TEXT NOT NULL,
   last_modified   TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,

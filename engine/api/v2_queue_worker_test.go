@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/worker_v2"
-	"github.com/ovh/cds/sdk/jws"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/project_secret"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/worker_v2"
+	"github.com/ovh/cds/sdk/jws"
 
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -178,6 +180,13 @@ func TestWorkerTakeJobHandler(t *testing.T) {
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
 
+	secret := sdk.ProjectSecret{
+		ProjectKey: proj.Key,
+		Name:       "MyName",
+		Value:      "MyValue",
+	}
+	require.NoError(t, project_secret.Insert(context.TODO(), db, &secret))
+
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
 		Status:       sdk.StatusBuilding,
@@ -284,6 +293,10 @@ hatcheries:
 	require.True(t, has)
 	require.Equal(t, 1, len(jc.Outputs))
 	require.Equal(t, "bar", jc.Outputs["foo"])
+
+	secretValue := takeJob.Contexts.Secrets[secret.Name]
+	require.Equal(t, "MyValue", secretValue)
+
 }
 
 func TestWorkerRegister(t *testing.T) {

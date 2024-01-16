@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/event_v2"
@@ -89,6 +90,15 @@ func (api *API) putProjectSecretHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
+			reg, err := regexp.Compile(sdk.SecretNamePattern)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			if !reg.MatchString(secret.Name) {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "secret name doesn't match pattern %s", sdk.SecretNamePattern)
+			}
+
 			if name != secret.Name {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "wrong secret name")
 			}
@@ -140,6 +150,15 @@ func (api *API) postProjectSecretHandler() ([]service.RbacChecker, service.Handl
 			var secret sdk.ProjectSecret
 			if err := service.UnmarshalBody(req, &secret); err != nil {
 				return err
+			}
+
+			reg, err := regexp.Compile(sdk.SecretNamePattern)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			if !reg.MatchString(secret.Name) {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "secret name doesn't match pattern %s", sdk.SecretNamePattern)
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)

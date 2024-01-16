@@ -73,6 +73,10 @@ func Test_crudProjectSecret(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, psUpdated.Value, secretDB.Value)
 
+	secretsDB, err := project_secret.LoadByProjectKey(context.TODO(), db, proj.Key, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, psUpdated.Value, secretsDB[0].Value)
+
 	// DELETE
 	varsDelete := map[string]string{
 		"projectKey": proj.Key,

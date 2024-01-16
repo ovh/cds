@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/project_secret"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -64,6 +65,11 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return err
 		}
 
+		projectSecrets, err := project_secret.LoadByProjectKey(ctx, api.mustDB(), projWithSecrets.Key, gorpmapper.GetOptions.WithDecryption)
+		if err != nil {
+			return err
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -74,7 +80,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		if err != nil {
 			return err
 		}
-		secrets := computeSecretsContext(ctx, *projWithSecrets, *vcsWithSecrets)
+		secrets := computeSecretsContext(ctx, *projWithSecrets, projectSecrets, *vcsWithSecrets)
 		contexts.Secrets = secrets
 
 		// Change worker status
@@ -117,13 +123,11 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 	}
 }
 
-func computeSecretsContext(ctx context.Context, projWithSecrets sdk.Project, vcsWithSecrets sdk.VCSProject) map[string]string {
+func computeSecretsContext(ctx context.Context, projWithSecrets sdk.Project, clearSecrets []sdk.ProjectSecret, vcsWithSecrets sdk.VCSProject) map[string]string {
 	secrets := make(map[string]string)
 
-	for _, v := range projWithSecrets.Variables {
-		if v.Type == sdk.SecretVariable {
-			secrets[strings.ToUpper(v.Name)] = v.Value
-		}
+	for _, s := range clearSecrets {
+		secrets[s.Name] = s.Value
 	}
 	for _, k := range projWithSecrets.Keys {
 		if k.Name == vcsWithSecrets.Auth.SSHKeyName {
