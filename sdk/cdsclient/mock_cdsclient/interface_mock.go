@@ -2881,6 +2881,101 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueWorkerTakeJob(ctx, regio
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueWorkerTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueWorkerTakeJob), ctx, region, runJobID)
 }
 
+// MockProjectClientV2 is a mock of ProjectClientV2 interface.
+type MockProjectClientV2 struct {
+	ctrl     *gomock.Controller
+	recorder *MockProjectClientV2MockRecorder
+}
+
+// MockProjectClientV2MockRecorder is the mock recorder for MockProjectClientV2.
+type MockProjectClientV2MockRecorder struct {
+	mock *MockProjectClientV2
+}
+
+// NewMockProjectClientV2 creates a new mock instance.
+func NewMockProjectClientV2(ctrl *gomock.Controller) *MockProjectClientV2 {
+	mock := &MockProjectClientV2{ctrl: ctrl}
+	mock.recorder = &MockProjectClientV2MockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockProjectClientV2) EXPECT() *MockProjectClientV2MockRecorder {
+	return m.recorder
+}
+
+// ProjectNotificationCreate mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationCreate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationCreate indicates an expected call of ProjectNotificationCreate.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationCreate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationCreate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationCreate), ctx, pKey, notif)
+}
+
+// ProjectNotificationDelete mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationDelete(ctx context.Context, pKey, notifName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationDelete", ctx, pKey, notifName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationDelete indicates an expected call of ProjectNotificationDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationDelete(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationDelete), ctx, pKey, notifName)
+}
+
+// ProjectNotificationGet mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationGet(ctx context.Context, pKey, notifName string) (*sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationGet", ctx, pKey, notifName)
+	ret0, _ := ret[0].(*sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationGet indicates an expected call of ProjectNotificationGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationGet(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationGet), ctx, pKey, notifName)
+}
+
+// ProjectNotificationList mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationList indicates an expected call of ProjectNotificationList.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationList(ctx, pKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationList", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationList), ctx, pKey)
+}
+
+// ProjectNotificationUpdate mocks base method.
+func (m *MockProjectClientV2) ProjectNotificationUpdate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationUpdate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationUpdate indicates an expected call of ProjectNotificationUpdate.
+func (mr *MockProjectClientV2MockRecorder) ProjectNotificationUpdate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
+}
+
 // MockProjectClient is a mock of ProjectClient interface.
 type MockProjectClient struct {
 	ctrl     *gomock.Controller
@@ -8521,6 +8616,78 @@ func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{withApplications, withWorkflow}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockInterface)(nil).ProjectList), varargs...)
+}
+
+// ProjectNotificationCreate mocks base method.
+func (m *MockInterface) ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationCreate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationCreate indicates an expected call of ProjectNotificationCreate.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationCreate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationCreate", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationCreate), ctx, pKey, notif)
+}
+
+// ProjectNotificationDelete mocks base method.
+func (m *MockInterface) ProjectNotificationDelete(ctx context.Context, pKey, notifName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationDelete", ctx, pKey, notifName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationDelete indicates an expected call of ProjectNotificationDelete.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationDelete(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationDelete", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationDelete), ctx, pKey, notifName)
+}
+
+// ProjectNotificationGet mocks base method.
+func (m *MockInterface) ProjectNotificationGet(ctx context.Context, pKey, notifName string) (*sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationGet", ctx, pKey, notifName)
+	ret0, _ := ret[0].(*sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationGet indicates an expected call of ProjectNotificationGet.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationGet(ctx, pKey, notifName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationGet", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationGet), ctx, pKey, notifName)
+}
+
+// ProjectNotificationList mocks base method.
+func (m *MockInterface) ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationList", ctx, pKey)
+	ret0, _ := ret[0].([]sdk.ProjectNotification)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectNotificationList indicates an expected call of ProjectNotificationList.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationList(ctx, pKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationList", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationList), ctx, pKey)
+}
+
+// ProjectNotificationUpdate mocks base method.
+func (m *MockInterface) ProjectNotificationUpdate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectNotificationUpdate", ctx, pKey, notif)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectNotificationUpdate indicates an expected call of ProjectNotificationUpdate.
+func (mr *MockInterfaceMockRecorder) ProjectNotificationUpdate(ctx, pKey, notif interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
 }
 
 // ProjectRepositoryAnalysis mocks base method.
