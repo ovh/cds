@@ -98,7 +98,7 @@ testcases:
   - script: cat /tmp/artifactory.yaml
 
   - name: Import integration for project
-    script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import {{.cds_project}} /tmp/artifactory.yaml"
+    script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import {{.cds_project}} /tmp/artifactory.yaml
 
 - name: Push workflow file
   steps:
