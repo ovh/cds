@@ -100,6 +100,11 @@ testcases:
   - name: Import integration for project
     script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import {{.cds_project}} /tmp/artifactory.yaml
 
+  - name: Assert integration is imported on project
+    script: '{{.cdsctl}} -f {{.cdsctl.config}} project integration list {{.cds_project}}'
+    assertions:
+    - result.systemout ShouldContainSubstring {{.artifactory-{{.rt_project}}}}
+
 - name: Push workflow file
   steps:
   - type: v2_push_files_on_repo
