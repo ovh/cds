@@ -111,7 +111,7 @@ type FullEventV2 struct {
 	KeyName          string          `json:"key_name,omitempty"`
 	KeyType          string          `json:"key_type,omitempty"`
 	Variable         string          `json:"variable,omitempty"`
-  Notification     string          `json:"notification,omitempty"`
+	Notification     string          `json:"notification,omitempty"`
 }
 
 type GlobalEventV2 struct {
@@ -225,6 +225,7 @@ type ProjectIntegrationEvent struct {
 	IntegrationModel string `json:"integration_model"`
 	UserID           string `json:"user_id"`
 	Username         string `json:"username"`
+}
 
 type NotificationEvent struct {
 	ProjectEventV2
