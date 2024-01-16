@@ -103,7 +103,7 @@ testcases:
   - name: Assert integration is imported on project
     script: '{{.cdsctl}} -f {{.cdsctl.config}} project integration list {{.cds_project}}'
     assertions:
-    - result.systemout ShouldContainSubstring {{.artifactory-{{.rt_project}}}}
+    - result.systemout ShouldContainSubstring artifactory-{{.rt_project}}
 
 - name: Push workflow file
   steps:
