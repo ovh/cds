@@ -11,9 +11,9 @@ import (
 	"github.com/rockbears/log"
 )
 
-func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.ProjectNotification, error) {
+func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) (*sdk.ProjectNotification, error) {
 	var dbNotif dbProjectNotification
-	found, err := gorpmapping.Get(ctx, db, q, &dbNotif)
+	found, err := gorpmapping.Get(ctx, db, q, &dbNotif, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -31,9 +31,9 @@ func get(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*sdk.Pr
 	return &dbNotif.ProjectNotification, nil
 }
 
-func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]sdk.ProjectNotification, error) {
+func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...gorpmapping.GetOptionFunc) ([]sdk.ProjectNotification, error) {
 	var dbNotifs []dbProjectNotification
-	if err := gorpmapping.GetAll(ctx, db, q, &dbNotifs); err != nil {
+	if err := gorpmapping.GetAll(ctx, db, q, &dbNotifs, opts...); err != nil {
 		return nil, err
 	}
 
@@ -83,14 +83,14 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, notif *sdk.Proje
 	return nil
 }
 
-func LoadByName(ctx context.Context, db gorp.SqlExecutor, projectKey string, name string) (*sdk.ProjectNotification, error) {
+func LoadByName(ctx context.Context, db gorp.SqlExecutor, projectKey string, name string, opts ...gorpmapper.GetOptionFunc) (*sdk.ProjectNotification, error) {
 	q := gorpmapping.NewQuery("SELECT * FROM project_notification WHERE project_key=$1 AND name=$2").Args(projectKey, name)
-	return get(ctx, db, q)
+	return get(ctx, db, q, opts...)
 
 }
 
-func LoadAll(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectNotification, error) {
+func LoadAll(ctx context.Context, db gorp.SqlExecutor, projectKey string, opts ...gorpmapper.GetOptionFunc) ([]sdk.ProjectNotification, error) {
 	q := gorpmapping.NewQuery("SELECT * FROM project_notification WHERE project_key=$1").Args(projectKey)
-	return getAll(ctx, db, q)
+	return getAll(ctx, db, q, opts...)
 
 }
