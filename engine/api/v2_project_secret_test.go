@@ -21,7 +21,7 @@ func Test_crudProjectSecret(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 
 	ps := sdk.ProjectSecret{
-		Name:  "my-secret",
+		Name:  "mySecret",
 		Value: "MySecret",
 	}
 	vars := map[string]string{
@@ -41,7 +41,7 @@ func Test_crudProjectSecret(t *testing.T) {
 		"name":       ps.Name,
 	}
 	psUpdated := sdk.ProjectSecret{
-		Name:  "my-secret",
+		Name:  "mySecret",
 		Value: "MySecretUpdated",
 	}
 	uriPut := api.Router.GetRouteV2("PUT", api.putProjectSecretHandler, varsPut)
