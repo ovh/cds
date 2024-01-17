@@ -123,6 +123,9 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 // AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
 func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
 	vcsProject, err := vcs.LoadVCSByProject(ctx, db, projectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, sdk.WithStack(err)
+	}
 
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
 	if err != nil {
@@ -597,6 +600,7 @@ func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (We
 		return WebhooksInfos{}, errors.New("cast error")
 	}
 
+	log.Debug(ctx, "getting GetWebhooksInfos for type: %s", client.vcsProject.Type)
 	res := WebhooksInfos{}
 	switch {
 	case client.vcsProject.Type == sdk.VCSTypeBitbucketServer:

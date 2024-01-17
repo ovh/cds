@@ -304,7 +304,7 @@ func createVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		return sdk.WrapError(err, "cannot get vcs web hook info")
 	}
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
-		return sdk.NewErrorFrom(sdk.ErrForbidden, "hook creation are forbidden")
+		return sdk.NewErrorFrom(sdk.ErrForbidden, fmt.Sprintf("hook creation are forbidden supported:%t disabled:%t", webHookInfo.WebhooksSupported, webHookInfo.WebhooksDisabled))
 	}
 
 	// Check hook config to avoid sending wrong hooks to VCS

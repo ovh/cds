@@ -63,6 +63,7 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
@@ -143,6 +144,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
@@ -270,6 +272,7 @@ func Test_postResyncPRAsCodeHandler(t *testing.T) {
 	vcsServer := &sdk.VCSProject{
 		ProjectID: p.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
 	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
