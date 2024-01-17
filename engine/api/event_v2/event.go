@@ -1,6 +1,7 @@
 package event_v2
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -134,7 +135,8 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) e
 				}
 			}
 			if canSend {
-				req, err := http.NewRequest("POST", n.WebHookURL, nil)
+				bts, _ := json.Marshal(e)
+				req, err := http.NewRequest("POST", n.WebHookURL, bytes.NewBuffer(bts))
 				if err != nil {
 					log.Error(ctx, "unable to create request for notification %s for project %s: %v", n.Name, n.ProjectKey, err)
 					continue
