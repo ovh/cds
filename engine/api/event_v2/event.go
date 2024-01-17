@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/notification_v2"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 )
 
 const (
@@ -108,7 +109,7 @@ func pushToWebsockets(ctx context.Context, store cache.Store, e sdk.FullEventV2)
 
 func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) error {
 	if e.ProjectKey != "" {
-		notifications, err := notification_v2.LoadAll(ctx, db, e.ProjectKey)
+		notifications, err := notification_v2.LoadAll(ctx, db, e.ProjectKey, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project %s notifications", e.ProjectKey)
 		}
@@ -140,7 +141,9 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) e
 				}
 				for k, v := range n.Auth.Headers {
 					req.Header.Set(k, v)
+
 				}
+
 				resp, err := httpClient.Do(req)
 				if err != nil {
 					log.Error(ctx, "unable to send notification %s for project %s: %v", n.Name, n.ProjectKey, err)
@@ -149,7 +152,7 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) e
 				if resp.StatusCode >= 400 {
 					body, err := io.ReadAll(resp.Body)
 					if err != nil {
-						log.Error(ctx, "unable to read body: %v", err)
+						log.Error(ctx, "unable to read body %s: %v", string(body), err)
 					}
 					log.Error(ctx, "unable to send notification %s for project %s. Http code: %d Body: %s", n.Name, n.ProjectKey, resp.StatusCode, string(body))
 					_ = resp.Body.Close()

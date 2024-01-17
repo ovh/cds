@@ -1,10 +1,13 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/notification_v2"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -103,8 +106,16 @@ func Test_CrudProjectNotification(t *testing.T) {
 	require.Equal(t, len(nUpdate.Filters["filter1"].Events), 1)
 	require.Equal(t, "RunJob.*", nUpdate.Filters["filter1"].Events[0])
 
-	// Delete notification
+	// Load with decrypt
+	notifDB, err := notification_v2.LoadByName(context.TODO(), db, proj.Key, notif.Name, gorpmapping.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, notifDB.Auth.Headers["Authorization"], "Bearer aaaaa")
 
+	notifDBs, err := notification_v2.LoadAll(context.TODO(), db, proj.Key, gorpmapping.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, notifDBs[0].Auth.Headers["Authorization"], "Bearer aaaaa")
+
+	// Delete notification
 	varsDelete := map[string]string{
 		"projectKey":   proj.Key,
 		"notification": notif.Name,
