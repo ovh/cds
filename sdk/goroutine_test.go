@@ -27,7 +27,7 @@ func Test_GoroutineTools(t *testing.T) {
 		m := NewGoRoutines(ctx)
 
 		m.Run(context.TODO(), "test_goroutine_run", func(ctx context.Context) {
-			time.Sleep(1 * time.Second)
+			time.Sleep(2 * time.Second)
 		})
 
 		s := m.GoRoutine("test_goroutine_run")
@@ -35,7 +35,7 @@ func Test_GoroutineTools(t *testing.T) {
 		require.True(t, s.Active)
 		require.Len(t, m.GetStatus(), 1)
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		s = m.GoRoutine("test_goroutine_run")
 		require.NotNil(t, s)
