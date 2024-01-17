@@ -82,14 +82,6 @@ func TestUpdateAsCodePipelineHandler(t *testing.T) {
 				if err := enc.Encode(ope); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/foo/myrepo":
 				vcsRepo := sdk.VCSRepo{
 					Name:         "foo/myrepo",

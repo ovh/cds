@@ -27,7 +27,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -1694,16 +1693,6 @@ func TestInsertAndDeleteMultiHook(t *testing.T) {
 				}); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":
 				pr := sdk.VCSHook{
 					ID: "666",
@@ -2001,15 +1990,6 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 				}); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":
 				pr := sdk.VCSHook{
 					ID: "666",
@@ -2193,15 +2173,6 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 				if err := enc.Encode(map[string]sdk.NodeHook{
 					hooks[k].UUID: hooks[k],
 				}); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/github/webhooks":
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":

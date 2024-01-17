@@ -126,22 +126,6 @@ func TestUpdateAsCodeApplicationHandler(t *testing.T) {
 		DoJSONRequest(gomock.Any(), "POST", "/task/bulk", gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-
-				return nil, 200, nil
-			},
-		)
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/foo/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 			b := sdk.VCSBranch{

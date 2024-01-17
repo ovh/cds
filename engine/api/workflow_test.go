@@ -701,14 +701,6 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/foo/bar/hooks":
 				hook := sdk.VCSHook{}
 				if err := service.UnmarshalBody(r, &hook); err != nil {
@@ -2035,15 +2027,6 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 				if err := enc.Encode(map[string]sdk.NodeHook{
 					hooks[k].UUID: hooks[k],
 				}); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/github/webhooks":
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":

@@ -129,14 +129,6 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/foo/myrepo/hooks":
 				hook := sdk.VCSHook{
 					ID: "myod",
@@ -334,14 +326,6 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 					Default:   false,
 				}
 				if err := enc.Encode(b); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/foo/myrepo/hooks":
@@ -794,23 +778,6 @@ version: v1.0`),
 		)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-
-				return nil, 200, nil
-			},
-		)
-
-	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/grant", gomock.Any(), gomock.Any(), gomock.Any())
 
 	servicesClients.EXPECT().
@@ -1151,23 +1118,6 @@ hooks:
 		)
 
 	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-
-				return nil, 200, nil
-			},
-		)
-
-	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/hooks", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
@@ -1425,23 +1375,6 @@ version: v1.0`),
 					actualHooks[k] = h
 				}
 				out = actualHooks
-				return nil, 200, nil
-			},
-		)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-
 				return nil, 200, nil
 			},
 		)

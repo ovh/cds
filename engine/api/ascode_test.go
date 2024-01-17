@@ -23,7 +23,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -164,20 +163,6 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 		func(r *http.Request) (*http.Response, error) {
 			t.Logf("RequestURI: %s", r.URL.Path)
 			switch r.URL.Path {
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				body := new(bytes.Buffer)
-				w := new(http.Response)
-				enc := json.NewEncoder(body)
-				w.Body = io.NopCloser(body)
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
-				w.StatusCode = http.StatusOK
-				return w, nil
 			case "/vcs/github/repos/go-repo/branches":
 				b := sdk.VCSBranch{
 					Default:      true,

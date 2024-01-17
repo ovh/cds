@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -167,14 +166,6 @@ func TestParseAndImportFromRepository(t *testing.T) {
 					HTTPCloneURL: "https:foo",
 				}
 				if err := enc.Encode(vcsRepo); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/foo/myrepo/hooks":

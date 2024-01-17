@@ -13,7 +13,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -147,22 +146,6 @@ func Test_WorkflowAsCodeRename(t *testing.T) {
 				},
 			),
 	)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/webhooks", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method string, path string, in interface{}, out interface{}, mods ...interface{}) (http.Header, int, error) {
-				*(out.(*repositoriesmanager.WebhooksInfos)) = repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-					Icon:              sdk.GitHubIcon,
-					Events: []string{
-						"push",
-					},
-				}
-				return nil, 200, nil
-			},
-		).Times(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/github/repos/fsamin/go-repo/grant", gomock.Any(), gomock.Any(), gomock.Any())

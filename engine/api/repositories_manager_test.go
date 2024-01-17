@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -122,14 +121,6 @@ func TestAPI_detachRepositoriesManagerHandler(t *testing.T) {
 					}
 				}
 				if err := enc.Encode(hooks); err != nil {
-					return writeError(w, err)
-				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
 					return writeError(w, err)
 				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":

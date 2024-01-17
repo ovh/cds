@@ -1298,19 +1298,6 @@ func Test_postWorkflowRunAsyncFailedHandler(t *testing.T) {
 				if err := enc.Encode(ope); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				res := struct {
-					WebhooksSupported bool   `json:"webhooks_supported"`
-					WebhooksDisabled  bool   `json:"webhooks_disabled"`
-					WebhooksIcon      string `json:"webhooks_icon"`
-				}{
-					WebhooksDisabled:  false,
-					WebhooksIcon:      "",
-					WebhooksSupported: true,
-				}
-				if err := enc.Encode(res); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/foo/myrepo":
 				r := sdk.VCSRepo{
 					SSHCloneURL:  "ssh:/cloneurl",
