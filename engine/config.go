@@ -35,6 +35,7 @@ import (
 	"github.com/ovh/cds/engine/migrateservice"
 	"github.com/ovh/cds/engine/repositories"
 	"github.com/ovh/cds/engine/ui"
+	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	"github.com/ovh/cds/sdk/namesgenerator"
@@ -140,6 +141,11 @@ func configBootstrap(args []string) Configuration {
 			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS()
 			conf.Repositories.Basedir = "/var/lib/cds-engine/repositories"
 			conf.Repositories.HTTP.Port = 8085
+		case sdk.TypeVCS:
+			conf.VCS = &vcs.Configuration{}
+			defaults.SetDefaults(conf.VCS)
+			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS()
+			conf.VCS.HTTP.Port = 8084
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)
