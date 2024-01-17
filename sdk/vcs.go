@@ -359,6 +359,7 @@ type VCSAuthorizedClientCommon interface {
 
 	// Set build status on repository
 	SetStatus(ctx context.Context, event Event) error
+	SetDisableStatusDetails(disableStatusDetails bool)
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
 	// Release

@@ -492,6 +492,10 @@ func (c *vcsClient) IsDisableStatusDetails(ctx context.Context) bool {
 	return true
 }
 
+func (c *vcsClient) SetDisableStatusDetails(disableStatusDetails bool) {
+	// nothing here for the implementation of this func into api
+}
+
 func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if c.vcsProject != nil && c.vcsProject.Options.DisableStatus {
 		return nil

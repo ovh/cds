@@ -6,10 +6,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (g *giteaClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
+func (client *giteaClient) SetDisableStatusDetails(disableStatusDetails bool) {
+	// no implementation for gitea
+}
+
+func (client *giteaClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	return sdk.WithStack(sdk.ErrNotImplemented)
 }
 
-func (g *giteaClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (client *giteaClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	return nil, sdk.WithStack(sdk.ErrNotImplemented)
 }

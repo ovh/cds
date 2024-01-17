@@ -83,7 +83,6 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 func (s *Service) getConsumer(name string, vcsAuth sdk.VCSAuth) (sdk.VCSServer, error) {
-
 	switch vcsAuth.Type {
 	case sdk.VCSTypeGitea:
 		return gitea.New(strings.TrimSuffix(vcsAuth.URL, "/"),
@@ -154,7 +153,6 @@ func (s *Service) Serve(c context.Context) error {
 	}
 	s.UI.HTTP.URL = cfgUser.URLUI
 
-	//Init the cache
 	var errCache error
 	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.Redis.DbIndex, s.Cfg.Cache.TTL)
 	if errCache != nil {

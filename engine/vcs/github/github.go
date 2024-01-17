@@ -13,8 +13,7 @@ type githubClient struct {
 	GitHubAPIURL         string
 	ClientID             string
 	OAuthToken           string
-	DisableStatus        bool
-	DisableStatusDetails bool
+	disableStatusDetails bool
 	Cache                cache.Store
 	apiURL               string
 	uiURL                string
@@ -25,18 +24,14 @@ type githubClient struct {
 
 // GithubConsumer implements vcs.Server and it's used to instantiate a githubClient
 type githubConsumer struct {
-	ClientID             string `json:"client-id"`
-	ClientSecret         string `json:"-"`
-	Cache                cache.Store
-	GitHubURL            string
-	GitHubAPIURL         string
-	uiURL                string
-	apiURL               string
-	proxyURL             string
-	disableStatus        bool
-	disableStatusDetails bool
-	username             string
-	token                string
+	Cache        cache.Store
+	GitHubURL    string
+	GitHubAPIURL string
+	uiURL        string
+	apiURL       string
+	proxyURL     string
+	username     string
+	token        string
 }
 
 // New creates a new GithubConsumer
@@ -64,6 +59,18 @@ func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.St
 	}
 }
 
-func (c *githubClient) GetAccessToken(_ context.Context) string {
-	return c.OAuthToken
+// GetAuthorized returns an authorized client
+func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	c := &githubClient{
+		GitHubURL:    g.GitHubURL,    // default value of this field is computed in github.New() func
+		GitHubAPIURL: g.GitHubAPIURL, // default value of this field is computed in github.New() func
+		Cache:        g.Cache,
+		uiURL:        g.uiURL,
+		apiURL:       g.apiURL,
+		proxyURL:     g.proxyURL,
+		username:     vcsAuth.Username,
+		token:        vcsAuth.Token,
+	}
+
+	return c, c.RateLimit(ctx)
 }

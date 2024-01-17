@@ -1,6 +1,8 @@
 package bitbucketcloud
 
 import (
+	"context"
+
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -11,8 +13,7 @@ const rootURL = "https://api.bitbucket.org/2.0"
 type bitbucketcloudClient struct {
 	appPassword          string
 	username             string
-	DisableStatus        bool
-	DisableStatusDetails bool
+	disableStatusDetails bool
 	Cache                cache.Store
 	apiURL               string
 	uiURL                string
@@ -35,4 +36,17 @@ func New(apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
 		uiURL:    uiURL,
 		proxyURL: proxyURL,
 	}
+}
+
+// GetAuthorized returns an authorized client
+func (consumer *bitbucketcloudConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	c := &bitbucketcloudClient{
+		appPassword: vcsAuth.Token,
+		username:    vcsAuth.Username,
+		Cache:       consumer.Cache,
+		apiURL:      consumer.apiURL,
+		uiURL:       consumer.uiURL,
+		proxyURL:    consumer.proxyURL,
+	}
+	return c, nil
 }

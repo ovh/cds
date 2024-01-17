@@ -23,18 +23,17 @@ type statusData struct {
 	context      string
 }
 
-// SetStatus Users with push access can create commit statuses for a given ref:
-func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
-	if client.DisableStatus {
-		log.Warn(ctx, "bitbucketcloud.SetStatus> ⚠ bitbucketcloud statuses are disabled")
-		return nil
-	}
+func (client *bitbucketcloudClient) SetDisableStatusDetails(disableStatusDetails bool) {
+	client.disableStatusDetails = disableStatusDetails
+}
 
+// SetStatus Users with push access can create commit statuses for a given ref:
+func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var data statusData
 	var err error
 	switch event.EventType {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = client.processEventWorkflowNodeRun(event, client.uiURL, disableStatusDetails)
+		data, err = client.processEventWorkflowNodeRun(event, client.uiURL)
 	default:
 		log.Error(ctx, "bitbucketcloud.SetStatus> Unknown event %v", event)
 		return nil
@@ -130,7 +129,7 @@ func processBbitbucketState(s Status) string {
 	}
 }
 
-func (client *bitbucketcloudClient) processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disableStatusDetails bool) (statusData, error) {
+func (client *bitbucketcloudClient) processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string) (statusData, error) {
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
@@ -160,7 +159,7 @@ func (client *bitbucketcloudClient) processEventWorkflowNodeRun(event sdk.Event,
 	data.repoFullName = eventNR.RepositoryFullName
 	data.pipName = eventNR.NodeName
 
-	if !disableStatusDetails {
+	if !client.disableStatusDetails {
 		data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 			cdsUIURL,
 			event.ProjectKey,
@@ -168,8 +167,8 @@ func (client *bitbucketcloudClient) processEventWorkflowNodeRun(event sdk.Event,
 			eventNR.Number,
 		)
 	} else {
-		//CDS can avoid sending bitbucket target url in status, if it's disable
-		if disableStatusDetails {
+		//CDS can avoid sending bitbucket target url in status, if it's disabled
+		if client.disableStatusDetails {
 			data.urlPipeline = "https://ovh.github.io/cds/" // because it's mandatory
 		}
 	}

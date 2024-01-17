@@ -618,7 +618,9 @@ func (s *Service) postStatusHandler() service.Handler {
 			disableStatusDetails, _ = strconv.ParseBool(d)
 		}
 
-		if err := client.SetStatus(ctx, evt, disableStatusDetails); err != nil {
+		client.SetDisableStatusDetails(disableStatusDetails)
+
+		if err := client.SetStatus(ctx, evt); err != nil {
 			return sdk.WrapError(err, "Unable to set status on %s", name)
 		}
 
