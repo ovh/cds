@@ -40,9 +40,13 @@ func Test_accessTokenAuth(t *testing.T) {
 func Test_getReposHandler(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
 
-	//Bootstrap the service
 	s, err := newTestService(t)
 	require.NoError(t, err)
+
+	if cfg["githubToken"] == "" && cfg["githubUsername"] == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
 
 	//Prepare request
 	vars := map[string]string{
@@ -70,6 +74,11 @@ func Test_getRepoHandler(t *testing.T) {
 	//Bootstrap the service
 	s, err := newTestService(t)
 	require.NoError(t, err)
+
+	if cfg["githubToken"] == "" && cfg["githubUsername"] == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
 
 	//Prepare request
 	vars := map[string]string{
@@ -100,6 +109,11 @@ func Test_getBranchesHandler(t *testing.T) {
 	s, err := newTestService(t)
 	require.NoError(t, err)
 
+	if cfg["githubToken"] == "" && cfg["githubUsername"] == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
+
 	//Prepare request
 	vars := map[string]string{
 		"name":  "github",
@@ -128,6 +142,11 @@ func Test_getBranchHandler(t *testing.T) {
 	//Bootstrap the service
 	s, err := newTestService(t)
 	require.NoError(t, err)
+
+	if cfg["githubToken"] == "" && cfg["githubUsername"] == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
 
 	//Prepare request
 	vars := map[string]string{
@@ -166,6 +185,11 @@ func Test_getCommitsHandler(t *testing.T) {
 	s, err := newTestService(t)
 	require.NoError(t, err)
 
+	if cfg["githubToken"] == "" && cfg["githubUsername"] == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
+
 	//Prepare request
 	vars := map[string]string{
 		"name":  "github",
@@ -201,6 +225,11 @@ func Test_getCommitHandler(t *testing.T) {
 	s, err := newTestService(t)
 	require.NoError(t, err)
 
+	if cfg["githubToken"] == "" && cfg["githubUsername"] == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
+
 	//Prepare request
 	vars := map[string]string{
 		"name":   "github",
@@ -228,6 +257,11 @@ func Test_getCommitStatusHandler(t *testing.T) {
 	//Bootstrap the service
 	s, err := newTestService(t)
 	require.NoError(t, err)
+
+	if cfg["githubToken"] == "" && cfg["githubUsername"] == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
 
 	vars := map[string]string{
 		"name":   "github",
