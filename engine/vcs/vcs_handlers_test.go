@@ -52,8 +52,9 @@ func Test_getReposHandler(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
-	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(sdk.HeaderXVCSToken, token)
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(cfg["githubToken"])))
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(sdk.VCSTypeGithub)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(cfg["githubUsername"])))
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -80,8 +81,9 @@ func Test_getRepoHandler(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
-	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(sdk.HeaderXVCSToken, token)
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(cfg["githubToken"])))
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(sdk.VCSTypeGithub)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(cfg["githubUsername"])))
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -108,8 +110,9 @@ func Test_getBranchesHandler(t *testing.T) {
 	require.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
 
-	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(sdk.HeaderXVCSToken, token)
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(cfg["githubToken"])))
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(sdk.VCSTypeGithub)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(cfg["githubUsername"])))
 
 	//Do the request
 	rec := httptest.NewRecorder()
@@ -141,8 +144,9 @@ func Test_getBranchHandler(t *testing.T) {
 	}
 	req := newRequest(t, s, "GET", uri, nil, f)
 
-	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(sdk.HeaderXVCSToken, token)
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(cfg["githubToken"])))
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(sdk.VCSTypeGithub)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(cfg["githubUsername"])))
 
 	btes, _ := httputil.DumpRequest(req, false)
 	t.Log(string(btes))
@@ -178,8 +182,9 @@ func Test_getCommitsHandler(t *testing.T) {
 		req.URL.RawQuery = q.Encode()
 	})
 
-	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
-	req.Header.Set(sdk.HeaderXVCSToken, token)
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(cfg["githubToken"])))
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(sdk.VCSTypeGithub)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(cfg["githubUsername"])))
 
 	//Do the request
 	rec := httptest.NewRecorder()

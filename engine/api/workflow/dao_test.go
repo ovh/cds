@@ -1824,7 +1824,7 @@ vcs_ssh_key: proj-blabla
 
 	// Add check on Hook
 	assert.Equal(t, "666", w.WorkflowData.Node.Hooks[0].Config["webHookID"].Value)
-	assert.Equal(t, "github", w.WorkflowData.Node.Hooks[0].Config["hookIcon"].Value)
+	assert.Equal(t, "Github", w.WorkflowData.Node.Hooks[0].Config["hookIcon"].Value)
 	assert.Equal(t, fmt.Sprintf("http://6.6.6:8080/%s", w.WorkflowData.Node.Hooks[0].UUID), w.WorkflowData.Node.Hooks[0].Config["webHookURL"].Value)
 	t.Logf("%+v", w.WorkflowData.Node.Hooks[0])
 
