@@ -486,8 +486,6 @@ type IntegrationClient interface {
 
 // Interface is the main interface for cdsclient package
 // generate mock with "mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface" from directory ${GOPATH}/src/github.com/ovh/cds/sdk/cdsclient
-//
-//go:generate mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go
 type Interface interface {
 	Raw
 	AuthClient
