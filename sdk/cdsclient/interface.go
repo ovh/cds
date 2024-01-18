@@ -530,6 +530,7 @@ type V2WorkerInterface interface {
 	V2WorkerClient
 	V2QueueClient
 	GRPCPluginsClient
+	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 }
 

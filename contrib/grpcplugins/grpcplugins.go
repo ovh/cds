@@ -195,8 +195,8 @@ func UpdateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	return &response, nil
 }
 
-func GetIntegrationByModel(ctx context.Context, c *actionplugin.Common, model string) (*sdk.ProjectIntegration, error) {
-	req, err := c.NewRequest(ctx, http.MethodGet, fmt.Sprintf("/v2/integrations/%s", url.QueryEscape(model)), nil)
+func GetIntegrationByName(ctx context.Context, c *actionplugin.Common, name string) (*sdk.ProjectIntegration, error) {
+	req, err := c.NewRequest(ctx, http.MethodGet, fmt.Sprintf("/v2/integrations/%s", url.QueryEscape(name)), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -219,4 +219,52 @@ func GetIntegrationByModel(ctx context.Context, c *actionplugin.Common, model st
 	}
 	return &response, nil
 
+}
+
+func GetJobRun(ctx context.Context, c *actionplugin.Common) (*sdk.V2WorkflowRunJob, error) {
+	r, err := c.NewRequest(ctx, "GET", "/v2/jobrun", nil)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to prepare request")
+	}
+
+	resp, err := c.DoRequest(r)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get job run")
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+
+	defer resp.Body.Close()
+
+	var jobRun sdk.V2WorkflowRunJob
+	if err := sdk.JSONUnmarshal(btes, &jobRun); err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+	return &jobRun, nil
+}
+
+func GetJobContext(ctx context.Context, c *actionplugin.Common) (*sdk.WorkflowRunJobsContext, error) {
+	r, err := c.NewRequest(ctx, "GET", "/v2/context", nil)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to prepare request")
+	}
+
+	resp, err := c.DoRequest(r)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get job context")
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+
+	defer resp.Body.Close()
+
+	var context sdk.WorkflowRunJobsContext
+	if err := sdk.JSONUnmarshal(btes, &context); err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+	return &context, nil
 }

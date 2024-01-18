@@ -13,7 +13,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -292,7 +291,7 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 				return err
 			}
 
-			oldRunResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResult.ID, nil)
+			oldRunResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResult.ID)
 			if err != nil {
 				return err
 			}
@@ -338,7 +337,7 @@ func (api *API) getJobRunResultHandler() ([]service.RbacChecker, service.Handler
 
 			runResultID := vars["runResultID"]
 
-			runResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResultID, &integration.LoadProjectIntegrationByIDs)
+			runResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResultID)
 			if err != nil {
 				return err
 			}
@@ -358,14 +357,7 @@ func (api *API) getJobRunResultsHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			// Only the worker is allowed to load run result with decrypted config for integration run result
-			withClearIntegration := service.FormBool(req, "withClearIntegration") && isWorker(ctx)
-			integrationsLoader := &integration.LoadProjectIntegrationByIDs
-			if withClearIntegration {
-				integrationsLoader = &integration.LoadProjectIntegrationByIDsWithClearPassword
-			}
-
-			runResults, err := workflow_v2.LoadRunResults(ctx, api.mustDB(), runJob.WorkflowRunID, integrationsLoader)
+			runResults, err := workflow_v2.LoadRunResults(ctx, api.mustDB(), runJob.WorkflowRunID)
 			if err != nil {
 				return err
 			}

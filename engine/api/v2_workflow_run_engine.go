@@ -308,7 +308,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	}
 
 	// Synchronize workflow runs
-	runResults, err := workflow_v2.LoadRunResults(ctx, db, runID, &integration.LoadProjectIntegrationByIDsWithClearPassword)
+	runResults, err := workflow_v2.LoadRunResults(ctx, db, runID)
 	if err != nil {
 		return err
 	}
@@ -351,7 +351,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 
 	for i := range runResults {
 		result := &runResults[i]
-		if result.ArtifactManagerIntegrationID == nil {
+		if result.ArtifactManagerIntegrationName == nil {
 			continue
 		}
 		if result.DataSync == nil {

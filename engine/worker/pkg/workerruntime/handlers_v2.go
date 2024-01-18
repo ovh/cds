@@ -146,9 +146,9 @@ func V2_integrationsHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		name := vars["name"]
-		integ := wk.V2GetIntegrationByName(r.Context(), name)
-		if integ == nil {
-			writeError(w, r, sdk.ErrNotFound)
+		integ, err := wk.V2GetIntegrationByName(r.Context(), name)
+		if err != nil {
+			writeError(w, r, err)
 			return
 		}
 		writeJSON(w, integ, http.StatusOK)

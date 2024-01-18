@@ -76,9 +76,7 @@ func LoadProjectIntegrationByNameWithClearPassword(ctx context.Context, db gorp.
 	return loadWithClearPassword(ctx, db, query)
 }
 
-type ProjectIntegrationByIDsLoader func(ctx context.Context, db gorp.SqlExecutor, id ...int64) (map[int64]sdk.ProjectIntegration, error)
-
-var LoadProjectIntegrationByIDs ProjectIntegrationByIDsLoader = func(ctx context.Context, db gorp.SqlExecutor, id ...int64) (map[int64]sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByIDs(ctx context.Context, db gorp.SqlExecutor, id ...int64) (map[int64]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = ANY($1)").Args(pq.Int64Array(id))
 	pps, err := loadAll(ctx, db, query)
 	if err != nil {
@@ -91,7 +89,7 @@ var LoadProjectIntegrationByIDs ProjectIntegrationByIDsLoader = func(ctx context
 	return res, nil
 }
 
-var LoadProjectIntegrationByIDsWithClearPassword ProjectIntegrationByIDsLoader = func(ctx context.Context, db gorp.SqlExecutor, id ...int64) (map[int64]sdk.ProjectIntegration, error) {
+func LoadProjectIntegrationByIDsWithClearPassword(ctx context.Context, db gorp.SqlExecutor, id ...int64) (map[int64]sdk.ProjectIntegration, error) {
 	query := gorpmapping.NewQuery("SELECT * from project_integration WHERE id = ANY($1)").Args(pq.Int64Array(id))
 	pps, err := loadAllWithClearPassword(ctx, db, query)
 	if err != nil {

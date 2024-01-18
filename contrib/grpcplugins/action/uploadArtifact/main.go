@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -29,10 +30,15 @@ import (
 
 type runActionUploadArtifactPlugin struct {
 	actionplugin.Common
+	cacheIntegrations     map[string]sdk.ProjectIntegration
+	lockCacheIntegrations *sync.Mutex
 }
 
 func main() {
-	actPlugin := runActionUploadArtifactPlugin{}
+	actPlugin := runActionUploadArtifactPlugin{
+		cacheIntegrations:     make(map[string]sdk.ProjectIntegration),
+		lockCacheIntegrations: new(sync.Mutex),
+	}
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
@@ -64,7 +70,7 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 
 	var dirFS = os.DirFS(workDirs.WorkingDir)
 
-	if err := perform(ctx, &actPlugin.Common, dirFS, path, ifNoFilesFound); err != nil {
+	if err := actPlugin.perform(ctx, dirFS, path, ifNoFilesFound); err != nil {
 		res.Status = sdk.StatusFail
 		res.Status = err.Error()
 		return res, err
@@ -73,7 +79,7 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 	return res, nil
 }
 
-func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifNoFilesFound string) error {
+func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dirFS fs.FS, path, ifNoFilesFound string) error {
 	results, err := glob.Glob(dirFS, ".", path)
 	if err != nil {
 		return err
@@ -154,7 +160,7 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 			},
 		}
 
-		response, err := grpcplugins.CreateRunResult(ctx, c, &runResultRequest)
+		response, err := grpcplugins.CreateRunResult(ctx, &actPlugin.Common, &runResultRequest)
 		if err != nil {
 			grpcplugins.Error(err.Error())
 			return err
@@ -168,7 +174,7 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 			reader, ok := openFiles[r.Path].(io.ReadSeeker)
 			var item *sdk.CDNItem
 			if ok {
-				item, d, err = CDNItemUpload(ctx, c, response.CDNAddress, response.CDNSignature, reader)
+				item, d, err = actPlugin.CDNItemUpload(ctx, response.CDNAddress, response.CDNSignature, reader)
 				if err != nil {
 					grpcplugins.Error("An error occured during file upload upload: " + err.Error())
 					continue
@@ -193,21 +199,35 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 			grpcplugins.Logf("  CDN API Ref Hash: %s", i.Item.APIRefHash)
 			grpcplugins.Logf("  CDN HTTP URL: %s", i.CDNHttpURL)
 
-		case response.RunResult.ArtifactManagerIntegration != nil:
-			jobRun, err := GetJobRun(ctx, c)
+		case response.RunResult.ArtifactManagerIntegrationName != nil:
+			// Get integration from the local cache, or from the worker
+			actPlugin.lockCacheIntegrations.Lock()
+			integ, has := actPlugin.cacheIntegrations[*response.RunResult.ArtifactManagerIntegrationName]
+			if !has {
+				integFromWorker, err := grpcplugins.GetIntegrationByName(ctx, &actPlugin.Common, *response.RunResult.ArtifactManagerIntegrationName)
+				if err != nil {
+					grpcplugins.Errorf(err.Error())
+					return err
+				}
+				actPlugin.cacheIntegrations[*response.RunResult.ArtifactManagerIntegrationName] = *integFromWorker
+				integ = *integFromWorker
+			}
+			actPlugin.lockCacheIntegrations.Unlock()
+
+			jobRun, err := grpcplugins.GetJobRun(ctx, &actPlugin.Common)
 			if err != nil {
 				grpcplugins.Error(err.Error())
 				return err
 			}
 
-			jobContext, err := GetJobContext(ctx, c)
+			jobContext, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
 			if err != nil {
 				grpcplugins.Error(err.Error())
 				return err
 			}
 
-			repository := response.RunResult.ArtifactManagerIntegration.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-cds"
-			maturity := response.RunResult.ArtifactManagerIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+			repository := integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-cds"
+			maturity := integ.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
 			path := filepath.Join(jobRun.ProjectKey, jobRun.WorkflowName, jobContext.Git.SemverCurrent)
 
 			response.RunResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
@@ -226,11 +246,11 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 				return fmt.Errorf("unable to cast reader")
 			}
 
-			grpcplugins.Logf("  Artifactory URL: %s", response.RunResult.ArtifactManagerIntegration.Config[sdk.ArtifactoryConfigURL].Value)
+			grpcplugins.Logf("  Artifactory URL: %s", integ.Config[sdk.ArtifactoryConfigURL].Value)
 			grpcplugins.Logf("  Artifactory repository: %s", repository)
 
 			var res *ArtifactoryUploadResult
-			res, d, err = ArtifactoryItemUpload(ctx, c, response.RunResult, reader)
+			res, d, err = actPlugin.ArtifactoryItemUpload(ctx, response.RunResult, integ, reader)
 			if err != nil {
 				grpcplugins.Error(err.Error())
 				return err
@@ -254,7 +274,7 @@ func perform(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, path, ifN
 			return err
 		}
 
-		updateResponse, err := grpcplugins.UpdateRunResult(ctx, c, &runResultRequest)
+		updateResponse, err := grpcplugins.UpdateRunResult(ctx, &actPlugin.Common, &runResultRequest)
 		if err != nil {
 			grpcplugins.Error(err.Error())
 			return err
@@ -277,54 +297,6 @@ type checksumResult struct {
 	md5    string
 	sha1   string
 	sha256 string
-}
-
-func GetJobRun(ctx context.Context, c *actionplugin.Common) (*sdk.V2WorkflowRunJob, error) {
-	r, err := c.NewRequest(ctx, "GET", "/v2/jobrun", nil)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to prepare request")
-	}
-
-	resp, err := c.DoRequest(r)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to get job run")
-	}
-	btes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to read response")
-	}
-
-	defer resp.Body.Close()
-
-	var jobRun sdk.V2WorkflowRunJob
-	if err := sdk.JSONUnmarshal(btes, &jobRun); err != nil {
-		return nil, sdk.WrapError(err, "unable to read response")
-	}
-	return &jobRun, nil
-}
-
-func GetJobContext(ctx context.Context, c *actionplugin.Common) (*sdk.WorkflowRunJobsContext, error) {
-	r, err := c.NewRequest(ctx, "GET", "/v2/context", nil)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to prepare request")
-	}
-
-	resp, err := c.DoRequest(r)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to get job context")
-	}
-	btes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, sdk.WrapError(err, "unable to read response")
-	}
-
-	defer resp.Body.Close()
-
-	var context sdk.WorkflowRunJobsContext
-	if err := sdk.JSONUnmarshal(btes, &context); err != nil {
-		return nil, sdk.WrapError(err, "unable to read response")
-	}
-	return &context, nil
 }
 
 func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]checksumResult, error) {
@@ -370,7 +342,7 @@ func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]check
 	return result, nil
 }
 
-func CDNItemUpload(ctx context.Context, c *actionplugin.Common, cdnAddr string, signature string, reader io.ReadSeeker) (*sdk.CDNItem, time.Duration, error) {
+func (actPlugin *runActionUploadArtifactPlugin) CDNItemUpload(ctx context.Context, cdnAddr string, signature string, reader io.ReadSeeker) (*sdk.CDNItem, time.Duration, error) {
 	t0 := time.Now()
 
 	for i := 0; i < 3; i++ {
@@ -382,7 +354,7 @@ func CDNItemUpload(ctx context.Context, c *actionplugin.Common, cdnAddr string, 
 		}
 		req.Header.Set("X-CDS-WORKER-SIGNATURE", signature)
 
-		resp, err := c.HTTPClient.Do(req)
+		resp, err := actPlugin.HTTPClient.Do(req)
 		if err != nil {
 			return nil, time.Since(t0), err
 		}
@@ -435,14 +407,14 @@ type ArtifactoryUploadResult struct {
 	URI string `json:"uri"`
 }
 
-func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, runResult *sdk.V2WorkflowRunResult, reader io.ReadSeeker) (*ArtifactoryUploadResult, time.Duration, error) {
+func (actPlugin *runActionUploadArtifactPlugin) ArtifactoryItemUpload(ctx context.Context, runResult *sdk.V2WorkflowRunResult, integ sdk.ProjectIntegration, reader io.ReadSeeker) (*ArtifactoryUploadResult, time.Duration, error) {
 	t0 := time.Now()
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
-	rtURL := runResult.ArtifactManagerIntegration.Config[sdk.ArtifactoryConfigURL].Value
-	rtToken := runResult.ArtifactManagerIntegration.Config[sdk.ArtifactoryConfigToken].Value
+	rtURL := integ.Config[sdk.ArtifactoryConfigURL].Value
+	rtToken := integ.Config[sdk.ArtifactoryConfigToken].Value
 
 	repo := runResult.ArtifactManagerMetadata.Get("repository")
 	path := runResult.ArtifactManagerMetadata.Get("path")
@@ -460,7 +432,7 @@ func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, runResul
 		req.Header.Set("X-Checksum-Sha256", runResult.ArtifactManagerMetadata.Get("sha256"))
 		req.Header.Set("X-Checksum-MD5", runResult.ArtifactManagerMetadata.Get("md5"))
 
-		resp, err := c.HTTPClient.Do(req)
+		resp, err := actPlugin.HTTPClient.Do(req)
 		if err != nil {
 			return nil, time.Since(t0), err
 		}

@@ -11505,6 +11505,21 @@ func (mr *MockV2WorkerInterfaceMockRecorder) PluginsList() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsList", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginsList))
 }
 
+// ProjectIntegrationGet mocks base method.
+func (m *MockV2WorkerInterface) ProjectIntegrationGet(projectKey, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectIntegrationGet", projectKey, integrationName, clearPassword)
+	ret0, _ := ret[0].(sdk.ProjectIntegration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectIntegrationGet indicates an expected call of ProjectIntegrationGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationGet(projectKey, integrationName, clearPassword interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationGet), projectKey, integrationName, clearPassword)
+}
+
 // ProjectIntegrationWorkerHookGet mocks base method.
 func (m *MockV2WorkerInterface) ProjectIntegrationWorkerHookGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
 	m.ctrl.T.Helper()

@@ -79,7 +79,7 @@ func Test_perform(t *testing.T) {
 		},
 	)
 
-	mockHTTPClient.EXPECT().Do(reqMatcher{method: "POST", urlPath: "/item/upload"}).DoAndReturn(
+	mockHTTPClient.EXPECT().Do(reqMatcher{method: "POST", urlPath: "cdn-address/item/upload"}).DoAndReturn(
 		func(req *http.Request) (*http.Response, error) {
 			btes, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
@@ -94,7 +94,8 @@ func Test_perform(t *testing.T) {
 		func(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
 			require.Equal(t, "main.go", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultGenericDetail).Name)
 			return &workerruntime.V2AddResultResponse{
-				RunResult: req.RunResult,
+				RunResult:  req.RunResult,
+				CDNAddress: "cdn-address",
 			}, nil
 		},
 	)
@@ -108,7 +109,10 @@ func Test_perform(t *testing.T) {
 		},
 	)
 
-	err := perform(context.TODO(), &actionplugin.Common{HTTPPort: 1, HTTPClient: mockHTTPClient}, os.DirFS("."), "*.go !*_test.go", "warn")
+	plugin := new(runActionUploadArtifactPlugin)
+	plugin.Common = actionplugin.Common{HTTPPort: 1, HTTPClient: mockHTTPClient}
+
+	err := plugin.perform(context.TODO(), os.DirFS("."), "*.go !*_test.go", "warn")
 	require.NoError(t, err)
 }
 

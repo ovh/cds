@@ -42,7 +42,7 @@ func (*TestWorker) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
 }
 
 // V2GetIntegrationByName implements workerruntime.Runtime.
-func (*TestWorker) V2GetIntegrationByName(ctx context.Context, name string) *sdk.ProjectIntegration {
+func (*TestWorker) V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error) {
 	panic("unimplemented")
 }
 

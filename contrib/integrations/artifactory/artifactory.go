@@ -370,7 +370,7 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 	modules := make([]buildinfo.Module, 0)
 
 	for _, r := range runResults {
-		if r.ArtifactManagerIntegration == nil {
+		if r.ArtifactManagerIntegrationName == nil {
 			continue
 		}
 

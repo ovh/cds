@@ -16,10 +16,17 @@ import (
 
 func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
-	var runResult = req.RunResult
+	var (
+		runResult = req.RunResult
+		integ     *sdk.ProjectIntegration
+	)
 
-	if wk.currentJobV2.runJobContext.Integrations.ArtifactManager != nil {
-		runResult.ArtifactManagerIntegration = wk.currentJobV2.runJobContext.Integrations.ArtifactManager
+	if wk.currentJobV2.runJobContext.Integrations.ArtifactManager != "" {
+		var err error
+		integ, err = wk.V2GetIntegrationByName(ctx, wk.currentJobV2.runJobContext.Integrations.ArtifactManager)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to find integration %q", wk.currentJobV2.runJobContext.Integrations.ArtifactManager)
+		}
 	}
 
 	// Create the run result on API side
@@ -31,7 +38,7 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 		RunResult: runResult,
 	}
 
-	if runResult.ArtifactManagerIntegration == nil {
+	if integ == nil {
 		// Generate a worker signature
 		sig := cdn.Signature{
 			JobName:       wk.currentJobV2.runJob.Job.Name,
@@ -58,10 +65,12 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 		if err != nil {
 			return nil, sdk.NewError(sdk.ErrUnknownError, err)
 		}
-
 		// Returns the signature and CDN info
 		response.CDNSignature = signature
 		response.CDNAddress = wk.CDNHttpURL()
+	} else {
+		log.Info(ctx, "enabling integration %q for run result %s", integ.Name, response.RunResult.ID)
+		response.RunResult.ArtifactManagerIntegrationName = &integ.Name
 	}
 
 	return &response, nil
@@ -180,14 +189,17 @@ func (wk *CurrentWorker) AddStepOutput(ctx context.Context, outputName string, o
 	wk.currentJobV2.runJob.StepsStatus[wk.currentJobV2.currentStepName] = stepStatus
 }
 
-func (wk *CurrentWorker) V2GetIntegrationByName(ctx context.Context, name string) *sdk.ProjectIntegration {
-	if wk.currentJobV2.runJobContext.Integrations == nil {
-		return nil
+func (wk *CurrentWorker) V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error) {
+	integ, has := wk.currentJobV2.integrations[name]
+	if has {
+		return &integ, nil
 	}
-	for _, i := range wk.currentJobV2.runJobContext.Integrations.All() {
-		if i.Name == name {
-			return &i
-		}
+
+	integFromAPI, err := wk.clientV2.ProjectIntegrationGet(wk.currentJobV2.runJob.ProjectKey, name, true)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	wk.currentJobV2.integrations[name] = integFromAPI
+	return &integFromAPI, nil
 }
