@@ -429,19 +429,6 @@ func handleJobV2(_ context.Context, h Interface, runJob sdk.V2WorkflowRunJob, ca
 		return nil
 	}
 
-	if hWithModels != nil {
-		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, runJob.Job.RunsOn)
-		if err != nil {
-			endTrace(fmt.Sprintf("%v", err.Error()), runJob.ID)
-			return err
-		}
-		workerRequest.model = *workerModel
-		if !h.CanSpawn(ctx, *workerModel, runJob.ID, nil) {
-			endTrace("cannot spawn", runJob.ID)
-			return nil
-		}
-	}
-
 	// Check if we already try to start a worker for this job
 	maxAttemptsNumberBeforeFailure := h.Configuration().Provision.MaxAttemptsNumberBeforeFailure
 	if maxAttemptsNumberBeforeFailure > -1 {
@@ -458,6 +445,26 @@ func handleJobV2(_ context.Context, h Interface, runJob sdk.V2WorkflowRunJob, ca
 			}
 			log.Info(ctx, "hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure)
 			endTrace("maximum attempts", runJob.ID)
+			return nil
+		}
+	}
+
+	if hWithModels != nil {
+		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, runJob.Job.RunsOn)
+		if err != nil {
+			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, runJob.Region, runJob.ID, sdk.V2SendJobRunInfo{
+				Time:    time.Now(),
+				Level:   sdk.WorkflowRunInfoLevelError,
+				Message: fmt.Sprintf("unable to get worker model %s, retrying: %v", runJob.Job.RunsOn, err),
+			}); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			endTrace(fmt.Sprintf("%v", err.Error()), runJob.ID)
+			return err
+		}
+		workerRequest.model = *workerModel
+		if !h.CanSpawn(ctx, *workerModel, runJob.ID, nil) {
+			endTrace("cannot spawn", runJob.ID)
 			return nil
 		}
 	}
@@ -603,9 +610,9 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 	ctx, end := telemetry.Span(ctx, "hatchery.getWorkerModelV2", telemetry.Tag(telemetry.TagWorker, workerModelV2))
 	defer end()
 
-	branchSplit := strings.Split(workerModelV2, "@")
+	gitRefSplit := strings.Split(workerModelV2, "@")
 
-	modelPath := strings.Split(branchSplit[0], "/")
+	modelPath := strings.Split(gitRefSplit[0], "/")
 	if len(modelPath) < 4 {
 		return nil, sdk.WrapError(sdk.ErrInvalidData, "wrong model value %v", modelPath)
 	}
@@ -613,12 +620,12 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 	vcsName := modelPath[1]
 	modelName := modelPath[len(modelPath)-1]
 	repoName := strings.Join(modelPath[2:len(modelPath)-1], "/")
-	var branch string
-	if len(branchSplit) == 2 {
-		branch = branchSplit[1]
+	var gitRef string
+	if len(gitRefSplit) == 2 {
+		gitRef = gitRefSplit[1]
 	}
 
-	model, err := h.CDSClientV2().GetWorkerModel(ctx, projKey, vcsName, repoName, modelName, cdsclient.WithQueryParameter("branch", branch), cdsclient.WithQueryParameter("withCred", "true"))
+	model, err := h.CDSClientV2().GetWorkerModel(ctx, projKey, vcsName, repoName, modelName, cdsclient.WithQueryParameter("ref", gitRef), cdsclient.WithQueryParameter("withCred", "true"))
 	if err != nil {
 		return nil, err
 	}
@@ -628,7 +635,7 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 
 	workerStarterModel := &sdk.WorkerStarterWorkerModel{ModelV2: model}
 
-	entity, err := h.CDSClientV2().EntityGet(ctx, projKey, vcsName, repoName, sdk.EntityTypeWorkerModel, modelName, cdsclient.WithQueryParameter("branch", branch))
+	entity, err := h.CDSClientV2().EntityGet(ctx, projKey, vcsName, repoName, sdk.EntityTypeWorkerModel, modelName, cdsclient.WithQueryParameter("ref", gitRef))
 	if err != nil {
 		return nil, err
 	}

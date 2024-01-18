@@ -184,7 +184,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 			}
 			defer tx.Rollback()
 
-			a, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Branch, analysis.Commit, analysis.HookEventUUID)
+			a, err := api.createAnalyze(ctx, tx, *proj, *vcsProject, *repo, analysis.Ref, analysis.Commit, analysis.HookEventUUID)
 			if err != nil {
 				return err
 			}
@@ -202,7 +202,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 		}
 }
 
-func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, branch, commit, hookEventUUID string) (*sdk.ProjectRepositoryAnalysis, error) {
+func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, ref, commit, hookEventUUID string) (*sdk.ProjectRepositoryAnalysis, error) {
 	ctx = context.WithValue(ctx, cdslog.VCSServer, vcsProject.Name)
 	ctx = context.WithValue(ctx, cdslog.Repository, repo.Name)
 
@@ -212,7 +212,7 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		ProjectRepositoryID: repo.ID,
 		VCSProjectID:        vcsProject.ID,
 		ProjectKey:          proj.Key,
-		Branch:              branch,
+		Ref:                 ref,
 		Commit:              commit,
 		Data: sdk.ProjectRepositoryData{
 			HookEventUUID: hookEventUUID,
@@ -456,9 +456,9 @@ skipEntity:
 	eventUpdatedEntities := make([]sdk.Entity, 0)
 	for i := range entitiesToUpdate {
 		e := &entities[i]
-		existingEntity, err := entity.LoadByBranchTypeName(ctx, tx, e.ProjectRepositoryID, e.Branch, e.Type, e.Name)
+		existingEntity, err := entity.LoadByRefTypeName(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on branch %s", e.Name, e.Type, e.Branch))
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on git ref %s", e.Name, e.Type, e.Ref))
 		}
 		if existingEntity == nil {
 			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
@@ -475,7 +475,7 @@ skipEntity:
 
 		// Insert workflow hook
 		if e.Type == sdk.EntityTypeWorkflow {
-			if err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch.DisplayID); err != nil {
+			if err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch.ID); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
 		}
@@ -510,7 +510,7 @@ skipEntity:
 	return nil
 }
 
-func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch string) error {
+func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, ref string) error {
 	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
 	defer next()
 
@@ -538,12 +538,12 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Only save hook push if
 	// * workflow repo declaration == workflow.repository || default branch
 	if e.Workflow.On.Push != nil {
-		if workflowSameRepo || e.Branch == defaultBranch {
+		if workflowSameRepo || e.Ref == ref {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
 				ProjectKey:     e.ProjectKey,
 				Type:           sdk.WorkflowHookTypeRepository,
-				Branch:         e.Branch,
+				Ref:            e.Ref,
 				Commit:         e.Commit,
 				WorkflowName:   e.Name,
 				VCSName:        workflowDefVCSName,
@@ -553,6 +553,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 					VCSServer:       targetVCS,
 					RepositoryName:  targetRepository,
 					BranchFilter:    e.Workflow.On.Push.Branches,
+					TagFilter:       e.Workflow.On.Push.Tags,
 					PathFilter:      e.Workflow.On.Push.Paths,
 				},
 			}
@@ -565,13 +566,13 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Only save workflow_update hook if :
 	// * workflow.repository declaration != workflow.repository && default branch
 	if e.Workflow.On.WorkflowUpdate != nil {
-		if !workflowSameRepo && e.Branch == defaultBranch {
+		if !workflowSameRepo && e.Ref == ref {
 			wh := sdk.V2WorkflowHook{
 				VCSName:        workflowDefVCSName,
 				EntityID:       e.ID,
 				ProjectKey:     e.ProjectKey,
 				Type:           sdk.WorkflowHookTypeWorkflow,
-				Branch:         e.Branch,
+				Ref:            e.Ref,
 				Commit:         e.Commit,
 				WorkflowName:   e.Name,
 				RepositoryName: workflowDefRepositoryName,
@@ -611,7 +612,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				modelFullName = fmt.Sprintf("%s", m)
 			}
 			// Default branch && workflow and model on the same repo && distant workflow
-			if e.Branch == defaultBranch &&
+			if e.Ref == ref &&
 				modelVCSName == workflowDefVCSName && modelRepoName == workflowDefRepositoryName &&
 				(workflowDefVCSName != e.Workflow.Repository.VCSServer || workflowDefRepositoryName != e.Workflow.Repository.Name) {
 				wh := sdk.V2WorkflowHook{
@@ -619,7 +620,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 					EntityID:       e.ID,
 					ProjectKey:     e.ProjectKey,
 					Type:           sdk.WorkflowHookTypeWorkerModel,
-					Branch:         e.Branch,
+					Ref:            e.Ref,
 					Commit:         e.Commit,
 					WorkflowName:   e.Name,
 					RepositoryName: workflowDefRepositoryName,
@@ -665,7 +666,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 			VCSName:    vcsServerName,
 			RepoName:   repoName,
 			Name:       e.Name,
-			Branch:     e.Branch,
+			Ref:        e.Ref,
 		}
 		switch e.Type {
 		case sdk.EntityTypeWorkerModel:
@@ -909,7 +910,7 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 			return keyId, analyzeError, err
 		}
 
-		ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, vcsProject, repoWithSecret.Name, repoWithSecret.CloneURL, analysis.Commit, analysis.Branch)
+		ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, vcsProject, repoWithSecret.Name, repoWithSecret.CloneURL, analysis.Commit, analysis.Ref)
 		if err != nil {
 			return keyId, analyzeError, err
 		}

@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 
@@ -15,7 +16,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 	log.Info(ctx, "triggering workflow hooks for event [%s] %s", hre.EventName, hre.GetFullName())
 	request := sdk.HookListWorkflowRequest{
 		HookEventUUID:       hre.UUID,
-		Branch:              hre.ExtractData.Branch,
+		Ref:                 hre.ExtractData.Ref,
 		Models:              hre.ModelUpdated,
 		Workflows:           hre.WorkflowUpdated,
 		Paths:               hre.ExtractData.Paths,
@@ -55,7 +56,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 			EntityID:             wh.EntityID,
 			Type:                 wh.Type,
 			Status:               sdk.HookEventWorkflowStatusScheduler,
-			Branch:               wh.Branch,
+			Ref:                  wh.Ref,
 			TargetBranch:         wh.Data.TargetBranch,
 			ModelFullName:        wh.Data.Model,
 		}

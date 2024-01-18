@@ -34,19 +34,19 @@ import (
 )
 
 type WorkflowRunEntityFinder struct {
-	project                sdk.Project
-	vcsServerCache         map[string]sdk.VCSProject
-	repoCache              map[string]sdk.ProjectRepository
-	repoDefaultBranchCache map[string]string
-	actionsCache           map[string]sdk.V2Action
-	localActionsCache      map[string]sdk.V2Action
-	localWorkerModelCache  map[string]sdk.V2WorkerModel
-	workerModelCache       map[string]sdk.V2WorkerModel
-	plugins                map[string]sdk.GRPCPlugin
-	run                    sdk.V2WorkflowRun
-	runVcsServer           sdk.VCSProject
-	runRepo                sdk.ProjectRepository
-	userName               string
+	project               sdk.Project
+	vcsServerCache        map[string]sdk.VCSProject
+	repoCache             map[string]sdk.ProjectRepository
+	repoDefaultRefCache   map[string]string
+	actionsCache          map[string]sdk.V2Action
+	localActionsCache     map[string]sdk.V2Action
+	localWorkerModelCache map[string]sdk.V2WorkerModel
+	workerModelCache      map[string]sdk.V2WorkerModel
+	plugins               map[string]sdk.GRPCPlugin
+	run                   sdk.V2WorkflowRun
+	runVcsServer          sdk.VCSProject
+	runRepo               sdk.ProjectRepository
+	userName              string
 }
 
 func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) {
@@ -163,19 +163,19 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	run.Contexts = *runContext
 
 	wref := WorkflowRunEntityFinder{
-		project:                *p,
-		run:                    *run,
-		runRepo:                *repo,
-		runVcsServer:           *vcsServer,
-		actionsCache:           make(map[string]sdk.V2Action),
-		localActionsCache:      make(map[string]sdk.V2Action),
-		workerModelCache:       make(map[string]sdk.V2WorkerModel),
-		localWorkerModelCache:  make(map[string]sdk.V2WorkerModel),
-		repoCache:              make(map[string]sdk.ProjectRepository),
-		vcsServerCache:         make(map[string]sdk.VCSProject),
-		repoDefaultBranchCache: make(map[string]string),
-		plugins:                make(map[string]sdk.GRPCPlugin),
-		userName:               u.Username,
+		project:               *p,
+		run:                   *run,
+		runRepo:               *repo,
+		runVcsServer:          *vcsServer,
+		actionsCache:          make(map[string]sdk.V2Action),
+		localActionsCache:     make(map[string]sdk.V2Action),
+		workerModelCache:      make(map[string]sdk.V2WorkerModel),
+		localWorkerModelCache: make(map[string]sdk.V2WorkerModel),
+		repoCache:             make(map[string]sdk.ProjectRepository),
+		vcsServerCache:        make(map[string]sdk.VCSProject),
+		repoDefaultRefCache:   make(map[string]string),
+		plugins:               make(map[string]sdk.GRPCPlugin),
+		userName:              u.Username,
 	}
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
@@ -279,7 +279,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	ctx, end := telemetry.Span(ctx, "WorkflowRunEntityFinder.searchEntity", trace.StringAttribute("entity-type", entityType), trace.StringAttribute("entity-name", name))
 	defer end()
 
-	var branch, entityName, repoName, vcsName, projKey string
+	var ref, branchOrTag, entityName, repoName, vcsName, projKey string
 
 	if name == "" {
 		return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: entityType + " cannot be empty"}, nil
@@ -288,7 +288,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	// Get branch if present
 	splitBranch := strings.Split(name, "@")
 	if len(splitBranch) == 2 {
-		branch = splitBranch[1]
+		branchOrTag = splitBranch[1]
 	}
 	entityFullPath := splitBranch[0]
 
@@ -373,14 +373,15 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 			wref.repoCache[vcsName+"/"+repoName] = *repoDB
 		}
 	}
-	if branch == "" {
+
+	if branchOrTag == "" {
 		if embeddedEntity || (projKey == wref.run.ProjectKey && entityVCS.ID == wref.runVcsServer.ID && entityRepo.ID == wref.runRepo.ID) {
 			// Get current git.branch parameters
-			branch = wref.run.WorkflowRef
+			ref = wref.run.WorkflowRef
 		} else {
-			defaultCache, has := wref.repoDefaultBranchCache[entityVCS.Name+"/"+entityRepo.Name]
+			defaultCache, has := wref.repoDefaultRefCache[entityVCS.Name+"/"+entityRepo.Name]
 			if has {
-				branch = defaultCache
+				ref = defaultCache
 			} else {
 				// Get default branch
 				tx, err := db.Begin()
@@ -400,15 +401,49 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 				if err := tx.Commit(); err != nil {
 					return "", nil, sdk.WithStack(err)
 				}
-				branch = b.DisplayID
-				wref.repoDefaultBranchCache[entityVCS.Name+"/"+entityRepo.Name] = branch
+				ref = b.ID
+				wref.repoDefaultRefCache[entityVCS.Name+"/"+entityRepo.Name] = ref
 			}
 		}
+	} else if strings.HasPrefix(branchOrTag, sdk.GitRefBranchPrefix) || strings.HasPrefix(branchOrTag, sdk.GitRefTagPrefix) {
+		ref = branchOrTag
+	} else {
+		// Need to known if branchOrTag is a tag or a branch
+		tx, err := db.Begin()
+		if err != nil {
+			return "", nil, sdk.WithStack(err)
+		}
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, projKey, entityVCS.Name)
+		if err != nil {
+			_ = tx.Rollback()
+			return "", nil, err
+		}
+		b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{BranchName: branchOrTag})
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			_ = tx.Rollback()
+			return "", nil, err
+		}
+
+		if b == nil {
+			// try to get tag
+			t, err := client.Tag(ctx, entityRepo.Name, branchOrTag)
+			if err != nil {
+				_ = tx.Rollback()
+				return "", nil, err
+			}
+			ref = sdk.GitRefTagPrefix + t.Tag
+		} else {
+			ref = b.ID
+		}
+		if err := tx.Commit(); err != nil {
+			return "", nil, sdk.WithStack(err)
+		}
+
 	}
 
 	completePath := fmt.Sprintf("%s/%s/%s/%s", projKey, vcsName, repoName, entityName)
-	if branch != "" {
-		completePath += "@" + branch
+	if ref != "" {
+		completePath += "@" + ref
 	}
 
 	switch entityType {
@@ -424,10 +459,10 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 
 	var entityDB *sdk.Entity
 	var err error
-	if projKey != wref.run.ProjectKey || entityVCS.Name != wref.runVcsServer.Name || entityRepo.Name != wref.runRepo.Name || branch != wref.run.WorkflowRef {
-		entityDB, err = entity.LoadByBranchTypeName(ctx, db, entityRepo.ID, branch, entityType, entityName)
+	if projKey != wref.run.ProjectKey || entityVCS.Name != wref.runVcsServer.Name || entityRepo.Name != wref.runRepo.Name || ref != wref.run.WorkflowRef {
+		entityDB, err = entity.LoadByRefTypeName(ctx, db, entityRepo.ID, ref, entityType, entityName)
 	} else {
-		entityDB, err = entity.LoadByBranchTypeNameCommit(ctx, db, entityRepo.ID, branch, entityType, entityName, wref.run.WorkflowSha)
+		entityDB, err = entity.LoadByRefTypeNameCommit(ctx, db, entityRepo.ID, wref.run.WorkflowRef, entityType, entityName, wref.run.WorkflowSha)
 	}
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -468,7 +503,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			// Find action from path
 			localAct, has := wref.localActionsCache[step.Uses]
 			if !has {
-				actionEntity, err := entity.LoadEntityByPathAndBranch(ctx, db, wref.runRepo.ID, step.Uses, wref.run.WorkflowRef)
+				actionEntity, err := entity.LoadEntityByPathAndRef(ctx, db, wref.runRepo.ID, step.Uses, wref.run.WorkflowRef)
 				if err != nil {
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: wref.run.ID,
@@ -558,7 +593,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p sdk.Project, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
 	var runContext sdk.WorkflowRunContext
 
-	var ref, commit, semverNext, semverCurrent string
+	var ref, refType, commit, semverNext, semverCurrent string
 
 	cdsContext := sdk.CDSContext{
 		ProjectKey:         wr.ProjectKey,
@@ -578,9 +613,10 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 	case wr.RunEvent.Manual != nil:
 		cdsContext.EventName = "manual"
 		cdsContext.Event = wr.RunEvent.Manual.Payload
-		if r, has := wr.RunEvent.Manual.Payload[sdk.GitRefManualPayload]; has {
+		if r, has := wr.RunEvent.Manual.Payload[sdk.GitBranchManualPayload]; has {
 			if refString, ok := r.(string); ok {
-				ref = refString
+				ref = sdk.GitRefBranchPrefix + refString
+				refType = sdk.GitRefTypeBranch
 			}
 		}
 		if c, has := wr.RunEvent.Manual.Payload[sdk.GitCommitManualPayload]; has {
@@ -588,10 +624,21 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 				commit = commitString
 			}
 		}
+		if r, has := wr.RunEvent.Manual.Payload[sdk.GitTagManualPayload]; has {
+			if refString, ok := r.(string); ok {
+				ref = sdk.GitRefTagPrefix + refString
+				refType = sdk.GitRefTypeTag
+			}
+		}
 	case wr.RunEvent.GitTrigger != nil:
 		cdsContext.EventName = wr.RunEvent.GitTrigger.EventName
 		cdsContext.Event = wr.RunEvent.GitTrigger.Payload
 		ref = wr.RunEvent.GitTrigger.Ref
+		if strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
+			refType = sdk.GitRefTypeTag
+		} else {
+			refType = sdk.GitRefTypeBranch
+		}
 		commit = wr.RunEvent.GitTrigger.Sha
 
 		semverNext = wr.RunEvent.GitTrigger.SemverNext
@@ -651,6 +698,8 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		SSHKey:        workflowVCSServer.Auth.SSHKeyName,
 		Username:      workflowVCSServer.Auth.Username,
 		Ref:           ref,
+		RefName:       strings.TrimPrefix(strings.TrimPrefix(ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix),
+		RefType:       refType,
 		Sha:           commit,
 		SemverCurrent: semverCurrent,
 		SemverNext:    semverNext,
@@ -763,7 +812,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			// Find action from path
 			localWM, has := wref.localWorkerModelCache[workerModel]
 			if !has {
-				wmEntity, err := entity.LoadEntityByPathAndBranch(ctx, db, wref.runRepo.ID, workerModel, wref.run.WorkflowRef)
+				wmEntity, err := entity.LoadEntityByPathAndRef(ctx, db, wref.runRepo.ID, workerModel, wref.run.WorkflowRef)
 				if err != nil {
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: wref.run.ID,

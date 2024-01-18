@@ -27,7 +27,7 @@
                     <th nzWidth="50px">Status</th>
                     <th>Date</th>
                     <th nzWidth="330px">ID</th>
-                    <th>Branch</th>
+                    <th>Git Ref</th>
                     <th>CDS User</th>
                     <th>Files</th>
                     <th>Error</th>
@@ -37,7 +37,7 @@
                         <td><app-status-icon [status]="a.status" nz-tooltip="{{a.status}}"></app-status-icon></td>
                         <td><span nz-tooltip="{{a.last_modified}}">{{a.last_modified | amTimeAgo}}</span></td>
                         <td>{{a.id}}</td>
-                        <td><span nz-tooltip="{{'Commit: ' + a.commit}}">{{a.branch}}</span></td>
+                        <td><span nz-tooltip="{{'Commit: ' + a.commit}}">{{a.ref}}</span></td>
                         <td>{{a.data.cds_username}}</td>
                         <td>
                             <ng-container *ngIf="a?.data?.entities?.length > 0">

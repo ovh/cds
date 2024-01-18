@@ -224,6 +224,9 @@ var workflowRunCmd = cli.Command{
 			Name: "branch",
 		},
 		{
+			Name: "tag",
+		},
+		{
 			Name:    "data",
 			Default: "{}",
 		},
@@ -236,14 +239,19 @@ func workflowRunFunc(v cli.Values) error {
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
 	branch := v.GetString("branch")
+	tag := v.GetString("tag")
 	data := v.GetString("data")
+
+	if tag != "" && branch != "" {
+		return fmt.Errorf("you cannot use branch and tag together")
+	}
 
 	var payload map[string]interface{}
 	if err := json.Unmarshal([]byte(data), &payload); err != nil {
 		return fmt.Errorf("unable to read json data")
 	}
 
-	run, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload, cdsclient.WithQueryParameter("branch", branch))
+	run, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload, cdsclient.WithQueryParameter("branch", branch), cdsclient.WithQueryParameter("tag", tag))
 	if err != nil {
 		return err
 	}

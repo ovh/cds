@@ -190,7 +190,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		RepositoryID: repo.ID,
 		RunNumber:    0,
 		RunAttempt:   0,
-		WorkflowRef:  "master",
+		WorkflowRef:  "refs/heads/master",
 		WorkflowSha:  "123456",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
@@ -209,7 +209,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 							},
 							{
 								ID:   "mysecondStep",
-								Uses: fmt.Sprintf("actions/%s/%s/myaction@master", vcsProject.Name, repo.Name),
+								Uses: fmt.Sprintf("actions/%s/%s/myaction@refs/heads/master", vcsProject.Name, repo.Name),
 							},
 							{
 								ID:   "mythirdStep",
@@ -223,7 +223,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
-				Ref:       "main",
+				Ref:       "refs/heads/main",
 				Sha:       "123456",
 				EventName: "push",
 			},
@@ -237,7 +237,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		Type:                sdk.EntityTypeAction,
 		FilePath:            ".cds/actions/myaction.yml",
 		Name:                "myaction",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Commit:              "123456",
 		LastUpdate:          time.Time{},
 		Data:                "name: myaction",
@@ -250,7 +250,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		Type:                sdk.EntityTypeWorkerModel,
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Commit:              "123456",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
@@ -283,7 +283,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos))
 
-	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].RunsOn, "myworker-model@master")
+	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].RunsOn, "myworker-model@refs/heads/master")
 }
 
 func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
@@ -314,7 +314,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		RepositoryID: repo.ID,
 		RunNumber:    0,
 		RunAttempt:   0,
-		WorkflowRef:  "master",
+		WorkflowRef:  "refs/heads/master",
 		WorkflowSha:  "123456",
 		WorkflowName: wkName,
 		WorkflowData: sdk.V2WorkflowRunData{
@@ -329,7 +329,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",
-								Uses: fmt.Sprintf("actions/%s/%s/%s/myaction1@master", proj.Key, vcsProject.Name, repoAction1.Name),
+								Uses: fmt.Sprintf("actions/%s/%s/%s/myaction1@refs/heads/master", proj.Key, vcsProject.Name, repoAction1.Name),
 							},
 							{
 								ID:   "mysecondStep",
@@ -347,7 +347,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		RunEvent: sdk.V2WorkflowRunEvent{
 			GitTrigger: &sdk.GitTrigger{
 				Payload:   nil,
-				Ref:       "main",
+				Ref:       "refs/heads/main",
 				Sha:       "123456",
 				EventName: "push",
 			},
@@ -361,7 +361,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		Type:                sdk.EntityTypeAction,
 		FilePath:            ".cds/actions/myaction.yml",
 		Name:                "myaction1",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Commit:              "",
 		LastUpdate:          time.Time{},
 		Data:                "name: myaction",
@@ -374,7 +374,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		Type:                sdk.EntityTypeAction,
 		FilePath:            ".cds/actions/myaction2.yml",
 		Name:                "myaction2",
-		Branch:              "main",
+		Ref:                 "refs/heads/main",
 		Commit:              "",
 		LastUpdate:          time.Time{},
 		Data:                "name: myaction2",
@@ -387,7 +387,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		Type:                sdk.EntityTypeWorkerModel,
 		FilePath:            ".cds/worker-models/myworker-model.yml",
 		Name:                "myworker-model",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Commit:              "123456",
 		LastUpdate:          time.Time{},
 		Data:                "name: myworkermodel",
@@ -416,6 +416,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 				b := &sdk.VCSBranch{
 					Default:   true,
 					DisplayID: "main",
+					ID:        "refs/heads/main",
 				}
 				*(out.(*sdk.VCSBranch)) = *b
 				return nil, 200, nil

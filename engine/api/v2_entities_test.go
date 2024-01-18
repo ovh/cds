@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repository"
@@ -12,9 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 func TestCheckEntityHandler(t *testing.T) {
@@ -95,7 +96,7 @@ func TestGetEntitiesHandler(t *testing.T) {
 	e := sdk.Entity{
 		Name:                "model1",
 		Commit:              "123456",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,

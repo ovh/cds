@@ -74,7 +74,7 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 		EventName           string                            `cli:"event_name"`
 		VCSServerName       string                            `cli:"vcs_server_name"`
 		RepositoryName      string                            `cli:"repository_name"`
-		Branch              string                            `cli:"branch"`
+		Ref                 string                            `cli:"ref"`
 		Commit              string                            `cli:"commit"`
 		Path                []string                          `cli:"path"`
 		Event               string                            `cli:"event"`
@@ -95,7 +95,7 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 		EventName:           event.EventName,
 		VCSServerName:       event.VCSServerName,
 		RepositoryName:      event.RepositoryName,
-		Branch:              event.ExtractData.Branch,
+		Ref:                 event.ExtractData.Ref,
 		Commit:              event.ExtractData.Commit,
 		Path:                event.ExtractData.Paths,
 		Event:               string(event.Body),
@@ -137,7 +137,7 @@ func adminHooksRepoEventListRun(v cli.Values) (cli.ListResult, error) {
 		Created   time.Time `cli:"created"`
 		EventName string    `cli:"event_name"`
 		Status    string    `cli:"status"`
-		Branch    string    `cli:"branch"`
+		Ref       string    `cli:"ref"`
 		Commit    string    `cli:"commit"`
 	}
 	rs := make([]Result, 0, len(events))
@@ -147,7 +147,7 @@ func adminHooksRepoEventListRun(v cli.Values) (cli.ListResult, error) {
 			Status:    e.Status,
 			EventName: e.EventName,
 			Created:   time.Unix(0, e.Created),
-			Branch:    e.ExtractData.Branch,
+			Ref:       e.ExtractData.Ref,
 			Commit:    e.ExtractData.Commit,
 		})
 	}

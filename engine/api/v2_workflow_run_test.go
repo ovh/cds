@@ -1422,7 +1422,7 @@ func TestPostWorkflowRunHandler(t *testing.T) {
 		Name:                sdk.RandomString(10),
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          proj.Key,
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Commit:              "123456",
 		ProjectRepositoryID: repo.ID,
 		Data: `name: MyFirstWorkflow

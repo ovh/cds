@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/rockbears/log"
 	"regexp"
+
+	"github.com/rockbears/log"
 
 	"database/sql/driver"
 )
@@ -14,7 +15,7 @@ type HookListWorkflowRequest struct {
 	HookEventUUID       string           `json:"hook_event_uuid"`
 	VCSName             string           `json:"vcs_name"`
 	RepositoryName      string           `json:"repository_name"`
-	Branch              string           `json:"branch"`
+	Ref                 string           `json:"ref"`
 	Paths               []string         `json:"paths"`
 	RepositoryEventName string           `json:"repository_event"`
 	AnayzedProjectKeys  StringSlice      `json:"project_keys"`
@@ -49,17 +50,17 @@ func IsValidHookPath(ctx context.Context, configuredPaths []string, paths []stri
 	return false
 }
 
-func IsValidHookBranch(ctx context.Context, configuredBranches []string, currentEventBranch string) bool {
-	if len(configuredBranches) == 0 {
+func IsValidHookRefs(ctx context.Context, configuredRefs []string, currentEventRef string) bool {
+	if len(configuredRefs) == 0 {
 		return true
 	}
-	for _, b := range configuredBranches {
+	for _, b := range configuredRefs {
 		regexpB, err := regexp.Compile(b)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			continue
 		}
-		if regexpB.MatchString(currentEventBranch) {
+		if regexpB.MatchString(currentEventRef) {
 			return true
 		}
 	}

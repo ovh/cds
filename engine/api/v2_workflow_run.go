@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -684,7 +683,6 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.WithStack(err)
 			}
 			workflowName := vars["workflow"]
-			branch := QueryString(req, "branch")
 
 			var runRequest sdk.V2WorkflowRunHookRequest
 			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
@@ -708,29 +706,12 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			if branch == "" {
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsProject.Name)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				branch = defaultBranch.DisplayID
+			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			if err != nil {
+				return err
 			}
 
-			workflowEntity, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkflow, workflowName)
+			workflowEntity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
 			if err != nil {
 				return err
 			}
@@ -1131,7 +1112,6 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return sdk.WithStack(err)
 			}
 			workflowName := vars["workflow"]
-			branch := QueryString(req, "branch")
 
 			var runRequest map[string]interface{}
 			if err := service.UnmarshalBody(req, &runRequest); err != nil {
@@ -1153,29 +1133,12 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			if branch == "" {
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsProject.Name)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				branch = defaultBranch.DisplayID
+			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			if err != nil {
+				return err
 			}
 
-			workflowEntity, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkflow, workflowName)
+			workflowEntity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
 			if err != nil {
 				return err
 			}
@@ -1221,7 +1184,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		WorkflowName: wk.Name,
-		WorkflowRef:  wkEntity.Branch,
+		WorkflowRef:  wkEntity.Ref,
 		WorkflowSha:  wkEntity.Commit,
 		Status:       sdk.StatusCrafting,
 		RunAttempt:   0,

@@ -362,7 +362,8 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 
 func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, parentContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]string) sdk.V2WorkflowRunJobResult {
 	name := strings.TrimPrefix(step.Uses, "actions/")
-	actionPath := strings.Split(name, "/")
+	actionRefSplit := strings.Split(name, "@")
+	actionPath := strings.Split(actionRefSplit[0], "/")
 	stepName := parentStepName + "-" + filepath.Base(name)
 
 	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", stepName))
@@ -415,6 +416,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		}
 		return w.runPlugin(ctx, actionPath[0], opts, nil)
 	case 5:
+		// <project_key> / vcs / my / repo / actionName
 		for stepIndex, step := range w.actions[name].Runs.Steps {
 			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, actionContext)
 			if stepRes.Status == sdk.StatusFail {

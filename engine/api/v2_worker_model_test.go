@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/authentication/hatchery"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/vcs"
-	"net/http/httptest"
-	"testing"
-	"time"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -55,7 +56,7 @@ func TestGetWorkerModelV2Handler(t *testing.T) {
 	e := sdk.Entity{
 		Name:                "model1",
 		Commit:              "123456",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
@@ -144,7 +145,7 @@ func TestGetV2WorkerModelsHandler(t *testing.T) {
 	e := sdk.Entity{
 		Name:                "tmpl1",
 		Commit:              "123456",
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
@@ -162,7 +163,7 @@ spec:
 	e2 := sdk.Entity{
 		Name:                "tmpl2",
 		Commit:              "123456",
-		Branch:              "openstack",
+		Ref:                 "refs/heads/openstack",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
 		ProjectKey:          p.Key,
