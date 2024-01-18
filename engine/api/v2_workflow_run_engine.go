@@ -17,7 +17,6 @@ import (
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
-	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -307,6 +306,11 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		return err
 	}
 
+	proj, err := project.Load(ctx, db, run.ProjectKey, project.LoadOptions.WithClearIntegrations)
+	if err != nil {
+		return err
+	}
+
 	// Synchronize workflow runs
 	runResults, err := workflow_v2.LoadRunResults(ctx, db, runID)
 	if err != nil {
@@ -324,13 +328,17 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		artifactoryProjectKey  string
 	)
 
-	for i := range run.WorkflowData.Integrations {
-		integs, err := integration.LoadProjectIntegrationByIDsWithClearPassword(ctx, db, run.WorkflowData.Integrations[i].ID)
-		if err != nil {
-			return err
+	var integrations []sdk.ProjectIntegration
+	for _, integName := range run.WorkflowData.Workflow.Integrations {
+		for i := range proj.Integrations {
+			if proj.Integrations[i].Name == integName {
+				integrations = append(integrations, proj.Integrations[i])
+			}
 		}
+	}
 
-		integ := integs[run.WorkflowData.Integrations[i].ID]
+	for i := range integrations {
+		integ := integrations[i]
 
 		if integ.Model.ArtifactManager {
 			rtName := integ.Config[sdk.ArtifactoryConfigPlatform].Value

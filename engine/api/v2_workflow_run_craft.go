@@ -240,7 +240,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.WorkflowData.WorkerModels[completeName] = v
 	}
 
-	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	_, infos, err := wref.checkIntegrations(ctx, api.mustDB())
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
@@ -252,7 +252,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	if len(infos) > 0 {
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
 	}
-	run.WorkflowData.Integrations = integrations
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {

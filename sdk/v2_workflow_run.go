@@ -93,10 +93,9 @@ type WorkflowRunJobsContext struct {
 }
 
 type V2WorkflowRunData struct {
-	Workflow     V2Workflow                    `json:"workflow"`
-	WorkerModels map[string]V2WorkerModel      `json:"worker_models"`
-	Actions      map[string]V2Action           `json:"actions"`
-	Integrations map[string]ProjectIntegration `json:"integrations"`
+	Workflow     V2Workflow               `json:"workflow"`
+	WorkerModels map[string]V2WorkerModel `json:"worker_models"`
+	Actions      map[string]V2Action      `json:"actions"`
 }
 
 func (w V2WorkflowRunData) Value() (driver.Value, error) {
