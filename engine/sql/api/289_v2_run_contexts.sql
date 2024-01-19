@@ -1,5 +1,6 @@
 -- +migrate Up
 CREATE TABLE old_v2_workflow_run_context AS select id, contexts from v2_workflow_run;
+ALTER TABLE old_v2_workflow_run_context ADD PRIMARY KEY (id);
 ALTER TABLE v2_workflow_run DROP COLUMN contexts;
 ALTER TABLE v2_workflow_run ADD COLUMN contexts JSONB;
 
