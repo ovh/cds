@@ -11,8 +11,8 @@ import (
 
 var projectSecretCmd = cli.Command{
 	Name:    "secret",
-	Aliases: []string{""},
-	Short:   "Manage secret on a CDS project",
+	Aliases: []string{"secrets"},
+	Short:   "Manage secrets on a CDS project",
 }
 
 func projectSecret() *cobra.Command {
@@ -26,7 +26,7 @@ func projectSecret() *cobra.Command {
 
 var projectSecretListCmd = cli.Command{
 	Name:  "list",
-	Short: "List secret available on a project",
+	Short: "List secrets available on a project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
