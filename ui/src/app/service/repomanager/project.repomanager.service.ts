@@ -13,15 +13,6 @@ export class RepoManagerService {
     constructor(private _http: HttpClient) {
     }
 
-    /**
-     * Get all available repositories manager
-     *
-     * @returns
-     */
-    // DEPRECATED VCS
-    getAll(): Observable<string[]> {
-        return this._http.get<string[]>('/repositories_manager');
-    }
 
     /**
      * Get all the repositories for the given repository manager.
