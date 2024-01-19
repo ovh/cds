@@ -1,7 +1,7 @@
 name: Upload and Download generic artifacts from Workflow as code v2
 vars:
-  cds_project: "ITV2ARTIFACTSGENERIC"
-  git_repo: "it_v2_artifacts_generic_artifactory"
+  cds_project: "ITV2ARTIFACTSGENERICRT"
+  git_repo: "it_v2_artifacts_generic_artifactory_rt"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
   rt_url: "rt_url"
   rt_token: "rt_token"
@@ -94,8 +94,6 @@ testcases:
           value: {{.rt_url}}
           type: string
       EOF
-
-  - script: cat /tmp/artifactory.yaml
 
   - name: Import integration for project
     script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import {{.cds_project}} /tmp/artifactory.yaml
