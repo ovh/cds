@@ -165,6 +165,19 @@ testcases:
     retry: 2
     delay: 10
 
+  - name: Get hook event status
+    script: cdsctl admin hook repository event list my_vcs_server {{.git.user}}/{{.git_repo}} --format json
+    vars:
+      events:
+        from: result.systemoutjson
+
+  - name: Check all hook events status
+    range: "{{.events}}"
+    script: cdsctl admin hook repository event show my_vcs_server {{.git.user}}/{{.git_repo}} {{.value.uuid}} --format json
+    info: "hook event {{.value.uuid}} ({{.value.created}} - {{.result.systemoutjson.last_error}}) status is {{.result.systemoutjson.status}}"
+    assertions:
+    - result.systemoutjson.status ShouldEqual Done
+
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"
     assertions:
