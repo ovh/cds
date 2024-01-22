@@ -108,6 +108,7 @@ func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) ([]s
 		for _, r := range results {
 			runResults = append(runResults, r.V2WorkflowRunResult)
 		}
+
 		return runResults, nil
 	}
 	return nil, nil

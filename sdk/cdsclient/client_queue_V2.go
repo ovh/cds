@@ -52,10 +52,14 @@ func (c *client) V2QueueJobRunResultGet(ctx context.Context, regionName string, 
 	return &result, nil
 }
 
-func (c *client) V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+func (c *client) V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
 	var result []sdk.V2WorkflowRunResult
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult", regionName, jobRunID)
-	if _, err := c.GetJSON(ctx, path, &result); err != nil {
+	var mods []RequestModifier
+	if withClearIntegration {
+		mods = []RequestModifier{WithQueryParameter("withClearIntegration", "true")}
+	}
+	if _, err := c.GetJSON(ctx, path, &result, mods...); err != nil {
 		return nil, err
 	}
 	return result, nil

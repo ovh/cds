@@ -4,13 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
+	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
+	art "github.com/ovh/cds/contrib/integrations/artifactory"
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -21,9 +26,9 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
-	"github.com/rockbears/log"
 )
 
 func (api *API) TriggerBlockedWorkflowRuns(ctx context.Context) {
@@ -200,7 +205,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	tx, errTx := api.mustDB().Begin()
 	if errTx != nil {
-		return sdk.WithStack(err)
+		return sdk.WithStack(errTx)
 	}
 	defer tx.Rollback() // nolint
 
@@ -265,6 +270,13 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WithStack(tx.Commit())
 	}
 
+	// Synchronize run result in a separate transaction
+	api.GoRoutines.Run(ctx, "api.synchronizeRunResults", func(ctx context.Context) {
+		if err := api.synchronizeRunResults(ctx, api.mustDBWithCtx(ctx), run.ID); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	})
+
 	if sdk.StatusIsTerminated(run.Status) {
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
 	}
@@ -282,6 +294,210 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		default:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
 		}
+	}
+	return nil
+}
+
+type ArtifactSignature map[string]string
+
+func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) error {
+	run, err := workflow_v2.LoadRunByID(ctx, db, runID)
+	if err != nil {
+		return err
+	}
+
+	proj, err := project.Load(ctx, db, run.ProjectKey, project.LoadOptions.WithClearIntegrations)
+	if err != nil {
+		return err
+	}
+
+	// Synchronize workflow runs
+	runResults, err := workflow_v2.LoadRunResults(ctx, db, runID)
+	if err != nil {
+		return err
+	}
+
+	// Prepare artifactClient if available
+	// Only one artifact_manager integration is available on a workflow run
+	var (
+		artifactClient         artifact_manager.ArtifactManager
+		artifactoryIntegration *sdk.ProjectIntegration
+		rtToken                string
+		rtTokenName            string
+		rtURL                  string
+		artifactoryProjectKey  string
+	)
+
+	var integrations []sdk.ProjectIntegration
+	for _, integName := range run.WorkflowData.Workflow.Integrations {
+		for i := range proj.Integrations {
+			if proj.Integrations[i].Name == integName {
+				integrations = append(integrations, proj.Integrations[i])
+			}
+		}
+	}
+
+	for i := range integrations {
+		integ := integrations[i]
+
+		if integ.Model.ArtifactManager {
+			rtName := integ.Config[sdk.ArtifactoryConfigPlatform].Value
+			rtURL = integ.Config[sdk.ArtifactoryConfigURL].Value
+			rtToken = integ.Config[sdk.ArtifactoryConfigToken].Value
+			rtTokenName = integ.Config[sdk.ArtifactoryConfigTokenName].Value
+			artifactoryProjectKey = integ.Config[sdk.ArtifactoryConfigProjectKey].Value
+
+			var err error
+			artifactClient, err = artifact_manager.NewClient(rtName, rtURL, rtToken)
+			if err != nil {
+				return err
+			}
+			artifactoryIntegration = &integ
+			break
+		}
+	}
+
+	for i := range runResults {
+		result := &runResults[i]
+		if result.ArtifactManagerIntegrationName == nil {
+			continue
+		}
+		if result.DataSync == nil {
+			result.DataSync = new(sdk.WorkflowRunResultSync)
+		}
+
+		latestPromotion := result.DataSync.LatestPromotionOrRelease()
+		currentMaturity := result.ArtifactManagerMetadata.Get("maturity")
+		if latestPromotion != nil && currentMaturity != latestPromotion.ToMaturity {
+			return sdk.Errorf("desynchronized maturity and promotion on run result %s", result.ID)
+		}
+
+		// Set the properties
+		virtualRepository := result.ArtifactManagerMetadata.Get("repository")
+		localRepository := result.ArtifactManagerMetadata.Get("localRepository")
+		name := result.ArtifactManagerMetadata.Get("name")
+
+		repoDetails, err := artifactClient.GetRepository(localRepository)
+		if err != nil {
+			log.Error(ctx, "unable to get repository %q fror result %s: %v", localRepository, result.ID, err)
+			continue
+		}
+
+		// To get FileInfo for a docker image, we have to check the manifest file
+		filePath := result.ArtifactManagerMetadata.Get("path")
+		if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
+			filePath = path.Join(filePath, "manifest.json")
+		}
+
+		fi, err := artifactClient.GetFileInfo(localRepository, filePath)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
+			continue
+		}
+
+		existingProperties, err := artifactClient.GetProperties(localRepository, filePath)
+		if err != nil && !strings.Contains(err.Error(), "404") {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+			continue
+		}
+
+		if sdk.MapHasKeys(existingProperties, "cds.signature") {
+			log.Debug(ctx, "artifact is already signed by cds")
+		} else {
+			// Push git properties as artifact properties
+			props := utils.NewProperties()
+			signedProps := make(ArtifactSignature)
+
+			props.AddProperty("cds.project", run.ProjectKey)
+			signedProps["cds.project"] = run.ProjectKey
+			props.AddProperty("cds.workflow", run.WorkflowName)
+			signedProps["cds.workflow"] = run.WorkflowName
+			props.AddProperty("cds.version", run.Contexts.Git.SemverCurrent)
+			signedProps["cds.version"] = run.Contexts.Git.SemverCurrent
+			props.AddProperty("cds.run", strconv.FormatInt(run.RunNumber, 10))
+			signedProps["cds.run"] = strconv.FormatInt(run.RunNumber, 10)
+			props.AddProperty("git.url", run.Contexts.Git.RepositoryURL)
+			signedProps["git.url"] = run.Contexts.Git.RepositoryURL
+			props.AddProperty("git.hash", run.Contexts.Git.Sha)
+			signedProps["git.hash"] = run.Contexts.Git.Sha
+			props.AddProperty("git.ref", run.Contexts.Git.Ref)
+			signedProps["git.ref"] = run.Contexts.Git.Ref
+
+			// Prepare artifact signature
+			signedProps["repository"] = virtualRepository
+			signedProps["type"] = repoDetails.PackageType
+			signedProps["path"] = fi.Path
+			signedProps["name"] = name
+
+			if fi.Checksums == nil {
+				log.Error(ctx, "unable to get checksums for artifact %s %s", name, fi.Path)
+			} else {
+				signedProps["md5"] = fi.Checksums.Md5
+				signedProps["sha1"] = fi.Checksums.Sha1
+				signedProps["sha256"] = fi.Checksums.Sha256
+			}
+
+			// Sign the properties with main CDS authentication key pair
+			signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
+			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+				continue
+			}
+
+			log.Info(ctx, "artifact %s%s signature: %s", localRepository, fi.Path, signature)
+
+			props.AddProperty("cds.signature", signature)
+			if err := artifactClient.SetProperties(localRepository, fi.Path, props); err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
+				continue
+			}
+		}
+	}
+
+	if artifactClient != nil && artifactoryIntegration != nil {
+		// Set the Buildinfo
+		buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
+			BuildInfoPrefix: artifactoryIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value,
+			ProjectKey:      run.ProjectKey,
+			WorkflowName:    run.WorkflowName,
+			Version:         run.Contexts.Git.SemverCurrent,
+			AgentName:       "cds-api",
+			TokenName:       rtTokenName,
+			//RunURL:                   "TODO", // TODO Run UI URL
+			GitBranch:                run.Contexts.Git.Ref,
+			GitURL:                   run.Contexts.Git.RepositoryURL,
+			GitHash:                  run.Contexts.Git.Sha,
+			RunResultsV2:             runResults,
+			DefaultLowMaturitySuffix: artifactoryIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value,
+		})
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+
+		log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
+
+		if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+
+		var nbAttempts int
+		for {
+			nbAttempts++
+			err := artifactClient.PublishBuildInfo(artifactoryProjectKey, buildInfoRequest)
+			if err == nil {
+				break
+			} else if nbAttempts >= 3 {
+				log.ErrorWithStackTrace(ctx, err)
+				break
+			} else {
+				log.Error(ctx, "error while pushing buildinfo %s %s. Retrying...\n", buildInfoRequest.Name, buildInfoRequest.Number)
+			}
+		}
+
 	}
 
 	return nil
