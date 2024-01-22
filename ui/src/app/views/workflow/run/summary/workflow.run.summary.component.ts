@@ -20,8 +20,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { DeleteWorkflowRun } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-run-summary',

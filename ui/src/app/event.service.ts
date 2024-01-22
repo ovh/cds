@@ -4,9 +4,8 @@ import { AppService } from 'app/app.service';
 import { WebsocketEvent, WebsocketFilter, WebsocketFilterType } from 'app/model/websocket.model';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { from } from 'rxjs';
-import { WebSocketSubject } from 'rxjs/internal-compatibility';
 import { concatMap, delay, filter, retryWhen } from 'rxjs/operators';
-import { webSocket } from 'rxjs/webSocket';
+import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 
 @Injectable()
 export class EventService {

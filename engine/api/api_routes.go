@@ -467,6 +467,8 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/project/{projectKey}/notification", nil, r.GETv2(api.getProjectNotifsHandler), r.POSTv2(api.postProjectNotificationHandler))
 	r.Handle("/v2/project/{projectKey}/notification/{notification}", nil, r.GETv2(api.getProjectNotificationHandler), r.PUTv2(api.putProjectNotificationHandler), r.DELETEv2(api.deleteProjectNotificationHandler))
+	r.Handle("/v2/project/{projectKey}/run/search", nil, r.GETv2(api.getWorkflowRunsSearchV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/filter", nil, r.GETv2(api.getWorkflowRunsFiltersV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs", nil, r.POSTv2(api.postVCSProjectHandler), r.GETv2(api.getVCSProjectAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}", nil, r.PUTv2(api.putVCSProjectHandler), r.DELETEv2(api.deleteVCSProjectHandler), r.GETv2(api.getVCSProjectHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository", nil, r.POSTv2(api.postProjectRepositoryHandler), r.GETv2(api.getVCSProjectRepositoryAllHandler))
