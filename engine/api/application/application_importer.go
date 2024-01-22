@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Import is able to create a new application and all its components
+// Import is able to create a new application and all its components
 func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Project, app *sdk.Application, repomanager string, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
 	doUpdate, erre := Exists(db, proj.Key, app.Name)
 	if erre != nil {
@@ -70,15 +70,7 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Proje
 	app.VCSServer = repomanager
 	if app.VCSServer != "" && app.RepositoryFullname != "" {
 		if _, err := vcs.LoadVCSByProject(ctx, db, proj.Key, app.VCSServer); err != nil {
-			if sdk.ErrorIs(err, sdk.ErrNotFound) {
-				// Check old way
-				if _, err := repositoriesmanager.LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, proj.Key, app.VCSServer); err != nil {
-					return sdk.NewError(sdk.ErrNoReposManager, err)
-				}
-			} else {
-				return err
-			}
-
+			return err
 		}
 
 		if err := repositoriesmanager.InsertForApplication(db, app); err != nil {
@@ -115,7 +107,7 @@ func Import(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj sdk.Proje
 	return nil
 }
 
-//importVariables is able to create variable on an existing application
+// importVariables is able to create variable on an existing application
 func importVariables(db gorpmapper.SqlExecutorWithTx, app *sdk.Application, u sdk.Identifiable, msgChan chan<- sdk.Message) error {
 	for i := range app.Variables {
 		newVar := &app.Variables[i]

@@ -30,7 +30,7 @@ func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 		}
 
 		var response Response
-		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get repos")
 		}
 
@@ -81,7 +81,7 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 	path := fmt.Sprintf("/projects/%s/repos/%s", t[0], t[1])
 
 	var repo sdk.VCSRepo
-	if err := b.do(ctx, "GET", "core", path, nil, nil, &r, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &r); err != nil {
 		return repo, sdk.WrapError(err, "Unable to get repo")
 	}
 
@@ -119,7 +119,7 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 }
 
 func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo string) (bool, error) {
-	if b.accessToken != "" && b.username == "" { // DEPRECATED VCS
+	if b.username == "" {
 		return false, sdk.WrapError(sdk.ErrUserNotFound, "No user found in configuration")
 	}
 
@@ -132,7 +132,7 @@ func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo strin
 	params.Add("filter", b.username)
 
 	var reponse UsersPermissionResponse
-	if err := b.do(ctx, "GET", "core", path, params, nil, &reponse, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, params, nil, &reponse); err != nil {
 		return false, sdk.WithStack(err)
 	}
 
@@ -142,21 +142,4 @@ func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo strin
 		}
 	}
 	return false, nil
-}
-
-func (b *bitbucketClient) GrantWritePermission(ctx context.Context, repo string) error {
-	if b.username == "" {
-		return nil
-	}
-
-	project, slug, err := getRepo(repo)
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	path := fmt.Sprintf("/projects/%s/repos/%s/permissions/users", project, slug)
-	params := url.Values{}
-	params.Add("name", b.username)
-	params.Add("permission", "REPO_WRITE")
-
-	return b.do(ctx, "PUT", "core", path, params, nil, nil, nil)
 }

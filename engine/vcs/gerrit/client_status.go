@@ -11,13 +11,12 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// DEPRECATED VCS
-func (client *gerritClient) IsDisableStatusDetails(ctx context.Context) bool {
-	return client.disableStatusDetails
+func (client *gerritClient) SetDisableStatusDetails(disableStatusDetails bool) {
+	client.disableStatusDetails = disableStatusDetails
 }
 
 // SetStatus set build status on Gerrit
-func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableStatusDetails bool) error {
+func (client *gerritClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var eventNR sdk.EventRunWorkflowNode
 	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
 		return sdk.WrapError(err, "cannot unmarshal payload")
@@ -29,18 +28,18 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableSt
 	}
 
 	// Use reviewer account to post the review
-	c.client.Authentication.SetBasicAuth(c.reviewerName, c.reviewerToken)
+	client.client.Authentication.SetBasicAuth(client.reviewerName, client.reviewerToken)
 
 	// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#review-input
 	ri := gerrit.ReviewInput{
-		Message: c.buildMessage(eventNR),
+		Message: client.buildMessage(eventNR),
 		Tag:     "CDS",
-		Labels:  c.buildLabel(eventNR),
+		Labels:  client.buildLabel(eventNR),
 		Notify:  "OWNER", // Send notification to the owner
 	}
 
 	// Check if we already send the message
-	changeDetail, _, err := c.client.Changes.GetChangeDetail(eventNR.GerritChange.ID, nil)
+	changeDetail, _, err := client.client.Changes.GetChangeDetail(eventNR.GerritChange.ID, nil)
 	if err != nil {
 		return sdk.WrapError(err, "error while getting change detail")
 	}
@@ -56,7 +55,7 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableSt
 	}
 
 	if !found {
-		if _, _, err := c.client.Changes.SetReview(eventNR.GerritChange.ID, eventNR.GerritChange.Revision, &ri); err != nil {
+		if _, _, err := client.client.Changes.SetReview(eventNR.GerritChange.ID, eventNR.GerritChange.Revision, &ri); err != nil {
 			return sdk.WrapError(err, "unable to set gerrit review")
 		}
 	}
@@ -64,11 +63,11 @@ func (c *gerritClient) SetStatus(ctx context.Context, event sdk.Event, disableSt
 	return nil
 }
 
-func (c *gerritClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (client *gerritClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	return nil, nil
 }
 
-func (c *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
+func (client *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
 	var message string
 	switch eventNR.Status {
 	case sdk.StatusSuccess:
@@ -83,7 +82,7 @@ func (c *gerritClient) buildMessage(eventNR sdk.EventRunWorkflowNode) string {
 	return message
 }
 
-func (c *gerritClient) buildLabel(eventNR sdk.EventRunWorkflowNode) map[string]string {
+func (client *gerritClient) buildLabel(eventNR sdk.EventRunWorkflowNode) map[string]string {
 	labels := make(map[string]string)
 	switch eventNR.Status {
 	case sdk.StatusSuccess:

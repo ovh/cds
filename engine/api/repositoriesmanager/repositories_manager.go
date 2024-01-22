@@ -36,32 +36,7 @@ func (c *vcsClient) IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, er
 	if c.vcsProject != nil {
 		return c.vcsProject.Type == "gerrit", nil
 	}
-
-	// DEPRECATED VCS
-	var vcsServer sdk.VCSConfiguration
-	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
-	if err != nil {
-		return false, sdk.WrapError(err, "Unable to load services")
-	}
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "GET", fmt.Sprintf("/vcs/%s", c.name), nil, &vcsServer); err != nil {
-		return false, sdk.WrapError(err, "error on requesting vcs service")
-	}
-
-	return vcsServer.Type == "gerrit", nil
-}
-
-// LoadAll Load all RepositoriesManager from the database
-func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string]sdk.VCSConfiguration, error) {
-	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
-	if err != nil {
-		return nil, sdk.WrapError(err, "Unable to load services")
-	}
-
-	vcsServers := make(map[string]sdk.VCSConfiguration)
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, "GET", "/vcs", nil, &vcsServers); err != nil {
-		return nil, sdk.WithStack(err)
-	}
-	return vcsServers, nil
+	return false, nil
 }
 
 type vcsConsumer struct {
@@ -127,52 +102,7 @@ func GetReposForProjectVCSServer(ctx context.Context, db gorpmapper.SqlExecutorW
 	return repos, nil
 }
 
-// NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs µServices calls
-func NewVCSServerConsumer(db gorpmapper.SqlExecutorWithTx, store cache.Store, name string) (sdk.VCSServerService, error) {
-	return &vcsConsumer{name: name, db: db}, nil
-}
-
-func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
-	srv, err := services.LoadAllByType(ctx, c.db, sdk.TypeVCS)
-	if err != nil {
-		return "", "", sdk.WithStack(err)
-	}
-
-	res := map[string]string{}
-	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	if _, _, err := services.NewClient(c.db, srv).DoJSONRequest(ctx, "GET", path, nil, &res); err != nil {
-		return "", "", sdk.WithStack(err)
-	}
-
-	return res["token"], res["url"], nil
-}
-
-func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret string) (string, string, error) {
-	srv, err := services.LoadAllByType(ctx, c.db, sdk.TypeVCS)
-	if err != nil {
-		return "", "", sdk.WithStack(err)
-	}
-
-	body := map[string]string{
-		"token":  token,
-		"secret": secret,
-	}
-
-	res := map[string]string{}
-	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	if _, _, err := services.NewClient(c.db, srv).DoJSONRequest(ctx, "POST", path, body, &res); err != nil {
-		return "", "", sdk.WithStack(err)
-	}
-
-	return res["token"], res["secret"], nil
-}
-
 func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret string, created int64) (sdk.VCSAuthorizedClientService, error) {
-	_, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, c.db, c.proj.Key, c.name)
-	if err != nil {
-		return nil, sdk.NewError(sdk.ErrNoReposManagerClientAuth, err)
-	}
-
 	srvs, err := services.LoadAllByType(ctx, c.db, sdk.TypeVCS)
 	if err != nil {
 		return nil, sdk.WithStack(err)
@@ -193,9 +123,8 @@ func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret str
 // AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
 func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
 	vcsProject, err := vcs.LoadVCSByProject(ctx, db, projectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
-
-	if sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return deprecatedAuthorizedClient(ctx, db, store, projectKey, vcsName)
+	if err != nil {
+		return nil, sdk.WithStack(err)
 	}
 
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
@@ -214,65 +143,17 @@ func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 	return vcs, nil
 }
 
-func deprecatedAuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
-	vcsServer, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, db, projectKey, vcsName)
-	if err != nil {
-		return nil, sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "cannot get client got %s %s : %s", projectKey, vcsName, err)
-	}
-
-	repoData, err := LoadProjectVCSServerLinksData(ctx, db, vcsServer.ID, gorpmapping.GetOptions.WithDecryption)
-	if err != nil {
-		return nil, err
-	}
-	vcsServer.ProjectVCSServerLinkData = repoData
-
-	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeVCS)
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-	var created int64
-
-	if createdS, ok := vcsServer.Get("created"); ok {
-		created, err = strconv.ParseInt(createdS, 10, 64)
-		if err != nil {
-			return nil, sdk.WithStack(err)
-		}
-	}
-
-	vcs := &vcsClient{
-		name:       vcsServer.Name,
-		created:    created,
-		srvs:       srvs,
-		db:         db,
-		projectKey: projectKey,
-	}
-
-	vcs.token, _ = vcsServer.Get("token")
-	vcs.secret, _ = vcsServer.Get("secret")
-
-	return vcs, nil
-}
-
 func (c *vcsClient) setAuthHeader(ctx context.Context, req *http.Request) {
-	if c.vcsProject != nil {
-		log.Debug(ctx, "requesting vcs via vcs project")
-		req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Type)))
-		req.Header.Set(sdk.HeaderXVCSURL, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.URL)))
-		req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Username)))
-		req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Token)))
-		req.Header.Set(sdk.HeaderXVCSURLApi, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Options.URLAPI)))
+	log.Debug(ctx, "requesting vcs via vcs project")
+	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Type)))
+	req.Header.Set(sdk.HeaderXVCSURL, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.URL)))
+	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Username)))
+	req.Header.Set(sdk.HeaderXVCSToken, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Token)))
+	req.Header.Set(sdk.HeaderXVCSURLApi, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Options.URLAPI)))
 
-		req.Header.Set(sdk.HeaderXVCSSSHUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.SSHUsername)))
-		req.Header.Set(sdk.HeaderXVCSSSHPort, base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(c.vcsProject.Auth.SSHPort))))
-		req.Header.Set(sdk.HeaderXVCSSSHPrivateKey, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.SSHPrivateKey)))
-	} else {
-		log.Debug(ctx, "requesting vcs via vcs oauth2")
-		req.Header.Set(sdk.HeaderXAccessToken, base64.StdEncoding.EncodeToString([]byte(c.token)))
-		req.Header.Set(sdk.HeaderXAccessTokenSecret, base64.StdEncoding.EncodeToString([]byte(c.secret)))
-		if c.created != 0 {
-			req.Header.Set(sdk.HeaderXAccessTokenCreated, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d", c.created))))
-		}
-	}
+	req.Header.Set(sdk.HeaderXVCSSSHUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.SSHUsername)))
+	req.Header.Set(sdk.HeaderXVCSSSHPort, base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(c.vcsProject.Auth.SSHPort))))
+	req.Header.Set(sdk.HeaderXVCSSSHPrivateKey, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.SSHPrivateKey)))
 }
 
 func (c *vcsClient) doStreamRequest(ctx context.Context, method, path string, in interface{}) (io.Reader, http.Header, error) {
@@ -295,16 +176,11 @@ func (c *vcsClient) doStreamRequest(ctx context.Context, method, path string, in
 		}
 	}
 
-	if err != nil {
-		return nil, nil, sdk.WithStack(err)
-	}
-	err = c.checkAccessToken(ctx, headers)
-
 	return reader, headers, sdk.WithStack(err)
 }
 
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
-	headers, code, err := services.NewClient(c.db, c.srvs).DoJSONRequest(ctx, method, path, in, out, func(req *http.Request) {
+	_, code, err := services.NewClient(c.db, c.srvs).DoJSONRequest(ctx, method, path, in, out, func(req *http.Request) {
 		c.setAuthHeader(ctx, req)
 	})
 
@@ -324,11 +200,6 @@ func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in i
 		}
 	}
 
-	if err != nil {
-		return code, sdk.WithStack(err)
-	}
-	err = c.checkAccessToken(ctx, headers)
-
 	return code, sdk.WithStack(err)
 }
 
@@ -338,31 +209,6 @@ func (c *vcsClient) postBinary(ctx context.Context, path string, fileLength int,
 		req.Header.Set("Content-Type", "application/octet-stream")
 		req.Header.Set("Content-Length", strconv.Itoa(fileLength))
 	})
-}
-
-func (c *vcsClient) checkAccessToken(ctx context.Context, header http.Header) error {
-	if newAccessToken := header.Get(sdk.HeaderXAccessToken); newAccessToken != "" {
-		c.token = newAccessToken
-
-		vcsserver, err := LoadProjectVCSServerLinkByProjectKeyAndVCSServerName(ctx, c.db, c.projectKey, c.name)
-		if err != nil {
-			return sdk.NewErrorFrom(err, "cannot load vcs servers for project %s", c.projectKey)
-		}
-
-		vcsserver.ProjectVCSServerLinkData, err = LoadProjectVCSServerLinksData(ctx, c.db, vcsserver.ID, gorpmapping.GetOptions.WithDecryption)
-		if err != nil {
-			return err
-		}
-
-		vcsserver.Set("token", c.token)
-		vcsserver.Set("created", strconv.FormatInt(time.Now().Unix(), 10))
-
-		if err := UpdateProjectVCSServerLink(ctx, c.db, &vcsserver); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (c *vcsClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
@@ -646,7 +492,11 @@ func (c *vcsClient) IsDisableStatusDetails(ctx context.Context) bool {
 	return true
 }
 
-func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event, _ bool) error {
+func (c *vcsClient) SetDisableStatusDetails(disableStatusDetails bool) {
+	// nothing here for the implementation of this func into api
+}
+
+func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if c.vcsProject != nil && c.vcsProject.Options.DisableStatus {
 		return nil
 	}
@@ -706,14 +556,6 @@ func (c *vcsClient) ListStatuses(ctx context.Context, repo string, ref string) (
 	return statuses, nil
 }
 
-func (c *vcsClient) GrantWritePermission(ctx context.Context, repo string) error {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/grant", c.name, repo)
-	if _, err := c.doJSONRequest(ctx, "POST", path, nil, nil); err != nil {
-		return sdk.WithStack(err)
-	}
-	return nil
-}
-
 func (c *vcsClient) GetAccessToken(_ context.Context) string {
 	return ""
 }
@@ -762,58 +604,49 @@ func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClientService) (We
 		return WebhooksInfos{}, errors.New("cast error")
 	}
 
-	if client.vcsProject != nil {
-		res := WebhooksInfos{}
-		switch {
-		case client.vcsProject.Type == sdk.VCSTypeBitbucketServer:
-			res.WebhooksSupported = true
-			res.Icon = sdk.BitbucketIcon
-			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
-			res.Events = sdk.BitbucketEvents
-			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == sdk.VCSTypeBitbucketCloud:
-			res.WebhooksSupported = true
-			res.Icon = sdk.BitbucketIcon
-			// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
-			res.Events = sdk.BitbucketCloudEvents
-			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == sdk.VCSTypeGithub:
-			res.WebhooksSupported = true
-			res.Icon = sdk.GitHubIcon
-			// https://developer.github.com/v3/activity/events/types/
-			res.Events = sdk.GitHubEvents
-			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-		case client.vcsProject.Type == sdk.VCSTypeGitlab:
-			res.WebhooksSupported = true
-			res.Icon = sdk.GitlabIcon
-			res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
-			// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
-			res.Events = []string{
-				string(gitlab.EventTypePush),
-				string(gitlab.EventTypeTagPush),
-				string(gitlab.EventTypeIssue),
-				string(gitlab.EventTypeNote),
-				string(gitlab.EventTypeMergeRequest),
-				string(gitlab.EventTypeWikiPage),
-				string(gitlab.EventTypePipeline),
-				"Job Hook", // TODO update gitlab sdk
-			}
-		case client.vcsProject.Type == sdk.VCSTypeGerrit:
-			res.WebhooksSupported = false
-			res.Icon = sdk.GerritIcon
-			// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
-			res.Events = sdk.GerritEvents
-		}
-
-		return res, nil
-	}
-
-	// DEPRECATED VCS
+	log.Debug(ctx, "getting GetWebhooksInfos for type: %s", client.vcsProject.Type)
 	res := WebhooksInfos{}
-	path := fmt.Sprintf("/vcs/%s/webhooks", client.name)
-	if _, err := client.doJSONRequest(ctx, "GET", path, nil, &res); err != nil {
-		return WebhooksInfos{}, sdk.WithStack(err)
+	switch {
+	case client.vcsProject.Type == sdk.VCSTypeBitbucketServer:
+		res.WebhooksSupported = true
+		res.Icon = sdk.BitbucketIcon
+		// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
+		res.Events = sdk.BitbucketEvents
+		res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
+	case client.vcsProject.Type == sdk.VCSTypeBitbucketCloud:
+		res.WebhooksSupported = true
+		res.Icon = sdk.BitbucketIcon
+		// https://developer.atlassian.com/bitbucket/api/2/reference/resource/hook_events/%7Bsubject_type%7D
+		res.Events = sdk.BitbucketCloudEvents
+		res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
+	case client.vcsProject.Type == sdk.VCSTypeGithub:
+		res.WebhooksSupported = true
+		res.Icon = sdk.GitHubIcon
+		// https://developer.github.com/v3/activity/events/types/
+		res.Events = sdk.GitHubEvents
+		res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
+	case client.vcsProject.Type == sdk.VCSTypeGitlab:
+		res.WebhooksSupported = true
+		res.Icon = sdk.GitlabIcon
+		res.WebhooksDisabled = client.vcsProject.Options.DisableWebhooks
+		// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
+		res.Events = []string{
+			string(gitlab.EventTypePush),
+			string(gitlab.EventTypeTagPush),
+			string(gitlab.EventTypeIssue),
+			string(gitlab.EventTypeNote),
+			string(gitlab.EventTypeMergeRequest),
+			string(gitlab.EventTypeWikiPage),
+			string(gitlab.EventTypePipeline),
+			"Job Hook", // TODO update gitlab sdk
+		}
+	case client.vcsProject.Type == sdk.VCSTypeGerrit:
+		res.WebhooksSupported = false
+		res.Icon = sdk.GerritIcon
+		// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
+		res.Events = sdk.GerritEvents
 	}
+
 	return res, nil
 }
 
@@ -830,29 +663,20 @@ func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClientService, prj 
 		return PollingInfos{}, errors.New("cast error")
 	}
 
-	if client.vcsProject != nil {
-		res := PollingInfos{}
-		res.PollingDisabled = client.vcsProject.Options.DisablePolling
-
-		switch {
-		case client.vcsProject.Type == "bitbucketserver":
-			res.PollingSupported = false
-		case client.vcsProject.Type == "bitbucketcloud":
-			res.PollingSupported = false
-		case client.vcsProject.Type == "github":
-			res.PollingSupported = true
-		case client.vcsProject.Type == "gitlab":
-			res.PollingSupported = false
-		}
-
-		return res, nil
-	}
-
-	// DEPRECATED VCS
 	res := PollingInfos{}
-	path := fmt.Sprintf("/vcs/%s/polling", client.name)
-	if _, err := client.doJSONRequest(ctx, "GET", path, nil, &res); err != nil {
-		return PollingInfos{}, sdk.WrapError(err, "project %s", prj.Key)
+	res.PollingDisabled = client.vcsProject.Options.DisablePolling
+
+	switch {
+	case client.vcsProject.Type == "bitbucketserver":
+		res.PollingSupported = false
+	case client.vcsProject.Type == "bitbucketcloud":
+		res.PollingSupported = false
+	case client.vcsProject.Type == "github":
+		res.PollingSupported = true
+	case client.vcsProject.Type == "gitlab":
+		res.PollingSupported = false
 	}
+
 	return res, nil
+
 }

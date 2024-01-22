@@ -10,7 +10,7 @@
             <tr *ngFor="let r of listrepos.data">
                 <td>
                     {{r.name}}
-                    <span *ngIf="r.created_by !== ''"> -{{ 'project_repoman_created_by' | translate
+                    <span *ngIf="r.created_by !== ''"> - {{ 'project_repoman_created_by' | translate
                         }}{{r.created_by}}</span>
                     <span *ngIf="r.auth && r.auth.username && r.auth.username !== ''"> - User:
                         {{r.auth.username}}</span>
@@ -20,20 +20,9 @@
                         {{r.auth.sshKeyName}}</span>
                 </td>
                 <td class="rightAlign">
-                    <button *ngIf="r.type === '' && apiConfig && !apiConfig.project_vcs_management_disabled" nz-button
-                        nzDanger nzType="primary" [nzLoading]="deleteLoading"
-                        (click)="clickDeleteButton(r.name)">Remove</button>
+                    <app-repomanager-form [vcsProjectName]="r.name" [project]="project"></app-repomanager-form>
                 </td>
             </tr>
         </tbody>
     </nz-table>
 </div>
-<nz-modal [(nzVisible)]="deleteModal" nzTitle="Repository manager deletion" (nzOnCancel)="deleteModal = false">
-    <div *nzModalContent>
-        {{confirmationMessage}}
-    </div>
-    <div *nzModalFooter>
-        <button nz-button (click)="deleteModal = false">{{'common_no' | translate}}</button>
-        <button nz-button nzType="primary" (click)="confirmDeletion(true)">{{'common_yes' | translate}}</button>
-    </div>
-</nz-modal>

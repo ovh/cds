@@ -18,12 +18,7 @@ func TestRepos(t *testing.T) {
 
 func TestRepoByFullname(t *testing.T) {
 	client := getAuthorizedClient(t)
-	repo, err := client.RepoByFullname(context.Background(), "CDS/images")
+	repo, err := client.RepoByFullname(context.Background(), "CDS/tests")
 	test.NoError(t, err)
 	t.Logf("repo: %+v", repo)
-}
-
-func TestGrantWritePermission(t *testing.T) {
-	client := getAuthorizedClient(t)
-	test.NoError(t, client.GrantWritePermission(context.Background(), "CDS/demo"))
 }

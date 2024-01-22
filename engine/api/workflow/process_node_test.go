@@ -19,10 +19,10 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -48,13 +48,12 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -242,13 +241,12 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -424,13 +422,12 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -578,13 +575,12 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	srvs, err := services.LoadAll(context.Background(), db)
 	require.NoError(t, err)
@@ -725,13 +721,12 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	mockVCSSservice, _ := assets.InsertService(t, db, "TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter", sdk.TypeVCS)
 	defer func() {
@@ -953,21 +948,19 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1195,21 +1188,19 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1427,21 +1418,19 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1614,21 +1603,19 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
-	vcsServer2 := sdk.ProjectVCSServerLink{
+	vcsServer2 := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "stash",
+		Type:      sdk.VCSTypeBitbucketServer,
 	}
-	vcsServer2.Set("token", "foo")
-	vcsServer2.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer2))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer2))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1796,21 +1783,12 @@ func TestGitParamRunWithTag(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	vcsServer = sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "stash",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -1957,21 +1935,12 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	vcsServer = sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "stash",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -2160,21 +2129,12 @@ func TestGitParamWithJoin(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	vcsServer = sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "stash",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -2498,21 +2458,12 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
-
-	vcsServer = sdk.ProjectVCSServerLink{
-		ProjectID: proj.ID,
-		Name:      "stash",
-	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -2717,13 +2668,12 @@ func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
 	// Create project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	allSrv, err := services.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
