@@ -17,7 +17,6 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipelineParameter, DeletePipelineParameter, FetchPipeline, UpdatePipelineParameter } from 'app/store/pipelines.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';

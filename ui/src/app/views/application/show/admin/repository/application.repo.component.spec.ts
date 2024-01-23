@@ -29,7 +29,6 @@ import { NgxsStoreModule } from 'app/store/store.module';
 import { ApplicationModule } from 'app/views/application/application.module';
 import { ProjectModule } from 'app/views/project/project.module';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { ApplicationRepositoryComponent } from './application.repo.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
