@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
 import { Store } from '@ngxs/store';
-import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Project } from 'app/model/project.model';
 import { ProjectStore } from 'app/service/project/project.store';
 import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
-import {RouterService} from "../../service/router/router.service";
+import { RouterService } from "../../service/router/router.service";
 
 @Component({
     selector: 'app-projectv2-show',
@@ -40,9 +40,12 @@ export class ProjectV2ShowComponent implements OnInit, OnDestroy {
         this.routerSub = this._router.events.subscribe(e => {
             if (e instanceof NavigationEnd) {
                 let activatedRoute = this._routerService.getActivatedRoute(this._router.routerState.root);
-                if (activatedRoute.snapshot.url.length >= 1 && activatedRoute.snapshot.url[0].path === 'run') {
-                    this.runSidebar = true;
+                if (activatedRoute.snapshot.url.length == 1 && activatedRoute.snapshot.url[0].path === 'run') {
                     this.workspaceSidebar = false;
+                    this.runSidebar = false;
+                } else if (activatedRoute.snapshot.url.length >= 1 && activatedRoute.snapshot.url[0].path === 'run') {
+                    this.workspaceSidebar = false;
+                    this.runSidebar = true;
                 } else {
                     this.workspaceSidebar = true;
                     this.runSidebar = false;

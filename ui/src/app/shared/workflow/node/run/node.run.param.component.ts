@@ -21,9 +21,9 @@ import { ProjectState } from 'app/store/project.state';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { debounceTime, finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { PreferencesState } from 'app/store/preferences.state';
+import { Subscription } from 'rxjs';
 
 declare let CodeMirror: any;
 

@@ -1,0 +1,40 @@
+@import '../../../../common';
+
+:host {
+  height: 100%;
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  color: $polar_grey_1;
+  background-color: $greyBackground;
+
+  :host-context(.night) & {
+    background-color: $darkBackground;
+    color: $darkTheme_grey_6;
+  }
+
+  a:last-child {
+    margin-top: auto;
+  }
+
+  a {
+    padding: 10px 0;
+    height: 44px;
+    line-height: 44px;
+    color: inherit;
+    border-left: 3px solid transparent;
+    padding-right: 3px;
+
+    &.active {
+      border-left: 3px solid $polar_grey_1;
+
+      :host-context(.night) & {
+        border-left: 3px solid $greyBackground;
+      }
+    }
+  }
+
+  [nz-icon] {
+    font-size: 22px;
+  }
+}

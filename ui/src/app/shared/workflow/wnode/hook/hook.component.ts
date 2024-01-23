@@ -9,8 +9,8 @@ import { WorkflowNodeHookDetailsComponent } from 'app/shared/workflow/node/hook/
 import { ProjectState } from 'app/store/project.state';
 import { DeleteHookWorkflow, OpenEditModal } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Subscription } from 'rxjs/Subscription';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-node-hook',
