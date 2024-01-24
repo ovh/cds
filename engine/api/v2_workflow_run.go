@@ -586,7 +586,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 				return err
 			}
 
-			count, err := workflow_v2.CountRuns(ctx, api.mustDB(), proj.Key)
+			count, err := workflow_v2.CountRuns(ctx, api.mustDB(), proj.Key, filters)
 			if err != nil {
 				return err
 			}
