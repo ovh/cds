@@ -154,6 +154,7 @@ import { EditorInputComponent } from './input/editor/editor.input.component';
 import { NzAvatarModule } from "ng-zorro-antd/avatar";
 import { CodemirrorComponent } from './codemirror';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 
 const ngZorroConfig: NzConfig = {
     notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
@@ -205,6 +206,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NzToolTipModule,
         NzTreeViewModule,
         NzUploadModule,
+        NzEmptyModule,
         CommonModule,
         ClipboardModule,
         FormsModule,
@@ -408,6 +410,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NzToolTipModule,
         NzTreeViewModule,
         NzUploadModule,
+        NzEmptyModule,
         ParameterFormComponent,
         ParameterListComponent,
         ParameterValueComponent,

@@ -57,9 +57,12 @@
 						[routerLink]="['/projectv2', run.project_key, 'run', 'vcs', run.contexts.git.server, 'repository', run.contexts.git.repository, 'workflow', run.workflow_name]">open</a></nz-list-item-action>
 			</ul>
 		</ng-container>
-		<nz-skeleton [nzAvatar]=" true" [nzActive]="true" [nzTitle]="false" [nzLoading]="true"></nz-skeleton>
 	</nz-list-item>
+	<nz-list-empty *ngIf="!loading && totalCount === 0" [nzNoResult]="emptyList"></nz-list-empty>
 </nz-list>
+<ng-template #emptyList>
+	<nz-empty nzNotFoundContent="No result found"></nz-empty>
+</ng-template>
 <div class="footer">
 	<span *ngIf="totalCount > 0">
 		{{totalCount}} results
