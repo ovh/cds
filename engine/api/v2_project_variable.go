@@ -120,7 +120,7 @@ func (api *API) deleteProjectVariableSetHandler() ([]service.RbacChecker, servic
 				return err
 			}
 
-			items, err := project.LoadVariableSetAllItem(ctx, api.mustDB(), pKey, vs.ID)
+			items, err := project.LoadVariableSetAllItem(ctx, api.mustDB(), vs.ID)
 			if err != nil {
 				return err
 			}

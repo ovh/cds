@@ -146,7 +146,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
-	p, err := project.Load(ctx, api.mustDB(), run.ProjectKey, project.LoadOptions.WithVariables)
+	p, err := project.Load(ctx, api.mustDB(), run.ProjectKey)
 	if err != nil {
 		return err
 	}
@@ -219,6 +219,13 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			}
 			j.RunsOn = completeName
 		}
+
+		// Check variable set
+		vss := sdk.StringSlice{}
+		vss = append(vss, run.WorkflowData.Workflow.VariableSets...)
+		vss = append(vss, j.VariableSets...)
+		vss.Unique()
+		j.VariableSets = vss
 
 		run.WorkflowData.Workflow.Jobs[jobID] = j
 	}
@@ -755,16 +762,6 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		return nil, sdk.WithStack(err)
 	}
 
-	// VARS context
-	vars := make(map[string]string, 0)
-	for _, v := range p.Variables {
-		if sdk.NeedPlaceholder(v.Type) {
-			continue
-		}
-		vName := strings.Replace(v.Name, ".", "_", -1)
-		vars[vName] = v.Value
-	}
-
 	// Env context
 	envs := make(map[string]string)
 	for k, v := range wr.WorkflowData.Workflow.Env {
@@ -773,7 +770,6 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 
 	runContext.CDS = cdsContext
 	runContext.Git = gitContext
-	runContext.Vars = vars
 	runContext.Env = envs
 	return &runContext, nil
 }
