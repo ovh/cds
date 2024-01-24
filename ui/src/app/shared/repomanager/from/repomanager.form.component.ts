@@ -1,16 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
-import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
+import { VCSProject, VCSProjectAuth, VCSProjectOptions } from 'app/model/vcs.model';
+import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
-import {
-    CallbackRepositoryManagerBasicAuthInProject,
-    CallbackRepositoryManagerInProject,
-    ConnectRepositoryManagerInProject
-} from 'app/store/project.action';
-import { ProjectState, ProjectStateModel } from 'app/store/project.state';
-import { finalize, flatMap } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'app-repomanager-form',
@@ -19,11 +13,10 @@ import { finalize, flatMap } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RepoManagerFormComponent {
-
-    // project
+    @Input() vcsProjectName: string;
     @Input() project: Project;
-    @Input() disableLabel: boolean = false;
 
+    loading: boolean;
     public ready = false;
     public connectLoading = false;
     public verificationLoading = false;
@@ -31,85 +24,94 @@ export class RepoManagerFormComponent {
     // Repo manager form data
     reposManagerList: string[];
     selectedRepoId: number;
-
-    // Repo manager validation
-    public addRepoResponse: any;
-    validationToken: string;
-
-    basicUser: string;
-    basicPassword: string;
+    selectedRepoType: string;
 
     repoModalVisible: boolean;
+    addingVCSProject: boolean;
+    askDeleting: boolean;
+
+    vcsProject: VCSProject;
 
     constructor(
-        private _repoManService: RepoManagerService,
-        private _toast: ToastService,
         public _translate: TranslateService,
+        private _toastService: ToastService,
         private _cd: ChangeDetectorRef,
-        private store: Store) {
-        this._repoManService.getAll()
-            .pipe(finalize(() => this._cd.markForCheck()))
-            .subscribe(res => {
-                this.ready = true;
-                this.reposManagerList = res;
-            });
+        private _projectService: ProjectService) {
+            this.askDeleting = false;
+            this.reposManagerList = ["bitbucketcloud", "bitbucketserver", "github", "gitlab", "gitea", "gerrit"];
+            if (!this.vcsProjectName) {
+                this.vcsProject = new VCSProject();
+                this.vcsProject.options = new VCSProjectOptions();
+                this.vcsProject.auth = new VCSProjectAuth();
+            }
     }
 
     create(): void {
-        if (this.selectedRepoId && this.reposManagerList[this.selectedRepoId]) {
-
-            this.connectLoading = true;
-            this.store.dispatch(new ConnectRepositoryManagerInProject({
-                projectKey: this.project.key,
-                repoManager: this.reposManagerList[this.selectedRepoId]
-            })).pipe(
-                flatMap(() => this.store.selectOnce(ProjectState)),
-                finalize(() => {
-                    this.connectLoading = false;
-                    this._cd.markForCheck();
-                })
-            ).subscribe((projState: ProjectStateModel) => {
-                this.addRepoResponse = projState.repoManager;
-                this.repoModalVisible = true;
-            });
-
+        if (this.reposManagerList[this.selectedRepoId]) {
+            this.repoModalVisible = true;
+            this.selectedRepoType = this.reposManagerList[this.selectedRepoId];
+            this.vcsProject.type = this.reposManagerList[this.selectedRepoId];
         }
     }
 
-    sendBasicAuth(): void {
-        this.verificationLoading = true;
-        this.store.dispatch(new CallbackRepositoryManagerBasicAuthInProject({
-            projectKey: this.project.key,
-            repoManager: this.reposManagerList[this.selectedRepoId],
-            basicUser: this.basicUser,
-            basicPassword: this.basicPassword
-        }))
-            .pipe(finalize(() => {
-                this.verificationLoading = false;
+    view(): void {
+        if (this.vcsProjectName) {
+            this._projectService.getVCSProject(this.project.key, this.vcsProjectName).subscribe(vcsProject => {
+                this.vcsProject = vcsProject;
+                this.repoModalVisible = true;
                 this._cd.markForCheck();
-            }))
-            .subscribe(() => {
-                this.repoModalVisible = false;
-                this.basicUser = '';
-                this.basicPassword = '';
-                this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
             });
+        }
     }
 
-    sendVerificationCode(): void {
-        this.verificationLoading = true;
-        this.store.dispatch(new CallbackRepositoryManagerInProject({
-            projectKey: this.project.key,
-            repoManager: this.reposManagerList[this.selectedRepoId],
-            requestToken: this.addRepoResponse.request_token,
-            code: this.validationToken
-        })).pipe(finalize(() => {
-            this.verificationLoading = false;
-            this.repoModalVisible = false;
+    addVCSProject(): void {
+        if (!this.reposManagerList[this.selectedRepoId]) {
+            return;
+        }
+        this.loading = true;
+        this._cd.markForCheck();
+        this._projectService.addVCSProject(this.project.key, this.vcsProject).pipe(finalize(() => {
+            this.loading = false;
             this._cd.markForCheck();
-        }))
-            .subscribe(() => {
-                this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
+        })).subscribe(r => {
+            this._toastService.success('Repository Manager added', '');
+            this._projectService.listVCSProject(this.project.key).subscribe(vcsProjects => {
+                this.repoModalVisible = false;
+                this.project.vcs_servers = vcsProjects;
+                this._cd.markForCheck();
             });
+        });
+    }
+
+    saveVCSProject(): void {
+        this.loading = true;
+        this._cd.markForCheck();
+        this._projectService.addVCSProject(this.project.key, this.vcsProject).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(r => {
+            this._toastService.success('Repository Manager updated', '');
+            this._projectService.listVCSProject(this.project.key).subscribe(vcsProjects => {
+                this.repoModalVisible = false;
+                this.project.vcs_servers = vcsProjects;
+                this._cd.markForCheck();
+            });
+        });
+    }
+
+    deleteVCSProject(): void {
+        this.loading = true;
+        this._cd.markForCheck();
+        this._projectService.deleteVCSProject(this.project.key, this.vcsProject.name).pipe(finalize(() => {
+            this.loading = false;
+            this._cd.markForCheck();
+        })).subscribe(r => {
+            this._toastService.success('Repository Manager deleted', '');
+            this._projectService.listVCSProject(this.project.key).subscribe(vcsProjects => {
+                this.repoModalVisible = false;
+                this.project.vcs_servers = vcsProjects;
+                this._cd.markForCheck();
+            });
+        });
     }
 }

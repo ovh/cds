@@ -108,6 +108,7 @@ func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) ([]s
 		for _, r := range results {
 			runResults = append(runResults, r.V2WorkflowRunResult)
 		}
+
 		return runResults, nil
 	}
 	return nil, nil
@@ -246,6 +247,72 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	}
 	*wr = dbWkfRun.V2WorkflowRun
 	return nil
+}
+
+func LoadRunsWorkflowNames(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var names []string
+	_, next := telemetry.Span(ctx, "LoadRunsWorkflowNames")
+	defer next()
+	if _, err := db.Select(&names, `
+		SELECT DISTINCT v2_workflow_run.workflow_name
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return names, nil
+}
+
+func LoadRunsActors(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var actors []string
+	_, next := telemetry.Span(ctx, "LoadRunsActors")
+	defer next()
+	if _, err := db.Select(&actors, `
+		SELECT DISTINCT v2_workflow_run.username
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return actors, nil
+}
+
+func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string) (int64, error) {
+	_, next := telemetry.Span(ctx, "CountRuns")
+	defer next()
+	count, err := db.SelectInt(`
+		SELECT COUNT(1)
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey)
+	return count, sdk.WithStack(err)
+}
+
+type SearchsRunsFilters struct {
+	Workflows []string
+}
+
+func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters, offset, limit uint, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+	ctx, next := telemetry.Span(ctx, "LoadRuns")
+	defer next()
+
+	if limit == 0 {
+		limit = 10
+	}
+
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run
+    WHERE 
+			project_key = $1 
+			AND (
+				array_length($2::text[], 1) = 0 OR v2_workflow_run.workflow_name = ANY($2)
+			)
+		ORDER BY started desc
+    LIMIT $3 OFFSET $4
+	`).Args(projKey, pq.StringArray(filters.Workflows), limit, offset)
+
+	return getRuns(ctx, db, query, opts...)
 }
 
 func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, repoID, workflowName string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {

@@ -37,10 +37,6 @@ func (g *giteaClient) UserHasWritePermission(ctx context.Context, repo string) (
 	return false, sdk.WithStack(sdk.ErrNotImplemented)
 }
 
-func (g *giteaClient) GrantWritePermission(ctx context.Context, repo string) error {
-	return sdk.WithStack(sdk.ErrNotImplemented)
-}
-
 func (g *giteaClient) ToVCSRepo(repo *gg.Repository) sdk.VCSRepo {
 	return sdk.VCSRepo{
 		URL:          repo.HTMLURL,

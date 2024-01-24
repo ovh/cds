@@ -31,6 +31,7 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	defer cancel()
 	w.currentJobV2.context = ctx
 	w.currentJobV2.runJob = &info.RunJob
+	w.currentJobV2.integrations = make(map[string]sdk.ProjectIntegration)
 	w.actions = info.AsCodeActions
 	w.currentJobV2.runJobContext = info.Contexts
 	w.actionPlugin = make(map[string]*sdk.GRPCPlugin)

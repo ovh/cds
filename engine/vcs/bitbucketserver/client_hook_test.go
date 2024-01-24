@@ -13,10 +13,10 @@ func TestCreateHook(t *testing.T) {
 
 	h := sdk.VCSHook{
 		Method: "POST",
-		URL:    "http://localhost:8080",
+		URL:    "http://localhost:8090",
 	}
 
-	err := client.CreateHook(context.Background(), "CDS/cds-event-function", &h)
+	err := client.CreateHook(context.Background(), "CDS/tests", &h)
 	test.NoError(t, err)
 }
 
@@ -28,9 +28,9 @@ func TestDeleteHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err := client.CreateHook(context.Background(), "CDS/cds-event-function", &h)
+	err := client.CreateHook(context.Background(), "CDS/tests", &h)
 	test.NoError(t, err)
 
-	err = client.DeleteHook(context.Background(), "CDS/cds-event-function", h)
+	err = client.DeleteHook(context.Background(), "CDS/tests", h)
 	test.NoError(t, err)
 }

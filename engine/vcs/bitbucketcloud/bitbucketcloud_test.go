@@ -2,23 +2,17 @@ package bitbucketcloud
 
 import (
 	"context"
-	"net/http"
 	"testing"
-	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 
-	"github.com/pkg/browser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/test"
 )
-
-var currentAccessToken string
-var currentRefreshToken string
 
 // TestNew needs bitbucketCloudClientID and bitbucketCloudClientSecret
 func TestNewClient(t *testing.T) {
@@ -29,35 +23,28 @@ func TestNewClient(t *testing.T) {
 func getNewConsumer(t *testing.T) sdk.VCSServer {
 	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
-	clientID := cfg["bitbucketCloudClientID"]
-	clientSecret := cfg["bitbucketCloudClientSecret"]
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
-
-	if clientID == "" && clientSecret == "" {
-		t.Logf("Unable to read bitbucket cloud configuration. Skipping this tests.")
-		t.SkipNow()
-	}
 
 	cache, err := cache.New(redisHost, redisPassword, 0, 30)
 	if err != nil {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	bbConsumer := NewDeprecated(clientID, clientSecret, "http://localhost", "", "", cache, true, true)
+	bbConsumer := New("http://localhost", "", "", cache)
 	return bbConsumer
 }
 
 func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	log.Factory = log.NewTestingWrapper(t)
 	cfg := test.LoadTestingConf(t, sdk.TypeAPI)
-	clientID := cfg["bitbucketCloudClientID"]
-	clientSecret := cfg["bitbucketCloudClientSecret"]
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
+	bitbucketCloudUsername := cfg["bitbucketCloudUsername"]
+	bitbucketCloudToken := cfg["bitbucketCloudToken"]
 
-	if clientID == "" && clientSecret == "" {
-		t.Logf("Unable to read github configuration. Skipping this tests.")
+	if bitbucketCloudUsername == "" && bitbucketCloudToken == "" {
+		t.Logf("Unable to read bitbucketcloud configuration. Skipping this tests.")
 		t.SkipNow()
 	}
 
@@ -66,11 +53,11 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	bbConsumer := NewDeprecated(clientID, clientSecret, "http://localhost", "", "", cache, true, true)
+	bbConsumer := New("http://localhost", "", "", cache)
 	vcsAuth := sdk.VCSAuth{
-		AccessToken:        currentAccessToken,
-		AccessTokenSecret:  currentRefreshToken,
-		AccessTokenCreated: time.Now().Unix(),
+		Type:     sdk.VCSTypeBitbucketCloud,
+		Username: bitbucketCloudUsername,
+		Token:    bitbucketCloudToken,
 	}
 	cli, err := bbConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	if err != nil {
@@ -78,60 +65,6 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	return cli
-}
-
-func TestClientAuthorizeToken(t *testing.T) {
-	bbConsumer := getNewConsumer(t)
-	token, url, err := bbConsumer.AuthorizeRedirect(context.Background())
-	t.Logf("token: %s", token)
-	t.Logf("url: %s", url)
-	assert.NotEmpty(t, token)
-	assert.NotEmpty(t, url)
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	out := make(chan http.Request, 1)
-
-	go callbackServer(ctx, t, out)
-	err = browser.OpenURL(url)
-	require.NoError(t, err)
-
-	r, ok := <-out
-	t.Logf("Chan request closed? %v", !ok)
-	t.Logf("OAuth request 2: %+v", r)
-	assert.NotNil(t, r)
-
-	cberr := r.FormValue("error")
-	errDescription := r.FormValue("error_description")
-	errURI := r.FormValue("error_uri")
-
-	assert.Empty(t, cberr)
-	assert.Empty(t, errDescription)
-	assert.Empty(t, errURI)
-
-	code := r.FormValue("code")
-
-	assert.NotEmpty(t, code)
-
-	accessToken, refreshToken, err := bbConsumer.AuthorizeToken(context.Background(), "", code)
-	assert.NotEmpty(t, accessToken)
-	assert.NotEmpty(t, refreshToken)
-	require.NoError(t, err)
-
-	currentAccessToken = accessToken
-	currentRefreshToken = refreshToken
-	t.Logf("Token is %s", accessToken)
-
-	vcsAuth := sdk.VCSAuth{
-		AccessToken:        accessToken,
-		AccessTokenSecret:  refreshToken,
-		AccessTokenCreated: time.Now().Unix(),
-	}
-	bbClient, err := bbConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
-	require.NoError(t, err)
-	assert.NotNil(t, bbClient)
 }
 
 func TestAuthorizedClient(t *testing.T) {
@@ -152,7 +85,7 @@ func TestRepoByFullname(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	repo, err := bbClient.RepoByFullname(context.Background(), "bnjjj/test")
+	repo, err := bbClient.RepoByFullname(context.Background(), "yesnault/testr")
 	require.NoError(t, err)
 	assert.NotNil(t, repo)
 }
@@ -161,7 +94,7 @@ func TestBranches(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	branches, err := bbClient.Branches(context.Background(), "bnjjj/test", sdk.VCSBranchesFilter{})
+	branches, err := bbClient.Branches(context.Background(), "yesnault/testr", sdk.VCSBranchesFilter{})
 	require.NoError(t, err)
 	assert.NotEmpty(t, branches)
 }
@@ -170,7 +103,7 @@ func TestBranch(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	branch, err := bbClient.Branch(context.Background(), "bnjjj/test", sdk.VCSBranchFilters{BranchName: "master"})
+	branch, err := bbClient.Branch(context.Background(), "yesnault/testr", sdk.VCSBranchFilters{BranchName: "master"})
 	require.NoError(t, err)
 	assert.NotNil(t, branch)
 }
@@ -179,7 +112,7 @@ func TestCommits(t *testing.T) {
 	bbClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, bbClient)
 
-	commits, err := bbClient.Commits(context.Background(), "bnjjj/test", "master", "HEAD", "HEAD")
+	commits, err := bbClient.Commits(context.Background(), "yesnault/testr", "master", "HEAD", "HEAD")
 	require.NoError(t, err)
 	assert.NotNil(t, commits)
 }

@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-//Github http var
+// Github http var
 var (
 	RateLimitLimit     = 5000
 	RateLimitRemaining = 5000
@@ -27,42 +27,6 @@ var (
 
 	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 )
-
-func (g *githubConsumer) postForm(path string, data url.Values, headers map[string][]string) (int, []byte, error) {
-	body := strings.NewReader(data.Encode())
-
-	req, err := http.NewRequest(http.MethodPost, g.GitHubURL+path, body)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+g.ClientID)
-	for k, h := range headers {
-		for i := range h {
-			req.Header.Add(k, h[i])
-		}
-	}
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return 0, nil, err
-	}
-	defer res.Body.Close()
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return res.StatusCode, nil, err
-	}
-
-	if res.StatusCode > 400 {
-		ghErr := &ghError{}
-		if err := sdk.JSONUnmarshal(resBody, ghErr); err == nil {
-			return res.StatusCode, resBody, ghErr
-		}
-	}
-
-	return res.StatusCode, resBody, nil
-}
 
 func (c *githubClient) setETag(ctx context.Context, path string, headers http.Header) {
 	etag := headers.Get("ETag")
@@ -203,30 +167,6 @@ func (c *githubClient) setAuth(ctx context.Context, req *http.Request, opts *pos
 		return sdk.NewError(sdk.ErrWrongRequest, errors.New("invalid configuration - github authentication"))
 	}
 	return nil
-}
-
-func (c *githubClient) put(ctx context.Context, path string, bodyType string, body io.Reader, opts *postOptions) (*http.Response, error) {
-	if opts == nil {
-		opts = new(postOptions)
-	}
-	if !opts.skipDefaultBaseURL && !strings.HasPrefix(path, c.GitHubAPIURL) {
-		path = c.GitHubAPIURL + path
-	}
-
-	req, err := http.NewRequest(http.MethodPut, path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", bodyType)
-	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
-	req.Header.Add("Accept", "application/json")
-
-	if err := c.setAuth(ctx, req, opts); err != nil {
-		return nil, err
-	}
-
-	return httpClient.Do(req)
 }
 
 func (c *githubClient) get(ctx context.Context, path string, opts ...getArgFunc) (int, []byte, http.Header, error) {

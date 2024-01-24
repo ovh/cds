@@ -8,8 +8,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import { PreferencesState } from 'app/store/preferences.state';
 import omit from 'lodash-es/omit';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-worker-model-form',

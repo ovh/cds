@@ -13,33 +13,28 @@ type githubClient struct {
 	GitHubAPIURL         string
 	ClientID             string
 	OAuthToken           string
-	DisableStatus        bool
-	DisableStatusDetails bool
-	Cache                cache.Store
-	apiURL               string
-	uiURL                string
-	proxyURL             string
-	username             string
-	token                string
-}
-
-//GithubConsumer implements vcs.Server and it's used to instantiate a githubClient
-type githubConsumer struct {
-	ClientID             string `json:"client-id"`
-	ClientSecret         string `json:"-"`
-	Cache                cache.Store
-	GitHubURL            string
-	GitHubAPIURL         string
-	uiURL                string
-	apiURL               string
-	proxyURL             string
-	disableStatus        bool
 	disableStatusDetails bool
+	Cache                cache.Store
+	apiURL               string
+	uiURL                string
+	proxyURL             string
 	username             string
 	token                string
 }
 
-//New creates a new GithubConsumer
+// GithubConsumer implements vcs.Server and it's used to instantiate a githubClient
+type githubConsumer struct {
+	Cache        cache.Store
+	GitHubURL    string
+	GitHubAPIURL string
+	uiURL        string
+	apiURL       string
+	proxyURL     string
+	username     string
+	token        string
+}
+
+// New creates a new GithubConsumer
 func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.Store) sdk.VCSServer {
 	//Github const
 	const (
@@ -64,36 +59,18 @@ func New(githubURL, githubAPIURL, apiURL, uiURL, proxyURL string, store cache.St
 	}
 }
 
-func NewDeprecated(ClientID, ClientSecret, githubURL, githubAPIURL, apiURL, uiURL, proxyURL, username, token string, store cache.Store, disableStatus, disableStatusDetails bool) sdk.VCSServer {
-	//Github const
-	const (
-		publicURL    = "https://github.com"
-		publicAPIURL = "https://api.github.com"
-	)
-	// if the githubURL is passed as an empty string default it to public GitHub
-	if githubURL == "" {
-		githubURL = publicURL
+// GetAuthorized returns an authorized client
+func (g *githubConsumer) GetAuthorizedClient(ctx context.Context, vcsAuth sdk.VCSAuth) (sdk.VCSAuthorizedClient, error) {
+	c := &githubClient{
+		GitHubURL:    g.GitHubURL,    // default value of this field is computed in github.New() func
+		GitHubAPIURL: g.GitHubAPIURL, // default value of this field is computed in github.New() func
+		Cache:        g.Cache,
+		uiURL:        g.uiURL,
+		apiURL:       g.apiURL,
+		proxyURL:     g.proxyURL,
+		username:     vcsAuth.Username,
+		token:        vcsAuth.Token,
 	}
-	// if the githubAPIURL is passed as an empty string default it to public GitHub
-	if githubAPIURL == "" {
-		githubAPIURL = publicAPIURL
-	}
-	return &githubConsumer{
-		ClientID:             ClientID,
-		ClientSecret:         ClientSecret,
-		GitHubURL:            githubURL,
-		GitHubAPIURL:         githubAPIURL,
-		Cache:                store,
-		apiURL:               apiURL,
-		uiURL:                uiURL,
-		proxyURL:             proxyURL,
-		disableStatus:        disableStatus,
-		disableStatusDetails: disableStatusDetails,
-		username:             username,
-		token:                token,
-	}
-}
 
-func (c *githubClient) GetAccessToken(_ context.Context) string {
-	return c.OAuthToken
+	return c, c.RateLimit(ctx)
 }

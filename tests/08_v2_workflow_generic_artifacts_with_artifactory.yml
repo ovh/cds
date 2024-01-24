@@ -1,0 +1,186 @@
+name: Upload and Download generic artifacts from Workflow as code v2
+vars:
+  cds_project: "ITV2ARTIFACTSGENERICRT"
+  git_repo: "it_v2_artifacts_generic_artifactory_rt"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+  rt_url: "rt_url"
+  rt_token: "rt_token"
+  rt_token_name: "rt_tokenName"
+  rt_distribution_url: "rt_distribution_url"
+  rt_project: "rt_project"
+  rt_component: "rt_component"
+  rt_project_key: "rt_project_key"
+
+testcases:
+- name: Prepare test
+  steps:
+  - name: "Verify cdsctl configuration"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+    vars:
+      cdsUser:
+        from: result.systemoutjson.username
+
+  - name: "Display username"
+    info: "Connected CDS user is {{.cdsUser}}"
+
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo}}"
+
+  - type: v2_install_gpg_key
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    vars:
+      emailaddress:
+        from: result.emailaddress
+
+  - name: Prepare integration for project
+    script: |-
+      /bin/bash -c cat <<- EOF > /tmp/artifactory.yaml
+      name: artifactory-{{.rt_project}}
+      model:
+        name: Artifactory
+      config:
+        build.info.prefix:
+          value: {{.rt_project}}/{{.rt_component}}
+          type: string
+        cds.repository:
+          value: {{.rt_project}}-{{.rt_component}}-cds
+          type: string
+        distribution.url:
+          value: {{.rt_distribution_url}}
+          type: string
+        platform:
+          value: artifactory
+          type: string
+        project.key:
+          value: {{.rt_project_key}}
+          type: string
+        promotion.maturity.high:
+          value: release
+          type: string
+        promotion.maturity.low:
+          value: snapshot
+          type: string
+        release.token:
+          value: ""
+          type: password
+        repo.prefix:
+          value: fsamin-v2
+          type: string
+        token:
+          value: {{.rt_token}}
+          type: password
+        token.name:
+          value: {{.rt_token_name}}
+          type: string
+        url:
+          value: {{.rt_url}}
+          type: string
+      EOF
+
+  - name: Import integration for project
+    script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import {{.cds_project}} /tmp/artifactory.yaml
+
+  - name: Assert integration is imported on project
+    script: '{{.cdsctl}} -f {{.cdsctl.config}} project integration list {{.cds_project}}'
+    assertions:
+    - result.systemout ShouldContainSubstring artifactory-{{.rt_project}}
+
+- name: Push workflow file
+  steps:
+  - type: v2_push_files_on_repo
+    git_repo: "{{.git_repo}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debian.yaml:
+        name: docker-debian
+        description: my debian worker model
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
+      workflows/workflowA.yaml:
+        name: WorkflowA
+        on: [push]
+        integrations: [artifactory-{{.rt_project}}]
+        jobs:
+          First-Job:
+            runs-on: "{{.worker_model}}"
+            steps:
+              - run: |-
+                  #!/bin/bash -x
+                  env > env.txt
+                  echo "foobar" > foo.txt
+              - uses: actions/uploadArtifact
+                with:
+                  path: "*.txt"
+          Second-Job:
+            runs-on: "{{.worker_model}}"
+            needs: [First-Job]
+            steps:
+              - uses: actions/downloadArtifact
+              - run: |-
+                  #!/bin/bash
+                  ls -l
+                  cat env.txt
+                  cat foo.txt
+                  grep foobar foo.txt
+
+  - name: Check CDS project analyses
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    retry: 2
+    delay: 10
+    vars:
+      analysisID:
+        from:
+          result.systemoutjson.systemoutjson1.id
+
+  - name: Get CDS project analysis
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
+    assertions:
+    - 'result.systemout ShouldContainSubstring "status: Success"'
+    retry: 2
+    delay: 10
+
+  - name: Get hook event status
+    script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event list my_vcs_server {{.git.user}}/{{.git_repo}} --format json
+    vars:
+      events:
+        from: result.systemoutjson
+
+  - name: Check all hook events status
+    range: "{{.events}}"
+    script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event show my_vcs_server {{.git.user}}/{{.git_repo}} {{.value.uuid}} --format json
+    info: "hook event {{.value.uuid}} ({{.value.created}} - {{.result.systemoutjson.last_error}}) status is {{.result.systemoutjson.status}}"
+    assertions:
+    - result.systemoutjson.status ShouldEqual Done
+
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"
+    assertions:
+    - result.systemoutjson.status ShouldEqual "Success"
+    retry: 100
+    delay: 10

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -8,12 +7,11 @@ import { NavbarService } from 'app/service/navbar/navbar.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { NgxsStoreModule } from 'app/store/store.module';
-import 'rxjs/add/observable/of';
-import { Observable } from 'rxjs/Observable';
 import { ApplicationService } from 'app/service/application/application.service';
 import { EnvironmentService } from 'app/service/environment/environment.service';
 import { SharedModule } from '../../../../../../shared/shared.module';
 import { PipelineModule } from '../../../../pipeline.module';
+import { of } from 'rxjs';
 
 
 describe('CDS: Stage From component', () => {
@@ -53,7 +51,7 @@ class MockToast {
 class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
-        this.params = Observable.of({ key: 'key1', appName: 'app1' });
-        this.queryParams = Observable.of({ key: 'key1', appName: 'app1' });
+        this.params = of({ key: 'key1', appName: 'app1' });
+        this.queryParams = of({ key: 'key1', appName: 'app1' });
     }
 }

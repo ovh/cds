@@ -86,7 +86,7 @@ func (g *giteaClient) GetDefaultBranch(ctx context.Context, fullname string) (*s
 		return nil, err
 	}
 	vcsBranch := sdk.VCSBranch{
-		ID:        b.Name,
+		ID:        sdk.GitRefBranchPrefix + b.Name,
 		DisplayID: b.Name,
 		Default:   true,
 	}

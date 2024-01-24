@@ -592,8 +592,8 @@ func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV
 		log.Info(ctx, "no integration available for this job")
 		return nil
 	}
-	for _, it := range currentJob.runJobContext.Integrations.All() {
-		integrationName := it.Name
+
+	for _, integrationName := range currentJob.runJobContext.Integrations.All() {
 		log.Info(ctx, "Getting integration %q hooks for project %q", integrationName, currentJob.runJob.ProjectKey)
 		hook, err := w.clientV2.ProjectIntegrationWorkerHookGet(currentJob.runJob.ProjectKey, integrationName)
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {

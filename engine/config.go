@@ -135,34 +135,17 @@ func configBootstrap(args []string) Configuration {
 			defaults.SetDefaults(conf.Hooks)
 			conf.Hooks.Name = "cds-hooks-" + namesgenerator.GetRandomNameCDS()
 			conf.Hooks.HTTP.Port = 8083
-		case sdk.TypeVCS:
-			conf.VCS = &vcs.Configuration{}
-			defaults.SetDefaults(conf.VCS)
-			var github vcs.GithubServerConfiguration
-			defaults.SetDefaults(&github)
-			var bitbucket vcs.BitbucketServerConfiguration
-			defaults.SetDefaults(&bitbucket)
-			var bitbucketcloud vcs.BitbucketCloudConfiguration
-			defaults.SetDefaults(&bitbucketcloud)
-			var gitlab vcs.GitlabServerConfiguration
-			defaults.SetDefaults(&gitlab)
-			var gerrit vcs.GerritServerConfiguration
-			defaults.SetDefaults(&gerrit)
-			conf.VCS.Servers = map[string]vcs.ServerConfiguration{
-				"github":         {URL: "https://github.com", Github: &github},
-				"bitbucket":      {URL: "https://mybitbucket.com", Bitbucket: &bitbucket},
-				"bitbucketcloud": {BitbucketCloud: &bitbucketcloud},
-				"gitlab":         {URL: "https://gitlab.com", Gitlab: &gitlab},
-				"gerrit":         {URL: "http://localhost:8080", Gerrit: &gerrit},
-			}
-			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS()
-			conf.VCS.HTTP.Port = 8084
 		case sdk.TypeRepositories:
 			conf.Repositories = &repositories.Configuration{}
 			defaults.SetDefaults(conf.Repositories)
 			conf.Repositories.Name = "cds-repositories-" + namesgenerator.GetRandomNameCDS()
 			conf.Repositories.Basedir = "/var/lib/cds-engine/repositories"
 			conf.Repositories.HTTP.Port = 8085
+		case sdk.TypeVCS:
+			conf.VCS = &vcs.Configuration{}
+			defaults.SetDefaults(conf.VCS)
+			conf.VCS.Name = "cds-vcs-" + namesgenerator.GetRandomNameCDS()
+			conf.VCS.HTTP.Port = 8084
 		case sdk.TypeCDN:
 			conf.CDN = &cdn.Configuration{}
 			defaults.SetDefaults(conf.CDN)

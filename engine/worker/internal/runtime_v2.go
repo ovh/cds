@@ -16,10 +16,17 @@ import (
 
 func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
-	var runResult = req.RunResult
+	var (
+		runResult = req.RunResult
+		integ     *sdk.ProjectIntegration
+	)
 
-	if wk.currentJobV2.runJobContext.Integrations.ArtifactManager != nil {
-		runResult.ArtifactManagerIntegration = wk.currentJobV2.runJobContext.Integrations.ArtifactManager
+	if wk.currentJobV2.runJobContext.Integrations.ArtifactManager != "" {
+		var err error
+		integ, err = wk.V2GetIntegrationByName(ctx, wk.currentJobV2.runJobContext.Integrations.ArtifactManager)
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to find integration %q", wk.currentJobV2.runJobContext.Integrations.ArtifactManager)
+		}
 	}
 
 	// Create the run result on API side
@@ -27,45 +34,57 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 		return nil, sdk.NewError(sdk.ErrUnknownError, err)
 	}
 
-	// Generate a worker signature
-	sig := cdn.Signature{
-		JobName:       wk.currentJobV2.runJob.Job.Name,
-		RunJobID:      wk.currentJobV2.runJob.ID,
-		ProjectKey:    wk.currentJobV2.runJob.ProjectKey,
-		WorkflowName:  wk.currentJobV2.runJob.WorkflowName,
-		WorkflowRunID: wk.currentJobV2.runJob.WorkflowRunID,
-		RunNumber:     wk.currentJobV2.runJob.RunNumber,
-		RunAttempt:    wk.currentJobV2.runJob.RunAttempt,
-		Region:        wk.currentJobV2.runJob.Region,
-
-		Timestamp: time.Now().UnixNano(),
-
-		Worker: &cdn.SignatureWorker{
-			WorkerID:      wk.id,
-			WorkerName:    wk.Name(),
-			RunResultName: runResult.Name(),
-			RunResultType: runResult.Typ(),
-			RunResultID:   runResult.ID,
-		},
-	}
-
-	signature, err := jws.Sign(wk.signer, sig)
-	if err != nil {
-		return nil, sdk.NewError(sdk.ErrUnknownError, err)
-	}
-
-	// Returns the signature and CDN info
-
 	response := workerruntime.V2AddResultResponse{
-		RunResult:    runResult,
-		CDNSignature: signature,
-		CDNAddress:   wk.CDNHttpURL(),
+		RunResult: runResult,
+	}
+
+	if integ == nil {
+		// Generate a worker signature
+		sig := cdn.Signature{
+			JobName:       wk.currentJobV2.runJob.Job.Name,
+			RunJobID:      wk.currentJobV2.runJob.ID,
+			ProjectKey:    wk.currentJobV2.runJob.ProjectKey,
+			WorkflowName:  wk.currentJobV2.runJob.WorkflowName,
+			WorkflowRunID: wk.currentJobV2.runJob.WorkflowRunID,
+			RunNumber:     wk.currentJobV2.runJob.RunNumber,
+			RunAttempt:    wk.currentJobV2.runJob.RunAttempt,
+			Region:        wk.currentJobV2.runJob.Region,
+
+			Timestamp: time.Now().UnixNano(),
+
+			Worker: &cdn.SignatureWorker{
+				WorkerID:      wk.id,
+				WorkerName:    wk.Name(),
+				RunResultName: runResult.Name(),
+				RunResultType: runResult.Typ(),
+				RunResultID:   runResult.ID,
+			},
+		}
+
+		signature, err := jws.Sign(wk.signer, sig)
+		if err != nil {
+			return nil, sdk.NewError(sdk.ErrUnknownError, err)
+		}
+		// Returns the signature and CDN info
+		response.CDNSignature = signature
+		response.CDNAddress = wk.CDNHttpURL()
+	} else {
+		log.Info(ctx, "enabling integration %q for run result %s", integ.Name, response.RunResult.ID)
+		response.RunResult.ArtifactManagerIntegrationName = &integ.Name
 	}
 
 	return &response, nil
 }
 
 var _ workerruntime.Runtime = new(CurrentWorker)
+
+func (wk *CurrentWorker) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
+	return wk.currentJobV2.runJob
+}
+
+func (wk *CurrentWorker) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
+	return &wk.currentJobV2.runJobContext
+}
 
 func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
@@ -102,7 +121,7 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
 
-	resp, err := wk.clientV2.V2QueueJobRunResultsGet(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID)
+	resp, err := wk.clientV2.V2QueueJobRunResultsGet(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, filter.WithClearIntegration)
 	if err != nil {
 		return nil, err
 	}
@@ -168,4 +187,19 @@ func (wk *CurrentWorker) AddStepOutput(ctx context.Context, outputName string, o
 	}
 	stepStatus.Outputs[outputName] = outputValue
 	wk.currentJobV2.runJob.StepsStatus[wk.currentJobV2.currentStepName] = stepStatus
+}
+
+func (wk *CurrentWorker) V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error) {
+	integ, has := wk.currentJobV2.integrations[name]
+	if has {
+		return &integ, nil
+	}
+
+	integFromAPI, err := wk.clientV2.ProjectIntegrationGet(wk.currentJobV2.runJob.ProjectKey, name, true)
+	if err != nil {
+		return nil, err
+	}
+
+	wk.currentJobV2.integrations[name] = integFromAPI
+	return &integFromAPI, nil
 }

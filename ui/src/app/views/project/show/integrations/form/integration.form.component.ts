@@ -8,8 +8,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { PreferencesState } from 'app/store/preferences.state';
 import { AddIntegrationInProject } from 'app/store/project.action';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-project-integration-form',

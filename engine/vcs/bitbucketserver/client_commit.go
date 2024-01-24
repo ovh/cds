@@ -50,7 +50,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
 			}
 
-			if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+			if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
 				if sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, nil
 				}
@@ -108,7 +108,7 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 
 	sc := Commit{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/commits/%s", project, slug, hash)
-	if err := b.do(ctx, "GET", "core", path, nil, nil, &sc, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &sc); err != nil {
 		return commit, sdk.WrapError(err, "Unable to get commit %s", path)
 	}
 
@@ -170,7 +170,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
 			}
 
-			if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+			if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
 				if sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, nil
 				}

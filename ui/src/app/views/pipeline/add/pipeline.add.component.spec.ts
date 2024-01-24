@@ -16,7 +16,6 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddPipeline } from 'app/store/pipelines.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { Application } from '../../../model/application.model';
 import { Pipeline } from '../../../model/pipeline.model';
 import { Project } from '../../../model/project.model';

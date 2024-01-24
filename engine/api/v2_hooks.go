@@ -147,14 +147,14 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
 					} else {
 						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
-						callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg
+						callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 					}
 				} else {
-					callback.SigningKeyCallback.Error = ope.Error.Message
+					callback.SigningKeyCallback.Error = ope.Error.Message + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 				}
 
 				if _, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
-					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to  hook [HTTP: %d]", code))
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to hook [HTTP: %d]", code))
 					return
 				}
 			})

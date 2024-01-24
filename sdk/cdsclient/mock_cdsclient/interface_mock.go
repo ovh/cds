@@ -2791,18 +2791,18 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultUpdate(ctx, 
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockHatcheryServiceClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockHatcheryServiceClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
 }
 
 // V2QueueJobStepUpdate mocks base method.
@@ -3345,35 +3345,6 @@ func (m *MockProjectClient) ProjectRepositoryHookSecret(ctx context.Context, pro
 func (mr *MockProjectClientMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey, vcsType, vcsName, repoName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
-}
-
-// ProjectRepositoryManagerDelete mocks base method.
-func (m *MockProjectClient) ProjectRepositoryManagerDelete(projectKey, repoManagerName string, force bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerDelete", projectKey, repoManagerName, force)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjectRepositoryManagerDelete indicates an expected call of ProjectRepositoryManagerDelete.
-func (mr *MockProjectClientMockRecorder) ProjectRepositoryManagerDelete(projectKey, repoManagerName, force interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryManagerDelete), projectKey, repoManagerName, force)
-}
-
-// ProjectRepositoryManagerList mocks base method.
-func (m *MockProjectClient) ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerList", projectKey)
-	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectRepositoryManagerList indicates an expected call of ProjectRepositoryManagerList.
-func (mr *MockProjectClientMockRecorder) ProjectRepositoryManagerList(projectKey interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerList", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryManagerList), projectKey)
 }
 
 // ProjectUpdate mocks base method.
@@ -4000,18 +3971,18 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultUpdate(ctx, regionNa
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockV2QueueClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockV2QueueClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
 }
 
 // V2QueueJobStepUpdate mocks base method.
@@ -5153,21 +5124,6 @@ func (m *MockHookClient) RetrieveHookEventUser(ctx context.Context, req sdk.Hook
 func (mr *MockHookClientMockRecorder) RetrieveHookEventUser(ctx, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveHookEventUser", reflect.TypeOf((*MockHookClient)(nil).RetrieveHookEventUser), ctx, req)
-}
-
-// VCSConfiguration mocks base method.
-func (m *MockHookClient) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VCSConfiguration indicates an expected call of VCSConfiguration.
-func (mr *MockHookClientMockRecorder) VCSConfiguration() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockHookClient)(nil).VCSConfiguration))
 }
 
 // VCSGerritConfiguration mocks base method.
@@ -8764,35 +8720,6 @@ func (mr *MockInterfaceMockRecorder) ProjectRepositoryHookSecret(ctx, projectKey
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryHookSecret", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryHookSecret), ctx, projectKey, vcsType, vcsName, repoName)
 }
 
-// ProjectRepositoryManagerDelete mocks base method.
-func (m *MockInterface) ProjectRepositoryManagerDelete(projectKey, repoManagerName string, force bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerDelete", projectKey, repoManagerName, force)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjectRepositoryManagerDelete indicates an expected call of ProjectRepositoryManagerDelete.
-func (mr *MockInterfaceMockRecorder) ProjectRepositoryManagerDelete(projectKey, repoManagerName, force interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerDelete", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryManagerDelete), projectKey, repoManagerName, force)
-}
-
-// ProjectRepositoryManagerList mocks base method.
-func (m *MockInterface) ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectRepositoryManagerList", projectKey)
-	ret0, _ := ret[0].([]sdk.ProjectVCSServer)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectRepositoryManagerList indicates an expected call of ProjectRepositoryManagerList.
-func (mr *MockInterfaceMockRecorder) ProjectRepositoryManagerList(projectKey interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryManagerList", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryManagerList), projectKey)
-}
-
 // ProjectUpdate mocks base method.
 func (m *MockInterface) ProjectUpdate(key string, project *sdk.Project) error {
 	m.ctrl.T.Helper()
@@ -10074,18 +10001,18 @@ func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultUpdate(ctx, regionName, 
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
 }
 
 // V2QueueJobStepUpdate mocks base method.
@@ -10197,21 +10124,6 @@ func (m *MockInterface) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error
 func (mr *MockInterfaceMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockInterface)(nil).V2WorkerList), ctx)
-}
-
-// VCSConfiguration mocks base method.
-func (m *MockInterface) VCSConfiguration() (map[string]sdk.VCSConfiguration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VCSConfiguration")
-	ret0, _ := ret[0].(map[string]sdk.VCSConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VCSConfiguration indicates an expected call of VCSConfiguration.
-func (mr *MockInterfaceMockRecorder) VCSConfiguration() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VCSConfiguration", reflect.TypeOf((*MockInterface)(nil).VCSConfiguration))
 }
 
 // VCSGerritConfiguration mocks base method.
@@ -11593,6 +11505,21 @@ func (mr *MockV2WorkerInterfaceMockRecorder) PluginsList() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsList", reflect.TypeOf((*MockV2WorkerInterface)(nil).PluginsList))
 }
 
+// ProjectIntegrationGet mocks base method.
+func (m *MockV2WorkerInterface) ProjectIntegrationGet(projectKey, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectIntegrationGet", projectKey, integrationName, clearPassword)
+	ret0, _ := ret[0].(sdk.ProjectIntegration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectIntegrationGet indicates an expected call of ProjectIntegrationGet.
+func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationGet(projectKey, integrationName, clearPassword interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationGet), projectKey, integrationName, clearPassword)
+}
+
 // ProjectIntegrationWorkerHookGet mocks base method.
 func (m *MockV2WorkerInterface) ProjectIntegrationWorkerHookGet(projectKey, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
 	m.ctrl.T.Helper()
@@ -11681,18 +11608,18 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultUpdate(ctx, regi
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockV2WorkerInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockV2WorkerInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
 }
 
 // V2QueueJobStepUpdate mocks base method.

@@ -63,7 +63,10 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/version", LogMiddleware(setVersionHandler(c, w)))
 
 	r.HandleFunc("/v2/output", LogMiddleware(workerruntime.V2_outputHandler(c, w)))
+	r.HandleFunc("/v2/jobrun", LogMiddleware(workerruntime.V2_jobRunHandler(c, w)))
+	r.HandleFunc("/v2/context", LogMiddleware(workerruntime.V2_contextHandler(c, w)))
 	r.HandleFunc("/v2/result", LogMiddleware(workerruntime.V2_runResultHandler(c, w)))
+	r.HandleFunc("/v2/integrations/{name}", LogMiddleware(workerruntime.V2_integrationsHandler(c, w)))
 
 	srv := &http.Server{
 		Handler: r,

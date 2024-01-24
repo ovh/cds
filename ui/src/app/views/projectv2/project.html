@@ -4,15 +4,18 @@
     </div>
     <div class="body">
         <ng-container *ngIf="project">
-            <app-resizable-panel growDirection="after" minSize="250" [initialSize]="panelSize"
+            <app-projectv2-left-menu [project]="project"></app-projectv2-left-menu>
+            <app-resizable-panel *ngIf="workspaceSidebar" growDirection="after" minSize="250" [initialSize]="panelSize"
                 (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
-                <ng-container *ngIf="workspaceSidebar">
+                <ng-container>
                     <app-projectv2-sidebar class="sidebar" [project]="project"></app-projectv2-sidebar>
                 </ng-container>
-                <ng-container *ngIf="runSidebar">
+            </app-resizable-panel>
+            <app-resizable-panel *ngIf="runSidebar" growDirection="after" minSize="250" [initialSize]="panelSize"
+                (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
+                <ng-container>
                     <app-projectv2-sidebar-run class="sidebar" [project]="project"></app-projectv2-sidebar-run>
                 </ng-container>
-
             </app-resizable-panel>
             <div class="content">
                 <router-outlet></router-outlet>

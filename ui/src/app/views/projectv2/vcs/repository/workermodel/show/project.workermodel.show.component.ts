@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { Project, ProjectRepository, VCSProject } from 'app/model/project.model';
+import { Project, ProjectRepository } from 'app/model/project.model';
 import { ProjectState } from 'app/store/project.state';
 import { Store } from '@ngxs/store';
 import { forkJoin } from 'rxjs';
@@ -10,6 +10,7 @@ import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.servic
 import { finalize } from "rxjs/operators";
 import { Schema } from 'app/model/json-schema.model';
 import {Entity, EntityWorkerModel} from "../../../../../../model/entity.model";
+import { VCSProject } from 'app/model/vcs.model';
 
 @Component({
     selector: 'app-projectv2-workermodel-show',

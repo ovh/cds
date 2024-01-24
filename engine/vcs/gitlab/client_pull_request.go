@@ -55,7 +55,7 @@ func (c *gitlabClient) PullRequests(ctx context.Context, repo string, opts sdk.V
 // PullRequestComment push a new comment on a pull request
 func (c *gitlabClient) PullRequestComment(ctx context.Context, repo string, prReq sdk.VCSPullRequestCommentRequest) error {
 	if c.disableStatus {
-		log.Warn(ctx, "gitlab.PullRequestComment>  ⚠ Gitlab statuses are disabled")
+		log.Warn(ctx, "gitlab.PullRequestComment> ⚠ Gitlab statuses are disabled")
 		return nil
 	}
 	_, _, err := c.client.Notes.CreateMergeRequestNote(repo, prReq.ID, &gitlab.CreateMergeRequestNoteOptions{

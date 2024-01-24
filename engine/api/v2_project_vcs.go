@@ -152,7 +152,7 @@ func (api *API) putVCSProjectHandler() ([]service.RbacChecker, service.Handler) 
 
 func (api *API) deleteVCSProjectHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectManage),
-		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+		func(ctx context.Context, _ http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 

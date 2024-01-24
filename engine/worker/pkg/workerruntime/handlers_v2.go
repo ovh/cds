@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 )
@@ -56,6 +57,30 @@ func V2_outputHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 		}
 
 		writeJSON(w, nil, http.StatusNoContent)
+	}
+}
+
+func V2_jobRunHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, wk.V2GetJobRun(r.Context()), http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+}
+
+func V2_contextHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, wk.V2GetJobContext(r.Context()), http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
 	}
 }
 
@@ -114,6 +139,19 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 		default:
 			writeError(w, r, sdk.ErrNotFound)
 		}
+	}
+}
+
+func V2_integrationsHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		name := vars["name"]
+		integ, err := wk.V2GetIntegrationByName(r.Context(), name)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+		writeJSON(w, integ, http.StatusOK)
 	}
 }
 

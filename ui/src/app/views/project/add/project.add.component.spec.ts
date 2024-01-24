@@ -16,7 +16,6 @@ import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AddProject } from 'app/store/project.action';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { Group, GroupPermission } from 'app/model/group.model';
 import { Project } from 'app/model/project.model';
 import { EnvironmentService } from 'app/service/environment/environment.service';
