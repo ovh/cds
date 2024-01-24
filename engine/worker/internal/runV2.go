@@ -149,7 +149,7 @@ func (w *CurrentWorker) runJobServiceReadiness(ctx context.Context, serviceName 
 	}
 	runJobContext := sdk.WorkflowRunJobsContext{
 		WorkflowRunContext: sdk.WorkflowRunContext{
-			Vars: service.Env,
+			Env: service.Env,
 		},
 	}
 
