@@ -30,8 +30,8 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item show {{.cds_project}} vs1 foo --format json
     assertions:
       - result.code ShouldEqual 0
-      - result.systemoutjson.systemoutjson0.name ShouldEqual "foo"   
-      - result.systemoutjson.systemoutjson0.value ShouldEqual "barUpdated"
+      - result.systemoutjson.name ShouldEqual "foo"   
+      - result.systemoutjson.value ShouldEqual "barUpdated"
   - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item remove {{.cds_project}} vs1 foo --force
   - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item ls {{.cds_project}} vs1 --format json
     assertions:
