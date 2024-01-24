@@ -1,0 +1,19 @@
+name: docker-push
+type: action
+author: "François SAMIN <francois.samin@corp.ovh.com>"
+description: |
+  This push Docker image
+inputs:
+  image:
+    type: string
+    description: Image name
+    required: true
+  tags:
+    type: string
+    description: Image tags
+    required: true
+  registries:
+    type: string
+    description: Docker registries to push on
+    required: true
+
