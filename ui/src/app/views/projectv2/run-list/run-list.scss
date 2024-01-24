@@ -1,0 +1,69 @@
+@import '../../../../common';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+  height: 100%;
+}
+
+::ng-deep {
+  .ant-select-item-empty {
+    display: none !important;
+  }
+}
+
+[nz-form] {
+  display: flex;
+  flex-direction: row;
+
+  nz-form-item {
+    margin: 0;
+  }
+
+  nz-form-item:first-child {
+    flex: 1;
+    margin-right: 10px;
+  }
+}
+
+.run-list {
+  margin: 20px 0;
+  flex: 1;
+  overflow-y: auto;
+
+  .run-avatar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 25px;
+    height: 48px;
+
+    [nz-icon] {
+      font-size: 25px;
+
+      &.success {
+        color: $cds_color_green;
+      }
+
+      &.fail {
+        color: $cds_color_red;
+      }
+
+      &.building {
+        color: $cds_color_teal;
+      }
+    }
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  nz-pagination {
+    margin-left: auto;
+  }
+}

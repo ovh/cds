@@ -769,7 +769,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelWarning,
-			Message:       fmt.Sprintf("job %s: user %s does not have enough right", jobID, u.Username),
+			Message:       fmt.Sprintf("job %s: user %s does not have enough right on region %q", jobID, u.Username, jobDef.Region),
 		})
 		return false, runInfos, nil
 	}
@@ -815,6 +815,7 @@ func computeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, runID string,
 	return finalStatus, nil
 }
 
+// Check and set default region on job
 func checkUserRight(ctx context.Context, db gorp.SqlExecutor, jobDef *sdk.V2Job, u sdk.AuthentifiedUser, defaultRegion string) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkUserRight")
 	defer next()

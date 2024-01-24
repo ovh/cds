@@ -638,3 +638,9 @@ type V2WorkflowRunResultVariableDetail struct {
 	Name  string `json:"name" mapstructure:"name"`
 	Value string `json:"value" mapstructure:"value"`
 }
+
+type V2WorkflowRunSearchFilter struct {
+	Key     string   `json:"key"`
+	Options []string `json:"options"`
+	Example string   `json:"example"`
+}

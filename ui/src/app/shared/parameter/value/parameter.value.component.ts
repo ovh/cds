@@ -20,8 +20,8 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { SharedService } from 'app/shared/shared.service';
 import { PreferencesState } from 'app/store/preferences.state';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 declare let CodeMirror: any;
 

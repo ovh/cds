@@ -16,7 +16,6 @@ import { ApplicationStateModel } from 'app/store/applications.state';
 import { ProjectStateModel } from 'app/store/project.state';
 import { NgxsStoreModule } from 'app/store/store.module';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { Application } from 'app/model/application.model';
 import { Project } from 'app/model/project.model';
 import { Usage } from 'app/model/usage.model';
