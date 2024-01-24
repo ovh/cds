@@ -242,7 +242,7 @@ type ProjectClientV2 interface {
 	ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error)
 
 	ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error
-	ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string) error
+	ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string, mod ...RequestModifier) error
 	ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error)
 	ProjectVariableSetShow(ctx context.Context, pKey string, vsName string) (*sdk.ProjectVariableSet, error)
 

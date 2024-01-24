@@ -13,9 +13,9 @@ func (c *client) ProjectVariableSetCreate(ctx context.Context, pKey string, vs *
 	return err
 }
 
-func (c *client) ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string) error {
+func (c *client) ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string, mod ...RequestModifier) error {
 	path := fmt.Sprintf("/v2/project/%s/variableset/%s", pKey, vsName)
-	_, err := c.DeleteJSON(ctx, path, nil)
+	_, err := c.DeleteJSON(ctx, path, nil, mod...)
 	return err
 }
 

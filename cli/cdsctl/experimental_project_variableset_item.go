@@ -58,7 +58,7 @@ var projectVariableSetItemShowCmd = cli.Command{
 }
 
 func projectVariableSetItemShowFunc(v cli.Values) (interface{}, error) {
-	item, err := client.ProjectVariableSetItemGet(context.Background(), v.GetString(_ProjectKey), v.GetString("variable-set-name"), v.GetString("item-name"))
+	item, err := client.ProjectVariableSetItemGet(context.Background(), v.GetString(_ProjectKey), v.GetString("variableset-name"), v.GetString("item-name"))
 	return item, err
 }
 

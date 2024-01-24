@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var projectVariableSetCmd = cli.Command{
@@ -67,10 +69,17 @@ var projectVariableSetDeleteCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "name"},
 	},
+	Flags: []cli.Flag{
+		{
+			Name: "with-items",
+			Type: cli.FlagBool,
+		},
+	},
 }
 
 func projectVariableSetDeleteFunc(v cli.Values) error {
-	return client.ProjectVariableSetDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("name"))
+	mod := cdsclient.WithQueryParameter("force", strconv.FormatBool(v.GetBool("with-items")))
+	return client.ProjectVariableSetDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("name"), mod)
 }
 
 var projectVariableSetCreateCmd = cli.Command{
@@ -90,5 +99,6 @@ func projectVariableSetCreateFunc(v cli.Values) error {
 	vs := sdk.ProjectVariableSet{
 		Name: v.GetString("name"),
 	}
+
 	return client.ProjectVariableSetCreate(context.Background(), v.GetString(_ProjectKey), &vs)
 }

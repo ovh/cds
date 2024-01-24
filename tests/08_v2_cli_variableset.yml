@@ -1,0 +1,55 @@
+name: Project VariableSet Command TestSuite
+vars:
+  cds_project: "ITV2VARIABLESET"
+testcases:
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force {{.cds_project}}"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force {{.cds_project}}"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group add {{.cds_project}}"
+  - script: >
+      {{.cdsctl}} -f {{.cdsctl.config}} project create {{.cds_project}} "Test Project {{.cds_project}}" {{.cds_project}}
+
+- name: Create variable set with item of type string
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} vs1 foo bar string --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset list {{.cds_project}} --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.systemoutjson0.name ShouldEqual "vs1"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset show {{.cds_project}} vs1 --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.name ShouldEqual "vs1"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item ls {{.cds_project}} vs1 --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.systemoutjson0.name ShouldEqual "foo"   
+      - result.systemoutjson.systemoutjson0.value ShouldEqual "bar"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item update {{.cds_project}} vs1 foo barUpdated
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item show {{.cds_project}} vs1 foo --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.systemoutjson0.name ShouldEqual "foo"   
+      - result.systemoutjson.systemoutjson0.value ShouldEqual "barUpdated"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item remove {{.cds_project}} vs1 foo --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item ls {{.cds_project}} vs1 --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson ShouldHaveLength 0
+
+- name: Create variable set with item of type secret
+  steps:           
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset add {{.cds_project}} vs2
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} vs2 mySecret barSecret secret
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item show {{.cds_project}} vs2 mySecret --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.name ShouldEqual "mySecret"   
+      - result.systemoutjson.value ShouldEqual "**********"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset rm {{.cds_project}} vs2 --with-items --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset list {{.cds_project}} --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson ShouldHaveLength 1
+      - result.systemoutjson.systemoutjson0.name ShouldEqual "vs1"   
