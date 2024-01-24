@@ -65,7 +65,7 @@ type WorkflowRunContext struct {
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
-	j, err := yaml.Marshal(m)
+	j, err := json.Marshal(m)
 	return j, WrapError(err, "cannot marshal WorkflowRunContext")
 }
 
@@ -73,11 +73,11 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
-	source, ok := src.(string)
+	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(yaml.Unmarshal([]byte(source), m), "cannot unmarshal WorkflowRunContext")
+	return WrapError(json.Unmarshal(source, m), "cannot unmarshal WorkflowRunContext")
 }
 
 type WorkflowRunJobsContext struct {
