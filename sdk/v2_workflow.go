@@ -25,6 +25,7 @@ type V2Workflow struct {
 	Jobs         map[string]V2Job         `json:"jobs"`
 	Env          map[string]string        `json:"env,omitempty"`
 	Integrations []string                 `json:"integrations,omitempty"`
+	VariableSets []string                 `json:"vars,omitempty"`
 }
 
 type WorkflowOn struct {
@@ -150,7 +151,7 @@ type V2Job struct {
 	If              string                  `json:"if,omitempty" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
 	Gate            string                  `json:"gate,omitempty" jsonschema_extras:"order=5" jsonschema_description:"Gate allows to trigger manually a job"`
 	Inputs          map[string]string       `json:"inputs,omitempty" jsonschema_extras:"order=8,mode=edit" jsonschema_description:"Input of thejob"`
-	Steps           []ActionStep            `json:"steps,omitempty" jsonschema_extras:"order=10" jsonschema_description:"List of steps"`
+	Steps           []ActionStep            `json:"steps,omitempty" jsonschema_extras:"order=11" jsonschema_description:"List of steps"`
 	Needs           []string                `json:"needs,omitempty" jsonschema_extras:"order=6,mode=tags" jsonschema_description:"Job dependencies"`
 	Stage           string                  `json:"stage,omitempty" jsonschema_extras:"order=2"`
 	Region          string                  `json:"region,omitempty" jsonschema_extras:"order=3"`
@@ -158,7 +159,8 @@ type V2Job struct {
 	RunsOn          string                  `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split"`
 	Strategy        *V2JobStrategy          `json:"strategy,omitempty" jsonschema_extras:"order=7"`
 	Integrations    []string                `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
-	Env             map[string]string       `json:"env,omitempty"  jsonschema_extras:"order=11,mode=edit" jsonschema_description:"Environment variable available in the job"`
+	VariableSets    []string                `json:"vars,omitempty" jsonschema_extras:"required,order=10" jsonschema_description:"VariableSet linked to the job"`
+	Env             map[string]string       `json:"env,omitempty"  jsonschema_extras:"order=12,mode=edit" jsonschema_description:"Environment variable available in the job"`
 	Services        map[string]V2JobService `json:"services,omitempty"`
 
 	// TODO

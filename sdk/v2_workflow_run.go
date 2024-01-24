@@ -58,10 +58,9 @@ type V2WorkflowRun struct {
 }
 
 type WorkflowRunContext struct {
-	CDS  CDSContext        `json:"cds,omitempty"`
-	Git  GitContext        `json:"git,omitempty"`
-	Vars map[string]string `json:"vars,omitempty"`
-	Env  map[string]string `json:"env,omitempty"`
+	CDS CDSContext        `json:"cds,omitempty"`
+	Git GitContext        `json:"git,omitempty"`
+	Env map[string]string `json:"env,omitempty"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
@@ -86,10 +85,10 @@ type WorkflowRunJobsContext struct {
 	Needs        NeedsContext            `json:"needs"`
 	Inputs       map[string]interface{}  `json:"inputs"`
 	Steps        StepsContext            `json:"steps"`
-	Secrets      map[string]string       `json:"secrets"`
 	Matrix       map[string]string       `json:"matrix"`
 	Integrations *JobIntegrationsContext `json:"integrations,omitempty"`
 	Gate         map[string]interface{}  `json:"gate"`
+	Vars         map[string]interface{}  `json:"vars"`
 }
 
 type V2WorkflowRunData struct {
