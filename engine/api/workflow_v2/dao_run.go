@@ -277,14 +277,18 @@ func LoadRunsActors(ctx context.Context, db gorp.SqlExecutor, projKey string) ([
 	return actors, nil
 }
 
-func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string) (int64, error) {
+func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
 	count, err := db.SelectInt(`
 		SELECT COUNT(1)
-		FROM v2_workflow_run
-		WHERE project_key = $1
-	`, projKey)
+    FROM v2_workflow_run
+    WHERE 
+			project_key = $1 
+			AND (
+				array_length($2::text[], 1) IS NULL OR v2_workflow_run.workflow_name = ANY($2)
+			)
+	`, projKey, pq.StringArray(filters.Workflows))
 	return count, sdk.WithStack(err)
 }
 
@@ -306,7 +310,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
     WHERE 
 			project_key = $1 
 			AND (
-				array_length($2::text[], 1) = 0 OR v2_workflow_run.workflow_name = ANY($2)
+				array_length($2::text[], 1) IS NULL OR v2_workflow_run.workflow_name = ANY($2)
 			)
 		ORDER BY started desc
     LIMIT $3 OFFSET $4
