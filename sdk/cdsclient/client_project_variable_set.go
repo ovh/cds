@@ -33,25 +33,25 @@ func (c *client) ProjectVariableSetShow(ctx context.Context, pKey string, vsName
 	return &vs, err
 }
 
-func (c *client) ProjetVariableSetItemAdd(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error {
+func (c *client) ProjectVariableSetItemAdd(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error {
 	path := fmt.Sprintf("/v2/project/%s/variableset/%s/item", pKey, vsName)
 	_, err := c.PostJSON(ctx, path, item, item)
 	return err
 }
 
-func (c *client) ProjetVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error {
+func (c *client) ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error {
 	path := fmt.Sprintf("/v2/project/%s/variableset/%s/item/%s", pKey, vsName, item.Name)
 	_, err := c.PutJSON(ctx, path, item, item)
 	return err
 }
 
-func (c *client) ProjetVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error {
+func (c *client) ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error {
 	path := fmt.Sprintf("/v2/project/%s/variableset/%s/item/%s", pKey, vsName, itemName)
 	_, err := c.DeleteJSON(ctx, path, nil)
 	return err
 }
 
-func (c *client) ProjetVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error) {
+func (c *client) ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error) {
 	var item sdk.ProjectVariableSetItem
 	path := fmt.Sprintf("/v2/project/%s/variableset/%s/item/%s", pKey, vsName, itemName)
 	_, err := c.GetJSON(ctx, path, &item)

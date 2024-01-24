@@ -20,7 +20,8 @@ func projectVariableSet() *cobra.Command {
 		cli.NewListCommand(projectVariableSetListCmd, projectVariableSetListFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(projectVariableSetDeleteCmd, projectVariableSetDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetCreateCmd, projectVariableSetCreateFunc, nil, withAllCommandModifiers()...),
-		cli.NewListCommand(projectVariableSetShowCmd, projectVariableSetShowFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(projectVariableSetShowCmd, projectVariableSetShowFunc, nil, withAllCommandModifiers()...),
+		projectVariableSetItem(),
 	})
 }
 
@@ -37,9 +38,9 @@ var projectVariableSetShowCmd = cli.Command{
 	},
 }
 
-func projectVariableSetShowFunc(v cli.Values) (cli.ListResult, error) {
+func projectVariableSetShowFunc(v cli.Values) (interface{}, error) {
 	vs, err := client.ProjectVariableSetShow(context.Background(), v.GetString(_ProjectKey), v.GetString("name"))
-	return cli.AsListResult(vs.Items), err
+	return vs, err
 }
 
 var projectVariableSetListCmd = cli.Command{
@@ -89,8 +90,5 @@ func projectVariableSetCreateFunc(v cli.Values) error {
 	vs := sdk.ProjectVariableSet{
 		Name: v.GetString("name"),
 	}
-	if err := client.ProjectVariableSetCreate(context.Background(), v.GetString(_ProjectKey), &vs); err != nil {
-		return cli.WrapError(err, "unable to get notification")
-	}
-	return nil
+	return client.ProjectVariableSetCreate(context.Background(), v.GetString(_ProjectKey), &vs)
 }

@@ -118,18 +118,23 @@ func (api *API) putProjectVariableSetItemHandler() ([]service.RbacChecker, servi
 				return err
 			}
 
+			if item.Name != itemName {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "item name doesn't match")
+			}
+
 			vs, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, vsName)
 			if err != nil {
 				return err
 			}
 
-			itemDB, err := project.LoadVariableSetItemWithType(ctx, api.mustDB(), vs.ID, itemName, item.Type)
+			itemDB, err := project.LoadVariableSetItem(ctx, api.mustDB(), vs.ID, item.Name)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
 
 			item.ProjectVariableSetID = vs.ID
 			item.ID = itemDB.ID
+			item.Type = itemDB.Type
 			tx, err := api.mustDBWithCtx(ctx).Begin()
 			if err != nil {
 				return sdk.WithStack(err)

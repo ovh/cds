@@ -246,10 +246,10 @@ type ProjectClientV2 interface {
 	ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error)
 	ProjectVariableSetShow(ctx context.Context, pKey string, vsName string) (*sdk.ProjectVariableSet, error)
 
-	ProjetVariableSetItemAdd(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
-	ProjetVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
-	ProjetVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
-	ProjetVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
+	ProjectVariableSetItemAdd(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
+	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
 }
 
 // ProjectClient exposes project related functions

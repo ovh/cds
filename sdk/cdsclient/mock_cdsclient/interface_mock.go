@@ -3004,6 +3004,63 @@ func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetDelete(ctx, pKey, v
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetDelete), ctx, pKey, vsName)
 }
 
+// ProjectVariableSetItemAdd mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemAdd(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemAdd", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemAdd indicates an expected call of ProjectVariableSetItemAdd.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemAdd(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemAdd", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemAdd), ctx, pKey, vsName, item)
+}
+
+// ProjectVariableSetItemDelete mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemDelete(ctx context.Context, pKey, vsName, itemName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemDelete", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemDelete indicates an expected call of ProjectVariableSetItemDelete.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemDelete(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemDelete), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemGet mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemGet(ctx context.Context, pKey, vsName, itemName string) (*sdk.ProjectVariableSetItem, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemGet", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSetItem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetItemGet indicates an expected call of ProjectVariableSetItemGet.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemGet(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemGet), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemUpdate mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetItemUpdate(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemUpdate", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemUpdate indicates an expected call of ProjectVariableSetItemUpdate.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetItemUpdate(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetItemUpdate), ctx, pKey, vsName, item)
+}
+
 // ProjectVariableSetList mocks base method.
 func (m *MockProjectClientV2) ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error) {
 	m.ctrl.T.Helper()
@@ -3032,63 +3089,6 @@ func (m *MockProjectClientV2) ProjectVariableSetShow(ctx context.Context, pKey, 
 func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetShow(ctx, pKey, vsName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetShow", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetShow), ctx, pKey, vsName)
-}
-
-// ProjetVariableSetItemAdd mocks base method.
-func (m *MockProjectClientV2) ProjetVariableSetItemAdd(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemAdd", ctx, pKey, vsName, item)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjetVariableSetItemAdd indicates an expected call of ProjetVariableSetItemAdd.
-func (mr *MockProjectClientV2MockRecorder) ProjetVariableSetItemAdd(ctx, pKey, vsName, item interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemAdd", reflect.TypeOf((*MockProjectClientV2)(nil).ProjetVariableSetItemAdd), ctx, pKey, vsName, item)
-}
-
-// ProjetVariableSetItemDelete mocks base method.
-func (m *MockProjectClientV2) ProjetVariableSetItemDelete(ctx context.Context, pKey, vsName, itemName string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemDelete", ctx, pKey, vsName, itemName)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjetVariableSetItemDelete indicates an expected call of ProjetVariableSetItemDelete.
-func (mr *MockProjectClientV2MockRecorder) ProjetVariableSetItemDelete(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemDelete", reflect.TypeOf((*MockProjectClientV2)(nil).ProjetVariableSetItemDelete), ctx, pKey, vsName, itemName)
-}
-
-// ProjetVariableSetItemGet mocks base method.
-func (m *MockProjectClientV2) ProjetVariableSetItemGet(ctx context.Context, pKey, vsName, itemName string) (*sdk.ProjectVariableSetItem, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemGet", ctx, pKey, vsName, itemName)
-	ret0, _ := ret[0].(*sdk.ProjectVariableSetItem)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjetVariableSetItemGet indicates an expected call of ProjetVariableSetItemGet.
-func (mr *MockProjectClientV2MockRecorder) ProjetVariableSetItemGet(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemGet", reflect.TypeOf((*MockProjectClientV2)(nil).ProjetVariableSetItemGet), ctx, pKey, vsName, itemName)
-}
-
-// ProjetVariableSetItemUpdate mocks base method.
-func (m *MockProjectClientV2) ProjetVariableSetItemUpdate(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemUpdate", ctx, pKey, vsName, item)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjetVariableSetItemUpdate indicates an expected call of ProjetVariableSetItemUpdate.
-func (mr *MockProjectClientV2MockRecorder) ProjetVariableSetItemUpdate(ctx, pKey, vsName, item interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjetVariableSetItemUpdate), ctx, pKey, vsName, item)
 }
 
 // MockProjectClient is a mock of ProjectClient interface.
@@ -9013,6 +9013,63 @@ func (mr *MockInterfaceMockRecorder) ProjectVariableSetDelete(ctx, pKey, vsName 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetDelete), ctx, pKey, vsName)
 }
 
+// ProjectVariableSetItemAdd mocks base method.
+func (m *MockInterface) ProjectVariableSetItemAdd(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemAdd", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemAdd indicates an expected call of ProjectVariableSetItemAdd.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemAdd(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemAdd", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemAdd), ctx, pKey, vsName, item)
+}
+
+// ProjectVariableSetItemDelete mocks base method.
+func (m *MockInterface) ProjectVariableSetItemDelete(ctx context.Context, pKey, vsName, itemName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemDelete", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemDelete indicates an expected call of ProjectVariableSetItemDelete.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemDelete(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemDelete", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemDelete), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemGet mocks base method.
+func (m *MockInterface) ProjectVariableSetItemGet(ctx context.Context, pKey, vsName, itemName string) (*sdk.ProjectVariableSetItem, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemGet", ctx, pKey, vsName, itemName)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSetItem)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectVariableSetItemGet indicates an expected call of ProjectVariableSetItemGet.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemGet(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemGet", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemGet), ctx, pKey, vsName, itemName)
+}
+
+// ProjectVariableSetItemUpdate mocks base method.
+func (m *MockInterface) ProjectVariableSetItemUpdate(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetItemUpdate", ctx, pKey, vsName, item)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetItemUpdate indicates an expected call of ProjectVariableSetItemUpdate.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetItemUpdate(ctx, pKey, vsName, item interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetItemUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetItemUpdate), ctx, pKey, vsName, item)
+}
+
 // ProjectVariableSetList mocks base method.
 func (m *MockInterface) ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error) {
 	m.ctrl.T.Helper()
@@ -9070,63 +9127,6 @@ func (m *MockInterface) ProjectVariablesList(key string) ([]sdk.Variable, error)
 func (mr *MockInterfaceMockRecorder) ProjectVariablesList(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariablesList", reflect.TypeOf((*MockInterface)(nil).ProjectVariablesList), key)
-}
-
-// ProjetVariableSetItemAdd mocks base method.
-func (m *MockInterface) ProjetVariableSetItemAdd(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemAdd", ctx, pKey, vsName, item)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjetVariableSetItemAdd indicates an expected call of ProjetVariableSetItemAdd.
-func (mr *MockInterfaceMockRecorder) ProjetVariableSetItemAdd(ctx, pKey, vsName, item interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemAdd", reflect.TypeOf((*MockInterface)(nil).ProjetVariableSetItemAdd), ctx, pKey, vsName, item)
-}
-
-// ProjetVariableSetItemDelete mocks base method.
-func (m *MockInterface) ProjetVariableSetItemDelete(ctx context.Context, pKey, vsName, itemName string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemDelete", ctx, pKey, vsName, itemName)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjetVariableSetItemDelete indicates an expected call of ProjetVariableSetItemDelete.
-func (mr *MockInterfaceMockRecorder) ProjetVariableSetItemDelete(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemDelete", reflect.TypeOf((*MockInterface)(nil).ProjetVariableSetItemDelete), ctx, pKey, vsName, itemName)
-}
-
-// ProjetVariableSetItemGet mocks base method.
-func (m *MockInterface) ProjetVariableSetItemGet(ctx context.Context, pKey, vsName, itemName string) (*sdk.ProjectVariableSetItem, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemGet", ctx, pKey, vsName, itemName)
-	ret0, _ := ret[0].(*sdk.ProjectVariableSetItem)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjetVariableSetItemGet indicates an expected call of ProjetVariableSetItemGet.
-func (mr *MockInterfaceMockRecorder) ProjetVariableSetItemGet(ctx, pKey, vsName, itemName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemGet", reflect.TypeOf((*MockInterface)(nil).ProjetVariableSetItemGet), ctx, pKey, vsName, itemName)
-}
-
-// ProjetVariableSetItemUpdate mocks base method.
-func (m *MockInterface) ProjetVariableSetItemUpdate(ctx context.Context, pKey, vsName string, item *sdk.ProjectVariableSetItem) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjetVariableSetItemUpdate", ctx, pKey, vsName, item)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ProjetVariableSetItemUpdate indicates an expected call of ProjetVariableSetItemUpdate.
-func (mr *MockInterfaceMockRecorder) ProjetVariableSetItemUpdate(ctx, pKey, vsName, item interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjetVariableSetItemUpdate", reflect.TypeOf((*MockInterface)(nil).ProjetVariableSetItemUpdate), ctx, pKey, vsName, item)
 }
 
 // PutJSON mocks base method.
