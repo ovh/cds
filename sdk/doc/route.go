@@ -135,6 +135,10 @@ func CleanURLParameter(u string) string {
 		u = "repository-name"
 	case "vcsType":
 		u = "vcs-type"
+	case "variableSetName":
+		u = "variable-set-name"
+	case "itemName":
+		u = "item-name"
 	}
 	return u
 }

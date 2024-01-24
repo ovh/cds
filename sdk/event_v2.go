@@ -78,6 +78,12 @@ const (
 	EventNotificationCreated = "NotificationCreated"
 	EventNotificationUpdated = "NotificationUpdated"
 	EventNotificationDeleted = "NotificationDeleted"
+
+	EventVariableSetCreated     = "VariableSetCreated"
+	EventVariableSetDeleted     = "VariableSetDeleted"
+	EventVariableSetItemCreated = "VariableSetItemCreated"
+	EventVariableSetItemUpdated = "VariableSetItemUpdated"
+	EventVariableSetItemDeleted = "VariableSetItemDeleted"
 )
 
 // FullEventV2 uses to process event
@@ -112,6 +118,8 @@ type FullEventV2 struct {
 	KeyType          string          `json:"key_type,omitempty"`
 	Variable         string          `json:"variable,omitempty"`
 	Notification     string          `json:"notification,omitempty"`
+	VariableSet      string          `json:"variable_set,omitempty"`
+	Item             string          `json:"item,omitempty"`
 }
 
 type GlobalEventV2 struct {
@@ -232,6 +240,21 @@ type NotificationEvent struct {
 	Notification string `json:"notification"`
 	UserID       string `json:"user_id"`
 	Username     string `json:"username"`
+}
+
+type ProjectVariableSetEvent struct {
+	ProjectEventV2
+	VariableSet string `json:"variable_set"`
+	UserID      string `json:"user_id"`
+	Username    string `json:"username"`
+}
+
+type ProjectVariableSetItemEvent struct {
+	ProjectEventV2
+	VariableSet string `json:"variable_set"`
+	Item        string `json:"item"`
+	UserID      string `json:"user_id"`
+	Username    string `json:"username"`
 }
 
 type UserEvent struct {
