@@ -13,7 +13,7 @@ import (
 var projectVariableSetItemCmd = cli.Command{
 	Name:    "item",
 	Aliases: []string{"vs"},
-	Short:   "Manage item on a CDS project variableset",
+	Short:   "Manage item on a CDS project Variable Set",
 }
 
 func projectVariableSetItem() *cobra.Command {
@@ -30,7 +30,7 @@ var projectVariableSetItemListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
 
-	Short: "List the items of the given variableset",
+	Short: "List the items of the given Variable Set",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -47,7 +47,7 @@ func projectVariableSetItemListFunc(v cli.Values) (cli.ListResult, error) {
 var projectVariableSetItemShowCmd = cli.Command{
 	Name:    "show",
 	Aliases: []string{"get"},
-	Short:   "Get the given variableset item",
+	Short:   "Get the given variable set item",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -65,7 +65,7 @@ func projectVariableSetItemShowFunc(v cli.Values) (interface{}, error) {
 var projectVariableSetItemDeleteCmd = cli.Command{
 	Name:    "delete",
 	Aliases: []string{"rm", "remove"},
-	Short:   "Delete an item from a variableset",
+	Short:   "Delete an item from a variable set",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -82,7 +82,7 @@ func projectVariableSetItemDeleteFunc(v cli.Values) error {
 var projectVariableSetItemCreateCmd = cli.Command{
 	Name:    "add",
 	Aliases: []string{"create"},
-	Short:   "Create a new item inside a variableset ",
+	Short:   "Create a new item inside a variable set",
 	Example: "cdsctl exp project variableset item add MY-PROJECT MY-VARIABLESET-NAME ITEM-NAME ITEM-VALUE ITEM-TYPE(secret|string)",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
@@ -134,7 +134,7 @@ func projectVariableSetItemCreateFunc(v cli.Values) error {
 var projectVariableSetItemUpdateCmd = cli.Command{
 	Name:    "update",
 	Aliases: []string{""},
-	Short:   "Update an item inside a variableset ",
+	Short:   "Update an item inside a variable set",
 	Example: "cdsctl exp project variableset item update MY-PROJECT MY-VARIABLESET-NAME ITEM-NAME ITEM-VALUE",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},

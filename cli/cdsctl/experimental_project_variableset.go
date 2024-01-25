@@ -14,7 +14,7 @@ import (
 var projectVariableSetCmd = cli.Command{
 	Name:    "variableset",
 	Aliases: []string{"vs"},
-	Short:   "Manage VariableSet on a CDS project",
+	Short:   "Manage Variable Set on a CDS project",
 }
 
 func projectVariableSet() *cobra.Command {
@@ -31,7 +31,7 @@ var projectVariableSetShowCmd = cli.Command{
 	Name:    "show",
 	Aliases: []string{"get"},
 
-	Short: "Get the given variableset",
+	Short: "Get the given variable set",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -48,7 +48,7 @@ func projectVariableSetShowFunc(v cli.Values) (interface{}, error) {
 var projectVariableSetListCmd = cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
-	Short:   "List all variabelset in the given project",
+	Short:   "List all variable sets in the given project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -62,7 +62,7 @@ func projectVariableSetListFunc(v cli.Values) (cli.ListResult, error) {
 var projectVariableSetDeleteCmd = cli.Command{
 	Name:    "delete",
 	Aliases: []string{"rm", "remove"},
-	Short:   "Delete a variableset on a project",
+	Short:   "Delete a variable set on a project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
