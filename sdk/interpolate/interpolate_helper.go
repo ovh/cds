@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/sdk"
 	"net/url"
 	"path"
 	"reflect"
@@ -83,12 +84,13 @@ func init() {
 			}
 			return val
 		},
-		"div": func(a, b interface{}) int64 { return toInt64(a) / toInt64(b) },
-		"mod": func(a, b interface{}) int64 { return toInt64(a) % toInt64(b) },
+		"div":       func(a, b interface{}) int64 { return toInt64(a) / toInt64(b) },
+		"mod":       func(a, b interface{}) int64 { return toInt64(a) % toInt64(b) },
 		"ternary":   ternary,
 		"urlencode": func(s string) string { return url.QueryEscape(s) },
 		"dirname":   func(s string) string { return path.Dir(s) },
 		"basename":  func(s string) string { return path.Base(s) },
+		"uuid":      sdk.UUID(),
 	})
 }
 
