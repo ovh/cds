@@ -45,12 +45,12 @@
 			</ng-template>
 			<ng-template #runTitle>
 				<a
-					[routerLink]="['/projectv2', run.project_key, 'run', 'vcs', run.contexts.git.server, 'repository', run.contexts.git.repository, 'workflow', run.workflow_name]">{{run.workflow_name}}
+					[routerLink]="['/projectv2', run.project_key, 'run', 'vcs', run.vcs_server, 'repository', run.repository, 'workflow', run.workflow_name]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
 					#{{run.run_number}}</a>
 			</ng-template>
 			<ng-template #runDescription>
 				Commit {{run.contexts.git.sha.substring(0,8)}} by {{run.contexts.git.username}} on repository
-				{{run.contexts.git.repository}}
+				{{run.contexts.git.server}}/{{run.contexts.git.repository}}
 			</ng-template>
 			<ul nz-list-item-actions>
 				<nz-list-item-action><a

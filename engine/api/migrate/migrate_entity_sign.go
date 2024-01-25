@@ -27,7 +27,7 @@ func MigrateHashSignature(ctx context.Context, db *gorp.DbMap, c cache.Store) er
 		}
 	}
 
-	wrs, err := workflow_v2.LoadAllUnsafe(ctx, db)
+	wrs, err := workflow_v2.LoadRunsUnsafe(ctx, db)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func MigrateBranchToRef(ctx context.Context, db *gorp.DbMap) error {
 		}
 	}
 
-	wrs, err := workflow_v2.LoadAllUnsafe(ctx, db)
+	wrs, err := workflow_v2.LoadRunsUnsafe(ctx, db)
 	if err != nil {
 		return err
 	}
