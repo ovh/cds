@@ -46,6 +46,8 @@ func TestWorkerUnregistered(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -119,6 +121,8 @@ func TestWorkerRefresh(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -210,6 +214,8 @@ func TestWorkerTakeJobHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 		RunAttempt:   1,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -342,6 +348,8 @@ func TestWorkerRegister(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 

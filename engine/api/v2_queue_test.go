@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/authentication"
 	authhatch "github.com/ovh/cds/engine/api/authentication/hatchery"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -15,9 +19,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
@@ -40,6 +41,8 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -135,6 +138,8 @@ func TestPostJobResultHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -215,6 +220,8 @@ func TestGetJobsQueuedHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -320,6 +327,8 @@ func TestGetJobHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -403,6 +412,8 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 

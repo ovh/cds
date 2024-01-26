@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -10,8 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestJobConditionSuccess(t *testing.T) {
@@ -209,7 +210,9 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -289,7 +292,9 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: wkfName,
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -375,7 +380,9 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: wkfName,
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -428,7 +435,9 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -475,7 +484,9 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 	wr2 := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -570,7 +581,9 @@ func TestWorkflowTriggerStage(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -657,7 +670,9 @@ func TestWorkflowStageNeeds(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -761,7 +776,9 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -889,7 +906,9 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -1023,7 +1042,9 @@ func TestWorkflowSkippedJob(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",

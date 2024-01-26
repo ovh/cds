@@ -2,6 +2,9 @@ package worker_v2_test
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/test"
@@ -10,8 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestDeleteDisabledWorkers(t *testing.T) {
@@ -28,7 +29,9 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -124,7 +127,9 @@ func TestDisabledDeadWorkers(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
