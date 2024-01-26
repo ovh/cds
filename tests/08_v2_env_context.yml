@@ -67,6 +67,7 @@ testcases:
             foo: barWorkflow
           jobs:
             overrideEnv:
+              vars: [varset1]
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               env:
                 foo: barJob
