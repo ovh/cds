@@ -530,7 +530,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 		}
 
 		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-		interpolatedInput, err := ap.Interpolate(ctx, rj.Job.RunsOn)
+		model, err := ap.InterpolateToString(ctx, rj.Job.RunsOn)
 		if err != nil {
 			rj.Status = sdk.StatusFail
 			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
@@ -538,20 +538,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 				Level:            sdk.WorkflowRunInfoLevelError,
 				WorkflowRunJobID: rj.ID,
 				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job %s: unable to interpolate %s: %v", rj.JobID, rj.Job.RunsOn, err),
-			}
-			continue
-		}
-
-		model, ok := interpolatedInput.(string)
-		if !ok {
-			rj.Status = sdk.StatusFail
-			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
-				WorkflowRunID:    run.ID,
-				Level:            sdk.WorkflowRunInfoLevelError,
-				WorkflowRunJobID: rj.ID,
-				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job %s: unable to interpolate %s, it's not a string: %v", rj.JobID, rj.Job.RunsOn, interpolatedInput),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.RunsOn, err),
 			}
 			continue
 		}
@@ -564,7 +551,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 				Level:            sdk.WorkflowRunInfoLevelError,
 				WorkflowRunJobID: rj.ID,
 				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job %s: unable to interpolate %s, it's not a string: %v", rj.JobID, model, interpolatedInput),
+				Message:          fmt.Sprintf("%v", err),
 			}
 			continue
 		}
@@ -913,18 +900,9 @@ func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string,
 	}
 
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-	interpolatedInput, err := ap.Interpolate(ctx, jobCondition)
+	booleanResult, err := ap.InterpolateToBool(ctx, jobCondition)
 	if err != nil {
-		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: unable to parse if statement %s: %v", jobID, jobCondition, err)
-	}
-
-	if _, ok := interpolatedInput.(string); !ok {
-		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: if statement does not return a boolean. Got %v", jobID, interpolatedInput)
-	}
-
-	booleanResult, err := strconv.ParseBool(interpolatedInput.(string))
-	if err != nil {
-		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: if statement does not return a boolean. Got %s", jobID, interpolatedInput)
+		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: unable to parse if statement %s into a boolean: %v", jobID, jobCondition, err)
 	}
 	return booleanResult, nil
 }
