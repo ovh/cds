@@ -791,7 +791,9 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		if err != nil {
 			return nil, err
 		}
-		gitContext.Ref = defaultBranch.DisplayID
+		gitContext.Ref = defaultBranch.ID
+		gitContext.RefName = defaultBranch.DisplayID
+		gitContext.RefType = sdk.GitRefTypeBranch
 		if gitContext.Sha == "" {
 			gitContext.Sha = defaultBranch.LatestCommit
 		}
