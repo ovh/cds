@@ -162,11 +162,14 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				} else {
 					vsMap[item.Name] = jsonValue
 					// also add all value from json
-					datas, err := getAllSensitiveDataFromJson(ctx, jsonValue)
-					if err != nil {
-						return nil, nil, err
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						datas, err := getAllSensitiveDataFromJson(ctx, jsonValue)
+						if err != nil {
+							return nil, nil, err
+						}
+						sensitiveDatas = append(sensitiveDatas, datas...)
 					}
-					sensitiveDatas = append(sensitiveDatas, datas...)
+
 				}
 			} else if strings.HasPrefix(item.Value, "[") && strings.HasSuffix(item.Value, "]") {
 				var jsonArrayValue []interface{}
@@ -175,16 +178,20 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				} else {
 					vsMap[item.Name] = jsonArrayValue
 
-					datas, err := getAllSensitiveDataFromJsonArray(ctx, jsonArrayValue)
-					if err != nil {
-						return nil, nil, err
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						datas, err := getAllSensitiveDataFromJsonArray(ctx, jsonArrayValue)
+						if err != nil {
+							return nil, nil, err
+						}
+						sensitiveDatas = append(sensitiveDatas, datas...)
 					}
-					sensitiveDatas = append(sensitiveDatas, datas...)
 				}
 			} else {
 				vsMap[item.Name] = item.Value
 			}
-			sensitiveDatas = append(sensitiveDatas, item.Value)
+			if item.Type == sdk.ProjectVariableTypeSecret {
+				sensitiveDatas = append(sensitiveDatas, item.Value)
+			}
 		}
 		contexts.Vars[vs.Name] = vsMap
 	}
