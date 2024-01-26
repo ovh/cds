@@ -118,6 +118,6 @@ testcases:
     - name: Check globEnv log content
       script: "cat {{.cds_workflow}}-1-1-overrideEnv-globEnv | grep \"{{.cds_workflow}}\""
     - name: Check stringVar log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-stringVar | grep \"value\""  
+      script: "cat {{.cds_workflow}}-1-1-overrideEnv-stringVar && cat {{.cds_workflow}}-1-1-overrideEnv-stringVar | grep \"value\""  
     - name: Check secretVar log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep \"**********\""    
+      script: "cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep \"**********\""    
