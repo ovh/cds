@@ -4,12 +4,13 @@ import { Store } from '@ngxs/store';
 import { ProjectState } from 'app/store/project.state';
 import { finalize } from 'rxjs/operators';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { forkJoin, Subscription } from 'rxjs';
-import { Project, ProjectRepository, VCSProject } from 'app/model/project.model';
+import { forkJoin } from 'rxjs';
+import { Project, ProjectRepository } from 'app/model/project.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { RepoManagerService } from 'app/service/repomanager/project.repomanager.service';
 import { Repository } from 'app/model/repositories.model';
 import { ToastService } from 'app/shared/toast/ToastService';
+import { VCSProject } from 'app/model/vcs.model';
 
 @Component({
     selector: 'app-projectv2-repository-add',
@@ -86,7 +87,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
             this._cd.markForCheck();
         })).subscribe(r => {
             this._toastService.success('Repository added', '');
-            this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', this.vcsProject.name, 'repository', r.name]).then()
+            this._router.navigate(['/', 'projectv2', this.project.key, 'explore', 'vcs', this.vcsProject.name, 'repository', r.name]).then()
         });
     }
 

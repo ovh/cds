@@ -82,7 +82,7 @@
     "postcss": "8.4.31",
     "prismjs": "1.28.0",
     "raven-js": "3.27.2",
-    "rxjs": "6.5.5",
+    "rxjs": "7.8.1",
     "rxjs-compat": "6.3.3",
     "sanitize-html": "2.11.0",
     "spinkit": "2.0.1",

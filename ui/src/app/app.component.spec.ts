@@ -13,7 +13,6 @@ import { MonitoringService } from 'app/service/monitoring/monitoring.service';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { of } from 'rxjs';
-import 'rxjs/add/observable/of';
 import { AppComponent } from './app.component';
 import { createTranslateLoader } from './app.module';
 import { AppService } from './app.service';

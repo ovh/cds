@@ -29,7 +29,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 					VCSServerType:  hre.VCSServerType,
 					RepositoryName: hre.RepositoryName,
 					Commit:         hre.ExtractData.Commit,
-					Branch:         hre.ExtractData.Branch,
+					Ref:            hre.ExtractData.Ref,
 				})
 				if err != nil {
 					return err

@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
-// eslint-disable-next-line max-len
 import { WNode, WNodeContext, WNodeHook, Workflow, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerConditionCache } from 'app/model/workflow.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -15,8 +14,8 @@ import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-node-conditions',

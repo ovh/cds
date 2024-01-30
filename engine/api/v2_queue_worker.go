@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -55,7 +56,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return err
 		}
 
-		projWithSecrets, err := project.Load(ctx, api.mustDB(), run.ProjectKey, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithClearKeys)
+		projWithSecrets, err := project.Load(ctx, api.mustDB(), run.ProjectKey, project.LoadOptions.WithClearKeys)
 		if err != nil {
 			return err
 		}
@@ -64,18 +65,29 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return err
 		}
 
+		vss := make([]sdk.ProjectVariableSet, 0, len(jobRun.Job.VariableSets))
+		for _, vsName := range jobRun.Job.VariableSets {
+			vsDB, err := project.LoadVariableSetByName(ctx, api.mustDB(), projWithSecrets.Key, vsName)
+			if err != nil {
+				return err
+			}
+			vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID, gorpmapper.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+			vss = append(vss, *vsDB)
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
 
-		contexts, err := computeRunJobContext(ctx, tx, projWithSecrets, *run, *jobRun, *wk)
+		contexts, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun, *wk)
 		if err != nil {
 			return err
 		}
-		secrets := computeSecretsContext(ctx, *projWithSecrets, *vcsWithSecrets)
-		contexts.Secrets = secrets
 
 		// Change worker status
 		wrkWithSecret.Status = sdk.StatusBuilding
@@ -117,35 +129,38 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 	}
 }
 
-func computeSecretsContext(ctx context.Context, projWithSecrets sdk.Project, vcsWithSecrets sdk.VCSProject) map[string]string {
-	secrets := make(map[string]string)
-
-	for _, v := range projWithSecrets.Variables {
-		if v.Type == sdk.SecretVariable {
-			secrets[strings.ToUpper(v.Name)] = v.Value
-		}
-	}
-	for _, k := range projWithSecrets.Keys {
-		if k.Name == vcsWithSecrets.Auth.SSHKeyName {
-			secrets["GIT_SSH_KEY"] = k.Private
-		} else {
-			secrets[strings.ToUpper(k.Name)] = k.Private
-		}
-	}
-	if vcsWithSecrets.Auth.Token != "" {
-		secrets["GIT_TOKEN"] = vcsWithSecrets.Auth.Token
-	}
-
-	return secrets
-}
-
-func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, error) {
+func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
 	contexts.CDS.Job = jobRun.JobID
 	contexts.CDS.Stage = jobRun.Job.Stage
-	contexts.Vars = run.Contexts.Vars
 	contexts.Git = run.Contexts.Git
+
+	for _, k := range proj.Keys {
+		if k.Name == vcs.Auth.SSHKeyName {
+			contexts.Git.SSHPrivate = k.Private
+			break
+		}
+	}
+	contexts.Git.Token = vcs.Auth.Token
+
+	contexts.Vars = make(map[string]interface{})
+	for _, vs := range vss {
+		vsMap := make(map[string]interface{})
+		for _, item := range vs.Items {
+			if (strings.HasPrefix(item.Value, "{") && strings.HasSuffix(item.Value, "}")) || (strings.HasPrefix(item.Value, "[") && strings.HasSuffix(item.Value, "]")) {
+				var jsonValue map[string]interface{}
+				if err := json.Unmarshal([]byte(item.Value), &jsonValue); err != nil {
+					vsMap[item.Name] = item.Value
+				} else {
+					vsMap[item.Name] = jsonValue
+				}
+			} else {
+				vsMap[item.Name] = item.Value
+			}
+		}
+		contexts.Vars[vs.Name] = vsMap
+	}
 
 	contexts.Env = make(map[string]string)
 	for k, v := range run.Contexts.Env {
@@ -203,8 +218,8 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}
 	}
 
-	contexts.Integrations = &sdk.JobIntegrationsContext{}
-	integs, err := integration.LoadIntegrationsByProjectIDWithClearPassword(ctx, db, proj.ID)
+	contexts.Integrations = &sdk.JobIntegrationsContext{}                    // The context only contais name of integration by function (artifact_manager / deployment)
+	integs, err := integration.LoadIntegrationsByProjectID(ctx, db, proj.ID) // Here
 	if err != nil {
 		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
 	}
@@ -224,15 +239,15 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}
 		switch {
 		case integ.Model.ArtifactManager:
-			if contexts.Integrations.ArtifactManager != nil {
+			if contexts.Integrations.ArtifactManager != "" {
 				return nil // If it's already set, it's by job integration
 			}
-			contexts.Integrations.ArtifactManager = integ
+			contexts.Integrations.ArtifactManager = integ.Name
 		case integ.Model.Deployment:
-			if contexts.Integrations.Deployment != nil {
+			if contexts.Integrations.Deployment != "" {
 				return nil // If it's already set, it's by job integration
 			}
-			contexts.Integrations.Deployment = integ
+			contexts.Integrations.Deployment = integ.Name
 		default:
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not supported", i)
 		}

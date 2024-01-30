@@ -2,8 +2,6 @@ package github
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -187,64 +185,4 @@ func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname stri
 		}
 	}
 	return permResp.Permission == "write" || permResp.Permission == "admin", nil
-}
-
-func (g *githubClient) GrantWritePermission(ctx context.Context, fullname string) error {
-	owner := strings.SplitN(fullname, "/", 2)[0]
-	if g.username == "" || owner == g.username {
-		log.Debug(ctx, "githubClient.GrantWritePermission> nothing to do ¯\\_(ツ)_/¯")
-		return nil
-	}
-	url := "/repos/" + fullname + "/collaborators/" + g.username + "?permission=push"
-	resp, err := g.put(ctx, url, "application/json", nil, nil)
-	if err != nil {
-		log.Warn(ctx, "githubClient.GrantWritePermission> Error (%s) %s", url, err)
-		return err
-	}
-
-	// Response when person is already a collaborator
-	if resp.StatusCode == 204 {
-		log.Info(ctx, "githubClient.GrantWritePermission> %s is already a collaborator", g.username)
-		return nil
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close() // nolint
-
-	log.Debug(ctx, "githubClient.GrantWritePermission> invitation response: %v", string(body))
-
-	// Response when a new invitation is created
-	if resp.StatusCode == 201 {
-		invit := RepositoryInvitation{}
-		if err := sdk.JSONUnmarshal(body, &invit); err != nil {
-			log.Warn(ctx, "githubClient.GrantWritePermission> unable to unmarshal invitation %s", err)
-			return err
-		}
-
-		// Accept the invitation
-		url := fmt.Sprintf("/user/repository_invitations/%d", invit.ID)
-		resp, err := g.patch(ctx, url, "", nil, &postOptions{asUser: true})
-		if err != nil {
-			log.Warn(ctx, "githubClient.GrantWritePermission> Error (%s) %s", url, err)
-			return err
-		}
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		_ = resp.Body.Close()
-		log.Debug(ctx, "githubClient.GrantWritePermission> accept invitation response: %v", string(body))
-
-		// All is fine
-		if resp.StatusCode == 204 {
-			return nil
-		}
-
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 }

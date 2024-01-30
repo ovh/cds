@@ -42,7 +42,7 @@ func (b *bitbucketClient) Branches(ctx context.Context, fullname string, filters
 		}
 
 		var response BranchResponse
-		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get branches %s", path)
 		}
 
@@ -80,7 +80,7 @@ func (b *bitbucketClient) Branch(ctx context.Context, fullname string, filters s
 	branches := BranchResponse{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/branches?filterText=%s", t[0], t[1], url.QueryEscape(filters.BranchName))
 
-	if err := b.do(ctx, "GET", "core", path, nil, nil, &branches, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &branches); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get branch %s %s", filters.BranchName, path)
 	}
 
@@ -110,7 +110,7 @@ func (b *bitbucketClient) GetDefaultBranch(ctx context.Context, fullname string)
 	defaultBranch := Branch{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/branches/default", t[0], t[1])
 
-	if err := b.do(ctx, "GET", "core", path, nil, nil, &defaultBranch, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &defaultBranch); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get default branch %s", path)
 	}
 

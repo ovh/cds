@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -519,6 +518,98 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		}
 }
 
+func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			consumer := getUserConsumer(ctx)
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			actors, err := workflow_v2.LoadRunsActors(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
+			workflowNames, err := workflow_v2.LoadRunsWorkflowNames(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
+			refs, err := workflow_v2.LoadRunsGitRefs(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
+			filters := []sdk.V2WorkflowRunSearchFilter{
+				{
+					Key:     "actor",
+					Options: actors,
+					Example: consumer.GetUsername(),
+				},
+				{
+					Key:     "workflow",
+					Options: workflowNames,
+					Example: "workflow-name",
+				},
+				{
+					Key:     "branch",
+					Options: refs,
+					Example: "branch-name",
+				},
+				{
+					Key:     "status",
+					Options: []string{sdk.StatusFail, sdk.StatusSuccess, sdk.StatusBuilding, sdk.StatusStopped},
+					Example: "Success, Failure, etc.",
+				},
+			}
+
+			return service.WriteJSON(w, filters, http.StatusOK)
+		}
+}
+
+func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			offset := service.FormUInt(req, "offset")
+			limit := service.FormUInt(req, "limit")
+
+			filters := workflow_v2.SearchsRunsFilters{
+				Workflows: req.URL.Query()["workflow"],
+				Actors:    req.URL.Query()["actor"],
+				Status:    req.URL.Query()["status"],
+				Branches:  req.URL.Query()["branch"],
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			count, err := workflow_v2.CountRuns(ctx, api.mustDB(), proj.Key, filters)
+			if err != nil {
+				return err
+			}
+
+			runs, err := workflow_v2.SearchRuns(ctx, api.mustDB(), proj.Key, filters, offset, limit)
+			if err != nil {
+				return err
+			}
+
+			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
+
+			return service.WriteJSON(w, runs, http.StatusOK)
+		}
+}
+
 func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -684,7 +775,6 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.WithStack(err)
 			}
 			workflowName := vars["workflow"]
-			branch := QueryString(req, "branch")
 
 			var runRequest sdk.V2WorkflowRunHookRequest
 			if err := service.UnmarshalRequest(ctx, req, &runRequest); err != nil {
@@ -708,29 +798,12 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			if branch == "" {
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsProject.Name)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				branch = defaultBranch.DisplayID
+			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			if err != nil {
+				return err
 			}
 
-			workflowEntity, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkflow, workflowName)
+			workflowEntity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
 			if err != nil {
 				return err
 			}
@@ -871,6 +944,8 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 			return service.WriteJSON(w, wr, http.StatusOK)
@@ -992,6 +1067,10 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			}
 			// Check gate reviewers
 			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			gate := wr.WorkflowData.Workflow.Gates[jobToRun.Job.Gate]
 			reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
 			if len(gate.Reviewers.Users) > 0 {
@@ -1103,7 +1182,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRun.JobID, gateInputs, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
@@ -1125,7 +1204,6 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return sdk.WithStack(err)
 			}
 			workflowName := vars["workflow"]
-			branch := QueryString(req, "branch")
 
 			var runRequest map[string]interface{}
 			if err := service.UnmarshalBody(req, &runRequest); err != nil {
@@ -1147,29 +1225,12 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			if branch == "" {
-				tx, err := api.mustDB().Begin()
-				if err != nil {
-					return err
-				}
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsProject.Name)
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
-				}
-				branch = defaultBranch.DisplayID
+			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			if err != nil {
+				return err
 			}
 
-			workflowEntity, err := entity.LoadByBranchTypeName(ctx, api.mustDB(), repo.ID, branch, sdk.EntityTypeWorkflow, workflowName)
+			workflowEntity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
 			if err != nil {
 				return err
 			}
@@ -1213,9 +1274,11 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsProject.ID,
+		VCSServer:    vcsProject.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: wk.Name,
-		WorkflowRef:  wkEntity.Branch,
+		WorkflowRef:  wkEntity.Ref,
 		WorkflowSha:  wkEntity.Commit,
 		Status:       sdk.StatusCrafting,
 		RunAttempt:   0,

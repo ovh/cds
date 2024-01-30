@@ -11,8 +11,8 @@ import {
     ProjectV2RepositoryShowComponent
 } from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
 import { ProjectV2WorkerModelShowComponent } from "./vcs/repository/workermodel/show/project.workermodel.show.component";
-import {ProjectV2ActionShowComponent} from "./vcs/repository/action/show/project.action.show.component";
-import {ProjectV2WorkflowShowComponent} from "./vcs/repository/workflow/show/project.workflow.show.component";
+import { ProjectV2ActionShowComponent } from "./vcs/repository/action/show/project.action.show.component";
+import { ProjectV2WorkflowShowComponent } from "./vcs/repository/workflow/show/project.workflow.show.component";
 import {
     ProjectV2WorkflowForkJoinNodeComponent,
 } from "./vcs/repository/workflow/show/graph/node/fork-join-node.components";
@@ -25,43 +25,45 @@ import {
 import {
     ProjectV2WorkflowJobsGraphComponent
 } from "./vcs/repository/workflow/show/graph/jobs-graph.component";
-import {ProjectWorkflowEntityComponent} from "./vcs/repository/workflow/show/entity/project.workflow.entity.component";
-import {ProjectV2WorkflowRunComponent} from "./run/project.run.component";
+import { ProjectWorkflowEntityComponent } from "./vcs/repository/workflow/show/entity/project.workflow.entity.component";
+import { ProjectV2WorkflowRunComponent } from "./run/project.run.component";
 import { ProjectV2SidebarComponent } from './sidebar/workspace/sidebar.component';
-import {ProjectV2SidebarRunComponent} from "./sidebar/run/sidebar.run.component";
-import {RunJobComponent} from "./run/run-job.component";
-import {RunJobLogsComponent} from "./run/run-job-logs.component";
-import {ProjectV2WorkflowGateNodeComponent} from "./vcs/repository/workflow/show/graph/node/gate-node.component";
-import {RunGateComponent} from "./run/gate/gate.component";
+import { ProjectV2SidebarRunComponent } from "./sidebar/run/sidebar.run.component";
+import { RunJobComponent } from "./run/run-job.component";
+import { RunJobLogsComponent } from "./run/run-job-logs.component";
+import { ProjectV2WorkflowGateNodeComponent } from "./vcs/repository/workflow/show/graph/node/gate-node.component";
+import { RunGateComponent } from "./run/gate/gate.component";
+import { ProjectV2LeftMenuComponent } from './left-menu/left-menu.component';
+import { ProjectV2WorkflowRunListComponent } from './run-list/run-list.component';
 
 @NgModule({
     declarations: [
+        ProjectV2ActionShowComponent,
+        ProjectV2LeftMenuComponent,
         ProjectV2RepositoryAddComponent,
         ProjectV2RepositoryShowComponent,
         ProjectV2ShowComponent,
         ProjectV2SidebarComponent,
+        ProjectV2SidebarRunComponent,
         ProjectV2TopMenuComponent,
         ProjectV2WorkerModelShowComponent,
-        ProjectV2ActionShowComponent,
-        ProjectV2WorkflowShowComponent,
-
         ProjectV2WorkflowForkJoinNodeComponent,
         ProjectV2WorkflowGateNodeComponent,
         ProjectV2WorkflowJobNodeComponent,
-        ProjectV2WorkflowStagesGraphComponent,
         ProjectV2WorkflowJobsGraphComponent,
-        ProjectWorkflowEntityComponent,
-
         ProjectV2WorkflowRunComponent,
-        ProjectV2SidebarRunComponent,
+        ProjectV2WorkflowShowComponent,
+        ProjectV2WorkflowStagesGraphComponent,
+        ProjectWorkflowEntityComponent,
         RunGateComponent,
         RunJobComponent,
         RunJobLogsComponent,
+        ProjectV2WorkflowRunListComponent
     ],
     imports: [
         SharedModule,
         RouterModule,
-        projectV2Routing,
+        projectV2Routing
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

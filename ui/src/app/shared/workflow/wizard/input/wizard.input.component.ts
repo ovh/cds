@@ -27,8 +27,8 @@ import { ProjectState } from 'app/store/project.state';
 import { UpdateWorkflow } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 
 declare let CodeMirror: any;
 

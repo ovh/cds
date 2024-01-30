@@ -45,6 +45,7 @@ type CurrentJobV2 struct {
 	context          context.Context
 	currentStepIndex int
 	currentStepName  string
+	integrations     map[string]sdk.ProjectIntegration // contains integration with clearPassword
 }
 
 type CurrentWorker struct {

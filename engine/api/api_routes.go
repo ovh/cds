@@ -337,21 +337,12 @@ func (api *API) InitRouter() {
 	r.Handle("/notification/type", ScopeNone(), r.GET(api.getUserNotificationTypeHandler))
 	r.Handle("/notification/state", ScopeNone(), r.GET(api.getUserNotificationStateValueHandler))
 
-	// RepositoriesManager
-	r.Handle("/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerHandler))
-	r.Handle("/repositories_manager/oauth2/callback", Scope(sdk.AuthConsumerScopeProject), r.GET(api.repositoriesManagerOAuthCallbackHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-
 	// RepositoriesManager for projects
 	r.Handle("/project/{permProjectKey}/repositories_manager", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerForProjectHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize", Scope(sdk.AuthConsumerScopeProject), r.POST(api.repositoriesManagerAuthorizeHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/callback", Scope(sdk.AuthConsumerScopeProject), r.POST(api.repositoriesManagerAuthorizeCallbackHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize/basicauth", Scope(sdk.AuthConsumerScopeProject), r.POST(api.repositoriesManagerAuthorizeBasicHandler))
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}", Scope(sdk.AuthConsumerScopeProject), r.DELETE(api.deleteRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repo", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepoFromRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getReposFromRepositoriesManagerHandler))
 
 	// RepositoriesManager for applications
-	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/applications", Scope(sdk.AuthConsumerScopeProject), r.GET(api.getRepositoriesManagerLinkedApplicationsHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/attach", Scope(sdk.AuthConsumerScopeProject), r.POST(api.attachRepositoriesManagerHandler))
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/detach", Scope(sdk.AuthConsumerScopeProject), r.POST(api.detachRepositoriesManagerHandler))
 
@@ -364,7 +355,6 @@ func (api *API) InitRouter() {
 
 	// config
 	r.Handle("/config/user", ScopeNone(), r.GET(api.configUserHandler, service.OverrideAuth(service.NoAuthMiddleware)))
-	r.Handle("/config/vcs", ScopeNone(), r.GET(api.configVCShandler))
 	r.Handle("/config/vcsgerrit", ScopeNone(), r.GET(api.configVCSGerritHandler))
 	r.Handle("/config/cdn", ScopeNone(), r.GET(api.configCDNHandler))
 	r.Handle("/config/api", ScopeNone(), r.GET(api.configAPIHandler))
@@ -475,6 +465,14 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/repository/analyze", Scope(sdk.AuthConsumerScopeHooks), r.POSTv2(api.postRepositoryAnalysisHandler))
 
+	r.Handle("/v2/project/{projectKey}/notification", nil, r.GETv2(api.getProjectNotifsHandler), r.POSTv2(api.postProjectNotificationHandler))
+	r.Handle("/v2/project/{projectKey}/notification/{notification}", nil, r.GETv2(api.getProjectNotificationHandler), r.PUTv2(api.putProjectNotificationHandler), r.DELETEv2(api.deleteProjectNotificationHandler))
+	r.Handle("/v2/project/{projectKey}/run/search", nil, r.GETv2(api.getWorkflowRunsSearchV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/filter", nil, r.GETv2(api.getWorkflowRunsFiltersV2Handler))
+	r.Handle("/v2/project/{projectKey}/variableset", nil, r.GETv2(api.getProjectVariableSetsHandler), r.POSTv2(api.postProjectVariableSetHandler))
+	r.Handle("/v2/project/{projectKey}/variableset/{variableSetName}", nil, r.GETv2(api.getProjectVariableSetHandler), r.DELETEv2(api.deleteProjectVariableSetHandler))
+	r.Handle("/v2/project/{projectKey}/variableset/{variableSetName}/item", nil, r.POSTv2(api.postProjectVariableSetItemHandler))
+	r.Handle("/v2/project/{projectKey}/variableset/{variableSetName}/item/{itemName}", nil, r.GETv2(api.getProjectVariableSetItemHandler), r.PUTv2(api.putProjectVariableSetItemHandler), r.DELETEv2(api.deleteProjectVariableSetItemHandler))
 	r.Handle("/v2/project/{projectKey}/vcs", nil, r.POSTv2(api.postVCSProjectHandler), r.GETv2(api.getVCSProjectAllHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}", nil, r.PUTv2(api.putVCSProjectHandler), r.DELETEv2(api.deleteVCSProjectHandler), r.GETv2(api.getVCSProjectHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository", nil, r.POSTv2(api.postProjectRepositoryHandler), r.GETv2(api.getVCSProjectRepositoryAllHandler))

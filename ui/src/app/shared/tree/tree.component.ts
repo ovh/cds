@@ -210,7 +210,7 @@ class DynamicDatasource implements DataSource<FlatNodeItem> {
         const changes = [
             collectionViewer.viewChange,
             this.treeControl.expansionModel.changed.pipe(tap(change => this.handleExpansionChange(change))),
-            this.flattenedData
+            this.flattenedData.pipe()
         ];
         return merge(...changes).pipe(map(() => this.expandFlattenedNodes(this.flattenedData.getValue())));
     }

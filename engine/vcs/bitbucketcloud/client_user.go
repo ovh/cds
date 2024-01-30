@@ -34,7 +34,7 @@ func (client *bitbucketcloudClient) User(ctx context.Context, username string) (
 func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, error) {
 	var user User
 	url := "/user"
-	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", sdk.Hash512(client.OAuthToken+client.username), url)
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", sdk.Hash512(client.username), url)
 
 	find, err := client.Cache.Get(cacheKey, &user)
 	if err != nil {
@@ -66,7 +66,7 @@ func (client *bitbucketcloudClient) Workspaces(ctx context.Context) (Workspaces,
 	var workspaces Workspaces
 	url := "/workspaces?role=member"
 
-	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "workspaces", sdk.Hash512(client.OAuthToken+client.username), url)
+	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "workspaces", sdk.Hash512(client.username), url)
 
 	find, err := client.Cache.Get(cacheKey, &workspaces)
 	if err != nil {
@@ -75,7 +75,7 @@ func (client *bitbucketcloudClient) Workspaces(ctx context.Context) (Workspaces,
 	if !find {
 		status, body, _, err := client.get(ctx, url)
 		if err != nil {
-			log.Warn(ctx, "bitbucketcloudClient.Teams> Error %s", err)
+			log.Warn(ctx, "bitbucketcloudClient.Teams> Error %s username:%v status:%d body:%v", err, client.username, status, string(body))
 			return workspaces, sdk.WithStack(err)
 		}
 		if status >= 400 {
@@ -84,7 +84,7 @@ func (client *bitbucketcloudClient) Workspaces(ctx context.Context) (Workspaces,
 		if err := sdk.JSONUnmarshal(body, &workspaces); err != nil {
 			return workspaces, sdk.WithStack(err)
 		}
-		//Put the body on cache for 1 hour
+		// Put the body on cache for 1 hour
 		if err := client.Cache.SetWithTTL(cacheKey, workspaces, 60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}

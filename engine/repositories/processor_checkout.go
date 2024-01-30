@@ -33,39 +33,37 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 			return sdk.WithStack(err)
 		}
 		log.Info(ctx, "processCheckout> repository %s ready on tag '%s'", op.URL, op.Setup.Checkout.Tag)
-		return nil
-	}
-
-	if op.Setup.Checkout.Branch == "" {
-		op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
-	}
-	log.Debug(ctx, "processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
-	if err := gitRepo.FetchRemoteBranch(ctx, "origin", op.Setup.Checkout.Branch); err != nil {
-		return sdk.WithStack(err)
-	}
-
-	// Check commit
-	if op.Setup.Checkout.Commit == "" {
-		// Reset HARD to the latest commit of the remote branch (don't use pull because there can be conflicts if the remote was forced)
-		log.Debug(ctx, "processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
-		if err := gitRepo.ResetHard(ctx, "origin/"+op.Setup.Checkout.Branch); err != nil {
-			return sdk.WithStack(err)
-		}
 	} else {
-		currentCommit, err := gitRepo.LatestCommit(ctx)
-		if err != nil {
+		if op.Setup.Checkout.Branch == "" {
+			op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
+		}
+		log.Debug(ctx, "processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
+		if err := gitRepo.FetchRemoteBranch(ctx, "origin", op.Setup.Checkout.Branch); err != nil {
 			return sdk.WithStack(err)
 		}
-		if currentCommit.LongHash != op.Setup.Checkout.Commit {
-			// Not the same commit, pull and reset HARD the commit
+		// Check commit
+		if op.Setup.Checkout.Commit == "" {
+			// Reset HARD to the latest commit of the remote branch (don't use pull because there can be conflicts if the remote was forced)
 			log.Debug(ctx, "processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
 			if err := gitRepo.ResetHard(ctx, "origin/"+op.Setup.Checkout.Branch); err != nil {
 				return sdk.WithStack(err)
 			}
-
-			log.Debug(ctx, "processCheckout> resetting commit %s", op.Setup.Checkout.Commit)
-			if err := gitRepo.ResetHard(ctx, op.Setup.Checkout.Commit); err != nil {
+		} else {
+			currentCommit, err := gitRepo.LatestCommit(ctx)
+			if err != nil {
 				return sdk.WithStack(err)
+			}
+			if currentCommit.LongHash != op.Setup.Checkout.Commit {
+				// Not the same commit, pull and reset HARD the commit
+				log.Debug(ctx, "processCheckout> resetting the branch %s from remote", op.Setup.Checkout.Branch)
+				if err := gitRepo.ResetHard(ctx, "origin/"+op.Setup.Checkout.Branch); err != nil {
+					return sdk.WithStack(err)
+				}
+
+				log.Debug(ctx, "processCheckout> resetting commit %s", op.Setup.Checkout.Commit)
+				if err := gitRepo.ResetHard(ctx, op.Setup.Checkout.Commit); err != nil {
+					return sdk.WithStack(err)
+				}
 			}
 		}
 	}
@@ -82,27 +80,39 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 	}
 
-	if op.Setup.Checkout.CheckSignature && op.Setup.Checkout.Commit != "" {
-		log.Debug(ctx, "retrieve gpg key id")
-		c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit)
-		if err != nil {
-			return sdk.WithStack(err)
+	if op.Setup.Checkout.CheckSignature && (op.Setup.Checkout.Commit != "" || op.Setup.Checkout.Tag != "") {
+		var gpgKeyID string
+		if op.Setup.Checkout.Tag != "" {
+			log.Debug(ctx, "retrieve gpg key id from tag %s", op.Setup.Checkout.Tag)
+			// Check tag signature
+			t, err := gitRepo.GetTag(ctx, op.Setup.Checkout.Tag)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			gpgKeyID = t.GPGKeyID
+		} else {
+			log.Debug(ctx, "retrieve gpg key id from commit %s", op.Setup.Checkout.Commit)
+			c, err := gitRepo.GetCommit(ctx, op.Setup.Checkout.Commit)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			gpgKeyID = c.GPGKeyID
 		}
 
-		if c.GPGKeyID == "" {
+		if gpgKeyID == "" {
 			op.Setup.Checkout.Result.CommitVerified = false
 			op.Setup.Checkout.Result.Msg = "commit not signed"
 			return nil
 		}
-		ctx = context.WithValue(ctx, cdslog.GpgKey, c.GPGKeyID)
-		op.Setup.Checkout.Result.SignKeyID = c.GPGKeyID
+		ctx = context.WithValue(ctx, cdslog.GpgKey, gpgKeyID)
+		op.Setup.Checkout.Result.SignKeyID = gpgKeyID
 
 		// Search for public key on vcsserver
 		var publicKey string
 		vcsKeys, has := vcsPublicKeys[op.VCSServer]
 		if has {
 			for _, k := range vcsKeys {
-				if k.KeyID == c.GPGKeyID {
+				if k.KeyID == gpgKeyID {
 					publicKey = k.Public
 					break
 				}
@@ -112,27 +122,35 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		// If not key found, try to get it from a user
 		if publicKey == "" {
 			// Retrieve gpg public key
-			userKey, err := s.Client.UserGpgKeyGet(ctx, c.GPGKeyID)
+			userKey, err := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
 			if err != nil {
 				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", c.GPGKeyID, err)
+				op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
 				return nil
 			}
 			publicKey = userKey.PublicKey
 		}
 
 		// Import gpg public key
-		fileName, _, err := sdk.ImportGPGKey(os.TempDir(), c.GPGKeyID, publicKey)
+		fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, publicKey)
 		if err != nil {
 			return err
 		}
-		log.Debug(ctx, "key: %s, fileName: %s imported", c.GPGKeyID, fileName)
+		log.Debug(ctx, "key: %s, fileName: %s imported", gpgKeyID, fileName)
 
 		// Check commit signature
-		if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
-			op.Setup.Checkout.Result.CommitVerified = false
-			op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
-			return nil
+		if op.Setup.Checkout.Tag != "" {
+			if _, err := gitRepo.VerifyTag(ctx, op.Setup.Checkout.Tag); err != nil {
+				op.Setup.Checkout.Result.CommitVerified = false
+				op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
+				return nil
+			}
+		} else {
+			if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
+				op.Setup.Checkout.Result.CommitVerified = false
+				op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
+				return nil
+			}
 		}
 		op.Setup.Checkout.Result.CommitVerified = true
 	}

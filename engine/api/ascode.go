@@ -209,17 +209,6 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		// Grant CDS as a repository collaborator
-		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, ope.VCSServer)
-		if erra != nil {
-			log.Error(ctx, "postPerformImportAsCodeHandler> Cannot get client for %s %s : %s", proj.Key, ope.VCSServer, erra)
-		} else {
-			if err := client.GrantWritePermission(ctx, ope.RepoFullName); err != nil {
-				log.Error(ctx, "postPerformImportAsCodeHandler> Unable to grant CDS a repository %s/%s collaborator : %v", ope.VCSServer, ope.RepoFullName, err)
-			}
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}

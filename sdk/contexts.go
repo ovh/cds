@@ -86,10 +86,14 @@ type GitContext struct {
 	Repository    string `json:"repository,omitempty"`
 	RepositoryURL string `json:"repositoryUrl,omitempty"`
 	Ref           string `json:"ref,omitempty"`
+	RefName       string `json:"ref_name,omitempty"`
 	Sha           string `json:"sha,omitempty"`
+	RefType       string `json:"ref_type,omitempty"`
 	Connection    string `json:"connection,omitempty"`
 	SSHKey        string `json:"ssh_key,omitempty"`
+	SSHPrivate    string `json:"ssh_private,omitempty"`
 	Username      string `json:"username,omitempty"`
+	Token         string `json:"token,omitempty"`
 	SemverCurrent string `json:"semver_current,omitempty"`
 	SemverNext    string `json:"semver_next,omitempty"`
 }

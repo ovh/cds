@@ -22,12 +22,13 @@ func Test_GoroutineTools(t *testing.T) {
 	})
 
 	t.Run("GoRoutineRun", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.TODO())
+		ctx, cancel := context.WithTimeout(context.TODO(), time.Second)
 		t.Cleanup(cancel)
 		m := NewGoRoutines(ctx)
 
-		m.Run(context.TODO(), "test_goroutine_run", func(ctx context.Context) {
-			time.Sleep(1 * time.Second)
+		ctxRoutine, routineCancel := context.WithCancel(context.TODO())
+		m.Run(context.TODO(), "test_goroutine_run", func(_ context.Context) {
+			<-ctxRoutine.Done()
 		})
 
 		s := m.GoRoutine("test_goroutine_run")
@@ -35,7 +36,23 @@ func Test_GoroutineTools(t *testing.T) {
 		require.True(t, s.Active)
 		require.Len(t, m.GetStatus(), 1)
 
-		time.Sleep(1 * time.Second)
+		routineCancel()
+
+		// Wait for the routine status to change
+		ticker := time.NewTicker(1 * time.Millisecond)
+		t.Cleanup(ticker.Stop)
+	wait:
+		for {
+			select {
+			case <-ctx.Done():
+				break wait
+			case <-ticker.C:
+				s = m.GoRoutine("test_goroutine_run")
+				if s != nil && !s.Active {
+					break wait
+				}
+			}
+		}
 
 		s = m.GoRoutine("test_goroutine_run")
 		require.NotNil(t, s)

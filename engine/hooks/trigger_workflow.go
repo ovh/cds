@@ -26,7 +26,6 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			VCSServerType:  hre.VCSServerType,
 			RepositoryName: hre.RepositoryName,
 			Commit:         hre.ExtractData.Commit,
-			Branch:         hre.ExtractData.Branch,
 			SignKey:        hre.SignKey,
 			HookEventUUID:  hre.UUID,
 		})
@@ -70,7 +69,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				case sdk.WorkflowHookTypeRepository:
 					runRequest.Sha = hre.ExtractData.Commit
 					if runRequest.Ref == "" {
-						runRequest.Ref = hre.ExtractData.Branch
+						runRequest.Ref = hre.ExtractData.Ref
 					}
 				case sdk.WorkflowHookTypeWorkflow:
 					runRequest.EntityUpdated = wh.WorkflowName
@@ -79,7 +78,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				}
 
 				if _, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
-					runRequest, cdsclient.WithQueryParameter("branch", wh.Branch)); err != nil {
+					runRequest, cdsclient.WithQueryParameter("ref", wh.Ref)); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					allEnded = false
 					continue

@@ -32,6 +32,7 @@ import (
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -700,14 +701,6 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				hookInfo := repositoriesmanager.WebhooksInfos{
-					WebhooksSupported: true,
-					WebhooksDisabled:  false,
-				}
-				if err := enc.Encode(hookInfo); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/foo/bar/hooks":
 				hook := sdk.VCSHook{}
 				if err := service.UnmarshalBody(r, &hook); err != nil {
@@ -739,13 +732,12 @@ func Test_putWorkflowHandler(t *testing.T) {
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key)
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Init pipeline
 	pip := sdk.Pipeline{
@@ -2037,15 +2029,6 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 				}); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/webhooks":
-				infos := repositoriesmanager.WebhooksInfos{
-					WebhooksDisabled:  false,
-					WebhooksSupported: true,
-					Icon:              "github",
-				}
-				if err := enc.Encode(infos); err != nil {
-					return writeError(w, err)
-				}
 			case "/vcs/github/repos/sguiheux/demo/hooks":
 				pr := sdk.VCSHook{
 					ID: "666",
@@ -2070,13 +2053,12 @@ func Test_getWorkfloDependencieswHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
-	vcsServer := sdk.ProjectVCSServerLink{
+	vcsServer := &sdk.VCSProject{
 		ProjectID: proj.ID,
 		Name:      "github",
+		Type:      sdk.VCSTypeGithub,
 	}
-	vcsServer.Set("token", "foo")
-	vcsServer.Set("secret", "bar")
-	assert.NoError(t, repositoriesmanager.InsertProjectVCSServerLink(context.TODO(), db, &vcsServer))
+	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Add pipeline
 	pipS := `version: v1.0

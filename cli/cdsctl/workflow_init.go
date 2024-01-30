@@ -108,33 +108,31 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 		if err != nil {
 			return "", cli.WrapError(err, "Unable to get remote URL")
 		}
-		if !strings.HasPrefix(fetchURL, "https://") && !strings.HasPrefix(fetchURL, "ssh://") {
+		if !strings.HasPrefix(fetchURL, "https://") && !strings.HasPrefix(fetchURL, "ssh://") && !strings.HasPrefix(fetchURL, "git@") {
 			return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
 		}
 
-		// example: ssh://git@foo.bar.net:7999/foo/bar.git
-		// originHost is foo.bar.net
-		fetchURLParsed, err := url.Parse(fetchURL)
-		if err != nil {
-			return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
-		}
-		originHost := fetchURLParsed.Hostname()
-
-		vcsConf, err := client.VCSConfiguration()
-		if err != nil {
-			return "", cli.WrapError(err, "Unable to get VCS Configuration")
-		}
-
-		for rmName, cfg := range vcsConf {
-			rmURL, err := url.Parse(cfg.URL)
-			if err != nil {
-				return "", cli.WrapError(err, "Unable to get VCS Configuration")
+		for _, v := range proj.VCSServers {
+			if (strings.HasPrefix(fetchURL, "https://github.com/") || strings.HasPrefix(fetchURL, "git@github.com")) && v.Type == "github" && v.URL == "" {
+				fmt.Printf(" * using repositories manager %s", cli.Magenta(v.Name))
+				return v.Name, nil
 			}
-			rmHost := rmURL.Hostname()
-			if originHost == rmHost {
-				fmt.Printf(" * using repositories manager %s (%s)", cli.Magenta(rmName), cli.Magenta(rmURL.String()))
-				fmt.Println()
-				return rmName, nil
+			if v.URL != "" {
+				rmURL, err := url.Parse(v.URL)
+				if err != nil {
+					return "", cli.WrapError(err, "Unable to get VCS Configuration")
+				}
+				rmHost := rmURL.Hostname()
+				fetchURLParsed, err := url.Parse(fetchURL)
+				if err != nil {
+					return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
+				}
+				originHost := fetchURLParsed.Hostname()
+				if originHost == rmHost {
+					fmt.Printf(" * using repositories manager %s (%s)", cli.Magenta(v.Name), cli.Magenta(rmURL.String()))
+					fmt.Println()
+					return v.Name, nil
+				}
 			}
 		}
 	}

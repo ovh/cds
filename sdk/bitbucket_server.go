@@ -52,6 +52,7 @@ type BitbucketServerRef struct {
 	DisplayID    string                    `json:"displayId"`
 	LatestCommit string                    `json:"latestCommit"`
 	Repository   BitbucketServerRepository `json:"repository"`
+	Type         string                    `json:"type"`
 }
 
 type BitbucketServerAuthor struct {

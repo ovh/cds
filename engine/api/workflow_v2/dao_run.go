@@ -108,6 +108,7 @@ func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) ([]s
 		for _, r := range results {
 			runResults = append(runResults, r.V2WorkflowRunResult)
 		}
+
 		return runResults, nil
 	}
 	return nil, nil
@@ -248,6 +249,111 @@ func UpdateRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2W
 	return nil
 }
 
+func LoadRunsWorkflowNames(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var names []string
+	_, next := telemetry.Span(ctx, "LoadRunsWorkflowNames")
+	defer next()
+	if _, err := db.Select(&names, `
+		SELECT DISTINCT workflow_name
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return names, nil
+}
+
+func LoadRunsActors(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var actors []string
+	_, next := telemetry.Span(ctx, "LoadRunsActors")
+	defer next()
+	if _, err := db.Select(&actors, `
+		SELECT DISTINCT username
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return actors, nil
+}
+
+func LoadRunsGitRefs(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var refs []string
+	_, next := telemetry.Span(ctx, "LoadRunsGitRefs")
+	defer next()
+	if _, err := db.Select(&refs, `
+		SELECT DISTINCT contexts -> 'git' ->> 'ref'
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return refs, nil
+}
+
+func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
+	_, next := telemetry.Span(ctx, "CountRuns")
+	defer next()
+	count, err := db.SelectInt(`
+		SELECT COUNT(1)
+    FROM v2_workflow_run
+    WHERE 
+			project_key = $1 
+			AND (
+				array_length($2::text[], 1) IS NULL OR workflow_name = ANY($2)
+			)
+			AND (
+				array_length($3::text[], 1) IS NULL OR username = ANY($3)
+			)
+			AND (
+				array_length($4::text[], 1) IS NULL OR status = ANY($4)
+			)
+			AND (
+				array_length($5::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($5)
+			)
+	`, projKey, pq.StringArray(filters.Workflows), pq.StringArray(filters.Actors), pq.StringArray(filters.Status), pq.StringArray(filters.Branches))
+	return count, sdk.WithStack(err)
+}
+
+type SearchsRunsFilters struct {
+	Workflows []string
+	Actors    []string
+	Status    []string
+	Branches  []string
+}
+
+func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters, offset, limit uint, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+	ctx, next := telemetry.Span(ctx, "LoadRuns")
+	defer next()
+
+	if limit == 0 {
+		limit = 10
+	}
+
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run
+    WHERE 
+			project_key = $1
+			AND (
+				array_length($2::text[], 1) IS NULL OR workflow_name = ANY($2)
+			)
+			AND (
+				array_length($3::text[], 1) IS NULL OR username = ANY($3)
+			)
+			AND (
+				array_length($4::text[], 1) IS NULL OR status = ANY($4)
+			)
+			AND (
+				array_length($5::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($5)
+			)
+		ORDER BY started desc
+    LIMIT $6 OFFSET $7
+	`).Args(projKey, pq.StringArray(filters.Workflows), pq.StringArray(filters.Actors), pq.StringArray(filters.Status), pq.StringArray(filters.Branches), limit, offset)
+
+	return getRuns(ctx, db, query, opts...)
+}
+
 func LoadRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcsProjectID, repoID, workflowName string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
@@ -305,7 +411,7 @@ func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor, opts
 	return getRuns(ctx, db, query, opts...)
 }
 
-func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun, error) {
+func LoadRunsUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun, error) {
 	query := gorpmapping.NewQuery(`SELECT * from v2_workflow_run`)
 	var dbWkfRuns []dbWorkflowRun
 	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRuns); err != nil {

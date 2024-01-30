@@ -304,8 +304,10 @@ func (m *Mapper) getEncryptedSliceData(ctx context.Context, db gorp.SqlExecutor,
 
 			// Find the right target against the primary key
 			primaryKeyReference := reflectFindValueByTag(targetSlice.Interface(), "db", key)
+
 			// Check the primary key known the from target slice and from the database
-			if reflect.DeepEqual(primaryKeyReference, newPk) {
+			// the pk could be a []uint8. If it's the case, string values are compared
+			if reflect.DeepEqual(primaryKeyReference, newPk) || primaryKeyReference == fmt.Sprintf("%s", newPk) {
 				targetSliceFound = true
 				// Decrypt all the contents
 				for idx := range mapping.EncryptedFields {
@@ -327,7 +329,7 @@ func (m *Mapper) getEncryptedSliceData(ctx context.Context, db gorp.SqlExecutor,
 			}
 		}
 		if !targetSliceFound {
-			return sdk.WithStack(fmt.Errorf("unmatched element with pk %T %v (%v)", newPk, newPk, pks))
+			return sdk.WithStack(fmt.Errorf("unmatched element with pk type:%T - value:%v - pks:%v", newPk, newPk, pks))
 		}
 	}
 

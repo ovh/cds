@@ -213,10 +213,12 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 			}
 			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryDeleted, *hatch, u.AuthConsumerUser.AuthentifiedUser)
 
-			if hatcheryPermission.IsEmpty() {
-				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionDeleted, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
-			} else {
-				event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
+			if rbacFound {
+				if hatcheryPermission.IsEmpty() {
+					event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionDeleted, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
+				} else {
+					event_v2.PublishPermissionEvent(ctx, api.Cache, sdk.EventPermissionUpdated, *hatcheryPermission, *u.AuthConsumerUser.AuthentifiedUser)
+				}
 			}
 			return nil
 		}

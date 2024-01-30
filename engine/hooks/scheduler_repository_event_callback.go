@@ -111,6 +111,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 				hre.Status = sdk.HookEventStatusSkipped
 				hre.LastError = callback.SigningKeyCallback.Error
 				hre.NbErrors++
+				log.Error(ctx, "unable to verify commit for event %s: %s", callback.HookEventUUID, hre.LastError)
 			} else if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error == "" {
 				// commit verified
 				hre.SignKey = callback.SigningKeyCallback.SignKey

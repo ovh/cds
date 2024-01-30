@@ -3,14 +3,15 @@ package hooks
 import (
 	"context"
 	"encoding/json"
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestManageAnalysisCallback(t *testing.T) {
@@ -94,7 +95,7 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
 		ExtractData: sdk.HookRepositoryEventExtractData{
-			Branch: "master",
+			Ref:    "refs/heads/master",
 			Commit: "123456",
 		},
 	}

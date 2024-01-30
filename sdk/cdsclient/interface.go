@@ -233,6 +233,25 @@ type HatcheryServiceClient interface {
 	V2QueueClient
 }
 
+// ProjectClientV2 exposes project related functions
+type ProjectClientV2 interface {
+	ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error
+	ProjectNotificationUpdate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error
+	ProjectNotificationDelete(ctx context.Context, pKey string, notifName string) error
+	ProjectNotificationGet(ctx context.Context, pKey string, notifName string) (*sdk.ProjectNotification, error)
+	ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error)
+
+	ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error
+	ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string, mod ...RequestModifier) error
+	ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error)
+	ProjectVariableSetShow(ctx context.Context, pKey string, vsName string) (*sdk.ProjectVariableSet, error)
+
+	ProjectVariableSetItemAdd(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
+	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project) error
@@ -248,8 +267,6 @@ type ProjectClient interface {
 	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error)
 	ProjectIntegrationDelete(projectKey string, integrationName string) error
-	ProjectRepositoryManagerList(projectKey string) ([]sdk.ProjectVCSServer, error)
-	ProjectRepositoryManagerDelete(projectKey string, repoManagerName string, force bool) error
 	ProjectAccess(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 	ProjectIntegrationWorkerHooksImport(projectKey string, integrationName string, hook sdk.WorkerHookProjectIntegrationModel) error
@@ -298,7 +315,7 @@ type V2QueueClient interface {
 	V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error
 	V2QueueJobResult(ctx context.Context, region string, jobRunID string, result sdk.V2WorkflowRunJobResult) error
 	V2QueueJobRunResultGet(ctx context.Context, regionName string, jobRunID string, runResultID string) (*sdk.V2WorkflowRunResult, error)
-	V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string) ([]sdk.V2WorkflowRunResult, error)
+	V2QueueJobRunResultsGet(ctx context.Context, regionName string, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error)
 	V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
 	V2QueueJobRunResultUpdate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error
 	V2QueuePushRunInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2WorkflowRunInfo) error
@@ -383,7 +400,6 @@ type CDNClient interface {
 // HookClient exposes functions used for hooks services
 type HookClient interface {
 	PollVCSEvents(uuid string, workflowID int64, vcsServer string, timestamp int64) (events sdk.RepositoryEvents, interval time.Duration, err error)
-	VCSConfiguration() (map[string]sdk.VCSConfiguration, error)
 	VCSGerritConfiguration() (map[string]sdk.VCSGerritConfiguration, error)
 
 	HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error)
@@ -496,6 +512,7 @@ type Interface interface {
 	PipelineClient
 	IntegrationClient
 	ProjectClient
+	ProjectClientV2
 	RBACClient
 	OrganizationClient
 	RegionClient
@@ -523,6 +540,7 @@ type V2WorkerInterface interface {
 	V2WorkerClient
 	V2QueueClient
 	GRPCPluginsClient
+	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
 	ProjectIntegrationWorkerHookGet(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error)
 }
 

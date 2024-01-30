@@ -22,7 +22,7 @@ func TestCrud(t *testing.T) {
 
 	vcsProject := &sdk.VCSProject{
 		Name:        "the-name",
-		Type:        "github",
+		Type:        sdk.VCSTypeGithub,
 		Auth:        sdk.VCSAuthProject{Username: "the-username", Token: "the-token"},
 		Description: "the-username",
 		ProjectID:   proj1.ID,

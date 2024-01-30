@@ -166,7 +166,7 @@ func hookRegistration(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			return err
 		}
 		hookToUpdate[h.UUID] = *h
-		log.Debug(ctx, "workflow.hookrRegistration> following hook must be updated: %+v", h)
+		log.Debug(ctx, "workflow.hookRegistration> following hook must be updated: %+v len(hookToUpdate):%d", h, len(hookToUpdate))
 	}
 
 	if len(hookToUpdate) > 0 {
@@ -304,7 +304,7 @@ func createVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		return sdk.WrapError(err, "cannot get vcs web hook info")
 	}
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
-		return sdk.NewErrorFrom(sdk.ErrForbidden, "hook creation are forbidden")
+		return sdk.NewErrorFrom(sdk.ErrForbidden, fmt.Sprintf("hook creation are forbidden supported:%t disabled:%t", webHookInfo.WebhooksSupported, webHookInfo.WebhooksDisabled))
 	}
 
 	// Check hook config to avoid sending wrong hooks to VCS
@@ -356,9 +356,9 @@ func updateVCSConfiguration(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		log.Debug(ctx, "createVCSConfiguration> No vcsServer found: %v", err)
 		return nil
 	}
-	webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(ctx, client)
-	if errWH != nil {
-		return sdk.WrapError(errWH, "cannot get vcs web hook info")
+	webHookInfo, err := repositoriesmanager.GetWebhooksInfos(ctx, client)
+	if err != nil {
+		return sdk.WrapError(err, "cannot get vcs web hook info")
 	}
 
 	vcsHook := sdk.VCSHook{

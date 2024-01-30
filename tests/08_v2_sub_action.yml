@@ -107,6 +107,10 @@ testcases:
       retry: 10
       delay: 12
 
+    - name: Get Workflow run info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1"
+        
+
     - name: Download logs
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
     - name: Display log

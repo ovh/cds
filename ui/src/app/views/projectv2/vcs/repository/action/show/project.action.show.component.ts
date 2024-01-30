@@ -2,8 +2,7 @@ import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy} from "
 import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
 import {
     Project,
-    ProjectRepository,
-    VCSProject
+    ProjectRepository
 } from "app/model/project.model";
 import {Schema} from "app/model/json-schema.model";
 import {Store} from "@ngxs/store";
@@ -14,6 +13,7 @@ import {ProjectState} from "app/store/project.state";
 import {forkJoin} from "rxjs";
 import {finalize} from "rxjs/operators";
 import {Entity, EntityAction} from "app/model/entity.model";
+import { VCSProject } from "app/model/vcs.model";
 
 @Component({
     selector: 'app-projectv2-action-show',

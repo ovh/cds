@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
@@ -332,29 +331,6 @@ func unwrap(ctx context.Context, db gorp.SqlExecutor, p *dbProject, opts []LoadO
 	}
 
 	proj.VCSServers = vcsProjects
-
-	// DEPRECATED VCS
-	vcsServersDeprecated, err := repositoriesmanager.LoadAllProjectVCSServerLinksByProjectID(ctx, db, p.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, vcsDeprecated := range vcsServersDeprecated {
-		var found bool
-		for _, v := range vcsProjects {
-			if vcsDeprecated.Name == v.Name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			toadd := sdk.VCSProject{
-				Name:      vcsDeprecated.Name,
-				CreatedBy: vcsDeprecated.Username,
-			}
-			proj.VCSServers = append(proj.VCSServers, toadd)
-		}
-	}
 
 	return &proj, nil
 }

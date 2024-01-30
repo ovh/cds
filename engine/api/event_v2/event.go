@@ -1,18 +1,24 @@
 package event_v2
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/rockbears/log"
 
-	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/notification_v2"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 )
 
 const (
@@ -20,6 +26,8 @@ const (
 	EventUIWS       = "event:ui"
 	EventHatcheryWS = "event:run:job"
 )
+
+var httpClient = cdsclient.NewHTTPClient(10*time.Second, false)
 
 // Enqueue event into cache
 func publish(ctx context.Context, store cache.Store, event interface{}) {
@@ -58,7 +66,7 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 
 		// Create audit
 		wg.Add(1)
-		goroutines.Exec(ctx, "event.audit", func(ctx context.Context) {
+		goroutines.Exec(ctx, "event.audit", func(_ context.Context) {
 			defer wg.Done()
 			// TODO Audit
 		})
@@ -102,12 +110,59 @@ func pushToWebsockets(ctx context.Context, store cache.Store, e sdk.FullEventV2)
 
 func pushNotifications(ctx context.Context, db *gorp.DbMap, e sdk.FullEventV2) error {
 	if e.ProjectKey != "" {
-		proj, err := project.Load(ctx, db, e.ProjectKey)
+		notifications, err := notification_v2.LoadAll(ctx, db, e.ProjectKey, gorpmapper.GetOptions.WithDecryption)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load project %s", e.ProjectKey)
+			return sdk.WrapError(err, "unable to load project %s notifications", e.ProjectKey)
 		}
-		log.Debug(ctx, "Sending notification on project %s", proj.Key)
-		// TODO send notification
+		for _, n := range notifications {
+			canSend := false
+			if len(n.Filters) == 0 {
+				canSend = true
+			} else {
+			filterLoop:
+				for _, f := range n.Filters {
+					for _, evt := range f.Events {
+						reg, err := regexp.Compile(evt)
+						if err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+							continue
+						}
+						if reg.MatchString(e.Type) {
+							canSend = true
+							break filterLoop
+						}
+					}
+				}
+			}
+			if canSend {
+				bts, _ := json.Marshal(e)
+				req, err := http.NewRequest("POST", n.WebHookURL, bytes.NewBuffer(bts))
+				if err != nil {
+					log.Error(ctx, "unable to create request for notification %s for project %s: %v", n.Name, n.ProjectKey, err)
+					continue
+				}
+				for k, v := range n.Auth.Headers {
+					req.Header.Set(k, v)
+
+				}
+
+				resp, err := httpClient.Do(req)
+				if err != nil {
+					log.Error(ctx, "unable to send notification %s for project %s: %v", n.Name, n.ProjectKey, err)
+					continue
+				}
+				if resp.StatusCode >= 400 {
+					body, err := io.ReadAll(resp.Body)
+					if err != nil {
+						log.Error(ctx, "unable to read body %s: %v", string(body), err)
+					}
+					log.Error(ctx, "unable to send notification %s for project %s. Http code: %d Body: %s", n.Name, n.ProjectKey, resp.StatusCode, string(body))
+					_ = resp.Body.Close()
+					continue
+				}
+				log.Debug(ctx, "notification %s - %s send on event %s", n.ProjectKey, n.Name, e.Type)
+			}
+		}
 	}
 	return nil
 }

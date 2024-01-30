@@ -38,7 +38,9 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -200,7 +202,9 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -365,7 +369,9 @@ func TestRunManualJob(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -564,7 +570,9 @@ func TestPutWorkflowRun(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -730,7 +738,9 @@ func TestPutWorkflowRun_BuildingRun(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -779,7 +789,9 @@ func TestPutWorkflowRun_NoFailingJob(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -828,7 +840,9 @@ func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -891,7 +905,9 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -957,7 +973,9 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -1038,7 +1056,9 @@ func TestPostJobRunStepHandler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -1140,7 +1160,9 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -1214,7 +1236,9 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -1279,7 +1303,9 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -1334,7 +1360,6 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 	rjDB, err := workflow_v2.LoadRunJobByID(context.TODO(), db, wrj.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.StatusStopped, rjDB.Status)
-
 }
 
 func TestPostStopJobHandler(t *testing.T) {
@@ -1348,7 +1373,9 @@ func TestPostStopJobHandler(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -1422,7 +1449,7 @@ func TestPostWorkflowRunHandler(t *testing.T) {
 		Name:                sdk.RandomString(10),
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          proj.Key,
-		Branch:              "master",
+		Ref:                 "refs/heads/master",
 		Commit:              "123456",
 		ProjectRepositoryID: repo.ID,
 		Data: `name: MyFirstWorkflow

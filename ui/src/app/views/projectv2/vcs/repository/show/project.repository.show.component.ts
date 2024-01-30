@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import {Project, ProjectRepository, RepositoryHookEvent, VCSProject} from 'app/model/project.model';
+import { Project, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
 import { ProjectState } from 'app/store/project.state';
 import { finalize } from 'rxjs/operators';
 import { Store } from '@ngxs/store';
@@ -11,6 +11,7 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
 import { RepositoryAnalysis } from "../../../../../model/analysis.model";
 import { AnalysisService } from "../../../../../service/analysis/analysis.service";
+import { VCSProject } from 'app/model/vcs.model';
 
 @Component({
     selector: 'app-projectv2-repository-show',

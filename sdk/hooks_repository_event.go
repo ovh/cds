@@ -94,7 +94,7 @@ type HookRepositoryEventWorkflow struct {
 	RepositoryIdentifier string `json:"repository_identifier"`
 	WorkflowName         string `json:"workflow_name"`
 	EntityID             string `json:"entity_id"`
-	Branch               string `json:"branch"`
+	Ref                  string `json:"ref"`
 	Type                 string `json:"type"`
 	Status               string `json:"status"`
 	TargetBranch         string `json:"target_branch,omitempty"`
@@ -102,7 +102,7 @@ type HookRepositoryEventWorkflow struct {
 }
 
 type HookRepositoryEventExtractData struct {
-	Branch string   `json:"branch"`
+	Ref    string   `json:"ref"`
 	Commit string   `json:"commit"`
 	Paths  []string `json:"paths"`
 }
@@ -127,7 +127,7 @@ type HookRetrieveSignKeyRequest struct {
 	VCSServerName  string `json:"vcs_server_name"`
 	RepositoryName string `json:"repository_name"`
 	Commit         string `json:"commit"`
-	Branch         string `json:"branch"`
+	Ref            string `json:"ref"`
 	HookEventUUID  string `json:"hook_event_uuid"`
 }
 
@@ -137,7 +137,6 @@ type HookRetrieveUserRequest struct {
 	VCSServerName  string `json:"vcs_server_name"`
 	RepositoryName string `json:"repository_name"`
 	Commit         string `json:"commit"`
-	Branch         string `json:"branch"`
 	SignKey        string `json:"sign_key"`
 	HookEventUUID  string `json:"hook_event_uuid"`
 }
@@ -151,7 +150,7 @@ type AnalysisRequest struct {
 	ProjectKey    string `json:"projectKey"`
 	VcsName       string `json:"vcsName"`
 	RepoName      string `json:"repoName"`
-	Branch        string `json:"branch"`
+	Ref           string `json:"ref"`
 	Commit        string `json:"commit"`
 	HookEventUUID string `json:"hook_event_uuid"`
 }

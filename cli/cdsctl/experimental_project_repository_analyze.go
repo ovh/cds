@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/rockbears/yaml"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 )
@@ -68,7 +68,7 @@ func projectRepositoryGetFunc(v cli.Values) error {
 	type AnalysisCli struct {
 		ID          string    `json:"id"`
 		Created     time.Time `json:"created"`
-		Branch      string    `json:"branch"`
+		Ref         string    `json:"ref"`
 		Commit      string    `json:"commit"`
 		Status      string    `json:"status"`
 		Error       string    `json:"error,omitempty"`
@@ -77,7 +77,7 @@ func projectRepositoryGetFunc(v cli.Values) error {
 	}
 
 	resp := AnalysisCli{
-		Branch:      analysis.Branch,
+		Ref:         analysis.Ref,
 		ID:          analysis.ID,
 		Error:       analysis.Data.Error,
 		Commit:      analysis.Commit,

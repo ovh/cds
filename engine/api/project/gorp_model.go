@@ -3,6 +3,7 @@ package project
 import (
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -10,6 +11,90 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
+
+type dbProjectVariableSet struct {
+	gorpmapper.SignedEntity
+	sdk.ProjectVariableSet
+}
+
+func (e dbProjectVariableSet) Canonical() gorpmapper.CanonicalForms {
+	var _ = []interface{}{e.ID, e.ProjectKey, e.Name}
+	return gorpmapper.CanonicalForms{
+		"{{print .ID}}{{print .ProjectKey}}{{.Name}}",
+	}
+}
+
+type dbProjectVariableSetItemText struct {
+	gorpmapper.SignedEntity
+	ID                   string    `json:"id" db:"id"`
+	ProjectVariableSetID string    `json:"project_variable_set_id" db:"project_variable_set_id"`
+	LastModified         time.Time `json:"last_modified" db:"last_modified"`
+	Name                 string    `json:"name" db:"name"`
+	Value                string    `json:"value" db:"value"`
+}
+
+func (e dbProjectVariableSetItemText) Canonical() gorpmapper.CanonicalForms {
+	var _ = []interface{}{e.ID, e.ProjectVariableSetID, e.Name, e.Value}
+	return gorpmapper.CanonicalForms{
+		"{{print .ID}}{{print .ProjectVariableSetID}}{{.Name}}{{.Value}}",
+	}
+}
+
+func newDbProjectVariableSetItemText(e sdk.ProjectVariableSetItem) dbProjectVariableSetItemText {
+	return dbProjectVariableSetItemText{
+		ID:                   e.ID,
+		Name:                 e.Name,
+		ProjectVariableSetID: e.ProjectVariableSetID,
+		LastModified:         e.LastModified,
+		Value:                e.Value,
+	}
+}
+func (e dbProjectVariableSetItemText) Item() *sdk.ProjectVariableSetItem {
+	return &sdk.ProjectVariableSetItem{
+		ID:                   e.ID,
+		Name:                 e.Name,
+		ProjectVariableSetID: e.ProjectVariableSetID,
+		LastModified:         e.LastModified,
+		Type:                 sdk.ProjectVariableTypeString,
+		Value:                e.Value,
+	}
+}
+
+type dbProjectVariableSetItemSecret struct {
+	gorpmapper.SignedEntity
+	ID                   string    `json:"id" db:"id"`
+	ProjectVariableSetID string    `json:"project_variable_set_id" db:"project_variable_set_id"`
+	LastModified         time.Time `json:"last_modified" db:"last_modified"`
+	Name                 string    `json:"name" db:"name"`
+	Value                string    `json:"value" db:"value" gorpmapping:"encrypted,ID,ProjectVariableSetID,Name"`
+}
+
+func (e dbProjectVariableSetItemSecret) Canonical() gorpmapper.CanonicalForms {
+	var _ = []interface{}{e.ID, e.ProjectVariableSetID, e.Name}
+	return gorpmapper.CanonicalForms{
+		"{{print .ID}}{{print .ProjectVariableSetID}}{{.Name}}",
+	}
+}
+
+func newDbProjectVariableSetItemSecret(e sdk.ProjectVariableSetItem) dbProjectVariableSetItemSecret {
+	return dbProjectVariableSetItemSecret{
+		ID:                   e.ID,
+		Name:                 e.Name,
+		ProjectVariableSetID: e.ProjectVariableSetID,
+		LastModified:         e.LastModified,
+		Value:                e.Value,
+	}
+}
+func (e dbProjectVariableSetItemSecret) Item() *sdk.ProjectVariableSetItem {
+	return &sdk.ProjectVariableSetItem{
+		ID:                   e.ID,
+		Name:                 e.Name,
+		ProjectVariableSetID: e.ProjectVariableSetID,
+		LastModified:         e.LastModified,
+		Type:                 sdk.ProjectVariableTypeSecret,
+		Value:                e.Value,
+	}
+}
 
 type dbProject sdk.Project
 type dbProjectVariableAudit sdk.ProjectVariableAudit
@@ -89,6 +174,9 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbProjectKey{}, "project_key", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbLabel{}, "project_label", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariable{}, "project_variable", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectVariableSet{}, "project_variable_set", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectVariableSetItemText{}, "project_variable_set_text", false, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectVariableSetItemSecret{}, "project_variable_set_secret", false, "id"))
 }
 
 // PostGet is a db hook

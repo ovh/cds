@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -108,7 +109,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 			if vcsProjectWithSecret.Auth.SSHKeyName == "" {
 				cloneURL = repo.HTTPCloneURL
 			}
-			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, hookRetrieveSignKey.Commit, hookRetrieveSignKey.Branch)
+			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, hookRetrieveSignKey.Commit, hookRetrieveSignKey.Ref)
 			if err != nil {
 				return err
 			}
@@ -146,14 +147,14 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
 					} else {
 						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
-						callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg
+						callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 					}
 				} else {
-					callback.SigningKeyCallback.Error = ope.Error.Message
+					callback.SigningKeyCallback.Error = ope.Error.Message + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 				}
 
 				if _, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
-					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to  hook [HTTP: %d]", code))
+					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to hook [HTTP: %d]", code))
 					return
 				}
 			})
@@ -258,7 +259,7 @@ func LoadWorkflowHooksWithModelUpdate(ctx context.Context, db gorp.SqlExecutor, 
 		return nil, err
 	}
 	for _, h := range entitiesHooks {
-		if h.Branch == hookRequest.Branch {
+		if h.Ref == hookRequest.Ref {
 			filteredWorkflowHooks = append(filteredWorkflowHooks, h)
 		}
 	}
@@ -279,7 +280,7 @@ func LoadWorkflowHooksWithWorkflowUpdate(ctx context.Context, db gorp.SqlExecuto
 			return nil, err
 		}
 		// check of event come from the right branch
-		if hookRequest.Branch == h.Branch {
+		if hookRequest.Ref == h.Ref {
 			filteredWorkflowHooks = append(filteredWorkflowHooks, *h)
 		}
 	}
@@ -302,7 +303,7 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 		// If event && workflow declaration are on the same repo
 		if w.VCSName == hookRequest.VCSName && w.RepositoryName == hookRequest.RepositoryName {
 			// Only get workflow configuration from current branch
-			if w.Branch != hookRequest.Branch {
+			if w.Ref != hookRequest.Ref {
 				continue
 			}
 		}
@@ -310,9 +311,10 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 		// Check configuration : branch filter + path filter
 		switch hookRequest.RepositoryEventName {
 		case sdk.WorkflowHookEventPush:
-			validBranch := sdk.IsValidHookBranch(ctx, w.Data.BranchFilter, hookRequest.Branch)
+			validBranch := sdk.IsValidHookRefs(ctx, w.Data.BranchFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefBranchPrefix))
+			validTag := sdk.IsValidHookRefs(ctx, w.Data.TagFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefTagPrefix))
 			validPath := sdk.IsValidHookPath(ctx, w.Data.PathFilter, hookRequest.Paths)
-			if validBranch && validPath {
+			if validBranch && validPath && validTag {
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue
