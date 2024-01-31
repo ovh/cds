@@ -32,9 +32,9 @@ const (
 
 type RBAC struct {
 	ID           string         `json:"id" db:"id"`
-	Name         string         `json:"name" db:"name"`
+	Name         string         `json:"name" db:"name" cli:"name"`
 	Created      time.Time      `json:"created" db:"created"`
-	LastModified time.Time      `json:"last_modified" db:"last_modified"`
+	LastModified time.Time      `json:"last_modified" db:"last_modified" cli:"last_modified"`
 	Global       []RBACGlobal   `json:"global,omitempty" db:"-"`
 	Projects     []RBACProject  `json:"projects,omitempty" db:"-"`
 	Regions      []RBACRegion   `json:"regions,omitempty" db:"-"`

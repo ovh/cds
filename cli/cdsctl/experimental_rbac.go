@@ -25,7 +25,25 @@ func experimentalRbac() *cobra.Command {
 		cli.NewCommand(rbacImportCmd, rbacImportFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(rbacDeleteCmd, rbacDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(rbacGetCmd, rbacGetFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(rbacListCmd, rbacListFunc, nil, withAllCommandModifiers()...),
 	})
+}
+
+var rbacListCmd = cli.Command{
+	Name:    "list",
+	Aliases: []string{"ls"},
+	Short:   "List CDS permissions",
+	Example: "cdsctl rbac list ",
+	Ctx:     []cli.Arg{},
+	Args:    []cli.Arg{},
+}
+
+func rbacListFunc(v cli.Values) (cli.ListResult, error) {
+	perms, err := client.RBACList(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return cli.AsListResult(perms), nil
 }
 
 var rbacGetCmd = cli.Command{

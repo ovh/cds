@@ -456,6 +456,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/organization", nil, r.POSTv2(api.postOrganizationHandler), r.GETv2(api.getOrganizationsHandler))
 	r.Handle("/v2/organization/{organizationIdentifier}", nil, r.GETv2(api.getOrganizationHandler), r.DELETEv2(api.deleteOrganizationHandler))
 
+	r.Handle("/v2/rbac", nil, r.GETv2(api.getPermissionsHandler))
 	r.Handle("/v2/rbac/import", nil, r.POSTv2(api.postImportRBACHandler))
 	r.Handle("/v2/rbac/{rbacIdentifier}", nil, r.GETv2(api.getRBACHandler), r.DELETEv2(api.deleteRBACHandler))
 	r.Handle("/v2/rbac/access/project/session/check", nil, r.POSTv2(api.getCheckSessionProjectAccessHandler))

@@ -2,8 +2,16 @@ package cdsclient
 
 import (
 	"context"
+
 	"github.com/ovh/cds/sdk"
 )
+
+func (c *client) RBACList(ctx context.Context) ([]sdk.RBAC, error) {
+	path := "/v2/rbac"
+	var perms []sdk.RBAC
+	_, err := c.GetJSON(ctx, path, &perms)
+	return perms, err
+}
 
 func (c *client) RBACGet(ctx context.Context, permissionIdentifier string) (sdk.RBAC, error) {
 	path := "/v2/rbac/" + permissionIdentifier
