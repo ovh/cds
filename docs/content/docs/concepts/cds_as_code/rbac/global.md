@@ -3,7 +3,7 @@ title: "Global roles"
 weight: 1
 ---
 
-The `global` section allow users/groups  to manage global CDS configuration:
+The `global` section allows users/groups  to manage global CDS configuration:
 
 * users
 * groups

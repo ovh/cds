@@ -3,7 +3,7 @@ title: "Hatchery roles"
 weight: 2
 ---
 
-* `start-worker`: Allow the hatchery to spawn worker a the given region
+* `start-worker`: Allow the hatchery to spawn a worker in the given region
 
 Yaml example:
 ```yaml

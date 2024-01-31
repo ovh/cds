@@ -8,7 +8,7 @@ card:
 
 # Contexts
 
-Contexts are a way to access information inside a workflow run. Data can be access like this
+Contexts are a way to access information inside a workflow run. Data can be accessed like this
 ```yaml
 ${{ <contextName>.data }}
 ```
