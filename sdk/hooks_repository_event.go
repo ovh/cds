@@ -156,8 +156,8 @@ type AnalysisRequest struct {
 }
 
 type AnalysisResponse struct {
-	AnalysisID string `json:"analysis_id"`
-	Status     string `json:"status"`
+	AnalysisID string `json:"analysis_id" cli:"analysis_id"`
+	Status     string `json:"status" cli:"status"`
 }
 
 func GenerateRepositoryWebHookSecret(hookSecretKey, vcsName, repoName string) string {
