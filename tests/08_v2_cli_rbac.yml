@@ -13,12 +13,14 @@ testcases:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac show perm-global-test --format json
       assertions:
         - result.code ShouldEqual 0
+        - result.systemoutjson.name ShouldEqual "perm-global-test"
 
 - name: list permission
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac list --format json
     assertions:
         - result.code ShouldEqual 0
+        - result.systemoutjson ShouldHaveLength 2
 
 - name: delete permission
   steps:
