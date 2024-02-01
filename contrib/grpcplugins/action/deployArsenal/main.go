@@ -65,12 +65,12 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 
 	maxRetry, err := strconv.Atoi(q.GetOptions()["retry-max"])
 	if err != nil {
-		fmt.Printf("Error parsing retry-max: %v. Default value will be used\n", err)
+		grpcplugins.Errorf("Error parsing retry-max: %v. Default value will be used\n", err)
 		maxRetry = 30
 	}
 	delayRetry, err := strconv.Atoi(q.GetOptions()["retry-delay"])
 	if err != nil {
-		fmt.Printf("Error parsing retry-delay: %v. Default value will be used\n", err)
+		grpcplugins.Errorf("Error parsing retry-delay: %v. Default value will be used\n", err)
 		delayRetry = 10
 	}
 
@@ -143,12 +143,11 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 		if retry > 0 {
 			time.Sleep(time.Duration(10) * time.Second)
 		}
-
-		fmt.Printf("Deploying (%s) on Arsenal at %s...\n", deployReq, host.Value)
+		grpcplugins.Logf("Deploying (%s) on Arsenal at %s...\n", deployReq, host.Value)
 		followUpToken, err = arsenalClient.Deploy(deployReq)
 		if err != nil {
 			if _, ok := err.(*arsenal.RequestError); ok {
-				fmt.Println("Deployment has failed, retrying...")
+				grpcplugins.Error("Deployment has failed, retrying...")
 				retry++
 			} else {
 				return fail("deploy failed: %v", err)
@@ -169,14 +168,14 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 			time.Sleep(time.Duration(delayRetry) * time.Second)
 		}
 
-		fmt.Println("Fetching followup status on deployment...")
+		grpcplugins.Log("Fetching followup status on deployment...")
 		state, err := arsenalClient.Follow(followUpToken)
 		if err != nil {
 			return failErr(err)
 		}
 		if state == nil {
 			retry++
-			fmt.Println("Arsenal service unavailable, waiting for next retry")
+			grpcplugins.Error("Arsenal service unavailable, waiting for next retry")
 			continue
 		}
 		if state.Done {
@@ -186,12 +185,12 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 		// If the progress is back to 0 after subsequent call to follows, it means
 		// it was probably cancelled on the platform side.
 		if state.Progress < lastProgress && state.Progress == 0 {
-			fmt.Println("Deployment cancelled.")
+			grpcplugins.Error("Deployment cancelled.")
 			break
 		}
 		lastProgress = state.Progress
 
-		fmt.Printf("Deployment still in progress (%.1f%%)...\n", lastProgress*100)
+		grpcplugins.Logf("Deployment still in progress (%.1f%%)...\n", lastProgress*100)
 		retry++
 	}
 
@@ -199,7 +198,7 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 		return fail("deployment failed after %d retries", retry)
 	}
 
-	fmt.Println("Deployment succeeded.")
+	grpcplugins.Log("Deployment succeeded.")
 	return &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}, nil
@@ -227,7 +226,7 @@ func createAlternative(ctx context.Context, arsenalClient *arsenal.Client, alter
 		// Create alternative if anything was resolved.
 		if altBuf.Len() > 0 {
 			if err = json.Unmarshal(altBuf.Bytes(), &createdConfig); err != nil {
-				fmt.Println("Resolved alternative:", altBuf.String())
+				grpcplugins.Error("Resolved alternative: " + altBuf.String())
 				return nil, fmt.Errorf("failed to unmarshal alternative config: %v", err)
 			}
 
@@ -239,7 +238,7 @@ func createAlternative(ctx context.Context, arsenalClient *arsenal.Client, alter
 
 			// Create alternative on /alternative
 			rawAltConfig, _ := json.MarshalIndent(createdConfig, "", "  ")
-			fmt.Printf("Creating/Updating alternative: %s\n", rawAltConfig)
+			grpcplugins.Logf("Creating/Updating alternative: %s\n", rawAltConfig)
 			if err = arsenalClient.UpsertAlternative(createdConfig); err != nil {
 				return nil, err
 			}
@@ -253,7 +252,7 @@ func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error
 }
 
 func failErr(err error) (*actionplugin.ActionResult, error) {
-	fmt.Println("Error:", err)
+	grpcplugins.Errorf("Error: %v", err)
 	return &actionplugin.ActionResult{
 		Details: err.Error(),
 		Status:  sdk.StatusFail,
