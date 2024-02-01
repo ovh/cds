@@ -15,11 +15,12 @@ import (
 	"github.com/docker/go-units"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/moby/moby/client"
+	"github.com/pkg/errors"
+
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-	"github.com/pkg/errors"
 )
 
 type dockerPushPlugin struct {
@@ -233,6 +234,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 				result.ArtifactManagerMetadata.Set("downloadURI", rtPathInfo.DownloadURI)
 				result.ArtifactManagerMetadata.Set("createdBy", rtPathInfo.CreatedBy)
 				result.ArtifactManagerMetadata.Set("localRepository", rtPathInfo.Repo)
+				result.ArtifactManagerMetadata.Set("id", img.imageID)
 				break
 			}
 		}
@@ -242,8 +244,25 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 	default:
 		// Push on the registry set as parameter
-		destination = registry + "/" + source + ":" + tag
+		destination = registry + "/" + img.repository + ":" + tag
 
+		if err := cli.ImageTag(ctx, img.imageID, destination); err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to tag %q to %q: %v", source, destination, err)
+		}
+
+		output, err := cli.ImagePush(ctx, destination, types.ImagePushOptions{RegistryAuth: registryAuth})
+		if err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to push %q: %v", destination, err)
+		}
+
+		if err := jsonmessage.DisplayJSONMessagesToStream(output, streams.NewOut(os.Stdout), nil); err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to push %q: %v", destination, err)
+		}
+
+		result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
+		result.ArtifactManagerMetadata.Set("registry", registry)
+		result.ArtifactManagerMetadata.Set("name", destination)
+		result.ArtifactManagerMetadata.Set("id", img.imageID)
 	}
 
 	details, err := result.GetDetailAsV2WorkflowRunResultDockerDetail()
