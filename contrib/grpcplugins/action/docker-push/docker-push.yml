@@ -2,7 +2,7 @@ name: docker-push
 type: action
 author: "François SAMIN <francois.samin@corp.ovh.com>"
 description: |
-  This push Docker image
+  This pushes Docker image
 inputs:
   image:
     type: string
