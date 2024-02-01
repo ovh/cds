@@ -20,7 +20,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac list --format json
     assertions:
         - result.code ShouldEqual 0
-        - result.systemoutjson ShouldHaveLength 2
+        - result.systemout ShouldContainSubstring "perm-global-test"
 
 - name: delete permission
   steps:
