@@ -186,6 +186,11 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		wref.plugins[p.Name] = p
 	}
 
+	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
+	if err != nil {
+		return err
+	}
+
 	// Retrieve all deps
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
@@ -221,6 +226,14 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 
 		// Check variable set
+		if err := checkWorkflowVariableSets(*run, j, allVariableSets); err != nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       err.Error(),
+			})
+		}
 		vss := sdk.StringSlice{}
 		vss = append(vss, run.WorkflowData.Workflow.VariableSets...)
 		vss = append(vss, j.VariableSets...)
@@ -278,6 +291,32 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, *u)
 
 	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
+	return nil
+}
+
+func checkWorkflowVariableSets(run sdk.V2WorkflowRun, currentJob sdk.V2Job, projectVariableSets []sdk.ProjectVariableSet) error {
+	for _, vsName := range run.WorkflowData.Workflow.VariableSets {
+		vsFound := false
+		for _, projVarset := range projectVariableSets {
+			if projVarset.Name == vsName {
+				vsFound = true
+			}
+		}
+		if !vsFound {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "variable set %s not found on project", vsName)
+		}
+	}
+	for _, vsName := range currentJob.VariableSets {
+		vsFound := false
+		for _, projVarset := range projectVariableSets {
+			if projVarset.Name == vsName {
+				vsFound = true
+			}
+		}
+		if !vsFound {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "variable set %s not found on project", vsName)
+		}
+	}
 	return nil
 }
 

@@ -84,7 +84,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		}
 		defer tx.Rollback() // nolint
 
-		contexts, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun, *wk)
+		contexts, sensitiveDatas, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun, *wk)
 		if err != nil {
 			return err
 		}
@@ -118,10 +118,11 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		}
 
 		takeResponse := sdk.V2TakeJobResponse{
-			RunJob:        *jobRun,
-			AsCodeActions: run.WorkflowData.Actions,
-			SigningKey:    base64.StdEncoding.EncodeToString(workerKey),
-			Contexts:      *contexts,
+			RunJob:         *jobRun,
+			AsCodeActions:  run.WorkflowData.Actions,
+			SigningKey:     base64.StdEncoding.EncodeToString(workerKey),
+			Contexts:       *contexts,
+			SensitiveDatas: sensitiveDatas,
 		}
 
 		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobBuilding, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
@@ -129,34 +130,67 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 	}
 }
 
-func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, error) {
+func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, []string, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
 	contexts.CDS.Job = jobRun.JobID
 	contexts.CDS.Stage = jobRun.Job.Stage
 	contexts.Git = run.Contexts.Git
 
+	sensitiveDatas := make([]string, 0)
+
 	for _, k := range proj.Keys {
 		if k.Name == vcs.Auth.SSHKeyName {
 			contexts.Git.SSHPrivate = k.Private
+			sensitiveDatas = append(sensitiveDatas, k.Private)
 			break
 		}
 	}
-	contexts.Git.Token = vcs.Auth.Token
+	if vcs.Auth.Token != "" {
+		contexts.Git.Token = vcs.Auth.Token
+		sensitiveDatas = append(sensitiveDatas, vcs.Auth.Token)
+	}
 
 	contexts.Vars = make(map[string]interface{})
 	for _, vs := range vss {
 		vsMap := make(map[string]interface{})
 		for _, item := range vs.Items {
-			if (strings.HasPrefix(item.Value, "{") && strings.HasSuffix(item.Value, "}")) || (strings.HasPrefix(item.Value, "[") && strings.HasSuffix(item.Value, "]")) {
+			if strings.HasPrefix(item.Value, "{") && strings.HasSuffix(item.Value, "}") {
 				var jsonValue map[string]interface{}
 				if err := json.Unmarshal([]byte(item.Value), &jsonValue); err != nil {
 					vsMap[item.Name] = item.Value
 				} else {
 					vsMap[item.Name] = jsonValue
+					// also add all value from json
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						datas, err := getAllSensitiveDataFromJson(ctx, jsonValue)
+						if err != nil {
+							return nil, nil, err
+						}
+						sensitiveDatas = append(sensitiveDatas, datas...)
+					}
+
+				}
+			} else if strings.HasPrefix(item.Value, "[") && strings.HasSuffix(item.Value, "]") {
+				var jsonArrayValue []interface{}
+				if err := json.Unmarshal([]byte(item.Value), &jsonArrayValue); err != nil {
+					vsMap[item.Name] = item.Value
+				} else {
+					vsMap[item.Name] = jsonArrayValue
+
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						datas, err := getAllSensitiveDataFromJsonArray(ctx, jsonArrayValue)
+						if err != nil {
+							return nil, nil, err
+						}
+						sensitiveDatas = append(sensitiveDatas, datas...)
+					}
 				}
 			} else {
 				vsMap[item.Name] = item.Value
+			}
+			if item.Type == sdk.ProjectVariableTypeSecret {
+				sensitiveDatas = append(sensitiveDatas, item.Value)
 			}
 		}
 		contexts.Vars[vs.Name] = vsMap
@@ -187,7 +221,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 
 	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	contexts.Jobs = sdk.JobsResultContext{}
 	for _, rj := range runJobs {
@@ -221,7 +255,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	contexts.Integrations = &sdk.JobIntegrationsContext{}                    // The context only contais name of integration by function (artifact_manager / deployment)
 	integs, err := integration.LoadIntegrationsByProjectID(ctx, db, proj.ID) // Here
 	if err != nil {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
 	}
 
 	// this private function is called on job integrations to set the integration on the context, and then on the workflow integration
@@ -267,18 +301,72 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	// This must be done before the workflow level
 	for _, i := range jobRun.Job.Integrations {
 		if err := matchIntegration(i); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	// Load integration from the workflow level
 	for _, i := range run.WorkflowData.Workflow.Integrations {
 		if err := matchIntegration(i); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return contexts, nil
+	return contexts, sensitiveDatas, nil
+}
+
+func getAllSensitiveDataFromJsonArray(ctx context.Context, secretJsonValue []interface{}) ([]string, error) {
+	datas := make([]string, 0)
+	bts, err := json.Marshal(secretJsonValue)
+	if err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal json secret value: %v", err)
+	}
+	// Add JSON value with indent in sensitive data in case of user using toJson function.
+	datas = append(datas, string(bts))
+
+	// Retrieve sensitive value
+	for _, arrayItem := range secretJsonValue {
+		if itemMap, ok := arrayItem.(map[string]interface{}); ok {
+			dataFromMap, err := getAllSensitiveDataFromJson(ctx, itemMap)
+			if err != nil {
+				return nil, err
+			}
+			datas = append(datas, dataFromMap...)
+		} else {
+			datas = append(datas, fmt.Sprintf("%v", arrayItem))
+		}
+	}
+	return datas, nil
+}
+
+func getAllSensitiveDataFromJson(ctx context.Context, secretJsonValue map[string]interface{}) ([]string, error) {
+	datas := make([]string, 0)
+	bts, err := json.Marshal(secretJsonValue)
+	if err != nil {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal json secret value: %v", err)
+	}
+	// Add JSON value with indent in sensitive data in case of user using toJson function.
+	datas = append(datas, string(bts))
+
+	// browse all keys in value
+	for _, value := range secretJsonValue {
+		if valueMap, ok := value.(map[string]interface{}); ok { // if value is map
+			dataFromMap, err := getAllSensitiveDataFromJson(ctx, valueMap)
+			if err != nil {
+				return nil, err
+			}
+			datas = append(datas, dataFromMap...)
+		} else if valueArray, ok := value.([]interface{}); ok { // if value is array
+			dataFromArray, err := getAllSensitiveDataFromJsonArray(ctx, valueArray)
+			if err != nil {
+				return nil, err
+			}
+			datas = append(datas, dataFromArray...)
+		} else { // if string and numbers and other ...
+			datas = append(datas, fmt.Sprintf("%v", value))
+		}
+	}
+	return datas, nil
 }
 
 func (api *API) postV2RefreshWorkerHandler() ([]service.RbacChecker, service.Handler) {

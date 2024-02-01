@@ -26,6 +26,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGetAllSensitiveDataFromJson(t *testing.T) {
+	secret := `{"level1String": "value1", "level1Int": 1, "level1": {"level2Array": ["secret1", "secret2"], "level2": {"level3": "value3", "level3Array": [{"level4": {"level5": "value5"}}]}}}`
+	var secretJSON map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(secret), &secretJSON))
+	data, err := getAllSensitiveDataFromJson(context.TODO(), secretJSON)
+	require.NoError(t, err)
+
+	// full json / value1 / 1 / level1Value / level2ArrayValue / secret1 / secret2 / level2Value / value3 / level3ArrayValue / level3ArrayItem/ level4 Value / value5
+	for _, i := range data {
+		t.Logf(">> %s", i)
+	}
+	require.Equal(t, 13, len(data))
+}
+
 func TestWorkerUnregistered(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()

@@ -62,6 +62,30 @@ func (a *ActionParser) checkSyntax(_ context.Context, input string) []string {
 	return errorLst.Errors
 }
 
+func (a *ActionParser) InterpolateToBool(ctx context.Context, input string) (bool, error) {
+	resultString, err := a.InterpolateToString(ctx, input)
+	if err != nil {
+		return false, err
+	}
+	result, err := strconv.ParseBool(resultString)
+	if err != nil {
+		return false, fmt.Errorf("unable to interpolate [%s] into a boolean, got %s: %v", input, resultString, err)
+	}
+	return result, nil
+}
+
+func (a *ActionParser) InterpolateToString(ctx context.Context, input string) (string, error) {
+	resultInterface, err := a.Interpolate(ctx, input)
+	if err != nil {
+		return "", err
+	}
+	result, ok := resultInterface.(string)
+	if !ok {
+		return "", fmt.Errorf("unable to interpolate [%s] into a string: %v", input, err)
+	}
+	return result, nil
+}
+
 func (a *ActionParser) Interpolate(ctx context.Context, input string) (interface{}, error) {
 	interpolatedInput := input
 	matches := extractRegexp.FindAllString(input, -1)

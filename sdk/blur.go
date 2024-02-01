@@ -17,15 +17,19 @@ func NewBlur(secrets []string) (*Blur, error) {
 		if err != nil {
 			return nil, WithStack(err)
 		}
+		jsonAlt := buildJsonAlternative(string(v))
 		return []string{
 			v,
 			strings.Replace(v, "'", `'"'"'`, -1), // Useful to match secrets from 'env' in script steps
 			strings.Trim(string(jsonAlternative), "\""),
 			url.QueryEscape(v),
 			base64.StdEncoding.EncodeToString([]byte(v)),
+
+			// Useful to match secreet json variable, that are print through toJson function + an env variable
+			jsonAlt,
+			strings.TrimSuffix(strings.TrimPrefix(jsonAlt, "{ "), "}"),
 		}, nil
 	}
-
 	var alternatives []string
 	for i := range secrets {
 		as, err := alternativeFuncs(secrets[i])
@@ -86,4 +90,20 @@ func (b *Blur) Interface(i interface{}) error {
 	}
 
 	return nil
+}
+
+func buildJsonAlternative(v string) string {
+	return strings.Replace(
+		strings.Replace(
+			strings.Replace(
+				strings.Replace(
+					strings.Replace(
+						strings.Replace(
+							strings.Replace(v, "\n", "", -1),
+							":", ": ", -1),
+						"{", "{ ", -1),
+					"}", " }", -1),
+				"[", "[ ", -1),
+			"]", " ]", -1),
+		",", ", ", -1)
 }

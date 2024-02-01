@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -249,8 +248,21 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		for k, v := range actionContext.Env {
 			currentStepContext.Env[k] = v
 		}
-		for k, v := range step.Env {
-			currentStepContext.Env[k] = v
+		if len(step.Env) > 0 {
+			mapContextBts, _ := json.Marshal(actionContext)
+			var parserContext map[string]interface{}
+			if err := json.Unmarshal(mapContextBts, &parserContext); err != nil {
+				return w.failJob(ctx, fmt.Sprintf("unable to unmarshal current step context: %v", err))
+			}
+			ap := sdk.NewActionParser(parserContext, sdk.DefaultFuncs)
+			for k, v := range step.Env {
+				// Interpolate current step env variable
+				resultString, err := ap.InterpolateToString(ctx, v)
+				if err != nil {
+					return w.failJob(ctx, fmt.Sprintf("unable to interpolate env variable %s [%s]: %v", k, v, err))
+				}
+				currentStepContext.Env[k] = resultString
+			}
 		}
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
@@ -314,29 +326,12 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	}
 
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-	interpolatedInput, err := ap.Interpolate(ctx, step.If)
+	booleanResult, err := ap.InterpolateToBool(ctx, step.If)
 	if err != nil {
 		return sdk.V2WorkflowRunJobResult{
 			Status: sdk.StatusFail,
 			Time:   time.Now(),
-			Error:  fmt.Sprintf("unable to interpolate step condition %s: %v", step.If, err),
-		}
-	}
-
-	if _, ok := interpolatedInput.(string); !ok {
-		return sdk.V2WorkflowRunJobResult{
-			Status: sdk.StatusFail,
-			Time:   time.Now(),
-			Error:  fmt.Sprintf("step %s: if statement does not return a string. Got %v", stepName, interpolatedInput),
-		}
-	}
-
-	booleanResult, err := strconv.ParseBool(interpolatedInput.(string))
-	if err != nil {
-		return sdk.V2WorkflowRunJobResult{
-			Status: sdk.StatusFail,
-			Time:   time.Now(),
-			Error:  fmt.Sprintf("step %s: if statement does not return a boolean. Got %v", stepName, interpolatedInput),
+			Error:  fmt.Sprintf("unable to interpolate step condition %s into a boolean: %v", step.If, err),
 		}
 	}
 
@@ -449,13 +444,10 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 		return w.failJob(ctx, fmt.Sprintf("unable to unmarshal contexts: %v", err))
 	}
 
-	interpolatedInput, err := w.interpolateActionInput(ctx, mapContexts, step.Run)
+	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+	contentString, err := ap.InterpolateToString(ctx, step.Run)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to interpolate script content: %v", err))
-	}
-	contentString, ok := interpolatedInput.(string)
-	if !ok {
-		return w.failJob(ctx, fmt.Sprintf("interpolated script content is not a string. Got %T", interpolatedInput))
 	}
 
 	env, err := w.GetEnvVariable(runJobContext)
@@ -501,17 +493,23 @@ func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2Workfl
 	return res
 }
 
-func (w *CurrentWorker) interpolateActionInput(ctx context.Context, contexts map[string]interface{}, input string) (interface{}, error) {
-	ap := sdk.NewActionParser(contexts, sdk.DefaultFuncs)
-	interpolatedInput, err := ap.Interpolate(ctx, input)
-	if err != nil {
-		return "", err
-	}
-	return interpolatedInput, nil
-}
-
 func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]string) (sdk.WorkflowRunJobsContext, error) {
 	if len(inputs) == 0 {
+		mapContextBts, _ := json.Marshal(parentContext)
+		var parserContext map[string]interface{}
+		if err := json.Unmarshal(mapContextBts, &parserContext); err != nil {
+			return parentContext, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid context found: %v", err)
+		}
+		if len(parentContext.Env) > 0 {
+			ap := sdk.NewActionParser(parserContext, sdk.DefaultFuncs)
+			for k, e := range parentContext.Env {
+				interpolatedValue, err := ap.InterpolateToString(ctx, e)
+				if err != nil {
+					return parentContext, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate env variabke %s: %v", k, err)
+				}
+				parentContext.Env[k] = interpolatedValue
+			}
+		}
 		return parentContext, nil
 	}
 	actionContext := sdk.WorkflowRunJobsContext{
@@ -527,7 +525,8 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 	}
 
 	for k, v := range inputs {
-		interpolatedInput, err := w.interpolateActionInput(ctx, mapContext, v)
+		ap := sdk.NewActionParser(mapContext, sdk.DefaultFuncs)
+		interpolatedInput, err := ap.Interpolate(ctx, v)
 		if err != nil {
 			return actionContext, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate job inputs: %v", err)
 		}
