@@ -19,7 +19,7 @@ inputs:
   ssh-key:
     type: text
     description: "The ssh-key used to fetch the repository"
-    default: ${{secrets.GIT_SSH_KEY}}
+    default: ${{git.ssh_private}}
   path:
     type: text
     description: Relative path under $CD_WORKSPACE to place the repository
@@ -31,7 +31,7 @@ inputs:
   token:
     type: text
     description: Token use for https authentication
-    default: ${{secrets.GIT_TOKEN}}
+    default: ${{git.token}}
   submodules:
     type: text
     description: "Whether to checkout submodules: `true` to checkout submodules or `recursive` to recursively checkout submodules"

@@ -240,6 +240,16 @@ type ProjectClientV2 interface {
 	ProjectNotificationDelete(ctx context.Context, pKey string, notifName string) error
 	ProjectNotificationGet(ctx context.Context, pKey string, notifName string) (*sdk.ProjectNotification, error)
 	ProjectNotificationList(ctx context.Context, pKey string) ([]sdk.ProjectNotification, error)
+
+	ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error
+	ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string, mod ...RequestModifier) error
+	ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error)
+	ProjectVariableSetShow(ctx context.Context, pKey string, vsName string) (*sdk.ProjectVariableSet, error)
+
+	ProjectVariableSetItemAdd(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
+	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
+	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
 }
 
 // ProjectClient exposes project related functions

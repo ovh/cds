@@ -16,8 +16,8 @@ import { WorkflowNodeCondition, WorkflowNodeConditions, WorkflowTriggerCondition
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Table } from 'app/shared/table/table';
 import { PreferencesState } from 'app/store/preferences.state';
-import { Subscription } from 'rxjs/Subscription';
 import { CodemirrorComponent } from '../codemirror';
+import { Subscription } from 'rxjs';
 
 declare let CodeMirror: any;
 

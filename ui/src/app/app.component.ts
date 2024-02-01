@@ -8,10 +8,8 @@ import { Store } from '@ngxs/store';
 import { EventService } from 'app/event.service';
 import { GetCDSStatus } from 'app/store/cds.action';
 import { CDSState } from 'app/store/cds.state';
-import { interval, of, zip } from 'rxjs';
-import { WebSocketSubject } from 'rxjs/internal-compatibility';
+import { Subscription, interval, of, zip } from 'rxjs';
 import { concatMap, filter, map, mergeMap } from 'rxjs/operators';
-import { Subscription } from 'rxjs/Subscription';
 import format from 'string-format-obj';
 import { AppService } from './app.service';
 import { AuthSummary } from './model/user.model';
@@ -26,6 +24,7 @@ import { NzConfigService } from "ng-zorro-antd/core/config";
 import { CodeEditorConfig } from "ng-zorro-antd/core/config/config";
 import { PreferencesState } from './store/preferences.state';
 import { Editor } from './model/editor.model';
+import { WebSocketSubject } from 'rxjs/webSocket';
 
 declare const monaco: any;
 

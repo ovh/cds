@@ -87,7 +87,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
             this._cd.markForCheck();
         })).subscribe(r => {
             this._toastService.success('Repository added', '');
-            this._router.navigate(['/', 'projectv2', this.project.key, 'vcs', this.vcsProject.name, 'repository', r.name]).then()
+            this._router.navigate(['/', 'projectv2', this.project.key, 'explore', 'vcs', this.vcsProject.name, 'repository', r.name]).then()
         });
     }
 

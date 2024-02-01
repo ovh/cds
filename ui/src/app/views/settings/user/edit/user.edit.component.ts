@@ -3,9 +3,9 @@ import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
-import { AuthConsumer, AuthDriverManifest, AuthDriverManifests, AuthSession } from 'app/model/authentication.model';
+import { AuthConsumer, AuthDriverManifest, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
-import {AuthentifiedUser, AuthSummary, UserContact, UserLink} from 'app/model/user.model';
+import { AuthentifiedUser, AuthSummary, UserContact, UserLink } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -22,8 +22,8 @@ import {
     ConsumerDetailsModalComponent
 } from '../consumer-details-modal/consumer-details-modal.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import {HttpClient} from "@angular/common/http";
-import {LinkService} from "../../../../service/link/link.service";
+import { HttpClient } from "@angular/common/http";
+import { LinkService } from "../../../../service/link/link.service";
 
 const usernamePattern = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -48,7 +48,7 @@ export class UserEditComponent implements OnInit {
     currentAuthSummary: AuthSummary;
     editable: boolean;
     path: Array<PathItem>;
-    menuItems: Map<string,string>;
+    menuItems: Map<string, string>;
     selectedItem: string;
     loadingUser: boolean;
     user: AuthentifiedUser;
@@ -376,11 +376,11 @@ export class UserEditComponent implements OnInit {
     linkUser(type: string): void {
         this._linkService.askLink(type, "/settings/user/" + this.user.username)
             .pipe(first())
-            .subscribe(redirect  => {
+            .subscribe(redirect => {
                 if (redirect.method.toLowerCase() === ('get')) {
                     window.location.replace(redirect.url);
                 }
-        })
+            })
     }
 
     clickConsumerDetails(selected: AuthConsumer): void {
@@ -620,11 +620,11 @@ export class UserEditComponent implements OnInit {
     getAuthData(): void {
         this.loadingAuthData = true;
         this._cd.markForCheck();
-        forkJoin<AuthDriverManifests, Array<AuthConsumer>, Array<AuthSession>>(
+        forkJoin([
             this._authenticationService.getDrivers(),
             this._userService.getConsumers(this.username),
             this._userService.getSessions(this.username)
-        )
+        ])
             .pipe(finalize(() => {
                 this.loadingAuthData = false;
                 this._cd.markForCheck();

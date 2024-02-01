@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt"
-	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/worker_v2"
-	"github.com/ovh/cds/sdk/jws"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/worker_v2"
+	"github.com/ovh/cds/sdk/jws"
 
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/rbac"
@@ -44,6 +46,8 @@ func TestWorkerUnregistered(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -117,6 +121,8 @@ func TestWorkerRefresh(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
@@ -178,6 +184,28 @@ func TestWorkerTakeJobHandler(t *testing.T) {
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
 
+	vs1 := sdk.ProjectVariableSet{
+		Name:       "vs1",
+		ProjectKey: proj.Key,
+	}
+	require.NoError(t, project.InsertVariableSet(ctx, db, &vs1))
+
+	vsItem1 := sdk.ProjectVariableSetItem{
+		ProjectVariableSetID: vs1.ID,
+		Name:                 "item1",
+		Type:                 sdk.ProjectVariableTypeString,
+		Value:                "value1",
+	}
+	require.NoError(t, project.InsertVariableSetItemText(ctx, db, &vsItem1))
+
+	vsItem2 := sdk.ProjectVariableSetItem{
+		ProjectVariableSetID: vs1.ID,
+		Name:                 "item2",
+		Type:                 sdk.ProjectVariableTypeSecret,
+		Value:                "secretValue",
+	}
+	require.NoError(t, project.InsertVariableSetItemText(ctx, db, &vsItem2))
+
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
 		Status:       sdk.StatusBuilding,
@@ -186,6 +214,8 @@ func TestWorkerTakeJobHandler(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 		RunAttempt:   1,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -256,6 +286,9 @@ hatcheries:
 		WorkflowRunID: wr.ID,
 		HatcheryName:  hatch.Name,
 		RunAttempt:    wr.RunAttempt,
+		Job: sdk.V2Job{
+			VariableSets: []string{"vs1"},
+		},
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
 
@@ -284,6 +317,15 @@ hatcheries:
 	require.True(t, has)
 	require.Equal(t, 1, len(jc.Outputs))
 	require.Equal(t, "bar", jc.Outputs["foo"])
+
+	vars, has := takeJob.Contexts.Vars[vs1.Name]
+	require.True(t, has)
+	varsMap, ok := vars.(map[string]interface{})
+	require.True(t, ok)
+	item1 := varsMap[vsItem1.Name]
+	require.Equal(t, vsItem1.Value, item1)
+	item2 := varsMap[vsItem2.Name]
+	require.Equal(t, vsItem2.Value, item2)
 }
 
 func TestWorkerRegister(t *testing.T) {
@@ -306,6 +348,8 @@ func TestWorkerRegister(t *testing.T) {
 		WorkflowName: wkfName,
 		RepositoryID: repo.ID,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 

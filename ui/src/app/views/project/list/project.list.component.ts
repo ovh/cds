@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
 import { Project } from '../../../model/project.model';
 import { ProjectStore } from '../../../service/project/project.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-project-list',

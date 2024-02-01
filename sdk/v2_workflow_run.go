@@ -36,7 +36,9 @@ type V2WorkflowRun struct {
 	ID           string                 `json:"id" db:"id"`
 	ProjectKey   string                 `json:"project_key" db:"project_key"`
 	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
+	VCSServer    string                 `json:"vcs_server" db:"vcs_server"`
 	RepositoryID string                 `json:"repository_id" db:"repository_id"`
+	Repository   string                 `json:"repository" db:"repository"`
 	WorkflowName string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
 	WorkflowSha  string                 `json:"workflow_sha" db:"workflow_sha"`
 	WorkflowRef  string                 `json:"workflow_ref" db:"workflow_ref"`
@@ -58,14 +60,13 @@ type V2WorkflowRun struct {
 }
 
 type WorkflowRunContext struct {
-	CDS  CDSContext        `json:"cds,omitempty"`
-	Git  GitContext        `json:"git,omitempty"`
-	Vars map[string]string `json:"vars,omitempty"`
-	Env  map[string]string `json:"env,omitempty"`
+	CDS CDSContext        `json:"cds,omitempty"`
+	Git GitContext        `json:"git,omitempty"`
+	Env map[string]string `json:"env,omitempty"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {
-	j, err := yaml.Marshal(m)
+	j, err := json.Marshal(m)
 	return j, WrapError(err, "cannot marshal WorkflowRunContext")
 }
 
@@ -73,11 +74,11 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
-	source, ok := src.(string)
+	source, ok := src.([]byte)
 	if !ok {
-		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
-	return WrapError(yaml.Unmarshal([]byte(source), m), "cannot unmarshal WorkflowRunContext")
+	return WrapError(json.Unmarshal(source, m), "cannot unmarshal WorkflowRunContext")
 }
 
 type WorkflowRunJobsContext struct {
@@ -86,10 +87,10 @@ type WorkflowRunJobsContext struct {
 	Needs        NeedsContext            `json:"needs"`
 	Inputs       map[string]interface{}  `json:"inputs"`
 	Steps        StepsContext            `json:"steps"`
-	Secrets      map[string]string       `json:"secrets"`
 	Matrix       map[string]string       `json:"matrix"`
 	Integrations *JobIntegrationsContext `json:"integrations,omitempty"`
 	Gate         map[string]interface{}  `json:"gate"`
+	Vars         map[string]interface{}  `json:"vars"`
 }
 
 type V2WorkflowRunData struct {
@@ -637,4 +638,10 @@ type V2WorkflowRunResultGenericDetail struct {
 type V2WorkflowRunResultVariableDetail struct {
 	Name  string `json:"name" mapstructure:"name"`
 	Value string `json:"value" mapstructure:"value"`
+}
+
+type V2WorkflowRunSearchFilter struct {
+	Key     string   `json:"key"`
+	Options []string `json:"options"`
+	Example string   `json:"example"`
 }

@@ -518,6 +518,98 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		}
 }
 
+func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			consumer := getUserConsumer(ctx)
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			actors, err := workflow_v2.LoadRunsActors(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
+			workflowNames, err := workflow_v2.LoadRunsWorkflowNames(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
+			refs, err := workflow_v2.LoadRunsGitRefs(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
+			filters := []sdk.V2WorkflowRunSearchFilter{
+				{
+					Key:     "actor",
+					Options: actors,
+					Example: consumer.GetUsername(),
+				},
+				{
+					Key:     "workflow",
+					Options: workflowNames,
+					Example: "workflow-name",
+				},
+				{
+					Key:     "branch",
+					Options: refs,
+					Example: "branch-name",
+				},
+				{
+					Key:     "status",
+					Options: []string{sdk.StatusFail, sdk.StatusSuccess, sdk.StatusBuilding, sdk.StatusStopped},
+					Example: "Success, Failure, etc.",
+				},
+			}
+
+			return service.WriteJSON(w, filters, http.StatusOK)
+		}
+}
+
+func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			offset := service.FormUInt(req, "offset")
+			limit := service.FormUInt(req, "limit")
+
+			filters := workflow_v2.SearchsRunsFilters{
+				Workflows: req.URL.Query()["workflow"],
+				Actors:    req.URL.Query()["actor"],
+				Status:    req.URL.Query()["status"],
+				Branches:  req.URL.Query()["branch"],
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			count, err := workflow_v2.CountRuns(ctx, api.mustDB(), proj.Key, filters)
+			if err != nil {
+				return err
+			}
+
+			runs, err := workflow_v2.SearchRuns(ctx, api.mustDB(), proj.Key, filters, offset, limit)
+			if err != nil {
+				return err
+			}
+
+			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
+
+			return service.WriteJSON(w, runs, http.StatusOK)
+		}
+}
+
 func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -1182,7 +1274,9 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsProject.ID,
+		VCSServer:    vcsProject.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: wk.Name,
 		WorkflowRef:  wkEntity.Ref,
 		WorkflowSha:  wkEntity.Commit,
