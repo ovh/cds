@@ -653,6 +653,9 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunContextsToJSON", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateRunContextsToJSON(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunRepositoryInfo", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunRepositoryInfo(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
 	if err != nil {

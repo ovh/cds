@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/yaml"
@@ -31,7 +33,7 @@ func (m *OldContext) Scan(src interface{}) error {
 }
 
 func MigrateRunContextsToJSON(ctx context.Context, db *gorp.DbMap) error {
-	runs, err := workflow_v2.LoadAllUnsafe(ctx, db)
+	runs, err := workflow_v2.LoadRunsUnsafe(ctx, db)
 	if err != nil {
 		return err
 	}
@@ -55,6 +57,45 @@ func MigrateRunContextsToJSON(ctx context.Context, db *gorp.DbMap) error {
 			return err
 		}
 		r.Contexts = oldContextsMap[r.ID]
+		if err := workflow_v2.UpdateRun(ctx, tx, &r); err != nil {
+			return err
+		}
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func MigrateRunRepositoryInfo(ctx context.Context, db *gorp.DbMap) error {
+	runs, err := workflow_v2.LoadRunsUnsafe(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range runs {
+		tx, err := db.Begin()
+		if err != nil {
+			return err
+		}
+		vcs, err := vcs.LoadVCSByIDAndProjectKey(ctx, db, r.ProjectKey, r.VCSServerID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if vcs != nil {
+			r.VCSServer = vcs.Name
+		} else {
+			r.VCSServer = r.VCSServerID
+		}
+		repo, err := repository.LoadRepositoryByVCSAndID(ctx, db, r.VCSServerID, r.RepositoryID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		if repo != nil {
+			r.Repository = repo.Name
+		} else {
+			r.Repository = r.RepositoryID
+		}
 		if err := workflow_v2.UpdateRun(ctx, tx, &r); err != nil {
 			return err
 		}

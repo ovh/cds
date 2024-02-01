@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -102,6 +103,38 @@ func interactiveChooseVCSServer(proj *sdk.Project, gitRepo repo.Repo) (string, e
 		return "", cli.NewError("your CDS project must be linked to a repositories manager to perform this operation")
 	case 1:
 		return proj.VCSServers[0].Name, nil
+	default:
+		fetchURL, err := gitRepo.FetchURL(context.Background())
+		if err != nil {
+			return "", cli.WrapError(err, "Unable to get remote URL")
+		}
+		if !strings.HasPrefix(fetchURL, "https://") && !strings.HasPrefix(fetchURL, "ssh://") && !strings.HasPrefix(fetchURL, "git@") {
+			return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
+		}
+
+		for _, v := range proj.VCSServers {
+			if (strings.HasPrefix(fetchURL, "https://github.com/") || strings.HasPrefix(fetchURL, "git@github.com")) && v.Type == "github" && v.URL == "" {
+				fmt.Printf(" * using repositories manager %s", cli.Magenta(v.Name))
+				return v.Name, nil
+			}
+			if v.URL != "" {
+				rmURL, err := url.Parse(v.URL)
+				if err != nil {
+					return "", cli.WrapError(err, "Unable to get VCS Configuration")
+				}
+				rmHost := rmURL.Hostname()
+				fetchURLParsed, err := url.Parse(fetchURL)
+				if err != nil {
+					return "", cli.NewError("Unable to parse remote URL %v", fetchURL)
+				}
+				originHost := fetchURLParsed.Hostname()
+				if originHost == rmHost {
+					fmt.Printf(" * using repositories manager %s (%s)", cli.Magenta(v.Name), cli.Magenta(rmURL.String()))
+					fmt.Println()
+					return v.Name, nil
+				}
+			}
+		}
 	}
 
 	// Ask the user to choose the repository

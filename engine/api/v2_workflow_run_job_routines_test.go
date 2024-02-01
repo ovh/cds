@@ -2,14 +2,15 @@ package api
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestReEnqueueScheduledJobs(t *testing.T) {
@@ -26,7 +27,9 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",
@@ -99,7 +102,9 @@ func TestStopDeadJobs(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: sdk.RandomString(10),
 		WorkflowSha:  "123",
 		WorkflowRef:  "master",

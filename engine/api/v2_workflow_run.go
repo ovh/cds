@@ -541,6 +541,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			refs, err := workflow_v2.LoadRunsGitRefs(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			filters := []sdk.V2WorkflowRunSearchFilter{
 				{
 					Key:     "actor",
@@ -554,7 +559,7 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				},
 				{
 					Key:     "branch",
-					Options: []string{},
+					Options: refs,
 					Example: "branch-name",
 				},
 				{
@@ -579,6 +584,9 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 
 			filters := workflow_v2.SearchsRunsFilters{
 				Workflows: req.URL.Query()["workflow"],
+				Actors:    req.URL.Query()["actor"],
+				Status:    req.URL.Query()["status"],
+				Branches:  req.URL.Query()["branch"],
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
@@ -1258,7 +1266,9 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   proj.Key,
 		VCSServerID:  vcsProject.ID,
+		VCSServer:    vcsProject.Name,
 		RepositoryID: repo.ID,
+		Repository:   repo.Name,
 		WorkflowName: wk.Name,
 		WorkflowRef:  wkEntity.Ref,
 		WorkflowSha:  wkEntity.Commit,

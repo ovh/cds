@@ -36,7 +36,9 @@ type V2WorkflowRun struct {
 	ID           string                 `json:"id" db:"id"`
 	ProjectKey   string                 `json:"project_key" db:"project_key"`
 	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
+	VCSServer    string                 `json:"vcs_server" db:"vcs_server"`
 	RepositoryID string                 `json:"repository_id" db:"repository_id"`
+	Repository   string                 `json:"repository" db:"repository"`
 	WorkflowName string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
 	WorkflowSha  string                 `json:"workflow_sha" db:"workflow_sha"`
 	WorkflowRef  string                 `json:"workflow_ref" db:"workflow_ref"`
