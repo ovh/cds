@@ -74,6 +74,13 @@ type img struct {
 }
 
 func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, tags []string, registry, registryAuth string) error {
+	if image == "" {
+		return sdk.Errorf("wrong usage: <image> parameter should not be empty")
+	}
+	if len(tags) == 0 {
+		return sdk.Errorf("wrong usage: <tags> parameter should not be empty")
+	}
+
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return sdk.Errorf("unable to get instanciate docker client: %v", err)
@@ -119,7 +126,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 			grpcplugins.Error(err.Error())
 			return err
 		}
-		grpcplugins.Logf("  %q pushed in %.3fs", result.Name(), d.Seconds())
+		grpcplugins.Logf("Image %s pushed in %.3fs", result.Name(), d.Seconds())
 	}
 
 	return nil
