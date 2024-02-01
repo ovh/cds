@@ -2,15 +2,24 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/docker/cli/cli/streams"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-units"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/moby/moby/client"
+	"github.com/ovh/cds/contrib/grpcplugins"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
+	"github.com/pkg/errors"
 )
 
 type dockerPushPlugin struct {
@@ -42,10 +51,11 @@ func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	image := q.GetOptions()["image"]
 	tags := q.GetOptions()["tags"]
 	registry := q.GetOptions()["registry"]
+	auth := q.GetOptions()["registryAuth"]
 
 	tagSlice := strings.Split(tags, ",")
 
-	if err := actPlugin.perform(ctx, image, tagSlice, registry); err != nil {
+	if err := actPlugin.perform(ctx, image, tagSlice, registry, auth); err != nil {
 		res.Status = sdk.StatusFail
 		res.Status = err.Error()
 		return res, err
@@ -54,8 +64,16 @@ func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	return res, nil
 }
 
-func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, tags []string, registry string) error {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+type img struct {
+	repository string
+	tag        string
+	imageID    string
+	created    string
+	size       string
+}
+
+func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, tags []string, registry, registryAuth string) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return sdk.Errorf("unable to get instanciate docker client: %v", err)
 	}
@@ -63,14 +81,6 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	imageSummaries, err := cli.ImageList(ctx, types.ImageListOptions{All: true})
 	if err != nil {
 		return sdk.Errorf("unable to get docker image %q: %v", image, err)
-	}
-
-	type img struct {
-		repository string
-		tag        string
-		imageID    string
-		created    string
-		size       string
 	}
 
 	images := []img{}
@@ -91,6 +101,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 
 	var imgFound *img
 	for i := range images {
+		grpcplugins.Logf("image %s:%s", images[i].repository, images[i].tag)
 		if images[i].repository+":"+images[i].tag == image {
 			imgFound = &images[i]
 			break
@@ -102,19 +113,150 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	}
 
 	for _, tag := range tags {
-		var destination = registry + "/" + imgFound.repository + ":" + tag
-		if err := cli.ImageTag(ctx, imgFound.imageID, destination); err != nil {
-			return sdk.Errorf("unable to tag %q: %v", image, err)
-		}
-
-		output, err := cli.ImagePush(ctx, destination, types.ImagePushOptions{})
+		result, d, err := actPlugin.performImage(ctx, cli, image, imgFound, registry, registryAuth, tag)
 		if err != nil {
-			return sdk.Errorf("unable to push %q: %v", image, err)
+			grpcplugins.Error(err.Error())
+			return err
 		}
-
+		grpcplugins.Logf("  %q pushed in %.3fs", result.Name(), d.Seconds())
 	}
 
 	return nil
+}
+
+func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *img, registry string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
+	var t0 = time.Now()
+
+	// Create run result at status "pending"
+	var runResultRequest = workerruntime.V2RunResultRequest{
+		RunResult: &sdk.V2WorkflowRunResult{
+			IssuedAt: time.Now(),
+			Type:     sdk.V2WorkflowRunResultTypeDocker,
+			Status:   sdk.V2WorkflowRunResultStatusPending,
+			Detail: sdk.V2WorkflowRunResultDetail{
+				Data: sdk.V2WorkflowRunResultDockerDetail{
+					Name:         source,
+					ID:           img.imageID,
+					HumanSize:    img.size,
+					HumanCreated: img.created,
+				},
+			},
+		},
+	}
+
+	response, err := grpcplugins.CreateRunResult(ctx, &actPlugin.Common, &runResultRequest)
+	if err != nil {
+		return nil, time.Since(t0), err
+	}
+
+	result := response.RunResult
+
+	var destination string
+	// Upload the file to an artifactory or CDN
+	switch {
+	case result.ArtifactManagerIntegrationName != nil:
+		integration, err := grpcplugins.GetIntegrationByName(ctx, &actPlugin.Common, *response.RunResult.ArtifactManagerIntegrationName)
+		if err != nil {
+			return nil, time.Since(t0), err
+		}
+
+		repository := integration.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-docker"
+		rtURLRaw := integration.Config[sdk.ArtifactoryConfigURL].Value
+		if !strings.HasSuffix(rtURLRaw, "/") {
+			rtURLRaw = rtURLRaw + "/"
+		}
+		rtURL, err := url.Parse(rtURLRaw)
+		if err != nil {
+			return nil, time.Since(t0), err
+		}
+
+		destination = repository + "." + rtURL.Host + "/" + img.repository + ":" + tag
+
+		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
+			Name:         destination,
+			ID:           img.imageID,
+			HumanSize:    img.size,
+			HumanCreated: img.created,
+		}
+
+		if err := cli.ImageTag(ctx, img.imageID, destination); err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to tag %q to %q: %v", source, destination, err)
+		}
+
+		auth := types.AuthConfig{
+			Username:      integration.Config[sdk.ArtifactoryConfigTokenName].Value,
+			Password:      integration.Config[sdk.ArtifactoryConfigToken].Value,
+			ServerAddress: repository + "." + rtURL.Host,
+		}
+		buf, _ := json.Marshal(auth)
+		registryAuth = base64.URLEncoding.EncodeToString(buf)
+
+		output, err := cli.ImagePush(ctx, destination, types.ImagePushOptions{RegistryAuth: registryAuth})
+		if err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to push %q: %v", destination, err)
+		}
+
+		if err := jsonmessage.DisplayJSONMessagesToStream(output, streams.NewOut(os.Stdout), nil); err != nil {
+			return nil, time.Since(t0), errors.Errorf("unable to push %q: %v", destination, err)
+		}
+
+		var rtConfig = grpcplugins.ArtifactoryConfig{
+			URL:   rtURL.String(),
+			Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
+		}
+
+		rtFolderPath := img.repository + "/" + tag
+		rtFolderPathInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, rtFolderPath)
+		if err != nil {
+			return nil, time.Since(t0), err
+		}
+
+		var manifestFound bool
+		for _, child := range rtFolderPathInfo.Children {
+			if strings.HasSuffix(child.URI, "manifest.json") { // Can be manifest.json of list.manifest.json for multi-arch docker image
+				rtPathInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &actPlugin.Common, rtConfig, repository, rtFolderPath+child.URI)
+				if err != nil {
+					return nil, time.Since(t0), err
+				}
+				manifestFound = true
+				result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
+				result.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
+				result.ArtifactManagerMetadata.Set("type", "docker")
+				result.ArtifactManagerMetadata.Set("maturity", integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value)
+				result.ArtifactManagerMetadata.Set("name", destination)
+				result.ArtifactManagerMetadata.Set("path", rtPathInfo.Path)
+				result.ArtifactManagerMetadata.Set("md5", rtPathInfo.Checksums.Md5)
+				result.ArtifactManagerMetadata.Set("sha1", rtPathInfo.Checksums.Sha1)
+				result.ArtifactManagerMetadata.Set("sha256", rtPathInfo.Checksums.Sha256)
+				result.ArtifactManagerMetadata.Set("uri", rtPathInfo.URI)
+				result.ArtifactManagerMetadata.Set("mimeType", rtPathInfo.MimeType)
+				result.ArtifactManagerMetadata.Set("downloadURI", rtPathInfo.DownloadURI)
+				result.ArtifactManagerMetadata.Set("createdBy", rtPathInfo.CreatedBy)
+				result.ArtifactManagerMetadata.Set("localRepository", rtPathInfo.Repo)
+				break
+			}
+		}
+		if !manifestFound {
+			return nil, time.Since(t0), errors.New("unable to get uploaded image manifest")
+		}
+
+	default:
+		// Push on the registry set as parameter
+		destination = registry + "/" + source + ":" + tag
+
+	}
+
+	details, err := result.GetDetailAsV2WorkflowRunResultDockerDetail()
+	if err != nil {
+		return nil, time.Since(t0), err
+	}
+	details.Name = destination
+	result.Detail.Data = details
+	result.Status = sdk.V2WorkflowRunResultStatusCompleted
+
+	updatedRunresult, err := grpcplugins.UpdateRunResult(ctx, &actPlugin.Common, &workerruntime.V2RunResultRequest{RunResult: result})
+	return updatedRunresult.RunResult, time.Since(t0), err
+
 }
 
 func HumanDuration(seconds int64) string {

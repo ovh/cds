@@ -10,10 +10,25 @@ inputs:
     required: true
   tags:
     type: string
-    description: Image tags
-    required: true
-  registries:
+    description: |- 
+      The tags to associate with the image on the registry.
+
+      This parameter can be empty if you want to keep the same tag.
+    required: false
+  registry:
     type: string
-    description: Docker registries to push on
-    required: true
+    description: |-
+      Docker registry to push on.
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  registryAuth:
+    type: string
+    description: |-
+      Docker base64url-encoded auth configuration. 
+      
+      See docker authentication section for more details: https://docs.docker.com/engine/api/v1.41/#section/Authentication.
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
 

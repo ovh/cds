@@ -30,7 +30,7 @@ func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error)
 	var client *redis.Client
 
 	//if host is line master@localhost:26379,localhost:26380 => it's a redis sentinel cluster
-	if strings.Contains(host, "@") && strings.Contains(host, ",") {
+	if strings.Contains(host, "@") {
 		masterName := strings.Split(host, "@")[0]
 		sentinelsStr := strings.Split(host, "@")[1]
 		sentinels := strings.Split(sentinelsStr, ",")
