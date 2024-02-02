@@ -11,124 +11,105 @@ card:
 
 Each action on CDS triggers an event.
 
-# Analysis event
 
-```go
-type AnalysisEvent struct {
-	ProjectEventV2
-	VCSName    string `json:"vcs_name"`
-	Repository string `json:"repository"`
-	Status     string `json:"status"`
-	UserID     string `json:"user_id,omitempty"`
-	Username   string `json:"username,omitempty"`
-}
-
-type ProjectEventV2 struct {
-	ID         string          `json:"id"`
-	Type       string          `json:"type"`
-	ProjectKey string          `json:"project_key"`
-	Payload    json.RawMessage `json:"payload"`
-}
-```
-
-Status:
+# Analysis events
 
 * `AnalysisStart`
 * `AnalysisDone`
 
-# AsCode entity event
+# AsCode entity events
 
 * `EntityCreated`
 * `EntityUpdated`
 * `EntityDeleted`
 
-# Hachery event
+# Hachery events
 
 * `HatcheryCreated`
 * `HatcheryUpdated`
 * `HatcheryDeleted`
 
-# Integration model event
+# Integration model events
 
 * `IntegrationModelCreated`
 * `IntegrationModelUpdated`
 * `IntegrationModelDeleted`
 
-# Integration event	
+# Integration events
 
 * `IntegrationCreated`
 * `IntegrationUpdated`
 * `IntegrationDeleted`
 
-# Notification event
+# Notification events
 
 * `NotificationCreated`
 * `NotificationUpdated`
 * `NotificationDeleted`
 
-# Organization event
+# Organization events
 
 * `OrganizationCreated`
 * `OrganizationDeleted`
 
-# Permission event
+# Permission events
 
 * `PermissionCreated`
 * `PermissionUpdated`
 * `PermissionDeleted`
 
-# Plugin event
+# Plugin events
 
 * `PluginCreated`
 * `PluginUpdated`
 * `PluginDeleted`
 
-# Project event
+# Project events
 
 * `ProjectCreated`
 * `ProjectUpdated`
 * `ProjectDeleted`
 
-# Region event
+# Region events
 
 * `RegionCreated`
 * `RegionDeleted`
 
-# Repository event
+# Repository events
 
 * `RepositoryCreated`
 * `RepositoryDeleted`
 
-# User event
+# User events
 
 * `UserCreated`
 * `UserUpdated`
 * `UserDeleted`
 
-# User gpg event
+# User gpg events
 
 * `UserGPGKeyCreated`
 * `UserGPGKeyDeleted`
 
-# VariableSet event
+# VariableSet events
 
 * `VariableSetCreated`
 * `VariableSetDeleted`
 
-# VariableSet item event
+# VariableSet item events
 
 * `VariableSetItemCreated`
 * `VariableSetItemUpdated`
 * `VariableSetItemDeleted`
 
-# Workflow Run event
+# Workflow Run events
 
 * `RunCrafted`
 * `RunBuilding`
 * `RunEnded`
 * `RunRestartFailedJob`
 
-# Workflow Run Job event
+# Workflow Run Job events
 
 * `RunJobEnqueued`
 * `RunJobScheduled`

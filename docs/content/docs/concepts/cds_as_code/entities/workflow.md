@@ -5,7 +5,7 @@ weight: 2
 
 # Description
 
-The workflow is the main entity in CDS.It allows you to chain jobs, using conditional branching. 
+The workflow is the main entity in CDS. It allows you to chain jobs, using conditional branching. 
 
 # As Code directory
 
