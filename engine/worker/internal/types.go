@@ -46,7 +46,7 @@ type CurrentJobV2 struct {
 	currentStepIndex int
 	currentStepName  string
 	integrations     map[string]sdk.ProjectIntegration // contains integration with clearPassword
-	sensitiveData    []string
+	envFromHooks     map[string]string
 }
 
 type CurrentWorker struct {
@@ -413,6 +413,10 @@ func (wk *CurrentWorker) Environ() []string {
 
 		//Set env variables from hooks
 		for k, v := range wk.currentJob.envFromHooks {
+			newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
+		}
+	} else {
+		for k, v := range wk.currentJobV2.envFromHooks {
 			newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 		}
 	}

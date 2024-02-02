@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 
@@ -88,13 +91,11 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 	w.currentJobV2.runJobContext.CDS.Workspace = wdAbs
 
 	log.Info(ctx, "Executing hooks setup from directory: %s", hdFile.Name())
-	if err := w.executeHooksSetup(ctx, w.basedir, hdFile.Name()); err != nil {
+	if err := w.executeHooksSetupV2(ctx, w.basedir, hdFile.Name()); err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return w.failJob(ctx, fmt.Sprintf("Error: unable to setup hooks: %v", err))
 	}
 	res = w.runJobAsCode(ctx)
-
-	// TODO Teardown worker hooks
 
 	// Delete hooks directory
 	if err := teardownDirectory(w.basedir, hdFile.Name()); err != nil {
@@ -547,9 +548,9 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 		switch reflect.ValueOf(v).Kind() {
 		case reflect.Map, reflect.Slice:
 			s, _ := json.Marshal(v)
-			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = string(s)
+			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = sdk.OneLineValue(string(s))
 		default:
-			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = fmt.Sprintf("%v", v)
+			newEnvVar[fmt.Sprintf("CDS_%s", strings.ToUpper(k))] = sdk.OneLineValue(fmt.Sprintf("%v", v))
 		}
 
 	}
@@ -560,7 +561,7 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal git context")
 	}
 	for k, v := range mapGIT {
-		newEnvVar[fmt.Sprintf("GIT_%s", strings.ToUpper(k))] = fmt.Sprintf("%v", v)
+		newEnvVar[fmt.Sprintf("GIT_%s", strings.ToUpper(k))] = sdk.OneLineValue(fmt.Sprintf("%v", v))
 	}
 
 	var mapEnv map[string]interface{}
@@ -572,9 +573,67 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 		if strings.HasPrefix(k, "CDS_") || strings.HasPrefix(k, "GIT_") {
 			continue
 		}
-		newEnvVar[strings.ToUpper(k)] = fmt.Sprintf("%v", v)
+		newEnvVar[strings.ToUpper(k)] = sdk.OneLineValue(fmt.Sprintf("%v", v))
 	}
 	return newEnvVar, nil
+}
+
+func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, workingDir string) error {
+	if strings.EqualFold(runtime.GOOS, "windows") {
+		log.Warn(ctx, "hooks are not supported on windows")
+		return nil
+	}
+
+	var result = make(map[string]string)
+
+	basedir, ok := fs.(*afero.BasePathFs)
+	if !ok {
+		return sdk.WithStack(fmt.Errorf("invalid given basedir"))
+	}
+
+	workerEnv := w.Environ()
+
+	for _, h := range w.hooks {
+		filepath, err := basedir.RealPath(h.SetupPath)
+		if err != nil {
+			return sdk.WrapError(err, "cannot get real path for: %s", h.SetupPath)
+		}
+
+		msg := sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Time:    time.Now(),
+			Message: "Running worker hook " + h.Config.Label,
+		}
+		if err := w.ClientV2().V2QueuePushJobInfo(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, msg); err != nil {
+			return sdk.WrapError(err, "cannot record V2QueuePushJobInfo for job (err spawn): %s", w.currentJobV2.runJob.ID)
+		}
+
+		str := fmt.Sprintf("source %s ; echo '<<<ENVIRONMENT>>>' ; env", filepath)
+		cmd := exec.Command("bash", "-c", str)
+		cmd.Env = workerEnv
+		bs, err := cmd.CombinedOutput()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		s := bufio.NewScanner(bytes.NewReader(bs))
+		start := false
+		for s.Scan() {
+			if s.Text() == "<<<ENVIRONMENT>>>" {
+				start = true
+			} else if start {
+				kv := strings.SplitN(s.Text(), "=", 2)
+				if len(kv) == 2 {
+					k := kv[0]
+					v := kv[1]
+					if !sdk.IsInArray(k+"="+v, workerEnv) {
+						result[k] = v
+					}
+				}
+			}
+		}
+	}
+	w.currentJobV2.envFromHooks = result
+	return nil
 }
 
 func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV2, fs afero.Fs, workingDir string) error {

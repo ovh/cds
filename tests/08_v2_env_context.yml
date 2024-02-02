@@ -31,8 +31,10 @@ testcases:
       git_repo: "{{.git_repo}}"
     - name: Create variable set item var1
       script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 var1 '{\"key\": \"value\"}' string --force"
-    - name: Create variable set item secret
+    - name: Create variable set item secret one line
       script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 varSecret myLongSecret secret"
+    - name: Create variable set item secret multiline line
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 varSecret myMultilineSecret \"secretMultiline1 \n secretMultiline2\""  
 
     - type: v2_install_gpg_key
       cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
@@ -84,6 +86,10 @@ testcases:
                   id: stringVar
                 - run: "echo ${{ vars.varset1.varSecret }}" 
                   id: secretVar 
+                - run: echo "${{ toJSON(vars.varset1) }}" 
+                  id: varset1
+                - run: env
+                  id: env  
             init:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
@@ -121,4 +127,8 @@ testcases:
     - name: Check stringVar log content
       script: "cat {{.cds_workflow}}-1-1-overrideEnv-stringVar && cat {{.cds_workflow}}-1-1-overrideEnv-stringVar | grep \"value\""  
     - name: Check secretVar log content
-      script: "cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep \"**********\""    
+      script: "cat {{.cds_workflow}}-1-1-overrideEnv-varset1 && cat {{.cds_workflow}}-1-1-overrideEnv-varset1 | grep \"secretMultiline2\""   
+    - name: Check multiline secret
+      script: "cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep \"myMultilineSecret: **********\""    
+    - name: Check git context    
+      script: 'cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep "\"ssh_private\": \"**********"'

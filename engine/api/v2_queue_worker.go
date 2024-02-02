@@ -130,6 +130,15 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 	}
 }
 
+func buildSensitiveData(value string) []string {
+	datas := make([]string, 0)
+
+	// If multiline, add all lines as sensitive data
+	datas = append(datas, strings.Split(value, "\n")...)
+	datas = append(datas, strings.Split(value, "\\n")...)
+	datas = append(datas, sdk.OneLineValue(value))
+	return datas
+}
 func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, []string, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
@@ -142,13 +151,13 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	for _, k := range proj.Keys {
 		if k.Name == vcs.Auth.SSHKeyName {
 			contexts.Git.SSHPrivate = k.Private
-			sensitiveDatas = append(sensitiveDatas, k.Private)
+			sensitiveDatas = append(sensitiveDatas, buildSensitiveData(k.Private)...)
 			break
 		}
 	}
 	if vcs.Auth.Token != "" {
 		contexts.Git.Token = vcs.Auth.Token
-		sensitiveDatas = append(sensitiveDatas, vcs.Auth.Token)
+		sensitiveDatas = append(sensitiveDatas, buildSensitiveData(vcs.Auth.Token)...)
 	}
 
 	contexts.Vars = make(map[string]interface{})
@@ -159,6 +168,9 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				var jsonValue map[string]interface{}
 				if err := json.Unmarshal([]byte(item.Value), &jsonValue); err != nil {
 					vsMap[item.Name] = item.Value
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
+					}
 				} else {
 					vsMap[item.Name] = jsonValue
 					// also add all value from json
@@ -174,7 +186,9 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			} else if strings.HasPrefix(item.Value, "[") && strings.HasSuffix(item.Value, "]") {
 				var jsonArrayValue []interface{}
 				if err := json.Unmarshal([]byte(item.Value), &jsonArrayValue); err != nil {
-					vsMap[item.Name] = item.Value
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
+					}
 				} else {
 					vsMap[item.Name] = jsonArrayValue
 
@@ -190,7 +204,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				vsMap[item.Name] = item.Value
 			}
 			if item.Type == sdk.ProjectVariableTypeSecret {
-				sensitiveDatas = append(sensitiveDatas, item.Value)
+				sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
 			}
 		}
 		contexts.Vars[vs.Name] = vsMap
@@ -322,7 +336,7 @@ func getAllSensitiveDataFromJsonArray(ctx context.Context, secretJsonValue []int
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal json secret value: %v", err)
 	}
 	// Add JSON value with indent in sensitive data in case of user using toJson function.
-	datas = append(datas, string(bts))
+	datas = append(datas, buildSensitiveData(string(bts))...)
 
 	// Retrieve sensitive value
 	for _, arrayItem := range secretJsonValue {
@@ -333,7 +347,7 @@ func getAllSensitiveDataFromJsonArray(ctx context.Context, secretJsonValue []int
 			}
 			datas = append(datas, dataFromMap...)
 		} else {
-			datas = append(datas, fmt.Sprintf("%v", arrayItem))
+			datas = append(datas, buildSensitiveData(fmt.Sprintf("%v", arrayItem))...)
 		}
 	}
 	return datas, nil
@@ -346,7 +360,7 @@ func getAllSensitiveDataFromJson(ctx context.Context, secretJsonValue map[string
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal json secret value: %v", err)
 	}
 	// Add JSON value with indent in sensitive data in case of user using toJson function.
-	datas = append(datas, string(bts))
+	datas = append(datas, buildSensitiveData(string(bts))...)
 
 	// browse all keys in value
 	for _, value := range secretJsonValue {
@@ -363,7 +377,7 @@ func getAllSensitiveDataFromJson(ctx context.Context, secretJsonValue map[string
 			}
 			datas = append(datas, dataFromArray...)
 		} else { // if string and numbers and other ...
-			datas = append(datas, fmt.Sprintf("%v", value))
+			datas = append(datas, buildSensitiveData(fmt.Sprintf("%v", value))...)
 		}
 	}
 	return datas, nil
