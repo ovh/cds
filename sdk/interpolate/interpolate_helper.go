@@ -211,9 +211,8 @@ func coalesce(v ...interface{}) interface{} {
 
 // toJSON encodes an item into a JSON string
 func toJSON(v interface{}) string {
-	// output, _ := json.Marshal(v)
-	// return string(output)
-	return ""
+	output, _ := json.Marshal(v)
+	return string(output)
 }
 
 // toPrettyJSON encodes an item into a pretty (indented) JSON string
