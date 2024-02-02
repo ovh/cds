@@ -146,7 +146,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	contexts.CDS.Stage = jobRun.Job.Stage
 	contexts.Git = run.Contexts.Git
 
-	sensitiveDatas := make([]string, 0)
+	sensitiveDatas := sdk.StringSlice{}
 
 	for _, k := range proj.Keys {
 		if k.Name == vcs.Auth.SSHKeyName {
@@ -326,6 +326,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}
 	}
 
+	sensitiveDatas.Unique()
 	return contexts, sensitiveDatas, nil
 }
 
