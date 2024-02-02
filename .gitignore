@@ -1,7 +1,11 @@
 *.swp
 *.iml
 .idea
-.vscode
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
 .DS_Store
 dump.rdb
 dist
@@ -63,3 +67,7 @@ docs/content/cli/engine/
 docs/content/cli/worker/
 docs/content/cli/api/*
 !docs/content/cli/api/_index.md
+
+# contrib vscode-cds
+contrib/vscode-cds/node_modules/
+contrib/vscode-cds/out/

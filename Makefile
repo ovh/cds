@@ -63,7 +63,7 @@ build_cli:
 	$(MAKE) build -C cli/cdsctl OS="$(foreach OS,${TARGET_OS},${OS}/%)" ARCH="$(foreach ARCH,${TARGET_ARCH},%/${ARCH})"
 
 build_contrib:
-	 $(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
+	$(MAKE) build -C contrib OS="${TARGET_OS}" ARCH="${TARGET_ARCH}"
 
 define get_dist_from_target
 $(filter %/$(notdir $(1)), $(ALL_DIST))
