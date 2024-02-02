@@ -13,6 +13,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func LoadAll(ctx context.Context, db gorp.SqlExecutor) ([]sdk.RBAC, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM rbac`)
+	return getAll(ctx, db, query)
+}
+
 func LoadRBACByName(ctx context.Context, db gorp.SqlExecutor, name string, opts ...LoadOptionFunc) (*sdk.RBAC, error) {
 	query := `SELECT * FROM rbac WHERE name = $1`
 	return get(ctx, db, gorpmapping.NewQuery(query).Args(name), opts...)

@@ -3762,6 +3762,21 @@ func (mr *MockRBACClientMockRecorder) RBACImport(ctx, rbacRule interface{}, mods
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockRBACClient)(nil).RBACImport), varargs...)
 }
 
+// RBACList mocks base method.
+func (m *MockRBACClient) RBACList(ctx context.Context) ([]sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACList", ctx)
+	ret0, _ := ret[0].([]sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACList indicates an expected call of RBACList.
+func (mr *MockRBACClientMockRecorder) RBACList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACList", reflect.TypeOf((*MockRBACClient)(nil).RBACList), ctx)
+}
+
 // MockProjectKeysClient is a mock of ProjectKeysClient interface.
 type MockProjectKeysClient struct {
 	ctrl     *gomock.Controller
@@ -9474,6 +9489,21 @@ func (mr *MockInterfaceMockRecorder) RBACImport(ctx, rbacRule interface{}, mods 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, rbacRule}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACImport", reflect.TypeOf((*MockInterface)(nil).RBACImport), varargs...)
+}
+
+// RBACList mocks base method.
+func (m *MockInterface) RBACList(ctx context.Context) ([]sdk.RBAC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RBACList", ctx)
+	ret0, _ := ret[0].([]sdk.RBAC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RBACList indicates an expected call of RBACList.
+func (mr *MockInterfaceMockRecorder) RBACList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RBACList", reflect.TypeOf((*MockInterface)(nil).RBACList), ctx)
 }
 
 // RegionAdd mocks base method.

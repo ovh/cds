@@ -50,6 +50,17 @@ func (api *API) getRBACByIdentifier(ctx context.Context, rbacIdentifier string, 
 	return repo, nil
 }
 
+func (api *API) getPermissionsHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.globalPermissionManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			perms, err := rbac.LoadAll(ctx, api.mustDB())
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, perms, http.StatusOK)
+		}
+}
+
 func (api *API) getRBACHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.globalPermissionManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

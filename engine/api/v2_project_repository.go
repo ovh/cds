@@ -232,7 +232,16 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
-			a, err := api.createAnalyze(ctx, tx, *proj, *vcsProjectWithSecret, repoDB, defaultBranch.ID, defaultBranch.LatestCommit, "")
+			createAnalysis := createAnalysisRequest{
+				proj:          *proj,
+				vcsProject:    *vcsProjectWithSecret,
+				repo:          repoDB,
+				ref:           defaultBranch.ID,
+				commit:        defaultBranch.LatestCommit,
+				hookEventUUID: "",
+				user:          u.AuthConsumerUser.AuthentifiedUser,
+			}
+			a, err := api.createAnalyze(ctx, tx, createAnalysis)
 			if err != nil {
 				return err
 			}

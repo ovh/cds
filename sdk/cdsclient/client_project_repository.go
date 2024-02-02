@@ -32,7 +32,7 @@ func (c *client) ProjectRepositoryDelete(ctx context.Context, projectKey string,
 }
 
 func (c *client) ProjectRepositoryAnalysis(ctx context.Context, analyze sdk.AnalysisRequest) (sdk.AnalysisResponse, error) {
-	path := "/v2/repository/analyze"
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/analysis", analyze.ProjectKey, url.PathEscape(analyze.VcsName), url.PathEscape(analyze.RepoName))
 	var resp sdk.AnalysisResponse
 	_, err := c.PostJSON(ctx, path, &analyze, &resp)
 	return resp, err

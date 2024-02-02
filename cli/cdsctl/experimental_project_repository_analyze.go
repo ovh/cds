@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var projectAnalysisCmd = cli.Command{
@@ -20,8 +21,55 @@ var projectAnalysisCmd = cli.Command{
 func projectRepositoryAnalysis() *cobra.Command {
 	return cli.NewCommand(projectAnalysisCmd, nil, []*cobra.Command{
 		cli.NewListCommand(projectRepositoryAnalysisListCmd, projectRepositoryAnalysisListFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(projectRepositoryGetCmd, projectRepositoryGetFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectRepositoryAnalysisGetCmd, projectRepositoryAnalysisGetFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(projectRepositoryAnalysisTriggerCmd, projectRepositoryAnalysisTriggerFunc, nil, withAllCommandModifiers()...),
 	})
+}
+
+var projectRepositoryAnalysisTriggerCmd = cli.Command{
+	Name:    "trigger",
+	Aliases: []string{"run", "start"},
+	Short:   "Trigger an analysis on the given branch",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "vcs-name"},
+		{Name: "repository-name"},
+	},
+	Flags: []cli.Flag{
+		{
+			Name: "branch",
+		},
+		{
+			Name: "tag",
+		},
+		{
+			Name: "commit",
+		},
+	},
+}
+
+func projectRepositoryAnalysisTriggerFunc(v cli.Values) (interface{}, error) {
+	analysisRequest := sdk.AnalysisRequest{
+		ProjectKey: v.GetString(_ProjectKey),
+		VcsName:    v.GetString("vcs-name"),
+		RepoName:   v.GetString("repository-name"),
+	}
+	if v.GetString("branch") != "" {
+		analysisRequest.Ref = sdk.GitRefBranchPrefix + v.GetString("branch")
+	}
+	if v.GetString("tag") != "" {
+		analysisRequest.Ref = sdk.GitRefTagPrefix + v.GetString("tag")
+	}
+	if v.GetString("commit") != "" {
+		analysisRequest.Commit = v.GetString("commit")
+	}
+	analysisResponse, err := client.ProjectRepositoryAnalysis(context.Background(), analysisRequest)
+	if err != nil {
+		return nil, err
+	}
+	return analysisResponse, nil
 }
 
 var projectRepositoryAnalysisListCmd = cli.Command{
@@ -44,9 +92,9 @@ func projectRepositoryAnalysisListFunc(v cli.Values) (cli.ListResult, error) {
 	return cli.AsListResult(analyses), nil
 }
 
-var projectRepositoryGetCmd = cli.Command{
+var projectRepositoryAnalysisGetCmd = cli.Command{
 	Name:  "show",
-	Short: "List available repositories on a project",
+	Short: "Get the given analysis",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -57,7 +105,7 @@ var projectRepositoryGetCmd = cli.Command{
 	},
 }
 
-func projectRepositoryGetFunc(v cli.Values) error {
+func projectRepositoryAnalysisGetFunc(v cli.Values) error {
 	analysis, err := client.ProjectRepositoryAnalysisGet(context.Background(), v.GetString(_ProjectKey), v.GetString("vcs-name"), v.GetString("repository-name"), v.GetString("analysis-id"))
 	if err != nil {
 		return err

@@ -287,6 +287,7 @@ type RBACClient interface {
 	RBACImport(ctx context.Context, rbacRule sdk.RBAC, mods ...RequestModifier) (sdk.RBAC, error)
 	RBACDelete(ctx context.Context, permissionIdentifier string) error
 	RBACGet(ctx context.Context, permissionIdentifier string) (sdk.RBAC, error)
+	RBACList(ctx context.Context) ([]sdk.RBAC, error)
 }
 
 // ProjectKeysClient exposes project keys related functions
