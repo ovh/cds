@@ -30,6 +30,7 @@ type V2Workflow struct {
 
 type WorkflowOn struct {
 	Push           *WorkflowOnPush           `json:"push,omitempty"`
+	PullRequest    *WorkflowOnPullRequest    `json:"pull_request,omitempty"`
 	ModelUpdate    *WorkflowOnModelUpdate    `json:"model_update,omitempty"`
 	WorkflowUpdate *WorkflowOnWorkflowUpdate `json:"workflow_update,omitempty"`
 }
@@ -38,6 +39,13 @@ type WorkflowOnPush struct {
 	Branches []string `json:"branches,omitempty"`
 	Tags     []string `json:"tags,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
+}
+
+type WorkflowOnPullRequest struct {
+	Branches []string `json:"branches,omitempty"`
+	Comment  string   `json:"pr_comment,omitempty"`
+	Paths    []string `json:"paths,omitempty"`
+	Types    []string `json:"types,omitempty"`
 }
 
 type WorkflowOnModelUpdate struct {
@@ -80,7 +88,13 @@ func IsDefaultHooks(on *WorkflowOn) []string {
 	hookKeys := make([]string, 0)
 	if on.Push != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventPush)
-		if len(on.Push.Paths) > 0 || len(on.Push.Branches) > 0 {
+		if len(on.Push.Paths) > 0 || len(on.Push.Branches) > 0 || len(on.Push.Tags) > 0 {
+			return nil
+		}
+	}
+	if on.PullRequest != nil {
+		hookKeys = append(hookKeys, WorkflowHookEventPullRequest)
+		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 {
 			return nil
 		}
 	}
@@ -128,6 +142,12 @@ func (w *V2Workflow) UnmarshalJSON(data []byte) error {
 						}
 					case WorkflowHookEventPush:
 						workflowAlias.On.Push = &WorkflowOnPush{
+							Branches: []string{}, // trigger for all pushed branches
+							Paths:    []string{},
+							Tags:     []string{},
+						}
+					case WorkflowHookEventPullRequest:
+						workflowAlias.On.PullRequest = &WorkflowOnPullRequest{
 							Branches: []string{}, // trigger for all pushed branches
 							Paths:    []string{},
 						}
@@ -234,6 +254,7 @@ type V2WorkflowHookData struct {
 	BranchFilter    []string `json:"branch_filter,omitempty"`
 	TagFilter       []string `json:"tag_filter,omitempty"`
 	PathFilter      []string `json:"path_filter,omitempty"`
+	TypesFilter     []string `json:"types_filter,omitempty"`
 	TargetBranch    string   `json:"target_branch,omitempty"`
 }
 
@@ -275,19 +296,19 @@ func (w V2Workflow) Lint() []error {
 	workflowSchema := GetWorkflowJsonSchema(nil, nil, nil)
 	workflowSchemaS, err := workflowSchema.MarshalJSON()
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to load action schema")}
+		return []error{NewErrorFrom(err, "unable to load workflow schema")}
 	}
 	schemaLoader := gojsonschema.NewStringLoader(string(workflowSchemaS))
 
 	modelJson, err := json.Marshal(w)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to marshal action")}
+		return []error{NewErrorFrom(err, "unable to marshal workflow")}
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to validate action")}
+		return []error{NewErrorFrom(err, "unable to validate workflow")}
 	}
 
 	for _, e := range result.Errors() {

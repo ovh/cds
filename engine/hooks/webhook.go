@@ -77,21 +77,21 @@ func (s *Service) executeRepositoryWebHook(ctx context.Context, t *sdk.TaskExecu
 		}
 	case BitbucketHeader:
 		headerValue := t.WebHook.RequestHeader[BitbucketHeader][0]
-		var errG error
-		payloads, errG = s.generatePayloadFromBitbucketServerRequest(ctx, t, headerValue)
-		if errG != nil {
-			return nil, errG
+		var err error
+		payloads, err = s.generatePayloadFromBitbucketServerRequest(ctx, t, headerValue)
+		if err != nil {
+			return nil, err
 		}
 	case BitbucketCloudHeader:
 		headerValue := t.WebHook.RequestHeader[BitbucketHeader][0]
-		var errG error
-		payloads, errG = s.generatePayloadFromBitbucketCloudRequest(ctx, t, headerValue)
-		if errG != nil {
-			return nil, errG
+		var err error
+		payloads, err = s.generatePayloadFromBitbucketCloudRequest(ctx, t, headerValue)
+		if err != nil {
+			return nil, err
 		}
 	default:
 		log.Warn(ctx, "executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
-		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")
+		return nil, fmt.Errorf("repository manager not found, cannot read request body")
 	}
 
 	hs := make([]sdk.WorkflowNodeRunHookEvent, 0, len(payloads))

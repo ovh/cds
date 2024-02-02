@@ -53,15 +53,9 @@ func (s *Service) extractDataFromGitlabRequest(body []byte) (string, sdk.HookRep
 	extractedData.Commit = request.After
 
 	for _, c := range request.Commits {
-		for _, p := range c.Added {
-			extractedData.Paths = append(extractedData.Paths, p)
-		}
-		for _, p := range c.Modified {
-			extractedData.Paths = append(extractedData.Paths, p)
-		}
-		for _, p := range c.Removed {
-			extractedData.Paths = append(extractedData.Paths, p)
-		}
+		extractedData.Paths = append(extractedData.Paths, c.Added...)
+		extractedData.Paths = append(extractedData.Paths, c.Modified...)
+		extractedData.Paths = append(extractedData.Paths, c.Removed...)
 	}
 
 	return repoName, extractedData, nil
@@ -102,10 +96,22 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 	if request.Repository != nil {
 		repoName = strings.ToLower(request.Repository.Project.Key) + "/" + request.Repository.Slug
 	}
-	if len(request.Changes) == 0 {
-		return "", extractedData, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to know branch and commit: %s", string(body))
+	switch request.EventKey {
+	case "repo:refs_changed":
+		extractedData.Ref = request.Changes[0].RefID
+		extractedData.Commit = request.Changes[0].ToHash
+	case "pr:opened", "pr:from_ref_updated":
+		extractedData.Ref = request.PullRequest.FromRef.ID
+		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 	}
-	extractedData.Ref = request.Changes[0].RefID
-	extractedData.Commit = request.Changes[0].ToHash
+	if request.EventKey == "repo:refs_changed" {
+		extractedData.Ref = request.Changes[0].RefID
+		extractedData.Commit = request.Changes[0].ToHash
+	}
+
+	if extractedData.Ref == "" {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrInvalidData, "repoName: %v unable to know branch and commit: %s", repoName, string(body))
+	}
+
 	return repoName, extractedData, nil
 }

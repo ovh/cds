@@ -109,11 +109,8 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 
 func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, eventName string, event []byte) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(vcsServerName, repoName)
-	hr := s.Dao.FindRepository(ctx, repoKey)
-	if hr == nil {
-		var err error
-		hr, err = s.Dao.CreateRepository(ctx, vcsServerType, vcsServerName, repoName)
-		if err != nil {
+	if s.Dao.FindRepository(ctx, repoKey) == nil {
+		if _, err := s.Dao.CreateRepository(ctx, vcsServerType, vcsServerName, repoName); err != nil {
 			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
 		}
 	}
@@ -125,7 +122,8 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType strin
 
 	exec := &sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
-		EventName:      cdsEventName,
+		EventName:      cdsEventName, // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
+		EventType:      eventName,    // repo:refs_changed", "pr:opened", "pr:from_ref_updated"
 		VCSServerType:  vcsServerType,
 		VCSServerName:  vcsServerName,
 		RepositoryName: repoName,

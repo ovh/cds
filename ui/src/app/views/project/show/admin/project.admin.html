@@ -37,9 +37,9 @@
         </form>
     </nz-card>
     <nz-card nzTitle="Link to a repository manager" class="coloredTitle">
-        <app-repomanager-form *ngIf="apiConfig && !apiConfig.project_vcs_management_disabled"
+        <app-repomanager-form *ngIf="project && apiConfig && !apiConfig.project_vcs_management_disabled"
             [project]="project"></app-repomanager-form>
-        <app-project-repomanager-list *ngIf="project.vcs_servers && project.vcs_servers.length > 0" [project]="project"
+        <app-project-repomanager-list *ngIf="project && project.vcs_servers && project.vcs_servers.length > 0" [project]="project"
             [reposmanagers]="project.vcs_servers"></app-project-repomanager-list>
     </nz-card>
     <nz-card nzTitle="Danger zone" class="redTitle">

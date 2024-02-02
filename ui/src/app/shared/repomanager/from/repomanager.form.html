@@ -90,7 +90,7 @@
             <ng-container *ngIf="vcsProject.type !== 'gerrit'">
                 <nz-form-item>
                     <h3>Authentication</h3>
-                    CDS needs to call VCS API (getting repos, commits, etc...). Username and token are mandatory.
+                    CDS needs to call VCS API (getting repos, commits, etc...). These fields are mandatory.
                 </nz-form-item>
             </ng-container>
             <ng-container *ngIf="vcsProject.type !== 'gerrit'">
@@ -105,6 +105,21 @@
                     <nz-form-control [nzSm]="14">
                         <input nz-input type="password" [(ngModel)]="vcsProject.auth.token" name="token">
                     </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-label [nzSm]="6">SSH key</nz-form-label>
+                    <nz-form-control [nzSm]="14">
+                        <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
+                                             [(value)]="this.vcsProject.auth.sshKeyName" (valueChange)="updatePublicKey($event)">
+                        </app-parameter-value>
+                    </nz-form-control>
+                    <ng-container *ngIf="selectedPublicKey">
+                        <button nz-button [title]="'key_copy_public' | translate" ngxClipboard
+                                [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
+                            <i nz-icon nzType="copy" nzTheme="outline"></i>
+                        </button>
+                    </ng-container>
                 </nz-form-item>
             </ng-container>
             <ng-container *ngIf="vcsProject.type === 'gerrit'">

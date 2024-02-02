@@ -108,6 +108,7 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 	reflector := jsonschema.Reflector{Anonymous: false}
 	workflowSchema := reflector.Reflect(&V2Workflow{})
 	workflowOn := reflector.Reflect(&WorkflowOn{
+		PullRequest:    &WorkflowOnPullRequest{},
 		Push:           &WorkflowOnPush{},
 		ModelUpdate:    &WorkflowOnModelUpdate{},
 		WorkflowUpdate: &WorkflowOnWorkflowUpdate{},
@@ -134,6 +135,7 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 	workflowSchema.Definitions["V2Job"] = jobSchema.Definitions["V2Job"]
 	workflowSchema.Definitions["WorkflowOn"] = workflowOn.Definitions["WorkflowOn"]
 	workflowSchema.Definitions["WorkflowOnPush"] = workflowOn.Definitions["WorkflowOnPush"]
+	workflowSchema.Definitions["WorkflowOnPullRequest"] = workflowOn.Definitions["WorkflowOnPullRequest"]
 	workflowSchema.Definitions["WorkflowOnModelUpdate"] = workflowOn.Definitions["WorkflowOnModelUpdate"]
 	workflowSchema.Definitions["WorkflowOnWorkflowUpdate"] = workflowOn.Definitions["WorkflowOnWorkflowUpdate"]
 

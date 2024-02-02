@@ -94,6 +94,9 @@ func Do(input string, vars map[string]string) (string, error) {
 				}
 				processedExpression[expression] = void{}
 
+				if strings.HasPrefix(expression, "${{") {
+					continue
+				}
 				var quotedStuff = []string{}
 				var trimmedExpression = strings.TrimPrefix(expression, "{{")
 				trimmedExpression = strings.TrimSuffix(trimmedExpression, "}}")

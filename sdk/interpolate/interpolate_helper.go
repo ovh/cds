@@ -83,8 +83,8 @@ func init() {
 			}
 			return val
 		},
-		"div": func(a, b interface{}) int64 { return toInt64(a) / toInt64(b) },
-		"mod": func(a, b interface{}) int64 { return toInt64(a) % toInt64(b) },
+		"div":       func(a, b interface{}) int64 { return toInt64(a) / toInt64(b) },
+		"mod":       func(a, b interface{}) int64 { return toInt64(a) % toInt64(b) },
 		"ternary":   ternary,
 		"urlencode": func(s string) string { return url.QueryEscape(s) },
 		"dirname":   func(s string) string { return path.Dir(s) },
@@ -211,8 +211,9 @@ func coalesce(v ...interface{}) interface{} {
 
 // toJSON encodes an item into a JSON string
 func toJSON(v interface{}) string {
-	output, _ := json.Marshal(v)
-	return string(output)
+	// output, _ := json.Marshal(v)
+	// return string(output)
+	return ""
 }
 
 // toPrettyJSON encodes an item into a pretty (indented) JSON string

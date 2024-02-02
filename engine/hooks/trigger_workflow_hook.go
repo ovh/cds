@@ -21,6 +21,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 		Workflows:           hre.WorkflowUpdated,
 		Paths:               hre.ExtractData.Paths,
 		RepositoryEventName: hre.EventName,
+		RepositoryEventType: hre.EventType,
 		VCSName:             hre.VCSServerName,
 		RepositoryName:      hre.RepositoryName,
 		AnayzedProjectKeys:  sdk.StringSlice{},

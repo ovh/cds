@@ -677,6 +677,32 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 		}
 	}
 
+	if e.Workflow.On.PullRequest != nil {
+		if workflowSameRepo || e.Ref == ref {
+			wh := sdk.V2WorkflowHook{
+				EntityID:       e.ID,
+				ProjectKey:     e.ProjectKey,
+				Type:           sdk.WorkflowHookTypeRepository,
+				Ref:            e.Ref,
+				Commit:         e.Commit,
+				WorkflowName:   e.Name,
+				VCSName:        workflowDefVCSName,
+				RepositoryName: workflowDefRepositoryName,
+				Data: sdk.V2WorkflowHookData{
+					RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+					VCSServer:       targetVCS,
+					RepositoryName:  targetRepository,
+					BranchFilter:    e.Workflow.On.PullRequest.Branches,
+					PathFilter:      e.Workflow.On.PullRequest.Paths,
+					TypesFilter:     e.Workflow.On.PullRequest.Types,
+				},
+			}
+			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
+				return err
+			}
+		}
+	}
+
 	// Only save workflow_update hook if :
 	// * workflow.repository declaration != workflow.repository && default branch
 	if e.Workflow.On.WorkflowUpdate != nil {
