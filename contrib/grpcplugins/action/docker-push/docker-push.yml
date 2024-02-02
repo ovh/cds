@@ -1,0 +1,34 @@
+name: docker-push
+type: action
+author: "François SAMIN <francois.samin@corp.ovh.com>"
+description: |
+  This pushes Docker image
+inputs:
+  image:
+    type: string
+    description: Image name
+    required: true
+  tags:
+    type: string
+    description: |- 
+      The tags to associate with the image on the registry.
+
+      This parameter can be empty if you want to keep the same tag.
+    required: false
+  registry:
+    type: string
+    description: |-
+      Docker registry to push on.
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  registryAuth:
+    type: string
+    description: |-
+      Docker base64url-encoded auth configuration. 
+      
+      See docker authentication section for more details: https://docs.docker.com/engine/api/v1.41/#section/Authentication.
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+

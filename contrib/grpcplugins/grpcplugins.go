@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -267,4 +269,106 @@ func GetJobContext(ctx context.Context, c *actionplugin.Common) (*sdk.WorkflowRu
 		return nil, sdk.WrapError(err, "unable to read response")
 	}
 	return &context, nil
+}
+
+type ArtifactoryConfig struct {
+	URL   string
+	Token string
+}
+
+type ArtifactoryFileInfo struct {
+	Repo        string    `json:"repo"`
+	Path        string    `json:"path"`
+	Created     time.Time `json:"created"`
+	CreatedBy   string    `json:"createdBy"`
+	DownloadURI string    `json:"downloadUri"`
+	MimeType    string    `json:"mimeType"`
+	Size        string    `json:"size"`
+	Checksums   struct {
+		Sha1   string `json:"sha1"`
+		Md5    string `json:"md5"`
+		Sha256 string `json:"sha256"`
+	} `json:"checksums"`
+	OriginalChecksums struct {
+		Sha1   string `json:"sha1"`
+		Md5    string `json:"md5"`
+		Sha256 string `json:"sha256"`
+	} `json:"originalChecksums"`
+	URI string `json:"uri"`
+}
+
+type ArtifactoryFolderInfo struct {
+	Repo      string    `json:"repo"`
+	Path      string    `json:"path"`
+	Created   time.Time `json:"created"`
+	CreatedBy string    `json:"createdBy"`
+	URI       string    `json:"uri"`
+	Children  []struct {
+		URI    string `json:"uri"`
+		Folder bool   `json:"folder"`
+	} `json:"children"`
+}
+
+func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFileInfo, error) {
+	uri := config.URL + "api/storage/" + filepath.Join(repo, path)
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode > 200 {
+		Error(string(btes))
+		return nil, errors.Errorf("unable to get Artifactory file info %s: error %d", uri, resp.StatusCode)
+	}
+
+	var res ArtifactoryFileInfo
+	if err := json.Unmarshal(btes, &res); err != nil {
+		Error(string(btes))
+		return nil, errors.Errorf("unable to get Artifactory file info: %v", err)
+	}
+
+	return &res, nil
+}
+
+func GetArtifactoryFolderInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFolderInfo, error) {
+	uri := config.URL + "api/storage/" + filepath.Join(repo, path)
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode > 200 {
+		Error(string(btes))
+		return nil, errors.Errorf("unable to get Artifactory folder info %s: error %d", uri, resp.StatusCode)
+	}
+
+	var res ArtifactoryFolderInfo
+	if err := json.Unmarshal(btes, &res); err != nil {
+		Error(string(btes))
+		return nil, errors.Errorf("unable to get Artifactory folder info: %v", err)
+	}
+
+	return &res, nil
 }

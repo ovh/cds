@@ -449,6 +449,24 @@ func (r *V2WorkflowRunResult) GetDetail() (any, error) {
 	return r.Detail.Data, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDockerDetail() (*V2WorkflowRunResultDockerDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultDockerDetail)
+	if !ok {
+		var ii V2WorkflowRunResultDockerDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultDockerDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultDockerDetail")
+	}
+	return i, nil
+}
+
 func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2WorkflowRunResultGenericDetail, error) {
 	if err := r.Detail.castData(); err != nil {
 		return nil, err
@@ -471,6 +489,11 @@ func (r *V2WorkflowRunResult) Name() string {
 	switch r.Type {
 	case V2WorkflowRunResultTypeGeneric:
 		detail, err := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+		if err == nil {
+			return string(r.Type) + ":" + detail.Name
+		}
+	case V2WorkflowRunResultTypeDocker:
+		detail, err := r.GetDetailAsV2WorkflowRunResultDockerDetail()
 		if err == nil {
 			return string(r.Type) + ":" + detail.Name
 		}
@@ -542,6 +565,13 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		var detail = new(V2WorkflowRunResultVariableDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultVariableDetail")
+		}
+		s.Data = detail
+		return nil
+	case "V2WorkflowRunResultDockerDetail":
+		var detail = new(V2WorkflowRunResultDockerDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultDockerDetail")
 		}
 		s.Data = detail
 		return nil
@@ -633,6 +663,13 @@ type V2WorkflowRunResultGenericDetail struct {
 	MD5    string      `json:"md5" mapstructure:"md5"`
 	SHA1   string      `json:"sha1" mapstructure:"sha1"`
 	SHA256 string      `json:"sha256" mapstructure:"sha256"`
+}
+
+type V2WorkflowRunResultDockerDetail struct {
+	Name         string `json:"name" mapstructure:"name"`
+	ID           string `json:"id" mapstructure:"id"`
+	HumanSize    string `json:"human_size" mapstructure:"human_size"`
+	HumanCreated string `json:"human_created" mapstructure:"human_created"`
 }
 
 type V2WorkflowRunResultVariableDetail struct {

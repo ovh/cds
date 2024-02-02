@@ -1,7 +1,9 @@
 package sdk
 
 import (
+	"fmt"
 	"math/rand"
+	"net/http"
 	"time"
 )
 
@@ -83,4 +85,39 @@ func StringFirstN(s string, i int) string {
 		return s
 	}
 	return s[:i]
+}
+
+type ReqHostMatcher struct {
+	Host string
+}
+
+func (m ReqHostMatcher) Matches(x interface{}) bool {
+	switch i := x.(type) {
+	case *http.Request:
+		return i.URL.Host == m.Host
+	default:
+		return false
+	}
+}
+
+func (m ReqHostMatcher) String() string {
+	return fmt.Sprintf("Host is %q", m.Host)
+}
+
+type ReqMatcher struct {
+	Method  string
+	URLPath string
+}
+
+func (m ReqMatcher) Matches(x interface{}) bool {
+	switch i := x.(type) {
+	case *http.Request:
+		return i.URL.Path == m.URLPath && m.Method == i.Method
+	default:
+		return false
+	}
+}
+
+func (m ReqMatcher) String() string {
+	return fmt.Sprintf("Method is %q, URL Path is %q", m.Method, m.URLPath)
 }

@@ -231,7 +231,7 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dir
 			path := filepath.Join(jobRun.ProjectKey, jobRun.WorkflowName, jobContext.Git.SemverCurrent)
 
 			response.RunResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
-			response.RunResult.ArtifactManagerMetadata.Set("repository", repository)
+			response.RunResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
 			response.RunResult.ArtifactManagerMetadata.Set("type", "generic")
 			response.RunResult.ArtifactManagerMetadata.Set("maturity", maturity)
 			response.RunResult.ArtifactManagerMetadata.Set("name", r.Result)
