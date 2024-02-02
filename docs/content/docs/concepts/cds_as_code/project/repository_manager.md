@@ -24,4 +24,4 @@ cdsctl experimental project vcs import <PROJECT-KEY> <vcs_file.yaml>
 ```
 * `PROJECT-KEY`: The project key
 
-[Full CLI documentation here]({{< relref "/docs/components/cdsctl/experimental/project/vcs/_index.md" >}})
+[Full CLI documentation here]({{< relref "/docs/components/cdsctl/project/vcs/_index.md" >}})
