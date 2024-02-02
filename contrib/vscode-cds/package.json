@@ -1,0 +1,76 @@
+{
+  "name": "vscode-cds",
+  "displayName": "CDS",
+  "description": "CDS VSCode Extension",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "url": "https://github.com/ovh/cds"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "cds",
+    "cdsctl"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-cds.setCurrentContext",
+        "title": "Change the CDS context"
+      }
+    ],
+    "configuration": {
+      "title": "CDS",
+      "type": "object",
+      "properties": {
+        "cds.config": {
+          "type": "string",
+          "default": "~/.cdsrc",
+          "markdownDescription": "The CDS configuration file (.cdsrc)."
+        },
+        "cds.logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "error"
+          ],
+          "default": "info",
+          "markdownDescription": "Logging for CDS extension. The log is emitted to the output channel named as CDS."
+        }
+      }
+    }
+  },
+  "extensionDependencies": [
+    "redhat.vscode-yaml"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "vsce": "vsce"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.23.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  }
+}

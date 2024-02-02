@@ -5,14 +5,16 @@ TARGET_DIST := $(if ${TARGET_DIST},${TARGET_DIST},./dist)
 clean:
 	$(MAKE) clean -C grpcplugins/action
 	$(MAKE) clean -C integrations
+	$(MAKE) clean -C vscode-cds
 	rm -rf $(TARGET_DIST)
 
-ALL_DISTS := $(shell find . -type d -name "dist")
+ALL_DISTS := $(shell find . -type d -name "dist" | grep -v node_modules)
 ALL_FILES := $(foreach d, $(ALL_DISTS), $(wildcard $(d)/*))
 
 build:
 	$(MAKE) build -C grpcplugins/action OS="$(OS)" ARCH="$(ARCH)"
 	$(MAKE) build -C integrations OS="$(OS)" ARCH="$(ARCH)"
+	$(MAKE) build -C vscode-cds
 
 $(TARGET_DIST):
 	@mkdir -p $(TARGET_DIST)
