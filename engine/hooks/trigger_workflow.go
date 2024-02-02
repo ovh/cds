@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/rockbears/log"
 
@@ -49,10 +50,10 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 	if hre.UserID != "" {
 		allEnded := true
+		workflowErrors := make([]string, 0)
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
 			if wh.Status == sdk.HookEventWorkflowStatusScheduler {
-
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:   hre.UUID,
 					UserID:        hre.UserID,
@@ -80,24 +81,33 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				if _, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
 					runRequest, cdsclient.WithQueryParameter("ref", wh.Ref)); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
+					errorMsg := fmt.Sprintf("unable to run workflow %s: %v", wh.WorkflowName, err)
+					workflowErrors = append(workflowErrors, errorMsg)
 					allEnded = false
-					continue
+				} else {
+					wh.Status = sdk.HookEventWorkflowStatusDone
 				}
-				wh.Status = sdk.HookEventWorkflowStatusDone
 				if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 					return err
 				}
 			}
 		}
+		if !allEnded {
+			hre.NbErrors++
+			hre.LastError = strings.Join(workflowErrors, "\n")
+		}
 		if allEnded {
 			hre.Status = sdk.HookEventStatusDone
-			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-				return err
-			}
+		}
+		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+			return err
+		}
+		if allEnded {
 			if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
 				return err
 			}
 		}
+
 	}
 
 	return nil

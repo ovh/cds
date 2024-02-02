@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/ovh/cds/sdk"
@@ -12,6 +13,12 @@ import (
 )
 
 func TestBlur(t *testing.T) {
+	jsonScret := `{ "varjsoncomplex": { "foo": { "bar": { "aa": "**********", "fb": "**********", "fb2": [ "111", "fds" ], "fb3": [ { "tt": "aze" } ], "fb4": [ 1, 2, 3 ] } } } }`
+	var mJson map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(strings.Replace(jsonScret, " ", "", -1)), &mJson))
+	bts, err := json.Marshal(mJson)
+	require.NoError(t, err)
+
 	b, err := sdk.NewBlur([]string{
 		"1234567890",
 		"1234567890abcdef",
@@ -20,6 +27,7 @@ func TestBlur(t *testing.T) {
 		"12345",
 		"123456",
 		"123\n456",
+		string(bts),
 	})
 	require.NoError(t, err)
 
@@ -30,6 +38,7 @@ func TestBlur(t *testing.T) {
 	require.Equal(t, sdk.PasswordPlaceholder, b.String(url.QueryEscape("&é'(§è!çà")))
 	require.Equal(t, sdk.PasswordPlaceholder, b.String(base64.StdEncoding.EncodeToString([]byte("&é'(§è!çà"))))
 	require.Equal(t, sdk.PasswordPlaceholder, b.String("123\\n456"))
+	require.Equal(t, sdk.PasswordPlaceholder, b.String(jsonScret))
 
 	buf, err := json.Marshal(`"1234567890`)
 	require.NoError(t, err)

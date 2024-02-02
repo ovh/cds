@@ -46,6 +46,7 @@ type CurrentJobV2 struct {
 	currentStepIndex int
 	currentStepName  string
 	integrations     map[string]sdk.ProjectIntegration // contains integration with clearPassword
+	sensitiveData    []string
 }
 
 type CurrentWorker struct {

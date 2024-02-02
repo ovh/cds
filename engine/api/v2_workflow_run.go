@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -818,6 +819,14 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
+			hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, wk.Name)
+			if err != nil {
+				return err
+			}
+			if !hasRole {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
 			runEvent := sdk.V2WorkflowRunEvent{}
 			switch runRequest.HookType {
 			case sdk.WorkflowHookTypeWorkerModel:
@@ -1123,19 +1132,11 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-			interpolatedInput, err := ap.Interpolate(ctx, gate.If)
+			booleanResult, err := ap.InterpolateToBool(ctx, gate.If)
 			if err != nil {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: unable to parse gate statement %s: %v", jobToRun.JobID, gate.If, err)
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement %s doesn't return a boolean: %v", jobToRun.JobID, gate.If, err)
 			}
 
-			if _, ok := interpolatedInput.(string); !ok {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement does not return a string. Got %v", jobToRun.JobID, interpolatedInput)
-			}
-
-			booleanResult, err := strconv.ParseBool(interpolatedInput.(string))
-			if err != nil {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement does not return a boolean. Got %s", jobToRun.JobID, interpolatedInput)
-			}
 			if !booleanResult {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "gate conditions are not satisfied")
 			}

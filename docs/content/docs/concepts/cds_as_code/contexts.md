@@ -96,5 +96,3 @@ It contains the status and outputs of all previous steps in the current jobs
 
 * `vars.<varset_name>.<item_name>`: value of the given item. If the value is a JSON item, you can select any element like this `vars.<varset_name>.<item_name>.<key>.<subkey>`
 
-
-

@@ -169,8 +169,7 @@ jobs:
 
 #### Inputs
 
-
-Inputs allows you to define a list of variable that will be used in your job. If you use it all others contexts will be unavailable. This allows you to exactly control the inputs of your job
+Inputs allow you to define a list of variable that will be used in your job. If you use it all others contexts will be unavailable. This allows you to exactly control the inputs of your job
 
 ```yaml
 jobs:
@@ -201,9 +200,9 @@ jobs:
       run: echo ${{ matrix.version }} - ${{ matrix.os }}  
 ```
 
-The matric strategy allows you to template a job with matrix variables that will automatically create multiple job during the execution
+The matrix strategy allows you to template a job with matrix variables that will automatically create multiple jobs during the execution
 
-In this example, CDS will create 4 job during execution with the given matrix context:
+In this example, CDS will create 4 jobs during execution with the given matrix context:
 
 * job1: matrix.Version = go1.21  / matrix.os = ubuntu
 * job2: matrix.Version = go1.21  / matrix.os = debian
@@ -243,7 +242,7 @@ jobs:
 
 ## Gates
 
-Gates are a hook that allow you to trigger manually a job under certain conditions
+Gates are hooks that allow you to manually trigger a job under certain conditions
 
 ```yaml
 gates:

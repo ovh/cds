@@ -7,10 +7,10 @@ card:
 ---
 
 # Description
-We introduce a new permission system using Role-based Access Control (RBAC).
+CDS permissions system uses a Role-based Access Control (RBAC).
 
 You will be able to manage all CDS resources, included ascode resources. 
-For example, if a user update you workflow files on your repository but he doesn't have the permission to do that, his changes will be ignored.
+For example, if a user updates your workflow files on your repository but doesn't have permission to do so, his changes will be discarded.
 
 You can manage permissions on all CDS resources through 5 sections:
 
@@ -26,7 +26,7 @@ Permissions can be managed by [CDS cli]({{< relref "/docs/components/cdsctl/expe
 
 # Permission
 
-You need the permission `manage-permission` to be able to created/update/delete an permission
+You need the permission `manage-permission` to be able to created/update/delete a permission
 
 # Yaml Example
 

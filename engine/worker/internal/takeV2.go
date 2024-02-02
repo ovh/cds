@@ -37,7 +37,8 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	w.actionPlugin = make(map[string]*sdk.GRPCPlugin)
 
 	// setup blur
-	if err := w.SetSecrets(nil); err != nil {
+	w.blur, err = sdk.NewBlur(info.SensitiveDatas)
+	if err != nil {
 		return err
 	}
 
