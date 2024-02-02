@@ -170,7 +170,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 			// analyze have to be trigger only on push event
 			hre.Status = sdk.HookEventStatusAnalysis
 			if err := s.triggerAnalyses(ctx, hre); err != nil {
-				return sdk.WrapError(err, "unable to trigger analysis")
+				return sdk.WrapError(err, "unable to trigger analyses")
 			}
 		} else {
 			hre.Status = sdk.HookEventStatusWorkflowHooks
@@ -182,7 +182,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		// Check if all analysis are ended
 	case sdk.HookEventStatusAnalysis:
 		if err := s.triggerAnalyses(ctx, hre); err != nil {
-			return sdk.WrapError(err, "unable to trigger analysis")
+			return sdk.WrapError(err, "unable to trigger analyses")
 		}
 		// Check if all workflow triggered has been sent
 	case sdk.HookEventStatusWorkflowHooks:
