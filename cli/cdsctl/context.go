@@ -15,18 +15,13 @@ var contextCmd = cli.Command{
 	Name:    "context",
 	Aliases: []string{"ctx"},
 	Short:   "Manage cdsctl config file",
-	Flags: []cli.Flag{
-		{
-			Name:  "context-name",
-			Usage: "A cdsctl context name",
-		},
-	},
 }
 
 func contexts() *cobra.Command {
 	return cli.NewCommand(contextCmd, contextRun, []*cobra.Command{
 		cli.NewListCommand(contextListCmd, contextListRun, nil, withAllCommandModifiers()...),
-		cli.NewCommand(contextCurrentCmd, contextCurrentRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(contextGetCurrentCmd, contextGetCurrentRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(contextSetCurrentCmd, contextSetCurrentRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -35,9 +30,19 @@ var contextListCmd = cli.Command{
 	Short: "List cdsctl contexts",
 }
 
-var contextCurrentCmd = cli.Command{
+var contextGetCurrentCmd = cli.Command{
 	Name:  "current",
 	Short: "Show the current context",
+}
+
+var contextSetCurrentCmd = cli.Command{
+	Name:  "set-current",
+	Short: "Set the current context",
+	Args: []cli.Arg{
+		{
+			Name: "name",
+		},
+	},
 }
 
 func contextListRun(v cli.Values) (cli.ListResult, error) {
@@ -60,7 +65,7 @@ func contextListRun(v cli.Values) (cli.ListResult, error) {
 	return cli.AsListResult(m), nil
 }
 
-func contextCurrentRun(v cli.Values) error {
+func contextGetCurrentRun(v cli.Values) error {
 	fi, err := os.Open(configFilePath)
 	if err != nil {
 		return cli.WrapError(err, "error while opening config file %s", configFilePath)
@@ -71,6 +76,26 @@ func contextCurrentRun(v cli.Values) error {
 		return cli.WrapError(err, "error while getting current context")
 	}
 	fmt.Println(current)
+	return nil
+}
+
+func contextSetCurrentRun(v cli.Values) error {
+	fi, err := os.OpenFile(configFilePath, os.O_RDONLY, 0600)
+	if err != nil {
+		return cli.WrapError(err, "Error while opening file %s", configFilePath)
+	}
+
+	wdata := &bytes.Buffer{}
+	if err := internal.SetCurrentContext(fi, wdata, v.GetString("name")); err != nil {
+		fi.Close() // nolint
+		return err
+	}
+	if err := fi.Close(); err != nil {
+		return cli.WrapError(err, "Error while closing file %s", configFilePath)
+	}
+	if err := writeConfigFile(configFilePath, wdata); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -85,24 +110,9 @@ func contextRun(v cli.Values) error {
 	}
 
 	if v.GetBool("no-interactive") {
-		if v.GetString("context-name") == "" {
-			fi.Close() // nolint
-			return cli.NewError("you must use a context name with no-interactive flag. Example: cdsctl context --context-name my-context")
-		}
-		wdata := &bytes.Buffer{}
-		if err := internal.SetCurrentContext(fi, wdata, v.GetString("context-name")); err != nil {
-			fi.Close() // nolint
-			return err
-		}
-		if err := fi.Close(); err != nil {
-			return cli.WrapError(err, "Error while closing file %s", configFilePath)
-		}
-		if err := writeConfigFile(configFilePath, wdata); err != nil {
-			return err
-		}
-		return nil
+		fi.Close() // nolint
+		return cli.NewError("you must use the set subcommand with no-interactive flag. Example: cdsctl context set my-context")
 	}
-	fi.Close() // nolint
 
 	// interactive: let user choose the context
 	if len(cdsConfigFile.Contexts) > 0 {
