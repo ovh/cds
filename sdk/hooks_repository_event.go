@@ -18,8 +18,17 @@ const (
 	WorkflowHookEventWorkflowUpdate = "workflow_update"
 	WorkflowHookEventModelUpdate    = "model_update"
 	WorkflowHookEventPush           = "push"
-	WorkflowHookEventPullRequest    = "pull_request"
-	RepoEventPush                   = "push"
+
+	WorkflowHookEventPullRequest           = "pull_request"
+	WorkflowHookEventPullRequestTypeOpened = "opened"
+	WorkflowHookEventPullRequestTypeEdited = "edited"
+
+	WorkflowHookEventPullRequestComment            = "pull_request_comment"
+	WorkflowHookEventPullRequestCommentTypeCreated = "created"
+	WorkflowHookEventPullRequestCommentTypeDeleted = "deleted"
+	WorkflowHookEventPullRequestCommentTypeEdited  = "edited"
+
+	RepoEventPush = "push"
 
 	HookEventStatusScheduled     = "Scheduled"
 	HookEventStatusAnalysis      = "Analyzing"
@@ -105,9 +114,11 @@ type HookRepositoryEventWorkflow struct {
 }
 
 type HookRepositoryEventExtractData struct {
-	Ref    string   `json:"ref"`
-	Commit string   `json:"commit"`
-	Paths  []string `json:"paths"`
+	CDSEventName string   `json:"cds_event_name"`
+	CDSEventType string   `json:"cds_event_type"`
+	Commit       string   `json:"commit"`
+	Paths        []string `json:"paths"`
+	Ref          string   `json:"ref"`
 }
 
 type GenerateRepositoryWebhook struct {
