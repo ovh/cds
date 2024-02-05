@@ -37,7 +37,7 @@ type DeployResponse struct {
 	FollowUpToken    string `json:"followup_token"`
 	DeploymentName   string `json:"deployment_name"`
 	DeploymentID     string `json:"deployment_id"`
-	DeploymentFamily string `json:"deploymentFamily"`
+	DeploymentFamily string `json:"deployment_family"`
 	StackName        string `json:"stack_name"`
 	StackID          string `json:"stack_id"`
 	StackPlatform    string `json:"stack_platform"`
