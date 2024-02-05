@@ -59,7 +59,12 @@
                                 {{result.type}}
                             </td>
                             <td>
-                                {{result.detail.Data.name}}
+                                <ng-container *ngIf="result.type === 'deployment'; else nameTmpl">
+                                    {{result.detail.Data.deployment_name}}:{{result.detail.Data.version}}
+                                </ng-container>
+                                <ng-template #nameTmpl>
+                                    {{result.detail.Data.name}}
+                                </ng-template>
                             </td>
                         </tr>
                     </tbody>
