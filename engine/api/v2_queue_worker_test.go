@@ -33,11 +33,14 @@ func TestGetAllSensitiveDataFromJson(t *testing.T) {
 	data, err := getAllSensitiveDataFromJson(context.TODO(), secretJSON)
 	require.NoError(t, err)
 
+	dataStringSlice := sdk.StringSlice{}
+	dataStringSlice = append(dataStringSlice, data...)
+	dataStringSlice.Unique()
 	// full json / value1 / 1 / level1Value / level2ArrayValue / secret1 / secret2 / level2Value / value3 / level3ArrayValue / level3ArrayItem/ level4 Value / value5
-	for _, i := range data {
+	for _, i := range dataStringSlice {
 		t.Logf(">> %s", i)
 	}
-	require.Equal(t, 13, len(data))
+	require.Equal(t, 13, len(dataStringSlice))
 }
 
 func TestWorkerUnregistered(t *testing.T) {

@@ -100,14 +100,6 @@ func (h *HatcherySwarm) killAndRemove(ctx context.Context, dockerClient *dockerC
 
 			msg := fmt.Sprintf("Hatchery %v - error on exit container: %s logs: %v", h.Name(), errmsg, strings.ReplaceAll(logs, "\u0000", ""))
 			log.Error(ctx, "job info err: %v", msg)
-
-			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, h.Region, container.Config.Labels[LabelJobID], sdk.V2SendJobRunInfo{
-				Time:    time.Now(),
-				Level:   sdk.WorkflowRunInfoLevelError,
-				Message: msg,
-			}); err != nil {
-				log.Warn(ctx, "unable to send job info for job %s: %v", container.Config.Labels[LabelJobID], err)
-			}
 		}
 	}
 

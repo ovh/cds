@@ -13,7 +13,7 @@
                     {{r.type}}
                 </td>
                 <td>
-                    <ng-container *ngIf="suggest && suggestWithWorkerModel && suggestWithOSArch">
+                    <ng-container *ngIf="suggestWithWorkerModel && suggestWithOSArch">
                         <app-requirements-value [requirement]="r"
                                                 (requirementChange)="change(r)"
                                                 [edit]="edit"
