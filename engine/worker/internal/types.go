@@ -416,6 +416,9 @@ func (wk *CurrentWorker) Environ() []string {
 			newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 		}
 	} else {
+		data := []byte(wk.currentJobV2.runJob.JobID)
+		suffix := fmt.Sprintf("%x", md5.Sum(data))
+		newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir+"/"+suffix)
 		for k, v := range wk.currentJobV2.envFromHooks {
 			newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 		}
