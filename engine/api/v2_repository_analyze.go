@@ -258,10 +258,12 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				}
 			}
 
-			uc := getUserConsumer(ctx)
 			var u *sdk.AuthentifiedUser
-			if uc != nil {
-				u = uc.AuthConsumerUser.AuthentifiedUser
+			if !isHooks(ctx) {
+				uc := getUserConsumer(ctx)
+				if uc != nil {
+					u = uc.AuthConsumerUser.AuthentifiedUser
+				}
 			}
 
 			createAnalysis := createAnalysisRequest{
