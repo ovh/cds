@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/rbac"
 	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ovh/cds/engine/api/rbac"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -38,10 +39,15 @@ projects:
     users: [%s]
     groups: [%s]
 global:
- - role: manage-permission
-   users: [%s]
-   groups: [%s]
-`, p.Key, u.Username, g.Name, u.Username, g.Name)
+  - role: manage-permission
+    users: [%s]
+    groups: [%s]
+workflows:
+  - role: trigger
+    all_users: true  
+    all_workflows: true
+    project: %s
+`, p.Key, u.Username, g.Name, u.Username, g.Name, p.Key)
 
 	// Here, we insert the vcs server as a CDS administrator
 	req.Body = io.NopCloser(strings.NewReader(body))
@@ -76,6 +82,8 @@ global:
 	require.Equal(t, 1, len(rbacGET.Projects[0].RBACGroupsName))
 	require.Equal(t, u.Username, rbacGET.Projects[0].RBACUsersName[0])
 	require.Equal(t, g.Name, rbacGET.Projects[0].RBACGroupsName[0])
+
+	require.Equal(t, 1, len(rbacGET.Workflows))
 
 	// Delete
 	varsDelete := map[string]string{"rbacIdentifier": rbacGET.ID}

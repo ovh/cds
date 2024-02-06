@@ -69,6 +69,7 @@ func (api *API) getRBACHandler() ([]service.RbacChecker, service.Handler) {
 			perm, err := api.getRBACByIdentifier(ctx, rbacIdentifier,
 				rbac.LoadOptions.LoadRBACGlobal,
 				rbac.LoadOptions.LoadRBACProject,
+				rbac.LoadOptions.LoadRBACWorkflow,
 				rbac.LoadOptions.LoadRBACHatchery,
 				rbac.LoadOptions.LoadRBACRegion)
 			if err != nil {
