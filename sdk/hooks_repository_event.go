@@ -19,9 +19,11 @@ const (
 	WorkflowHookEventModelUpdate    = "model_update"
 	WorkflowHookEventPush           = "push"
 
-	WorkflowHookEventPullRequest           = "pull_request"
-	WorkflowHookEventPullRequestTypeOpened = "opened"
-	WorkflowHookEventPullRequestTypeEdited = "edited"
+	WorkflowHookEventPullRequest             = "pull_request"
+	WorkflowHookEventPullRequestTypeOpened   = "opened"
+	WorkflowHookEventPullRequestTypeReopened = "reopened"
+	WorkflowHookEventPullRequestTypeClosed   = "closed"
+	WorkflowHookEventPullRequestTypeEdited   = "edited"
 
 	WorkflowHookEventPullRequestComment            = "pull_request_comment"
 	WorkflowHookEventPullRequestCommentTypeCreated = "created"
@@ -77,7 +79,7 @@ type HookRepositoryEvent struct {
 	UUID                string                         `json:"uuid"`
 	Created             int64                          `json:"created"`
 	EventName           string                         `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
-	EventType           string                         `json:"event_type"` // repo:refs_changed", "pr:opened", "pr:from_ref_updated"
+	EventType           string                         `json:"event_type"` // created, deleted, edited, opened
 	VCSServerType       string                         `json:"vcs_server_type"`
 	VCSServerName       string                         `json:"vcs_server_name"`
 	RepositoryName      string                         `json:"repository_name"`

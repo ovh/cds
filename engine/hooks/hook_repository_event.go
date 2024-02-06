@@ -145,6 +145,16 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeOpened
+	case "pr:reopened":
+		extractedData.Ref = request.PullRequest.FromRef.ID
+		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
+		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeReopened
+	case "pr:declined":
+		extractedData.Ref = request.PullRequest.FromRef.ID
+		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
+		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeClosed
 	case "pr:from_ref_updated":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
