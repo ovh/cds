@@ -59,19 +59,9 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrNoReposManager, "app.VCSServer is empty")
 		}
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, app.VCSServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, app.VCSServer)
 		if err != nil {
 			return sdk.WrapError(err, "cannot get client got %s %s", key, app.VCSServer)
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
 		}
 
 		release, errRelease := client.Release(ctx, app.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)

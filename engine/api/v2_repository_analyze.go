@@ -209,21 +209,10 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			defer tx.Rollback()
-
 			if analysis.Commit == "" || analysis.Ref == "" {
 				// retrieve commit for the given ref
-				tx, err := api.mustDB().Begin()
+				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcs.Name)
 				if err != nil {
-					return err
-				}
-				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcs.Name)
-				if err != nil {
-					_ = tx.Rollback()
 					return err
 				}
 
@@ -232,14 +221,12 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 					case strings.HasPrefix(analysis.Ref, sdk.GitRefTagPrefix):
 						giventTag, err := client.Tag(ctx, repo.Name, strings.TrimPrefix(analysis.Ref, sdk.GitRefTagPrefix))
 						if err != nil {
-							_ = tx.Rollback()
 							return err
 						}
 						analysis.Commit = giventTag.Sha
 					default:
 						givenBranch, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix)})
 						if err != nil {
-							_ = tx.Rollback()
 							return err
 						}
 						analysis.Commit = givenBranch.LatestCommit
@@ -251,10 +238,6 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 					}
 					analysis.Ref = defaultBranch.ID
 					analysis.Commit = defaultBranch.LatestCommit
-				}
-
-				if err := tx.Commit(); err != nil {
-					return sdk.WithStack(err)
 				}
 			}
 
@@ -275,6 +258,13 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				hookEventUUID: analysis.HookEventUUID,
 				user:          u,
 			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback()
+
 			a, err := api.createAnalyze(ctx, tx, createAnalysis)
 			if err != nil {
 				return err
@@ -549,14 +539,8 @@ skipEntity:
 		entitiesToUpdate = append(entitiesToUpdate, *e)
 	}
 
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
 	// Insert / Update entities
-	vcsAuthClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProjectWithSecret.Name)
+	vcsAuthClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsProjectWithSecret.Name)
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve vcs_server %s on project %s", vcsProjectWithSecret.Name, analysis.ProjectKey))
 	}
@@ -567,6 +551,12 @@ skipEntity:
 
 	eventInsertedEntities := make([]sdk.Entity, 0)
 	eventUpdatedEntities := make([]sdk.Entity, 0)
+
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback() // nolint
 	for i := range entitiesToUpdate {
 		e := &entities[i]
 		existingEntity, err := entity.LoadByRefTypeName(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name)
@@ -884,6 +874,13 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 
 	}
 
+	client, err := repositoriesmanager.AuthorizedClient(ctx, db, cache, projKey, vcsProjectWithSecret.Name)
+	if err != nil {
+		return nil, "", "", sdk.WithStack(err)
+	}
+
+	var commitUser *sdk.AuthentifiedUser
+
 	// Get commit
 	tx, err := db.Begin()
 	if err != nil {
@@ -891,20 +888,13 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 	}
 	defer tx.Rollback() // nolint
 
-	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, cache, projKey, vcsProjectWithSecret.Name)
-	if err != nil {
-		return nil, "", "", sdk.WithStack(err)
-	}
-
-	var commitUser *sdk.AuthentifiedUser
-
 	switch vcsProjectWithSecret.Type {
 	case sdk.VCSTypeBitbucketServer, sdk.VCSTypeGitlab:
 		commit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
 			return nil, "", "", err
 		}
-		commitUser, err = user.LoadByUsername(ctx, tx, commit.Committer.Slug)
+		commitUser, err = user.LoadByUsername(ctx, db, commit.Committer.Slug)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", sdk.WithStack(sdk.NewErrorFrom(err, "unable to get user %s", commit.Committer.Slug))
@@ -922,7 +912,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 
 		// Retrieve user link by external ID
-		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, tx, vcsProjectWithSecret.Type, commit.Committer.ID)
+		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, vcsProjectWithSecret.Type, commit.Committer.ID)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
@@ -1029,39 +1019,29 @@ func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysi
 
 	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
 	defer next()
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return keyID, analyzesError, sdk.WithStack(err)
-	}
 
 	// Check commit signature
-	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsProject.Name)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsProject.Name)
 	if err != nil {
-		_ = tx.Rollback() // nolint
 		return keyID, analyzesError, err
 	}
 	vcsCommit, err := client.Commit(ctx, repoWithSecret.Name, analysis.Commit)
 	if err != nil {
-		_ = tx.Rollback() // nolint
 		return keyID, analyzesError, err
-	}
-	if err := tx.Commit(); err != nil {
-		return keyID, analyzesError, sdk.WithStack(err)
 	}
 
 	if vcsCommit.Hash == "" {
 		return keyID, analyzesError, fmt.Errorf("commit %s not found", analysis.Commit)
-	} else {
-		if vcsCommit.Signature != "" {
-			keyId, err := gpg.GetKeyIdFromSignature(vcsCommit.Signature)
-			if err != nil {
-				return keyID, analyzesError, fmt.Errorf("unable to extract keyID from signature: %v", err)
-			} else {
-				keyID = keyId
-			}
+	}
+	if vcsCommit.Signature != "" {
+		keyId, err := gpg.GetKeyIdFromSignature(vcsCommit.Signature)
+		if err != nil {
+			return keyID, analyzesError, fmt.Errorf("unable to extract keyID from signature: %v", err)
 		} else {
-			analyzesError = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
+			keyID = keyId
 		}
+	} else {
+		analyzesError = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
 	}
 	return keyID, analyzesError, nil
 }
@@ -1116,13 +1096,7 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 	ctx, next := telemetry.Span(ctx, "api.getCdsFilesOnVCSDirectory")
 	defer next()
 
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
-	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsName)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsName)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -1155,9 +1129,6 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 			}
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WithStack(err)
-	}
 	return filesContent, nil
 }
 
@@ -1165,13 +1136,7 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 	ctx, next := telemetry.Span(ctx, "api.getCdsArchiveFileOnRepo")
 	defer next()
 
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
-	client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, analysis.ProjectKey, vcsName)
+	client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsName)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -1206,10 +1171,6 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 			return nil, sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read tar file"))
 		}
 		filesContent[dir+fileName] = buff.Bytes()
-
-	}
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WithStack(err)
 	}
 	return filesContent, nil
 }

@@ -310,15 +310,8 @@ func (api *API) getProjectRepositoryBranchesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			tx, err := api.mustDB().Begin()
+			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
 			if err != nil {
-				return err
-			}
-			defer tx.Rollback()
-
-			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
-			if err != nil {
-				_ = tx.Rollback() // nolint
 				return err
 			}
 			branches, err := client.Branches(ctx, repo.Name, sdk.VCSBranchesFilter{Limit: int64(limit)})
@@ -326,9 +319,6 @@ func (api *API) getProjectRepositoryBranchesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			if err := tx.Commit(); err != nil {
-				return err
-			}
 			return service.WriteJSON(w, branches, http.StatusOK)
 		}
 }

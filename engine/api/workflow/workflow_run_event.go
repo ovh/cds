@@ -48,12 +48,6 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun, cdsUIURL string) error {
 	ctx = context.WithValue(ctx, cdslog.NodeRunID, nodeRun.ID)
 
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
-
 	if nodeRun.Status == sdk.StatusWaiting {
 		return nil
 	}
@@ -101,7 +95,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	//Get the RepositoriesManager Client
 	if e.vcsClient == nil {
 		var err error
-		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServerName)
+		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServerName)
 		if err != nil {
 			return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", proj.Key, vcsServerName)
 		}
@@ -144,7 +138,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	if statusFound == nil || statusFound.State == "" {
 		for i := range notifs {
 			log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
+			if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
 				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 			}
 		}
@@ -175,7 +169,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		if !skipStatus {
 			for i := range notifs {
 				log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-				if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
+				if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
 					return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 				}
 			}
@@ -186,13 +180,9 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		return nil
 	}
 	for i := range notifs {
-		if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+		if err := e.sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
 			return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
 		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
 	}
 
 	return nil
