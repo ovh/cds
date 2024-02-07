@@ -3,7 +3,7 @@ import * as uri from "vscode-uri";
 import { isCDSWorkflowFile } from "./lib/cds/file_utils";
 import { Journal } from "./lib/utils/journal";
 
-
+const dirWeb = 'dist-web/browser';
 
 export function init(context: vscode.ExtensionContext) {
     const cdsPreview = new CDSPreview(context);
@@ -58,7 +58,7 @@ class CDSPreview extends vscode.Disposable {
             {
               enableScripts: true,
               localResourceRoots: [
-                vscode.Uri.joinPath(this._context.extensionUri, 'dist-web'),
+                vscode.Uri.joinPath(this._context.extensionUri, dirWeb),
               ]
             }
           );
@@ -103,44 +103,33 @@ class CDSPreview extends vscode.Disposable {
         }
     
         const stylesUri = this._panel.webview.asWebviewUri(
-          vscode.Uri.joinPath(this._context.extensionUri, "dist-web", "styles.css")
+          vscode.Uri.joinPath(this._context.extensionUri, dirWeb, "styles.css")
         );
-    
-        const scriptRuntimeUri = this._panel.webview.asWebviewUri(
-          vscode.Uri.joinPath(this._context.extensionUri, "dist-web", "runtime.js")
-        );
-    
+        
         const scriptPolyfillsUri = this._panel.webview.asWebviewUri(
-          vscode.Uri.joinPath(this._context.extensionUri, "dist-web", "polyfills.js")
-        );
-    
-        const scriptVendorUri = this._panel.webview.asWebviewUri(
-          vscode.Uri.joinPath(this._context.extensionUri, "dist-web",
-            "vendor.js")
+          vscode.Uri.joinPath(this._context.extensionUri, dirWeb, "polyfills.js")
         );
     
         const scriptMainUri = this._panel.webview.asWebviewUri(
-          vscode.Uri.joinPath(this._context.extensionUri, "dist-web",
+          vscode.Uri.joinPath(this._context.extensionUri, dirWeb,
             "main.js")
         );
     
         const baseUri = this._panel.webview.asWebviewUri(vscode.Uri.joinPath(
-          this._context.extensionUri, 'dist-web')
+          this._context.extensionUri, dirWeb)
         ).toString().replace('%22', '');
     
         return `<!doctype html>
           <html lang="en">
           <head>
             <meta charset="utf-8">
-            <title>Utask.Preview</title>
+            <title>CDS.Preview</title>
             <base href="${baseUri}/">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <link rel="stylesheet" href="${stylesUri}"></head>
           <body>
             <app-root></app-root>
-            <script src="${scriptRuntimeUri}" type="module"></script>
             <script src="${scriptPolyfillsUri}" type="module"></script>
-            <script src="${scriptVendorUri}" type="module"></script>
             <script src="${scriptMainUri}" type="module"></script>
           </body>
           </html>`;
