@@ -1,13 +1,26 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Component, HostListener } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'web';
+  
+  fileValue: String;
+
+  constructor() {
+    this.fileValue = '';
+  }
+
+  @HostListener('window:message', ['$event'])
+  onRefresh(e: MessageEvent) {
+    console.log(e);
+    if (e.data.type === 'refresh') {
+      this.fileValue = e.data.value;
+    }
+  }
 }
