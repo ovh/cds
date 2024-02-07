@@ -816,7 +816,7 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "event_v2.dequeue", func(ctx context.Context) {
-		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines)
+		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines, a.Config.URL.UI)
 	})
 
 	log.Info(ctx, "Initializing internal routines...")

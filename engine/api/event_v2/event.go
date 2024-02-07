@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"regexp"
@@ -39,7 +40,7 @@ func publish(ctx context.Context, store cache.Store, event interface{}) {
 }
 
 // Dequeue runs in a goroutine and dequeue event from cache
-func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines *sdk.GoRoutines) {
+func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines *sdk.GoRoutines, cdsUIURL string) {
 	for {
 		if err := ctx.Err(); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
@@ -91,7 +92,7 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		wg.Add(1)
 		goroutines.Exec(ctx, "event.workflow.notifications", func(ctx context.Context) {
 			defer wg.Done()
-			if err := workflowNotifications(ctx, db, store, e); err != nil {
+			if err := workflowNotifications(ctx, db, store, e, cdsUIURL); err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "EventV2.workflowNotifications: %v", err)
 			}
@@ -118,7 +119,7 @@ func pushToWebsockets(ctx context.Context, store cache.Store, event sdk.FullEven
 	}
 }
 
-func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Store, event sdk.FullEventV2) error {
+func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Store, event sdk.FullEventV2, cdsUIURL string) error {
 	// EventRunEnded
 	if event.Type != sdk.EventRunEnded || event.ProjectKey == "" {
 		return nil
@@ -131,16 +132,22 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	}
 
 	// always send build status on workflow End
-
 	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, event.ProjectKey, event.VCSName)
 	if err != nil {
 		return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", event.ProjectKey, event.VCSName)
 	}
 
-	// TODO yesnault
-	vcsClient.SetStatus(ctx, sdk.VCSBuildStatus{})
-
-	// TODO send build status
+	buildStatus := sdk.VCSBuildStatus{
+		Description:        run.WorkflowName + ":" + run.Status,
+		URLCDS:             fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, event.ProjectKey, run.WorkflowName, event.RunNumber),
+		Context:            fmt.Sprintf("%s-%s", event.ProjectKey, run.WorkflowName),
+		Status:             event.Status,
+		RepositoryFullname: event.Repository,
+		GitHash:            run.Contexts.Git.Ref,
+	}
+	if err := vcsClient.SetStatus(ctx, buildStatus); err != nil {
+		return sdk.WrapError(err, "can't send the build status for %v/%v", event.ProjectKey, event.VCSName)
+	}
 
 	if run.WorkflowData.Workflow.On == nil {
 		return nil
@@ -148,22 +155,52 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 
 	if run.WorkflowData.Workflow.On.PullRequest != nil {
 		if run.WorkflowData.Workflow.On.PullRequest.Comment != "" {
-			// TODO yesnault send comment
 
-			// if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
-			// 	log.ErrorWithStackTrace(ctx, err)
-			// 	return err
-			// }
-
+			err := sendVCSPullRequestComment(ctx, vcsClient, run, run.WorkflowData.Workflow.On.PullRequest.Comment)
+			if err != nil {
+				return sdk.WrapError(err, "can't send the pull-request comment for %v/%v", event.ProjectKey, event.VCSName)
+			}
 		}
 	}
 
 	if run.WorkflowData.Workflow.On.PullRequestComment != nil {
 		if run.WorkflowData.Workflow.On.PullRequestComment.Comment != "" {
-			// TODO yesnault send comment
+			err := sendVCSPullRequestComment(ctx, vcsClient, run, run.WorkflowData.Workflow.On.PullRequestComment.Comment)
+			if err != nil {
+				return sdk.WrapError(err, "can't send the pull-request comment for %v/%v", event.ProjectKey, event.VCSName)
+			}
 		}
 	}
 
+	return nil
+}
+
+func sendVCSPullRequestComment(ctx context.Context, vcsClient sdk.VCSAuthorizedClientService, run sdk.V2WorkflowRun, comment string) error {
+	prComment := sdk.VCSPullRequestCommentRequest{
+		Revision: run.Contexts.Git.Ref,
+		Message:  comment,
+	}
+
+	//Check if this branch and this commit is a pullrequest
+	prs, err := vcsClient.PullRequests(ctx, run.Contexts.Git.Repository)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return err
+	}
+
+	// Send comment on pull request
+	for _, pr := range prs {
+		if pr.Head.Branch.DisplayID == run.Contexts.Git.RefName && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, run.Contexts.Git.Ref) && !pr.Merged && !pr.Closed {
+			prComment.ID = pr.ID
+			log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", prComment.Revision, prComment.ID, run.Contexts.Git.Repository)
+			if err := vcsClient.PullRequestComment(ctx, run.Contexts.Git.Repository, prComment); err != nil {
+				return err
+			}
+			break
+		} else {
+			log.Info(ctx, "nothing to do on pr %+v for ref %s", pr, run.Contexts.Git.Ref)
+		}
+	}
 	return nil
 }
 

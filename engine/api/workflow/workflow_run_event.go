@@ -396,7 +396,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 		//Send comment on pull request
 		for _, pr := range prs {
-			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && IsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
+			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
 				log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", reqComment.Revision, reqComment.ID, app.RepositoryFullname)
 				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
@@ -410,17 +410,4 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		}
 	}
 	return nil
-}
-
-func IsSameCommit(sha1, sha1b string) bool {
-	if len(sha1) == len(sha1b) {
-		return sha1 == sha1b
-	}
-	if len(sha1) == 12 && len(sha1b) >= 12 {
-		return sha1 == sha1b[0:len(sha1)]
-	}
-	if len(sha1b) == 12 && len(sha1) >= 12 {
-		return sha1b == sha1[0:len(sha1b)]
-	}
-	return false
 }
