@@ -49,4 +49,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/search/pullrequest", nil, r.GET(s.SearchPullRequestHandler))
 
 	r.Handle("/vcs/{name}/status", nil, r.POST(s.postStatusHandler))
+
+	// TOTO yesnault add route v2 to post status, and another to post a comment
 }

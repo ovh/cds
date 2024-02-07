@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/rockbears/log"
@@ -43,48 +42,26 @@ func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 	return gitlab.Failed
 }
 
-func (g *gitlabClient) SetDisableStatusDetails(disableStatusDetails bool) {
-	g.disableStatusDetails = disableStatusDetails
-}
-
 // SetStatus set build status on Gitlab
-func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
+func (c *gitlabClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
 	if c.disableStatus {
 		log.Warn(ctx, "disableStatus.SetStatus> ⚠ Gitlab statuses are disabled")
 		return nil
-	}
-
-	var data statusData
-	var err error
-	switch event.EventType {
-	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = processWorkflowNodeRunEvent(event, c.uiURL)
-	default:
-		log.Debug(ctx, "gitlabClient.SetStatus> Unknown event %v", event)
-		return nil
-	}
-
-	if err != nil {
-		return sdk.WrapError(err, "cannot process event %v", event)
-	}
-
-	if c.disableStatusDetails {
-		data.url = ""
 	}
 
 	cds := "CDS"
 	opt := &gitlab.SetCommitStatusOptions{
 		Name:        &cds,
 		Context:     &cds,
-		State:       getGitlabStateFromStatus(data.status),
-		Ref:         &data.branchName,
-		TargetURL:   &data.url,
-		Description: &data.desc,
+		State:       getGitlabStateFromStatus(buildStatus.Status),
+		Ref:         &buildStatus.GitHash,
+		TargetURL:   &buildStatus.URLCDS,
+		Description: &buildStatus.Description,
 	}
 
-	val, _, err := c.client.Commits.GetCommitStatuses(data.repoFullName, data.hash, nil)
+	val, _, err := c.client.Commits.GetCommitStatuses(buildStatus.RepositoryFullname, buildStatus.GitHash, nil)
 	if err != nil {
-		return sdk.WrapError(err, "unable to get commit statuses - repo:%s hash:%s", data.repoFullName, data.hash)
+		return sdk.WrapError(err, "unable to get commit statuses - repo:%s hash:%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 	}
 
 	found := false
@@ -92,19 +69,19 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		sameRequest := s.TargetURL == *opt.TargetURL && // Comparing TargetURL as there is the workflow run number inside
 			s.Status == string(opt.State) && // Comparing Status to avoid duplicate entries
 			s.Ref == *opt.Ref && // Comparing branches name
-			s.SHA == data.hash && // Comparing commit SHA to match the right commit
+			s.SHA == buildStatus.GitHash && // Comparing commit SHA to match the right commit
 			s.Name == *opt.Name && // Comparing app name (CDS)
 			s.Description == *opt.Description // Comparing Description as there are the pipelines names inside
 
 		if sameRequest {
-			log.Debug(ctx, "gitlabClient.SetStatus> Duplicate commit status, ignoring request - repo:%s hash:%s", data.repoFullName, data.hash)
+			log.Debug(ctx, "gitlabClient.SetStatus> Duplicate commit status, ignoring request - repo:%s hash:%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 			found = true
 			break
 		}
 	}
 	if !found {
-		if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
-			return sdk.WrapError(err, "cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
+		if _, _, err := c.client.Commits.SetCommitStatus(buildStatus.RepositoryFullname, buildStatus.GitHash, opt); err != nil {
+			return sdk.WrapError(err, "cannot process event repo:%s hash:%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 		}
 	}
 	return nil
@@ -143,26 +120,4 @@ func processGitlabState(s gitlab.CommitStatus) string {
 	default:
 		return sdk.StatusDisabled
 	}
-}
-
-func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, error) {
-	data := statusData{}
-	var eventNR sdk.EventRunWorkflowNode
-	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "cannot read payload")
-	}
-
-	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-		uiURL,
-		event.ProjectKey,
-		event.WorkflowName,
-		eventNR.Number,
-	)
-
-	data.desc = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
-	data.hash = eventNR.Hash
-	data.repoFullName = eventNR.RepositoryFullName
-	data.status = eventNR.Status
-	data.branchName = eventNR.BranchName
-	return data, nil
 }

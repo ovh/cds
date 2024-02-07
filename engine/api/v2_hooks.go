@@ -153,7 +153,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 					callback.SigningKeyCallback.Error = ope.Error.Message + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 				}
 
-				if _, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
+				if _, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to hook [HTTP: %d]", code))
 					return
 				}
@@ -402,7 +402,7 @@ func (api *API) getRepositoryWebHookSecretHandler() ([]service.RbacChecker, serv
 			path := fmt.Sprintf("/v2/repository/key/%s/%s", vcsName, url.PathEscape(repositoryName))
 
 			var keyResp sdk.GenerateRepositoryWebhook
-			_, code, err := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &keyResp)
+			_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &keyResp)
 			if err != nil {
 				return sdk.WrapError(err, "unable to delete hook [HTTP: %d]", code)
 			}

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -99,7 +98,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 	defer ctrl.Finish()
 
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -111,7 +110,7 @@ func TestResyncCommitStatusNotifDisabled(t *testing.T) {
 			gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	err = workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr)
+	err = workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr, "")
 	assert.NoError(t, err)
 }
 
@@ -187,7 +186,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 	defer ctrl.Finish()
 
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -210,7 +209,7 @@ func TestResyncCommitStatusSetStatus(t *testing.T) {
 		DoJSONRequest(gomock.Any(), "POST", "/vcs/gerrit/status", gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, 201, nil)
 
-	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr)
+	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr, "")
 	assert.NoError(t, err)
 }
 
@@ -296,7 +295,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 	defer ctrl.Finish()
 
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -324,7 +323,7 @@ func TestResyncCommitStatusCommentPR(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 
-	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr)
+	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr, "")
 	assert.NoError(t, err)
 }
 
@@ -410,7 +409,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 	defer ctrl.Finish()
 
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -431,7 +430,7 @@ func TestResyncCommitStatusCommentPRNotTerminated(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 
-	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr)
+	err := workflow.ResyncCommitStatus(ctx, db.DbMap, cache, *proj, wr, "")
 	assert.NoError(t, err)
 }
 
@@ -517,7 +516,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 	defer ctrl.Finish()
 
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -555,7 +554,7 @@ func TestResyncCommitStatusCommitCache(t *testing.T) {
 			return nil, 200, nil
 		}).MaxTimes(1)
 	e := workflow.VCSEventMessenger{}
-	err := e.SendVCSEvent(ctx, db.DbMap, cache, *proj, *wr, wr.WorkflowNodeRuns[1][0])
+	err := e.SendVCSEvent(ctx, db.DbMap, cache, *proj, *wr, wr.WorkflowNodeRuns[1][0], "")
 	assert.NoError(t, err)
 }
 

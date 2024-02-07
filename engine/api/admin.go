@@ -124,7 +124,7 @@ func (api *API) postMaintenanceHandler() service.Handler {
 				return err
 			}
 			url := fmt.Sprintf("/admin/maintenance?enable=%v", enable)
-			_, code, errHooks := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, url, nil, nil)
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, url, nil, nil)
 			if errHooks != nil || code >= 400 {
 				return fmt.Errorf("unable to change hook maintenant state to %v. Code result %d: %v", enable, code, errHooks)
 			}

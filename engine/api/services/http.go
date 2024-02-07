@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 	"gopkg.in/spacemonkeygo/httpsig.v0"
 
@@ -48,15 +47,13 @@ type Client interface {
 }
 
 type defaultServiceClient struct {
-	db   gorp.SqlExecutor
 	srvs []sdk.Service
 }
 
-var NewClient func(gorp.SqlExecutor, []sdk.Service) Client = NewDefaultClient
+var NewClient func([]sdk.Service) Client = NewDefaultClient
 
-func NewDefaultClient(db gorp.SqlExecutor, srvs []sdk.Service) Client {
+func NewDefaultClient(srvs []sdk.Service) Client {
 	return &defaultServiceClient{
-		db:   db,
 		srvs: srvs,
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,7 +42,7 @@ func Test_RunNonDefaultBranchWithSecrets(t *testing.T) {
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {

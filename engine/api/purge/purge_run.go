@@ -84,19 +84,10 @@ func ApplyRetentionPolicyOnWorkflow(ctx context.Context, store cache.Store, db *
 			}
 			app = *appDB
 			if app.RepositoryFullname != "" {
-				tx, err := db.Begin()
-				if err != nil {
-					return sdk.WithStack(err)
-				}
 				//Get the RepositoriesManager Client
-				vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, wf.ProjectKey, app.VCSServer)
+				vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, db, store, wf.ProjectKey, app.VCSServer)
 				if err != nil {
-					_ = tx.Rollback()
 					return sdk.WithStack(err)
-				}
-				if err := tx.Commit(); err != nil {
-					_ = tx.Rollback()
-					return err
 				}
 			}
 		}

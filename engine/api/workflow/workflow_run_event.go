@@ -23,7 +23,7 @@ type VCSEventMessenger struct {
 }
 
 // ResyncCommitStatus resync commit status for a workflow run
-func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun) error {
+func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, cdsUIURL string) error {
 	_, end := telemetry.Span(ctx, "workflow.resyncCommitStatus",
 		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
 		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
@@ -37,7 +37,7 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		})
 		nodeRun := nodeRuns[0]
 
-		if err := eventMessenger.SendVCSEvent(ctx, db, store, proj, *wr, nodeRun); err != nil {
+		if err := eventMessenger.SendVCSEvent(ctx, db, store, proj, *wr, nodeRun, cdsUIURL); err != nil {
 			log.Error(ctx, "resyncCommitStatus > unable to send vcs event: %v", err)
 		}
 	}
@@ -45,7 +45,7 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	return nil
 }
 
-func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun) error {
+func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun, cdsUIURL string) error {
 	ctx = context.WithValue(ctx, cdslog.NodeRunID, nodeRun.ID)
 
 	tx, err := db.Begin()
@@ -144,7 +144,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	if statusFound == nil || statusFound.State == "" {
 		for i := range notifs {
 			log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
 				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 			}
 		}
@@ -175,7 +175,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		if !skipStatus {
 			for i := range notifs {
 				log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-				if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+				if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
 					return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 				}
 			}
@@ -199,7 +199,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 }
 
 // sendVCSEventStatus send status
-func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string) error {
+func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string, cdsUIURL string) error {
 	if notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
 		return nil
 	}
@@ -314,7 +314,17 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		EnvironmentName: envName,
 	}
 
-	if err := e.vcsClient.SetStatus(ctx, evt); err != nil {
+	buildStatus := sdk.VCSBuildStatus{
+		Description:        eventWNR.NodeName + ": " + eventWNR.Status,
+		URLCDS:             fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, evt.ProjectKey, evt.WorkflowName, eventWNR.Number),
+		Context:            fmt.Sprintf("%s-%s-%s", evt.ProjectKey, evt.WorkflowName, eventWNR.NodeName),
+		Status:             eventWNR.Status,
+		RepositoryFullname: eventWNR.RepositoryFullName,
+		GitHash:            eventWNR.Hash,
+		GerritChange:       eventWNR.GerritChange,
+	}
+
+	if err := e.vcsClient.SetStatus(ctx, buildStatus); err != nil {
 		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
 			return err2
 		}

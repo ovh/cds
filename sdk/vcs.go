@@ -301,10 +301,6 @@ type VCSServer interface {
 	GetAuthorizedClient(context.Context, VCSAuth) (VCSAuthorizedClient, error)
 }
 
-type VCSServerService interface {
-	GetAuthorizedClient(context.Context, string, string, int64) (VCSAuthorizedClientService, error)
-}
-
 type VCSBranchFilters struct {
 	BranchName string
 	Default    bool
@@ -358,8 +354,7 @@ type VCSAuthorizedClientCommon interface {
 	PullRequestEvents(context.Context, string, []interface{}) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
-	SetStatus(ctx context.Context, event Event) error
-	SetDisableStatusDetails(disableStatusDetails bool)
+	SetStatus(ctx context.Context, buildStatus VCSBuildStatus) error
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
 	// Release
@@ -418,4 +413,26 @@ func VCSCommitStatusDescription(projKey, workflowName string, evt EventRunWorkfl
 		evt.NodeName,
 	)
 	return fmt.Sprintf("CDS/%s", key)
+}
+
+type VCSBuildStatus struct {
+	// v1:eventNR.NodeName + ": " + eventNR.Status
+	// v2: Workflow.Name + ": " +Status
+	Description string `json:"description"`
+
+	// v1: fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, event.ProjectKey, event.WorkflowName, eventNR.Number)
+	// v2: TODO
+	URLCDS string `json:"url_cds"` //
+
+	// v1: fmt.Sprintf("%s-%s-%s", event.ProjectKey, event.WorkflowName, eventNR.NodeName)
+	// v2: TODO
+	Context string `json:"context"`
+
+	Status string `json:"status"`
+
+	RepositoryFullname string `json:"repository_fullname"`
+	GitHash            string `json:"git_hash"`
+
+	// from v1 workflow only
+	GerritChange *GerritChangeEvent `json:"gerrit_change,omitempty"`
 }

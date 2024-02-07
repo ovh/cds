@@ -527,7 +527,7 @@ func Test_WorkflowAsCodeWithNotifications(t *testing.T) {
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -926,7 +926,7 @@ hooks:
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -1185,7 +1185,7 @@ func Test_WorkflowAsCodeWithPermissions(t *testing.T) {
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {

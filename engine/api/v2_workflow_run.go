@@ -993,7 +993,7 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 			}
 		}
 		req := sdk.CDNDuplicateItemRequest{FromJob: rj.ID, ToJob: duplicatedRJ.ID}
-		_, code, err := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
+		_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
 		if err != nil || code >= 400 {
 			return fmt.Errorf("unable to duplicate cdn item for runjob %s. Code result %d: %v", rj.ID, code, err)
 		}

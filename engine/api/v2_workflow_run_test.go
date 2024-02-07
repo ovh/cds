@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -161,7 +160,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -322,7 +321,7 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -490,7 +489,7 @@ func TestRunManualJob(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -678,7 +677,7 @@ func TestPutWorkflowRun(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {

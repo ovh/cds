@@ -71,7 +71,7 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 			}
 			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProject.Name, url.PathEscape(repo.Name))
 			var repositoryEvents []sdk.HookRepositoryEvent
-			_, code, errHooks := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
 			if (errHooks != nil || code >= 400) && code != 404 {
 				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
 			}

@@ -851,7 +851,7 @@ func (a *API) Serve(ctx context.Context) error {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
 	a.GoRoutines.RunWithRestart(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
-		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
+		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)

@@ -42,7 +42,7 @@ func PushInElasticSearch(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			}
 			e.Payload = nil
 			log.Info(ctx, "sending event %q to %s services", e.EventType, sdk.TypeElasticsearch)
-			_, code, errD := services.NewClient(db, esServices).DoJSONRequest(context.Background(), "POST", "/events", e, nil)
+			_, code, errD := services.NewClient(esServices).DoJSONRequest(context.Background(), "POST", "/events", e, nil)
 			if code >= 400 || errD != nil {
 				log.Error(ctx, "PushInElasticSearch> Unable to send event %s to elasticsearch [%d]: %v", e.EventType, code, errD)
 				continue
@@ -59,7 +59,7 @@ func GetEvents(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filt
 	}
 
 	var esEvents []elastic.SearchHit
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(context.Background(), "GET", "/events", filters, &esEvents); err != nil {
+	if _, _, err := services.NewClient(srvs).DoJSONRequest(context.Background(), "GET", "/events", filters, &esEvents); err != nil {
 		return nil, sdk.WrapError(err, "Unable to get events")
 	}
 

@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,7 +61,7 @@ func TestUpdateAsCodeEnvironmentHandler(t *testing.T) {
 	defer ctrl.Finish()
 
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
