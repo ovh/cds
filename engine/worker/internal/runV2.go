@@ -630,7 +630,7 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 
 		str := fmt.Sprintf("source %s ; echo '<<<ENVIRONMENT>>>' ; env", filepath)
 		cmd := exec.Command("bash", "-c", str)
-		cmd.Env = append(cmd.Env, integrationEnv...)
+		cmd.Env = append(workerEnv, integrationEnv...)
 		bs, err := cmd.CombinedOutput()
 		if err != nil {
 			return errors.WithStack(err)
