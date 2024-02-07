@@ -18,7 +18,7 @@
           "builder": "@angular-devkit/build-angular:application",
           "options": {
             "baseHref": "/dist-web/",
-            "outputPath": "../dist-web",
+            "outputPath": "../../dist-web/workflow-preview",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
