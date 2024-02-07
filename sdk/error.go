@@ -200,6 +200,7 @@ var (
 	ErrMFARequired                                   = Error{ID: 194, Status: http.StatusForbidden}
 	ErrHatcheryNoResourceAvailable                   = Error{ID: 195, Status: http.StatusInternalServerError}
 	ErrRegionNotAllowed                              = Error{ID: 196, Status: http.StatusInternalServerError}
+	ErrInvalidRunIdentifier                          = Error{ID: 197, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -383,6 +384,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrMFARequired.ID:                                   "Multi factor authentication is required",
 	ErrHatcheryNoResourceAvailable.ID:                   "No enough resource available to start worker",
 	ErrRegionNotAllowed.ID:                              "Region not allowed",
+	ErrInvalidRunIdentifier.ID:                          "Invalid run identifier",
 }
 
 // Error type.

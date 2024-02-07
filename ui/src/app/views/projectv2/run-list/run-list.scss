@@ -2,9 +2,9 @@
 
 :host {
   display: flex;
-  flex-direction: column;
-  padding: 20px;
+  flex: 1;
   overflow: hidden;
+  flex-direction: row;
   height: 100%;
 }
 
@@ -14,56 +14,85 @@
   }
 }
 
-[nz-form] {
-  display: flex;
-  flex-direction: row;
-
+.save-search-form {
   nz-form-item {
     margin: 0;
   }
 
-  nz-form-item:first-child {
-    flex: 1;
-    margin-right: 10px;
+  [nz-input] {
+    width: 250px;
   }
 }
 
-.run-list {
-  margin: 20px 0;
+.content {
   flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 15px 20px;
+  overflow: hidden;
+  height: 100%;
 
-  .run-avatar {
+  .header {
     display: flex;
     flex-direction: row;
-    align-items: center;
-    width: 25px;
-    height: 48px;
 
-    [nz-icon] {
-      font-size: 25px;
+    [nz-form] {
+      margin-left: 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: row;
 
-      &.success {
-        color: $cds_color_green;
+      nz-form-item {
+        margin: 0;
       }
 
-      &.fail {
-        color: $cds_color_red;
+      nz-form-item:first-child {
+        flex: 1;
       }
 
-      &.building {
-        color: $cds_color_teal;
+      nz-form-item:not(last-child) {
+        margin-right: 10px;
       }
     }
   }
-}
 
-.footer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+  .run-list {
+    margin: 20px 0;
+    flex: 1;
+    overflow-y: auto;
 
-  nz-pagination {
-    margin-left: auto;
+    .run-avatar {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      width: 25px;
+      height: 48px;
+
+      [nz-icon] {
+        font-size: 25px;
+
+        &.success {
+          color: $cds_color_green;
+        }
+
+        &.fail {
+          color: $cds_color_red;
+        }
+
+        &.building {
+          color: $cds_color_teal;
+        }
+      }
+    }
+  }
+
+  .footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    nz-pagination {
+      margin-left: auto;
+    }
   }
 }

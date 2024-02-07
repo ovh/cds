@@ -8,6 +8,10 @@ export class PreferencesStateModel {
         sizes: { [key: string]: number };
     };
     theme: string;
+    searches: Array<{
+        name: string;
+        value: string;
+    }>;
 }
 
 @State<PreferencesStateModel>({
@@ -17,7 +21,8 @@ export class PreferencesStateModel {
             resizing: false,
             sizes: {}
         },
-        theme: 'light'
+        theme: 'light',
+        searches: []
     }
 })
 @Injectable()
@@ -43,6 +48,11 @@ export class PreferencesState {
         return state.panel.resizing;
     }
 
+    @Selector()
+    static searches(state: PreferencesStateModel) {
+        return state.searches;
+    }
+
     @Action(actionPreferences.SetPanelResize)
     setPanelResize(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SetPanelResize) {
         const state = ctx.getState();
@@ -66,6 +76,29 @@ export class PreferencesState {
                 ...state.panel,
                 sizes
             }
+        });
+    }
+
+    @Action(actionPreferences.SaveWorkflowRunSearch)
+    saveWorkflowRunSearch(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveWorkflowRunSearch) {
+        const state = ctx.getState();
+        let searches = (state.searches ?? []).filter(s => s.name !== action.payload.name);
+        searches.push({
+            name: action.payload.name,
+            value: action.payload.value
+        });
+        ctx.setState({
+            ...state,
+            searches
+        });
+    }
+
+    @Action(actionPreferences.DeleteWorkflowRunSearch)
+    deleteWorkflowRunSearch(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.DeleteWorkflowRunSearch) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            searches: (state.searches ?? []).filter(s => s.name !== action.payload.name)
         });
     }
 

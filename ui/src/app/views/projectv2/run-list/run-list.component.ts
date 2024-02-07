@@ -7,6 +7,10 @@ import { Project } from "app/model/project.model";
 import { Store } from "@ngxs/store";
 import { ProjectState } from "app/store/project.state";
 import { NzAutocompleteTriggerDirective } from "ng-zorro-antd/auto-complete";
+import { ActivatedRoute, Router } from "@angular/router";
+import * as actionPreferences from 'app/store/preferences.action';
+import { PreferencesState } from "app/store/preferences.state";
+import { NzPopconfirmDirective } from "ng-zorro-antd/popconfirm";
 
 export class WorkflowRunFilter {
 	key: string;
@@ -26,8 +30,11 @@ export class WorkflowRunFilterValue {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit {
+	static PANEL_KEY = 'project-v2-run-list-sidebar';
+
 	@ViewChild('filterInput') filterInput: ElementRef;
 	@ViewChild('filterInputDirective') filterInputDirective: NzAutocompleteTriggerDirective;
+	@ViewChild('saveSearchButton') saveSearchButton: NzPopconfirmDirective;
 
 	loading = false;
 	totalCount: number = 0;
@@ -40,19 +47,33 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 	selectedFilter: WorkflowRunFilter = null;
 	textFilters = [];
 	cursorTextFilterPosition: number = 0;
+	index: number = 1;
+	panelSize: number | string;
+	searchName: string = '';
 
 	constructor(
 		private _http: HttpClient,
 		private _messageService: NzMessageService,
 		private _cd: ChangeDetectorRef,
-		private _store: Store
+		private _store: Store,
+		private _router: Router,
+		private _activatedRoute: ActivatedRoute
 	) {
 		this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 	}
 
 	ngOnInit(): void {
+		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunListComponent.PANEL_KEY)) ?? '15%';
 		this.loadFilters();
-		this.search();
+		this._activatedRoute.queryParams.subscribe(values => {
+			this.filterText = Object.keys(values).filter(key => key !== 'page').map(key => {
+				return (!Array.isArray(values[key]) ? [values[key]] : values[key]).map(f => {
+					return `${key}:${f}`;
+				}).join(' ');
+			}).join(' ');
+			this.index = values['page'] ?? 1;
+			this.search();
+		});
 	}
 
 	ngAfterViewInit(): void {
@@ -70,7 +91,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 					if (this.filterInputDirective.activeOption.nzValue.endsWith(':')) {
 						event.preventDefault();
 					}
-					this.onFilterChange(this.filterInputDirective.activeOption.nzValue);
+					this.onFilterTextChange(this.filterInputDirective.activeOption.nzValue);
 					return;
 				} else if (this.filterInputDirective.activeOption) {
 					this.submitForm();
@@ -85,7 +106,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 	}
 
 	submitForm(): void {
-		this.search();
+		this.saveSearchInQueryParams();
 	}
 
 	onClickInput(): void {
@@ -110,7 +131,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 		this._cd.markForCheck();
 	}
 
-	async search(offset?: number) {
+	async search() {
 		this.loading = true;
 		this._cd.markForCheck();
 
@@ -127,12 +148,12 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 
 		let params = {
 			...mFilters,
-			offset: offset ?? 0,
+			offset: this.index ? (this.index - 1) * 20 : 0,
 			limit: 20
 		};
 
 		try {
-			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run/search`, { params, observe: 'response' })
+			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, { params, observe: 'response' })
 				.pipe(map(res => {
 					let headers: HttpHeaders = res.headers;
 					return {
@@ -150,15 +171,41 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 		this._cd.markForCheck();
 	}
 
+	saveSearchInQueryParams() {
+		let mFilters = {};
+		this.filterText.split(' ').forEach(f => {
+			const s = f.split(':');
+			if (s.length === 2 && s[1] !== '') {
+				if (!mFilters[s[0]]) {
+					mFilters[s[0]] = [];
+				}
+				mFilters[s[0]].push(s[1]);
+			}
+		});
+
+		let queryParams = { ...mFilters };
+		if (this.index > 1) {
+			queryParams['page'] = this.index;
+		}
+
+		this._router.navigate([], {
+			relativeTo: this._activatedRoute,
+			queryParams,
+			replaceUrl: true,
+		});
+	}
+
 	edit(item: any): void {
 		this._messageService.success(item.email);
 	}
 
 	pageIndexChange(index: number): void {
-		this.search((index - 1) * 20);
+		this.index = index;
+		this._cd.markForCheck();
+		this.saveSearchInQueryParams();
 	}
 
-	onFilterChange(originalText: string): void {
+	onFilterTextChange(originalText: string): void {
 		this.computeAvailableFilters(originalText);
 		this.filterText = originalText;
 		this._cd.markForCheck();
@@ -197,5 +244,28 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 		const textFilters = [].concat(this.textFilters);
 		textFilters[this.cursorTextFilterPosition] = filter.key + ':' + (option ?? '');
 		return textFilters.join(' ');
+	}
+
+	panelStartResize(): void {
+		this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
+	}
+
+	panelEndResize(size: number): void {
+		this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: ProjectV2WorkflowRunListComponent.PANEL_KEY, size: size }));
+		this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
+	}
+
+	submitSaveSearch(): void {
+		this.confirmSaveSearch();
+		this.saveSearchButton.hide();
+	}
+
+	confirmSaveSearch(): void {
+		this._store.dispatch(new actionPreferences.SaveWorkflowRunSearch({ name: this.searchName, value: this.filterText }));
+		this.searchName = '';
+	}
+
+	onSearchNameChange(name: string): void {
+		this.searchName = name;
 	}
 }

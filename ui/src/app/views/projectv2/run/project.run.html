@@ -1,16 +1,18 @@
-<ng-container *ngIf="selectedRun">
+<ng-container *ngIf="workflowRun">
     <div class="graph" [class.disableSelection]="resizing">
-        <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="selectedRun"
-                          (onSelectJobGate)="selectJobGate($event)"
-                          (onSelectJob)="selectJob($event)" #graph></app-stages-graph>
+        <nz-page-header class="title" nzBackIcon (nzBack)="onBack()"
+            [nzTitle]="workflowRun.workflow_name"></nz-page-header>
+
+        <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
+            (onSelectJobGate)="selectJobGate($event)" (onSelectJob)="selectJob($event)" #graph></app-stages-graph>
 
         <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
-                             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
+            (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
 
             <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
             <ng-container *ngIf="selectedTab.key === 'problems'">
                 <ul class="infos">
-                    <ng-container *ngFor="let info of selectedRunInfos">
+                    <ng-container *ngFor="let info of workflowRunInfos">
                         <li *ngIf="info.level === 'error'">
                             <span class="error" nz-icon nzType="close-circle" nzTheme="fill"></span>
                             <div class="content">
@@ -18,7 +20,7 @@
                             </div>
                         </li>
                     </ng-container>
-                    <ng-container *ngFor="let info of selectedRunInfos">
+                    <ng-container *ngFor="let info of workflowRunInfos">
                         <li *ngIf="info.level === 'warning'">
                             <span class="warning" nz-icon nzType="warning" nzTheme="fill"></span>
                             <div class="content">
@@ -30,7 +32,7 @@
             </ng-container>
             <ng-container *ngIf="selectedTab.key === 'infos'">
                 <ul class="infos">
-                    <ng-container *ngFor="let info of selectedRunInfos">
+                    <ng-container *ngFor="let info of workflowRunInfos">
                         <li *ngIf="info.level==='info'">
                             <span class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
                             <div class="content">
@@ -41,7 +43,7 @@
                 </ul>
             </ng-container>
             <ng-container *ngIf="selectedTab.key === 'results'">
-                <nz-table #basicTable [nzData]="selectedRun.results">
+                <nz-table #basicTable [nzData]="workflowRun.results">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -50,7 +52,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let result of selectedRun.results">
+                        <tr *ngFor="let result of workflowRun.results">
                             <td>
                                 <span class="info" nz-icon nzType="file" nzTheme="fill"></span>
                                 {{result.id}}
@@ -70,16 +72,15 @@
 
     <!--  RIGHT PANELS -->
 
-        <app-resizable-panel *ngIf="selectedJobRun || selectedJobGate" minSize="400" [initialSize]="jobPanelSize"
-                             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
-            <ng-container *ngIf="selectedJobRun">
-                <app-run-job [workflowRun]="selectedRun" [jobRun]="selectedJobRun" [jobRunInfos]="selectedJobRunInfos"
+    <app-resizable-panel *ngIf="selectedJobRun || selectedJobGate" minSize="400" [initialSize]="jobPanelSize"
+        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
+        <ng-container *ngIf="selectedJobRun">
+            <app-run-job [workflowRun]="workflowRun" [jobRun]="selectedJobRun" [jobRunInfos]="selectedJobRunInfos"
                 (onClickClose)="unselectJob()" #runJob></app-run-job>
-            </ng-container>
-            <ng-container *ngIf="selectedJobGate">
-                <app-run-gate [gateNode]="selectedJobGate" [run]="selectedRun"></app-run-gate>
-            </ng-container>
-        </app-resizable-panel>
+        </ng-container>
+        <ng-container *ngIf="selectedJobGate">
+            <app-run-gate [gateNode]="selectedJobGate" [run]="workflowRun"></app-run-gate>
+        </ng-container>
+    </app-resizable-panel>
 
 </ng-container>
-

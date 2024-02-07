@@ -33,7 +33,7 @@ type V2WorkflowRunHookRequest struct {
 }
 
 type V2WorkflowRun struct {
-	ID           string                 `json:"id" db:"id"`
+	ID           string                 `json:"id" db:"id" cli:"id"`
 	ProjectKey   string                 `json:"project_key" db:"project_key"`
 	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
 	VCSServer    string                 `json:"vcs_server" db:"vcs_server"`

@@ -18,7 +18,7 @@ import (
 
 const (
 	jobLockKey           = "jobs:lock"
-	jobSchedulingTimeout = 600.0
+	jobSchedulingTimeout = 60.0
 )
 
 func (api *API) StopDeadJobs(ctx context.Context) {

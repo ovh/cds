@@ -25,6 +25,7 @@ import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.servic
 import { AnalysisService } from "app/service/analysis/analysis.service";
 import { Entity, EntityAction, EntityWorkerModel, EntityWorkflow } from "app/model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
+
 @Component({
     selector: 'app-projectv2-sidebar',
     templateUrl: './sidebar.html',
@@ -56,8 +57,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     sidebarServiceSub: Subscription;
     analysisServiceSub: Subscription;
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -65,8 +65,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
         private _router: Router,
         private _sidebarService: SidebarService,
         private _analysisService: AnalysisService,
-    ) {
-    }
+    ) { }
 
     ngAfterViewInit(): void {
         this.sidebarServiceSub = this._sidebarService.getWorkspaceObservable().subscribe(e => {
