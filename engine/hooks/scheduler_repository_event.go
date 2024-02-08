@@ -166,8 +166,8 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		hre.ProcessingTimestamp = time.Now().UnixNano()
 		hre.LastError = ""
 		hre.NbErrors = 0
-
-		if hre.EventName == sdk.WorkflowHookEventPush {
+		if hre.EventName == sdk.RepoEventPush {
+			// analyze have to be trigger only on push event
 			hre.Status = sdk.HookEventStatusAnalysis
 			if err := s.triggerAnalyses(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger analyses")

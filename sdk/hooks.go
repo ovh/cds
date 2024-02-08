@@ -18,6 +18,7 @@ type HookListWorkflowRequest struct {
 	Ref                 string           `json:"ref"`
 	Paths               []string         `json:"paths"`
 	RepositoryEventName string           `json:"repository_event"`
+	RepositoryEventType string           `json:"repository_event_type"`
 	AnayzedProjectKeys  StringSlice      `json:"project_keys"`
 	Models              []EntityFullName `json:"models"`
 	Workflows           []EntityFullName `json:"workflows"`
