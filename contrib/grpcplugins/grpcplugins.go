@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -310,6 +311,9 @@ type ArtifactoryFolderInfo struct {
 }
 
 func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFileInfo, error) {
+	if !strings.HasSuffix(config.URL, "/") {
+		config.URL = config.URL + "/"
+	}
 	uri := config.URL + "api/storage/" + filepath.Join(repo, path)
 	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
 	if err != nil {
@@ -342,6 +346,9 @@ func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config 
 }
 
 func GetArtifactoryFolderInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFolderInfo, error) {
+	if !strings.HasSuffix(config.URL, "/") {
+		config.URL = config.URL + "/"
+	}
 	uri := config.URL + "api/storage/" + filepath.Join(repo, path)
 	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
 	if err != nil {

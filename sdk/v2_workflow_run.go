@@ -575,6 +575,13 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		}
 		s.Data = detail
 		return nil
+	case "V2WorkflowRunResultHelmDetail":
+		var detail = new(V2WorkflowRunResultHelmDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultHelmDetail")
+		}
+		s.Data = detail
+		return nil
 	default:
 		return errors.Errorf("unsupported type %q", s.Type)
 	}
@@ -670,6 +677,11 @@ type V2WorkflowRunResultDockerDetail struct {
 	ID           string `json:"id" mapstructure:"id"`
 	HumanSize    string `json:"human_size" mapstructure:"human_size"`
 	HumanCreated string `json:"human_created" mapstructure:"human_created"`
+}
+
+type V2WorkflowRunResultHelmDetail struct {
+	Name       string `json:"name" mapstructure:"name"`
+	AppVersion string `json:"appVersion" mapstructure:"appVersion"`
 }
 
 type V2WorkflowRunResultVariableDetail struct {

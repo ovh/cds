@@ -36,6 +36,7 @@ test_results.xml
 .tmp
 contrib/**/dist
 config.*.toml
+.paas-sdev.yaml
 
 # TEST
 tests/fixtures/ITSCWRKFLW1/output
