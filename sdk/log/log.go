@@ -62,6 +62,8 @@ func Initialize(ctx context.Context, conf *Conf) {
 		logrus.SetOutput(io.Discard)
 	case "json":
 		logrus.SetFormatter(&logrus.JSONFormatter{})
+	case "readable":
+		logrus.SetFormatter(&CDSFormatter{DisabledPrintFields: true})
 	default:
 		logrus.SetFormatter(&CDSFormatter{})
 	}

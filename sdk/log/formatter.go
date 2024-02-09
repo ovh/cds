@@ -11,7 +11,9 @@ import (
 )
 
 // CDSFormatter ...
-type CDSFormatter struct{}
+type CDSFormatter struct {
+	DisabledPrintFields bool
+}
 
 // Format format a log
 func (f *CDSFormatter) Format(entry *logrus.Entry) ([]byte, error) {
@@ -53,10 +55,13 @@ func (f *CDSFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys [
 	levelText = "[" + levelText + "]"
 
 	fmt.Fprintf(b, "%s %s%+5s%s %s", entry.Time.Format("2006-01-02 15:04:05"), levelColor, levelText, ansi.Reset, entry.Message)
-	for _, k := range keys {
-		v := entry.Data[k]
-		fmt.Fprintf(b, " %s%s%s=%+v", levelColor, k, ansi.Reset, v)
+	if !f.DisabledPrintFields {
+		for _, k := range keys {
+			v := entry.Data[k]
+			fmt.Fprintf(b, " %s%s%s=%+v", levelColor, k, ansi.Reset, v)
+		}
 	}
+
 }
 
 func needsQuoting(text string) bool {

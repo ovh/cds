@@ -30,8 +30,8 @@ type V2Workflow struct {
 
 type WorkflowOn struct {
 	Push               *WorkflowOnPush               `json:"push,omitempty"`
-	PullRequest        *WorkflowOnPullRequest        `json:"pull_request,omitempty"`
-	PullRequestComment *WorkflowOnPullRequestComment `json:"pull_request_comment,omitempty"`
+	PullRequest        *WorkflowOnPullRequest        `json:"pull-request,omitempty"`
+	PullRequestComment *WorkflowOnPullRequestComment `json:"pull-request-comment,omitempty"`
 	ModelUpdate        *WorkflowOnModelUpdate        `json:"model_update,omitempty"`
 	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow_update,omitempty"`
 }

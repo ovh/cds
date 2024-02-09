@@ -19,13 +19,13 @@ const (
 	WorkflowHookEventModelUpdate    = "model_update"
 	WorkflowHookEventPush           = "push"
 
-	WorkflowHookEventPullRequest             = "pull_request"
+	WorkflowHookEventPullRequest             = "pull-request"
 	WorkflowHookEventPullRequestTypeOpened   = "opened"
 	WorkflowHookEventPullRequestTypeReopened = "reopened"
 	WorkflowHookEventPullRequestTypeClosed   = "closed"
 	WorkflowHookEventPullRequestTypeEdited   = "edited"
 
-	WorkflowHookEventPullRequestComment            = "pull_request_comment"
+	WorkflowHookEventPullRequestComment            = "pull-request-comment"
 	WorkflowHookEventPullRequestCommentTypeCreated = "created"
 	WorkflowHookEventPullRequestCommentTypeDeleted = "deleted"
 	WorkflowHookEventPullRequestCommentTypeEdited  = "edited"
