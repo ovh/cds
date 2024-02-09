@@ -74,9 +74,19 @@ testcases:
                 - run: |-
                     #!/bin/bash
                     set -ex
+                    echo "$GIT_REF"
                     echo "job done" && date
 
-    - name: Create a file on a new branch
+    - name: Check CDS project analyses status after push on master
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 10
+      delay: 12
+
+    - name: Create a file on a new-branch branch
       script: |- 
         cd /tmp/repos/{{.git_repo}}
         git checkout -b new-branch
@@ -85,8 +95,15 @@ testcases:
         git commit --gpg-sign={{.gpg.key_id}} -m "add file and sign" --author "{{.git.user}} <{{.Prepare-test.emailaddress}}>"
         git push origin new-branch
 
-    - name: wait 10s
-      script: sleep 10
+    - name: Check CDS project analyses status after push on new-branch
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+      retry: 10
+      delay: 12
 
     - name: Create the pull-request
       type: http
@@ -106,16 +123,6 @@ testcases:
       assertions:
       - or:
         - result.statuscode ShouldEqual 201
-
-    - name: Check CDS project analyses status
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
-      retry: 10
-      delay: 12
 
     - name: Check that the CDS workflow has at least one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"

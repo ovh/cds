@@ -27,9 +27,19 @@ func (client *giteaClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBui
 	}
 
 	giteaStatus := gitea.CreateStatusOption{
-		Description: buildStatus.Description,
-		Context:     buildStatus.Context,
-		TargetURL:   buildStatus.URLCDS,
+		Context:   buildStatus.Context,
+		TargetURL: buildStatus.URLCDS,
+	}
+
+	// gitea display on the UI, the context contact with the description.
+	// so that, we remove the context from the description:
+	// description":"WorkflowNotificationsLog:Success","context":"ITV2WFNOTIF-WorkflowNotificationsLog
+	// we want only ITV2WFNOTIF-WorkflowNotificationsLog:Success display
+	td := strings.Split(buildStatus.Description, ":")
+	if len(td) == 2 {
+		giteaStatus.Description = td[1]
+	} else {
+		giteaStatus.Description = buildStatus.Description
 	}
 
 	switch buildStatus.Status {
@@ -45,7 +55,7 @@ func (client *giteaClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBui
 
 	b, err := json.Marshal(giteaStatus)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal gitea status")
+		return sdk.WrapError(err, "unable to marshal gitea status")
 	}
 
 	log.Debug(ctx, "SetStatus> gitea post on %v body:%v", path, string(b))
@@ -56,13 +66,13 @@ func (client *giteaClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBui
 	}
 	s, resp, err := client.client.CreateStatus(t[0], t[1], buildStatus.GitHash, giteaStatus)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to post gitea status")
+		return sdk.WrapError(err, "unable to post gitea status")
 	}
 
 	log.Debug(ctx, "SetStatus> gitea response for %v status: %d:", path, resp.StatusCode)
 
 	if resp.StatusCode != 201 {
-		return sdk.WrapError(err, "Unable to create status on gitea. Status code : %d - Body: %s - context:%s", resp.StatusCode, resp.Body, buildStatus.Context)
+		return sdk.WrapError(err, "unable to create status on gitea. Status code : %d - Body: %s - context:%s", resp.StatusCode, resp.Body, buildStatus.Context)
 	}
 
 	log.Debug(ctx, "SetStatus> Status %d %s created at %v", s.ID, s.URL, s.Created)

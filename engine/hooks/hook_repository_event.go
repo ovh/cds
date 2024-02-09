@@ -42,8 +42,8 @@ func (s *Service) extractDataFromGiteaRequest(headers http.Header, body []byte, 
 		extractedData.Ref = request.Ref
 		extractedData.Commit = request.After
 	case "pull_request":
-		extractedData.Ref = "refs/heads/" + request.PullRequest.Base.Ref
-		extractedData.Commit = request.PullRequest.Base.Sha
+		extractedData.Ref = "refs/heads/" + request.PullRequest.Head.Ref
+		extractedData.Commit = request.PullRequest.Head.Sha
 		switch request.Action {
 		case "opened":
 			extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
