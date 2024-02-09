@@ -44,14 +44,14 @@ type WorkflowOnPush struct {
 
 type WorkflowOnPullRequest struct {
 	Branches []string `json:"branches,omitempty"`
-	Comment  string   `json:"pr_comment,omitempty"`
+	Comment  string   `json:"comment,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
 	Types    []string `json:"types,omitempty"`
 }
 
 type WorkflowOnPullRequestComment struct {
 	Branches []string `json:"branches,omitempty"`
-	Comment  string   `json:"pr_comment,omitempty"`
+	Comment  string   `json:"comment,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
 	Types    []string `json:"types,omitempty"`
 }
@@ -102,13 +102,13 @@ func IsDefaultHooks(on *WorkflowOn) []string {
 	}
 	if on.PullRequest != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventPullRequest)
-		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 {
+		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 || on.PullRequest.Comment != "" {
 			return nil
 		}
 	}
 	if on.PullRequestComment != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventPullRequestComment)
-		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 {
+		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" {
 			return nil
 		}
 	}

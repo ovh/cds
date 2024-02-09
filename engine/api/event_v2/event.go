@@ -190,7 +190,7 @@ func sendVCSPullRequestComment(ctx context.Context, vcsClient sdk.VCSAuthorizedC
 
 	// Send comment on pull request
 	for _, pr := range prs {
-		if pr.Head.Branch.DisplayID == run.Contexts.Git.RefName && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, run.Contexts.Git.Ref) && !pr.Merged && !pr.Closed {
+		if pr.Head.Branch.DisplayID == run.Contexts.Git.RefName && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, run.Contexts.Git.Sha) && !pr.Merged && !pr.Closed {
 			prComment.ID = pr.ID
 			log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", prComment.Revision, prComment.ID, run.Contexts.Git.Repository)
 			if err := vcsClient.PullRequestComment(ctx, run.Contexts.Git.Repository, prComment); err != nil {

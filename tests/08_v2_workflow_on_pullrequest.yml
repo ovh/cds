@@ -86,6 +86,8 @@ testcases:
       retry: 10
       delay: 12
 
+- name: Work on another git branch
+  steps:
     - name: Create a file on a new-branch branch
       script: |- 
         cd /tmp/repos/{{.git_repo}}
@@ -124,6 +126,8 @@ testcases:
       - or:
         - result.statuscode ShouldEqual 201
 
+- name: Check if workflow triggered on the new-branch is ok after pull-request creation
+  steps:
     - name: Check that the CDS workflow has at least one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
