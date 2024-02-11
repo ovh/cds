@@ -107,7 +107,9 @@ testcases:
       retry: 10
       delay: 12
 
-    - name: Create the pull-request
+- name: Create Pull-Request
+  steps:
+    - name: Create the pull-request on gitea
       type: http
       method: POST
       url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls"
@@ -123,8 +125,10 @@ testcases:
           "title": "test pull-request"
         }
       assertions:
-      - or:
         - result.statuscode ShouldEqual 201
+      vars:
+        prNumber:
+          from: result.bodyjson.number
 
 - name: Check if workflow triggered on the new-branch is ok after pull-request creation
   steps:
@@ -141,3 +145,25 @@ testcases:
 
     - name: Check workflowEnv log content
       script: "cat {{.cds_workflow}}-*-myjob* | grep \"job done\""
+
+- name: Check comment created on gitea
+  steps:
+    - name: Get pull-request from gitea and check comment
+      type: http
+      method: GET
+      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
+      basic_auth_user: "{{.git.user}}"
+      basic_auth_password: "{{.git.password}}"
+      headers:
+        Content-Type: application/json
+      body: >
+        {
+          "base": "master",
+          "body": "test body pull-request",
+          "head": "new-branch",
+          "title": "test pull-request"
+        }
+      assertions:
+        - result.statuscode ShouldEqual 200
+        - result.bodyjson ShouldHaveLength 1
+        - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
