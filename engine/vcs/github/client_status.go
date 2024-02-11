@@ -39,6 +39,18 @@ func (g *githubClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildSt
 		TargetURL:   buildStatus.URLCDS,
 	}
 
+	switch buildStatus.Status {
+	case sdk.StatusSuccess:
+		ghStatus.State = "success"
+	case sdk.StatusFail:
+		ghStatus.State = "failure"
+	case sdk.StatusBuilding:
+		ghStatus.State = "pending"
+	default:
+		log.Debug(ctx, "SetStatus> github setStatus not managed for %s", buildStatus.Status)
+		return nil
+	}
+
 	path := fmt.Sprintf("/repos/%s/statuses/%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 
 	b, err := json.Marshal(ghStatus)
