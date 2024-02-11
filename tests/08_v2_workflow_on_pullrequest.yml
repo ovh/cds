@@ -74,7 +74,8 @@ testcases:
                 - run: |-
                     #!/bin/bash
                     set -ex
-                    echo "$GIT_REF"
+                    echo "GIT_REF: $GIT_REF"
+                    echo "GIT_SHA: $GIT_SHA"
                     echo "job done" && date
 
     - name: Check CDS project analyses status after push on master
@@ -129,6 +130,8 @@ testcases:
       vars:
         prNumber:
           from: result.bodyjson.number
+        gitSha:
+          from: result.bodyjson.head.sha
 
 - name: Check if workflow triggered on the new-branch is ok after pull-request creation
   steps:
@@ -156,14 +159,23 @@ testcases:
       basic_auth_password: "{{.git.password}}"
       headers:
         Content-Type: application/json
-      body: >
-        {
-          "base": "master",
-          "body": "test body pull-request",
-          "head": "new-branch",
-          "title": "test pull-request"
-        }
       assertions:
         - result.statuscode ShouldEqual 200
         - result.bodyjson ShouldHaveLength 1
         - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
+
+- name: Check status created on gitea
+  steps:
+    - name: Get status from gitea
+      type: http
+      method: GET
+      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/commits/{{.Create-Pull-Request.gitSha}}/status"
+      basic_auth_user: "{{.git.user}}"
+      basic_auth_password: "{{.git.password}}"
+      headers:
+        Content-Type: application/json
+      assertions:
+        - result.statuscode ShouldEqual 200
+        - result.bodyjson.statuses ShouldHaveLength 1
+        - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
+        - result.bodyjson.statuses.statuses0.context ShouldEqual "ITV2WFNOTIF-WorkflowNotificationsLog"

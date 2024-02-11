@@ -79,6 +79,37 @@ func (client *giteaClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBui
 	return nil
 }
 
-func (client *giteaClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
-	return nil, sdk.WithStack(sdk.ErrNotImplemented)
+func (client *giteaClient) ListStatuses(ctx context.Context, fullname string, ref string) ([]sdk.VCSCommitStatus, error) {
+
+	t := strings.Split(fullname, "/")
+	if len(t) != 2 {
+		return nil, fmt.Errorf("giteaCliet.Tags> invalid fullname %s", fullname)
+	}
+	statuses, _, err := client.client.ListStatuses(t[0], t[1], ref, gitea.ListStatusesOption{})
+	if err != nil {
+		return nil, err
+	}
+
+	var vcsStatuses []sdk.VCSCommitStatus
+	for _, s := range statuses {
+		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
+			CreatedAt:  s.Created,
+			Decription: s.Context,
+			Ref:        ref,
+			State:      processGiteaState(s.State),
+		})
+	}
+
+	return vcsStatuses, nil
+}
+
+func processGiteaState(s gitea.StatusState) string {
+	switch s {
+	case "success":
+		return sdk.StatusSuccess
+	case "error", "failure":
+		return sdk.StatusFail
+	default:
+		return sdk.StatusDisabled
+	}
 }

@@ -64,6 +64,8 @@ func (c *gitlabClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildSt
 		return sdk.WrapError(err, "unable to get commit statuses - repo:%s hash:%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 	}
 
+	log.Debug(ctx, "gitlabClient.SetStatus> existing nb statuses: %d", len(val))
+
 	found := false
 	for _, s := range val {
 		sameRequest := s.TargetURL == *opt.TargetURL && // Comparing TargetURL as there is the workflow run number inside
@@ -80,6 +82,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildSt
 		}
 	}
 	if !found {
+		log.Debug(ctx, "gitlabClient.SetStatus> gitlab set status on %v hash:%v status:%v", buildStatus.RepositoryFullname, buildStatus.GitHash, buildStatus.Status)
 		if _, _, err := c.client.Commits.SetCommitStatus(buildStatus.RepositoryFullname, buildStatus.GitHash, opt); err != nil {
 			return sdk.WrapError(err, "cannot process event repo:%s hash:%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 		}

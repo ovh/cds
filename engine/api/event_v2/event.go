@@ -143,7 +143,7 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		Context:            fmt.Sprintf("%s-%s", event.ProjectKey, run.WorkflowName),
 		Status:             event.Status,
 		RepositoryFullname: event.Repository,
-		GitHash:            run.Contexts.Git.Ref,
+		GitHash:            run.Contexts.Git.Sha,
 	}
 	if err := vcsClient.SetStatus(ctx, buildStatus); err != nil {
 		return sdk.WrapError(err, "can't send the build status for %v/%v", event.ProjectKey, event.VCSName)
