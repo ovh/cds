@@ -42,7 +42,7 @@ func (s *Service) extractDataFromGiteaRequest(headers http.Header, body []byte, 
 		extractedData.Ref = request.Ref
 		extractedData.Commit = request.After
 	case "pull_request":
-		extractedData.Ref = "refs/heads/" + request.PullRequest.Head.Ref
+		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.Commit = request.PullRequest.Head.Sha
 		switch request.Action {
 		case "opened":
