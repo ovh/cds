@@ -4616,6 +4616,21 @@ func (mr *MockUserClientMockRecorder) UserGetSchema(ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockUserClient)(nil).UserGetSchema), ctx)
 }
 
+// UserGetSchemaV2 mocks base method.
+func (m *MockUserClient) UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGetSchemaV2", ctx, entityType)
+	ret0, _ := ret[0].(sdk.Schema)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGetSchemaV2 indicates an expected call of UserGetSchemaV2.
+func (mr *MockUserClientMockRecorder) UserGetSchemaV2(ctx, entityType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchemaV2", reflect.TypeOf((*MockUserClient)(nil).UserGetSchemaV2), ctx, entityType)
+}
+
 // UserGpgKeyCreate mocks base method.
 func (m *MockUserClient) UserGpgKeyCreate(ctx context.Context, username, publicKey string) (sdk.UserGPGKey, error) {
 	m.ctrl.T.Helper()
@@ -10155,6 +10170,21 @@ func (m *MockInterface) UserGetSchema(ctx context.Context) (sdk.SchemaResponse, 
 func (mr *MockInterfaceMockRecorder) UserGetSchema(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchema", reflect.TypeOf((*MockInterface)(nil).UserGetSchema), ctx)
+}
+
+// UserGetSchemaV2 mocks base method.
+func (m *MockInterface) UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserGetSchemaV2", ctx, entityType)
+	ret0, _ := ret[0].(sdk.Schema)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserGetSchemaV2 indicates an expected call of UserGetSchemaV2.
+func (mr *MockInterfaceMockRecorder) UserGetSchemaV2(ctx, entityType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserGetSchemaV2", reflect.TypeOf((*MockInterface)(nil).UserGetSchemaV2), ctx, entityType)
 }
 
 // UserGpgKeyCreate mocks base method.

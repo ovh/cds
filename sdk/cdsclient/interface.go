@@ -358,6 +358,7 @@ type UserClient interface {
 	UserGetGroups(ctx context.Context, username string) (map[string][]sdk.Group, error)
 	UpdateFavorite(ctx context.Context, params sdk.FavoriteParams) (interface{}, error)
 	UserGetSchema(ctx context.Context) (sdk.SchemaResponse, error)
+	UserGetSchemaV2(ctx context.Context, entityType string) (sdk.Schema, error)
 	UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error)
 	UserGpgKeyGet(ctx context.Context, keyID string) (sdk.UserGPGKey, error)
 	UserGpgKeyDelete(ctx context.Context, username string, keyID string) error
@@ -490,7 +491,8 @@ type IntegrationClient interface {
 }
 
 // Interface is the main interface for cdsclient package
-// generate mock with "mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface" from directory ${GOPATH}/src/github.com/ovh/cds/sdk/cdsclient
+//
+//go:generate mockgen -source=interface.go -destination=mock_cdsclient/interface_mock.go Interface
 type Interface interface {
 	Raw
 	AuthClient
