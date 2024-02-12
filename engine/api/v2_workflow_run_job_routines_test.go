@@ -76,7 +76,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
-	jobs, err := workflow_v2.LoadOldScheduledRunJob(ctx, api.mustDB(), jobSchedulingTimeout)
+	jobs, err := workflow_v2.LoadOldScheduledRunJob(ctx, api.mustDB(), 600)
 	require.NoError(t, err)
 	require.Equal(t, len(jobs), 1)
 	require.Equal(t, wrj.ID, jobs[0].ID)

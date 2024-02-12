@@ -16,10 +16,7 @@ import (
 	"github.com/rockbears/log"
 )
 
-const (
-	jobLockKey           = "jobs:lock"
-	jobSchedulingTimeout = 60.0
-)
+const jobLockKey = "jobs:lock"
 
 func (api *API) StopDeadJobs(ctx context.Context) {
 	tickStopDeadJobs := time.NewTicker(1 * time.Minute)
@@ -55,6 +52,10 @@ func (api *API) ReEnqueueScheduledJobs(ctx context.Context) {
 			}
 			return
 		case <-tickScheduledJob.C:
+			jobSchedulingTimeout := api.Config.WorkflowV2.JobSchedulingTimeout
+			if jobSchedulingTimeout == 0 {
+				jobSchedulingTimeout = 600
+			}
 			jobs, err := workflow_v2.LoadOldScheduledRunJob(ctx, api.mustDB(), jobSchedulingTimeout)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)

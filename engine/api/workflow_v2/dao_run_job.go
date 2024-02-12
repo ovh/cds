@@ -134,7 +134,7 @@ func LoadRunJobsByRunIDAndStatus(ctx context.Context, db gorp.SqlExecutor, runID
 	return getAllRunJobs(ctx, db, query)
 }
 
-func LoadOldScheduledRunJob(ctx context.Context, db gorp.SqlExecutor, timeout float64) ([]sdk.V2WorkflowRunJob, error) {
+func LoadOldScheduledRunJob(ctx context.Context, db gorp.SqlExecutor, timeout int64) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadOldScheduledRunJob")
 	defer next()
 	query := gorpmapping.NewQuery(`
