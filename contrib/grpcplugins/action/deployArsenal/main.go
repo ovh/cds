@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/contrib/integrations/arsenal"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -138,13 +139,13 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 	// Retry loop to deploy an application
 	// This loop consists of 6 retries (+ the first try), separated by 10 sec
 	var retry int
-	var followUpToken string
+	var deploymentResult *arsenal.DeployResponse
 	for retry < 7 {
 		if retry > 0 {
 			time.Sleep(time.Duration(10) * time.Second)
 		}
 		grpcplugins.Logf("Deploying (%s) on Arsenal at %s...\n", deployReq, host.Value)
-		followUpToken, err = arsenalClient.Deploy(deployReq)
+		deploymentResult, err = arsenalClient.Deploy(deployReq)
 		if err != nil {
 			if _, ok := err.(*arsenal.RequestError); ok {
 				grpcplugins.Error("Deployment has failed, retrying...")
@@ -154,10 +155,47 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 			}
 		}
 
-		if followUpToken != "" {
+		if deploymentResult != nil {
 			break
 		}
 	}
+
+	// Create run result at status "pending"
+	var runResultRequest = workerruntime.V2RunResultRequest{
+		RunResult: &sdk.V2WorkflowRunResult{
+			IssuedAt: time.Now(),
+			Type:     sdk.V2WorkflowRunResultTypeArsenalDeployment,
+			Status:   sdk.V2WorkflowRunResultStatusPending,
+			Detail:   sdk.V2WorkflowRunResultDetail{},
+		},
+	}
+	data := sdk.V2WorkflowRunResultArsenalDeploymentDetail{
+		Version:         version,
+		DeploymentName:  deploymentResult.DeploymentName,
+		DeploymentID:    deploymentResult.DeploymentID,
+		StackID:         deploymentResult.StackID,
+		StackName:       deploymentResult.StackName,
+		StackPlatform:   deploymentResult.StackPlatform,
+		Namespace:       deploymentResult.Namespace,
+		IntegrationName: deploymentIntgration.Name,
+		Alternative:     nil,
+	}
+	if altConfig != nil {
+		data.Alternative = &sdk.ArsenalDeploymentDetailAlternative{
+			Name:    altConfig.Name,
+			From:    altConfig.From,
+			Config:  altConfig.Config,
+			Options: altConfig.Options,
+		}
+	}
+	runResultRequest.RunResult.Detail.Data = data
+
+	response, err := grpcplugins.CreateRunResult(ctx, &e.Common, &runResultRequest)
+	if err != nil {
+		return failErr(err)
+	}
+
+	result := response.RunResult
 
 	// Retry loop to follow the deployment status
 	retry = 0
@@ -168,8 +206,8 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 			time.Sleep(time.Duration(delayRetry) * time.Second)
 		}
 
-		grpcplugins.Log("Fetching followup status on deployment...")
-		state, err := arsenalClient.Follow(followUpToken)
+		grpcplugins.Logf("Fetching followup status on deployment %s...", deploymentResult.DeploymentName)
+		state, err := arsenalClient.Follow(deploymentResult.FollowUpToken)
 		if err != nil {
 			return failErr(err)
 		}
@@ -198,7 +236,13 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 		return fail("deployment failed after %d retries", retry)
 	}
 
-	grpcplugins.Log("Deployment succeeded.")
+	result.Status = sdk.V2WorkflowRunResultStatusCompleted
+	if _, err := grpcplugins.UpdateRunResult(ctx, &e.Common, &workerruntime.V2RunResultRequest{RunResult: result}); err != nil {
+		return failErr(err)
+	}
+
+	grpcplugins.Logf("Deployment of %s succeeded.", deploymentResult.DeploymentName)
+
 	return &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}, nil
