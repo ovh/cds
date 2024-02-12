@@ -589,7 +589,7 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 
 	// Load integrations
 	integrationEnv := make([]string, 0)
-	for _, name := range w.currentJobV2.runJob.Job.Integrations {
+	for _, name := range w.currentJobV2.runJobContext.Integrations.All() {
 		integration, err := w.V2GetIntegrationByName(ctx, name)
 		if err != nil {
 			return nil
