@@ -589,7 +589,7 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 
 	// Load integrations
 	integrationEnv := make([]string, 0)
-	for _, name := range w.currentJobV2.runJob.Job.Integrations {
+	for _, name := range w.currentJobV2.runJobContext.Integrations.All() {
 		integration, err := w.V2GetIntegrationByName(ctx, name)
 		if err != nil {
 			return nil
@@ -630,7 +630,7 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 
 		str := fmt.Sprintf("source %s ; echo '<<<ENVIRONMENT>>>' ; env", filepath)
 		cmd := exec.Command("bash", "-c", str)
-		cmd.Env = append(cmd.Env, integrationEnv...)
+		cmd.Env = append(workerEnv, integrationEnv...)
 		bs, err := cmd.CombinedOutput()
 		if err != nil {
 			return errors.WithStack(err)
