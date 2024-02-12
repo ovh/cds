@@ -114,7 +114,6 @@ func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 }
 
 func (c *vcsClient) setAuthHeader(ctx context.Context, req *http.Request) {
-	log.Debug(ctx, "requesting vcs via vcs project")
 	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Type)))
 	req.Header.Set(sdk.HeaderXVCSURL, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.URL)))
 	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Username)))

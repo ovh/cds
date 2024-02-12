@@ -1404,6 +1404,10 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 				VCSServer: vcsServer.Name,
 				Name:      repoDef.Name,
 			},
+			CommitStatus: &sdk.CommitStatus{
+				Title:       "foo",
+				Description: "bar",
+			},
 			On: &sdk.WorkflowOn{
 				Push:           &sdk.WorkflowOnPush{},
 				WorkflowUpdate: &sdk.WorkflowOnWorkflowUpdate{},

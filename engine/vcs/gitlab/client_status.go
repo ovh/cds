@@ -51,7 +51,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildSt
 
 	cds := "CDS"
 	opt := &gitlab.SetCommitStatusOptions{
-		Name:        &cds,
+		Name:        &buildStatus.Title,
 		Context:     &cds,
 		State:       getGitlabStateFromStatus(buildStatus.Status),
 		Ref:         &buildStatus.GitHash,

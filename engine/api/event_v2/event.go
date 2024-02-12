@@ -137,8 +137,20 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", event.ProjectKey, event.VCSName)
 	}
 
+	title := fmt.Sprintf("%s-%s", event.ProjectKey, run.WorkflowName)
+	description := run.WorkflowName + ":" + run.Status
+	if run.WorkflowData.Workflow.CommitStatus != nil {
+		if run.WorkflowData.Workflow.CommitStatus.Title != "" {
+			title = run.WorkflowData.Workflow.CommitStatus.Title
+		}
+		if run.WorkflowData.Workflow.CommitStatus.Description != "" {
+			description = run.WorkflowData.Workflow.CommitStatus.Description
+		}
+	}
+
 	buildStatus := sdk.VCSBuildStatus{
-		Description:        run.WorkflowName + ":" + run.Status,
+		Title:              title,
+		Description:        description,
 		URLCDS:             fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, event.ProjectKey, run.WorkflowName, event.RunNumber),
 		Context:            fmt.Sprintf("%s-%s", event.ProjectKey, run.WorkflowName),
 		Status:             event.Status,

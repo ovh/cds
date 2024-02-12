@@ -19,6 +19,7 @@ type V2Workflow struct {
 	Name         string                   `json:"name"`
 	Repository   *WorkflowRepository      `json:"repository,omitempty"`
 	OnRaw        json.RawMessage          `json:"on,omitempty"`
+	CommitStatus *CommitStatus            `json:"commit-status,omitempty"`
 	On           *WorkflowOn              `json:"-" yaml:"-"`
 	Stages       map[string]WorkflowStage `json:"stages,omitempty"`
 	Gates        map[string]V2JobGate     `json:"gates,omitempty"`
@@ -28,12 +29,17 @@ type V2Workflow struct {
 	VariableSets []string                 `json:"vars,omitempty"`
 }
 
+type CommitStatus struct {
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 type WorkflowOn struct {
 	Push               *WorkflowOnPush               `json:"push,omitempty"`
 	PullRequest        *WorkflowOnPullRequest        `json:"pull-request,omitempty"`
 	PullRequestComment *WorkflowOnPullRequestComment `json:"pull-request-comment,omitempty"`
-	ModelUpdate        *WorkflowOnModelUpdate        `json:"model_update,omitempty"`
-	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow_update,omitempty"`
+	ModelUpdate        *WorkflowOnModelUpdate        `json:"model-update,omitempty"`
+	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow-update,omitempty"`
 }
 
 type WorkflowOnPush struct {

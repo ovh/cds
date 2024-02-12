@@ -416,6 +416,9 @@ func VCSCommitStatusDescription(projKey, workflowName string, evt EventRunWorkfl
 }
 
 type VCSBuildStatus struct {
+	// v2: fmt.Sprintf("%s-%s", event.ProjectKey, event.WorkflowName)
+	Title string `json:"title"`
+
 	// v1:eventNR.NodeName + ": " + eventNR.Status
 	// v2: Workflow.Name + ": " +Status
 	Description string `json:"description"`
@@ -425,7 +428,7 @@ type VCSBuildStatus struct {
 	URLCDS string `json:"url_cds"` //
 
 	// v1: fmt.Sprintf("%s-%s-%s", event.ProjectKey, event.WorkflowName, eventNR.NodeName)
-	// v2: TODO
+	// v2: fmt.Sprintf("%s-%s", event.ProjectKey, event.WorkflowName)
 	Context string `json:"context"`
 
 	Status string `json:"status"`

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mgutz/ansi"
+	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -55,49 +56,13 @@ func (f *CDSFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys [
 	levelText = "[" + levelText + "]"
 
 	fmt.Fprintf(b, "%s %s%+5s%s %s", entry.Time.Format("2006-01-02 15:04:05"), levelColor, levelText, ansi.Reset, entry.Message)
-	if !f.DisabledPrintFields {
-		for _, k := range keys {
+
+	for _, k := range keys {
+		if !f.DisabledPrintFields || k == string(log.FieldStackTrace) {
 			v := entry.Data[k]
 			fmt.Fprintf(b, " %s%s%s=%+v", levelColor, k, ansi.Reset, v)
 		}
 	}
-
-}
-
-func needsQuoting(text string) bool {
-	for _, ch := range text {
-		if !((ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') ||
-			(ch >= '0' && ch <= '9') ||
-			ch == '-' || ch == '.') {
-			return false
-		}
-	}
-	return true
-}
-
-func (f *CDSFormatter) appendKeyValue(b *bytes.Buffer, key string, value interface{}) {
-	b.WriteString(key)
-	b.WriteByte('=')
-
-	switch value := value.(type) {
-	case string:
-		if needsQuoting(value) {
-			b.WriteString(value)
-		} else {
-			fmt.Fprintf(b, "%q", value)
-		}
-	case error:
-		errmsg := value.Error()
-		if needsQuoting(errmsg) {
-			b.WriteString(errmsg)
-		} else {
-			fmt.Fprintf(b, "%q", value)
-		}
-	default:
-		fmt.Fprint(b, value)
-	}
-	b.WriteByte(' ')
 }
 
 func prefixFieldClashes(data logrus.Fields) {

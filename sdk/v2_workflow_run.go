@@ -144,8 +144,8 @@ func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 type V2WorkflowRunEvent struct {
 	Manual                *ManualTrigger         `json:"manual,omitempty"`
 	GitTrigger            *GitTrigger            `json:"git,omitempty"`
-	WorkflowUpdateTrigger *WorkflowUpdateTrigger `json:"workflow_update,omitempty"`
-	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model_update,omitempty"`
+	WorkflowUpdateTrigger *WorkflowUpdateTrigger `json:"workflow-update,omitempty"`
+	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model-update,omitempty"`
 
 	// TODO
 	Scheduler      *SchedulerTrigger `json:"scheduler"`

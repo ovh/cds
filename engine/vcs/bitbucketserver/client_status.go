@@ -21,7 +21,7 @@ func (client *bitbucketClient) SetStatus(ctx context.Context, buildStatus sdk.VC
 	state := getBitbucketStateFromStatus(buildStatus.Status)
 	status := Status{
 		Key:         buildStatus.Context,
-		Name:        buildStatus.Context,
+		Name:        buildStatus.Title,
 		State:       state,
 		URL:         buildStatus.URLCDS,
 		Description: buildStatus.Description,

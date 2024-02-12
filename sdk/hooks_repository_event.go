@@ -15,8 +15,8 @@ const (
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
 	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
 
-	WorkflowHookEventWorkflowUpdate = "workflow_update"
-	WorkflowHookEventModelUpdate    = "model_update"
+	WorkflowHookEventWorkflowUpdate = "workflow-update"
+	WorkflowHookEventModelUpdate    = "model-update"
 	WorkflowHookEventPush           = "push"
 
 	WorkflowHookEventPullRequest             = "pull-request"

@@ -45,7 +45,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, buildStatus s
 		Description: buildStatus.Description,
 		URL:         buildStatus.URLCDS,
 		State:       state,
-		Name:        buildStatus.Context,
+		Name:        buildStatus.Title,
 		Key:         buildStatus.Context,
 	}
 
