@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { Journal } from './lib/utils/journal';
@@ -5,10 +8,35 @@ import { CDS } from './lib/cds';
 import { selectContext } from './forms/select-context';
 import { onContextChanged, setContext } from './events/context';
 import { init as initPreview } from "./preview";
+import { createContextStatusBarItem } from './components/context-status';
 
-let currentContextBarItem: vscode.StatusBarItem;
+const CDS_SCHEMA = 'cds';
 
-export function activate(context: vscode.ExtensionContext) {
+const schemas = {
+    'action': [
+        new RegExp(/\/.cds\/actions\/.+\.ya?ml$/),
+    ],
+    'job': [
+        new RegExp(/\/.cds\/jobs\/.+\.ya?ml$/),
+    ],
+    'workflow': [
+        new RegExp(/\/.cds\/workflows\/.+\.ya?ml$/),
+    ],
+    'worker-model': [
+        new RegExp(/\/.cds\/worker-models\/.+\.ya?ml$/),
+    ],
+};
+
+export async function activate(context: vscode.ExtensionContext) {
+    const yamlExtension = vscode.extensions.getExtension('redhat.vscode-yaml');
+    if (!yamlExtension) {
+        vscode.window.showErrorMessage(
+            'The "YAML Language Support by Red Hat" extension is required for the CDS extension to work properly. Please install it and reload the window.'
+        );
+        return;
+    }
+    const yamlExtensionAPI = await yamlExtension.activate();
+
     Journal.logInfo('Activating CDS Extension');
 
     const setCurrentContextCommandID = 'vscode-cds.setCurrentContext';
@@ -19,27 +47,24 @@ export function activate(context: vscode.ExtensionContext) {
     initPreview(context);
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
-        if (event.affectsConfiguration("cds.config")) {
+        if (event.affectsConfiguration('cds.config')) {
             updateContext();
         }
     }));
 
-    const contextChanged = onContextChanged(context => {
-        Journal.logInfo(`CDS context has changed to "${context?.context ?? null}"`);
-
+    context.subscriptions.push(onContextChanged(async (context) => {
         if (context) {
-            currentContextBarItem.text = context.context;
-            currentContextBarItem.show();
-        } else {
-            currentContextBarItem.hide();
+            Journal.logInfo(`Downloading schema for "${context.context}"...`);
+            await CDS.downloadSchemas();
+            Journal.logInfo(`Downloaded schema for "${context.context}"`);
         }
-    })
-    context.subscriptions.push(contextChanged);
+    }));
 
-    currentContextBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    currentContextBarItem.command = setCurrentContextCommandID;
-    currentContextBarItem.tooltip = 'Current CDS context';
-    context.subscriptions.push(currentContextBarItem);
+    // register the schema provider
+    yamlExtensionAPI.registerContributor(CDS_SCHEMA, onRequestSchemaURI, onRequestSchemaContent);
+
+    // creates the status bar displaying the current context
+    createContextStatusBarItem(context);
 
     // init the update of the context
     updateContext();
@@ -63,4 +88,30 @@ async function switchContext(): Promise<void> {
     } catch (e) {
         Journal.logError(e as Error);
     }
+}
+
+function onRequestSchemaURI(resource: string): string | undefined {
+    for (const [type, patterns] of Object.entries(schemas)) {
+        for (const pattern of patterns) {
+            if (pattern.test(resource)) {
+                return `${CDS_SCHEMA}:${type}`;
+            }
+        }
+    }
+    return undefined;
+}
+
+function onRequestSchemaContent(schemaUri: string): string | undefined {
+    const parsedUri = vscode.Uri.parse(schemaUri);
+
+    if (parsedUri.scheme !== CDS_SCHEMA) {
+        return undefined;
+    }
+
+    return getSchemaContent(parsedUri.path);
+}
+
+function getSchemaContent(name: string) {
+    const schemaPath = path.join(os.homedir(), '.cds-schema', name + '.v2.schema.json');
+    return fs.readFileSync(schemaPath, 'utf-8');
 }

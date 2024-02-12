@@ -39,6 +39,10 @@ export class CDS {
         return foundContext[0];
     }
 
+    static async downloadSchemas(): Promise<void> {
+        await CDS.getInstance().runCtl("tools", "yaml-schema", "vscode");
+    }
+
     static getInstance(): CDS {
         if (!CDS.instance) {
             CDS.instance = new CDS();
