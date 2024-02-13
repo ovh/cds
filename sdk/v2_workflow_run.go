@@ -438,7 +438,7 @@ type V2WorkflowRunResult struct {
 	ArtifactManagerIntegrationName *string                                     `json:"artifact_manager_integration_name" db:"artifact_manager_integration_name"`
 	ArtifactManagerMetadata        *V2WorkflowRunResultArtifactManagerMetadata `json:"artifact_manager_metadata" db:"artifact_manager_metadata"`
 	Detail                         V2WorkflowRunResultDetail                   `json:"detail" db:"artifact_manager_detail"`
-	DataSync                       *WorkflowRunResultSync                      `json:"sync,omitempty" db:"sync"`
+	DataSync                       *WorkflowRunResultSync                      `json:"sync" db:"sync"`
 	Status                         string                                      `json:"status" db:"status"`
 }
 
@@ -525,6 +525,11 @@ func (r *V2WorkflowRunResult) Name() string {
 		if ok {
 			return string(r.Type) + ":" + detail.DeploymentName
 		}
+	case V2WorkflowRunResultTypeHelm:
+		detail, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
+		if ok {
+			return string(r.Type) + ":" + detail.Name
+		}
 	}
 	return string(r.Type) + ":" + r.ID
 }
@@ -539,6 +544,8 @@ func (r *V2WorkflowRunResult) Typ() string {
 const (
 	V2WorkflowRunResultStatusPending   = "PENDING"
 	V2WorkflowRunResultStatusCompleted = "COMPLETED"
+	V2WorkflowRunResultStatusPromoted  = "PROMOTED"
+	V2WorkflowRunResultStatusReleased  = "RELEASED"
 )
 
 type V2WorkflowRunResultArtifactManagerMetadata map[string]string
@@ -602,8 +609,8 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		var detail = new(V2WorkflowRunResultHelmDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultHelmDetail")
-    }
-    s.Data = detail
+		}
+		s.Data = detail
 		return nil
 	case "V2WorkflowRunResultArsenalDeploymentDetail":
 		var detail = new(V2WorkflowRunResultArsenalDeploymentDetail)
@@ -730,8 +737,9 @@ type V2WorkflowRunResultDockerDetail struct {
 }
 
 type V2WorkflowRunResultHelmDetail struct {
-	Name       string `json:"name" mapstructure:"name"`
-	AppVersion string `json:"appVersion" mapstructure:"appVersion"`
+	Name         string `json:"name" mapstructure:"name"`
+	AppVersion   string `json:"appVersion" mapstructure:"appVersion"`
+	ChartVersion string `json:"chartVersion" mapstructure:"chartVersion"`
 }
 
 type V2WorkflowRunResultVariableDetail struct {
