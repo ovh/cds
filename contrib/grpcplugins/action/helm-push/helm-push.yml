@@ -1,8 +1,8 @@
-name: docker-push
+name: helm-push
 type: action
 author: "François SAMIN <francois.samin@corp.ovh.com>"
 description: |
-  This push Docker image
+  This push Helm chart on Chart Museum or Artifactory.
 inputs:
   chartFolder:
     value: .chart/

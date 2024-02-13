@@ -116,8 +116,9 @@ func (p *helmPushPlugin) perform(
 			Status:   sdk.V2WorkflowRunResultStatusPending,
 			Detail: sdk.V2WorkflowRunResultDetail{
 				Data: sdk.V2WorkflowRunResultHelmDetail{
-					Name:       chartFolder,
-					AppVersion: chartVersion,
+					Name:         chartFolder,
+					AppVersion:   appVersion,
+					ChartVersion: chartFolder,
 				},
 			},
 		},
