@@ -19,6 +19,8 @@ import (
 type Conf struct {
 	Level                      string
 	Format                     string
+	TextFields                 []string
+	SkipTextFields             []string
 	GraylogHost                string
 	GraylogPort                string
 	GraylogProtocol            string
@@ -62,10 +64,14 @@ func Initialize(ctx context.Context, conf *Conf) {
 		logrus.SetOutput(io.Discard)
 	case "json":
 		logrus.SetFormatter(&logrus.JSONFormatter{})
-	case "readable":
-		logrus.SetFormatter(&CDSFormatter{DisabledPrintFields: true})
 	default:
-		logrus.SetFormatter(&CDSFormatter{})
+		for _, v := range conf.SkipTextFields {
+			t := strings.SplitN(v, "=", 2)
+			fieldName := t[0]
+			fieldValue := t[1]
+			log.Skip(log.Field(fieldName), fieldValue)
+		}
+		logrus.SetFormatter(&CDSFormatter{Fields: conf.TextFields})
 	}
 
 	if conf.GraylogHost != "" && conf.GraylogPort != "" {

@@ -7,13 +7,12 @@ import (
 	"strings"
 
 	"github.com/mgutz/ansi"
-	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
 )
 
 // CDSFormatter ...
 type CDSFormatter struct {
-	DisabledPrintFields bool
+	Fields []string
 }
 
 // Format format a log
@@ -58,11 +57,20 @@ func (f *CDSFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys [
 	fmt.Fprintf(b, "%s %s%+5s%s %s", entry.Time.Format("2006-01-02 15:04:05"), levelColor, levelText, ansi.Reset, entry.Message)
 
 	for _, k := range keys {
-		if !f.DisabledPrintFields || k == string(log.FieldStackTrace) {
-			v := entry.Data[k]
+		v := entry.Data[k]
+		if f.Fields == nil || fieldsInArray(k, f.Fields) {
 			fmt.Fprintf(b, " %s%s%s=%+v", levelColor, k, ansi.Reset, v)
 		}
 	}
+}
+
+func fieldsInArray(elt string, array []string) bool {
+	for _, item := range array {
+		if item == elt {
+			return true
+		}
+	}
+	return false
 }
 
 func prefixFieldClashes(data logrus.Fields) {
