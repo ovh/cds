@@ -25,7 +25,7 @@ module.exports = function (config) {
       suppressAll: true // removes the duplicated traces
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/utask.preview'),
+      dir: require('path').join(__dirname, './coverage/cds.workflow.preview'),
       subdir: '.',
       reporters: [
         { type: 'html' },

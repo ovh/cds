@@ -13,10 +13,11 @@ $(NG):
 	npm ci
 
 stats: $(NG)
-	@node --max-old-space-size=3048 node_modules/@angular/cli/bin/ng build --configuration production --stats-json
+	@node --max-old-space-size=3048 node_modules/@angular/cli/bin/ng build ui-ng2 --configuration production --stats-json
 
 ngbuild: $(NG)
-	@node --max-old-space-size=3048 node_modules/@angular/cli/bin/ng build --configuration production
+	@node --max-old-space-size=3048 node_modules/@angular/cli/bin/ng build ui-ng2 --configuration production
+	@node --max-old-space-size=3048 node_modules/@angular/cli/bin/ng build workflow-graph --configuration production
 
 INDEX = dist/index.tmpl
 $(INDEX):
