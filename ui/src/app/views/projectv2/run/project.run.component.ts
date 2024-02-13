@@ -9,13 +9,13 @@ import {PreferencesState} from "app/store/preferences.state";
 import {Store} from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
 import {Tab} from "app/shared/tabs/tabs.component";
-import {ProjectV2WorkflowStagesGraphComponent} from "../vcs/repository/workflow/show/graph/stages-graph.component";
 import {CDNLine, CDNStreamFilter, PipelineStatus} from "../../../model/pipeline.model";
 import {webSocket, WebSocketSubject} from "rxjs/webSocket";
 import {concatMap, delay, retryWhen} from "rxjs/operators";
 import {Router} from "@angular/router";
 import {RunJobComponent} from "./run-job.component";
-import {GraphNode} from "../vcs/repository/workflow/show/graph/graph.model";
+import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
+import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 
 
 @Component({
@@ -27,7 +27,7 @@ import {GraphNode} from "../vcs/repository/workflow/show/graph/graph.model";
 @AutoUnsubscribe()
 export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
-    @ViewChild('graph') graph: ProjectV2WorkflowStagesGraphComponent;
+    @ViewChild('graph') graph: WorkflowV2StagesGraphComponent;
     @ViewChild('runJob') runJobComponent: RunJobComponent
 
     selectedRun: V2WorkflowRun;

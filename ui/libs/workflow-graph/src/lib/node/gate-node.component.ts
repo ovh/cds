@@ -1,22 +1,20 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy} from '@angular/core';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {GraphNode} from "../graph.model";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {GraphNode} from '../graph.model'
+import { NodeStatus } from './status.model';
 
 @Component({
-    selector: 'app-job-node',
-    templateUrl: './job-node.html',
-    styleUrls: ['./job-node.scss'],
+    selector: 'app-gate-node',
+    templateUrl: './gate-node.html',
+    styleUrls: ['./gate-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-@AutoUnsubscribe()
-export class ProjectV2WorkflowJobNodeComponent implements OnDestroy {
+export class GraphGateNodeComponent implements OnInit {
     @Input() node: GraphNode;
     @Input() mouseCallback: (type: string, node: GraphNode) => void;
 
     highlight = false;
-    selected = false;
-    pipelineStatusEnum = PipelineStatus;
+    status: string;
+    nodeStatusEnum = NodeStatus;
 
     constructor(
         private _cd: ChangeDetectorRef
@@ -25,12 +23,13 @@ export class ProjectV2WorkflowJobNodeComponent implements OnDestroy {
         this.setSelect.bind(this);
     }
 
+    ngOnInit() {
+        this.status = this.node.gateStatus;
+    }
+
     getNodes() {
         return [this.node];
     }
-
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
 
     onMouseEnter(): void {
         if (this.mouseCallback) {
@@ -55,8 +54,6 @@ export class ProjectV2WorkflowJobNodeComponent implements OnDestroy {
         this._cd.markForCheck();
     }
 
-    setSelect(active: boolean): void {
-        this.selected = active;
-        this._cd.markForCheck();
+    setSelect(_: boolean): void {
     }
 }

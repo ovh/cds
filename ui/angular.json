@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
-  "newProjectRoot": "projects",
+  "newProjectRoot": "libs",
   "projects": {
     "ui-ng2": {
       "root": "",
@@ -327,6 +327,39 @@
       "root": "",
       "sourceRoot": "",
       "projectType": "application"
+    },
+    "workflow-graph": {
+      "projectType": "library",
+      "root": "libs/workflow-graph",
+      "sourceRoot": "libs/workflow-graph/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "libs/workflow-graph/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/workflow-graph/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/workflow-graph/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "libs/workflow-graph/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
     }
   },
   "schematics": {

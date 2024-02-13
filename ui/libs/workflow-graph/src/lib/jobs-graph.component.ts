@@ -9,12 +9,11 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob} from "./graph.model";
-import {GraphDirection, WorkflowNodeComponent, WorkflowV2Graph} from "./graph.lib";
-import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
-import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
-import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
+import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob} from './graph.model';
+import {GraphDirection, WorkflowNodeComponent, WorkflowV2Graph} from './graph.lib';
+import {GraphForkJoinNodeComponent} from './node/fork-join-node.components';
+import {GraphJobNodeComponent} from './node/job-node.component';
+import {GraphGateNodeComponent} from './node/gate-node.component';
 
 @Component({
     selector: 'app-jobs-graph',
@@ -22,8 +21,7 @@ import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
     styleUrls: ['./jobs-graph.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-@AutoUnsubscribe()
-export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDestroy {
+export class WorkflowV2JobsGraphComponent implements AfterViewInit {
     static maxScale = 2;
     static minScale = 0.1;
 
@@ -56,9 +54,6 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
     getNodes() {
         return [this.node];
     }
-
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
 
     onMouseEnter(): void {
         if (this.mouseCallback) {
@@ -100,7 +95,7 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
         }
         if (!this.graph || this.graph.direction !== this.direction) {
             this.graph = new WorkflowV2Graph(this.createForkJoinNodeComponent.bind(this), this.direction,
-                ProjectV2WorkflowJobsGraphComponent.minScale, ProjectV2WorkflowJobsGraphComponent.maxScale);
+                WorkflowV2JobsGraphComponent.minScale, WorkflowV2JobsGraphComponent.maxScale);
         }
 
         this.nodes.forEach(n => {
@@ -129,23 +124,23 @@ export class ProjectV2WorkflowJobsGraphComponent implements AfterViewInit, OnDes
         this._cd.markForCheck();
     }
 
-    createGateNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowGateNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowGateNodeComponent);
+    createGateNodeComponent(node: GraphNode): ComponentRef<GraphGateNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphGateNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
-    createJobNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowJobNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowJobNodeComponent);
+    createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
 
-    createForkJoinNodeComponent(nodes: Array<GraphNode>, type: string): ComponentRef<ProjectV2WorkflowForkJoinNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowForkJoinNodeComponent);
+    createForkJoinNodeComponent(nodes: Array<GraphNode>, type: string): ComponentRef<GraphForkJoinNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphForkJoinNodeComponent);
         componentRef.instance.nodes = nodes;
         componentRef.instance.type = type;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);

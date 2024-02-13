@@ -1,17 +1,17 @@
 import {ComponentRef} from '@angular/core';
-import {PipelineStatus} from 'app/model/pipeline.model';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import {GraphNode} from "./graph.model";
-import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
-import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
-import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
+import {GraphNode} from './graph.model';
+import {GraphForkJoinNodeComponent} from './node/fork-join-node.components';
+import {GraphJobNodeComponent} from './node/job-node.component';
+import {GraphGateNodeComponent} from './node/gate-node.component';
 import {curveBasisClosed} from "d3-shape";
+import { NodeStatus } from './node/status.model';
 
 export type WorkflowNodeComponent =
-    ProjectV2WorkflowForkJoinNodeComponent
-    | ProjectV2WorkflowJobNodeComponent
-    | ProjectV2WorkflowGateNodeComponent;
+    GraphForkJoinNodeComponent
+    | GraphJobNodeComponent
+    | GraphGateNodeComponent;
 
 export enum GraphDirection {
     HORIZONTAL = 'horizontal',
@@ -328,7 +328,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             const componentRef = this.componentFactory(nodes, 'fork');
             let nodeKeys = this.forks[f].parents.map(n => n.split('node-')[1]).sort().join(' ');
             this.createGFork(f, componentRef, {class: `${nodeKeys}`});
-            this.nodeStatus[`fork-${f}`] = PipelineStatus.sum(nodes.map(n => n.run ? n.run.status : null));
+            this.nodeStatus[`fork-${f}`] = NodeStatus.sum(nodes.map(n => n.run ? n.run.status : null));
             this.forks[f].parents.forEach(n => {
                 let edge = <Edge>{
                     from: n,
@@ -370,7 +370,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             const componentRef = this.componentFactory(nodes, 'join');
             let nodeKeys = this.joins[j].children.map(n => n.split('node-')[1]).sort().join(' ');
             this.createGJoin(j, componentRef, {class: `${nodeKeys}`});
-            this.nodeStatus[`join-${j}`] = PipelineStatus.sum(nodes.map(n => n.run ? n.run.status : null));
+            this.nodeStatus[`join-${j}`] = NodeStatus.sum(nodes.map(n => n.run ? n.run.status : null));
             this.joins[j].children.forEach(n => {
                 let edge = <Edge>{
                     from: `join-${j}`,
@@ -433,17 +433,14 @@ export class WorkflowV2Graph<T extends WithHighlight> {
 
     nodeStatusToColor(s: string): string {
         switch (s) {
-            case PipelineStatus.SUCCESS:
+            case NodeStatus.SUCCESS:
                 return 'color-success';
-            case PipelineStatus.FAIL:
+            case NodeStatus.FAIL:
                 return 'color-fail';
-            case PipelineStatus.WAITING:
-            case PipelineStatus.DISABLED:
-            case PipelineStatus.SCHEDULING:
-            case PipelineStatus.BUILDING:
-            case PipelineStatus.PENDING:
-            case PipelineStatus.NEVER_BUILT:
-            case PipelineStatus.STOPPED:
+            case NodeStatus.WAITING:
+            case NodeStatus.SCHEDULING:
+            case NodeStatus.BUILDING:
+            case NodeStatus.STOPPED:
                 return 'color-inactive';
             default:
                 return '';

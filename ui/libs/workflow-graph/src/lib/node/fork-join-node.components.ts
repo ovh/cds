@@ -1,7 +1,6 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {GraphNode} from "../graph.model";
+import { GraphNode } from '../graph.model';
+import { NodeStatus } from './status.model';
 
 @Component({
     selector: 'app-fork-join-node',
@@ -9,15 +8,14 @@ import {GraphNode} from "../graph.model";
     styleUrls: ['./fork-join-node.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-@AutoUnsubscribe()
-export class ProjectV2WorkflowForkJoinNodeComponent implements OnInit, OnDestroy {
+export class GraphForkJoinNodeComponent implements OnInit {
     @Input() nodes: Array<GraphNode>;
     @Input() type = 'fork';
     @Input() mouseCallback: (type: string, node: GraphNode) => void;
 
     highlight = false;
     status: string;
-    pipelineStatusEnum = PipelineStatus;
+    nodeStatusEnum = NodeStatus;
 
     constructor(
         private _cd: ChangeDetectorRef
@@ -27,15 +25,12 @@ export class ProjectV2WorkflowForkJoinNodeComponent implements OnInit, OnDestroy
     }
 
     ngOnInit() {
-        this.status = PipelineStatus.sum(this.nodes.map(n => n.run ? n.run.status : null));
+        this.status = NodeStatus.sum(this.nodes.map(n => n.run ? n.run.status : null));
     }
 
     getNodes() {
         return this.nodes;
     }
-
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
 
     onMouseEnter(): void {
         if (this.mouseCallback) {

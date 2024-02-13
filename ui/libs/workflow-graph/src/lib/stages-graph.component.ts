@@ -11,18 +11,17 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {ProjectV2WorkflowJobsGraphComponent} from "./jobs-graph.component";
-import {ProjectV2WorkflowForkJoinNodeComponent} from "./node/fork-join-node.components";
-import {ProjectV2WorkflowJobNodeComponent} from "./node/job-node.component";
-import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob, GraphNodeTypeStage} from "./graph.model";
-import {GraphDirection, WorkflowV2Graph} from "./graph.lib";
-import {load, LoadOptions} from "js-yaml";
-import {V2WorkflowRun, V2WorkflowRunJob} from "app/model/v2.workflow.run.model";
-import {ProjectV2WorkflowGateNodeComponent} from "./node/gate-node.component";
+import {WorkflowV2JobsGraphComponent} from './jobs-graph.component';
+import {GraphForkJoinNodeComponent} from './node/fork-join-node.components';
+import {GraphJobNodeComponent} from './node/job-node.component';
+import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob, GraphNodeTypeStage} from './graph.model';
+import {GraphDirection, WorkflowV2Graph} from './graph.lib';
+import {load, LoadOptions} from 'js-yaml';
+import {GraphGateNodeComponent} from './node/gate-node.component';
+import { V2WorkflowRun, V2WorkflowRunJob } from './v2.workflow.run.model';
 
-export type WorkflowV2JobsGraphOrNodeComponent = ProjectV2WorkflowJobsGraphComponent |
-    ProjectV2WorkflowForkJoinNodeComponent | ProjectV2WorkflowJobNodeComponent | ProjectV2WorkflowGateNodeComponent;
+export type WorkflowV2JobsGraphOrNodeComponent = WorkflowV2JobsGraphComponent |
+    GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphGateNodeComponent;
 
 @Component({
     selector: 'app-stages-graph',
@@ -30,8 +29,7 @@ export type WorkflowV2JobsGraphOrNodeComponent = ProjectV2WorkflowJobsGraphCompo
     styleUrls: ['./stages-graph.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-@AutoUnsubscribe()
-export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnDestroy {
+export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy {
     static maxScale = 15;
     static minScale = 1 / 5;
 
@@ -250,8 +248,8 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         return needs;
     }
 
-    static isJobsGraph = (component: WorkflowV2JobsGraphOrNodeComponent): component is ProjectV2WorkflowJobsGraphComponent => {
-        if ((component as ProjectV2WorkflowJobsGraphComponent).direction) {
+    static isJobsGraph = (component: WorkflowV2JobsGraphOrNodeComponent): component is WorkflowV2JobsGraphComponent => {
+        if ((component as WorkflowV2JobsGraphComponent).direction) {
             return true;
         }
         return false;
@@ -334,8 +332,8 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         }
         if (!this.graph || this.graph.direction !== this.direction) {
             this.graph = new WorkflowV2Graph(this.createForkJoinNodeComponent.bind(this), this.direction,
-                ProjectV2WorkflowStagesGraphComponent.minScale,
-                ProjectV2WorkflowStagesGraphComponent.maxScale);
+                WorkflowV2StagesGraphComponent.minScale,
+                WorkflowV2StagesGraphComponent.maxScale);
         }
 
 
@@ -391,24 +389,24 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         this.graph.center(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
     }
 
-    createGateNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowGateNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowGateNodeComponent);
+    createGateNodeComponent(node: GraphNode): ComponentRef<GraphGateNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphGateNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
 
-    createJobNodeComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowJobNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowJobNodeComponent);
+    createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
 
-    createForkJoinNodeComponent(nodes: Array<GraphNode>, type: string): ComponentRef<ProjectV2WorkflowForkJoinNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowForkJoinNodeComponent);
+    createForkJoinNodeComponent(nodes: Array<GraphNode>, type: string): ComponentRef<GraphForkJoinNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphForkJoinNodeComponent);
         componentRef.instance.nodes = nodes;
         componentRef.instance.type = type;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
@@ -416,8 +414,8 @@ export class ProjectV2WorkflowStagesGraphComponent implements AfterViewInit, OnD
         return componentRef;
     }
 
-    createSubGraphComponent(node: GraphNode): ComponentRef<ProjectV2WorkflowJobsGraphComponent> {
-        const componentRef = this.svgContainer.createComponent(ProjectV2WorkflowJobsGraphComponent);
+    createSubGraphComponent(node: GraphNode): ComponentRef<WorkflowV2JobsGraphComponent> {
+        const componentRef = this.svgContainer.createComponent(WorkflowV2JobsGraphComponent);
         componentRef.instance.graphNode = node;
         componentRef.instance.direction = this.direction;
         componentRef.instance.centerCallback = this.centerSubGraph.bind(this);

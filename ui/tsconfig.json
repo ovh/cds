@@ -3,10 +3,13 @@
   "compilerOptions": {
     "module": "es2020",
     "outDir": "./dist/out-tsc",
-    "baseUrl": "src",
+    "baseUrl": "./",
     "paths": {
       "@cds/*": [
         ".src/app/*"
+      ],
+      "workflow-graph": [
+        "dist/workflow-graph"
       ]
     },
     "sourceMap": true,

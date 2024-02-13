@@ -1,4 +1,4 @@
-import {V2WorkflowRunJob} from "app/model/v2.workflow.run.model";
+import { V2WorkflowRunJob } from "./v2.workflow.run.model";
 
 export class StepStatus {
     step_order: number;
