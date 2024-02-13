@@ -137,8 +137,10 @@ func (s VCSPullRequestState) IsValid() bool {
 }
 
 type VCSPullRequestCommentRequest struct {
-	VCSPullRequest
-	Message string `json:"message"`
+	ID       int    `json:"id"`
+	ChangeID string `json:"change_id"` // gerrit only
+	Revision string `json:"revision"`
+	Message  string `json:"message"`
 }
 
 // VCSPushEvent represents a push events for polling
@@ -187,4 +189,17 @@ type VCSCommitStatus struct {
 	CreatedAt  time.Time `json:"created_at"`
 	State      string    `json:"state"`
 	Decription string    `json:"description"`
+}
+
+func VCSIsSameCommit(sha1, sha1b string) bool {
+	if len(sha1) == len(sha1b) {
+		return sha1 == sha1b
+	}
+	if len(sha1) == 12 && len(sha1b) >= 12 {
+		return sha1 == sha1b[0:len(sha1)]
+	}
+	if len(sha1b) == 12 && len(sha1) >= 12 {
+		return sha1b == sha1[0:len(sha1b)]
+	}
+	return false
 }

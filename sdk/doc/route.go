@@ -139,6 +139,8 @@ func CleanURLParameter(u string) string {
 		u = "variable-set-name"
 	case "itemName":
 		u = "item-name"
+	case "runIdentifier":
+		u = "run-identifier"
 	}
 	return u
 }

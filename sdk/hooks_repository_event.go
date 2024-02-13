@@ -15,17 +15,17 @@ const (
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
 	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
 
-	WorkflowHookEventWorkflowUpdate = "workflow_update"
-	WorkflowHookEventModelUpdate    = "model_update"
+	WorkflowHookEventWorkflowUpdate = "workflow-update"
+	WorkflowHookEventModelUpdate    = "model-update"
 	WorkflowHookEventPush           = "push"
 
-	WorkflowHookEventPullRequest             = "pull_request"
+	WorkflowHookEventPullRequest             = "pull-request"
 	WorkflowHookEventPullRequestTypeOpened   = "opened"
 	WorkflowHookEventPullRequestTypeReopened = "reopened"
 	WorkflowHookEventPullRequestTypeClosed   = "closed"
 	WorkflowHookEventPullRequestTypeEdited   = "edited"
 
-	WorkflowHookEventPullRequestComment            = "pull_request_comment"
+	WorkflowHookEventPullRequestComment            = "pull-request-comment"
 	WorkflowHookEventPullRequestCommentTypeCreated = "created"
 	WorkflowHookEventPullRequestCommentTypeDeleted = "deleted"
 	WorkflowHookEventPullRequestCommentTypeEdited  = "edited"

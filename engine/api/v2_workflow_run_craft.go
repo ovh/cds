@@ -430,22 +430,13 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 				ref = defaultCache
 			} else {
 				// Get default branch
-				tx, err := db.Begin()
+				client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projKey, entityVCS.Name)
 				if err != nil {
-					return "", nil, sdk.WithStack(err)
-				}
-				client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, projKey, entityVCS.Name)
-				if err != nil {
-					_ = tx.Rollback()
 					return "", nil, err
 				}
 				b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{Default: true})
 				if err != nil {
-					_ = tx.Rollback()
 					return "", nil, err
-				}
-				if err := tx.Commit(); err != nil {
-					return "", nil, sdk.WithStack(err)
 				}
 				ref = b.ID
 				wref.repoDefaultRefCache[entityVCS.Name+"/"+entityRepo.Name] = ref
@@ -455,18 +446,12 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 		ref = branchOrTag
 	} else {
 		// Need to known if branchOrTag is a tag or a branch
-		tx, err := db.Begin()
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projKey, entityVCS.Name)
 		if err != nil {
-			return "", nil, sdk.WithStack(err)
-		}
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, projKey, entityVCS.Name)
-		if err != nil {
-			_ = tx.Rollback()
 			return "", nil, err
 		}
 		b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{BranchName: branchOrTag})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			_ = tx.Rollback()
 			return "", nil, err
 		}
 
@@ -474,17 +459,12 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 			// try to get tag
 			t, err := client.Tag(ctx, entityRepo.Name, branchOrTag)
 			if err != nil {
-				_ = tx.Rollback()
 				return "", nil, err
 			}
 			ref = sdk.GitRefTagPrefix + t.Tag
 		} else {
 			ref = b.ID
 		}
-		if err := tx.Commit(); err != nil {
-			return "", nil, sdk.WithStack(err)
-		}
-
 	}
 
 	completePath := fmt.Sprintf("%s/%s/%s/%s", projKey, vcsName, repoName, entityName)
@@ -763,12 +743,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		gitContext.Repository = repo.Name
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-	defer tx.Rollback()
-	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, wr.ProjectKey, workflowVCSServer.Name)
+	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, wr.ProjectKey, workflowVCSServer.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -797,10 +772,6 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		if gitContext.Sha == "" {
 			gitContext.Sha = defaultBranch.LatestCommit
 		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WithStack(err)
 	}
 
 	// Env context

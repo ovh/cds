@@ -9,9 +9,15 @@
 .graph {
     flex: 1;
     display: flex;
+    position: relative;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
+
+    .title {
+        position: absolute;
+        z-index: 1000;
+    }
 
     &.disableSelection {
         user-select: none;

@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/go-gorp/gorp"
-	"github.com/golang/mock/gomock"
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/services/mock_services"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/services/mock_services"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -39,7 +39,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {

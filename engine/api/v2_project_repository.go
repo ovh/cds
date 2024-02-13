@@ -71,7 +71,7 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 			}
 			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProject.Name, url.PathEscape(repo.Name))
 			var repositoryEvents []sdk.HookRepositoryEvent
-			_, code, errHooks := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
 			if (errHooks != nil || code >= 400) && code != 404 {
 				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
 			}
@@ -310,15 +310,8 @@ func (api *API) getProjectRepositoryBranchesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			tx, err := api.mustDB().Begin()
+			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
 			if err != nil {
-				return err
-			}
-			defer tx.Rollback()
-
-			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsProject.Name)
-			if err != nil {
-				_ = tx.Rollback() // nolint
 				return err
 			}
 			branches, err := client.Branches(ctx, repo.Name, sdk.VCSBranchesFilter{Limit: int64(limit)})
@@ -326,9 +319,6 @@ func (api *API) getProjectRepositoryBranchesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			if err := tx.Commit(); err != nil {
-				return err
-			}
 			return service.WriteJSON(w, branches, http.StatusOK)
 		}
 }

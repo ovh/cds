@@ -15,6 +15,7 @@ import { DurationService } from "app/shared/duration/duration.service";
 import { CDNLine, CDNLogLinkData, CDNLogLinks, PipelineStatus } from "app/model/pipeline.model";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { WorkflowService } from "app/service/workflow/workflow.service";
+import { lastValueFrom } from "rxjs";
 
 @Component({
     selector: 'app-run-job-logs',
@@ -85,8 +86,7 @@ export class RunJobLogsComponent {
         let types = new Map<string, Array<CDNLogLinkData>>();
         let linksServices = new Array<CDNLogLinkData>();
         let linksSteps = new Array<CDNLogLinkData>();
-        let links = await this._workflowRunService
-            .getAllLogsLinks(this.workflowRun, this.runJob.id).toPromise();
+        let links = await lastValueFrom(this._workflowRunService.getAllLogsLinks(this.workflowRun, this.runJob.id));
         links.datas.forEach(link => {
             let logBlockStep = this.logBlocks.find(s => s.name === link.step_name)
             if (logBlockStep) {

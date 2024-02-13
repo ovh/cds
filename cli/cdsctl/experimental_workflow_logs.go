@@ -29,14 +29,11 @@ var workflowRunJobLogsDownloadCmd = cli.Command{
 	Name:    "download",
 	Aliases: []string{"dl"},
 	Short:   "Get the workflow run job status",
-	Example: "cdsctl experimental workflow logs download <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Example: "cdsctl experimental workflow logs download <proj_key> <run_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "vcs_identifier"},
-		{Name: "repo_identifier"},
-		{Name: "workflow_name"},
-		{Name: "run-number"},
+		{Name: "run_identifier"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -48,15 +45,10 @@ var workflowRunJobLogsDownloadCmd = cli.Command{
 
 func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	vcsId := v.GetString("vcs_identifier")
-	repoId := v.GetString("repo_identifier")
-	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run-number")
-	if err != nil {
-		return err
-	}
+	runIdentifier := v.GetString("run_identifier")
 
 	var reg *regexp.Regexp
+	var err error
 	if v.GetString("pattern") != "" {
 		reg, err = regexp.Compile(v.GetString("pattern"))
 		if err != nil {
@@ -64,7 +56,7 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 		}
 	}
 
-	runJobs, err := client.WorkflowV2RunJobs(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	runJobs, err := client.WorkflowV2RunJobs(context.Background(), projKey, runIdentifier)
 	if err != nil {
 		return err
 	}
@@ -73,7 +65,7 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 		if reg != nil && !reg.MatchString(rj.JobID) {
 			continue
 		}
-		links, err := client.WorkflowV2RunJobLogLinks(context.Background(), projKey, vcsId, repoId, wkfName, runNumber, rj.JobID)
+		links, err := client.WorkflowV2RunJobLogLinks(context.Background(), projKey, runIdentifier, rj.JobID)
 		if err != nil {
 			return err
 		}

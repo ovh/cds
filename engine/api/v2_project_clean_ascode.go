@@ -138,13 +138,7 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 }
 
 func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback()
-
-	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, store, c.projKey, c.vcsName)
+	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, c.projKey, c.vcsName)
 	if err != nil {
 		return err
 	}
@@ -166,7 +160,7 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 	for _, t := range tags {
 		c.refs[sdk.GitRefTagPrefix+t.Tag] = struct{}{}
 	}
-	return sdk.WithStack(tx.Commit())
+	return nil
 }
 
 func (c *EntitiesCleaner) cleanEntitiesByRef(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, entitiesByBranch []sdk.Entity) error {

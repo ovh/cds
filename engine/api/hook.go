@@ -34,30 +34,22 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 			}
 		}
 
-		h, err := workflow.LoadHookByUUID(api.mustDB(), uuid)
+		db := api.mustDB()
+
+		h, err := workflow.LoadHookByUUID(db, uuid)
 		if err != nil {
 			return err
 		}
 
-		proj, err := project.Load(ctx, api.mustDB(), h.Config[sdk.HookConfigProject].Value, nil)
+		proj, err := project.Load(ctx, db, h.Config[sdk.HookConfigProject].Value, nil)
 		if err != nil {
 			return err
 		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
 
 		//get the client for the repositories manager
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, proj.Key, vcsServerParam)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, proj.Key, vcsServerParam)
 		if err != nil {
 			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
 		}
 
 		//Check if the polling if disabled

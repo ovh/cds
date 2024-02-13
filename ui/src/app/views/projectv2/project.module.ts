@@ -28,23 +28,24 @@ import {
 import { ProjectWorkflowEntityComponent } from "./vcs/repository/workflow/show/entity/project.workflow.entity.component";
 import { ProjectV2WorkflowRunComponent } from "./run/project.run.component";
 import { ProjectV2SidebarComponent } from './sidebar/workspace/sidebar.component';
-import { ProjectV2SidebarRunComponent } from "./sidebar/run/sidebar.run.component";
 import { RunJobComponent } from "./run/run-job.component";
 import { RunJobLogsComponent } from "./run/run-job-logs.component";
 import { ProjectV2WorkflowGateNodeComponent } from "./vcs/repository/workflow/show/graph/node/gate-node.component";
 import { RunGateComponent } from "./run/gate/gate.component";
 import { ProjectV2LeftMenuComponent } from './left-menu/left-menu.component';
 import { ProjectV2WorkflowRunListComponent } from './run-list/run-list.component';
+import { ProjectV2ExploreComponent } from './explore/explore.component';
+import { ProjectV2WorkflowRunListSidebarComponent } from './run-list/run-list-sidebar.component';
 
 @NgModule({
     declarations: [
         ProjectV2ActionShowComponent,
+        ProjectV2ExploreComponent,
         ProjectV2LeftMenuComponent,
         ProjectV2RepositoryAddComponent,
         ProjectV2RepositoryShowComponent,
         ProjectV2ShowComponent,
         ProjectV2SidebarComponent,
-        ProjectV2SidebarRunComponent,
         ProjectV2TopMenuComponent,
         ProjectV2WorkerModelShowComponent,
         ProjectV2WorkflowForkJoinNodeComponent,
@@ -52,13 +53,14 @@ import { ProjectV2WorkflowRunListComponent } from './run-list/run-list.component
         ProjectV2WorkflowJobNodeComponent,
         ProjectV2WorkflowJobsGraphComponent,
         ProjectV2WorkflowRunComponent,
+        ProjectV2WorkflowRunListComponent,
+        ProjectV2WorkflowRunListSidebarComponent,
         ProjectV2WorkflowShowComponent,
         ProjectV2WorkflowStagesGraphComponent,
         ProjectWorkflowEntityComponent,
         RunGateComponent,
         RunJobComponent,
-        RunJobLogsComponent,
-        ProjectV2WorkflowRunListComponent
+        RunJobLogsComponent
     ],
     imports: [
         SharedModule,

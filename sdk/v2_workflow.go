@@ -19,6 +19,7 @@ type V2Workflow struct {
 	Name         string                   `json:"name"`
 	Repository   *WorkflowRepository      `json:"repository,omitempty"`
 	OnRaw        json.RawMessage          `json:"on,omitempty"`
+	CommitStatus *CommitStatus            `json:"commit-status,omitempty"`
 	On           *WorkflowOn              `json:"-" yaml:"-"`
 	Stages       map[string]WorkflowStage `json:"stages,omitempty"`
 	Gates        map[string]V2JobGate     `json:"gates,omitempty"`
@@ -28,12 +29,17 @@ type V2Workflow struct {
 	VariableSets []string                 `json:"vars,omitempty"`
 }
 
+type CommitStatus struct {
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
 type WorkflowOn struct {
 	Push               *WorkflowOnPush               `json:"push,omitempty"`
-	PullRequest        *WorkflowOnPullRequest        `json:"pull_request,omitempty"`
-	PullRequestComment *WorkflowOnPullRequestComment `json:"pull_request_comment,omitempty"`
-	ModelUpdate        *WorkflowOnModelUpdate        `json:"model_update,omitempty"`
-	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow_update,omitempty"`
+	PullRequest        *WorkflowOnPullRequest        `json:"pull-request,omitempty"`
+	PullRequestComment *WorkflowOnPullRequestComment `json:"pull-request-comment,omitempty"`
+	ModelUpdate        *WorkflowOnModelUpdate        `json:"model-update,omitempty"`
+	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow-update,omitempty"`
 }
 
 type WorkflowOnPush struct {
@@ -44,14 +50,14 @@ type WorkflowOnPush struct {
 
 type WorkflowOnPullRequest struct {
 	Branches []string `json:"branches,omitempty"`
-	Comment  string   `json:"pr_comment,omitempty"`
+	Comment  string   `json:"comment,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
 	Types    []string `json:"types,omitempty"`
 }
 
 type WorkflowOnPullRequestComment struct {
 	Branches []string `json:"branches,omitempty"`
-	Comment  string   `json:"pr_comment,omitempty"`
+	Comment  string   `json:"comment,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
 	Types    []string `json:"types,omitempty"`
 }
@@ -102,13 +108,13 @@ func IsDefaultHooks(on *WorkflowOn) []string {
 	}
 	if on.PullRequest != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventPullRequest)
-		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 {
+		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 || on.PullRequest.Comment != "" {
 			return nil
 		}
 	}
 	if on.PullRequestComment != nil {
 		hookKeys = append(hookKeys, WorkflowHookEventPullRequestComment)
-		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 {
+		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" {
 			return nil
 		}
 	}

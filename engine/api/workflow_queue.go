@@ -900,7 +900,7 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 }
 
 func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return func(ctx context.Context, _ http.ResponseWriter, r *http.Request) error {
 		if isWorker := isWorker(ctx); !isWorker {
 			return sdk.WithStack(sdk.ErrForbidden)
 		}

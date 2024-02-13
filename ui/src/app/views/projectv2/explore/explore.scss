@@ -1,0 +1,12 @@
+:host {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: row;
+  height: 100%;
+}
+
+.content {
+	flex: 1;
+	overflow: hidden;
+}

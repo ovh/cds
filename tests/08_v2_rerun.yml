@@ -85,9 +85,12 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Fail"
       retry: 10
       delay: 12
+      vars:
+        runIdentifier:
+          from: result.systemoutjson.systemoutjson0.id
 
     - name: Restart failed job
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow restart {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow restart {{.cds_project}} {{.runIdentifier}}"
 
     - name: Check that the CDS workflow is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"

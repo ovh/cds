@@ -251,6 +251,8 @@ See $ engine config command for more details.
 		logConf := cdslog.Conf{
 			Level:                      conf.Log.Level,
 			Format:                     conf.Log.Format,
+			TextFields:                 conf.Log.TextFields,
+			SkipTextFields:             conf.Log.SkipTextFields,
 			GraylogProtocol:            conf.Log.Graylog.Protocol,
 			GraylogHost:                conf.Log.Graylog.Host,
 			GraylogPort:                fmt.Sprintf("%d", conf.Log.Graylog.Port),

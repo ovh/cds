@@ -9,17 +9,16 @@ import (
 
 // githubClient is a github.com wrapper for CDS vcs. interface
 type githubClient struct {
-	GitHubURL            string
-	GitHubAPIURL         string
-	ClientID             string
-	OAuthToken           string
-	disableStatusDetails bool
-	Cache                cache.Store
-	apiURL               string
-	uiURL                string
-	proxyURL             string
-	username             string
-	token                string
+	GitHubURL    string
+	GitHubAPIURL string
+	ClientID     string
+	OAuthToken   string
+	Cache        cache.Store
+	apiURL       string
+	uiURL        string
+	proxyURL     string
+	username     string
+	token        string
 }
 
 // GithubConsumer implements vcs.Server and it's used to instantiate a githubClient

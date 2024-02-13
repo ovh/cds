@@ -23,7 +23,7 @@ type VCSEventMessenger struct {
 }
 
 // ResyncCommitStatus resync commit status for a workflow run
-func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun) error {
+func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr *sdk.WorkflowRun, cdsUIURL string) error {
 	_, end := telemetry.Span(ctx, "workflow.resyncCommitStatus",
 		telemetry.Tag(telemetry.TagWorkflow, wr.Workflow.Name),
 		telemetry.Tag(telemetry.TagWorkflowRun, wr.Number),
@@ -37,7 +37,7 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		})
 		nodeRun := nodeRuns[0]
 
-		if err := eventMessenger.SendVCSEvent(ctx, db, store, proj, *wr, nodeRun); err != nil {
+		if err := eventMessenger.SendVCSEvent(ctx, db, store, proj, *wr, nodeRun, cdsUIURL); err != nil {
 			log.Error(ctx, "resyncCommitStatus > unable to send vcs event: %v", err)
 		}
 	}
@@ -45,14 +45,8 @@ func ResyncCommitStatus(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	return nil
 }
 
-func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun) error {
+func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, wr sdk.WorkflowRun, nodeRun sdk.WorkflowNodeRun, cdsUIURL string) error {
 	ctx = context.WithValue(ctx, cdslog.NodeRunID, nodeRun.ID)
-
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback() // nolint
 
 	if nodeRun.Status == sdk.StatusWaiting {
 		return nil
@@ -101,7 +95,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	//Get the RepositoriesManager Client
 	if e.vcsClient == nil {
 		var err error
-		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, tx, store, proj.Key, vcsServerName)
+		e.vcsClient, err = repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, vcsServerName)
 		if err != nil {
 			return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", proj.Key, vcsServerName)
 		}
@@ -144,7 +138,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	if statusFound == nil || statusFound.State == "" {
 		for i := range notifs {
 			log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-			if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+			if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
 				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 			}
 		}
@@ -175,7 +169,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		if !skipStatus {
 			for i := range notifs {
 				log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-				if err := e.sendVCSEventStatus(ctx, tx, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+				if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
 					return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 				}
 			}
@@ -186,20 +180,16 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		return nil
 	}
 	for i := range notifs {
-		if err := e.sendVCSPullRequestComment(ctx, tx, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+		if err := e.sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
 			return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
 		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(err)
 	}
 
 	return nil
 }
 
 // sendVCSEventStatus send status
-func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string) error {
+func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string, cdsUIURL string) error {
 	if notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
 		return nil
 	}
@@ -314,7 +304,18 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 		EnvironmentName: envName,
 	}
 
-	if err := e.vcsClient.SetStatus(ctx, evt); err != nil {
+	buildStatus := sdk.VCSBuildStatus{
+		Title:              fmt.Sprintf("%s-%s-%s", evt.ProjectKey, evt.WorkflowName, eventWNR.NodeName),
+		Description:        eventWNR.NodeName + ": " + eventWNR.Status,
+		URLCDS:             fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, evt.ProjectKey, evt.WorkflowName, eventWNR.Number),
+		Context:            fmt.Sprintf("%s-%s-%s", evt.ProjectKey, evt.WorkflowName, eventWNR.NodeName),
+		Status:             eventWNR.Status,
+		RepositoryFullname: eventWNR.RepositoryFullName,
+		GitHash:            eventWNR.Hash,
+		GerritChange:       eventWNR.GerritChange,
+	}
+
+	if err := e.vcsClient.SetStatus(ctx, buildStatus); err != nil {
 		if err2 := repositoriesmanager.RetryEvent(&evt, err, store); err2 != nil {
 			return err2
 		}
@@ -396,7 +397,7 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 
 		//Send comment on pull request
 		for _, pr := range prs {
-			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && IsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
+			if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, nodeRun.VCSHash) && !pr.Merged && !pr.Closed {
 				reqComment.ID = pr.ID
 				log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", reqComment.Revision, reqComment.ID, app.RepositoryFullname)
 				if err := e.vcsClient.PullRequestComment(ctx, app.RepositoryFullname, reqComment); err != nil {
@@ -410,17 +411,4 @@ func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db go
 		}
 	}
 	return nil
-}
-
-func IsSameCommit(sha1, sha1b string) bool {
-	if len(sha1) == len(sha1b) {
-		return sha1 == sha1b
-	}
-	if len(sha1) == 12 && len(sha1b) >= 12 {
-		return sha1 == sha1b[0:len(sha1)]
-	}
-	if len(sha1b) == 12 && len(sha1) >= 12 {
-		return sha1b == sha1[0:len(sha1b)]
-	}
-	return false
 }

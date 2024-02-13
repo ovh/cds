@@ -20,7 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func pushOperation(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
+func pushOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, data exportentities.WorkflowComponents, ope sdk.Operation) (*sdk.Operation, error) {
 	if ope.RepositoryStrategy.SSHKey != "" {
 		key := proj.GetSSHKey(ope.RepositoryStrategy.SSHKey)
 		if key == nil {
@@ -130,12 +130,12 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.P
 	}
 
 	if multipartData == nil {
-		if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodPost, "/operations", ope, ope); err != nil {
+		if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/operations", ope, ope); err != nil {
 			return sdk.WrapError(err, "Unable to perform operation")
 		}
 		return nil
 	}
-	if _, err := services.NewClient(db, srvs).DoMultiPartRequest(ctx, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
+	if _, err := services.NewClient(srvs).DoMultiPartRequest(ctx, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
 		return sdk.WrapError(err, "unable to perform multipart operation")
 	}
 	return nil
@@ -148,7 +148,7 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 		return nil, sdk.WrapError(err, "unable to found repositories service")
 	}
 	var ope sdk.Operation
-	if _, _, err := services.NewClient(db, srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+uuid, nil, &ope); err != nil {
+	if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+uuid, nil, &ope); err != nil {
 		return nil, sdk.WrapError(err, "unable to get operation")
 	}
 	return &ope, nil

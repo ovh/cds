@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +36,7 @@ func Test_WorkflowAsCodeWithNoHook_ShouldGive_AnAutomaticRepoWebHook(t *testing.
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
 	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager
@@ -227,7 +226,7 @@ func Test_WorkflowAsCodeWithDefaultHook_ShouldGive_TheSameRepoWebHook(t *testing
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
 	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager
@@ -476,7 +475,7 @@ func Test_WorkflowAsCodeWithDefaultHookAndAScheduler_ShouldGive_TheSameRepoWebHo
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
 	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager
@@ -808,7 +807,7 @@ func Test_WorkflowAsCodeWithJustAcheduler_ShouldGive_ARepoWebHookAndTheScheduler
 	// If you have to regenerate thi mock you just have to run, from directory $GOPATH/src/github.com/ovh/cds/engine/api/services:
 	// mockgen -source=http.go -destination=mock_services/services_mock.go Client
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client { return servicesClients }
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
 	t.Cleanup(func() { services.NewClient = services.NewDefaultClient })
 
 	// Create a project with a repository manager

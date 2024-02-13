@@ -64,13 +64,6 @@ const (
 	EventIntegrationUpdated = "IntegrationUpdated"
 	EventIntegrationDeleted = "IntegrationDeleted"
 
-	EventKeyCreated = "KeyCreated"
-	EventKeyDeleted = "KeyDeleted"
-
-	EventVariableCreated = "VariableCreated"
-	EventVariableUpdated = "VariableUpdated"
-	EventVariableDeleted = "VariableDeleted"
-
 	EventProjectCreated = "ProjectCreated"
 	EventProjectUpdated = "ProjectUpdated"
 	EventProjectDeleted = "ProjectDeleted"
@@ -137,7 +130,6 @@ type ProjectEventV2 struct {
 
 type AnalysisEvent struct {
 	ProjectEventV2
-	ProjectKey string `json:"project_key"`
 	VCSName    string `json:"vcs_name"`
 	Repository string `json:"repository"`
 	Status     string `json:"status"`
@@ -147,7 +139,6 @@ type AnalysisEvent struct {
 
 type EntityEvent struct {
 	ProjectEventV2
-	ProjectKey string `json:"project_key"`
 	VCSName    string `json:"vcs_name"`
 	Repository string `json:"repository"`
 	Entity     string `json:"entity"`
