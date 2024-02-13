@@ -335,7 +335,7 @@ func (h *HatcheryVSphere) isMarkedToDelete(s mo.VirtualMachine) bool {
 
 // killAwolServers kill unused servers
 func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
-	allWorkers, err := h.CDSClient().WorkerList(ctx)
+	allWorkers, err := h.WorkerList(ctx)
 	if err != nil {
 		ctx := sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, "unable to load workers from CDS: %v", err)
@@ -366,7 +366,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			var expire = bootTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			// Else it's WorkerTTL (default 120 minutes)
 			for _, w := range allWorkers {
-				if w.Name == s.Name {
+				if w.Name() == s.Name {
 					expire = bootTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 					break
 				}

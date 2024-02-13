@@ -274,7 +274,7 @@ func (h *HatcheryOpenstack) main(ctx context.Context) {
 func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	workers, err := h.CDSClient().WorkerList(ctx)
+	workers, err := h.WorkerList(ctx)
 	now := time.Now().Unix()
 	if err != nil {
 		log.Warn(ctx, "killAwolServers> Cannot fetch worker list: %s", err)
@@ -297,14 +297,14 @@ func (h *HatcheryOpenstack) killAwolServers(ctx context.Context) {
 
 		var inWorkersList bool
 		for _, w := range workers {
-			if _, ok := workersAlive[w.Name]; !ok {
+			if _, ok := workersAlive[w.Name()]; !ok {
 				log.Debug(ctx, "killAwolServers> add %s to map workersAlive", w.Name)
-				workersAlive[w.Name] = now
+				workersAlive[w.Name()] = now
 			}
 
-			if w.Name == s.Name {
+			if w.Name() == s.Name {
 				inWorkersList = true
-				workersAlive[w.Name] = now
+				workersAlive[w.Name()] = now
 				break
 			}
 		}

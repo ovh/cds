@@ -74,6 +74,61 @@ func (c *Common) GetMapPendingWorkerCreation() *sdk.HatcheryPendingWorkerCreatio
 	return c.mapPendingWorkerCreation
 }
 
+type WorkerInterface interface {
+	Name() string
+	Status() string
+}
+
+type workerImpl struct {
+	eitherV1 *sdk.Worker
+	eitherV2 *sdk.V2Worker
+}
+
+func (w workerImpl) Name() string {
+	if w.eitherV1 != nil {
+		return w.eitherV1.Name
+	}
+	return w.eitherV2.Name
+}
+
+func (w workerImpl) Status() string {
+	if w.eitherV1 != nil {
+		return w.eitherV1.Status
+	}
+	return w.eitherV2.Status
+}
+
+func (c *Common) WorkerList(ctx context.Context) ([]WorkerInterface, error) {
+	var (
+		v1Workers  []sdk.Worker
+		v2Workers  []sdk.V2Worker
+		err        error
+		allWorkers []WorkerInterface
+	)
+
+	if c.Client != nil {
+		v1Workers, err = c.CDSClient().WorkerList(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if c.Clientv2 != nil {
+		v2Workers, err = c.CDSClientV2().V2WorkerList(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for i := range v1Workers {
+		allWorkers = append(allWorkers, workerImpl{eitherV1: &v1Workers[i]})
+	}
+	for i := range v1Workers {
+		allWorkers = append(allWorkers, workerImpl{eitherV2: &v2Workers[i]})
+	}
+
+	return allWorkers, nil
+}
+
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 	log.Info(ctx, "%s> Starting service %s (%s)...", c.Name(), h.Configuration().Name, sdk.VERSION)

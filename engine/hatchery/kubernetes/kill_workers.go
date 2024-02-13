@@ -24,7 +24,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	workers, err := h.CDSClient().WorkerList(ctx)
+	workers, err := h.WorkerList(ctx)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (h *HatcheryKubernetes) killAwolWorkers(ctx context.Context) error {
 		if !toDelete {
 			var found bool
 			for _, w := range workers {
-				if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name {
+				if workerName, ok := labels[LABEL_WORKER_NAME]; ok && workerName == w.Name() {
 					found = true
 					break
 				}
