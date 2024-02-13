@@ -1,0 +1,10 @@
+::ng-deep .step {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: #333 !important;
+}
+
+::ng-deep .edge {
+  fill: transparent;
+}

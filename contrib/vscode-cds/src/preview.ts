@@ -3,7 +3,7 @@ import * as uri from "vscode-uri";
 import { isCDSWorkflowFile } from "./lib/cds/file_utils";
 import { Journal } from "./lib/utils/journal";
 
-const dirWeb = 'dist-web/workflow-preview/browser';
+const dirWeb = 'dist-web';
 
 export function init(context: vscode.ExtensionContext) {
     const cdsPreview = new CDSPreview(context);
@@ -109,6 +109,10 @@ class CDSPreview extends vscode.Disposable {
         const scriptPolyfillsUri = this._panel.webview.asWebviewUri(
           vscode.Uri.joinPath(this._context.extensionUri, dirWeb, "polyfills.js")
         );
+
+        const scriptRuntimeUri = this._panel.webview.asWebviewUri(
+          vscode.Uri.joinPath(this._context.extensionUri, dirWeb, "runtime.js")
+        );
     
         const scriptMainUri = this._panel.webview.asWebviewUri(
           vscode.Uri.joinPath(this._context.extensionUri, dirWeb,
@@ -131,9 +135,9 @@ class CDSPreview extends vscode.Disposable {
             <app-root></app-root>
             <script src="${scriptPolyfillsUri}" type="module"></script>
             <script src="${scriptMainUri}" type="module"></script>
+            <script src="${scriptRuntimeUri}" type="module"></script>
+            
           </body>
           </html>`;
       }
-    
-
 }
