@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
@@ -73,7 +72,6 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		}
 
 		event.PublishDeleteProjectKey(ctx, p, deletedKey, getUserConsumer(ctx))
-		event_v2.PublishProjectKeyEvent(ctx, api.Cache, p.Key, sdk.EventKeyDeleted, deletedKey, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -169,7 +167,6 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 		}
 
 		event.PublishAddProjectKey(ctx, p, newKey, getUserConsumer(ctx))
-		event_v2.PublishProjectKeyEvent(ctx, api.Cache, p.Key, sdk.EventKeyCreated, newKey, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

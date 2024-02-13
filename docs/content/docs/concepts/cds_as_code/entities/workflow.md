@@ -23,6 +23,7 @@ repository:
   vcs: github
   name: ovh/cds
 on: [push] 
+integrations: [my-artifactory]
 stages:
   ... 
 jobs:
@@ -39,6 +40,7 @@ gates:
 * <span style="color:red">*</span>`name`: The name of your workflow
 * <span style="color:red">*</span>[`on`](#on): Allow you to define hooks to trigger your workflow
 * <span style="color:red">*</span>[`jobs`](#jobs): Jobs definitions
+* [`integrations`](#integrations): Integrations linked to the workflow 
 * [`repository`](#repository): The repository linked to the workflow
 * [`stages`](#stages): List of stages
 * `env`: Define environment variable for the whole workflow
@@ -92,6 +94,16 @@ on:
 * `model_update.target_branch`: destination repository branch to trigger
 * `workflow_update.target_branch`: destination repository branch to trigger
 
+## Integrations
+
+Allow a job to use an project integration.
+
+Integration can be put directly on a [job](#jobs) or at the [workflow top level](#fields) to be applied on all jobs
+
+Supported integrations:
+
+* [Artifactory]({{< relref "/docs/integrations/artifact-manager.md" >}})
+
 ## jobs
 
 Jobs field is a map that contains all the jobs of your workflow. The key of the map is the name that will be display in CDS UI
@@ -100,9 +112,10 @@ Jobs field is a map that contains all the jobs of your workflow. The key of the 
 jobs:
   myJob:
     runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+    integrations: [my-artifactory]
     steps:
-     run: echo 'Hello World'      
-  myscondJob
+     run: echo 'Hello World'
+  mySecondJob:
     runs-on: ./cds/worker-models/my-custom-ubuntu.yml
     needs: [myJob]
     steps:
@@ -113,6 +126,7 @@ jobs:
 * <span style="color:red">*</span>[`steps`](#step): the list of step to execute
 * `name`: job description
 * `needs`: the list of jobs that need to be executed before this one
+* [`integrations`](#integrations): integration linked to the job
 * `region`: the region on which the job must be triggered
 * [`if`](#conditions): condition that must be satisfied to run the job. `if` and `gate` field cannot be set together
 * `gate`: manual [gate](#gates) definition to use.`if` and `gate` field cannot be set together
@@ -154,7 +168,6 @@ jobs:
 
 
 #### Inputs
-
 
 Inputs allow you to define a list of variable that will be used in your job. If you use it all others contexts will be unavailable. This allows you to exactly control the inputs of your job
 
