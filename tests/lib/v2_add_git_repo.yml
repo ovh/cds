@@ -70,7 +70,11 @@ steps:
             "secret": "{{.hookSecret}}",
             "content_type": "json",
             "url": "{{.input.cds_hook_url}}/v2/webhook/repository/gitea/my_vcs_server"
-        }
+        },
+        "events": [
+          "push",
+          "pull_request"
+        ]
       }
     vars:
       hookID:

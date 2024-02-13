@@ -1,0 +1,181 @@
+name: Workflow notifications
+vars:
+  cds_project: "ITV2WFNOTIF"
+  git_repo: "it_v2_workflow_notifications"
+  cds_workflow: "WorkflowNotificationsLog"
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+
+- name: Push workflow file
+  steps:
+    - type: v2_push_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:buster
+        workflows/workflow_notifications.yaml:
+          name: {{.cds_workflow}}
+          commit-status:
+            title: foo
+            description: bar
+          on:
+            pull-request:
+              comment: "a comment here"
+              types: ["opened"]
+          jobs:
+            myjob:
+              runs-on: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+              steps:
+                - run: |-
+                    #!/bin/bash
+                    set -ex
+                    echo "GIT_REF: $GIT_REF"
+                    echo "GIT_SHA: $GIT_SHA"
+                    echo "job done" && date
+
+    - name: Check CDS project analyses status after push on master
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 10
+      delay: 12
+
+- name: Work on another git branch
+  steps:
+    - name: Create a file on a new-branch branch
+      script: |- 
+        cd /tmp/repos/{{.git_repo}}
+        git checkout -b new-branch
+        echo 'FOO' > foo.md
+        git add --all
+        git commit --gpg-sign={{.gpg.key_id}} -m "add file and sign" --author "{{.git.user}} <{{.Prepare-test.emailaddress}}>"
+        git push origin new-branch
+
+    - name: Check CDS project analyses status after push on new-branch
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
+      retry: 10
+      delay: 12
+
+- name: Create Pull-Request
+  steps:
+    - name: Create the pull-request on gitea
+      type: http
+      method: POST
+      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls"
+      basic_auth_user: "{{.git.user}}"
+      basic_auth_password: "{{.git.password}}"
+      headers:
+        Content-Type: application/json
+      body: >
+        {
+          "base": "master",
+          "body": "test body pull-request",
+          "head": "new-branch",
+          "title": "test pull-request"
+        }
+      assertions:
+        - result.statuscode ShouldEqual 201
+      vars:
+        prNumber:
+          from: result.bodyjson.number
+        gitSha:
+          from: result.bodyjson.head.sha
+
+- name: Check if workflow triggered on the new-branch is ok after pull-request creation
+  steps:
+    - name: Check that the CDS workflow has at least one execution and is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      retry: 20
+      delay: 12
+
+    - name: Download logs
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1"
+
+    - name: Check workflowEnv log content
+      script: "cat {{.cds_workflow}}-*-myjob* | grep \"job done\""
+
+- name: Check comment created on gitea
+  steps:
+    - name: Get pull-request from gitea and check comment
+      type: http
+      method: GET
+      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
+      basic_auth_user: "{{.git.user}}"
+      basic_auth_password: "{{.git.password}}"
+      headers:
+        Content-Type: application/json
+      assertions:
+        - result.statuscode ShouldEqual 200
+        - result.bodyjson ShouldHaveLength 1
+        - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
+
+- name: Check status created on gitea
+  steps:
+    - name: Get status from gitea
+      type: http
+      method: GET
+      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/commits/{{.Create-Pull-Request.gitSha}}/status"
+      basic_auth_user: "{{.git.user}}"
+      basic_auth_password: "{{.git.password}}"
+      headers:
+        Content-Type: application/json
+      assertions:
+        - result.statuscode ShouldEqual 200
+        - result.bodyjson.statuses ShouldHaveLength 1
+        - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
+        - result.bodyjson.statuses.statuses0.context ShouldEqual "ITV2WFNOTIF-WorkflowNotificationsLog"

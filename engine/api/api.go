@@ -816,7 +816,7 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "event_v2.dequeue", func(ctx context.Context) {
-		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines)
+		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines, a.Config.URL.UI)
 	})
 
 	log.Info(ctx, "Initializing internal routines...")
@@ -851,7 +851,7 @@ func (a *API) Serve(ctx context.Context) error {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
 	a.GoRoutines.RunWithRestart(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
-		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
+		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)

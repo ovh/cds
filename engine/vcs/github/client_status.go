@@ -16,7 +16,6 @@ import (
 )
 
 type statusData struct {
-	pipName      string
 	desc         string
 	status       string
 	repoFullName string
@@ -25,41 +24,34 @@ type statusData struct {
 	context      string
 }
 
-func (g *githubClient) SetDisableStatusDetails(disableStatusDetails bool) {
-	g.disableStatusDetails = disableStatusDetails
-}
-
 // SetStatus Users with push access can create commit statuses for a given ref:
 // https://developer.github.com/v3/repos/statuses/#create-a-status
-func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
-	var data statusData
-	var err error
-	switch event.EventType {
-	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.disableStatusDetails)
-	default:
-		log.Error(ctx, "github.SetStatus> Unknown event %v", event)
-		return nil
-	}
-	if err != nil {
-		return sdk.WrapError(err, "Cannot process Event")
-	}
-
-	if data.status == "" {
-		log.Debug(ctx, "github.SetStatus> Do not process event for current status: %v", event)
+func (g *githubClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
+	if buildStatus.Status == "" {
+		log.Debug(ctx, "github.SetStatus> Do not process event for empty status")
 		return nil
 	}
 
 	ghStatus := CreateStatus{
-		Description: data.desc,
-		State:       data.status,
-		Context:     data.context,
+		Description: buildStatus.Description,
+		State:       buildStatus.Status,
+		Context:     buildStatus.Context,
+		TargetURL:   buildStatus.URLCDS,
 	}
 
-	if !g.disableStatusDetails {
-		ghStatus.TargetURL = data.urlPipeline
+	switch buildStatus.Status {
+	case sdk.StatusSuccess:
+		ghStatus.State = "success"
+	case sdk.StatusFail:
+		ghStatus.State = "failure"
+	case sdk.StatusBuilding:
+		ghStatus.State = "pending"
+	default:
+		log.Debug(ctx, "SetStatus> github setStatus not managed for %s", buildStatus.Status)
+		return nil
 	}
-	path := fmt.Sprintf("/repos/%s/statuses/%s", data.repoFullName, data.hash)
+
+	path := fmt.Sprintf("/repos/%s/statuses/%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 
 	b, err := json.Marshal(ghStatus)
 	if err != nil {
@@ -84,7 +76,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	log.Debug(ctx, "SetStatus> github response for %v body:%v", path, string(body))
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
+		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s - context:%s", res.StatusCode, body, buildStatus.Context)
 	}
 
 	s := &Status{}
@@ -179,7 +171,6 @@ func processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string, disabledStatu
 	}
 	data.hash = eventNR.Hash
 	data.repoFullName = eventNR.RepositoryFullName
-	data.pipName = eventNR.NodeName
 
 	if !disabledStatusDetail {
 		data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",

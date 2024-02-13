@@ -13,52 +13,50 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type statusData struct {
-	pipName      string
-	desc         string
-	status       string
-	repoFullName string
-	hash         string
-	urlPipeline  string
-	context      string
-}
-
-func (client *bitbucketcloudClient) SetDisableStatusDetails(disableStatusDetails bool) {
-	client.disableStatusDetails = disableStatusDetails
-}
-
 // SetStatus Users with push access can create commit statuses for a given ref:
-func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Event) error {
-	var data statusData
-	var err error
-	switch event.EventType {
-	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
-		data, err = client.processEventWorkflowNodeRun(event, client.uiURL)
-	default:
-		log.Error(ctx, "bitbucketcloud.SetStatus> Unknown event %v", event)
+func (client *bitbucketcloudClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
+	if buildStatus.Status == "" {
+		log.Debug(ctx, "bitbucketcloud.SetStatus> Do not process event for empty status")
 		return nil
-	}
-	if err != nil {
-		return sdk.WrapError(err, "Cannot process Event")
 	}
 
-	if data.status == "" {
-		log.Debug(ctx, "bitbucketcloud.SetStatus> Do not process event for current status: %v", event)
+	if buildStatus.Status == sdk.StatusChecking ||
+		buildStatus.Status == sdk.StatusDisabled ||
+		buildStatus.Status == sdk.StatusNeverBuilt ||
+		buildStatus.Status == sdk.StatusSkipped ||
+		buildStatus.Status == sdk.StatusUnknown ||
+		buildStatus.Status == sdk.StatusWaiting {
 		return nil
+	}
+
+	var state string
+	switch buildStatus.Status {
+	case sdk.StatusFail:
+		state = "FAILED"
+	case sdk.StatusSuccess, sdk.StatusSkipped:
+		state = "SUCCESSFUL"
+	case sdk.StatusStopped:
+		state = "STOPPED"
+	default:
+		state = "INPROGRESS"
 	}
 
 	bbStatus := Status{
-		Description: data.desc,
-		URL:         data.urlPipeline,
-		State:       data.status,
-		Name:        data.context,
-		Key:         data.context,
+		Description: buildStatus.Description,
+		URL:         buildStatus.URLCDS,
+		State:       state,
+		Name:        buildStatus.Title,
+		Key:         buildStatus.Context,
 	}
 
-	path := fmt.Sprintf("/repositories/%s/commit/%s/statuses/build", data.repoFullName, data.hash)
+	if len(buildStatus.Context) > 36 { // 40 maxlength on bitbucket cloud
+		buildStatus.Context = buildStatus.Context[:36]
+	}
+
+	path := fmt.Sprintf("/repositories/%s/commit/%s/statuses/build", buildStatus.RepositoryFullname, buildStatus.GitHash)
 	b, err := json.Marshal(bbStatus)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal github status")
+		return sdk.WrapError(err, "Unable to marshal bitbucketcloud status")
 	}
 	buf := bytes.NewBuffer(b)
 
@@ -73,7 +71,7 @@ func (client *bitbucketcloudClient) SetStatus(ctx context.Context, event sdk.Eve
 		return sdk.WrapError(err, "Unable to read body")
 	}
 	if res.StatusCode != 201 && res.StatusCode != 200 {
-		return fmt.Errorf("Unable to create status on bitbucket cloud. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
+		return fmt.Errorf("unable to create status on bitbucket cloud. Status code : %d - Body: %s - context:%s", res.StatusCode, body, buildStatus.Context)
 	}
 
 	var resp Status
@@ -127,56 +125,4 @@ func processBbitbucketState(s Status) string {
 	default:
 		return sdk.StatusBuilding
 	}
-}
-
-func (client *bitbucketcloudClient) processEventWorkflowNodeRun(event sdk.Event, cdsUIURL string) (statusData, error) {
-	data := statusData{}
-	var eventNR sdk.EventRunWorkflowNode
-	if err := sdk.JSONUnmarshal(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "cannot unmarshal payload")
-	}
-	//We only manage status Success, Failure and Stopped
-	if eventNR.Status == sdk.StatusChecking ||
-		eventNR.Status == sdk.StatusDisabled ||
-		eventNR.Status == sdk.StatusNeverBuilt ||
-		eventNR.Status == sdk.StatusSkipped ||
-		eventNR.Status == sdk.StatusUnknown ||
-		eventNR.Status == sdk.StatusWaiting {
-		return data, nil
-	}
-
-	switch eventNR.Status {
-	case sdk.StatusFail:
-		data.status = "FAILED"
-	case sdk.StatusSuccess, sdk.StatusSkipped:
-		data.status = "SUCCESSFUL"
-	case sdk.StatusStopped:
-		data.status = "STOPPED"
-	default:
-		data.status = "INPROGRESS"
-	}
-	data.hash = eventNR.Hash
-	data.repoFullName = eventNR.RepositoryFullName
-	data.pipName = eventNR.NodeName
-
-	if !client.disableStatusDetails {
-		data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
-			cdsUIURL,
-			event.ProjectKey,
-			event.WorkflowName,
-			eventNR.Number,
-		)
-	} else {
-		//CDS can avoid sending bitbucket target url in status, if it's disabled
-		if client.disableStatusDetails {
-			data.urlPipeline = "https://ovh.github.io/cds/" // because it's mandatory
-		}
-	}
-
-	data.context = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
-	if len(data.context) > 36 { // 40 maxlength on bitbucket cloud
-		data.context = data.context[:36]
-	}
-	data.desc = eventNR.NodeName + ": " + eventNR.Status
-	return data, nil
 }

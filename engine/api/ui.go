@@ -38,18 +38,14 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
+		db := api.mustDB()
 
-		app, err := application.LoadByName(ctx, tx, projectKey, appName)
+		app, err := application.LoadByName(ctx, db, projectKey, appName)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
 
-		usage, err := loadApplicationUsage(ctx, tx, projectKey, appName)
+		usage, err := loadApplicationUsage(ctx, db, projectKey, appName)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load application usage")
 		}
@@ -62,7 +58,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 
 		if len(srvs) > 0 {
 			// Get metrics
-			mTest, err := metrics.GetMetrics(ctx, tx, projectKey, app.ID, sdk.MetricKeyUnitTest)
+			mTest, err := metrics.GetMetrics(ctx, db, projectKey, app.ID, sdk.MetricKeyUnitTest)
 			if err != nil {
 				return sdk.WrapError(err, "cannot list Unit test metrics")
 			}
@@ -75,7 +71,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		if app.VCSServer != "" {
 			// GET VCS URL
 			// Get vcs info to known if we are on the default branch or not
-			client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, app.VCSServer)
+			client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, projectKey, app.VCSServer)
 			if err != nil {
 				return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
 					"cannot get repo client %s", app.VCSServer))
@@ -94,16 +90,12 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			tagFilter := make(map[string]string, 1)
 			tagFilter["git.branch"] = defaultBranch.DisplayID
 			for _, w := range app.Usage.Workflows {
-				runs, _, _, _, err := workflow.LoadRunsSummaries(ctx, tx, projectKey, w.Name, 0, 5, tagFilter)
+				runs, _, _, _, err := workflow.LoadRunsSummaries(ctx, db, projectKey, w.Name, 0, 5, tagFilter)
 				if err != nil {
 					return sdk.WrapError(err, "unable to load runs")
 				}
 				appOverview.History[w.Name] = runs
 			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, appOverview, http.StatusOK)

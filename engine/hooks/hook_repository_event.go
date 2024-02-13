@@ -31,9 +31,6 @@ func (s *Service) extractDataFromGiteaRequest(headers http.Header, body []byte, 
 	}
 
 	repoName := request.Repository.FullName
-	extractedData.Ref = request.Ref
-
-	extractedData.Commit = request.After
 
 	// https://github.com/go-gitea/gitea/blob/main/modules/webhook/type.go
 	// https://github.com/go-gitea/gitea/blob/main/services/webhook/deliver.go#L128
@@ -42,12 +39,19 @@ func (s *Service) extractDataFromGiteaRequest(headers http.Header, body []byte, 
 	case "push":
 		extractedData.CDSEventName = sdk.WorkflowHookEventPush
 		extractedData.CDSEventType = "" // nothing here
+		extractedData.Ref = request.Ref
+		extractedData.Commit = request.After
 	case "pull_request":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-		extractedData.CDSEventType = "" // nothing here
+		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
+		extractedData.Commit = request.PullRequest.Head.Sha
+		switch request.Action {
+		case "opened":
+			extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
+			extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeOpened
+		}
 	case "pull_request_comment":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
-		extractedData.CDSEventType = "" // nothing here
+		// Not managed. Should needs to get the pull-request detail to get the ref / sha from the pull-request
+		// with a comment event, gitea does not send these details
 	}
 
 	return repoName, extractedData, nil

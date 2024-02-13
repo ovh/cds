@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/engine/api/operation"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -56,7 +55,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		}
 		defer tx.Rollback() // nolint
 
-		asCodeEvent, err = createPullRequest(ctx, tx, store, proj, workflowHolder.ID, rootApp, ed, u, ope.Setup)
+		asCodeEvent, err = createPullRequest(ctx, db, store, proj, workflowHolder.ID, rootApp, ed, u, ope.Setup)
 		if err != nil {
 			return err
 		}
@@ -104,7 +103,7 @@ func UpdateAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	})
 }
 
-func createPullRequest(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
+func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, proj sdk.Project, workflowHolderID int64, rootApp sdk.Application, ed EntityData, u sdk.Identifiable, opeSetup sdk.OperationSetup) (*sdk.AsCodeEvent, error) {
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, proj.Key, rootApp.VCSServer)
 	if err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to create repositories manager client")

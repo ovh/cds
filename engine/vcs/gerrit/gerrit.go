@@ -10,13 +10,12 @@ import (
 
 // gerritClient implements VCSAuthorizedClient interface
 type gerritClient struct {
-	client               *ger.Client
-	url                  string
-	disableStatusDetails bool
-	sshUsername          string
-	sshPort              int
-	reviewerName         string
-	reviewerToken        string
+	client        *ger.Client
+	url           string
+	sshUsername   string
+	sshPort       int
+	reviewerName  string
+	reviewerToken string
 }
 
 // gerritConsumer implements vcs.Server and it's used to instantiate a gerritClient

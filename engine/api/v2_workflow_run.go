@@ -993,7 +993,7 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 			}
 		}
 		req := sdk.CDNDuplicateItemRequest{FromJob: rj.ID, ToJob: duplicatedRJ.ID}
-		_, code, err := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
+		_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
 		if err != nil || code >= 400 {
 			return fmt.Errorf("unable to duplicate cdn item for runjob %s. Code result %d: %v", rj.ID, code, err)
 		}
@@ -1265,9 +1265,9 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	case runEvent.GitTrigger != nil:
 		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.GitTrigger.EventName, u.Username)
 	case runEvent.WorkflowUpdateTrigger != nil:
-		msg = fmt.Sprintf("Workflow was triggered by the workflow_update hook by user %s", u.Username)
+		msg = fmt.Sprintf("Workflow was triggered by the workflow-update hook by user %s", u.Username)
 	case runEvent.ModelUpdateTrigger != nil:
-		msg = fmt.Sprintf("Workflow was triggered by the model_update hook by user %s", u.Username)
+		msg = fmt.Sprintf("Workflow was triggered by the model-update hook by user %s", u.Username)
 	default:
 		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event not implemented")
 	}
