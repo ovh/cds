@@ -645,7 +645,7 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 				if len(kv) == 2 {
 					k := kv[0]
 					v := kv[1]
-					if !sdk.IsInArray(k+"="+v, workerEnv) {
+					if !strings.HasPrefix(k, "CDS_") && !sdk.IsInArray(k+"="+v, workerEnv) {
 						result[k] = v
 					}
 				}

@@ -183,7 +183,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 			}
 		}
 
-		if deploymentResult.FollowUpToken != "" {
+		if deploymentResult != nil && deploymentResult.FollowUpToken != "" {
 			followUpToken = deploymentResult.FollowUpToken
 			break
 		}
