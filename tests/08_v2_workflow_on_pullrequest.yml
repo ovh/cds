@@ -142,9 +142,12 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
       retry: 20
       delay: 12
+      vars:
+        runIdentifier:
+          from: result.systemoutjson.systemoutjson0.id
 
     - name: Download logs
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}"
 
     - name: Check workflowEnv log content
       script: "cat {{.cds_workflow}}-*-myjob* | grep \"job done\""
