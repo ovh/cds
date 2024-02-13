@@ -1,21 +1,21 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild} from "@angular/core";
-import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
-import {SidebarService} from "app/service/sidebar/sidebar.service";
-import {from, interval, Subscription} from "rxjs";
-import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult} from "app/model/v2.workflow.run.model";
-import {dump} from "js-yaml";
-import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
-import {PreferencesState} from "app/store/preferences.state";
-import {Store} from "@ngxs/store";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from "@angular/core";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { from, interval, lastValueFrom, Subscription } from "rxjs";
+import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from "app/model/v2.workflow.run.model";
+import { dump } from "js-yaml";
+import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
+import { PreferencesState } from "app/store/preferences.state";
+import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
-import {Tab} from "app/shared/tabs/tabs.component";
-import {ProjectV2WorkflowStagesGraphComponent} from "../vcs/repository/workflow/show/graph/stages-graph.component";
-import {CDNLine, CDNStreamFilter, PipelineStatus} from "../../../model/pipeline.model";
-import {webSocket, WebSocketSubject} from "rxjs/webSocket";
-import {concatMap, delay, retryWhen} from "rxjs/operators";
-import {Router} from "@angular/router";
-import {RunJobComponent} from "./run-job.component";
-import {GraphNode} from "../vcs/repository/workflow/show/graph/graph.model";
+import { Tab } from "app/shared/tabs/tabs.component";
+import { ProjectV2WorkflowStagesGraphComponent } from "../vcs/repository/workflow/show/graph/stages-graph.component";
+import { CDNLine, CDNStreamFilter, PipelineStatus } from "../../../model/pipeline.model";
+import { webSocket, WebSocketSubject } from "rxjs/webSocket";
+import { concatMap, delay, retryWhen } from "rxjs/operators";
+import { ActivatedRoute, Router } from "@angular/router";
+import { RunJobComponent } from "./run-job.component";
+import { GraphNode } from "../vcs/repository/workflow/show/graph/graph.model";
+import { NzMessageService } from "ng-zorro-antd/message";
 
 
 @Component({
@@ -26,16 +26,15 @@ import {GraphNode} from "../vcs/repository/workflow/show/graph/graph.model";
 })
 @AutoUnsubscribe()
 export class ProjectV2WorkflowRunComponent implements OnDestroy {
-
     @ViewChild('graph') graph: ProjectV2WorkflowStagesGraphComponent;
     @ViewChild('runJob') runJobComponent: RunJobComponent
 
-    selectedRun: V2WorkflowRun;
+    workflowRun: V2WorkflowRun;
+    workflowRunInfos: Array<WorkflowRunInfo>;
     selectedJobRun: V2WorkflowRunJob;
-    selectedJobGate: {gate: string, job: string};
+    selectedJobGate: { gate: string, job: string };
     selectedJobRunInfos: Array<WorkflowRunInfo>;
     jobs: Array<V2WorkflowRunJob>;
-    selectedRunInfos: Array<WorkflowRunInfo>;
     workflowGraph: any;
     cdnFilter: CDNStreamFilter;
 
@@ -57,38 +56,22 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     static INFO_PANEL_KEY = 'workflow-run-info';
     static JOB_PANEL_KEY = 'workflow-run-job';
 
-    constructor(private _sidebarService: SidebarService, private _cd: ChangeDetectorRef,
-                private _workflowService: V2WorkflowRunService, private _store: Store, private _router: Router) {
-        this.sidebarSubs = this._sidebarService.getRunObservable().subscribe(r => {
-            if (r?.id === this.selectedRun?.id && r?.status === this.selectedRun?.status) {
+    constructor(
+        private _cd: ChangeDetectorRef,
+        private _workflowService: V2WorkflowRunService,
+        private _store: Store,
+        private _router: Router,
+        private _route: ActivatedRoute,
+        private _messageService: NzMessageService
+    ) {
+        this._route.params.subscribe(_ => {
+            const runIdentifier = this._route.snapshot.params['runIdentifier'];
+
+            if (this.workflowRun && this.workflowRun.id === runIdentifier) {
                 return;
             }
-            delete this.selectedJobGate;
-            delete this.selectedJobRun;
-            delete this.selectedJobRunInfos;
-            delete this.selectedRunInfos;
-            if (this.pollSubs) {
-                this.pollSubs.unsubscribe();
-            }
-            if (r?.id !== this.selectedRun?.id) {
-                delete this.selectedRunInfos;
-                delete this.jobs;
-            }
-            this.selectedRun = r;
-            if (r) {
-                this.loadJobs();
-                this.pollSubs = interval(5000)
-                    .pipe(concatMap(_ => from(this.loadJobs())))
-                    .subscribe();
-                this.workflowGraph = dump(r.workflow_data.workflow);
-                this._workflowService.getRunInfos(r).subscribe(infos => {
-                    this.selectedRunInfos = infos;
-                    this._cd.markForCheck();
-                });
-            } else {
-                delete this.workflowGraph;
-            }
-            this._cd.markForCheck();
+
+            this.load();
         });
         this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
             this.resizing = resizing;
@@ -114,24 +97,54 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }];
     }
 
+    async load() {
+        const projectKey = this._route.snapshot.parent.params['key'];
+        const runIdentifier = this._route.snapshot.params['runIdentifier'];
+
+        delete this.selectedJobGate;
+        delete this.selectedJobRun;
+        delete this.selectedJobRunInfos;
+        delete this.workflowGraph;
+        if (this.pollSubs) {
+            this.pollSubs.unsubscribe();
+        }
+
+        try {
+            this.workflowRun = await lastValueFrom(this._workflowService.getRun(projectKey, runIdentifier));
+            this.workflowRunInfos = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
+            await this.loadJobs();
+        } catch (e) {
+            this._messageService.error(`Unable to get workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
+        }
+
+        this.pollSubs = interval(5000)
+            .pipe(concatMap(_ => from(this.loadJobs())))
+            .subscribe();
+        this.workflowGraph = dump(this.workflowRun.workflow_data.workflow);
+
+        this._cd.markForCheck();
+    }
+
     async loadJobs() {
-        let updatedJobs = await this._workflowService.getJobs(this.selectedRun).toPromise();
+        let updatedJobs = await lastValueFrom(this._workflowService.getJobs(this.workflowRun));
         if (this.selectedJobRun) {
-            this.selectJob(this.selectedJobRun.job_id)
+            await this.selectJob(this.selectedJobRun.job_id);
         }
         this.jobs = Object.assign([], updatedJobs);
-        if (PipelineStatus.isDone(this.selectedRun.status)) {
+        if (PipelineStatus.isDone(this.workflowRun.status)) {
             this.pollSubs.unsubscribe();
         }
         this._cd.markForCheck();
     }
+
+    onBack(): void { }
 
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
     }
 
     panelStartResize(): void {
-        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: true}));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
     infoPanelEndResize(size: number): void {
@@ -151,23 +164,22 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     }
 
     panelEndResize(): void {
-        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: false}));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
         this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {
             this.graph.resize();
         }
     }
 
-    ngOnDestroy(): void {
-    }
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     selectJobGate(gateNode: GraphNode): void {
         delete this.selectedJobRun;
-        this.selectedJobGate = {gate: gateNode.gateName, job: gateNode.gateChild};
+        this.selectedJobGate = { gate: gateNode.gateName, job: gateNode.gateChild };
         this._cd.markForCheck();
     }
 
-    selectJob(runJobID: string): void {
+    async selectJob(runJobID: string) {
         let jobRun = this.jobs.find(j => j.id === runJobID);
         if (this.selectedJobRun && jobRun && jobRun.id === this.selectedJobRun.id) {
             return;
@@ -182,10 +194,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this.startStreamingLogsForJob();
         }
 
-        this._workflowService.getRunJobInfos(this.selectedRun, jobRun.id).subscribe(infos => {
-            this.selectedJobRunInfos = infos;
-            this._cd.markForCheck();
-        });
+        this.selectedJobRunInfos = await lastValueFrom(this._workflowService.getRunJobInfos(this.workflowRun, jobRun.id));
         this._cd.markForCheck();
     }
 

@@ -70,7 +70,7 @@ testcases:
                 - id: gitvariables
                   run: |-
                     #!/bin/bash -x
-                    env | grep GIT        
+                    env | grep GIT
 
     - name: Trigger manually an analysis
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis trigger {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -94,9 +94,12 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
       retry: 5
       delay: 30
+      vars:
+        runIdentifier:
+          from: result.systemoutjson.systemoutjson0.id
 
     - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 1
+      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}
 
     - name: Check checkout log content
       script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
@@ -127,14 +130,14 @@ testcases:
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
       retry: 5
       delay: 30
+      vars:
+        runIdentifier:
+          from: result.systemoutjson.systemoutjson0.id
 
     - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} 2
+      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}
 
     - name: Check checkout tag log content
       script: "cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout completed\""
     - name: Check checkout tag log content 2
-      script: "cat {{.cds_workflow}}-2-1-init-checkout && cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout tag v0.1.0\""     
-
-
-
+      script: "cat {{.cds_workflow}}-2-1-init-checkout && cat {{.cds_workflow}}-2-1-init-checkout | grep \"Checkout tag v0.1.0\""

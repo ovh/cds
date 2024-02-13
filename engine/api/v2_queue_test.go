@@ -108,11 +108,10 @@ hatcheries:
 	api.Router.Mux.ServeHTTP(wRelease, reqRelease)
 	require.Equal(t, 200, w.Code)
 
-	jobRunDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobRun.ID)
+	jobRunDB, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, db, wr.ID, jobRun.ID)
 	require.NoError(t, err)
 	require.Equal(t, jobRunDB.Status, sdk.StatusWaiting)
 	require.Equal(t, jobRunDB.HatcheryName, "")
-
 }
 
 func TestPostJobResultHandler(t *testing.T) {
@@ -194,7 +193,7 @@ hatcheries:
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 204, w.Code)
 
-	jobRunDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobRun.ID)
+	jobRunDB, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, db, wr.ID, jobRun.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.StatusFail, jobRunDB.Status)
 }

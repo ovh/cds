@@ -24,8 +24,8 @@ func experimentalWorkflow() *cobra.Command {
 	return cli.NewCommand(experimentalWorkflowCmd, nil, []*cobra.Command{
 		cli.NewCommand(workflowRunCmd, workflowRunFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRestartCmd, workflowRestartFunc, nil, withAllCommandModifiers()...),
-		cli.NewListCommand(workflowRunInfosListCmd, workflowRunInfosListFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(workflowRunHistoryCmd, workflowRunHistoryFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowRunInfosListCmd, workflowRunInfosListFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRunStopCmd, workflowRunStopFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowLintCmd, workflowLintFunc, nil, withAllCommandModifiers()...),
@@ -88,28 +88,18 @@ var workflowRunInfosListCmd = cli.Command{
 	Name:    "info",
 	Aliases: []string{"i", "infos"},
 	Short:   "List run informations",
-	Example: "cdsctl experimental workflow info <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Example: "cdsctl experimental workflow info <proj_key> <run_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "vcs_identifier"},
-		{Name: "repo_identifier"},
-		{Name: "workflow_name"},
-		{Name: "run_number"},
+		{Name: "run_identifier"},
 	},
 }
 
 func workflowRunInfosListFunc(v cli.Values) (cli.ListResult, error) {
 	projKey := v.GetString("proj_key")
-	vcsId := v.GetString("vcs_identifier")
-	repoId := v.GetString("repo_identifier")
-	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run_number")
-	if err != nil {
-		return nil, err
-	}
-
-	runInfos, err := client.WorkflowV2RunInfoList(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	runIdentifier := v.GetString("run_identifier")
+	runInfos, err := client.WorkflowV2RunInfoList(context.Background(), projKey, runIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +126,9 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
 
-	runs, err := client.WorkflowV2RunList(context.Background(), projKey, vcsId, repoId, wkfName)
+	wkfIdentifier := vcsId + "/" + repoId + "/" + wkfName
+
+	runs, err := client.WorkflowV2RunSearch(context.Background(), projKey, cdsclient.Workflows(wkfIdentifier))
 	if err != nil {
 		return nil, err
 	}
@@ -147,28 +139,18 @@ var workflowRunStatusCmd = cli.Command{
 	Name:    "status",
 	Aliases: []string{"st"},
 	Short:   "Get the workflow run status",
-	Example: "cdsctl experimental workflow status <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Example: "cdsctl experimental workflow status <proj_key> <run_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "vcs_identifier"},
-		{Name: "repo_identifier"},
-		{Name: "workflow_name"},
-		{Name: "run-number"},
+		{Name: "run_identifier"},
 	},
 }
 
 func workflowRunStatusFunc(v cli.Values) (interface{}, error) {
 	projKey := v.GetString("proj_key")
-	vcsId := v.GetString("vcs_identifier")
-	repoId := v.GetString("repo_identifier")
-	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run-number")
-	if err != nil {
-		return nil, err
-	}
-
-	run, err := client.WorkflowV2RunStatus(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	runIdentifier := v.GetString("run_identifier")
+	run, err := client.WorkflowV2RunStatus(context.Background(), projKey, runIdentifier)
 	if err != nil {
 		return nil, err
 	}
@@ -179,31 +161,21 @@ var workflowRunStopCmd = cli.Command{
 	Name:    "stop",
 	Aliases: []string{""},
 	Short:   "Stop the workflow run",
-	Example: "cdsctl experimental workflow stop <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Example: "cdsctl experimental workflow stop <proj_key> <run_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "vcs_identifier"},
-		{Name: "repo_identifier"},
-		{Name: "workflow_name"},
-		{Name: "run-number"},
+		{Name: "run_identifier"},
 	},
 }
 
 func workflowRunStopFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	vcsId := v.GetString("vcs_identifier")
-	repoId := v.GetString("repo_identifier")
-	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run-number")
-	if err != nil {
+	runIdentifier := v.GetString("run_identifier")
+	if err := client.WorkflowV2Stop(context.Background(), projKey, runIdentifier); err != nil {
 		return err
 	}
-
-	if err := client.WorkflowV2Stop(context.Background(), projKey, vcsId, repoId, wkfName, runNumber); err != nil {
-		return err
-	}
-	fmt.Printf("Workflow run %d has been stopped\n", runNumber)
+	fmt.Printf("Workflow run %s has been stopped\n", runIdentifier)
 	return nil
 }
 
@@ -262,28 +234,18 @@ func workflowRunFunc(v cli.Values) error {
 var workflowRestartCmd = cli.Command{
 	Name:    "restart",
 	Short:   "Restart workflow failed jobs",
-	Example: "cdsctl workflow restart <proj_key> <vcs_identifier> <repo_identifier> <workflow_name> <run_number>",
+	Example: "cdsctl workflow restart <proj_key> <run_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "vcs_identifier"},
-		{Name: "repo_identifier"},
-		{Name: "workflow_name"},
-		{Name: "run_number"},
+		{Name: "run_identifier"},
 	},
 }
 
 func workflowRestartFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	vcsId := v.GetString("vcs_identifier")
-	repoId := v.GetString("repo_identifier")
-	wkfName := v.GetString("workflow_name")
-	runNumber, err := v.GetInt64("run_number")
-	if err != nil {
-		return err
-	}
-
-	run, err := client.WorkflowV2Restart(context.Background(), projKey, vcsId, repoId, wkfName, runNumber)
+	runIdentifier := v.GetString("run_identifier")
+	run, err := client.WorkflowV2Restart(context.Background(), projKey, runIdentifier)
 	if err != nil {
 		return err
 	}

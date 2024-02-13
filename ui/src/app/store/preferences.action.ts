@@ -12,3 +12,13 @@ export class SetTheme {
     static readonly type = '[Preferences] Set theme';
     constructor(public payload: { theme: string }) { }
 }
+
+export class SaveWorkflowRunSearch {
+    static readonly type = '[Preferences] Save workflow run search';
+    constructor(public payload: { name: string, value: string }) { }
+}
+
+export class DeleteWorkflowRunSearch {
+    static readonly type = '[Preferences] Delete workflow run search';
+    constructor(public payload: { name: string }) { }
+}

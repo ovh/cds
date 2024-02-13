@@ -157,22 +157,26 @@ testcases:
     retry: 2
     delay: 10
 
-  - name: Check that the CDS workflow has at least one execution and is Success
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow status {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 --format json"
+  - name: Check that the CDS workflow has at least one execution and is Fail
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
     assertions:
-    - result.systemoutjson.status ShouldEqual "Success"
-    retry: 100
-    delay: 10
+      - result.systemoutjson ShouldHaveLength 1
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+    retry: 10
+    delay: 12
+    vars:
+      runIdentifier:
+        from: result.systemoutjson.systemoutjson0.id
 
   - name: Check the workflow run job info mentions the artifactory integration on the first job
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 First-Job"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.runIdentifier}} First-Job"
     assertions:
     - result.systemout ShouldContainSubstring Integration
     - result.systemout ShouldContainSubstring artifactory
     - result.systemout ShouldContainSubstring First-Job
 
   - name: Check the workflow run job info mentions the artifactory integration on the second job
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA 1 Second-Job"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.runIdentifier}} Second-Job"
     assertions:
     - result.systemout ShouldContainSubstring Integration
     - result.systemout ShouldContainSubstring artifactory

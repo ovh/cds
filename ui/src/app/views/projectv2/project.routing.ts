@@ -14,6 +14,7 @@ import { ProjectV2ActionShowComponent } from "./vcs/repository/action/show/proje
 import { ProjectV2WorkflowShowComponent } from "./vcs/repository/workflow/show/project.workflow.show.component";
 import { ProjectV2WorkflowRunComponent } from "./run/project.run.component";
 import { ProjectV2WorkflowRunListComponent } from './run-list/run-list.component';
+import { ProjectV2ExploreComponent } from './explore/explore.component';
 
 
 const projectRoutes: Routes = [
@@ -21,6 +22,9 @@ const projectRoutes: Routes = [
         path: ':key',
         component: ProjectV2ShowComponent,
         canActivate: [FeatureGuard],
+        resolve: {
+            project: Projectv2Resolver,
+        },
         data: {
             title: '{key} • Project', feature: FeatureNames.AllAsCode
         },
@@ -30,64 +34,44 @@ const projectRoutes: Routes = [
             },
             {
                 path: 'explore',
+                component: ProjectV2ExploreComponent,
                 children: [
                     {
                         path: 'vcs/:vcsName/repository',
                         component: ProjectV2RepositoryAddComponent,
-                        data: { title: 'Add • Repository' },
-                        resolve: {
-                            project: Projectv2Resolver,
-                        }
+                        data: { title: 'Add • Repository' }
                     },
                     {
                         path: 'vcs/:vcsName/repository/:repoName',
                         component: ProjectV2RepositoryShowComponent,
-                        data: { title: '{repoName} • Repository' },
-                        resolve: {
-                            project: Projectv2Resolver,
-                        }
+                        data: { title: '{repoName} • Repository' }
                     },
                     {
                         path: 'vcs/:vcsName/repository/:repoName/workermodel/:workerModelName',
                         component: ProjectV2WorkerModelShowComponent,
-                        data: { title: '{workerModelName} • Worker Model' },
-                        resolve: {
-                            project: Projectv2Resolver,
-                        },
+                        data: { title: '{workerModelName} • Worker Model' }
                     },
                     {
                         path: 'vcs/:vcsName/repository/:repoName/action/:actionName',
                         component: ProjectV2ActionShowComponent,
-                        data: { title: '{actionName} • Action' },
-                        resolve: {
-                            project: Projectv2Resolver,
-                        },
+                        data: { title: '{actionName} • Action' }
                     },
                     {
                         path: 'vcs/:vcsName/repository/:repoName/workflow/:workflowName',
                         component: ProjectV2WorkflowShowComponent,
-                        data: { title: '{workflowName} • Workflow' },
-                        resolve: {
-                            project: Projectv2Resolver,
-                        },
+                        data: { title: '{workflowName} • Workflow' }
                     }
                 ]
             },
             {
                 path: 'run',
                 component: ProjectV2WorkflowRunListComponent,
-                data: { title: 'List • Workflow Runs' },
-                resolve: {
-                    project: Projectv2Resolver,
-                }
+                data: { title: 'List • Workflow Runs' }
             },
             {
-                path: 'run/vcs/:vcsName/repository/:repoName/workflow/:workflowName',
+                path: 'run/:runIdentifier',
                 component: ProjectV2WorkflowRunComponent,
-                data: { title: '{workflowName} • Workflow Run' },
-                resolve: {
-                    project: Projectv2Resolver,
-                }
+                data: { title: '{runIdentifier} • Workflow Run' }
             }
         ]
     }
