@@ -5,10 +5,14 @@ DIST := dist
 $(DIST):
 	mkdir -p $(DIST)
 
-build: $(DIST)
+workflow-graph:
 	cd ../../ui && npm ci && ng build workflow-graph && cd dist/workflow-graph && npm pack
-	npm install --include=dev
+
+webviews: workflow-graph
 	cd webviews/workflow-preview && npm install && npm run build
+
+build: $(DIST) webviews
+	npm install --include=dev
 	npm run vsce package
 	mv vscode-cds-*.vsix $(DIST)
 
