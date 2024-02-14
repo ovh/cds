@@ -380,11 +380,11 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 	}
 
 	// If no vcs in path, get it from workflow run
-	if vcsName == "" || vcsName == wref.runVcsServer.Name {
+	if vcsName == "" || (vcsName == wref.runVcsServer.Name && projKey == wref.run.ProjectKey) {
 		vcsName = wref.runVcsServer.Name
 		entityVCS = wref.runVcsServer
 	} else {
-		vcsFromCache, has := wref.vcsServerCache[vcsName]
+		vcsFromCache, has := wref.vcsServerCache[projKey+"/"+vcsName]
 		if has {
 			entityVCS = vcsFromCache
 		} else {
@@ -396,7 +396,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 				return "", nil, err
 			}
 			entityVCS = *vcsDB
-			wref.vcsServerCache[vcsName] = *vcsDB
+			wref.vcsServerCache[projKey+"/"+vcsName] = *vcsDB
 		}
 	}
 	// If no repo in path, get it from workflow run
@@ -404,7 +404,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 		repoName = wref.runRepo.Name
 		entityRepo = wref.runRepo
 	} else {
-		entityFromCache, has := wref.repoCache[vcsName+"/"+repoName]
+		entityFromCache, has := wref.repoCache[projKey+"/"+vcsName+"/"+repoName]
 		if has {
 			entityRepo = entityFromCache
 		} else {
@@ -416,7 +416,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 				return "", nil, err
 			}
 			entityRepo = *repoDB
-			wref.repoCache[vcsName+"/"+repoName] = *repoDB
+			wref.repoCache[projKey+"/"+vcsName+"/"+repoName] = *repoDB
 		}
 	}
 
@@ -425,7 +425,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 			// Get current git.branch parameters
 			ref = wref.run.WorkflowRef
 		} else {
-			defaultCache, has := wref.repoDefaultRefCache[entityVCS.Name+"/"+entityRepo.Name]
+			defaultCache, has := wref.repoDefaultRefCache[projKey+"/"+entityVCS.Name+"/"+entityRepo.Name]
 			if has {
 				ref = defaultCache
 			} else {
@@ -439,7 +439,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 					return "", nil, err
 				}
 				ref = b.ID
-				wref.repoDefaultRefCache[entityVCS.Name+"/"+entityRepo.Name] = ref
+				wref.repoDefaultRefCache[projKey+"/"+entityVCS.Name+"/"+entityRepo.Name] = ref
 			}
 		}
 	} else if strings.HasPrefix(branchOrTag, sdk.GitRefBranchPrefix) || strings.HasPrefix(branchOrTag, sdk.GitRefTagPrefix) {
