@@ -260,7 +260,7 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dir
 			response.RunResult.ArtifactManagerMetadata.Set("mimeType", res.MimeType)
 			response.RunResult.ArtifactManagerMetadata.Set("downloadURI", res.DownloadURI)
 			response.RunResult.ArtifactManagerMetadata.Set("createdBy", res.CreatedBy)
-			response.RunResult.ArtifactManagerMetadata.Set("localRepository", res.Repo)
+			response.RunResult.ArtifactManagerMetadata.Set("localRepository", res.Repo) // This contains the localrepository
 			response.RunResult.ArtifactManagerMetadata.Set("path", res.Path)
 			response.RunResult.ArtifactManagerMetadata.Set("name", filepath.Base(res.Path))
 
@@ -273,7 +273,8 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dir
 			grpcplugins.Error(err.Error())
 			return err
 		}
-
+		// Update run result
+		runResultRequest.RunResult.Status = sdk.V2WorkflowRunResultStatusCompleted
 		updateResponse, err := grpcplugins.UpdateRunResult(ctx, &actPlugin.Common, &runResultRequest)
 		if err != nil {
 			grpcplugins.Error(err.Error())
@@ -350,7 +351,7 @@ func (actPlugin *runActionUploadArtifactPlugin) CDNItemUpload(ctx context.Contex
 
 		req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/item/upload", cdnAddr), reader)
 		if err != nil {
-			return nil, time.Since(t0), err
+			return nil, time.Since(t0), errors.Errorf("unable to prepare HTTP request: %v", err)
 		}
 		req.Header.Set("X-CDS-WORKER-SIGNATURE", signature)
 

@@ -69,8 +69,11 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 		response.CDNSignature = signature
 		response.CDNAddress = wk.CDNHttpURL()
 	} else {
-		log.Info(ctx, "enabling integration %q for run result %s", integ.Name, response.RunResult.ID)
-		response.RunResult.ArtifactManagerIntegrationName = &integ.Name
+		if response.RunResult.Type != sdk.V2WorkflowRunResultTypeArsenalDeployment &&
+			response.RunResult.Type != sdk.V2WorkflowRunResultTypeRelease && response.RunResult.Type != sdk.V2WorkflowRunResultTypeVariable {
+			log.Info(ctx, "enabling integration %q for run result %s", integ.Name, response.RunResult.ID)
+			response.RunResult.ArtifactManagerIntegrationName = &integ.Name
+		}
 	}
 
 	return &response, nil
@@ -90,30 +93,48 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
 	var runResult = req.RunResult
 
-	runResult.Status = sdk.V2WorkflowRunResultStatusCompleted
-
 	log.Info(ctx, "updating run result %s to status completed", runResult.ID)
-
-	// TODO compute CDN Item links and push it into RunResult object
 
 	// Update the run result on API side
 	if err := wk.clientV2.V2QueueJobRunResultUpdate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
 		ctx := log.ContextWithStackTrace(ctx, err)
-		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to update run result %s", wk.currentJobV2.runJob.ID))
+		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to update run result %s", runResult.ID))
 		return nil, sdk.NewError(sdk.ErrUnknownError, err)
 	}
 
 	duration := time.Since(runResult.IssuedAt)
-	wk.clientV2.V2QueuePushJobInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2SendJobRunInfo{
-		Level:   sdk.WorkflowRunInfoLevelInfo,
-		Message: fmt.Sprintf("Job %q issued a new result %q in %.3f seconds", wk.currentJobV2.runJob.JobID, runResult.Name(), duration.Seconds()),
-		Time:    time.Now(),
-	})
 
-	wk.clientV2.V2QueuePushRunInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2WorkflowRunInfo{
-		Level:   sdk.WorkflowRunInfoLevelInfo,
-		Message: fmt.Sprintf("Job %q issued a new result %q in %.3f seconds", wk.currentJobV2.runJob.JobID, runResult.Name(), duration.Seconds()),
-	})
+	if runResult.DataSync == nil || runResult.DataSync.LatestPromotionOrRelease() == nil {
+		wk.clientV2.V2QueuePushJobInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q issued a new result %q in %.3f seconds", wk.currentJobV2.runJob.JobID, runResult.Name(), duration.Seconds()),
+			Time:    time.Now(),
+		})
+
+		wk.clientV2.V2QueuePushRunInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2WorkflowRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q issued a new result %q in %.3f seconds", wk.currentJobV2.runJob.JobID, runResult.Name(), duration.Seconds()),
+		})
+	} else {
+		var isRelease = len(runResult.DataSync.Releases) > 0
+		var message = "has promoted"
+		if isRelease {
+			message = "has released"
+		}
+
+		latestRelease := runResult.DataSync.LatestPromotionOrRelease()
+
+		wk.clientV2.V2QueuePushJobInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q %s artifact %q to %s", wk.currentJobV2.runJob.JobID, message, runResult.Name(), latestRelease.ToMaturity),
+			Time:    time.Now(),
+		})
+
+		wk.clientV2.V2QueuePushRunInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2WorkflowRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q %s artifact %q to %s", wk.currentJobV2.runJob.JobID, message, runResult.Name(), latestRelease.ToMaturity),
+		})
+	}
 
 	return &workerruntime.V2UpdateResultResponse{RunResult: runResult}, nil
 }
@@ -132,13 +153,18 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 	}
 	pattern := glob.New(filter.Pattern)
 	for _, r := range resp {
-		if r.Type != filter.Type {
+		if filter.Type != "" && r.Type != filter.Type {
 			continue
 		}
 		switch r.Detail.Type {
 		case "V2WorkflowRunResultGenericDetail":
-			x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
-			res, err := pattern.MatchString(x.Name)
+			var res *glob.Result
+			if filter.Type == "V2WorkflowRunResultGenericDetail" { // If the filter is set to "V2WorkflowRunResultGenericDetail" we can directly check the artifact name. This is the usecase of plugin "downloadArtifact"
+				x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+				res, err = pattern.MatchString(x.Name)
+			} else {
+				res, err = pattern.MatchString(r.Name())
+			}
 			if err != nil {
 				log.Error(ctx, "unable to perform glob expression on %s (%s): %v", r.Name(), r.ID, err)
 				continue
@@ -147,7 +173,14 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 				result.RunResults = append(result.RunResults, r)
 			}
 		default:
-			log.Error(ctx, "unsupported run result detail %q type", r.Detail.Type)
+			res, err := pattern.MatchString(r.Name()) // We match with the implementation of the Name function that depends on V2WorkflowRunResult.Type (docker:image/latest, generic:foo.txt, etc...)
+			if err != nil {
+				log.Error(ctx, "unable to perform glob expression on %s (%s): %v", r.Name(), r.ID, err)
+				continue
+			}
+			if res != nil {
+				result.RunResults = append(result.RunResults, r)
+			}
 		}
 	}
 
