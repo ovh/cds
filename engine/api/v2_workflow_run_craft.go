@@ -400,7 +400,7 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 		}
 	}
 	// If no repo in path, get it from workflow run
-	if repoName == "" || (vcsName == wref.runVcsServer.Name && repoName == wref.runRepo.Name) {
+	if repoName == "" || (vcsName == wref.runVcsServer.Name && repoName == wref.runRepo.Name && projKey == wref.run.ProjectKey) {
 		repoName = wref.runRepo.Name
 		entityRepo = wref.runRepo
 	} else {
