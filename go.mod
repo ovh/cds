@@ -58,7 +58,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/moby/moby v23.0.1+incompatible
+	github.com/moby/moby v24.0.9+incompatible
 	github.com/mum4k/termdash v0.10.0
 	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d
 	github.com/ncw/swift v1.0.52
