@@ -71,7 +71,14 @@ func CreateArtifactoryClient(ctx context.Context, url, token string) (artifactor
 	return artifactory.New(serviceConfig)
 }
 
-func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
+type FileToPromote struct {
+	RepoType string
+	RepoName string
+	Name     string
+	Path     string
+}
+
+func PromoteFile(artiClient artifact_manager.ArtifactManager, data FileToPromote, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
 	// artifactory does not manage virtual cargo repositories
 	var srcRepo, targetRepo string
 	switch data.RepoType {
@@ -106,7 +113,7 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowR
 			// Get the properties of the source reposiytory
 			maturity, err := artiClient.GetRepositoryMaturity(srcRepo)
 			if err != nil {
-				return fmt.Errorf("unable to get repository maturity: %v\n", err)
+				return fmt.Errorf("unable to get repository maturity: %v", err)
 			}
 
 			if maturity == "release" {
@@ -143,7 +150,7 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data sdk.WorkflowR
 	return nil
 }
 
-func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.ArtifactManager, data sdk.WorkflowRunResultArtifactManager, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
+func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.ArtifactManager, data FileToPromote, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
 	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)

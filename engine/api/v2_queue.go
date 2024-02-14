@@ -291,15 +291,13 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 				return err
 			}
 
-			oldRunResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResult.ID)
+			oldRunResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.WorkflowRunID, runResult.ID)
 			if err != nil {
 				return err
 			}
 
 			// Check consistency
-			if oldRunResult.WorkflowRunID != runResult.WorkflowRunID ||
-				oldRunResult.WorkflowRunJobID != runResult.WorkflowRunJobID ||
-				runResult.WorkflowRunJobID != runJob.ID {
+			if oldRunResult.WorkflowRunID != runResult.WorkflowRunID {
 				return sdk.WithStack(sdk.ErrWrongRequest)
 			}
 
@@ -337,7 +335,7 @@ func (api *API) getJobRunResultHandler() ([]service.RbacChecker, service.Handler
 
 			runResultID := vars["runResultID"]
 
-			runResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.ID, runResultID)
+			runResult, err := workflow_v2.LoadRunResult(ctx, api.mustDB(), runJob.WorkflowRunID, runResultID)
 			if err != nil {
 				return err
 			}
