@@ -7,6 +7,7 @@ inputs:
   artifacts:
     type: string
     description: Artifact name or wilcard pattern.
+    required: true
   maturity:
     type: string
     description: The maturity you want to promote in.
