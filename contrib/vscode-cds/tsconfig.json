@@ -6,7 +6,7 @@
 		"lib": [
 			"ES2022"
 		],
-		"sourceMap": true,
+		"sourceMap": false,
 		"rootDir": "src",
 		"strict": true,   /* enable all strict type-checking options */
 		/* Additional Checks */
