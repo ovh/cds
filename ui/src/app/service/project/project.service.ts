@@ -115,6 +115,10 @@ export class ProjectService {
         return this._http.post<VCSProject>(`/v2/project/${key}/vcs`, vcsProject);
     }
 
+    saveVCSProject(key: string, vcsProject: VCSProject): Observable<VCSProject> {
+        return this._http.put<VCSProject>(`/v2/project/${key}/vcs/${vcsProject.name}`, vcsProject);
+    }
+
     deleteVCSProject(key: string, vcsName: string): Observable<any> {
         return this._http.delete(`/v2/project/${key}/vcs/${vcsName}`);
     }

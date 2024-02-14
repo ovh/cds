@@ -26,5 +26,5 @@ type V2TakeJobResponse struct {
 	AsCodeActions  map[string]V2Action    `json:"actions"`
 	SigningKey     string                 `json:"signing_key"`
 	Contexts       WorkflowRunJobsContext `json:"contexts"`
-	SensitiveDatas []string               `json:"sensitive_datas`
+	SensitiveDatas []string               `json:"sensitive_datas"`
 }

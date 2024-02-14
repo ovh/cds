@@ -173,7 +173,7 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 		}
 
 		fmt.Printf("Deploying %s (%s) on Arsenal at %s...\n", application, deployReq, arsenalHost)
-		followUpToken, err = arsenalClient.Deploy(deployReq)
+		deploymentResult, err := arsenalClient.Deploy(deployReq)
 		if err != nil {
 			if _, ok := err.(*arsenal.RequestError); ok {
 				fmt.Println("Deployment has failed, retrying...")
@@ -183,7 +183,8 @@ func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *integrationplugin.
 			}
 		}
 
-		if followUpToken != "" {
+		if deploymentResult != nil && deploymentResult.FollowUpToken != "" {
+			followUpToken = deploymentResult.FollowUpToken
 			break
 		}
 	}

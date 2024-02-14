@@ -242,6 +242,9 @@ type Configuration struct {
 		JobDefaultBookDelay       int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue (in seconds)" json:"jobDefaultBookDelay" default:"120"`
 		CustomServiceJobBookDelay map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery (in seconds)" json:"customServiceJobBookDelay" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
+	WorkflowV2 struct {
+		JobSchedulingTimeout int64 `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
 		InfoCreationDisabled       string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
@@ -816,7 +819,7 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "event_v2.dequeue", func(ctx context.Context) {
-		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines)
+		event_v2.Dequeue(ctx, a.mustDB(), a.Cache, a.GoRoutines, a.Config.URL.UI)
 	})
 
 	log.Info(ctx, "Initializing internal routines...")
@@ -851,7 +854,7 @@ func (a *API) Serve(ctx context.Context) error {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper))
 	})
 	a.GoRoutines.RunWithRestart(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
-		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache)
+		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Cache, a.Config.URL.UI)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)

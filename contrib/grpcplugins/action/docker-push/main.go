@@ -85,7 +85,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 		return sdk.Errorf("unable to get instanciate docker client: %v", err)
 	}
 
-	imageSummaries, err := cli.ImageList(ctx, types.ImageListOptions{All: true})
+	imageSummaries, err := cli.ImageList(ctx, types.ImageListOptions{All: false})
 	if err != nil {
 		return sdk.Errorf("unable to get docker image %q: %v", image, err)
 	}
@@ -108,7 +108,6 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 
 	var imgFound *img
 	for i := range images {
-		grpcplugins.Logf("image %s:%s", images[i].repository, images[i].tag)
 		if images[i].repository+":"+images[i].tag == image {
 			imgFound = &images[i]
 			break
@@ -245,7 +244,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 				result.ArtifactManagerMetadata.Set("mimeType", rtPathInfo.MimeType)
 				result.ArtifactManagerMetadata.Set("downloadURI", rtPathInfo.DownloadURI)
 				result.ArtifactManagerMetadata.Set("createdBy", rtPathInfo.CreatedBy)
-				result.ArtifactManagerMetadata.Set("localRepository", rtPathInfo.Repo)
+				result.ArtifactManagerMetadata.Set("localRepository", repository+"-"+integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value)
 				result.ArtifactManagerMetadata.Set("id", img.imageID)
 				break
 			}

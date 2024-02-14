@@ -86,13 +86,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			defer tx.Rollback() // nolint
-
-			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, hookRetrieveSignKey.ProjectKey, hookRetrieveSignKey.VCSServerName)
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, hookRetrieveSignKey.ProjectKey, hookRetrieveSignKey.VCSServerName)
 			if err != nil {
 				return err
 			}
@@ -100,9 +94,6 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 			if err != nil {
 				log.Info(ctx, "unable to get repository %s/%s for project %s", hookRetrieveSignKey.VCSServerName, hookRetrieveSignKey.RepositoryName, hookRetrieveSignKey.ProjectKey)
 				return err
-			}
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
 			}
 
 			cloneURL := repo.SSHCloneURL
@@ -153,7 +144,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 					callback.SigningKeyCallback.Error = ope.Error.Message + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 				}
 
-				if _, code, err := services.NewClient(api.mustDB(), srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
+				if _, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
 					log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "unable to send analysis call to hook [HTTP: %d]", code))
 					return
 				}
@@ -173,11 +164,13 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 
 			ctx = context.WithValue(ctx, cdslog.HookEventID, hookRequest.HookEventUUID)
 
+			db := api.mustDB()
+
 			uniqueWorkflowMap := make(map[string]struct{})
 			filteredWorkflowHooks := make([]sdk.V2WorkflowHook, 0)
 
 			// Get repository web hooks
-			workflowHooks, err := LoadWorkflowHooksWithRepositoryWebHooks(ctx, api.mustDB(), hookRequest)
+			workflowHooks, err := LoadWorkflowHooksWithRepositoryWebHooks(ctx, db, hookRequest)
 			if err != nil {
 				return err
 			}
@@ -190,7 +183,7 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 			}
 
 			// Get workflow_update hooks
-			workflowUpdateHooks, err := LoadWorkflowHooksWithWorkflowUpdate(ctx, api.mustDB(), hookRequest)
+			workflowUpdateHooks, err := LoadWorkflowHooksWithWorkflowUpdate(ctx, db, hookRequest)
 			if err != nil {
 				return err
 			}
@@ -203,7 +196,7 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 			}
 
 			// Get model_update hooks
-			modelUpdateHooks, err := LoadWorkflowHooksWithModelUpdate(ctx, api.mustDB(), hookRequest)
+			modelUpdateHooks, err := LoadWorkflowHooksWithModelUpdate(ctx, db, hookRequest)
 			if err != nil {
 				return err
 			}
@@ -215,17 +208,11 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 				}
 			}
 
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			defer tx.Rollback()
-
 			hooksWithReadRight := make([]sdk.V2WorkflowHook, 0)
 			for _, h := range filteredWorkflowHooks {
 				if !hookRequest.AnayzedProjectKeys.Contains(h.ProjectKey) {
 					// Check project right
-					vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, h.ProjectKey, hookRequest.VCSName)
+					vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, h.ProjectKey, hookRequest.VCSName)
 					if err != nil {
 						return err
 					}
@@ -235,10 +222,6 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 					}
 				}
 				hooksWithReadRight = append(hooksWithReadRight, h)
-			}
-
-			if err := tx.Commit(); err != nil {
-				return sdk.WithStack(err)
 			}
 
 			return service.WriteJSON(w, hooksWithReadRight, http.StatusOK)
@@ -318,6 +301,18 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue
+		case sdk.WorkflowHookEventPullRequest, sdk.WorkflowHookEventPullRequestComment:
+			validBranch := sdk.IsValidHookRefs(ctx, w.Data.BranchFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefBranchPrefix))
+			validTag := sdk.IsValidHookRefs(ctx, w.Data.TagFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefTagPrefix))
+			validPath := sdk.IsValidHookPath(ctx, w.Data.PathFilter, hookRequest.Paths)
+			validType := true
+			if len(w.Data.TypesFilter) > 0 {
+				validType = sdk.IsInArray(hookRequest.RepositoryEventType, w.Data.TypesFilter)
+			}
+			if validBranch && validPath && validTag && validType {
+				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
+			}
+			continue
 		}
 	}
 	return filteredWorkflowHooks, nil
@@ -365,14 +360,10 @@ func (api *API) getRepositoryWebHookSecretHandler() ([]service.RbacChecker, serv
 				return err
 			}
 
-			tx, err := api.mustDB().Begin()
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			defer tx.Rollback()
+			db := api.mustDB()
 
 			// Check if project has read access
-			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, pKey, vcsName)
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, pKey, vcsName)
 			if err != nil {
 				return err
 			}
@@ -380,7 +371,7 @@ func (api *API) getRepositoryWebHookSecretHandler() ([]service.RbacChecker, serv
 				return err
 			}
 
-			srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeHooks)
+			srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 			if err != nil {
 				return err
 			}
@@ -390,7 +381,7 @@ func (api *API) getRepositoryWebHookSecretHandler() ([]service.RbacChecker, serv
 			path := fmt.Sprintf("/v2/repository/key/%s/%s", vcsName, url.PathEscape(repositoryName))
 
 			var keyResp sdk.GenerateRepositoryWebhook
-			_, code, err := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &keyResp)
+			_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &keyResp)
 			if err != nil {
 				return sdk.WrapError(err, "unable to delete hook [HTTP: %d]", code)
 			}

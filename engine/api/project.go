@@ -627,12 +627,6 @@ func (api *API) postProjectHandler() service.Handler {
 		for _, pp := range updated {
 			event_v2.PublishProjectIntegrationEvent(ctx, api.Cache, sdk.EventIntegrationUpdated, permProjectKey, pp, *consumer.AuthConsumerUser.AuthentifiedUser)
 		}
-		for _, k := range p.Keys {
-			event_v2.PublishProjectKeyEvent(ctx, api.Cache, p.Key, sdk.EventKeyCreated, k, *consumer.AuthConsumerUser.AuthentifiedUser)
-		}
-		for _, v := range p.Variables {
-			event_v2.PublishVariableEvent(ctx, api.Cache, sdk.EventVariableCreated, p.Key, v, *consumer.AuthConsumerUser.AuthentifiedUser)
-		}
 		event_v2.PublishProjectEvent(ctx, api.Cache, sdk.EventProjectCreated, p, *consumer.AuthConsumerUser.AuthentifiedUser)
 
 		proj, err := project.Load(ctx, api.mustDB(), p.Key,

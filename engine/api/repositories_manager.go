@@ -77,27 +77,17 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Missing repository name 'repo' as a query parameter"))
 		}
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
-
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, rmName)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectKey, rmName)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth,
 				"cannot get client got %s %s", projectKey, rmName))
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
 		}
 
 		log.Info(ctx, "getRepoFromRepositoriesManagerHandler> Loading repository on %s", rmName)
 
 		repo, err := client.RepoByFullname(ctx, repoName)
 		if err != nil {
-			return sdk.WrapError(err, "cannot get repos")
+			return sdk.WrapError(err, "cannot get repo %v", repoName)
 		}
 
 		return service.WriteJSON(w, repo, http.StatusOK)

@@ -3,7 +3,8 @@
 </div>
 
 <div class="app" *ngIf="!loading">
-    <div class="page" *ngIf="!isAPIAvailable || (maintenance && isConnected && currentAuthSummary?.user?.ring !== 'ADMIN')">
+    <div class="page"
+        *ngIf="!isAPIAvailable || (maintenance && isConnected && currentAuthSummary?.user?.ring !== 'ADMIN')">
         <div class="content">
             <div class="wrapper loading">
                 <app-scrollview class="scrollview">
@@ -19,13 +20,15 @@
         </div>
     </div>
 
-    <ng-container *ngIf="isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')">
+    <ng-container
+        *ngIf="isAPIAvailable && (!isConnected || !maintenance || currentAuthSummary?.user?.ring === 'ADMIN')">
         <nz-layout>
             <nz-header>
                 <app-navbar></app-navbar>
             </nz-header>
             <nz-content>
-                <div class="banner" *ngIf="(maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')">
+                <div class="banner"
+                    *ngIf="(maintenance) && (!isConnected || currentAuthSummary?.user?.ring === 'ADMIN')">
                     {{ 'maintenance_title' | translate }}
                 </div>
                 <div class="banner update" (click)="refresh()" *ngIf="showUIUpdatedBanner">
@@ -33,7 +36,7 @@
                 </div>
                 <div class="page" [class.connected]="isConnected && !hideNavBar">
                     <div class="content inner-content" [class.connected]="isConnected && !hideNavBar">
-                            <router-outlet></router-outlet>
+                        <router-outlet></router-outlet>
                         <nz-spin nzTip="Loading..." *ngIf="displayResolver"></nz-spin>
                     </div>
                 </div>
@@ -45,9 +48,7 @@
 </div>
 <ng-template #templateRootToast let-data="data">
     <div class="toastTitle">
-        <i nz-icon
-           nzType="exclamation-circle"
-        class="ant-notification-notice-icon-error"></i>
+        <i nz-icon nzType="exclamation-circle" class="ant-notification-notice-icon-error"></i>
         {{data.title}}
     </div>
     <span *ngIf="data.from">{{data.from}}<br /></span>

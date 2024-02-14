@@ -15,9 +15,22 @@ const (
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
 	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
 
-	WorkflowHookEventWorkflowUpdate = "workflow_update"
-	WorkflowHookEventModelUpdate    = "model_update"
+	WorkflowHookEventWorkflowUpdate = "workflow-update"
+	WorkflowHookEventModelUpdate    = "model-update"
 	WorkflowHookEventPush           = "push"
+
+	WorkflowHookEventPullRequest             = "pull-request"
+	WorkflowHookEventPullRequestTypeOpened   = "opened"
+	WorkflowHookEventPullRequestTypeReopened = "reopened"
+	WorkflowHookEventPullRequestTypeClosed   = "closed"
+	WorkflowHookEventPullRequestTypeEdited   = "edited"
+
+	WorkflowHookEventPullRequestComment            = "pull-request-comment"
+	WorkflowHookEventPullRequestCommentTypeCreated = "created"
+	WorkflowHookEventPullRequestCommentTypeDeleted = "deleted"
+	WorkflowHookEventPullRequestCommentTypeEdited  = "edited"
+
+	RepoEventPush = "push"
 
 	HookEventStatusScheduled     = "Scheduled"
 	HookEventStatusAnalysis      = "Analyzing"
@@ -65,7 +78,8 @@ type HookRepository struct {
 type HookRepositoryEvent struct {
 	UUID                string                         `json:"uuid"`
 	Created             int64                          `json:"created"`
-	EventName           string                         `json:"event_name"`
+	EventName           string                         `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
+	EventType           string                         `json:"event_type"` // created, deleted, edited, opened
 	VCSServerType       string                         `json:"vcs_server_type"`
 	VCSServerName       string                         `json:"vcs_server_name"`
 	RepositoryName      string                         `json:"repository_name"`
@@ -102,9 +116,11 @@ type HookRepositoryEventWorkflow struct {
 }
 
 type HookRepositoryEventExtractData struct {
-	Ref    string   `json:"ref"`
-	Commit string   `json:"commit"`
-	Paths  []string `json:"paths"`
+	CDSEventName string   `json:"cds_event_name"`
+	CDSEventType string   `json:"cds_event_type"`
+	Commit       string   `json:"commit"`
+	Paths        []string `json:"paths"`
+	Ref          string   `json:"ref"`
 }
 
 type GenerateRepositoryWebhook struct {

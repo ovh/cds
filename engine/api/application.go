@@ -191,13 +191,9 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		applicationName := vars["applicationName"]
 		remote := r.FormValue("remote")
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WithStack(err)
-		}
-		defer tx.Rollback() // nolint
+		db := api.mustDB()
 
-		app, err := application.LoadByName(ctx, tx, projectKey, applicationName, application.LoadOptions.Default)
+		app, err := application.LoadByName(ctx, db, projectKey, applicationName, application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "cannot load application %s for project %s from db", applicationName, projectKey)
 		}
@@ -212,7 +208,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 			return service.WriteJSON(w, resp, http.StatusOK)
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projectKey, app.VCSServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, projectKey, app.VCSServer)
 		if err != nil {
 			return sdk.NewErrorWithStack(err, sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get vcs server %s for project %s", app.VCSServer, projectKey))
 		}
@@ -244,10 +240,6 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 				Slug:     app.RepositoryFullname,
 				Fullname: app.RepositoryFullname,
 			})
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WithStack(err)
 		}
 
 		return service.WriteJSON(w, resp, http.StatusOK)

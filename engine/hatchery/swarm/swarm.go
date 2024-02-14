@@ -678,7 +678,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers Cont
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	apiworkers, err := h.CDSClient().WorkerList(ctx)
+	apiworkers, err := h.WorkerList(ctx)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workers on %s", dockerClientName)
 	}
@@ -703,10 +703,10 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClientName string, containers Cont
 		//Try to find the worker matching this container
 		var found = false
 		for _, n := range apiworkers {
-			if n.Name == c.Names[0] || n.Name == strings.Replace(c.Names[0], "/", "", 1) {
+			if n.Name() == c.Names[0] || n.Name() == strings.Replace(c.Names[0], "/", "", 1) {
 				found = true
 				// If worker is disabled, kill it
-				if n.Status == sdk.StatusDisabled {
+				if n.Status() == sdk.StatusDisabled {
 					log.Debug(ctx, "hatchery> swarm> listAwolWorkers> Worker %s is disabled. Kill it with fire!", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break

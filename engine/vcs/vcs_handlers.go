@@ -592,8 +592,8 @@ func (s *Service) postStatusHandler() service.Handler {
 	return func(ctx context.Context, _ http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 
-		evt := sdk.Event{}
-		if err := service.UnmarshalBody(r, &evt); err != nil {
+		buildStatus := sdk.VCSBuildStatus{}
+		if err := service.UnmarshalBody(r, &buildStatus); err != nil {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
@@ -612,15 +612,7 @@ func (s *Service) postStatusHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client")
 		}
 
-		var disableStatusDetails bool
-		d := r.URL.Query().Get("disableStatusDetails")
-		if d != "" {
-			disableStatusDetails, _ = strconv.ParseBool(d)
-		}
-
-		client.SetDisableStatusDetails(disableStatusDetails)
-
-		if err := client.SetStatus(ctx, evt); err != nil {
+		if err := client.SetStatus(ctx, buildStatus); err != nil {
 			return sdk.WrapError(err, "Unable to set status on %s", name)
 		}
 

@@ -1,0 +1,61 @@
+name: helm-push
+type: action
+author: "François SAMIN <francois.samin@corp.ovh.com>"
+description: |
+  This push Helm chart on Chart Museum or Artifactory.
+inputs:
+  chartFolder:
+    value: .chart/
+    type: string
+    description: Relative path to chart folder to be published	
+    required: true
+  chartVersion:
+    value: ${{git.semver.current}}
+    type: string
+    description: |-
+      (Optional) Override the chart version before push to registry.
+    required: true
+  appVersion:
+    type: string
+    description: |-
+      (Optional) Override the app version before push to registry.
+    required: true
+  updateDependencies:
+    type: boolean
+    description: Update dependencies from the chart before packaging
+    required: false
+  registryURL:
+    type: string
+    description: |-
+      Registry URL
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  registryUsername:
+    type: string
+    description: |-
+      Registry Username
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  registryPassword:
+    type: string
+    description: |-
+      Registry Password
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  registryAuthHeader:
+    type: string
+    description: |-
+      Alternative header to use for token auth
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  registryAccessToken:
+    type: string
+    description: |-
+      Send token in Authorization header
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false

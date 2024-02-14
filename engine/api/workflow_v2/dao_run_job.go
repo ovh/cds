@@ -39,10 +39,10 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 	var dbWkfRunJob dbWorkflowRunJob
 	found, err := gorpmapping.Get(ctx, db, query, &dbWkfRunJob)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	if !found {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	isValid, err := gorpmapping.CheckSignature(dbWkfRunJob, dbWkfRunJob.Signature)
 	if err != nil {
@@ -50,7 +50,7 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 	}
 	if !isValid {
 		log.Error(ctx, "run job %s on run %s: data corrupted", dbWkfRunJob.ID, dbWkfRunJob.WorkflowRunID)
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &dbWkfRunJob.V2WorkflowRunJob, nil
 }
@@ -93,7 +93,7 @@ func UnsafeLoadAllRunJobs(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Wor
 	query := "SELECT * from v2_workflow_run_job"
 	var runJobs []sdk.V2WorkflowRunJob
 	if _, err := db.Select(&runJobs, query); err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	return runJobs, nil
 }
@@ -102,6 +102,13 @@ func LoadRunJobByID(ctx context.Context, db gorp.SqlExecutor, jobRunID string) (
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByID")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE id = $1").Args(jobRunID)
+	return getRunJob(ctx, db, query)
+}
+
+func LoadRunJobByRunIDAndID(ctx context.Context, db gorp.SqlExecutor, wrID, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
+	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadRunJobByRunIDAndID")
+	defer next()
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND id = $2").Args(wrID, jobRunID)
 	return getRunJob(ctx, db, query)
 }
 
@@ -127,7 +134,7 @@ func LoadRunJobsByRunIDAndStatus(ctx context.Context, db gorp.SqlExecutor, runID
 	return getAllRunJobs(ctx, db, query)
 }
 
-func LoadOldScheduledRunJob(ctx context.Context, db gorp.SqlExecutor, timeout float64) ([]sdk.V2WorkflowRunJob, error) {
+func LoadOldScheduledRunJob(ctx context.Context, db gorp.SqlExecutor, timeout int64) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.LoadOldScheduledRunJob")
 	defer next()
 	query := gorpmapping.NewQuery(`

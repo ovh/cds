@@ -8,7 +8,6 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -159,7 +158,6 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 		}
 
 		event.PublishDeleteProjectVariable(ctx, p, *varToDelete, getUserConsumer(ctx))
-		event_v2.PublishVariableEvent(ctx, api.Cache, sdk.EventVariableDeleted, p.Key, *varToDelete, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -207,7 +205,6 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 		}
 
 		event.PublishUpdateProjectVariable(ctx, p, newVar, *previousVar, getUserConsumer(ctx))
-		event_v2.PublishVariableEvent(ctx, api.Cache, sdk.EventVariableUpdated, p.Key, newVar, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
@@ -260,7 +257,6 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 
 		// Send Add variable event
 		event.PublishAddProjectVariable(ctx, p, newVar, getUserConsumer(ctx))
-		event_v2.PublishVariableEvent(ctx, api.Cache, sdk.EventVariableCreated, p.Key, newVar, *u.AuthConsumerUser.AuthentifiedUser)
 
 		return service.WriteJSON(w, newVar, http.StatusOK)
 	}

@@ -18,11 +18,10 @@ var (
 
 // gitlabClient implements VCSAuthorizedClient interface
 type gitlabClient struct {
-	client               *gitlab.Client
-	uiURL                string
-	proxyURL             string
-	disableStatus        bool
-	disableStatusDetails bool
+	client        *gitlab.Client
+	uiURL         string
+	proxyURL      string
+	disableStatus bool
 }
 
 // gitlabConsumer implements vcs.Server and it's used to instantiate a gitlabClient

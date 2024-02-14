@@ -21,9 +21,11 @@ import (
 type Configuration struct {
 	// common
 	Log struct {
-		Level   string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, error" json:"level"`
-		Format  string `toml:"format" default:"text" comment:"Stdout format: text, json, discard" json:"format"`
-		Graylog struct {
+		Level          string   `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, error" json:"level"`
+		Format         string   `toml:"format" default:"text" comment:"Stdout format: text, json, discard" json:"format"`
+		TextFields     []string `toml:"textFields" default:"" json:"textFields" commented:"true" comment:"Can be used only with text format. Empty values = all fields will be displayed, example: [\"request_uri\",\"request_id\",\"stack_trace\",\"status\"]".`
+		SkipTextFields []string `toml:"skipTextFields" default:"" json:"skipTextFields" commented:"true" comment:"Can be used only with text format. Skip logs with some fields. Empty values = all logs will be displayed, example: [\"handler=api.(*API).postServiceHearbeatHandler-fm.(*API).postServiceHearbeatHandler\"]".`
+		Graylog        struct {
 			Host       string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
 			Port       int    `toml:"port" comment:"Example: 12202" json:"port"`
 			Protocol   string `toml:"protocol" default:"tcp" comment:"tcp or udp" json:"protocol"`

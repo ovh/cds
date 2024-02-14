@@ -231,6 +231,7 @@ type HatcheryServiceClient interface {
 	V2HatcheryReleaseJob(ctx context.Context, regionName string, jobRunID string) error
 	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
 	V2QueueClient
+	V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error)
 }
 
 // ProjectClientV2 exposes project related functions
@@ -418,17 +419,17 @@ type ServiceClient interface {
 type WorkflowV2Client interface {
 	WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runRequest sdk.V2WorkflowRunHookRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
 	WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
-	WorkflowV2Restart(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
-	WorkflowV2JobStart(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64, jobName string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
-	WorkflowV2RunList(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
-	WorkflowV2RunInfoList(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error)
-	WorkflowV2RunStatus(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, runNumber int64) (*sdk.V2WorkflowRun, error)
-	WorkflowV2RunJobs(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64) ([]sdk.V2WorkflowRunJob, error)
-	WorkflowV2RunJob(ctx context.Context, projKey, vcsId, repoId, wkfName, jobIdentifier string, runNumber int64) (*sdk.V2WorkflowRunJob, error)
-	WorkflowV2RunJobInfoList(ctx context.Context, projKey, vcsId, repoId, wkfName, jobIdentifier string, runNumber int64) ([]sdk.V2WorkflowRunJobInfo, error)
-	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64, jobName string) (sdk.CDNLogLinks, error)
-	WorkflowV2Stop(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64) error
-	WorkflowV2StopJob(ctx context.Context, projKey, vcsId, repoId, wkfName string, runNumber int64, jobName string) error
+	WorkflowV2Restart(ctx context.Context, projectKey, runIdentifier string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2JobStart(ctx context.Context, projectKey, runIdentifier, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunSearch(ctx context.Context, projectKey string, mods ...RequestModifier) ([]sdk.V2WorkflowRun, error)
+	WorkflowV2RunInfoList(ctx context.Context, projectKey, runIdentifier string, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error)
+	WorkflowV2RunStatus(ctx context.Context, projectKey, runIdentifier string) (*sdk.V2WorkflowRun, error)
+	WorkflowV2RunJobs(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (*sdk.V2WorkflowRunJob, error)
+	WorkflowV2RunJobInfoList(ctx context.Context, projKey, runIdentifier, jobIdentifier string) ([]sdk.V2WorkflowRunJobInfo, error)
+	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (sdk.CDNLogLinks, error)
+	WorkflowV2Stop(ctx context.Context, projKey, runIdentifier string) error
+	WorkflowV2StopJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) error
 }
 
 // WorkflowClient exposes workflows functions
@@ -752,6 +753,16 @@ func ModelType(modelType string) RequestModifier {
 	return func(r *http.Request) {
 		q := r.URL.Query()
 		q.Set("modelType", modelType)
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
+func Workflows(ws ...string) RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		for _, w := range ws {
+			q.Add("workflow", w)
+		}
 		r.URL.RawQuery = q.Encode()
 	}
 }

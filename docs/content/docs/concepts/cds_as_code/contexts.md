@@ -1,14 +1,15 @@
 ---
 title: "Contexts"
-weight: 3
+weight: 5
 card:
   name: cds_as_code
+  weight: 4
 ---
 
 
 # Contexts
 
-Contexts are a way to access information inside a workflow run. Data can be accessed like this
+Contexts are a way to access information inside a workflow run. Data can be access like this inside a job
 ```yaml
 ${{ <contextName>.data }}
 ```
@@ -17,7 +18,7 @@ Contexts available:
 
 * `cds`: contains all the information about the workflow run
 * `git`: contains the git information
-* `vars`: contains all the project variables
+* `vars`: contains the project variableset used by the current job
 * `env`: contains environment variables
 * `jobs`: contains all parent jobs results and outputs
 * `needs`: contains all direct parents ( `job.needs` ) results and outputs
@@ -26,10 +27,11 @@ Contexts available:
 * `matrix`: contains the curent value for each [matrix](../entities/workflow/#strategy) variable
 * `integrations`: contains data of integration linked to the current job
 * `gate`: contains all gate inputs
-* `secrets`: contains the secrets
 
 
 ## Context CDS
+
+It contains all cds data related to the workflow execution
 
 * `event_name`: the event name that trigger the workflow
 * `event`: the event payload received by CDS
@@ -50,6 +52,8 @@ Contexts available:
 
 ## Context Git
 
+It contains all git information related to the workflow execution
+
 * `server`: The vcs server name linked to the workflow
 * `repository`: The repository linked to the workflow
 * `repositoryUrl`: Url of the linked repositoryy
@@ -57,11 +61,15 @@ Contexts available:
 * `sha`: Current commit
 * `connection`: Type of connection used: https/ssh
 * `ssh_key`: SSH Key name used
+* `ssh_private`: Private SSH Key used for git authentication 
 * `username`: Username used to connect to the repository
+* `token`: User token used for git authentication
 * `semver_current`: Current semantic version computed by CDS
 * `semver_next`: Next semantic version computed by CDS
 
 ## Context Jobs
+
+It contains the status and outputs of all recursive parent jobs
 
 * `jobs.<job_id>.result`: status of the given parent job. 
 * `jobs.<job_id>.outputs`: map of all job run result of type variable
@@ -69,13 +77,22 @@ Contexts available:
 
 ## Context Needs
 
+It contains the status and outputs of all direct parent jobs
+
 * `needs.<job_id>.result`: status of the given parent job. 
 * `needs.<job_id>.outputs`: map of all job run results of type variable
     * `needs.<job_id>.outputs.<run_result_name>`        
 
 ## Context Steps 
 
+It contains the status and outputs of all previous steps in the current jobs
+
 * `steps.<step_id>.outcome`: result of the given state before 'continue-on-error'
 * `steps.<step_id>.conclusion`: result of the given state after 'continue-on-error'
 * `steps.<step_id>.outputs`: map of all job run results of type variable by step
+  * `steps.<step_id>.outputs.<run_result_name>`    
+
+## Context vars
+
+* `vars.<varset_name>.<item_name>`: value of the given item. If the value is a JSON item, you can select any element like this `vars.<varset_name>.<item_name>.<key>.<subkey>`
 

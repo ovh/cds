@@ -18,6 +18,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
+	ehatchery "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -329,14 +330,14 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	apiWorkers, err := h.CDSClient().WorkerList(ctx)
+	apiWorkers, err := h.WorkerList(ctx)
 	if err != nil {
 		return err
 	}
 
-	mAPIWorkers := make(map[string]sdk.Worker, len(apiWorkers))
+	mAPIWorkers := make(map[string]ehatchery.WorkerInterface, len(apiWorkers))
 	for _, w := range apiWorkers {
-		mAPIWorkers[w.Name] = w
+		mAPIWorkers[w.Name()] = w
 	}
 
 	killedWorkers := []string{}
@@ -351,7 +352,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 			}
 			log.Info(ctx, "Killing AWOL worker %s", name)
 			kill = true
-		} else if w.Status == sdk.StatusDisabled {
+		} else if w.Status() == sdk.StatusDisabled {
 			log.Info(ctx, "Killing disabled worker %s", w.Name)
 			kill = true
 		}

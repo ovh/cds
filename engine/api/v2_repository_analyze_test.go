@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -133,7 +132,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -201,7 +200,7 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -278,7 +277,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -413,7 +412,7 @@ GDFkaTe3nUJdYV4=
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -539,7 +538,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -674,7 +673,7 @@ GDFkaTe3nUJdYV4=
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer t.Cleanup(func() {
@@ -879,7 +878,7 @@ GDFkaTe3nUJdYV4=
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -1041,7 +1040,7 @@ GDFkaTe3nUJdYV4=
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -1250,7 +1249,7 @@ GDFkaTe3nUJdYV4=
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	servicesClients := mock_services.NewMockClient(ctrl)
-	services.NewClient = func(_ gorp.SqlExecutor, _ []sdk.Service) services.Client {
+	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
 	defer func() {
@@ -1404,6 +1403,10 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 			Repository: &sdk.WorkflowRepository{
 				VCSServer: vcsServer.Name,
 				Name:      repoDef.Name,
+			},
+			CommitStatus: &sdk.CommitStatus{
+				Title:       "foo",
+				Description: "bar",
 			},
 			On: &sdk.WorkflowOn{
 				Push:           &sdk.WorkflowOnPush{},

@@ -11,11 +11,10 @@ import (
 
 // bitbucketClient is a bitbucket wrapper for CDS vcs. interface
 type bitbucketClient struct {
-	username             string
-	token                string
-	proxyURL             string
-	disableStatusDetails bool
-	consumer             bitbucketConsumer
+	username string
+	token    string
+	proxyURL string
+	consumer bitbucketConsumer
 }
 
 // bitbucketConsumer implements vcs.Server and it's used to instantiate a bitbucketClient

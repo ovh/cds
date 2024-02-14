@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/cache"
-	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -39,21 +38,11 @@ func (c *vcsClient) IsGerrit(ctx context.Context, db gorp.SqlExecutor) (bool, er
 	return false, nil
 }
 
-type vcsConsumer struct {
-	name string
-	proj *sdk.Project
-	db   gorpmapper.SqlExecutorWithTx
-}
-
 type vcsClient struct {
 	name       string
-	token      string
-	secret     string
 	projectKey string
-	created    int64 //Timestamp .Unix() of creation
 	srvs       []sdk.Service
 	cache      *gocache.Cache
-	db         gorpmapper.SqlExecutorWithTx
 	vcsProject *sdk.VCSProject
 }
 
@@ -68,7 +57,7 @@ type Options struct {
 	Sync bool
 }
 
-func GetReposForProjectVCSServer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
+func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj sdk.Project, vcsServerName string, opts Options) ([]sdk.VCSRepo, error) {
 	log.Debug(ctx, "GetReposForProjectVCSServer> Loading repo for %s", vcsServerName)
 
 	client, err := AuthorizedClient(ctx, db, store, proj.Key, vcsServerName)
@@ -102,26 +91,8 @@ func GetReposForProjectVCSServer(ctx context.Context, db gorpmapper.SqlExecutorW
 	return repos, nil
 }
 
-func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token, secret string, created int64) (sdk.VCSAuthorizedClientService, error) {
-	srvs, err := services.LoadAllByType(ctx, c.db, sdk.TypeVCS)
-	if err != nil {
-		return nil, sdk.WithStack(err)
-	}
-
-	return &vcsClient{
-		name:       c.name,
-		token:      token,
-		projectKey: c.proj.Key,
-		created:    created,
-		secret:     secret,
-		srvs:       srvs,
-		cache:      gocache.New(5*time.Second, 60*time.Second),
-		db:         c.db,
-	}, nil
-}
-
 // AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
-func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
+func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, vcsName string) (sdk.VCSAuthorizedClientService, error) {
 	vcsProject, err := vcs.LoadVCSByProject(ctx, db, projectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, sdk.WithStack(err)
@@ -135,7 +106,6 @@ func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 	vcs := &vcsClient{
 		name:       vcsProject.Name,
 		srvs:       srvs,
-		db:         db,
 		projectKey: projectKey,
 		vcsProject: vcsProject,
 	}
@@ -144,7 +114,6 @@ func AuthorizedClient(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 }
 
 func (c *vcsClient) setAuthHeader(ctx context.Context, req *http.Request) {
-	log.Debug(ctx, "requesting vcs via vcs project")
 	req.Header.Set(sdk.HeaderXVCSType, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Type)))
 	req.Header.Set(sdk.HeaderXVCSURL, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.URL)))
 	req.Header.Set(sdk.HeaderXVCSUsername, base64.StdEncoding.EncodeToString([]byte(c.vcsProject.Auth.Username)))
@@ -157,7 +126,7 @@ func (c *vcsClient) setAuthHeader(ctx context.Context, req *http.Request) {
 }
 
 func (c *vcsClient) doStreamRequest(ctx context.Context, method, path string, in interface{}) (io.Reader, http.Header, error) {
-	reader, headers, code, err := services.NewClient(c.db, c.srvs).StreamRequest(ctx, method, path, in, func(req *http.Request) {
+	reader, headers, code, err := services.NewClient(c.srvs).StreamRequest(ctx, method, path, in, func(req *http.Request) {
 		c.setAuthHeader(ctx, req)
 	})
 	if code >= 400 {
@@ -180,7 +149,7 @@ func (c *vcsClient) doStreamRequest(ctx context.Context, method, path string, in
 }
 
 func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
-	_, code, err := services.NewClient(c.db, c.srvs).DoJSONRequest(ctx, method, path, in, out, func(req *http.Request) {
+	_, code, err := services.NewClient(c.srvs).DoJSONRequest(ctx, method, path, in, out, func(req *http.Request) {
 		c.setAuthHeader(ctx, req)
 	})
 
@@ -485,29 +454,18 @@ func (c *vcsClient) PullRequestEvents(ctx context.Context, fullname string, evts
 	return events, nil
 }
 
-func (c *vcsClient) IsDisableStatusDetails(ctx context.Context) bool {
-	if c.vcsProject != nil {
-		return c.vcsProject.Options.DisableStatusDetails
-	}
-	return true
-}
-
-func (c *vcsClient) SetDisableStatusDetails(disableStatusDetails bool) {
-	// nothing here for the implementation of this func into api
-}
-
-func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event) error {
+func (c *vcsClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
 	if c.vcsProject != nil && c.vcsProject.Options.DisableStatus {
 		return nil
 	}
 
 	path := fmt.Sprintf("/vcs/%s/status", c.name)
 	if c.vcsProject != nil && c.vcsProject.Options.DisableStatusDetails {
-		path += "?disableStatusDetails=true"
+		buildStatus.URLCDS = ""
 	}
 
-	_, err := c.doJSONRequest(ctx, "POST", path, event, nil)
-	return sdk.NewErrorFrom(err, "unable to set status on %s (workflow: %s, application: %s)", event.WorkflowName, event.ApplicationName, c.name)
+	_, err := c.doJSONRequest(ctx, "POST", path, buildStatus, nil)
+	return sdk.NewErrorFrom(err, "unable to set build-status on Context: %s", buildStatus.Context)
 }
 
 func (c *vcsClient) Release(ctx context.Context, fullname, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {

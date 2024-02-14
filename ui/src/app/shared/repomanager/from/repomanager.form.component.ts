@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { AllKeys } from 'app/model/keys.model';
 import { Project } from 'app/model/project.model';
 import { VCSProject, VCSProjectAuth, VCSProjectOptions } from 'app/model/vcs.model';
 import { ProjectService } from 'app/service/project/project.service';
+import { KeyService } from 'app/service/services.module';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { finalize } from 'rxjs/operators';
 
@@ -25,15 +27,18 @@ export class RepoManagerFormComponent {
     reposManagerList: string[];
     selectedRepoId: number;
     selectedRepoType: string;
+    selectedPublicKey: string;
 
     repoModalVisible: boolean;
     addingVCSProject: boolean;
     askDeleting: boolean;
+    keys: AllKeys;
 
     vcsProject: VCSProject;
 
     constructor(
         public _translate: TranslateService,
+        private _keyService: KeyService,
         private _toastService: ToastService,
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService) {
@@ -44,6 +49,14 @@ export class RepoManagerFormComponent {
                 this.vcsProject.options = new VCSProjectOptions();
                 this.vcsProject.auth = new VCSProjectAuth();
             }
+    }
+
+    ngOnInit(): void {
+        this._keyService.getAllKeys(this.project.key)
+            .pipe(finalize(() => this._cd.markForCheck()))
+            .subscribe(k => {
+            this.keys = k;
+        });
     }
 
     create(): void {
@@ -86,7 +99,7 @@ export class RepoManagerFormComponent {
     saveVCSProject(): void {
         this.loading = true;
         this._cd.markForCheck();
-        this._projectService.addVCSProject(this.project.key, this.vcsProject).pipe(finalize(() => {
+        this._projectService.saveVCSProject(this.project.key, this.vcsProject).pipe(finalize(() => {
             this.loading = false;
             this._cd.markForCheck();
         })).subscribe(r => {
@@ -113,5 +126,19 @@ export class RepoManagerFormComponent {
                 this._cd.markForCheck();
             });
         });
+    }
+
+    updatePublicKey(keyName: string): void {
+        if (this.keys) {
+            let key = this.keys.ssh.find(k => k.name === keyName);
+            if (key) {
+                this.selectedPublicKey = key.public;
+                this.vcsProject.auth.sshKeyName = key.name;
+            }
+        }
+    }
+
+    clickCopyKey() {
+        this._toastService.success('', this._translate.instant('key_copied'));
     }
 }

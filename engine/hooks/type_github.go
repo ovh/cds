@@ -9,6 +9,7 @@ import (
 
 // GithubWebHookEvent represents payload send by github on a push event
 type GithubWebHookEvent struct {
+	Action     string            `json:"action,omitempty"` // used by pull_request event
 	Ref        string            `json:"ref"`
 	Before     string            `json:"before"`
 	After      string            `json:"after"`

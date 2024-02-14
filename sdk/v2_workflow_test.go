@@ -17,14 +17,14 @@ func TestUnmarshalV2WorkflowHooksDetailed(t *testing.T) {
       - run: 'echo "Workflow: ${{cds.workflow}}"'
 name: MyDistantWorkflow
 "on":
-  model_update:
+  model-update:
     models:
       - mymodel
     target_branch: develop
   push:
     branches:
       - master
-  workflow_update:
+  workflow-update:
     target_branch: master
 `
 	var w V2Workflow
@@ -47,8 +47,8 @@ func TestUnmarshalV2WorkflowHooksShort(t *testing.T) {
 name: MyDistantWorkflow
 "on":
   - push
-  - workflow_update
-  - model_update
+  - workflow-update
+  - model-update
 `
 	var w V2Workflow
 	require.NoError(t, yaml.Unmarshal([]byte(src), &w))

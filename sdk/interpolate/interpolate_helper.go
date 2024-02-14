@@ -83,8 +83,8 @@ func init() {
 			}
 			return val
 		},
-		"div": func(a, b interface{}) int64 { return toInt64(a) / toInt64(b) },
-		"mod": func(a, b interface{}) int64 { return toInt64(a) % toInt64(b) },
+		"div":       func(a, b interface{}) int64 { return toInt64(a) / toInt64(b) },
+		"mod":       func(a, b interface{}) int64 { return toInt64(a) % toInt64(b) },
 		"ternary":   ternary,
 		"urlencode": func(s string) string { return url.QueryEscape(s) },
 		"dirname":   func(s string) string { return path.Dir(s) },

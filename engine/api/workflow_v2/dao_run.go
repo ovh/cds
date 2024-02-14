@@ -114,15 +114,15 @@ func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) ([]s
 	return nil, nil
 }
 
-func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runJobID string, id string) (*sdk.V2WorkflowRunResult, error) {
-	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where id = $1 AND workflow_run_job_id = $2`).Args(id, runJobID)
+func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runID string, id string) (*sdk.V2WorkflowRunResult, error) {
+	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where id = $1 AND workflow_run_id = $2`).Args(id, runID)
 	var result dbV2WorkflowRunResult
 	found, err := gorpmapping.Get(ctx, db, query, &result)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to load run result %v", id)
 	}
 	if !found {
-		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to run load result id=%s workflow_run_job_id=%s", id, runJobID)
+		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to run load result id=%s workflow_run_id=%s", id, runID)
 	}
 	return &result.V2WorkflowRunResult, nil
 }
@@ -199,7 +199,7 @@ func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, o
 		return nil, err
 	}
 	if !found {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	isValid, err := gorpmapping.CheckSignature(dbWkfRun, dbWkfRun.Signature)
 	if err != nil {
@@ -207,7 +207,7 @@ func getRun(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, o
 	}
 	if !isValid {
 		log.Error(ctx, "run %s: data corrupted", dbWkfRun.ID)
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &dbWkfRun.V2WorkflowRun, nil
 }
@@ -254,7 +254,7 @@ func LoadRunsWorkflowNames(ctx context.Context, db gorp.SqlExecutor, projKey str
 	_, next := telemetry.Span(ctx, "LoadRunsWorkflowNames")
 	defer next()
 	if _, err := db.Select(&names, `
-		SELECT DISTINCT workflow_name
+		SELECT DISTINCT (vcs_server || '/' || repository || '/' || workflow_name)
 		FROM v2_workflow_run
 		WHERE project_key = $1
 	`, projKey); err != nil {
@@ -300,7 +300,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
     WHERE 
 			project_key = $1 
 			AND (
-				array_length($2::text[], 1) IS NULL OR workflow_name = ANY($2)
+				array_length($2::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY($2)
 			)
 			AND (
 				array_length($3::text[], 1) IS NULL OR username = ANY($3)
@@ -336,7 +336,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
     WHERE 
 			project_key = $1
 			AND (
-				array_length($2::text[], 1) IS NULL OR workflow_name = ANY($2)
+				array_length($2::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY($2)
 			)
 			AND (
 				array_length($3::text[], 1) IS NULL OR username = ANY($3)
@@ -369,6 +369,13 @@ func LoadRunByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...go
 	ctx, next := telemetry.Span(ctx, "LoadRunByID")
 	defer next()
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run WHERE id = $1").Args(id)
+	return getRun(ctx, db, query, opts...)
+}
+
+func LoadRunByProjectKeyAndID(ctx context.Context, db gorp.SqlExecutor, projectKey, id string, opts ...gorpmapper.GetOptionFunc) (*sdk.V2WorkflowRun, error) {
+	ctx, next := telemetry.Span(ctx, "LoadRunByProjectKeyAndID")
+	defer next()
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run WHERE project_key = $1 AND id = $2").Args(projectKey, id)
 	return getRun(ctx, db, query, opts...)
 }
 

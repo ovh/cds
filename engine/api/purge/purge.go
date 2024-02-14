@@ -245,7 +245,7 @@ func deleteWorkflowRunsHistory(ctx context.Context, db *gorp.DbMap, workflowRuns
 	if err != nil {
 		return err
 	}
-	cdnClient := services.NewClient(db, srvs)
+	cdnClient := services.NewClient(srvs)
 
 	limit := int64(2000)
 	offset := int64(0)

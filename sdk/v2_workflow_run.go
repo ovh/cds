@@ -33,7 +33,7 @@ type V2WorkflowRunHookRequest struct {
 }
 
 type V2WorkflowRun struct {
-	ID           string                 `json:"id" db:"id"`
+	ID           string                 `json:"id" db:"id" cli:"id"`
 	ProjectKey   string                 `json:"project_key" db:"project_key"`
 	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
 	VCSServer    string                 `json:"vcs_server" db:"vcs_server"`
@@ -144,8 +144,8 @@ func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 type V2WorkflowRunEvent struct {
 	Manual                *ManualTrigger         `json:"manual,omitempty"`
 	GitTrigger            *GitTrigger            `json:"git,omitempty"`
-	WorkflowUpdateTrigger *WorkflowUpdateTrigger `json:"workflow_update,omitempty"`
-	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model_update,omitempty"`
+	WorkflowUpdateTrigger *WorkflowUpdateTrigger `json:"workflow-update,omitempty"`
+	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model-update,omitempty"`
 
 	// TODO
 	Scheduler      *SchedulerTrigger `json:"scheduler"`
@@ -438,7 +438,7 @@ type V2WorkflowRunResult struct {
 	ArtifactManagerIntegrationName *string                                     `json:"artifact_manager_integration_name" db:"artifact_manager_integration_name"`
 	ArtifactManagerMetadata        *V2WorkflowRunResultArtifactManagerMetadata `json:"artifact_manager_metadata" db:"artifact_manager_metadata"`
 	Detail                         V2WorkflowRunResultDetail                   `json:"detail" db:"artifact_manager_detail"`
-	DataSync                       *WorkflowRunResultSync                      `json:"sync,omitempty" db:"sync"`
+	DataSync                       *WorkflowRunResultSync                      `json:"sync" db:"sync"`
 	Status                         string                                      `json:"status" db:"status"`
 }
 
@@ -447,6 +447,24 @@ func (r *V2WorkflowRunResult) GetDetail() (any, error) {
 		return nil, err
 	}
 	return r.Detail.Data, nil
+}
+
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail() (*V2WorkflowRunResultArsenalDeploymentDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultArsenalDeploymentDetail)
+	if !ok {
+		var ii V2WorkflowRunResultArsenalDeploymentDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultArsenalDeploymentDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
+	}
+	return i, nil
 }
 
 func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDockerDetail() (*V2WorkflowRunResultDockerDetail, error) {
@@ -502,6 +520,16 @@ func (r *V2WorkflowRunResult) Name() string {
 		if ok {
 			return string(r.Type) + ":" + detail.Name
 		}
+	case V2WorkflowRunResultTypeArsenalDeployment:
+		detail, ok := r.Detail.Data.(*V2WorkflowRunResultArsenalDeploymentDetail)
+		if ok {
+			return string(r.Type) + ":" + detail.DeploymentName
+		}
+	case V2WorkflowRunResultTypeHelm:
+		detail, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
+		if ok {
+			return string(r.Type) + ":" + detail.Name
+		}
 	}
 	return string(r.Type) + ":" + r.ID
 }
@@ -516,6 +544,8 @@ func (r *V2WorkflowRunResult) Typ() string {
 const (
 	V2WorkflowRunResultStatusPending   = "PENDING"
 	V2WorkflowRunResultStatusCompleted = "COMPLETED"
+	V2WorkflowRunResultStatusPromoted  = "PROMOTED"
+	V2WorkflowRunResultStatusReleased  = "RELEASED"
 )
 
 type V2WorkflowRunResultArtifactManagerMetadata map[string]string
@@ -572,6 +602,20 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		var detail = new(V2WorkflowRunResultDockerDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultDockerDetail")
+		}
+		s.Data = detail
+		return nil
+	case "V2WorkflowRunResultHelmDetail":
+		var detail = new(V2WorkflowRunResultHelmDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultHelmDetail")
+		}
+		s.Data = detail
+		return nil
+	case "V2WorkflowRunResultArsenalDeploymentDetail":
+		var detail = new(V2WorkflowRunResultArsenalDeploymentDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultArsenalDeploymentDetail")
 		}
 		s.Data = detail
 		return nil
@@ -646,13 +690,14 @@ func (s *V2WorkflowRunResultDetail) Scan(src interface{}) error {
 type V2WorkflowRunResultType string
 
 const (
-	V2WorkflowRunResultTypeCoverage = "coverage"
-	V2WorkflowRunResultTypeTest     = "tests"
-	V2WorkflowRunResultTypeRelease  = "release"
-	V2WorkflowRunResultTypeGeneric  = "generic"
-	V2WorkflowRunResultTypeVariable = "variable"
-	V2WorkflowRunResultTypeDocker   = "docker"
-	V2WorkflowRunResultTypeHelm     = "helm"
+	V2WorkflowRunResultTypeCoverage          = "coverage"
+	V2WorkflowRunResultTypeTest              = "tests"
+	V2WorkflowRunResultTypeRelease           = "release"
+	V2WorkflowRunResultTypeGeneric           = "generic"
+	V2WorkflowRunResultTypeVariable          = "variable"
+	V2WorkflowRunResultTypeDocker            = "docker"
+	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
+	V2WorkflowRunResultTypeHelm              = "helm"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
@@ -665,11 +710,36 @@ type V2WorkflowRunResultGenericDetail struct {
 	SHA256 string      `json:"sha256" mapstructure:"sha256"`
 }
 
+type V2WorkflowRunResultArsenalDeploymentDetail struct {
+	IntegrationName string                              `json:"integration_name" mapstructure:"integration_name"`
+	DeploymentID    string                              `json:"deployment_id" mapstructure:"deployment_id"`
+	DeploymentName  string                              `json:"deployment_name" mapstructure:"deployment_name"`
+	StackID         string                              `json:"stack_id" mapstructure:"stack_id"`
+	StackName       string                              `json:"stack_name" mapstructure:"stack_name"`
+	StackPlatform   string                              `json:"stack_platform" mapstructure:"stack_platform"`
+	Namespace       string                              `json:"namespace" mapstructure:"namespace"`
+	Version         string                              `json:"version" mapstructure:"version"`
+	Alternative     *ArsenalDeploymentDetailAlternative `json:"alternative" mapstructure:"alternative"`
+}
+
+type ArsenalDeploymentDetailAlternative struct {
+	Name    string                 `json:"name"`
+	From    string                 `json:"from,omitempty"`
+	Config  map[string]interface{} `json:"config"`
+	Options map[string]interface{} `json:"options,omitempty"`
+}
+
 type V2WorkflowRunResultDockerDetail struct {
 	Name         string `json:"name" mapstructure:"name"`
 	ID           string `json:"id" mapstructure:"id"`
 	HumanSize    string `json:"human_size" mapstructure:"human_size"`
 	HumanCreated string `json:"human_created" mapstructure:"human_created"`
+}
+
+type V2WorkflowRunResultHelmDetail struct {
+	Name         string `json:"name" mapstructure:"name"`
+	AppVersion   string `json:"appVersion" mapstructure:"appVersion"`
+	ChartVersion string `json:"chartVersion" mapstructure:"chartVersion"`
 }
 
 type V2WorkflowRunResultVariableDetail struct {

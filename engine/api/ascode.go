@@ -59,7 +59,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load project")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, p.Key, ope.VCSServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, p.Key, ope.VCSServer)
 		if err != nil {
 			return sdk.NewErrorWithStack(err,
 				sdk.NewErrorFrom(sdk.ErrNoReposManagerClientAuth, "cannot get client for %s %s", key, ope.VCSServer))

@@ -52,7 +52,6 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 		// Get repository data
 		vcsName := r.Header.Get(sdk.SignHeaderVCSName)
 		vcsType := r.Header.Get(sdk.SignHeaderVCSType)
-		repoName := r.Header.Get(sdk.SignHeaderRepoName)
 		eventName := r.Header.Get(sdk.SignHeaderEventName)
 
 		defer r.Body.Close()
@@ -61,12 +60,12 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		repoName, extractData, err := s.extractDataFromPayload(vcsType, body)
+		repoName, extractData, err := s.extractDataFromPayload(r.Header, vcsType, body, eventName)
 		if err != nil {
 			return err
 		}
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, repoName, extractData, eventName, body)
+		exec, err := s.handleRepositoryEvent(ctx, vcsType, vcsName, repoName, extractData, body)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return err
@@ -88,17 +87,17 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to read body: %v", err)
 		}
 
-		repoName, extractedData, err := s.extractDataFromPayload(vcsServerType, body)
-		if err != nil {
-			return err
-		}
-
 		eventName, err := s.extractEventFromHeader(ctx, vcsServerType, r.Header)
 		if err != nil {
 			return err
 		}
 
-		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, extractedData, eventName, body)
+		repoName, extractedData, err := s.extractDataFromPayload(r.Header, vcsServerType, body, eventName)
+		if err != nil {
+			return err
+		}
+
+		exec, err := s.handleRepositoryEvent(ctx, vcsServerType, vcsServerName, repoName, extractedData, body)
 		if err != nil {
 			return err
 		}
@@ -107,25 +106,18 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 	}
 }
 
-func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, eventName string, event []byte) (*sdk.HookRepositoryEvent, error) {
+func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, event []byte) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(vcsServerName, repoName)
-	hr := s.Dao.FindRepository(ctx, repoKey)
-	if hr == nil {
-		var err error
-		hr, err = s.Dao.CreateRepository(ctx, vcsServerType, vcsServerName, repoName)
-		if err != nil {
+	if s.Dao.FindRepository(ctx, repoKey) == nil {
+		if _, err := s.Dao.CreateRepository(ctx, vcsServerType, vcsServerName, repoName); err != nil {
 			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
 		}
 	}
 
-	cdsEventName, err := s.toWorkflowHookEvent(ctx, vcsServerType, eventName)
-	if err != nil {
-		return nil, sdk.WrapError(err, "event %s is not managed for %s", eventName, vcsServerType)
-	}
-
 	exec := &sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
-		EventName:      cdsEventName,
+		EventName:      extractedData.CDSEventName, // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest, sdk.WorkflowHookEventPullRequestComment
+		EventType:      extractedData.CDSEventType, // WorkflowHookEventPullRequestTypeOpened, WorkflowHookEventPullRequestTypeEdited, etc...
 		VCSServerType:  vcsServerType,
 		VCSServerName:  vcsServerName,
 		RepositoryName: repoName,
@@ -147,26 +139,6 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType strin
 	s.Dao.enqueuedRepositoryEventIncr()
 
 	return exec, nil
-}
-
-func (s *Service) toWorkflowHookEvent(ctx context.Context, vcstype string, vcsEventName string) (string, error) {
-	var cdsWorkflowHookEvent string
-	switch vcstype {
-	case sdk.VCSTypeBitbucketServer:
-		cdsWorkflowHookEvent = GetWorkflowHookEventFromBitbucketEvent(vcsEventName)
-	case sdk.VCSTypeGithub:
-		cdsWorkflowHookEvent = GetWorkflowHookEventFromGithubEvent(vcsEventName)
-	case sdk.VCSTypeGitea:
-		cdsWorkflowHookEvent = GetWorkflowHookEventFromGiteaEvent(vcsEventName)
-	case sdk.VCSTypeGitlab:
-		cdsWorkflowHookEvent = GetWorkflowHookEventFromGitlabEvent(vcsEventName)
-	}
-	if cdsWorkflowHookEvent == "" {
-		msg := fmt.Sprintf("unable to translate event %s from %s to a valid workflow hook", vcsEventName, vcstype)
-		log.Warn(ctx, msg)
-		return "", sdk.WrapError(sdk.ErrNotImplemented, msg)
-	}
-	return cdsWorkflowHookEvent, nil
 }
 
 func (s *Service) extractEventFromHeader(ctx context.Context, vcsServerType string, header http.Header) (string, error) {

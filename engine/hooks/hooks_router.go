@@ -28,7 +28,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.SetHeaderFunc = service.DefaultHeaders
 	r.Middlewares = append(r.Middlewares, service.TracingMiddlewareFunc(s))
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
-	r.PostAuthMiddlewares = append(r.PostAuthMiddlewares)
+	//r.PostAuthMiddlewares nothing here
 	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
 
 	r.Handle("/admin/maintenance", nil, r.POST(s.postMaintenanceHandler))
@@ -79,7 +79,13 @@ func (s *Service) CheckHmac256Signature(headerName string) service.Middleware {
 			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to check signature")
 		}
 
-		repoName, _, err := s.extractDataFromPayload(vcsType, body)
+		eventName, err := s.extractEventFromHeader(ctx, vcsType, req.Header)
+		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+			return ctx, sdk.NewErrorFrom(sdk.ErrUnauthorized, "unable to extract event from header")
+		}
+
+		repoName, _, err := s.extractDataFromPayload(req.Header, vcsType, body, eventName)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return ctx, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find repository")

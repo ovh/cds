@@ -583,6 +583,26 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 		log.Warn(ctx, "hooks are not supported on windows")
 		return nil
 	}
+	if len(w.hooks) == 0 {
+		return nil
+	}
+
+	// Load integrations
+	integrationEnv := make([]string, 0)
+	for _, name := range w.currentJobV2.runJobContext.Integrations.All() {
+		integration, err := w.V2GetIntegrationByName(ctx, name)
+		if err != nil {
+			return nil
+		}
+		for k, v := range integration.Config {
+			varKey := fmt.Sprintf("cds.integration.%s.%s", sdk.GetIntegrationVariablePrefix(integration.Model), k)
+			varValue := sdk.OneLineValue(v.Value)
+			envName := strings.Replace(varKey, ".", "_", -1)
+			envName = strings.Replace(envName, "-", "_", -1)
+			envName = strings.ToUpper(envName)
+			integrationEnv = append(integrationEnv, fmt.Sprintf("%s=%s", envName, varValue))
+		}
+	}
 
 	var result = make(map[string]string)
 
@@ -610,7 +630,7 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 
 		str := fmt.Sprintf("source %s ; echo '<<<ENVIRONMENT>>>' ; env", filepath)
 		cmd := exec.Command("bash", "-c", str)
-		cmd.Env = workerEnv
+		cmd.Env = append(workerEnv, integrationEnv...)
 		bs, err := cmd.CombinedOutput()
 		if err != nil {
 			return errors.WithStack(err)
@@ -625,7 +645,7 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, wo
 				if len(kv) == 2 {
 					k := kv[0]
 					v := kv[1]
-					if !sdk.IsInArray(k+"="+v, workerEnv) {
+					if !strings.HasPrefix(k, "CDS_") && !sdk.IsInArray(k+"="+v, workerEnv) {
 						result[k] = v
 					}
 				}

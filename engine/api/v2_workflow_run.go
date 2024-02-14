@@ -35,42 +35,27 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
 
-			attemptS := FormString(req, "attempt")
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
-			if err != nil {
-				return err
-			}
+			attemptS := FormString(req, "attempt")
 
 			attempt := wr.RunAttempt
 			if attemptS != "" {
@@ -85,7 +70,6 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 			return service.WriteJSON(w, runJobs, http.StatusOK)
-
 		}
 }
 
@@ -94,42 +78,28 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
-			}
-			jobIdentifier := vars["jobIdentifier"]
-			attemptS := FormString(req, "attempt")
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
-			if err != nil {
-				return err
-			}
+			jobIdentifier := vars["jobIdentifier"]
+			attemptS := FormString(req, "attempt")
 
 			attempt := wr.RunAttempt
 			if attemptS != "" {
@@ -141,7 +111,7 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 
 			var runJob *sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
 			} else {
 				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
 			}
@@ -162,43 +132,28 @@ func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handl
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
-			}
-			jobIdentifier := vars["jobIdentifier"]
 
-			attemptS := FormString(req, "attempt")
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
-			if err != nil {
-				return err
-			}
+			jobIdentifier := vars["jobIdentifier"]
+			attemptS := FormString(req, "attempt")
 
 			attempt := wr.RunAttempt
 			if attemptS != "" {
@@ -210,7 +165,7 @@ func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handl
 
 			var runJob *sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
 			} else {
 				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
 			}
@@ -226,42 +181,28 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
-			}
-			jobIdentifier := vars["jobIdentifier"]
-			attemptS := FormString(req, "attempt")
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
-			if err != nil {
-				return err
-			}
+			jobIdentifier := vars["jobIdentifier"]
+			attemptS := FormString(req, "attempt")
 
 			attempt := wr.RunAttempt
 			if attemptS != "" {
@@ -273,7 +214,7 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 
 			var runJob *sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
 			} else {
 				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
 			}
@@ -308,42 +249,28 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
-			}
-			jobIdentifier := vars["jobIdentifier"]
-			attemptS := FormString(req, "attempt")
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
-			if err != nil {
-				return err
-			}
+			jobIdentifier := vars["jobIdentifier"]
+			attemptS := FormString(req, "attempt")
 
 			attempt := wr.RunAttempt
 			if attemptS != "" {
@@ -355,7 +282,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 
 			var runJob *sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
 			} else {
 				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
 			}
@@ -433,19 +360,14 @@ func (api *API) getWorkflowRunInfoV2Handler() ([]service.RbacChecker, service.Ha
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
@@ -453,17 +375,7 @@ func (api *API) getWorkflowRunInfoV2Handler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
@@ -481,19 +393,9 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
@@ -501,17 +403,7 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber, workflow_v2.WithRunResults)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier, workflow_v2.WithRunResults)
 			if err != nil {
 				return err
 			}
@@ -611,62 +503,14 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 		}
 }
 
-func (api *API) getWorkflowRunsV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
-		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			vars := mux.Vars(req)
-			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-
-			proj, err := project.Load(ctx, api.mustDB(), pKey)
-			if err != nil {
-				return err
-			}
-
-			vcsProject, err := api.getVCSByIdentifier(ctx, pKey, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			runs, err := workflow_v2.LoadRuns(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, workflow_v2.WithRunResults)
-			if err != nil {
-				return err
-			}
-			return service.WriteJSON(w, runs, http.StatusOK)
-		}
-}
-
 func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
 
 			u := getUserConsumer(ctx)
@@ -679,17 +523,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
@@ -865,20 +699,9 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
-			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
 
 			u := getUserConsumer(ctx)
@@ -891,17 +714,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
-			if err != nil {
-				return err
-			}
-
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
-			}
-
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
 			if err != nil {
 				return err
 			}
@@ -993,7 +806,7 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 			}
 		}
 		req := sdk.CDNDuplicateItemRequest{FromJob: rj.ID, ToJob: duplicatedRJ.ID}
-		_, code, err := services.NewClient(tx, srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
+		_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
 		if err != nil || code >= 400 {
 			return fmt.Errorf("unable to duplicate cdn item for runjob %s. Code result %d: %v", rj.ID, code, err)
 		}
@@ -1010,25 +823,14 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
-			if err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, err)
+			runIdentifier := vars["runIdentifier"]
+			if !sdk.IsValidUUID(runIdentifier) {
+				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
 			}
-			repositoryIdentifier, err := url.PathUnescape(vars["repositoryIdentifier"])
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			workflowName := vars["workflow"]
-			runNumberS := vars["runNumber"]
-			runNumber, err := strconv.ParseInt(runNumberS, 10, 64)
-			if err != nil {
-				return err
-			}
-			jobIdentifier := vars["jobIdentifier"]
 
-			var gateInputs map[string]interface{}
-			if err := service.UnmarshalBody(req, &gateInputs); err != nil {
-				return err
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
@@ -1036,20 +838,18 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			vcsProject, err := api.getVCSByIdentifier(ctx, proj.Key, vcsIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier, workflow_v2.WithRunResults)
 			if err != nil {
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
+			jobIdentifier := vars["jobIdentifier"]
+
+			var gateInputs map[string]interface{}
+			if err := service.UnmarshalBody(req, &gateInputs); err != nil {
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByRunNumber(ctx, api.mustDB(), proj.Key, vcsProject.ID, repo.ID, workflowName, runNumber, workflow_v2.WithRunResults)
-			if err != nil {
-				return err
-			}
 			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
 			if err != nil {
 				return err
@@ -1057,7 +857,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 
 			var jobToRun *sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
-				jobToRun, err = workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobIdentifier)
+				jobToRun, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
 			} else {
 				jobToRun, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, wr.RunAttempt)
 			}
@@ -1073,11 +873,6 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			// Gate check
 			if jobToRun.Job.Gate == "" {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "there is no gate on job %s", jobToRun.JobID)
-			}
-			// Check gate reviewers
-			u := getUserConsumer(ctx)
-			if u == nil {
-				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
 			gate := wr.WorkflowData.Workflow.Gates[jobToRun.Job.Gate]
@@ -1265,9 +1060,9 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	case runEvent.GitTrigger != nil:
 		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.GitTrigger.EventName, u.Username)
 	case runEvent.WorkflowUpdateTrigger != nil:
-		msg = fmt.Sprintf("Workflow was triggered by the workflow_update hook by user %s", u.Username)
+		msg = fmt.Sprintf("Workflow was triggered by the workflow-update hook by user %s", u.Username)
 	case runEvent.ModelUpdateTrigger != nil:
-		msg = fmt.Sprintf("Workflow was triggered by the model_update hook by user %s", u.Username)
+		msg = fmt.Sprintf("Workflow was triggered by the model-update hook by user %s", u.Username)
 	default:
 		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event not implemented")
 	}

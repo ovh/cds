@@ -30,22 +30,12 @@ func (api *API) getEntityRefFromQueryParams(ctx context.Context, req *http.Reque
 	}
 
 	if branch == "" {
-		tx, err := api.mustDB().Begin()
+		vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projKey, vcsName)
 		if err != nil {
-			return "", err
-		}
-		vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, projKey, vcsName)
-		if err != nil {
-			_ = tx.Rollback()
 			return "", err
 		}
 		defaultBranch, err := vcsClient.Branch(ctx, repoName, sdk.VCSBranchFilters{Default: true})
 		if err != nil {
-			_ = tx.Rollback()
-			return "", err
-		}
-		if err := tx.Commit(); err != nil {
-			_ = tx.Rollback()
 			return "", err
 		}
 		ref = defaultBranch.ID
