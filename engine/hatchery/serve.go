@@ -122,7 +122,7 @@ func (c *Common) WorkerList(ctx context.Context) ([]WorkerInterface, error) {
 	for i := range v1Workers {
 		allWorkers = append(allWorkers, workerImpl{eitherV1: &v1Workers[i]})
 	}
-	for i := range v1Workers {
+	for i := range v2Workers {
 		allWorkers = append(allWorkers, workerImpl{eitherV2: &v2Workers[i]})
 	}
 
