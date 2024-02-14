@@ -231,6 +231,7 @@ type HatcheryServiceClient interface {
 	V2HatcheryReleaseJob(ctx context.Context, regionName string, jobRunID string) error
 	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
 	V2QueueClient
+	V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error)
 }
 
 // ProjectClientV2 exposes project related functions
