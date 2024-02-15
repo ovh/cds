@@ -8,7 +8,7 @@ $(DIST):
 workflow-graph:
 	cd ../../ui && npm ci && ng build workflow-graph
 
-package-workflow-graph:
+package-workflow-graph: workflow-graph
 	cd ../../ui/dist/workflow-graph && npm pack
 
 webviews: package-workflow-graph
