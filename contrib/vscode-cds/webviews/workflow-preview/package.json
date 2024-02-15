@@ -1,6 +1,6 @@
 {
   "name": "workflow-preview",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -24,7 +24,7 @@
     "normalize.css": "^8.0.1",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
-    "workflow-graph": "file:/../../../../ui/dist/workflow-graph/workflow-graph-0.0.1.tgz",
+    "workflow-graph": "file:/../../../../ui/dist/workflow-graph/workflow-graph-1.0.0.tgz",
     "zone.js": "~0.13.3"
   },
   "devDependencies": {
