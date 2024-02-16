@@ -188,6 +188,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			}
 
 			jobRun.Status = result.Status
+			jobRun.Ended = time.Now()
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
