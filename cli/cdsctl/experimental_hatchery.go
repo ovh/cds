@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 
@@ -19,7 +20,27 @@ func experimentalHatchery() *cobra.Command {
 		cli.NewGetCommand(hatcheryGetCmd, hatcheryGetFunc, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(hatcheryListCmd, hatcheryListFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(hatcheryDeleteCmd, hatcheryDeleteFunc, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(hatcheryRegenTokenCmd, hatcheryRegenTokenFunc, nil, withAllCommandModifiers()...),
 	})
+}
+
+var hatcheryRegenTokenCmd = cli.Command{
+	Name:    "regen",
+	Aliases: []string{""},
+	Short:   "Regen the hatchery token",
+	Example: "cdsctl hatchery regen <hatchery_name>",
+	Ctx:     []cli.Arg{},
+	Args: []cli.Arg{
+		{Name: "hatcheryIdentifier"},
+	},
+}
+
+func hatcheryRegenTokenFunc(v cli.Values) (interface{}, error) {
+	hresp, err := client.HatcheryRegenToken(context.Background(), v.GetString("hatcheryIdentifier"))
+	if err != nil {
+		return nil, err
+	}
+	return hresp, nil
 }
 
 var hatcheryAddCmd = cli.Command{
@@ -35,10 +56,11 @@ var hatcheryAddCmd = cli.Command{
 
 func hatcheryAddFunc(v cli.Values) (interface{}, error) {
 	h := sdk.Hatchery{Name: v.GetString("hatcheryIdentifier")}
-	if err := client.HatcheryAdd(context.Background(), &h); err != nil {
+	hresp, err := client.HatcheryAdd(context.Background(), &h)
+	if err != nil {
 		return nil, err
 	}
-	return h, nil
+	return hresp, nil
 }
 
 var hatcheryGetCmd = cli.Command{

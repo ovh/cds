@@ -84,7 +84,7 @@ spec:
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hatcheryCreated))
 
 	// GET CONSUMER AND CREATE SESSION
-	consumer, err := authentication.LoadHatcheryConsumerByHatcheryID(context.TODO(), db, hatcheryCreated.ID)
+	consumer, err := authentication.LoadHatcheryConsumerByName(context.TODO(), db, hatcheryCreated.Name)
 	require.NoError(t, err)
 	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, hatchery.SessionDuration)
 	require.NoError(t, err)

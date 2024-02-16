@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/authentication"
 	hatch_auth "github.com/ovh/cds/engine/api/authentication/hatchery"
@@ -15,6 +16,58 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) postHatcheryRegenTokenHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.globalHatcheryManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			vars := mux.Vars(req)
+			hatcheryIdentifier := vars["hatcheryIdentifier"]
+
+			hatch, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
+			if err != nil {
+				return err
+			}
+
+			hatchConsumer, err := authentication.LoadHatcheryConsumerByName(ctx, api.mustDB(), hatch.Name)
+			if err != nil {
+				return err
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback()
+
+			if err := authentication.HatcheryConsumerRegen(ctx, tx, hatchConsumer); err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryCreated, *hatch, u.AuthConsumerUser.AuthentifiedUser)
+
+			jwsToken, err := hatch_auth.NewSigninConsumerToken(hatchConsumer)
+			if err != nil {
+				return err
+			}
+
+			hgr := sdk.HatcheryGetResponse{}
+			hgr.Hatchery = *hatch
+			hgr.Token = jwsToken
+			latestPeriod := hatchConsumer.ValidityPeriods.Latest()
+			hgr.ConsumerExpiration = latestPeriod.IssuedAt.Add(latestPeriod.Duration).String()
+
+			return service.WriteJSON(w, hgr, http.StatusOK)
+		}
+}
 
 func (api *API) postHatcheryHeartbeatHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.isHatchery),
@@ -114,17 +167,23 @@ func (api *API) postHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 			if err != nil {
 				return err
 			}
-			jwsToken, err := hatch_auth.NewSigninConsumerToken(c)
-			if err != nil {
-				return err
-			}
-			h.Token = jwsToken
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			jwsToken, err := hatch_auth.NewSigninConsumerToken(c)
+			if err != nil {
+				return err
+			}
+			hgr := sdk.HatcheryGetResponse{}
+			hgr.Hatchery = h
+			hgr.Token = jwsToken
+			latestPeriod := c.ValidityPeriods.Latest()
+			hgr.ConsumerExpiration = latestPeriod.IssuedAt.Add(latestPeriod.Duration).String()
+
 			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryCreated, h, u.AuthConsumerUser.AuthentifiedUser)
-			return service.WriteMarshal(w, req, h, http.StatusCreated)
+			return service.WriteMarshal(w, req, hgr, http.StatusCreated)
 		}
 }
 
@@ -135,7 +194,21 @@ func (api *API) getHatcheriesHandler() ([]service.RbacChecker, service.Handler) 
 			if err != nil {
 				return err
 			}
-			return service.WriteMarshal(w, req, hatcheries, http.StatusOK)
+			resp := make([]sdk.HatcheryGetResponse, 0)
+			for _, h := range hatcheries {
+				hgr := sdk.HatcheryGetResponse{}
+				hgr.Hatchery = h
+				hc, err := authentication.LoadHatcheryConsumerByName(ctx, api.mustDB(), h.Name)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
+				if hc != nil {
+					latestPeriod := hc.ValidityPeriods.Latest()
+					hgr.ConsumerExpiration = latestPeriod.IssuedAt.Add(latestPeriod.Duration).String()
+				}
+				resp = append(resp, hgr)
+			}
+			return service.WriteMarshal(w, req, resp, http.StatusOK)
 		}
 }
 
@@ -145,11 +218,21 @@ func (api *API) getHatcheryHandler() ([]service.RbacChecker, service.Handler) {
 			vars := mux.Vars(req)
 			hatcheryIdentifier := vars["hatcheryIdentifier"]
 
-			reg, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
+			hatch, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
 			if err != nil {
 				return err
 			}
-			return service.WriteMarshal(w, req, reg, http.StatusOK)
+			hgr := sdk.HatcheryGetResponse{}
+			hgr.Hatchery = *hatch
+			hc, err := authentication.LoadHatcheryConsumerByName(ctx, api.mustDB(), hatch.Name)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			if hc != nil {
+				latestPeriod := hc.ValidityPeriods.Latest()
+				hgr.ConsumerExpiration = latestPeriod.IssuedAt.Add(latestPeriod.Duration).String()
+			}
+			return service.WriteMarshal(w, req, hgr, http.StatusOK)
 		}
 }
 
@@ -166,6 +249,11 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 
 			hatch, err := api.getHatcheryByIdentifier(ctx, hatcheryIdentifier)
 			if err != nil {
+				return err
+			}
+
+			hc, err := authentication.LoadHatcheryConsumerByName(ctx, api.mustDB(), hatch.Name)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
 
@@ -202,6 +290,12 @@ func (api *API) deleteHatcheryHandler() ([]service.RbacChecker, service.Handler)
 					if err := rbac.Update(ctx, tx, hatcheryPermission); err != nil {
 						return err
 					}
+				}
+			}
+
+			if hc != nil {
+				if err := authentication.DeleteConsumerByID(tx, hc.AuthConsumer.ID); err != nil {
+					return err
 				}
 			}
 

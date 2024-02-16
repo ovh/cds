@@ -36,7 +36,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 			}
 
 			// Check if a consumer exists
-			consumer, err := authentication.LoadHatcheryConsumerByID(ctx, api.mustDB(), consumerID)
+			consumer, err := authentication.LoadHatcheryConsumerByAuthConsumerID(ctx, api.mustDB(), consumerID)
 			if err != nil {
 				return sdk.NewError(sdk.ErrForbidden, err)
 			}

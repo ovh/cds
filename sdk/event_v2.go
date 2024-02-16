@@ -29,9 +29,10 @@ const (
 	EventVCSUpdated = "VCSUpdated"
 	EventVCSDeleted = "VCSDeleted"
 
-	EventHatcheryCreated = "HatcheryCreated"
-	EventHatcheryUpdated = "HatcheryUpdated"
-	EventHatcheryDeleted = "HatcheryDeleted"
+	EventHatcheryCreated    = "HatcheryCreated"
+	EventHatcheryUpdated    = "HatcheryUpdated"
+	EventHatcheryTokenRegen = "HatcheryTokenRegen"
+	EventHatcheryDeleted    = "HatcheryDeleted"
 
 	EventRepositoryCreated = "RepositoryCreated"
 	EventRepositoryDeleted = "RepositoryDeleted"

@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/region"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/region"
 
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
@@ -40,7 +41,7 @@ func Test_hatcheryHeartbeat(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hatcheryCreated))
 
 	// GET CONSUMER AND CREATE SESSION
-	consumer, err := authentication.LoadHatcheryConsumerByHatcheryID(context.TODO(), db, hatcheryCreated.ID)
+	consumer, err := authentication.LoadHatcheryConsumerByName(context.TODO(), db, hatcheryCreated.Name)
 	require.NoError(t, err)
 	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, hatchery.SessionDuration)
 	require.NoError(t, err)

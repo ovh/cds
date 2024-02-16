@@ -1,4 +1,4 @@
-package worker_v2_test
+package api
 
 import (
 	"context"
@@ -107,7 +107,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 	require.Equal(t, 1, len(workers))
 	require.Equal(t, work.ID, workers[0].ID)
 
-	require.NoError(t, worker_v2.DeleteDisabledWorker(ctx, cache, db.DbMap, workers[0].ID, workers[0].Name))
+	require.NoError(t, DeleteDisabledWorker(ctx, cache, db.DbMap, workers[0].ID, workers[0].Name))
 
 	_, err = worker_v2.LoadByID(ctx, db, workers[0].ID)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
@@ -205,7 +205,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 	require.Equal(t, 1, len(workers))
 	require.Equal(t, work.ID, workers[0].ID)
 
-	require.NoError(t, worker_v2.DisableDeadWorker(ctx, cache, db.DbMap, workers[0].ID, workers[0].Name))
+	require.NoError(t, DisableDeadWorker(ctx, cache, db.DbMap, workers[0].ID, workers[0].Name))
 
 	wrDB, err := worker_v2.LoadByID(ctx, db, workers[0].ID)
 	require.NoError(t, err)

@@ -20,6 +20,13 @@ func InsertHatcheryConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 	return insertConsumerHatcheryData(ctx, db, &ac.AuthConsumerHatchery)
 }
 
+func UpdateHatcheryConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ac *sdk.AuthHatcheryConsumer) error {
+	if err := updateConsumer(ctx, db, &ac.AuthConsumer); err != nil {
+		return sdk.WrapError(err, "unable to update auth consumer")
+	}
+	return nil
+}
+
 // InsertConsumerHatchery in database.
 func insertConsumerHatcheryData(ctx context.Context, db gorpmapper.SqlExecutorWithTx, ach *sdk.AuthConsumerHatcheryData) error {
 	if ach.ID == "" {
@@ -33,7 +40,7 @@ func insertConsumerHatcheryData(ctx context.Context, db gorpmapper.SqlExecutorWi
 	return nil
 }
 
-func LoadHatcheryConsumerByID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.AuthHatcheryConsumer, error) {
+func LoadHatcheryConsumerByAuthConsumerID(ctx context.Context, db gorp.SqlExecutor, consumerID string) (*sdk.AuthHatcheryConsumer, error) {
 	c, err := LoadConsumerByID(ctx, db, consumerID)
 	if err != nil {
 		return nil, err
@@ -54,28 +61,10 @@ func LoadHatcheryConsumerByName(ctx context.Context, db gorp.SqlExecutor, hatche
 	q := gorpmapping.NewQuery("SELECT * FROM auth_consumer WHERE type = $1 AND name = $2").Args(sdk.ConsumerHatchery, hatcheryName)
 	c, err := getConsumer(ctx, db, q)
 	if err != nil {
-
+		return nil, err
 	}
 	queryhatch := gorpmapping.NewQuery("SELECT * from auth_consumer_hatchery WHERE auth_consumer_id = $1").Args(c.ID)
 	hatcheryData, err := getAuthConsumerHatchery(ctx, db, queryhatch)
-	if err != nil {
-		return nil, err
-	}
-	hc := sdk.AuthHatcheryConsumer{
-		AuthConsumer:         *c,
-		AuthConsumerHatchery: *hatcheryData,
-	}
-	return &hc, nil
-}
-
-func LoadHatcheryConsumerByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) (*sdk.AuthHatcheryConsumer, error) {
-	q := gorpmapping.NewQuery("SELECT * from auth_consumer_hatchery WHERE hatchery_id = $1").Args(hatcheryID)
-	hatcheryData, err := getAuthConsumerHatchery(ctx, db, q)
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := LoadConsumerByID(ctx, db, hatcheryData.AuthConsumerID)
 	if err != nil {
 		return nil, err
 	}
