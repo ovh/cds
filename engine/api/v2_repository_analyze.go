@@ -1021,9 +1021,11 @@ func Lint[T sdk.Lintable](api *API, o T) []error {
 	if err := o.Lint(); err != nil {
 		return err
 	}
-	// 2. Lint againt some API specific rules
-	switch x := any(o).(type) {
 
+	// 2. Lint againt some API specific rules
+
+	var err []error
+	switch x := any(o).(type) {
 	case sdk.V2WorkerModel:
 		// 2.1 Validate docker image against the whitelist from API configuration
 		var dockerSpec sdk.V2WorkerModelDockerSpec
@@ -1041,10 +1043,15 @@ func Lint[T sdk.Lintable](api *API, o T) []error {
 				}
 			}
 			if !allowedImage {
-				return []error{sdk.WithStack(sdk.ErrWrongRequest)}
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "image %q is not allowed", dockerSpec.Image))
 			}
 		}
 	}
+
+	if len(err) > 0 {
+		return err
+	}
+
 	return nil
 }
 
