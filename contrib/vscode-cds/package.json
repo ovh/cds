@@ -25,7 +25,11 @@
       {
         "command": "vscode-cds.setCurrentContext",
         "title": "Change the CDS context"
-      }
+      },
+       {
+        "command": "vscode-cds.previewWorkflow",
+        "title": "Preview the CDS workflow"
+       }
     ],
     "configuration": {
       "title": "CDS",
@@ -60,6 +64,9 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test",
     "vsce": "vsce"
+  },
+  "dependencies": {
+    "vscode-uri": "^3.0.3"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
