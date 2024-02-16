@@ -1,58 +1,57 @@
 import * as vscode from "vscode";
 import * as uri from "vscode-uri";
-import { Journal } from "../utils/journal";
 
-export function isCDSWorkflowFile(document?: vscode.TextDocument): boolean {
-    if (!isCDSFile(document)) {
-        return false;
-    }
-
-    if (getParentDirectory(document?.uri) !== 'workflows') {
-        Journal.logError(new Error(`Workflow files must be inside the 'workflows' folder`));
-        return false;
-    }
-    Journal.logInfo('CDS workflow file detected');
-    return true;
+export interface valid {
+    valid: boolean;
+    error: string;
 }
 
-export function isCDSWorkerModelFile(document?: vscode.TextDocument): boolean {
-    if (!isCDSFile(document)) {
-        return false;
+export function isCDSWorkflowFile(document?: vscode.TextDocument): valid {
+    const valid = isCDSFile(document);
+    if (!valid.valid) {
+        return valid;
+    }
+    if (getParentDirectory(document?.uri) !== 'workflows') {
+        return {valid: false, error: `Workflow files must be inside the 'workflows' folder`};
+    }
+    return {valid: true, error: ''};
+}
+
+export function isCDSWorkerModelFile(document?: vscode.TextDocument): valid {
+    const valid = isCDSFile(document);
+    if (!valid.valid) {
+        return valid;
     }
 
     if (getParentDirectory(document?.uri) !== 'worker-models') {
-        Journal.logError(new Error(`Workflow files must be inside the 'worker-models' folder`));
-        return false;
+        return {valid: false, error: `Worker model files must be inside the 'worker-models' folder`};
     }
-    return true;
+    return {valid: true, error: ''};
 }
 
-export function isCDSActionFile(document?: vscode.TextDocument): boolean {
-    if (!isCDSFile(document)) {
-        return false;
+export function isCDSActionFile(document?: vscode.TextDocument): valid {
+    const valid = isCDSFile(document);
+    if (!valid.valid) {
+        return valid;
     }
 
     if (getParentDirectory(document?.uri) !== 'actions') {
-        Journal.logError(new Error(`Workflow files must be inside the 'actions' folder`));
-        return false;
+        return {valid: false, error: `Action files must be inside the 'actions' folder`};
     }
-    return true;
+    return {valid: true, error: ''};
 }
 
-function isCDSFile(document?: vscode.TextDocument): boolean { 
+function isCDSFile(document?: vscode.TextDocument): valid { 
     if (!document) {
-        Journal.logError(new Error(`Unable to get file`));
-        return false;
+        return {valid: false, error: `Unable to get file`};
     }
     if (document.languageId !== 'yaml') {
-        Journal.logError(new Error(`It's not a yaml file`));
-        return false;
+        return {valid: false, error: `It's not a yaml file`};
     }
     if (document.isUntitled) {
-        Journal.logError(new Error(`Unable to preview an untitled file`));
-        return false;
+        return {valid: false, error: `Unable to preview an untitled file`};
     }
-    return true;
+    return {valid: true, error:''};
 }
 
 function getParentDirectory(filepath?: uri.URI): string {

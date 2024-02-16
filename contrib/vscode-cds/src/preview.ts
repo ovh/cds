@@ -10,7 +10,12 @@ export function init(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand("vscode-cds.previewWorkflow", () => {
         Journal.logInfo('Running workflow preview on ' + vscode.window.activeTextEditor?.document.fileName);
-        if ( isCDSWorkflowFile(vscode.window.activeTextEditor?.document) && vscode.window.activeTextEditor?.document.uri) {
+        const file = isCDSWorkflowFile(vscode.window.activeTextEditor?.document);
+        if (!file.valid) {
+          Journal.logError(new Error(file.error));
+          return;
+        }
+        if ( file.valid && vscode.window.activeTextEditor?.document.uri) {
             cdsPreview.load(vscode.window.activeTextEditor?.document.uri);
           }
         })
@@ -31,7 +36,7 @@ class CDSPreview extends vscode.Disposable {
     
         _context.subscriptions.push(
           vscode.window.onDidChangeActiveTextEditor(editor => {
-            if (this._panel && editor && isCDSWorkflowFile(editor.document)) {
+            if (this._panel && editor && isCDSWorkflowFile(editor.document).valid) {
               this.load(editor.document.uri);
             }
           })
