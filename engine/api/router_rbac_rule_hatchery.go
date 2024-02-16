@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/rbac"
@@ -32,8 +33,15 @@ func hatcheryHasRoleOnRegion(ctx context.Context, db gorp.SqlExecutor, hatcheryI
 }
 
 func (api *API) isHatchery(ctx context.Context, _ *sdk.AuthUserConsumer, _ cache.Store, _ gorp.SqlExecutor, _ map[string]string) error {
-  if getHatcheryConsumer(ctx) != nil && getWorker(ctx) == nil {
+	if getHatcheryConsumer(ctx) != nil && getWorker(ctx) == nil {
 		return nil
 	}
 	return sdk.WithStack(sdk.ErrForbidden)
+}
+
+func (api *API) canRegenHatcheryToken(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+	if err := api.isHatchery(ctx, auth, store, db, vars); err == nil {
+		return nil
+	}
+	return hasGlobalRole(ctx, auth, store, db, sdk.GlobalRoleManageHatchery)
 }

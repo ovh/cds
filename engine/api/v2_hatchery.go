@@ -18,10 +18,12 @@ import (
 )
 
 func (api *API) postHatcheryRegenTokenHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.globalHatcheryManage),
+	return service.RBAC(api.canRegenHatcheryToken),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			hatchConsumer := getHatcheryConsumer(ctx)
 			u := getUserConsumer(ctx)
-			if u == nil {
+
+			if u == nil && hatchConsumer == nil {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
@@ -33,9 +35,15 @@ func (api *API) postHatcheryRegenTokenHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			hatchConsumer, err := authentication.LoadHatcheryConsumerByName(ctx, api.mustDB(), hatch.Name)
-			if err != nil {
-				return err
+			if hatchConsumer == nil {
+				hatchConsumer, err = authentication.LoadHatcheryConsumerByName(ctx, api.mustDB(), hatch.Name)
+				if err != nil {
+					return err
+				}
+			} else {
+				if hatchConsumer.AuthConsumerHatchery.HatcheryID != hatch.ID {
+					return sdk.NewErrorFrom(sdk.ErrInvalidData, "wrong ")
+				}
 			}
 
 			tx, err := api.mustDB().Begin()
@@ -52,7 +60,11 @@ func (api *API) postHatcheryRegenTokenHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryTokenRegen, *hatch, u.AuthConsumerUser.AuthentifiedUser)
+			var us *sdk.AuthentifiedUser
+			if u != nil {
+				us = u.AuthConsumerUser.AuthentifiedUser
+			}
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryTokenRegen, *hatch, us)
 
 			jwsToken, err := hatch_auth.NewSigninConsumerToken(hatchConsumer)
 			if err != nil {
