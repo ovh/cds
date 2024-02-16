@@ -116,7 +116,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		}
 		e.commitsStatuses[ref] = statuses
 	}
-	expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
+	expected := sdk.VCSCommitStatusContextV1(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
 		NodeName: nodeRun.WorkflowNodeName,
 	})
 	log.Info(ctx, "expected status description is %q", expected)
@@ -305,7 +305,7 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 	}
 
 	buildStatus := sdk.VCSBuildStatus{
-		Title:              fmt.Sprintf("%s-%s-%s", evt.ProjectKey, evt.WorkflowName, eventWNR.NodeName),
+		Title:              sdk.VCSCommitStatusContextV1(evt.ProjectKey, evt.WorkflowName, eventWNR),
 		Description:        eventWNR.NodeName + ": " + eventWNR.Status,
 		URLCDS:             fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, evt.ProjectKey, evt.WorkflowName, eventWNR.Number),
 		Context:            fmt.Sprintf("%s-%s-%s", evt.ProjectKey, evt.WorkflowName, eventWNR.NodeName),
