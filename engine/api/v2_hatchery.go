@@ -52,7 +52,7 @@ func (api *API) postHatcheryRegenTokenHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryCreated, *hatch, u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishHatcheryEvent(ctx, api.Cache, sdk.EventHatcheryTokenRegen, *hatch, u.AuthConsumerUser.AuthentifiedUser)
 
 			jwsToken, err := hatch_auth.NewSigninConsumerToken(hatchConsumer)
 			if err != nil {

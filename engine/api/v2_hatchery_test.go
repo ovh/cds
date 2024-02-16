@@ -93,7 +93,7 @@ global:
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
-	var hatcheryCreated sdk.Hatchery
+	var hatcheryCreated sdk.HatcheryGetResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hatcheryCreated))
 
 	// Then Get the hatchery
