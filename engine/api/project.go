@@ -123,6 +123,7 @@ func (api *API) getProjectsHandler() service.Handler {
 		withApplications := service.FormBool(r, "application")
 		withWorkflows := service.FormBool(r, "workflow")
 		withIcon := service.FormBool(r, "withIcon")
+		withFavorites := service.FormBool(r, "withFavorites")
 
 		requestedUserName := r.Header.Get("X-Cds-Username")
 		var requestedUser *sdk.AuthentifiedUser
@@ -146,6 +147,14 @@ func (api *API) getProjectsHandler() service.Handler {
 		}
 		if withWorkflows {
 			opts = append(opts, project.LoadOptions.WithIntegrations, project.LoadOptions.WithWorkflows)
+		}
+
+		if withFavorites {
+			if requestedUser == nil {
+				opts = append(opts, project.LoadOptions.WithFavorites(getUserConsumer(ctx).AuthConsumerUser.AuthentifiedUserID))
+			} else {
+				opts = append(opts, project.LoadOptions.WithFavorites(requestedUser.ID))
+			}
 		}
 
 		var projects sdk.Projects
