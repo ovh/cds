@@ -8,10 +8,14 @@ import { init as initPreview } from "./preview";
 let currentContextBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
+    Journal.logInfo('Activating CDS Extension');
+
     const setCurrentContextCommandID = 'vscode-cds.setCurrentContext';
     context.subscriptions.push(vscode.commands.registerCommand(setCurrentContextCommandID, async () => {
         await switchContext();
     }));
+
+    initPreview(context);
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         let affected = event.affectsConfiguration("cds.config");
@@ -28,9 +32,6 @@ export function activate(context: vscode.ExtensionContext) {
     CDS.getAvailableContexts();
 
     updateStatusBar();
-
-    Journal.logInfo('Init CDS preview component');
-    initPreview(context);
 }
 
 async function updateStatusBar(): Promise<void> {
