@@ -87,6 +87,23 @@ func StringFirstN(s string, i int) string {
 	return s[:i]
 }
 
+type ReqNotHostMatcher struct {
+	NotHost string
+}
+
+func (m ReqNotHostMatcher) Matches(x interface{}) bool {
+	switch i := x.(type) {
+	case *http.Request:
+		return i.URL.Host != m.NotHost
+	default:
+		return false
+	}
+}
+
+func (m ReqNotHostMatcher) String() string {
+	return fmt.Sprintf("Not Host is %q", m.NotHost)
+}
+
 type ReqHostMatcher struct {
 	Host string
 }

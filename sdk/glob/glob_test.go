@@ -101,6 +101,18 @@ func TestGlob_Match(t *testing.T) {
 				},
 			},
 		},
+		{
+			"With colon",
+			`docker:path/to/image:* helm:**/*`, testcase{
+				args: []string{
+					"docker:path/to/image:latest", "helm:chart",
+				},
+				want: []string{
+					"image:latest",
+					"helm:chart",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

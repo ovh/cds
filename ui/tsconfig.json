@@ -7,6 +7,9 @@
     "paths": {
       "@cds/*": [
         ".src/app/*"
+      ],
+      "workflow-graph": [
+        "dist/workflow-graph"
       ]
     },
     "sourceMap": true,

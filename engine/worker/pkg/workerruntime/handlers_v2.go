@@ -100,10 +100,6 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 				return
 			}
-			if filter.Type == "" {
-				writeError(w, r, sdk.ErrWrongRequest)
-				return
-			}
 			response, err := wk.V2GetRunResult(ctx, filter)
 			if err != nil {
 				writeError(w, r, err)

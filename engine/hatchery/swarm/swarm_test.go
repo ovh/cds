@@ -303,7 +303,7 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 	}
 	gock.New("https://lolcat.local").Post("/v6.66/networks/create").Reply(http.StatusOK).JSON(n)
 	gock.New("https://lolcat.local").Post("/v6.66/images/create").MatchParam("fromImage", "postgresql").MatchParam("tag", "5.6.6").Reply(http.StatusOK).JSON(nil)
-	cService := container.ContainerCreateCreatedBody{
+	cService := container.CreateResponse{
 		ID: "serviceIdContainer",
 	}
 	gock.New("https://lolcat.local").Post("/v6.66/containers/create").MatchParam("name", "pg-*").Reply(http.StatusOK).JSON(cService)
@@ -311,7 +311,7 @@ func TestHatcherySwarm_Spawn(t *testing.T) {
 
 	// WORKER
 	gock.New("https://lolcat.local").Post("/v6.66/images/create").MatchParam("fromImage", "model").MatchParam("tag", "9").Reply(http.StatusOK).JSON(nil)
-	cWorker := container.ContainerCreateCreatedBody{
+	cWorker := container.CreateResponse{
 		ID: "workerIDContainer",
 	}
 	gock.New("https://lolcat.local").Post("/v6.66/containers/create").MatchParam("name", "swarmy-*").Reply(http.StatusOK).JSON(cWorker)

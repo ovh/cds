@@ -798,7 +798,7 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 		}
 		for _, r := range runResults {
 			duplicatedRunResult := r
-			duplicatedRunResult.ID = ""
+			duplicatedRunResult.ID = sdk.UUID()
 			duplicatedRunResult.WorkflowRunJobID = duplicatedRJ.ID
 			duplicatedRunResult.RunAttempt = duplicatedRJ.RunAttempt
 			if err := workflow_v2.InsertRunResult(ctx, tx, &duplicatedRunResult); err != nil {

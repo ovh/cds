@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { Journal } from './lib/utils/journal';
 import { CDS } from './lib/cds';
 import { selectContext } from './select-context';
+import { init as initPreview } from "./preview";
 
 let currentContextBarItem: vscode.StatusBarItem;
 
@@ -27,6 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
     CDS.getAvailableContexts();
 
     updateStatusBar();
+
+    Journal.logInfo('Init CDS preview component');
+    initPreview(context);
 }
 
 async function updateStatusBar(): Promise<void> {

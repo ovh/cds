@@ -405,14 +405,14 @@ func GetDefaultBranch(branches []VCSBranch) VCSBranch {
 	return VCSBranch{}
 }
 
-// VCSCommitStatusDescription return a node formated status description
-func VCSCommitStatusDescription(projKey, workflowName string, evt EventRunWorkflowNode) string {
+// VCSCommitStatusContextV1 return a node formated status Context for workflow V1
+func VCSCommitStatusContextV1(projKey, workflowName string, evt EventRunWorkflowNode) string {
 	key := fmt.Sprintf("%s-%s-%s",
 		projKey,
 		workflowName,
 		evt.NodeName,
 	)
-	return fmt.Sprintf("CDS/%s", key)
+	return fmt.Sprintf("%s", key)
 }
 
 type VCSBuildStatus struct {

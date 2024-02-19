@@ -1,0 +1,49 @@
+{
+  "name": "workflow-preview",
+  "version": "1.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build --output-hashing none",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^16.2.12",
+    "@angular/common": "16.2.12",
+    "@angular/compiler": "16.2.12",
+    "@angular/core": "16.2.12",
+    "@angular/forms": "16.2.12",
+    "@angular/platform-browser": "16.2.12",
+    "@angular/platform-browser-dynamic": "16.2.12",
+    "@angular/router": "16.2.12",
+    "d3": "7.8.5",
+    "d3-zoom": "3.0.0",
+    "dagre-d3": "0.6.4",
+    "normalize.css": "^8.0.1",
+    "rxjs": "~7.5.0",
+    "tslib": "^2.3.0",
+    "workflow-graph": "file:/../../../../ui/dist/workflow-graph/workflow-graph-1.0.0.tgz",
+    "zone.js": "~0.13.3"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "16.2.11",
+    "@angular/cli": "16.2.11",
+    "@angular/compiler-cli": "16.2.12",
+    "@types/d3": "5.9.2",
+    "@types/dagre": "0.7.52",
+    "@types/dagre-d3": "0.6.6",
+    "@types/graphlib": "2.1.11",
+    "@types/jasmine": "~3.10.0",
+    "@types/node": "^12.11.1",
+    "@types/vscode-webview": "^1.57.0",
+    "jasmine-core": "~4.0.0",
+    "karma": "~6.3.0",
+    "karma-chrome-launcher": "~3.1.0",
+    "karma-coverage": "~2.1.0",
+    "karma-jasmine": "~4.0.0",
+    "karma-jasmine-html-reporter": "~1.7.0",
+    "typescript": "~4.9.5"
+  }
+}

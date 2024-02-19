@@ -15,6 +15,7 @@ import (
 
 func (api *API) getWorkersV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workerList), func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+		// TODO: List workers per hatchery
 		wks, err := worker_v2.LoadAllWorker(ctx, api.mustDB())
 		if err != nil {
 			return err
