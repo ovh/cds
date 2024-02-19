@@ -8,6 +8,25 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func HatcheryConsumerRegen(ctx context.Context, db gorpmapper.SqlExecutorWithTx, consumer *sdk.AuthHatcheryConsumer) error {
+	if consumer.Disabled {
+		return sdk.NewErrorFrom(sdk.ErrForbidden, "can't regen a disabled consumer")
+	}
+	consumer.Warnings = nil
+
+	// new duration
+	consumer.ValidityPeriods = append(consumer.ValidityPeriods,
+		sdk.AuthConsumerValidityPeriod{
+			IssuedAt: time.Now(),
+			Duration: 365 * 24 * time.Hour,
+		},
+	)
+	if err := UpdateHatcheryConsumer(ctx, db, consumer); err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewConsumerHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h sdk.Hatchery) (*sdk.AuthHatcheryConsumer, error) {
 	c := sdk.AuthHatcheryConsumer{
 		AuthConsumer: sdk.AuthConsumer{
@@ -15,6 +34,7 @@ func NewConsumerHatchery(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h
 			Type:            sdk.ConsumerHatchery,
 			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 365*24*time.Hour),
 			Description:     "Consumer for hatchery " + h.Name,
+			Created:         time.Now(),
 		},
 		AuthConsumerHatchery: sdk.AuthConsumerHatcheryData{
 			HatcheryID: h.ID,

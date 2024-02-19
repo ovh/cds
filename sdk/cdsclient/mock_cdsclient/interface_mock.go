@@ -2555,11 +2555,12 @@ func (m *MockHatcheryClient) EXPECT() *MockHatcheryClientMockRecorder {
 }
 
 // HatcheryAdd mocks base method.
-func (m *MockHatcheryClient) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error {
+func (m *MockHatcheryClient) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) (*sdk.HatcheryGetResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // HatcheryAdd indicates an expected call of HatcheryAdd.
@@ -2583,10 +2584,10 @@ func (mr *MockHatcheryClientMockRecorder) HatcheryDelete(ctx, hatcheryIdentifier
 }
 
 // HatcheryGet mocks base method.
-func (m *MockHatcheryClient) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error) {
+func (m *MockHatcheryClient) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.HatcheryGetResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryGet", ctx, hatcheryIdentifier)
-	ret0, _ := ret[0].(sdk.Hatchery)
+	ret0, _ := ret[0].(sdk.HatcheryGetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2598,10 +2599,10 @@ func (mr *MockHatcheryClientMockRecorder) HatcheryGet(ctx, hatcheryIdentifier in
 }
 
 // HatcheryList mocks base method.
-func (m *MockHatcheryClient) HatcheryList(ctx context.Context) ([]sdk.Hatchery, error) {
+func (m *MockHatcheryClient) HatcheryList(ctx context.Context) ([]sdk.HatcheryGetResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryList", ctx)
-	ret0, _ := ret[0].([]sdk.Hatchery)
+	ret0, _ := ret[0].([]sdk.HatcheryGetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2610,6 +2611,21 @@ func (m *MockHatcheryClient) HatcheryList(ctx context.Context) ([]sdk.Hatchery, 
 func (mr *MockHatcheryClientMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryList), ctx)
+}
+
+// HatcheryRegenToken mocks base method.
+func (m *MockHatcheryClient) HatcheryRegenToken(ctx context.Context, hatcheryIdentifier string) (*sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryRegenToken", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryRegenToken indicates an expected call of HatcheryRegenToken.
+func (mr *MockHatcheryClientMockRecorder) HatcheryRegenToken(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryRegenToken", reflect.TypeOf((*MockHatcheryClient)(nil).HatcheryRegenToken), ctx, hatcheryIdentifier)
 }
 
 // MockHatcheryServiceClient is a mock of HatcheryServiceClient interface.
@@ -2879,6 +2895,21 @@ func (m *MockHatcheryServiceClient) V2QueueWorkerTakeJob(ctx context.Context, re
 func (mr *MockHatcheryServiceClientMockRecorder) V2QueueWorkerTakeJob(ctx, region, runJobID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueWorkerTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueWorkerTakeJob), ctx, region, runJobID)
+}
+
+// V2WorkerList mocks base method.
+func (m *MockHatcheryServiceClient) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2WorkerList", ctx)
+	ret0, _ := ret[0].([]sdk.V2Worker)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2WorkerList indicates an expected call of V2WorkerList.
+func (mr *MockHatcheryServiceClientMockRecorder) V2WorkerList(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2WorkerList", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2WorkerList), ctx)
 }
 
 // MockProjectClientV2 is a mock of ProjectClientV2 interface.
@@ -7857,11 +7888,12 @@ func (mr *MockInterfaceMockRecorder) HasProjectRole(ctx, projectKey, sessionID, 
 }
 
 // HatcheryAdd mocks base method.
-func (m *MockInterface) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error {
+func (m *MockInterface) HatcheryAdd(ctx context.Context, h *sdk.Hatchery) (*sdk.HatcheryGetResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryAdd", ctx, h)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // HatcheryAdd indicates an expected call of HatcheryAdd.
@@ -7885,10 +7917,10 @@ func (mr *MockInterfaceMockRecorder) HatcheryDelete(ctx, hatcheryIdentifier inte
 }
 
 // HatcheryGet mocks base method.
-func (m *MockInterface) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error) {
+func (m *MockInterface) HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.HatcheryGetResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryGet", ctx, hatcheryIdentifier)
-	ret0, _ := ret[0].(sdk.Hatchery)
+	ret0, _ := ret[0].(sdk.HatcheryGetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -7900,10 +7932,10 @@ func (mr *MockInterfaceMockRecorder) HatcheryGet(ctx, hatcheryIdentifier interfa
 }
 
 // HatcheryList mocks base method.
-func (m *MockInterface) HatcheryList(ctx context.Context) ([]sdk.Hatchery, error) {
+func (m *MockInterface) HatcheryList(ctx context.Context) ([]sdk.HatcheryGetResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HatcheryList", ctx)
-	ret0, _ := ret[0].([]sdk.Hatchery)
+	ret0, _ := ret[0].([]sdk.HatcheryGetResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -7912,6 +7944,21 @@ func (m *MockInterface) HatcheryList(ctx context.Context) ([]sdk.Hatchery, error
 func (mr *MockInterfaceMockRecorder) HatcheryList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryList", reflect.TypeOf((*MockInterface)(nil).HatcheryList), ctx)
+}
+
+// HatcheryRegenToken mocks base method.
+func (m *MockInterface) HatcheryRegenToken(ctx context.Context, hatcheryIdentifier string) (*sdk.HatcheryGetResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HatcheryRegenToken", ctx, hatcheryIdentifier)
+	ret0, _ := ret[0].(*sdk.HatcheryGetResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HatcheryRegenToken indicates an expected call of HatcheryRegenToken.
+func (mr *MockInterfaceMockRecorder) HatcheryRegenToken(ctx, hatcheryIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HatcheryRegenToken", reflect.TypeOf((*MockInterface)(nil).HatcheryRegenToken), ctx, hatcheryIdentifier)
 }
 
 // HookRepositoriesList mocks base method.

@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/engine/api/region"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/api/region"
 
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
@@ -40,7 +41,7 @@ func Test_hatcheryHeartbeat(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hatcheryCreated))
 
 	// GET CONSUMER AND CREATE SESSION
-	consumer, err := authentication.LoadHatcheryConsumerByHatcheryID(context.TODO(), db, hatcheryCreated.ID)
+	consumer, err := authentication.LoadHatcheryConsumerByName(context.TODO(), db, hatcheryCreated.Name)
 	require.NoError(t, err)
 	session, err := authentication.NewSession(context.TODO(), db, &consumer.AuthConsumer, hatchery.SessionDuration)
 	require.NoError(t, err)
@@ -62,6 +63,17 @@ func Test_hatcheryHeartbeat(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, now.Equal(hatcheryStatus.Status.Now))
 
+	// Regen token with hatchery auth
+	uriRegen := api.Router.GetRouteV2("POST", api.postHatcheryRegenTokenHandler, map[string]string{"hatcheryIdentifier": h.Name})
+	reqRegen := assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uriRegen, nil)
+	wRegen := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wRegen, reqRegen)
+	require.Equal(t, 200, wRegen.Code)
+
+	var hatchResp sdk.HatcheryGetResponse
+	require.NoError(t, json.Unmarshal(wRegen.Body.Bytes(), &hatchResp))
+
+	require.NotEmpty(t, hatchResp.Token)
 }
 
 func Test_crudHatchery(t *testing.T) {
@@ -92,7 +104,7 @@ global:
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
-	var hatcheryCreated sdk.Hatchery
+	var hatcheryCreated sdk.HatcheryGetResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hatcheryCreated))
 
 	// Then Get the hatchery
@@ -142,6 +154,17 @@ hatcheries:
 	var authSigninResponse sdk.AuthConsumerHatcherySigninResponse
 	require.NoError(t, json.Unmarshal(wSignin.Body.Bytes(), &authSigninResponse))
 	require.NotEmpty(t, authSigninResponse.Token)
+
+	uriRegen := api.Router.GetRouteV2("POST", api.postHatcheryRegenTokenHandler, map[string]string{"hatcheryIdentifier": h.Name})
+	reqRegen := assets.NewAuthentifiedRequest(t, u, pass, "POST", uriRegen, nil)
+	wRegen := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wRegen, reqRegen)
+	require.Equal(t, 200, wRegen.Code)
+
+	var hatchResp sdk.HatcheryGetResponse
+	require.NoError(t, json.Unmarshal(wRegen.Body.Bytes(), &hatchResp))
+
+	require.NotEmpty(t, hatchResp.Token)
 
 	// Then Delete hatchery
 	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteHatcheryHandler, map[string]string{"hatcheryIdentifier": h.Name})

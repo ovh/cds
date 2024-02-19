@@ -44,9 +44,12 @@ type Hatchery struct {
 	LastHeartbeat time.Time     `json:"last_heartbeat,omitempty" db:"last_heartbeat" cli:"last_heartbeat"`
 	PublicKey     []byte        `json:"public_key" db:"public_key"`
 	HTTPURL       string        `json:"http_url" db:"http_url"`
+}
 
-	// On signup / regen
-	Token string `json:"token,omitempty" db:"-" cli:"token,omitempty"`
+type HatcheryGetResponse struct {
+	Hatchery
+	ConsumerExpiration string `json:"consumer_expiration,omitempty" db:"-" cli:"consumer_expiration,omitempty"`
+	Token              string `json:"token,omitempty" db:"-" cli:"token,omitempty"`
 }
 
 type HatcheryMetrics struct {

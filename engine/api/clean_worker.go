@@ -1,4 +1,4 @@
-package worker_v2
+package api
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/api/authentication"
+	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
@@ -29,7 +31,7 @@ func DisabledDeadWorkers(ctx context.Context, store cache.Store, DBFunc func() *
 			}
 			return
 		case <-tickDisable.C:
-			workers, err := LoadDeadWorkers(ctx, db, workerHeartbeatTimeout, []string{sdk.StatusWaiting, sdk.StatusBuilding})
+			workers, err := worker_v2.LoadDeadWorkers(ctx, db, workerHeartbeatTimeout, []string{sdk.StatusWaiting, sdk.StatusBuilding})
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				continue
@@ -56,14 +58,14 @@ func DeleteDisabledWorkers(ctx context.Context, store cache.Store, DBFunc func()
 			}
 			return
 		case <-tickDelete.C:
-			workers, err := LoadWorkerByStatus(ctx, db, sdk.StatusDisabled)
+			workers, err := worker_v2.LoadWorkerByStatus(ctx, db, sdk.StatusDisabled)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				continue
 			}
 			for i := range workers {
 				if err := DeleteDisabledWorker(ctx, store, db, workers[i].ID, workers[i].Name); err != nil {
-					log.ErrorWithStackTrace(ctx, err)
+					log.Error(ctx, "unable to delete disable worker %s: %v", workers[i].ID, err)
 					continue
 				}
 			}
@@ -91,9 +93,9 @@ func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap
 		_ = store.Unlock(lockKey)
 	}()
 
-	worker, err := LoadByID(ctx, db, workerID)
+	worker, err := worker_v2.LoadByID(ctx, db, workerID)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return err
+		return sdk.WrapError(err, "unable to load worker %s", workerID)
 	}
 	if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return nil
@@ -105,7 +107,12 @@ func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap
 	}
 	defer tx.Rollback() // nolint
 
-	if err := deleteWorker(ctx, tx, *worker); err != nil {
+	// remove consumer
+	if err := authentication.DeleteConsumerByID(tx, worker.ConsumerID); err != nil {
+		return sdk.WrapError(err, "unable to delete worker consumer")
+	}
+
+	if err := worker_v2.DeleteWorker(ctx, tx, *worker); err != nil {
 		return err
 	}
 
@@ -135,7 +142,7 @@ func DisableDeadWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, w
 		_ = store.Unlock(lockKey)
 	}()
 
-	worker, err := LoadByID(ctx, db, workerID)
+	worker, err := worker_v2.LoadByID(ctx, db, workerID)
 	if err != nil {
 		return err
 	}
@@ -157,7 +164,7 @@ func DisableDeadWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, w
 
 	log.Debug(ctx, "Disable worker %s[%s] LastBeat:%v status:%s", worker.Name, worker.ID, worker.LastBeat, worker.Status)
 	worker.Status = sdk.StatusDisabled
-	if err := Update(ctx, tx, worker); err != nil {
+	if err := worker_v2.Update(ctx, tx, worker); err != nil {
 		return err
 	}
 

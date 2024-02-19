@@ -137,7 +137,7 @@ func (api *API) authOptionalMiddleware(ctx context.Context, w http.ResponseWrite
 
 func (api *API) handleAuthMiddlewareHatcheryConsumer(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig, consumerID string) (context.Context, error) {
 	// Load auth consumer for current session in database with authentified user and contacts
-	consumer, err := authentication.LoadHatcheryConsumerByID(ctx, api.mustDB(), consumerID)
+	consumer, err := authentication.LoadHatcheryConsumerByAuthConsumerID(ctx, api.mustDB(), consumerID)
 	if err != nil {
 		return ctx, sdk.NewErrorWithStack(err, sdk.ErrUnauthorized)
 	}

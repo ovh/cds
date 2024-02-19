@@ -77,7 +77,7 @@ func Update(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, w *sdk.V2Worke
 	return nil
 }
 
-func deleteWorker(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, w sdk.V2Worker) error {
+func DeleteWorker(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, w sdk.V2Worker) error {
 	ctx, next := telemetry.Span(ctx, "worker.deleteWorker")
 	defer next()
 	dbWkr := &dbWorker{V2Worker: w}

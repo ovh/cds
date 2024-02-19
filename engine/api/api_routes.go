@@ -442,6 +442,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/hatchery/ws", nil, r.GETv2(api.getHatcheryWebsocketHandler))
 	r.Handle("/v2/hatchery/heartbeat", nil, r.POSTv2(api.postHatcheryHeartbeatHandler))
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}", nil, r.GETv2(api.getHatcheryHandler), r.DELETEv2(api.deleteHatcheryHandler))
+	r.Handle("/v2/hatchery/{hatcheryIdentifier}/regen", nil, r.POSTv2(api.postHatcheryRegenTokenHandler))
 
 	r.Handle("/v2/hooks/workflows", nil, r.POSTv2(api.postRetrieveWorkflowToTriggerHandler))
 	r.Handle("/v2/hooks/event/signKey", nil, r.POSTv2(api.postHookEventRetrieveSignKeyHandler))

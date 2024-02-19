@@ -217,10 +217,11 @@ type RegionClient interface {
 }
 
 type HatcheryClient interface {
-	HatcheryAdd(ctx context.Context, h *sdk.Hatchery) error
-	HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.Hatchery, error)
-	HatcheryList(ctx context.Context) ([]sdk.Hatchery, error)
+	HatcheryAdd(ctx context.Context, h *sdk.Hatchery) (*sdk.HatcheryGetResponse, error)
+	HatcheryGet(ctx context.Context, hatcheryIdentifier string) (sdk.HatcheryGetResponse, error)
+	HatcheryList(ctx context.Context) ([]sdk.HatcheryGetResponse, error)
 	HatcheryDelete(ctx context.Context, hatcheryIdentifier string) error
+	HatcheryRegenToken(ctx context.Context, hatcheryIdentifier string) (*sdk.HatcheryGetResponse, error)
 }
 
 type HatcheryServiceClient interface {
