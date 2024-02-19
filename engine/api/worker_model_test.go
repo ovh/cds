@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 	"time"
 
@@ -91,6 +92,41 @@ func Test_postWorkerModelAsAdmin(t *testing.T) {
 	assert.Equal(t, groupShared.ID, newModel.GroupID)
 	assert.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 	assert.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
+}
+
+func Test_postWorkerModelAsAdminWithWhiteList(t *testing.T) {
+	Test_DeleteAllWorkerModels(t)
+
+	api, db, _ := newTestAPI(t)
+	r := regexp.MustCompile("notbuildpack.*")
+	api.WorkerModelDockerImageWhiteList = append(api.WorkerModelDockerImageWhiteList, *r)
+
+	_, jwtRaw := assets.InsertAdminUser(t, db)
+
+	groupShared, err := group.LoadByName(context.TODO(), api.mustDB(), sdk.SharedInfraGroupName)
+	require.NoError(t, err)
+
+	model := sdk.Model{
+		Name:    "Test1",
+		GroupID: groupShared.ID,
+		Type:    sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Shell: "sh -c",
+			Cmd:   "worker --api={{.API}}",
+			Envs: map[string]string{
+				"CDS_TEST": "THIS IS A TEST",
+			},
+		},
+	}
+
+	// Send POST model request
+	uri := api.Router.GetRoute("POST", api.postWorkerModelHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, "POST", uri, model)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 400, w.Code)
 }
 
 func Test_addWorkerModelWithPrivateRegistryAsAdmin(t *testing.T) {

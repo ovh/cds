@@ -30,6 +30,20 @@ func (api *API) postWorkerModelHandler() service.Handler {
 			return err
 		}
 
+		// Verify the image if any whitelist is setup
+		if data.ModelDocker.Image != "" && len(api.WorkerModelDockerImageWhiteList) > 0 {
+			var allowedImage = false
+			for _, r := range api.WorkerModelDockerImageWhiteList { // At least one regexp must match
+				if r.MatchString(data.ModelDocker.Image) {
+					allowedImage = true
+					break
+				}
+			}
+			if !allowedImage {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
+		}
+
 		// check that given group id exits and that the user is admin of the group
 		grp, err := group.LoadByID(ctx, api.mustDB(), data.GroupID, group.LoadOptions.WithMembers)
 		if err != nil {
@@ -105,6 +119,20 @@ func (api *API) putWorkerModelHandler() service.Handler {
 		}
 		if err := data.IsValid(); err != nil {
 			return err
+		}
+
+		// Verify the image if any whitelist is setup
+		if data.ModelDocker.Image != "" && len(api.WorkerModelDockerImageWhiteList) > 0 {
+			var allowedImage = false
+			for _, r := range api.WorkerModelDockerImageWhiteList { // At least one regexp must match
+				if r.MatchString(data.ModelDocker.Image) {
+					allowedImage = true
+					break
+				}
+			}
+			if !allowedImage {
+				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
 		}
 
 		if old.GroupID != data.GroupID {

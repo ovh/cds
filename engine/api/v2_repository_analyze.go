@@ -6,11 +6,13 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -18,6 +20,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -990,13 +993,13 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		switch {
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
-			es, err = sdk.ReadEntityFile(dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
+			es, err = ReadEntityFile(api, dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
 		case strings.HasPrefix(filePath, ".cds/actions/"):
 			var actions []sdk.V2Action
-			es, err = sdk.ReadEntityFile(dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis)
+			es, err = ReadEntityFile(api, dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis)
 		case strings.HasPrefix(filePath, ".cds/workflows/"):
 			var w []sdk.V2Workflow
-			es, err = sdk.ReadEntityFile(dir, fileName, content, &w, sdk.EntityTypeWorkflow, *analysis)
+			es, err = ReadEntityFile(api, dir, fileName, content, &w, sdk.EntityTypeWorkflow, *analysis)
 		default:
 			continue
 		}
@@ -1011,6 +1014,88 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 	}
 	return entities, nil
 
+}
+
+func Lint[T sdk.Lintable](api *API, o T) []error {
+	// 1. Static lint
+	if err := o.Lint(); err != nil {
+		return err
+	}
+
+	// 2. Lint againt some API specific rules
+
+	var err []error
+	switch x := any(o).(type) {
+	case sdk.V2WorkerModel:
+		// 2.1 Validate docker image against the whitelist from API configuration
+		var dockerSpec sdk.V2WorkerModelDockerSpec
+		if err := json.Unmarshal(x.Spec, &dockerSpec); err != nil {
+			// Check only docker spec, so we skipp other errors
+			break
+		}
+		// Verify the image if any whitelist is setup
+		if dockerSpec.Image != "" && len(api.WorkerModelDockerImageWhiteList) > 0 {
+			var allowedImage = false
+			for _, r := range api.WorkerModelDockerImageWhiteList { // At least one regexp must match
+				if r.MatchString(dockerSpec.Image) {
+					allowedImage = true
+					break
+				}
+			}
+			if !allowedImage {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "image %q is not allowed", dockerSpec.Image))
+			}
+		}
+	}
+
+	if len(err) > 0 {
+		return err
+	}
+
+	return nil
+}
+
+func ReadEntityFile[T sdk.Lintable](api *API, directory, fileName string, content []byte, out *[]T, t string, analysis sdk.ProjectRepositoryAnalysis) ([]sdk.EntityWithObject, []error) {
+	namePattern, err := regexp.Compile(sdk.EntityNamePattern)
+	if err != nil {
+		return nil, []error{sdk.WrapError(err, "unable to compile regexp %s", namePattern)}
+	}
+
+	if err := yaml.UnmarshalMultipleDocuments(content, out); err != nil {
+		return nil, []error{sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read %s%s: %v", directory, fileName, err)}
+	}
+	var entities []sdk.EntityWithObject
+	for _, o := range *out {
+		if err := o.Lint(); err != nil {
+			return nil, err
+		}
+		eo := sdk.EntityWithObject{
+			Entity: sdk.Entity{
+				Data:                string(content),
+				Name:                o.GetName(),
+				Ref:                 analysis.Ref,
+				Commit:              analysis.Commit,
+				ProjectKey:          analysis.ProjectKey,
+				ProjectRepositoryID: analysis.ProjectRepositoryID,
+				Type:                t,
+				FilePath:            directory + fileName,
+			},
+		}
+		if !namePattern.MatchString(o.GetName()) {
+			return nil, []error{sdk.WrapError(sdk.ErrInvalidData, "name %s doesn't match %s", o.GetName(), sdk.EntityNamePattern)}
+		}
+		switch t {
+		case sdk.EntityTypeWorkerModel:
+			eo.Model = any(o).(sdk.V2WorkerModel)
+		case sdk.EntityTypeAction:
+			eo.Action = any(o).(sdk.V2Action)
+		case sdk.EntityTypeWorkflow:
+			eo.Workflow = any(o).(sdk.V2Workflow)
+		}
+
+		entities = append(entities, eo)
+	}
+	return entities, nil
 }
 
 // analyzeCommitSignatureThroughVcsAPI analyzes commit.

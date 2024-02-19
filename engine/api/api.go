@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime/pprof"
 	"strings"
 	"time"
@@ -63,6 +64,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 // Configuration is the configuration structure for CDS API
@@ -234,13 +236,14 @@ type Configuration struct {
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
 	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
 	Workflow struct {
-		MaxRuns                   int64            `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
-		DefaultRetentionPolicy    string           `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
-		DisablePurgeDeletion      bool             `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
-		TemplateBulkRunnerCount   int64            `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
-		JobDefaultRegion          string           `toml:"jobDefaultRegion" comment:"The default region where the job will be sent if no one is defined on a job" json:"jobDefaultRegion"`
-		JobDefaultBookDelay       int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue (in seconds)" json:"jobDefaultBookDelay" default:"120"`
-		CustomServiceJobBookDelay map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery (in seconds)" json:"customServiceJobBookDelay" commented:"true"`
+		MaxRuns                         int64            `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
+		DefaultRetentionPolicy          string           `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
+		DisablePurgeDeletion            bool             `toml:"disablePurgeDeletion" comment:"Allow you to disable the deletion part of the purge. Workflow run will only be marked as delete" json:"disablePurgeDeletion" default:"false"`
+		TemplateBulkRunnerCount         int64            `toml:"templateBulkRunnerCount" comment:"The count of runner that will execute the workflow template bulk operation." json:"templateBulkRunnerCount" default:"10"`
+		JobDefaultRegion                string           `toml:"jobDefaultRegion" comment:"The default region where the job will be sent if no one is defined on a job" json:"jobDefaultRegion"`
+		JobDefaultBookDelay             int64            `toml:"jobDefaultBookDelay" comment:"The default book delay for a job in queue (in seconds)" json:"jobDefaultBookDelay" default:"120"`
+		CustomServiceJobBookDelay       map[string]int64 `toml:"customServiceJobBookDelay" comment:"Set custom job book delay for given CDS Hatchery (in seconds)" json:"customServiceJobBookDelay" commented:"true"`
+		WorkerModelDockerImageWhiteList []string         `toml:"workerModelDockerImageWhiteList" comment:"White list for docker image worker model " json:"workerModelDockerImageWhiteList" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	WorkflowV2 struct {
 		JobSchedulingTimeout int64 `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
@@ -332,10 +335,11 @@ type API struct {
 		RunResultSynchronized      *stats.Int64Measure
 		RunResultSynchronizedError *stats.Int64Measure
 	}
-	workflowRunCraftChan   chan string
-	workflowRunTriggerChan chan sdk.V2WorkflowRunEnqueue
-	AuthenticationDrivers  map[sdk.AuthConsumerType]sdk.AuthDriver
-	LinkDrivers            map[sdk.AuthConsumerType]link.LinkDriver
+	workflowRunCraftChan            chan string
+	workflowRunTriggerChan          chan sdk.V2WorkflowRunEnqueue
+	AuthenticationDrivers           map[sdk.AuthConsumerType]sdk.AuthDriver
+	LinkDrivers                     map[sdk.AuthConsumerType]link.LinkDriver
+	WorkerModelDockerImageWhiteList []regexp.Regexp
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -486,6 +490,9 @@ type StartupConfigConsumer struct {
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
 
+	// Skip this verbose log
+	log.Skip(cdslog.Handler, "api.(*API).postServiceHearbeatHandler-fm.(*API).postServiceHearbeatHandler")
+
 	log.Info(ctx, "Starting CDS API Server %s", sdk.VERSION)
 
 	a.StartupTime = time.Now()
@@ -612,6 +619,17 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.TTL)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to cache store")
+	}
+
+	// Manage worker model docker image whitelist
+	if len(a.Config.Workflow.WorkerModelDockerImageWhiteList) > 0 {
+		for _, s := range a.Config.Workflow.WorkerModelDockerImageWhiteList {
+			r, err := regexp.Compile(s)
+			if err != nil {
+				return sdk.WrapError(err, "wront WorkerModelDockerImageWhiteList regexp %q", s)
+			}
+			a.WorkerModelDockerImageWhiteList = append(a.WorkerModelDockerImageWhiteList, *r)
+		}
 	}
 
 	a.GoRoutines = sdk.NewGoRoutines(ctx)

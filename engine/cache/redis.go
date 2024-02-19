@@ -63,7 +63,7 @@ func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error)
 
 	pong, err := client.Ping().Result()
 	if err != nil {
-		return nil, sdk.WithStack(err)
+		return nil, sdk.WrapError(err, "unable to connect to redis %s:%d", host, dbindex)
 	}
 	if pong != "PONG" {
 		return nil, fmt.Errorf("cannot ping Redis on %s", host)
