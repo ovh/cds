@@ -18,18 +18,23 @@
   }
 
   a {
-    padding: 10px 0;
-    height: 44px;
-    line-height: 44px;
     color: inherit;
-    border-left: 3px solid transparent;
-    padding-right: 3px;
+
+    [nz-button] {
+      padding: 10px 0;
+      height: 44px;
+      line-height: 44px;
+      border-left: 3px solid transparent;
+      padding-right: 3px;
+    }
 
     &.active {
-      border-left: 3px solid $polar_grey_1;
+      [nz-button] {
+        border-left: 3px solid $polar_grey_1;
 
-      :host-context(.night) & {
-        border-left: 3px solid $greyBackground;
+        :host-context(.night) & {
+          border-left: 3px solid $greyBackground;
+        }
       }
     }
   }

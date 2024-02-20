@@ -261,7 +261,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 	}
 
 	confirmSaveSearch(): void {
-		this._store.dispatch(new actionPreferences.SaveWorkflowRunSearch({ name: this.searchName, value: this.filterText }));
+		this._store.dispatch(new actionPreferences.SaveProjectWorkflowRunFilter({ projectKey: this.project.key, name: this.searchName, value: this.filterText }));
 		this.searchName = '';
 	}
 

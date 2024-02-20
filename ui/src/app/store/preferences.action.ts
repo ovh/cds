@@ -13,12 +13,12 @@ export class SetTheme {
     constructor(public payload: { theme: string }) { }
 }
 
-export class SaveWorkflowRunSearch {
-    static readonly type = '[Preferences] Save workflow run search';
-    constructor(public payload: { name: string, value: string }) { }
+export class SaveProjectWorkflowRunFilter {
+    static readonly type = '[Preferences] Save project\'s workflow run filter';
+    constructor(public payload: { projectKey: string, name: string, value: string }) { }
 }
 
-export class DeleteWorkflowRunSearch {
-    static readonly type = '[Preferences] Delete workflow run search';
-    constructor(public payload: { name: string }) { }
+export class DeleteProjectWorkflowRunFilter {
+    static readonly type = '[Preferences] Delete project\'s workflow run filter';
+    constructor(public payload: { projectKey: string, name: string }) { }
 }

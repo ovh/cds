@@ -19,6 +19,7 @@ import { PreferencesState } from './preferences.state';
 import { ProjectState } from './project.state';
 import { QueueState } from './queue.state';
 import { WorkflowState } from './workflow.state';
+import { NavigationState } from './navigation.state';
 
 @NgModule({
     imports: [
@@ -36,6 +37,7 @@ import { WorkflowState } from './workflow.state';
             EventState,
             FeatureState,
             HelpState,
+            NavigationState,
             PipelinesState,
             PreferencesState,
             ProjectState,

@@ -8,10 +8,12 @@ export class PreferencesStateModel {
         sizes: { [key: string]: number };
     };
     theme: string;
-    searches: Array<{
-        name: string;
-        value: string;
-    }>;
+    projectRunFilters: {
+        [projectKey: string]: Array<{
+            name: string;
+            value: string;
+        }>
+    };
 }
 
 @State<PreferencesStateModel>({
@@ -22,7 +24,7 @@ export class PreferencesStateModel {
             sizes: {}
         },
         theme: 'light',
-        searches: []
+        projectRunFilters: {}
     }
 })
 @Injectable()
@@ -48,9 +50,13 @@ export class PreferencesState {
         return state.panel.resizing;
     }
 
-    @Selector()
-    static searches(state: PreferencesStateModel) {
-        return state.searches;
+    static selectProjectRunFilters(projectKey: string) {
+        return createSelector(
+            [PreferencesState],
+            (state: PreferencesStateModel) => {
+                return state.projectRunFilters[projectKey] ?? [];
+            }
+        );
     }
 
     @Action(actionPreferences.SetPanelResize)
@@ -79,26 +85,33 @@ export class PreferencesState {
         });
     }
 
-    @Action(actionPreferences.SaveWorkflowRunSearch)
-    saveWorkflowRunSearch(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveWorkflowRunSearch) {
+    @Action(actionPreferences.SaveProjectWorkflowRunFilter)
+    saveProjectWorkflowRunFilter(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveProjectWorkflowRunFilter) {
         const state = ctx.getState();
-        let searches = (state.searches ?? []).filter(s => s.name !== action.payload.name);
+        let projects = { ...state.projectRunFilters };
+        if (!projects[action.payload.projectKey]) { projects[action.payload.projectKey] = []; }
+        let searches = (projects[action.payload.projectKey] ?? []).filter(s => s.name !== action.payload.name);
         searches.push({
             name: action.payload.name,
             value: action.payload.value
         });
+        projects[action.payload.projectKey] = searches;
         ctx.setState({
             ...state,
-            searches
+            projectRunFilters: projects
         });
     }
 
-    @Action(actionPreferences.DeleteWorkflowRunSearch)
-    deleteWorkflowRunSearch(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.DeleteWorkflowRunSearch) {
+    @Action(actionPreferences.DeleteProjectWorkflowRunFilter)
+    deleteWorkflowRunSearch(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.DeleteProjectWorkflowRunFilter) {
         const state = ctx.getState();
+        let projects = { ...state.projectRunFilters };
+        if (projects[action.payload.projectKey]) {
+            projects[action.payload.projectKey] = projects[action.payload.projectKey].filter(s => s.name !== action.payload.name);
+        }
         ctx.setState({
             ...state,
-            searches: (state.searches ?? []).filter(s => s.name !== action.payload.name)
+            projectRunFilters: projects
         });
     }
 
