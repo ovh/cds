@@ -452,12 +452,12 @@ func handleJobV2(_ context.Context, h Interface, runJob sdk.V2WorkflowRunJob, ca
 	if hWithModels != nil {
 		workerModel, err := getWorkerModelV2(ctx, hWithModels, workerRequest, runJob.Job.RunsOn)
 		if err != nil {
-			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, runJob.Region, runJob.ID, sdk.V2SendJobRunInfo{
+			if errInfo := h.CDSClientV2().V2QueuePushJobInfo(ctx, runJob.Region, runJob.ID, sdk.V2SendJobRunInfo{
 				Time:    time.Now(),
 				Level:   sdk.WorkflowRunInfoLevelError,
 				Message: fmt.Sprintf("unable to get worker model %s, retrying: %v", runJob.Job.RunsOn, err),
-			}); err != nil {
-				log.ErrorWithStackTrace(ctx, err)
+			}); errInfo != nil {
+				log.ErrorWithStackTrace(ctx, errInfo)
 			}
 			endTrace(fmt.Sprintf("%v", err.Error()), runJob.ID)
 			return err
