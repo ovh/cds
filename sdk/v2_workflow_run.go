@@ -505,7 +505,7 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2
 
 func (r *V2WorkflowRunResult) Name() string {
 	switch r.Type {
-	case V2WorkflowRunResultTypeGeneric:
+	case V2WorkflowRunResultTypeGeneric, V2WorkflowRunResultTypeCoverage:
 		detail, err := r.GetDetailAsV2WorkflowRunResultGenericDetail()
 		if err == nil {
 			return string(r.Type) + ":" + detail.Name

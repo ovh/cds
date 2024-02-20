@@ -72,12 +72,19 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		return err
 	}
 
-	response, err := grpcplugins.GetV2RunResults(ctx, &actPlugin.Common, workerruntime.V2FilterRunResult{Pattern: name, Type: sdk.V2WorkflowRunResultTypeGeneric, WithClearIntegration: true})
+	response, err := grpcplugins.GetV2RunResults(ctx, &actPlugin.Common, workerruntime.V2FilterRunResult{Pattern: name, Type: []string{sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric}, WithClearIntegration: true})
 	if err != nil {
 		return err
 	}
 
-	if len(response.RunResults) == 0 {
+	filteredRunResults := make([]sdk.V2WorkflowRunResult, 0)
+	for _, r := range response.RunResults {
+		if r.Type == sdk.V2WorkflowRunResultTypeGeneric || r.Type == sdk.V2WorkflowRunResultTypeCoverage {
+			filteredRunResults = append(filteredRunResults, r)
+		}
+	}
+
+	if len(filteredRunResults) == 0 {
 		grpcplugins.Log("Unable to find any artifacts for the associated workflow")
 	}
 
@@ -86,7 +93,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 
 	grpcplugins.Logf("Total number of files that will be downloaded: %d", len(response.RunResults))
 
-	for _, r := range response.RunResults {
+	for _, r := range filteredRunResults {
 		t0 := time.Now()
 
 		switch {

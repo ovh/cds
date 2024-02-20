@@ -18,3 +18,7 @@ inputs:
         error: Fail the action with an error message
         ignore: Do not output any warnings or errors, the action does not fail
     default: 'warn'
+  type:
+    type: string
+    description: Type a run result to upload. It can be generic or coverage
+    default: generic  
