@@ -1,6 +1,6 @@
 import { QuickPickItem, window } from "vscode";
-import { Context } from "./lib/cds/models";
-import { CDS } from "./lib/cds";
+import { Context } from "../lib/cds/models";
+import { CDS } from "../lib/cds";
 
 class ContextPickItem implements QuickPickItem {
     label: string;

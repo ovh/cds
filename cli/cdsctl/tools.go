@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -44,6 +46,13 @@ type yamlSchemaPath struct {
 	Environment string
 }
 
+type yamlSchemaPathV2 struct {
+	Workflow    string
+	WorkerModel string
+	Action      string
+	Job         string
+}
+
 type yamlSchemaInstaller interface {
 	Install(schemas yamlSchemaPath) error
 }
@@ -72,7 +81,27 @@ func (y yamlSchemaVSCodeInstaller) Install(schemas yamlSchemaPath) error {
 }
 
 func toolsYamlSchemaRun(v cli.Values) error {
-	res, err := client.UserGetSchema(context.Background())
+	v1, err := client.UserGetSchema(context.Background())
+	if err != nil {
+		return err
+	}
+
+	v2Workflow, err := client.UserGetSchemaV2(context.Background(), sdk.EntityTypeWorkflow)
+	if err != nil {
+		return err
+	}
+
+	v2WorkerModel, err := client.UserGetSchemaV2(context.Background(), sdk.EntityTypeWorkerModel)
+	if err != nil {
+		return err
+	}
+
+	v2Action, err := client.UserGetSchemaV2(context.Background(), sdk.EntityTypeAction)
+	if err != nil {
+		return err
+	}
+
+	v2Job, err := client.UserGetSchemaV2(context.Background(), sdk.EntityTypeJob)
 	if err != nil {
 		return err
 	}
@@ -99,31 +128,58 @@ func toolsYamlSchemaRun(v cli.Values) error {
 	}
 
 	paths := yamlSchemaPath{
-		Workflow:    fmt.Sprintf("%s/workflow.schema.json", targetFolder),
-		Pipeline:    fmt.Sprintf("%s/pipeline.schema.json", targetFolder),
-		Application: fmt.Sprintf("%s/application.schema.json", targetFolder),
-		Environment: fmt.Sprintf("%s/environment.schema.json", targetFolder),
+		Workflow:    path.Join(targetFolder, "workflow.schema.json"),
+		Pipeline:    path.Join(targetFolder, "pipeline.schema.json"),
+		Application: path.Join(targetFolder, "application.schema.json"),
+		Environment: path.Join(targetFolder, "environment.schema.json"),
 	}
 
-	if err := os.WriteFile(paths.Workflow, []byte(res.Workflow), 0775); err != nil {
+	pathsV2 := yamlSchemaPathV2{
+		Workflow:    path.Join(targetFolder, "workflow.v2.schema.json"),
+		WorkerModel: path.Join(targetFolder, "worker-model.v2.schema.json"),
+		Action:      path.Join(targetFolder, "action.v2.schema.json"),
+		Job:         path.Join(targetFolder, "job.v2.schema.json"),
+	}
+
+	if err := os.WriteFile(paths.Workflow, []byte(v1.Workflow), 0644); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Workflow)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Workflow)
 
-	if err := os.WriteFile(paths.Pipeline, []byte(res.Pipeline), 0775); err != nil {
+	if err := os.WriteFile(paths.Pipeline, []byte(v1.Pipeline), 0644); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Pipeline)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Pipeline)
 
-	if err := os.WriteFile(paths.Application, []byte(res.Application), 0775); err != nil {
+	if err := os.WriteFile(paths.Application, []byte(v1.Application), 0644); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Application)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Application)
 
-	if err := os.WriteFile(paths.Environment, []byte(res.Environment), 0775); err != nil {
+	if err := os.WriteFile(paths.Environment, []byte(v1.Environment), 0644); err != nil {
 		return cli.WrapError(err, "Cannot write file at %s", paths.Environment)
 	}
 	fmt.Printf("File %s successfully written.\n", paths.Environment)
+
+	if err := os.WriteFile(pathsV2.Workflow, v2Workflow, 0644); err != nil {
+		return cli.WrapError(err, "Cannot write file at %s", pathsV2.Workflow)
+	}
+	fmt.Printf("File %s successfully written.\n", pathsV2.Workflow)
+
+	if err := os.WriteFile(pathsV2.WorkerModel, v2WorkerModel, 0644); err != nil {
+		return cli.WrapError(err, "Cannot write file at %s", pathsV2.WorkerModel)
+	}
+	fmt.Printf("File %s successfully written.\n", pathsV2.WorkerModel)
+
+	if err := os.WriteFile(pathsV2.Action, v2Action, 0644); err != nil {
+		return cli.WrapError(err, "Cannot write file at %s", pathsV2.Action)
+	}
+	fmt.Printf("File %s successfully written.\n", pathsV2.Action)
+
+	if err := os.WriteFile(pathsV2.Job, v2Job, 0644); err != nil {
+		return cli.WrapError(err, "Cannot write file at %s", pathsV2.Job)
+	}
+	fmt.Printf("File %s successfully written.\n", pathsV2.Job)
 
 	paths.Workflow = "file://" + paths.Workflow
 	paths.Pipeline = "file://" + paths.Pipeline
