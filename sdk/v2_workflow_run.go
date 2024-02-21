@@ -546,6 +546,7 @@ const (
 	V2WorkflowRunResultStatusCompleted = "COMPLETED"
 	V2WorkflowRunResultStatusPromoted  = "PROMOTED"
 	V2WorkflowRunResultStatusReleased  = "RELEASED"
+	V2WorkflowRunResultStatusCanceled  = "CANCELED"
 )
 
 type V2WorkflowRunResultArtifactManagerMetadata map[string]string

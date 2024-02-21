@@ -58,9 +58,13 @@ func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	tags = strings.Replace(tags, ";", ",", -1) // If tags are separated by <semicolon>
 	tagSlice := strings.Split(tags, ",")
 
+	if !strings.ContainsRune(image, ':') { // Latest is the default tag
+		image = image + ":latest"
+	}
+
 	if err := actPlugin.perform(ctx, image, tagSlice, registry, auth); err != nil {
 		res.Status = sdk.StatusFail
-		res.Status = err.Error()
+		res.Details = err.Error()
 		return res, err
 	}
 

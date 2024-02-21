@@ -45,7 +45,7 @@ func (p *rtPromotePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) 
 
 	if err := p.perform(ctx, artifacts, maturity, properties); err != nil {
 		res.Status = sdk.StatusFail
-		res.Status = err.Error()
+		res.Details = err.Error()
 		return res, err
 	}
 

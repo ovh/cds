@@ -127,6 +127,19 @@ func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runID string, id st
 	return &result.V2WorkflowRunResult, nil
 }
 
+func LoadAndLockRunResultByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.V2WorkflowRunResult, error) {
+	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where id = $1 for update skip locked`).Args(id)
+	var result dbV2WorkflowRunResult
+	found, err := gorpmapping.Get(ctx, db, query, &result)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to load run result %v", id)
+	}
+	if !found {
+		return nil, nil
+	}
+	return &result.V2WorkflowRunResult, nil
+}
+
 func LoadRunResultsByRunJobID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunResult, error) {
 	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where workflow_run_job_id = $1`).Args(runJobID)
 	var result []dbV2WorkflowRunResult
@@ -169,6 +182,21 @@ func loadRunResultsByRunIDs(ctx context.Context, db gorp.SqlExecutor, runIDs ...
 		mapRes[r.WorkflowRunID] = res
 	}
 	return mapRes, nil
+}
+
+func LoadAbandonnedRunResultsID(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {
+	query := `
+  	select v2_workflow_run_result.id 
+	from v2_workflow_run_result 
+	join v2_workflow_run_job on v2_workflow_run_job.id = v2_workflow_run_result.workflow_run_job_id
+	where v2_workflow_run_job.status IN ('Fail', 'Stopped')
+	and v2_workflow_run_result.status = 'PENDING'
+	order by v2_workflow_run_result.issued_at ASC`
+	var results pq.StringArray
+	if _, err := db.Select(&results, query); err != nil {
+		return nil, sdk.WrapError(err, "unable to load abandonned run results")
+	}
+	return results, nil
 }
 
 func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {

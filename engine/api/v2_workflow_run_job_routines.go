@@ -18,6 +18,58 @@ import (
 
 const jobLockKey = "jobs:lock"
 
+func (api *API) CancelAbandonnedRunResults(ctx context.Context) {
+	tick := time.NewTicker(5 * time.Minute)
+	for {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() != nil {
+				log.Error(ctx, "%v", ctx.Err())
+			}
+			return
+		case <-tick.C:
+			ids, err := workflow_v2.LoadAbandonnedRunResultsID(ctx, api.mustDB())
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				continue
+			}
+			for _, id := range ids {
+				if err := api.cancelAbandonnedRunResult(ctx, api.mustDB(), id); err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
+			}
+		}
+	}
+}
+
+func (api *API) cancelAbandonnedRunResult(ctx context.Context, db *gorp.DbMap, id string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+
+	defer tx.Rollback()
+
+	runResult, err := workflow_v2.LoadAndLockRunResultByID(ctx, tx, id)
+	if err != nil {
+		return err
+	}
+
+	if runResult == nil {
+		log.Debug(ctx, "RunResult %s skipped", id)
+		return nil
+	}
+
+	log.Debug(ctx, "cancelAbandonnedRunResult: %s", id)
+
+	runResult.Status = sdk.V2WorkflowRunResultStatusCanceled
+	if err := workflow_v2.UpdateRunResult(ctx, tx, runResult); err != nil {
+		return err
+	}
+
+	return sdk.WithStack(tx.Commit())
+}
+
 func (api *API) StopDeadJobs(ctx context.Context) {
 	tickStopDeadJobs := time.NewTicker(1 * time.Minute)
 	for {
