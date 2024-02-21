@@ -1,6 +1,6 @@
 import { QuickPickItem, window } from "vscode";
-import { Context } from "../lib/cds/models";
-import { CDS } from "../lib/cds";
+import { Context } from "../cds/models";
+import { CDS } from "../cds";
 
 class ContextPickItem implements QuickPickItem {
     label: string;
@@ -12,13 +12,12 @@ class ContextPickItem implements QuickPickItem {
     }
 }
 
-export async function selectContext(): Promise<Context> {
-    return new Promise<Context>(async (resolve, reject) => {
-        const contexts = await CDS.getAvailableContexts();
+export function selectContext(): Promise<Context> {
+    return new Promise<Context>((resolve, reject) => {
         const input = window.createQuickPick<ContextPickItem>();
 
+        input.busy = true;
         input.placeholder = 'Select a context';
-        input.items = contexts.map(c => new ContextPickItem(c));
 
         input.onDidChangeSelection(context => {
             input.hide();
@@ -26,6 +25,11 @@ export async function selectContext(): Promise<Context> {
             if (context) {
                 resolve(context[0].context);
             }
+        });
+
+        CDS.getAvailableContexts().then(contexts => {
+            input.items = contexts.map(c => new ContextPickItem(c));
+            input.busy = false;
         });
 
         input.show();

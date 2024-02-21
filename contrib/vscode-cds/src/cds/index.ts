@@ -4,9 +4,14 @@ import { window, workspace } from "vscode";
 import { Journal } from "../utils/journal";
 import { isActiveEditorValid } from "../utils/editor";
 import { Property } from "../utils/property";
-import { Context } from "./models";
+import { Context, Project } from "./models";
+import { getGitLocalConfig, getGitRepositoryPath, setGitLocalConfig } from "../utils/git";
+import { Cache } from "../utils/cache";
 
 const defaultConfigFile = '~/.cdsrc';
+
+const GIT_CONFIG_SECTION = "cds";
+const GIT_CONFIG_PROJECT = "project";
 
 export class CDS {
     static getConfigFile(): string {
@@ -37,6 +42,73 @@ export class CDS {
         }
 
         return foundContext[0];
+    }
+
+
+    static async getProjects(): Promise<Project[]> {
+        const context = await CDS.getCurrentContext();
+
+        if (context) {
+            const cachedProjects = Cache.get<Project[]>(`${context.context}.projects`);
+
+            if (cachedProjects) {
+                return cachedProjects;
+            }
+        }
+
+        const projectsJson = (await CDS.getInstance().runCtl("project", "list", "--format", "json"));
+        const projects = JSON.parse(projectsJson);
+
+        if (context) {
+            Cache.set(`${context.context}.projects`, projects, Cache.TTL_HOUR * 24);
+        }
+
+        return projects;
+    }
+
+    static async getCurrentProject(): Promise<Project | null> {
+        if (!window.activeTextEditor || window.activeTextEditor.document.uri.scheme !== 'file') {
+            return null;
+        }
+
+        try {
+            const repository = await getGitRepositoryPath(window.activeTextEditor.document.fileName);
+            const projectKey = await getGitLocalConfig(repository, GIT_CONFIG_SECTION, "project");
+
+            if (!projectKey) {
+                return null;
+            }
+
+            const foundProject = (await CDS.getProjects()).filter(p => p.key === projectKey)[0] ?? null;
+
+            if (!foundProject) {
+                return {
+                    key: projectKey,
+                    name: projectKey,
+                    description: '',
+                    favorite: 'false',
+                    found: false,
+                };
+            }
+
+            return {
+                ...foundProject,
+                found: true,
+            }
+        } catch (e) {
+            return null;
+        }
+    }
+
+    static async setCurrentProject(project: Project): Promise<void> {
+        if (!window.activeTextEditor || window.activeTextEditor.document.uri.scheme !== 'file') {
+            return;
+        }
+
+        if (project) {
+            const repository = await getGitRepositoryPath(window.activeTextEditor.document.fileName);
+            await setGitLocalConfig(repository, GIT_CONFIG_SECTION, GIT_CONFIG_PROJECT, project.key);
+        }
     }
 
     static async downloadSchemas(): Promise<void> {
