@@ -30,6 +30,7 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 	}
 
 	// Create the run result on API side
+	log.Info(ctx, "creating run result %s", runResult.Name())
 	if err := wk.clientV2.V2QueueJobRunResultCreate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
 		return nil, sdk.NewError(sdk.ErrUnknownError, err)
 	}
@@ -93,7 +94,7 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
 	var runResult = req.RunResult
 
-	log.Info(ctx, "updating run result %s to status completed", runResult.ID)
+	log.Info(ctx, "updating run result %s (%s)", runResult.Name(), runResult.ID)
 
 	// Update the run result on API side
 	if err := wk.clientV2.V2QueueJobRunResultUpdate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {

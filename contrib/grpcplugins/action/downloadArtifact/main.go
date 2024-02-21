@@ -122,7 +122,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 				hasError = true
 				continue
 			}
-			grpcplugins.Logf("Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
+			grpcplugins.Successf("Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
 		}
 		nbSuccess++
 	}
