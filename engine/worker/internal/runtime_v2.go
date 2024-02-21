@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -153,7 +154,7 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 	}
 	pattern := glob.New(filter.Pattern)
 	for _, r := range resp {
-		if len(filter.Type) == 0 && !sdk.IsInArray(string(r.Type), filter.Type) {
+		if len(filter.Type) == 0 && !slices.Contains(filter.Type, r.Type) {
 			continue
 		}
 		switch r.Detail.Type {
