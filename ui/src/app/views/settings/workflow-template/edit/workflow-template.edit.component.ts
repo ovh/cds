@@ -118,7 +118,7 @@ export class WorkflowTemplateEditComponent implements OnInit, OnDestroy {
                 selector: (a: AuditWorkflowTemplate) => a.triggered_by
             },
             <Column<AuditWorkflowTemplate>>{
-                type: ColumnType.MARKDOWN,
+                type: ColumnType.TEXT_PRE,
                 class: 'seven',
                 name: 'common_description',
                 selector: (a: AuditWorkflowTemplate) => a.change_message

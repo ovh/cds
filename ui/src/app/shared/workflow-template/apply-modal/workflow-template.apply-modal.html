@@ -42,7 +42,7 @@
         <nz-col [nzSpan]="24">
             <nz-alert nzType="warning" [nzMessage]="auditTmpl"></nz-alert>
             <ng-template #auditTmpl>
-                <markdown *ngFor="let m of workflowTemplateAuditMessages">{{m}}</markdown>
+                <pre *ngFor="let m of workflowTemplateAuditMessages">{{m}}</pre>
             </ng-template>
         </nz-col>
     </nz-row>

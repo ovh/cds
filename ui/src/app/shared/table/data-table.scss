@@ -24,6 +24,10 @@ th.descending:after {
     }
 }
 
+pre {
+  word-wrap: break-word;
+}
+
 .text-labels {
     .label:first-child {
         margin-left: 5px;
