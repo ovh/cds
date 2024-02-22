@@ -9,11 +9,11 @@ The workflow is the main entity in CDS. It allows you to chain jobs, using condi
 
 # As Code directory
 
-A workflow is described directly on your repository inside the directory `.cds/workflows`
+A workflow is described directly on your repository inside the directory `.cds/workflows/`.
 
 # Permission
 
-To be able to manage a workflow you will need the permission `manage-workflow` on your project
+The permission `manage-workflow` on your project is mandatory to manage a workflow.
 
 # Fields
 
@@ -22,26 +22,27 @@ name: cds
 repository:
   vcs: github
   name: ovh/cds
+commit-status:
+  ...
 on: [push] 
 integrations: [my-artifactory]
 stages:
-  ... 
+  ...
 jobs:
   ...
 env:   
   VAR_1: value
   VAR_2: value2
 gates:
-  ...  
+  ... 
 ```
-
-
 
 * <span style="color:red">*</span>`name`: The name of your workflow
 * <span style="color:red">*</span>[`on`](#on): Allow you to define hooks to trigger your workflow
 * <span style="color:red">*</span>[`jobs`](#jobs): Jobs definitions
 * [`integrations`](#integrations): Integrations linked to the workflow 
 * [`repository`](#repository): The repository linked to the workflow
+* [`commit-status`](#commit-status): Commit status created by CDS on workflow run
 * [`stages`](#stages): List of stages
 * `env`: Define environment variable for the whole workflow
 * [`gates`](#gates): Manual gate for your workflow
@@ -55,15 +56,26 @@ The repository linked to you workflow allows you to:
 * Listen event to trigger the workflow through the field [`on`](#on)
 * Use actions as `checkout` that simply git clone action
 
+## Commit-status:
+
+A commit build status is always sent by CDS with default values. You can customize the title and description of the build status with the `commit-status` attribute.
+
+```yaml
+commit-status:
+  title: foo
+  description: bar
+```
+
 ## On
 
 Available hooks:
 
 * `push`: trigger the workflow on repository push event
-* `model_update`: trigger the workflow is a worker model used in the worker has been updated
-* `workflow_update`: trigger the workflow is the workflow definition was updated
+* `pull-request`: trigger the workflow on repository pull-request event, see types of pull-request below.
+* `model-update`: trigger the workflow is a worker model used in the worker has been updated
+* `workflow-update`: trigger the workflow is the workflow definition was updated
 
-`model_update` and `workflow_update` are only available is the workflow definition is different from the `repository` field of your workflow. The hook will be triggered when default branch is updated, and will trigger the default branch of the destination repository
+`model-update` and `workflow-update` are only available is the workflow definition is different from the `repository` field of your workflow. The hook will be triggered when default branch is updated, and will trigger the default branch of the destination repository
 
 
 the `on` field has 2 formats
@@ -71,7 +83,7 @@ the `on` field has 2 formats
 ### Array of string:
 
 ```yaml
-on: [push,model_update,workflow_update]
+on: [push,pull-request,model-update,workflow-update]
 ```
 
 ### Map
@@ -81,18 +93,36 @@ on:
   push:
     branches: [main,develop]
     paths: [src/**/*.java]
-  model_update:
+  model-update:
     models: [MYPROJ/github/ovh/resources/mymodel]
     target_branch: main
-  workflow_update:
+  pull-request:
+    comment: "a comment here"
+    types: ["opened","reopened","closed","edited"]
+    branches: [main,develop]
+    paths: [src/**/*.java]
+  pull-request-comment:
+    comment: "a comment here"
+    types: ["created","deleted","edited"]
+    branches: [main,develop]
+    paths: [src/**/*.java]
+  workflow-update:
     target_branch: main
 ```
 
 * `push.branches`: branches filter
 * `push.paths`: file paths filter
-* `model_update.models`: worker model filter
-* `model_update.target_branch`: destination repository branch to trigger
-* `workflow_update.target_branch`: destination repository branch to trigger
+* `pull-request.comment`: comment written by cds at workflow end if it was triggered by a pull-request event.
+* `pull-request.types`: types of pull-request event that can trigger the workflow. Could be: `opened`, `reopened`, `closed`, `edited`.
+* `pull-request.branches`: branches filter
+* `pull-request.paths`: file paths filter
+* `pull-request-comment.comment`: comment written by cds at workflow end if it was triggered by a pull-request-comment event.
+* `pull-request-comment.types`: types of pull-request-comment event that can trigger the workflow. Could be: `created`, `deleted`, `edited`.
+* `pull-request-comment.branches`: branches filter
+* `pull-request-comment.paths`: file paths filter
+* `model-update.models`: worker model filter
+* `model-update.target_branch`: destination repository branch to trigger
+* `workflow-update.target_branch`: destination repository branch to trigger
 
 ## Integrations
 
@@ -288,7 +318,7 @@ Condition can be use at different level but share the same syntaxe
 
 You can use all [contexts](./../../contexts/) to create your condition
 
-## Syntaxe
+## Syntax
 
 ```
 if: ${{ git.ref == "master" && cds.job == "MyJob" }}
