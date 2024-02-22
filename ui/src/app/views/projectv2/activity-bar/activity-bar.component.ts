@@ -24,10 +24,12 @@ export class ProjectV2ActivityBarComponent implements OnInit {
 		this._router.events.pipe(
 			filter(e => e instanceof NavigationEnd),
 		).forEach((e: NavigationEnd) => {
-			if (e.url.startsWith(`/projectv2/${this.project.key}/run`)) {
+			if (e.url.startsWith(`/projectv2/${this.project.key}/run/`)) {
 				this._store.dispatch(new actionNavigation.SetActivityLastRoute({ projectKey: this.project.key, activityKey: 'run', route: e.url }));
-			}
-			if (e.url.startsWith(`/projectv2/${this.project.key}/explore`)) {
+			} else if (e.url.startsWith(`/projectv2/${this.project.key}/run`)) {
+				this._store.dispatch(new actionNavigation.SetActivityRunLastFilters({ projectKey: this.project.key, route: e.url }));
+				this._store.dispatch(new actionNavigation.SetActivityLastRoute({ projectKey: this.project.key, activityKey: 'run', route: e.url }));
+			} else if (e.url.startsWith(`/projectv2/${this.project.key}/explore`)) {
 				this._store.dispatch(new actionNavigation.SetActivityLastRoute({ projectKey: this.project.key, activityKey: 'explore', route: e.url }));
 			}
 		});
@@ -36,7 +38,16 @@ export class ProjectV2ActivityBarComponent implements OnInit {
 	clickActivity(event: Event, activityKey: string): void {
 		const lastRoute = this._store.selectSnapshot(NavigationState.selectActivityLastRoute(this.project.key, activityKey));
 		if (lastRoute) {
-			this._router.navigateByUrl(lastRoute);
+			if (activityKey == 'run') {
+				const lastFilters = this._store.selectSnapshot(NavigationState.selectActivityRunLastFilters(this.project.key));
+				if (lastFilters && this._router.isActive(lastRoute, { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' })) {
+					this._router.navigateByUrl(lastFilters);
+				} else {
+					this._router.navigateByUrl(lastRoute);
+				}
+			} else {
+				this._router.navigateByUrl(lastRoute);
+			}
 			event.stopPropagation();
 			event.preventDefault();
 		}

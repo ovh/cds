@@ -4,12 +4,14 @@ import * as actionNavigation from './navigation.action';
 
 export class NavigationStateModel {
 	activitiesLastRoute: { [projectKey: string]: { [activityKey: string]: string } }
+	activityRunLastFilters: { [projectKey: string]: string }
 }
 
 @State<NavigationStateModel>({
 	name: 'navigation',
 	defaults: {
-		activitiesLastRoute: {}
+		activitiesLastRoute: {},
+		activityRunLastFilters: {}
 	}
 })
 @Injectable()
@@ -24,6 +26,18 @@ export class NavigationState {
 					return null;
 				}
 				return state.activitiesLastRoute[projectKey][activityKey] ?? null;
+			}
+		);
+	}
+
+	static selectActivityRunLastFilters(projectKey: string) {
+		return createSelector(
+			[NavigationState],
+			(state: NavigationStateModel): string => {
+				if (!state.activityRunLastFilters[projectKey]) {
+					return null;
+				}
+				return state.activityRunLastFilters[projectKey] ?? null;
 			}
 		);
 	}
@@ -47,6 +61,21 @@ export class NavigationState {
 		ctx.setState({
 			...state,
 			activitiesLastRoute: projects
+		});
+	}
+
+	@Action(actionNavigation.SetActivityRunLastFilters)
+	setActivityRunLastFilters(ctx: StateContext<NavigationStateModel>, action: actionNavigation.SetActivityRunLastFilters) {
+		const state = ctx.getState();
+
+		let projects = {
+			...state.activityRunLastFilters
+		};
+		projects[action.payload.projectKey] = action.payload.route;
+
+		ctx.setState({
+			...state,
+			activityRunLastFilters: projects
 		});
 	}
 }

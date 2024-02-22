@@ -42,7 +42,7 @@ export class ProjectV2WorkflowRunListSidebarComponent implements OnInit, OnDestr
 		this.authSummary = this._store.selectSnapshot(AuthenticationState.summary);
 
 		this.searchesSubscription = this._store.select(PreferencesState.selectProjectRunFilters(this.project.key)).subscribe(searches => {
-			this.searches = searches.map(s => {
+			this.searches = (searches ?? []).map(s => {
 				let params = {};
 				s.value.split(' ').forEach(f => {
 					const s = f.split(':');

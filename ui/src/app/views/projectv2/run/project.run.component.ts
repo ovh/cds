@@ -16,6 +16,7 @@ import { RunJobComponent } from "./run-job.component";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
+import { NavigationState } from "app/store/navigation.state";
 
 
 @Component({
@@ -132,13 +133,21 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             await this.selectJob(this.selectedJobRun.job_id);
         }
         this.jobs = Object.assign([], updatedJobs);
-        if (PipelineStatus.isDone(this.workflowRun.status)) {
+        if (PipelineStatus.isDone(this.workflowRun.status) && this.pollSubs) {
             this.pollSubs.unsubscribe();
         }
         this._cd.markForCheck();
     }
 
-    onBack(): void { }
+    onBack(): void {
+        const projectKey = this._route.snapshot.parent.params['key'];
+        const lastFilters = this._store.selectSnapshot(NavigationState.selectActivityRunLastFilters(projectKey));
+        if (lastFilters) {
+            this._router.navigateByUrl(lastFilters);
+        } else {
+            this._router.navigate(['/projectv2', projectKey, 'run']);
+        }
+    }
 
     selectTab(tab: Tab): void {
         this.selectedTab = tab;

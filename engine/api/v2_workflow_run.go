@@ -439,6 +439,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			repositories, err := workflow_v2.LoadRunsRepositories(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			filters := []sdk.V2WorkflowRunSearchFilter{
 				{
 					Key:     "actor",
@@ -448,7 +453,7 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				{
 					Key:     "workflow",
 					Options: workflowNames,
-					Example: "workflow-name",
+					Example: "vcs_server/repository/workflow-name",
 				},
 				{
 					Key:     "branch",
@@ -459,6 +464,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 					Key:     "status",
 					Options: []string{sdk.StatusFail, sdk.StatusSuccess, sdk.StatusBuilding, sdk.StatusStopped},
 					Example: "Success, Failure, etc.",
+				},
+				{
+					Key:     "repository",
+					Options: repositories,
+					Example: "vcs_server/repository",
 				},
 			}
 
@@ -476,10 +486,11 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 			limit := service.FormUInt(req, "limit")
 
 			filters := workflow_v2.SearchsRunsFilters{
-				Workflows: req.URL.Query()["workflow"],
-				Actors:    req.URL.Query()["actor"],
-				Status:    req.URL.Query()["status"],
-				Branches:  req.URL.Query()["branch"],
+				Workflows:    req.URL.Query()["workflow"],
+				Actors:       req.URL.Query()["actor"],
+				Status:       req.URL.Query()["status"],
+				Branches:     req.URL.Query()["branch"],
+				Repositories: req.URL.Query()["repository"],
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
