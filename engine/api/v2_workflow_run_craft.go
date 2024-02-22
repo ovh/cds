@@ -701,7 +701,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 
 		// We replace the metadata "+" from semver because a lot of tools doesn't support it (docker, artifactory, ...)
 		semverNext = strings.ReplaceAll(semverNext, "+", "-")
-		semverCurrent = strings.ReplaceAll(semverNext, "+", "-")
+		semverCurrent = strings.ReplaceAll(semverCurrent, "+", "-")
 
 	case wr.RunEvent.ModelUpdateTrigger != nil:
 		ref = wr.RunEvent.ModelUpdateTrigger.Ref
