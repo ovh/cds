@@ -44,6 +44,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 	filters: Array<WorkflowRunFilter> = [];
 	availableFilters: Array<WorkflowRunFilter> = [];
 	filterText: string = '';
+	previousFilterText: string = null;
 	selectedFilter: WorkflowRunFilter = null;
 	textFilters = [];
 	cursorTextFilterPosition: number = 0;
@@ -135,6 +136,8 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 		this.loading = true;
 		this._cd.markForCheck();
 
+		this.previousFilterText = this.filterText;
+
 		let mFilters = {};
 		this.filterText.split(' ').forEach(f => {
 			const s = f.split(':');
@@ -191,7 +194,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 		this._router.navigate([], {
 			relativeTo: this._activatedRoute,
 			queryParams,
-			replaceUrl: true,
+			replaceUrl: true
 		});
 	}
 
@@ -267,5 +270,14 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 
 	onSearchNameChange(name: string): void {
 		this.searchName = name;
+	}
+
+	refresh(e: Event): void {
+		if (this.filterText !== this.previousFilterText) {
+			return;
+		}
+		this.search();
+		e.preventDefault();
+		e.stopPropagation();
 	}
 }

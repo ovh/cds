@@ -69,5 +69,7 @@ ul {
     }
 }
 
-
-
+app-run-job-logs {
+    flex: 1;
+    overflow-y: auto;
+}

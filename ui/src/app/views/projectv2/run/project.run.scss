@@ -53,15 +53,29 @@
     }
 }
 
-ul {
-    padding-left: 0;
-    list-style: none;
+.bottom-panel {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
-    .rightFloat {
-        float: right;
-    }
+    .infos {
+        height: 100%;
+        overflow-y: auto;
+        padding-left: 10px;
+        list-style: none;
 
-    .content {
-        display: inline;
+        .rightFloat {
+            float: right;
+        }
+
+        .content {
+            display: inline;
+        }
     }
+}
+
+app-run-job {
+    height: 100%;
+    overflow: hidden;
 }

@@ -48,7 +48,8 @@
 			</nz-form-item>
 			<nz-form-item>
 				<nz-form-control>
-					<button nz-button nzType="primary"><span nz-icon nzType="search"></span></button>
+					<button nz-button nzType="primary" (click)="refresh($event)"><span nz-icon
+							[nzType]="filterText === previousFilterText ? 'reload' : 'search'"></span></button>
 				</nz-form-control>
 			</nz-form-item>
 		</form>

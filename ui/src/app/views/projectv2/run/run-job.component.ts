@@ -4,18 +4,21 @@ import {
     Component,
     EventEmitter,
     Input,
-    OnInit,
+    OnChanges,
+    OnDestroy,
     Output,
     ViewChild
 } from '@angular/core';
-import {Store} from '@ngxs/store';
-import {Parameter} from 'app/model/parameter.model';
-import {CDNLine} from 'app/model/pipeline.model';
-import {WorkflowNodeJobRun} from 'app/model/workflow.run.model';
-import {AutoUnsubscribe} from 'app/shared/decorator/autoUnsubscribe';
-import {Tab} from 'app/shared/tabs/tabs.component';
-import {V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo} from "app/model/v2.workflow.run.model";
-import {RunJobLogsComponent} from "./run-job-logs.component";
+import { Parameter } from 'app/model/parameter.model';
+import { CDNLine, CDNStreamFilter, PipelineStatus } from 'app/model/pipeline.model';
+import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
+import { Tab } from 'app/shared/tabs/tabs.component';
+import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from "app/model/v2.workflow.run.model";
+import { RunJobLogsComponent } from "./run-job-logs.component";
+import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
+import { Subscription, delay, retryWhen } from 'rxjs';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -25,44 +28,63 @@ import {RunJobLogsComponent} from "./run-job-logs.component";
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class RunJobComponent implements OnInit {
-    @ViewChild('runJobLogs') jobLogsComponent: RunJobLogsComponent;
+export class RunJobComponent implements OnChanges, OnDestroy {
+    @ViewChild('runJobLogs') runJobLogs: RunJobLogsComponent;
 
     @Input() workflowRun: V2WorkflowRun
     @Input() jobRun: V2WorkflowRunJob;
     @Input() jobRunInfos: Array<WorkflowRunInfo>;
-
     @Output() onClickClose = new EventEmitter<void>();
 
+    defaultTabs: Array<Tab>;
     tabs: Array<Tab>;
     selectedTab: Tab;
     loading = false;
     selectedNodeJobRun: WorkflowNodeJobRun;
     variables: { [key: string]: Array<Parameter> } = {};
     variableKeys: Array<string> = [];
+    websocket: WebSocketSubject<any>;
+    websocketSubscription: Subscription;
+    cdnFilter: CDNStreamFilter;
 
     constructor(
         private _cd: ChangeDetectorRef,
-        private _store: Store
+        private _router: Router
     ) {
-        this.tabs = [<Tab>{
+        this.defaultTabs = [<Tab>{
             title: 'Logs',
             key: 'logs',
             default: true
-        }, <Tab>{
-            title: 'Problems',
-            icon: 'warning',
-            iconTheme: 'fill',
-            key: 'problems',
         }, <Tab>{
             title: 'Infos',
             key: 'infos',
             icon: 'info-circle',
             iconTheme: 'outline',
         }];
+        this.tabs = [...this.defaultTabs];
+        this.tabs[0].default = true;
     }
 
-    ngOnInit(): void {
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+
+    ngOnChanges(): void {
+        if (this.jobRunInfos && !!this.jobRunInfos.find(i => i.level === 'warning' || i.level === 'error')) {
+            this.tabs = [<Tab>{
+                title: 'Problems',
+                icon: 'warning',
+                iconTheme: 'fill',
+                key: 'problems',
+                default: true,
+            }, ...this.defaultTabs];
+        }
+
+        if (this.jobRun && !PipelineStatus.isDone(this.jobRun.status) && !this.websocketSubscription) {
+            this.startStreamingLogsForJob();
+        }
+
+        if (this.jobRun && PipelineStatus.isDone(this.jobRun.status) && this.websocketSubscription) {
+            this.websocketSubscription.unsubscribe();
+        }
     }
 
     selectTab(tab: Tab): void {
@@ -73,7 +95,7 @@ export class RunJobComponent implements OnInit {
     }
 
     onJobScroll(target) {
-        this.jobLogsComponent.onJobScroll(target);
+
     }
 
     setVariables(data: Array<Parameter>) {
@@ -127,10 +149,49 @@ export class RunJobComponent implements OnInit {
         this.onClickClose.emit();
     }
 
-    receiveLogs(l: CDNLine) {
-        if (this.jobLogsComponent) {
-            this.jobLogsComponent.receiveLogs(l);
+    startStreamingLogsForJob() {
+        if (!this.cdnFilter) {
+            this.cdnFilter = new CDNStreamFilter();
+        }
+        if (this.cdnFilter.job_run_id === this.jobRun.id) {
+            return;
         }
 
+        if (!this.websocket) {
+            const protocol = window.location.protocol.replace('http', 'ws');
+            const host = window.location.host;
+            const href = this._router['location']._basePath;
+            this.websocket = webSocket({
+                url: `${protocol}//${host}${href}/cdscdn/v2/item/stream`,
+                openObserver: {
+                    next: value => {
+                        if (value.type === 'open') {
+                            this.cdnFilter.job_run_id = this.jobRun.id;
+                            this.websocket.next(this.cdnFilter);
+                        }
+                    }
+                }
+            });
+
+            this.websocketSubscription = this.websocket
+                .pipe(retryWhen(errors => errors.pipe(delay(2000))))
+                .subscribe((l: CDNLine) => {
+                    if (this.runJobLogs) {
+                        this.runJobLogs.receiveLogs(l);
+                    } else {
+                        console.log('job component not loaded');
+                    }
+                }, (err) => {
+                    console.error('Error: ', err);
+                }, () => {
+                    console.warn('Websocket Completed');
+                });
+        } else {
+            // Refresh cdn filter if job changed
+            if (this.cdnFilter.job_run_id !== this.jobRun.id) {
+                this.cdnFilter.job_run_id = this.jobRun.id;
+                this.websocket.next(this.cdnFilter);
+            }
+        }
     }
 }
