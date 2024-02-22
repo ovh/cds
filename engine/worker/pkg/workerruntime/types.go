@@ -38,7 +38,7 @@ type V2UpdateResultResponse struct {
 
 type V2FilterRunResult struct {
 	Pattern              string
-	Type                 sdk.V2WorkflowRunResultType
+	Type                 []sdk.V2WorkflowRunResultType
 	WithClearIntegration bool
 }
 

@@ -16,7 +16,7 @@ const DESC: direction = 'desc';
 
 export enum ColumnType {
     TEXT = 'text',
-    TEXT_HTML = 'text-html',
+    TEXT_PRE = 'text-pre',
     ICON = 'icon',
     IMG_TEXT = 'img-text',
     LINK_CLICK = 'link-click',
@@ -24,7 +24,6 @@ export enum ColumnType {
     ROUTER_LINK = 'router-link',
     ROUTER_LINK_WITH_ICONS = 'router-link-with-icons',
     ROUTER_LINK_WITH_LABELS = 'router-link-with-labels',
-    MARKDOWN = 'markdown',
     DATE = 'date',
     BUTTON = 'button',
     CONFIRM_BUTTON = 'confirm-button',

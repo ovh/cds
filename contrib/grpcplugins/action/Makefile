@@ -4,7 +4,7 @@ include ../../../.build/core.mk
 include ../../../.build/go.mk
 
 DIRS 			:= `ls -d */ | grep -v dist | cut -f1 -d'/'`
-ALL_PLUGINS 	:= $(if ${TARGET_NAME},${TARGET_NAME}, $(filter-out $(TARGET_DIST), $(shell for plugin in $(DIRS); do echo $(basename "$$plugin"); done)))
+ALL_PLUGINS 	:= $(if ${TARGET_NAME},${TARGET_NAME}, $(filter-out %-lib, $(filter-out $(TARGET_DIST), $(shell for plugin in $(DIRS); do echo $(basename "$$plugin"); done))))
 TARGET_PLUGINS 	:= $(foreach PLUGIN, $(ALL_PLUGINS), dist/$(PLUGIN).yml)
 TARGET_PLUGINS_DIST := $(foreach TARGET_PLUGIN, $(TARGET_PLUGINS), $(foreach OS, $(TARGET_OS), $(foreach ARCH, $(TARGET_ARCH), $(TARGET_PLUGIN)-$(OS)-$(ARCH)$(if $(call isWindows, $(OS)),.exe))))
 TARGET_DIST 		:= ./dist

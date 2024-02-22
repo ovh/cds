@@ -45,7 +45,7 @@ export class CommitListComponent implements OnInit, OnDestroy {
                 }
             },
             <Column<Commit>>{
-                type: ColumnType.TEXT_HTML,
+                type: ColumnType.TEXT_PRE,
                 name: 'commit_message',
                 class: 'middle',
                 selector: (commit: Commit) => commit.message,

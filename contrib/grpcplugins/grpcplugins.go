@@ -30,6 +30,10 @@ func Logf(s string, i ...any) {
 	fmt.Println(fmt.Sprintf(s, i...))
 }
 
+func Println(a ...interface{}) {
+	fmt.Println(a...)
+}
+
 func Log(s string) {
 	fmt.Println(s)
 }
@@ -50,10 +54,19 @@ func Error(s string) {
 	Log(ErrColor + "Error: " + NoColor + s)
 }
 
+func Successf(s string, i ...any) {
+	Logf(SuccessColor+s+NoColor, i...)
+}
+
+func Success(s string) {
+	Log(SuccessColor + s + NoColor)
+}
+
 const (
-	WarnColor = "\033[1;33m"
-	ErrColor  = "\033[1;31m"
-	NoColor   = "\033[0m"
+	WarnColor    = "\033[1;33m"
+	ErrColor     = "\033[1;31m"
+	SuccessColor = "\033[1;32m"
+	NoColor      = "\033[0m"
 )
 
 func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
@@ -282,8 +295,10 @@ func GetJobContext(ctx context.Context, c *actionplugin.Common) (*sdk.WorkflowRu
 }
 
 type ArtifactoryConfig struct {
-	URL   string
-	Token string
+	URL             string
+	Token           string
+	DistributionURL string
+	ReleaseToken    string
 }
 
 type ArtifactoryFileInfo struct {
@@ -488,8 +503,6 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 		Error(err.Error())
 		return nil, err
 	}
-	Logf("Responses: %+v", response)
-	Logf("Error: %+v", err)
 
 	// Upload the file to an artifactory or CDN
 	var d time.Duration

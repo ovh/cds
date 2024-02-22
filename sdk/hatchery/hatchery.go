@@ -669,7 +669,7 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 		workerStarterModel.DockerSpec = dockerSpec
 
 	case sdk.WorkerModelTypeVSphere:
-		workerStarterModel.Cmd = "./worker"
+		workerStarterModel.Cmd = "PATH=$PATH ./worker"
 		workerStarterModel.PreCmd = preCmd
 		workerStarterModel.PostCmd = "sudo shutdown -h now"
 		var vsphereSpec sdk.V2WorkerModelVSphereSpec

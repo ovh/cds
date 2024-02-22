@@ -1,0 +1,22 @@
+name: artifactory-release
+type: action
+author: "François SAMIN <francois.samin@corp.ovh.com>"
+description: |
+  Release artifactory package from a repository to another
+inputs:
+  artifacts:
+    type: string
+    description: Artifact name or wildcard pattern.
+    required: true
+  maturity:
+    type: string
+    description: The maturity you want to promote in.
+  properties:
+    type: string
+    description: Properties to add on the promoted artifacts
+  releaseNotes:
+    default: Release ${{git.semver.current}}
+    type: string
+    description: Notes associated to your Release.
+    required: true
+

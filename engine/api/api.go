@@ -906,8 +906,11 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.StopDeadJobs", func(ctx context.Context) {
 		a.StopDeadJobs(ctx)
 	})
-	a.GoRoutines.RunWithRestart(ctx, "api.xx", func(ctx context.Context) {
+	a.GoRoutines.RunWithRestart(ctx, "api.TriggerBlockedWorkflowRuns", func(ctx context.Context) {
 		a.TriggerBlockedWorkflowRuns(ctx)
+	})
+	a.GoRoutines.RunWithRestart(ctx, "api.CancelAbandonnedRunResults", func(ctx context.Context) {
+		a.CancelAbandonnedRunResults(ctx)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {

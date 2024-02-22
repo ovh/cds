@@ -679,7 +679,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 				splittedSuffix := strings.Split(suffix, ".")
 				var metadataStr string
 				if len(splittedSuffix) >= 2 {
-					metadataStr += splittedSuffix[0] + ".sha." + splittedSuffix[1]
+					metadataStr += splittedSuffix[0] + ".sha." + sdk.StringFirstN(splittedSuffix[1], 8)
 				}
 				for i := 2; i < len(splittedSuffix); i++ {
 					metadataStr += "." + splittedSuffix[i]
@@ -696,8 +696,12 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 			}
 		} else {
 			// If no semver found, compute it from 0.1.0
-			semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha." + commit
+			semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha." + sdk.StringFirstN(commit, 8)
 		}
+
+		// We replace the metadata "+" from semver because a lot of tools doesn't support it (docker, artifactory, ...)
+		semverNext = strings.ReplaceAll(semverNext, "+", "-")
+		semverCurrent = strings.ReplaceAll(semverCurrent, "+", "-")
 
 	case wr.RunEvent.ModelUpdateTrigger != nil:
 		ref = wr.RunEvent.ModelUpdateTrigger.Ref

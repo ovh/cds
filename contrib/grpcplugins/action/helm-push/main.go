@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	cm "github.com/chartmuseum/helm-push/pkg/chartmuseum"
@@ -68,11 +69,15 @@ func (p *helmPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (
 	registryAccessToken := q.GetOptions()["registryAccessToken"]
 	registryAuthHeader := q.GetOptions()["registryAuthHeader"]
 
-	updateDependencies, err := strconv.ParseBool(updateDependenciesS)
-	if err != nil {
-		res.Status = sdk.StatusFail
-		res.Status = "invalid value for parameter <updateDependencies>"
-		return res, err
+	var updateDependencies = false
+	if strings.TrimSpace(updateDependenciesS) != "" {
+		var err error
+		updateDependencies, err = strconv.ParseBool(updateDependenciesS)
+		if err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = "invalid value for parameter <updateDependencies>"
+			return res, err
+		}
 	}
 
 	registryOpts := chartMuseumOptions{
@@ -85,7 +90,7 @@ func (p *helmPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (
 	result, d, err := p.perform(ctx, chartFolder, chartVersion, appVersion, updateDependencies, registryOpts)
 	if err != nil {
 		res.Status = sdk.StatusFail
-		res.Status = err.Error()
+		res.Details = err.Error()
 		return res, err
 	}
 
@@ -279,7 +284,7 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 	result.ArtifactManagerMetadata.Set("createdBy", fi.CreatedBy)
 	result.ArtifactManagerMetadata.Set("localRepository", localRepository)
 
-	grpcplugins.Log("Done.")
+	grpcplugins.Success("Done.")
 
 	respReindex, err := p.ReindexArtifactoryRepo(ctx, localRepository, rtConfig)
 	if err != nil {

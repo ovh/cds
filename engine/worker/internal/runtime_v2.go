@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 	}
 
 	// Create the run result on API side
+	log.Info(ctx, "creating run result %s", runResult.Name())
 	if err := wk.clientV2.V2QueueJobRunResultCreate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
 		return nil, sdk.NewError(sdk.ErrUnknownError, err)
 	}
@@ -93,7 +95,7 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
 	var runResult = req.RunResult
 
-	log.Info(ctx, "updating run result %s to status completed", runResult.ID)
+	log.Info(ctx, "updating run result %s (%s)", runResult.Name(), runResult.ID)
 
 	// Update the run result on API side
 	if err := wk.clientV2.V2QueueJobRunResultUpdate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
@@ -153,13 +155,13 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 	}
 	pattern := glob.New(filter.Pattern)
 	for _, r := range resp {
-		if filter.Type != "" && r.Type != filter.Type {
+		if len(filter.Type) == 0 && !slices.Contains(filter.Type, r.Type) {
 			continue
 		}
 		switch r.Detail.Type {
 		case "V2WorkflowRunResultGenericDetail":
 			var res *glob.Result
-			if filter.Type == "V2WorkflowRunResultGenericDetail" { // If the filter is set to "V2WorkflowRunResultGenericDetail" we can directly check the artifact name. This is the usecase of plugin "downloadArtifact"
+			if r.Type == sdk.V2WorkflowRunResultTypeCoverage || r.Type == sdk.V2WorkflowRunResultTypeGeneric { // If the filter is set to "V2WorkflowRunResultGenericDetail" we can directly check the artifact name. This is the usecase of plugin "downloadArtifact"
 				x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
 				res, err = pattern.MatchString(x.Name)
 			} else {
