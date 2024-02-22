@@ -60,6 +60,11 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 	path := q.GetOptions()["path"]
 	ifNoFilesFound := q.GetOptions()["if-no-files-found"]
 
+	runResultType := sdk.V2WorkflowRunResultType(sdk.V2WorkflowRunResultTypeGeneric)
+	if q.GetOptions()["type"] == sdk.V2WorkflowRunResultTypeCoverage {
+		runResultType = sdk.V2WorkflowRunResultType(sdk.V2WorkflowRunResultTypeCoverage)
+	}
+
 	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &actPlugin.Common)
 	if err != nil {
 		err := fmt.Errorf("unable to get working directory: %v", err)
@@ -70,7 +75,7 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 
 	var dirFS = os.DirFS(workDirs.WorkingDir)
 
-	if err := actPlugin.perform(ctx, dirFS, path, ifNoFilesFound); err != nil {
+	if err := actPlugin.perform(ctx, dirFS, path, ifNoFilesFound, runResultType); err != nil {
 		res.Status = sdk.StatusFail
 		res.Status = err.Error()
 		return res, err
@@ -79,7 +84,7 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 	return res, nil
 }
 
-func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dirFS fs.FS, path, ifNoFilesFound string) error {
+func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dirFS fs.FS, path, ifNoFilesFound string, runResultType sdk.V2WorkflowRunResultType) error {
 	results, err := glob.Glob(dirFS, ".", path)
 	if err != nil {
 		return err
@@ -145,7 +150,7 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dir
 		var runResultRequest = workerruntime.V2RunResultRequest{
 			RunResult: &sdk.V2WorkflowRunResult{
 				IssuedAt: time.Now(),
-				Type:     sdk.V2WorkflowRunResultTypeGeneric,
+				Type:     runResultType,
 				Status:   sdk.V2WorkflowRunResultStatusPending,
 				Detail: sdk.V2WorkflowRunResultDetail{
 					Data: sdk.V2WorkflowRunResultGenericDetail{
