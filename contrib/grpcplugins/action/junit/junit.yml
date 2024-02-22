@@ -1,0 +1,10 @@
+name: junit
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  Parse a junit report, create a run result of type test
+inputs:
+  path:
+    type: text
+    description: "File path to the junit report"
+    required: true
