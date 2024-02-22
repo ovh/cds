@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -343,6 +344,65 @@ hatcheries:
 	require.Equal(t, vsItem1.Value, item1)
 	item2 := varsMap[vsItem2.Name]
 	require.Equal(t, vsItem2.Value, item2)
+
+	// Upload a run result of type test
+	rrRequest := &sdk.V2WorkflowRunResult{
+		IssuedAt: time.Now(),
+		Type:     sdk.V2WorkflowRunResultTypeTest,
+		Status:   sdk.V2WorkflowRunResultStatusCompleted,
+		Detail: sdk.V2WorkflowRunResultDetail{
+			Data: sdk.V2WorkflowRunResultTestDetail{
+				Name:   "report.xml",
+				Size:   123,
+				Mode:   fs.ModePerm,
+				MD5:    "aa",
+				SHA1:   "bb",
+				SHA256: "cc",
+				TestsSuites: sdk.JUnitTestsSuites{
+					TestSuites: []sdk.JUnitTestSuite{
+						{
+							Name: "MyTestsuite",
+							TestCases: []sdk.JUnitTestCase{
+								{
+									Name: "myTestCase",
+								},
+							},
+						},
+					},
+				},
+				TestStats: sdk.TestsStats{
+					Total:        3,
+					TotalOK:      1,
+					TotalKO:      1,
+					TotalSkipped: 1,
+				},
+			},
+		},
+	}
+
+	uriPostRR := api.Router.GetRouteV2("POST", api.postJobRunResultHandler, map[string]string{"regionName": "default", "runJobID": jobRun.ID})
+	test.NotEmpty(t, uriPostRR)
+	reqPostRR := assets.NewJWTAuthentifiedRequest(t, jwtWorker, "POST", uriPostRR, rrRequest)
+	wPostRR := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wPostRR, reqPostRR)
+	require.Equal(t, 201, wPostRR.Code)
+	var resp sdk.V2WorkflowRunResult
+	require.NoError(t, json.Unmarshal(wPostRR.Body.Bytes(), &resp))
+
+	rrDBs, err := workflow_v2.LoadRunResultsByRunJobID(context.TODO(), db, jobRun.ID)
+	require.NoError(t, err)
+	require.Len(t, rrDBs, 1)
+	require.Equal(t, sdk.V2WorkflowRunResultType(sdk.V2WorkflowRunResultTypeTest), rrDBs[0].Type)
+
+	details, err := rrDBs[0].GetDetailAsV2WorkflowRunResultTestDetail()
+	require.NoError(t, err)
+	require.Equal(t, 3, details.TestStats.Total)
+	require.Equal(t, 1, details.TestStats.TotalOK)
+	require.Equal(t, 1, details.TestStats.TotalKO)
+	require.Equal(t, 1, details.TestStats.TotalSkipped)
+
+	require.Len(t, details.TestsSuites.TestSuites, 1)
+	require.Len(t, details.TestsSuites.TestSuites[0].TestCases, 1)
 }
 
 func TestWorkerRegister(t *testing.T) {

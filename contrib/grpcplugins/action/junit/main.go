@@ -142,7 +142,6 @@ func createRunResult(fileContent []byte, filePath string, fileName string, size 
 		}
 	}
 
-	// TODO COMPUTE RAISON
 	reportLogs := computeTestsReasons(ftests)
 	for _, l := range reportLogs {
 		grpcplugins.Log(l)
