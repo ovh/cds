@@ -115,6 +115,11 @@ func LoadAllWorker(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2Worker, er
 	return getWorkers(ctx, db, query)
 }
 
+func LoadAllWorkersByHatcheryID(ctx context.Context, db gorp.SqlExecutor, hatcheryID string) ([]sdk.V2Worker, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM v2_worker WHERE hatchery_id=$1`).Args(hatcheryID)
+	return getWorkers(ctx, db, query)
+}
+
 func LoadDeadWorkers(ctx context.Context, db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.V2Worker, error) {
 	query := gorpmapping.NewQuery(`
     SELECT *

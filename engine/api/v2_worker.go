@@ -15,7 +15,14 @@ import (
 
 func (api *API) getWorkersV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workerList), func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-		// TODO: List workers per hatchery
+		hc := getHatcheryConsumer(ctx)
+		if hc != nil {
+			wks, err := worker_v2.LoadAllWorkersByHatcheryID(ctx, api.mustDB(), hc.AuthConsumerHatchery.HatcheryID)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, wks, http.StatusOK)
+		}
 		wks, err := worker_v2.LoadAllWorker(ctx, api.mustDB())
 		if err != nil {
 			return err
