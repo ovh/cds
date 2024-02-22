@@ -12,7 +12,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
-	"github.com/rockbears/log"
 )
 
 func hasRoleOnRegion(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, regionIdentifier string, role string) error {
@@ -26,8 +25,6 @@ func hasRoleOnRegion(ctx context.Context, auth *sdk.AuthUserConsumer, store cach
 	}
 
 	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
-	log.Info(ctx, "hasRole:%t", hasRole)
-
 	if !hasRole {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}

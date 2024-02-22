@@ -128,7 +128,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 			grpcplugins.Error(err.Error())
 			return err
 		}
-		grpcplugins.Logf("Image %s pushed in %.3fs", result.Name(), d.Seconds())
+		grpcplugins.Successf("Image %s pushed in %.3fs", result.Name(), d.Seconds())
 	}
 
 	return nil

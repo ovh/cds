@@ -279,7 +279,7 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 	result.ArtifactManagerMetadata.Set("createdBy", fi.CreatedBy)
 	result.ArtifactManagerMetadata.Set("localRepository", localRepository)
 
-	grpcplugins.Log("Done.")
+	grpcplugins.Success("Done.")
 
 	respReindex, err := p.ReindexArtifactoryRepo(ctx, localRepository, rtConfig)
 	if err != nil {

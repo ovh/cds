@@ -503,6 +503,24 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2
 	return i, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultReleaseDetail() (*V2WorkflowRunResultReleaseDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultReleaseDetail)
+	if !ok {
+		var ii V2WorkflowRunResultReleaseDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultReleaseDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultReleaseDetail")
+	}
+	return i, nil
+}
+
 func (r *V2WorkflowRunResult) Name() string {
 	switch r.Type {
 	case V2WorkflowRunResultTypeGeneric:
@@ -529,6 +547,11 @@ func (r *V2WorkflowRunResult) Name() string {
 		detail, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
 		if ok {
 			return string(r.Type) + ":" + detail.Name
+		}
+	case V2WorkflowRunResultTypeRelease:
+		detail, err := r.GetDetailAsV2WorkflowRunResultReleaseDetail()
+		if err == nil {
+			return string(r.Type) + ":" + detail.Name + ":" + detail.Version
 		}
 	}
 	return string(r.Type) + ":" + r.ID
@@ -618,6 +641,39 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultArsenalDeploymentDetail")
 		}
 		s.Data = detail
+		return nil
+	case "V2WorkflowRunResultReleaseDetail":
+		var detail = new(V2WorkflowRunResultReleaseDetail)
+		decoderConfig := &mapstructure.DecoderConfig{
+			Metadata: nil,
+			Result:   &detail,
+		}
+		// Here is the trick to transform the map to a json.RawMessage for the SBOM itself
+		decoderConfig.DecodeHook = mapstructure.ComposeDecodeHookFunc(
+			func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+				if f.Kind() != reflect.Map {
+					return data, nil
+				}
+				result := reflect.New(t).Interface()
+				_, ok := result.(*json.RawMessage)
+				if !ok {
+					return data, nil
+				}
+				btes, err := json.Marshal(data)
+				if err != nil {
+					return nil, err
+				}
+				return json.RawMessage(btes), nil
+			},
+		)
+		decoder, err := mapstructure.NewDecoder(decoderConfig)
+		if err != nil {
+			panic(err)
+		}
+		if err := decoder.Decode(s.Data); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultReleaseDetail")
+		}
+		s.Data = *detail
 		return nil
 	default:
 		return errors.Errorf("unsupported type %q", s.Type)
@@ -745,6 +801,12 @@ type V2WorkflowRunResultHelmDetail struct {
 type V2WorkflowRunResultVariableDetail struct {
 	Name  string `json:"name" mapstructure:"name"`
 	Value string `json:"value" mapstructure:"value"`
+}
+
+type V2WorkflowRunResultReleaseDetail struct {
+	Name    string          `json:"name" mapstructure:"name"`
+	Version string          `json:"version" mapstructure:"version"`
+	SBOM    json.RawMessage `json:"sbom" mapstructure:"sbom"`
 }
 
 type V2WorkflowRunSearchFilter struct {

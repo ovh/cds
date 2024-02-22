@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/go-gorp/gorp"
-	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/cache"
@@ -23,8 +22,6 @@ func hasRoleOnWorkflow(ctx context.Context, auth *sdk.AuthUserConsumer, store ca
 	}
 
 	ctx = context.WithValue(ctx, cdslog.RbacRole, role)
-	log.Info(ctx, "hasRole:%t", hasRole)
-
 	if !hasRole {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}

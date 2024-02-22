@@ -5,12 +5,12 @@ description: |
   This push Helm chart on Chart Museum or Artifactory.
 inputs:
   chartFolder:
-    value: .chart/
+    default: .chart/
     type: string
     description: Relative path to chart folder to be published	
     required: true
   chartVersion:
-    value: ${{git.semver.current}}
+    default: ${{git.semver.current}}
     type: string
     description: |-
       (Optional) Override the chart version before push to registry.

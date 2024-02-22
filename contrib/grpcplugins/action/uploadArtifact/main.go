@@ -281,7 +281,7 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dir
 			return err
 		}
 
-		grpcplugins.Logf("  %d bytes uploaded in %.3fs", sizes[r.Path], d.Seconds())
+		grpcplugins.Successf("  %d bytes uploaded in %.3fs", sizes[r.Path], d.Seconds())
 
 		if _, err := updateResponse.RunResult.GetDetail(); err != nil {
 			grpcplugins.Error(err.Error())

@@ -12,18 +12,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/pkg/errors"
 
-	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
 func Logf(s string, i ...any) {
 	fmt.Println(fmt.Sprintf(s, i...))
+}
+
+func Println(a ...interface{}) {
+	fmt.Println(a...)
 }
 
 func Log(s string) {
@@ -46,10 +47,19 @@ func Error(s string) {
 	Log(ErrColor + "Error: " + NoColor + s)
 }
 
+func Successf(s string, i ...any) {
+	Logf(SuccessColor+s+NoColor, i...)
+}
+
+func Success(s string) {
+	Log(SuccessColor + s + NoColor)
+}
+
 const (
-	WarnColor = "\033[1;33m"
-	ErrColor  = "\033[1;31m"
-	NoColor   = "\033[0m"
+	WarnColor    = "\033[1;33m"
+	ErrColor     = "\033[1;31m"
+	SuccessColor = "\033[1;32m"
+	NoColor      = "\033[0m"
 )
 
 func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
@@ -277,8 +287,10 @@ func GetJobContext(ctx context.Context, c *actionplugin.Common) (*sdk.WorkflowRu
 }
 
 type ArtifactoryConfig struct {
-	URL   string
-	Token string
+	URL             string
+	Token           string
+	DistributionURL string
+	ReleaseToken    string
 }
 
 type ArtifactoryFileInfo struct {
@@ -398,81 +410,4 @@ func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, patte
 	return &workerruntime.V2GetResultResponse{
 		RunResults: final,
 	}, nil
-}
-
-func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, r sdk.V2WorkflowRunResult, promotionType sdk.WorkflowRunResultPromotionType, maturity string, props *utils.Properties) error {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
-	defer cancel()
-
-	integration, err := GetIntegrationByName(ctx, c, *r.ArtifactManagerIntegrationName)
-	if err != nil {
-		return err
-	}
-
-	rtConfig := ArtifactoryConfig{
-		URL:   integration.Config[sdk.ArtifactoryConfigURL].Value,
-		Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
-	}
-
-	artifactClient, err := artifact_manager.NewClient("artifactory", rtConfig.URL, rtConfig.Token)
-	if err != nil {
-		return errors.Errorf("Failed to create artifactory client: %v", err)
-	}
-
-	if r.DataSync == nil {
-		r.DataSync = &sdk.WorkflowRunResultSync{}
-	}
-
-	latestPromotion := r.DataSync.LatestPromotionOrRelease()
-	currentMaturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-	if latestPromotion != nil {
-		currentMaturity = latestPromotion.ToMaturity
-	}
-
-	if maturity == "" {
-		maturity = integration.Config[sdk.ArtifactoryConfigPromotionHighMaturity].Value
-	}
-
-	newPromotion := sdk.WorkflowRunResultPromotion{
-		Date:         time.Now(),
-		FromMaturity: currentMaturity,
-		ToMaturity:   maturity,
-	}
-
-	data := art.FileToPromote{
-		RepoType: r.ArtifactManagerMetadata.Get("type"),
-		RepoName: r.ArtifactManagerMetadata.Get("repository"),
-		Name:     r.ArtifactManagerMetadata.Get("name"),
-		Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"), // strip the first "/" and remove "/manifest.json"
-	}
-
-	switch r.Type {
-	case "docker":
-		if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
-			return errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
-		}
-	default:
-		if err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
-			return errors.Errorf("unable to promote file: %s: %v", data.Name, err)
-		}
-	}
-
-	switch promotionType {
-	case sdk.WorkflowRunResultPromotionTypePromote:
-		r.Status = sdk.V2WorkflowRunResultStatusPromoted
-		r.DataSync.Promotions = append(r.DataSync.Promotions, newPromotion)
-	case sdk.WorkflowRunResultPromotionTypeRelease:
-		r.Status = sdk.V2WorkflowRunResultStatusReleased
-		r.DataSync.Releases = append(r.DataSync.Releases, newPromotion)
-	}
-
-	// Update metadata
-	r.ArtifactManagerMetadata.Set("localRepository", r.ArtifactManagerMetadata.Get("repository")+"-"+newPromotion.ToMaturity)
-	r.ArtifactManagerMetadata.Set("maturity", newPromotion.ToMaturity)
-
-	if _, err := UpdateRunResult(ctx, c, &workerruntime.V2RunResultRequest{RunResult: &r}); err != nil {
-		return err
-	}
-
-	return nil
 }
