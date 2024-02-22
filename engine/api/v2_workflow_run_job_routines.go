@@ -20,6 +20,7 @@ const jobLockKey = "jobs:lock"
 
 func (api *API) CancelAbandonnedRunResults(ctx context.Context) {
 	tick := time.NewTicker(5 * time.Minute)
+	defer tick.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -72,6 +73,7 @@ func (api *API) cancelAbandonnedRunResult(ctx context.Context, db *gorp.DbMap, i
 
 func (api *API) StopDeadJobs(ctx context.Context) {
 	tickStopDeadJobs := time.NewTicker(1 * time.Minute)
+	defer tickStopDeadJobs.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -96,6 +98,7 @@ func (api *API) StopDeadJobs(ctx context.Context) {
 
 func (api *API) ReEnqueueScheduledJobs(ctx context.Context) {
 	tickScheduledJob := time.NewTicker(1 * time.Minute)
+	defer tickScheduledJob.Stop()
 	for {
 		select {
 		case <-ctx.Done():
