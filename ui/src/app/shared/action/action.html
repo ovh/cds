@@ -18,7 +18,7 @@
                              <textarea *ngIf="edit;" nz-input [disabled]="!edit" name="actionDescription"
                                        [(ngModel)]="editableAction.description" rows="{{getDescriptionHeight()}}"
                                        (keydown)="editableAction.hasChanged = true; keyEvent($event)"></textarea>
-                            <markdown *ngIf="!edit;" [data]="editableAction.description"></markdown>
+                            <pre *ngIf="!edit;" class="inline">{{editableAction.description}}</pre>
                         </nz-form-control>
                     </nz-form-item>
                 </nz-col>

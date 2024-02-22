@@ -6,7 +6,7 @@
                     <nz-card *ngIf="selected">
                         <nz-card-meta [nzTitle]="selected.group ? selected.group.name + '/' + selected.name : selected?.name"
                                       [nzDescription]="selected?.type"></nz-card-meta>
-                        <markdown [data]="selected?.description"></markdown>
+                        <span class="inline">{{selected?.description}}</span>
                     </nz-card>
                 </nz-form-control>
 

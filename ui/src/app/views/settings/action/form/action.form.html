@@ -68,12 +68,12 @@
                     <nz-form-control>
                         <ng-container *ngIf="action.editable;">
                     <textarea nz-input [disabled]="!action.editable" name="actionDescription"
-                              placeholder="Markdown description"
+                              placeholder="description"
                               [(ngModel)]="action.description" rows="{{getDescriptionHeight()}}"
                               (keydown)="action.hasChanged = true; keyEvent($event)"></textarea>
                         </ng-container>
                         <ng-container *ngIf="!action.editable;">
-                            <markdown [data]="action.description"></markdown>
+                            <pre>{{action.description}}</pre>
                         </ng-container>
                     </nz-form-control>
                 </nz-form-item>

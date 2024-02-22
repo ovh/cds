@@ -50,7 +50,7 @@ export class WorkflowTemplateListComponent {
                     })
             },
             <Column<WorkflowTemplate>>{
-                type: ColumnType.MARKDOWN,
+                type: ColumnType.TEXT_PRE,
                 name: 'common_description',
                 selector: (wt: WorkflowTemplate) => {
                     if (wt.description && wt.description.length > 100) {
