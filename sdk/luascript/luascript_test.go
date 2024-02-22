@@ -18,6 +18,27 @@ func TestLuaCheck(t *testing.T) {
 	assert.True(t, l.Result)
 }
 
+func TestLuaCheckMissingValue(t *testing.T) {
+	l1, err := NewCheck()
+	require.NoError(t, err)
+	l1.SetVariables(map[string]string{
+		"cds.application": "mon-appli",
+	})
+	require.NoError(t, l1.Perform("return cds_application == \"mon-appli\" and git_tag == nil"))
+	require.False(t, l1.IsError)
+	require.True(t, l1.Result)
+
+	l2, err := NewCheck()
+	require.NoError(t, err)
+	l2.SetVariables(map[string]string{
+		"cds.application": "mon-appli",
+		"git_tag":         "",
+	})
+	require.NoError(t, l2.Perform("return cds_application == \"mon-appli\" and git_tag ~= nil"))
+	require.False(t, l2.IsError)
+	require.True(t, l2.Result)
+}
+
 func TestLuaPerformErrorNoBoolReturn(t *testing.T) {
 	l1, err := NewCheck()
 	require.NoError(t, err)

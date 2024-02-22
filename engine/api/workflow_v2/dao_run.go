@@ -312,11 +312,25 @@ func LoadRunsGitRefs(ctx context.Context, db gorp.SqlExecutor, projKey string) (
 	if _, err := db.Select(&refs, `
 		SELECT DISTINCT contexts -> 'git' ->> 'ref'
 		FROM v2_workflow_run
-		WHERE project_key = $1
+		WHERE project_key = $1 AND contexts -> 'git' ->> 'ref' IS NOT NULL
 	`, projKey); err != nil {
 		return nil, sdk.WithStack(err)
 	}
 	return refs, nil
+}
+
+func LoadRunsRepositories(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var names []string
+	_, next := telemetry.Span(ctx, "LoadRunsRepositories")
+	defer next()
+	if _, err := db.Select(&names, `
+		SELECT DISTINCT (vcs_server || '/' || repository)
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return names, nil
 }
 
 func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
@@ -339,15 +353,24 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 			AND (
 				array_length($5::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($5)
 			)
-	`, projKey, pq.StringArray(filters.Workflows), pq.StringArray(filters.Actors), pq.StringArray(filters.Status), pq.StringArray(filters.Branches))
+			AND (
+				array_length($6::text[], 1) IS NULL OR (vcs_server || '/' || repository) = ANY($6)
+			)
+	`, projKey,
+		pq.StringArray(filters.Workflows),
+		pq.StringArray(filters.Actors),
+		pq.StringArray(filters.Status),
+		pq.StringArray(filters.Branches),
+		pq.StringArray(filters.Repositories))
 	return count, sdk.WithStack(err)
 }
 
 type SearchsRunsFilters struct {
-	Workflows []string
-	Actors    []string
-	Status    []string
-	Branches  []string
+	Workflows    []string
+	Actors       []string
+	Status       []string
+	Branches     []string
+	Repositories []string
 }
 
 func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters, offset, limit uint, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
@@ -375,9 +398,18 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 			AND (
 				array_length($5::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($5)
 			)
+			AND (
+				array_length($6::text[], 1) IS NULL OR (vcs_server || '/' || repository) = ANY($6)
+			)
 		ORDER BY started desc
-    LIMIT $6 OFFSET $7
-	`).Args(projKey, pq.StringArray(filters.Workflows), pq.StringArray(filters.Actors), pq.StringArray(filters.Status), pq.StringArray(filters.Branches), limit, offset)
+    LIMIT $7 OFFSET $8
+	`).Args(projKey,
+		pq.StringArray(filters.Workflows),
+		pq.StringArray(filters.Actors),
+		pq.StringArray(filters.Status),
+		pq.StringArray(filters.Branches),
+		pq.StringArray(filters.Repositories),
+		limit, offset)
 
 	return getRuns(ctx, db, query, opts...)
 }
