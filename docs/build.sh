@@ -28,7 +28,7 @@ EOF
 }
 
 function generatePluginsDocumentation {
-  for plugin in `ls ../contrib/grpcplugins/action/plugin-*/*.yml`; do
+  for plugin in `ls ../contrib/grpcplugins/action/**/*.yml`; do
 
   filename=$(basename "$plugin")
   pluginName=${filename/.yml/}

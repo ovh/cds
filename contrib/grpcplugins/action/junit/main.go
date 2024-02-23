@@ -62,6 +62,7 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath
 		return err
 	}
 
+	testFailed := 0
 	for _, r := range results {
 		bts, err := os.ReadFile(r.Path)
 		if err != nil {
@@ -69,26 +70,33 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath
 			return errors.New("unable to read file " + r.Path)
 		}
 
-		runResultRequest, err := createRunResult(bts, r.Path, r.Result, sizes[r.Path], checksums[r.Path], permissions[r.Path])
+		runResultRequest, nbFailed, err := createRunResult(bts, r.Path, r.Result, sizes[r.Path], checksums[r.Path], permissions[r.Path])
 		if err != nil {
 			return err
 		}
+		testFailed += nbFailed
 
 		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, &grpcplugins.IntegrationCache{}, runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
 			return err
 		}
 	}
+
+	if testFailed == 1 {
+		return fmt.Errorf("there is 1 test failed")
+	} else if testFailed > 1 {
+		return fmt.Errorf("there are %d tests failed", testFailed)
+	}
 	return nil
 }
 
-func createRunResult(fileContent []byte, filePath string, fileName string, size int64, checksum grpcplugins.ChecksumResult, perm fs.FileMode) (*workerruntime.V2RunResultRequest, error) {
+func createRunResult(fileContent []byte, filePath string, fileName string, size int64, checksum grpcplugins.ChecksumResult, perm fs.FileMode) (*workerruntime.V2RunResultRequest, int, error) {
 	var ftests sdk.JUnitTestsSuites
 	if err := xml.Unmarshal(fileContent, &ftests); err != nil {
 		// Check if file contains testsuite only (and no testsuites)
 		var s sdk.JUnitTestSuite
 		if err := xml.Unmarshal([]byte(fileContent), &s); err != nil {
 			grpcplugins.Error(fmt.Sprintf("Unable to unmarshal junit file %q: %v.", filePath, err))
-			return nil, errors.New("unable to read file " + filePath)
+			return nil, 0, errors.New("unable to read file " + filePath)
 		}
 
 		if s.Name != "" {
@@ -125,7 +133,7 @@ func createRunResult(fileContent []byte, filePath string, fileName string, size 
 				},
 			},
 		},
-	}, nil
+	}, stats.TotalKO, nil
 }
 
 func main() {
