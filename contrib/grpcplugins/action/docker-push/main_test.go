@@ -21,7 +21,7 @@ import (
 )
 
 func Test_dockerPushPlugin_perform(t *testing.T) {
-	artifactoryRepoPrefix := os.Getenv("ARTIFACTORY_REPO_PRPEFIX")
+	artifactoryRepoPrefix := os.Getenv("ARTIFACTORY_REPO_PREFIX")
 	artifactoryURL := os.Getenv("ARTIFACTORY_URL")
 	artifactoryToken := os.Getenv("ARTIFACTORY_TOKEN")
 	artifactoryUsername := os.Getenv("ARTIFACTORY_USERNAME")
