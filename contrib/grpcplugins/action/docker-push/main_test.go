@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/moby/moby/client"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime/mock_workerruntime"
 	"github.com/ovh/cds/sdk"
@@ -21,6 +22,12 @@ import (
 )
 
 func Test_dockerPushPlugin_perform(t *testing.T) {
+	// If we don't have docker client, skip this test
+	if _, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); err != nil {
+		t.Logf("unable to get instanciate docker client: %v", err)
+		t.SkipNow()
+	}
+
 	artifactoryRepoPrefix := os.Getenv("ARTIFACTORY_REPO_PREFIX")
 	artifactoryURL := os.Getenv("ARTIFACTORY_URL")
 	artifactoryToken := os.Getenv("ARTIFACTORY_TOKEN")
