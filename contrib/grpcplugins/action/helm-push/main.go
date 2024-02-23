@@ -117,7 +117,7 @@ func (p *helmPushPlugin) perform(
 	var runResultRequest = workerruntime.V2RunResultRequest{
 		RunResult: &sdk.V2WorkflowRunResult{
 			IssuedAt: time.Now(),
-			Type:     sdk.V2WorkflowRunResultTypeDocker,
+			Type:     sdk.V2WorkflowRunResultTypeHelm,
 			Status:   sdk.V2WorkflowRunResultStatusPending,
 			Detail: sdk.V2WorkflowRunResultDetail{
 				Data: sdk.V2WorkflowRunResultHelmDetail{

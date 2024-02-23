@@ -5,7 +5,7 @@ description: |
   This push Helm chart on Chart Museum or Artifactory.
 inputs:
   chartFolder:
-    default: .chart/
+    default: ./chart
     type: string
     description: Relative path to chart folder to be published	
     required: true
