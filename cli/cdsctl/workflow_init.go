@@ -77,7 +77,7 @@ func interactiveChooseProject(gitRepo repo.Repo, defaultValue string) (string, e
 		return defaultValue, nil
 	}
 
-	projs, err := client.ProjectList(false, false)
+	projs, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return "", err
 	}
