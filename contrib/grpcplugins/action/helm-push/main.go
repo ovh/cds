@@ -33,7 +33,6 @@ const (
 
 type helmPushPlugin struct {
 	actionplugin.Common
-	helmCommandPath string
 }
 
 func main() {
@@ -113,29 +112,6 @@ func (p *helmPushPlugin) perform(
 ) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
 
-	// Create run result at status "pending"
-	var runResultRequest = workerruntime.V2RunResultRequest{
-		RunResult: &sdk.V2WorkflowRunResult{
-			IssuedAt: time.Now(),
-			Type:     sdk.V2WorkflowRunResultTypeHelm,
-			Status:   sdk.V2WorkflowRunResultStatusPending,
-			Detail: sdk.V2WorkflowRunResultDetail{
-				Data: sdk.V2WorkflowRunResultHelmDetail{
-					Name:         chartFolder,
-					AppVersion:   appVersion,
-					ChartVersion: chartFolder,
-				},
-			},
-		},
-	}
-
-	response, err := grpcplugins.CreateRunResult(ctx, &p.Common, &runResultRequest)
-	if err != nil {
-		return nil, time.Since(t0), err
-	}
-
-	result := response.RunResult
-
 	// Prepare teh chart package
 	chart, err := helm.GetChartByName(chartFolder)
 	if err != nil {
@@ -167,6 +143,29 @@ func (p *helmPushPlugin) perform(
 		}
 	}
 
+	// Create run result at status "pending"
+	var runResultRequest = workerruntime.V2RunResultRequest{
+		RunResult: &sdk.V2WorkflowRunResult{
+			IssuedAt: time.Now(),
+			Type:     sdk.V2WorkflowRunResultTypeHelm,
+			Status:   sdk.V2WorkflowRunResultStatusPending,
+			Detail: sdk.V2WorkflowRunResultDetail{
+				Data: sdk.V2WorkflowRunResultHelmDetail{
+					Name:         chart.Name(),
+					AppVersion:   chart.AppVersion(),
+					ChartVersion: chart.Metadata.Version,
+				},
+			},
+		},
+	}
+
+	response, err := grpcplugins.CreateRunResult(ctx, &p.Common, &runResultRequest)
+	if err != nil {
+		return nil, time.Since(t0), err
+	}
+
+	result := response.RunResult
+
 	switch {
 	case result.ArtifactManagerIntegrationName != nil:
 		integration, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, *result.ArtifactManagerIntegrationName)
@@ -177,6 +176,10 @@ func (p *helmPushPlugin) perform(
 		rtConfig := grpcplugins.ArtifactoryConfig{
 			URL:   integration.Config[sdk.ArtifactoryConfigURL].Value,
 			Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
+		}
+
+		if !strings.HasSuffix(rtConfig.URL, "/") {
+			rtConfig.URL = rtConfig.URL + "/"
 		}
 
 		if err := p.pushArtifactory(ctx, result, chart, chartPackagePath, integration, rtConfig); err != nil {
@@ -334,7 +337,7 @@ func (p *helmPushPlugin) UploadChartPackageToArtifactory(ctx context.Context, re
 
 // ReindexArtifactoryRepo calculates chart index of the local repository
 func (p *helmPushPlugin) ReindexArtifactoryRepo(ctx context.Context, repo string, rtConfig grpcplugins.ArtifactoryConfig) (*http.Response, error) {
-	path := rtConfig.URL + path.Join("/api/helm/", repo, "reindex")
+	path := rtConfig.URL + path.Join("api/helm/", repo, "reindex")
 
 	req, err := http.NewRequestWithContext(ctx, "POST", path, nil)
 	if err != nil {
