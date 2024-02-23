@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
@@ -58,52 +57,7 @@ func (actPlugin *junitPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 }
 
 func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath string) error {
-	results, err := glob.Glob(dirFS, ".", filePath)
-	if err != nil {
-		return err
-	}
-
-	var message string
-	switch len(results) {
-	case 0:
-		message = fmt.Sprintf("No files were found with the provided path: %q. No junit report will be uploaded.", filePath)
-	case 1:
-		message = fmt.Sprintf("With the provided pattern %q, there will be %d file uploaded.", filePath, len(results))
-	default:
-		message = fmt.Sprintf("With the provided pattern %q, there will be %d files uploaded.", filePath, len(results))
-	}
-
-	if len(results) == 0 {
-		grpcplugins.Error(message)
-		return errors.New("no files were found")
-	} else {
-		grpcplugins.Log(message)
-	}
-
-	var files []string
-	var sizes = map[string]int64{}
-	var permissions = map[string]os.FileMode{}
-	var openFiles = map[string]fs.File{}
-	for _, r := range results {
-		files = append(files, r.Path)
-		f, err := dirFS.Open(r.Path)
-		if err != nil {
-			grpcplugins.Errorf("unable to open file %q: %v", r.Path, err)
-			continue
-		}
-		stat, err := f.Stat()
-		if err != nil {
-			grpcplugins.Errorf("unable to stat file %q: %v", r.Path, err)
-			f.Close()
-			continue
-		}
-		defer f.Close()
-		sizes[r.Path] = stat.Size()
-		permissions[r.Path] = stat.Mode()
-		openFiles[r.Path] = f
-	}
-
-	checksums, err := grpcplugins.Checksums(ctx, dirFS, files...)
+	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, dirFS, filePath, "ERROR")
 	if err != nil {
 		return err
 	}

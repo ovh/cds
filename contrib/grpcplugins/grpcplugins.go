@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -23,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
@@ -754,7 +756,7 @@ type ChecksumResult struct {
 	Sha256 string
 }
 
-func Checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]ChecksumResult, error) {
+func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]ChecksumResult, error) {
 	pipe, err := checksum.NewPipe(dir, checksum.WithCtx(ctx), checksum.WithMD5(), checksum.WithSHA1(), checksum.WithSHA256())
 	if err != nil {
 		return nil, err
@@ -795,6 +797,67 @@ func Checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]Check
 	}
 
 	return result, nil
+}
+
+func RetrieveFilesToUpload(ctx context.Context, dirFS fs.FS, filePath string, ifNoFilesFound string) (glob.Results, map[string]int64, map[string]os.FileMode, map[string]fs.File, map[string]ChecksumResult, error) {
+	results, err := glob.Glob(dirFS, ".", filePath)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	var message string
+	switch len(results) {
+	case 0:
+		message = fmt.Sprintf("No files were found with the provided path: %q. No artifacts will be uploaded.", filePath)
+	case 1:
+		message = fmt.Sprintf("With the provided pattern %q, there will be %d file uploaded.", filePath, len(results))
+	default:
+		message = fmt.Sprintf("With the provided pattern %q, there will be %d files uploaded.", filePath, len(results))
+	}
+
+	if len(results) == 0 {
+		switch strings.ToUpper(ifNoFilesFound) {
+		case "ERROR":
+			Error(message)
+			return nil, nil, nil, nil, nil, errors.New("no files were found")
+		case "WARN":
+			Warn(message)
+		default:
+			Log(message)
+		}
+	} else {
+		Log(message)
+	}
+
+	var files []string
+	var sizes = map[string]int64{}
+	var permissions = map[string]os.FileMode{}
+	var openFiles = map[string]fs.File{}
+	for _, r := range results {
+		files = append(files, r.Path)
+		f, err := dirFS.Open(r.Path)
+		if err != nil {
+			Errorf("unable to open file %q: %v", r.Path, err)
+			continue
+		}
+		stat, err := f.Stat()
+		if err != nil {
+			Errorf("unable to stat file %q: %v", r.Path, err)
+			f.Close()
+			continue
+		}
+		defer f.Close()
+		sizes[r.Path] = stat.Size()
+		permissions[r.Path] = stat.Mode()
+		openFiles[r.Path] = f
+	}
+
+	checksums, err := checksums(ctx, dirFS, files...)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+
+	return results, sizes, permissions, openFiles, checksums, nil
 }
 
 type IntegrationCache struct {

@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
@@ -76,65 +73,13 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 }
 
 func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dirFS fs.FS, path, ifNoFilesFound string, runResultType sdk.V2WorkflowRunResultType) error {
-	results, err := glob.Glob(dirFS, ".", path)
-	if err != nil {
-		return err
-	}
-
-	var message string
-	switch len(results) {
-	case 0:
-		message = fmt.Sprintf("No files were found with the provided path: %q. No artifacts will be uploaded.", path)
-	case 1:
-		message = fmt.Sprintf("With the provided pattern %q, there will be %d file uploaded.", path, len(results))
-	default:
-		message = fmt.Sprintf("With the provided pattern %q, there will be %d files uploaded.", path, len(results))
-	}
-
-	if len(results) == 0 {
-		switch strings.ToUpper(ifNoFilesFound) {
-		case "ERROR":
-			grpcplugins.Error(message)
-			return errors.New("no files were found")
-		case "WARN":
-			grpcplugins.Warn(message)
-		default:
-			grpcplugins.Log(message)
-		}
-	} else {
-		grpcplugins.Log(message)
-	}
-
-	var files []string
-	var sizes = map[string]int64{}
-	var permissions = map[string]os.FileMode{}
-	var openFiles = map[string]fs.File{}
-	for _, r := range results {
-		files = append(files, r.Path)
-		f, err := dirFS.Open(r.Path)
-		if err != nil {
-			grpcplugins.Errorf("unable to open file %q: %v", r.Path, err)
-			continue
-		}
-		stat, err := f.Stat()
-		if err != nil {
-			grpcplugins.Errorf("unable to stat file %q: %v", r.Path, err)
-			f.Close()
-			continue
-		}
-		defer f.Close()
-		sizes[r.Path] = stat.Size()
-		permissions[r.Path] = stat.Mode()
-		openFiles[r.Path] = f
-	}
-
-	checksums, err := grpcplugins.Checksums(ctx, dirFS, files...)
+	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, dirFS, path, ifNoFilesFound)
 	if err != nil {
 		return err
 	}
 
 	for _, r := range results {
-		message = fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sh1: %s, SHA256: %s, Mode: %v", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256, permissions[r.Path])
+		message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s, Mode: %v", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256, permissions[r.Path])
 		grpcplugins.Log(message)
 
 		// Create run result at status "pending"
