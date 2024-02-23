@@ -72,8 +72,8 @@ func getWorkerModelNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUs
 	}
 	wmNames := make([]string, 0, len(entities))
 	for _, wm := range entities {
-		shortRef := strings.TrimPrefix(strings.TrimPrefix(wm.Ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix)
-		wmNames = append(wmNames, fmt.Sprintf("%s/%s/%s/%s@%s", wm.ProjectKey, wm.VCSName, wm.RepoName, wm.Name, shortRef))
+		wmNames = append(wmNames, fmt.Sprintf("%s/%s/%s/%s@%s", wm.ProjectKey, wm.VCSName, wm.RepoName, wm.Name, wm.Ref))
+		wmNames = append(wmNames, fmt.Sprintf("%s/%s/%s/%s", wm.ProjectKey, wm.VCSName, wm.RepoName, wm.Name))
 	}
 	return wmNames, nil
 }
