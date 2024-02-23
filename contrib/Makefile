@@ -42,4 +42,4 @@ clean_archive:
 	rm -rf $(TARGET_DIST)/*.tar.gz
 
 test:
-	$(MAKE) test -C grpcplugins
+	$(MAKE) test -C grpcplugins/action
