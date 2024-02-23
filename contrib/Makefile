@@ -40,3 +40,6 @@ archive: $(ALL_ARCHIVES)
 
 clean_archive:
 	rm -rf $(TARGET_DIST)/*.tar.gz
+
+test:
+	$(MAKE) test -C grpcplugins

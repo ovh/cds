@@ -9,6 +9,7 @@ CURRENT_PACKAGE          = $(shell $(GO_LIST) 2>&1 | grep -v 'no Go files in')
 TARGET_DIST              := ./dist
 TARGET_RESULTS           := ./dist/test-results
 ENABLE_CROSS_COMPILATION := true
+GOPATH                   = $(shell go env GOPATH)
 
 
 ##### =====> Clean <===== #####
@@ -69,37 +70,37 @@ TESTPKGS_RESULTS = $(foreach PKG, $(TESTPKGS), $(TESTPKGS_RESULTS_LOG_FILE))
 $(HOME)/.richstyle.yml:
 	echo "leaveTestPrefix: true" > $(HOME)/.richstyle.yml
 
-GO_RICHGO = ${GOPATH}/bin/richgo
+GO_RICHGO = $(GOPATH)/bin/richgo
 $(GO_RICHGO): $(HOME)/.richstyle.yml
-	go get -u github.com/kyoh86/richgo
+	go install github.com/kyoh86/richgo@latest
 
 EXIT_TESTS := 0
 $(TESTPKGS_RESULTS): $(GOFILES) $(TESTPKGS_C) $(GO_RICHGO)
 	$(info *** executing tests in $(dir $@))
 	@-cd $(dir $@) && ./bin.test $(TEST_RUN_ARGS) | tee tests.log | richgo testfilter ;
 
-GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
+GO_COV_MERGE = $(GOPATH)/bin/gocovmerge
 $(GO_COV_MERGE):
-	go get -u github.com/wadey/gocovmerge
+	go install github.com/wadey/gocovmerge@latest
 
-GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
+GO_GOJUNIT = $(GOPATH)/bin/go-junit-report
 $(GO_GOJUNIT):
-	go get -u github.com/jstemmer/go-junit-report
+	go install github.com/jstemmer/go-junit-report@latest
 
-GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
+GO_COBERTURA = $(GOPATH)/bin/gocover-cobertura
 $(GO_COBERTURA):
-	go get -u github.com/richardlt/gocover-cobertura
+	go install github.com/richardlt/gocover-cobertura@latest
 
-GO_XUTOOLS = ${GOPATH}/bin/xutools
+GO_XUTOOLS = $(GOPATH)/bin/xutools
 $(GO_XUTOOLS):
-	go get -u github.com/richardlt/xutools
+	go install github.com/richardlt/xutools@latest
 
 mk_go_test: $(GO_COV_MERGE) $(GO_XUTOOLS) $(GO_COBERTURA) $(GOFILES) $(TARGET_RESULTS) $(TESTPKGS_RESULTS) # Run tests
 	@echo "Generating unit tests coverage..."
 	@$(GO_COV_MERGE) `find ./ -name "*.coverprofile"` > $(TARGET_RESULTS)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_RESULTS)/cover.out > $(TARGET_RESULTS)/coverage.xml
 	@go tool cover -html=$(TARGET_RESULTS)/cover.out -o=$(TARGET_RESULTS)/cover.html
-	@NB=$$(grep -c "^FAIL" `find . -type f -name "tests.log"`|grep -v ':0'|grep -v '^0'|wc -l); echo "tests failed $$NB" && exit $$NB
+	@NB=$$(test `find . -type f -name "tests.log" | wc -l` -gt 0  && grep -c "^FAIL" `find . -type f -name "tests.log"`|grep -v ':0'|grep -v '^0'|wc -l || echo 0); echo "Tests failed: $$NB" && exit $$NB
 
 mk_go_test-xunit: $(GO_GOJUNIT) $(GOFILES) $(TARGET_RESULTS) # Generate test with xunit report
 	@echo "Generating xUnit Report..."
@@ -145,7 +146,7 @@ mk_go_test-xunit: $(GO_GOJUNIT) $(GOFILES) $(TARGET_RESULTS) # Generate test wit
 
 ##### =====> lint <===== #####
 
-GOLANG_CI_LINT 		:= ${GOPATH}/bin/golangci-lint
+GOLANG_CI_LINT 		:= $(GOPATH)/bin/golangci-lint
 $(GOLANG_CI_LINT):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.27.0
 
