@@ -11,15 +11,15 @@ type TestsResults struct {
 }
 
 type TestsStats struct {
-	Total        int `json:"total,omitempty"`
-	TotalOK      int `json:"ok,omitempty"`
-	TotalKO      int `json:"ko,omitempty"`
-	TotalSkipped int `json:"skipped,omitempty"`
+	Total        int `json:"total,omitempty" mapstructure:"total"`
+	TotalOK      int `json:"ok,omitempty" mapstructure:"ok"`
+	TotalKO      int `json:"ko,omitempty" mapstructure:"ko"`
+	TotalSkipped int `json:"skipped,omitempty" mapstructure:"skipped"`
 }
 
 type JUnitTestsSuites struct {
 	XMLName    xml.Name         `xml:"testsuites" json:"-"`
-	TestSuites []JUnitTestSuite `xml:"testsuite" json:"test_suites"`
+	TestSuites []JUnitTestSuite `xml:"testsuite" json:"test_suites" mapstructure:"test_suites"`
 }
 
 // EnsureData add missing names on test cases and suites also compute
@@ -74,43 +74,43 @@ func (s JUnitTestsSuites) ComputeStats() TestsStats {
 
 type JUnitTestSuite struct {
 	XMLName   xml.Name        `xml:"testsuite" json:"-"`
-	Disabled  int             `xml:"disabled,attr,omitempty" json:"disabled,omitempty"`
-	Errors    int             `xml:"errors,attr,omitempty" json:"errors,omitempty"`
-	Failures  int             `xml:"failures,attr,omitempty" json:"failures,omitempty"`
-	ID        string          `xml:"id,attr" json:"id,omitempty"`
-	Name      string          `xml:"name,attr" json:"name,omitempty"`
-	Package   string          `xml:"package,attr,omitempty" json:"package,omitempty"`
-	Skipped   int             `xml:"skipped,attr,omitempty" json:"skipped,omitempty"`
-	TestCases []JUnitTestCase `xml:"testcase" json:"tests,omitempty"`
-	Time      string          `xml:"time,attr,omitempty" json:"time,omitempty"`
-	Timestamp string          `xml:"timestamp,attr,omitempty" json:"timestamp,omitempty"`
-	Total     int             `xml:"tests,attr" json:"total,omitempty"`
+	Disabled  int             `xml:"disabled,attr,omitempty" json:"disabled,omitempty" mapstructure:"disabled"`
+	Errors    int             `xml:"errors,attr,omitempty" json:"errors,omitempty" mapstructure:"errors"`
+	Failures  int             `xml:"failures,attr,omitempty" json:"failures,omitempty" mapstructure:"failures"`
+	ID        string          `xml:"id,attr" json:"id,omitempty" mapstructure:"id"`
+	Name      string          `xml:"name,attr" json:"name,omitempty" mapstructure:"name"`
+	Package   string          `xml:"package,attr,omitempty" json:"package,omitempty" mapstructure:"package"`
+	Skipped   int             `xml:"skipped,attr,omitempty" json:"skipped,omitempty" mapstructure:"skipped"`
+	TestCases []JUnitTestCase `xml:"testcase" json:"tests,omitempty" mapstructure:"tests"`
+	Time      string          `xml:"time,attr,omitempty" json:"time,omitempty" mapstructure:"time"`
+	Timestamp string          `xml:"timestamp,attr,omitempty" json:"timestamp,omitempty" mapstructure:"timestamp"`
+	Total     int             `xml:"tests,attr" json:"total,omitempty" mapstructure:"total"`
 }
 
 type JUnitTestCase struct {
 	XMLName   xml.Name           `xml:"testcase" json:"-"`
-	Classname string             `xml:"classname,attr,omitempty" json:"classname,omitempty"`
-	Errors    []JUnitTestFailure `xml:"error,omitempty" json:"errors,omitempty"`
-	Failures  []JUnitTestFailure `xml:"failure,omitempty" json:"failures,omitempty"`
-	Name      string             `xml:"name,attr" json:"name,omitempty"`
-	Skipped   []JUnitTestSkipped `xml:"skipped,omitempty" json:"skipped,omitempty"`
-	Status    string             `xml:"status,attr,omitempty" json:"status,omitempty"`
-	Systemerr JUnitInnerResult   `xml:"system-err,omitempty" json:"systemerr,omitempty"`
-	Systemout JUnitInnerResult   `xml:"system-out,omitempty" json:"systemout,omitempty"`
-	Time      string             `xml:"time,attr,omitempty" json:"time,omitempty"`
+	Classname string             `xml:"classname,attr,omitempty" json:"classname,omitempty" mapstructure:"classname"`
+	Errors    []JUnitTestFailure `xml:"error,omitempty" json:"errors,omitempty" mapstructure:"errors"`
+	Failures  []JUnitTestFailure `xml:"failure,omitempty" json:"failures,omitempty" mapstructure:"failures"`
+	Name      string             `xml:"name,attr" json:"name,omitempty" mapstructure:"name"`
+	Skipped   []JUnitTestSkipped `xml:"skipped,omitempty" json:"skipped,omitempty" mapstructure:"skipped"`
+	Status    string             `xml:"status,attr,omitempty" json:"status,omitempty" mapstructure:"status"`
+	Systemerr JUnitInnerResult   `xml:"system-err,omitempty" json:"systemerr,omitempty" mapstructure:"systemerr"`
+	Systemout JUnitInnerResult   `xml:"system-out,omitempty" json:"systemout,omitempty" mapstructure:"systemout"`
+	Time      string             `xml:"time,attr,omitempty" json:"time,omitempty" mapstructure:"time"`
 }
 
 type JUnitTestSkipped struct {
-	Message string `xml:"message,attr,omitempty" json:"message,omitempty"`
-	Value   string `xml:",cdata" json:"value,omitempty"`
+	Message string `xml:"message,attr,omitempty" json:"message,omitempty" mapstructure:"message"`
+	Value   string `xml:",cdata" json:"value,omitempty" mapstructure:"value"`
 }
 
 type JUnitTestFailure struct {
-	Message string `xml:"message,attr,omitempty" json:"message,omitempty"`
-	Type    string `xml:"type,attr,omitempty" json:"type,omitempty"`
-	Value   string `xml:",cdata" json:"value,omitempty"`
+	Message string `xml:"message,attr,omitempty" json:"message,omitempty" mapstructure:"message"`
+	Type    string `xml:"type,attr,omitempty" json:"type,omitempty" mapstructure:"type"`
+	Value   string `xml:",cdata" json:"value,omitempty" mapstructure:"value"`
 }
 
 type JUnitInnerResult struct {
-	Value string `xml:",cdata" json:"value,omitempty"`
+	Value string `xml:",cdata" json:"value,omitempty" mapstructure:"value"`
 }

@@ -24,12 +24,6 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-func Test_checksums(t *testing.T) {
-	c, err := checksums(context.TODO(), os.DirFS("."), "main.go")
-	require.NoError(t, err)
-	t.Log(c)
-}
-
 func Test_perform(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	ctrl := gomock.NewController(t)
@@ -112,7 +106,7 @@ func Test_perform(t *testing.T) {
 	plugin := new(runActionUploadArtifactPlugin)
 	plugin.Common = actionplugin.Common{HTTPPort: 1, HTTPClient: mockHTTPClient}
 
-	err := plugin.perform(context.TODO(), os.DirFS("."), "*.go !*_test.go", "warn")
+	err := plugin.perform(context.TODO(), os.DirFS("."), "*.go !*_test.go", "warn", sdk.V2WorkflowRunResultTypeGeneric)
 	require.NoError(t, err)
 }
 

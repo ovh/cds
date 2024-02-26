@@ -485,6 +485,24 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDockerDetail() (*V2W
 	return i, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTestDetail() (*V2WorkflowRunResultTestDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultTestDetail)
+	if !ok {
+		var ii V2WorkflowRunResultTestDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultTestDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultTestDetail")
+	}
+	return i, nil
+}
+
 func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2WorkflowRunResultGenericDetail, error) {
 	if err := r.Detail.castData(); err != nil {
 		return nil, err
@@ -523,6 +541,11 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultReleaseDetail() (*V2
 
 func (r *V2WorkflowRunResult) Name() string {
 	switch r.Type {
+	case V2WorkflowRunResultTypeTest:
+		detail, err := r.GetDetailAsV2WorkflowRunResultTestDetail()
+		if err == nil {
+			return string(r.Type) + ":" + detail.Name
+		}
 	case V2WorkflowRunResultTypeGeneric, V2WorkflowRunResultTypeCoverage:
 		detail, err := r.GetDetailAsV2WorkflowRunResultGenericDetail()
 		if err == nil {
@@ -608,6 +631,13 @@ type V2WorkflowRunResultDetail struct {
 
 func (s *V2WorkflowRunResultDetail) castData() error {
 	switch s.Type {
+	case "V2WorkflowRunResultTestDetail":
+		var detail = new(V2WorkflowRunResultTestDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTestDetail")
+		}
+		s.Data = detail
+		return nil
 	case "V2WorkflowRunResultGenericDetail":
 		var detail = new(V2WorkflowRunResultGenericDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
@@ -757,6 +787,17 @@ const (
 	V2WorkflowRunResultTypeHelm              = "helm"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
+
+type V2WorkflowRunResultTestDetail struct {
+	Name        string           `json:"name" mapstructure:"name"`
+	Size        int64            `json:"size" mapstructure:"size"`
+	Mode        os.FileMode      `json:"mode" mapstructure:"mode"`
+	MD5         string           `json:"md5" mapstructure:"md5"`
+	SHA1        string           `json:"sha1" mapstructure:"sha1"`
+	SHA256      string           `json:"sha256" mapstructure:"sha256"`
+	TestsSuites JUnitTestsSuites `json:"tests_suites" mapstructure:"tests_suites"`
+	TestStats   TestsStats       `json:"tests_stats" mapstructure:"tests_stats"`
+}
 
 type V2WorkflowRunResultGenericDetail struct {
 	Name   string      `json:"name" mapstructure:"name"`
