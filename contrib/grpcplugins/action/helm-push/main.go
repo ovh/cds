@@ -289,24 +289,6 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 
 	grpcplugins.Success("Done.")
 
-	respReindex, err := p.ReindexArtifactoryRepo(ctx, localRepository, rtConfig)
-	if err != nil {
-		return errors.Errorf("unable to reindex artifactory repository %v", err)
-	}
-	defer respReindex.Body.Close()
-
-	btes, err := io.ReadAll(respReindex.Body)
-	if err != nil {
-		return err
-	}
-
-	if respReindex.StatusCode != 200 {
-		grpcplugins.Error(string(btes))
-		grpcplugins.Error(fmt.Sprintf("HTTP %d", respReindex.StatusCode))
-		return errors.Errorf("unable to upload chart package: HTTP %d", respReindex.StatusCode)
-	}
-	grpcplugins.Log(string(btes))
-
 	return nil
 }
 
@@ -332,22 +314,6 @@ func (p *helmPushPlugin) UploadChartPackageToArtifactory(ctx context.Context, re
 	req.Header.Set("User-Agent", "cds-helm-push-plugin-"+sdk.VERSION)
 
 	grpcplugins.Logf("Pushing %s to %s...\n", filepath.Base(chartPackagePath), u.String())
-	return p.HTTPClient.Do(req)
-}
-
-// ReindexArtifactoryRepo calculates chart index of the local repository
-func (p *helmPushPlugin) ReindexArtifactoryRepo(ctx context.Context, repo string, rtConfig grpcplugins.ArtifactoryConfig) (*http.Response, error) {
-	path := rtConfig.URL + path.Join("api/helm/", repo, "reindex")
-
-	req, err := http.NewRequestWithContext(ctx, "POST", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", rtConfig.Token))
-	req.Header.Set("User-Agent", "cds-helm-push-plugin-"+sdk.VERSION)
-
-	grpcplugins.Logf("Reindex helm repository %s...\n", repo)
 	return p.HTTPClient.Do(req)
 }
 

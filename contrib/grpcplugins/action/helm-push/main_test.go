@@ -56,7 +56,7 @@ func Test_helmPushPlugin(t *testing.T) {
 			btes, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			require.NoError(t, sdk.JSONUnmarshal(btes, &rrRequest))
-			require.Equal(t, "fixtures/chart", rrRequest.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
+			require.Equal(t, "buildachart", rrRequest.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
 
 			h := workerruntime.V2_runResultHandler(context.TODO(), mockWorker)
 
@@ -77,7 +77,7 @@ func Test_helmPushPlugin(t *testing.T) {
 			btes, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			require.NoError(t, sdk.JSONUnmarshal(btes, &rrRequest))
-			require.Equal(t, "fixtures/chart", rrRequest.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
+			require.Equal(t, "buildachart", rrRequest.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
 
 			h := workerruntime.V2_runResultHandler(context.TODO(), mockWorker)
 
@@ -129,7 +129,7 @@ func Test_helmPushPlugin(t *testing.T) {
 
 	mockWorker.EXPECT().V2AddRunResult(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
-			require.Equal(t, "fixtures/chart", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
+			require.Equal(t, "buildachart", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
 			var s = "artifactory-integration"
 			req.RunResult.ArtifactManagerIntegrationName = &s
 			req.RunResult.ID = sdk.UUID()
@@ -141,7 +141,7 @@ func Test_helmPushPlugin(t *testing.T) {
 
 	mockWorker.EXPECT().V2UpdateRunResult(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
-			require.Equal(t, "fixtures/chart", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
+			require.Equal(t, "buildachart", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultHelmDetail).Name)
 			var s = "artifactory-integration"
 			req.RunResult.ArtifactManagerIntegrationName = &s
 			req.RunResult.ID = sdk.UUID()
