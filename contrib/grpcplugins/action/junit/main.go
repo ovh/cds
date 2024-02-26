@@ -23,7 +23,7 @@ type junitPlugin struct {
 
 func (actPlugin *junitPlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:        "plugin-junit",
+		Name:        "junit",
 		Author:      "Steven GUIHEUX <steven.guiheux@ovhcloud.com>",
 		Description: `This action upload and parse a junit report`,
 		Version:     sdk.VERSION,
