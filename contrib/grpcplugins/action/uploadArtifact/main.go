@@ -102,8 +102,10 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dir
 		}
 
 		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, actPlugin.integrationCache, &runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
+			_ = openFiles[r.Path].Close()
 			return err
 		}
+		_ = openFiles[r.Path].Close()
 	}
 
 	return nil

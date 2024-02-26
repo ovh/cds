@@ -112,6 +112,7 @@ Jobs field is a map that contains all the jobs of your workflow. The key of the 
 jobs:
   myJob:
     runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+    vars: [varset1, varset2]
     integrations: [my-artifactory]
     steps:
      run: echo 'Hello World'
@@ -126,6 +127,7 @@ jobs:
 * <span style="color:red">*</span>[`steps`](#step): the list of step to execute
 * `name`: job description
 * `needs`: the list of jobs that need to be executed before this one
+* [`vars`](/docs/concepts/cds_as_code/project/variableset/): the list of variable set available in the job
 * [`integrations`](#integrations): integration linked to the job
 * `region`: the region on which the job must be triggered
 * [`if`](#conditions): condition that must be satisfied to run the job. `if` and `gate` field cannot be set together

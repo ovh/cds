@@ -67,18 +67,22 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath
 		bts, err := os.ReadFile(r.Path)
 		if err != nil {
 			grpcplugins.Error(fmt.Sprintf("Unable to read file %q: %v.", r.Path, err))
+			_ = openFiles[r.Path].Close()
 			return errors.New("unable to read file " + r.Path)
 		}
 
 		runResultRequest, nbFailed, err := createRunResult(bts, r.Path, r.Result, sizes[r.Path], checksums[r.Path], permissions[r.Path])
 		if err != nil {
+			_ = openFiles[r.Path].Close()
 			return err
 		}
 		testFailed += nbFailed
 
 		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, &grpcplugins.IntegrationCache{}, runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
+			_ = openFiles[r.Path].Close()
 			return err
 		}
+		_ = openFiles[r.Path].Close()
 	}
 
 	if testFailed == 1 {

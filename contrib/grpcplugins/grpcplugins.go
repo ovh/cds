@@ -846,7 +846,6 @@ func RetrieveFilesToUpload(ctx context.Context, dirFS fs.FS, filePath string, if
 			f.Close()
 			continue
 		}
-		defer f.Close()
 		sizes[r.Path] = stat.Size()
 		permissions[r.Path] = stat.Mode()
 		openFiles[r.Path] = f
