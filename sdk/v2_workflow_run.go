@@ -546,7 +546,7 @@ func (r *V2WorkflowRunResult) Name() string {
 	case V2WorkflowRunResultTypeHelm:
 		detail, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
 		if ok {
-			return string(r.Type) + ":" + detail.Name
+			return string(r.Type) + ":" + detail.Name + ":" + detail.ChartVersion
 		}
 	case V2WorkflowRunResultTypeRelease:
 		detail, err := r.GetDetailAsV2WorkflowRunResultReleaseDetail()
