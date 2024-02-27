@@ -641,8 +641,7 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 	}
 	workerStarterModel.Commit = entity.Commit
 
-	preCmd := `
-    #!/bin/sh
+	preCmd := `#!/bin/sh
     if [ ! -z ` + "`which curl`" + ` ]; then
       curl -L "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 >> /tmp/cds-worker-setup.log 2>&1 && chmod +x worker
     elif [ ! -z ` + "`which wget`" + ` ]; then
