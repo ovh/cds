@@ -5,6 +5,7 @@ import {
     ElementRef,
     EventEmitter,
     Input,
+    OnDestroy,
     Output
 } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
@@ -24,7 +25,7 @@ import { lastValueFrom } from "rxjs";
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class RunJobLogsComponent {
+export class RunJobLogsComponent implements OnDestroy {
     readonly initLoadLinesCount = 10;
     readonly expandLoadLinesCount = 100;
     readonly scrollTargets = ScrollTarget;
@@ -45,10 +46,19 @@ export class RunJobLogsComponent {
     logBlocks: Array<LogBlock>;
     currentTabIndex = 0;
 
-    constructor(private ref: ElementRef, private _cd: ChangeDetectorRef, private _workflowRunService: V2WorkflowRunService, private _workflowService: WorkflowService) {
-    }
+    constructor(
+        private ref: ElementRef,
+        private _cd: ChangeDetectorRef,
+        private _workflowRunService: V2WorkflowRunService,
+        private _workflowService: WorkflowService
+    ) { }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     async changeRunJob(data: V2WorkflowRunJob) {
+        if (this._runJob && this._runJob.id === data.id) {
+            return;
+        }
         this.logBlocks = new Array<LogBlock>();
         this._runJob = data;
 
@@ -204,7 +214,6 @@ export class RunJobLogsComponent {
         step.totalLinesCount = result.totalCount;
         step.lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
         this._cd.markForCheck();
-
     }
 
     async clickExpandStepUp(stepName: string) {
@@ -259,4 +268,5 @@ export class RunJobLogsComponent {
         this.ref.nativeElement.children[0].scrollTop = target === ScrollTarget.TOP ?
             0 : this.ref.nativeElement.children[0].scrollHeight;
     }
+
 }

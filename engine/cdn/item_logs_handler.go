@@ -121,6 +121,100 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 	}
 }
 
+func (s *Service) getItemLogsStreamV2Handler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		c, err := websocket.Upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			service.WriteError(ctx, w, r, sdk.NewErrorWithStack(err, sdk.ErrWebsocketUpgrade))
+			return nil
+		}
+		defer c.Close() //nolint
+
+		jwtToken := ctx.Value(service.ContextJWT).(*jwt.Token)
+		claims := jwtToken.Claims.(*sdk.AuthSessionJWTClaims)
+		sessionID := claims.StandardClaims.Id
+
+		wsClient := websocket.NewClient(c)
+		wsClientData := &websocketClientData{sessionID: sessionID}
+		s.WSServer.AddClient(wsClient, wsClientData)
+		defer s.WSServer.RemoveClient(wsClient.UUID())
+
+		wsClient.OnMessage(func(m []byte) {
+			var filter sdk.CDNStreamFilter
+			if err := sdk.JSONUnmarshal(m, &filter); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Warn(ctx, err.Error())
+				return
+			}
+
+			// Load last running step
+			var iuID string
+			jobRunInt, err := strconv.Atoi(filter.JobRunID)
+			if err == nil {
+				iu, err := storage.LoadLastItemUnitByJobUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), int64(jobRunInt), sdk.CDNTypeItemJobStepLog)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				if iu != nil {
+					iuID = iu.ID
+				}
+			} else {
+				iu, err := storage.LoadLastItemUnitByRunJobIDUnitType(ctx, s.Mapper, s.mustDBWithCtx(ctx), s.Units.LogsBuffer().ID(), filter.JobRunID, sdk.CDNTypeItemServiceLogV2)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					return
+				}
+				if iu != nil {
+					iuID = iu.ID
+				}
+			}
+
+			if err := wsClientData.UpdateFilter(filter, iuID); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Warn(ctx, err.Error())
+				return
+			}
+			// Trigger one update at routine startup
+			wsClientData.TriggerUpdate()
+		})
+
+		ctx, cancel := context.WithCancel(s.Router.Background)
+		ctx = context.WithValue(ctx, service.ContextSessionID, sessionID)
+		defer cancel()
+
+		s.GoRoutines.Exec(ctx, "getItemLogsStreamHandler."+wsClient.UUID(), func(ctx context.Context) {
+			log.Debug(ctx, "getItemLogsStreamHandler> start routine for client %s (session %s)", wsClient.UUID(), s.sessionID(ctx))
+
+			// Create a ticker to periodically send logs if needed
+			sendTicker := time.NewTicker(time.Millisecond * 100)
+			defer sendTicker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					log.Debug(ctx, "getItemLogsStreamHandler> stop routine for stream client %s", wsClient.UUID())
+					return
+				case <-sendTicker.C:
+					if !wsClientData.ConsumeTrigger() {
+						continue
+					}
+					if err := s.sendLogsToWSClient(ctx, wsClient, wsClientData); err != nil {
+						log.Warn(ctx, "getItemLogsStreamHandler> can't send to client %s it will be removed: %+v", wsClient.UUID(), err)
+						return
+					}
+				}
+			}
+		})
+
+		if err := wsClient.Listen(ctx, s.GoRoutines); err != nil {
+			return err
+		}
+
+		log.Debug(ctx, "getItemLogsStreamHandler> stop listenning for client %s", wsClient.UUID())
+		return nil
+	}
+}
+
 func (s *Service) sendLogsToWSClient(ctx context.Context, wsClient websocket.Client, wsClientData *websocketClientData) error {
 	wsClientData.mutexData.Lock()
 	defer wsClientData.mutexData.Unlock()

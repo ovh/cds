@@ -30,6 +30,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/item/duplicate", nil, r.POST(s.postDuplicateItemForJobHandler))
 	r.Handle("/item/upload", nil, r.POST(s.postUploadHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/item/stream", nil, r.GET(s.getItemLogsStreamHandler, service.OverrideAuth(s.validJWTMiddleware)))
+	r.Handle("/v2/item/stream", nil, r.GET(s.getItemLogsStreamV2Handler, service.OverrideAuth(s.validJWTMiddleware)))
 	r.Handle("/item/{type}", nil, r.GET(s.getItemsHandler))
 	r.Handle("/item/{type}/lines", nil, r.GET(s.getItemsAllLogsLinesHandler, service.OverrideAuth(s.validJWTMiddleware)))
 	r.Handle("/item/{type}/{apiRef}", nil, r.GET(s.getItemHandler, service.OverrideAuth(s.itemAccessMiddleware)), r.DELETE(s.deleteItemHandler))
