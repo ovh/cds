@@ -487,7 +487,7 @@ func Test_getProjectsHandler_FilterByRepo(t *testing.T) {
 		BuiltinConsumerAuthenticationToken: jws,
 	})
 
-	projs, err := sdkclientAdmin.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})
+	projs, err := sdkclientAdmin.ProjectList(true, true, false, cdsclient.Filter{Name: "repo", Value: "ovh/" + repofullName})
 	require.NoError(t, err)
 	require.True(t, len(projs) == 1)
 	require.True(t, len(projs[0].Workflows) == 1)

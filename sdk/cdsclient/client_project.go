@@ -48,9 +48,9 @@ func (c *client) ProjectUpdate(key string, project *sdk.Project) error {
 	return nil
 }
 
-func (c *client) ProjectList(withApplications, withWorkflows bool, filters ...Filter) ([]sdk.Project, error) {
+func (c *client) ProjectList(withApplications, withWorkflows, withFavorites bool, filters ...Filter) ([]sdk.Project, error) {
 	p := []sdk.Project{}
-	path := fmt.Sprintf("/project?application=%v&workflow=%v", withApplications, withWorkflows)
+	path := fmt.Sprintf("/project?application=%v&workflow=%v&withFavorites=%v", withApplications, withWorkflows, withFavorites)
 
 	for _, f := range filters {
 		path += fmt.Sprintf("&%s=%s", url.QueryEscape(f.Name), url.QueryEscape(f.Value))

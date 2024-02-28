@@ -262,7 +262,7 @@ type ProjectClient interface {
 	ProjectGroupDelete(projectKey, groupName string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
 	ProjectUpdate(key string, project *sdk.Project) error
-	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
+	ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectIntegrationImport(projectKey string, content io.Reader, mods ...RequestModifier) (sdk.ProjectIntegration, error)

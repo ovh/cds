@@ -137,7 +137,7 @@ func adminMetadataProjectExportRun(c cli.Values) error {
 	currentDisplay.Printf("Gettings projects list...")
 	currentDisplay.Do(context.Background())
 
-	projects, err := client.ProjectList(false, false)
+	projects, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func adminMetadataApplicationExportRun(c cli.Values) error {
 	currentDisplay.Printf("Gettings projects list...")
 	currentDisplay.Do(context.Background())
 
-	projects, err := client.ProjectList(false, false)
+	projects, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ func adminMetadataApplicationImportRun(c cli.Values) error {
 }
 
 func adminMetadataWorkflowExportRun(c cli.Values) error {
-	projects, err := client.ProjectList(false, false)
+	projects, err := client.ProjectList(false, false, false)
 	if err != nil {
 		return err
 	}

@@ -3405,9 +3405,9 @@ func (mr *MockProjectClientMockRecorder) ProjectKeysList(projectKey interface{})
 }
 
 // ProjectList mocks base method.
-func (m *MockProjectClient) ProjectList(withApplications, withWorkflow bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
+func (m *MockProjectClient) ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{withApplications, withWorkflow}
+	varargs := []interface{}{withApplications, withWorkflow, withFavorites}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -3418,9 +3418,9 @@ func (m *MockProjectClient) ProjectList(withApplications, withWorkflow bool, fil
 }
 
 // ProjectList indicates an expected call of ProjectList.
-func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkflow interface{}, filters ...interface{}) *gomock.Call {
+func (mr *MockProjectClientMockRecorder) ProjectList(withApplications, withWorkflow, withFavorites interface{}, filters ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{withApplications, withWorkflow}, filters...)
+	varargs := append([]interface{}{withApplications, withWorkflow, withFavorites}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockProjectClient)(nil).ProjectList), varargs...)
 }
 
@@ -8752,9 +8752,9 @@ func (mr *MockInterfaceMockRecorder) ProjectKeysList(projectKey interface{}) *go
 }
 
 // ProjectList mocks base method.
-func (m *MockInterface) ProjectList(withApplications, withWorkflow bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
+func (m *MockInterface) ProjectList(withApplications, withWorkflow, withFavorites bool, filters ...cdsclient.Filter) ([]sdk.Project, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{withApplications, withWorkflow}
+	varargs := []interface{}{withApplications, withWorkflow, withFavorites}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -8765,9 +8765,9 @@ func (m *MockInterface) ProjectList(withApplications, withWorkflow bool, filters
 }
 
 // ProjectList indicates an expected call of ProjectList.
-func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow interface{}, filters ...interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) ProjectList(withApplications, withWorkflow, withFavorites interface{}, filters ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{withApplications, withWorkflow}, filters...)
+	varargs := append([]interface{}{withApplications, withWorkflow, withFavorites}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectList", reflect.TypeOf((*MockInterface)(nil).ProjectList), varargs...)
 }
 
