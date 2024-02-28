@@ -308,6 +308,17 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}); err != nil {
 			return err
 		}
+
+		// Reload integration with secret
+		currentInteg, err := integration.LoadProjectIntegrationByIDWithClearPassword(ctx, db, integ.ID)
+		if err != nil {
+			return err
+		}
+		for _, v := range currentInteg.Config {
+			if v.Type == sdk.IntegrationConfigTypePassword {
+				sensitiveDatas = append(sensitiveDatas, v.Value)
+			}
+		}
 		return nil
 	}
 

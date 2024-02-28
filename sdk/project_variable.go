@@ -5,6 +5,8 @@ import "time"
 const (
 	ProjectVariableTypeSecret = "secret"
 	ProjectVariableTypeString = "string"
+
+	ProjectVariableSetItemNamePattern = "^[a-zA-Z0-9_-]{1,}$"
 )
 
 type ProjectVariableSet struct {

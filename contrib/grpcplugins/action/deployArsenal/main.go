@@ -159,6 +159,9 @@ func (e *deployArsenalPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 			break
 		}
 	}
+	if deploymentResult == nil {
+		return fail("deployment failed")
+	}
 
 	// Create run result at status "pending"
 	var runResultRequest = workerruntime.V2RunResultRequest{

@@ -54,6 +54,14 @@ func (api *API) postProjectVariableSetItemHandler() ([]service.RbacChecker, serv
 				return err
 			}
 
+			itemPattern, err := regexp.Compile(sdk.ProjectVariableSetItemNamePattern)
+			if err != nil {
+				return sdk.WrapError(err, "unable to compile regexp %s", sdk.ProjectVariableSetItemNamePattern)
+			}
+			if !itemPattern.MatchString(item.Name) {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "name %s doesn't match %s", item.Name, sdk.ProjectVariableSetItemNamePattern)
+			}
+
 			vs, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, vsName, project.WithVariableSetItems)
 			if err != nil {
 				return err

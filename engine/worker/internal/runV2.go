@@ -451,7 +451,7 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 		return w.failJob(ctx, fmt.Sprintf("unable to interpolate script content: %v", err))
 	}
 
-	env, err := w.GetEnvVariable(runJobContext)
+	env, err := w.GetEnvVariable(ctx, runJobContext)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("%v", err))
 	}
@@ -536,7 +536,7 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 	return actionContext, nil
 }
 
-func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map[string]string, error) {
+func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.WorkflowRunJobsContext) (map[string]string, error) {
 	newEnvVar := make(map[string]string)
 
 	var mapCDS map[string]interface{}
@@ -575,7 +575,41 @@ func (w *CurrentWorker) GetEnvVariable(contexts sdk.WorkflowRunJobsContext) (map
 		}
 		newEnvVar[strings.ToUpper(k)] = sdk.OneLineValue(fmt.Sprintf("%v", v))
 	}
+
+	// Integration variable
+	if w.currentJobV2.runJobContext.Integrations != nil && w.currentJobV2.runJobContext.Integrations.ArtifactManager != "" {
+		integ, err := w.V2GetIntegrationByName(ctx, w.currentJobV2.runJobContext.Integrations.ArtifactManager)
+		if err != nil {
+			return nil, err
+		}
+		envVars := computeIntegrationConfigToEnvVar(*integ, "ARTIFACT_MANAGER")
+		for k, v := range envVars {
+			newEnvVar[k] = v
+		}
+	}
+	if w.currentJobV2.runJobContext.Integrations != nil && w.currentJobV2.runJobContext.Integrations.Deployment != "" {
+		integ, err := w.V2GetIntegrationByName(ctx, w.currentJobV2.runJobContext.Integrations.Deployment)
+		if err != nil {
+			return nil, err
+		}
+		envVars := computeIntegrationConfigToEnvVar(*integ, "DEPLOYMENT")
+		for k, v := range envVars {
+			newEnvVar[k] = v
+		}
+	}
+
 	return newEnvVar, nil
+}
+
+func computeIntegrationConfigToEnvVar(integ sdk.ProjectIntegration, prefix string) map[string]string {
+	envVars := make(map[string]string)
+	for k, v := range integ.Config {
+		suffix := strings.Replace(k, "-", "_", -1)
+		suffix = strings.Replace(k, ".", "_", -1)
+		key := fmt.Sprintf("CDS_INTEGRATION_%s_%s", prefix, suffix)
+		envVars[strings.ToUpper(key)] = sdk.OneLineValue(v.Value)
+	}
+	return envVars
 }
 
 func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs, workingDir string) error {
