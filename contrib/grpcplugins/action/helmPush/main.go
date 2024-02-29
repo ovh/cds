@@ -45,7 +45,7 @@ func main() {
 // Manifest implements actionplugin.ActionPluginServer.
 func (*helmPushPlugin) Manifest(context.Context, *emptypb.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:        "helm-push",
+		Name:        "helmPush",
 		Author:      "François SAMIN <francois.samin@corp.ovh.com>",
 		Description: "Push helm chart on a helm registry",
 		Version:     sdk.VERSION,

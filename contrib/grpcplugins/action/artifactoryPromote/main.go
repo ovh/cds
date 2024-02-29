@@ -14,28 +14,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-type rtReleasePlugin struct {
+type rtPromotePlugin struct {
 	actionplugin.Common
 }
 
 func main() {
-	p := rtReleasePlugin{}
+	p := rtPromotePlugin{}
 	if err := actionplugin.Start(context.Background(), &p); err != nil {
 		panic(err)
 	}
 }
 
-func (p *rtReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
+func (p *rtPromotePlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:        "artifactory-release",
+		Name:        "artifactoryPromote",
 		Author:      "François SAMIN <francois.samin@corp.ovh.com>",
-		Description: "Release artifacts.",
+		Description: "Promote artifacts.",
 		Version:     sdk.VERSION,
 	}, nil
 }
 
 // Run implements actionplugin.ActionPluginServer.
-func (p *rtReleasePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+func (p *rtPromotePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	res := &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}
@@ -43,9 +43,8 @@ func (p *rtReleasePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) 
 	artifacts := q.GetOptions()["artifacts"]
 	maturity := q.GetOptions()["maturity"]
 	properties := q.GetOptions()["properties"]
-	releaseNotes := q.GetOptions()["releaseNotes"]
 
-	if err := p.perform(ctx, artifacts, maturity, properties, releaseNotes); err != nil {
+	if err := p.perform(ctx, artifacts, maturity, properties); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
 		return res, err
@@ -54,7 +53,7 @@ func (p *rtReleasePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) 
 	return res, nil
 }
 
-func (p *rtReleasePlugin) perform(ctx context.Context, artifacts string, maturity string, properties string, releaseNotes string) (err error) {
+func (p *rtPromotePlugin) perform(ctx context.Context, artifacts string, maturity string, properties string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic:", r)
@@ -81,10 +80,12 @@ func (p *rtReleasePlugin) perform(ctx context.Context, artifacts string, maturit
 		}
 	}
 
-	grpcplugins.Logf("Total number of artifacts that will be released: %d", len(results.RunResults))
+	grpcplugins.Logf("Total number of artifacts that will be promoted: %d", len(results.RunResults))
 
-	if err := artifactorypluginslib.ReleaseArtifactoryRunResult(ctx, &p.Common, results.RunResults, maturity, props, releaseNotes); err != nil {
-		return err
+	for _, r := range results.RunResults {
+		if err := artifactorypluginslib.PromoteArtifactoryRunResult(ctx, &p.Common, r, maturity, props); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -1,5 +1,5 @@
-PLUGIN_NAME		= artifactory-promote
-TARGET_NAME		= artifactory-promote
+PLUGIN_NAME		= artifactoryPromote
+TARGET_NAME		= artifactoryPromote
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 

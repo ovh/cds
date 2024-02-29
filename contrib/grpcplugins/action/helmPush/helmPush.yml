@@ -1,4 +1,4 @@
-name: helm-push
+name: helmPush
 type: action
 author: "François SAMIN <francois.samin@corp.ovh.com>"
 description: |
@@ -10,7 +10,7 @@ inputs:
     description: Relative path to chart folder to be published	
     required: true
   chartVersion:
-    default: ${{git.semver.current}}
+    default: ${{git.semver_current}}
     type: string
     description: |-
       (Optional) Override the chart version before push to registry.

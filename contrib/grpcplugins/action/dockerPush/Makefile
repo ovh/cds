@@ -1,5 +1,5 @@
-PLUGIN_NAME		= artifactory-release
-TARGET_NAME		= artifactory-release
+PLUGIN_NAME		= dockerPush
+TARGET_NAME		= dockerPush
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 
