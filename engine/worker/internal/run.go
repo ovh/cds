@@ -538,7 +538,11 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 				continue
 			}
 
-			hookFilename := fmt.Sprintf("%d-%s-%s", hookConfig.Priority, integrationName, slug.Convert(hookConfig.Label))
+			label := slug.Convert(hookConfig.Label)
+			if len(label) > 20 {
+				label = label[0:20]
+			}
+			hookFilename := fmt.Sprintf("%d-%s-%s", hookConfig.Priority, integrationName, label)
 
 			w.hooks = append(w.hooks, workerHook{
 				Config:       hookConfig,
