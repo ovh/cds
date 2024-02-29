@@ -27,7 +27,7 @@ func main() {
 
 func (p *rtPromotePlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:        "artifactory-promote",
+		Name:        "artifactoryPromote",
 		Author:      "François SAMIN <francois.samin@corp.ovh.com>",
 		Description: "Promote artifacts.",
 		Version:     sdk.VERSION,
