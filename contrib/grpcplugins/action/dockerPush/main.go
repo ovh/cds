@@ -36,7 +36,7 @@ func main() {
 
 func (actPlugin *dockerPushPlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:        "docker-push",
+		Name:        "dockerPush",
 		Author:      "François SAMIN <francois.samin@corp.ovh.com>",
 		Description: "Push an image docker on a docker registry",
 		Version:     sdk.VERSION,

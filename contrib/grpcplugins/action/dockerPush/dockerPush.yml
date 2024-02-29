@@ -1,4 +1,4 @@
-name: docker-push
+name: dockerPush
 type: action
 author: "François SAMIN <francois.samin@corp.ovh.com>"
 description: |

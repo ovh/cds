@@ -27,7 +27,7 @@ func main() {
 
 func (p *rtReleasePlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:        "artifactory-release",
+		Name:        "artifactoryRelease",
 		Author:      "François SAMIN <francois.samin@corp.ovh.com>",
 		Description: "Release artifacts.",
 		Version:     sdk.VERSION,

@@ -1,4 +1,4 @@
-name: artifactory-release
+name: artifactoryRelease
 type: action
 author: "François SAMIN <francois.samin@corp.ovh.com>"
 description: |
