@@ -735,11 +735,7 @@ func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV
 			if len(label) > 20 {
 				label = label[0:20]
 			}
-			name := integrationName
-			if len(integrationName) > 5 {
-				name = integrationName[0:5]
-			}
-			hookFilename := fmt.Sprintf("%d-%s-%s", hookConfig.Priority, name, label)
+			hookFilename := fmt.Sprintf("%d-%s", hookConfig.Priority, label)
 
 			w.hooks = append(w.hooks, workerHook{
 				Config:       hookConfig,
