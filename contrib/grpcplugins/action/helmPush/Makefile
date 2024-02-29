@@ -1,5 +1,5 @@
-PLUGIN_NAME		= helm-push
-TARGET_NAME		= helm-push
+PLUGIN_NAME		= helmPush
+TARGET_NAME		= helmPush
 
 ##### ^^^^^^ EDIT ABOVE ^^^^^^ #####
 
