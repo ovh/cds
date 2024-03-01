@@ -84,7 +84,7 @@
     "raven-js": "3.27.2",
     "rxjs": "7.8.1",
     "rxjs-compat": "6.3.3",
-    "sanitize-html": "2.11.0",
+    "sanitize-html": "2.12.1",
     "spinkit": "2.0.1",
     "string-format-obj": "1.1.1",
     "ts-helpers": "1.1.2",
