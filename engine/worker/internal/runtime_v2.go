@@ -144,7 +144,7 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
 
-	resp, err := wk.clientV2.V2QueueJobRunResultsGet(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, filter.WithClearIntegration)
+	resp, err := wk.clientV2.V2QueueJobRunResultsGet(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 	}
 	pattern := glob.New(filter.Pattern)
 	for _, r := range resp {
-		if len(filter.Type) == 0 && !slices.Contains(filter.Type, r.Type) {
+		if len(filter.Type) > 0 && !slices.Contains(filter.Type, r.Type) {
 			continue
 		}
 		switch r.Detail.Type {

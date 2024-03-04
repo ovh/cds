@@ -407,7 +407,7 @@ func GetArtifactoryFolderInfo(ctx context.Context, c *actionplugin.Common, confi
 }
 
 func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, pattern string) (*workerruntime.V2GetResultResponse, error) {
-	response, err := GetV2RunResults(ctx, c, workerruntime.V2FilterRunResult{Pattern: pattern, WithClearIntegration: true})
+	response, err := GetV2RunResults(ctx, c, workerruntime.V2FilterRunResult{Pattern: pattern})
 	if err != nil {
 		return nil, err
 	}

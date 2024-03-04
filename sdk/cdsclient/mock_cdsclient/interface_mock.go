@@ -2807,18 +2807,18 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultUpdate(ctx, 
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockHatcheryServiceClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockHatcheryServiceClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
 }
 
 // V2QueueJobStepUpdate mocks base method.
@@ -4137,18 +4137,18 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultUpdate(ctx, regionNa
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockV2QueueClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockV2QueueClient) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
+func (mr *MockV2QueueClientMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
 }
 
 // V2QueueJobStepUpdate mocks base method.
@@ -10348,18 +10348,18 @@ func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultUpdate(ctx, regionName, 
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
+func (mr *MockInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
 }
 
 // V2QueueJobStepUpdate mocks base method.
@@ -11955,18 +11955,18 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultUpdate(ctx, regi
 }
 
 // V2QueueJobRunResultsGet mocks base method.
-func (m *MockV2WorkerInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string, withClearIntegration bool) ([]sdk.V2WorkflowRunResult, error) {
+func (m *MockV2WorkerInterface) V2QueueJobRunResultsGet(ctx context.Context, regionName, jobRunID string) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID, withClearIntegration)
+	ret := m.ctrl.Call(m, "V2QueueJobRunResultsGet", ctx, regionName, jobRunID)
 	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // V2QueueJobRunResultsGet indicates an expected call of V2QueueJobRunResultsGet.
-func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID, withClearIntegration interface{}) *gomock.Call {
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobRunResultsGet(ctx, regionName, jobRunID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID, withClearIntegration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueJobRunResultsGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueJobRunResultsGet), ctx, regionName, jobRunID)
 }
 
 // V2QueueJobStepUpdate mocks base method.
