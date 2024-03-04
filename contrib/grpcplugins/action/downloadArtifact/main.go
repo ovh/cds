@@ -72,7 +72,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		return err
 	}
 
-	response, err := grpcplugins.GetV2RunResults(ctx, &actPlugin.Common, workerruntime.V2FilterRunResult{Pattern: name, Type: []sdk.V2WorkflowRunResultType{sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric}, WithClearIntegration: true})
+	response, err := grpcplugins.GetV2RunResults(ctx, &actPlugin.Common, workerruntime.V2FilterRunResult{Pattern: name, Type: []sdk.V2WorkflowRunResultType{sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric}})
 	if err != nil {
 		return err
 	}
