@@ -1,10 +1,22 @@
 <ng-container *ngIf="workflowRun">
     <div class="graph" [class.disableSelection]="resizing">
-        <nz-page-header class="title" nzBackIcon (nzBack)="onBack()"
-            [nzTitle]="workflowRun.workflow_name"></nz-page-header>
+        <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
+            <nz-page-header-title>
+                {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}
+                #{{workflowRun.run_number}}
+            </nz-page-header-title>
+            <nz-page-header-content>
+                <span nz-typography nzType="secondary">
+                    Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} by {{workflowRun.contexts.git.username}} on
+                    repository
+                    {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
+                </span>
+            </nz-page-header-content>
+        </nz-page-header>
 
         <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-            (onSelectJobGate)="selectJobGate($event)" (onSelectJob)="selectJob($event)" #graph></app-stages-graph>
+            (onSelectJobGate)="selectJobGate($event)" (onSelectJob)="selectJob($event)"
+            (onSelectHook)="selectHook($event)" #graph></app-stages-graph>
 
         <!--  BOTTOM PANELS -->
 
@@ -77,11 +89,13 @@
 
     <!--  RIGHT PANELS -->
 
-    <app-resizable-panel *ngIf="selectedJobRun || selectedJobGate" minSize="400" [initialSize]="jobPanelSize"
-        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
+    <app-resizable-panel *ngIf="selectedJobRun || selectedJobGate || selectedHook" minSize="400"
+        [initialSize]="jobPanelSize" (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
         <app-run-job *ngIf="selectedJobRun" [workflowRun]="workflowRun" [jobRun]="selectedJobRun"
             [jobRunInfos]="selectedJobRunInfos" (onClickClose)="unselectJob()"></app-run-job>
         <app-run-gate *ngIf="selectedJobGate" [gateNode]="selectedJobGate" [run]="workflowRun"></app-run-gate>
+        <app-run-hook *ngIf="selectedHook" [hook]="selectedHook" [run]="workflowRun"
+            (onClickClose)="unselectHook()"></app-run-hook>
     </app-resizable-panel>
 
 </ng-container>

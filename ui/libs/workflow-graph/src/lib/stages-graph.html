@@ -1,18 +1,27 @@
-<div class="hooks">
-    <nz-avatar-group>
-        <ng-container *ngFor="let h of hooks">
-            <nz-avatar [class.active]="h === selectedHook" [nzIcon]="'api'" nz-tooltip nzTooltipTitle="{{h}}"></nz-avatar>
-        </ng-container>
-    </nz-avatar-group>
+<div class="svg-wrapper" #svgGraph></div>
+
+<div *ngIf="_workflowRun" class="hooks">
+    <ng-container *ngFor="let h of hooks">
+        <div class="hook" *ngIf="h === selectedHook" [class.active]="true" (click)="clickHook(h)">
+            <span nz-icon nzType="api" nzTheme="outline"></span>
+            Hook triggered on&nbsp;<b>{{h}}</b>
+        </div>
+    </ng-container>
 </div>
-<div class="svg-wrapper" #svgGraph>
-    <div class="controls">
-        <button nz-button (click)="changeDirection()" nzSize="large">
-            <span *ngIf="direction === 'horizontal'">↔</span>
-            <span *ngIf="direction === 'vertical'">↕</span>
-        </button>
-        <button nz-button (click)="clickOrigin()" nzSize="large">
-            ⌖
-        </button>
+
+<div *ngIf="!_workflowRun" class="hooks">
+    <div class="hook" *ngFor="let h of hooks" (click)="clickHook(h)">
+        <span nz-icon nzType="api" nzTheme="outline"></span>
+        Hook on&nbsp;<b>{{h}}</b>
     </div>
+</div>
+
+<div class="controls">
+    <button nz-button (click)="changeDirection()" nzSize="large">
+        <span *ngIf="direction === 'horizontal'" nz-icon nzType="rotate-right" nzTheme="outline"></span>
+        <span *ngIf="direction === 'vertical'" nz-icon nzType="rotate-left" nzTheme="outline"></span>
+    </button>
+    <button nz-button (click)="clickOrigin()" nzSize="large">
+        <span nz-icon nzType="aim" nzTheme="outline"></span>
+    </button>
 </div>

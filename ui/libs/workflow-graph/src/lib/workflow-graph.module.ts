@@ -8,30 +8,33 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { CommonModule } from '@angular/common';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { AimOutline, RotateRightOutline, RotateLeftOutline } from '@ant-design/icons-angular/icons';
+import { IconDefinition } from '@ant-design/icons-angular';
 
-
-
+const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutline];
 
 @NgModule({
   declarations: [
-    WorkflowV2StagesGraphComponent,
-    WorkflowV2JobsGraphComponent,
     GraphForkJoinNodeComponent,
     GraphGateNodeComponent,
     GraphJobNodeComponent,
+    WorkflowV2JobsGraphComponent,
+    WorkflowV2StagesGraphComponent
   ],
   imports: [
     CommonModule,
-    NzIconModule,
     NzAvatarModule,
+    NzButtonModule,
+    NzIconModule.forRoot(icons),
     NzToolTipModule
   ],
   exports: [
-    WorkflowV2StagesGraphComponent,
-    WorkflowV2JobsGraphComponent,
     GraphForkJoinNodeComponent,
     GraphGateNodeComponent,
     GraphJobNodeComponent,
+    WorkflowV2JobsGraphComponent,
+    WorkflowV2StagesGraphComponent
   ]
 })
 export class WorkflowGraphModule { }

@@ -24,12 +24,13 @@ import { ProjectV2WorkflowRunListComponent } from './run-list/run-list.component
 import { WorkflowGraphModule } from '../../../../libs/workflow-graph/src/public-api';
 import { ProjectV2ExploreComponent } from './explore/explore.component';
 import { ProjectV2WorkflowRunListSidebarComponent } from './run-list/run-list-sidebar.component';
+import { RunHookComponent } from './run/run-hook.component';
 
 @NgModule({
     declarations: [
         ProjectV2ActionShowComponent,
-        ProjectV2ExploreComponent,
         ProjectV2ActivityBarComponent,
+        ProjectV2ExploreComponent,
         ProjectV2RepositoryAddComponent,
         ProjectV2RepositoryShowComponent,
         ProjectV2ShowComponent,
@@ -42,6 +43,7 @@ import { ProjectV2WorkflowRunListSidebarComponent } from './run-list/run-list-si
         ProjectV2WorkflowShowComponent,
         ProjectWorkflowEntityComponent,
         RunGateComponent,
+        RunHookComponent,
         RunJobComponent,
         RunJobLogsComponent
     ],

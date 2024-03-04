@@ -28,8 +28,8 @@ export class V2WorkflowRun {
  }
 
 export class WorkflowEvent {
-    workflow_update: {ref: string, workflow_updated: string};
-    model_update: {ref: string, workflow_updated: string};
+    "workflow-update": {ref: string, workflow_updated: string};
+    "model-update": {ref: string, workflow_updated: string};
     git: {event_name: string, payload: string, ref: string, sha: string};
 }
 

@@ -157,6 +157,7 @@ import { CodemirrorComponent } from './codemirror';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NsAutoHeightTableDirective } from './directives/ns-auto-height-table.directive';
+import { NzTypographyModule } from 'ng-zorro-antd/typography';
 
 const ngZorroConfig: NzConfig = {
     notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
@@ -172,10 +173,17 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
 
 @NgModule({
     imports: [
-        NzAvatarModule,
-        NzAutocompleteModule,
-        NzPaginationModule,
+        ClipboardModule,
+        CommonModule,
+        DragulaModule.forRoot(),
+        FormsModule,
+        InfiniteScrollModule,
+        MarkdownModule.forRoot(),
+        MomentModule,
+        NgxChartsModule,
         NzAlertModule,
+        NzAutocompleteModule,
+        NzAvatarModule,
         NzBadgeModule,
         NzBreadCrumbModule,
         NzButtonModule,
@@ -185,42 +193,36 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NzCollapseModule,
         NzDividerModule,
         NzDropDownModule,
+        NzEmptyModule,
         NzFormModule,
         NzGridModule,
         NzIconModule.forRoot(icons),
         NzInputModule,
         NzLayoutModule,
         NzListModule,
+        NzMenuModule,
         NzModalModule,
         NzNotificationModule,
-        NzMenuModule,
+        NzPageHeaderModule,
+        NzPaginationModule,
         NzPopconfirmModule,
-        NzProgressModule,
         NzPopoverModule,
+        NzProgressModule,
         NzRadioModule,
         NzSelectModule,
         NzSpinModule,
         NzStepsModule,
         NzSwitchModule,
-        NzTabsModule,
         NzTableModule,
-        NzPageHeaderModule,
+        NzTabsModule,
         NzTagModule,
         NzToolTipModule,
         NzTreeViewModule,
+        NzTypographyModule,
         NzUploadModule,
-        NzEmptyModule,
-        CommonModule,
-        ClipboardModule,
-        FormsModule,
-        TranslateModule,
-        DragulaModule.forRoot(),
-        MomentModule,
         ReactiveFormsModule,
-        MarkdownModule.forRoot(),
         RouterModule,
-        InfiniteScrollModule,
-        NgxChartsModule
+        TranslateModule
     ],
     declarations: [
         ActionComponent,
@@ -330,7 +332,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NoAuthenticationGuard,
         FeatureGuard,
         { provide: NZ_CONFIG, useValue: ngZorroConfig },
-        { provide: NZ_I18N, useValue: en_US },
+        { provide: NZ_I18N, useValue: en_US }
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -416,6 +418,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NzTagModule,
         NzToolTipModule,
         NzTreeViewModule,
+        NzTypographyModule,
         NzUploadModule,
         ParameterFormComponent,
         ParameterListComponent,

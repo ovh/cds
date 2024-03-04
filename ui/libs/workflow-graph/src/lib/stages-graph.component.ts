@@ -11,13 +11,13 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import {WorkflowV2JobsGraphComponent} from './jobs-graph.component';
-import {GraphForkJoinNodeComponent} from './node/fork-join-node.components';
-import {GraphJobNodeComponent} from './node/job-node.component';
-import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob, GraphNodeTypeStage} from './graph.model';
-import {GraphDirection, WorkflowV2Graph} from './graph.lib';
-import {load, LoadOptions} from 'js-yaml';
-import {GraphGateNodeComponent} from './node/gate-node.component';
+import { WorkflowV2JobsGraphComponent } from './jobs-graph.component';
+import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
+import { GraphJobNodeComponent } from './node/job-node.component';
+import { GraphNode, GraphNodeTypeGate, GraphNodeTypeJob, GraphNodeTypeStage } from './graph.model';
+import { GraphDirection, WorkflowV2Graph } from './graph.lib';
+import { load, LoadOptions } from 'js-yaml';
+import { GraphGateNodeComponent } from './node/gate-node.component';
 import { V2WorkflowRun, V2WorkflowRunJob } from './v2.workflow.run.model';
 
 export type WorkflowV2JobsGraphOrNodeComponent = WorkflowV2JobsGraphComponent |
@@ -42,8 +42,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         let workflow: any;
         try {
             workflow = load(data && data !== '' ? data : '{}', <LoadOptions>{
-                onWarning: (e) => {
-                }
+                onWarning: (e) => { }
             });
         } catch (e) {
             console.error("Invalid workflow:", data, e)
@@ -66,8 +65,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                 let expandMatrixJobs = new Array<string>();
                 if (job?.strategy?.matrix) {
                     let keys = Object.keys(job.strategy.matrix);
-                    let alls = new Array<Map<string,string>>();
-                    this.generateMatrix(job.strategy.matrix, keys, 0, new Map<string,string>(), alls)
+                    let alls = new Array<Map<string, string>>();
+                    this.generateMatrix(job.strategy.matrix, keys, 0, new Map<string, string>(), alls)
                     alls.forEach(m => {
                         let suffix = "";
                         let mapKeys = Array.from(m.keys()).sort();
@@ -88,11 +87,11 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                 let job = workflow.jobs[k];
                 let gateNode = undefined;
                 if (job?.gate && job.gate !== '') {
-                    gateNode = <GraphNode>{name: `${job.gate}-${k}`, type: GraphNodeTypeGate, gateChild: k, gateName: `${job.gate}`}
+                    gateNode = <GraphNode>{ name: `${job.gate}-${k}`, type: GraphNodeTypeGate, gateChild: k, gateName: `${job.gate}` }
                 }
                 if (matrixJobs.has(k)) {
                     matrixJobs.get(k).forEach(j => {
-                        let node = <GraphNode>{name: j.matrixName, depends_on: this.getJobNeeds(j, matrixJobs), type: GraphNodeTypeJob};
+                        let node = <GraphNode>{ name: j.matrixName, depends_on: this.getJobNeeds(j, matrixJobs), type: GraphNodeTypeJob };
                         if (job?.stage) {
                             for (let i = 0; i < this.nodes.length; i++) {
                                 if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
@@ -111,7 +110,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                         }
                     });
                 } else {
-                    let node = <GraphNode>{name: k, depends_on: this.getJobNeeds(job, matrixJobs), type: GraphNodeTypeJob};
+                    let node = <GraphNode>{ name: k, depends_on: this.getJobNeeds(job, matrixJobs), type: GraphNodeTypeJob };
                     node.run = this.jobRuns[k];
                     if (job?.stage) {
                         for (let i = 0; i < this.nodes.length; i++) {
@@ -192,6 +191,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     @Output() onSelectJob = new EventEmitter<string>();
     @Output() onSelectJobGate = new EventEmitter<GraphNode>();
     @Output() onSelectJobRun = new EventEmitter<string>();
+    @Output() onSelectHook = new EventEmitter<string>();
 
     direction: GraphDirection = GraphDirection.HORIZONTAL;
 
@@ -199,7 +199,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     hasStages = false;
 
     // workflow graph
-    @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer: ViewContainerRef;
+    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
     graph: WorkflowV2Graph<WorkflowV2JobsGraphOrNodeComponent>;
 
     constructor(private _cd: ChangeDetectorRef, private host: ElementRef) {
@@ -213,17 +213,17 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         this.hooks = [];
         this.selectedHook = '';
         if (this.hooksOn) {
-            if(Object.prototype.toString.call(this.hooksOn) === '[object Array]') {
+            if (Object.prototype.toString.call(this.hooksOn) === '[object Array]') {
                 this.hooks = this.hooksOn;
             } else {
                 this.hooks = Object.keys(this.hooksOn);
             }
 
             if (this._workflowRun) {
-                if (this._workflowRun.event.workflow_update) {
-                    this.selectedHook = 'workflow_update';
-                } else if (this._workflowRun.event.model_update) {
-                    this.selectedHook = 'model_update';
+                if (this._workflowRun.event['workflow-update']) {
+                    this.selectedHook = 'workflow-update';
+                } else if (this._workflowRun.event['model-update']) {
+                    this.selectedHook = 'model-update';
                 } else if (this._workflowRun.event.git) {
                     this.selectedHook = this._workflowRun.event.git.event_name;
                 }
@@ -255,8 +255,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         return false;
     };
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
         this.ready = true;
@@ -336,7 +335,6 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                 WorkflowV2StagesGraphComponent.maxScale);
         }
 
-
         this.nodes.forEach(n => {
             if (this.hasStages) {
                 this.graph.createNode(n.name, GraphNodeTypeStage, this.createSubGraphComponent(n),
@@ -387,6 +385,10 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             return;
         }
         this.graph.center(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
+    }
+
+    clickHook(type: string): void {
+        this.onSelectHook.emit(type);
     }
 
     createGateNodeComponent(node: GraphNode): ComponentRef<GraphGateNodeComponent> {
@@ -463,7 +465,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         this.changeDisplay();
     }
 
-    generateMatrix(matrix: {[key: string]:string[] }, keys: string[], keyIndex: number, current: Map<string,string>, alls: Map<string,string>[]) {
+    generateMatrix(matrix: { [key: string]: string[] }, keys: string[], keyIndex: number, current: Map<string, string>, alls: Map<string, string>[]) {
         if (current.size == keys.length) {
             let combi = new Map<string, string>();
             current.forEach((v, k) => {
@@ -476,7 +478,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         let values = matrix[key];
         values.forEach(v => {
             current.set(key, v);
-            this.generateMatrix(matrix, keys, keyIndex+1, current, alls);
+            this.generateMatrix(matrix, keys, keyIndex + 1, current, alls);
             current.delete(key);
         });
     }

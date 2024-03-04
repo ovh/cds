@@ -3,6 +3,7 @@ export class V2WorkflowRun {
     project_key: string;
     vcs_server_id: string;
     repository_id: string;
+    repository: string;
     workflow_name: string;
     workflow_sha: string;
     workflow_ref: string;
@@ -19,28 +20,30 @@ export class V2WorkflowRun {
     event: WorkflowEvent;
     job_events: V2WorkflowRunJobEvent[];
     results: Array<WorkflowRunResult>;
+    vcs_server: string;
 }
- export class V2WorkflowRunJobEvent {
+
+export class V2WorkflowRunJobEvent {
     username: string;
     job_id: string;
-    inputs: {[key:string]:any};
+    inputs: { [key: string]: any };
     run_attempt: number;
- }
+}
 
 export class WorkflowEvent {
-    workflow_update: {ref: string, workflow_updated: string};
-    model_update: {ref: string, workflow_updated: string};
-    git: {event_name: string, payload: string, ref: string, sha: string};
+    workflow_update: { ref: string, workflow_updated: string };
+    model_update: { ref: string, workflow_updated: string };
+    git: { event_name: string, payload: string, ref: string, sha: string };
 }
 
 export class WorkflowData {
     workflow: any;
-    worker_models: {[key:string]: { }};
-    actions:  {[key:string]: { }};
+    worker_models: { [key: string]: {} };
+    actions: { [key: string]: {} };
 }
 
 export class Gate {
-    inputs: {[key:string]:GateInput};
+    inputs: { [key: string]: GateInput };
     reviewers: GateReviewers;
 }
 
@@ -72,19 +75,19 @@ export class V2WorkflowRunJob {
     worker_id: string;
     worker_name: string;
     hatchery_name: string;
-    outputs: {[key:string]:string};
-    steps_status: {[key:string]:StepStatus };
+    outputs: { [key: string]: string };
+    steps_status: { [key: string]: StepStatus };
     user_id: string;
     username: string;
     region: string;
     model_type: string;
-    matrix: {[key:string]: string};
+    matrix: { [key: string]: string };
 }
 
 export class StepStatus {
     conclusion: string;
     outcome: string;
-    outputs: {[key:string]:string};
+    outputs: { [key: string]: string };
     started: string;
     ended: string;
 }
