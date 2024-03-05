@@ -184,21 +184,26 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 			ToMaturity:   maturity,
 		}
 
-		data := art.FileToPromote{
-			RepoType: r.ArtifactManagerMetadata.Get("type"),
-			RepoName: r.ArtifactManagerMetadata.Get("repository"),
-			Name:     r.ArtifactManagerMetadata.Get("name"),
-			Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"),
-		}
-
 		switch r.Type {
 		case "docker":
+			data := art.FileToPromote{
+				RepoType: r.ArtifactManagerMetadata.Get("type"),
+				RepoName: r.ArtifactManagerMetadata.Get("repository"),
+				Name:     r.ArtifactManagerMetadata.Get("name"),
+				Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"),
+			}
 			if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, true); err != nil {
 				return errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
 			}
 
 			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path")))
 		default:
+			data := art.FileToPromote{
+				RepoType: r.ArtifactManagerMetadata.Get("type"),
+				RepoName: r.ArtifactManagerMetadata.Get("repository"),
+				Name:     r.ArtifactManagerMetadata.Get("name"),
+				Path:     strings.TrimPrefix(r.ArtifactManagerMetadata.Get("path"), "/"),
+			}
 			if err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, true); err != nil {
 				return errors.Errorf("unable to promote file: %s: %v", data.Name, err)
 			}
@@ -228,7 +233,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		return errors.Errorf("Failed to create distribution client: %v", err)
 	}
 
-	xrayClient, err := xray.NewClient(strings.Replace(rtConfig.URL, "/artifactory/", "/xray/", -1), rtConfig.Token)
+	xrayClient, err := xray.NewClient(strings.Replace(rtConfig.URL, "/artifactory/", "/xray", -1), rtConfig.Token)
 	if err != nil {
 		return errors.Errorf("Failed to create xray client: %v", err)
 	}
