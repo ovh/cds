@@ -1,6 +1,6 @@
 module github.com/ovh/cds
 
-go 1.21
+go 1.22
 
 require (
 	code.gitea.io/sdk/gitea v0.15.1-0.20220530220844-359c771ce3d2

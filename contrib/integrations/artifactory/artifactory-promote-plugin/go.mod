@@ -1,6 +1,6 @@
 module github.com/ovh/cds/contrib/integrations/artifactory/artifactory-promote-plugin
 
-go 1.21.1
+go 1.22
 
 replace github.com/ovh/cds => ../../../../
 
