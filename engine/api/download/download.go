@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/cli"
