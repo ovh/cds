@@ -415,6 +415,8 @@ func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, patte
 	for i := range response.RunResults {
 		if response.RunResults[i].ArtifactManagerIntegrationName != nil {
 			final = append(final, response.RunResults[i])
+		} else {
+			Logf("skipping artifact %s, it has not been uploaded on artifactory.", response.RunResults[i].Name())
 		}
 	}
 	return &workerruntime.V2GetResultResponse{

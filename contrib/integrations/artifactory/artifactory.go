@@ -136,7 +136,7 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data FileToPromote
 				}
 			}
 		} else {
-			fmt.Printf("%s has been already promoted\n", data.Name)
+			fmt.Printf("%s already exists on destination repository\n", data.Name)
 		}
 	}
 
@@ -184,7 +184,7 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 				return err
 			}
 		} else {
-			fmt.Printf("%s has been already promoted\n", data.Name)
+			fmt.Printf("%s already exists on destination repository\n", data.Name)
 		}
 	}
 
