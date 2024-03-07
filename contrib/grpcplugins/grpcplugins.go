@@ -166,7 +166,6 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	Logf("Result create: %s", string(btes))
 	req, err := c.NewRequest(ctx, http.MethodPost, "/v2/result", bytes.NewReader(btes))
 	if err != nil {
 		return nil, err
