@@ -55,7 +55,7 @@ gitea_start:
   		echo "Gitea started"; \
   	fi
 
-test-docker compose:
+test-docker-compose:
 	(cd ../tools/smtpmock/ && docker build -t smtpmock . && docker run -d -p 2023:2023 -p 2024:2024 smtpmock) && \
 	docker compose up --no-recreate -d cds-db cds-cache elasticsearch && \
 	sleep 5	&& \
