@@ -1,5 +1,5 @@
 define MINIO_CONFIG
-export HOSTNAME=$$(hostname)
+export HOSTNAME=$$(hostname -I | cut -d' ' -f1)
 export AWS_DEFAULT_REGION=us-east-1
 export S3_BUCKET=cds-it
 export MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
@@ -80,7 +80,7 @@ test-docker-compose:
 	./test.sh smoke_services cli;
 
 merge-coverage:
-	@docker run -v `pwd`:/workspace golang:1.21 sh -c "\
+	@docker run -v `pwd`:/workspace golang:1.22 sh -c "\
 			go get -u github.com/wadey/gocovmerge && \
 			cd /workspace && \
       gocovmerge $(COVER_FILES) > /workspace/cdsctl.cover.out \
