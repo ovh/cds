@@ -71,7 +71,7 @@ test-docker-compose:
 	chmod +x cdsctl && \
 	cdsctl version && \
 	export CDSCTL=`realpath ./cdsctl` && \
-	TOKEN_CMD=`docker logs cds_cds-prepare_1|grep TOKEN` && \
+	TOKEN_CMD=`docker logs cds-cds-prepare-1|grep TOKEN` && \
 	$$TOKEN_CMD && \
 	./test.sh smoke_api initialization && \
 	CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.api.tokenV2=$(cat tmp.hatcheryv2.token)" docker compose up cds-edit-config && \
