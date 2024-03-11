@@ -6,7 +6,7 @@ $(DIST):
 	mkdir -p $(DIST)
 
 workflow-graph:
-	cd ../../ui && npm ci && ng build workflow-graph
+	cd ../../ui && npm ci && npm run ng -- build workflow-graph
 
 package-workflow-graph: workflow-graph
 	cd ../../ui/dist/workflow-graph && npm pack
