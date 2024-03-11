@@ -144,7 +144,7 @@ systemctl daemon-reload
 	assert.Equal(t, file{"target/test/DEBIAN/postinst", `#!/bin/bash
 set -e
 echo "Create the test User, Group and Directories"
-adduser --system --group test
+adduser --system --group test -m -s $(which bash)
 mkdir -p /var/lib/test
 chown -R test:test /var/lib/test
 chmod 770 /var/lib/test
