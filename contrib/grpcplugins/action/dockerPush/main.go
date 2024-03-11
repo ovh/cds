@@ -236,20 +236,10 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 					return nil, time.Since(t0), err
 				}
 				manifestFound = true
-				result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
-				result.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
-				result.ArtifactManagerMetadata.Set("type", "docker")
-				result.ArtifactManagerMetadata.Set("maturity", integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value)
-				result.ArtifactManagerMetadata.Set("name", destination)
-				result.ArtifactManagerMetadata.Set("path", rtPathInfo.Path)
-				result.ArtifactManagerMetadata.Set("md5", rtPathInfo.Checksums.Md5)
-				result.ArtifactManagerMetadata.Set("sha1", rtPathInfo.Checksums.Sha1)
-				result.ArtifactManagerMetadata.Set("sha256", rtPathInfo.Checksums.Sha256)
-				result.ArtifactManagerMetadata.Set("uri", rtPathInfo.URI)
-				result.ArtifactManagerMetadata.Set("mimeType", rtPathInfo.MimeType)
-				result.ArtifactManagerMetadata.Set("downloadURI", rtPathInfo.DownloadURI)
-				result.ArtifactManagerMetadata.Set("createdBy", rtPathInfo.CreatedBy)
-				result.ArtifactManagerMetadata.Set("localRepository", repository+"-"+integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value)
+				localRepo := repository + "-" + integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+				maturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+
+				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
 				result.ArtifactManagerMetadata.Set("id", img.imageID)
 				break
 			}

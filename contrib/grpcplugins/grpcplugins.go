@@ -423,12 +423,12 @@ func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, patte
 	}, nil
 }
 
-func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi ArtifactoryFileInfo, name, localRepository, repository, maturity string) {
+func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi ArtifactoryFileInfo, name, resultType, localRepository, repository, maturity string) {
 	runResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 	runResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
-	runResult.ArtifactManagerMetadata.Set("type", "helm")
 	runResult.ArtifactManagerMetadata.Set("maturity", maturity)
 	runResult.ArtifactManagerMetadata.Set("name", name)
+	runResult.ArtifactManagerMetadata.Set("type", resultType)
 	runResult.ArtifactManagerMetadata.Set("path", fi.Path)
 	runResult.ArtifactManagerMetadata.Set("md5", fi.Checksums.Md5)
 	runResult.ArtifactManagerMetadata.Set("sha1", fi.Checksums.Sha1)
