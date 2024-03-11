@@ -27,14 +27,14 @@ testcases:
 
 - name: run workflow by sending a kafka event
   steps:
-  - script: kafkacat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
+  - script: kcat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
     retry: 10
     delay: 10
     timeout: 100
 
 - name: check event in topic test.eventsproject
   steps:
-  - script: kafkacat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
+  - script: kcat -b localhost:9092 -t test.eventsproject -C -o -1 -c 1
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
@@ -46,7 +46,7 @@ testcases:
 
 - name: check event in topic test.eventspublic
   steps:
-  - script: kafkacat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
+  - script: kcat -b localhost:9092 -t test.eventspublic -C -o -1 -c 1
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0
@@ -55,7 +55,7 @@ testcases:
 
 - name: check event in topic test.jobs
   steps:
-  - script: kafkacat -b localhost:9092 -t test.jobs -C -o -1 -c 1
+  - script: kcat -b localhost:9092 -t test.jobs -C -o -1 -c 1
     info: "kafka message is: {{.result.systemout}}"
     assertions:
     - result.code ShouldEqual 0

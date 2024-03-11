@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/go-units"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/moby/moby/api/types/registry"
 	"github.com/moby/moby/client"
 	"github.com/pkg/errors"
 
@@ -138,7 +139,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	return nil
 }
 
-func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *img, registry string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
+func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *img, registryURL string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
 
 	// Create run result at status "pending"
@@ -199,7 +200,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			}
 		}
 
-		auth := types.AuthConfig{
+		auth := registry.AuthConfig{
 			Username:      integration.Config[sdk.ArtifactoryConfigTokenName].Value,
 			Password:      integration.Config[sdk.ArtifactoryConfigToken].Value,
 			ServerAddress: repository + "." + rtURL.Host,
@@ -259,13 +260,13 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 	default:
 		// Push on the registry set as parameter
-		if registry == "" && registryAuth == "" {
+		if registryURL == "" && registryAuth == "" {
 			return nil, time.Since(t0), errors.New("wrong usage: <registry> and <registryAuth> parameters should not be both empty")
 		}
 
 		destination = img.repository + ":" + tag
-		if registry != "" {
-			destination = registry + "/" + destination
+		if registryURL != "" {
+			destination = registryURL + "/" + destination
 		}
 
 		if tag != img.tag { // if the image already has the right tag, nothing to do
@@ -284,7 +285,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		}
 
 		result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
-		result.ArtifactManagerMetadata.Set("registry", registry)
+		result.ArtifactManagerMetadata.Set("registry", registryURL)
 		result.ArtifactManagerMetadata.Set("name", destination)
 		result.ArtifactManagerMetadata.Set("id", img.imageID)
 	}
