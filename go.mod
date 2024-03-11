@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-sdk-go v1.43.21
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/buger/goterm v0.0.0-20170918171949-d443b9114f9c
+	github.com/bugsnag/osext v0.0.0-20130617224835-0dd3f918b21b
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/confluentinc/bincover v0.2.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
