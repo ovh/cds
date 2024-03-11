@@ -26,10 +26,10 @@
         "command": "vscode-cds.setCurrentContext",
         "title": "Change the CDS context"
       },
-       {
+      {
         "command": "vscode-cds.previewWorkflow",
         "title": "Preview the CDS workflow"
-       }
+      }
     ],
     "configuration": {
       "title": "CDS",
@@ -57,6 +57,7 @@
     "redhat.vscode-yaml"
   ],
   "scripts": {
+    "ng": "ng",
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
