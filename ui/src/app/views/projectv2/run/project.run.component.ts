@@ -34,6 +34,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     selectedJobRun: V2WorkflowRunJob;
     selectedJobGate: { gate: string, job: string };
     selectedJobRunInfos: Array<WorkflowRunInfo>;
+    selectedHook: string;
     jobs: Array<V2WorkflowRunJob>;
     workflowGraph: any;
 
@@ -194,12 +195,20 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     selectJobGate(gateNode: GraphNode): void {
         this.unselectJob();
+        this.unselectHook();
+
         this.selectedJobGate = { gate: gateNode.gateName, job: gateNode.gateChild };
         this._cd.markForCheck();
     }
 
-    async selectJob(runJobID: string) {
+    unselectJobGate(): void {
         delete this.selectedJobGate;
+    }
+
+    async selectJob(runJobID: string) {
+        this.unselectJobGate();
+        this.unselectHook();
+
         this.selectedJobRun = this.jobs.find(j => j.id === runJobID);
 
         try {
@@ -231,6 +240,18 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this.graph.resize();
         }
         this._cd.detectChanges(); // force rendering to compute graph container size
+    }
+
+    selectHook(hook): void {
+        this.unselectJob();
+        this.unselectJobGate();
+
+        this.selectedHook = hook;
+        this._cd.markForCheck();
+    }
+
+    unselectHook(): void {
+        delete this.selectedHook;
     }
 
 }

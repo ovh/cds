@@ -148,8 +148,8 @@ type V2WorkflowRunEvent struct {
 	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model-update,omitempty"`
 
 	// TODO
-	Scheduler      *SchedulerTrigger `json:"scheduler"`
-	WebHookTrigger *WebHookTrigger   `json:"webhook"`
+	Scheduler      *SchedulerTrigger `json:"scheduler,omitempty"`
+	WebHookTrigger *WebHookTrigger   `json:"webhook,omitempty"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {

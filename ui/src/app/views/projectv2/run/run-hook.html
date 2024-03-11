@@ -1,0 +1,7 @@
+<app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
+<div class="close" (click)="clickClose()">
+	<span nz-icon nzType="close" nzTheme="outline"></span>
+</div>
+<ng-container *ngIf="selectedTab.key === 'event'">
+	<nz-code-editor #editor [ngModel]="event" [nzEditorOption]="editorOption"></nz-code-editor>
+</ng-container>

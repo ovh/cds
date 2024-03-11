@@ -1,0 +1,43 @@
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+app-tabs {
+  ::ng-deep {
+    .menu {
+      background-color: inherit !important;
+    }
+  }
+}
+
+.close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 40px;
+  width: 40px;
+  padding: 10px;
+  cursor: pointer;
+
+  &:hover {
+    color: white;
+  }
+
+  .icon {
+    margin: unset;
+  }
+}
+
+nz-code-editor {
+  height: 100%;
+  border-left: 1px solid #f0f0f0;
+
+  :host-context(.night) & {
+    background-color: #1e1e1e;
+    border-left: 1px solid #303030;
+  }
+}
