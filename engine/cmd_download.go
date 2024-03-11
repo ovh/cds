@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 	"github.com/rockbears/log"
 	"github.com/spf13/cobra"
 

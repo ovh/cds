@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-GO_BUILD                 = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -a -installsuffix cgo
+GO_BUILD                 = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -installsuffix cgo
 GO_LIST                  = env GOPRIVATE="${GO_PRIVATE}" go list
 TEST_CMD                 = go test -v -timeout 600s -coverprofile=profile.coverprofile
 TEST_C_CMD               = go test -c -coverprofile=profile.coverprofile

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	zglob "github.com/mattn/go-zglob"
-	"github.com/mholt/archiver"
+	archiver "github.com/mholt/archiver/v3"
 	"github.com/pkg/errors"
 )
 
