@@ -153,7 +153,7 @@ func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceD
 	var runResultRequest = workerruntime.V2RunResultRequest{
 		RunResult: &sdk.V2WorkflowRunResult{
 			IssuedAt: time.Now(),
-			Type:     sdk.V2WorkflowRunResultTypeCoverage,
+			Type:     sdk.V2WorkflowRunResultTypePython,
 			Status:   sdk.V2WorkflowRunResultStatusPending,
 			Detail: sdk.V2WorkflowRunResultDetail{
 				Data: sdk.V2WorkflowRunResultPythonDetail{
@@ -168,7 +168,6 @@ func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceD
 	if err != nil {
 		return err
 	}
-	grpcplugins.Logf(">>%+v", result)
 
 	pullScript := fmt.Sprintf(`#!/bin/bash
 # write .pypirc file
@@ -251,7 +250,7 @@ fi
 				// Create a new run result
 				runResult = &sdk.V2WorkflowRunResult{
 					IssuedAt: time.Now(),
-					Type:     sdk.V2WorkflowRunResultTypeCoverage,
+					Type:     sdk.V2WorkflowRunResultTypePython,
 					Status:   sdk.V2WorkflowRunResultStatusPending,
 					Detail: sdk.V2WorkflowRunResultDetail{
 						Data: sdk.V2WorkflowRunResultPythonDetail{
@@ -268,9 +267,16 @@ fi
 			var runResultRequest = workerruntime.V2RunResultRequest{
 				RunResult: runResult,
 			}
-			grpcplugins.Logf("Updating run result: %s", runResultRequest.RunResult.Name())
-			if _, err := grpcplugins.UpdateRunResult(ctx, &actPlugin.Common, &runResultRequest); err != nil {
-				return err
+
+			if c.URI == fmt.Sprintf("/%s-%s.%s", opts.packageName, opts.version, "tar.gz") {
+				grpcplugins.Logf("Updating run result: %s", runResultRequest.RunResult.Name())
+				if _, err := grpcplugins.UpdateRunResult(ctx, &actPlugin.Common, &runResultRequest); err != nil {
+					return err
+				}
+			} else {
+				if _, err := grpcplugins.CreateRunResult(ctx, &actPlugin.Common, &runResultRequest); err != nil {
+					return err
+				}
 			}
 		}
 	}
