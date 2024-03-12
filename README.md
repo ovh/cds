@@ -253,7 +253,7 @@ Several types of hatchery are available:
  - **[hatchery vSphere](https://ovh.github.io/cds/docs/integrations/vsphere/)** starts virtual machines
  - **[hatchery local](https://ovh.github.io/cds/docs/components/hatchery/local/)** starts processes on a host
 
- So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
+So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
 
 ## License
