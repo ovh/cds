@@ -874,14 +874,8 @@ func GetRandomNameCDSWithMaxLength(maxLength int) string {
 // A worker name must be 63 char max, without '.' and '_', "/" -> replaced by '-'
 const maxWorkerNameLength = 63
 
-func GenerateWorkerName(model, prefix string) string {
-	nameFirstPart := model
-	if len(prefix) > 0 {
-		nameFirstPart = prefix + "-" + model
-	}
-	if len(nameFirstPart) > maxWorkerNameLength-10 {
-		nameFirstPart = nameFirstPart[:maxWorkerNameLength-10]
-	}
+func GenerateWorkerName(prefix string) string {
+	nameFirstPart := prefix
 	remainingLength := maxWorkerNameLength - len(nameFirstPart) - 1
 	random := GetRandomNameCDSWithMaxLength(remainingLength)
 	return slug.Convert(nameFirstPart + "-" + random)
