@@ -1,7 +1,7 @@
 name: debianPush
 type: action
 author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
-description: This push Debian package on an artifactory debian repository. 
+description: This pushes Debian package on an artifactory debian repository. 
 inputs:
   architectures:
     default: amd64
