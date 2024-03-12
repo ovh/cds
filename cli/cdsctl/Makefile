@@ -61,15 +61,15 @@ clean:
 
 $(TARGET_BINARIES):
 	$(info *** building binary $@)
-	@$(MAKE) --no-print-directory gobuild TAGS='' GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
+	@$(MAKE) --no-print-directory gobuild TAGS='' CGO_ENABLED=1 GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
 
 $(TARGET_BINARIES_VARIANT):
 	$(info *** building binary variant $@)
-	@$(MAKE) --no-print-directory gobuild TAGS="--tags='nokeychain'" GOOS=$(call get_os_from_binary_file,$(subst -nokeychain,,$@)) GOARCH=$(call get_arch_from_binary_file,$(subst -nokeychain,,$@)) OUTPUT=$@
+	@$(MAKE) --no-print-directory gobuild TAGS="--tags='nokeychain'" CGO_ENABLED=0 GOOS=$(call get_os_from_binary_file,$(subst -nokeychain,,$@)) GOARCH=$(call get_arch_from_binary_file,$(subst -nokeychain,,$@)) OUTPUT=$@
 
 gobuild:
 	$(info ... OS:$(GOOS) ARCH:$(GOARCH) -> $(OUTPUT))
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) $(TAGS) $(TARGET_LDFLAGS) -o $(OUTPUT)
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) $(GO_BUILD) $(TAGS) $(TARGET_LDFLAGS) -o $(OUTPUT)
 
 build: $(TARGET_DIR) $(TARGET_BINARIES_VARIANT) $(TARGET_BINARIES)
 
