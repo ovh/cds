@@ -269,7 +269,6 @@ fi
 			}
 
 			if c.URI == fmt.Sprintf("/%s-%s.%s", opts.packageName, opts.version, "tar.gz") {
-				grpcplugins.Logf("Updating run result: %s", runResultRequest.RunResult.Name())
 				if _, err := grpcplugins.UpdateRunResult(ctx, &actPlugin.Common, &runResultRequest); err != nil {
 					return err
 				}
@@ -279,6 +278,15 @@ fi
 				}
 			}
 		}
+	} else {
+		result.RunResult.Status = sdk.V2WorkflowRunResultStatusCompleted
+		runResultRequest := workerruntime.V2RunResultRequest{
+			RunResult: result.RunResult,
+		}
+		if _, err := grpcplugins.UpdateRunResult(ctx, &actPlugin.Common, &runResultRequest); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
