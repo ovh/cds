@@ -52,6 +52,7 @@ $(PLUGIN_CONF):
 	@mkdir -p $(TARGET_DIST); \
 	cp $(TARGET_NAME).yml $@;
 
+OPT_LD_FLAGS = -s -w
 mk_go_build_plugin: $(CROSS_COMPILED_PLUGIN_CONF) $(PLUGIN_CONF) $(CROSS_COMPILED_BINARIES)
 
 mk_plugin_publish:
