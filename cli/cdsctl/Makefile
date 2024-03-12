@@ -70,7 +70,7 @@ $(TARGET_BINARIES_VARIANT):
 	$(eval IS_LINUX := $(filter linux,$(OS)))
 	$(eval IS_DARWIN := $(filter darwin,$(OS)))
 	$(eval IS_WINDOWS := $(filter windows,$(OS)))
-	$(eval CGO_ENABLED := $(if $(or $(IS_LINUX), $(IS_DARWIN), $(IS_WINDOWS)),0,1))
+	$(eval CGO_ENABLED := $(if $(or $(IS_LINUX), $(IS_WINDOWS)),0,1))
 	$(info *** building binary variant $@ GOOS=$(OS) GOARCH=$(ARCH))
 	@$(MAKE) --no-print-directory gobuild TAGS="--tags='nokeychain'" CGO_ENABLED=$(CGO_ENABLED) GOOS=$(OS) GOARCH=$(ARCH) OUTPUT=$@
 
