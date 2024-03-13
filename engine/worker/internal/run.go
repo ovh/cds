@@ -278,7 +278,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	}
 
 	//Run children actions
-	r, nDisabled := w.runSteps(ctx, a.Actions, a, jobID, secrets, actionName)
+	r, nDisabled := w.runSteps(ctx, a.Actions, jobID, secrets, actionName)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= len(a.Actions) {
 		r.Status = sdk.StatusDisabled
@@ -287,7 +287,7 @@ func (w *CurrentWorker) runAction(ctx context.Context, a sdk.Action, jobID int64
 	return r
 }
 
-func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, a sdk.Action, jobID int64, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
+func (w *CurrentWorker) runSteps(ctx context.Context, steps []sdk.Action, jobID int64, secrets []sdk.Variable, stepName string) (sdk.Result, int) {
 	log.Info(ctx, "runSteps> start action steps %s %d len(steps):%d context=%p", stepName, jobID, len(steps), ctx)
 	defer func() {
 		log.Info(ctx, "runSteps> end action steps %s %d len(steps):%d context=%p (%s)", stepName, jobID, len(steps), ctx, ctx.Err())
@@ -461,7 +461,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	}
 
 	log.Info(ctx, "Executing hooks setup from directory: %s", hdFile.Name())
-	if err := w.executeHooksSetup(ctx, w.basedir, hdFile.Name()); err != nil {
+	if err := w.executeHooksSetup(ctx, w.basedir); err != nil {
 		return sdk.Result{Status: sdk.StatusFail, Reason: fmt.Sprintf("Error: unable to setup hooks: %v", err)}
 	}
 
@@ -472,7 +472,7 @@ func (w *CurrentWorker) ProcessJob(jobInfo sdk.WorkflowNodeJobRunData) (res sdk.
 	}
 
 	// Teardown worker hooks
-	if err := w.executeHooksTeardown(ctx, w.basedir, hdFile.Name()); err != nil {
+	if err := w.executeHooksTeardown(ctx, w.basedir); err != nil {
 		log.Error(ctx, "error while executing teardown hook scripts: %v", err)
 	}
 
@@ -586,7 +586,7 @@ func (w *CurrentWorker) setupHooks(ctx context.Context, jobInfo sdk.WorkflowNode
 	return nil
 }
 
-func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, workingDir string) error {
+func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs) error {
 	if strings.EqualFold(runtime.GOOS, "windows") {
 		log.Warn(ctx, "hooks are not supported on windows")
 		return nil
@@ -599,7 +599,7 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, work
 		return sdk.WithStack(fmt.Errorf("invalid given basedir"))
 	}
 
-	workerEnv := w.Environ()
+	workerEnv := w.getEnvironmentForWorkerHook()
 
 	for _, h := range w.hooks {
 		filepath, err := basedir.RealPath(h.SetupPath)
@@ -643,7 +643,17 @@ func (w *CurrentWorker) executeHooksSetup(ctx context.Context, fs afero.Fs, work
 	return nil
 }
 
-func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, fs afero.Fs, workingDir string) error {
+func (w *CurrentWorker) getEnvironmentForWorkerHook() []string {
+	var workerEnv []string
+	for _, v := range w.Environ() {
+		if strings.HasPrefix(v, "CDS_INTEGRATION_") || strings.HasPrefix(v, "BASEDIR=") {
+			workerEnv = append(workerEnv, v)
+		}
+	}
+	return workerEnv
+}
+
+func (w *CurrentWorker) executeHooksTeardown(ctx context.Context, fs afero.Fs) error {
 	basedir, ok := fs.(*afero.BasePathFs)
 	if !ok {
 		return sdk.WithStack(fmt.Errorf("invalid given basedir"))

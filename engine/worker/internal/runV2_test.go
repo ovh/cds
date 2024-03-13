@@ -3,15 +3,22 @@ package internal
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
+	"os"
+	"path"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/engine/worker/internal/plugin/mock"
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
 
@@ -228,4 +235,90 @@ func TestCurrentWorker_runJobServicesReadinessWithServiceWithCommand(t *testing.
 	}
 	result := w.runJobServicesReadiness(context.TODO())
 	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, result.Status)
+}
+
+func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
+	fs := afero.NewOsFs()
+	basedir := "test-" + test.GetTestName(t) + "-" + sdk.RandomString(10) + "-" + fmt.Sprintf("%d", time.Now().Unix())
+	t.Logf("Creating worker basedir at %s", basedir)
+	require.NoError(t, fs.MkdirAll(basedir, os.FileMode(0755)))
+
+	ctrl := gomock.NewController(t)
+	mockClient := mock_cdsclient.NewMockV2WorkerInterface(ctrl)
+
+	mockClient.EXPECT().V2QueuePushJobInfo(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
+		func(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error {
+			require.Equal(t, sdk.WorkflowRunInfoLevelInfo, msg.Level)
+			return nil
+		},
+	)
+	mockClient.EXPECT().ProjectIntegrationWorkerHookGet(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(projectKey string, integrationName string) (*sdk.WorkerHookProjectIntegrationModel, error) {
+			return nil, sdk.ErrNotFound
+		},
+	)
+	mockClient.EXPECT().ProjectIntegrationGet(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
+			return sdk.ProjectIntegration{}, nil
+		},
+	)
+
+	// Setup test worker
+	wk := &CurrentWorker{
+		basedir:  afero.NewBasePathFs(fs, basedir),
+		cfg:      &workerruntime.WorkerConfig{CDNEndpoint: "https://cdn.local"},
+		clientV2: mockClient,
+	}
+
+	wk.currentJobV2.runJob = &sdk.V2WorkflowRunJob{
+		ID:     sdk.UUID(),
+		Status: sdk.StatusBuilding,
+		JobID:  "myjob",
+		Region: "build",
+		Job: sdk.V2Job{
+			Region: "build",
+			Steps: []sdk.ActionStep{
+				{
+					ID:              "step-0",
+					Run:             "exit 0",
+					ContinueOnError: true,
+				},
+			},
+		},
+	}
+	wk.SetContextForTestJobV2(t, context.TODO())
+	wk.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
+	wk.currentJobV2.runJobContext.Integrations = &sdk.JobIntegrationsContext{ArtifactManager: "foo"}
+	wk.currentJobV2.integrations = make(map[string]sdk.ProjectIntegration)
+
+	wk.hooks = []workerHook{{
+		Config: sdk.WorkerHookSetupTeardownScripts{
+			Priority: 0,
+			Label:    "foo",
+			Setup: `#!/bin/bash
+export NEW_VAR=testfoo
+`,
+			Teardown: `#!/bin/bash
+echo 'done'
+`,
+		},
+		SetupPath:    path.Join(basedir, "setup", "test-hook"),
+		TeardownPath: path.Join(basedir, "teardown", "test-hook"),
+	}}
+
+	err := wk.setupHooksV2(context.TODO(), wk.currentJobV2, wk.basedir, basedir)
+	require.NoError(t, err)
+
+	err = wk.executeHooksSetupV2(context.TODO(), wk.basedir)
+	require.NoError(t, err)
+
+	var found bool
+	for k, v := range wk.currentJobV2.envFromHooks {
+		if k == "NEW_VAR" && v == "testfoo" {
+			found = true
+			break
+		}
+	}
+	t.Logf("envFromHooks: %v", wk.currentJobV2.envFromHooks)
+	require.True(t, found)
 }
