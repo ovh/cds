@@ -94,9 +94,7 @@ export class RunJobComponent implements OnChanges, OnDestroy {
         }
     }
 
-    onJobScroll(target) {
-
-    }
+    onJobScroll(target) { }
 
     setVariables(data: Array<Parameter>) {
         this.variables = {};

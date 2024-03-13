@@ -148,8 +148,8 @@ type V2WorkflowRunEvent struct {
 	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model-update,omitempty"`
 
 	// TODO
-	Scheduler      *SchedulerTrigger `json:"scheduler"`
-	WebHookTrigger *WebHookTrigger   `json:"webhook"`
+	Scheduler      *SchedulerTrigger `json:"scheduler,omitempty"`
+	WebHookTrigger *WebHookTrigger   `json:"webhook,omitempty"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {
@@ -449,6 +449,24 @@ func (r *V2WorkflowRunResult) GetDetail() (any, error) {
 	return r.Detail.Data, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultVariableDetail() (*V2WorkflowRunResultVariableDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultVariableDetail)
+	if !ok {
+		var ii V2WorkflowRunResultVariableDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultVariableDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
+	}
+	return i, nil
+}
+
 func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail() (*V2WorkflowRunResultArsenalDeploymentDetail, error) {
 	if err := r.Detail.castData(); err != nil {
 		return nil, err
@@ -467,6 +485,41 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDet
 	return i, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDebianDetail() (*V2WorkflowRunResultDebianDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultDebianDetail)
+	if !ok {
+		var ii V2WorkflowRunResultDebianDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultDebianDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultDebianDetail")
+	}
+	return i, nil
+}
+
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultHelmDetail() (*V2WorkflowRunResultHelmDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
+	if !ok {
+		var ii V2WorkflowRunResultHelmDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultHelmDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultHelmDetail")
+	}
+	return i, nil
+}
 func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDockerDetail() (*V2WorkflowRunResultDockerDetail, error) {
 	if err := r.Detail.castData(); err != nil {
 		return nil, err
@@ -551,24 +604,29 @@ func (r *V2WorkflowRunResult) Name() string {
 		if err == nil {
 			return string(r.Type) + ":" + detail.Name
 		}
+	case V2WorkflowRunResultTypeDebian:
+		detail, err := r.GetDetailAsV2WorkflowRunResultDebianDetail()
+		if err == nil {
+			return string(r.Type) + ":" + detail.Name
+		}
 	case V2WorkflowRunResultTypeDocker:
 		detail, err := r.GetDetailAsV2WorkflowRunResultDockerDetail()
 		if err == nil {
 			return string(r.Type) + ":" + detail.Name
 		}
 	case V2WorkflowRunResultTypeVariable:
-		detail, ok := r.Detail.Data.(*V2WorkflowRunResultVariableDetail)
-		if ok {
+		detail, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
+		if err == nil {
 			return string(r.Type) + ":" + detail.Name
 		}
 	case V2WorkflowRunResultTypeArsenalDeployment:
-		detail, ok := r.Detail.Data.(*V2WorkflowRunResultArsenalDeploymentDetail)
-		if ok {
+		detail, err := r.GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail()
+		if err == nil {
 			return string(r.Type) + ":" + detail.DeploymentName
 		}
 	case V2WorkflowRunResultTypeHelm:
-		detail, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
-		if ok {
+		detail, err := r.GetDetailAsV2WorkflowRunResultHelmDetail()
+		if err == nil {
 			return string(r.Type) + ":" + detail.Name + ":" + detail.ChartVersion
 		}
 	case V2WorkflowRunResultTypeRelease:
@@ -649,6 +707,13 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		var detail = new(V2WorkflowRunResultVariableDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultVariableDetail")
+		}
+		s.Data = detail
+		return nil
+	case "V2WorkflowRunResultDebianDetail":
+		var detail = new(V2WorkflowRunResultDebianDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultDebianDetail")
 		}
 		s.Data = detail
 		return nil
@@ -783,6 +848,7 @@ const (
 	V2WorkflowRunResultTypeGeneric           = "generic"
 	V2WorkflowRunResultTypeVariable          = "variable"
 	V2WorkflowRunResultTypeDocker            = "docker"
+	V2WorkflowRunResultTypeDebian            = "debian"
 	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
 	V2WorkflowRunResultTypeHelm              = "helm"
 	// Other values may be instantiated from Artifactory Manager repository type
@@ -832,6 +898,17 @@ type V2WorkflowRunResultDockerDetail struct {
 	ID           string `json:"id" mapstructure:"id"`
 	HumanSize    string `json:"human_size" mapstructure:"human_size"`
 	HumanCreated string `json:"human_created" mapstructure:"human_created"`
+}
+
+type V2WorkflowRunResultDebianDetail struct {
+	Name          string   `json:"name" mapstructure:"name"`
+	Size          int64    `json:"size" mapstructure:"size"`
+	MD5           string   `json:"md5" mapstructure:"md5"`
+	SHA1          string   `json:"sha1" mapstructure:"sha1"`
+	SHA256        string   `json:"sha256" mapstructure:"sha256"`
+	Components    []string `json:"components" mapstructure:"components"`
+	Distributions []string `json:"distributions" mapstructure:"distributions"`
+	Architectures []string `json:"architectures" mapstructure:"architectures"`
 }
 
 type V2WorkflowRunResultHelmDetail struct {

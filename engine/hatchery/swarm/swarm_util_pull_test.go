@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/h2non/gock.v1"
@@ -32,7 +32,7 @@ func Test_pullImage(t *testing.T) {
 
 		buf, err := base64.StdEncoding.DecodeString(r.Header.Get("X-Registry-Auth"))
 		require.NoError(t, err)
-		var auth types.AuthConfig
+		var auth registry.AuthConfig
 		err = json.Unmarshal(buf, &auth)
 		require.NoError(t, err)
 

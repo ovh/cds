@@ -115,10 +115,12 @@ func (c *client) RequestJSON(ctx context.Context, method, path string, in interf
 
 	res, header, code, err := c.Request(ctx, method, path, body, mods...)
 	if code >= 400 {
-		var err = errors.Errorf("HTTP %d", code)
+		var err = errors.Errorf("HTTP %d: %s", code, string(res))
 		var apiError APIError
 		if errX := json.Unmarshal(res, &apiError); errX == nil {
-			err = errors.Wrap(apiError.Error(), fmt.Sprintf("HTTP %d", code))
+			if len(apiError.Errors) > 0 {
+				err = errors.Wrap(apiError.Error(), fmt.Sprintf("HTTP %d", code))
+			}
 		}
 		return res, nil, code, err
 	}

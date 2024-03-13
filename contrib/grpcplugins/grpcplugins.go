@@ -166,7 +166,6 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	Logf("Result create: %s", string(btes))
 	req, err := c.NewRequest(ctx, http.MethodPost, "/v2/result", bytes.NewReader(btes))
 	if err != nil {
 		return nil, err
@@ -407,7 +406,7 @@ func GetArtifactoryFolderInfo(ctx context.Context, c *actionplugin.Common, confi
 }
 
 func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, pattern string) (*workerruntime.V2GetResultResponse, error) {
-	response, err := GetV2RunResults(ctx, c, workerruntime.V2FilterRunResult{Pattern: pattern, WithClearIntegration: true})
+	response, err := GetV2RunResults(ctx, c, workerruntime.V2FilterRunResult{Pattern: pattern})
 	if err != nil {
 		return nil, err
 	}
@@ -415,6 +414,8 @@ func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, patte
 	for i := range response.RunResults {
 		if response.RunResults[i].ArtifactManagerIntegrationName != nil {
 			final = append(final, response.RunResults[i])
+		} else {
+			Logf("skipping artifact %s, it has not been uploaded on artifactory.", response.RunResults[i].Name())
 		}
 	}
 	return &workerruntime.V2GetResultResponse{

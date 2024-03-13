@@ -1,11 +1,10 @@
-import {ComponentRef} from '@angular/core';
+import { ComponentRef } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import {GraphNode} from './graph.model';
-import {GraphForkJoinNodeComponent} from './node/fork-join-node.components';
-import {GraphJobNodeComponent} from './node/job-node.component';
-import {GraphGateNodeComponent} from './node/gate-node.component';
-import {curveBasisClosed} from "d3-shape";
+import { GraphNode } from './graph.model';
+import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
+import { GraphJobNodeComponent } from './node/job-node.component';
+import { GraphGateNodeComponent } from './node/gate-node.component';
 import { NodeStatus } from './node/status.model';
 
 export type WorkflowNodeComponent =
@@ -112,10 +111,10 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         node.intersect = (point) => {
             if (direction === GraphDirection.VERTICAL) {
                 const h = ((node.height) / 2);
-                return {x: node.x, y: node.y + (point.y < node.y ? -h : h)};
+                return { x: node.x, y: node.y + (point.y < node.y ? -h : h) };
             }
             const w = ((node.width) / 2);
-            return {x: node.x + (point.x < node.x ? -w : w), y: node.y};
+            return { x: node.x + (point.x < node.x ? -w : w), y: node.y };
         };
 
         return shapeSvg;
@@ -128,7 +127,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             .attr('y', -bbox.height / 2)
             .attr('r', r);
 
-        node.intersect = point => ({x: node.x, y: node.y});
+        node.intersect = point => ({ x: node.x, y: node.y });
 
         return shapeSvg;
     };
@@ -327,7 +326,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             let nodes = this.forks[f].parents.map(n => this.nodesComponent.get(n).instance.getNodes()).reduce((p, c) => p.concat(c));
             const componentRef = this.componentFactory(nodes, 'fork');
             let nodeKeys = this.forks[f].parents.map(n => n.split('node-')[1]).sort().join(' ');
-            this.createGFork(f, componentRef, {class: `${nodeKeys}`});
+            this.createGFork(f, componentRef, { class: `${nodeKeys}` });
             this.nodeStatus[`fork-${f}`] = NodeStatus.sum(nodes.map(n => n.run ? n.run.status : null));
             this.forks[f].parents.forEach(n => {
                 let edge = <Edge>{
@@ -369,7 +368,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             let nodes = this.joins[j].parents.map(n => this.nodesComponent.get(n).instance.getNodes()).reduce((p, c) => p.concat(c));
             const componentRef = this.componentFactory(nodes, 'join');
             let nodeKeys = this.joins[j].children.map(n => n.split('node-')[1]).sort().join(' ');
-            this.createGJoin(j, componentRef, {class: `${nodeKeys}`});
+            this.createGJoin(j, componentRef, { class: `${nodeKeys}` });
             this.nodeStatus[`join-${j}`] = NodeStatus.sum(nodes.map(n => n.run ? n.run.status : null));
             this.joins[j].children.forEach(n => {
                 let edge = <Edge>{
@@ -397,7 +396,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             let nodeKeyFrom = e.from.split('node-')[1];
             let nodeKeyTo = e.to.split('node-')[1];
             if (!uniqueEdges[edgeKey]) {
-                uniqueEdges[edgeKey] = {from, to, classes: [nodeKeyFrom, nodeKeyTo]};
+                uniqueEdges[edgeKey] = { from, to, classes: [nodeKeyFrom, nodeKeyTo] };
                 return;
             }
             uniqueEdges[edgeKey].classes = this.uniqueStrings(uniqueEdges[edgeKey].classes.concat(nodeKeyFrom, nodeKeyTo));
@@ -420,9 +419,9 @@ export class WorkflowV2Graph<T extends WithHighlight> {
 
         // Gate edge
         if (this.gates) {
-            this.gates.forEach( g => {
-                let e = <Edge>{from: `gate-${g.key}`, to: `node-${g.child}`};
-                let options = { class: `${g.key} ${g.child}`};
+            this.gates.forEach(g => {
+                let e = <Edge>{ from: `gate-${g.key}`, to: `node-${g.child}` };
+                let options = { class: `${g.key} ${g.child}` };
                 options['class'] += ` ` + this.nodeStatusToColor(this.nodeStatus[e.from]);
                 options['style'] = 'stroke-width: 2px;';
                 e.options = options
@@ -448,10 +447,10 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     }
 
     createGate(graphNode: GraphNode, type: string, componentRef: ComponentRef<T>, status: string,
-               width: number = 40, height: number = 40): void {
+        width: number = 40, height: number = 40): void {
         let key = graphNode.name;
         let child = graphNode.gateChild;
-        this.gates.push(<Gate>{key, width, height, child});
+        this.gates.push(<Gate>{ key, width, height, child });
         this.nodesComponent.set(`gate-${key}`, componentRef);
     }
 
@@ -467,8 +466,8 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     }
 
     createNode(key: string, type: string, componentRef: ComponentRef<T>, status: string,
-               width: number = 130, height: number = 40): void {
-        this.nodes.push(<Node>{key, width, height});
+        width: number = 130, height: number = 40): void {
+        this.nodes.push(<Node>{ key, width, height });
         this.nodesComponent.set(`node-${key}`, componentRef);
         if (status) {
             this.nodeStatus[`node-${key}`] = status;
@@ -507,7 +506,7 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     }
 
     createEdge(from: string, to: string, opts?): void {
-        this.edges.push(<Edge>{from, to});
+        this.edges.push(<Edge>{ from, to });
     }
 
     createGEdge(e: Edge): void {

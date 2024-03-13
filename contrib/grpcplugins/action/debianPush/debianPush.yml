@@ -1,0 +1,26 @@
+name: debianPush
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: This pushes Debian package on an artifactory debian repository. 
+inputs:
+  architectures:
+    default: amd64
+    description: List of debian architectures (space separated)
+    required: true
+  components:
+    default: main contrib
+    description: List of debian components (space separated)
+    required: true
+  distributions:
+    default: bookworm
+    description: List of debian distributions (space separated)
+    required: true
+  files:
+    description: List of files (space separated)
+    required: true
+  label:
+    default: OVH
+    description: Fill the deb.release.label parameter
+  origin:
+    default: OVH
+    description: Fill the deb.release.origin parameter    

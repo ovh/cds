@@ -1,10 +1,10 @@
 SHELL := /bin/bash
-GO_BUILD                 = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -a -installsuffix cgo
+GO_BUILD                 = GOPRIVATE="${GO_PRIVATE}" CGO_ENABLED=0 go build -installsuffix cgo
 GO_LIST                  = env GOPRIVATE="${GO_PRIVATE}" go list
 TEST_CMD                 = go test -v -timeout 600s -coverprofile=profile.coverprofile
 TEST_C_CMD               = go test -c -coverprofile=profile.coverprofile
 TEST_RUN_ARGS            = -test.v -test.timeout 600s -test.coverprofile=profile.coverprofile
-LDFLAGS                  = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE) -X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
+LDFLAGS                  = -ldflags "$(OPT_LD_FLAGS) -X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE) -X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
 CURRENT_PACKAGE          = $(shell $(GO_LIST) 2>&1 | grep -v 'no Go files in')
 TARGET_DIST              := ./dist
 TARGET_RESULTS           := ./dist/test-results

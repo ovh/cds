@@ -10,7 +10,7 @@ select create_primary_key('pipeline_trigger', 'ID');
 select create_primary_key('application_key', 'ID');
 select create_primary_key('template_action', 'template_id,action_id');
 select create_primary_key('action_audit', 'action_id,user_id,versionned');
-select create_primary_key('gorp_migrations_lock', 'ID');
+-- select create_primary_key('gorp_migrations_lock', 'ID');
 
 DROP TABLE IF EXISTS sla;
 

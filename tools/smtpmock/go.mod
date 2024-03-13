@@ -1,6 +1,6 @@
 module github.com/ovh/cds/tools/smtpmock
 
-go 1.20
+go 1.22
 
 require (
 	github.com/fsamin/smtp v0.0.0-20190904085838-54a7c428d4f9

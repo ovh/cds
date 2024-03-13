@@ -57,13 +57,13 @@ gitea_start:
 
 test-docker-compose:
 	(cd ../tools/smtpmock/ && docker build -t smtpmock . && docker run -d -p 2023:2023 -p 2024:2024 smtpmock) && \
-	docker-compose up --no-recreate -d cds-db cds-cache elasticsearch && \
+	docker compose up --no-recreate -d cds-db cds-cache elasticsearch && \
 	sleep 5	&& \
-	docker-compose up --no-recreate cds-db-init && \
-	docker-compose up --no-recreate cds-migrate && \
-	docker-compose up cds-prepare && \
-	CDS_EDIT_CONFIG="api.smtp.disable=false api.smtp.port=2023 api.smtp.host=$(HOSTNAME) " docker-compose up cds-edit-config && \
-	docker-compose up -d cds-api && \
+	docker compose up --no-recreate cds-db-init && \
+	docker compose up --no-recreate cds-migrate && \
+	docker compose up cds-prepare && \
+	CDS_EDIT_CONFIG="api.smtp.disable=false api.smtp.port=2023 api.smtp.host=$(HOSTNAME) " docker compose up cds-edit-config && \
+	docker compose up -d cds-api && \
 	echo "waiting 8s to let cds-api start.." && sleep 8 && \
 	docker ps && \
 	echo "downloading cdsctl from http://localhost:8081/download/cdsctl/$(UNAME_S)/amd64?variant=nokeychain -o cdsctl" && \
@@ -71,16 +71,16 @@ test-docker-compose:
 	chmod +x cdsctl && \
 	cdsctl version && \
 	export CDSCTL=`realpath ./cdsctl` && \
-	TOKEN_CMD=`docker logs cds_cds-prepare_1|grep TOKEN` && \
+	TOKEN_CMD=`docker logs cds-cds-prepare-1|grep TOKEN` && \
 	$$TOKEN_CMD && \
 	./test.sh smoke_api initialization && \
-	CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.api.tokenV2=$(cat tmp.hatcheryv2.token)" docker-compose up cds-edit-config && \
-	docker-compose up -d cds-cdn cds-ui cds-hooks cds-vcs cds-hatchery-local cds-elasticsearch && \
+	CDS_EDIT_CONFIG="hatchery.swarm.commonConfiguration.api.tokenV2=$(cat tmp.hatcheryv2.token)" docker compose up cds-edit-config && \
+	docker compose up -d cds-cdn cds-ui cds-hooks cds-vcs cds-hatchery-local cds-elasticsearch && \
 	echo "waiting 5s to let services start.." && sleep 5 && \
 	./test.sh smoke_services cli;
 
 merge-coverage:
-	@docker run -v `pwd`:/workspace golang:1.21 sh -c "\
+	@docker run -v `pwd`:/workspace golang:1.22 sh -c "\
 			go get -u github.com/wadey/gocovmerge && \
 			cd /workspace && \
       gocovmerge $(COVER_FILES) > /workspace/cdsctl.cover.out \

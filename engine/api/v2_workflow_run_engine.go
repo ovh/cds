@@ -312,7 +312,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	}
 
 	// Synchronize workflow runs
-	runResults, err := workflow_v2.LoadRunResults(ctx, db, runID)
+	runResults, err := workflow_v2.LoadRunResults(ctx, db, runID, run.RunAttempt)
 	if err != nil {
 		return err
 	}

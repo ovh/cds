@@ -9,22 +9,22 @@ import {
     ViewChild
 } from "@angular/core";
 
-import {editor,} from 'monaco-editor';
+import { editor, } from 'monaco-editor';
 
-import {EditorOptions} from "ng-zorro-antd/code-editor/typings";
-import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
-import {Store} from "@ngxs/store";
-import {PreferencesState} from "app/store/preferences.state";
+import { EditorOptions } from "ng-zorro-antd/code-editor/typings";
+import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
+import { Store } from "@ngxs/store";
+import { PreferencesState } from "app/store/preferences.state";
 import * as actionPreferences from 'app/store/preferences.action';
-import {Subscription} from 'rxjs';
-import {Schema} from "app/model/json-schema.model";
-import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
-import {FlatSchema, JSONSchema} from "app/model/schema.model";
+import { Subscription } from 'rxjs';
+import { Schema } from "app/model/json-schema.model";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { FlatSchema, JSONSchema } from "app/model/schema.model";
 import Debounce from "app/shared/decorator/debounce";
-import {dump, load, LoadOptions} from "js-yaml";
-import {EntityAction, EntityWorkflow} from "app/model/entity.model";
-import {EntityService} from "app/service/entity/entity.service";
-import {first} from "rxjs/operators";
+import { dump, load, LoadOptions } from "js-yaml";
+import { EntityAction, EntityWorkflow } from "app/model/entity.model";
+import { EntityService } from "app/service/entity/entity.service";
+import { first } from "rxjs/operators";
 
 declare const monaco: any;
 
@@ -65,13 +65,12 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _entityService: EntityService
-    ) {
-    }
+    ) { }
 
     ngOnInit(): void {
         this.editorOption = {
             language: 'yaml',
-            minimap: {enabled: false}
+            minimap: { enabled: false }
         };
 
         this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectWorkflowEntityComponent.PANEL_KEY)) ?? '50%';
@@ -92,8 +91,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
         this._cd.markForCheck();
     }
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     selectJob(jobName: string) {
         this.selectedJob = jobName;
@@ -125,9 +123,9 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
             if (filteredJobName && v.enum && filteredJobName.length === v.enum.length) {
                 let needUpdate = false
                 v.enum.forEach((v, i) => {
-                   if (filteredJobName[i] !== v) {
-                       needUpdate = true
-                   }
+                    if (filteredJobName[i] !== v) {
+                        needUpdate = true
+                    }
                 });
                 if (needUpdate) {
                     v.enum = filteredJobName;
@@ -230,7 +228,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
     }
 
     panelStartResize(): void {
-        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: true}));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
     panelEndResize(size: number): void {
@@ -238,7 +236,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
             panelKey: ProjectWorkflowEntityComponent.PANEL_KEY,
             size: size
         }));
-        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: false}));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
         this.editor.layout();
     }
 }

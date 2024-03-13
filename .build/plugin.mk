@@ -35,7 +35,7 @@ export PLUGIN_CDS_NAME
 
 ## Prepare yml file for each os-arch
 $(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES)
-	$(info *** prepare conf $@)
+	$(info *** prepare conf $@, TARGET_NAME=$(TARGET_NAME))
 	@mkdir -p $(TARGET_DIST); \
 	echo "$$PLUGIN_MANIFEST_BINARY" > $@; \
 	OS=$(call get_os_from_binary_file,$@); \
@@ -43,7 +43,7 @@ $(CROSS_COMPILED_PLUGIN_CONF): $(GOFILES)
 	perl -pi -e s,%os%,$$OS,g $@ ; \
 	perl -pi -e s,%arch%,$$ARCH,g $@ ; \
 	EXTENSION=""; \
-	if test "$(TARGET_NAME)" == *"windows"* ; then EXTENSION=".exe"; fi; \
+	if test "$(OS)" = "windows" ; then EXTENSION=".exe"; fi; \
 	FILENAME=$(TARGET_NAME)-$$OS-$$ARCH$$EXTENSION; \
 	perl -pi -e s,%filename%,$$FILENAME,g $@
 
@@ -52,6 +52,7 @@ $(PLUGIN_CONF):
 	@mkdir -p $(TARGET_DIST); \
 	cp $(TARGET_NAME).yml $@;
 
+OPT_LD_FLAGS = -s -w
 mk_go_build_plugin: $(CROSS_COMPILED_PLUGIN_CONF) $(PLUGIN_CONF) $(CROSS_COMPILED_BINARIES)
 
 mk_plugin_publish:

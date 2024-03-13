@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/mholt/archiver"
+	archiver "github.com/mholt/archiver/v3"
 	"github.com/olekukonko/tablewriter"
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
@@ -291,7 +291,7 @@ func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 	table.Render()
 }
 
-//ApplyMigrations applies migration (or not depending on dryrun flag)
+// ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	var err error
 	dbConf := database.DBConfiguration{

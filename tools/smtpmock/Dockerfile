@@ -1,5 +1,5 @@
 # build stage
-FROM golang:1.20 AS builder
+FROM golang:1.22 AS builder
 ADD . $GOPATH/src/github.com/ovh/cds/tools/smtpmock
 WORKDIR $GOPATH/src/github.com/ovh/cds/tools/smtpmock
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o /tmp/smtpmocksrv github.com/ovh/cds/tools/smtpmock/server

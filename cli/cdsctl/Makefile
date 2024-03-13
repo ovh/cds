@@ -6,11 +6,13 @@ BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = ./dist
 TARGET_BINARY = cdsctl
-TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_BINARY)"
+TARGET_LDFLAGS = -ldflags "-s -w -X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_BINARY)"
 
 split = $(word $2,$(subst /, ,$1))
-TARGET_OS := $(if ${OS},${OS}, linux/% darwin/% windows/% freebsd/% openbsd/%)
-TARGET_ARCH := $(if ${ARCH}, ${ARCH}, %/amd64 %/arm %/386 %/arm64)
+SPLITTED_OS := $(foreach O, $(OS), $(O)/%)
+SPLITTED_ARCH := $(foreach A, $(ARCH), %/$(A))
+TARGET_OS := $(if ${OS},${SPLITTED_OS}, linux/% darwin/% windows/% freebsd/% openbsd/%)
+TARGET_ARCH := $(if ${ARCH}, ${SPLITTED_ARCH}, %/amd64 %/arm %/386 %/arm64)
 TARGET_DISTS := $(filter $(TARGET_OS), $(filter $(TARGET_ARCH), $(shell go tool dist list)))
 isWindows = $(filter $1,windows)
 TARGET_BINARIES := $(foreach DIST, $(filter-out darwin/386,$(TARGET_DISTS)), $(TARGET_DIR)/cdsctl-$(call split,$(DIST),1)-$(call split,$(DIST),2)$(if $(call isWindows, $(call split,$(DIST),1)),.exe))
@@ -30,7 +32,6 @@ endef
 define get_arch_from_binary_file
 $(strip $(patsubst %.exe, %,$(shell echo $(1) | cut -d'-' -f 3)))
 endef
-
 
 TEST_PKGS = $(shell go list ./... | grep -v vendor)
 TEST_CMD = go test -tags skipkeychaintests -v -timeout 180s -coverprofile=profile.coverprofile
@@ -64,12 +65,18 @@ $(TARGET_BINARIES):
 	@$(MAKE) --no-print-directory gobuild TAGS='' GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
 
 $(TARGET_BINARIES_VARIANT):
-	$(info *** building binary variant $@)
-	@$(MAKE) --no-print-directory gobuild TAGS="--tags='nokeychain'" GOOS=$(call get_os_from_binary_file,$(subst -nokeychain,,$@)) GOARCH=$(call get_arch_from_binary_file,$(subst -nokeychain,,$@)) OUTPUT=$@
+	$(eval OS := $(call get_os_from_binary_file,$(subst -nokeychain,,$@)))
+	$(eval ARCH := $(call get_arch_from_binary_file,$(subst -nokeychain,,$@)))
+	$(eval IS_LINUX := $(filter linux,$(OS)))
+	$(eval IS_DARWIN := $(filter darwin,$(OS)))
+	$(eval IS_WINDOWS := $(filter windows,$(OS)))
+	$(eval CGO_ENABLED := $(if $(IS_LINUX),0,1))
+	$(info *** building binary variant $@ GOOS=$(OS) GOARCH=$(ARCH))
+	@$(MAKE) --no-print-directory gobuild TAGS="--tags='nokeychain'" CGO_ENABLED=$(CGO_ENABLED) GOOS=$(OS) GOARCH=$(ARCH) OUTPUT=$@
 
 gobuild:
-	$(info ... OS:$(GOOS) ARCH:$(GOARCH) -> $(OUTPUT))
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO_BUILD) $(TAGS) $(TARGET_LDFLAGS) -o $(OUTPUT)
+	$(info ... $(OUTPUT))
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) $(GO_BUILD) $(TAGS) $(TARGET_LDFLAGS) -o $(OUTPUT)
 
 build: $(TARGET_DIR) $(TARGET_BINARIES_VARIANT) $(TARGET_BINARIES)
 

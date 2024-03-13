@@ -5,15 +5,14 @@ import {
     Component,
     ComponentRef,
     Input,
-    OnDestroy,
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import {GraphNode, GraphNodeTypeGate, GraphNodeTypeJob} from './graph.model';
-import {GraphDirection, WorkflowNodeComponent, WorkflowV2Graph} from './graph.lib';
-import {GraphForkJoinNodeComponent} from './node/fork-join-node.components';
-import {GraphJobNodeComponent} from './node/job-node.component';
-import {GraphGateNodeComponent} from './node/gate-node.component';
+import { GraphNode, GraphNodeTypeGate, GraphNodeTypeJob } from './graph.model';
+import { GraphDirection, WorkflowNodeComponent, WorkflowV2Graph } from './graph.lib';
+import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
+import { GraphJobNodeComponent } from './node/job-node.component';
+import { GraphGateNodeComponent } from './node/gate-node.component';
 
 @Component({
     selector: 'app-jobs-graph',
@@ -43,7 +42,7 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
     highlight = false;
 
     // workflow graph
-    @ViewChild('svgSubGraph', {read: ViewContainerRef}) svgContainer: ViewContainerRef;
+    @ViewChild('svgSubGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
     graph: WorkflowV2Graph<WorkflowNodeComponent>;
 
     constructor(

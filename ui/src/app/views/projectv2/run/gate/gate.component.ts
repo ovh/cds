@@ -1,9 +1,9 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit} from "@angular/core";
-import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
-import {finalize, first} from "rxjs/operators";
-import {Gate, V2WorkflowRun, V2WorkflowRunJobEvent} from "app/model/v2.workflow.run.model";
-import {V2WorkflowRunService} from "app/service/workflowv2/workflow.service";
-import {ToastService} from "app/shared/toast/ToastService";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { finalize, first } from "rxjs/operators";
+import { Gate, V2WorkflowRun, V2WorkflowRunJobEvent } from "app/model/v2.workflow.run.model";
+import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
+import { ToastService } from "app/shared/toast/ToastService";
 
 @Component({
     selector: 'app-run-gate',
@@ -19,11 +19,14 @@ export class RunGateComponent implements OnInit {
 
     currentGate: Gate;
     jobEvent: V2WorkflowRunJobEvent;
-    request : {[key:string]: any};
+    request: { [key: string]: any };
     loading: boolean;
 
-    constructor(private _cd: ChangeDetectorRef, private _workflowService: V2WorkflowRunService, private _toastService: ToastService) {
-    }
+    constructor(
+        private _cd: ChangeDetectorRef,
+        private _workflowService: V2WorkflowRunService,
+        private _toastService: ToastService
+    ) { }
 
     ngOnInit(): void {
         this.currentGate = <Gate>this.run.workflow_data.workflow.gates[this.gateNode.gate];

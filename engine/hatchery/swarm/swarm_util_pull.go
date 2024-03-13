@@ -11,6 +11,7 @@ import (
 
 	"github.com/docker/distribution/reference"
 	types "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/rockbears/log"
 	context "golang.org/x/net/context"
 
@@ -25,24 +26,24 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 	defer cancel()
 
 	//Pull the worker image
-	var authConfig *types.AuthConfig
+	var authConfig *registry.AuthConfig
 	if model.IsPrivate() {
-		registry := "index.docker.io"
+		reg := "index.docker.io"
 		if model.ModelV1.ModelDocker.Registry != "" {
 			urlParsed, err := url.Parse(model.ModelV1.ModelDocker.Registry)
 			if err != nil {
-				return sdk.WrapError(err, "cannot parse registry url %q", registry)
+				return sdk.WrapError(err, "cannot parse registry url %q", reg)
 			}
 			if urlParsed.Host == "" {
-				registry = urlParsed.Path
+				reg = urlParsed.Path
 			} else {
-				registry = urlParsed.Host
+				reg = urlParsed.Host
 			}
 		}
-		authConfig = &types.AuthConfig{
+		authConfig = &registry.AuthConfig{
 			Username:      model.GetDockerUsername(),
 			Password:      model.GetDockerPassword(),
-			ServerAddress: registry,
+			ServerAddress: reg,
 		}
 	} else {
 		ref, err := reference.ParseNormalizedNamed(img)
@@ -76,7 +77,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 		}
 
 		if credentials != nil {
-			authConfig = &types.AuthConfig{
+			authConfig = &registry.AuthConfig{
 				Username:      credentials.Username,
 				Password:      credentials.Password,
 				ServerAddress: domain,
