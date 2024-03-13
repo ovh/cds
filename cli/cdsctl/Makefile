@@ -65,18 +65,18 @@ $(TARGET_BINARIES):
 	@$(MAKE) --no-print-directory gobuild TAGS='' GOOS=$(call get_os_from_binary_file,$@) GOARCH=$(call get_arch_from_binary_file,$@) OUTPUT=$@
 
 $(TARGET_BINARIES_VARIANT):
-	$(eval OS := $(call get_os_from_binary_file,$(subst -nokeychain,,$@)))
-	$(eval ARCH := $(call get_arch_from_binary_file,$(subst -nokeychain,,$@)))
+	$(eval BINARY_OS := $(call get_os_from_binary_file,$(subst -nokeychain,,$@)))
+	$(eval BINARY_ARCH := $(call get_arch_from_binary_file,$(subst -nokeychain,,$@)))
 	$(eval IS_LINUX := $(filter linux,$(OS)))
 	$(eval IS_DARWIN := $(filter darwin,$(OS)))
 	$(eval IS_WINDOWS := $(filter windows,$(OS)))
 	$(eval CGO_ENABLED := $(if $(IS_LINUX),0,1))
-	$(info *** building binary variant $@ GOOS=$(OS) GOARCH=$(ARCH))
-	@$(MAKE) --no-print-directory gobuild TAGS="--tags='nokeychain'" CGO_ENABLED=$(CGO_ENABLED) GOOS=$(OS) GOARCH=$(ARCH) OUTPUT=$@
+	$(info *** building binary variant $@ GOOS="$(BINARY_OS)" GOARCH="$(BINARY_ARCH)")
+	@$(MAKE) --no-print-directory gobuild TAGS="--tags='nokeychain'" CGO_ENABLED=$(CGO_ENABLED) GOOS="$(BINARY_OS)" GOARCH="$(BINARY_ARCH)" OUTPUT=$@
 
 gobuild:
 	$(info ... $(OUTPUT))
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) $(GO_BUILD) $(TAGS) $(TARGET_LDFLAGS) -o $(OUTPUT)
+	@GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=$(CGO_ENABLED) $(GO_BUILD) $(TAGS) $(TARGET_LDFLAGS) -o $(OUTPUT)
 
 build: $(TARGET_DIR) $(TARGET_BINARIES_VARIANT) $(TARGET_BINARIES)
 
