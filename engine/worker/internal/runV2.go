@@ -676,7 +676,6 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs) er
 		s := bufio.NewScanner(bytes.NewReader(bs))
 		start := false
 		for s.Scan() {
-			log.Info(ctx, "CCC", s.Text())
 			if s.Text() == "<<<ENVIRONMENT>>>" {
 				start = true
 			} else if start {
