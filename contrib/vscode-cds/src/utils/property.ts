@@ -1,4 +1,5 @@
 import { ConfigurationTarget, workspace } from "vscode";
+
 import { LogCategory } from "./journal";
 
 interface IPropertiesMap {

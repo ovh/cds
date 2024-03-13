@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Context } from '../lib/cds/models';
+import { Context } from '../cds/models';
 
 const emitter = new vscode.EventEmitter<Context | null>();
 

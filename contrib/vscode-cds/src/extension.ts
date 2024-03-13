@@ -3,12 +3,21 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { Journal } from './lib/utils/journal';
-import { CDS } from './lib/cds';
-import { selectContext } from './forms/select-context';
-import { onContextChanged, setContext } from './events/context';
-import { init as initPreview } from "./preview";
+import { onContextChanged } from './events/context';
+import { CDSPreview } from "./preview";
+import { Journal } from './utils/journal';
+import { CDS } from './cds';
 import { createContextStatusBarItem } from './components/context-status';
+import { SetCurrentContext, registerCommand } from './commands';
+import { updateContext } from './utils/context';
+import { SetCurrentProjectCommand } from './commands/set-current-project';
+import { updateProject } from './utils/project';
+import { createProjectStatusBarItem } from './components/project-status';
+import { Context } from './cds/models';
+import { onGitRepositoryChanged, updateGitRepository } from './events/git-repository';
+import { PreviewWorkflowCommand } from './commands/preview-workflow';
+import { isCDSActionFile, isCDSWorkerModelFile, isCDSWorkflowFile } from './cds/file_utils';
+import { ClearCacheCommand } from './commands/clear-cache';
 
 const CDS_SCHEMA = 'cds';
 
@@ -37,14 +46,14 @@ export async function activate(context: vscode.ExtensionContext) {
     }
     const yamlExtensionAPI = await yamlExtension.activate();
 
-    Journal.logInfo('Activating CDS Extension');
+    // instanciate the preview component
+    const cdsPreview = new CDSPreview(context);
 
-    const setCurrentContextCommandID = 'vscode-cds.setCurrentContext';
-    context.subscriptions.push(vscode.commands.registerCommand(setCurrentContextCommandID, async () => {
-        await switchContext();
-    }));
-
-    initPreview(context);
+    // register the commands
+    registerCommand(context, new ClearCacheCommand());
+    registerCommand(context, new SetCurrentContext());
+    registerCommand(context, new SetCurrentProjectCommand());
+    registerCommand(context, new PreviewWorkflowCommand(cdsPreview));
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('cds.config')) {
@@ -52,12 +61,22 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }));
 
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+        updateGitRepository();
+        updateVscodeContext(editor);
+    }));
+
+
+    // when the CDS context has changed
     context.subscriptions.push(onContextChanged(async (context) => {
         if (context) {
-            Journal.logInfo(`Downloading schema for "${context.context}"...`);
-            await CDS.downloadSchemas();
-            Journal.logInfo(`Downloaded schema for "${context.context}"`);
+            updateSchema(context);
         }
+    }));
+
+    // when the current git repository has changed
+    context.subscriptions.push(onGitRepositoryChanged(async (repository) => {
+        updateProject(repository);
     }));
 
     // register the schema provider
@@ -66,28 +85,23 @@ export async function activate(context: vscode.ExtensionContext) {
     // creates the status bar displaying the current context
     createContextStatusBarItem(context);
 
+    // creates the status bar displaying the current project
+    createProjectStatusBarItem(context);
+
     // init the update of the context
     updateContext();
+
+    // init the update of the repository
+    updateGitRepository();
+
+    // init the vscode context
+    updateVscodeContext(vscode.window.activeTextEditor);
 }
 
-async function updateContext(): Promise<void> {
-    try {
-        const context = await CDS.getCurrentContext();
-        setContext(context);
-    } catch (e) {
-        Journal.logError(new Error(`Cannot get the current context: ${e}`));
-        setContext(null);
-    }
-}
-
-async function switchContext(): Promise<void> {
-    const context = await selectContext();
-    try {
-        await CDS.setCurrentContext(context.context);
-        await updateContext();
-    } catch (e) {
-        Journal.logError(e as Error);
-    }
+async function updateSchema(context: Context) {
+    Journal.logInfo(`Downloading schema for "${context.context}"...`);
+    await CDS.downloadSchemas();
+    Journal.logInfo(`Downloaded schema for "${context.context}"`);
 }
 
 function onRequestSchemaURI(resource: string): string | undefined {
@@ -114,4 +128,25 @@ function onRequestSchemaContent(schemaUri: string): string | undefined {
 function getSchemaContent(name: string) {
     const schemaPath = path.join(os.homedir(), '.cds-schema', name + '.v2.schema.json');
     return fs.readFileSync(schemaPath, 'utf-8');
+}
+
+function updateVscodeContext(editor?: vscode.TextEditor) {
+    // set vscode context
+    if (editor?.document && isCDSWorkflowFile(editor.document)) {
+        vscode.commands.executeCommand('setContext', 'isCDSWorkflowFile', true);
+    } else {
+        vscode.commands.executeCommand('setContext', 'isCDSWorkflowFile', false);
+    }
+
+    if (editor?.document && isCDSActionFile(editor.document)) {
+        vscode.commands.executeCommand('setContext', 'isCDSActionFile', true);
+    } else {
+        vscode.commands.executeCommand('setContext', 'isCDSActionFile', false);
+    }
+
+    if (editor?.document && isCDSWorkerModelFile(editor.document)) {
+        vscode.commands.executeCommand('setContext', 'isCDSWorkerModelFile', true);
+    } else {
+        vscode.commands.executeCommand('setContext', 'isCDSWorkerModelFile', false);
+    }
 }

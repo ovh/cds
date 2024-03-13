@@ -1,0 +1,17 @@
+.label-container,
+.edgePaths {
+  fill: transparent;
+}
+
+.pointing,
+.stage {
+  box-sizing: border-box;
+}
+
+.stage {
+  border-color: var(--vscode-foreground) !important;
+}
+
+foreignObject {
+  overflow: visible;
+}

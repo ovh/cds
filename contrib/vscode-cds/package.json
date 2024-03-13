@@ -23,12 +23,25 @@
   "contributes": {
     "commands": [
       {
+        "command": "vscode-cds.clearCache",
+        "title": "Clear the cache",
+        "category": "CDS"
+      },
+      {
         "command": "vscode-cds.setCurrentContext",
-        "title": "Change the CDS context"
+        "title": "Change the CDS context",
+        "category": "CDS"
+      },
+      {
+        "command": "vscode-cds.setCurrentProject",
+        "title": "Set the CDS context for the current repository",
+        "category": "CDS"
       },
       {
         "command": "vscode-cds.previewWorkflow",
-        "title": "Preview the CDS workflow"
+        "title": "Preview the CDS workflow",
+        "category": "CDS",
+        "icon": "$(open-preview)"
       }
     ],
     "configuration": {
@@ -51,7 +64,25 @@
           "markdownDescription": "Logging for CDS extension. The log is emitted to the output channel named as CDS."
         }
       }
-    }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "vscode-cds.previewWorkflow",
+          "when": "isCDSWorkflowFile",
+          "alt": "vscode-cds.previewWorkflow",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "vscode-cds.previewWorkflow",
+        "key": "shift+ctrl+v",
+        "mac": "shift+cmd+v",
+        "when": "isCDSWorkflowFile"
+      }
+    ]
   },
   "extensionDependencies": [
     "redhat.vscode-yaml"

@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 
-import { setCurrentContextCommandID } from '../commands/set-current-context';
 import { onContextChanged } from '../events/context';
+import { SetCurrentContextCommandID } from '../commands';
 
 let instance: vscode.StatusBarItem;
 
 export function createContextStatusBarItem(context: vscode.ExtensionContext) {
     instance = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    instance.command = setCurrentContextCommandID;
+    instance.command = SetCurrentContextCommandID;
     instance.tooltip = 'Current CDS context';
     context.subscriptions.push(instance);
 
