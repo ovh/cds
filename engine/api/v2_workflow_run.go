@@ -644,12 +644,12 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
 			if err != nil {
 				return err
 			}
 
-			workflowEntity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
+			workflowEntity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
 			if err != nil {
 				return err
 			}
@@ -1032,12 +1032,12 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
 			if err != nil {
 				return err
 			}
 
-			workflowEntity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
+			workflowEntity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
 			if err != nil {
 				return err
 			}

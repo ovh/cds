@@ -388,15 +388,29 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load repository %s", analysis.ProjectRepositoryID))
 	}
 
+	// Check if there is an analysis on the current repository
+	lockKeyRepo := cache.Key("api:repository:analyzeRepository", repo.ID)
+	bRepoLock, err := api.Cache.Lock(lockKeyRepo, 5*time.Minute, 0, 1)
+	if err != nil {
+		return err
+	}
+	if !bRepoLock {
+		log.Debug(ctx, "api.analyzeRepository> repository %s is locked in cache", repo.ID)
+		return nil
+	}
+	defer func() {
+		_ = api.Cache.Unlock(lockKeyRepo)
+	}()
+
 	var userDB sdk.AuthentifiedUser
 
 	defer func() {
 		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis, userDB)
 	}()
 
-	entitiesToUpdate := make([]sdk.EntityWithObject, 0)
+	entitiesUpdated := make([]sdk.Entity, 0)
 	defer func() {
-		if err := sendAnalysisHookCallback(ctx, api.mustDB(), *analysis, entitiesToUpdate, vcsProjectWithSecret.Type, vcsProjectWithSecret.Name, repo.Name); err != nil {
+		if err := sendAnalysisHookCallback(ctx, api.mustDB(), *analysis, entitiesUpdated, vcsProjectWithSecret.Type, vcsProjectWithSecret.Name, repo.Name); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 	}()
@@ -508,6 +522,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	skippedFiles := make(sdk.StringSlice, 0)
 
 	// For each entities, check user role for each entities
+	entitiesToUpdate := make([]sdk.EntityWithObject, 0)
 skipEntity:
 	for i := range entities {
 		e := &entities[i]
@@ -552,6 +567,24 @@ skipEntity:
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve default branch on repository %s", repo.Name))
 	}
 
+	var currentAnalysisBranch *sdk.VCSBranch
+	var currentAnalysisTag sdk.VCSTag
+	if analysis.Ref == defaultBranch.ID {
+		currentAnalysisBranch = defaultBranch
+	} else {
+		if strings.HasPrefix(analysis.Ref, sdk.GitRefTagPrefix) {
+			currentAnalysisTag, err = vcsAuthClient.Tag(ctx, repo.Name, strings.TrimPrefix(analysis.Ref, sdk.GitRefTagPrefix))
+			if err != nil {
+				return err
+			}
+		} else {
+			currentAnalysisBranch, err = vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix)})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	eventInsertedEntities := make([]sdk.Entity, 0)
 	eventUpdatedEntities := make([]sdk.Entity, 0)
 
@@ -562,21 +595,55 @@ skipEntity:
 	defer tx.Rollback() // nolint
 	for i := range entitiesToUpdate {
 		e := &entities[i]
-		existingEntity, err := entity.LoadByRefTypeName(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name)
+
+		// Check if entity has changed from current HEAD
+		var entityUpdated bool
+		existingHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, "HEAD")
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve latest entity with same name"))
+		}
+		if existingHeadEntity != nil && existingHeadEntity.Data != e.Entity.Data {
+			entityUpdated = true
+		}
+
+		// If entity already exist, ignore it.
+		existingEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, e.Commit)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on git ref %s", e.Name, e.Type, e.Ref))
 		}
+		if existingEntity != nil {
+			continue
+		}
+
+		// Insert new entity for current branch and commit
 		if existingEntity == nil {
 			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
 			}
 			eventInsertedEntities = append(eventInsertedEntities, e.Entity)
-		} else {
-			e.ID = existingEntity.ID
-			if err := entity.Update(ctx, tx, &e.Entity); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to update %s of type %s", e.Name, e.Type)))
+			// If data is the same as the head of the current branch, do not notified a new entity
+			if entityUpdated {
+				entitiesUpdated = append(entitiesUpdated, e.Entity)
 			}
-			eventUpdatedEntities = append(eventUpdatedEntities, e.Entity)
+		}
+
+		// If current commit is HEAD, create/update HEAD entity
+		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Hash == e.Commit {
+			newHead := e.Entity
+			newHead.ID = ""
+			newHead.Commit = "HEAD"
+			if existingHeadEntity != nil {
+				newHead.ID = existingHeadEntity.ID
+				if err := entity.Update(ctx, tx, &newHead); err != nil {
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to update HEAD entity %s of type %s", e.Name, e.Type))
+				}
+				eventUpdatedEntities = append(eventUpdatedEntities, newHead)
+			} else {
+				if err := entity.Insert(ctx, tx, &newHead); err != nil {
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save HEAD entity %s of type %s", e.Name, e.Type))
+				}
+				eventInsertedEntities = append(eventInsertedEntities, newHead)
+			}
 		}
 
 		// Insert workflow hook
@@ -798,7 +865,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	return nil
 }
 
-func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, entities []sdk.EntityWithObject, vcsServerType, vcsServerName, repoName string) error {
+func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, entities []sdk.Entity, vcsServerType, vcsServerName, repoName string) error {
 	// Remove hooks
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 	if err != nil {

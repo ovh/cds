@@ -2735,10 +2735,10 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryTakeJob(ctx, regionNa
 }
 
 // V2QueueGetJobRun mocks base method.
-func (m *MockHatcheryServiceClient) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error) {
+func (m *MockHatcheryServiceClient) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
-	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -2836,7 +2836,7 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2QueueJobStepUpdate(ctx, regio
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockHatcheryServiceClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -4065,10 +4065,10 @@ func (m *MockV2QueueClient) EXPECT() *MockV2QueueClientMockRecorder {
 }
 
 // V2QueueGetJobRun mocks base method.
-func (m *MockV2QueueClient) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error) {
+func (m *MockV2QueueClient) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
-	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -4166,7 +4166,7 @@ func (mr *MockV2QueueClientMockRecorder) V2QueueJobStepUpdate(ctx, regionName, i
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2QueueClient) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -10276,10 +10276,10 @@ func (mr *MockInterfaceMockRecorder) UserUpdate(ctx, username, user interface{})
 }
 
 // V2QueueGetJobRun mocks base method.
-func (m *MockInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error) {
+func (m *MockInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
-	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -10377,7 +10377,7 @@ func (mr *MockInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionName, id, s
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
@@ -11883,10 +11883,10 @@ func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationWorkerHookGet(pro
 }
 
 // V2QueueGetJobRun mocks base method.
-func (m *MockV2WorkerInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error) {
+func (m *MockV2WorkerInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "V2QueueGetJobRun", ctx, regionName, id)
-	ret0, _ := ret[0].(*sdk.V2WorkflowRunJob)
+	ret0, _ := ret[0].(*sdk.V2QueueJobInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -11984,7 +11984,7 @@ func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueJobStepUpdate(ctx, regionNam
 }
 
 // V2QueuePolling mocks base method.
-func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
+func (m *MockV2WorkerInterface) V2QueuePolling(ctx context.Context, region string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...cdsclient.RequestModifier) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, region, goRoutines, hatcheryMetrics, pendingWorkerCreation, jobs, errs, delay}
 	for _, a := range ms {
