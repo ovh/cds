@@ -377,7 +377,7 @@ hatcheries:
 		"runJobID":   jobRun.ID,
 		"regionName": "default",
 	}
-	uri := api.Router.GetRouteV2("GET", api.getJobRunHandler, vars)
+	uri := api.Router.GetRouteV2("GET", api.getJobRunQueueInfoHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
