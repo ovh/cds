@@ -602,7 +602,7 @@ skipEntity:
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve latest entity with same name"))
 		}
-		if existingHeadEntity != nil && existingHeadEntity.Data != e.Entity.Data {
+		if existingHeadEntity == nil || existingHeadEntity.Data != e.Entity.Data {
 			entityUpdated = true
 		}
 

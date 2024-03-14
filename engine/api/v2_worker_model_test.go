@@ -55,7 +55,7 @@ func TestGetWorkerModelV2Handler(t *testing.T) {
 
 	e := sdk.Entity{
 		Name:                "model1",
-		Commit:              "123456",
+		Commit:              "HEAD",
 		Ref:                 "refs/heads/master",
 		Type:                sdk.EntityTypeWorkerModel,
 		ProjectRepositoryID: repo.ID,
@@ -189,14 +189,7 @@ spec:
 
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
-	require.Equal(t, 200, w.Code)
-
-	body := w.Body.Bytes()
-	var wms []sdk.V2WorkerModel
-	require.NoError(t, json.Unmarshal(body, &wms))
-
-	t.Logf("%+v", wms)
-	require.Equal(t, 2, len(wms))
+	require.Equal(t, 400, w.Code)
 
 	varsGetOne := map[string]string{
 		"projectKey":           p.Key,
@@ -205,7 +198,7 @@ spec:
 	}
 	uriOne := api.Router.GetRouteV2("GET", api.getWorkerModelsV2Handler, varsGetOne)
 	test.NotEmpty(t, uri)
-	reqOne := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriOne+"?branch=master", nil)
+	reqOne := assets.NewAuthentifiedRequest(t, u, pass, "GET", uriOne+"?branch=master&commit=123456", nil)
 
 	wOne := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wOne, reqOne)

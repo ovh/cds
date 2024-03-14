@@ -79,7 +79,7 @@ runs:
 		"repositoryIdentifier": repo.Name,
 		"actionName":           "test-action",
 	}
-	uri := api.Router.GetRouteV2("GET", api.getActionV2Handler, vars) + "?branch=master"
+	uri := api.Router.GetRouteV2("GET", api.getActionV2Handler, vars) + "?branch=master&commit=123456"
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 

@@ -1395,7 +1395,7 @@ func TestPostWorkflowRunHandler(t *testing.T) {
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          proj.Key,
 		Ref:                 "refs/heads/master",
-		Commit:              "123456",
+		Commit:              "HEAD",
 		ProjectRepositoryID: repo.ID,
 		Data: `name: MyFirstWorkflow
 jobs:

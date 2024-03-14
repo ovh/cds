@@ -361,7 +361,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		FilePath:            ".cds/actions/myaction.yml",
 		Name:                "myaction1",
 		Ref:                 "refs/heads/master",
-		Commit:              "",
+		Commit:              "HEAD",
 		LastUpdate:          time.Time{},
 		Data:                "name: myaction",
 	}
@@ -374,7 +374,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 		FilePath:            ".cds/actions/myaction2.yml",
 		Name:                "myaction2",
 		Ref:                 "refs/heads/main",
-		Commit:              "",
+		Commit:              "HEAD",
 		LastUpdate:          time.Time{},
 		Data:                "name: myaction2",
 	}
