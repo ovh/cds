@@ -1,7 +1,7 @@
 package sdk
 
 import (
-	"github.com/invopop/jsonschema"
+	"github.com/sguiheux/jsonschema"
 )
 
 func GetWorkerModelJsonSchema() *jsonschema.Schema {
