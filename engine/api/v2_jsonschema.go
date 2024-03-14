@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/invopop/jsonschema"
+	"github.com/sguiheux/jsonschema"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/entity"

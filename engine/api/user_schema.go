@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	"github.com/iancoleman/orderedmap"
-	"github.com/invopop/jsonschema"
+	"github.com/sguiheux/jsonschema"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/group"

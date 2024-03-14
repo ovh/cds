@@ -38,9 +38,8 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/hashicorp/vault/api v1.0.4
-	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0
+	github.com/iancoleman/orderedmap v0.3.0
 	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
-	github.com/invopop/jsonschema v0.6.0
 	github.com/jfrog/build-info-go v1.9.23
 	github.com/jfrog/jfrog-client-go v1.37.1
 	github.com/jordan-wright/email v4.0.1-0.20200917010138-e1c00e156980+incompatible
@@ -76,6 +75,7 @@ require (
 	github.com/rockbears/yaml v0.4.0
 	github.com/rubenv/sql-migrate v1.5.2
 	github.com/sguiheux/go-coverage v0.0.0-20190710153556-287b082a7197
+	github.com/sguiheux/jsonschema v0.0.0-20240314085137-97ecc280683c
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cast v1.6.0
@@ -333,8 +333,6 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.14.3-0.20230601165947-6ce0bf390ce3 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 )
-
-replace github.com/invopop/jsonschema v0.6.0 => github.com/sguiheux/jsonschema v0.0.0-20230316145935-733732e89063
 
 replace gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.3.0
 
