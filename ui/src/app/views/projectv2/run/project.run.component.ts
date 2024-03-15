@@ -77,6 +77,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this._cd.markForCheck();
         });
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.INFO_PANEL_KEY));
+        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.JOB_PANEL_KEY));
         this.defaultTabs = [<Tab>{
             title: 'Infos',
             key: 'infos'
