@@ -616,19 +616,17 @@ skipEntity:
 		}
 
 		// Insert new entity for current branch and commit
-		if existingEntity == nil {
-			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
-			}
-			eventInsertedEntities = append(eventInsertedEntities, e.Entity)
-			// If data is the same as the head of the current branch, do not notified a new entity
-			if entityUpdated {
-				entitiesUpdated = append(entitiesUpdated, e.Entity)
-			}
+		if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+		}
+		eventInsertedEntities = append(eventInsertedEntities, e.Entity)
+		// If data is the same as the head of the current branch, do not notified a new entity
+		if entityUpdated {
+			entitiesUpdated = append(entitiesUpdated, e.Entity)
 		}
 
 		// If current commit is HEAD, create/update HEAD entity
-		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Hash == e.Commit {
+		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Sha == e.Commit {
 			newHead := e.Entity
 			newHead.ID = ""
 			newHead.Commit = "HEAD"
