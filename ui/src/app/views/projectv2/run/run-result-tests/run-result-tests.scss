@@ -1,0 +1,36 @@
+@import '../../../../../common';
+
+:host {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.form {
+  display: flex;
+  flex-direction: row;
+  margin: 10px;
+
+  [nz-button] {
+    margin-left: 5px;
+
+    &.active {
+      color: $cds_color_green;
+      border-color: $cds_color_green;
+
+      :host-context(.night) & {
+        border-color: $darkTheme_green;
+        color: $darkTheme_green;
+      }
+    }
+  }
+}
+
+nz-checkbox-group {
+  display: flex;
+  flex-direction: column;
+}
+
+nz-tree {
+  margin: 0 10px;
+}

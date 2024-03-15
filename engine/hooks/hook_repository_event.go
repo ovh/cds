@@ -54,6 +54,12 @@ func (s *Service) extractDataFromGiteaRequest(headers http.Header, body []byte, 
 		// with a comment event, gitea does not send these details
 	}
 
+	for _, c := range request.Commits {
+		extractedData.Paths = append(extractedData.Paths, c.Added...)
+		extractedData.Paths = append(extractedData.Paths, c.Modified...)
+		extractedData.Paths = append(extractedData.Paths, c.Removed...)
+	}
+
 	return repoName, extractedData, nil
 }
 

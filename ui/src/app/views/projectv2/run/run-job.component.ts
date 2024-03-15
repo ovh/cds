@@ -53,13 +53,10 @@ export class RunJobComponent implements OnChanges, OnDestroy {
     ) {
         this.defaultTabs = [<Tab>{
             title: 'Logs',
-            key: 'logs',
-            default: true
+            key: 'logs'
         }, <Tab>{
             title: 'Infos',
-            key: 'infos',
-            icon: 'info-circle',
-            iconTheme: 'outline',
+            key: 'infos'
         }];
         this.tabs = [...this.defaultTabs];
         this.tabs[0].default = true;

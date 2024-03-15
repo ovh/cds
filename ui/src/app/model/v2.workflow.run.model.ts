@@ -107,6 +107,6 @@ export class WorkflowRunResult {
 }
 
 export class WorkflowRunResultDetail {
-    Data: any;
-    Type: string;
+    data: any;
+    type: string;
 }

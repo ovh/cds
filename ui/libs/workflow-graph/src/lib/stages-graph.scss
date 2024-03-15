@@ -69,12 +69,15 @@
     flex-direction: row;
 
     button {
-        margin-right: 15px;
         background-color: #fff;
 
         :host-context(.night) & {
             background-color: #141414;
         }
+    }
+
+    button:not(:last-child) {
+        margin-right: 10px;
     }
 }
 

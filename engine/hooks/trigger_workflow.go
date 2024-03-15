@@ -57,8 +57,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:   hre.UUID,
 					UserID:        hre.UserID,
-					Ref:           wh.TargetBranch,
-					Sha:           "HEAD",
+					Ref:           hre.ExtractData.Ref,
+					Sha:           hre.ExtractData.Commit,
 					Payload:       event,
 					EventName:     hre.EventName,
 					HookType:      wh.Type,
@@ -67,15 +67,14 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				}
 
 				switch wh.Type {
-				case sdk.WorkflowHookTypeRepository:
-					runRequest.Sha = hre.ExtractData.Commit
-					if runRequest.Ref == "" {
-						runRequest.Ref = hre.ExtractData.Ref
-					}
 				case sdk.WorkflowHookTypeWorkflow:
 					runRequest.EntityUpdated = wh.WorkflowName
+					runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
+					runRequest.Sha = "HEAD"
 				case sdk.WorkflowHookTypeWorkerModel:
 					runRequest.EntityUpdated = wh.ModelFullName
+					runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
+					runRequest.Sha = "HEAD"
 				}
 
 				if _, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

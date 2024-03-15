@@ -1,13 +1,13 @@
-<div *ngIf="runJob" class="job">
+<ng-container *ngIf="runJob">
     <!-- Display job services and steps -->
     <ng-container *ngIf="currentTabIndex === 0">
         <div class="step" *ngFor="let logBlock of logBlocks; trackBy: trackStepElement; let i = index">
             <div class="line info" (click)="clickOpen(logBlock)">
                 <div class="number">
-                    <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && !logBlock.open" nz-icon nzType="caret-right"
-                          nzTheme="fill"></span>
-                    <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && logBlock.open" nz-icon nzType="caret-down"
-                          nzTheme="fill"></span>
+                    <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && !logBlock.open" nz-icon
+                        nzType="caret-right" nzTheme="fill"></span>
+                    <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && logBlock.open" nz-icon
+                        nzType="caret-down" nzTheme="fill"></span>
                     <span nz-icon [nzType]="'loading'" *ngIf="logBlock.lines.length === 0 && logBlock.loading"></span>
                     {{logBlock.firstDisplayedLineNumber ? logBlock.firstDisplayedLineNumber : ''}}
                 </div>
@@ -23,9 +23,9 @@
                 </div>
                 <div class="action">
                     <a *ngIf="logBlock?.link"
-                       [href]="'./cdscdn/item/' + logBlock.link.item_type + '/' + logBlock.link.api_ref + '/download?refresh=5'"
-                       target="_blank" rel="noopener noreferrer" title="Share/download the step"
-                       (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
+                        [href]="'./cdscdn/item/' + logBlock.link.item_type + '/' + logBlock.link.api_ref + '/download?refresh=5'"
+                        target="_blank" rel="noopener noreferrer" title="Share/download the step"
+                        (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
                 </div>
             </div>
             <ng-container *ngIf="logBlock.open">
@@ -41,27 +41,29 @@
                         <div *ngFor="let extra of line.extra">{{extra}}</div>
                     </div>
                 </div>
-                <div class="line expand" *ngIf="logBlock.lines.length + logBlock.endLines.length < logBlock.totalLinesCount"
-                     (click)="clickExpandStepDown(logBlock.name)">
+                <div class="line expand"
+                    *ngIf="logBlock.lines.length + logBlock.endLines.length < logBlock.totalLinesCount"
+                    (click)="clickExpandStepDown(logBlock.name)">
                     <div class="number">
                         <i nz-icon nzType="caret-down" nzTheme="fill"></i>
                         {{logBlock.firstDisplayedLineNumber +
-                    logBlock.lines.length + 1}}
+                        logBlock.lines.length + 1}}
                     </div>
                     <div class="value">…</div>
                 </div>
                 <div class="line expand"
-                     *ngIf="logBlock.lines.length + logBlock.endLines.length < (logBlock.totalLinesCount - expandLoadLinesCount) - 1"
-                     (click)="clickExpandStepUp(logBlock.name)">
+                    *ngIf="logBlock.lines.length + logBlock.endLines.length < (logBlock.totalLinesCount - expandLoadLinesCount) - 1"
+                    (click)="clickExpandStepUp(logBlock.name)">
                     <div class="number"><i nz-icon nzType="caret-up"
-                                           nzTheme="fill"></i>{{(logBlock.firstDisplayedLineNumber +
+                            nzTheme="fill"></i>{{(logBlock.firstDisplayedLineNumber +
                         logBlock.totalLinesCount) - logBlock.endLines.length}}
                     </div>
                     <div class="value">…</div>
                 </div>
                 <div class="line" *ngFor="let line of logBlock.endLines; trackBy: trackLineElement; let j = index">
                     <div class="number">
-                        {{((logBlock.firstDisplayedLineNumber + logBlock.totalLinesCount) - logBlock.endLines.length) + j + 1}}
+                        {{((logBlock.firstDisplayedLineNumber + logBlock.totalLinesCount) - logBlock.endLines.length) +
+                        j + 1}}
                     </div>
                     <div class="value">
                         <pre [innerHTML]="line.value | ansi: false | safeHtml"></pre>
@@ -78,8 +80,8 @@
 
     <div class="footer">
         <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down"
-                                                                               nzTheme="fill"></i></div>
+                nzTheme="fill"></i></div>
         <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i>
         </div>
     </div>
-</div>
+</ng-container>

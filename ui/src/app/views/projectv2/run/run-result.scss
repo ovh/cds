@@ -12,7 +12,7 @@ app-tabs {
   ::ng-deep {
     .ant-menu {
       background-color: $greyBackground !important;
-
+      
       :host-context(.night) & {
         background-color: $darkBackground !important;
         color: $darkTheme_grey_6;
@@ -47,4 +47,8 @@ nz-code-editor {
     background-color: #1e1e1e;
     border-left: 1px solid #303030;
   }
+}
+
+app-run-result-tests {
+  height: 100%;
 }

@@ -1,15 +1,20 @@
+@import '../../../../../../common';
+
 .Notifications {
-    padding: 20px;
+  padding: 20px;
 
   .section {
     margin-bottom: 10px;
+
     h3 {
       display: inline;
     }
+
     button {
       float: right;
     }
   }
+
   .section:not(:first-child) {
     margin-top: 50px;
   }
@@ -35,12 +40,14 @@
       }
     }
   }
-  .item.active, .item:hover {
-    background-color: #eeeeee;
-    :host-context(.night) & {
-      background-color: #1f1f1f;
-    }
 
+  .item.active,
+  .item:hover {
+    background-color: #eeeeee;
+
+    :host-context(.night) & {
+      background-color: $darkTheme_grey_1;
+    }
   }
 
   .form {

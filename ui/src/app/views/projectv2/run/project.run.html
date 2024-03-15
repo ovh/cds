@@ -15,8 +15,8 @@
         </nz-page-header>
 
         <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-            (onSelectJobGate)="selectJobGate($event)" (onSelectJob)="selectJob($event)"
-            (onSelectHook)="selectHook($event)" #graph></app-stages-graph>
+            (onSelectJobGate)="openPanel('gate', $event)" (onSelectJob)="openPanel('job', $event)"
+            (onSelectHook)="openPanel('hook', $event)" #graph></app-stages-graph>
 
         <!--  BOTTOM PANELS -->
 
@@ -58,26 +58,22 @@
                     [nzData]="workflowRun.results" #autoHeightDirective=nsAutoHeightTable #resultsTable>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Type</th>
+                            <th nzWidth="100px">Type</th>
                             <th>Name</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let result of resultsTable.data">
-                            <td>
-                                <span class="info" nz-icon nzType="file" nzTheme="fill"></span>
-                                {{result.id}}
-                            </td>
+                        <tr class="result" *ngFor="let result of resultsTable.data"
+                            (click)="openPanel('result', result.id)">
                             <td>
                                 {{result.type}}
                             </td>
                             <td>
                                 <ng-container *ngIf="result.type === 'deployment'; else nameTmpl">
-                                    {{result.detail.Data.deployment_name}}:{{result.detail.Data.version}}
+                                    {{result.detail.data.deployment_name}}:{{result.detail.data.version}}
                                 </ng-container>
                                 <ng-template #nameTmpl>
-                                    {{result.detail.Data.name}}
+                                    {{result.detail.data.name ?? result.id}}
                                 </ng-template>
                             </td>
                         </tr>
@@ -89,13 +85,16 @@
 
     <!--  RIGHT PANELS -->
 
-    <app-resizable-panel *ngIf="selectedJobRun || selectedJobGate || selectedHook" minSize="400"
-        [initialSize]="jobPanelSize" (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
-        <app-run-job *ngIf="selectedJobRun" [workflowRun]="workflowRun" [jobRun]="selectedJobRun"
-            [jobRunInfos]="selectedJobRunInfos" (onClickClose)="unselectJob()"></app-run-job>
-        <app-run-gate *ngIf="selectedJobGate" [gateNode]="selectedJobGate" [run]="workflowRun"></app-run-gate>
-        <app-run-hook *ngIf="selectedHook" [hook]="selectedHook" [run]="workflowRun"
-            (onClickClose)="unselectHook()"></app-run-hook>
+    <app-resizable-panel *ngIf="selectedItemType" minSize="400" [initialSize]="jobPanelSize"
+        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
+        <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun" [jobRun]="selectedJobRun"
+            [jobRunInfos]="selectedJobRunInfos" (onClose)="closePanel()"></app-run-job>
+        <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate" [run]="workflowRun"
+            (onClose)="closePanel()"></app-run-gate>
+        <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"
+            (onClose)="closePanel()"></app-run-hook>
+        <app-run-result *ngIf="selectedItemType === 'result'" [run]="workflowRun" [resultID]="selectedRunResultID"
+            (onClose)="closePanel()"></app-run-result>
     </app-resizable-panel>
 
 </ng-container>

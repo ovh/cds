@@ -158,6 +158,8 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NsAutoHeightTableDirective } from './directives/ns-auto-height-table.directive';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
+import { DateFromNowComponent } from './date-from-now/date-from-now';
+import { NzTreeModule } from 'ng-zorro-antd/tree';
 
 const ngZorroConfig: NzConfig = {
     notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
@@ -217,6 +219,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NzTabsModule,
         NzTagModule,
         NzToolTipModule,
+        NzTreeModule,
         NzTreeViewModule,
         NzTypographyModule,
         NzUploadModule,
@@ -245,6 +248,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         ConditionsComponent,
         CutPipe,
         DataTableComponent,
+        DateFromNowComponent,
         DiffItemComponent,
         DiffListComponent,
         DurationMsPipe,
@@ -360,6 +364,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         ConditionsComponent,
         CutPipe,
         DataTableComponent,
+        DateFromNowComponent,
         DiffItemComponent,
         DiffListComponent,
         DragulaModule,
@@ -417,6 +422,7 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         NzTabsModule,
         NzTagModule,
         NzToolTipModule,
+        NzTreeModule,
         NzTreeViewModule,
         NzTypographyModule,
         NzUploadModule,

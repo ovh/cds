@@ -25,6 +25,8 @@ import { WorkflowGraphModule } from '../../../../libs/workflow-graph/src/public-
 import { ProjectV2ExploreComponent } from './explore/explore.component';
 import { ProjectV2WorkflowRunListSidebarComponent } from './run-list/run-list-sidebar.component';
 import { RunHookComponent } from './run/run-hook.component';
+import { RunResultComponent } from './run/run-result.component';
+import { RunResultTestsComponent } from './run/run-result-tests/run-result-tests.component';
 
 @NgModule({
     declarations: [
@@ -45,7 +47,9 @@ import { RunHookComponent } from './run/run-hook.component';
         RunGateComponent,
         RunHookComponent,
         RunJobComponent,
-        RunJobLogsComponent
+        RunJobLogsComponent,
+        RunResultComponent,
+        RunResultTestsComponent
     ],
     imports: [
         SharedModule,

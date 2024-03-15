@@ -33,8 +33,13 @@ nz-page-header-content {
 
     app-tabs {
         ::ng-deep {
-            .menu {
-                background-color: inherit;
+            .ant-menu {
+                background-color: $greyBackground !important;
+
+                :host-context(.night) & {
+                    background-color: $darkBackground !important;
+                    color: $darkTheme_grey_6;
+                }
             }
         }
     }
@@ -83,7 +88,6 @@ nz-page-header-content {
     }
 }
 
-app-run-job {
-    height: 100%;
-    overflow: hidden;
+.result {
+    cursor: pointer;
 }
