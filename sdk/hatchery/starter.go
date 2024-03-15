@@ -73,7 +73,7 @@ func workerStarterRunning(ctx context.Context, h Interface, workerNum string, j 
 		return
 	}
 
-	workerName := namesgenerator.GenerateWorkerName(m.Name, "register")
+	workerName := namesgenerator.GenerateWorkerName("register")
 
 	atomic.AddInt64(&nbWorkerToStart, 1)
 	// increment nbRegisteringWorkerModels, but no decrement.
@@ -154,7 +154,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	}
 	ctx = context.WithValue(ctx, LogFieldModel, modelName)
 	arg := SpawnArguments{
-		WorkerName:   namesgenerator.GenerateWorkerName(modelName, ""),
+		WorkerName:   namesgenerator.GenerateWorkerName(""),
 		Model:        j.model,
 		JobID:        j.id,
 		Region:       j.region,

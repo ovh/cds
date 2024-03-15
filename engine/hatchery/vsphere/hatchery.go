@@ -497,7 +497,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		go func() {
 			defer wg.Done()
 
-			workerName := namesgenerator.GenerateWorkerName(modelPath, "provision")
+			workerName := namesgenerator.GenerateWorkerName("provision")
 
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
