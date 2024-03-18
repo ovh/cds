@@ -626,7 +626,7 @@ skipEntity:
 		}
 
 		// If current commit is HEAD, create/update HEAD entity
-		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || currentAnalysisTag.Sha == e.Commit {
+		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || (currentAnalysisTag.Sha == e.Commit) || currentAnalysisTag.Sha == "" {
 			newHead := e.Entity
 			newHead.ID = ""
 			newHead.Commit = "HEAD"

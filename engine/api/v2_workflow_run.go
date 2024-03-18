@@ -651,7 +651,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 
 			workflowEntity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
 			if err != nil {
-				return err
+				return sdk.WrapError(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
 			}
 
 			var wk sdk.V2Workflow
@@ -852,6 +852,10 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier, workflow_v2.WithRunResults)
 			if err != nil {
 				return err
+			}
+
+			if !sdk.StatusIsTerminated(wr.Status) {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start a job on a running workflow")
 			}
 
 			jobIdentifier := vars["jobIdentifier"]
