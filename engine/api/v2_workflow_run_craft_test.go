@@ -286,7 +286,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos))
 
-	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].RunsOn, "myworker-model@refs/heads/master")
+	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].RunsOn.Model, "myworker-model@refs/heads/master")
 }
 
 func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
