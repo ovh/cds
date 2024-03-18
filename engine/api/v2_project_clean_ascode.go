@@ -20,13 +20,14 @@ import (
 )
 
 type EntitiesCleaner struct {
-	projKey  string
-	vcsName  string
-	repoName string
-	refs     map[string]struct{}
+	projKey   string
+	vcsName   string
+	repoName  string
+	refs      map[string]string
+	retention time.Duration
 }
 
-func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration) {
+func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration, entityRetention time.Duration) {
 	ticker := time.NewTicker(delay)
 	defer ticker.Stop()
 
@@ -48,7 +49,7 @@ func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration) {
 			for w := 0; w < 10; w++ {
 				a.GoRoutines.Exec(ctx, "cleanProjectEntities-"+strconv.Itoa(w), func(ctx context.Context) {
 					for pKey := range inputChan {
-						if err := workerCleanProject(ctx, a.mustDB(), a.Cache, pKey); err != nil {
+						if err := workerCleanProject(ctx, a.mustDB(), a.Cache, pKey, entityRetention); err != nil {
 							log.ErrorWithStackTrace(ctx, err)
 						}
 						resultChan <- true
@@ -66,7 +67,7 @@ func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration) {
 	}
 }
 
-func workerCleanProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pKey string) error {
+func workerCleanProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pKey string, entityRetention time.Duration) error {
 	ctx = context.WithValue(ctx, cdslog.Action, "workerCleanProject")
 	ctx = context.WithValue(ctx, "action_metadata_project_key", pKey)
 	log.Info(ctx, "Clean ascode entities on project %s", pKey)
@@ -79,13 +80,13 @@ func workerCleanProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		return nil
 	}
 	defer store.Unlock(lockKey)
-	if err := cleanAscodeProject(ctx, db, store, pKey); err != nil {
+	if err := cleanAscodeProject(ctx, db, store, pKey, entityRetention); err != nil {
 		return err
 	}
 	return nil
 }
 
-func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pKey string) error {
+func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pKey string, entityRetention time.Duration) error {
 	vcsRepos, err := vcs.LoadAllVCSByProject(ctx, db, pKey)
 	if err != nil {
 		return err
@@ -116,22 +117,30 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			}
 
 			cleaner := &EntitiesCleaner{
-				projKey:  pKey,
-				vcsName:  vcsServer.Name,
-				repoName: r.Name,
-				refs:     make(map[string]struct{}),
+				projKey:   pKey,
+				vcsName:   vcsServer.Name,
+				repoName:  r.Name,
+				refs:      make(map[string]string),
+				retention: entityRetention,
 			}
 			if err := cleaner.getBranches(ctx, db, store); err != nil {
 				return err
 			}
 
 			for branchName, branchEntities := range entitiesByRef {
-				if err := cleaner.cleanEntitiesByRef(ctx, db, store, branchName, branchEntities); err != nil {
-					return err
+				// Clean entities that exists on deleted branches
+				if currentHEAD, has := cleaner.refs[branchName]; has {
+					// Clean non head commits on existing branch
+					if err := cleaner.cleanNonHeadEntities(ctx, db, store, branchName, currentHEAD, branchEntities); err != nil {
+						return err
+					}
+				} else {
+					if err := cleaner.cleanEntitiesByDeletedRef(ctx, db, store, branchName, branchEntities); err != nil {
+						return err
+					}
 				}
-			}
 
-			// TODO manage tags
+			}
 		}
 	}
 	return nil
@@ -148,9 +157,9 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 		return err
 	}
 
-	c.refs = make(map[string]struct{})
+	c.refs = make(map[string]string)
 	for _, b := range branches {
-		c.refs[b.ID] = struct{}{}
+		c.refs[b.ID] = b.LatestCommit
 	}
 
 	tags, err := vcsClient.Tags(ctx, c.repoName)
@@ -158,12 +167,12 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 		return err
 	}
 	for _, t := range tags {
-		c.refs[sdk.GitRefTagPrefix+t.Tag] = struct{}{}
+		c.refs[sdk.GitRefTagPrefix+t.Tag] = t.Hash
 	}
 	return nil
 }
 
-func (c *EntitiesCleaner) cleanEntitiesByRef(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, entitiesByBranch []sdk.Entity) error {
+func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, refHeadCommit string, entitiesByBranch []sdk.Entity) error {
 	deletedEntities := make([]sdk.Entity, 0)
 
 	tx, err := db.Begin()
@@ -172,14 +181,41 @@ func (c *EntitiesCleaner) cleanEntitiesByRef(ctx context.Context, db *gorp.DbMap
 	}
 	defer tx.Rollback()
 
-	if _, has := c.refs[ref]; !has {
-		log.Info(ctx, "Deleting entities on  %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
-		for _, e := range entitiesByBranch {
+	log.Info(ctx, "Deleting entities on  %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
+	for _, e := range entitiesByBranch {
+		if e.Commit != "HEAD" && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
 			if err := entity.Delete(ctx, tx, &e); err != nil {
 				return err
 			}
 			deletedEntities = append(deletedEntities, e)
 		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(tx.Commit())
+	}
+
+	for _, e := range deletedEntities {
+		event_v2.PublishEntityEvent(ctx, store, sdk.EventEntityDeleted, c.vcsName, c.repoName, e, nil)
+	}
+	return nil
+}
+
+func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, entitiesByBranch []sdk.Entity) error {
+	deletedEntities := make([]sdk.Entity, 0)
+
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback()
+
+	log.Info(ctx, "Deleting entities on  %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
+	for _, e := range entitiesByBranch {
+		if err := entity.Delete(ctx, tx, &e); err != nil {
+			return err
+		}
+		deletedEntities = append(deletedEntities, e)
 	}
 
 	if err := tx.Commit(); err != nil {
