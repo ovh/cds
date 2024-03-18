@@ -842,15 +842,13 @@ begin:
 
 // GetRandomNameCDS generates a random name from the list of adjectives and surnames in this package
 func GetRandomNameCDS() string {
-	format := rand.Intn(3)
+	format := rand.Intn(2)
 	var name string
 	switch format {
 	case 0:
 		name = fmt.Sprintf("%s_but_%s_%s", left[rand.Intn(len(left))], left[rand.Intn(len(left))], right[rand.Intn(len(right))])
-	case 1:
-		name = fmt.Sprintf("%s_and_%s_%s", left[rand.Intn(len(left))], left[rand.Intn(len(left))], right[rand.Intn(len(right))])
 	default:
-		name = fmt.Sprintf("%s_%s", left[rand.Intn(len(left))], right[rand.Intn(len(right))])
+		name = fmt.Sprintf("%s_and_%s_%s", left[rand.Intn(len(left))], left[rand.Intn(len(left))], right[rand.Intn(len(right))])
 	}
 	return name
 }
