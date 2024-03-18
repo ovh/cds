@@ -377,16 +377,16 @@ hatcheries:
 		"runJobID":   jobRun.ID,
 		"regionName": "default",
 	}
-	uri := api.Router.GetRouteV2("GET", api.getJobRunHandler, vars)
+	uri := api.Router.GetRouteV2("GET", api.getJobRunQueueInfoHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
-	var jobRunResponse sdk.V2WorkflowRunJob
+	var jobRunResponse sdk.V2QueueJobInfo
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &jobRunResponse))
-	require.Equal(t, "job1", jobRunResponse.JobID)
+	require.Equal(t, "job1", jobRunResponse.RunJob.JobID)
 }
 
 func TestPostJobRunInfoHandler(t *testing.T) {

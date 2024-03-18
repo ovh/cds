@@ -933,3 +933,8 @@ type V2WorkflowRunSearchFilter struct {
 	Options []string `json:"options"`
 	Example string   `json:"example"`
 }
+
+type V2QueueJobInfo struct {
+	RunJob V2WorkflowRunJob `json:"runjob"`
+	Model  V2WorkerModel    `json:"model"`
+}

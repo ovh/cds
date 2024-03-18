@@ -110,10 +110,10 @@ spec:
 	err = workerCleanProject(context.TODO(), db.DbMap, api.Cache, p.Key)
 	require.NoError(t, err)
 
-	_, err = entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/temp", sdk.EntityTypeWorkerModel, "model1")
+	_, err = entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/temp", sdk.EntityTypeWorkerModel, "model1", "123456")
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
-	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "model2")
+	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "model2", "987654")
 	require.NoError(t, err)
 	require.Equal(t, etoKeep.ID, e.ID)
 }

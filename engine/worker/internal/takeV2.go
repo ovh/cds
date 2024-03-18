@@ -123,8 +123,8 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 				}
 				cancelGetJSON()
 				nbConnrefused = 0
-				if j == nil || j.Status != sdk.StatusBuilding {
-					log.Warn(ctx, "V2Take> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
+				if j == nil || j.RunJob.Status != sdk.StatusBuilding {
+					log.Warn(ctx, "V2Take> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.RunJob.Status, err)
 					cancel()
 					return
 				}

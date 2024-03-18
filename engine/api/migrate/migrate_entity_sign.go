@@ -9,6 +9,27 @@ import (
 	"github.com/ovh/cds/engine/cache"
 )
 
+func MigrateHeadEntity(ctx context.Context, db *gorp.DbMap) error {
+	entities, err := entity.LoadAllUnsafe(ctx, db)
+	if err != nil {
+		return err
+	}
+	for _, e := range entities {
+		tx, err := db.Begin()
+		if err != nil {
+			return err
+		}
+		e.Commit = "HEAD"
+		if err := entity.Update(ctx, tx, &e); err != nil {
+			return err
+		}
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func MigrateHashSignature(ctx context.Context, db *gorp.DbMap, c cache.Store) error {
 	entities, err := entity.LoadAllUnsafe(ctx, db)
 	if err != nil {

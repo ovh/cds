@@ -541,7 +541,7 @@ func (loader *asCodeLoader) loadAsCodeActionStep(ctx context.Context, stepName s
 	}
 	var currentAction sdk.V2Action
 	// For old workflow only manage entities on branch
-	if err := entity.LoadAndUnmarshalByRefTypeName(ctx, loader.db, repo.ID, sdk.GitRefBranchPrefix+branch, sdk.EntityTypeAction, actionName, &currentAction); err != nil {
+	if err := entity.LoadAndUnmarshalByRefTypeName(ctx, loader.db, repo.ID, sdk.GitRefBranchPrefix+branch, "HEAD", sdk.EntityTypeAction, actionName, &currentAction); err != nil {
 		return err
 	}
 	loader.action[stepName] = currentAction

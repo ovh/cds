@@ -502,7 +502,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))
 
-	r.Handle("/v2/queue/{regionName}/job/{runJobID}", nil, r.GETv2(api.getJobRunHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}", nil, r.GETv2(api.getJobRunQueueInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/info", nil, r.POSTv2(api.postJobRunInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runinfo", nil, r.POSTv2(api.postRunInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", nil, r.POSTv2(api.postJobRunStepHandler))
