@@ -485,6 +485,24 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDet
 	return i, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultPythonDetail() (*V2WorkflowRunResultPythonDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultPythonDetail)
+	if !ok {
+		var ii V2WorkflowRunResultPythonDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultPythonDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultPythonDetail")
+	}
+	return i, nil
+}
+
 func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDebianDetail() (*V2WorkflowRunResultDebianDetail, error) {
 	if err := r.Detail.castData(); err != nil {
 		return nil, err
@@ -603,6 +621,11 @@ func (r *V2WorkflowRunResult) Name() string {
 		detail, err := r.GetDetailAsV2WorkflowRunResultGenericDetail()
 		if err == nil {
 			return string(r.Type) + ":" + detail.Name
+		}
+	case V2WorkflowRunResultTypePython:
+		detail, err := r.GetDetailAsV2WorkflowRunResultPythonDetail()
+		if err == nil {
+			return string(r.Type) + ":" + detail.Name + ":" + detail.Version
 		}
 	case V2WorkflowRunResultTypeDebian:
 		detail, err := r.GetDetailAsV2WorkflowRunResultDebianDetail()
@@ -731,6 +754,13 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		}
 		s.Data = detail
 		return nil
+	case "V2WorkflowRunResultPythonDetail":
+		var detail = new(V2WorkflowRunResultPythonDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultPythonDetail")
+		}
+		s.Data = detail
+		return nil
 	case "V2WorkflowRunResultArsenalDeploymentDetail":
 		var detail = new(V2WorkflowRunResultArsenalDeploymentDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
@@ -849,6 +879,7 @@ const (
 	V2WorkflowRunResultTypeVariable          = "variable"
 	V2WorkflowRunResultTypeDocker            = "docker"
 	V2WorkflowRunResultTypeDebian            = "debian"
+	V2WorkflowRunResultTypePython            = "python"
 	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
 	V2WorkflowRunResultTypeHelm              = "helm"
 	// Other values may be instantiated from Artifactory Manager repository type
@@ -909,6 +940,12 @@ type V2WorkflowRunResultDebianDetail struct {
 	Components    []string `json:"components" mapstructure:"components"`
 	Distributions []string `json:"distributions" mapstructure:"distributions"`
 	Architectures []string `json:"architectures" mapstructure:"architectures"`
+}
+
+type V2WorkflowRunResultPythonDetail struct {
+	Name      string `json:"name" mapstructure:"name"`
+	Version   string `json:"version" mapstructure:"version"`
+	Extension string `json:"extension" mapstructure:"extension"`
 }
 
 type V2WorkflowRunResultHelmDetail struct {

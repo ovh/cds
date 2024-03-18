@@ -423,6 +423,23 @@ func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, patte
 	}, nil
 }
 
+func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi ArtifactoryFileInfo, name, resultType, localRepository, repository, maturity string) {
+	runResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
+	runResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
+	runResult.ArtifactManagerMetadata.Set("maturity", maturity)
+	runResult.ArtifactManagerMetadata.Set("name", name)
+	runResult.ArtifactManagerMetadata.Set("type", resultType)
+	runResult.ArtifactManagerMetadata.Set("path", fi.Path)
+	runResult.ArtifactManagerMetadata.Set("md5", fi.Checksums.Md5)
+	runResult.ArtifactManagerMetadata.Set("sha1", fi.Checksums.Sha1)
+	runResult.ArtifactManagerMetadata.Set("sha256", fi.Checksums.Sha256)
+	runResult.ArtifactManagerMetadata.Set("uri", fi.URI)
+	runResult.ArtifactManagerMetadata.Set("mimeType", fi.MimeType)
+	runResult.ArtifactManagerMetadata.Set("downloadURI", fi.DownloadURI)
+	runResult.ArtifactManagerMetadata.Set("createdBy", fi.CreatedBy)
+	runResult.ArtifactManagerMetadata.Set("localRepository", localRepository)
+}
+
 func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, r sdk.V2WorkflowRunResult, promotionType sdk.WorkflowRunResultPromotionType, maturity string, props *utils.Properties) error {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
