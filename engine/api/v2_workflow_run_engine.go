@@ -538,7 +538,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 				Level:            sdk.WorkflowRunInfoLevelError,
 				WorkflowRunJobID: rj.ID,
 				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.RunsOn, err),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.RunsOn.Model, err),
 			}
 			continue
 		}
