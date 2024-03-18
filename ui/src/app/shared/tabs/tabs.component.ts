@@ -44,47 +44,55 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit() {
         this.select(this.tabs.find(t => t.default));
         this.queryParamsSub = this._route.queryParams.subscribe(params => {
-            if (params['tab'] && !this.disableNavigation) {
-                this.select(this.tabs.find(t => t.key === params['tab']));
+            if (!this.disableNavigation) {
+                if (params['tab']) {
+                    this.select(this.tabs.find(t => t.key === params['tab']));
+                } else {
+                    this.select(this.getDefaultTab());
+                }
             }
         });
     }
 
     ngOnChanges() {
-        delete this.selected;
+        if (this.selected && !this.tabs.find(t => t.key === this.selected.key)) {
+            delete this.selected;
+        }
 
         if (!this.selected) {
-            let default_tab = this.tabs.find(t => t.default);
-            if (default_tab) {
-                this.select(default_tab);
-            } else {
-                this.select(this.tabs[0]);
-            }
+            this.select(this.getDefaultTab());
         }
 
         this._cd.markForCheck();
     }
 
+    getDefaultTab(): Tab {
+        let defaultTab = this.tabs.find(t => t.default);
+        if (defaultTab) {
+            return defaultTab;
+        }
+        return this.tabs[0];
+    }
+
     clickSelect(tab: Tab) {
+        if (this.selected && this.selected.key === tab.key) {
+            return;
+        }
         if (tab.disabled) {
             return;
         }
+        if (tab.link?.length > 0) {
+            this._router.navigate(tab.link);
+            return;
+        }
         if (!this.disableNavigation) {
-            if (tab.link?.length > 0) {
-                this._router.navigate(tab.link);
-                return;
-            }
             this._router.navigate([], {
                 relativeTo: this._route,
                 queryParams: { tab: tab.key },
                 queryParamsHandling: 'merge'
             });
         } else {
-            if (tab.link?.length > 0) {
-                this._router.navigate(tab.link);
-            } else {
-                this.select(this.tabs.find(t => t.key === tab.key));
-            }
+            this.select(this.tabs.find(t => t.key === tab.key));
         }
     }
 
