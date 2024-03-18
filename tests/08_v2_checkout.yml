@@ -63,7 +63,9 @@ testcases:
           on: [push]
           jobs:
             init:
-              runs-on: "{{.worker_model}}"
+              runs-on: 
+                model: "{{.worker_model}}"
+                memory: 2048
               steps:
                 - id: checkout
                   uses: actions/checkout

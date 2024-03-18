@@ -201,7 +201,8 @@ type V2Job struct {
 	Stage           string                  `json:"stage,omitempty" jsonschema_extras:"order=2"`
 	Region          string                  `json:"region,omitempty" jsonschema_extras:"order=3"`
 	ContinueOnError bool                    `json:"continue-on-error,omitempty" jsonschema_extras:"order=4"`
-	RunsOn          string                  `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split"`
+	RunsOnRaw       json.RawMessage         `json:"runs-on,omitempty" jsonschema_extras:"required,order=5,mode=split"`
+	RunsOn          V2JobRunsOn             `json:"-"`
 	Strategy        *V2JobStrategy          `json:"strategy,omitempty" jsonschema_extras:"order=7"`
 	Integrations    []string                `json:"integrations,omitempty" jsonschema_extras:"required,order=9" jsonschema_description:"Job integrations"`
 	VariableSets    []string                `json:"vars,omitempty" jsonschema_extras:"required,order=10" jsonschema_description:"VariableSet linked to the job"`
@@ -210,6 +211,12 @@ type V2Job struct {
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
+}
+
+type V2JobRunsOn struct {
+	Model  string `json:"model"`
+	Memory int64  `json:"memory"`
+	Flavor string `json:"flavor"`
 }
 
 type V2JobGate struct {
@@ -229,8 +236,8 @@ type V2JobGateReviewers struct {
 	Users  []string `json:"users,omitempty"`
 }
 
-func (w V2Job) Value() (driver.Value, error) {
-	j, err := yaml.Marshal(w)
+func (job V2Job) Value() (driver.Value, error) {
+	j, err := yaml.Marshal(job)
 	return j, WrapError(err, "cannot marshal V2Job")
 }
 
@@ -243,6 +250,53 @@ func (w *V2Job) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .(string) failed (%T)", src))
 	}
 	return WrapError(yaml.Unmarshal([]byte(source), w), "cannot unmarshal V2Job")
+}
+
+func (job V2Job) MarshalJSON() ([]byte, error) {
+	type Alias V2Job // prevent recursion
+	jobAlias := Alias(job)
+
+	if jobAlias.RunsOn.Memory == 0 && jobAlias.RunsOn.Flavor == "" {
+		runOnsBts, err := json.Marshal(jobAlias.RunsOn.Model)
+		if err != nil {
+			return nil, WrapError(err, "unable to marshal RunsOn field")
+		}
+		jobAlias.RunsOnRaw = runOnsBts
+	} else {
+		runOnsBts, err := json.Marshal(jobAlias.RunsOn)
+		if err != nil {
+			return nil, WrapError(err, "unable to marshal RunsOn field")
+		}
+		jobAlias.RunsOnRaw = runOnsBts
+	}
+	j, err := json.Marshal(jobAlias)
+	return j, WrapError(err, "cannot marshal V2Job")
+}
+
+func (job *V2Job) UnmarshalJSON(data []byte) error {
+	type Alias V2Job // prevent recursion
+	var jobAlias Alias
+	if err := JSONUnmarshal(data, &jobAlias); err != nil {
+		return WrapError(err, "unable to unmarshal v2Job")
+	}
+	if jobAlias.RunsOnRaw != nil {
+		bts, _ := json.Marshal(jobAlias.RunsOnRaw)
+		var modelOnly string
+		if err := JSONUnmarshal(bts, &modelOnly); err != nil {
+			var runsOn V2JobRunsOn
+			if err := JSONUnmarshal(bts, &runsOn); err != nil {
+				return WrapError(err, "unable to unmarshal RunsOn in V2Job")
+			}
+			jobAlias.RunsOn = runsOn
+		} else {
+			runsOn := V2JobRunsOn{
+				Model: modelOnly,
+			}
+			jobAlias.RunsOn = runsOn
+		}
+	}
+	*job = V2Job(jobAlias)
+	return nil
 }
 
 type V2JobService struct {

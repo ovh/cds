@@ -209,8 +209,8 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
 		}
 
-		if !strings.HasPrefix(j.RunsOn, "${{") {
-			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, jobID, j.RunsOn, j.Region, api.Config.Workflow.JobDefaultRegion)
+		if !strings.HasPrefix(j.RunsOn.Model, "${{") {
+			completeName, msg, err := wref.checkWorkerModel(ctx, api.mustDB(), api.Cache, jobID, j.RunsOn.Model, j.Region, api.Config.Workflow.JobDefaultRegion)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
@@ -222,7 +222,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			if msg != nil {
 				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
 			}
-			j.RunsOn = completeName
+			j.RunsOn.Model = completeName
 		}
 
 		// Check variable set

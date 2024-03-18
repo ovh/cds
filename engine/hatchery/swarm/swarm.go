@@ -270,6 +270,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//Memory for the worker
 	memory := int64(h.Config.DefaultMemory)
 
+	if spawnArgs.Model.Memory != 0 {
+		memory = spawnArgs.Model.Memory
+	}
+
 	var network, networkAlias string
 	services := []string{}
 

@@ -424,7 +424,7 @@ func handleJobV2(_ context.Context, h Interface, runJob sdk.V2WorkflowRunJob, ca
 
 	// Check at least one worker model can match
 	hWithModels, isWithModels := h.(InterfaceWithModels)
-	if isWithModels && runJob.Job.RunsOn == "" {
+	if isWithModels && runJob.Job.RunsOn.Model == "" {
 		endTrace("no model", runJob.ID)
 		return nil
 	}
@@ -606,11 +606,11 @@ fi`
 	return &oldModel, nil
 }
 
-func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, workerModelV2 string) (*sdk.WorkerStarterWorkerModel, error) {
-	ctx, end := telemetry.Span(ctx, "hatchery.getWorkerModelV2", telemetry.Tag(telemetry.TagWorker, workerModelV2))
+func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, runsOn sdk.V2JobRunsOn) (*sdk.WorkerStarterWorkerModel, error) {
+	ctx, end := telemetry.Span(ctx, "hatchery.getWorkerModelV2", telemetry.Tag(telemetry.TagWorker, runsOn.Model))
 	defer end()
 
-	gitRefSplit := strings.Split(workerModelV2, "@")
+	gitRefSplit := strings.Split(runsOn.Model, "@")
 
 	modelPath := strings.Split(gitRefSplit[0], "/")
 	if len(modelPath) < 4 {
@@ -686,6 +686,8 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, j workerStarte
 		}
 		workerStarterModel.OpenstackSpec = openstackSpec
 	}
+	workerStarterModel.Memory = runsOn.Memory
+	workerStarterModel.Flavor = runsOn.Flavor
 	return workerStarterModel, nil
 }
 

@@ -120,8 +120,10 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 						Name:   "My super job",
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
-						RunsOn: "myworker-model",
-						Steps:  []sdk.ActionStep{},
+						RunsOn: sdk.V2JobRunsOn{
+							Model: "myworker-model",
+						},
+						Steps: []sdk.ActionStep{},
 					},
 				},
 			},
@@ -200,7 +202,9 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 						Name:   "My super job",
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
-						RunsOn: "myworker-model",
+						RunsOn: sdk.V2JobRunsOn{
+							Model: "myworker-model",
+						},
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",
@@ -324,7 +328,9 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 						Name:   "My super job",
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
-						RunsOn: "myworker-model",
+						RunsOn: sdk.V2JobRunsOn{
+							Model: "myworker-model",
+						},
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",
