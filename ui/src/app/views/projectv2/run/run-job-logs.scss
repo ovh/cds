@@ -1,161 +1,160 @@
-.job {
-    position: relative;
+:host {
     background-color: #222222;
+    position: relative;
     color: #f1f1f1;
     padding-bottom: 19px;
+}
 
-    .step {
+.step {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    line-height: 19px;
+    font-family: monospace;
+    font-weight: 400;
+
+    .line {
+        min-height: 19px;
         display: flex;
-        flex-direction: column;
-        font-size: 12px;
-        line-height: 19px;
-        font-family: monospace;
-        font-weight: 400;
+        flex-direction: row;
 
-        .line {
-            min-height: 19px;
-            display: flex;
-            flex-direction: row;
+        &:hover {
+            background-color: #444444 !important;
+        }
 
-            &:hover {
-                background-color: #444444 !important;
+        .number {
+            position: relative;
+            width: 65px;
+            user-select: none;
+            text-align: right;
+            padding-right: 12px;
+            color: #B4B4B4;
+            cursor: pointer;
+
+            i {
+                position: absolute;
+                left: 5px;
             }
 
-            .number {
-                position: relative;
-                width: 65px;
-                user-select: none;
-                text-align: right;
-                padding-right: 12px;
-                color: #B4B4B4;
-                cursor: pointer;
+            .loader {
+                position: absolute;
+                left: 15px;
+                display: block;
+            }
+        }
 
-                i {
-                    position: absolute;
-                    left: 5px;
-                }
+        .value {
+            flex: 1;
+            overflow-wrap: anywhere;
+            position: relative;
 
-                .loader {
-                    position: absolute;
-                    left: 15px;
+            pre {
+                margin: 0;
+                white-space: pre-wrap;
+                word-break: break-all;
+            }
+
+            &:hover {
+                .since {
                     display: block;
                 }
             }
 
+            .since {
+                display: none;
+                height: 15px;
+                background-color: #666666;
+                color: #cccccc;
+                line-height: 11px;
+                font-size: 11px;
+                border-radius: 6px;
+                padding: 2px 4px;
+                position: absolute;
+                top: 2px;
+                right: 4px;
+            }
+        }
+
+        &.info {
+            background-color: #2B2B2B;
+            cursor: pointer;
+
             .value {
-                flex: 1;
-                overflow-wrap: anywhere;
-                position: relative;
-
-                pre {
-                    margin: 0;
-                    white-space: pre-wrap;
-                    word-break: break-all;
-                }
-
-                &:hover {
-                    .since {
-                        display: block;
-                    }
-                }
-
-                .since {
-                    display: none;
-                    height: 15px;
-                    background-color: #666666;
-                    color: #cccccc;
-                    line-height: 11px;
-                    font-size: 11px;
-                    border-radius: 6px;
-                    padding: 2px 4px;
-                    position: absolute;
-                    top: 2px;
-                    right: 4px;
-                }
+                color: #FFFF91;
             }
-
-            &.info {
-                background-color: #2B2B2B;
-                cursor: pointer;
-
-                .value {
-                    color: #FFFF91;
-                }
-
-                .extra {
-                    div {
-                        background-color: #666666;
-                        color: #dddddd;
-                    }
-
-                    .orange {
-                        background-color: #F2711C;
-                    }
-
-                    .red {
-                        background-color: #e42805;
-                    }
-                }
-            }
-
-            &.expand {
-                cursor: pointer;
-            }
-
 
             .extra {
-                display: flex;
-                flex-direction: row;
-
                 div {
-                    height: 15px;
-                    background-color: #505050;
-                    color: #cccccc;
-                    line-height: 11px;
-                    font-size: 11px;
-                    border-radius: 6px;
-                    padding: 2px 4px;
-                    margin-top: 2px;
-                    margin-right: 4px;
-                }
-            }
-
-            .action {
-                display: flex;
-                flex-direction: row;
-
-                a {
-                    cursor: pointer;
-                    color: #999999;
-
-                    &:hover {
-                        color: #dddddd !important;
-                    }
+                    background-color: #666666;
+                    color: #dddddd;
                 }
 
-                i {
-                    margin-right: 5px;
-                    font-size: 1.4em;
+                .orange {
+                    background-color: #F2711C;
+                }
+
+                .red {
+                    background-color: #e42805;
                 }
             }
         }
-    }
 
-    .footer {
-        position: sticky;
-        bottom: 0;
-        display: block;
-        float: right;
-
-        .goto {
-            display: inline-block;
-            padding-left: 7px;
+        &.expand {
             cursor: pointer;
-            color: #999999;
+        }
 
-            &:hover {
-                background-color: #444444 !important;
+
+        .extra {
+            display: flex;
+            flex-direction: row;
+
+            div {
+                height: 15px;
+                background-color: #505050;
+                color: #cccccc;
+                line-height: 11px;
+                font-size: 11px;
+                border-radius: 6px;
+                padding: 2px 4px;
+                margin-top: 2px;
+                margin-right: 4px;
             }
+        }
+
+        .action {
+            display: flex;
+            flex-direction: row;
+
+            a {
+                cursor: pointer;
+                color: #999999;
+
+                &:hover {
+                    color: #dddddd !important;
+                }
+            }
+
+            i {
+                margin-right: 5px;
+                font-size: 1.4em;
+            }
+        }
+    }
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+
+    .goto {
+        display: inline-block;
+        padding-left: 7px;
+        cursor: pointer;
+        color: #999999;
+
+        &:hover {
+            background-color: #444444 !important;
         }
     }
 }

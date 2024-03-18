@@ -24,6 +24,9 @@ type GiteaEventPayload struct {
 			Username string `json:"username"`
 		} `json:"committer"`
 		Timestamp time.Time `json:"timestamp"`
+		Added     []string  `json:"added"`
+		Removed   []string  `json:"removed"`
+		Modified  []string  `json:"modified"`
 	} `json:"commits"`
 	PullRequest struct {
 		ID     int    `json:"id"`

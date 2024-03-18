@@ -13,7 +13,6 @@ import { concatMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
-import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 import { NavigationState } from "app/store/navigation.state";
 import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
 
@@ -31,10 +30,12 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     workflowRun: V2WorkflowRun;
     workflowRunInfos: Array<WorkflowRunInfo>;
     workflowRunInfosContainsProblems: boolean = false;
+    selectedItemType: string;
     selectedJobRun: V2WorkflowRunJob;
     selectedJobGate: { gate: string, job: string };
     selectedJobRunInfos: Array<WorkflowRunInfo>;
-    selectedHook: string;
+    selectedHookName: string;
+    selectedRunResultID: string;
     jobs: Array<V2WorkflowRunJob>;
     workflowGraph: any;
 
@@ -76,15 +77,12 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this._cd.markForCheck();
         });
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.INFO_PANEL_KEY));
+        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.JOB_PANEL_KEY));
         this.defaultTabs = [<Tab>{
             title: 'Infos',
-            icon: 'info-circle',
-            iconTheme: 'outline',
             key: 'infos'
         }, <Tab>{
             title: 'Results',
-            icon: 'unordered-list',
-            iconTheme: 'outline',
             key: 'results'
         }];
         this.tabs = [...this.defaultTabs];
@@ -111,10 +109,8 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             if (!!this.workflowRunInfos.find(i => i.level === 'warning' || i.level === 'error')) {
                 this.tabs = [<Tab>{
                     title: 'Problems',
-                    icon: 'warning',
-                    iconTheme: 'fill',
                     key: 'problems',
-                    default: true,
+                    default: true
                 }, ...this.defaultTabs];
             }
         } catch (e) {
@@ -193,23 +189,8 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }
     }
 
-    selectJobGate(gateNode: GraphNode): void {
-        this.unselectJob();
-        this.unselectHook();
-
-        this.selectedJobGate = { gate: gateNode.gateName, job: gateNode.gateChild };
-        this._cd.markForCheck();
-    }
-
-    unselectJobGate(): void {
-        delete this.selectedJobGate;
-    }
 
     async selectJob(runJobID: string) {
-        this.unselectJobGate();
-        this.unselectHook();
-
-        this.selectedJobRun = this.jobs.find(j => j.id === runJobID);
 
         try {
             this.selectedJobRunInfos = await lastValueFrom(this._workflowService.getRunJobInfos(this.workflowRun, this.selectedJobRun.id));
@@ -226,32 +207,52 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         if (PipelineStatus.isDone(this.selectedJobRun.status) && this.pollRunJobInfosSubs) {
             this.pollRunJobInfosSubs.unsubscribe();
         }
+    }
+
+    async openPanel(type: string, data: any) {
+        this.clearPanel();
+
+        this.selectedItemType = type;
+
+        switch (type) {
+            case 'hook':
+                this.selectedHookName = data;
+                break;
+            case 'gate':
+                this.selectedJobGate = { gate: data.gateName, job: data.gateChild };
+                break;
+            case 'result':
+                this.selectedRunResultID = data;
+                break;
+            case 'job':
+                this.selectedJobRun = this.jobs.find(j => j.id === data);
+                await this.selectJob(data);
+                break;
+        }
+
 
         this._cd.markForCheck();
     }
 
-    unselectJob(): void {
+    clearPanel(): void {
         if (this.pollRunJobInfosSubs) {
             this.pollRunJobInfosSubs.unsubscribe();
         }
+        delete this.selectedItemType;
+        delete this.selectedHookName;
+        delete this.selectedRunResultID;
+        delete this.selectedJobGate;
         delete this.selectedJobRunInfos;
         delete this.selectedJobRun;
+    }
+
+    closePanel(): void {
+        this.clearPanel();
+
+        this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {
             this.graph.resize();
         }
-        this._cd.detectChanges(); // force rendering to compute graph container size
-    }
-
-    selectHook(hook): void {
-        this.unselectJob();
-        this.unselectJobGate();
-
-        this.selectedHook = hook;
-        this._cd.markForCheck();
-    }
-
-    unselectHook(): void {
-        delete this.selectedHook;
     }
 
 }

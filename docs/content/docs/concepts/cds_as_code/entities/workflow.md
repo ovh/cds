@@ -92,7 +92,7 @@ on: [push,pull-request,model-update,workflow-update]
 on:
   push:
     branches: [main,develop]
-    paths: [src/**/*.java]
+    paths: [^src/.*/.*.java$]
   model-update:
     models: [MYPROJ/github/ovh/resources/mymodel]
     target_branch: main
@@ -100,12 +100,12 @@ on:
     comment: "a comment here"
     types: ["opened","reopened","closed","edited"]
     branches: [main,develop]
-    paths: [src/**/*.java]
+    paths: [^src/.*/.*.java$]
   pull-request-comment:
     comment: "a comment here"
     types: ["created","deleted","edited"]
     branches: [main,develop]
-    paths: [src/**/*.java]
+    paths: [^src/.*/.*.java$]
   workflow-update:
     target_branch: main
 ```

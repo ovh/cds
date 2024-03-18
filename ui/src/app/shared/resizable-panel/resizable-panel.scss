@@ -10,6 +10,7 @@
         .grabber {
             height: 100%;
             width: 9px;
+            border-right: 1px solid;
             cursor: col-resize;
             flex-direction: row;
 
@@ -32,6 +33,7 @@
         .grabber {
             width: 100%;
             height: 9px;
+            border-bottom: 1px solid;
             cursor: row-resize;
             flex-direction: column;
 
@@ -52,9 +54,11 @@
         align-items: center;
         z-index: 2;
         color: $darkTheme_grey_6;
+        border-color: #f0f0f0 !important;
 
         :host-context(.night) & {
             background-color: $darkBackground;
+            border-color: $darkTheme_grey_1 !important;
         }
     }
 

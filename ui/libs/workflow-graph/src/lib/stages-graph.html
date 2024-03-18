@@ -4,7 +4,7 @@
     <ng-container *ngFor="let h of hooks">
         <div class="hook" *ngIf="h === selectedHook" [class.active]="true" (click)="clickHook(h)">
             <span nz-icon nzType="api" nzTheme="outline"></span>
-            Hook triggered on&nbsp;<b>{{h}}</b>
+            Triggered by hook on&nbsp;<b>{{h}}</b>
         </div>
     </ng-container>
 </div>
@@ -17,11 +17,11 @@
 </div>
 
 <div class="controls">
-    <button nz-button (click)="changeDirection()" nzSize="large">
+    <button nz-button (click)="changeDirection()" nzSize="medium">
         <span *ngIf="direction === 'horizontal'" nz-icon nzType="rotate-right" nzTheme="outline"></span>
         <span *ngIf="direction === 'vertical'" nz-icon nzType="rotate-left" nzTheme="outline"></span>
     </button>
-    <button nz-button (click)="clickOrigin()" nzSize="large">
+    <button nz-button (click)="clickOrigin()" nzSize="medium">
         <span nz-icon nzType="aim" nzTheme="outline"></span>
     </button>
 </div>

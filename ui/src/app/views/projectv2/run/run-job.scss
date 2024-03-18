@@ -10,8 +10,13 @@
 
 app-tabs {
     ::ng-deep {
-        .menu {
-            background-color: inherit !important;
+        .ant-menu {
+            background-color: $greyBackground !important;
+
+            :host-context(.night) & {
+                background-color: $darkBackground !important;
+                color: $darkTheme_grey_6;
+            }
         }
     }
 }
@@ -20,9 +25,9 @@ app-tabs {
     position: absolute;
     top: 0;
     right: 0;
-    height: 40px;
-    width: 40px;
-    padding: 10px;
+    height: 36px;
+    width: 36px;
+    padding: 8px;
     cursor: pointer;
 
     &:hover {

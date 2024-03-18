@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, TemplateRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
@@ -20,6 +20,7 @@ export class Tab {
 @Component({
     selector: 'app-tabs',
     templateUrl: './tabs.html',
+    styleUrls: ['./tabs.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
@@ -32,7 +33,11 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     selected: Tab;
     queryParamsSub: Subscription;
 
-    constructor(private _route: ActivatedRoute, private _router: Router) { }
+    constructor(
+        private _route: ActivatedRoute,
+        private _router: Router,
+        private _cd: ChangeDetectorRef
+    ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
@@ -46,14 +51,18 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges() {
+        delete this.selected;
+
         if (!this.selected) {
             let default_tab = this.tabs.find(t => t.default);
             if (default_tab) {
-                this.selected = default_tab;
+                this.select(default_tab);
             } else {
-                this.selected = this.tabs[0];
+                this.select(this.tabs[0]);
             }
         }
+
+        this._cd.markForCheck();
     }
 
     clickSelect(tab: Tab) {
@@ -76,7 +85,6 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
             } else {
                 this.select(this.tabs.find(t => t.key === tab.key));
             }
-
         }
     }
 

@@ -1,0 +1,10 @@
+<app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
+<div class="close" (click)="clickClose()">
+	<span nz-icon nzType="close" nzTheme="outline"></span>
+</div>
+<ng-container *ngIf="selectedTab && selectedTab.key === 'tests'">
+	<app-run-result-tests *ngIf="result && result.type === 'tests'" [detail]="result.detail"></app-run-result-tests>
+</ng-container>
+<ng-container *ngIf="selectedTab && selectedTab.key === 'raw'">
+	<nz-code-editor #editor [ngModel]="resultRaw" [nzEditorOption]="editorOption"></nz-code-editor>
+</ng-container>

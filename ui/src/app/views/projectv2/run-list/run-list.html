@@ -79,8 +79,7 @@
 					{{run.contexts.git.server}}/{{run.contexts.git.repository}}
 				</ng-template>
 				<ul nz-list-item-actions>
-					<nz-list-item-action><a
-							[routerLink]="['/projectv2', run.project_key, 'run', run.id]">open</a></nz-list-item-action>
+					<nz-list-item-action><app-date-from-now [value]="run.started"></app-date-from-now></nz-list-item-action>
 				</ul>
 			</ng-container>
 		</nz-list-item>

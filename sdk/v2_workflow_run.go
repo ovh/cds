@@ -683,8 +683,8 @@ func (x *V2WorkflowRunResultArtifactManagerMetadata) Scan(src interface{}) error
 }
 
 type V2WorkflowRunResultDetail struct {
-	Data interface{}
-	Type string
+	Data interface{} `json:"data"`
+	Type string      `json:"type"`
 }
 
 func (s *V2WorkflowRunResultDetail) castData() error {
@@ -802,8 +802,8 @@ func (s *V2WorkflowRunResultDetail) MarshalJSON() ([]byte, error) {
 	}
 
 	var content = struct {
-		Data interface{}
-		Type string
+		Data interface{} `json:"data"`
+		Type string      `json:"type"`
 	}{
 		Data: s.Data,
 		Type: s.Type,
@@ -887,10 +887,10 @@ type V2WorkflowRunResultArsenalDeploymentDetail struct {
 }
 
 type ArsenalDeploymentDetailAlternative struct {
-	Name    string                 `json:"name"`
-	From    string                 `json:"from,omitempty"`
-	Config  map[string]interface{} `json:"config"`
-	Options map[string]interface{} `json:"options,omitempty"`
+	Name    string                 `json:"name" mapstructure:"name"`
+	From    string                 `json:"from,omitempty" mapstructure:"from"`
+	Config  map[string]interface{} `json:"config" mapstructure:"config"`
+	Options map[string]interface{} `json:"options,omitempty" mapstructure:"options"`
 }
 
 type V2WorkflowRunResultDockerDetail struct {
