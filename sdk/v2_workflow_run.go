@@ -975,3 +975,16 @@ type V2QueueJobInfo struct {
 	RunJob V2WorkflowRunJob `json:"runjob"`
 	Model  V2WorkerModel    `json:"model"`
 }
+
+type HookManulWorkflowRun struct {
+	UserRequest V2WorkflowRunManualRequest
+	Project     string
+	VCSType     string
+	VCSServer   string
+	Repository  string
+	Ref         string
+	Commit      string
+	Workflow    string
+	UserID      string
+	Username    string
+}

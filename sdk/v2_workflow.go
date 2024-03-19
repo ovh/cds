@@ -432,3 +432,13 @@ func WorkflowJobParents(w V2Workflow, jobID string) []string {
 	}
 	return parents
 }
+
+type V2WorkflowRunManualRequest struct {
+	Git *V2WorkflowRunManualRequestGit `json:"git"`
+}
+
+type V2WorkflowRunManualRequestGit struct {
+	Branch string `json:"branch,omitempty"`
+	Tag    string `json:"tag,omitempty"`
+	Sha    string `json:"sha,omitempty"`
+}

@@ -18,6 +18,7 @@ const (
 	WorkflowHookEventWorkflowUpdate = "workflow-update"
 	WorkflowHookEventModelUpdate    = "model-update"
 	WorkflowHookEventPush           = "push"
+	WorkflowHookManual              = "manual"
 
 	WorkflowHookEventPullRequest             = "pull-request"
 	WorkflowHookEventPullRequestTypeOpened   = "opened"
@@ -112,15 +113,19 @@ type HookRepositoryEventWorkflow struct {
 	Type                 string `json:"type"`
 	Status               string `json:"status"`
 	TargetBranch         string `json:"target_branch,omitempty"`
+	TargetCommit         string `json:"target_commit,omitempty`
 	ModelFullName        string `json:"model,omitempty"`
+	RunID                string `json:"run_id,omitempty"`
 }
 
 type HookRepositoryEventExtractData struct {
-	CDSEventName string   `json:"cds_event_name"`
-	CDSEventType string   `json:"cds_event_type"`
-	Commit       string   `json:"commit"`
-	Paths        []string `json:"paths"`
-	Ref          string   `json:"ref"`
+	CDSEventName   string   `json:"cds_event_name"`
+	CDSEventType   string   `json:"cds_event_type"`
+	Commit         string   `json:"commit"`
+	Paths          []string `json:"paths"`
+	Ref            string   `json:"ref"`
+	ProjectManual  string   `json:"manual_project"`
+	WorkflowManual string   `json:"manual_workflow"`
 }
 
 type GenerateRepositoryWebhook struct {

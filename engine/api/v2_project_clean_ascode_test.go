@@ -107,7 +107,7 @@ spec:
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/the-name/repos/myrepo/tags", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(1)
 
-	err = workerCleanProject(context.TODO(), db.DbMap, api.Cache, p.Key)
+	err = workerCleanProject(context.TODO(), db.DbMap, api.Cache, p.Key, time.Minute)
 	require.NoError(t, err)
 
 	_, err = entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/temp", sdk.EntityTypeWorkerModel, "model1", "123456")

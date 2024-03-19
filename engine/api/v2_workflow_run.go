@@ -1004,6 +1004,11 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WrapError(sdk.ErrForbidden, "no user consumer")
+			}
+
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
@@ -1016,7 +1021,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			}
 			workflowName := vars["workflow"]
 
-			var runRequest map[string]interface{}
+			var runRequest sdk.V2WorkflowRunManualRequest
 			if err := service.UnmarshalBody(req, &runRequest); err != nil {
 				return err
 			}
@@ -1041,28 +1046,30 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			workflowEntity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
+			hookRequest := sdk.HookManulWorkflowRun{
+				UserRequest: runRequest,
+				Project:     proj.Key,
+				VCSType:     vcsProject.Type,
+				VCSServer:   vcsProject.Name,
+				Repository:  repo.Name,
+				Ref:         ref,
+				Commit:      commit,
+				Workflow:    workflowName,
+				UserID:      u.AuthConsumerUser.AuthentifiedUserID,
+				Username:    u.AuthConsumerUser.AuthentifiedUser.Username,
+			}
+
+			// Send start request to hooks
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
 			if err != nil {
 				return err
 			}
-
-			var wk sdk.V2Workflow
-			if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
-				return err
+			var hookResponse sdk.HookRepositoryEvent
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/manual", hookRequest, &hookResponse)
+			if errHooks != nil || code >= 400 {
+				return fmt.Errorf("unable to start workflow: %v", errHooks)
 			}
-
-			runEvent := sdk.V2WorkflowRunEvent{ // TODO handler semver ?
-				Manual: &sdk.ManualTrigger{
-					Payload: runRequest,
-				},
-			}
-
-			u := getUserConsumer(ctx)
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u.AuthConsumerUser.AuthentifiedUser)
-			if err != nil {
-				return err
-			}
-			return service.WriteJSON(w, wr, http.StatusCreated)
+			return service.WriteJSON(w, hookResponse, http.StatusCreated)
 		}
 }
 

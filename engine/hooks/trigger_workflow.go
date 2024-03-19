@@ -43,6 +43,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			return err
 		}
 	}
+
 	var event map[string]interface{}
 	if err := json.Unmarshal(hre.Body, &event); err != nil {
 		return err
@@ -51,9 +52,15 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	if hre.UserID != "" {
 		allEnded := true
 		workflowErrors := make([]string, 0)
+
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
 			if wh.Status == sdk.HookEventWorkflowStatusScheduler {
+
+				// Query params to select the right workflow version to run
+				mods := make([]cdsclient.RequestModifier, 2)
+				mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", hre.ExtractData.Commit))
+
 				runRequest := sdk.V2WorkflowRunHookRequest{
 					HookEventID:   hre.UUID,
 					UserID:        hre.UserID,
@@ -66,31 +73,38 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					SemverNext:    hre.SemverNext,
 				}
 
+				// Override repository ref to clone in the workflow
 				switch wh.Type {
+				case sdk.WorkflowHookManual:
+					runRequest.Sha = wh.TargetBranch
+					runRequest.Sha = wh.TargetCommit
 				case sdk.WorkflowHookTypeWorkflow:
 					runRequest.EntityUpdated = wh.WorkflowName
 					runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
-					runRequest.Sha = "HEAD"
+					runRequest.Sha = wh.TargetCommit
 				case sdk.WorkflowHookTypeWorkerModel:
 					runRequest.EntityUpdated = wh.ModelFullName
 					runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
-					runRequest.Sha = "HEAD"
+					runRequest.Sha = wh.TargetCommit
 				}
 
-				if _, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
-					runRequest, cdsclient.WithQueryParameter("ref", wh.Ref)); err != nil {
+				wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
+					runRequest, mods...)
+				if err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 					errorMsg := fmt.Sprintf("unable to run workflow %s: %v", wh.WorkflowName, err)
 					workflowErrors = append(workflowErrors, errorMsg)
 					allEnded = false
 				} else {
 					wh.Status = sdk.HookEventWorkflowStatusDone
+					wh.RunID = wr.ID
 				}
 				if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 					return err
 				}
 			}
 		}
+
 		if !allEnded {
 			hre.NbErrors++
 			hre.LastError = strings.Join(workflowErrors, "\n")

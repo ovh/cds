@@ -47,6 +47,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/v2/repository/event/{vcsServer}/{repoName}", nil, r.GET(s.listRepositoryEventHandler))
 	r.Handle("/v2/repository/event/{vcsServer}/{repoName}/{uuid}", nil, r.GET(s.getRepositoryEventHandler))
 	r.Handle("/v2/repository/key/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
+	r.Handle("/v2/workflow/manual", nil, r.POST(s.workflowManualHandler))
 
 	r.Handle("/webhook/{uuid}", nil, r.POST(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.GET(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.DELETE(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)), r.PUT(s.webhookHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/task", nil, r.POST(s.postTaskHandler), r.GET(s.getTasksHandler))

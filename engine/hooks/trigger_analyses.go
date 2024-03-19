@@ -17,16 +17,22 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 	// If first time
 	if len(hre.Analyses) == 0 {
 		log.Info(ctx, "triggering analysis for event [%s] %s", hre.EventName, hre.GetFullName())
-		repos, err := s.Client.HookRepositoriesList(ctx, hre.VCSServerName, hre.RepositoryName)
-		if err != nil {
-			return err
-		}
-		log.Info(ctx, "found %d repositories to analyze", len(repos))
-		hre.Analyses = make([]sdk.HookRepositoryEventAnalysis, 0, len(repos))
-		for _, r := range repos {
-			hre.Analyses = append(hre.Analyses, sdk.HookRepositoryEventAnalysis{
-				ProjectKey: r.ProjectKey,
-			})
+		if hre.EventName == sdk.WorkflowHookManual {
+			hre.Analyses = []sdk.HookRepositoryEventAnalysis{{
+				ProjectKey: hre.ExtractData.ProjectManual,
+			}}
+		} else {
+			repos, err := s.Client.HookRepositoriesList(ctx, hre.VCSServerName, hre.RepositoryName)
+			if err != nil {
+				return err
+			}
+			log.Info(ctx, "found %d repositories to analyze", len(repos))
+			hre.Analyses = make([]sdk.HookRepositoryEventAnalysis, 0, len(repos))
+			for _, r := range repos {
+				hre.Analyses = append(hre.Analyses, sdk.HookRepositoryEventAnalysis{
+					ProjectKey: r.ProjectKey,
+				})
+			}
 		}
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
@@ -75,6 +81,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err
 	}
+
 	return s.triggerWorkflowHooks(ctx, hre)
 }
 
