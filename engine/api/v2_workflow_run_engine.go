@@ -119,7 +119,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}()
 
 	// Load run by id
-	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), wrEnqueue.RunID, workflow_v2.WithRunResults)
+	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), wrEnqueue.RunID)
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil
@@ -312,7 +312,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	}
 
 	// Synchronize workflow runs
-	runResults, err := workflow_v2.LoadRunResults(ctx, db, runID, run.RunAttempt)
+	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, runID, run.RunAttempt)
 	if err != nil {
 		return err
 	}
@@ -666,12 +666,17 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	jobToQueue := make(map[string]sdk.V2Job)
 
-	// Load run_jobs
 	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, run.ID, run.RunAttempt)
 	if err != nil {
 		return nil, nil, nil, sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
 	}
-	runJobsContexts := computeExistingRunJobContexts(*run, runJobs)
+
+	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, run.ID, run.RunAttempt)
+	if err != nil {
+		return nil, nil, nil, sdk.WrapError(err, "unable to load workflow run results for run %s", wrEnqueue.RunID)
+	}
+
+	runJobsContexts := computeExistingRunJobContexts(runJobs, runResults)
 
 	// temp map of run jobs
 	allrunJobsMap := make(map[string]sdk.V2WorkflowRunJob)

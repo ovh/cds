@@ -19,7 +19,6 @@ export class V2WorkflowRun {
     contexts: any;
     event: WorkflowEvent;
     job_events: V2WorkflowRunJobEvent[];
-    results: Array<WorkflowRunResult>;
     vcs_server: string;
 }
 

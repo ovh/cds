@@ -33,7 +33,6 @@ name: MyDistantWorkflow
 	require.NoError(t, err)
 
 	require.Equal(t, src, string(bts))
-
 }
 
 func TestUnmarshalV2WorkflowHooksShort(t *testing.T) {

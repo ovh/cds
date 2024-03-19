@@ -2,7 +2,6 @@ package workflow_v2
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -14,106 +13,6 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
-
-func WithRunResults(ctx context.Context, _ *gorpmapper.Mapper, db gorp.SqlExecutor, i interface{}) error {
-	switch target := i.(type) {
-	case *[]dbWorkflowRun:
-		var ids []string
-		for _, r := range *target {
-			ids = append(ids, r.ID)
-		}
-		allResults, err := loadRunResultsByRunIDs(ctx, db, ids...)
-		if err != nil {
-			return err
-		}
-		for i := range *target {
-			r := &(*target)[i]
-			if results, has := allResults[r.ID]; has {
-				var runResults []sdk.V2WorkflowRunResult
-				for _, runResult := range results {
-					if r.RunAttempt != runResult.RunAttempt {
-						continue
-					}
-					runResults = append(runResults, runResult.V2WorkflowRunResult)
-				}
-				r.Results = runResults
-			}
-		}
-	case []sdk.V2WorkflowRun:
-		var ids []string
-		for _, r := range target {
-			ids = append(ids, r.ID)
-		}
-		allResults, err := loadRunResultsByRunIDs(ctx, db, ids...)
-		if err != nil {
-			return err
-		}
-		for i := range target {
-			r := &target[i]
-			if results, has := allResults[r.ID]; has {
-				var runResults []sdk.V2WorkflowRunResult
-				for _, runResult := range results {
-					if r.RunAttempt != runResult.RunAttempt {
-						continue
-					}
-					runResults = append(runResults, runResult.V2WorkflowRunResult)
-				}
-				r.Results = runResults
-			}
-		}
-	case *sdk.V2WorkflowRun:
-		allResults, err := loadRunResultsByRunIDs(ctx, db, target.ID)
-		if err != nil {
-			return err
-		}
-		if results, has := allResults[target.ID]; has {
-			var runResults []sdk.V2WorkflowRunResult
-			for _, r := range results {
-				if target.RunAttempt != r.RunAttempt {
-					continue
-				}
-				runResults = append(runResults, r.V2WorkflowRunResult)
-			}
-			target.Results = runResults
-		}
-	case *dbWorkflowRun:
-		allResults, err := loadRunResultsByRunIDs(ctx, db, target.ID)
-		if err != nil {
-			return err
-		}
-		if results, has := allResults[target.ID]; has {
-			var runResult []sdk.V2WorkflowRunResult
-			for _, r := range results {
-				if target.RunAttempt != r.RunAttempt {
-					continue
-				}
-				runResult = append(runResult, r.V2WorkflowRunResult)
-			}
-			target.Results = runResult
-		}
-	default:
-		panic(fmt.Sprintf("WithRunResults: unsupported target %T", i))
-	}
-
-	return nil
-}
-
-func loadRunResultsByRunIDs(ctx context.Context, db gorp.SqlExecutor, runIDs ...string) (map[string][]dbV2WorkflowRunResult, error) {
-	query := gorpmapping.NewQuery(`
-  select * from v2_workflow_run_result where workflow_run_id = ANY($1::uuid[]) order by workflow_run_id, issued_at ASC
-  `).Args(pq.StringArray(runIDs))
-	var result []dbV2WorkflowRunResult
-	if err := gorpmapping.GetAll(ctx, db, query, &result); err != nil {
-		return nil, sdk.WrapError(err, "unable to load run results for %v", runIDs)
-	}
-	var mapRes = make(map[string][]dbV2WorkflowRunResult)
-	for _, r := range result {
-		res := mapRes[r.WorkflowRunID]
-		res = append(res, r)
-		mapRes[r.WorkflowRunID] = res
-	}
-	return mapRes, nil
-}
 
 func getRuns(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	var dbWkfRuns []dbWorkflowRun
@@ -162,7 +61,6 @@ func WorkflowRunNextNumber(db gorp.SqlExecutor, repoID, workflowName string) (in
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}
 	return i, nil
-
 }
 
 func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun) error {

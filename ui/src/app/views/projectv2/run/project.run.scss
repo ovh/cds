@@ -12,7 +12,8 @@ nz-page-header-title {
     flex-direction: row;
     align-items: center;
 
-    button {
+    button,
+    nz-select {
         margin-left: 5px;
     }
 }

@@ -85,7 +85,11 @@ func UpdateJobRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk
 func LoadRunJobsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempt int64) ([]sdk.V2WorkflowRunJob, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRunJobsByRunID")
 	defer next()
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run_job WHERE workflow_run_id = $1 AND run_attempt = $2").Args(runID, runAttempt)
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM v2_workflow_run_job
+		WHERE workflow_run_id = $1 AND run_attempt = $2
+	`).Args(runID, runAttempt)
 	return getAllRunJobs(ctx, db, query)
 }
 
