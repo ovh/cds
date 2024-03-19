@@ -44,7 +44,7 @@ func (api *API) getEntityRefFromQueryParams(ctx context.Context, req *http.Reque
 			return "", "", err
 		}
 		ref = defaultBranch.ID
-		commit = defaultBranch.LatestCommit
+		commit = "HEAD"
 	} else if tag != "" {
 		ref = sdk.GitRefTagPrefix + tag
 	} else {
