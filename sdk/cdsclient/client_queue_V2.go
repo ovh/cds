@@ -96,16 +96,16 @@ func (c *client) V2HatcheryReleaseJob(ctx context.Context, regionName string, jo
 }
 
 // V2QueueGetJobRun returns information about a job
-func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2WorkflowRunJob, error) {
+func (c *client) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s", regionName, id)
-	var job sdk.V2WorkflowRunJob
+	var job sdk.V2QueueJobInfo
 	if _, err := c.GetJSON(ctx, path, &job); err != nil {
 		return nil, err
 	}
 	return &job, nil
 }
 
-func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2WorkflowRunJob, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
+func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutines *sdk.GoRoutines, hatcheryMetrics *sdk.HatcheryMetrics, pendingWorkerCreation *sdk.HatcheryPendingWorkerCreation, jobs chan<- sdk.V2QueueJobInfo, errs chan<- error, delay time.Duration, ms ...RequestModifier) error {
 	jobsTicker := time.NewTicker(delay)
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -139,7 +139,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				continue
 			}
 			// push the job in the channel
-			if j.Status == sdk.StatusWaiting {
+			if j.RunJob.Status == sdk.StatusWaiting {
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(wsEvent.JobRunID) {
 					log.Debug(ctx, "skipping job %s", wsEvent.JobRunID)
 					continue
@@ -184,7 +184,12 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 			for i := 0; i < max; i++ {
 				pendingWorkerCreation.SetJobInPendingWorkerCreation(queueFiltered[i].ID)
 				telemetry.Record(ctx, hatcheryMetrics.ChanV2JobAdd, 1)
-				jobs <- queueFiltered[i]
+
+				jobInfo, err := c.V2QueueGetJobRun(ctx, regionName, queueFiltered[i].ID)
+				if err != nil {
+					return err
+				}
+				jobs <- *jobInfo
 			}
 		}
 	}

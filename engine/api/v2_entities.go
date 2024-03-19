@@ -16,35 +16,41 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getEntityRefFromQueryParams(ctx context.Context, req *http.Request, projKey string, vcsName string, repoName string) (string, error) {
+func (api *API) getEntityRefFromQueryParams(ctx context.Context, req *http.Request, projKey string, vcsName string, repoName string) (string, string, error) {
 	branch := QueryString(req, "branch")
 	tag := QueryString(req, "tag")
 	ref := QueryString(req, "ref")
+	commit := QueryString(req, "commit")
+
+	if commit == "" {
+		commit = "HEAD"
+	}
 
 	if ref != "" && (strings.HasPrefix(ref, sdk.GitRefBranchPrefix) || strings.HasPrefix(ref, sdk.GitRefTagPrefix)) {
-		return ref, nil
+		return ref, commit, nil
 	}
 
 	if branch != "" && tag != "" {
-		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "Query params branch and tag cannot be used together")
+		return "", commit, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Query params branch and tag cannot be used together")
 	}
 
 	if branch == "" {
 		vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projKey, vcsName)
 		if err != nil {
-			return "", err
+			return "", commit, err
 		}
 		defaultBranch, err := vcsClient.Branch(ctx, repoName, sdk.VCSBranchFilters{Default: true})
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		ref = defaultBranch.ID
+		commit = defaultBranch.LatestCommit
 	} else if tag != "" {
 		ref = sdk.GitRefTagPrefix + tag
 	} else {
 		ref = sdk.GitRefBranchPrefix + branch
 	}
-	return ref, nil
+	return ref, commit, nil
 
 }
 
@@ -156,12 +162,12 @@ func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Hand
 				return err
 			}
 
-			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
 			if err != nil {
 				return err
 			}
 
-			entities, err := entity.LoadByRepositoryAndRef(ctx, api.mustDB(), repo.ID, ref)
+			entities, err := entity.LoadByRepositoryAndRefAndCommit(ctx, api.mustDB(), repo.ID, ref, commit)
 			if err != nil {
 				return err
 			}
@@ -204,12 +210,12 @@ func (api *API) getProjectEntityHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
 			if err != nil {
 				return err
 			}
 
-			entity, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, entityType, entityName)
+			entity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, entityType, entityName, commit)
 			if err != nil {
 				return err
 			}

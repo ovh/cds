@@ -41,7 +41,7 @@ func (c *giteaClient) Tag(ctx context.Context, fullname string, tagName string) 
 		return sdk.VCSTag{}, err
 	}
 	return sdk.VCSTag{
-		Tag: tag.Name,
-		Sha: tag.Commit.SHA,
-	}, sdk.WrapError(sdk.ErrNotFound, "tag not found")
+		Tag:  tag.Name,
+		Hash: tag.Commit.SHA,
+	}, nil
 }

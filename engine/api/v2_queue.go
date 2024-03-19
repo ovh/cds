@@ -513,7 +513,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 		}
 }
 
-func (api *API) getJobRunHandler() ([]service.RbacChecker, service.Handler) {
+func (api *API) getJobRunQueueInfoHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.jobRunRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
@@ -526,6 +526,11 @@ func (api *API) getJobRunHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			if jobRun.Region != regionName {
 				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
+			if err != nil {
+				return err
 			}
 
 			hatch := getHatcheryConsumer(ctx)
@@ -545,7 +550,12 @@ func (api *API) getJobRunHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(sdk.ErrNotImplemented)
 			}
 
-			return service.WriteJSON(w, jobRun, http.StatusOK)
+			infoJob := sdk.V2QueueJobInfo{
+				RunJob: *jobRun,
+				Model:  run.WorkflowData.WorkerModels[jobRun.Job.RunsOn],
+			}
+
+			return service.WriteJSON(w, infoJob, http.StatusOK)
 		}
 }
 

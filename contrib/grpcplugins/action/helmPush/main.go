@@ -271,24 +271,8 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 
 	maturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
 	localRepository := repository + "-" + maturity
-
-	result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
-	result.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
-	result.ArtifactManagerMetadata.Set("type", "helm")
-	result.ArtifactManagerMetadata.Set("maturity", maturity)
-	result.ArtifactManagerMetadata.Set("name", chart.Metadata.Name)
-	result.ArtifactManagerMetadata.Set("path", fi.Path)
-	result.ArtifactManagerMetadata.Set("md5", fi.Checksums.Md5)
-	result.ArtifactManagerMetadata.Set("sha1", fi.Checksums.Sha1)
-	result.ArtifactManagerMetadata.Set("sha256", fi.Checksums.Sha256)
-	result.ArtifactManagerMetadata.Set("uri", fi.URI)
-	result.ArtifactManagerMetadata.Set("mimeType", fi.MimeType)
-	result.ArtifactManagerMetadata.Set("downloadURI", fi.DownloadURI)
-	result.ArtifactManagerMetadata.Set("createdBy", fi.CreatedBy)
-	result.ArtifactManagerMetadata.Set("localRepository", localRepository)
-
+	grpcplugins.ExtractFileInfoIntoRunResult(result, *fi, chart.Metadata.Name, "helm", localRepository, repository, maturity)
 	grpcplugins.Success("Done.")
-
 	return nil
 }
 

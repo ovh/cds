@@ -1,0 +1,47 @@
+name: pythonPush
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  This pushes python package
+inputs:
+  package:
+    type: string
+    description: The name of the package
+    required: true
+  version:
+    type: string
+    description: |- 
+      The version of the package
+    required: true  
+  directory:
+    type: string
+    description: Directory of the package    
+    default: "."
+    required: true
+  wheel:
+    type: boolean
+    description: Package into a wheel or not
+    default: false
+    require: true
+  url:
+    type: string
+    description: |-
+      Python repository url to push on.
+
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  username:
+    type: string
+    description: |-
+      Username used to push the package
+      
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false
+  password:
+    type: string
+    description: |-
+      Password used to push the package
+      
+      This parameter can be empty when an Artifactory integration is set up.
+    required: false    
+

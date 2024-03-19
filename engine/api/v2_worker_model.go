@@ -50,13 +50,13 @@ func (api *API) getWorkerModelV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			ref, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
 			if err != nil {
 				return err
 			}
 
 			var workerModel sdk.V2WorkerModel
-			ent, err := entity.LoadByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkerModel, workerModelName)
+			ent, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkerModel, workerModelName, commit)
 			if err != nil {
 				return err
 			}
@@ -89,6 +89,11 @@ func (api *API) getWorkerModelsV2Handler() ([]service.RbacChecker, service.Handl
 
 			branch := QueryString(req, "branch")
 			tag := QueryString(req, "tag")
+			commit := QueryString(req, "commit")
+
+			if commit == "" {
+				commit = "HEAD"
+			}
 
 			if tag != "" && branch != "" {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Query param tag and branch cannot be used together")
@@ -106,16 +111,15 @@ func (api *API) getWorkerModelsV2Handler() ([]service.RbacChecker, service.Handl
 
 			var entities []sdk.Entity
 			if branch == "" && tag == "" {
-				entities, err = entity.LoadByRepositoryAndType(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel)
-			} else {
-				var ref string
-				if tag != "" {
-					ref = sdk.GitRefTagPrefix + tag
-				} else {
-					ref = sdk.GitRefBranchPrefix + branch
-				}
-				entities, err = entity.LoadByTypeAndRef(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel, ref)
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "you must provide a branch or a tag")
 			}
+			var ref string
+			if tag != "" {
+				ref = sdk.GitRefTagPrefix + tag
+			} else {
+				ref = sdk.GitRefBranchPrefix + branch
+			}
+			entities, err = entity.LoadByTypeAndRefCommit(ctx, api.mustDB(), repo.ID, sdk.EntityTypeWorkerModel, ref, commit)
 			if err != nil {
 				return err
 			}

@@ -489,8 +489,16 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
-
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := sdk.VCSBranch{
+					ID: "refs/heads/master",
+				}
+				*(out.(*sdk.VCSBranch)) = contents
+				return nil, 200, nil
+			},
+		)
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -751,7 +759,16 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := sdk.VCSBranch{
+					ID: "refs/heads/master",
+				}
+				*(out.(*sdk.VCSBranch)) = contents
+				return nil, 200, nil
+			},
+		)
 
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
@@ -759,14 +776,14 @@ GDFkaTe3nUJdYV4=
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, analysisUpdated.Status)
 
-	es, err := entity.LoadByRepositoryAndType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel)
+	es, err := entity.LoadByTypeAndRefCommit(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel, "refs/heads/master", "abcdef")
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(es))
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
-	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian")
+	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian", "abcdef")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 }
@@ -1122,22 +1139,30 @@ spec:
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
-
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := sdk.VCSBranch{
+					ID: "refs/heads/master",
+				}
+				*(out.(*sdk.VCSBranch)) = contents
+				return nil, 200, nil
+			},
+		)
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, analysisUpdated.Status)
 
-	es, err := entity.LoadByRepositoryAndType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel)
+	es, err := entity.LoadByTypeAndRefCommit(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel, "refs/heads/master", "abcdef")
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(es))
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
-	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian")
+	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian", "abcdef")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 }
@@ -1358,8 +1383,16 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
-
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				contents := sdk.VCSBranch{
+					ID: "refs/heads/master",
+				}
+				*(out.(*sdk.VCSBranch)) = contents
+				return nil, 200, nil
+			},
+		)
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -1367,14 +1400,14 @@ GDFkaTe3nUJdYV4=
 	t.Logf("%+v", analysisUpdated)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, analysisUpdated.Status)
 
-	es, err := entity.LoadByRepositoryAndType(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel)
+	es, err := entity.LoadByTypeAndRefCommit(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel, "refs/heads/master", "abcdef")
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(es))
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
-	e, err := entity.LoadByRefTypeName(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian")
+	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian", "abcdef")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)
 }

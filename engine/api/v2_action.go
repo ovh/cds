@@ -42,13 +42,13 @@ func (api *API) getActionV2Handler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 
-			ref, err := api.getEntityRefFromQueryParams(ctx, req, proj.Key, vcsProject.Name, repo.Name)
+			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, proj.Key, vcsProject.Name, repo.Name)
 			if err != nil {
 				return err
 			}
 
 			var act sdk.V2Action
-			if err := entity.LoadAndUnmarshalByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeAction, actionName, &act); err != nil {
+			if err := entity.LoadAndUnmarshalByRefTypeName(ctx, api.mustDB(), repo.ID, ref, commit, sdk.EntityTypeAction, actionName, &act); err != nil {
 				return err
 			}
 			return service.WriteJSON(w, act, http.StatusOK)

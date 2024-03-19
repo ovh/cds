@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { GroupPermission } from 'app/model/group.model';
@@ -16,7 +16,6 @@ import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
 import { AddFeatureResult, FeaturePayload } from 'app/store/feature.action';
-import { FeatureState } from 'app/store/feature.state';
 
 @Component({
     selector: 'app-project-show',
@@ -46,7 +45,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     constructor(
         private _route: ActivatedRoute,
-        private _router: Router,
         private _toast: ToastService,
         public _translate: TranslateService,
         private _helpersService: HelpersService,
@@ -68,7 +66,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                     });
                 }
                 if (!this.project || this.project.key !== proj?.key) {
-                    let data = {'project_key': proj.key}
+                    let data = { 'project_key': proj.key }
                     this._featureService.isEnabled(FeatureNames.AllAsCode, data).subscribe(f => {
                         this.ascodeEnabled = f.enabled;
                         this._store.dispatch(new AddFeatureResult(<FeaturePayload>{
@@ -120,26 +118,18 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     ngOnInit() {
         this.initTabs();
-        this._route.queryParams.subscribe((queryParams) => {
-            if (queryParams['tab']) {
-                let current_tab = this.tabs.find((tab) => tab.key === queryParams['tab']);
-                if (current_tab) {
-                    this.selectTab(current_tab);
+
+        this._route.params.subscribe(routeParams => {
+            const key = routeParams['key'];
+            if (key) {
+                if (this.project && this.project.key !== key) {
+                    this.project = undefined;
+                }
+                if (!this.project) {
+                    this.refreshDatas(key);
                 }
                 this._cd.markForCheck();
             }
-            this._route.params.subscribe(routeParams => {
-                const key = routeParams['key'];
-                if (key) {
-                    if (this.project && this.project.key !== key) {
-                        this.project = undefined;
-                    }
-                    if (!this.project) {
-                        this.refreshDatas(key);
-                    }
-                    this._cd.markForCheck();
-                }
-            });
         });
 
         if (this._route.snapshot && this._route.snapshot.queryParams) {
@@ -231,6 +221,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
 
     selectTab(tab: Tab): void {
         this.selectedTab = tab;
+        this._cd.markForCheck();
     }
 
     refreshDatas(key: string): void {
