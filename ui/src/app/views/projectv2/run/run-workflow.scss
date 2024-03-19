@@ -1,0 +1,54 @@
+@import '../../../../common';
+
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+app-tabs {
+  ::ng-deep {
+    .ant-menu {
+      background-color: $greyBackground !important;
+      
+      :host-context(.night) & {
+        background-color: $darkBackground !important;
+        color: $darkTheme_grey_6;
+      }
+    }
+  }
+}
+
+.close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 38px;
+  width: 38px;
+  padding: 9px;
+  cursor: pointer;
+
+  &:hover {
+    color: white;
+  }
+
+  .icon {
+    margin: unset;
+  }
+}
+
+nz-code-editor {
+  height: 100%;
+  border-left: 1px solid #f0f0f0;
+
+  :host-context(.night) & {
+    background-color: #1e1e1e;
+    border-left: 1px solid #303030;
+  }
+}
+
+app-run-result-tests {
+  height: 100%;
+}

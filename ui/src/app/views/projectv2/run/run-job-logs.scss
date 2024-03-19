@@ -31,9 +31,10 @@
             color: #B4B4B4;
             cursor: pointer;
 
-            i {
+            [nz-icon] {
                 position: absolute;
                 left: 5px;
+                top: 5px;
             }
 
             .loader {

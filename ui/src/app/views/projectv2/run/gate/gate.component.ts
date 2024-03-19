@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { finalize, first } from "rxjs/operators";
 import { Gate, V2WorkflowRun, V2WorkflowRunJobEvent } from "app/model/v2.workflow.run.model";
@@ -16,6 +16,7 @@ export class RunGateComponent implements OnInit {
 
     @Input() run: V2WorkflowRun;
     @Input() gateNode: { gate, job };
+    @Output() onClose = new EventEmitter<void>();
 
     currentGate: Gate;
     jobEvent: V2WorkflowRunJobEvent;
@@ -70,4 +71,9 @@ export class RunGateComponent implements OnInit {
             });
         this._cd.markForCheck();
     }
+
+    clickClose(): void {
+        this.onClose.emit();
+    }
+
 }

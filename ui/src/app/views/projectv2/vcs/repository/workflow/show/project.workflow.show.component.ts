@@ -1,16 +1,16 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild} from "@angular/core";
-import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
-import {Project, ProjectRepository} from "app/model/project.model";
-import {Store} from "@ngxs/store";
-import {ActivatedRoute} from "@angular/router";
-import {ProjectService} from "app/service/project/project.service";
-import {SidebarEvent, SidebarService} from "app/service/sidebar/sidebar.service";
-import {ProjectState} from "app/store/project.state";
-import {forkJoin} from "rxjs";
-import {finalize} from "rxjs/operators";
-import {Entity, EntityJob, EntityWorkflow} from "app/model/entity.model";
-import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
-import {Schema} from "app/model/json-schema.model";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from "@angular/core";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { Project, ProjectRepository } from "app/model/project.model";
+import { Store } from "@ngxs/store";
+import { ActivatedRoute } from "@angular/router";
+import { ProjectService } from "app/service/project/project.service";
+import { SidebarEvent, SidebarService } from "app/service/sidebar/sidebar.service";
+import { ProjectState } from "app/store/project.state";
+import { forkJoin } from "rxjs";
+import { finalize } from "rxjs/operators";
+import { Entity, EntityJob, EntityWorkflow } from "app/model/entity.model";
+import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
+import { Schema } from "app/model/json-schema.model";
 import { VCSProject } from "app/model/vcs.model";
 
 @Component({
