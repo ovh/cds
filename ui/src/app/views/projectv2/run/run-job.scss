@@ -31,7 +31,11 @@ app-tabs {
     cursor: pointer;
 
     &:hover {
-        color: white;
+        color: $darkTheme_grey_5;
+        
+        :host-context(.night) & {
+            color: white;
+        }
     }
 
     .icon {

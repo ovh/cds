@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { V2WorkflowRun, WorkflowRunResult } from "app/model/v2.workflow.run.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
@@ -19,7 +19,7 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 
 	@Input() run: V2WorkflowRun;
 	@Input() resultID: string;
-	@Output() onClickClose = new EventEmitter<void>();
+	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
@@ -76,7 +76,7 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	clickClose(): void {
-		this.onClickClose.emit();
+		this.onClose.emit();
 	}
 
 }

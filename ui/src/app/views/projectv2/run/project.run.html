@@ -4,6 +4,9 @@
             <nz-page-header-title>
                 {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}
                 #{{workflowRun.run_number}}
+                <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
+                    (click)="openPanel('workflow')"><span nz-icon nzType="file-text"
+                        nzTheme="outline"></span></button>
             </nz-page-header-title>
             <nz-page-header-content>
                 <span nz-typography nzType="secondary">
@@ -95,6 +98,8 @@
             (onClose)="closePanel()"></app-run-hook>
         <app-run-result *ngIf="selectedItemType === 'result'" [run]="workflowRun" [resultID]="selectedRunResultID"
             (onClose)="closePanel()"></app-run-result>
+        <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"
+            (onClose)="closePanel()"></app-run-workflow>
     </app-resizable-panel>
 
 </ng-container>

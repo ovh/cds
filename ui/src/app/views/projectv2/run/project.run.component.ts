@@ -191,7 +191,6 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
 
     async selectJob(runJobID: string) {
-
         try {
             this.selectedJobRunInfos = await lastValueFrom(this._workflowService.getRunJobInfos(this.workflowRun, this.selectedJobRun.id));
         } catch (e) {
@@ -209,7 +208,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }
     }
 
-    async openPanel(type: string, data: any) {
+    async openPanel(type: string, data: any = null) {
         this.clearPanel();
 
         this.selectedItemType = type;

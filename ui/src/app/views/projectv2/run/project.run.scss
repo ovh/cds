@@ -8,6 +8,13 @@
 
 nz-page-header-title {
     font-size: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    button {
+        margin-left: 5px;
+    }
 }
 
 nz-page-header-content {
