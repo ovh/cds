@@ -106,6 +106,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		if callback.SigningKeyCallback != nil {
 			hre.SemverCurrent = callback.SigningKeyCallback.SemverCurrent
 			hre.SemverNext = callback.SigningKeyCallback.SemverNext
+			hre.SigningKeyOperationStatus = callback.SigningKeyCallback.Status
 			if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
 				// event on error commit unverified
 				hre.Status = sdk.HookEventStatusSkipped

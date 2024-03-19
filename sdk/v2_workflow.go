@@ -13,6 +13,7 @@ const (
 	WorkflowHookTypeRepository  = "RepositoryWebHook"
 	WorkflowHookTypeWorkerModel = "WorkerModelUpdate"
 	WorkflowHookTypeWorkflow    = "WorkflowUpdate"
+	WorkflowHookTypeManual      = "Manual"
 )
 
 type V2Workflow struct {
@@ -434,10 +435,6 @@ func WorkflowJobParents(w V2Workflow, jobID string) []string {
 }
 
 type V2WorkflowRunManualRequest struct {
-	Git *V2WorkflowRunManualRequestGit `json:"git"`
-}
-
-type V2WorkflowRunManualRequestGit struct {
 	Branch string `json:"branch,omitempty"`
 	Tag    string `json:"tag,omitempty"`
 	Sha    string `json:"sha,omitempty"`

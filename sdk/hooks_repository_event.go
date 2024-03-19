@@ -56,10 +56,11 @@ type HookEventCallback struct {
 }
 
 type HookSigninKeyCallback struct {
-	SignKey       string `json:"sign_key"`
-	SemverCurrent string `json:"semver_current"`
-	SemverNext    string `json:"semver_next"`
-	Error         string `json:"error"`
+	Status        OperationStatus `json:"status"`
+	SignKey       string          `json:"sign_key"`
+	SemverCurrent string          `json:"semver_current"`
+	SemverNext    string          `json:"semver_next"`
+	Error         string          `json:"error"`
 }
 
 type HookAnalysisCallback struct {
@@ -77,30 +78,31 @@ type HookRepository struct {
 }
 
 type HookRepositoryEvent struct {
-	UUID                string                         `json:"uuid"`
-	Created             int64                          `json:"created"`
-	EventName           string                         `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
-	EventType           string                         `json:"event_type"` // created, deleted, edited, opened
-	VCSServerType       string                         `json:"vcs_server_type"`
-	VCSServerName       string                         `json:"vcs_server_name"`
-	RepositoryName      string                         `json:"repository_name"`
-	Body                []byte                         `json:"body"`
-	ExtractData         HookRepositoryEventExtractData `json:"extracted_data"`
-	Status              string                         `json:"status"`
-	ProcessingTimestamp int64                          `json:"processing_timestamp"`
-	LastUpdate          int64                          `json:"last_update"`
-	LastError           string                         `json:"last_error"`
-	NbErrors            int64                          `json:"nb_errors"`
-	Analyses            []HookRepositoryEventAnalysis  `json:"analyses"`
-	ModelUpdated        []EntityFullName               `json:"model_updated"`
-	WorkflowUpdated     []EntityFullName               `json:"workflow_updated"`
-	WorkflowHooks       []HookRepositoryEventWorkflow  `json:"workflows"`
-	UserID              string                         `json:"user_id"`
-	Username            string                         `json:"username"`
-	SignKey             string                         `json:"sign_key"`
-	SigningKeyOperation string                         `json:"signing_key_operation"`
-	SemverCurrent       string                         `json:"semver_current"`
-	SemverNext          string                         `json:"semver_next"`
+	UUID                      string                         `json:"uuid"`
+	Created                   int64                          `json:"created"`
+	EventName                 string                         `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
+	EventType                 string                         `json:"event_type"` // created, deleted, edited, opened
+	VCSServerType             string                         `json:"vcs_server_type"`
+	VCSServerName             string                         `json:"vcs_server_name"`
+	RepositoryName            string                         `json:"repository_name"`
+	Body                      []byte                         `json:"body"`
+	ExtractData               HookRepositoryEventExtractData `json:"extracted_data"`
+	Status                    string                         `json:"status"`
+	ProcessingTimestamp       int64                          `json:"processing_timestamp"`
+	LastUpdate                int64                          `json:"last_update"`
+	LastError                 string                         `json:"last_error"`
+	NbErrors                  int64                          `json:"nb_errors"`
+	Analyses                  []HookRepositoryEventAnalysis  `json:"analyses"`
+	ModelUpdated              []EntityFullName               `json:"model_updated"`
+	WorkflowUpdated           []EntityFullName               `json:"workflow_updated"`
+	WorkflowHooks             []HookRepositoryEventWorkflow  `json:"workflows"`
+	UserID                    string                         `json:"user_id"`
+	Username                  string                         `json:"username"`
+	SignKey                   string                         `json:"sign_key"`
+	SigningKeyOperation       string                         `json:"signing_key_operation"`
+	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
+	SemverCurrent             string                         `json:"semver_current"`
+	SemverNext                string                         `json:"semver_next"`
 }
 
 type HookRepositoryEventWorkflow struct {
@@ -113,7 +115,7 @@ type HookRepositoryEventWorkflow struct {
 	Type                 string `json:"type"`
 	Status               string `json:"status"`
 	TargetBranch         string `json:"target_branch,omitempty"`
-	TargetCommit         string `json:"target_commit,omitempty`
+	TargetCommit         string `json:"target_commit,omitempty"`
 	ModelFullName        string `json:"model,omitempty"`
 	RunID                string `json:"run_id,omitempty"`
 }

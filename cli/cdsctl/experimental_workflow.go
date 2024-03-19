@@ -218,7 +218,7 @@ func workflowRunFunc(v cli.Values) error {
 		return fmt.Errorf("you cannot use branch and tag together")
 	}
 
-	var payload map[string]interface{}
+	var payload sdk.V2WorkflowRunManualRequest
 	if err := json.Unmarshal([]byte(data), &payload); err != nil {
 		return fmt.Errorf("unable to read json data")
 	}

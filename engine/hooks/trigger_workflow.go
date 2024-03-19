@@ -75,8 +75,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 				// Override repository ref to clone in the workflow
 				switch wh.Type {
-				case sdk.WorkflowHookManual:
-					runRequest.Sha = wh.TargetBranch
+				case sdk.WorkflowHookTypeManual:
+					runRequest.Ref = wh.TargetBranch
 					runRequest.Sha = wh.TargetCommit
 				case sdk.WorkflowHookTypeWorkflow:
 					runRequest.EntityUpdated = wh.WorkflowName

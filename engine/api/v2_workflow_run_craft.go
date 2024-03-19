@@ -619,8 +619,6 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p sdk.Project, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
 	var runContext sdk.WorkflowRunContext
 
-	var ref, refType, commit, semverNext, semverCurrent string
-
 	cdsContext := sdk.CDSContext{
 		ProjectKey:         wr.ProjectKey,
 		RunID:              wr.ID,
@@ -631,86 +629,53 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		WorkflowSha:        wr.WorkflowSha,
 		WorkflowVCSServer:  vcsServer.Name,
 		WorkflowRepository: repo.Name,
-		Event:              nil,
+		Event:              wr.RunEvent.Payload,
 		TriggeringActor:    u.Username,
-		EventName:          "",
+		EventName:          wr.RunEvent.EventName,
 	}
-	switch {
-	case wr.RunEvent.Manual != nil:
-		cdsContext.EventName = "manual"
-		cdsContext.Event = wr.RunEvent.Manual.Payload
-		if r, has := wr.RunEvent.Manual.Payload[sdk.GitBranchManualPayload]; has {
-			if refString, ok := r.(string); ok {
-				ref = sdk.GitRefBranchPrefix + refString
-				refType = sdk.GitRefTypeBranch
-			}
-		}
-		if c, has := wr.RunEvent.Manual.Payload[sdk.GitCommitManualPayload]; has {
-			if commitString, ok := c.(string); ok {
-				commit = commitString
-			}
-		}
-		if r, has := wr.RunEvent.Manual.Payload[sdk.GitTagManualPayload]; has {
-			if refString, ok := r.(string); ok {
-				ref = sdk.GitRefTagPrefix + refString
-				refType = sdk.GitRefTypeTag
-			}
-		}
-	case wr.RunEvent.GitTrigger != nil:
-		cdsContext.EventName = wr.RunEvent.GitTrigger.EventName
-		cdsContext.Event = wr.RunEvent.GitTrigger.Payload
-		ref = wr.RunEvent.GitTrigger.Ref
-		if strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
-			refType = sdk.GitRefTypeTag
+
+	ref := wr.RunEvent.Ref
+	var refType string
+	if strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
+		refType = sdk.GitRefTypeTag
+	} else {
+		refType = sdk.GitRefTypeBranch
+	}
+	commit := wr.RunEvent.Sha
+	var semverCurrent string
+	semverNext := wr.RunEvent.SemverNext
+	currentVersion, _ := semver.NewVersion(wr.RunEvent.SemverCurrent)
+
+	if currentVersion != nil {
+		if currentVersion.Metadata() == "" { // Tags doesn't have metadata
+			semverCurrent = wr.RunEvent.SemverCurrent
 		} else {
-			refType = sdk.GitRefTypeBranch
-		}
-		commit = wr.RunEvent.GitTrigger.Sha
-
-		semverNext = wr.RunEvent.GitTrigger.SemverNext
-
-		// Compute current semver version with CDS metadata
-		currentVersion, _ := semver.NewVersion(wr.RunEvent.GitTrigger.SemverCurrent)
-		if currentVersion != nil {
-			if currentVersion.Metadata() == "" { // Tags doesn't have metadata
-				semverCurrent = wr.RunEvent.GitTrigger.SemverCurrent
+			suffix := currentVersion.Metadata()
+			splittedSuffix := strings.Split(suffix, ".")
+			var metadataStr string
+			if len(splittedSuffix) >= 2 {
+				metadataStr += splittedSuffix[0] + ".sha." + sdk.StringFirstN(splittedSuffix[1], 8)
+			}
+			for i := 2; i < len(splittedSuffix); i++ {
+				metadataStr += "." + splittedSuffix[i]
+			}
+			preRelease := currentVersion.Prerelease()
+			var v = *currentVersion
+			if preRelease != "" {
+				v, _ = currentVersion.SetPrerelease(preRelease + "-" + strconv.FormatInt(wr.RunNumber, 10))
 			} else {
-				suffix := currentVersion.Metadata()
-				splittedSuffix := strings.Split(suffix, ".")
-				var metadataStr string
-				if len(splittedSuffix) >= 2 {
-					metadataStr += splittedSuffix[0] + ".sha." + sdk.StringFirstN(splittedSuffix[1], 8)
-				}
-				for i := 2; i < len(splittedSuffix); i++ {
-					metadataStr += "." + splittedSuffix[i]
-				}
-				preRelease := currentVersion.Prerelease()
-				var v = *currentVersion
-				if preRelease != "" {
-					v, _ = currentVersion.SetPrerelease(preRelease + "-" + strconv.FormatInt(wr.RunNumber, 10))
-				} else {
-					v, _ = currentVersion.SetPrerelease(strconv.FormatInt(wr.RunNumber, 10))
-				}
-				v, _ = v.SetMetadata(metadataStr)
-				semverCurrent = v.String()
+				v, _ = currentVersion.SetPrerelease(strconv.FormatInt(wr.RunNumber, 10))
 			}
-		} else {
-			// If no semver found, compute it from 0.1.0
-			semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha." + sdk.StringFirstN(commit, 8)
+			v, _ = v.SetMetadata(metadataStr)
+			semverCurrent = v.String()
 		}
-
-		// We replace the metadata "+" from semver because a lot of tools doesn't support it (docker, artifactory, ...)
-		semverNext = strings.ReplaceAll(semverNext, "+", "-")
-		semverCurrent = strings.ReplaceAll(semverCurrent, "+", "-")
-
-	case wr.RunEvent.ModelUpdateTrigger != nil:
-		ref = wr.RunEvent.ModelUpdateTrigger.Ref
-	case wr.RunEvent.WorkflowUpdateTrigger != nil:
-		ref = wr.RunEvent.WorkflowUpdateTrigger.Ref
-	default:
-		// TODO implement scheduler and webhooks
-		return nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "RunEvent not implemented: %+v", wr.RunEvent)
+	} else {
+		// If no semver found, compute it from 0.1.0
+		semverCurrent = "0.1.0+" + strconv.FormatInt(wr.RunNumber, 10) + ".sha." + sdk.StringFirstN(commit, 8)
 	}
+
+	semverNext = strings.ReplaceAll(semverNext, "+", "-")
+	semverCurrent = strings.ReplaceAll(semverCurrent, "+", "-")
 
 	// Reload VCS with decryption to have sshkey / git username
 	vcsName := vcsServer.Name

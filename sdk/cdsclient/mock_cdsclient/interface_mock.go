@@ -5424,7 +5424,7 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Restart(ctx, projectKey, r
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload map[string]interface{}, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
 	for _, a := range mods {
@@ -11498,7 +11498,7 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2Restart(ctx, projectKey, runIdent
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload map[string]interface{}, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
 	for _, a := range mods {

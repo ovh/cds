@@ -130,6 +130,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 					HookEventUUID:      hookRetrieveSignKey.HookEventUUID,
 					SigningKeyCallback: &sdk.HookSigninKeyCallback{},
 				}
+				callback.SigningKeyCallback.Status = ope.Status
 				if ope.Status == sdk.OperationStatusDone {
 					callback.SigningKeyCallback.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
 					callback.SigningKeyCallback.SemverNext = ope.Setup.Checkout.Result.Semver.Next

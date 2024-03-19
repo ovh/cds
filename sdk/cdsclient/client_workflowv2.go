@@ -18,7 +18,7 @@ func (c *client) WorkflowV2RunFromHook(ctx context.Context, projectKey, vcsIdent
 	return &run, nil
 }
 
-func (c *client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (c *client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
 	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run", projectKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName)
 	_, _, _, err := c.RequestJSON(ctx, "POST", path, payload, &run, mods...)

@@ -21,10 +21,10 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 			return err
 		}
 		var destRef string
-		if userRequest.Git.Branch != "" {
-			destRef = sdk.GitRefBranchPrefix + userRequest.Git.Branch
-		} else {
-			destRef = sdk.GitRefTagPrefix + userRequest.Git.Tag
+		if userRequest.Branch != "" {
+			destRef = sdk.GitRefBranchPrefix + userRequest.Branch
+		} else if userRequest.Tag != "" {
+			destRef = sdk.GitRefTagPrefix + userRequest.Tag
 		}
 		// Create Manual Hook
 		hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{
@@ -33,10 +33,11 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 				VCSIdentifier:        hre.VCSServerName,
 				RepositoryIdentifier: hre.RepositoryName,
 				WorkflowName:         hre.ExtractData.WorkflowManual,
-				Type:                 sdk.WorkflowHookManual,
+				Type:                 sdk.WorkflowHookTypeManual,
 				Status:               sdk.HookEventWorkflowStatusScheduler,
-				Ref:                  destRef,
-				TargetBranch:         userRequest.Git.Sha,
+				Ref:                  hre.ExtractData.Ref,
+				TargetBranch:         destRef,
+				TargetCommit:         userRequest.Sha,
 			},
 		}
 	} else {

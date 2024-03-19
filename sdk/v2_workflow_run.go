@@ -142,14 +142,15 @@ func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunEvent struct {
-	Manual                *ManualTrigger         `json:"manual,omitempty"`
-	GitTrigger            *GitTrigger            `json:"git,omitempty"`
-	WorkflowUpdateTrigger *WorkflowUpdateTrigger `json:"workflow-update,omitempty"`
-	ModelUpdateTrigger    *ModelUpdateTrigger    `json:"model-update,omitempty"`
-
-	// TODO
-	Scheduler      *SchedulerTrigger `json:"scheduler,omitempty"`
-	WebHookTrigger *WebHookTrigger   `json:"webhook,omitempty"`
+	HookType      string                 `json:"hook_type"`
+	EventName     string                 `json:"event_name"`
+	Ref           string                 `json:"ref"`
+	Sha           string                 `json:"sha"`
+	SemverCurrent string                 `json:"semver_current"`
+	SemverNext    string                 `json:"sember_next"`
+	Payload       map[string]interface{} `json:"payload,omitempty"`
+	EntityUpdated string                 `json:"entity_updated,omitempty"`
+	Cron          string                 `json:"cron,omitempty"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {
@@ -166,38 +167,6 @@ func (w *V2WorkflowRunEvent) Scan(src interface{}) error {
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal V2WorkflowRunTrigger")
-}
-
-type ManualTrigger struct {
-	Payload map[string]interface{} `json:"payload"`
-}
-
-type SchedulerTrigger struct {
-	Payload map[string]interface{} `json:"payload"`
-	Cron    string                 `json:"cron"`
-}
-
-type GitTrigger struct {
-	EventName     string                 `json:"event_name"`
-	Payload       map[string]interface{} `json:"payload"`
-	Ref           string                 `json:"ref"`
-	Sha           string                 `json:"sha"`
-	SemverCurrent string                 `json:"semver_current"`
-	SemverNext    string                 `json:"sember_next"`
-}
-
-type WorkflowUpdateTrigger struct {
-	WorkflowUpdated string `json:"workflow_updated"`
-	Ref             string `json:"ref"`
-}
-
-type ModelUpdateTrigger struct {
-	ModelUpdated string `json:"model_updated"`
-	Ref          string `json:"ref"`
-}
-
-type WebHookTrigger struct {
-	Payload map[string]interface{} `json:"payload"`
 }
 
 type V2WorkflowRunJob struct {

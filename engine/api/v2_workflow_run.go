@@ -672,31 +672,25 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
-			runEvent := sdk.V2WorkflowRunEvent{}
-			switch runRequest.HookType {
-			case sdk.WorkflowHookTypeWorkerModel:
-				runEvent.ModelUpdateTrigger = &sdk.ModelUpdateTrigger{
-					Ref:          runRequest.Ref,
-					ModelUpdated: runRequest.EntityUpdated,
+			// Check runrequest git information regarding workflow
+			if wk.Repository == nil || (wk.Repository.VCSServer == vcsProject.Name && wk.Repository.Name == repo.Name) {
+				// git info must match between workflow def and target repository
+				if (ref != runRequest.Ref && runRequest.Ref != "") || (commit != runRequest.Sha && runRequest.Sha != "") {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to use a different commit")
 				}
-			case sdk.WorkflowHookTypeWorkflow:
-				runEvent.WorkflowUpdateTrigger = &sdk.WorkflowUpdateTrigger{
-					Ref:             runRequest.Ref,
-					WorkflowUpdated: runRequest.EntityUpdated,
-				}
-			case sdk.WorkflowHookTypeRepository:
-				runEvent.GitTrigger = &sdk.GitTrigger{
-					Payload:       runRequest.Payload,
-					EventName:     runRequest.EventName,
-					Ref:           runRequest.Ref,
-					Sha:           runRequest.Sha,
-					SemverCurrent: runRequest.SemverCurrent,
-					SemverNext:    runRequest.SemverNext,
-				}
-			default:
-				return sdk.WrapError(sdk.ErrWrongRequest, "unknown event: %v", runRequest)
-
 			}
+
+			runEvent := sdk.V2WorkflowRunEvent{
+				HookType:      runRequest.HookType,
+				EventName:     runRequest.EventName,
+				Ref:           runRequest.Ref,
+				Sha:           runRequest.Sha,
+				SemverCurrent: runRequest.SemverCurrent,
+				SemverNext:    runRequest.SemverNext,
+				EntityUpdated: runRequest.EntityUpdated,
+				Payload:       runRequest.Payload,
+			}
+
 			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u)
 			if err != nil {
 				return err
@@ -1076,14 +1070,14 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runEvent sdk.V2WorkflowRunEvent, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 	var msg string
-	switch {
-	case runEvent.Manual != nil:
+	switch runEvent.HookType {
+	case sdk.WorkflowHookTypeManual:
 		msg = fmt.Sprintf("Workflow was manually triggered by user %s", u.Username)
-	case runEvent.GitTrigger != nil:
-		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.GitTrigger.EventName, u.Username)
-	case runEvent.WorkflowUpdateTrigger != nil:
+	case sdk.WorkflowHookTypeRepository:
+		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.EventName, u.Username)
+	case sdk.WorkflowHookTypeWorkflow:
 		msg = fmt.Sprintf("Workflow was triggered by the workflow-update hook by user %s", u.Username)
-	case runEvent.ModelUpdateTrigger != nil:
+	case sdk.WorkflowHookTypeWorkerModel:
 		msg = fmt.Sprintf("Workflow was triggered by the model-update hook by user %s", u.Username)
 	default:
 		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event not implemented")
