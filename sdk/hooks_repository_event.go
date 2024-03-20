@@ -118,6 +118,7 @@ type HookRepositoryEventWorkflow struct {
 	TargetCommit         string `json:"target_commit,omitempty"`
 	ModelFullName        string `json:"model,omitempty"`
 	RunID                string `json:"run_id,omitempty"`
+	RunNumber            int64  `json:"run_number,omitempty"`
 }
 
 type HookRepositoryEventExtractData struct {

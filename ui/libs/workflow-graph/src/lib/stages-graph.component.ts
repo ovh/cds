@@ -218,16 +218,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             } else {
                 this.hooks = Object.keys(this.hooksOn);
             }
-
-            if (this._workflowRun) {
-                if (this._workflowRun.event['workflow-update']) {
-                    this.selectedHook = 'workflow-update';
-                } else if (this._workflowRun.event['model-update']) {
-                    this.selectedHook = 'model-update';
-                } else if (this._workflowRun.event.git) {
-                    this.selectedHook = this._workflowRun.event.git.event_name;
-                }
-            }
+            this.selectedHook = this._workflowRun?.event?.event_name;
         }
     }
 

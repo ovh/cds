@@ -3483,6 +3483,36 @@ func (mr *MockProjectClientMockRecorder) ProjectRepositoryDelete(ctx, projectKey
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryDelete", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryDelete), ctx, projectKey, vcsName, repositoryName)
 }
 
+// ProjectRepositoryEvent mocks base method.
+func (m *MockProjectClient) ProjectRepositoryEvent(ctx context.Context, projectKey, vcsName, repoName, eventID string) (*sdk.HookRepositoryEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvent", ctx, projectKey, vcsName, repoName, eventID)
+	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvent indicates an expected call of ProjectRepositoryEvent.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryEvent(ctx, projectKey, vcsName, repoName, eventID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvent", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryEvent), ctx, projectKey, vcsName, repoName, eventID)
+}
+
+// ProjectRepositoryEvents mocks base method.
+func (m *MockProjectClient) ProjectRepositoryEvents(ctx context.Context, projectKey, vcsName, repoName string) ([]sdk.HookRepositoryEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvents", ctx, projectKey, vcsName, repoName)
+	ret0, _ := ret[0].([]sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvents indicates an expected call of ProjectRepositoryEvents.
+func (mr *MockProjectClientMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockProjectClient)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
+}
+
 // ProjectRepositoryHookSecret mocks base method.
 func (m *MockProjectClient) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
 	m.ctrl.T.Helper()
@@ -5424,14 +5454,14 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Restart(ctx, projectKey, r
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.HookRepositoryEvent, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
-	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -8902,6 +8932,36 @@ func (mr *MockInterfaceMockRecorder) ProjectRepositoryDelete(ctx, projectKey, vc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryDelete", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryDelete), ctx, projectKey, vcsName, repositoryName)
 }
 
+// ProjectRepositoryEvent mocks base method.
+func (m *MockInterface) ProjectRepositoryEvent(ctx context.Context, projectKey, vcsName, repoName, eventID string) (*sdk.HookRepositoryEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvent", ctx, projectKey, vcsName, repoName, eventID)
+	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvent indicates an expected call of ProjectRepositoryEvent.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvent(ctx, projectKey, vcsName, repoName, eventID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvent", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvent), ctx, projectKey, vcsName, repoName, eventID)
+}
+
+// ProjectRepositoryEvents mocks base method.
+func (m *MockInterface) ProjectRepositoryEvents(ctx context.Context, projectKey, vcsName, repoName string) ([]sdk.HookRepositoryEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectRepositoryEvents", ctx, projectKey, vcsName, repoName)
+	ret0, _ := ret[0].([]sdk.HookRepositoryEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProjectRepositoryEvents indicates an expected call of ProjectRepositoryEvents.
+func (mr *MockInterfaceMockRecorder) ProjectRepositoryEvents(ctx, projectKey, vcsName, repoName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectRepositoryEvents", reflect.TypeOf((*MockInterface)(nil).ProjectRepositoryEvents), ctx, projectKey, vcsName, repoName)
+}
+
 // ProjectRepositoryHookSecret mocks base method.
 func (m *MockInterface) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vcsType, vcsName, repoName string) (sdk.HookAccessData, error) {
 	m.ctrl.T.Helper()
@@ -11498,14 +11558,14 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2Restart(ctx, projectKey, runIdent
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.HookRepositoryEvent, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
-	ret0, _ := ret[0].(*sdk.V2WorkflowRun)
+	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

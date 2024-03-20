@@ -28,9 +28,12 @@ export class V2WorkflowRun {
  }
 
 export class WorkflowEvent {
-    "workflow-update": {ref: string, workflow_updated: string};
-    "model-update": {ref: string, workflow_updated: string};
-    git: {event_name: string, payload: string, ref: string, sha: string};
+    hook_type: string
+    ref: string;
+    event_name: string;
+    sha: String;
+    payload: string;
+    entity_updated: String;
 }
 
 export class WorkflowData {

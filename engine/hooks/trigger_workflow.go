@@ -98,6 +98,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				} else {
 					wh.Status = sdk.HookEventWorkflowStatusDone
 					wh.RunID = wr.ID
+					wh.RunNumber = wr.RunNumber
 				}
 				if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 					return err

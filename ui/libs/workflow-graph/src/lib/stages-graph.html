@@ -7,6 +7,12 @@
             Triggered by hook on&nbsp;<b>{{h}}</b>
         </div>
     </ng-container>
+    <ng-container *ngIf="selectedHook === 'manual'">
+        <div class="hook" [class.active]="true" (click)="clickHook('manual')">
+            <span nz-icon nzType="api" nzTheme="outline"></span>
+            <b>Manual</b>&nbsp;trigger
+        </div>
+    </ng-container>
 </div>
 
 <div *ngIf="!_workflowRun" class="hooks">

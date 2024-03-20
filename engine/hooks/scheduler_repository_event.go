@@ -166,7 +166,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		hre.ProcessingTimestamp = time.Now().UnixNano()
 		hre.LastError = ""
 		hre.NbErrors = 0
-		if hre.EventName == sdk.RepoEventPush {
+		if hre.EventName == sdk.RepoEventPush || hre.EventName == sdk.WorkflowHookManual {
 			// analyze have to be trigger only on push event
 			hre.Status = sdk.HookEventStatusAnalysis
 			if err := s.triggerAnalyses(ctx, hre); err != nil {
