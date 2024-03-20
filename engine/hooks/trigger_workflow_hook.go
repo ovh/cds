@@ -45,6 +45,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 		request := sdk.HookListWorkflowRequest{
 			HookEventUUID:       hre.UUID,
 			Ref:                 hre.ExtractData.Ref,
+			Sha:                 hre.ExtractData.Commit,
 			Models:              hre.ModelUpdated,
 			Workflows:           hre.WorkflowUpdated,
 			Paths:               hre.ExtractData.Paths,

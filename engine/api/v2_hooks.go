@@ -243,7 +243,7 @@ func LoadWorkflowHooksWithModelUpdate(ctx context.Context, db gorp.SqlExecutor, 
 		return nil, err
 	}
 	for _, h := range entitiesHooks {
-		if h.Ref == hookRequest.Ref {
+		if h.Ref == hookRequest.Ref && hookRequest.Sha == h.Commit {
 			filteredWorkflowHooks = append(filteredWorkflowHooks, h)
 		}
 	}
@@ -264,7 +264,7 @@ func LoadWorkflowHooksWithWorkflowUpdate(ctx context.Context, db gorp.SqlExecuto
 			return nil, err
 		}
 		// check of event come from the right branch
-		if hookRequest.Ref == h.Ref {
+		if hookRequest.Ref == h.Ref && hookRequest.Sha == h.Commit {
 			filteredWorkflowHooks = append(filteredWorkflowHooks, *h)
 		}
 	}
@@ -287,7 +287,7 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 		// If event && workflow declaration are on the same repo
 		if w.VCSName == hookRequest.VCSName && w.RepositoryName == hookRequest.RepositoryName {
 			// Only get workflow configuration from current branch
-			if w.Ref != hookRequest.Ref {
+			if w.Ref != hookRequest.Ref || w.Commit != hookRequest.Sha {
 				continue
 			}
 		}
