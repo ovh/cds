@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from "../../model/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "../../model/v2.workflow.run.model";
 import { CDNLogLinks } from "../../model/pipeline.model";
 
 @Injectable()
@@ -14,8 +14,20 @@ export class V2WorkflowRunService {
         return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}`);
     }
 
-    getJobs(r: V2WorkflowRun): Observable<Array<V2WorkflowRunJob>> {
-        return this._http.get<Array<V2WorkflowRunJob>>(`/v2/project/${r.project_key}/run/${r.id}/job`);
+    getJobs(r: V2WorkflowRun, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {
+        let params = new HttpParams();
+        if (attempt) {
+            params = params.append('attempt', attempt);
+        }
+        return this._http.get<Array<V2WorkflowRunJob>>(`/v2/project/${r.project_key}/run/${r.id}/job`, { params });
+    }
+
+    getResults(r: V2WorkflowRun, attempt: number = null): Observable<Array<WorkflowRunResult>> {
+        let params = new HttpParams();
+        if (attempt) {
+            params = params.append('attempt', attempt);
+        }
+        return this._http.get<Array<WorkflowRunResult>>(`/v2/project/${r.project_key}/run/${r.id}/result`, { params });
     }
 
     getRunInfos(r: V2WorkflowRun): Observable<Array<WorkflowRunInfo>> {

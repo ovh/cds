@@ -9,7 +9,20 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/telemetry"
 )
+
+func getAllRunResults(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query) ([]sdk.V2WorkflowRunResult, error) {
+	var dbWkfRunResults []dbV2WorkflowRunResult
+	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRunResults); err != nil {
+		return nil, err
+	}
+	jobResults := make([]sdk.V2WorkflowRunResult, 0, len(dbWkfRunResults))
+	for _, rr := range dbWkfRunResults {
+		jobResults = append(jobResults, rr.V2WorkflowRunResult)
+	}
+	return jobResults, nil
+}
 
 func InsertRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2WorkflowRunResult) error {
 	entity := dbV2WorkflowRunResult{*runResult}
@@ -25,31 +38,26 @@ func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2
 	return gorpmapping.Update(db, &entity)
 }
 
-func LoadRunResults(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempts int64) ([]sdk.V2WorkflowRunResult, error) {
-	results, err := loadRunResultsByRunIDs(ctx, db, runID)
-	if err != nil {
-		return nil, err
-	}
-	if results, has := results[runID]; has {
-		var runResults []sdk.V2WorkflowRunResult
-		for _, r := range results {
-			if r.RunAttempt == runAttempts {
-				runResults = append(runResults, r.V2WorkflowRunResult)
-			}
-		}
-		return runResults, nil
-	}
-	return nil, nil
+func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempt int64) ([]sdk.V2WorkflowRunResult, error) {
+	ctx, next := telemetry.Span(ctx, "LoadRunResultsByRunID")
+	defer next()
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run_result
+    WHERE workflow_run_id = $1 AND run_attempt = $2
+    ORDER BY issued_at ASC
+	`).Args(runID, runAttempt)
+	return getAllRunResults(ctx, db, query)
 }
 
 func LoadAbandonnedRunResultsID(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {
 	query := `
-  	select v2_workflow_run_result.id 
-	from v2_workflow_run_result 
-	join v2_workflow_run_job on v2_workflow_run_job.id = v2_workflow_run_result.workflow_run_job_id
-	where v2_workflow_run_job.status IN ('Fail', 'Stopped')
-	and v2_workflow_run_result.status = 'PENDING'
-	order by v2_workflow_run_result.issued_at ASC`
+    SELECT v2_workflow_run_result.id 
+    FROM v2_workflow_run_result 
+    JOIN v2_workflow_run_job ON v2_workflow_run_job.id = v2_workflow_run_result.workflow_run_job_id
+    WHERE v2_workflow_run_job.status IN ('Fail', 'Stopped') AND v2_workflow_run_result.status = 'PENDING'
+    ORDER BY v2_workflow_run_result.issued_at ASC
+	`
 	var results pq.StringArray
 	if _, err := db.Select(&results, query); err != nil {
 		return nil, sdk.WrapError(err, "unable to load abandonned run results")
@@ -84,14 +92,12 @@ func LoadAndLockRunResultByID(ctx context.Context, db gorp.SqlExecutor, id strin
 }
 
 func LoadRunResultsByRunJobID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunResult, error) {
-	query := gorpmapping.NewQuery(`select * from v2_workflow_run_result where workflow_run_job_id = $1`).Args(runJobID)
-	var result []dbV2WorkflowRunResult
-	if err := gorpmapping.GetAll(ctx, db, query, &result); err != nil {
-		return nil, sdk.WrapError(err, "unable to load run results for run job %s", runJobID)
-	}
-	runResults := make([]sdk.V2WorkflowRunResult, 0, len(result))
-	for _, r := range result {
-		runResults = append(runResults, r.V2WorkflowRunResult)
-	}
-	return runResults, nil
+	ctx, next := telemetry.Span(ctx, "LoadRunResultsByRunJobID")
+	defer next()
+	query := gorpmapping.NewQuery(`
+    SELECT *
+    FROM v2_workflow_run_result
+    WHERE workflow_run_job_id = $1
+	`).Args(runJobID)
+	return getAllRunResults(ctx, db, query)
 }

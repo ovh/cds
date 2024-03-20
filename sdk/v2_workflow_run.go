@@ -54,9 +54,6 @@ type V2WorkflowRun struct {
 	Contexts     WorkflowRunContext     `json:"contexts" db:"contexts"`
 	RunEvent     V2WorkflowRunEvent     `json:"event" db:"event"`
 	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
-
-	// Aggregations
-	Results []V2WorkflowRunResult `json:"results" db:"-"`
 }
 
 type WorkflowRunContext struct {

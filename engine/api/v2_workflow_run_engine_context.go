@@ -2,12 +2,13 @@ package api
 
 import (
 	"context"
+
 	"github.com/ovh/cds/sdk"
 )
 
-func computeExistingRunJobContexts(run sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
+func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) sdk.JobsResultContext {
 	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
-	for _, rr := range run.Results {
+	for _, rr := range runResults {
 		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
 			continue
 		}

@@ -51,7 +51,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "unable take the job %s, current status %s", jobRunID, jobRun.Status)
 		}
 
-		run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID, workflow_v2.WithRunResults)
+		run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
 		if err != nil {
 			return err
 		}
@@ -139,6 +139,7 @@ func buildSensitiveData(value string) []string {
 	datas = append(datas, sdk.OneLineValue(value))
 	return datas
 }
+
 func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, []string, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
@@ -219,8 +220,12 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		contexts.Env[k] = v
 	}
 
+	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, run.ID, run.RunAttempt)
+	if err != nil {
+		return nil, nil, err
+	}
 	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
-	for _, rr := range run.Results {
+	for _, rr := range runResults {
 		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
 			continue
 		}

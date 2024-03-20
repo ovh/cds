@@ -17,8 +17,7 @@ import { Subscription } from "rxjs";
 export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
-	@Input() run: V2WorkflowRun;
-	@Input() resultID: string;
+	@Input() result: WorkflowRunResult;
 	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
@@ -26,7 +25,6 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	defaultTabs: Array<Tab>;
 	tabs: Array<Tab>;
 	selectedTab: Tab;
-	result: WorkflowRunResult;
 	resultRaw: string;
 
 	constructor(
@@ -56,7 +54,6 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(): void {
-		this.result = this.run.results.find(r => r.id === this.resultID);
 		if (this.result.type === 'tests') {
 			this.tabs = [<Tab>{
 				title: 'Tests',
