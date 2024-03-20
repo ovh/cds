@@ -63,12 +63,11 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 			},
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{
-			GitTrigger: &sdk.GitTrigger{
-				Payload:   nil,
-				Ref:       "main",
-				Sha:       "123456",
-				EventName: "push",
-			},
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "main",
+			Sha:       "123456",
+			EventName: "push",
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -127,12 +126,11 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 			},
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{
-			GitTrigger: &sdk.GitTrigger{
-				Payload:   nil,
-				Ref:       "main",
-				Sha:       "123456",
-				EventName: "push",
-			},
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "main",
+			Sha:       "123456",
+			EventName: "push",
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -220,12 +218,11 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 			},
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{
-			GitTrigger: &sdk.GitTrigger{
-				Payload:   nil,
-				Ref:       "refs/heads/main",
-				Sha:       "123456",
-				EventName: "push",
-			},
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "refs/heads/main",
+			Sha:       "123456",
+			EventName: "push",
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -344,12 +341,11 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 			},
 		},
 		RunEvent: sdk.V2WorkflowRunEvent{
-			GitTrigger: &sdk.GitTrigger{
-				Payload:   nil,
-				Ref:       "refs/heads/main",
-				Sha:       "123456",
-				EventName: "push",
-			},
+			HookType:  sdk.WorkflowHookTypeRepository,
+			Payload:   nil,
+			Ref:       "refs/heads/main",
+			Sha:       "123456",
+			EventName: "push",
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
