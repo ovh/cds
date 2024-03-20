@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -200,8 +199,13 @@ var workflowRunCmd = cli.Command{
 			Name: "tag",
 		},
 		{
-			Name:    "data",
-			Default: "{}",
+			Name: "commit",
+		},
+		{
+			Name: "workflow-branch",
+		},
+		{
+			Name: "workflow-tag",
 		},
 	},
 }
@@ -211,20 +215,29 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 	vcsId := v.GetString("vcs_identifier")
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
-	branch := v.GetString("branch")
-	tag := v.GetString("tag")
-	data := v.GetString("data")
+	destBranch := v.GetString("branch")
+	destTag := v.GetString("tag")
+	destCommit := v.GetString("commit")
+	workflowBranch := v.GetString("workflow-branch")
+	workflowTag := v.GetString("workflow-tag")
 
-	if tag != "" && branch != "" {
+	if destBranch != "" && destTag != "" {
 		return nil, fmt.Errorf("you cannot use branch and tag together")
 	}
 
-	var payload sdk.V2WorkflowRunManualRequest
-	if err := json.Unmarshal([]byte(data), &payload); err != nil {
-		return nil, fmt.Errorf("unable to read json data")
+	if workflowBranch != "" && workflowTag != "" {
+		return nil, fmt.Errorf("you cannot use workflow-branch and workflow-tag together")
 	}
 
-	hookRunEvent, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload, cdsclient.WithQueryParameter("branch", branch), cdsclient.WithQueryParameter("tag", tag))
+	payload := sdk.V2WorkflowRunManualRequest{
+		Branch:         destBranch,
+		Tag:            destTag,
+		Sha:            destCommit,
+		WorkflowBranch: workflowBranch,
+		WorkflowTag:    workflowTag,
+	}
+
+	hookRunEvent, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)
 	if err != nil {
 		return nil, err
 	}

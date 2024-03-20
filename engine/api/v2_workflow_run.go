@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -1035,9 +1036,31 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
-			if err != nil {
-				return err
+			var workflowRef, workflowCommit string
+			if runRequest.WorkflowBranch != "" {
+				workflowRef = sdk.GitRefBranchPrefix + runRequest.WorkflowBranch
+			} else if runRequest.WorkflowTag != "" {
+				workflowRef = sdk.GitRefTagPrefix + runRequest.WorkflowTag
+			} else if runRequest.Branch != "" {
+				workflowRef = sdk.GitRefBranchPrefix + runRequest.Branch
+				workflowCommit = runRequest.Sha
+			} else if runRequest.Tag != "" {
+				workflowRef = sdk.GitRefTagPrefix + runRequest.Tag
+				workflowCommit = runRequest.Sha
+			} else {
+				// Retrieve default branch
+				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
+				if err != nil {
+					return err
+				}
+				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					return err
+				}
+				workflowRef = defaultBranch.ID
+			}
+			if workflowCommit == "" {
+				workflowCommit = "HEAD"
 			}
 
 			hookRequest := sdk.HookManulWorkflowRun{
@@ -1046,8 +1069,8 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				VCSType:     vcsProject.Type,
 				VCSServer:   vcsProject.Name,
 				Repository:  repo.Name,
-				Ref:         ref,
-				Commit:      commit,
+				Ref:         workflowRef,
+				Commit:      workflowCommit,
 				Workflow:    workflowName,
 				UserID:      u.AuthConsumerUser.AuthentifiedUserID,
 				Username:    u.AuthConsumerUser.AuthentifiedUser.Username,
