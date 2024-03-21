@@ -277,7 +277,7 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			defer tx.Rollback() // nolint
 
-			runJob.Status = sdk.StatusStopped
+			runJob.Status = sdk.V2WorkflowRunJobStatusStopped
 			if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
 				return err
 			}
@@ -595,7 +595,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			}
 
 			for _, rj := range runJobs {
-				rj.Status = sdk.StatusStopped
+				rj.Status = sdk.V2WorkflowRunJobStatusStopped
 
 				tx, err := api.mustDB().Begin()
 				if err != nil {
@@ -623,7 +623,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 					return sdk.WithStack(err)
 				}
 			}
-			wr.Status = sdk.StatusStopped
+			wr.Status = sdk.V2WorkflowRunStatusStopped
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return err
@@ -774,7 +774,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			if !sdk.StatusIsTerminated(wr.Status) {
+			if !wr.Status.IsTerminated() {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to rerun a running workflow")
 			}
 
@@ -787,7 +787,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
 			for _, rj := range runJobs {
 				runJobsMap[rj.ID] = rj
-				if rj.Status == sdk.StatusFail {
+				if rj.Status == sdk.V2WorkflowRunJobStatusFail {
 					runJobToRestart[rj.ID] = rj
 				}
 			}
@@ -831,7 +831,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 
 func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun, runJobsToKeep map[string]sdk.V2WorkflowRunJob) error {
 	wr.RunAttempt++
-	wr.Status = sdk.StatusBuilding
+	wr.Status = sdk.V2WorkflowRunStatusBuilding
 	wr.Contexts.CDS.RunAttempt = wr.RunAttempt
 
 	srvs, err := services.LoadAllByType(ctx, tx, sdk.TypeCDN)
@@ -898,7 +898,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			if !sdk.StatusIsTerminated(wr.Status) {
+			if !wr.Status.IsTerminated() {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start a job on a running workflow")
 			}
 
@@ -920,7 +920,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			}
 
 			// Check job status
-			if jobToRun.Status != sdk.StatusSkipped {
+			if jobToRun.Status != sdk.V2WorkflowRunJobStatusSkipped {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to run manually a non skipped job")
 			}
 
@@ -1188,7 +1188,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		WorkflowName: wk.Name,
 		WorkflowRef:  wkEntity.Ref,
 		WorkflowSha:  wkEntity.Commit,
-		Status:       sdk.StatusCrafting,
+		Status:       sdk.V2WorkflowRunStatusCrafting,
 		RunAttempt:   0,
 		Started:      time.Now(),
 		LastModified: time.Now(),

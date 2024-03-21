@@ -14,8 +14,7 @@ import { UserService } from 'app/service/user/user.service';
 import { Column, ColumnType, Filter } from 'app/shared/table/data-table.component';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { AuthenticationState } from 'app/store/authentication.state';
-import moment from 'moment';
-import {NZ_MODAL_DATA, NzModalRef} from 'ng-zorro-antd/modal';
+import { NZ_MODAL_DATA, NzModalRef } from 'ng-zorro-antd/modal';
 
 interface IModalData {
     user: AuthentifiedUser;
@@ -52,7 +51,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
     columnsConsumers: Array<Column<AuthConsumer>>;
     filterChildren: Filter<AuthConsumer>;
     selectedChildDetails: AuthConsumer;
-    menuItems: Map<string,string>;
+    menuItems: Map<string, string>;
     selectedItem: string;
     columnsSessions: Array<Column<AuthSession>>;
     filterSessions: Filter<AuthSession>;
@@ -78,11 +77,11 @@ export class ConsumerDetailsModalComponent implements OnInit {
         this.filterChildren = f => {
             const lowerFilter = f.toLowerCase();
             return (c: AuthConsumer) => c.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
-                    (!c.auth_consumer_user.groups && lowerFilter === '*');
+                c.description.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                c.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                c.auth_consumer_user.scope_details.map(s => s.scope).join(' ').toLowerCase().indexOf(lowerFilter) !== -1 ||
+                (c.auth_consumer_user.groups && c.auth_consumer_user.groups.map(g => g.name).join(' ').toLowerCase().indexOf(lowerFilter) !== -1) ||
+                (!c.auth_consumer_user.groups && lowerFilter === '*');
         };
 
         this.columnsConsumers = [
@@ -115,20 +114,20 @@ export class ConsumerDetailsModalComponent implements OnInit {
                 name: 'Action',
                 class: 'rightAlign',
                 selector: (c: AuthConsumer) => ({
-                        title: 'Details',
-                        buttonDanger: false,
-                        click: () => this.clickConsumerDetails(c)
-                    })
+                    title: 'Details',
+                    buttonDanger: false,
+                    click: () => this.clickConsumerDetails(c)
+                })
             }
         ];
 
         this.filterSessions = f => {
             const lowerFilter = f.toLowerCase();
             return (s: AuthSession) => s.consumer.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
+                s.id.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                s.consumer_id.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                s.created.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                s.expire_at.toLowerCase().indexOf(lowerFilter) !== -1;
         };
 
         this.columnsSessions = [
@@ -164,7 +163,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
             <Column<AuthConsumerValidityPeriod>>{
                 type: ColumnType.DATE,
                 name: 'Issued at',
-                selector: (s: AuthConsumerValidityPeriod) => moment(s.issued_at).format()
+                selector: (s: AuthConsumerValidityPeriod) => new Date(s.issued_at)
             },
             <Column<AuthConsumerValidityPeriod>>{
                 type: ColumnType.TEXT_LABELS,
@@ -172,7 +171,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
                 selector: (s: AuthConsumerValidityPeriod) => {
                     let labels = [];
                     if (s.duration === 0) {
-                        return {value: '-', labels};
+                        return { value: '-', labels };
                     }
 
                     let ms = (s.duration / 1000000);
@@ -275,7 +274,7 @@ export class ConsumerDetailsModalComponent implements OnInit {
 
     clickClose(): void {
         if (this.regenConsumerSigninToken) {
-            this._modal.close (<CloseEvent>{
+            this._modal.close(<CloseEvent>{
                 type: CloseEventType.REGEN,
                 payload: this.consumer.id
             });

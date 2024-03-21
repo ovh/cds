@@ -139,7 +139,7 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 				continue
 			}
 			// push the job in the channel
-			if j.RunJob.Status == sdk.StatusWaiting {
+			if j.RunJob.Status == sdk.V2WorkflowRunJobStatusWaiting {
 				if pendingWorkerCreation.IsJobAlreadyPendingWorkerCreation(wsEvent.JobRunID) {
 					log.Debug(ctx, "skipping job %s", wsEvent.JobRunID)
 					continue

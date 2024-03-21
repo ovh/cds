@@ -37,7 +37,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -52,15 +52,18 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
+	now := time.Now()
+	nowMinus20Min := now.Add(-20 * time.Minute)
+
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           sdk.V2Job{},
 		WorkflowRunID: wr.ID,
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
-		Scheduled:     time.Now().Add(-20 * time.Minute),
+		Scheduled:     &nowMinus20Min,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusScheduling,
+		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -70,9 +73,9 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 		UserID:        admin.ID,
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
-		Scheduled:     time.Now(),
+		Scheduled:     &now,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusScheduling,
+		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
@@ -85,7 +88,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 
 	rjDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobs[0].ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.StatusWaiting, rjDB.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, rjDB.Status)
 }
 
 func TestStopDeadJobs(t *testing.T) {
@@ -112,7 +115,7 @@ func TestStopDeadJobs(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -140,7 +143,7 @@ func TestStopDeadJobs(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -160,7 +163,7 @@ func TestStopDeadJobs(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
@@ -173,5 +176,5 @@ func TestStopDeadJobs(t *testing.T) {
 
 	rjDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobs[0].ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.StatusStopped, rjDB.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusStopped, rjDB.Status)
 }

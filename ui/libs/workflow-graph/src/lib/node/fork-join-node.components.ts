@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model';
 import { NodeStatus } from './status.model';
 
@@ -48,11 +48,10 @@ export class GraphForkJoinNodeComponent implements OnInit {
         }
     }
 
-    setHighlight(active: boolean): void {
+    setHighlight(active: boolean, options?: any): void {
         this.highlight = active;
         this._cd.markForCheck();
     }
 
-    setSelect(_: boolean): void {
-    }
+    setSelect(active: boolean, options?: any): void { }
 }

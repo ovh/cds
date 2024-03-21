@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
@@ -14,6 +13,7 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
 
 @Component({
     selector: 'app-workflow-node-run-summary',

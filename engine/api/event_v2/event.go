@@ -138,7 +138,7 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	}
 
 	title := fmt.Sprintf("%s-%s", event.ProjectKey, run.WorkflowName)
-	description := run.WorkflowName + ":" + run.Status
+	description := run.WorkflowName + ":" + string(run.Status)
 	if run.WorkflowData.Workflow.CommitStatus != nil {
 		if run.WorkflowData.Workflow.CommitStatus.Title != "" {
 			title = run.WorkflowData.Workflow.CommitStatus.Title

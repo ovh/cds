@@ -7,7 +7,7 @@
                 <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
                     (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">
                     <nz-option *ngFor="let item of [].constructor(workflowRun.run_attempt); let i = index"
-                        [nzValue]="i+1" [nzLabel]="i+1"></nz-option>
+                        [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
                 </nz-select>
                 <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
                     (click)="openPanel('workflow')"><span nz-icon nzType="file-text" nzTheme="outline"></span></button>
@@ -22,7 +22,7 @@
         </nz-page-header>
 
         <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-            (onSelectJobGate)="openPanel('gate', $event)" (onSelectJob)="openPanel('job', $event)"
+            (onSelectJobGate)="openPanel('gate', $event)" (onSelectJobRun)="openPanel('job', $event)"
             (onSelectHook)="openPanel('hook', $event)" #graph></app-stages-graph>
 
         <!--  BOTTOM PANELS -->

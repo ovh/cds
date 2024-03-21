@@ -35,7 +35,7 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -49,7 +49,7 @@ func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusWaiting,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
@@ -97,7 +97,7 @@ hatcheries:
 	require.Equal(t, 200, w.Code)
 	var jobRunResponse sdk.V2WorkflowRunJob
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &jobRunResponse))
-	require.Equal(t, sdk.StatusScheduling, jobRunResponse.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusScheduling, jobRunResponse.Status)
 
 	// release
 
@@ -110,8 +110,8 @@ hatcheries:
 
 	jobRunDB, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, db, wr.ID, jobRun.ID)
 	require.NoError(t, err)
-	require.Equal(t, jobRunDB.Status, sdk.StatusWaiting)
-	require.Equal(t, jobRunDB.HatcheryName, "")
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, jobRunDB.Status)
+	require.Equal(t, "", jobRunDB.HatcheryName)
 }
 
 func TestPostJobResultHandler(t *testing.T) {
@@ -131,7 +131,7 @@ func TestPostJobResultHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -164,7 +164,7 @@ hatcheries:
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusScheduling,
+		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
@@ -182,7 +182,7 @@ hatcheries:
 
 	// Take Job
 	jobResult := sdk.V2WorkflowRunJobResult{
-		Status: sdk.StatusFail,
+		Status: sdk.V2WorkflowRunJobStatusFail,
 		Error:  "unable to craft job",
 	}
 	vars := map[string]string{"runJobID": jobRun.ID, "regionName": "default"}
@@ -195,7 +195,7 @@ hatcheries:
 
 	jobRunDB, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, db, wr.ID, jobRun.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.StatusFail, jobRunDB.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, jobRunDB.Status)
 }
 
 func TestGetJobsQueuedHandler(t *testing.T) {
@@ -213,7 +213,7 @@ func TestGetJobsQueuedHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -227,7 +227,7 @@ func TestGetJobsQueuedHandler(t *testing.T) {
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusWaiting,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
 		Region:        "default",
@@ -238,7 +238,7 @@ func TestGetJobsQueuedHandler(t *testing.T) {
 	jobRun2 := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusWaiting,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job2",
 		ModelType:     "docker",
 		Region:        "default2",
@@ -249,7 +249,7 @@ func TestGetJobsQueuedHandler(t *testing.T) {
 	jobRun3 := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusWaiting,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job3",
 		ModelType:     "openstack",
 		Region:        "default",
@@ -320,7 +320,7 @@ func TestGetJobHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -334,7 +334,7 @@ func TestGetJobHandler(t *testing.T) {
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusWaiting,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
 		Region:        "default",
@@ -405,7 +405,7 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -419,7 +419,7 @@ func TestPostJobRunInfoHandler(t *testing.T) {
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusWaiting,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
 		JobID:         "job1",
 		ModelType:     "docker",
 		Region:        "default",

@@ -1,16 +1,14 @@
 import { ComponentRef } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import { GraphNode } from './graph.model';
+import { GraphNode, GraphNodeType } from './graph.model';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
-import { GraphGateNodeComponent } from './node/gate-node.component';
 import { NodeStatus } from './node/status.model';
 
 export type WorkflowNodeComponent =
     GraphForkJoinNodeComponent
-    | GraphJobNodeComponent
-    | GraphGateNodeComponent;
+    | GraphJobNodeComponent;
 
 export enum GraphDirection {
     HORIZONTAL = 'horizontal',
@@ -20,25 +18,18 @@ export enum GraphDirection {
 export interface WithHighlight {
     getNodes(): Array<GraphNode>;
 
-    setHighlight(active: boolean): void;
+    setHighlight(active: boolean, options?: any): void;
 
-    setSelect(active: boolean): void;
+    setSelect(active: boolean, options?: any): void;
 }
 
 export type ComponentFactory<T> = (nodes: Array<GraphNode>, type: string) => ComponentRef<T>;
 
 export class Node {
-    key: string;
-    width: number;
-    height: number;
     type: string;
-}
-
-export class Gate {
     key: string;
     width: number;
     height: number;
-    child: string;
 }
 
 export class Edge {
@@ -57,7 +48,6 @@ export class WorkflowV2Graph<T extends WithHighlight> {
 
     nodesComponent = new Map<string, ComponentRef<T>>();
     nodes = new Array<Node>();
-    gates = new Array<Gate>();
     edges = new Array<Edge>();
     direction: string;
     zoom: d3.ZoomBehavior<Element, {}>;
@@ -95,6 +85,8 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         this.render = new dagreD3.render();
         this.render.shapes().customRectH = WorkflowV2Graph.customRect(GraphDirection.HORIZONTAL);
         this.render.shapes().customRectV = WorkflowV2Graph.customRect(GraphDirection.VERTICAL);
+        this.render.shapes().customRectForMatrixH = WorkflowV2Graph.customRectForMatrix(GraphDirection.HORIZONTAL);
+        this.render.shapes().customRectForMatrixV = WorkflowV2Graph.customRectForMatrix(GraphDirection.VERTICAL);
         this.render.shapes().customCircle = WorkflowV2Graph.customCircle;
         this.render.arrows().customArrow = WorkflowV2Graph.customArrow;
     }
@@ -112,6 +104,27 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             if (direction === GraphDirection.VERTICAL) {
                 const h = ((node.height) / 2);
                 return { x: node.x, y: node.y + (point.y < node.y ? -h : h) };
+            }
+            const w = ((node.width) / 2);
+            return { x: node.x + (point.x < node.x ? -w : w), y: node.y };
+        };
+
+        return shapeSvg;
+    };
+
+    static customRectForMatrix = (direction: GraphDirection) => (parent, bbox, node) => {
+        let shapeSvg = parent.insert('rect', ':first-child')
+            .attr('rx', node.rx)
+            .attr('ry', node.ry)
+            .attr('x', -bbox.width / 2)
+            .attr('y', -bbox.height / 2)
+            .attr('width', bbox.width)
+            .attr('height', bbox.height);
+
+        node.intersect = (point) => {
+            if (direction === GraphDirection.VERTICAL) {
+                const h = ((node.height) / 2);
+                return { x: node.x, y: node.y + (point.y < node.y ? -h : h) + 30 };
             }
             const w = ((node.width) / 2);
             return { x: node.x + (point.x < node.x ? -w : w), y: node.y };
@@ -269,16 +282,20 @@ export class WorkflowV2Graph<T extends WithHighlight> {
 
     drawNodes(): void {
         this.nodes.forEach(n => {
-            this.createGNode(`node-${n.key}`, this.nodesComponent.get(`node-${n.key}`), n.width, n.height, {
-                class: n.key
-            });
+            switch (n.type) {
+                case GraphNodeType.Matrix:
+                    this.createGNode(`node-${n.key}`, this.nodesComponent.get(`node-${n.key}`), n.width, n.height, {
+                        class: n.key,
+                        shape: this.direction === GraphDirection.VERTICAL ? 'customRectForMatrixV' : 'customRectForMatrixH'
+                    });
+                    break;
+                default:
+                    this.createGNode(`node-${n.key}`, this.nodesComponent.get(`node-${n.key}`), n.width, n.height, {
+                        class: n.key
+                    });
+                    break;
+            }
         });
-
-        this.gates.forEach(n => {
-            this.createGGate(`gate-${n.key}`, this.nodesComponent.get(`gate-${n.key}`), n.width, n.height, {
-                class: n.key
-            });
-        })
     }
 
     uniqueStrings(a: Array<string>): Array<string> {
@@ -416,18 +433,6 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                 from: e.from, to: e.to, options
             });
         });
-
-        // Gate edge
-        if (this.gates) {
-            this.gates.forEach(g => {
-                let e = <Edge>{ from: `gate-${g.key}`, to: `node-${g.child}` };
-                let options = { class: `${g.key} ${g.child}` };
-                options['class'] += ` ` + this.nodeStatusToColor(this.nodeStatus[e.from]);
-                options['style'] = 'stroke-width: 2px;';
-                e.options = options
-                this.createGEdge(e);
-            });
-        }
     }
 
     nodeStatusToColor(s: string): string {
@@ -446,32 +451,13 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         }
     }
 
-    createGate(graphNode: GraphNode, type: string, componentRef: ComponentRef<T>, status: string,
-        width: number = 40, height: number = 40): void {
-        let key = graphNode.name;
-        let child = graphNode.gateChild;
-        this.gates.push(<Gate>{ key, width, height, child });
-        this.nodesComponent.set(`gate-${key}`, componentRef);
-    }
-
-    createGGate(name: string, componentRef: ComponentRef<T>, width: number, height: number, options: {}): void {
-        this.graph.setNode(name, <any>{
-            shape: 'customCircle',
-            label: () => componentRef.location.nativeElement,
-            labelStyle: `width: ${width}px;height: ${height}px;`,
-            width,
-            height,
-            ...options
-        });
-    }
-
-    createNode(key: string, type: string, componentRef: ComponentRef<T>, status: string,
-        width: number = 130, height: number = 40): void {
-        this.nodes.push(<Node>{ key, width, height });
+    createNode(key: string, type: GraphNodeType, componentRef: ComponentRef<T>, width: number = 200, height: number = 60): void {
+        this.nodes.push(<Node>{ type, key, width, height });
         this.nodesComponent.set(`node-${key}`, componentRef);
-        if (status) {
-            this.nodeStatus[`node-${key}`] = status;
-        }
+    }
+
+    setNodeStatus(key: string, status: string): void {
+        this.nodeStatus[`node-${key}`] = status;
     }
 
     createGNode(name: string, componentRef: ComponentRef<T>, width: number, height: number, options: {}): void {
@@ -518,17 +504,17 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         });
     }
 
-    nodeMouseEvent(type: string, key: string): void {
+    nodeMouseEvent(type: string, key: string, options?: any): void {
         switch (type) {
             case 'enter':
-                this.highlightNode(true, key);
+                this.highlightNode(true, key, options);
                 break;
             case 'out':
-                this.highlightNode(false, key);
+                this.highlightNode(false, key, options);
                 break;
             case 'click':
                 this.unselectAllNode();
-                this.selectNode(key);
+                this.selectNode(key, options);
                 break;
         }
     }
@@ -537,16 +523,16 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         this.nodesComponent.forEach(n => n.instance.setSelect(false));
     }
 
-    selectNode(key: string): void {
+    selectNode(key: string, options?: any): void {
         if (this.nodesComponent.has(`node-${key}`)) {
-            this.nodesComponent.get(`node-${key}`).instance.setSelect(true);
+            this.nodesComponent.get(`node-${key}`).instance.setSelect(true, options);
             this.currentSelectedNodeKey = key;
         } else {
             this.currentSelectedNodeKey = null;
         }
     }
 
-    highlightNode(active: boolean, key: string) {
+    highlightNode(active: boolean, key: string, options?: any) {
         let selectionEdges = d3.selectAll(`.${key} > .path`);
         if (selectionEdges.size() > 0) {
             selectionEdges.attr('class', active ? 'path highlight' : 'path');
@@ -555,22 +541,19 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         if (selectionEdgeMarkers.size() > 0) {
             selectionEdgeMarkers.attr('class', active ? 'highlight' : '');
         }
-        if (this.nodesComponent.has(`gate-${key}`)) {
-            this.nodesComponent.get(`gate-${key}`).instance.setHighlight(active);
-        }
         if (this.nodesComponent.has(`node-${key}`)) {
-            this.nodesComponent.get(`node-${key}`).instance.setHighlight(active);
+            this.nodesComponent.get(`node-${key}`).instance.setHighlight(active, options);
         }
         let inName = this.nodeInNames[`node-${key}`];
         if (inName !== `node-${key}`) {
             if (this.nodesComponent.has(inName)) {
-                this.nodesComponent.get(inName).instance.setHighlight(active);
+                this.nodesComponent.get(inName).instance.setHighlight(active, options);
             }
         }
         let outName = this.nodeOutNames[`node-${key}`];
         if (outName !== `node-${key}`) {
             if (this.nodesComponent.has(outName)) {
-                this.nodesComponent.get(outName).instance.setHighlight(active);
+                this.nodesComponent.get(outName).instance.setHighlight(active, options);
             }
         }
     }

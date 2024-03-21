@@ -8,11 +8,13 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
-import { GraphNode, GraphNodeTypeGate, GraphNodeTypeJob } from './graph.model';
-import { GraphDirection, WorkflowNodeComponent, WorkflowV2Graph } from './graph.lib';
+import { GraphNode, GraphNodeType } from './graph.model';
+import { GraphDirection, WorkflowV2Graph } from './graph.lib';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
-import { GraphGateNodeComponent } from './node/gate-node.component';
+import { GraphMatrixNodeComponent } from './node/matrix-node.component';
+
+export type WorkflowV2JobsNodeOrMatrixComponent = GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
 
 @Component({
     selector: 'app-jobs-graph',
@@ -36,19 +38,18 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
     @Input() direction: GraphDirection;
     @Input() centerCallback: any;
     @Input() mouseCallback: (type: string, node: GraphNode) => void;
-    @Input() selectJobCallback: (name: string) => void;
+    @Input() selectJobCallback: (type: string, node: GraphNode, options?: any) => void;
 
     ready: boolean;
     highlight = false;
 
     // workflow graph
     @ViewChild('svgSubGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
-    graph: WorkflowV2Graph<WorkflowNodeComponent>;
+    graph: WorkflowV2Graph<WorkflowV2JobsNodeOrMatrixComponent>;
 
     constructor(
         private _cd: ChangeDetectorRef
-    ) {
-    }
+    ) { }
 
     getNodes() {
         return [this.node];
@@ -98,14 +99,21 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
         }
 
         this.nodes.forEach(n => {
+            let component: ComponentRef<WorkflowV2JobsNodeOrMatrixComponent>;
             switch (n.type) {
-                case GraphNodeTypeGate:
-                    this.graph.createNode(`${this.node.name}-${n.name}`, GraphNodeTypeGate, this.createGateNodeComponent(n),
-                        n.run ? n.run.status : null, 20, 20);
+                case GraphNodeType.Matrix:
+                    component = this.createJobMatrixComponent(n);
+                    const alls = GraphNode.generateMatrixOptions(n.job.strategy.matrix);
+                    let height = 30 * alls.length + 10 * (alls.length - 1) + 60 + 20;
+                    this.graph.createNode(`${this.node.name}-${n.name}`, n.type, component, 240, height);
                     break;
                 default:
-                    this.graph.createNode(`${this.node.name}-${n.name}`, GraphNodeTypeJob, this.createJobNodeComponent(n),
-                        n.run ? n.run.status : null);
+                    component = this.createJobNodeComponent(n);
+                    this.graph.createNode(`${this.node.name}-${n.name}`, n.type, component);
+                    if (n.run) {
+                        this.graph.setNodeStatus(`${this.node.name}-${n.name}`, n.run ? n.run.status : null);
+                    }
+                    break;
             }
         });
 
@@ -123,13 +131,14 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
         this._cd.markForCheck();
     }
 
-    createGateNodeComponent(node: GraphNode): ComponentRef<GraphGateNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(GraphGateNodeComponent);
+    createJobMatrixComponent(node: GraphNode): ComponentRef<GraphMatrixNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphMatrixNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
+
     createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
         const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
         componentRef.instance.node = node;
@@ -147,16 +156,11 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
         return componentRef;
     }
 
-    nodeMouseEvent(type: string, n: GraphNode) {
-        if (type === 'click' && this.selectJobCallback) {
-            if (n.run) {
-                this.selectJobCallback(n.run.id);
-            } else {
-                this.selectJobCallback(n.name);
-            }
-
+    nodeMouseEvent(type: string, n: GraphNode, options?: any) {
+        if (this.selectJobCallback) {
+            this.selectJobCallback(type, n, options);
         }
-        this.graph.nodeMouseEvent(type, `${this.node.name}-${n.name}`);
+        this.graph.nodeMouseEvent(type, `${this.node.name}-${n.name}`, options);
     }
 
     clickCenter(): void {

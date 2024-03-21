@@ -14,15 +14,14 @@
     color: $polar_grey_1;
     padding: 2px;
     background-color: white;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 
     :host-context(.night) & {
         background-color: $darkTheme_grey_1;
         border-color: $darkTheme_grey_5;
         color: $darkTheme_grey_6;
-
-        a {
-            color: $polar_grey_4;
-        }
 
         &.success {
             background-color: $darkTheme_night_green;
@@ -54,50 +53,39 @@
         }
     }
 
-    .icon {
-        display: unset;
-        margin: 0;
+    .gate {
+        color: $polar_grey_1;
+        font-size: 30px;
+        margin-left: 10px;
+        cursor: pointer;
+
+        :host-context(.night) & {
+            color: $darkTheme_grey_6;
+        }
+
+        &:hover {
+            color: grey !important;
+        }
     }
 
-    .ellipsis {
+    .name {
+        font-size: 1em;
+        flex: 1;
+        font-weight: bold;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin: 0 10px;
     }
 
-    a {
-        color: $polar_grey_1;
-
-        &:hover {
-            color: $cds_color_teal;
-        }
+    .duration {
+        font-size: 0.8em;
+        margin-right: 10px;
     }
-
-    .title {
-        height: 100%;
+    
+    .durationTooltip {
         display: flex;
-        flex-direction: row;
-        font-size: 1em;
-        padding: 2px 4px 0 4px;
-        align-items: center;
-        text-align: center;
-
-        .name {
-            flex: 1;
-            font-weight: bold;
-        }
-
-        .count {
-            padding: 0 0px 0 2px;
-            text-align: right;
-        }
-    }
-
-    .details {
-        flex: 1;
-        display: flex;
-        flex-direction: row;
-        justify-content: flex-end;
+        flex-direction: column;
     }
 
     &.success {

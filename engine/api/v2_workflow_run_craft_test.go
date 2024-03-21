@@ -41,7 +41,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		UserID:       admin.ID,
 		ProjectKey:   proj.Key,
-		Status:       sdk.StatusCrafting,
+		Status:       sdk.V2WorkflowRunStatusCrafting,
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		RunNumber:    0,
@@ -76,7 +76,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.StatusFail, wrDB.Status)
+	require.Equal(t, sdk.V2WorkflowRunStatusFail, wrDB.Status)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(wrInfos))
@@ -103,7 +103,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		UserID:       admin.ID,
 		ProjectKey:   proj.Key,
-		Status:       sdk.StatusCrafting,
+		Status:       sdk.V2WorkflowRunStatusCrafting,
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		RunNumber:    0,
@@ -157,7 +157,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.StatusFail, wrDB.Status)
+	require.Equal(t, sdk.V2WorkflowRunStatusFail, wrDB.Status)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(wrInfos))
@@ -184,7 +184,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		UserID:       admin.ID,
 		ProjectKey:   proj.Key,
-		Status:       sdk.StatusCrafting,
+		Status:       sdk.V2WorkflowRunStatusCrafting,
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		RunNumber:    0,
@@ -278,7 +278,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	t.Logf("%+v", wrDB.WorkflowData.Actions)
-	require.Equal(t, sdk.StatusBuilding, wrDB.Status)
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos))
@@ -309,7 +309,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	wr := sdk.V2WorkflowRun{
 		UserID:       admin.ID,
 		ProjectKey:   proj.Key,
-		Status:       sdk.StatusCrafting,
+		Status:       sdk.V2WorkflowRunStatusCrafting,
 		VCSServerID:  vcsProject.ID,
 		RepositoryID: repo.ID,
 		RunNumber:    0,
@@ -444,7 +444,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, wrDB.Status, sdk.StatusBuilding)
+	require.Equal(t, wrDB.Status, sdk.V2WorkflowRunStatusBuilding)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(wrInfos))

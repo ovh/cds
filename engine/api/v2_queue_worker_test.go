@@ -58,7 +58,7 @@ func TestWorkerUnregistered(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -97,7 +97,7 @@ hatcheries:
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusScheduling,
+		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
@@ -133,7 +133,7 @@ func TestWorkerRefresh(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -172,7 +172,7 @@ hatcheries:
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusScheduling,
+		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
@@ -226,7 +226,7 @@ func TestWorkerTakeJobHandler(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -266,7 +266,7 @@ hatcheries:
 	jobRunSuccess := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		JobID:         "myjob",
 		ModelType:     "docker",
 		Region:        "default",
@@ -298,7 +298,7 @@ hatcheries:
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusScheduling,
+		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,
@@ -323,7 +323,7 @@ hatcheries:
 	var takeJob sdk.V2TakeJobResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &takeJob))
 
-	require.Equal(t, sdk.StatusBuilding, takeJob.RunJob.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusBuilding, takeJob.RunJob.Status)
 	require.Equal(t, workerName, takeJob.RunJob.WorkerName)
 
 	wkDB, err := worker_v2.LoadByID(ctx, db, wkr.ID)
@@ -419,7 +419,7 @@ func TestWorkerRegister(t *testing.T) {
 
 	wkfName := sdk.RandomString(10)
 	wr := sdk.V2WorkflowRun{
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		ProjectKey:   proj.Key,
 		UserID:       admin.ID,
 		WorkflowName: wkfName,
@@ -465,7 +465,7 @@ hatcheries:
 	jobRun := sdk.V2WorkflowRunJob{
 		ProjectKey:    proj.Key,
 		UserID:        admin.ID,
-		Status:        sdk.StatusScheduling,
+		Status:        sdk.V2WorkflowRunJobStatusScheduling,
 		ModelType:     "docker",
 		Region:        "default",
 		WorkflowRunID: wr.ID,

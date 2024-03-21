@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { from, interval, lastValueFrom, Subscription } from "rxjs";
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "app/model/v2.workflow.run.model";
 import { dump } from "js-yaml";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { PreferencesState } from "app/store/preferences.state";
@@ -15,6 +14,8 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { NavigationState } from "app/store/navigation.state";
 import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
+import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -227,7 +228,8 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
                 this.selectedHookName = data;
                 break;
             case 'gate':
-                this.selectedJobGate = { gate: data.gateName, job: data.gateChild };
+                const node = <GraphNode>(data);
+                this.selectedJobGate = { gate: node.job.gate, job: node.name };
                 break;
             case 'result':
                 this.selectedRunResult = data;

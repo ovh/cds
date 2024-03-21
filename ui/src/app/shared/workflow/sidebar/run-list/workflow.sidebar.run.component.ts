@@ -15,13 +15,13 @@ import { Workflow } from 'app/model/workflow.model';
 import { WorkflowRunSummary, WorkflowRunTags } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { ProjectState } from 'app/store/project.state';
 import { CleanWorkflowRun, ClearListRuns, SetWorkflowRuns } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
 import { Subscription } from 'rxjs';
 import { finalize, first } from 'rxjs/operators';
+import { DurationService } from '../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
 
 const limitWorkflowRun = 30;
 

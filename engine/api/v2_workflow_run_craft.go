@@ -128,7 +128,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	ctx = context.WithValue(ctx, cdslog.Project, run.ProjectKey)
 	ctx = context.WithValue(ctx, cdslog.Workflow, run.WorkflowName)
 
-	if run.Status != sdk.StatusCrafting {
+	if run.Status != sdk.V2WorkflowRunStatusCrafting {
 		return nil
 	}
 
@@ -279,7 +279,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	defer tx.Rollback() // nolint
 
-	run.Status = sdk.StatusBuilding
+	run.Status = sdk.V2WorkflowRunStatusBuilding
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
 	}
@@ -590,14 +590,14 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 	}
 	defer tx.Rollback() // nolint
 
-	var status = sdk.StatusSkipped
+	status := sdk.V2WorkflowRunStatusSkipped
 
 	for _, msg := range messages {
 		if err := workflow_v2.InsertRunInfo(ctx, tx, &msg); err != nil {
 			return err
 		}
-		if msg.Level != sdk.WorkflowRunInfoLevelWarning && status == sdk.StatusSkipped {
-			status = sdk.StatusFail
+		if msg.Level != sdk.WorkflowRunInfoLevelWarning && status == sdk.V2WorkflowRunStatusSkipped {
+			status = sdk.V2WorkflowRunStatusFail
 		}
 	}
 
