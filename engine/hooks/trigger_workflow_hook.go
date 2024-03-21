@@ -56,7 +56,10 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 			AnayzedProjectKeys:  sdk.StringSlice{},
 		}
 		for _, a := range hre.Analyses {
-			request.AnayzedProjectKeys = append(request.AnayzedProjectKeys, a.ProjectKey)
+			// Only retrieve hooks from project where analysis is OK
+			if a.Status == sdk.RepositoryAnalysisStatusSucceed {
+				request.AnayzedProjectKeys = append(request.AnayzedProjectKeys, a.ProjectKey)
+			}
 		}
 		request.AnayzedProjectKeys.Unique()
 		workflowHooks, err := s.Client.ListWorkflowToTrigger(ctx, request)

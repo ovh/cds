@@ -40,7 +40,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		return nil
 	} else {
 		// If operation status has not been updated through signkey callback
-		if hre.SigningKeyOperationStatus != sdk.OperationStatusDone {
+		if hre.SigningKeyOperationStatus != sdk.OperationStatusDone && hre.SigningKeyOperationStatus != sdk.OperationStatusError {
 			if time.Now().UnixMilli()-hre.LastUpdate > RetryDelayMilli {
 				// Call CDS api to get operation
 				ope, err := s.Client.RetrieveHookEventSigningKeyOperation(ctx, hre.SigningKeyOperation)
@@ -51,17 +51,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 				if ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
 					return nil
 				}
-				// Operation in error : remove uuid, return error and it will be retried
+				hre.SigningKeyOperationStatus = ope.Status
 				if ope.Status == sdk.OperationStatusError {
-					hre.SigningKeyOperation = ""
-					if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-						return err
-					}
-					hre.SigningKeyOperationStatus = sdk.OperationStatusError
-					return ope.Error.ToError()
-				}
-				if ope.Status == sdk.OperationStatusDone {
-					hre.SigningKeyOperationStatus = sdk.OperationStatusDone
+					hre.LastError = ope.Error.ToError().Error()
+				} else if ope.Status == sdk.OperationStatusDone {
 					hre.SignKey = ope.Setup.Checkout.Result.SignKeyID
 					hre.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
 					hre.SemverNext = ope.Setup.Checkout.Result.Semver.Next
@@ -81,6 +74,19 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		}
 	}
 
+	// Operation in error stop the hook
+	if hre.SigningKeyOperationStatus == sdk.OperationStatusError {
+		hre.Status = sdk.HookEventStatusError
+		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+			return err
+		}
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Continue to next step
 	hre.Status = sdk.HookEventStatusWorkflow
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err

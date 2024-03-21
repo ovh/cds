@@ -91,6 +91,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 						a.Status = callback.AnalysisCallback.AnalysisStatus
 						hre.ModelUpdated = append(hre.ModelUpdated, callback.AnalysisCallback.Models...)
 						hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.AnalysisCallback.Workflows...)
+
 						if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 							return err
 						}
@@ -107,6 +108,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			hre.SemverCurrent = callback.SigningKeyCallback.SemverCurrent
 			hre.SemverNext = callback.SigningKeyCallback.SemverNext
 			hre.SigningKeyOperationStatus = callback.SigningKeyCallback.Status
+
 			if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
 				// event on error commit unverified
 				hre.Status = sdk.HookEventStatusSkipped
@@ -119,6 +121,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			} else if callback.SigningKeyCallback.Error != "" {
 				hre.LastError = "Unable to get signing key: " + callback.SigningKeyCallback.Error
 				hre.NbErrors++
+				hre.Status = sdk.HookEventStatusError
 			}
 		} else {
 			return sdk.Errorf("missing analysis callback data")

@@ -246,6 +246,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		Workflow  string `json:"workflow" cli:"workflow"`
 		RunNumber int64  `json:"run_number" cli:"run_number"`
 		RunID     string `json:"run_id" cli:"run_id"`
+		Error     string `json:"error" cli:"error"`
 	}
 
 	retry := 0
@@ -264,8 +265,10 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 			}
 			return nil, fmt.Errorf("workflow did not start")
 		}
-		if event.Status == sdk.HookEventStatusError {
-			return nil, fmt.Errorf(event.LastError)
+		if event.Status == sdk.HookEventStatusError || event.Status == sdk.HookEventStatusSkipped {
+			return run{
+				Error: event.LastError,
+			}, nil
 		}
 		retry++
 		if retry > 90 {
