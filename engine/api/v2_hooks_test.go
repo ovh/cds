@@ -341,6 +341,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 		RepositoryName:      repo.Name,
 		VCSName:             vcs.Name,
 		Ref:                 "refs/heads/master",
+		Sha:                 "123456",
 		RepositoryEventName: sdk.WorkflowHookEventPush,
 		AnayzedProjectKeys:  []string{p.Key},
 		Models: []sdk.EntityFullName{
