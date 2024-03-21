@@ -177,6 +177,7 @@ type AnalysisRequest struct {
 	Ref           string `json:"ref"`
 	Commit        string `json:"commit"`
 	HookEventUUID string `json:"hook_event_uuid"`
+	UserID        string `json:"user_id"`
 }
 
 type AnalysisResponse struct {

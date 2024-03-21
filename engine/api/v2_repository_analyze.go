@@ -250,6 +250,11 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				if uc != nil {
 					u = uc.AuthConsumerUser.AuthentifiedUser
 				}
+			} else if isHooks(ctx) && analysis.UserID != "" {
+				u, err = user.LoadByID(ctx, api.mustDB(), analysis.UserID)
+				if err != nil {
+					return err
+				}
 			}
 
 			createAnalysis := createAnalysisRequest{

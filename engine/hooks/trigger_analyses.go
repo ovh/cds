@@ -118,6 +118,7 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 		Ref:           hre.ExtractData.Ref,
 		Commit:        hre.ExtractData.Commit,
 		HookEventUUID: hre.UUID,
+		UserID:        hre.UserID,
 	}
 	resp, err := s.Client.ProjectRepositoryAnalysis(ctx, analyze)
 	if err != nil {
