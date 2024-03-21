@@ -669,27 +669,35 @@ skipEntity:
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve HEAD entity with same name on same branch"))
 		}
+		entityInserted := false
 		if existingHeadEntity != nil {
 			// Copy it for the current commit
 			e.Data = existingHeadEntity.Data
 			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
 			}
-			continue
+			entityInserted = true
+		} else {
+			// If head entity do not exist, check default branch
+			defaultBranchHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, defaultBranch.ID, e.Type, e.Name, "HEAD")
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve latest entity on default branch with same name"))
+			}
+			if defaultBranchHeadEntity != nil {
+				// Copy it for the current commit
+				e.Data = defaultBranchHeadEntity.Data
+				if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+				}
+				entityInserted = true
+			}
 		}
 
-		// If head entity do not exist, check default branch
-		defaultBranchHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, defaultBranch.ID, e.Type, e.Name, "HEAD")
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve latest entity on default branch with same name"))
-		}
-		if defaultBranchHeadEntity != nil {
-			// Copy it for the current commit
-			e.Data = defaultBranchHeadEntity.Data
-			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+		// Insert workflow hook
+		if entityInserted && e.Type == sdk.EntityTypeWorkflow {
+			if err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch.ID); err != nil {
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
-			continue
 		}
 	}
 
