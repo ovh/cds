@@ -66,6 +66,7 @@ type HookSigninKeyCallback struct {
 type HookAnalysisCallback struct {
 	AnalysisID     string           `json:"analysis_id"`
 	AnalysisStatus string           `json:"analysis_status"`
+	Error          string           `json:"error"`
 	Models         []EntityFullName `json:"models"`
 	Workflows      []EntityFullName `json:"workflows"`
 }
@@ -143,6 +144,7 @@ type HookRepositoryEventAnalysis struct {
 	AnalyzeID  string `json:"analyze_id"`
 	Status     string `json:"status"`
 	ProjectKey string `json:"project_key"`
+	Error      string `json:"error"`
 }
 
 type HookRetrieveSignKeyRequest struct {

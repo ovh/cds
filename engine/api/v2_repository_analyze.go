@@ -524,6 +524,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}
 
 	userRoles := make(map[string]bool)
+	skippedEntities := make([]sdk.EntityWithObject, 0)
 	skippedFiles := make(sdk.StringSlice, 0)
 
 	// For each entities, check user role for each entities
@@ -554,6 +555,7 @@ skipEntity:
 				} else {
 					skippedFiles = append(skippedFiles, "User doesn't have the permission to manage "+e.Type)
 					analysisEntity.Status = sdk.RepositoryAnalysisStatusSkipped
+					skippedEntities = append(skippedEntities, *e)
 					continue skipEntity
 				}
 				break
@@ -625,27 +627,30 @@ skipEntity:
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
 		}
 		eventInsertedEntities = append(eventInsertedEntities, e.Entity)
-		// If data is the same as the head of the current branch, do not notified a new entity
+
+		// If it's a new entity or an update, add it to the list of entity updated (for hooks)
 		if entityUpdated {
 			entitiesUpdated = append(entitiesUpdated, e.Entity)
 		}
 
 		// If current commit is HEAD, create/update HEAD entity
 		if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == e.Commit) || (currentAnalysisTag.Sha == e.Commit) || currentAnalysisTag.Sha == "" {
-			newHead := e.Entity
-			newHead.ID = ""
-			newHead.Commit = "HEAD"
-			if existingHeadEntity != nil {
-				newHead.ID = existingHeadEntity.ID
-				if err := entity.Update(ctx, tx, &newHead); err != nil {
-					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to update HEAD entity %s of type %s", e.Name, e.Type))
+			if entityUpdated {
+				newHead := e.Entity
+				newHead.ID = ""
+				newHead.Commit = "HEAD"
+				if existingHeadEntity != nil {
+					newHead.ID = existingHeadEntity.ID
+					if err := entity.Update(ctx, tx, &newHead); err != nil {
+						return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to update HEAD entity %s of type %s", e.Name, e.Type))
+					}
+					eventUpdatedEntities = append(eventUpdatedEntities, newHead)
+				} else {
+					if err := entity.Insert(ctx, tx, &newHead); err != nil {
+						return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save HEAD entity %s of type %s", e.Name, e.Type))
+					}
+					eventInsertedEntities = append(eventInsertedEntities, newHead)
 				}
-				eventUpdatedEntities = append(eventUpdatedEntities, newHead)
-			} else {
-				if err := entity.Insert(ctx, tx, &newHead); err != nil {
-					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save HEAD entity %s of type %s", e.Name, e.Type))
-				}
-				eventInsertedEntities = append(eventInsertedEntities, newHead)
 			}
 		}
 
@@ -654,6 +659,37 @@ skipEntity:
 			if err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch.ID); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
+		}
+	}
+
+	// For skipped entities, retrieve definition on head or default branch
+	for _, e := range skippedEntities {
+		// Check if head entity exist
+		existingHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, "HEAD")
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve HEAD entity with same name on same branch"))
+		}
+		if existingHeadEntity != nil {
+			// Copy it for the current commit
+			e.Data = existingHeadEntity.Data
+			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+			}
+			continue
+		}
+
+		// If head entity do not exist, check default branch
+		defaultBranchHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, defaultBranch.ID, e.Type, e.Name, "HEAD")
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve latest entity on default branch with same name"))
+		}
+		if defaultBranchHeadEntity != nil {
+			// Copy it for the current commit
+			e.Data = defaultBranchHeadEntity.Data
+			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+			}
+			continue
 		}
 	}
 
@@ -885,6 +921,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 		AnalysisCallback: &sdk.HookAnalysisCallback{
 			AnalysisStatus: analysis.Status,
 			AnalysisID:     analysis.ID,
+			Error:          analysis.Data.Error,
 			Models:         make([]sdk.EntityFullName, 0),
 			Workflows:      make([]sdk.EntityFullName, 0),
 		},
