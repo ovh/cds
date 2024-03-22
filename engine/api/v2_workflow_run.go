@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -1036,6 +1037,11 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
+			if err != nil {
+				return err
+			}
+
 			var workflowRef, workflowCommit string
 			if runRequest.WorkflowBranch != "" {
 				workflowRef = sdk.GitRefBranchPrefix + runRequest.WorkflowBranch
@@ -1049,18 +1055,32 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				workflowCommit = runRequest.Sha
 			} else {
 				// Retrieve default branch
-				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
-				if err != nil {
-					return err
-				}
 				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
 				if err != nil {
 					return err
 				}
 				workflowRef = defaultBranch.ID
+				if workflowCommit == "" || workflowCommit == "HEAD" {
+					workflowCommit = defaultBranch.LatestCommit
+				}
 			}
-			if workflowCommit == "" {
-				workflowCommit = "HEAD"
+			if workflowCommit == "" || workflowCommit == "HEAD" {
+				switch {
+				case strings.HasPrefix(workflowRef, sdk.GitRefBranchPrefix):
+					// Retrieve branch to get commit
+					b, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(workflowRef, sdk.GitRefBranchPrefix)})
+					if err != nil {
+						return err
+					}
+					workflowCommit = b.LatestCommit
+				default:
+					// Retrieve branch to get commit
+					t, err := vcsClient.Tag(ctx, repo.Name, strings.TrimPrefix(workflowRef, sdk.GitRefTagPrefix))
+					if err != nil {
+						return err
+					}
+					workflowCommit = t.Hash
+				}
 			}
 
 			hookRequest := sdk.HookManulWorkflowRun{
