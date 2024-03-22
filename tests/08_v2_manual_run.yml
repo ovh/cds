@@ -81,14 +81,14 @@ testcases:
       delay: 12
 
     - name: Save current git commit
-      script: git rev-parse HEAD
+      script: cd /tmp/repos/{{.git_repo}} && git rev-parse HEAD
       vars:
         commitToRun:
           from: result.systemout
 
-    - name: Update workflow
-      steps:
-      - type: v2_push_files_on_repo
+- name: Update workflow
+  steps:
+    - type: v2_push_files_on_repo
       git_repo: "{{.git_repo}}"
       git_host: "{{.git.host}}"
       git_user: "{{.git.user}}"
