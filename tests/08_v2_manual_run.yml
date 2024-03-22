@@ -117,7 +117,9 @@ testcases:
         - result.systemoutjson ShouldHaveLength 3
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success" 
-        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"                     
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"    
+      retry: 10
+      delay: 12                   
 
     - name: Run workflow on previous commit
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --branch master --commit {{.commitToRun}}"
