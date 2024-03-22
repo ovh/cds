@@ -1,0 +1,149 @@
+name: Manual run
+vars:
+  cds_project: "ITV2MANUAL"
+  git_repo: "it_v2_manual"
+  cds_workflow: "WorkflowManual"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+
+- name: Push workflow file
+  steps:
+    - type: v2_push_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:buster
+        workflows/checkout.yaml:
+          name: {{.cds_workflow}}
+          jobs:
+            init:
+              runs-on: "{{.worker_model}}"
+              steps:
+                - id: checkout
+                  uses: actions/checkout
+                - id: gitvariables
+                  run: |-
+                    #!/bin/bash -x
+                    env | grep GIT
+
+    - name: Check CDS project analyses status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 10
+      delay: 12
+
+    - name: Save current git commit
+      script: git rev-parse HEAD
+      vars:
+        commitToRun:
+          from: result.systemout
+
+    - name: Update workflow
+      steps:
+      - type: v2_push_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        workflows/checkout.yaml:
+          name: {{.cds_workflow}}
+          jobs:
+            init:
+              runs-on: "{{.worker_model}}"
+              steps:
+                - id: checkout
+                  uses: actions/checkout
+                - id: gitvariables
+                  run: |-
+                    #!/bin/bash -x
+                    env | grep GIT  
+                - id: newstep
+                  run: exit 1
+
+    - name: Check CDS project analyses status after update
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 3
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success" 
+        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"                     
+
+    - name: Run workflow on previous commit
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --branch master --commit {{.commitToRun}}"
+   
+    - name: Check that the CDS workflow has at least one execution and is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 1
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+      retry: 30
+      delay: 5
+      vars:
+        runIdentifier:
+          from: result.systemoutjson.systemoutjson0.id
+
+    - name: Download logs
+      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}
+
+    - name: Check checkout log content
+      script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
+    - name: Check checkout log content 2
+      script: "cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout branch master\""  
+    - name: Check commit
+      script: "cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep \"{{.commitToRun}}\""
+    - name: Check that newstep is not here
+      script: ls {{.cds_workflow}}-1-1-init*.yml | wc -l
+      assertions:
+        - result.systemout ShouldEqual "2" 
+   
