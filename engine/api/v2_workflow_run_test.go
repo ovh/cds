@@ -1434,8 +1434,9 @@ jobs:
 
 	uri := api.Router.GetRouteV2("POST", api.postWorkflowRunV2Handler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri+"?branch=master", map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, map[string]interface{}{
 		"branch": "main",
+		"sha":    "123456",
 	})
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
