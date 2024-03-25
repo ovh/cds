@@ -92,6 +92,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 				Ref:                  wh.Ref,
 				TargetBranch:         wh.Data.TargetBranch,
 				ModelFullName:        wh.Data.Model,
+				PathFilters:          wh.Data.PathFilter,
 			}
 			if wh.Type == sdk.WorkflowHookTypeWorkflow || wh.Type == sdk.WorkflowHookTypeWorkerModel {
 				w.TargetCommit = "HEAD"
@@ -101,5 +102,8 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 	}
 
 	hre.Status = sdk.HookEventStatusSignKey
+	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+		return err
+	}
 	return s.triggerGetSigningKey(ctx, hre)
 }

@@ -1256,7 +1256,13 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 			return keyId, analyzeError, err
 		}
 
-		ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, vcsProject, repoWithSecret.Name, repoWithSecret.CloneURL, analysis.Commit, analysis.Ref)
+		opts := sdk.OperationCheckout{
+			Commit:         analysis.Commit,
+			CheckSignature: true,
+			ProcessSemver:  false,
+			GetChangeSet:   false,
+		}
+		ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, vcsProject, repoWithSecret.Name, repoWithSecret.CloneURL, analysis.Ref, opts)
 		if err != nil {
 			return keyId, analyzeError, err
 		}

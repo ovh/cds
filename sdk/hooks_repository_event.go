@@ -43,6 +43,7 @@ const (
 	HookEventStatusSkipped       = "Skipped"
 
 	HookEventWorkflowStatusScheduler = "Scheduled"
+	HookEventWorkflowStatusSkipped   = "Skipped"
 	HookEventWorkflowStatusDone      = "Done"
 )
 
@@ -56,11 +57,12 @@ type HookEventCallback struct {
 }
 
 type HookSigninKeyCallback struct {
-	Status        OperationStatus `json:"status"`
-	SignKey       string          `json:"sign_key"`
-	SemverCurrent string          `json:"semver_current"`
-	SemverNext    string          `json:"semver_next"`
-	Error         string          `json:"error"`
+	Status        OperationStatus                    `json:"status"`
+	SignKey       string                             `json:"sign_key"`
+	SemverCurrent string                             `json:"semver_current"`
+	SemverNext    string                             `json:"semver_next"`
+	ChangeSets    map[string]OperationChangetsetFile `json:"changesets"`
+	Error         string                             `json:"error"`
 }
 
 type HookAnalysisCallback struct {
@@ -107,19 +109,20 @@ type HookRepositoryEvent struct {
 }
 
 type HookRepositoryEventWorkflow struct {
-	ProjectKey           string `json:"project_key"`
-	VCSIdentifier        string `json:"vcs_identifier"`
-	RepositoryIdentifier string `json:"repository_identifier"`
-	WorkflowName         string `json:"workflow_name"`
-	EntityID             string `json:"entity_id"`
-	Ref                  string `json:"ref"`
-	Type                 string `json:"type"`
-	Status               string `json:"status"`
-	TargetBranch         string `json:"target_branch,omitempty"`
-	TargetCommit         string `json:"target_commit,omitempty"`
-	ModelFullName        string `json:"model,omitempty"`
-	RunID                string `json:"run_id,omitempty"`
-	RunNumber            int64  `json:"run_number,omitempty"`
+	ProjectKey           string   `json:"project_key"`
+	VCSIdentifier        string   `json:"vcs_identifier"`
+	RepositoryIdentifier string   `json:"repository_identifier"`
+	WorkflowName         string   `json:"workflow_name"`
+	EntityID             string   `json:"entity_id"`
+	Ref                  string   `json:"ref"`
+	Type                 string   `json:"type"`
+	Status               string   `json:"status"`
+	TargetBranch         string   `json:"target_branch,omitempty"`
+	TargetCommit         string   `json:"target_commit,omitempty"`
+	ModelFullName        string   `json:"model,omitempty"`
+	RunID                string   `json:"run_id,omitempty"`
+	RunNumber            int64    `json:"run_number,omitempty"`
+	PathFilters          []string `json:"path_filters,omitempty"`
 }
 
 type HookRepositoryEventExtractData struct {

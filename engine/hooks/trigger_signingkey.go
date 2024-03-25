@@ -52,6 +52,14 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 					return nil
 				}
 				hre.SigningKeyOperationStatus = ope.Status
+
+				if len(ope.Setup.Checkout.Result.Files) > 0 && len(hre.ExtractData.Paths) == 0 {
+					hre.ExtractData.Paths = make([]string, 0, len(ope.Setup.Checkout.Result.Files))
+					for _, v := range ope.Setup.Checkout.Result.Files {
+						hre.ExtractData.Paths = append(hre.ExtractData.Paths, v.Filename)
+					}
+				}
+
 				if ope.Status == sdk.OperationStatusError {
 					hre.LastError = ope.Error.ToError().Error()
 				} else if ope.Status == sdk.OperationStatusDone {
@@ -77,6 +85,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 	// Operation in error stop the hook
 	if hre.SigningKeyOperationStatus == sdk.OperationStatusError {
 		hre.Status = sdk.HookEventStatusError
+		for i := range hre.WorkflowHooks {
+			wh := &hre.WorkflowHooks[i]
+			wh.Status = sdk.HookEventWorkflowStatusSkipped
+		}
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}

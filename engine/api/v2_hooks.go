@@ -100,7 +100,14 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 			if vcsProjectWithSecret.Auth.SSHKeyName == "" {
 				cloneURL = repo.HTTPCloneURL
 			}
-			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, hookRetrieveSignKey.Commit, hookRetrieveSignKey.Ref)
+
+			opts := sdk.OperationCheckout{
+				Commit:         hookRetrieveSignKey.Commit,
+				CheckSignature: true,
+				ProcessSemver:  true,
+				GetChangeSet:   true,
+			}
+			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, hookRetrieveSignKey.Ref, opts)
 			if err != nil {
 				return err
 			}
@@ -134,6 +141,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 				if ope.Status == sdk.OperationStatusDone {
 					callback.SigningKeyCallback.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
 					callback.SigningKeyCallback.SemverNext = ope.Setup.Checkout.Result.Semver.Next
+					callback.SigningKeyCallback.ChangeSets = ope.Setup.Checkout.Result.Files
 
 					if ope.Setup.Checkout.Result.CommitVerified {
 						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
@@ -297,20 +305,18 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 		case sdk.WorkflowHookEventPush:
 			validBranch := sdk.IsValidHookRefs(ctx, w.Data.BranchFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefBranchPrefix))
 			validTag := sdk.IsValidHookRefs(ctx, w.Data.TagFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefTagPrefix))
-			validPath := sdk.IsValidHookPath(ctx, w.Data.PathFilter, hookRequest.Paths)
-			if validBranch && validPath && validTag {
+			if validBranch && validTag {
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue
 		case sdk.WorkflowHookEventPullRequest, sdk.WorkflowHookEventPullRequestComment:
 			validBranch := sdk.IsValidHookRefs(ctx, w.Data.BranchFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefBranchPrefix))
 			validTag := sdk.IsValidHookRefs(ctx, w.Data.TagFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefTagPrefix))
-			validPath := sdk.IsValidHookPath(ctx, w.Data.PathFilter, hookRequest.Paths)
 			validType := true
 			if len(w.Data.TypesFilter) > 0 {
 				validType = sdk.IsInArray(hookRequest.RepositoryEventType, w.Data.TypesFilter)
 			}
-			if validBranch && validPath && validTag && validType {
+			if validBranch && validTag && validType {
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue

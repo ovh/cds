@@ -31,9 +31,9 @@ export class WorkflowEvent {
     hook_type: string
     ref: string;
     event_name: string;
-    sha: String;
+    sha: string;
     payload: string;
-    entity_updated: String;
+    entity_updated: string;
 }
 
 export class WorkflowData {

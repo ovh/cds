@@ -109,6 +109,13 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			hre.SemverNext = callback.SigningKeyCallback.SemverNext
 			hre.SigningKeyOperationStatus = callback.SigningKeyCallback.Status
 
+			if len(callback.SigningKeyCallback.ChangeSets) > 0 && len(hre.ExtractData.Paths) == 0 {
+				hre.ExtractData.Paths = make([]string, 0, len(callback.SigningKeyCallback.ChangeSets))
+				for _, v := range callback.SigningKeyCallback.ChangeSets {
+					hre.ExtractData.Paths = append(hre.ExtractData.Paths, v.Filename)
+				}
+			}
+
 			if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
 				// event on error commit unverified
 				hre.Status = sdk.HookEventStatusSkipped
@@ -128,6 +135,13 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		}
 	default:
 		return nil
+	}
+
+	if hre.Status == sdk.HookEventStatusError {
+		for i := range hre.WorkflowHooks {
+			wh := &hre.WorkflowHooks[i]
+			wh.Status = sdk.HookEventWorkflowStatusSkipped
+		}
 	}
 
 	if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
