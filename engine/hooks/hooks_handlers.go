@@ -50,7 +50,7 @@ func (s *Service) postRepositoryEventAnalysisCallbackHandler() service.Handler {
 
 func (s *Service) workflowManualHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var runRequest sdk.HookManulWorkflowRun
+		var runRequest sdk.HookManualWorkflowRun
 		if err := service.UnmarshalBody(r, &runRequest); err != nil {
 			return sdk.WithStack(err)
 		}
@@ -62,7 +62,7 @@ func (s *Service) workflowManualHandler() service.Handler {
 	}
 }
 
-func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.HookManulWorkflowRun) (*sdk.HookRepositoryEvent, error) {
+func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.HookManualWorkflowRun) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(runRequest.VCSServer, runRequest.Repository)
 	if s.Dao.FindRepository(ctx, repoKey) == nil {
 		if _, err := s.Dao.CreateRepository(ctx, runRequest.VCSType, runRequest.VCSServer, runRequest.Repository); err != nil {

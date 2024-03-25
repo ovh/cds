@@ -945,7 +945,7 @@ type V2QueueJobInfo struct {
 	Model  V2WorkerModel    `json:"model"`
 }
 
-type HookManulWorkflowRun struct {
+type HookManualWorkflowRun struct {
 	UserRequest V2WorkflowRunManualRequest
 	Project     string
 	VCSType     string

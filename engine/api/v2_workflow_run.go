@@ -1083,7 +1083,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				}
 			}
 
-			hookRequest := sdk.HookManulWorkflowRun{
+			hookRequest := sdk.HookManualWorkflowRun{
 				UserRequest: runRequest,
 				Project:     proj.Key,
 				VCSType:     vcsProject.Type,
