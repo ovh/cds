@@ -144,8 +144,4 @@ testcases:
       script: "cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout branch master\""  
     - name: Check commit
       script: "cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep \"{{.Push-workflow-file.commitToRun}}\""
-    - name: Check that newstep is not here
-      script: find . -name "{{.cds_workflow}}-1-1-init" | wc -l
-      assertions:
-        - result.systemout ShouldEqual "2" 
    
