@@ -130,6 +130,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 					HookEventUUID:      hookRetrieveSignKey.HookEventUUID,
 					SigningKeyCallback: &sdk.HookSigninKeyCallback{},
 				}
+				callback.SigningKeyCallback.Status = ope.Status
 				if ope.Status == sdk.OperationStatusDone {
 					callback.SigningKeyCallback.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
 					callback.SigningKeyCallback.SemverNext = ope.Setup.Checkout.Result.Semver.Next
@@ -141,7 +142,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 						callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 					}
 				} else {
-					callback.SigningKeyCallback.Error = ope.Error.Message + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
+					callback.SigningKeyCallback.Error = fmt.Sprintf("%v (Operation ID: %s)", ope.Error.From, ope.UUID)
 				}
 
 				if _, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
@@ -242,7 +243,7 @@ func LoadWorkflowHooksWithModelUpdate(ctx context.Context, db gorp.SqlExecutor, 
 		return nil, err
 	}
 	for _, h := range entitiesHooks {
-		if h.Ref == hookRequest.Ref {
+		if h.Ref == hookRequest.Ref && hookRequest.Sha == h.Commit {
 			filteredWorkflowHooks = append(filteredWorkflowHooks, h)
 		}
 	}
@@ -263,7 +264,7 @@ func LoadWorkflowHooksWithWorkflowUpdate(ctx context.Context, db gorp.SqlExecuto
 			return nil, err
 		}
 		// check of event come from the right branch
-		if hookRequest.Ref == h.Ref {
+		if hookRequest.Ref == h.Ref && hookRequest.Sha == h.Commit {
 			filteredWorkflowHooks = append(filteredWorkflowHooks, *h)
 		}
 	}
@@ -286,7 +287,7 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 		// If event && workflow declaration are on the same repo
 		if w.VCSName == hookRequest.VCSName && w.RepositoryName == hookRequest.RepositoryName {
 			// Only get workflow configuration from current branch
-			if w.Ref != hookRequest.Ref {
+			if w.Ref != hookRequest.Ref || w.Commit != hookRequest.Sha {
 				continue
 			}
 		}

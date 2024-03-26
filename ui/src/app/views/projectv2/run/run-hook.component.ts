@@ -56,17 +56,7 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 
 	ngOnChanges(): void {
 		if (this.run) {
-			switch (this.hook) {
-				case 'workflow-update':
-					this.event = JSON.stringify(this.run.event['workflow-update'], null, 2);
-					break;
-				case 'model-update':
-					this.event = JSON.stringify(this.run.event['model-update'], null, 2);
-					break;
-				case 'push':
-					this.event = JSON.stringify(this.run.event.git, null, 2);
-					break;
-			}
+			this.event = JSON.stringify(this.run.event, null, 2);
 			this._cd.markForCheck();
 		}
 	}

@@ -141,6 +141,8 @@ func CleanURLParameter(u string) string {
 		u = "item-name"
 	case "runIdentifier":
 		u = "run-identifier"
+	case "eventID":
+		u = "event-id"
 	}
 	return u
 }

@@ -16,6 +16,7 @@ type HookListWorkflowRequest struct {
 	VCSName             string           `json:"vcs_name"`
 	RepositoryName      string           `json:"repository_name"`
 	Ref                 string           `json:"ref"`
+	Sha                 string           `json:"sha"`
 	Paths               []string         `json:"paths"`
 	RepositoryEventName string           `json:"repository_event"`
 	RepositoryEventType string           `json:"repository_event_type"`

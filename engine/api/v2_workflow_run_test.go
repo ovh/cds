@@ -1409,6 +1409,22 @@ jobs:
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
+	// Mock Hook
+	s, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/manual", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+
 	vars := map[string]string{
 		"projectKey":           proj.Key,
 		"vcsIdentifier":        vcsServer.ID,
@@ -1418,14 +1434,11 @@ jobs:
 
 	uri := api.Router.GetRouteV2("POST", api.postWorkflowRunV2Handler, vars)
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri+"?branch=master", map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, map[string]interface{}{
 		"branch": "main",
+		"sha":    "123456",
 	})
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 201, w.Code)
-
-	var wr sdk.V2WorkflowRun
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wr))
-	require.Equal(t, sdk.StatusCrafting, wr.Status)
 }

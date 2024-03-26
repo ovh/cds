@@ -67,7 +67,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		if err := s.processCheckout(ctx, &op); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, err.Error())
-			op.Error = sdk.ToOperationError(err)
+			op.Error = sdk.ToOperationError(sdk.FromGitToHumanError(sdk.ErrUnknownError, err))
 			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = nil
@@ -81,7 +81,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 				if err := s.processLoadFiles(ctx, &op); err != nil {
 					ctx := sdk.ContextWithStacktrace(ctx, err)
 					log.Error(ctx, err.Error())
-					op.Error = sdk.ToOperationError(err)
+					op.Error = sdk.ToOperationError(sdk.FromGitToHumanError(sdk.ErrUnknownError, err))
 					op.Status = sdk.OperationStatusError
 				} else {
 					op.Error = nil
@@ -97,7 +97,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		if err := s.processPush(ctx, &op); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, err.Error())
-			op.Error = sdk.ToOperationError(err)
+			op.Error = sdk.ToOperationError(sdk.FromGitToHumanError(sdk.ErrUnknownError, err))
 			op.Status = sdk.OperationStatusError
 		} else {
 			op.Error = nil

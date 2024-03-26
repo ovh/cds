@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -45,6 +46,65 @@ func (s *Service) postRepositoryEventAnalysisCallbackHandler() service.Handler {
 		s.Dao.enqueuedRepositoryEventCallbackIncr()
 		return nil
 	}
+}
+
+func (s *Service) workflowManualHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var runRequest sdk.HookManualWorkflowRun
+		if err := service.UnmarshalBody(r, &runRequest); err != nil {
+			return sdk.WithStack(err)
+		}
+		exec, err := s.handleManualWorkflowEvent(ctx, runRequest)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, exec, http.StatusAccepted)
+	}
+}
+
+func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.HookManualWorkflowRun) (*sdk.HookRepositoryEvent, error) {
+	repoKey := s.Dao.GetRepositoryMemberKey(runRequest.VCSServer, runRequest.Repository)
+	if s.Dao.FindRepository(ctx, repoKey) == nil {
+		if _, err := s.Dao.CreateRepository(ctx, runRequest.VCSType, runRequest.VCSServer, runRequest.Repository); err != nil {
+			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
+		}
+	}
+
+	request, _ := json.Marshal(runRequest.UserRequest)
+	extractedData := sdk.HookRepositoryEventExtractData{
+		CDSEventName:   sdk.WorkflowHookManual,
+		Commit:         runRequest.Commit,
+		Ref:            runRequest.Ref,
+		ProjectManual:  runRequest.Project,
+		WorkflowManual: runRequest.Workflow,
+	}
+
+	exec := &sdk.HookRepositoryEvent{
+		UUID:           sdk.UUID(),
+		UserID:         runRequest.UserID,
+		Username:       runRequest.Username,
+		EventName:      sdk.WorkflowHookManual,
+		VCSServerType:  runRequest.VCSType,
+		VCSServerName:  runRequest.VCSServer,
+		RepositoryName: runRequest.Repository,
+		Body:           request,
+		Created:        time.Now().UnixNano(),
+		Status:         sdk.HookEventStatusScheduled,
+		ExtractData:    extractedData,
+	}
+
+	// Save event
+	if err := s.Dao.SaveRepositoryEvent(ctx, exec); err != nil {
+		return nil, sdk.WrapError(err, "unable to create repository event %s", exec.GetFullName())
+	}
+
+	// Enqueue event
+	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
+		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
+	}
+	s.Dao.enqueuedRepositoryEventIncr()
+
+	return exec, nil
 }
 
 func (s *Service) repositoryHooksHandler() service.Handler {

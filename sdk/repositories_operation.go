@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"encoding/base64"
+	"strings"
 	"time"
 )
 
@@ -34,6 +35,10 @@ type OperationError struct {
 	Message    string `json:"message"`
 	StackTrace string `json:"stack_trace,omitempty"`
 	From       string `json:"from,omitempty"`
+}
+
+func FromGitToHumanError(targetError, err error) error {
+	return NewErrorFrom(targetError, strings.Split(err.Error(), "\n")[0])
 }
 
 func ToOperationError(err error) *OperationError {

@@ -247,6 +247,9 @@ type Configuration struct {
 	WorkflowV2 struct {
 		JobSchedulingTimeout int64 `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
+	Entity struct {
+		Retention string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
 		InfoCreationDisabled       string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
@@ -496,6 +499,14 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.StartupTime = time.Now()
 
+	if a.Config.Entity.Retention == "" {
+		a.Config.Entity.Retention = "24h"
+	}
+	entityRetention, err := time.ParseDuration(a.Config.Entity.Retention)
+	if err != nil {
+		return sdk.WrapError(err, "wrong entity retention %s, bad format.", a.Config.Entity.Retention)
+	}
+
 	// Checking downloadable binaries
 	if err := download.Init(ctx, a.getDownloadConf()); err != nil {
 		return sdk.WrapError(err, "unable to initialize downloadable binaries")
@@ -586,7 +597,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	// API Storage will be a public integration
-	var err error
 	a.SharedStorage, err = objectstore.Init(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("cannot initialize storage: %v", err)
@@ -926,7 +936,7 @@ func (a *API) Serve(ctx context.Context) error {
 		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, a.Cache, 5*time.Second)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "project.CleanAsCodeEntities", func(ctx context.Context) {
-		a.cleanProjectEntities(ctx, 1*time.Hour)
+		a.cleanProjectEntities(ctx, 1*time.Minute, entityRetention)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorkers", func(ctx context.Context) {

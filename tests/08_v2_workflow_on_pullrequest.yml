@@ -84,8 +84,8 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 10
-      delay: 12
+      retry: 20
+      delay: 5
 
 - name: Work on another git branch
   steps:
@@ -105,8 +105,8 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
-      retry: 10
-      delay: 12
+      retry: 20
+      delay: 5
 
 - name: Create Pull-Request
   steps:
@@ -140,8 +140,8 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 20
-      delay: 12
+      retry: 40
+      delay: 5
       vars:
         runIdentifier:
           from: result.systemoutjson.systemoutjson0.id

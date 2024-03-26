@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -20,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -720,31 +722,25 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
-			runEvent := sdk.V2WorkflowRunEvent{}
-			switch runRequest.HookType {
-			case sdk.WorkflowHookTypeWorkerModel:
-				runEvent.ModelUpdateTrigger = &sdk.ModelUpdateTrigger{
-					Ref:          runRequest.Ref,
-					ModelUpdated: runRequest.EntityUpdated,
+			// Check runrequest git information regarding workflow
+			if wk.Repository == nil || (wk.Repository.VCSServer == vcsProject.Name && wk.Repository.Name == repo.Name) {
+				// git info must match between workflow def and target repository
+				if (ref != runRequest.Ref && runRequest.Ref != "") || (commit != runRequest.Sha && runRequest.Sha != "") {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to use a different commit")
 				}
-			case sdk.WorkflowHookTypeWorkflow:
-				runEvent.WorkflowUpdateTrigger = &sdk.WorkflowUpdateTrigger{
-					Ref:             runRequest.Ref,
-					WorkflowUpdated: runRequest.EntityUpdated,
-				}
-			case sdk.WorkflowHookTypeRepository:
-				runEvent.GitTrigger = &sdk.GitTrigger{
-					Payload:       runRequest.Payload,
-					EventName:     runRequest.EventName,
-					Ref:           runRequest.Ref,
-					Sha:           runRequest.Sha,
-					SemverCurrent: runRequest.SemverCurrent,
-					SemverNext:    runRequest.SemverNext,
-				}
-			default:
-				return sdk.WrapError(sdk.ErrWrongRequest, "unknown event: %v", runRequest)
-
 			}
+
+			runEvent := sdk.V2WorkflowRunEvent{
+				HookType:      runRequest.HookType,
+				EventName:     runRequest.EventName,
+				Ref:           runRequest.Ref,
+				Sha:           runRequest.Sha,
+				SemverCurrent: runRequest.SemverCurrent,
+				SemverNext:    runRequest.SemverNext,
+				EntityUpdated: runRequest.EntityUpdated,
+				Payload:       runRequest.Payload,
+			}
+
 			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u)
 			if err != nil {
 				return err
@@ -1057,6 +1053,11 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WrapError(sdk.ErrForbidden, "no user consumer")
+			}
+
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 			vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
@@ -1069,7 +1070,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			}
 			workflowName := vars["workflow"]
 
-			var runRequest map[string]interface{}
+			var runRequest sdk.V2WorkflowRunManualRequest
 			if err := service.UnmarshalBody(req, &runRequest); err != nil {
 				return err
 			}
@@ -1089,47 +1090,90 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			ref, commit, err := api.getEntityRefFromQueryParams(ctx, req, pKey, vcsProject.Name, repo.Name)
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
 			if err != nil {
 				return err
 			}
 
-			workflowEntity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
+			var workflowRef, workflowCommit string
+			if runRequest.WorkflowBranch != "" {
+				workflowRef = sdk.GitRefBranchPrefix + runRequest.WorkflowBranch
+			} else if runRequest.WorkflowTag != "" {
+				workflowRef = sdk.GitRefTagPrefix + runRequest.WorkflowTag
+			} else if runRequest.Branch != "" {
+				workflowRef = sdk.GitRefBranchPrefix + runRequest.Branch
+				workflowCommit = runRequest.Sha
+			} else if runRequest.Tag != "" {
+				workflowRef = sdk.GitRefTagPrefix + runRequest.Tag
+				workflowCommit = runRequest.Sha
+			} else {
+				// Retrieve default branch
+				defaultBranch, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					return err
+				}
+				workflowRef = defaultBranch.ID
+				if workflowCommit == "" || workflowCommit == "HEAD" {
+					workflowCommit = defaultBranch.LatestCommit
+				}
+			}
+			if workflowCommit == "" || workflowCommit == "HEAD" {
+				switch {
+				case strings.HasPrefix(workflowRef, sdk.GitRefBranchPrefix):
+					// Retrieve branch to get commit
+					b, err := vcsClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(workflowRef, sdk.GitRefBranchPrefix)})
+					if err != nil {
+						return err
+					}
+					workflowCommit = b.LatestCommit
+				default:
+					// Retrieve branch to get commit
+					t, err := vcsClient.Tag(ctx, repo.Name, strings.TrimPrefix(workflowRef, sdk.GitRefTagPrefix))
+					if err != nil {
+						return err
+					}
+					workflowCommit = t.Hash
+				}
+			}
+
+			hookRequest := sdk.HookManualWorkflowRun{
+				UserRequest: runRequest,
+				Project:     proj.Key,
+				VCSType:     vcsProject.Type,
+				VCSServer:   vcsProject.Name,
+				Repository:  repo.Name,
+				Ref:         workflowRef,
+				Commit:      workflowCommit,
+				Workflow:    workflowName,
+				UserID:      u.AuthConsumerUser.AuthentifiedUserID,
+				Username:    u.AuthConsumerUser.AuthentifiedUser.Username,
+			}
+
+			// Send start request to hooks
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
 			if err != nil {
 				return err
 			}
-
-			var wk sdk.V2Workflow
-			if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
-				return err
+			var hookResponse sdk.HookRepositoryEvent
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/manual", hookRequest, &hookResponse)
+			if errHooks != nil || code >= 400 {
+				return fmt.Errorf("unable to start workflow: %v", errHooks)
 			}
-
-			runEvent := sdk.V2WorkflowRunEvent{ // TODO handler semver ?
-				Manual: &sdk.ManualTrigger{
-					Payload: runRequest,
-				},
-			}
-
-			u := getUserConsumer(ctx)
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u.AuthConsumerUser.AuthentifiedUser)
-			if err != nil {
-				return err
-			}
-			return service.WriteJSON(w, wr, http.StatusCreated)
+			return service.WriteJSON(w, hookResponse, http.StatusCreated)
 		}
 }
 
 func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runEvent sdk.V2WorkflowRunEvent, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
 	var msg string
-	switch {
-	case runEvent.Manual != nil:
+	switch runEvent.HookType {
+	case sdk.WorkflowHookTypeManual:
 		msg = fmt.Sprintf("Workflow was manually triggered by user %s", u.Username)
-	case runEvent.GitTrigger != nil:
-		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.GitTrigger.EventName, u.Username)
-	case runEvent.WorkflowUpdateTrigger != nil:
+	case sdk.WorkflowHookTypeRepository:
+		msg = fmt.Sprintf("The workflow was triggered by the repository webhook event %s by user %s", runEvent.EventName, u.Username)
+	case sdk.WorkflowHookTypeWorkflow:
 		msg = fmt.Sprintf("Workflow was triggered by the workflow-update hook by user %s", u.Username)
-	case runEvent.ModelUpdateTrigger != nil:
+	case sdk.WorkflowHookTypeWorkerModel:
 		msg = fmt.Sprintf("Workflow was triggered by the model-update hook by user %s", u.Username)
 	default:
 		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event not implemented")

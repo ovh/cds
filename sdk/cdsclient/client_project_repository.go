@@ -58,3 +58,17 @@ func (c *client) ProjectRepositoryHookSecret(ctx context.Context, projectKey, vc
 	_, err := c.GetJSON(ctx, path, &hookData)
 	return hookData, err
 }
+
+func (c *client) ProjectRepositoryEvents(ctx context.Context, projectKey, vcsName, repoName string) ([]sdk.HookRepositoryEvent, error) {
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/events", projectKey, url.PathEscape(vcsName), url.PathEscape(repoName))
+	var events []sdk.HookRepositoryEvent
+	_, err := c.GetJSON(ctx, path, &events)
+	return events, err
+}
+
+func (c *client) ProjectRepositoryEvent(ctx context.Context, projectKey, vcsName, repoName, eventID string) (*sdk.HookRepositoryEvent, error) {
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/events/%s", projectKey, url.PathEscape(vcsName), url.PathEscape(repoName), eventID)
+	var event sdk.HookRepositoryEvent
+	_, err := c.GetJSON(ctx, path, &event)
+	return &event, err
+}
