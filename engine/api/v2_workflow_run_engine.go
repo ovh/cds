@@ -507,7 +507,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 	runJobInfos := make(map[string]sdk.V2WorkflowRunJobInfo)
 	for i := range runJobs {
 		rj := &runJobs[i]
-		if !strings.HasPrefix(rj.Job.RunsOn, "${{") {
+		if !strings.HasPrefix(rj.Job.RunsOn.Model, "${{") {
 			continue
 		}
 		computeModelCtx := sdk.WorkflowRunJobsContext{
@@ -530,7 +530,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 		}
 
 		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-		model, err := ap.InterpolateToString(ctx, rj.Job.RunsOn)
+		model, err := ap.InterpolateToString(ctx, rj.Job.RunsOn.Model)
 		if err != nil {
 			rj.Status = sdk.StatusFail
 			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
@@ -538,7 +538,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 				Level:            sdk.WorkflowRunInfoLevelError,
 				WorkflowRunJobID: rj.ID,
 				IssuedAt:         time.Now(),
-				Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.RunsOn, err),
+				Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.RunsOn.Model, err),
 			}
 			continue
 		}
@@ -572,7 +572,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 		} else {
 			rj.ModelType = wref.workerModelCache[completeName].Type
 		}
-		rj.Job.RunsOn = completeName
+		rj.Job.RunsOn.Model = completeName
 	}
 	return runJobInfos
 }
@@ -607,8 +607,8 @@ func prepareRunJobs(_ context.Context, proj sdk.Project, run sdk.V2WorkflowRun, 
 				RunNumber:     run.RunNumber,
 				RunAttempt:    run.RunAttempt,
 			}
-			if jobDef.RunsOn != "" {
-				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn].Type
+			if jobDef.RunsOn.Model != "" {
+				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
 			}
 			runJobs = append(runJobs, runJob)
 		} else {
@@ -630,8 +630,8 @@ func prepareRunJobs(_ context.Context, proj sdk.Project, run sdk.V2WorkflowRun, 
 				for k, v := range m {
 					runJob.Matrix[k] = v
 				}
-				if jobDef.RunsOn != "" {
-					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn].Type
+				if jobDef.RunsOn.Model != "" {
+					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
 				}
 				runJobs = append(runJobs, runJob)
 			}

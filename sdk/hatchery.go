@@ -141,6 +141,8 @@ type WorkerStarterWorkerModel struct {
 	OpenstackSpec V2WorkerModelOpenstackSpec
 	VSphereSpec   V2WorkerModelVSphereSpec
 	Commit        string
+	Flavor        string
+	Memory        int64
 }
 
 func (w WorkerStarterWorkerModel) GetName() string {
@@ -158,6 +160,9 @@ func (w WorkerStarterWorkerModel) GetFlavor(reqs RequirementList, defaultFlavor 
 			return w.ModelV1.ModelVirtualMachine.Flavor
 		}
 	case w.ModelV2 != nil:
+		if w.Flavor != "" {
+			return w.Flavor
+		}
 		for _, r := range reqs {
 			if r.Type == FlavorRequirement && r.Value != "" {
 				return r.Value

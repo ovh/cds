@@ -552,7 +552,7 @@ func (api *API) getJobRunQueueInfoHandler() ([]service.RbacChecker, service.Hand
 
 			infoJob := sdk.V2QueueJobInfo{
 				RunJob: *jobRun,
-				Model:  run.WorkflowData.WorkerModels[jobRun.Job.RunsOn],
+				Model:  run.WorkflowData.WorkerModels[jobRun.Job.RunsOn.Model],
 			}
 
 			return service.WriteJSON(w, infoJob, http.StatusOK)
