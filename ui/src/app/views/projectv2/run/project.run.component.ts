@@ -98,6 +98,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         const projectKey = this._route.snapshot.parent.params['key'];
         const runIdentifier = this._route.snapshot.params['runIdentifier'];
 
+        delete this.selectedItemType;
         delete this.selectedJobGate;
         delete this.selectedJobRun;
         delete this.selectedJobRunInfos;
@@ -109,14 +110,6 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         try {
             this.workflowRun = await lastValueFrom(this._workflowService.getRun(projectKey, runIdentifier));
             this.selectedRunAttempt = this.workflowRun.run_attempt;
-            this.workflowRunInfos = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
-            if (!!this.workflowRunInfos.find(i => i.level === 'warning' || i.level === 'error')) {
-                this.tabs = [<Tab>{
-                    title: 'Problems',
-                    key: 'problems',
-                    default: true
-                }, ...this.defaultTabs];
-            }
         } catch (e) {
             this._messageService.error(`Unable to get workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
         }
@@ -139,16 +132,30 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         } catch (e) {
             this._messageService.error(`Unable to get results: ${e?.error?.error}`, { nzDuration: 2000 });
         }
+        try {
+            this.workflowRunInfos = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
+            if (!!this.workflowRunInfos.find(i => i.level === 'warning' || i.level === 'error')) {
+                this.tabs = [<Tab>{
+                    title: 'Problems',
+                    key: 'problems',
+                    default: true
+                }, ...this.defaultTabs];
+            }
+        } catch (e) {
+            this._messageService.error(`Unable to get run infos: ${e?.error?.error}`, { nzDuration: 2000 });
+        }
 
-        this.refreshPanel();
+        await this.refreshPanel();
 
-        if (!PipelineStatus.isDone(this.workflowRun.status) && !this.pollSubs) {
+        const jobsNotTerminated = this.jobs.filter(j => !PipelineStatus.isDone(j.status)).length > 0;
+
+        if (jobsNotTerminated && !this.pollSubs) {
             this.pollSubs = interval(5000)
                 .pipe(concatMap(_ => from(this.loadJobsAndResults())))
                 .subscribe();
         }
 
-        if (PipelineStatus.isDone(this.workflowRun.status) && this.pollSubs) {
+        if (!jobsNotTerminated && this.pollSubs) {
             this.pollSubs.unsubscribe();
         }
 
@@ -293,10 +300,24 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }
     }
 
-    changeRunAttempt(value: number): void {
+    async changeRunAttempt(value: number) {
         this.selectedRunAttempt = value;
         this._cd.markForCheck();
-        this.loadJobsAndResults();
+        await this.loadJobsAndResults();
+    }
+
+    async clickRestartJobs() {
+        const projectKey = this._route.snapshot.parent.params['key'];
+        const runIdentifier = this._route.snapshot.params['runIdentifier'];
+        await lastValueFrom(this._workflowService.restart(projectKey, runIdentifier));
+        await this.load();
+    }
+
+    async clickStopRun() {
+        const projectKey = this._route.snapshot.parent.params['key'];
+        const runIdentifier = this._route.snapshot.params['runIdentifier'];
+        await lastValueFrom(this._workflowService.stop(projectKey, runIdentifier));
+        await this.load();
     }
 
 }

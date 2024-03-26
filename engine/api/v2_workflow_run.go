@@ -278,6 +278,8 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			defer tx.Rollback() // nolint
 
 			runJob.Status = sdk.V2WorkflowRunJobStatusStopped
+			now := time.Now()
+			runJob.Ended = &now
 			if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
 				return err
 			}
@@ -596,6 +598,8 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 
 			for _, rj := range runJobs {
 				rj.Status = sdk.V2WorkflowRunJobStatusStopped
+				now := time.Now()
+				rj.Ended = &now
 
 				tx, err := api.mustDB().Begin()
 				if err != nil {
@@ -787,12 +791,12 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 			runJobToRestart := make(map[string]sdk.V2WorkflowRunJob)
 			for _, rj := range runJobs {
 				runJobsMap[rj.ID] = rj
-				if rj.Status == sdk.V2WorkflowRunJobStatusFail {
+				if rj.Status == sdk.V2WorkflowRunJobStatusFail || rj.Status == sdk.V2WorkflowRunJobStatusStopped {
 					runJobToRestart[rj.ID] = rj
 				}
 			}
 			if len(runJobToRestart) == 0 {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow doesn't contains failed jobs")
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow doesn't contains failed or stopped jobs")
 			}
 
 			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, runJobToRestart)
@@ -811,7 +815,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				WorkflowRunID: wr.ID,
 				IssuedAt:      time.Now(),
 				Level:         sdk.WorkflowRunInfoLevelInfo,
-				Message:       u.GetFullname() + " restarted all failed jobs",
+				Message:       u.GetFullname() + " restarted all failed and stopped jobs",
 			}
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 				return err

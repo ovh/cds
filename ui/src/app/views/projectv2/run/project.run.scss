@@ -6,23 +6,7 @@
     height: 100%;
 }
 
-nz-page-header-title {
-    font-size: 16px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    button,
-    nz-select {
-        margin-left: 5px;
-    }
-}
-
-nz-page-header-content {
-    padding: 0 0 0 32px;
-}
-
-.graph {
+.content {
     flex: 1;
     display: flex;
     position: relative;
@@ -30,9 +14,87 @@ nz-page-header-content {
     height: 100%;
     overflow: hidden;
 
-    .title {
-        position: absolute;
-        z-index: 1000;
+    .graph {
+        flex: 1;
+        position: relative;
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        width: 100%;
+        overflow: hidden;
+
+        .title {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            background-color: white;
+            border-bottom-right-radius: 40px;
+
+            :host-context(.night) & {
+                background-color: #141414;
+            }
+        }
+
+        .controls {
+            z-index: 1000;
+            height: 40px;
+            border: 2px solid $polar_grey_3;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            font-size: 20px;
+            background-color: white;
+
+            [nz-icon] {
+                color: $polar_grey_1;
+                cursor: pointer;
+
+                :host-context(.night) & {
+                    color: $darkTheme_grey_6;
+                }
+
+                &:hover {
+                    color: grey !important;
+                }
+            }
+
+            :host-context(.night) & {
+                border-color: $darkTheme_grey_5;
+                background-color: $darkTheme_grey_1;
+            }
+
+            [nz-icon]:not(:last-child) {
+                margin-right: 10px;
+            }
+        }
+
+        app-stages-graph {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%s;
+        }
+
+        nz-page-header-title {
+            font-size: 16px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            button,
+            nz-select {
+                margin-left: 5px;
+            }
+        }
+
+        nz-page-header-content {
+            padding: 0 0 0 32px;
+        }
     }
 
     &.disableSelection {
@@ -72,30 +134,30 @@ nz-page-header-content {
             color: $darkTheme_blue;
         }
     }
-}
 
-.bottom-panel {
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-
-    .infos {
+    .bottom-panel {
         height: 100%;
-        overflow-y: auto;
-        padding-left: 10px;
-        list-style: none;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
 
-        .rightFloat {
-            float: right;
-        }
+        .infos {
+            height: 100%;
+            overflow-y: auto;
+            padding-left: 10px;
+            list-style: none;
 
-        .content {
-            display: inline;
+            .rightFloat {
+                float: right;
+            }
+
+            .content {
+                display: inline;
+            }
         }
     }
-}
 
-.result {
-    cursor: pointer;
+    .result {
+        cursor: pointer;
+    }
 }

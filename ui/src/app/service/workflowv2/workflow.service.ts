@@ -14,6 +14,14 @@ export class V2WorkflowRunService {
         return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}`);
     }
 
+    restart(projKey: string, runIdentifier: string): Observable<V2WorkflowRun> {
+        return this._http.put<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}/restart`, null);
+    }
+
+    stop(projKey: string, runIdentifier: string) {
+        return this._http.post(`/v2/project/${projKey}/run/${runIdentifier}/stop`, null);
+    }
+
     getJobs(r: V2WorkflowRun, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {
         let params = new HttpParams();
         if (attempt) {

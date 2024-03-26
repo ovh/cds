@@ -227,6 +227,8 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 
 	log.Info(ctx, fmt.Sprintf("stopDeadJob: stopping job %s/%s on workflow %s run %d", runJob.JobID, runJob.ID, runJob.WorkflowName, runJob.RunNumber))
 	runJob.Status = sdk.V2WorkflowRunJobStatusStopped
+	now := time.Now()
+	runJob.Ended = &now
 
 	if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
 		return err

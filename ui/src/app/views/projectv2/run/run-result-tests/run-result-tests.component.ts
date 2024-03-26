@@ -55,7 +55,7 @@ export class RunResultTestsComponent implements OnInit, OnChanges {
     }
 
     initTestTree(): void {
-        const nodes = this.tests.test_suites.map(ts => {
+        const nodes = (this.tests.test_suites ?? []).map(ts => {
             let node = <NzTreeNodeOptions>{
                 title: ts.name,
                 key: ts.name,
