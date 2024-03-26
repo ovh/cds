@@ -5,12 +5,12 @@ import { CDNLine, CDNLogLink, PipelineStatus, SpawnInfo } from 'app/model/pipeli
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 import moment from 'moment';
 import { from, interval, Subject, Subscription } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { DurationService } from '../../../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
 
 export enum DisplayMode {
     ANSI = 'ansi',
@@ -35,7 +35,7 @@ export class LogBlock {
     firstDisplayedLineNumber: number;
     totalLinesCount: number;
     link: CDNLogLink;
-    startDate: moment.Moment;
+    startDate: Date;
     duration: string;
     optional: boolean;
     disabled: boolean;
@@ -204,7 +204,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     selectTab(i: number): void {
         this.currentTabIndex = i;
         this._cd.markForCheck();
-        this.loadDataForCurrentTab().then(() => {});
+        this.loadDataForCurrentTab().then(() => { });
     }
 
     clickMode(mode: DisplayMode): void {
@@ -310,15 +310,11 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
             if (PipelineStatus.neverRun(stepStatus.status) || !stepStatus.start) {
                 continue;
             }
-            this.steps[i].startDate = moment(stepStatus.start);
+            this.steps[i].startDate = new Date(stepStatus.start);
             if (stepStatus.done && stepStatus.done !== '0001-01-01T00:00:00Z') {
-                this.steps[i].duration = DurationService.duration(this.steps[i].startDate.toDate(), moment(stepStatus.done).toDate());
+                this.steps[i].duration = DurationService.duration(this.steps[i].startDate, new Date(stepStatus.done));
             }
         }
-    }
-
-    formatDuration(fromM: moment.Moment, to?: moment.Moment): string {
-        return DurationService.duration(fromM.toDate(), to ? to.toDate() : moment().toDate());
     }
 
     async clickExpandStepDown(index: number, event: MouseEvent) {
@@ -330,7 +326,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         }
 
         let result = await this._workflowService.getLogLines(step.link,
-            {offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: limit}
+            { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: limit }
         ).toPromise();
         this.steps[index].totalLinesCount = result.totalCount;
         this.steps[index].lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
@@ -375,13 +371,13 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
     receiveLogs(l: CDNLine): void {
         if (this.steps) {
             this.steps.forEach(v => {
-               if (v?.link?.api_ref === l.api_ref_hash) {
-                   if (!v.lines.find(line => line.number === l.number)
-                       && !v.endLines.find(line => line.number === l.number)) {
-                       v.endLines.push(l);
-                       v.totalLinesCount++;
-                   }
-               }
+                if (v?.link?.api_ref === l.api_ref_hash) {
+                    if (!v.lines.find(line => line.number === l.number)
+                        && !v.endLines.find(line => line.number === l.number)) {
+                        v.endLines.push(l);
+                        v.totalLinesCount++;
+                    }
+                }
             });
         }
         if (this.services) {

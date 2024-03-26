@@ -42,7 +42,7 @@ type V2WorkflowRun struct {
 	WorkflowName string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
 	WorkflowSha  string                 `json:"workflow_sha" db:"workflow_sha"`
 	WorkflowRef  string                 `json:"workflow_ref" db:"workflow_ref"`
-	Status       string                 `json:"status" db:"status" cli:"status"`
+	Status       V2WorkflowRunStatus    `json:"status" db:"status" cli:"status"`
 	RunNumber    int64                  `json:"run_number" db:"run_number" cli:"run_number"`
 	RunAttempt   int64                  `json:"run_attempt" db:"run_attempt"`
 	Started      time.Time              `json:"started" db:"started" cli:"started"`
@@ -54,9 +54,25 @@ type V2WorkflowRun struct {
 	Contexts     WorkflowRunContext     `json:"contexts" db:"contexts"`
 	RunEvent     V2WorkflowRunEvent     `json:"event" db:"event"`
 	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
+}
 
-	// Aggregations
-	Results []V2WorkflowRunResult `json:"results" db:"-"`
+type V2WorkflowRunStatus string
+
+const (
+	V2WorkflowRunStatusSkipped  V2WorkflowRunStatus = "Skipped"
+	V2WorkflowRunStatusFail     V2WorkflowRunStatus = "Fail"
+	V2WorkflowRunStatusSuccess  V2WorkflowRunStatus = "Success"
+	V2WorkflowRunStatusStopped  V2WorkflowRunStatus = "Stopped"
+	V2WorkflowRunStatusBuilding V2WorkflowRunStatus = "Building"
+	V2WorkflowRunStatusCrafting V2WorkflowRunStatus = "Crafting"
+)
+
+func (s V2WorkflowRunStatus) IsTerminated() bool {
+	switch s {
+	case V2WorkflowRunStatusBuilding, V2WorkflowRunStatusCrafting:
+		return false
+	}
+	return true
 }
 
 type WorkflowRunContext struct {
@@ -170,29 +186,60 @@ func (w *V2WorkflowRunEvent) Scan(src interface{}) error {
 }
 
 type V2WorkflowRunJob struct {
-	ID            string         `json:"id" db:"id"`
-	JobID         string         `json:"job_id" db:"job_id" cli:"job_id"`
-	WorkflowRunID string         `json:"workflow_run_id" db:"workflow_run_id"`
-	ProjectKey    string         `json:"project_key" db:"project_key"`
-	WorkflowName  string         `json:"workflow_name" db:"workflow_name"`
-	RunNumber     int64          `json:"run_number" db:"run_number"`
-	RunAttempt    int64          `json:"run_attempt" db:"run_attempt"`
-	Status        string         `json:"status" db:"status" cli:"status"`
-	Queued        time.Time      `json:"queued" db:"queued"`
-	Scheduled     time.Time      `json:"scheduled" db:"scheduled"`
-	Started       time.Time      `json:"started" db:"started"`
-	Ended         time.Time      `json:"ended" db:"ended"`
-	Job           V2Job          `json:"job" db:"job"`
-	WorkerID      string         `json:"worker_id,omitempty" db:"worker_id"`
-	WorkerName    string         `json:"worker_name" db:"worker_name"`
-	HatcheryName  string         `json:"hatchery_name" db:"hatchery_name"`
-	StepsStatus   JobStepsStatus `json:"steps_status" db:"steps_status"`
-	UserID        string         `json:"user_id" db:"user_id"`
-	Username      string         `json:"username" db:"username"`
-	Region        string         `json:"region,omitempty" db:"region"`
-	ModelType     string         `json:"model_type,omitempty" db:"model_type"`
-	Matrix        JobMatrix      `json:"matrix,omitempty" db:"matrix"`
-	GateInputs    GateInputs     `json:"gate_inputs,omitempty" db:"gate_inputs"`
+	ID            string                 `json:"id" db:"id"`
+	JobID         string                 `json:"job_id" db:"job_id" cli:"job_id"`
+	WorkflowRunID string                 `json:"workflow_run_id" db:"workflow_run_id"`
+	ProjectKey    string                 `json:"project_key" db:"project_key"`
+	WorkflowName  string                 `json:"workflow_name" db:"workflow_name"`
+	RunNumber     int64                  `json:"run_number" db:"run_number"`
+	RunAttempt    int64                  `json:"run_attempt" db:"run_attempt"`
+	Status        V2WorkflowRunJobStatus `json:"status" db:"status" cli:"status"`
+	Queued        time.Time              `json:"queued" db:"queued"`
+	Scheduled     *time.Time             `json:"scheduled,omitempty" db:"scheduled"`
+	Started       *time.Time             `json:"started,omitempty" db:"started"`
+	Ended         *time.Time             `json:"ended,omitempty" db:"ended"`
+	Job           V2Job                  `json:"job" db:"job"`
+	WorkerID      string                 `json:"worker_id,omitempty" db:"worker_id"`
+	WorkerName    string                 `json:"worker_name" db:"worker_name"`
+	HatcheryName  string                 `json:"hatchery_name" db:"hatchery_name"`
+	StepsStatus   JobStepsStatus         `json:"steps_status" db:"steps_status"`
+	UserID        string                 `json:"user_id" db:"user_id"`
+	Username      string                 `json:"username" db:"username"`
+	Region        string                 `json:"region,omitempty" db:"region"`
+	ModelType     string                 `json:"model_type,omitempty" db:"model_type"`
+	Matrix        JobMatrix              `json:"matrix,omitempty" db:"matrix"`
+	GateInputs    GateInputs             `json:"gate_inputs,omitempty" db:"gate_inputs"`
+}
+
+type V2WorkflowRunJobStatus string
+
+const (
+	V2WorkflowRunJobStatusUnknown    V2WorkflowRunJobStatus = ""
+	V2WorkflowRunJobStatusWaiting    V2WorkflowRunJobStatus = "Waiting"
+	V2WorkflowRunJobStatusBuilding   V2WorkflowRunJobStatus = "Building"
+	V2WorkflowRunJobStatusFail       V2WorkflowRunJobStatus = "Fail"
+	V2WorkflowRunJobStatusStopped    V2WorkflowRunJobStatus = "Stopped"
+	V2WorkflowRunJobStatusSuccess    V2WorkflowRunJobStatus = "Success"
+	V2WorkflowRunJobStatusScheduling V2WorkflowRunJobStatus = "Scheduling"
+	V2WorkflowRunJobStatusSkipped    V2WorkflowRunJobStatus = "Skipped"
+)
+
+func NewV2WorkflowRunJobStatusFromString(s string) (V2WorkflowRunJobStatus, error) {
+	switch s {
+	case StatusFail:
+		return V2WorkflowRunJobStatusFail, nil
+	case StatusSuccess:
+		return V2WorkflowRunJobStatusSuccess, nil
+	}
+	return V2WorkflowRunJobStatusUnknown, errors.Errorf("cannot convert given status value %q to workflow run job v2 status", s)
+}
+
+func (s V2WorkflowRunJobStatus) IsTerminated() bool {
+	switch s {
+	case V2WorkflowRunJobStatusUnknown, V2WorkflowRunJobStatusBuilding, V2WorkflowRunJobStatusWaiting, V2WorkflowRunJobStatusScheduling:
+		return false
+	}
+	return true
 }
 
 type JobIntegrationsContext struct {
@@ -213,11 +260,11 @@ func (c JobIntegrationsContext) All() []string {
 
 type JobStepsStatus map[string]JobStepStatus
 type JobStepStatus struct {
-	Conclusion string          `json:"conclusion"` // result of a step after 'continue-on-error'
-	Outcome    string          `json:"outcome"`    // result of a step before 'continue-on-error'
-	Outputs    JobResultOutput `json:"outputs"`
-	Started    time.Time       `json:"started"`
-	Ended      time.Time       `json:"ended"`
+	Conclusion V2WorkflowRunJobStatus `json:"conclusion"` // result of a step after 'continue-on-error'
+	Outcome    V2WorkflowRunJobStatus `json:"outcome"`    // result of a step before 'continue-on-error'
+	Outputs    JobResultOutput        `json:"outputs"`
+	Started    time.Time              `json:"started"`
+	Ended      time.Time              `json:"ended"`
 }
 
 type GateInputs map[string]interface{}
@@ -276,7 +323,7 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 	stepsContext := StepsContext{}
 	for k, v := range s {
 		// Do not include current step
-		if v.Conclusion == "" {
+		if v.Conclusion == V2WorkflowRunJobStatusUnknown {
 			continue
 		}
 		stepsContext[k] = StepContext{
@@ -323,9 +370,9 @@ const (
 )
 
 type V2WorkflowRunJobResult struct {
-	Status string    `json:"status"`
-	Error  string    `json:"error,omitempty"`
-	Time   time.Time `json:"time"`
+	Status V2WorkflowRunJobStatus `json:"status"`
+	Error  string                 `json:"error,omitempty"`
+	Time   time.Time              `json:"time"`
 }
 
 type V2SendJobRunInfo struct {
@@ -339,7 +386,6 @@ func GetJobStepName(stepID string, stepIndex int) string {
 		return stepID
 	}
 	return fmt.Sprintf("step-%d", stepIndex)
-
 }
 
 type WorkflowRunStages map[string]WorkflowRunStage
@@ -350,7 +396,7 @@ stageLoop:
 	for name := range wrs {
 		stage := wrs[name]
 		for _, status := range stage.Jobs {
-			if !StatusIsTerminated(status) {
+			if !status.IsTerminated() {
 				stage.Ended = false
 				wrs[name] = stage
 				continue stageLoop
@@ -379,20 +425,20 @@ stageLoop:
 type WorkflowRunStage struct {
 	WorkflowStage
 	CanBeRun bool
-	Jobs     map[string]string
+	Jobs     map[string]V2WorkflowRunJobStatus
 	Ended    bool
 }
 
 func (w V2WorkflowRun) GetStages() WorkflowRunStages {
 	stages := WorkflowRunStages{}
 	for k, s := range w.WorkflowData.Workflow.Stages {
-		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]string)}
+		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]V2WorkflowRunJobStatus)}
 	}
 	if len(stages) == 0 {
 		return stages
 	}
 	for jobID, job := range w.WorkflowData.Workflow.Jobs {
-		stages[job.Stage].Jobs[jobID] = ""
+		stages[job.Stage].Jobs[jobID] = V2WorkflowRunJobStatusUnknown
 	}
 	return stages
 }

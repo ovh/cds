@@ -169,7 +169,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
 
-			if sdk.StatusIsTerminated(jobRun.Status) {
+			if jobRun.Status.IsTerminated() {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "job %s is already in a final state %s", jobRun.JobID, jobRun.Status)
 			}
 
@@ -188,7 +188,8 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			}
 
 			jobRun.Status = result.Status
-			jobRun.Ended = time.Now()
+			now := time.Now()
+			jobRun.Ended = &now
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -356,7 +357,7 @@ func (api *API) getJobRunResultsHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			runResults, err := workflow_v2.LoadRunResults(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
+			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
 			if err != nil {
 				return err
 			}
@@ -382,7 +383,7 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s taken by hatchery %s", jobRun.ID, regionName, hatch.Name)
 			}
 
-			jobRun.Status = sdk.StatusWaiting
+			jobRun.Status = sdk.V2WorkflowRunJobStatusWaiting
 			jobRun.HatcheryName = ""
 
 			tx, err := api.mustDB().Begin()
@@ -460,7 +461,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
-			if sdk.StatusIsTerminated(jobRun.Status) {
+			if jobRun.Status.IsTerminated() {
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "job %s is already in a final state %s", jobRun.JobID, jobRun.Status)
 			}
 
@@ -469,7 +470,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 				trace.StringAttribute(telemetry.TagProjectKey, jobRun.ProjectKey),
 				trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(jobRun.RunNumber, 10)))
 
-			if jobRun.Status != sdk.StatusWaiting {
+			if jobRun.Status != sdk.V2WorkflowRunJobStatusWaiting {
 				return sdk.WrapError(sdk.ErrNotFound, "job has already been taken by %s", jobRun.HatcheryName)
 			}
 
@@ -483,8 +484,9 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			}
 
 			jobRun.HatcheryName = hatch.Name
-			jobRun.Status = sdk.StatusScheduling
-			jobRun.Scheduled = time.Now()
+			jobRun.Status = sdk.V2WorkflowRunJobStatusScheduling
+			now := time.Now()
+			jobRun.Scheduled = &now
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -552,7 +554,7 @@ func (api *API) getJobRunQueueInfoHandler() ([]service.RbacChecker, service.Hand
 
 			infoJob := sdk.V2QueueJobInfo{
 				RunJob: *jobRun,
-				Model:  run.WorkflowData.WorkerModels[jobRun.Job.RunsOn],
+				Model:  run.WorkflowData.WorkerModels[jobRun.Job.RunsOn.Model],
 			}
 
 			return service.WriteJSON(w, infoJob, http.StatusOK)

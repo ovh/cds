@@ -264,47 +264,47 @@ type UserGPGEvent struct {
 
 type WorkflowRunEvent struct {
 	ProjectEventV2
-	VCSName       string `json:"vcs_name"`
-	Repository    string `json:"repository"`
-	Workflow      string `json:"workflow"`
-	RunNumber     int64  `json:"run_number"`
-	RunAttempt    int64  `json:"run_attempt"`
-	Status        string `json:"status"`
-	WorkflowRunID string `json:"workflow_run_id"`
-	UserID        string `json:"user_id"`
-	Username      string `json:"username"`
+	VCSName       string              `json:"vcs_name"`
+	Repository    string              `json:"repository"`
+	Workflow      string              `json:"workflow"`
+	RunNumber     int64               `json:"run_number"`
+	RunAttempt    int64               `json:"run_attempt"`
+	Status        V2WorkflowRunStatus `json:"status"`
+	WorkflowRunID string              `json:"workflow_run_id"`
+	UserID        string              `json:"user_id"`
+	Username      string              `json:"username"`
 }
 
 type WorkflowRunJobEvent struct {
 	ProjectEventV2
-	VCSName       string `json:"vcs_name"`
-	Repository    string `json:"repository"`
-	Workflow      string `json:"workflow"`
-	WorkflowRunID string `json:"workflow_run_id"`
-	RunJobID      string `json:"run_job_id"`
-	RunNumber     int64  `json:"run_number"`
-	RunAttempt    int64  `json:"run_attempt"`
-	Region        string `json:"region"`
-	Hatchery      string `json:"hatchery"`
-	ModelType     string `json:"model_type"`
-	JobID         string `json:"job_id"`
-	Status        string `json:"status"`
-	UserID        string `json:"user_id"`
-	Username      string `json:"username"`
+	VCSName       string                 `json:"vcs_name"`
+	Repository    string                 `json:"repository"`
+	Workflow      string                 `json:"workflow"`
+	WorkflowRunID string                 `json:"workflow_run_id"`
+	RunJobID      string                 `json:"run_job_id"`
+	RunNumber     int64                  `json:"run_number"`
+	RunAttempt    int64                  `json:"run_attempt"`
+	Region        string                 `json:"region"`
+	Hatchery      string                 `json:"hatchery"`
+	ModelType     string                 `json:"model_type"`
+	JobID         string                 `json:"job_id"`
+	Status        V2WorkflowRunJobStatus `json:"status"`
+	UserID        string                 `json:"user_id"`
+	Username      string                 `json:"username"`
 }
 
 type WorkflowRunJobManualEvent struct {
 	ProjectEventV2
-	VCSName       string `json:"vcs_name"`
-	Repository    string `json:"repository"`
-	Workflow      string `json:"workflow"`
-	JobID         string `json:"job_id"`
-	RunNumber     int64  `json:"run_number"`
-	RunAttempt    int64  `json:"run_attempt"`
-	Status        string `json:"status"`
-	WorkflowRunID string `json:"workflow_run_id"`
-	UserID        string `json:"user_id"`
-	Username      string `json:"username"`
+	VCSName       string              `json:"vcs_name"`
+	Repository    string              `json:"repository"`
+	Workflow      string              `json:"workflow"`
+	JobID         string              `json:"job_id"`
+	RunNumber     int64               `json:"run_number"`
+	RunAttempt    int64               `json:"run_attempt"`
+	Status        V2WorkflowRunStatus `json:"status"`
+	WorkflowRunID string              `json:"workflow_run_id"`
+	UserID        string              `json:"user_id"`
+	Username      string              `json:"username"`
 }
 
 type WorkflowRunJobRunResultEvent struct {

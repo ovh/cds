@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
 import { TestCase, Tests } from 'app/model/pipeline.model';
-import { WorkflowRunResultDetail } from 'app/model/v2.workflow.run.model';
 import { NzFormatEmitEvent, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
+import { WorkflowRunResultDetail } from '../../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model';
 
 @Component({
     selector: 'app-run-result-tests',
@@ -55,7 +55,7 @@ export class RunResultTestsComponent implements OnInit, OnChanges {
     }
 
     initTestTree(): void {
-        const nodes = this.tests.test_suites.map(ts => {
+        const nodes = (this.tests.test_suites ?? []).map(ts => {
             let node = <NzTreeNodeOptions>{
                 title: ts.name,
                 key: ts.name,

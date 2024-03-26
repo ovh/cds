@@ -424,7 +424,7 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 
 	// Check at least one worker model can match
 	hWithModels, isWithModels := h.(InterfaceWithModels)
-	if isWithModels && jobInfo.RunJob.Job.RunsOn == "" {
+	if isWithModels && jobInfo.RunJob.Job.RunsOn.Model == "" {
 		endTrace("no model", jobInfo.RunJob.ID)
 		return nil
 	}
@@ -438,7 +438,7 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 		}
 		if nbAttempts > maxAttemptsNumberBeforeFailure {
 			if err := h.CDSClientV2().V2QueueJobResult(ctx, jobInfo.RunJob.Region, jobInfo.RunJob.ID, sdk.V2WorkflowRunJobResult{
-				Status: sdk.StatusFail,
+				Status: sdk.V2WorkflowRunJobStatusFail,
 				Error:  fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure),
 			}); err != nil {
 				return err
@@ -455,7 +455,7 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 			if errInfo := h.CDSClientV2().V2QueuePushJobInfo(ctx, jobInfo.RunJob.Region, jobInfo.RunJob.ID, sdk.V2SendJobRunInfo{
 				Time:    time.Now(),
 				Level:   sdk.WorkflowRunInfoLevelError,
-				Message: fmt.Sprintf("unable to get worker model %s, retrying: %v", jobInfo.RunJob.Job.RunsOn, err),
+				Message: fmt.Sprintf("unable to get worker model %s, retrying: %v", jobInfo.RunJob.Job.RunsOn.Model, err),
 			}); errInfo != nil {
 				log.ErrorWithStackTrace(ctx, errInfo)
 			}
@@ -661,6 +661,8 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 		}
 		workerStarterModel.OpenstackSpec = openstackSpec
 	}
+	workerStarterModel.Memory = jobInf.RunJob.Job.RunsOn.Memory
+	workerStarterModel.Flavor = jobInf.RunJob.Job.RunsOn.Flavor
 	return workerStarterModel, nil
 }
 

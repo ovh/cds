@@ -161,7 +161,7 @@ func success(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
 		}
 		for _, v := range steps {
-			if v.Conclusion != StatusSuccess {
+			if v.Conclusion != V2WorkflowRunJobStatusSuccess {
 				return false, nil
 			}
 		}
@@ -173,7 +173,7 @@ func success(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
 		}
 		for _, v := range needs {
-			if v.Result != StatusSuccess {
+			if v.Result != V2WorkflowRunJobStatusSuccess {
 				return false, nil
 			}
 		}
@@ -208,7 +208,7 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
 		}
 		for _, v := range steps {
-			if v.Conclusion == StatusFail {
+			if v.Conclusion == V2WorkflowRunJobStatusFail {
 				return true, nil
 			}
 		}
@@ -220,7 +220,7 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read jobs context")
 		}
 		for _, v := range jobs {
-			if v.Result == StatusFail {
+			if v.Result == V2WorkflowRunJobStatusFail {
 				return true, nil
 			}
 		}

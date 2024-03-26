@@ -6,11 +6,6 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
-	"github.com/ovh/cds/engine/api/organization"
-	"github.com/ovh/cds/engine/api/repository"
-	"github.com/ovh/cds/engine/api/worker_v2"
-	sdkhatch "github.com/ovh/cds/sdk/hatchery"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -19,6 +14,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
+	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/worker_v2"
+	sdkhatch "github.com/ovh/cds/sdk/hatchery"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -82,7 +83,7 @@ func InsertWorker(t *testing.T, ctx context.Context, db gorpmapper.SqlExecutorWi
 	spawnaargs := sdkhatch.SpawnArgumentsJWTV2{
 		WorkerName: workerName,
 		RunJobID:   jobRun.ID,
-		ModelName:  jobRun.Job.RunsOn,
+		ModelName:  jobRun.Job.RunsOn.Model,
 	}
 	wk, err := worker_v2.RegisterWorker(ctx, db, spawnaargs, hatch, workerConsumer, sdk.WorkerRegistrationForm{Arch: "amd64", OS: "linux"})
 	require.NoError(t, err)

@@ -1,15 +1,23 @@
 <div class="node pointing" [class.highlight]="highlight && !selected" [class.active]="selected" (click)="onMouseClick()"
-     (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()"
-     [class.success]="node?.run?.status === nodeStatusEnum.SUCCESS"
-     [class.inactive]="node?.run?.status === nodeStatusEnum.SKIPPED"
-     [class.fail]="node?.run?.status === nodeStatusEnum.FAIL || node?.run?.status === nodeStatusEnum.STOPPED"
-     [class.building]="node?.run?.status === nodeStatusEnum.BUILDING || node?.run?.status === nodeStatusEnum.WAITING"
-     [class.scheduling]="node?.run?.status === nodeStatusEnum.SCHEDULING">
-    <div class="title">
-        <div class="name ellipsis" title="{{node?.name}}">
-            <ng-container *ngIf="node?.name">
-                {{node?.name}}
-            </ng-container>
-        </div>
+    (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()" [class.success]="node?.run?.status === statusEnum.Success"
+    [class.inactive]="node?.run?.status === statusEnum.Skipped"
+    [class.fail]="node?.run?.status === statusEnum.Fail || node?.run?.status === statusEnum.Stopped"
+    [class.building]="node?.run?.status === statusEnum.Building || node?.run?.status === statusEnum.Waiting"
+    [class.scheduling]="node?.run?.status === statusEnum.Scheduling">
+    <span *ngIf="node?.gate && !node.event" class="gate" nz-icon nzType="play-circle" nzTheme="outline"
+        title="Run job gate" (click)="clickRunGate($event)"></span>
+    <div *ngIf="node?.name" class="name" title="{{node?.name}}">
+        {{node?.name}}
+    </div>
+    <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
+        {{duration}}
+        <ng-template #durationTooltip>
+            <div class="durationTooltip">
+                <div *ngIf="dates.queued"><b>Queued:</b>&nbsp;{{dates.queued | date: 'long'}}</div>
+                <div *ngIf="dates.scheduled"><b>Scheduled:</b>&nbsp;{{dates.scheduled | date: 'long'}}</div>
+                <div *ngIf="dates.started"><b>Started:</b>&nbsp;{{dates.started | date: 'long'}}</div>
+                <div *ngIf="dates.ended"><b>Ended:</b>&nbsp;{{dates.ended | date: 'long'}}</div>
+            </div>
+        </ng-template>
     </div>
 </div>

@@ -1,22 +1,40 @@
 <ng-container *ngIf="workflowRun">
-    <div class="graph" [class.disableSelection]="resizing">
-        <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
-            <nz-page-header-title>
-                {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}
-                #{{workflowRun.run_number}}
-            </nz-page-header-title>
-            <nz-page-header-content>
-                <span nz-typography nzType="secondary">
-                    Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} by {{workflowRun.contexts.git.username}} on
-                    repository
-                    {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
-                </span>
-            </nz-page-header-content>
-        </nz-page-header>
+    <div class="content" [class.disableSelection]="resizing">
 
-        <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-            (onSelectJobGate)="openPanel('gate', $event)" (onSelectJob)="openPanel('job', $event)"
-            (onSelectHook)="openPanel('hook', $event)" #graph></app-stages-graph>
+        <!--  GRAPH -->
+
+        <div class="graph">
+            <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
+                <nz-page-header-title>
+                    {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}
+                    #{{workflowRun.run_number}}
+                    <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
+                        (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">
+                        <nz-option *ngFor="let item of [].constructor(workflowRun.run_attempt); let i = index"
+                            [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
+                    </nz-select>
+                    <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
+                        (click)="openPanel('workflow')"><span nz-icon nzType="file-text"
+                            nzTheme="outline"></span></button>
+                </nz-page-header-title>
+                <nz-page-header-content>
+                    <span nz-typography nzType="secondary">
+                        Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} by {{workflowRun.contexts.git.username}}
+                        on
+                        repository
+                        {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
+                    </span>
+                </nz-page-header-content>
+            </nz-page-header>
+            <div class="controls">
+                <span nz-icon nzType="play-circle" nzTheme="outline" title="Restart failed jobs"
+                    (click)="clickRestartJobs()"></span>
+                <span nz-icon nzType="stop" nzTheme="outline" title="Stop workflow run" (click)="clickStopRun()"></span>
+            </div>
+            <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
+                (onSelectJobGate)="openPanel('gate', $event)" (onSelectJobRun)="openPanel('job', $event)"
+                (onSelectHook)="openPanel('hook', $event)" #graph></app-stages-graph>
+        </div>
 
         <!--  BOTTOM PANELS -->
 
@@ -54,8 +72,8 @@
                     </ng-container>
                 </ul>
                 <nz-table *ngIf="selectedTab && selectedTab.key === 'results'" class="results" [nsAutoHeightTable]="86"
-                    nzSize="small" [nzShowPagination]="false" [nzPageSize]="workflowRun.results?.length ?? 0"
-                    [nzData]="workflowRun.results" #autoHeightDirective=nsAutoHeightTable #resultsTable>
+                    nzSize="small" [nzShowPagination]="false" [nzPageSize]="results?.length ?? 0" [nzData]="results"
+                    #autoHeightDirective=nsAutoHeightTable #resultsTable>
                     <thead>
                         <tr>
                             <th nzWidth="100px">Type</th>
@@ -64,7 +82,7 @@
                     </thead>
                     <tbody>
                         <tr class="result" *ngFor="let result of resultsTable.data"
-                            (click)="openPanel('result', result.id)">
+                            (click)="openPanel('result', result)">
                             <td>
                                 {{result.type}}
                             </td>
@@ -93,8 +111,10 @@
             (onClose)="closePanel()"></app-run-gate>
         <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"
             (onClose)="closePanel()"></app-run-hook>
-        <app-run-result *ngIf="selectedItemType === 'result'" [run]="workflowRun" [resultID]="selectedRunResultID"
+        <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"
             (onClose)="closePanel()"></app-run-result>
+        <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"
+            (onClose)="closePanel()"></app-run-workflow>
     </app-resizable-panel>
 
 </ng-container>

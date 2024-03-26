@@ -40,7 +40,7 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 	ctx = workerruntime.SetRunJobID(ctx, w.currentJobV2.runJob.ID)
 	ctx = workerruntime.SetStepOrder(ctx, 0)
 	defer func() {
-		if res.Status == sdk.StatusSuccess {
+		if res.Status == sdk.V2WorkflowRunJobStatusSuccess {
 			log.Warn(ctx, "Status: %s", res.Status)
 		} else {
 			log.Warn(ctx, "Status: %s | Reason: %s", res.Status, res.Error)
@@ -57,7 +57,7 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 	log.Debug(ctx, "Setup workspace - %s", wdFile.Name())
 
 	// Manage services readiness
-	if result := w.runJobServicesReadiness(ctx); result.Status != sdk.StatusSuccess {
+	if result := w.runJobServicesReadiness(ctx); result.Status != sdk.V2WorkflowRunJobStatusSuccess {
 		return w.failJob(ctx, fmt.Sprintf("Error: readiness service command failed: %v", result.Error))
 	}
 
@@ -124,7 +124,7 @@ func (w *CurrentWorker) runJobServicesReadiness(ctx context.Context) sdk.V2Workf
 	ctx = workerruntime.SetIsReadinessServices(ctx, true)
 	defer workerruntime.SetIsReadinessServices(ctx, false)
 
-	result := sdk.V2WorkflowRunJobResult{Status: sdk.StatusSuccess}
+	result := sdk.V2WorkflowRunJobResult{Status: sdk.V2WorkflowRunJobStatusSuccess}
 	if w.currentJobV2.runJob.Job.Services == nil {
 		return result
 	}
@@ -136,7 +136,7 @@ func (w *CurrentWorker) runJobServicesReadiness(ctx context.Context) sdk.V2Workf
 
 		if err := w.runJobServiceReadiness(ctx, serviceName, service); err != nil {
 			result.Error = fmt.Sprintf("failed on check service readiness: %v", err.Error())
-			result.Status = sdk.StatusFail
+			result.Status = sdk.V2WorkflowRunJobStatusFail
 			return result
 		}
 	}
@@ -175,7 +175,7 @@ func (w *CurrentWorker) runJobServiceReadiness(ctx context.Context, serviceName 
 			Time: time.Now(),
 		}
 
-		if result.Status == sdk.StatusSuccess {
+		if result.Status == sdk.V2WorkflowRunJobStatusSuccess {
 			info.Level = sdk.WorkflowRunInfoLevelInfo
 			info.Message = fmt.Sprintf("service %s is ready", serviceName)
 		} else {
@@ -187,7 +187,7 @@ func (w *CurrentWorker) runJobServiceReadiness(ctx context.Context, serviceName 
 			log.Error(ctx, "runJobServiceReadiness> Unable to send spawn info: %v", err)
 		}
 
-		if result.Status == sdk.StatusSuccess {
+		if result.Status == sdk.V2WorkflowRunJobStatusSuccess {
 			return nil
 		}
 
@@ -210,7 +210,7 @@ func (w *CurrentWorker) runJobServiceReadiness(ctx context.Context, serviceName 
 func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobResult {
 	log.Info(ctx, "runJob> start job %s (%s)", w.currentJobV2.runJob.JobID, w.currentJobV2.runJob.ID)
 	var jobResult = sdk.V2WorkflowRunJobResult{
-		Status: sdk.StatusSuccess,
+		Status: sdk.V2WorkflowRunJobStatusSuccess,
 	}
 
 	defer func() {
@@ -281,13 +281,13 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		currentStepStatus.Ended = time.Now()
 		currentStepStatus.Outcome = stepRes.Status
 
-		if stepRes.Status == sdk.StatusFail && jobResult.Status != sdk.StatusFail && !step.ContinueOnError {
-			jobResult.Status = sdk.StatusFail
+		if stepRes.Status == sdk.V2WorkflowRunJobStatusFail && jobResult.Status != sdk.V2WorkflowRunJobStatusFail && !step.ContinueOnError {
+			jobResult.Status = sdk.V2WorkflowRunJobStatusFail
 			jobResult.Error = stepRes.Error
 		}
 
 		if step.ContinueOnError {
-			currentStepStatus.Conclusion = sdk.StatusSuccess
+			currentStepStatus.Conclusion = sdk.V2WorkflowRunJobStatusSuccess
 		} else {
 			currentStepStatus.Conclusion = currentStepStatus.Outcome
 		}
@@ -312,7 +312,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	bts, err := json.Marshal(runJobContext)
 	if err != nil {
 		return sdk.V2WorkflowRunJobResult{
-			Status: sdk.StatusFail,
+			Status: sdk.V2WorkflowRunJobStatusFail,
 			Time:   time.Now(),
 			Error:  fmt.Sprintf("unable to parse step %s condition expression: %v", stepName, err),
 		}
@@ -320,7 +320,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	var mapContexts map[string]interface{}
 	if err := json.Unmarshal(bts, &mapContexts); err != nil {
 		return sdk.V2WorkflowRunJobResult{
-			Status: sdk.StatusFail,
+			Status: sdk.V2WorkflowRunJobStatusFail,
 			Time:   time.Now(),
 			Error:  fmt.Sprintf("unable to parse step %s condition expression: %v", stepName, err),
 		}
@@ -330,7 +330,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	booleanResult, err := ap.InterpolateToBool(ctx, step.If)
 	if err != nil {
 		return sdk.V2WorkflowRunJobResult{
-			Status: sdk.StatusFail,
+			Status: sdk.V2WorkflowRunJobStatusFail,
 			Time:   time.Now(),
 			Error:  fmt.Sprintf("unable to interpolate step condition %s into a boolean: %v", step.If, err),
 		}
@@ -339,7 +339,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	if !booleanResult {
 		w.SendLog(ctx, workerruntime.LevelInfo, "not executed")
 		return sdk.V2WorkflowRunJobResult{
-			Status: sdk.StatusSkipped,
+			Status: sdk.V2WorkflowRunJobStatusSkipped,
 			Time:   time.Now(),
 		}
 	}
@@ -415,14 +415,14 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		// <project_key> / vcs / my / repo / actionName
 		for stepIndex, step := range w.actions[name].Runs.Steps {
 			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, actionContext)
-			if stepRes.Status == sdk.StatusFail {
+			if stepRes.Status == sdk.V2WorkflowRunJobStatusFail {
 				return stepRes
 			}
 		}
 	default:
 	}
 	return sdk.V2WorkflowRunJobResult{
-		Status: sdk.StatusSuccess,
+		Status: sdk.V2WorkflowRunJobStatusSuccess,
 	}
 }
 
@@ -478,15 +478,20 @@ func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts m
 		return w.failJob(ctx, pluginResult.Details)
 	}
 
+	jobStatus, err := sdk.NewV2WorkflowRunJobStatusFromString(pluginResult.Status)
+	if err != nil {
+		return w.failJob(ctx, fmt.Sprintf("error running plugin %s: %v", pluginName, err))
+	}
+
 	return sdk.V2WorkflowRunJobResult{
-		Status: pluginResult.Status,
+		Status: jobStatus,
 		Error:  pluginResult.Details,
 	}
 }
 
 func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2WorkflowRunJobResult {
 	res := sdk.V2WorkflowRunJobResult{
-		Status: sdk.StatusFail,
+		Status: sdk.V2WorkflowRunJobStatusFail,
 		Error:  reason,
 	}
 	log.Error(ctx, "worker.failJobStep> %v", res.Error)

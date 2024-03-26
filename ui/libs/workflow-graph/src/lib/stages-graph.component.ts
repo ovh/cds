@@ -14,14 +14,13 @@ import {
 import { WorkflowV2JobsGraphComponent } from './jobs-graph.component';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
-import { GraphNode, GraphNodeTypeGate, GraphNodeTypeJob, GraphNodeTypeStage } from './graph.model';
+import { GraphNode, GraphNodeType } from './graph.model';
 import { GraphDirection, WorkflowV2Graph } from './graph.lib';
 import { load, LoadOptions } from 'js-yaml';
-import { GraphGateNodeComponent } from './node/gate-node.component';
-import { V2WorkflowRun, V2WorkflowRunJob } from './v2.workflow.run.model';
+import { V2Workflow, V2WorkflowRun, V2WorkflowRunJob } from './v2.workflow.run.model';
+import { GraphMatrixNodeComponent } from './node/matrix-node.component';
 
-export type WorkflowV2JobsGraphOrNodeComponent = WorkflowV2JobsGraphComponent |
-    GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphGateNodeComponent;
+export type WorkflowV2JobsGraphOrNodeOrMatrixComponent = WorkflowV2JobsGraphComponent | GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
 
 @Component({
     selector: 'app-stages-graph',
@@ -39,7 +38,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     hooksOn: any;
 
     @Input() set workflow(data: any) {
-        let workflow: any;
+        // Parse the workflow
+        let workflow: V2Workflow;
         try {
             workflow = load(data && data !== '' ? data : '{}', <LoadOptions>{
                 onWarning: (e) => { }
@@ -47,136 +47,67 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         } catch (e) {
             console.error("Invalid workflow:", data, e)
         }
-        this.hasStages = !!workflow && !!workflow["stages"];
+
+        this.hasStages = !!workflow && !!workflow.stages;
+
         this.nodes = [];
-        if (workflow && workflow["stages"]) {
-            this.nodes.push(...Object.keys(workflow["stages"])
-                .map(k => <GraphNode>{
-                    name: k,
-                    depends_on: workflow["stages"][k]?.needs,
-                    sub_graph: [],
-                    type: GraphNodeTypeStage
-                }));
+        if (this.hasStages) {
+            this.nodes.push(...Object.keys(workflow.stages).map(k => <GraphNode>{
+                type: GraphNodeType.Stage,
+                name: k,
+                depends_on: workflow.stages[k]?.needs,
+                sub_graph: []
+            }));
         }
-        if (workflow && workflow["jobs"] && Object.keys(workflow["jobs"]).length > 0) {
-            let matrixJobs = new Map<string, any[]>()
-            Object.keys(workflow["jobs"]).forEach(jobID => {
-                let job = workflow.jobs[jobID];
-                let expandMatrixJobs = new Array<string>();
-                if (job?.strategy?.matrix) {
-                    let keys = Object.keys(job.strategy.matrix);
-                    let alls = new Array<Map<string, string>>();
-                    this.generateMatrix(job.strategy.matrix, keys, 0, new Map<string, string>(), alls)
-                    alls.forEach(m => {
-                        let suffix = "";
-                        let mapKeys = Array.from(m.keys()).sort();
-                        mapKeys.forEach((k, index) => {
-                            if (index !== 0) {
-                                suffix += ',';
-                            }
-                            suffix += m.get(k);
-                        });
-                        let newJob = Object.assign({}, job);
-                        newJob.matrixName = jobID + '-' + suffix.replaceAll('/', '-');
-                        expandMatrixJobs.push(newJob);
-                    });
-                    matrixJobs.set(jobID, expandMatrixJobs);
+
+        if (workflow && workflow.jobs) {
+            Object.keys(workflow.jobs).forEach(jobName => {
+                const jobSpec = workflow.jobs[jobName];
+
+                let node = <GraphNode>{
+                    type: jobSpec?.strategy?.matrix ? GraphNodeType.Matrix : GraphNodeType.Job,
+                    name: jobName,
+                    depends_on: jobSpec?.needs,
+                    job: jobSpec
+                };
+                if (jobSpec.gate) {
+                    node.gate = workflow.gates[jobSpec.gate];
                 }
-            });
-            Object.keys(workflow["jobs"]).forEach(k => {
-                let job = workflow.jobs[k];
-                let gateNode = undefined;
-                if (job?.gate && job.gate !== '') {
-                    gateNode = <GraphNode>{ name: `${job.gate}-${k}`, type: GraphNodeTypeGate, gateChild: k, gateName: `${job.gate}` }
-                }
-                if (matrixJobs.has(k)) {
-                    matrixJobs.get(k).forEach(j => {
-                        let node = <GraphNode>{ name: j.matrixName, depends_on: this.getJobNeeds(j, matrixJobs), type: GraphNodeTypeJob };
-                        if (job?.stage) {
-                            for (let i = 0; i < this.nodes.length; i++) {
-                                if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
-                                    this.nodes[i].sub_graph.push(node);
-                                    if (gateNode) {
-                                        this.nodes[i].sub_graph.push(gateNode);
-                                    }
-                                    break;
-                                }
-                            }
-                        } else {
-                            this.nodes.push(node);
-                            if (gateNode) {
-                                this.nodes.push(gateNode);
-                            }
-                        }
-                    });
-                } else {
-                    let node = <GraphNode>{ name: k, depends_on: this.getJobNeeds(job, matrixJobs), type: GraphNodeTypeJob };
-                    node.run = this.jobRuns[k];
-                    if (job?.stage) {
-                        for (let i = 0; i < this.nodes.length; i++) {
-                            if (this.nodes[i].name === job.stage && this.nodes[i].type === GraphNodeTypeStage) {
-                                this.nodes[i].sub_graph.push(node);
-                                if (gateNode) {
-                                    this.nodes[i].sub_graph.push(gateNode);
-                                }
-                                break;
-                            }
-                        }
-                    } else {
-                        this.nodes.push(node);
-                        if (gateNode) {
-                            this.nodes.push(gateNode);
+
+                if (jobSpec?.stage) {
+                    for (let i = 0; i < this.nodes.length; i++) {
+                        if (this.nodes[i].name === jobSpec.stage && this.nodes[i].type === GraphNodeType.Stage) {
+                            this.nodes[i].sub_graph.push(node);
+                            break;
                         }
                     }
+                } else {
+                    this.nodes.push(node);
                 }
             });
-            this.initRunJobs();
         }
+
+        this.initRunJobs();
+        this.initGate();
+
         this.hooks = [];
         this.selectedHook = '';
-        if (workflow && workflow['on']) {
-            this.hooksOn = workflow['on'];
+        if (workflow && workflow.on) {
+            this.hooksOn = workflow.on;
             this.initHooks();
         }
-        this.initGate();
+
         this.changeDisplay();
         this._cd.markForCheck();
     }
 
-    jobRuns: { [name: string]: V2WorkflowRunJob } = {};
+    _runJobs: Array<V2WorkflowRunJob> = [];
 
     @Input() set runJobs(data: Array<V2WorkflowRunJob>) {
-        if (!data) {
-            this.jobRuns = {}
-            if (this.nodes) {
-                this.nodes.forEach(n => {
-                    if (this.hasStages) {
-                        n.sub_graph.forEach(sub => {
-                            delete sub.run;
-                        });
-                    } else {
-                        delete n.run;
-                    }
-                })
-            }
+        this._runJobs = data ?? [];
+        if (!this.svgContainer) {
             return;
         }
-        this.jobRuns = {};
-        data.forEach(j => {
-            if (j.matrix && Object.keys(j.matrix).length > 0) {
-                let mapKeys = Object.keys(j.matrix).sort();
-                let suffix = "";
-                mapKeys.forEach((k, index) => {
-                    if (index !== 0) {
-                        suffix += ',';
-                    }
-                    suffix += j.matrix[k];
-                });
-                this.jobRuns[j.job_id + '-' + suffix.replaceAll('/', '-')] = j;
-            } else {
-                this.jobRuns[j.job_id] = j;
-            }
-        });
         this.initRunJobs();
         this.initGraph();
     }
@@ -200,9 +131,12 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
 
     // workflow graph
     @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: ViewContainerRef;
-    graph: WorkflowV2Graph<WorkflowV2JobsGraphOrNodeComponent>;
+    graph: WorkflowV2Graph<WorkflowV2JobsGraphOrNodeOrMatrixComponent>;
 
-    constructor(private _cd: ChangeDetectorRef, private host: ElementRef) {
+    constructor(
+        private _cd: ChangeDetectorRef,
+        private host: ElementRef
+    ) {
         const observer = new ResizeObserver(entries => {
             this.onResize();
         });
@@ -221,30 +155,6 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             this.selectedHook = this._workflowRun?.event?.event_name;
         }
     }
-
-    getJobNeeds(j: {}, matrixJobs: Map<string, Array<{}>>) {
-        if (!j['needs']) {
-            return [];
-        }
-        let needs = [];
-        <string[]>j['needs'].forEach(n => {
-            if (!matrixJobs.has(n)) {
-                needs.push(n);
-            } else {
-                matrixJobs.get(n).forEach(mj => {
-                    needs.push(mj['matrixName'].replaceAll('/', '-'));
-                });
-            }
-        });
-        return needs;
-    }
-
-    static isJobsGraph = (component: WorkflowV2JobsGraphOrNodeComponent): component is WorkflowV2JobsGraphComponent => {
-        if ((component as WorkflowV2JobsGraphComponent).direction) {
-            return true;
-        }
-        return false;
-    };
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
@@ -276,44 +186,61 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         if (!this._workflowRun.job_events || this._workflowRun.job_events.length === 0) {
             return;
         }
-        this.nodes.forEach(n => {
-            if (this.hasStages) {
-                n.sub_graph.forEach(subN => {
-                    if (subN.gateName !== '') {
-                        let je = this._workflowRun.job_events.filter(je => je.job_id === subN.gateChild);
-                        if (je) {
-                            subN.gateStatus = 'Success';
+        this._workflowRun.job_events.forEach(e => {
+            this.nodes.forEach(n => {
+                if (n.sub_graph) {
+                    n.sub_graph.forEach(sub => {
+                        if (sub.name === e.job_id) {
+                            sub.event = e;
                         }
+                    });
+                } else {
+                    if (n.name === e.job_id) {
+                        n.event = e;
                     }
-                });
-            } else {
-                if (n.gateName !== '') {
-                    let je = this._workflowRun.job_events.filter(je => je.job_id === n.gateChild);
-                    if (je) {
-                        n.gateStatus = 'Success';
-                    }
-                }
-            }
+                };
+            });
         });
     }
 
     initRunJobs(): void {
-        if (!this.jobRuns || !this.nodes) {
-            return;
-        }
+        // Clean run job data on nodes
         this.nodes.forEach(n => {
-            if (this.hasStages) {
+            if (n.sub_graph) {
                 n.sub_graph.forEach(sub => {
-                    if (this.jobRuns[sub.name]) {
-                        sub.run = this.jobRuns[sub.name];
-                    }
+                    delete sub.run;
+                    delete sub.runs;
                 });
             } else {
-                if (this.jobRuns[n.name]) {
-                    n.run = this.jobRuns[n.name];
-                }
+                delete n.run;
+                delete n.runs;
             }
-        })
+        });
+
+        // Add run job data on nodes
+        this._runJobs.forEach(j => {
+            this.nodes.forEach(n => {
+                if (n.sub_graph) {
+                    n.sub_graph.forEach(sub => {
+                        if (sub.name === j.job_id) {
+                            if (sub.type === GraphNodeType.Matrix) {
+                                sub.runs = (sub.runs ?? []).concat(j);
+                            } else {
+                                sub.run = j;
+                            }
+                        }
+                    });
+                } else {
+                    if (n.name === j.job_id) {
+                        if (n.type === GraphNodeType.Matrix) {
+                            n.runs = (n.runs ?? []).concat(j);
+                        } else {
+                            n.run = j;
+                        }
+                    }
+                };
+            });
+        });
     }
 
     initGraph() {
@@ -327,19 +254,25 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         }
 
         this.nodes.forEach(n => {
-            if (this.hasStages) {
-                this.graph.createNode(n.name, GraphNodeTypeStage, this.createSubGraphComponent(n),
-                    null, 300, 169);
-            } else {
-                switch (n.type) {
-                    case GraphNodeTypeGate:
-                        this.graph.createGate(n, GraphNodeTypeGate, this.createGateNodeComponent(n),
-                            n.run ? n.run.status : null);
-                        break;
-                    default:
-                        this.graph.createNode(n.name, GraphNodeTypeJob, this.createJobNodeComponent(n),
-                            n.run ? n.run.status : null);
-                }
+            let component: ComponentRef<WorkflowV2JobsGraphOrNodeOrMatrixComponent>;
+            switch (n.type) {
+                case GraphNodeType.Stage:
+                    component = this.createSubGraphComponent(n);
+                    this.graph.createNode(n.name, n.type, component, 300, 170);
+                    break;
+                case GraphNodeType.Matrix:
+                    component = this.createJobMatrixComponent(n);
+                    const alls = GraphNode.generateMatrixOptions(n.job.strategy.matrix);
+                    let height = 30 * alls.length + 10 * (alls.length - 1) + 60 + 20;
+                    this.graph.createNode(n.name, n.type, component, 240, height);
+                    break;
+                default:
+                    component = this.createJobNodeComponent(n);
+                    this.graph.createNode(n.name, n.type, component);
+                    if (n.run) {
+                        this.graph.setNodeStatus(n.name, n.run ? n.run.status : null);
+                    }
+                    break;
             }
         });
 
@@ -382,16 +315,16 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         this.onSelectHook.emit(type);
     }
 
-    createGateNodeComponent(node: GraphNode): ComponentRef<GraphGateNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(GraphGateNodeComponent);
+    createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
 
-    createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
-        const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
+    createJobMatrixComponent(node: GraphNode): ComponentRef<GraphMatrixNodeComponent> {
+        const componentRef = this.svgContainer.createComponent(GraphMatrixNodeComponent);
         componentRef.instance.node = node;
         componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
@@ -427,51 +360,39 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             this.svgContainer.element.nativeElement.offsetHeight);
     }
 
-    nodeMouseEvent(type: string, n: GraphNode) {
-        this.graph.nodeMouseEvent(type, n.name);
+    nodeMouseEvent(type: string, n: GraphNode, options?: any) {
+        this.graph.nodeMouseEvent(type, n.name, options);
     }
 
-    nodeJobMouseEvent(type: string, n: GraphNode) {
+    nodeJobMouseEvent(type: string, n: GraphNode, options?: any) {
         if (type === 'click') {
-            if (n.gateName && n.gateName !== '') {
+            if (options && options['jobRunID']) {
+                this.onSelectJobRun.emit(options['jobRunID']);
+            } else if (options && options['gate']) {
                 this.onSelectJobGate.emit(n);
             } else {
-                if (n.run) {
-                    this.onSelectJob.emit(n.run.id);
-                } else {
-                    this.onSelectJob.emit(n.name);
-                }
+                this.onSelectJob.emit(n.name);
             }
         }
-        this.graph.nodeMouseEvent(type, n.name);
+        this.graph.nodeMouseEvent(type, n.name, options);
     }
 
-    subGraphSelectJob(name: string): void {
-        this.graph.unselectAllNode();
-        this.onSelectJob.emit(name);
+    subGraphSelectJob(type: string, n: GraphNode, options?: any): void {
+        if (type === 'click') {
+            this.graph.unselectAllNode();
+            if (options && options['jobRunID']) {
+                this.onSelectJobRun.emit(options['jobRunID']);
+            } else if (options && options['gateName']) {
+                this.onSelectJobGate.emit(n);
+            } else {
+                this.onSelectJob.emit(n.name);
+            }
+        }
     }
 
     changeDirection(): void {
         this.direction = this.direction === GraphDirection.HORIZONTAL ? GraphDirection.VERTICAL : GraphDirection.HORIZONTAL;
         this.changeDisplay();
-    }
-
-    generateMatrix(matrix: { [key: string]: string[] }, keys: string[], keyIndex: number, current: Map<string, string>, alls: Map<string, string>[]) {
-        if (current.size == keys.length) {
-            let combi = new Map<string, string>();
-            current.forEach((v, k) => {
-                combi.set(k, v);
-            });
-            alls.push(combi);
-            return;
-        }
-        let key = keys[keyIndex];
-        let values = matrix[key];
-        values.forEach(v => {
-            current.set(key, v);
-            this.generateMatrix(matrix, keys, keyIndex + 1, current, alls);
-            current.delete(key);
-        });
     }
 }
 

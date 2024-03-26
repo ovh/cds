@@ -114,8 +114,8 @@ type JobContextService struct {
 type JobsResultContext map[string]JobResultContext
 
 type JobResultContext struct {
-	Result  string          `json:"result"`
-	Outputs JobResultOutput `json:"outputs"`
+	Result  V2WorkflowRunJobStatus `json:"result"`
+	Outputs JobResultOutput        `json:"outputs"`
 }
 
 type JobResultOutput map[string]string
@@ -138,15 +138,15 @@ func (jro *JobResultOutput) Scan(src interface{}) error {
 
 type StepsContext map[string]StepContext
 type StepContext struct {
-	Conclusion string          `json:"conclusion"` // result of a step after 'continue-on-error'
-	Outcome    string          `json:"outcome"`    // result of a step before 'continue-on-error'
-	Outputs    JobResultOutput `json:"outputs"`
+	Conclusion V2WorkflowRunJobStatus `json:"conclusion"` // result of a step after 'continue-on-error'
+	Outcome    V2WorkflowRunJobStatus `json:"outcome"`    // result of a step before 'continue-on-error'
+	Outputs    JobResultOutput        `json:"outputs"`
 }
 
 type NeedsContext map[string]NeedContext
 type NeedContext struct {
-	Result  string          `json:"result"`
-	Outputs JobResultOutput `json:"outputs"`
+	Result  V2WorkflowRunJobStatus `json:"result"`
+	Outputs JobResultOutput        `json:"outputs"`
 }
 
 func (sc StepsContext) Value() (driver.Value, error) {

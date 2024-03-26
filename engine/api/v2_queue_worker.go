@@ -47,11 +47,11 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return err
 		}
 
-		if jobRun.Status != sdk.StatusScheduling {
+		if jobRun.Status != sdk.V2WorkflowRunJobStatusScheduling {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "unable take the job %s, current status %s", jobRunID, jobRun.Status)
 		}
 
-		run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID, workflow_v2.WithRunResults)
+		run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)
 		if err != nil {
 			return err
 		}
@@ -95,8 +95,10 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			return err
 		}
 
-		jobRun.Status = sdk.StatusBuilding
-		jobRun.Started = time.Now()
+		now := time.Now()
+
+		jobRun.Status = sdk.V2WorkflowRunJobStatusBuilding
+		jobRun.Started = &now
 		jobRun.WorkerName = wrkWithSecret.Name
 		if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
 			return err
@@ -104,7 +106,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 
 		info := sdk.V2WorkflowRunJobInfo{
 			Level:            sdk.WorkflowRunInfoLevelInfo,
-			IssuedAt:         time.Now(),
+			IssuedAt:         now,
 			WorkflowRunJobID: jobRun.ID,
 			WorkflowRunID:    jobRun.WorkflowRunID,
 			Message:          fmt.Sprintf("Worker %q is starting for job %q", wk.Name, jobRun.JobID),
@@ -139,6 +141,7 @@ func buildSensitiveData(value string) []string {
 	datas = append(datas, sdk.OneLineValue(value))
 	return datas
 }
+
 func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, []string, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
@@ -219,8 +222,12 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		contexts.Env[k] = v
 	}
 
+	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, run.ID, run.RunAttempt)
+	if err != nil {
+		return nil, nil, err
+	}
 	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
-	for _, rr := range run.Results {
+	for _, rr := range runResults {
 		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
 			continue
 		}
@@ -259,8 +266,8 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 				Result:  j.Result,
 				Outputs: contexts.Jobs[n].Outputs,
 			}
-			if j.Result == sdk.StatusFail && run.WorkflowData.Workflow.Jobs[n].ContinueOnError {
-				needContext.Result = sdk.StatusSuccess
+			if j.Result == sdk.V2WorkflowRunJobStatusFail && run.WorkflowData.Workflow.Jobs[n].ContinueOnError {
+				needContext.Result = sdk.V2WorkflowRunJobStatusSuccess
 			}
 			contexts.Needs[n] = needContext
 		}
@@ -447,7 +454,7 @@ func (api *API) postV2RegisterWorkerHandler() ([]service.RbacChecker, service.Ha
 		if err != nil {
 			return err
 		}
-		if runJob.Status != sdk.StatusScheduling || runJob.HatcheryName != hatch.Name || runJob.ID != jobRunID || runJob.Region != regionName {
+		if runJob.Status != sdk.V2WorkflowRunJobStatusScheduling || runJob.HatcheryName != hatch.Name || runJob.ID != jobRunID || runJob.Region != regionName {
 			return sdk.WrapError(sdk.ErrForbidden, "unable to take job %s, current status: %s, hatchery: %s, region: %s", runJob.ID, runJob.Status, runJob.HatcheryName, runJob.Region)
 		}
 

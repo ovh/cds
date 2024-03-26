@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
-import { V2WorkflowRun, WorkflowRunResult } from "app/model/v2.workflow.run.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Tab } from "app/shared/tabs/tabs.component";
 import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
+import { WorkflowRunResult } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Component({
 	selector: 'app-run-result',
@@ -17,16 +17,14 @@ import { Subscription } from "rxjs";
 export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
-	@Input() run: V2WorkflowRun;
-	@Input() resultID: string;
-	@Output() onClickClose = new EventEmitter<void>();
+	@Input() result: WorkflowRunResult;
+	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
 	defaultTabs: Array<Tab>;
 	tabs: Array<Tab>;
 	selectedTab: Tab;
-	result: WorkflowRunResult;
 	resultRaw: string;
 
 	constructor(
@@ -56,7 +54,6 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(): void {
-		this.result = this.run.results.find(r => r.id === this.resultID);
 		if (this.result.type === 'tests') {
 			this.tabs = [<Tab>{
 				title: 'Tests',
@@ -76,7 +73,7 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	clickClose(): void {
-		this.onClickClose.emit();
+		this.onClose.emit();
 	}
 
 }

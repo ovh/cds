@@ -2,12 +2,13 @@ package api
 
 import (
 	"context"
+
 	"github.com/ovh/cds/sdk"
 )
 
-func computeExistingRunJobContexts(run sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob) sdk.JobsResultContext {
+func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) sdk.JobsResultContext {
 	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
-	for _, rr := range run.Results {
+	for _, rr := range runResults {
 		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
 			continue
 		}
@@ -24,7 +25,7 @@ func computeExistingRunJobContexts(run sdk.V2WorkflowRun, runJobs []sdk.V2Workfl
 	jobsContext := sdk.JobsResultContext{}
 	matrixJobs := make(map[string][]sdk.JobResultContext)
 	for _, rj := range runJobs {
-		if sdk.StatusIsTerminated(rj.Status) && len(rj.Matrix) == 0 {
+		if rj.Status.IsTerminated() && len(rj.Matrix) == 0 {
 			result := sdk.JobResultContext{
 				Result:  rj.Status,
 				Outputs: sdk.JobResultOutput{},
@@ -59,9 +60,9 @@ func computeExistingRunJobContexts(run sdk.V2WorkflowRun, runJobs []sdk.V2Workfl
 nextjob:
 	for k := range matrixJobs {
 		outputs := sdk.JobResultOutput{}
-		var finalStatus string
+		var finalStatus sdk.V2WorkflowRunJobStatus
 		for _, rj := range matrixJobs[k] {
-			if !sdk.StatusIsTerminated(rj.Result) {
+			if !rj.Result.IsTerminated() {
 				continue nextjob
 			}
 			for outputK, outputV := range rj.Outputs {
@@ -69,14 +70,14 @@ nextjob:
 			}
 
 			switch finalStatus {
-			case "":
+			case sdk.V2WorkflowRunJobStatusUnknown:
 				finalStatus = rj.Result
-			case sdk.StatusSuccess:
-				if rj.Result == sdk.StatusStopped || rj.Result == sdk.StatusFail {
+			case sdk.V2WorkflowRunJobStatusSuccess:
+				if rj.Result == sdk.V2WorkflowRunJobStatusStopped || rj.Result == sdk.V2WorkflowRunJobStatusFail {
 					finalStatus = rj.Result
 				}
-			case sdk.StatusFail:
-				if rj.Result == sdk.StatusStopped {
+			case sdk.V2WorkflowRunJobStatusFail:
+				if rj.Result == sdk.V2WorkflowRunJobStatusStopped {
 					finalStatus = rj.Result
 				}
 			}
@@ -104,8 +105,8 @@ func buildContextForJob(_ context.Context, allJobs map[string]sdk.V2Job, runJobs
 				Outputs: j.Outputs,
 			}
 			// override result if job has continue-on-error
-			if allJobs[n].ContinueOnError && j.Result == sdk.StatusFail {
-				needContext.Result = sdk.StatusSuccess
+			if allJobs[n].ContinueOnError && j.Result == sdk.V2WorkflowRunJobStatusFail {
+				needContext.Result = sdk.V2WorkflowRunJobStatusSuccess
 			}
 
 			needsContext[n] = needContext

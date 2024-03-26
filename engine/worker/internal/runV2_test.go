@@ -21,7 +21,7 @@ func TestRunJobContinueOnError(t *testing.T) {
 	ctx := context.TODO()
 	w.currentJobV2.runJob = &sdk.V2WorkflowRunJob{
 		ID:     sdk.UUID(),
-		Status: sdk.StatusBuilding,
+		Status: sdk.V2WorkflowRunJobStatusBuilding,
 		JobID:  "myjob",
 		Region: "build",
 		Job: sdk.V2Job{
@@ -59,13 +59,13 @@ func TestRunJobContinueOnError(t *testing.T) {
 	result := w.runJobAsCode(ctx)
 
 	require.Equal(t, 2, len(w.currentJobV2.runJob.StepsStatus))
-	require.Equal(t, sdk.StatusSuccess, w.currentJobV2.runJob.StepsStatus["step-0"].Conclusion)
-	require.Equal(t, sdk.StatusFail, w.currentJobV2.runJob.StepsStatus["step-0"].Outcome)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, w.currentJobV2.runJob.StepsStatus["step-0"].Conclusion)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, w.currentJobV2.runJob.StepsStatus["step-0"].Outcome)
 
-	require.Equal(t, sdk.StatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Conclusion)
-	require.Equal(t, sdk.StatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Outcome)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Conclusion)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Outcome)
 
-	require.Equal(t, sdk.StatusSuccess, result.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, result.Status)
 }
 
 func TestRunJobContinueAlways(t *testing.T) {
@@ -74,7 +74,7 @@ func TestRunJobContinueAlways(t *testing.T) {
 	ctx := context.TODO()
 	w.currentJobV2.runJob = &sdk.V2WorkflowRunJob{
 		ID:     sdk.UUID(),
-		Status: sdk.StatusBuilding,
+		Status: sdk.V2WorkflowRunJobStatusBuilding,
 		JobID:  "myjob",
 		Region: "build",
 		Job: sdk.V2Job{
@@ -112,20 +112,20 @@ func TestRunJobContinueAlways(t *testing.T) {
 	result := w.runJobAsCode(ctx)
 
 	require.Equal(t, 2, len(w.currentJobV2.runJob.StepsStatus))
-	require.Equal(t, sdk.StatusFail, w.currentJobV2.runJob.StepsStatus["step-0"].Conclusion)
-	require.Equal(t, sdk.StatusFail, w.currentJobV2.runJob.StepsStatus["step-0"].Outcome)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, w.currentJobV2.runJob.StepsStatus["step-0"].Conclusion)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, w.currentJobV2.runJob.StepsStatus["step-0"].Outcome)
 
-	require.Equal(t, sdk.StatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Conclusion)
-	require.Equal(t, sdk.StatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Outcome)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Conclusion)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, w.currentJobV2.runJob.StepsStatus["step-1"].Outcome)
 
-	require.Equal(t, sdk.StatusFail, result.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, result.Status)
 }
 
 func TestCurrentWorker_runJobServicesReadinessNoService(t *testing.T) {
 	var w = new(CurrentWorker)
 	w.currentJobV2.runJob = &sdk.V2WorkflowRunJob{}
 	result := w.runJobServicesReadiness(context.TODO())
-	require.Equal(t, sdk.StatusSuccess, result.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, result.Status)
 }
 
 func TestCurrentWorker_runJobServicesReadinessWithServiceNoCommand(t *testing.T) {
@@ -143,7 +143,7 @@ func TestCurrentWorker_runJobServicesReadinessWithServiceNoCommand(t *testing.T)
 		},
 	}
 	result := w.runJobServicesReadiness(context.TODO())
-	require.Equal(t, sdk.StatusSuccess, result.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, result.Status)
 }
 
 func TestCurrentWorker_runJobServicesReadinessWithServiceCommandNoRetries(t *testing.T) {
@@ -167,7 +167,7 @@ func TestCurrentWorker_runJobServicesReadinessWithServiceCommandNoRetries(t *tes
 	t.Log("err:", result.Error)
 	t.Log("status:", result.Status)
 
-	require.Equal(t, sdk.StatusFail, result.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, result.Status)
 }
 
 func TestCurrentWorker_runJobServicesReadinessWithServiceWithCommand(t *testing.T) {
@@ -227,5 +227,5 @@ func TestCurrentWorker_runJobServicesReadinessWithServiceWithCommand(t *testing.
 		},
 	}
 	result := w.runJobServicesReadiness(context.TODO())
-	require.Equal(t, sdk.StatusSuccess, result.Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, result.Status)
 }

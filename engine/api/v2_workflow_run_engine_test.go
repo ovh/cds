@@ -18,13 +18,13 @@ import (
 func TestJobConditionSuccess(t *testing.T) {
 	jobsContext := sdk.JobsResultContext{
 		"job1": {
-			Result: sdk.StatusFail,
+			Result: sdk.V2WorkflowRunJobStatusFail,
 		},
 		"job2": {
-			Result: sdk.StatusSuccess,
+			Result: sdk.V2WorkflowRunJobStatusSuccess,
 		},
 		"job3": {
-			Result: sdk.StatusFail,
+			Result: sdk.V2WorkflowRunJobStatusFail,
 		},
 	}
 	allJobs := map[string]sdk.V2Job{
@@ -114,19 +114,19 @@ func TestBuildCurrentJobContext(t *testing.T) {
 
 	jobsContext := sdk.JobsResultContext{
 		"job1": {
-			Result: sdk.StatusFail,
+			Result: sdk.V2WorkflowRunJobStatusFail,
 		},
 		"job2": {
-			Result: sdk.StatusSuccess,
+			Result: sdk.V2WorkflowRunJobStatusSuccess,
 		},
 		"job3": {
-			Result: sdk.StatusSuccess,
+			Result: sdk.V2WorkflowRunJobStatusSuccess,
 		},
 		"job4": {
-			Result: sdk.StatusFail,
+			Result: sdk.V2WorkflowRunJobStatusFail,
 		},
 		"job5": {
-			Result: sdk.StatusFail,
+			Result: sdk.V2WorkflowRunJobStatusFail,
 		},
 	}
 
@@ -134,8 +134,8 @@ func TestBuildCurrentJobContext(t *testing.T) {
 	buildAncestorJobContext("job6", allJobs, jobsContext, currentJobContext)
 
 	require.Equal(t, 3, len(currentJobContext))
-	require.Equal(t, sdk.StatusFail, currentJobContext["job1"].Result)
-	require.Equal(t, sdk.StatusFail, currentJobContext["job5"].Result)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, currentJobContext["job1"].Result)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, currentJobContext["job5"].Result)
 }
 
 func TestGenerateMatrix(t *testing.T) {
@@ -220,7 +220,7 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -248,7 +248,7 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(runjobs))
-	require.Equal(t, sdk.StatusWaiting, runjobs[0].Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, runjobs[0].Status)
 	require.Equal(t, "job1", runjobs[0].JobID)
 }
 
@@ -302,7 +302,7 @@ func TestWorkflowTriggerWithCondition(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -390,7 +390,7 @@ func TestWorkflowTriggerWithConditionKOSyntax(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -445,7 +445,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -465,7 +465,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunAttempt:    wr.RunAttempt,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -477,7 +477,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunAttempt:    wr.RunAttempt,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj11))
 
@@ -494,7 +494,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -514,7 +514,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunAttempt:    wr.RunAttempt,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
@@ -526,7 +526,7 @@ func TestTriggerBlockedWorkflowRuns(t *testing.T) {
 		ProjectKey:    wr.ProjectKey,
 		RunAttempt:    wr.RunAttempt,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj3))
 
@@ -591,7 +591,7 @@ func TestWorkflowTriggerStage(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -627,7 +627,7 @@ func TestWorkflowTriggerStage(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(runjobs))
-	require.Equal(t, sdk.StatusWaiting, runjobs[0].Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, runjobs[0].Status)
 	require.Equal(t, "job1", runjobs[0].JobID)
 }
 
@@ -680,7 +680,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -705,7 +705,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 
 	wrj := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		JobID:         "job1",
 		WorkflowRunID: wr.ID,
 		ProjectKey:    wr.ProjectKey,
@@ -734,7 +734,7 @@ func TestWorkflowStageNeeds(t *testing.T) {
 	}
 
 	require.NotEmpty(t, jobs["job2"])
-	require.Equal(t, sdk.StatusWaiting, jobs["job2"].Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, jobs["job2"].Status)
 }
 
 func TestWorkflowMatrixNeeds(t *testing.T) {
@@ -786,7 +786,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -809,7 +809,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 
 	wrjFoo1 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		JobID:         "job1",
 		WorkflowRunID: wr.ID,
 		ProjectKey:    wr.ProjectKey,
@@ -823,7 +823,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 
 	wrjFoo2 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 		JobID:         "job1",
 		WorkflowRunID: wr.ID,
 		ProjectKey:    wr.ProjectKey,
@@ -853,7 +853,7 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 
 	// END Matrix 2 - It must trigger job 2
 
-	wrjFoo2.Status = sdk.StatusSuccess
+	wrjFoo2.Status = sdk.V2WorkflowRunJobStatusSuccess
 	require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &wrjFoo2))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
@@ -916,7 +916,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -947,7 +947,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 
 	wrjFoo1 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		JobID:         "job1",
 		WorkflowRunID: wr.ID,
 		ProjectKey:    wr.ProjectKey,
@@ -961,7 +961,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 
 	wrjFoo2 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 		JobID:         "job1",
 		WorkflowRunID: wr.ID,
 		ProjectKey:    wr.ProjectKey,
@@ -989,7 +989,7 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 
 	// END Matrix 2 - It must trigger job 2
 
-	wrjFoo2.Status = sdk.StatusSuccess
+	wrjFoo2.Status = sdk.V2WorkflowRunJobStatusSuccess
 	require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &wrjFoo2))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
@@ -1052,7 +1052,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -1074,7 +1074,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 
 	wrj1 := sdk.V2WorkflowRunJob{
 		Job:           wr.WorkflowData.Workflow.Jobs["job1"],
-		Status:        sdk.StatusSuccess,
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
 		JobID:         "job1",
 		WorkflowRunID: wr.ID,
 		ProjectKey:    wr.ProjectKey,
@@ -1106,7 +1106,7 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		mapJob[rj.JobID] = rj
 	}
 
-	require.Equal(t, sdk.StatusSkipped, mapJob["job2"].Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusSkipped, mapJob["job2"].Status)
 
 	// Trigger again to process job2
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
@@ -1123,5 +1123,5 @@ func TestWorkflowSkippedJob(t *testing.T) {
 	}
 
 	require.Equal(t, 3, len(runjobs))
-	require.Equal(t, sdk.StatusWaiting, mapJob["job3"].Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, mapJob["job3"].Status)
 }

@@ -8,9 +8,7 @@ import {
     OnInit,
     ViewChild
 } from "@angular/core";
-
 import { editor, } from 'monaco-editor';
-
 import { EditorOptions } from "ng-zorro-antd/code-editor/typings";
 import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Store } from "@ngxs/store";

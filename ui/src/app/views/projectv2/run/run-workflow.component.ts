@@ -5,44 +5,41 @@ import { Tab } from "app/shared/tabs/tabs.component";
 import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
-import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Component({
-	selector: 'app-run-hook',
-	templateUrl: './run-hook.html',
-	styleUrls: ['./run-hook.scss'],
+	selector: 'app-run-workflow',
+	templateUrl: './run-workflow.html',
+	styleUrls: ['./run-workflow.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
+export class RunWorkflowComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
-	@Input() run: V2WorkflowRun;
-	@Input() hook: string;
+	@Input() workflow: string;
 	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
-	event: string;
+	defaultTabs: Array<Tab>;
 	tabs: Array<Tab>;
 	selectedTab: Tab;
 
 	constructor(
-		private _store: Store,
-		private _cd: ChangeDetectorRef
-	) { }
+		private _cd: ChangeDetectorRef,
+		private _store: Store
+	) {
+		this.defaultTabs = [<Tab>{
+			title: 'Workflow',
+			key: 'workflow'
+		}];
+	}
 
 	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
 	ngOnInit(): void {
-		this.tabs = [<Tab>{
-			title: 'Event',
-			key: 'event',
-			default: true
-		}];
-
 		this.editorOption = {
-			language: 'json',
+			language: 'yaml',
 			minimap: { enabled: false },
 			readOnly: true
 		};
@@ -55,10 +52,9 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(): void {
-		if (this.run) {
-			this.event = JSON.stringify(this.run.event, null, 2);
-			this._cd.markForCheck();
-		}
+		this.tabs = [...this.defaultTabs];
+		this.tabs[0].default = true;
+		this._cd.markForCheck();
 	}
 
 	selectTab(tab: Tab): void {
