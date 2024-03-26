@@ -438,7 +438,7 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 		}
 		if nbAttempts > maxAttemptsNumberBeforeFailure {
 			if err := h.CDSClientV2().V2QueueJobResult(ctx, jobInfo.RunJob.Region, jobInfo.RunJob.ID, sdk.V2WorkflowRunJobResult{
-				Status: sdk.StatusFail,
+				Status: sdk.V2WorkflowRunJobStatusFail,
 				Error:  fmt.Sprintf("hatchery %q failed to start worker after %d attempts", h.Configuration().Name, maxAttemptsNumberBeforeFailure),
 			}); err != nil {
 				return err

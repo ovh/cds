@@ -1,29 +1,40 @@
 <ng-container *ngIf="workflowRun">
-    <div class="graph" [class.disableSelection]="resizing">
-        <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
-            <nz-page-header-title>
-                {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}
-                #{{workflowRun.run_number}}
-                <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
-                    (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">
-                    <nz-option *ngFor="let item of [].constructor(workflowRun.run_attempt); let i = index"
-                        [nzValue]="i+1" [nzLabel]="i+1"></nz-option>
-                </nz-select>
-                <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
-                    (click)="openPanel('workflow')"><span nz-icon nzType="file-text" nzTheme="outline"></span></button>
-            </nz-page-header-title>
-            <nz-page-header-content>
-                <span nz-typography nzType="secondary">
-                    Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} by {{workflowRun.contexts.git.username}} on
-                    repository
-                    {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
-                </span>
-            </nz-page-header-content>
-        </nz-page-header>
+    <div class="content" [class.disableSelection]="resizing">
 
-        <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-            (onSelectJobGate)="openPanel('gate', $event)" (onSelectJob)="openPanel('job', $event)"
-            (onSelectHook)="openPanel('hook', $event)" #graph></app-stages-graph>
+        <!--  GRAPH -->
+
+        <div class="graph">
+            <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
+                <nz-page-header-title>
+                    {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}
+                    #{{workflowRun.run_number}}
+                    <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
+                        (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">
+                        <nz-option *ngFor="let item of [].constructor(workflowRun.run_attempt); let i = index"
+                            [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
+                    </nz-select>
+                    <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
+                        (click)="openPanel('workflow')"><span nz-icon nzType="file-text"
+                            nzTheme="outline"></span></button>
+                </nz-page-header-title>
+                <nz-page-header-content>
+                    <span nz-typography nzType="secondary">
+                        Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} by {{workflowRun.contexts.git.username}}
+                        on
+                        repository
+                        {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
+                    </span>
+                </nz-page-header-content>
+            </nz-page-header>
+            <div class="controls">
+                <span nz-icon nzType="play-circle" nzTheme="outline" title="Restart failed jobs"
+                    (click)="clickRestartJobs()"></span>
+                <span nz-icon nzType="stop" nzTheme="outline" title="Stop workflow run" (click)="clickStopRun()"></span>
+            </div>
+            <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
+                (onSelectJobGate)="openPanel('gate', $event)" (onSelectJobRun)="openPanel('job', $event)"
+                (onSelectHook)="openPanel('hook', $event)" #graph></app-stages-graph>
+        </div>
 
         <!--  BOTTOM PANELS -->
 

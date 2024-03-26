@@ -148,7 +148,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WrapError(err, "unable to load repository %s", run.RepositoryID)
 	}
 
-	if sdk.StatusIsTerminated(run.Status) {
+	if run.Status.IsTerminated() {
 		log.Debug(ctx, "workflow run already on a final state")
 		return nil
 	}
@@ -171,7 +171,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 				return err
 			}
 		}
-		run.Status = sdk.StatusFail
+		run.Status = sdk.V2WorkflowRunStatusFail
 		if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 			return err
 		}
@@ -253,8 +253,8 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	// End workflow if there is no more job to handle,  no running jobs and current status is not terminated
-	if len(jobsToQueue) == 0 && len(skippedJobs) == 0 && !sdk.StatusIsTerminated(run.Status) {
-		finalStatus, err := computeJobRunStatus(ctx, tx, run.ID, run.RunAttempt)
+	if len(jobsToQueue) == 0 && len(skippedJobs) == 0 && !run.Status.IsTerminated() {
+		finalStatus, err := computeRunStatusFromJobsStatus(ctx, tx, run.ID, run.RunAttempt)
 		if err != nil {
 			return err
 		}
@@ -277,7 +277,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	})
 
-	if sdk.StatusIsTerminated(run.Status) {
+	if run.Status.IsTerminated() {
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
 	}
 
@@ -289,7 +289,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	// Send to websocket
 	for _, rj := range runJobs {
 		switch rj.Status {
-		case sdk.StatusFail:
+		case sdk.V2WorkflowRunJobStatusFail:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
 		default:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
@@ -519,7 +519,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 
 		var mapContexts map[string]interface{}
 		if err := json.Unmarshal(bts, &mapContexts); err != nil {
-			rj.Status = sdk.StatusFail
+			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -532,7 +532,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 		model, err := ap.InterpolateToString(ctx, rj.Job.RunsOn.Model)
 		if err != nil {
-			rj.Status = sdk.StatusFail
+			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    run.ID,
 				Level:            sdk.WorkflowRunInfoLevelError,
@@ -545,7 +545,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 
 		completeName, msg, err := wref.checkWorkerModel(ctx, db, store, rj.JobID, model, rj.Region, "")
 		if err != nil {
-			rj.Status = sdk.StatusFail
+			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    run.ID,
 				Level:            sdk.WorkflowRunInfoLevelError,
@@ -556,7 +556,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 			continue
 		}
 		if msg != nil {
-			rj.Status = sdk.StatusFail
+			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    run.ID,
 				Level:            sdk.WorkflowRunInfoLevelError,
@@ -577,7 +577,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 	return runJobInfos
 }
 
-func prepareRunJobs(_ context.Context, proj sdk.Project, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, jobStatus string, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
+func prepareRunJobs(_ context.Context, proj sdk.Project, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, jobStatus sdk.V2WorkflowRunJobStatus, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	for jobID, jobDef := range jobsToQueue {
 		// Compute job matrix strategy
@@ -683,7 +683,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2Workflow
 	for _, rj := range runJobs {
 		// addition check for matrix job, only keep not terminated one if present
 		runjob, has := allrunJobsMap[rj.JobID]
-		if !has || sdk.StatusIsTerminated(runjob.Status) {
+		if !has || runjob.Status.IsTerminated() {
 			allrunJobsMap[rj.JobID] = rj
 		}
 	}
@@ -786,22 +786,22 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 	return canRun, runInfos, nil
 }
 
-func computeJobRunStatus(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempt int64) (string, error) {
+func computeRunStatusFromJobsStatus(ctx context.Context, db gorp.SqlExecutor, runID string, runAttempt int64) (sdk.V2WorkflowRunStatus, error) {
 	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, runID, runAttempt)
 	if err != nil {
 		return "", err
 	}
 
-	finalStatus := sdk.StatusSuccess
+	finalStatus := sdk.V2WorkflowRunStatusSuccess
 	for _, rj := range runJobs {
-		if rj.Status == sdk.StatusFail && finalStatus != sdk.StatusStopped && sdk.StatusIsTerminated(finalStatus) && !rj.Job.ContinueOnError {
-			finalStatus = rj.Status
+		if rj.Status == sdk.V2WorkflowRunJobStatusFail && finalStatus != sdk.V2WorkflowRunStatusStopped && finalStatus.IsTerminated() && !rj.Job.ContinueOnError {
+			finalStatus = sdk.V2WorkflowRunStatusFail
 		}
-		if rj.Status == sdk.StatusStopped && sdk.StatusIsTerminated(finalStatus) {
-			finalStatus = sdk.StatusStopped
+		if rj.Status == sdk.V2WorkflowRunJobStatusStopped && finalStatus.IsTerminated() {
+			finalStatus = sdk.V2WorkflowRunStatusStopped
 		}
-		if !sdk.StatusIsTerminated(rj.Status) {
-			finalStatus = sdk.StatusBuilding
+		if !rj.Status.IsTerminated() {
+			finalStatus = sdk.V2WorkflowRunStatusBuilding
 		}
 	}
 	return finalStatus, nil
@@ -934,7 +934,7 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 	}()
 
 	log.Info(ctx, "triggerBlockedWorkflowRun: trigger workflow %s for run %d", wr.WorkflowName, wr.RunNumber)
-	if wr.Status != sdk.StatusBuilding {
+	if wr.Status != sdk.V2WorkflowRunStatusBuilding {
 		return nil
 	}
 
@@ -945,10 +945,10 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 	}
 	var lastJobs sdk.V2WorkflowRunJob
 	for _, rj := range runJobs {
-		if !sdk.StatusIsTerminated(rj.Status) {
+		if !rj.Status.IsTerminated() {
 			return nil
 		}
-		if rj.Started.After(lastJobs.Started) {
+		if sdk.TimeSafe(rj.Started).After(sdk.TimeSafe(lastJobs.Started)) {
 			lastJobs = rj
 		}
 	}

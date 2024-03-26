@@ -67,7 +67,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -88,7 +88,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 
@@ -137,7 +137,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		RunNumber:    1,
 		Started:      time.Now(),
 		LastModified: time.Now(),
-		Status:       sdk.StatusBuilding,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
 		UserID:       admin.ID,
 		Username:     admin.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
@@ -165,7 +165,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj))
 
@@ -186,7 +186,7 @@ func TestDisabledDeadWorkers(t *testing.T) {
 		Username:      admin.Username,
 		ProjectKey:    wr.ProjectKey,
 		JobID:         sdk.RandomString(10),
-		Status:        sdk.StatusBuilding,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
 	}
 	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &wrj2))
 

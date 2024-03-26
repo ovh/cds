@@ -14,7 +14,7 @@
                 <div class="value">{{logBlock.name}}</div>
                 <div class="extra">
                     <div *ngIf="logBlock.startDate && !logBlock.duration">
-                        {{logBlock.startDate | amTimeAgo: true : formatDuration }}
+                        {{logBlock.startDate | date: 'long' }}
                     </div>
                     <div *ngIf="logBlock.duration" title="Step duration">{{logBlock.duration}}</div>
                     <div [class.orange]="logBlock.optional && logBlock.failed" *ngIf="logBlock.optional">Optional</div>

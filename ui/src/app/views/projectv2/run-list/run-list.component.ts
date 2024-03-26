@@ -2,7 +2,6 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom, map } from "rxjs";
-import { V2WorkflowRun } from "app/model/v2.workflow.run.model";
 import { Project } from "app/model/project.model";
 import { Store } from "@ngxs/store";
 import { ProjectState } from "app/store/project.state";
@@ -11,6 +10,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import * as actionPreferences from 'app/store/preferences.action';
 import { PreferencesState } from "app/store/preferences.state";
 import { NzPopconfirmDirective } from "ng-zorro-antd/popconfirm";
+import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 export class WorkflowRunFilter {
 	key: string;

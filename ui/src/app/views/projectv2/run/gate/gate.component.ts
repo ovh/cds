@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { finalize, first } from "rxjs/operators";
-import { Gate, V2WorkflowRun, V2WorkflowRunJobEvent } from "app/model/v2.workflow.run.model";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { ToastService } from "app/shared/toast/ToastService";
+import { V2JobGate, V2WorkflowRun, V2WorkflowRunJobEvent } from "../../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Component({
     selector: 'app-run-gate',
@@ -18,7 +18,7 @@ export class RunGateComponent implements OnInit {
     @Input() gateNode: { gate, job };
     @Output() onClose = new EventEmitter<void>();
 
-    currentGate: Gate;
+    currentGate: V2JobGate;
     jobEvent: V2WorkflowRunJobEvent;
     request: { [key: string]: any };
     loading: boolean;
@@ -30,7 +30,7 @@ export class RunGateComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.currentGate = <Gate>this.run.workflow_data.workflow.gates[this.gateNode.gate];
+        this.currentGate = <V2JobGate>this.run.workflow_data.workflow.gates[this.gateNode.gate];
         this.request = {};
         Object.keys(this.currentGate.inputs).forEach(k => {
             if (this.currentGate.inputs[k].default) {

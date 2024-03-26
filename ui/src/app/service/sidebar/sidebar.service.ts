@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { FlatNodeItem } from 'app/shared/tree/tree.component';
-import {V2WorkflowRun} from "../../model/v2.workflow.run.model";
-import {V2WorkflowRunService} from "../workflowv2/workflow.service";
+import { V2WorkflowRun } from '../../../../libs/workflow-graph/src/lib/v2.workflow.run.model';
 
 export class SidebarEvent {
     nodeID: string

@@ -14,17 +14,25 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    border: dashed 2px $darkBackground;
+    border: dashed 2px $polar_grey_3;
     border-radius: 3px;
 
+    :host-context(.night) & {
+        border-color: $darkTheme_grey_5;
+
+        &.highlight {
+            border-color: white;
+        }
+    }
+
     &.highlight {
-        border-color: black !important;
+        border-color: black;
     }
 
     .title {
         width: 100%;
         height: 25px;
-        padding: 0 10px;
+        padding: 0 5px;
         position: absolute;
         top: -25px;
         display: flex;

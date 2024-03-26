@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
-import { V2WorkflowRun, WorkflowRunResult } from "app/model/v2.workflow.run.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Tab } from "app/shared/tabs/tabs.component";
 import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
+import { WorkflowRunResult } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Component({
 	selector: 'app-run-result',

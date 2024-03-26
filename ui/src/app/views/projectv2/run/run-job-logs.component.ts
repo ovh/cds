@@ -9,14 +9,13 @@ import {
     Output
 } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
-import { V2WorkflowRun, V2WorkflowRunJob } from "app/model/v2.workflow.run.model";
 import { LogBlock, ScrollTarget } from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
-import moment from "moment";
-import { DurationService } from "app/shared/duration/duration.service";
 import { CDNLine, CDNLogLinkData, CDNLogLinks, PipelineStatus } from "app/model/pipeline.model";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { WorkflowService } from "app/service/workflow/workflow.service";
 import { lastValueFrom } from "rxjs";
+import { V2WorkflowRun, V2WorkflowRunJob } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { DurationService } from "../../../../../libs/workflow-graph/src/lib/duration/duration.service";
 
 @Component({
     selector: 'app-run-job-logs',
@@ -169,9 +168,9 @@ export class RunJobLogsComponent implements OnDestroy {
                     if (!stepStatus) {
                         return;
                     }
-                    s.startDate = moment(stepStatus.started);
+                    s.startDate = new Date(stepStatus.started);
                     if (stepStatus.ended && stepStatus.ended !== '0001-01-01T00:00:00Z') {
-                        s.duration = DurationService.duration(s.startDate.toDate(), moment(stepStatus.ended).toDate());
+                        s.duration = DurationService.duration(s.startDate, new Date(stepStatus.ended));
                     }
                 }
             });
@@ -192,10 +191,6 @@ export class RunJobLogsComponent implements OnDestroy {
 
     trackLineElement(index: number, element: CDNLine) {
         return element ? element.number : null;
-    }
-
-    formatDuration(fromM: moment.Moment, to?: moment.Moment): string {
-        return DurationService.duration(fromM.toDate(), to ? to.toDate() : moment().toDate());
     }
 
     clickScroll(target: ScrollTarget): void {

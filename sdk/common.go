@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/go-gorp/gorp"
@@ -402,4 +403,11 @@ func MapHasKeys(i interface{}, expectedKeys ...interface{}) bool {
 		}
 	}
 	return true
+}
+
+func TimeSafe(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
 }

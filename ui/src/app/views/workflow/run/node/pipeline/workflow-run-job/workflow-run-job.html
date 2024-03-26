@@ -27,7 +27,7 @@
                 <div class="value">{{step.name}}</div>
                 <div class="extra">
                     <div *ngIf="!step.disabled && step.startDate && !step.duration">
-                        {{step.startDate | amTimeAgo: true : formatDuration }}
+                        {{step.startDate | durationMs }}
                     </div>
                     <div *ngIf="step.duration" title="Step duration">{{step.duration}}</div>
                     <div [class.orange]="step.optional && step.failed" *ngIf="step.optional">Optional</div>

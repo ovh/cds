@@ -20,7 +20,7 @@ func TestGetRunResult(t *testing.T) {
 
 	w.currentJobV2.runJob = &sdk.V2WorkflowRunJob{
 		ID:     sdk.UUID(),
-		Status: sdk.StatusBuilding,
+		Status: sdk.V2WorkflowRunJobStatusBuilding,
 		JobID:  "myjob",
 		Region: "build",
 		Job:    sdk.V2Job{},

@@ -14,11 +14,11 @@ import { CDNLine, CDNStreamFilter, PipelineStatus } from 'app/model/pipeline.mod
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Tab } from 'app/shared/tabs/tabs.component';
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from "app/model/v2.workflow.run.model";
 import { RunJobLogsComponent } from "./run-job-logs.component";
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { Subscription, delay, retryWhen } from 'rxjs';
 import { Router } from '@angular/router';
+import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from '../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model';
 
 
 @Component({
@@ -31,7 +31,7 @@ import { Router } from '@angular/router';
 export class RunJobComponent implements OnChanges, OnDestroy {
     @ViewChild('runJobLogs') runJobLogs: RunJobLogsComponent;
 
-    @Input() workflowRun: V2WorkflowRun
+    @Input() workflowRun: V2WorkflowRun;
     @Input() jobRun: V2WorkflowRunJob;
     @Input() jobRunInfos: Array<WorkflowRunInfo>;
     @Output() onClose = new EventEmitter<void>();

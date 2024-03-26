@@ -123,7 +123,7 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 				}
 				cancelGetJSON()
 				nbConnrefused = 0
-				if j == nil || j.RunJob.Status != sdk.StatusBuilding {
+				if j == nil || j.RunJob.Status != sdk.V2WorkflowRunJobStatusBuilding {
 					log.Warn(ctx, "V2Take> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.RunJob.Status, err)
 					cancel()
 					return
@@ -138,7 +138,7 @@ func (w *CurrentWorker) V2Take(ctx context.Context, region, jobRunID string) err
 	res.Time = time.Now()
 
 	// Send the reason as a spawninfo
-	if res.Status != sdk.StatusSuccess && res.Error != "" {
+	if res.Status != sdk.V2WorkflowRunJobStatusSuccess && res.Error != "" {
 		info := sdk.V2SendJobRunInfo{
 			Level:   sdk.WorkflowRunInfoLevelError,
 			Message: fmt.Sprintf("⚠ An error has occurred: %s", res.Error),

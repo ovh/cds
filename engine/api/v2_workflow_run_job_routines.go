@@ -149,7 +149,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	if err != nil {
 		return err
 	}
-	if runJob.Status != sdk.StatusScheduling {
+	if runJob.Status != sdk.V2WorkflowRunJobStatusScheduling {
 		return nil
 	}
 
@@ -161,9 +161,9 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	}
 	defer tx.Rollback() // nolint
 
-	log.Info(ctx, fmt.Sprintf("reEnqueueScheduledJob: re-enqueue job %s/%s (timeout %s) on workflow %s run %d", runJob.JobID, runJob.ID, time.Now().Sub(runJob.Scheduled).String(), runJob.WorkflowName, runJob.RunNumber))
+	log.Info(ctx, fmt.Sprintf("reEnqueueScheduledJob: re-enqueue job %s/%s (timeout %s) on workflow %s run %d", runJob.JobID, runJob.ID, time.Now().Sub(sdk.TimeSafe(runJob.Scheduled)).String(), runJob.WorkflowName, runJob.RunNumber))
 
-	runJob.Status = sdk.StatusWaiting
+	runJob.Status = sdk.V2WorkflowRunJobStatusWaiting
 	runJob.HatcheryName = ""
 
 	if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
@@ -215,7 +215,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 
 	ctx = context.WithValue(ctx, cdslog.Workflow, runJob.WorkflowName)
 
-	if sdk.StatusIsTerminated(runJob.Status) {
+	if runJob.Status.IsTerminated() {
 		return nil
 	}
 
@@ -226,7 +226,9 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	defer tx.Rollback() // nolint
 
 	log.Info(ctx, fmt.Sprintf("stopDeadJob: stopping job %s/%s on workflow %s run %d", runJob.JobID, runJob.ID, runJob.WorkflowName, runJob.RunNumber))
-	runJob.Status = sdk.StatusStopped
+	runJob.Status = sdk.V2WorkflowRunJobStatusStopped
+	now := time.Now()
+	runJob.Ended = &now
 
 	if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
 		return err

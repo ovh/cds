@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "../../model/v2.workflow.run.model";
 import { CDNLogLinks } from "../../model/pipeline.model";
+import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Injectable()
 export class V2WorkflowRunService {
@@ -12,6 +12,14 @@ export class V2WorkflowRunService {
 
     getRun(projKey: string, runIdentifier: string): Observable<V2WorkflowRun> {
         return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}`);
+    }
+
+    restart(projKey: string, runIdentifier: string): Observable<V2WorkflowRun> {
+        return this._http.put<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}/restart`, null);
+    }
+
+    stop(projKey: string, runIdentifier: string) {
+        return this._http.post(`/v2/project/${projKey}/run/${runIdentifier}/stop`, null);
     }
 
     getJobs(r: V2WorkflowRun, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {

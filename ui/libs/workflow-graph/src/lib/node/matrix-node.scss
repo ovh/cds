@@ -1,0 +1,179 @@
+@import "../../../../../src/common.scss";
+
+:host {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.label {
+    height: 30px;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .gate {
+        color: $polar_grey_1;
+        font-size: 16px;
+        overflow: hidden;
+        margin-left: 2px;
+        cursor: pointer;
+
+        :host-context(.night) & {
+            color: $darkTheme_grey_6;
+        }
+
+        &:hover {
+            color: grey !important;
+        }
+    }
+
+    .name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0 2px;
+    }
+}
+
+.node {
+    width: 100%;
+    flex: 1;
+    border: 2px solid $polar_grey_3;
+    border-radius: 3px;
+    color: $polar_grey_1;
+    padding: 2px;
+    background-color: white;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    :host-context(.night) & {
+        background-color: $darkTheme_grey_1;
+        border-color: $darkTheme_grey_5;
+        color: $darkTheme_grey_6;
+    }
+
+    .jobs {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 10px;
+
+        .job {
+            height: 30px;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            background-color: white;
+            align-items: center;
+            border: 2px solid $polar_grey_3;
+            border-radius: 3px;
+            padding: 2px;
+
+            &:not(:first-child) {
+                margin-top: 10px;
+            }
+
+            .name {
+                flex: 1;
+                font-size: 1em;
+                font-weight: bold;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin: 0 10px;
+
+                .key {
+                    font-size: 0.8em;
+                    font-weight: unset;
+                }
+            }
+
+            .duration {
+                font-size: 0.8em;
+                margin-right: 10px;
+            }
+
+            .durationTooltip {
+                display: flex;
+                flex-direction: column;
+            }
+
+            &.success {
+                background-color: $cds_color_light_green;
+                border-color: $cds_color_green;
+            }
+
+            &.fail {
+                background-color: $cds_color_light_red;
+                border-color: $cds_color_red;
+            }
+
+            &.building {
+                background-color: $cds_color_light_teal;
+                border-color: $cds_color_teal;
+            }
+
+            &.scheduling {
+                border-color: $cds_color_teal;
+            }
+
+            &.inactive {
+                background-color: $cds_color_light_grey;
+                border-color: grey;
+            }
+
+            &.active {
+                border: 3px solid black;
+                padding: 1px;
+            }
+
+            &.highlight {
+                border-color: black;
+            }
+
+            :host-context(.night) & {
+                background-color: $darkTheme_grey_1;
+                border-color: $darkTheme_grey_5;
+                color: $darkTheme_grey_6;
+
+                &.success {
+                    background-color: $darkTheme_night_green;
+                    border-color: $darkTheme_green;
+                }
+
+                &.fail {
+                    background-color: $darkTheme_night_red;
+                    border-color: $darkTheme_red;
+                }
+
+                &.building {
+                    background-color: $darkTheme_night_blue;
+                    border-color: $darkTheme_blue;
+                }
+
+                &.scheduling {
+                    border-color: $darkTheme_blue;
+                }
+
+                &.inactive {
+                    background-color: $darkTheme_night_grey;
+                    border-color: grey;
+                }
+
+                &.active,
+                &.highlight {
+                    border-color: white;
+                }
+            }
+        }
+    }
+}

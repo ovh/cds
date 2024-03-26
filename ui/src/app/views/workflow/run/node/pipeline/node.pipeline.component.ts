@@ -7,7 +7,6 @@ import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
 import { WorkflowService } from 'app/service/workflow/workflow.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { DurationService } from 'app/shared/duration/duration.service';
 import { ProjectState } from 'app/store/project.state';
 import { SelectWorkflowNodeRunJob } from 'app/store/workflow.action';
 import { WorkflowState, WorkflowStateModel } from 'app/store/workflow.state';
@@ -16,6 +15,7 @@ import { Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workflow-run-job.component';
+import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
 
 @Component({
     selector: 'app-node-run-pipeline',

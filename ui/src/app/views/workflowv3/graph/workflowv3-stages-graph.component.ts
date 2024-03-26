@@ -87,13 +87,6 @@ export class WorkflowV3StagesGraphComponent implements AfterViewInit, OnDestroy 
         private _cd: ChangeDetectorRef
     ) { }
 
-    static isJobsGraph = (component: WorkflowV3JobsGraphOrNodeComponent): component is WorkflowV3JobsGraphComponent => {
-        if ((component as WorkflowV3JobsGraphComponent).direction) {
-            return true;
-        }
-        return false;
-    };
-
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngAfterViewInit(): void {
