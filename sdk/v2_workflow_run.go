@@ -992,14 +992,14 @@ type V2QueueJobInfo struct {
 }
 
 type HookManualWorkflowRun struct {
-	UserRequest V2WorkflowRunManualRequest
-	Project     string
-	VCSType     string
-	VCSServer   string
-	Repository  string
-	Ref         string
-	Commit      string
-	Workflow    string
-	UserID      string
-	Username    string
+	UserRequest    V2WorkflowRunManualRequest
+	Project        string
+	VCSType        string
+	VCSServer      string
+	Repository     string
+	WorkflowRef    string
+	WorkflowCommit string
+	Workflow       string
+	UserID         string
+	Username       string
 }

@@ -85,7 +85,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				} else {
 					// Query params to select the right workflow version to run
 					mods := make([]cdsclient.RequestModifier, 2)
-					mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", hre.ExtractData.Commit))
+					mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
 					runRequest := sdk.V2WorkflowRunHookRequest{
 						HookEventID:   hre.UUID,
@@ -107,11 +107,9 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					case sdk.WorkflowHookTypeWorkflow:
 						runRequest.EntityUpdated = wh.WorkflowName
 						runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
-						runRequest.Sha = wh.TargetCommit
 					case sdk.WorkflowHookTypeWorkerModel:
 						runRequest.EntityUpdated = wh.ModelFullName
 						runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
-						runRequest.Sha = wh.TargetCommit
 					}
 
 					wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

@@ -184,6 +184,7 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 				return err
 			}
 			log.Info(ctx, "found %d repository webhooks for event %+v", len(workflowHooks), hookRequest)
+
 			for _, wk := range workflowHooks {
 				if _, has := uniqueWorkflowMap[wk.EntityID]; !has {
 					filteredWorkflowHooks = append(filteredWorkflowHooks, wk)
@@ -246,14 +247,12 @@ func LoadWorkflowHooksWithModelUpdate(ctx context.Context, db gorp.SqlExecutor, 
 	for _, m := range hookRequest.Models {
 		models = append(models, fmt.Sprintf("%s/%s/%s/%s", m.ProjectKey, m.VCSName, m.RepoName, m.Name))
 	}
-	entitiesHooks, err := workflow_v2.LoadHooksByModelUpdated(ctx, db, models)
+	entitiesHooks, err := workflow_v2.LoadHooksByModelUpdated(ctx, db, hookRequest.Sha, models)
 	if err != nil {
 		return nil, err
 	}
 	for _, h := range entitiesHooks {
-		if h.Ref == hookRequest.Ref && hookRequest.Sha == h.Commit {
-			filteredWorkflowHooks = append(filteredWorkflowHooks, h)
-		}
+		filteredWorkflowHooks = append(filteredWorkflowHooks, h)
 	}
 	return filteredWorkflowHooks, nil
 }
@@ -264,17 +263,14 @@ func LoadWorkflowHooksWithWorkflowUpdate(ctx context.Context, db gorp.SqlExecuto
 	filteredWorkflowHooks := make([]sdk.V2WorkflowHook, 0)
 
 	for _, w := range hookRequest.Workflows {
-		h, err := workflow_v2.LoadHooksByWorkflowUpdated(ctx, db, w.ProjectKey, w.VCSName, w.RepoName, w.Name)
+		h, err := workflow_v2.LoadHooksByWorkflowUpdated(ctx, db, w.ProjectKey, w.VCSName, w.RepoName, w.Name, hookRequest.Sha)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNotFound) {
 				continue
 			}
 			return nil, err
 		}
-		// check of event come from the right branch
-		if hookRequest.Ref == h.Ref && hookRequest.Sha == h.Commit {
-			filteredWorkflowHooks = append(filteredWorkflowHooks, *h)
-		}
+		filteredWorkflowHooks = append(filteredWorkflowHooks, *h)
 	}
 	return filteredWorkflowHooks, nil
 }
@@ -294,10 +290,13 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 	for _, w := range workflowHooks {
 		// If event && workflow declaration are on the same repo
 		if w.VCSName == hookRequest.VCSName && w.RepositoryName == hookRequest.RepositoryName {
-			// Only get workflow configuration from current branch
+			// Only get workflow configuration from current branch/commit
 			if w.Ref != hookRequest.Ref || w.Commit != hookRequest.Sha {
 				continue
 			}
+		} else if w.Commit != "HEAD" {
+			// for distant workflow, only keep hook on default branch
+			continue
 		}
 
 		// Check configuration : branch filter + path filter

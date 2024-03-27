@@ -109,20 +109,22 @@ type HookRepositoryEvent struct {
 }
 
 type HookRepositoryEventWorkflow struct {
-	ProjectKey           string   `json:"project_key"`
-	VCSIdentifier        string   `json:"vcs_identifier"`
-	RepositoryIdentifier string   `json:"repository_identifier"`
-	WorkflowName         string   `json:"workflow_name"`
-	EntityID             string   `json:"entity_id"`
-	Ref                  string   `json:"ref"`
-	Type                 string   `json:"type"`
-	Status               string   `json:"status"`
-	TargetBranch         string   `json:"target_branch,omitempty"`
-	TargetCommit         string   `json:"target_commit,omitempty"`
-	ModelFullName        string   `json:"model,omitempty"`
-	RunID                string   `json:"run_id,omitempty"`
-	RunNumber            int64    `json:"run_number,omitempty"`
-	PathFilters          []string `json:"path_filters,omitempty"`
+	ProjectKey           string             `json:"project_key"`
+	VCSIdentifier        string             `json:"vcs_identifier"`
+	RepositoryIdentifier string             `json:"repository_identifier"`
+	WorkflowName         string             `json:"workflow_name"`
+	EntityID             string             `json:"entity_id"`
+	Ref                  string             `json:"ref"`
+	Commit               string             `json:"commit"`
+	Type                 string             `json:"type"`
+	Status               string             `json:"status"`
+	TargetBranch         string             `json:"target_branch,omitempty"`
+	TargetCommit         string             `json:"target_commit,omitempty"`
+	ModelFullName        string             `json:"model,omitempty"`
+	RunID                string             `json:"run_id,omitempty"`
+	RunNumber            int64              `json:"run_number,omitempty"`
+	PathFilters          []string           `json:"path_filters,omitempty"`
+	Data                 V2WorkflowHookData `json:"data,omitempty"`
 }
 
 type HookRepositoryEventExtractData struct {

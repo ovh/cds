@@ -36,6 +36,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 				Type:                 sdk.WorkflowHookTypeManual,
 				Status:               sdk.HookEventWorkflowStatusScheduler,
 				Ref:                  hre.ExtractData.Ref,
+				Commit:               hre.ExtractData.Commit,
 				TargetBranch:         destRef,
 				TargetCommit:         userRequest.Sha,
 			},
@@ -93,9 +94,7 @@ func (s *Service) triggerWorkflowHooks(ctx context.Context, hre *sdk.HookReposit
 				TargetBranch:         wh.Data.TargetBranch,
 				ModelFullName:        wh.Data.Model,
 				PathFilters:          wh.Data.PathFilter,
-			}
-			if wh.Type == sdk.WorkflowHookTypeWorkflow || wh.Type == sdk.WorkflowHookTypeWorkerModel {
-				w.TargetCommit = "HEAD"
+				Commit:               wh.Commit,
 			}
 			hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 		}

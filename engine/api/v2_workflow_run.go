@@ -1141,16 +1141,16 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			}
 
 			hookRequest := sdk.HookManualWorkflowRun{
-				UserRequest: runRequest,
-				Project:     proj.Key,
-				VCSType:     vcsProject.Type,
-				VCSServer:   vcsProject.Name,
-				Repository:  repo.Name,
-				Ref:         workflowRef,
-				Commit:      workflowCommit,
-				Workflow:    workflowName,
-				UserID:      u.AuthConsumerUser.AuthentifiedUserID,
-				Username:    u.AuthConsumerUser.AuthentifiedUser.Username,
+				UserRequest:    runRequest,
+				Project:        proj.Key,
+				VCSType:        vcsProject.Type,
+				VCSServer:      vcsProject.Name,
+				Repository:     repo.Name,
+				WorkflowRef:    workflowRef,
+				WorkflowCommit: workflowCommit,
+				Workflow:       workflowName,
+				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
+				Username:       u.AuthConsumerUser.AuthentifiedUser.Username,
 			}
 
 			// Send start request to hooks

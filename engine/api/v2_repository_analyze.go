@@ -656,7 +656,7 @@ skipEntity:
 
 		// Insert workflow hook
 		if e.Type == sdk.EntityTypeWorkflow {
-			if err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch.ID); err != nil {
+			if err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
 		}
@@ -695,7 +695,7 @@ skipEntity:
 
 		// Insert workflow hook
 		if entityInserted && e.Type == sdk.EntityTypeWorkflow {
-			if err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch.ID); err != nil {
+			if err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
 		}
@@ -731,7 +731,7 @@ skipEntity:
 	return nil
 }
 
-func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, ref string) error {
+func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch) error {
 	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
 	defer next()
 
@@ -759,7 +759,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Only save hook push if
 	// * workflow repo declaration == workflow.repository || default branch
 	if e.Workflow.On.Push != nil {
-		if workflowSameRepo || e.Ref == ref {
+		if workflowSameRepo || e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
 				ProjectKey:     e.ProjectKey,
@@ -781,11 +781,57 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
 				return err
 			}
+
+			if e.Commit == defaultBranch.LatestCommit {
+				// Load existing head hook
+				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPush)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+				if existingHook != nil {
+					// Update data and ref
+					existingHook.Data = sdk.V2WorkflowHookData{
+						RepositoryEvent: sdk.WorkflowHookEventPush,
+						VCSServer:       targetVCS,
+						RepositoryName:  targetRepository,
+						BranchFilter:    e.Workflow.On.Push.Branches,
+						TagFilter:       e.Workflow.On.Push.Tags,
+						PathFilter:      e.Workflow.On.Push.Paths,
+					}
+					existingHook.Ref = e.Ref
+					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
+						return err
+					}
+				} else {
+					// Create head hook
+					newHeadHook := sdk.V2WorkflowHook{
+						EntityID:       e.ID,
+						ProjectKey:     e.ProjectKey,
+						Type:           sdk.WorkflowHookTypeRepository,
+						Ref:            e.Ref,
+						Commit:         "HEAD",
+						WorkflowName:   e.Name,
+						VCSName:        workflowDefVCSName,
+						RepositoryName: workflowDefRepositoryName,
+						Data: sdk.V2WorkflowHookData{
+							RepositoryEvent: sdk.WorkflowHookEventPush,
+							VCSServer:       targetVCS,
+							RepositoryName:  targetRepository,
+							BranchFilter:    e.Workflow.On.Push.Branches,
+							TagFilter:       e.Workflow.On.Push.Tags,
+							PathFilter:      e.Workflow.On.Push.Paths,
+						},
+					}
+					if err := workflow_v2.InsertWorkflowHook(ctx, db, &newHeadHook); err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
 	if e.Workflow.On.PullRequest != nil {
-		if workflowSameRepo || e.Ref == ref {
+		if workflowSameRepo || e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
 				ProjectKey:     e.ProjectKey,
@@ -807,11 +853,57 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
 				return err
 			}
+
+			if e.Commit == defaultBranch.LatestCommit {
+				// Load existing head hook
+				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPullRequest)
+				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+					return err
+				}
+				if existingHook != nil {
+					// Update data and ref
+					existingHook.Data = sdk.V2WorkflowHookData{
+						RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+						VCSServer:       targetVCS,
+						RepositoryName:  targetRepository,
+						BranchFilter:    e.Workflow.On.PullRequest.Branches,
+						PathFilter:      e.Workflow.On.PullRequest.Paths,
+						TypesFilter:     e.Workflow.On.PullRequest.Types,
+					}
+					existingHook.Ref = e.Ref
+					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
+						return err
+					}
+				} else {
+					// Create head hook
+					newHeadHook := sdk.V2WorkflowHook{
+						EntityID:       e.ID,
+						ProjectKey:     e.ProjectKey,
+						Type:           sdk.WorkflowHookTypeRepository,
+						Ref:            e.Ref,
+						Commit:         "HEAD",
+						WorkflowName:   e.Name,
+						VCSName:        workflowDefVCSName,
+						RepositoryName: workflowDefRepositoryName,
+						Data: sdk.V2WorkflowHookData{
+							RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+							VCSServer:       targetVCS,
+							RepositoryName:  targetRepository,
+							BranchFilter:    e.Workflow.On.PullRequest.Branches,
+							PathFilter:      e.Workflow.On.PullRequest.Paths,
+							TypesFilter:     e.Workflow.On.PullRequest.Types,
+						},
+					}
+					if err := workflow_v2.InsertWorkflowHook(ctx, db, &newHeadHook); err != nil {
+						return err
+					}
+				}
+			}
 		}
 	}
 
 	if e.Workflow.On.PullRequestComment != nil {
-		if workflowSameRepo || e.Ref == ref {
+		if workflowSameRepo || e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
 				ProjectKey:     e.ProjectKey,
@@ -839,7 +931,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Only save workflow_update hook if :
 	// * workflow.repository declaration != workflow.repository && default branch
 	if e.Workflow.On.WorkflowUpdate != nil {
-		if !workflowSameRepo && e.Ref == ref {
+		if !workflowSameRepo && e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				VCSName:        workflowDefVCSName,
 				EntityID:       e.ID,
@@ -850,7 +942,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				WorkflowName:   e.Name,
 				RepositoryName: workflowDefRepositoryName,
 				Data: sdk.V2WorkflowHookData{
-					TargetBranch: e.Workflow.On.WorkflowUpdate.TargetBranch,
+					VCSServer:      e.Workflow.Repository.VCSServer,
+					RepositoryName: e.Workflow.Repository.Name,
+					TargetBranch:   e.Workflow.On.WorkflowUpdate.TargetBranch,
 				},
 			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
@@ -863,47 +957,51 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// * workflow and model on the same repo
 	// * workflow repo declaration != workflow.repository && default branch
 	if e.Workflow.On.ModelUpdate != nil {
-		for _, m := range e.Workflow.On.ModelUpdate.Models {
-			mSplit := strings.Split(m, "/")
-			var modelVCSName, modelRepoName, modelFullName string
-			switch len(mSplit) {
-			case 1:
-				modelVCSName = workflowDefVCSName
-				modelRepoName = workflowDefRepositoryName
-				modelFullName = fmt.Sprintf("%s/%s/%s/%s", e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, m)
-			case 3:
-				modelVCSName = workflowDefVCSName
-				modelRepoName = mSplit[0] + "/" + mSplit[1]
-				modelFullName = fmt.Sprintf("%s/%s/%s", e.ProjectKey, workflowDefVCSName, m)
-			case 4:
-				modelVCSName = mSplit[0]
-				modelRepoName = mSplit[1] + "/" + mSplit[2]
-				modelFullName = fmt.Sprintf("%s/%s", e.ProjectKey, m)
-			case 5:
-				modelVCSName = mSplit[1]
-				modelRepoName = mSplit[2] + "/" + mSplit[3]
-				modelFullName = fmt.Sprintf("%s", m)
-			}
-			// Default branch && workflow and model on the same repo && distant workflow
-			if e.Ref == ref &&
-				modelVCSName == workflowDefVCSName && modelRepoName == workflowDefRepositoryName &&
-				(workflowDefVCSName != e.Workflow.Repository.VCSServer || workflowDefRepositoryName != e.Workflow.Repository.Name) {
-				wh := sdk.V2WorkflowHook{
-					VCSName:        workflowDefVCSName,
-					EntityID:       e.ID,
-					ProjectKey:     e.ProjectKey,
-					Type:           sdk.WorkflowHookTypeWorkerModel,
-					Ref:            e.Ref,
-					Commit:         e.Commit,
-					WorkflowName:   e.Name,
-					RepositoryName: workflowDefRepositoryName,
-					Data: sdk.V2WorkflowHookData{
-						TargetBranch: e.Workflow.On.ModelUpdate.TargetBranch,
-						Model:        modelFullName,
-					},
+		if e.Ref == defaultBranch.ID {
+			for _, m := range e.Workflow.On.ModelUpdate.Models {
+				mSplit := strings.Split(m, "/")
+				var modelVCSName, modelRepoName, modelFullName string
+				switch len(mSplit) {
+				case 1:
+					modelVCSName = workflowDefVCSName
+					modelRepoName = workflowDefRepositoryName
+					modelFullName = fmt.Sprintf("%s/%s/%s/%s", e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, m)
+				case 3:
+					modelVCSName = workflowDefVCSName
+					modelRepoName = mSplit[0] + "/" + mSplit[1]
+					modelFullName = fmt.Sprintf("%s/%s/%s", e.ProjectKey, workflowDefVCSName, m)
+				case 4:
+					modelVCSName = mSplit[0]
+					modelRepoName = mSplit[1] + "/" + mSplit[2]
+					modelFullName = fmt.Sprintf("%s/%s", e.ProjectKey, m)
+				case 5:
+					modelVCSName = mSplit[1]
+					modelRepoName = mSplit[2] + "/" + mSplit[3]
+					modelFullName = m
 				}
-				if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
-					return err
+				// Default branch && workflow and model on the same repo && distant workflow
+				if modelVCSName == workflowDefVCSName && modelRepoName == workflowDefRepositoryName &&
+					(workflowDefVCSName != e.Workflow.Repository.VCSServer || workflowDefRepositoryName != e.Workflow.Repository.Name) {
+
+					wh := sdk.V2WorkflowHook{
+						VCSName:        workflowDefVCSName,
+						EntityID:       e.ID,
+						ProjectKey:     e.ProjectKey,
+						Type:           sdk.WorkflowHookTypeWorkerModel,
+						Ref:            e.Ref,
+						Commit:         e.Commit,
+						WorkflowName:   e.Name,
+						RepositoryName: workflowDefRepositoryName,
+						Data: sdk.V2WorkflowHookData{
+							VCSServer:      e.Workflow.Repository.VCSServer,
+							RepositoryName: e.Workflow.Repository.Name,
+							TargetBranch:   e.Workflow.On.ModelUpdate.TargetBranch,
+							Model:          modelFullName,
+						},
+					}
+					if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
+						return err
+					}
 				}
 			}
 		}

@@ -94,20 +94,34 @@ func LoadHooksByRepositoryEvent(ctx context.Context, db gorp.SqlExecutor, vcsNam
 	return getAllHooks(ctx, db, q)
 }
 
-func LoadHooksByWorkflowUpdated(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName string) (*sdk.V2WorkflowHook, error) {
+func LoadHooksByWorkflowUpdated(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName, commit string) (*sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
     type = $1 AND
     project_key = $2 AND
     vcs_name = $3 AND
     repository_name = $4 AND
-    workflow_name = $5`).Args(sdk.WorkflowHookTypeWorkflow, projKey, vcsName, repoName, workflowName)
+    workflow_name = $5 AND
+	commit = $6`).Args(sdk.WorkflowHookTypeWorkflow, projKey, vcsName, repoName, workflowName, commit)
 	return getHook(ctx, db, q)
 }
 
-func LoadHooksByModelUpdated(ctx context.Context, db gorp.SqlExecutor, models []string) ([]sdk.V2WorkflowHook, error) {
+func LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName, event string) (*sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
     type = $1 AND
-    data->>'model'::text = ANY($2)`).Args(sdk.WorkflowHookTypeWorkerModel, pq.StringArray(models))
+    project_key = $2 AND
+    vcs_name = $3 AND
+    repository_name = $4 AND
+    workflow_name = $5 AND
+	commit = 'HEAD' AND
+	data ->> 'repository_event'::text = $6 `).Args(sdk.WorkflowHookTypeRepository, projKey, vcsName, repoName, workflowName, event)
+	return getHook(ctx, db, q)
+}
+
+func LoadHooksByModelUpdated(ctx context.Context, db gorp.SqlExecutor, commit string, models []string) ([]sdk.V2WorkflowHook, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
+    type = $1 AND
+	commit = $2 AND 
+    data->>'model'::text = ANY($3)`).Args(sdk.WorkflowHookTypeWorkerModel, commit, pq.StringArray(models))
 	return getAllHooks(ctx, db, q)
 }
 
