@@ -6,7 +6,8 @@ RUN apk update && \
     apk --no-cache add tzdata && \
     apk --no-cache add openssh-client && \
     apk --no-cache add gpg-agent && \
-    apk --no-cache add ca-certificates && rm -rf /var/cache/apk/*
+    apk --no-cache add ca-certificates && \
+    apk upgrade && rm -rf /var/cache/apk/*
 RUN update-ca-certificates
 RUN echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /etc/ssh/ssh_config
 RUN mkdir -p /app/sql /app/ui_static_files
