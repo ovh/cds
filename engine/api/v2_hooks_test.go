@@ -147,13 +147,14 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
 	wh1 := sdk.V2WorkflowHook{
-		ProjectKey:   p.Key,
-		VCSName:      vcs.Name,
-		EntityID:     e.ID,
-		WorkflowName: sdk.RandomString(10),
-		Commit:       "123456",
-		Ref:          "refs/heads/master",
-		Type:         sdk.WorkflowHookTypeRepository,
+		ProjectKey:     p.Key,
+		VCSName:        vcs.Name,
+		RepositoryName: repo.Name,
+		EntityID:       e.ID,
+		WorkflowName:   sdk.RandomString(10),
+		Commit:         "123456",
+		Ref:            "refs/heads/master",
+		Type:           sdk.WorkflowHookTypeRepository,
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
 			VCSServer:       vcs.Name,
@@ -167,6 +168,8 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 		VCSName:             vcs.Name,
 		RepositoryEventName: sdk.WorkflowHookEventPush,
 		AnayzedProjectKeys:  []string{p.Key},
+		Ref:                 "refs/heads/master",
+		Sha:                 "123456",
 	}
 
 	uri := api.Router.GetRouteV2("POST", api.postRetrieveWorkflowToTriggerHandler, nil)
@@ -205,13 +208,14 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequest(t *t
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
 	wh1 := sdk.V2WorkflowHook{
-		ProjectKey:   p.Key,
-		VCSName:      vcs.Name,
-		EntityID:     e.ID,
-		WorkflowName: sdk.RandomString(10),
-		Commit:       "123456",
-		Ref:          "refs/heads/master",
-		Type:         sdk.WorkflowHookTypeRepository,
+		ProjectKey:     p.Key,
+		VCSName:        vcs.Name,
+		RepositoryName: repo.Name,
+		EntityID:       e.ID,
+		WorkflowName:   sdk.RandomString(10),
+		Commit:         "123456",
+		Ref:            "refs/heads/master",
+		Type:           sdk.WorkflowHookTypeRepository,
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
 			VCSServer:       vcs.Name,
@@ -226,6 +230,8 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequest(t *t
 		VCSName:             vcs.Name,
 		RepositoryEventName: sdk.WorkflowHookEventPullRequest,
 		RepositoryEventType: "pr:opened",
+		Ref:                 "refs/heads/master",
+		Sha:                 "123456",
 		AnayzedProjectKeys:  []string{p.Key},
 	}
 
