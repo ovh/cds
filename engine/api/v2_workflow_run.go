@@ -120,7 +120,7 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 			workflowRunID := vars["workflowRunID"]
-			runJobID := vars["runJobID"]
+			jobRunID := vars["jobRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -137,7 +137,7 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, runJobID)
+			runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobRunID)
 			if err != nil {
 				return err
 			}
@@ -356,7 +356,7 @@ func (api *API) getWorkflowRunInfoV2Handler() ([]service.RbacChecker, service.Ha
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runID := vars["workflowRunID"]
+			workflowRunID := vars["workflowRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -368,7 +368,7 @@ func (api *API) getWorkflowRunInfoV2Handler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runID)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -386,14 +386,14 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runID := vars["runID"]
+			workflowRunID := vars["workflowRunID"]
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runID)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
