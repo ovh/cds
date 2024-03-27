@@ -41,7 +41,7 @@ export class Edge {
 export class WorkflowV2Graph<T extends WithHighlight> {
     static margin = 40; // let 40px on top and bottom of the graph
     static marginSubGraph = 20; // let 20px on top and bottom of the sub graph
-    static maxOriginScale = 1;
+    static maxOriginScale = 1.5;
     static baseStageWidth = 300;
     static minStageWidth = 200;
     static minJobWidth = 60;

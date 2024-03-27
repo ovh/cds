@@ -139,10 +139,12 @@ func CleanURLParameter(u string) string {
 		u = "variable-set-name"
 	case "itemName":
 		u = "item-name"
-	case "runIdentifier":
-		u = "run-identifier"
 	case "eventID":
 		u = "event-id"
+	case "workflowRunID":
+		u = "workflow-run-id"
+	case "jobRunID":
+		u = "job-run-id"
 	}
 	return u
 }

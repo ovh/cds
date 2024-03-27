@@ -69,8 +69,8 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         private _messageService: NzMessageService
     ) {
         this._route.params.subscribe(_ => {
-            const runIdentifier = this._route.snapshot.params['runIdentifier'];
-            if (this.workflowRun && this.workflowRun.id === runIdentifier) {
+            const workflowRunID = this._route.snapshot.params['workflowRunID'];
+            if (this.workflowRun && this.workflowRun.id === workflowRunID) {
                 return;
             }
             this.load();
@@ -96,7 +96,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     async load() {
         const projectKey = this._route.snapshot.parent.params['key'];
-        const runIdentifier = this._route.snapshot.params['runIdentifier'];
+        const workflowRunID = this._route.snapshot.params['workflowRunID'];
 
         delete this.selectedItemType;
         delete this.selectedJobGate;
@@ -108,7 +108,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }
 
         try {
-            this.workflowRun = await lastValueFrom(this._workflowService.getRun(projectKey, runIdentifier));
+            this.workflowRun = await lastValueFrom(this._workflowService.getRun(projectKey, workflowRunID));
             this.selectedRunAttempt = this.workflowRun.run_attempt;
         } catch (e) {
             this._messageService.error(`Unable to get workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
@@ -308,15 +308,15 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     async clickRestartJobs() {
         const projectKey = this._route.snapshot.parent.params['key'];
-        const runIdentifier = this._route.snapshot.params['runIdentifier'];
-        await lastValueFrom(this._workflowService.restart(projectKey, runIdentifier));
+        const workflowRunID = this._route.snapshot.params['workflowRunID'];
+        await lastValueFrom(this._workflowService.restart(projectKey, workflowRunID));
         await this.load();
     }
 
     async clickStopRun() {
         const projectKey = this._route.snapshot.parent.params['key'];
-        const runIdentifier = this._route.snapshot.params['runIdentifier'];
-        await lastValueFrom(this._workflowService.stop(projectKey, runIdentifier));
+        const workflowRunID = this._route.snapshot.params['workflowRunID'];
+        await lastValueFrom(this._workflowService.stop(projectKey, workflowRunID));
         await this.load();
     }
 

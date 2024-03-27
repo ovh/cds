@@ -16,6 +16,8 @@
                     <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
                         (click)="openPanel('workflow')"><span nz-icon nzType="file-text"
                             nzTheme="outline"></span></button>
+                    <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
+                        (click)="openPanel('contexts')"><span nz-icon nzType="read" nzTheme="outline"></span></button>
                 </nz-page-header-title>
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
@@ -115,6 +117,8 @@
             (onClose)="closePanel()"></app-run-result>
         <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"
             (onClose)="closePanel()"></app-run-workflow>
+        <app-run-contexts *ngIf="selectedItemType === 'contexts'" [run]="workflowRun"
+            (onClose)="closePanel()"></app-run-contexts>
     </app-resizable-panel>
 
 </ng-container>

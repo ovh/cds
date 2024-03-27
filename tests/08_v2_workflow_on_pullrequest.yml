@@ -143,11 +143,11 @@ testcases:
       retry: 40
       delay: 5
       vars:
-        runIdentifier:
+        workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
     - name: Download logs
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"
 
     - name: Check workflowEnv log content
       script: "cat {{.cds_workflow}}-*-myjob* | grep \"job done\""
