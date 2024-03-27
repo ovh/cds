@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 
@@ -57,9 +58,9 @@ func (c *client) WorkflowV2RunSearch(ctx context.Context, projectKey string, mod
 	return runs, nil
 }
 
-func (c *client) WorkflowV2RunInfoList(ctx context.Context, projectKey, runIdentifier string, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error) {
+func (c *client) WorkflowV2RunInfoList(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) ([]sdk.V2WorkflowRunInfo, error) {
 	var runInfos []sdk.V2WorkflowRunInfo
-	path := fmt.Sprintf("/v2/project/%s/run/%s/infos", projectKey, runIdentifier)
+	path := fmt.Sprintf("/v2/project/%s/run/%s/infos", projectKey, workflowRunID)
 	_, err := c.GetJSON(ctx, path, &runInfos, mods...)
 	if err != nil {
 		return nil, err
@@ -67,29 +68,29 @@ func (c *client) WorkflowV2RunInfoList(ctx context.Context, projectKey, runIdent
 	return runInfos, nil
 }
 
-func (c *client) WorkflowV2Restart(ctx context.Context, projectKey, runIdentifier string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (c *client) WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
-	path := fmt.Sprintf("/v2/project/%s/run/%s/restart", projectKey, runIdentifier)
-	_, _, _, err := c.RequestJSON(ctx, "PUT", path, nil, &run, mods...)
+	path := fmt.Sprintf("/v2/project/%s/run/%s/restart", projectKey, workflowRunID)
+	_, _, _, err := c.RequestJSON(ctx, http.MethodPost, path, nil, &run, mods...)
 	if err != nil {
 		return nil, err
 	}
 	return &run, nil
 }
 
-func (c *client) WorkflowV2JobStart(ctx context.Context, projectKey, runIdentifier, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
+func (c *client) WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
-	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/run", projectKey, runIdentifier, jobIdentifier)
-	_, _, _, err := c.RequestJSON(ctx, "PUT", path, payload, &run, mods...)
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/run", projectKey, workflowRunID, jobIdentifier)
+	_, _, _, err := c.RequestJSON(ctx, http.MethodPost, path, payload, &run, mods...)
 	if err != nil {
 		return nil, err
 	}
 	return &run, nil
 }
 
-func (c *client) WorkflowV2RunStatus(ctx context.Context, projectKey, runIdentifier string) (*sdk.V2WorkflowRun, error) {
+func (c *client) WorkflowV2RunStatus(ctx context.Context, projectKey, workflowRunID string) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
-	path := fmt.Sprintf("/v2/project/%s/run/%s", projectKey, runIdentifier)
+	path := fmt.Sprintf("/v2/project/%s/run/%s", projectKey, workflowRunID)
 	_, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &run)
 	if err != nil {
 		return nil, err
@@ -97,9 +98,9 @@ func (c *client) WorkflowV2RunStatus(ctx context.Context, projectKey, runIdentif
 	return &run, nil
 }
 
-func (c *client) WorkflowV2RunJobs(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunJob, error) {
+func (c *client) WorkflowV2RunJobs(ctx context.Context, projKey, workflowRunID string) ([]sdk.V2WorkflowRunJob, error) {
 	var runJobs []sdk.V2WorkflowRunJob
-	path := fmt.Sprintf("/v2/project/%s/run/%s/job", projKey, runIdentifier)
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job", projKey, workflowRunID)
 	_, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &runJobs)
 	if err != nil {
 		return nil, err
@@ -107,9 +108,9 @@ func (c *client) WorkflowV2RunJobs(ctx context.Context, projKey, runIdentifier s
 	return runJobs, nil
 }
 
-func (c *client) WorkflowV2RunJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (*sdk.V2WorkflowRunJob, error) {
+func (c *client) WorkflowV2RunJob(ctx context.Context, projKey, workflowRunID, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
 	var runJob sdk.V2WorkflowRunJob
-	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s", projKey, runIdentifier, jobIdentifier)
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s", projKey, workflowRunID, jobRunID)
 	_, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &runJob)
 	if err != nil {
 		return nil, err
@@ -127,9 +128,9 @@ func (c *client) WorkflowV2RunResultList(ctx context.Context, projKey, runIdenti
 	return results, nil
 }
 
-func (c *client) WorkflowV2RunJobLogLinks(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (sdk.CDNLogLinks, error) {
+func (c *client) WorkflowV2RunJobLogLinks(ctx context.Context, projKey, workflowRunID, jobRunID string) (sdk.CDNLogLinks, error) {
 	var logsLinks sdk.CDNLogLinks
-	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/logs/links", projKey, runIdentifier, jobIdentifier)
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/logs/links", projKey, workflowRunID, jobRunID)
 	_, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &logsLinks)
 	if err != nil {
 		return logsLinks, err
@@ -137,25 +138,25 @@ func (c *client) WorkflowV2RunJobLogLinks(ctx context.Context, projKey, runIdent
 	return logsLinks, nil
 }
 
-func (c *client) WorkflowV2Stop(ctx context.Context, projKey, runIdentifier string) error {
-	path := fmt.Sprintf("/v2/project/%s/run/%s/stop", projKey, runIdentifier)
+func (c *client) WorkflowV2Stop(ctx context.Context, projKey, workflowRunID string) error {
+	path := fmt.Sprintf("/v2/project/%s/run/%s/stop", projKey, workflowRunID)
+	if _, _, _, err := c.RequestJSON(ctx, http.MethodPost, path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) WorkflowV2StopJob(ctx context.Context, projKey, workflowRunID, jobIdentifier string) error {
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/stop", projKey, workflowRunID, jobIdentifier)
 	if _, _, _, err := c.RequestJSON(ctx, "POST", path, nil, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *client) WorkflowV2StopJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) error {
-	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/stop", projKey, runIdentifier, jobIdentifier)
-	if _, _, _, err := c.RequestJSON(ctx, "POST", path, nil, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *client) WorkflowV2RunJobInfoList(ctx context.Context, projKey, runIdentifier, jobIdentifier string) ([]sdk.V2WorkflowRunJobInfo, error) {
+func (c *client) WorkflowV2RunJobInfoList(ctx context.Context, projKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJobInfo, error) {
 	var infos []sdk.V2WorkflowRunJobInfo
-	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/infos", projKey, runIdentifier, jobIdentifier)
+	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/infos", projKey, workflowRunID, jobRunID)
 	if _, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &infos); err != nil {
 		return nil, err
 	}

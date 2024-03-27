@@ -73,6 +73,9 @@ export class RunJobComponent implements OnChanges, OnDestroy {
                 key: 'problems',
                 default: true,
             }, ...this.defaultTabs];
+        } else {
+            this.tabs = [...this.defaultTabs];
+            this.tabs[0].default = true;
         }
 
         if (this.jobRun && !PipelineStatus.isDone(this.jobRun.status) && !this.websocketSubscription) {

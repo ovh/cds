@@ -28,6 +28,7 @@ import { RunHookComponent } from './run/run-hook.component';
 import { RunResultComponent } from './run/run-result.component';
 import { RunResultTestsComponent } from './run/run-result-tests/run-result-tests.component';
 import { RunWorkflowComponent } from './run/run-workflow.component';
+import { RunContextsComponent } from './run/run-contexts.component';
 
 @NgModule({
     declarations: [
@@ -45,6 +46,7 @@ import { RunWorkflowComponent } from './run/run-workflow.component';
         ProjectV2WorkflowRunListSidebarComponent,
         ProjectV2WorkflowShowComponent,
         ProjectWorkflowEntityComponent,
+        RunContextsComponent,
         RunGateComponent,
         RunHookComponent,
         RunJobComponent,

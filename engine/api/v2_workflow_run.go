@@ -37,11 +37,7 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -53,7 +49,7 @@ func (api *API) getWorkflowRunJobsV2Handler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -82,11 +78,7 @@ func (api *API) getWorkflowRunResultsV2Handler() ([]service.RbacChecker, service
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -98,7 +90,7 @@ func (api *API) getWorkflowRunResultsV2Handler() ([]service.RbacChecker, service
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -127,10 +119,8 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
+			jobRunID := vars["jobRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -142,28 +132,12 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
 
-			jobIdentifier := vars["jobIdentifier"]
-			attemptS := FormString(req, "attempt")
-
-			attempt := wr.RunAttempt
-			if attemptS != "" {
-				attempt, err = strconv.ParseInt(attemptS, 10, 64)
-				if err != nil {
-					return err
-				}
-			}
-
-			var runJob *sdk.V2WorkflowRunJob
-			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
-			} else {
-				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
-			}
+			runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobRunID)
 			if err != nil {
 				return err
 			}
@@ -172,6 +146,7 @@ func (api *API) getWorkflowRunJobInfosHandler() ([]service.RbacChecker, service.
 			if err != nil {
 				return err
 			}
+
 			return service.WriteJSON(w, infos, http.StatusOK)
 		}
 }
@@ -181,10 +156,8 @@ func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handl
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
+			jobRunID := vars["jobRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -196,31 +169,16 @@ func (api *API) getWorkflowRunJobHandler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
 
-			jobIdentifier := vars["jobIdentifier"]
-			attemptS := FormString(req, "attempt")
-
-			attempt := wr.RunAttempt
-			if attemptS != "" {
-				attempt, err = strconv.ParseInt(attemptS, 10, 64)
-				if err != nil {
-					return err
-				}
-			}
-
-			var runJob *sdk.V2WorkflowRunJob
-			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
-			} else {
-				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
-			}
+			runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobRunID)
 			if err != nil {
 				return err
 			}
+
 			return service.WriteJSON(w, runJob, http.StatusOK)
 		}
 }
@@ -230,10 +188,8 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
+			jobIdentifier := vars["jobIdentifier"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -245,12 +201,11 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
 
-			jobIdentifier := vars["jobIdentifier"]
 			attemptS := FormString(req, "attempt")
 
 			attempt := wr.RunAttempt
@@ -261,14 +216,18 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 				}
 			}
 
-			var runJob *sdk.V2WorkflowRunJob
+			var runJobs []sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
+				runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
+				if err != nil {
+					return err
+				}
+				runJobs = []sdk.V2WorkflowRunJob{*runJob}
 			} else {
-				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
-			}
-			if err != nil {
-				return err
+				runJobs, err = workflow_v2.LoadRunJobsByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
+				if err != nil {
+					return err
+				}
 			}
 
 			tx, err := api.mustDB().Begin()
@@ -277,19 +236,23 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			defer tx.Rollback() // nolint
 
-			runJob.Status = sdk.V2WorkflowRunJobStatusStopped
-			now := time.Now()
-			runJob.Ended = &now
-			if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
-				return err
+			for i := range runJobs {
+				runJobs[i].Status = sdk.V2WorkflowRunJobStatusStopped
+				now := time.Now()
+				runJobs[i].Ended = &now
+				if err := workflow_v2.UpdateJobRun(ctx, tx, &runJobs[i]); err != nil {
+					return err
+				}
 			}
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, *runJob)
-			api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber)
+			for i := range runJobs {
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, runJobs[i])
+			}
+			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 
 			return nil
 		}
@@ -300,10 +263,8 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
+			jobRunID := vars["jobRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -315,28 +276,12 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
 
-			jobIdentifier := vars["jobIdentifier"]
-			attemptS := FormString(req, "attempt")
-
-			attempt := wr.RunAttempt
-			if attemptS != "" {
-				attempt, err = strconv.ParseInt(attemptS, 10, 64)
-				if err != nil {
-					return err
-				}
-			}
-
-			var runJob *sdk.V2WorkflowRunJob
-			if sdk.IsValidUUID(jobIdentifier) {
-				runJob, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
-			} else {
-				runJob, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, attempt)
-			}
+			runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobRunID)
 			if err != nil {
 				return err
 			}
@@ -411,10 +356,7 @@ func (api *API) getWorkflowRunInfoV2Handler() ([]service.RbacChecker, service.Ha
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -426,7 +368,7 @@ func (api *API) getWorkflowRunInfoV2Handler() ([]service.RbacChecker, service.Ha
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -444,17 +386,14 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -606,10 +545,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -621,7 +557,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -789,15 +725,12 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 		}
 }
 
-func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
+func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -809,7 +742,7 @@ func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -913,15 +846,13 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 	return nil
 }
 
-func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Handler) {
+func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
-			runIdentifier := vars["runIdentifier"]
-			if !sdk.IsValidUUID(runIdentifier) {
-				return sdk.WithStack(sdk.ErrInvalidRunIdentifier)
-			}
+			workflowRunID := vars["workflowRunID"]
+			jobIdentifier := vars["jobIdentifier"]
 
 			u := getUserConsumer(ctx)
 			if u == nil {
@@ -933,7 +864,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return err
 			}
 
-			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, runIdentifier)
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
 				return err
 			}
@@ -942,34 +873,52 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start a job on a running workflow")
 			}
 
-			jobIdentifier := vars["jobIdentifier"]
-
 			var gateInputs map[string]interface{}
 			if err := service.UnmarshalBody(req, &gateInputs); err != nil {
 				return err
 			}
 
-			var jobToRun *sdk.V2WorkflowRunJob
+			var jobToRuns []sdk.V2WorkflowRunJob
 			if sdk.IsValidUUID(jobIdentifier) {
-				jobToRun, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
+				jobToRun, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobIdentifier)
+				if err != nil {
+					return err
+				}
+				jobToRuns = []sdk.V2WorkflowRunJob{*jobToRun}
 			} else {
-				jobToRun, err = workflow_v2.LoadRunJobByName(ctx, api.mustDB(), wr.ID, jobIdentifier, wr.RunAttempt)
+				jobToRuns, err = workflow_v2.LoadRunJobsByName(ctx, api.mustDB(), wr.ID, jobIdentifier, wr.RunAttempt)
+				if err != nil {
+					return err
+				}
 			}
-			if err != nil {
-				return err
-			}
-
-			// Check job status
-			if jobToRun.Status != sdk.V2WorkflowRunJobStatusSkipped {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to run manually a non skipped job")
+			if len(jobToRuns) == 0 {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "no job found for given identifier %q", jobIdentifier)
 			}
 
-			// Gate check
-			if jobToRun.Job.Gate == "" {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "there is no gate on job %s", jobToRun.JobID)
+			// Check that job is available to be run manually
+			for _, j := range jobToRuns {
+				if j.Status != sdk.V2WorkflowRunJobStatusSkipped {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to run manually a non skipped job")
+				}
+				if j.Job.Gate == "" {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "there is no gate on job %s", j.JobID)
+				}
 			}
 
-			gate := wr.WorkflowData.Workflow.Gates[jobToRun.Job.Gate]
+			// For job matrix, make sure that all job run contains the same gate definition
+			var gateName string
+			for _, j := range jobToRuns {
+				if gateName == "" {
+					gateName = j.Job.Gate
+					continue
+				}
+				if j.Job.Gate != gateName {
+					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid gate condition detected on job matrix")
+				}
+			}
+
+			// Check that gate reviewers condition are valid
+			gate := wr.WorkflowData.Workflow.Gates[gateName]
 			reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
 			if len(gate.Reviewers.Users) > 0 {
 				if sdk.IsInArray(u.GetUsername(), gate.Reviewers.Users) {
@@ -1010,7 +959,6 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			if err != nil {
 				return err
 			}
-
 			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
 			if err != nil {
 				return err
@@ -1019,13 +967,12 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			// Check gate condition
 			// retrieve previous jobs context
 			runJobsContexts := computeExistingRunJobContexts(runJobs, runResults)
-			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRun.JobID)
+			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRuns[0].JobID)
 			jobContext.Gate = inputs
 			bts, err := json.Marshal(jobContext)
 			if err != nil {
 				return sdk.WithStack(err)
 			}
-
 			var mapContexts map[string]interface{}
 			if err := json.Unmarshal(bts, &mapContexts); err != nil {
 				return sdk.WithStack(err)
@@ -1033,9 +980,8 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 			booleanResult, err := ap.InterpolateToBool(ctx, gate.If)
 			if err != nil {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement %s doesn't return a boolean: %v", jobToRun.JobID, gate.If, err)
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement %s doesn't return a boolean: %v", jobToRuns[0].JobID, gate.If, err)
 			}
-
 			if !booleanResult {
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "gate conditions are not satisfied")
 			}
@@ -1045,8 +991,11 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			for _, rj := range runJobs {
 				runJobsMap[rj.ID] = rj
 			}
-
-			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, map[string]sdk.V2WorkflowRunJob{jobToRun.ID: *jobToRun})
+			runJobsToKeepMap := make(map[string]sdk.V2WorkflowRunJob)
+			for _, rj := range jobToRuns {
+				runJobsToKeepMap[rj.ID] = rj
+			}
+			runJobsToKeep := workflow_v2.RetrieveJobToKeep(ctx, wr.WorkflowData.Workflow, runJobsMap, runJobsToKeepMap)
 
 			tx, err := api.mustDB().Begin()
 			if err != nil {
@@ -1061,7 +1010,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				Inputs:     gateInputs,
 				UserID:     u.AuthConsumerUser.AuthentifiedUserID,
 				Username:   u.GetUsername(),
-				JobID:      jobToRun.JobID,
+				JobID:      jobToRuns[0].JobID,
 				RunAttempt: wr.RunAttempt,
 			})
 			if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
@@ -1072,7 +1021,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				WorkflowRunID: wr.ID,
 				Level:         sdk.WorkflowRunInfoLevelInfo,
 				IssuedAt:      time.Now(),
-				Message:       fmt.Sprintf("%s manually trigger the job %s", u.GetFullname(), jobToRun.JobID),
+				Message:       fmt.Sprintf("%s manually trigger the job %s", u.GetFullname(), jobToRuns[0].JobID),
 			}
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runMsg); err != nil {
 				return err
@@ -1082,7 +1031,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRun.JobID, gateInputs, *u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRuns[0].JobID, gateInputs, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)

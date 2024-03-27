@@ -95,11 +95,11 @@ testcases:
       retry: 10
       delay: 12
       vars:
-        runIdentifier:
+        workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
     - name: Manual job
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow job run {{.cds_project}} {{.runIdentifier}} manual --data '{ \"approve\": true}'"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow job run {{.cds_project}} {{.workflowRunID}} manual --data '{ \"approve\": true}'"
 
     - name: Check that the CDS workflow is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
@@ -110,7 +110,7 @@ testcases:
       delay: 12
 
     - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}
+      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
 
     - name: Check log content
       script: "cat {{.cds_workflow}}-1-2-manual-step2 | grep \"World\""

@@ -5,32 +5,34 @@ import { Tab } from "app/shared/tabs/tabs.component";
 import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
+import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Component({
-	selector: 'app-run-workflow',
-	templateUrl: './run-workflow.html',
-	styleUrls: ['./run-workflow.scss'],
+	selector: 'app-run-contexts',
+	templateUrl: './run-contexts.html',
+	styleUrls: ['./run-contexts.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class RunWorkflowComponent implements OnInit, OnDestroy {
+export class RunContextsComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
-	@Input() workflow: string;
+	@Input() run: V2WorkflowRun;
 	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
 	tabs: Array<Tab>;
 	selectedTab: Tab;
+	contexts: string;
 
 	constructor(
 		private _cd: ChangeDetectorRef,
 		private _store: Store
 	) {
 		this.tabs = [<Tab>{
-			title: 'Workflow',
-			key: 'workflow',
+			title: 'Contexts',
+			key: 'contexts',
 			default: true
 		}];
 	}
@@ -39,7 +41,7 @@ export class RunWorkflowComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.editorOption = {
-			language: 'yaml',
+			language: 'json',
 			minimap: { enabled: false },
 			readOnly: true
 		};
@@ -49,6 +51,11 @@ export class RunWorkflowComponent implements OnInit, OnDestroy {
 				this.editor.layout();
 			}
 		});
+	}
+
+	ngOnChanges(): void {
+		this.contexts = this.run ? JSON.stringify(this.run.contexts, null, 2) : '';
+		this._cd.markForCheck();
 	}
 
 	selectTab(tab: Tab): void {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
@@ -222,13 +223,13 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": true,
 	})
 	w := httptest.NewRecorder()
@@ -378,13 +379,13 @@ func TestRunManualJob_WrongGateCondition(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": false,
 	})
 	w := httptest.NewRecorder()
@@ -541,13 +542,13 @@ func TestRunManualJob(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(3)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunJobV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": true,
 	})
 	w := httptest.NewRecorder()
@@ -724,13 +725,13 @@ func TestPutWorkflowRun(t *testing.T) {
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "POST", "/item/duplicate", gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(2)
 
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunV2Handler, map[string]string{
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRestartWorkflowRunHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"runNumber":     strconv.FormatInt(wr.RunNumber, 10),
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)
@@ -758,7 +759,7 @@ func TestPutWorkflowRun(t *testing.T) {
 	require.Equal(t, int64(2), rJob3.RunAttempt)
 }
 
-func TestPutWorkflowRun_BuildingRun(t *testing.T) {
+func TestPostRestartWorkflowRun_BuildingRun(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	admin, pwd := assets.InsertAdminUser(t, db)
@@ -794,22 +795,18 @@ func TestPutWorkflowRun_BuildingRun(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
-	vars := map[string]string{
-		"projectKey":           proj.Key,
-		"vcsIdentifier":        vcsServer.ID,
-		"repositoryIdentifier": repo.ID,
-		"workflow":             wr.WorkflowName,
-		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
-	}
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunV2Handler, vars)
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRestartWorkflowRunHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 400, w.Code)
 }
 
-func TestPutWorkflowRun_NoFailingJob(t *testing.T) {
+func TestPostRestartWorkflowRun_NoFailingJob(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	admin, pwd := assets.InsertAdminUser(t, db)
@@ -845,16 +842,12 @@ func TestPutWorkflowRun_NoFailingJob(t *testing.T) {
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
-	vars := map[string]string{
-		"projectKey":           proj.Key,
-		"vcsIdentifier":        vcsServer.ID,
-		"repositoryIdentifier": repo.ID,
-		"workflow":             wr.WorkflowName,
-		"runNumber":            strconv.FormatInt(wr.RunNumber, 10),
-	}
-	uri := api.Router.GetRouteV2("PUT", api.putWorkflowRunV2Handler, vars)
+	uri := api.Router.GetRouteV2(http.MethodPost, api.postRestartWorkflowRunHandler, map[string]string{
+		"projectKey":    proj.Key,
+		"workflowRunID": wr.ID,
+	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "PUT", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 400, w.Code)
@@ -906,7 +899,7 @@ func TestGetWorkflowRunInfoV2Handler(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunInfoV2Handler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"runNumber":     strconv.FormatInt(wr.RunNumber, 10),
 	})
 	test.NotEmpty(t, uri)
@@ -971,8 +964,8 @@ func TestGetWorkflowRunJobHandler(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
-		"jobIdentifier": wrj.JobID,
+		"workflowRunID": wr.ID,
+		"jobRunID":      wrj.ID,
 	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri, nil)
@@ -1044,8 +1037,8 @@ func TestGetWorkflowRunJobInfoHandler(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunJobInfosHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
-		"jobIdentifier": wrj.JobID,
+		"workflowRunID": wr.ID,
+		"jobRunID":      wrj.ID,
 	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri, nil)
@@ -1223,8 +1216,8 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 
 	uriGet := api.Router.GetRouteV2("GET", api.getWorkflowRunJobLogsLinksV2Handler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
-		"jobIdentifier": wrj.JobID,
+		"workflowRunID": wr.ID,
+		"jobRunID":      wrj.ID,
 	})
 	test.NotEmpty(t, uriGet)
 	reqGet := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uriGet, nil)
@@ -1285,7 +1278,7 @@ func TestGetWorkflowRunJobsV2Handler(t *testing.T) {
 
 	uriGet := api.Router.GetRouteV2("GET", api.getWorkflowRunJobsV2Handler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uriGet)
 	reqGet := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uriGet, nil)
@@ -1347,7 +1340,7 @@ func TestPostStopWorkflowRunHandler(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("POST", api.postStopWorkflowRunHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 	})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, nil)
@@ -1414,7 +1407,7 @@ func TestPostStopJobHandler(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("POST", api.postStopJobHandler, map[string]string{
 		"projectKey":    proj.Key,
-		"runIdentifier": wr.ID,
+		"workflowRunID": wr.ID,
 		"jobIdentifier": wrj.JobID,
 	})
 	test.NotEmpty(t, uri)
