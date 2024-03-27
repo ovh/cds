@@ -63,7 +63,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				pathLoop:
 					for _, hookPathFilter := range wh.PathFilters {
 						g := glob.New(hookPathFilter)
-						for _, file := range hre.ExtractData.Paths {
+						for _, file := range wh.UpdatedFiles {
 							result, err := g.MatchString(file)
 							if err != nil {
 								log.Error(ctx, "unable to check file %s with pattern %s", hookPathFilter)
@@ -95,8 +95,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 						Payload:       event,
 						EventName:     hre.EventName,
 						HookType:      wh.Type,
-						SemverCurrent: hre.SemverCurrent,
-						SemverNext:    hre.SemverNext,
+						SemverCurrent: wh.SemverCurrent,
+						SemverNext:    wh.SemverNext,
 					}
 
 					// Override repository ref to clone in the workflow

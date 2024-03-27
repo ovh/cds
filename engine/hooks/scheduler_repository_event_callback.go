@@ -105,30 +105,8 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 
 	case sdk.HookEventStatusSignKey:
 		if callback.SigningKeyCallback != nil {
-			hre.SemverCurrent = callback.SigningKeyCallback.SemverCurrent
-			hre.SemverNext = callback.SigningKeyCallback.SemverNext
-			hre.SigningKeyOperationStatus = callback.SigningKeyCallback.Status
-
-			if len(callback.SigningKeyCallback.ChangeSets) > 0 && len(hre.ExtractData.Paths) == 0 {
-				hre.ExtractData.Paths = make([]string, 0, len(callback.SigningKeyCallback.ChangeSets))
-				for _, v := range callback.SigningKeyCallback.ChangeSets {
-					hre.ExtractData.Paths = append(hre.ExtractData.Paths, v.Filename)
-				}
-			}
-
-			if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error != "" {
-				// event on error commit unverified
-				hre.Status = sdk.HookEventStatusSkipped
-				hre.LastError = callback.SigningKeyCallback.Error
-				hre.NbErrors++
-				log.Error(ctx, "unable to verify commit for event %s: %s", callback.HookEventUUID, hre.LastError)
-			} else if callback.SigningKeyCallback.SignKey != "" && callback.SigningKeyCallback.Error == "" {
-				// commit verified
-				hre.SignKey = callback.SigningKeyCallback.SignKey
-			} else if callback.SigningKeyCallback.Error != "" {
-				hre.LastError = "Unable to get signing key: " + callback.SigningKeyCallback.Error
-				hre.NbErrors++
-				hre.Status = sdk.HookEventStatusError
+			if err := s.manageRepositoryOperationCallback(ctx, *callback.SigningKeyCallback, &hre); err != nil {
+				return err
 			}
 		} else {
 			return sdk.Errorf("missing analysis callback data")
@@ -137,19 +115,19 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 		return nil
 	}
 
-	if hre.Status == sdk.HookEventStatusError {
-		for i := range hre.WorkflowHooks {
-			wh := &hre.WorkflowHooks[i]
-			wh.Status = sdk.HookEventWorkflowStatusSkipped
-		}
-	}
-
 	if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 		return err
 	}
 
-	if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
-		return err
+	// if hre is in error or skipped, remove it from in progress list
+	if hre.Status == sdk.HookEventStatusError || hre.Status == sdk.HookEventStatusSkipped {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
+			return err
+		}
+	} else {
+		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -105,7 +105,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 		return err
 	}
 
-	return s.triggerWorkflowHooks(ctx, hre)
+	return s.triggerGetWorkflowHooks(ctx, hre)
 }
 
 func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent, analysis *sdk.HookRepositoryEventAnalysis) error {

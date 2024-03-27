@@ -17,8 +17,25 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 
 	log.Info(ctx, "triggering get git context signing key / semver / changes for event [%s] %s", hre.EventName, hre.GetFullName())
 
-	// If operation not started
-	if hre.SigningKeyOperation == "" {
+	// If operation not started and not manual hook => run repository operation to get signinkey
+	if hre.EventName != sdk.WorkflowHookManual && hre.SigningKeyOperation == "" {
+		changesets := false
+		semver := false
+		signinkey := true
+
+		for _, wh := range hre.WorkflowHooks {
+			switch wh.Type {
+			case sdk.WorkflowHookTypeRepository:
+				changesets = true
+				semver = true
+				signinkey = true
+			case sdk.WorkflowHookTypeWorkflow:
+				signinkey = true
+			case sdk.WorkflowHookTypeWorkerModel:
+				signinkey = true
+			}
+		}
+
 		ope, err := s.Client.RetrieveHookEventSigningKey(ctx, sdk.HookRetrieveSignKeyRequest{
 			HookEventUUID:  hre.UUID,
 			ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
@@ -27,18 +44,32 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 			RepositoryName: hre.RepositoryName,
 			Commit:         hre.ExtractData.Commit,
 			Ref:            hre.ExtractData.Ref,
+			GetSigninKey:   signinkey,
+			GetChangesets:  changesets,
+			GetSemver:      semver,
 		})
 		if err != nil {
 			return err
 		}
 		hre.SigningKeyOperationStatus = ope.Status
 		hre.SigningKeyOperation = ope.UUID
+
+		// For repository webhook, signin operation == gitinfo operation
+		for i := range hre.WorkflowHooks {
+			wh := &hre.WorkflowHooks[i]
+			if wh.Type == sdk.WorkflowHookTypeRepository {
+				wh.OperationUUID = ope.UUID
+				wh.OperationStatus = ope.Status
+			}
+		}
+
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}
 		// Return and wait callback
 		return nil
-	} else {
+
+	} else if hre.EventName != sdk.WorkflowHookManual && hre.SigningKeyOperation != "" {
 		// If operation status has not been updated through signkey callback
 		if hre.SigningKeyOperationStatus != sdk.OperationStatusDone && hre.SigningKeyOperationStatus != sdk.OperationStatusError {
 			if time.Now().UnixMilli()-hre.LastUpdate > RetryDelayMilli {
@@ -51,30 +82,13 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 				if ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
 					return nil
 				}
-				hre.SigningKeyOperationStatus = ope.Status
 
-				if len(ope.Setup.Checkout.Result.Files) > 0 && len(hre.ExtractData.Paths) == 0 {
-					hre.ExtractData.Paths = make([]string, 0, len(ope.Setup.Checkout.Result.Files))
-					for _, v := range ope.Setup.Checkout.Result.Files {
-						hre.ExtractData.Paths = append(hre.ExtractData.Paths, v.Filename)
-					}
+				// Update hook repository event with operation
+				if err := s.manageRepositoryOperationCallback(ctx, ope, hre); err != nil {
+					return err
 				}
-
-				if ope.Status == sdk.OperationStatusError {
-					hre.LastError = ope.Error.ToError().Error()
-				} else if ope.Status == sdk.OperationStatusDone {
-					hre.SignKey = ope.Setup.Checkout.Result.SignKeyID
-					hre.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
-					hre.SemverNext = ope.Setup.Checkout.Result.Semver.Next
-					if !ope.Setup.Checkout.Result.CommitVerified {
-						hre.Status = sdk.HookEventStatusSkipped
-						hre.LastError = fmt.Sprintf("User with key '%s' not found in CDS", hre.SignKey)
-						if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-							return err
-						}
-						return nil
-					}
-					// Continue process and update hook event  status
+				if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+					return err
 				}
 			} else {
 				return nil
@@ -82,26 +96,72 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		}
 	}
 
-	// Operation in error stop the hook
-	if hre.SigningKeyOperationStatus == sdk.OperationStatusError {
-		hre.Status = sdk.HookEventStatusError
-		for i := range hre.WorkflowHooks {
-			wh := &hre.WorkflowHooks[i]
-			wh.Status = sdk.HookEventWorkflowStatusSkipped
-		}
-		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-			return err
-		}
+	// If Operation is skipped ( commit unverified ) || in error : stop hook event
+	if hre.Status == sdk.HookEventStatusError || hre.Status == sdk.HookEventStatusSkipped {
 		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
 			return err
 		}
-		return nil
 	}
 
 	// Continue to next step
-	hre.Status = sdk.HookEventStatusWorkflow
+	hre.Status = sdk.HookEventStatusGitInfo
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err
 	}
-	return s.triggerWorkflows(ctx, hre)
+	return s.triggerGetGitInfo(ctx, hre)
+}
+
+func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk.Operation, hre *sdk.HookRepositoryEvent) error {
+	var opeError string
+	if ope.Status == sdk.OperationStatusError {
+		opeError = ope.Error.ToError().Error()
+	}
+	// Get computed changesets
+	computeChangeSets := make([]string, 0, len(ope.Setup.Checkout.Result.Files))
+	for _, v := range ope.Setup.Checkout.Result.Files {
+		computeChangeSets = append(computeChangeSets, v.Filename)
+	}
+
+	// Update repository hook status
+	for i := range hre.WorkflowHooks {
+		wh := &hre.WorkflowHooks[i]
+
+		// If signin key operation failed, stop all hooks
+		if ope.Status == sdk.OperationStatusError && ope.UUID == hre.SigningKeyOperation {
+			wh.Status = sdk.HookEventWorkflowStatusSkipped
+		}
+
+		// If we found an unverified commit, skip all hooks
+		if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified && ope.UUID == hre.SigningKeyOperation {
+			wh.Status = sdk.HookEventWorkflowStatusSkipped
+		}
+
+		// Add gitinfo for repositorywebhook
+		if wh.Type == sdk.WorkflowHookTypeRepository {
+			wh.OperationStatus = ope.Status
+			wh.OperationError = opeError
+			wh.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
+			wh.SemverNext = ope.Setup.Checkout.Result.Semver.Next
+			// Set changeset on workflow hooks
+			if len(hre.ExtractData.Paths) > 0 {
+				wh.UpdatedFiles = hre.ExtractData.Paths
+			} else {
+				wh.UpdatedFiles = computeChangeSets
+			}
+		}
+	}
+
+	// Update hre
+	hre.SigningKeyOperationStatus = ope.Status
+	hre.LastError = opeError
+	hre.SignKey = ope.Setup.Checkout.Result.SignKeyID
+	if hre.SigningKeyOperationStatus == sdk.OperationStatusError {
+		hre.Status = sdk.HookEventStatusError
+	}
+
+	if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
+		hre.Status = sdk.HookEventStatusSkipped
+		hre.LastError = ope.Setup.Checkout.Result.Msg + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
+	}
+	return nil
 }

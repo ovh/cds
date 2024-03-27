@@ -103,9 +103,9 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 
 			opts := sdk.OperationCheckout{
 				Commit:         hookRetrieveSignKey.Commit,
-				CheckSignature: true,
-				ProcessSemver:  true,
-				GetChangeSet:   true,
+				CheckSignature: hookRetrieveSignKey.GetSigninKey,
+				ProcessSemver:  hookRetrieveSignKey.GetSemver,
+				GetChangeSet:   hookRetrieveSignKey.GetChangesets,
 			}
 			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, hookRetrieveSignKey.Ref, opts)
 			if err != nil {
@@ -135,22 +135,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 					VCSServerName:      hookRetrieveSignKey.VCSServerName,
 					RepositoryName:     hookRetrieveSignKey.RepositoryName,
 					HookEventUUID:      hookRetrieveSignKey.HookEventUUID,
-					SigningKeyCallback: &sdk.HookSigninKeyCallback{},
-				}
-				callback.SigningKeyCallback.Status = ope.Status
-				if ope.Status == sdk.OperationStatusDone {
-					callback.SigningKeyCallback.SemverCurrent = ope.Setup.Checkout.Result.Semver.Current
-					callback.SigningKeyCallback.SemverNext = ope.Setup.Checkout.Result.Semver.Next
-					callback.SigningKeyCallback.ChangeSets = ope.Setup.Checkout.Result.Files
-
-					if ope.Setup.Checkout.Result.CommitVerified {
-						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
-					} else {
-						callback.SigningKeyCallback.SignKey = ope.Setup.Checkout.Result.SignKeyID
-						callback.SigningKeyCallback.Error = ope.Setup.Checkout.Result.Msg + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
-					}
-				} else {
-					callback.SigningKeyCallback.Error = fmt.Sprintf("%v (Operation ID: %s)", ope.Error.From, ope.UUID)
+					SigningKeyCallback: ope,
 				}
 
 				if _, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/repository/event/callback", callback, nil); err != nil {
