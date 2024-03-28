@@ -129,6 +129,7 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 	for i := range hre.WorkflowHooks {
 		wh := &hre.WorkflowHooks[i]
 
+		// Check if callback is for the current workflow hook
 		if ope.UUID != hre.SigningKeyOperation && wh.OperationUUID != ope.UUID {
 			continue
 		}
@@ -138,6 +139,7 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 			wh.Status = sdk.HookEventWorkflowStatusSkipped
 		}
 
+		// Update workflow hook status
 		if ope.Status == sdk.OperationStatusError {
 			if ope.UUID == hre.SigningKeyOperation {
 				wh.Status = sdk.HookEventWorkflowStatusSkipped
@@ -169,7 +171,7 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 		}
 	}
 
-	// Update hre
+	// Update hook repository event if needed
 	if ope.UUID == hre.SigningKeyOperation {
 		hre.SigningKeyOperationStatus = ope.Status
 		hre.LastError = opeError

@@ -28,11 +28,14 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 			existingOpe, has := repositoryOperationCache[repoKeyUniqueKey]
 			if !has {
 				var ref string
+				withChangeSet := true
 				if wh.Data.TargetBranch != "" {
 					ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
 				} else if wh.Data.TargetTag != "" {
 					ref = sdk.GitRefTagPrefix + wh.Data.TargetTag
+					withChangeSet = false
 				}
+
 				ope, err := s.Client.RetrieveHookEventSigningKey(ctx, sdk.HookRetrieveSignKeyRequest{
 					HookEventUUID:  hre.UUID,
 					HookEventKey:   cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
@@ -42,7 +45,7 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 					Commit:         wh.TargetCommit,
 					Ref:            ref,
 					GetSigninKey:   false,
-					GetChangesets:  true,
+					GetChangesets:  withChangeSet,
 					GetSemver:      true,
 				})
 				if err != nil {
@@ -67,9 +70,9 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 				if err != nil {
 					return err
 				}
+				wh.LastCheck = time.Now().UnixMilli()
 				// Operation in progress : do nothing
 				if ope.Status == sdk.OperationStatusPending || ope.Status == sdk.OperationStatusProcessing {
-					wh.LastCheck = time.Now().UnixMilli()
 					continue
 				}
 				if err := s.manageRepositoryOperationCallback(ctx, ope, hre); err != nil {
