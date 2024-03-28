@@ -96,18 +96,46 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 				return err
 			}
 
+			// Fill ref and commit if empty
+			refToClone := hookRetrieveSignKey.Ref
+			commit := hookRetrieveSignKey.Commit
+			if hookRetrieveSignKey.Ref == "" {
+				b, err := vcsClient.Branch(ctx, hookRetrieveSignKey.RepositoryName, sdk.VCSBranchFilters{Default: true})
+				if err != nil {
+					return err
+				}
+				refToClone = b.ID
+				if commit == "" {
+					commit = b.LatestCommit
+				}
+			} else if commit == "" {
+				if strings.HasPrefix(refToClone, sdk.GitRefBranchPrefix) {
+					b, err := vcsClient.Branch(ctx, hookRetrieveSignKey.RepositoryName, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(refToClone, sdk.GitRefBranchPrefix)})
+					if err != nil {
+						return err
+					}
+					commit = b.LatestCommit
+				} else {
+					t, err := vcsClient.Tag(ctx, hookRetrieveSignKey.RepositoryName, strings.TrimPrefix(refToClone, sdk.GitRefTagPrefix))
+					if err != nil {
+						return err
+					}
+					commit = t.Hash
+				}
+			}
+
 			cloneURL := repo.SSHCloneURL
 			if vcsProjectWithSecret.Auth.SSHKeyName == "" {
 				cloneURL = repo.HTTPCloneURL
 			}
 
 			opts := sdk.OperationCheckout{
-				Commit:         hookRetrieveSignKey.Commit,
+				Commit:         commit,
 				CheckSignature: hookRetrieveSignKey.GetSigninKey,
 				ProcessSemver:  hookRetrieveSignKey.GetSemver,
 				GetChangeSet:   hookRetrieveSignKey.GetChangesets,
 			}
-			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, hookRetrieveSignKey.Ref, opts)
+			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, refToClone, opts)
 			if err != nil {
 				return err
 			}
@@ -131,10 +159,10 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 					return
 				}
 				callback := sdk.HookEventCallback{
-					VCSServerType:      hookRetrieveSignKey.VCSServerType,
 					VCSServerName:      hookRetrieveSignKey.VCSServerName,
 					RepositoryName:     hookRetrieveSignKey.RepositoryName,
 					HookEventUUID:      hookRetrieveSignKey.HookEventUUID,
+					HookEventKey:       hookRetrieveSignKey.HookEventKey,
 					SigningKeyCallback: ope,
 				}
 

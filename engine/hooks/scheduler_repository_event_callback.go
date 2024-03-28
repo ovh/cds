@@ -7,7 +7,6 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
-	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -71,13 +70,12 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 
 	// Load the event
 	var hre sdk.HookRepositoryEvent
-	eventKey := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(callback.VCSServerName, callback.RepositoryName), callback.HookEventUUID)
-	find, err := s.Cache.Get(eventKey, &hre)
+	find, err := s.Cache.Get(callback.HookEventKey, &hre)
 	if err != nil {
-		return sdk.WrapError(err, "unable to get hook event %s", eventKey)
+		return sdk.WrapError(err, "unable to get hook event %s", callback.HookEventKey)
 	}
 	if !find {
-		log.Info(ctx, "repository hook %s does not exist anymore", eventKey)
+		log.Info(ctx, "repository hook %s does not exist anymore", callback.HookEventKey)
 		return nil
 	}
 
@@ -103,7 +101,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			return sdk.Errorf("missing analysis callback data")
 		}
 
-	case sdk.HookEventStatusSignKey:
+	case sdk.HookEventStatusSignKey, sdk.HookEventStatusGitInfo:
 		if callback.SigningKeyCallback != nil {
 			if err := s.manageRepositoryOperationCallback(ctx, *callback.SigningKeyCallback, &hre); err != nil {
 				return err

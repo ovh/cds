@@ -53,7 +53,6 @@ func TestManageAnalysisCallback(t *testing.T) {
 	callback := sdk.HookEventCallback{
 		RepositoryName: hr.RepositoryName,
 		VCSServerName:  hr.VCSServerName,
-		VCSServerType:  hr.VCSServerType,
 		HookEventUUID:  hr.UUID,
 		AnalysisCallback: &sdk.HookAnalysisCallback{
 			AnalysisID:     hr.Analyses[0].AnalyzeID,

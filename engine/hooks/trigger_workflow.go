@@ -102,14 +102,20 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					// Override repository ref to clone in the workflow
 					switch wh.Type {
 					case sdk.WorkflowHookTypeManual:
-						runRequest.Ref = wh.TargetBranch
+						if wh.Data.TargetBranch != "" {
+							runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
+						} else {
+							runRequest.Ref = sdk.GitRefTagPrefix + wh.Data.TargetTag
+						}
 						runRequest.Sha = wh.TargetCommit
 					case sdk.WorkflowHookTypeWorkflow:
 						runRequest.EntityUpdated = wh.WorkflowName
-						runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
+						runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
+						runRequest.Sha = wh.TargetCommit
 					case sdk.WorkflowHookTypeWorkerModel:
 						runRequest.EntityUpdated = wh.ModelFullName
-						runRequest.Ref = sdk.GitRefBranchPrefix + wh.TargetBranch
+						runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
+						runRequest.Sha = wh.TargetCommit
 					}
 
 					wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

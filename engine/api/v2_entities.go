@@ -185,7 +185,7 @@ func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Hand
 }
 
 func (api *API) getProjectEntityHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
+	return service.RBAC(api.entityRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]

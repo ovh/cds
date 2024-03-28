@@ -45,6 +45,7 @@ const (
 
 	HookEventWorkflowStatusScheduler = "Scheduled"
 	HookEventWorkflowStatusSkipped   = "Skipped"
+	HookEventWorkflowStatusError     = "Error"
 	HookEventWorkflowStatusDone      = "Done"
 )
 
@@ -52,7 +53,7 @@ type HookEventCallback struct {
 	AnalysisCallback   *HookAnalysisCallback `json:"analysis_callback"`
 	SigningKeyCallback *Operation            `json:"signing_key_callback"`
 	HookEventUUID      string                `json:"hook_event_uuid"`
-	VCSServerType      string                `json:"vcs_server_type"`
+	HookEventKey       string                `json:"hook_event_key"`
 	VCSServerName      string                `json:"vcs_server_name"`
 	RepositoryName     string                `json:"repository_name"`
 }
@@ -108,7 +109,7 @@ type HookRepositoryEventWorkflow struct {
 	Commit               string             `json:"commit"`
 	Type                 string             `json:"type"`
 	Status               string             `json:"status"`
-	TargetBranch         string             `json:"target_branch,omitempty"`
+	Error                string             `json:"error"`
 	TargetCommit         string             `json:"target_commit,omitempty"`
 	ModelFullName        string             `json:"model,omitempty"`
 	PathFilters          []string           `json:"path_filters,omitempty"`
@@ -127,6 +128,7 @@ type HookRepositoryEventWorkflow struct {
 	OperationUUID   string          `json:"operation_uuid"`
 	OperationStatus OperationStatus `json:"operation_status"`
 	OperationError  string          `json:"operation_error"`
+	LastCheck       int64           `json:"last_check"`
 }
 
 type HookRepositoryEventExtractData struct {
@@ -162,6 +164,7 @@ type HookRetrieveSignKeyRequest struct {
 	Commit         string `json:"commit"`
 	Ref            string `json:"ref"`
 	HookEventUUID  string `json:"hook_event_uuid"`
+	HookEventKey   string `json:"hook_event_key"`
 	GetSigninKey   bool   `json:"get_signin_key"`
 	GetChangesets  bool   `json:"get_change_sets"`
 	GetSemver      bool   `json:"get_semver"`
@@ -189,6 +192,7 @@ type AnalysisRequest struct {
 	Ref           string `json:"ref"`
 	Commit        string `json:"commit"`
 	HookEventUUID string `json:"hook_event_uuid"`
+	HookEventKey  string `json:"hook_vent_key`
 	UserID        string `json:"user_id"`
 }
 

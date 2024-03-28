@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -20,27 +22,43 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 		if err := json.Unmarshal(hre.Body, &userRequest); err != nil {
 			return err
 		}
-		var destRef string
-		if userRequest.Branch != "" {
-			destRef = sdk.GitRefBranchPrefix + userRequest.Branch
-		} else if userRequest.Tag != "" {
-			destRef = sdk.GitRefTagPrefix + userRequest.Tag
+
+		// Get workflow definition
+		e, err := s.Client.EntityGet(ctx, hre.ExtractData.ProjectManual, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.WorkflowManual,
+			cdsclient.WithQueryParameter("ref", hre.ExtractData.Ref), cdsclient.WithQueryParameter("commit", hre.ExtractData.Commit))
+		if err != nil {
+			return err
 		}
-		// Create Manual Hook
-		hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{
-			{
-				ProjectKey:           hre.ExtractData.ProjectManual,
-				VCSIdentifier:        hre.VCSServerName,
-				RepositoryIdentifier: hre.RepositoryName,
-				WorkflowName:         hre.ExtractData.WorkflowManual,
-				Type:                 sdk.WorkflowHookTypeManual,
-				Status:               sdk.HookEventWorkflowStatusScheduler,
-				Ref:                  hre.ExtractData.Ref,
-				Commit:               hre.ExtractData.Commit,
-				TargetBranch:         destRef,
-				TargetCommit:         userRequest.Sha,
+		var wk sdk.V2Workflow
+		if err := yaml.Unmarshal([]byte(e.Data), &wk); err != nil {
+			return err
+		}
+		workflowVCS := hre.VCSServerName
+		workflowRepo := hre.RepositoryName
+		if wk.Repository != nil && wk.Repository.VCSServer != "" {
+			workflowVCS = wk.Repository.VCSServer
+			workflowRepo = wk.Repository.Name
+		}
+
+		wh := sdk.HookRepositoryEventWorkflow{
+			ProjectKey:           hre.ExtractData.ProjectManual,
+			VCSIdentifier:        hre.VCSServerName,
+			RepositoryIdentifier: hre.RepositoryName,
+			WorkflowName:         hre.ExtractData.WorkflowManual,
+			Type:                 sdk.WorkflowHookTypeManual,
+			Status:               sdk.HookEventWorkflowStatusScheduler,
+			Ref:                  hre.ExtractData.Ref,
+			Commit:               hre.ExtractData.Commit,
+			TargetCommit:         userRequest.Sha,
+			Data: sdk.V2WorkflowHookData{
+				VCSServer:      workflowVCS,
+				RepositoryName: workflowRepo,
+				TargetBranch:   userRequest.Branch,
+				TargetTag:      userRequest.Tag,
 			},
 		}
+		// Create Manual Hook
+		hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
 	} else {
 		// Retrieve hooks from API
 		request := sdk.HookListWorkflowRequest{
@@ -91,10 +109,10 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 				Type:                 wh.Type,
 				Status:               sdk.HookEventWorkflowStatusScheduler,
 				Ref:                  wh.Ref,
-				TargetBranch:         wh.Data.TargetBranch,
 				ModelFullName:        wh.Data.Model,
 				PathFilters:          wh.Data.PathFilter,
 				Commit:               wh.Commit,
+				Data:                 wh.Data,
 			}
 			hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 		}

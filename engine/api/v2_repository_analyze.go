@@ -52,6 +52,7 @@ type createAnalysisRequest struct {
 	ref           string
 	commit        string
 	hookEventUUID string
+	hookEventKey  string
 	user          *sdk.AuthentifiedUser
 }
 
@@ -264,6 +265,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				ref:           analysis.Ref,
 				commit:        analysis.Commit,
 				hookEventUUID: analysis.HookEventUUID,
+				hookEventKey:  analysis.HookEventKey,
 				user:          u,
 			}
 
@@ -305,6 +307,7 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 		Commit:              analysisRequest.commit,
 		Data: sdk.ProjectRepositoryData{
 			HookEventUUID: analysisRequest.hookEventUUID,
+			HookEventKey:  analysisRequest.hookEventKey,
 		},
 	}
 	if analysisRequest.user != nil {
@@ -1021,9 +1024,9 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 	}
 	callback := sdk.HookEventCallback{
 		RepositoryName: repoName,
-		VCSServerType:  vcsServerType,
 		VCSServerName:  vcsServerName,
 		HookEventUUID:  analysis.Data.HookEventUUID,
+		HookEventKey:   analysis.Data.HookEventKey,
 		AnalysisCallback: &sdk.HookAnalysisCallback{
 			AnalysisStatus: analysis.Status,
 			AnalysisID:     analysis.ID,
