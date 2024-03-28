@@ -18,7 +18,6 @@ jobs:
 - job: Release-to-staging
   stage: Stage 2
   steps:
-  - pushBuildInfo: '{{.cds.workflow}}'
   - promote:
       artifacts: .*.txt
       srcMaturity: snapshot
