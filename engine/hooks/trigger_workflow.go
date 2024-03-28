@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/rockbears/log"
 
@@ -43,6 +42,10 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}
+
+		if hre.IsTerminated() {
+			return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre)
+		}
 	}
 
 	var event map[string]interface{}
@@ -51,9 +54,6 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	}
 
 	if hre.UserID != "" {
-		allEnded := true
-		workflowErrors := make([]string, 0)
-
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
 			if wh.Status == sdk.HookEventWorkflowStatusScheduler {
@@ -123,9 +123,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 						runRequest, mods...)
 					if err != nil {
 						log.ErrorWithStackTrace(ctx, err)
-						errorMsg := fmt.Sprintf("unable to run workflow %s: %v", wh.WorkflowName, err)
-						workflowErrors = append(workflowErrors, errorMsg)
-						allEnded = false
+						wh.Status = sdk.HookEventWorkflowStatusError
+						wh.Error = fmt.Sprintf("unable to run workflow %s: %v", wh.WorkflowName, err)
 					} else {
 						wh.Status = sdk.HookEventWorkflowStatusDone
 						wh.RunID = wr.ID
@@ -139,23 +138,33 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			}
 		}
 
-		if !allEnded {
-			hre.NbErrors++
-			hre.LastError = strings.Join(workflowErrors, "\n")
+		allFailed := true
+		for i := range hre.WorkflowHooks {
+			wh := &hre.WorkflowHooks[i]
+			if !wh.IsTerminated() {
+				return nil
+			}
+
+			if wh.Status != sdk.HookEventWorkflowStatusError {
+				allFailed = false
+			}
 		}
-		if allEnded {
+
+		if allFailed {
+			hre.Status = sdk.HookEventStatusError
+			hre.LastError = "All workflow hooks failed"
+		} else {
 			hre.Status = sdk.HookEventStatusDone
 		}
+
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}
-		if allEnded {
+		if hre.IsTerminated() {
 			if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
 				return err
 			}
 		}
-
 	}
-
 	return nil
 }

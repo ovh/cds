@@ -86,15 +86,30 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 		}
 	}
 
-	for _, wh := range hre.WorkflowHooks {
-		if wh.OperationStatus != sdk.OperationStatusDone && wh.OperationStatus != sdk.OperationStatusError {
+	allFailed := true
+	for i := range hre.WorkflowHooks {
+		wh := hre.WorkflowHooks[i]
+		if wh.OperationStatus != sdk.OperationStatusError {
+			allFailed = false
+		}
+		// If we don't have all operation callbacks, return and wait for them
+		if !wh.IsTerminated() {
 			return nil
 		}
 	}
 
-	hre.Status = sdk.HookEventStatusWorkflow
+	if allFailed {
+		hre.Status = sdk.HookEventStatusError
+		hre.LastError = "All workflow hooks in error"
+	} else {
+		hre.Status = sdk.HookEventStatusWorkflow
+	}
+
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err
+	}
+	if hre.IsTerminated() {
+		return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre)
 	}
 	return s.triggerWorkflows(ctx, hre)
 }

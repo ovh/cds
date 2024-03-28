@@ -118,7 +118,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 	}
 
 	// if hre is in error or skipped, remove it from in progress list
-	if hre.Status == sdk.HookEventStatusError || hre.Status == sdk.HookEventStatusSkipped {
+	if (&hre).IsTerminated() {
 		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre); err != nil {
 			return err
 		}

@@ -99,7 +99,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 	}
 
 	// If Operation is skipped ( commit unverified ) || in error : stop hook event
-	if hre.Status == sdk.HookEventStatusError || hre.Status == sdk.HookEventStatusSkipped {
+	if hre.IsTerminated() {
 		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
 			return err
 		}

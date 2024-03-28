@@ -99,6 +99,10 @@ type HookRepositoryEvent struct {
 	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
 }
 
+func (h *HookRepositoryEvent) IsTerminated() bool {
+	return h.Status == HookEventStatusDone || h.Status == HookEventStatusError || h.Status == HookEventStatusSkipped
+}
+
 type HookRepositoryEventWorkflow struct {
 	ProjectKey           string             `json:"project_key"`
 	VCSIdentifier        string             `json:"vcs_identifier"`
@@ -129,6 +133,10 @@ type HookRepositoryEventWorkflow struct {
 	OperationStatus OperationStatus `json:"operation_status"`
 	OperationError  string          `json:"operation_error"`
 	LastCheck       int64           `json:"last_check"`
+}
+
+func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
+	return wh.Status == HookEventWorkflowStatusError || wh.Status == HookEventWorkflowStatusSkipped || wh.Status == HookEventWorkflowStatusDone
 }
 
 type HookRepositoryEventExtractData struct {
