@@ -15,7 +15,7 @@ export class V2WorkflowRunService {
     }
 
     restart(projKey: string, workflowRunID: string): Observable<V2WorkflowRun> {
-        return this._http.put<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/restart`, null);
+        return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/restart`, null);
     }
 
     stop(projKey: string, workflowRunID: string) {

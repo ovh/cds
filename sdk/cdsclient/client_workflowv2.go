@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -51,7 +52,7 @@ func (c *client) WorkflowV2RunInfoList(ctx context.Context, projectKey, workflow
 func (c *client) WorkflowV2Restart(ctx context.Context, projectKey, workflowRunID string, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
 	path := fmt.Sprintf("/v2/project/%s/run/%s/restart", projectKey, workflowRunID)
-	_, _, _, err := c.RequestJSON(ctx, "PUT", path, nil, &run, mods...)
+	_, _, _, err := c.RequestJSON(ctx, http.MethodPost, path, nil, &run, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func (c *client) WorkflowV2Restart(ctx context.Context, projectKey, workflowRunI
 func (c *client) WorkflowV2JobStart(ctx context.Context, projectKey, workflowRunID, jobIdentifier string, payload map[string]interface{}, mods ...RequestModifier) (*sdk.V2WorkflowRun, error) {
 	var run sdk.V2WorkflowRun
 	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/run", projectKey, workflowRunID, jobIdentifier)
-	_, _, _, err := c.RequestJSON(ctx, "PUT", path, payload, &run, mods...)
+	_, _, _, err := c.RequestJSON(ctx, http.MethodPost, path, payload, &run, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (c *client) WorkflowV2RunJobLogLinks(ctx context.Context, projKey, workflow
 
 func (c *client) WorkflowV2Stop(ctx context.Context, projKey, workflowRunID string) error {
 	path := fmt.Sprintf("/v2/project/%s/run/%s/stop", projKey, workflowRunID)
-	if _, _, _, err := c.RequestJSON(ctx, "POST", path, nil, nil); err != nil {
+	if _, _, _, err := c.RequestJSON(ctx, http.MethodPost, path, nil, nil); err != nil {
 		return err
 	}
 	return nil

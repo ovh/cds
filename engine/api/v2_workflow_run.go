@@ -689,7 +689,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 		}
 }
 
-func (api *API) putWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
+func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.workflowTrigger),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)

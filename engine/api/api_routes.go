@@ -490,7 +490,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/run", nil, r.GETv2(api.getWorkflowRunsSearchV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/filter", nil, r.GETv2(api.getWorkflowRunsFiltersV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}", nil, r.GETv2(api.getWorkflowRunV2Handler))
-	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/restart", nil, r.PUTv2(api.putWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/restart", nil, r.POSTv2(api.postRestartWorkflowRunHandler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/infos", nil, r.GETv2(api.getWorkflowRunInfoV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/stop", nil, r.POSTv2(api.postStopWorkflowRunHandler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}/job", nil, r.GETv2(api.getWorkflowRunJobsV2Handler))
