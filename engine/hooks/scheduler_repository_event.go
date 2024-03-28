@@ -174,7 +174,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 			}
 		} else {
 			hre.Status = sdk.HookEventStatusWorkflowHooks
-			if err := s.triggerWorkflowHooks(ctx, hre); err != nil {
+			if err := s.triggerGetWorkflowHooks(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger workflow hooks")
 			}
 		}
@@ -186,11 +186,15 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		}
 		// Check if all workflow triggered has been sent
 	case sdk.HookEventStatusWorkflowHooks:
-		if err := s.triggerWorkflowHooks(ctx, hre); err != nil {
+		if err := s.triggerGetWorkflowHooks(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger workflow hooks")
 		}
 	case sdk.HookEventStatusSignKey:
 		if err := s.triggerGetSigningKey(ctx, hre); err != nil {
+			return sdk.WrapError(err, "unable to get signing key")
+		}
+	case sdk.HookEventStatusGitInfo:
+		if err := s.triggerGetGitInfo(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to get signing key")
 		}
 	case sdk.HookEventStatusWorkflow:

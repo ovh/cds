@@ -73,7 +73,9 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 			op.Error = nil
 			op.Status = sdk.OperationStatusDone
 			switch {
-			case op.LoadFiles.Pattern == "" && op.Setup.Checkout.CheckSignature:
+			case op.LoadFiles.Pattern == "" && op.Setup.Checkout.CheckSignature,
+				op.LoadFiles.Pattern == "" && op.Setup.Checkout.GetChangeSet,
+				op.LoadFiles.Pattern == "" && op.Setup.Checkout.ProcessSemver:
 				op.Error = nil
 				op.Status = sdk.OperationStatusDone
 				// do nothing

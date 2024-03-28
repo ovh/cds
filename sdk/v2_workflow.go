@@ -336,6 +336,7 @@ type V2WorkflowHookData struct {
 	PathFilter      []string `json:"path_filter,omitempty"`
 	TypesFilter     []string `json:"types_filter,omitempty"`
 	TargetBranch    string   `json:"target_branch,omitempty"`
+	TargetTag       string   `json:"target_tag,omitempty"`
 }
 
 func (w V2WorkflowHookData) Value() (driver.Value, error) {

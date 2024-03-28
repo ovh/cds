@@ -1452,20 +1452,85 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
 
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "main"}))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, repoDef.Name, "push")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(repoWebHooks))
 
 	// Local workflow so worklow update hook must not be saved
-	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name)
+	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
 	// Local workflow so model update hook must not be saved
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, []string{"MyModel"})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{"MyModel"})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
+}
+
+func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE from v2_workflow_hook")
+	require.NoError(t, err)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repoDef := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "sgu/myDefRepo")
+
+	//
+	e := sdk.EntityWithObject{
+		Entity: sdk.Entity{
+			ProjectKey:          proj.Key,
+			ProjectRepositoryID: repoDef.ID,
+			Ref:                 "refs/heads/main",
+			Type:                sdk.EntityTypeWorkflow,
+			Commit:              "123456",
+			Name:                sdk.RandomString(10),
+		},
+		Workflow: sdk.V2Workflow{
+			Repository: &sdk.WorkflowRepository{
+				VCSServer: vcsServer.Name,
+				Name:      "sgu/myapp",
+			},
+			On: &sdk.WorkflowOn{
+				Push:           &sdk.WorkflowOnPush{},
+				WorkflowUpdate: &sdk.WorkflowOnWorkflowUpdate{},
+				ModelUpdate: &sdk.WorkflowOnModelUpdate{
+					Models: []string{"MyModel"},
+				},
+			},
+		},
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main", LatestCommit: "123456"}))
+
+	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
+	require.NoError(t, err)
+	require.Equal(t, 2, len(repoWebHooks))
+
+	hookWithCommit := false
+	hookWithHead := false
+	for _, wh := range repoWebHooks {
+		if wh.Commit == "123456" {
+			hookWithCommit = true
+		} else if wh.Commit == "HEAD" {
+			hookWithHead = true
+		}
+	}
+	require.True(t, hookWithCommit)
+	require.True(t, hookWithHead)
+
+	// Distant workflow so worklow update hook must be saved
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
+	require.NoError(t, err)
+	require.NotNil(t, workflowUpdateHooks)
+
+	// Distant workflow so model update hook must be saved
+	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
+	require.NoError(t, err)
+	require.Equal(t, 1, len(hooks))
 }
 
 func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
@@ -1503,20 +1568,20 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "refs/heads/main"))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(repoWebHooks))
 
-	// Local workflow so worklow update hook must not be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name)
+	// Distant workflow so worklow update hook must be saved
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
-	// Local workflow so model update hook must not be saved
+	// Distant workflow so model update hook must be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(hooks))
 }
@@ -1556,20 +1621,20 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "refs/heads/main"))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(repoWebHooks))
 
-	// Local workflow so worklow update hook must not be saved
-	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name)
+	// Distant workflow so worklow update hook must be saved
+	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
 
-	// Local workflow so model update hook must not be saved
+	// Model and workflow on different repo,  hook must not be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
 }
@@ -1609,19 +1674,19 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", "main"))
+	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}))
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
 	require.Equal(t, 0, len(repoWebHooks))
 
-	// Local workflow so worklow update hook must not be saved
-	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name)
+	// Non default branch, hook must not be saved
+	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
-	// Local workflow so model update hook must not be saved
+	// Non default branch, hook must not be saved
 	modelKey := fmt.Sprintf("%s/%s/%s/%s", proj.Key, vcsServer.Name, repoDef.Name, "MyModel")
-	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, []string{modelKey})
+	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
 }

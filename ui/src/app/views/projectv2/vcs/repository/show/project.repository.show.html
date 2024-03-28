@@ -85,6 +85,15 @@
                             <ul>
                                 <li *ngFor="let w of h.workflows">
                                     <span nz-tooltip nzTooltipTitle="{{w.project_key + ' / ' + w.vcs_identifier + ' / ' + w.repository_identifier}}">
+                                        <ng-container *ngIf="w.status === 'Skipped'">
+                                            <i nz-icon nzType="stop" nzTheme="outline"></i>
+                                        </ng-container>
+                                        <ng-container *ngIf="w.status === 'Done'">
+                                            <i nz-icon nzType="check" nzTheme="outline" class="green"></i>
+                                        </ng-container>
+                                        <ng-container *ngIf="w.status === 'Scheduled'">
+                                            <i nz-icon nzType="field-time" nzTheme="outline"></i>
+                                        </ng-container>
                                         <b>[{{w.type}}]</b>{{' ' + w.workflow_name}}
                                     </span>
 

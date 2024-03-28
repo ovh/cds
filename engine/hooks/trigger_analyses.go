@@ -6,6 +6,7 @@ import (
 
 	"github.com/rockbears/log"
 
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -105,7 +106,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 		return err
 	}
 
-	return s.triggerWorkflowHooks(ctx, hre)
+	return s.triggerGetWorkflowHooks(ctx, hre)
 }
 
 func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent, analysis *sdk.HookRepositoryEventAnalysis) error {
@@ -123,6 +124,7 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 		Ref:           hre.ExtractData.Ref,
 		Commit:        hre.ExtractData.Commit,
 		HookEventUUID: hre.UUID,
+		HookEventKey:  cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
 		UserID:        hre.UserID,
 	}
 	resp, err := s.Client.ProjectRepositoryAnalysis(ctx, analyze)

@@ -155,6 +155,20 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		op.Setup.Checkout.Result.CommitVerified = true
 	}
 
+	if op.Setup.Checkout.GetChangeSet {
+		commitWithDiffs, err := gitRepo.GetCommitWithDiff(ctx, op.Setup.Checkout.Commit)
+		if err != nil {
+			return err
+		}
+		op.Setup.Checkout.Result.Files = make(map[string]sdk.OperationChangetsetFile)
+		for k, v := range commitWithDiffs.Files {
+			op.Setup.Checkout.Result.Files[k] = sdk.OperationChangetsetFile{
+				Filename: v.Filename,
+				Status:   v.Status,
+			}
+		}
+	}
+
 	log.Info(ctx, "processCheckout> repository %s ready", op.URL)
 	return nil
 }

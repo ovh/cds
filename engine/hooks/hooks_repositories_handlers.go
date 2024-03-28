@@ -90,11 +90,11 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if e.Status != sdk.HookEventStatusDone && e.Status != sdk.HookEventStatusError {
+		if !e.IsTerminated() {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "hook event is not in a final state")
 		}
 
-		e.Status = sdk.HookEventWorkflowStatusScheduler
+		e.Status = sdk.HookEventStatusScheduled
 		e.UserID = ""
 		e.Username = ""
 		e.SignKey = ""

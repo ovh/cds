@@ -44,6 +44,7 @@ type ProjectRepositoryAnalysis struct {
 
 type ProjectRepositoryData struct {
 	HookEventUUID string                        `json:"hook_event_uuid"`
+	HookEventKey  string                        `json:"hook_event_key"`
 	OperationUUID string                        `json:"operation_uuid"`
 	CommitCheck   bool                          `json:"commit_check"`
 	SignKeyID     string                        `json:"sign_key_id"`

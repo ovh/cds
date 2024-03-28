@@ -194,7 +194,7 @@ func Poll(ctx context.Context, db gorp.SqlExecutor, operationUUID string) (*sdk.
 	}
 }
 
-func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, vcsWithSecret sdk.VCSProject, repoName, repoCloneURL string, commit, ref string) (*sdk.Operation, error) {
+func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj sdk.Project, vcsWithSecret sdk.VCSProject, repoName, repoCloneURL string, ref string, opts sdk.OperationCheckout) (*sdk.Operation, error) {
 	ope := &sdk.Operation{
 		VCSServer:    vcsWithSecret.Name,
 		RepoFullName: repoName,
@@ -205,11 +205,7 @@ func CheckoutAndAnalyzeOperation(ctx context.Context, db gorp.SqlExecutor, proj 
 			Password: vcsWithSecret.Auth.Token,
 		},
 		Setup: sdk.OperationSetup{
-			Checkout: sdk.OperationCheckout{
-				Commit:         commit,
-				CheckSignature: true,
-				ProcessSemver:  true,
-			},
+			Checkout: opts,
 		},
 	}
 	if strings.HasPrefix(ref, sdk.GitRefTagPrefix) {
