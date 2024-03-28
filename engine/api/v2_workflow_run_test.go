@@ -1166,7 +1166,7 @@ func TestGetWorkflowRunJobLogsLinksV2Handler(t *testing.T) {
 	uriGet := api.Router.GetRouteV2("GET", api.getWorkflowRunJobLogsLinksV2Handler, map[string]string{
 		"projectKey":    proj.Key,
 		"workflowRunID": wr.ID,
-		"jobRunID":      wrj.JobID,
+		"jobRunID":      wrj.ID,
 	})
 	test.NotEmpty(t, uriGet)
 	reqGet := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uriGet, nil)
