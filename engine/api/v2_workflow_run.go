@@ -741,6 +741,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				Sha:           runRequest.Sha,
 				SemverCurrent: runRequest.SemverCurrent,
 				SemverNext:    runRequest.SemverNext,
+				ChangeSets:    runRequest.ChangeSets,
 				EntityUpdated: runRequest.EntityUpdated,
 				Payload:       runRequest.Payload,
 			}

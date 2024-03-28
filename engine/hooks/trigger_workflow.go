@@ -97,6 +97,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 						HookType:      wh.Type,
 						SemverCurrent: wh.SemverCurrent,
 						SemverNext:    wh.SemverNext,
+						ChangeSets:    wh.UpdatedFiles,
 					}
 
 					// Override repository ref to clone in the workflow

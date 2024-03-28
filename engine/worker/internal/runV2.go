@@ -550,6 +550,9 @@ func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.Workflo
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal cds context: %v", err)
 	}
 	for k, v := range mapCDS {
+		if strings.EqualFold(k, "event") {
+			continue
+		}
 		switch reflect.ValueOf(v).Kind() {
 		case reflect.Map, reflect.Slice:
 			s, _ := json.Marshal(v)
@@ -566,6 +569,9 @@ func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.Workflo
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to unmarshal git context")
 	}
 	for k, v := range mapGIT {
+		if strings.EqualFold(k, "changesets") || strings.EqualFold(k, "ssh_private") || strings.EqualFold(k, "token") {
+			continue
+		}
 		newEnvVar[fmt.Sprintf("GIT_%s", strings.ToUpper(k))] = sdk.OneLineValue(fmt.Sprintf("%v", v))
 	}
 

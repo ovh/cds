@@ -698,6 +698,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 		Sha:           commit,
 		SemverCurrent: semverCurrent,
 		SemverNext:    semverNext,
+		ChangeSets:    wr.RunEvent.ChangeSets,
 	}
 
 	if gitContext.SSHKey != "" {

@@ -30,7 +30,7 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 				var ref string
 				if wh.Data.TargetBranch != "" {
 					ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
-				} else {
+				} else if wh.Data.TargetTag != "" {
 					ref = sdk.GitRefTagPrefix + wh.Data.TargetTag
 				}
 				ope, err := s.Client.RetrieveHookEventSigningKey(ctx, sdk.HookRetrieveSignKeyRequest{
