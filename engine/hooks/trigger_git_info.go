@@ -93,7 +93,7 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 			allFailed = false
 		}
 		// If we don't have all operation callbacks, return and wait for them
-		if !wh.IsTerminated() {
+		if wh.OperationStatus != sdk.OperationStatusDone && wh.OperationStatus != sdk.OperationStatusError {
 			return nil
 		}
 	}

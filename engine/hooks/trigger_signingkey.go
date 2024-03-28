@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rockbears/log"
@@ -35,6 +36,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 			case sdk.WorkflowHookTypeWorkerModel:
 				signinkey = true
 			}
+		}
+
+		if strings.HasPrefix(hre.ExtractData.Ref, sdk.GitRefTagPrefix) {
+			changesets = false
 		}
 
 		ope, err := s.Client.RetrieveHookEventSigningKey(ctx, sdk.HookRetrieveSignKeyRequest{
