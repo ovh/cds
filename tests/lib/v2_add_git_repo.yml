@@ -45,7 +45,9 @@ steps:
     assertions:
       - and:
         - result.code ShouldEqual 0
-        - result.systemoutjson.systemoutjson0.reponame ShouldEqual "{{.input.git_user}}/{{.input.git_repo}}"
+        - or:
+          - result.systemoutjson.systemoutjson0.reponame ShouldEqual "{{.input.git_user}}/{{.input.git_repo}}"
+          - result.systemoutjson.systemoutjson0.repoName ShouldEqual "{{.input.git_user}}/{{.input.git_repo}}"
 
   # Add webhook
   - script: {{.input.cdsctl_command}} experimental project repository hook-key {{.input.cds_project}} gitea my_vcs_server {{.input.git_user}}/{{.input.git_repo}} --format json
