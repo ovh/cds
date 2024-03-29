@@ -90,7 +90,7 @@ testcases:
           name: {{.cds_workflow}}
           on: [workflow-update]
           repository:
-            name: "{{.git_repo_src}}"
+            name: "{{.git.user}}/{{.git_repo_src}}"
             vcs: my_vcs_server
           jobs:
             init:
