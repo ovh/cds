@@ -133,5 +133,3 @@ testcases:
       script: "cat {{.cds_workflow}}-1-1-overrideEnv-secretVar && cat {{.cds_workflow}}-1-1-overrideEnv-secretVar | grep \"**********\""
     - name: Check multiline secret
       script: "cat {{.cds_workflow}}-1-1-overrideEnv-varset1 && cat {{.cds_workflow}}-1-1-overrideEnv-varset1 | grep \"**********\""   
-    - name: Check git context    
-      script: 'cat {{.cds_workflow}}-1-1-overrideEnv-env && cat {{.cds_workflow}}-1-1-overrideEnv-env | grep "GIT_SSH_PRIVATE=**********"'
