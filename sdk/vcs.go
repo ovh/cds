@@ -33,6 +33,12 @@ const (
 
 var (
 	BitbucketEvents = []string{
+		"repo:refs_changed", // position is important here
+		"repo:comment:added",
+		"repo:comment:deleted",
+		"repo:comment:edited",
+		"repo:forked",
+		"repo:modified",
 		"pr:comment:added",
 		"pr:comment:deleted",
 		"pr:comment:edited",
@@ -46,12 +52,6 @@ var (
 		"pr:reviewer:needs_work",
 		"pr:reviewer:unapproved",
 		"pr:reviewer:updated",
-		"repo:comment:added",
-		"repo:comment:deleted",
-		"repo:comment:edited",
-		"repo:forked",
-		"repo:modified",
-		"repo:refs_changed",
 	}
 
 	BitbucketEventsDefault = []string{
@@ -59,6 +59,16 @@ var (
 	}
 
 	BitbucketCloudEvents = []string{
+		"repo:push", // position is important here
+		"repo:commit_comment_created",
+		"repo:commit_status_created",
+		"repo:commit_status_updated",
+		"repo:created",
+		"repo:deleted",
+		"repo:fork",
+		"repo:imported",
+		"repo:transfer",
+		"repo:updated",
 		"issue:comment_created",
 		"issue:created",
 		"issue:updated",
@@ -72,16 +82,6 @@ var (
 		"pullrequest:rejected",
 		"pullrequest:unapproved",
 		"pullrequest:updated",
-		"repo:commit_comment_created",
-		"repo:commit_status_created",
-		"repo:commit_status_updated",
-		"repo:created",
-		"repo:deleted",
-		"repo:fork",
-		"repo:imported",
-		"repo:push",
-		"repo:transfer",
-		"repo:updated",
 	}
 
 	BitbucketCloudEventsDefault = []string{
@@ -89,6 +89,10 @@ var (
 	}
 
 	GitHubEvents = []string{
+		"push", // position is important here
+		"pull_request_review_comment",
+		"pull_request_review",
+		"pull_request",
 		"check_run",
 		"check_suite",
 		"commit_comment",
@@ -115,10 +119,6 @@ var (
 		"project_column",
 		"project",
 		"public",
-		"pull_request_review_comment",
-		"pull_request_review",
-		"pull_request",
-		"push",
 		"release",
 		"repository_import",
 		"repository_vulnerability_alert",
