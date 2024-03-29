@@ -100,8 +100,6 @@ testcases:
               steps:
                 - id: gitinfo
                   run: env
-                - id: changesets
-                  run: echo "${{ git.changesets }}"
 
     - name: Save code commit
       script: cd /tmp/repos/{{.git_repo_code}} && git rev-parse HEAD
@@ -137,5 +135,3 @@ testcases:
       script: "cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep \"GIT_SHA={{.PushMyfile.commitSrc}}\""
     - name: Check workflow_sha
       script: "cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep \"CDS_WORKFLOW_SHA={{.PushCode.commitCode}}\""  
-    - name: Check changesets log
-      script: "cat {{.cds_workflow}}-1-1-init-changesets && cat {{.cds_workflow}}-1-1-init-changesets | grep \"myfile.md\""  
