@@ -24,7 +24,7 @@ testcases:
       git_password: "{{.git.password}}"
       cds_region: "{{.cds.region}}"
 
-    - type: v2_add_git_repo_src
+    - type: v2_add_git_repo
       cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
       cds_project: "{{.cds_project}}"
       cds_hook_url: "{{.gitea.hook.url}}"
@@ -33,7 +33,7 @@ testcases:
       git_password: "{{.git.password}}"
       git_repo: "{{.git_repo_src}}"
 
-    - type: v2_add_git_repo_code
+    - type: v2_add_git_repo
       cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
       cds_project: "{{.cds_project}}"
       cds_hook_url: "{{.gitea.hook.url}}"
@@ -101,7 +101,7 @@ testcases:
                 - id: gitinfo
                   run: env
                 - id: changesets
-                  run: echo "${{ git.changesets[0] }}"
+                  run: echo "${{ git.changesets }}"
 
     - name: Save code commit
       script: cd /tmp/repos/{{.git_repo_code}} && git rev-parse HEAD
