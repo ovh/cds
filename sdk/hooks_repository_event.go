@@ -174,7 +174,7 @@ type HookRetrieveSignKeyRequest struct {
 	HookEventUUID  string `json:"hook_event_uuid"`
 	HookEventKey   string `json:"hook_event_key"`
 	GetSigninKey   bool   `json:"get_signin_key"`
-	GetChangesets  bool   `json:"get_change_sets"`
+	GetChangesets  bool   `json:"get_changesets"`
 	GetSemver      bool   `json:"get_semver"`
 }
 
@@ -200,7 +200,7 @@ type AnalysisRequest struct {
 	Ref           string `json:"ref"`
 	Commit        string `json:"commit"`
 	HookEventUUID string `json:"hook_event_uuid"`
-	HookEventKey  string `json:"hook_vent_key`
+	HookEventKey  string `json:"hook_event_key`
 	UserID        string `json:"user_id"`
 }
 
