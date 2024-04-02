@@ -244,6 +244,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 				break
 			}
 		}
+		result.ArtifactManagerMetadata.Set("dir", rtFolderPathInfo.Path)
 		if !manifestFound {
 			return nil, time.Since(t0), errors.New("unable to get uploaded image manifest")
 		}
