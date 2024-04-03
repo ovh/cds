@@ -57,7 +57,11 @@ func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 
 	tags = strings.Replace(tags, " ", ",", -1) // If tags are separated by <space>
 	tags = strings.Replace(tags, ";", ",", -1) // If tags are separated by <semicolon>
-	tagSlice := strings.Split(tags, ",")
+
+	var tagSlice []string
+	if len(tags) > 0 {
+		tagSlice = strings.Split(tags, ",")
+	}
 
 	if !strings.ContainsRune(image, ':') { // Latest is the default tag
 		image = image + ":latest"
@@ -141,7 +145,6 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 
 func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *img, registryURL string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
-
 	// Create run result at status "pending"
 	var runResultRequest = workerruntime.V2RunResultRequest{
 		RunResult: &sdk.V2WorkflowRunResult{
@@ -194,7 +197,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			HumanCreated: img.created,
 		}
 
-		if tag != img.tag { // if the image already has the right tag, nothing to do
+		// Check if we need to tag the image
+		if destination != img.repository+":"+img.tag {
 			if err := cli.ImageTag(ctx, img.imageID, destination); err != nil {
 				return nil, time.Since(t0), errors.Errorf("unable to tag %q to %q: %v", source, destination, err)
 			}
