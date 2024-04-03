@@ -26,6 +26,57 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSearchAllWorkflow(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     "github",
+				Repository: "ovh/cds",
+				Ref:        "refs/heads/master",
+				Sha:        "123456",
+			},
+		},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunsSearchAllProjectV2Handler, map[string]string{})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri+"?commit=123456&branch=refs/heads/master&offset=0&limit=1", nil)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	var runs []sdk.V2WorkflowRun
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &runs))
+	require.Len(t, runs, 1)
+	require.Equal(t, wr.ID, runs[0].ID)
+
+}
+
 func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 

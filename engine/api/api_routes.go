@@ -500,6 +500,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}/run", nil, r.PUTv2(api.putWorkflowRunJobV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}/stop", nil, r.POSTv2(api.postStopJobHandler))
 	r.Handle("/v2/project/{projectKey}/run/{runIdentifier}/job/{jobIdentifier}/logs/links", nil, r.GETv2(api.getWorkflowRunJobLogsLinksV2Handler))
+	r.Handle("/v2/run", nil, r.GETv2(api.getWorkflowRunsSearchAllProjectV2Handler))
 
 	r.Handle("/v2/plugin", nil, r.POSTv2(api.postImportPluginHandler))
 	r.Handle("/v2/plugin/{name}", nil, r.GETv2(api.getPluginHandler))
