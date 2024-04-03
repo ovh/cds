@@ -387,6 +387,7 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 			path     = r.ArtifactManagerMetadata.Get("path")
 			repoType = r.ArtifactManagerMetadata.Get("type")
 			md5      = r.ArtifactManagerMetadata.Get("md5")
+			dir      = r.ArtifactManagerMetadata.Get("dir")
 		)
 
 		mod := buildinfo.Module{
@@ -399,18 +400,10 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 		case "docker":
 			mod.Type = buildinfo.Docker
 			modProps := make(map[string]string)
-			parsedUrl, err := url.Parse(artiClient.GetURL())
-			if err != nil {
-				return nil, sdk.WrapError(err, "unable to parse artifactory url [%s]", artiClient.GetURL())
-			}
-			urlArtifactory := parsedUrl.Host
-			if parsedUrl.Port() != "" {
-				urlArtifactory += ":" + parsedUrl.Port()
-			}
-			modProps["docker.image.tag"] = fmt.Sprintf("%s.%s/%s", repoName, urlArtifactory, name)
+			modProps["docker.image.tag"] = name
 			mod.Properties = modProps
 
-			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName, strings.TrimSuffix(path, "/"))
+			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName, strings.TrimPrefix(strings.TrimSuffix(dir, "/"), "/"))
 			searchResults, err := artiClient.Search(ctx, query)
 			if err != nil {
 				return nil, err

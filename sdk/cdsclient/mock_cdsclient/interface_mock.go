@@ -5608,6 +5608,26 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunSearch(ctx, projectKey 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearch", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunSearch), varargs...)
 }
 
+// WorkflowV2RunSearchAllProjects mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, offset, limit}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunSearchAllProjects", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunSearchAllProjects indicates an expected call of WorkflowV2RunSearchAllProjects.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunSearchAllProjects(ctx, offset, limit interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, offset, limit}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearchAllProjects", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunSearchAllProjects), varargs...)
+}
+
 // WorkflowV2RunStatus mocks base method.
 func (m *MockWorkflowV2Client) WorkflowV2RunStatus(ctx context.Context, projectKey, runIdentifier string) (*sdk.V2WorkflowRun, error) {
 	m.ctrl.T.Helper()
@@ -11725,6 +11745,26 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2RunSearch(ctx, projectKey interfa
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, projectKey}, mods...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearch", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunSearch), varargs...)
+}
+
+// WorkflowV2RunSearchAllProjects mocks base method.
+func (m *MockInterface) WorkflowV2RunSearchAllProjects(ctx context.Context, offset, limit int64, mods ...cdsclient.RequestModifier) ([]sdk.V2WorkflowRun, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, offset, limit}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "WorkflowV2RunSearchAllProjects", varargs...)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunSearchAllProjects indicates an expected call of WorkflowV2RunSearchAllProjects.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunSearchAllProjects(ctx, offset, limit interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, offset, limit}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunSearchAllProjects", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunSearchAllProjects), varargs...)
 }
 
 // WorkflowV2RunStatus mocks base method.

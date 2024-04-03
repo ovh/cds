@@ -528,6 +528,40 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 		}
 }
 
+func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			offset := service.FormUInt(req, "offset")
+			limit := service.FormUInt(req, "limit")
+
+			filters := workflow_v2.SearchsRunsFilters{
+				Workflows:    req.URL.Query()["workflow"],
+				Actors:       req.URL.Query()["actor"],
+				Status:       req.URL.Query()["status"],
+				Branches:     req.URL.Query()["branch"],
+				Repositories: req.URL.Query()["repository"],
+				Commits:      req.URL.Query()["commit"],
+			}
+
+			count, err := workflow_v2.CountAllRuns(ctx, api.mustDB(), filters)
+			if err != nil {
+				return err
+			}
+			if count == 0 {
+				return service.WriteJSON(w, []sdk.V2WorkflowRun{}, http.StatusOK)
+			}
+
+			runs, err := workflow_v2.SearchAllRuns(ctx, api.mustDB(), filters, offset, limit)
+			if err != nil {
+				return err
+			}
+
+			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
+
+			return service.WriteJSON(w, runs, http.StatusOK)
+		}
+}
+
 func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
@@ -543,6 +577,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 				Status:       req.URL.Query()["status"],
 				Branches:     req.URL.Query()["branch"],
 				Repositories: req.URL.Query()["repository"],
+				Commits:      req.URL.Query()["commit"],
 			}
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
