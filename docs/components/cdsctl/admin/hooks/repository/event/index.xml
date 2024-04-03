@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>event on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/admin/hooks/repository/event/</link>
+    <description>Recent content in event on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/admin/hooks/repository/event/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/admin/hooks/repository/event/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/hooks/repository/event/list/</guid>
+      <description>cdsctl admin hooks repository event list List repository events
+Synopsis List repository events
+cdsctl admin hooks repository event list VCS-SERVER REPOSITORY [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>restart</title>
+      <link>/docs/components/cdsctl/admin/hooks/repository/event/restart/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/hooks/repository/event/restart/</guid>
+      <description>cdsctl admin hooks repository event restart Restart an event
+Synopsis Restart an event
+cdsctl admin hooks repository event restart VCS-SERVER REPOSITORY EVENT-ID Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin hooks repository event	- Manage repositories events  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>/docs/components/cdsctl/admin/hooks/repository/event/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/hooks/repository/event/show/</guid>
+      <description>cdsctl admin hooks repository event show Get event
+Synopsis Get event
+cdsctl admin hooks repository event show VCS-SERVER REPOSITORY EVENT-ID [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -27,7 +27,7 @@ Resume on what you have to do before using the GitHub Authentication Integration
       <description>The GitLab Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitLab to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More information  How to configure GitLab integration What you need to perform the following steps:</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitLab. More informations  Create the Personal Access Token on GitLab Generate a new token on https://gitlab.</description>
     </item>
     
   </channel>

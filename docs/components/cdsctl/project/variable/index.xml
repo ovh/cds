@@ -36,7 +36,7 @@ cdsctl project variable delete [ PROJECT-KEY ] VARIABLE-NAME Options inherited f
       <guid>/docs/components/cdsctl/project/variable/list/</guid>
       <description>cdsctl project variable list List CDS project variables
 Synopsis List CDS project variables
-cdsctl project variable list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl project variable list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -47,7 +47,7 @@ cdsctl project variable list [ PROJECT-KEY ] [flags] Options  --fields string On
       <guid>/docs/components/cdsctl/project/variable/show/</guid>
       <description>cdsctl project variable show Show a CDS project variable
 Synopsis Show a CDS project variable
-cdsctl project variable show [ PROJECT-KEY ] VARIABLE-NAME [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl project variable show [ PROJECT-KEY ] VARIABLE-NAME [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>

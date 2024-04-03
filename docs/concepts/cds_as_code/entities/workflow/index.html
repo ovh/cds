@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Workflow - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="../../../../../images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="../../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../../css/solarized-light.css">
+
+<meta name="description"
+    content="Description The workflow is the main entity in CDS. It allows you to chain jobs, using conditional branching.
+As Code directory A workflow is described directly on your repository inside the directory .cds/workflows/.
+Permission The permission manage-workflow on your project is mandatory to manage a workflow.
+Fields name: cds repository: vcs: github name: ovh/cds commit-status: ... on: [push]  integrations: [my-artifactory] stages: ... jobs: ... env: VAR_1: value VAR_2: value2 gates: .">
+<meta property="og:description"
+    content="Description The workflow is the main entity in CDS. It allows you to chain jobs, using conditional branching.
+As Code directory A workflow is described directly on your repository inside the directory .cds/workflows/.
+Permission The permission manage-workflow on your project is mandatory to manage a workflow.
+Fields name: cds repository: vcs: github name: ovh/cds commit-status: ... on: [push]  integrations: [my-artifactory] stages: ... jobs: ... env: VAR_1: value VAR_2: value2 gates: .">
+<meta name="twitter:description"
+    content="Description The workflow is the main entity in CDS. It allows you to chain jobs, using conditional branching.
+As Code directory A workflow is described directly on your repository inside the directory .cds/workflows/.
+Permission The permission manage-workflow on your project is mandatory to manage a workflow.
+Fields name: cds repository: vcs: github name: ovh/cds commit-status: ... on: [push]  integrations: [my-artifactory] stages: ... jobs: ... env: VAR_1: value VAR_2: value2 gates: .">
+<meta property="og:url" content="/docs/concepts/cds_as_code/entities/workflow/">
+<meta property="og:title" content="Workflow">
+<meta name="twitter:title" content="Workflow">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="../../../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../../../../js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+<script type="text/javascript" src="../../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../../index.json"></a>
+
+<script type="text/javascript" src="../../../../../js/auto-complete.min.js"></script>
+<script type="text/javascript" src="../../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../../js/asciinema-player.min.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="../../../../../" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="../../../../../docs/" class="active">Documentation</a></li>
+					
+					<li><a href="../../../../../hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="../../../../../development/">CDS Developer Manual</a></li>
+					
+					<li><a href="../../../../../about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="../../../../../docs/">Home</a></li>
+			
+			
+				
+				<li><a href="../../../../../docs/concepts/" class="menuSelected">Concepts</a></li>
+			
+				
+				<li><a href="../../../../../docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="../../../../../docs/components/">Components</a></li>
+			
+				
+				<li><a href="../../../../../docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="../../../../../docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Concepts" href="../../../../../docs/concepts/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Authentication" href="../../../../../docs/concepts/authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Job" href="../../../../../docs/concepts/job/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="New CDS as Code">
+	<div class="container">
+		
+		<a class="item" data-title="New CDS as Code" href="../../../../../docs/concepts/cds_as_code/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<div class="item" data-title="Permission">
+	<div class="container">
+		
+		<a class="item" data-title="Permission" href="../../../../../docs/concepts/cds_as_code/rbac/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Global roles" href="../../../../../docs/concepts/cds_as_code/rbac/global/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Hatchery roles" href="../../../../../docs/concepts/cds_as_code/rbac/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Project roles" href="../../../../../docs/concepts/cds_as_code/rbac/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Region roles" href="../../../../../docs/concepts/cds_as_code/rbac/region/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow roles" href="../../../../../docs/concepts/cds_as_code/rbac/workflow/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Project">
+	<div class="container">
+		
+		<a class="item" data-title="Project" href="../../../../../docs/concepts/cds_as_code/project/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Repository Manager" href="../../../../../docs/concepts/cds_as_code/project/repository_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Repository" href="../../../../../docs/concepts/cds_as_code/project/repository/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="VariableSet" href="../../../../../docs/concepts/cds_as_code/project/variableset/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notification" href="../../../../../docs/concepts/cds_as_code/project/notification/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="As code entities">
+	<div class="container">
+		
+		<a class="item" data-title="As code entities" href="../../../../../docs/concepts/cds_as_code/entities/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow" href="../../../../../docs/concepts/cds_as_code/entities/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action" href="../../../../../docs/concepts/cds_as_code/entities/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model" href="../../../../../docs/concepts/cds_as_code/entities/worker_model/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Contexts" href="../../../../../docs/concepts/cds_as_code/contexts/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Events" href="../../../../../docs/concepts/cds_as_code/events/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Project" href="../../../../../docs/concepts/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Permissions - ACLs" href="../../../../../docs/concepts/permissions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline" href="../../../../../docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Organization" href="../../../../../docs/concepts/organization/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Variables" href="../../../../../docs/concepts/variables/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Workflow">
+	<div class="container">
+		
+		<a class="item" data-title="Workflow" href="../../../../../docs/concepts/workflow/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Payload" href="../../../../../docs/concepts/workflow/payload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline Context" href="../../../../../docs/concepts/workflow/pipeline-context/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Hooks">
+	<div class="container">
+		
+		<a class="item" data-title="Hooks" href="../../../../../docs/concepts/workflow/hooks/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Webhook" href="../../../../../docs/concepts/workflow/hooks/webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Scheduler" href="../../../../../docs/concepts/workflow/hooks/scheduler/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Webhook" href="../../../../../docs/concepts/workflow/hooks/git-repo-webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Poller" href="../../../../../docs/concepts/workflow/hooks/git-repo-poller/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka hook" href="../../../../../docs/concepts/workflow/hooks/kafka-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ hook" href="../../../../../docs/concepts/workflow/hooks/rabbitmq-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Gerrit Hook" href="../../../../../docs/concepts/workflow/hooks/gerrit/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Run conditions on pipeline" href="../../../../../docs/concepts/workflow/run-conditions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Join" href="../../../../../docs/concepts/workflow/join/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mutex" href="../../../../../docs/concepts/workflow/mutex/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Sidebar" href="../../../../../docs/concepts/workflow/sidebar/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run Number" href="../../../../../docs/concepts/workflow/run-number/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notifications" href="../../../../../docs/concepts/workflow/notifications/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Retention" href="../../../../../docs/concepts/workflow/retention/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Requirement">
+	<div class="container">
+		
+		<a class="item" data-title="Requirement" href="../../../../../docs/concepts/requirement/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Region Requirement" href="../../../../../docs/concepts/requirement/requirement_region/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Secret Requirement" href="../../../../../docs/concepts/requirement/requirement_secret/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Link" href="../../../../../docs/concepts/requirement/requirement_service/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Memory" href="../../../../../docs/concepts/requirement/requirement_memory/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OS &amp; Architecture" href="../../../../../docs/concepts/requirement/requirement_os_arch/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Configuration files">
+	<div class="container">
+		
+		<a class="item" data-title="Configuration files" href="../../../../../docs/concepts/files/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow configuration file" href="../../../../../docs/concepts/files/workflow-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline configuration file" href="../../../../../docs/concepts/files/pipeline-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model configuration file" href="../../../../../docs/concepts/files/worker_model-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action configuration file" href="../../../../../docs/concepts/files/action-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Application configuration file" href="../../../../../docs/concepts/files/application-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Environment configuration file" href="../../../../../docs/concepts/files/environment-syntax/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model" href="../../../../../docs/concepts/worker-model/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="[Experimental] Ascode Worker Model" href="../../../../../docs/concepts/worker-model/ascode/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model patterns" href="../../../../../docs/concepts/worker-model/patterns/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model Variables" href="../../../../../docs/concepts/worker-model/variables/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow Template" href="../../../../../docs/concepts/template/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Workflow</h1>
+
+
+
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#repository">Repository</a></li>
+    <li><a href="#commit-status">Commit-status:</a></li>
+    <li><a href="#on">On</a>
+      <ul>
+        <li><a href="#array-of-string">Array of string:</a></li>
+        <li><a href="#map">Map</a></li>
+      </ul>
+    </li>
+    <li><a href="#integrations">Integrations</a></li>
+    <li><a href="#jobs">jobs</a>
+      <ul>
+        <li></li>
+      </ul>
+    </li>
+    <li><a href="#gates">Gates</a></li>
+    <li><a href="#stages">Stages</a></li>
+  </ul>
+
+  <ul>
+    <li><a href="#syntax">Syntax</a>
+      <ul>
+        <li><a href="#operators-list">Operators list</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+<h1 id="description">Description</h1>
+<p>The workflow is the main entity in CDS. It allows you to chain jobs, using conditional branching.</p>
+<h1 id="as-code-directory">As Code directory</h1>
+<p>A workflow is described directly on your repository inside the directory <code>.cds/workflows/</code>.</p>
+<h1 id="permission">Permission</h1>
+<p>The permission <code>manage-workflow</code> on your project is mandatory to manage a workflow.</p>
+<h1 id="fields">Fields</h1>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">name</span>: <span style="color:#ae81ff">cds</span>
+<span style="color:#f92672">repository</span>:
+  <span style="color:#f92672">vcs</span>: <span style="color:#ae81ff">github</span>
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">ovh/cds</span>
+<span style="color:#f92672">commit-status</span>:
+  <span style="color:#ae81ff">...</span>
+<span style="color:#f92672">on</span>: [<span style="color:#ae81ff">push] </span>
+<span style="color:#f92672">integrations</span>: [<span style="color:#ae81ff">my-artifactory]</span>
+<span style="color:#f92672">stages</span>:
+  <span style="color:#ae81ff">...</span>
+<span style="color:#f92672">jobs</span>:
+  <span style="color:#ae81ff">...</span>
+<span style="color:#f92672">env</span>:   
+  <span style="color:#f92672">VAR_1</span>: <span style="color:#ae81ff">value</span>
+  <span style="color:#f92672">VAR_2</span>: <span style="color:#ae81ff">value2</span>
+<span style="color:#f92672">gates</span>:
+  <span style="color:#ae81ff">... </span>
+</code></pre></div><ul>
+<li><!-- raw HTML omitted -->*<!-- raw HTML omitted --><code>name</code>: The name of your workflow</li>
+<li><!-- raw HTML omitted -->*<!-- raw HTML omitted --><a href="#on"><code>on</code></a>: Allow you to define hooks to trigger your workflow</li>
+<li><!-- raw HTML omitted -->*<!-- raw HTML omitted --><a href="#jobs"><code>jobs</code></a>: Jobs definitions</li>
+<li><a href="#integrations"><code>integrations</code></a>: Integrations linked to the workflow</li>
+<li><a href="#repository"><code>repository</code></a>: The repository linked to the workflow</li>
+<li><a href="#commit-status"><code>commit-status</code></a>: Commit status created by CDS on workflow run</li>
+<li><a href="#stages"><code>stages</code></a>: List of stages</li>
+<li><code>env</code>: Define environment variable for the whole workflow</li>
+<li><a href="#gates"><code>gates</code></a>: Manual gate for your workflow</li>
+</ul>
+<p><!-- raw HTML omitted -->*<!-- raw HTML omitted --> mandatory fields</p>
+<h2 id="repository">Repository</h2>
+<p>The repository linked to you workflow allows you to:</p>
+<ul>
+<li>Listen event to trigger the workflow through the field <a href="#on"><code>on</code></a></li>
+<li>Use actions as <code>checkout</code> that simply git clone action</li>
+</ul>
+<h2 id="commit-status">Commit-status:</h2>
+<p>A commit build status is always sent by CDS with default values. You can customize the title and description of the build status with the <code>commit-status</code> attribute.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">commit-status</span>:
+  <span style="color:#f92672">title</span>: <span style="color:#ae81ff">foo</span>
+  <span style="color:#f92672">description</span>: <span style="color:#ae81ff">bar</span>
+</code></pre></div><h2 id="on">On</h2>
+<p>Available hooks:</p>
+<ul>
+<li><code>push</code>: trigger the workflow on repository push event</li>
+<li><code>pull-request</code>: trigger the workflow on repository pull-request event, see types of pull-request below.</li>
+<li><code>model-update</code>: trigger the workflow is a worker model used in the worker has been updated</li>
+<li><code>workflow-update</code>: trigger the workflow is the workflow definition was updated</li>
+</ul>
+<p><code>model-update</code> and <code>workflow-update</code> are only available is the workflow definition is different from the <code>repository</code> field of your workflow. The hook will be triggered when default branch is updated, and will trigger the default branch of the destination repository</p>
+<p>the <code>on</code> field has 2 formats</p>
+<h3 id="array-of-string">Array of string:</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">on</span>: [<span style="color:#ae81ff">push,pull-request,model-update,workflow-update]</span>
+</code></pre></div><h3 id="map">Map</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">on</span>:
+  <span style="color:#f92672">push</span>:
+    <span style="color:#f92672">branches</span>: [<span style="color:#ae81ff">main,develop]</span>
+    <span style="color:#f92672">paths</span>: [<span style="color:#ae81ff">^src/.*/.*.java$]</span>
+  <span style="color:#f92672">model-update</span>:
+    <span style="color:#f92672">models</span>: [<span style="color:#ae81ff">MYPROJ/github/ovh/resources/mymodel]</span>
+    <span style="color:#f92672">target_branch</span>: <span style="color:#ae81ff">main</span>
+  <span style="color:#f92672">pull-request</span>:
+    <span style="color:#f92672">comment</span>: <span style="color:#e6db74">&#34;a comment here&#34;</span>
+    <span style="color:#f92672">types</span>: [<span style="color:#e6db74">&#34;opened&#34;</span>,<span style="color:#e6db74">&#34;reopened&#34;</span>,<span style="color:#e6db74">&#34;closed&#34;</span>,<span style="color:#e6db74">&#34;edited&#34;</span>]
+    <span style="color:#f92672">branches</span>: [<span style="color:#ae81ff">main,develop]</span>
+    <span style="color:#f92672">paths</span>: [<span style="color:#ae81ff">^src/.*/.*.java$]</span>
+  <span style="color:#f92672">pull-request-comment</span>:
+    <span style="color:#f92672">comment</span>: <span style="color:#e6db74">&#34;a comment here&#34;</span>
+    <span style="color:#f92672">types</span>: [<span style="color:#e6db74">&#34;created&#34;</span>,<span style="color:#e6db74">&#34;deleted&#34;</span>,<span style="color:#e6db74">&#34;edited&#34;</span>]
+    <span style="color:#f92672">branches</span>: [<span style="color:#ae81ff">main,develop]</span>
+    <span style="color:#f92672">paths</span>: [<span style="color:#ae81ff">^src/.*/.*.java$]</span>
+  <span style="color:#f92672">workflow-update</span>:
+    <span style="color:#f92672">target_branch</span>: <span style="color:#ae81ff">main</span>
+</code></pre></div><ul>
+<li><code>push.branches</code>: branches filter</li>
+<li><code>push.paths</code>: file paths filter</li>
+<li><code>pull-request.comment</code>: comment written by cds at workflow end if it was triggered by a pull-request event.</li>
+<li><code>pull-request.types</code>: types of pull-request event that can trigger the workflow. Could be: <code>opened</code>, <code>reopened</code>, <code>closed</code>, <code>edited</code>.</li>
+<li><code>pull-request.branches</code>: branches filter</li>
+<li><code>pull-request.paths</code>: file paths filter</li>
+<li><code>pull-request-comment.comment</code>: comment written by cds at workflow end if it was triggered by a pull-request-comment event.</li>
+<li><code>pull-request-comment.types</code>: types of pull-request-comment event that can trigger the workflow. Could be: <code>created</code>, <code>deleted</code>, <code>edited</code>.</li>
+<li><code>pull-request-comment.branches</code>: branches filter</li>
+<li><code>pull-request-comment.paths</code>: file paths filter</li>
+<li><code>model-update.models</code>: worker model filter</li>
+<li><code>model-update.target_branch</code>: destination repository branch to trigger</li>
+<li><code>workflow-update.target_branch</code>: destination repository branch to trigger</li>
+</ul>
+<h2 id="integrations">Integrations</h2>
+<p>Allow a job to use an project integration.</p>
+<p>Integration can be put directly on a <a href="#jobs">job</a> or at the <a href="#fields">workflow top level</a> to be applied on all jobs</p>
+<p>Supported integrations:</p>
+<ul>
+<li><a href="../../../../../docs/integrations/artifact-manager/">Artifactory</a></li>
+</ul>
+<h2 id="jobs">jobs</h2>
+<p>Jobs field is a map that contains all the jobs of your workflow. The key of the map is the name that will be display in CDS UI</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">jobs</span>:
+  <span style="color:#f92672">myJob</span>:
+    <span style="color:#f92672">runs-on</span>: <span style="color:#ae81ff">./cds/worker-models/my-custom-ubuntu.yml</span>
+    <span style="color:#f92672">vars</span>: [<span style="color:#ae81ff">varset1, varset2]</span>
+    <span style="color:#f92672">integrations</span>: [<span style="color:#ae81ff">my-artifactory]</span>
+    <span style="color:#f92672">steps</span>:
+     <span style="color:#f92672">run</span>: <span style="color:#ae81ff">echo &#39;Hello World&#39;</span>
+  <span style="color:#f92672">mySecondJob</span>:
+    <span style="color:#f92672">runs-on</span>: <span style="color:#ae81ff">./cds/worker-models/my-custom-ubuntu.yml</span>
+    <span style="color:#f92672">needs</span>: [<span style="color:#ae81ff">myJob]</span>
+    <span style="color:#f92672">steps</span>:
+     <span style="color:#f92672">run</span>: <span style="color:#ae81ff">echo &#39;Bye&#39;      </span>
+</code></pre></div><ul>
+<li><!-- raw HTML omitted -->*<!-- raw HTML omitted --><code>runs-on</code>: define on which worker model your job will be executed</li>
+<li><!-- raw HTML omitted -->*<!-- raw HTML omitted --><a href="#step"><code>steps</code></a>: the list of step to execute</li>
+<li><code>name</code>: job description</li>
+<li><code>needs</code>: the list of jobs that need to be executed before this one</li>
+<li><a href="../../../../../docs/concepts/cds_as_code/project/variableset/"><code>vars</code></a>: the list of variable set available in the job</li>
+<li><a href="#integrations"><code>integrations</code></a>: integration linked to the job</li>
+<li><code>region</code>: the region on which the job must be triggered</li>
+<li><a href="#conditions"><code>if</code></a>: condition that must be satisfied to run the job. <code>if</code> and <code>gate</code> field cannot be set together</li>
+<li><code>gate</code>: manual <a href="#gates">gate</a> definition to use.<code>if</code> and <code>gate</code> field cannot be set together</li>
+<li><a href="#inputs"><code>inputs</code></a>: input of the job. If used, only these inputs can be used in the job steps. All others contexts cannot be used</li>
+<li><code>stage</code>: link the job to a <a href="#stage">stage</a></li>
+<li><code>continue-on-error</code>: if <code>true</code>, the job will be considered as Success when it fails</li>
+<li><code>integrations</code>: link <a href="../../../../../docs/integrations/">project integrations</a> to your job. Available integration: <code>artifactory</code></li>
+<li><a href="#strategy"><code>strategy</code></a>: add a run strategy</li>
+<li><a href="#services"><code>services</code></a>: add container services to run with your job.</li>
+<li><code>env</code>: define environment variables to inject to your job. It overrides environment variable with the same name defined at the workflow level</li>
+</ul>
+<h4 id="step">Step</h4>
+<p>A step represent</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">jobs</span>:
+  <span style="color:#f92672">myjob</span>:
+    <span style="color:#f92672">steps</span>:
+      - <span style="color:#f92672">id</span>: <span style="color:#ae81ff">stepIdentifier</span>
+        <span style="color:#f92672">run</span>: <span style="color:#ae81ff">echo &#39;Hello World&#39;</span> <span style="color:#75715e"># cannot be used with `uses`</span>
+        <span style="color:#f92672">uses</span>: <span style="color:#ae81ff">actions/checkout</span> <span style="color:#75715e"># cannot be used with `run`</span>
+        <span style="color:#f92672">with</span>:
+          <span style="color:#f92672">ref</span>: <span style="color:#ae81ff">develop</span>
+          <span style="color:#f92672">sha</span>: <span style="color:#ae81ff">aefd1235</span>
+        <span style="color:#f92672">if</span>: <span style="color:#ae81ff">failure()</span>
+        <span style="color:#f92672">continue-on-error</span>: <span style="color:#66d9ef">true</span>
+        <span style="color:#f92672">env</span>:
+          <span style="color:#f92672">NEW_VAR</span>: <span style="color:#ae81ff">myValue  </span>
+</code></pre></div><ul>
+<li><code>id</code>: step identifier</li>
+<li><code>run</code>: script to execute. Cannot be used simultaneously with <code>uses</code> field</li>
+<li><code>uses</code>: action to execute. Cannot be used simultaneously with <code>run</code> field</li>
+<li><code>with</code>: allow you to customize action input. Must be used with <code>uses</code> field</li>
+<li><a href="#conditions"><code>if</code></a>: condition that must be satisfied to execute the step</li>
+<li><code>continue-on-error</code>:  if <code>true</code>, the step will be considered as Success when it fails</li>
+<li><code>env</code>: define environment variables to inject to your job. It overrides environment variable with the same name defined oat the workflow and job level</li>
+</ul>
+<h4 id="inputs">Inputs</h4>
+<p>Inputs allow you to define a list of variable that will be used in your job. If you use it all others contexts will be unavailable. This allows you to exactly control the inputs of your job</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">jobs</span>:
+  <span style="color:#f92672">myjob</span>:
+    <span style="color:#f92672">inputs</span>:
+      <span style="color:#f92672">inp1</span>: <span style="color:#ae81ff">${{ git.ref }}</span>
+      <span style="color:#f92672">inp2</span>: <span style="color:#ae81ff">${{ cds.workflow }}</span>
+      <span style="color:#f92672">inp3</span>: <span style="color:#ae81ff">My Value</span>
+</code></pre></div><h4 id="strategy">Strategy</h4>
+<p>Allow you to define a execution strategy for your job.</p>
+<p>Available strategy:</p>
+<ul>
+<li>matrix</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">jobs</span>:
+  <span style="color:#f92672">myjob</span>:
+    <span style="color:#f92672">strategy</span>:
+      <span style="color:#f92672">matrix</span>:
+        <span style="color:#f92672">version</span>: [<span style="color:#e6db74">&#34;go1.21&#34;</span>, <span style="color:#ae81ff">go1.22]</span>
+        <span style="color:#f92672">os</span>: [<span style="color:#ae81ff">ubuntu, debian]</span>
+    <span style="color:#f92672">steps</span>:
+      <span style="color:#f92672">run</span>: <span style="color:#ae81ff">echo ${{ matrix.version }} - ${{ matrix.os }}  </span>
+</code></pre></div><p>The matrix strategy allows you to template a job with matrix variables that will automatically create multiple jobs during the execution</p>
+<p>In this example, CDS will create 4 jobs during execution with the given matrix context:</p>
+<ul>
+<li>job1: matrix.Version = go1.21  / matrix.os = ubuntu</li>
+<li>job2: matrix.Version = go1.21  / matrix.os = debian</li>
+<li>job3: matrix.Version = go1.22  / matrix.os = ubuntu</li>
+<li>job4: matrix.Version = go1.22  / matrix.os = debian</li>
+</ul>
+<h4 id="services">Services</h4>
+<p>Service are docker containers spawned with your job in a private network. For example it allows you to start a postreSQL DB for your tests</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">jobs</span>:
+  <span style="color:#f92672">init</span>:
+    <span style="color:#f92672">runs-on</span>: <span style="color:#ae81ff">.cds/worker-models/buildpack-deps-buster.yml</span>
+    <span style="color:#f92672">services</span>:
+      <span style="color:#f92672">myngnix</span>:
+        <span style="color:#f92672">image</span>: <span style="color:#ae81ff">nginx:1.13</span>
+        <span style="color:#f92672">env</span>:
+          <span style="color:#f92672">NGINX_PORT</span>: <span style="color:#ae81ff">80</span>
+        <span style="color:#f92672">readiness</span>:
+          <span style="color:#f92672">command</span>: <span style="color:#ae81ff">curl --fail http://myngnix:80</span>
+          <span style="color:#f92672">interval</span>: <span style="color:#ae81ff">10s</span>
+          <span style="color:#f92672">timeout</span>: <span style="color:#ae81ff">5s</span>
+          <span style="color:#f92672">retries</span>: <span style="color:#ae81ff">5</span> 
+      <span style="color:#f92672">mypostgres</span>:
+        <span style="color:#ae81ff">...    </span>
+</code></pre></div><ul>
+<li><code>image</code>: The docker image of the service</li>
+<li><code>env</code>: Environment variable to inject in the service</li>
+<li><code>readiness</code>: Allows you to configure a readiness test for your service. Your job will wait for it before starting the steps execution
+<ul>
+<li><code>command</code>: Command to execute to check the readiness of the service</li>
+<li><code>interval</code>: Interval between 2 tests</li>
+<li><code>timeout</code>: Command timeout before failing</li>
+<li><code>retries</code>: Number of retries</li>
+</ul>
+</li>
+</ul>
+<h2 id="gates">Gates</h2>
+<p>Gates are hooks that allow you to manually trigger a job under certain conditions</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">gates</span>:
+  <span style="color:#f92672">first-gate</span>:
+    <span style="color:#f92672">if</span>: <span style="color:#ae81ff">${{ git.ref == &#39;main&#39; &amp;&amp; gate.approve }}</span>
+    <span style="color:#f92672">inputs</span>:
+      <span style="color:#f92672">approve</span>:
+        <span style="color:#f92672">type</span>: <span style="color:#ae81ff">boolean</span>
+    <span style="color:#f92672">reviewers</span>:
+      <span style="color:#f92672">groups</span>: [<span style="color:#ae81ff">release-team]</span>
+<span style="color:#f92672">jobs</span>:
+  <span style="color:#f92672">myGateJob</span>:
+    <span style="color:#f92672">gate</span>: <span style="color:#ae81ff">first-gate</span>
+</code></pre></div><ul>
+<li><a href="#conditions"><code>if</code></a>: condition that must be satisfied to pass the gate</li>
+<li><code>inputs</code>:
+<ul>
+<li><code>type</code>: type of the input (boolean, number, text)</li>
+</ul>
+</li>
+<li><code>reviewers</code>: Allow you to define who can trigger the gate
+<ul>
+<li><code>groups</code>: list of groups that are allowed to trigger the gate</li>
+<li><code>users</code>: list of users that are allowed to trigger the gate</li>
+</ul>
+</li>
+</ul>
+<h2 id="stages">Stages</h2>
+<p>The use of stages allows you to structure and organize jobs in a modular way</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">stages</span>:
+  <span style="color:#f92672">my-stage</span>: 
+  <span style="color:#f92672">my-stage2</span>:
+    <span style="color:#f92672">needs</span>: [<span style="color:#ae81ff">my-stage]</span>
+</code></pre></div><ul>
+<li><code>needs</code>: the list of stages that need to be executed before this one</li>
+</ul>
+<h1 id="conditions">Conditions</h1>
+<p>Condition can be use at different level but share the same syntaxe</p>
+<ul>
+<li>workflow gate</li>
+<li>job.if</li>
+<li>step.if</li>
+</ul>
+<p>You can use all <a href="./../../contexts/">contexts</a> to create your condition</p>
+<h2 id="syntax">Syntax</h2>
+<pre><code>if: ${{ git.ref == &quot;master&quot; &amp;&amp; cds.job == &quot;MyJob&quot; }}
+or 
+if: git.ref == &quot;master&quot; &amp;&amp; cds.job == &quot;MyJob&quot;
+</code></pre><h3 id="operators-list">Operators list</h3>
+<ul>
+<li><code>==</code></li>
+<li><code>!=</code></li>
+<li><code>&gt;</code></li>
+<li><code>&lt;</code></li>
+<li><code>&gt;=</code></li>
+<li><code>&lt;=</code></li>
+<li><code>||</code></li>
+<li><code>&amp;&amp;</code></li>
+<li><code>!</code></li>
+</ul>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

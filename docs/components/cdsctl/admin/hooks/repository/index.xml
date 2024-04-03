@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>repository on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/admin/hooks/repository/</link>
+    <description>Recent content in repository on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/admin/hooks/repository/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/admin/hooks/repository/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/hooks/repository/delete/</guid>
+      <description>cdsctl admin hooks repository delete Remove repository
+Synopsis Remove repository
+cdsctl admin hooks repository delete VCS-SERVER REPOSITORY [flags] Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl admin hooks repository	- Manage repositories where there were events  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/admin/hooks/repository/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/admin/hooks/repository/list/</guid>
+      <description>cdsctl admin hooks repository list List repositories
+Synopsis List repositories
+cdsctl admin hooks repository list [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) --pattern string Filter on repository name -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

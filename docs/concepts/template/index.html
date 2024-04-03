@@ -220,16 +220,10 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 	
 		
 			
-<a class="item" data-title="Project" href="../../../docs/concepts/project/"></a>
-
-		
-	
-		
-			
-<div class="item" data-title="[Experimental] Permissions - RBAC">
+<div class="item" data-title="New CDS as Code">
 	<div class="container">
 		
-		<a class="item" data-title="[Experimental] Permissions - RBAC" href="../../../docs/concepts/rbac/"></a>
+		<a class="item" data-title="New CDS as Code" href="../../../docs/concepts/cds_as_code/"></a>
 		
 		
 	
@@ -238,19 +232,151 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 	
 		
 			
-<a class="item" data-title="Global roles" href="../../../docs/concepts/rbac/global/"></a>
+<div class="item" data-title="Permission">
+	<div class="container">
+		
+		<a class="item" data-title="Permission" href="../../../docs/concepts/cds_as_code/rbac/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Global roles" href="../../../docs/concepts/cds_as_code/rbac/global/"></a>
 
 		
 	
 		
 			
-<a class="item" data-title="Project roles" href="../../../docs/concepts/rbac/project/"></a>
+<a class="item" data-title="Hatchery roles" href="../../../docs/concepts/cds_as_code/rbac/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Project roles" href="../../../docs/concepts/cds_as_code/rbac/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Region roles" href="../../../docs/concepts/cds_as_code/rbac/region/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow roles" href="../../../docs/concepts/cds_as_code/rbac/workflow/"></a>
 
 		
 	
 
 	</div>
 </div>
+
+		
+	
+		
+			
+<div class="item" data-title="Project">
+	<div class="container">
+		
+		<a class="item" data-title="Project" href="../../../docs/concepts/cds_as_code/project/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Repository Manager" href="../../../docs/concepts/cds_as_code/project/repository_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Repository" href="../../../docs/concepts/cds_as_code/project/repository/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="VariableSet" href="../../../docs/concepts/cds_as_code/project/variableset/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notification" href="../../../docs/concepts/cds_as_code/project/notification/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="As code entities">
+	<div class="container">
+		
+		<a class="item" data-title="As code entities" href="../../../docs/concepts/cds_as_code/entities/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow" href="../../../docs/concepts/cds_as_code/entities/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action" href="../../../docs/concepts/cds_as_code/entities/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model" href="../../../docs/concepts/cds_as_code/entities/worker_model/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Contexts" href="../../../docs/concepts/cds_as_code/contexts/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Events" href="../../../docs/concepts/cds_as_code/events/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Project" href="../../../docs/concepts/project/"></a>
 
 		
 	
@@ -589,12 +715,14 @@ use a template to create one unique and generic workflow then apply it on each w
 <p>A template contains a workflow, pipelines, applications, environments in yaml format.
 Each yaml file of a template is evaluated as a Golang template (with [[ and ]] delimiters) so loop or condition can be used in templates.</p>
 <h2 id="template-parameters">Template parameters</h2>
-<p>There are four types of custom parameters available in a template (string, boolean, repository, json).
-<img src="../../../images/workflow_template_parameters.png" alt="Parameters"></p>
+<p>There are six types of custom parameters available in a template (boolean, string, repository, json, ssh-key, pgp-key).</p>
+<p>Custom parameters are available with the <code>.params.</code> prefix. For instance, the value of the custom <code>deployWhen</code> parameter can be used with <code>[[ .params.deployWhen ]]</code> like in the image below.</p>
+<p><img src="../../../images/workflow_template_parameters.png" alt="Parameters"></p>
 <p>There are some other parameters that are automatically added by CDS:</p>
 <ul>
-<li><strong>name</strong>: the name of the generated workflow given when template is applied (could be used to set the workflow name but also application names for example).</li>
-<li><strong>id</strong>: the id of the template instance, this is unique for each generated workflow and reused when a template is re-applied (you can append this value to pipeline names to prevent override of existing pipeline).</li>
+<li><strong>name</strong>: the name of the generated workflow given when template is applied (could be used to set the workflow name but also application names for example). It can be used with <code>[[ .name ]]</code>.</li>
+<li><strong>id</strong>: the id of the template instance, this is unique for each generated workflow and reused when a template is re-applied (you can append this value to pipeline names to prevent override of existing pipeline).
+It can be used with <code>[[ .id ]]</code>.</li>
 </ul>
 <h2 id="apply-a-template">Apply a template</h2>
 <p>To generate a new workflow from a template you should use the cdsctl. Then use the same command to update a generated workflow:</p>
@@ -602,8 +730,8 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 </code></pre></div>
 <asciinema-player src="../../../images/workflow_template_apply.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
 
-<p>You can also create a workflow from a template with the web UI.
-<img src="../../../images/workflow_template_apply_ui.gif" alt="Apply"></p>
+<p>You can also create a workflow from a template with the web UI.</p>
+<p><img src="../../../images/workflow_template_apply_ui.gif" alt="Apply"></p>
 <h2 id="bulk-apply-a-template">Bulk apply a template</h2>
 <p>To generate or update multiple workflows from a same template in one time you can use the bulk feature. This works both in cdsctl and cds ui:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl template bulk
@@ -626,7 +754,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 <h2 id="importcreateexport">Import/Create/Export</h2>
 <p>With cdsctl you can import/export a template from/to yaml files, you can also create a template in the UI from the <strong>settings</strong> menu:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl template push ./my-template/*.yml <span style="color:#75715e">#from local files</span>
-cdsctl template push https://raw.githubusercontent.com/ovh/cds/v0.53.0/tests/fixtures/template/simple/example-simple.yml <span style="color:#75715e">#from remote files</span>
+cdsctl template push https://raw.githubusercontent.com/ovh/cds/v0.54.1/tests/fixtures/template/simple/example-simple.yml <span style="color:#75715e">#from remote files</span>
 
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 </code></pre></div>

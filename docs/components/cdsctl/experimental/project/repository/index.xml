@@ -29,14 +29,14 @@ cdsctl experimental project repository delete [ PROJECT-KEY ] VCS-NAME REPOSITOR
     </item>
     
     <item>
-      <title>hook-regen</title>
-      <link>/docs/components/cdsctl/experimental/project/repository/hook-regen/</link>
+      <title>hook-key</title>
+      <link>/docs/components/cdsctl/experimental/project/repository/hook-key/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/docs/components/cdsctl/experimental/project/repository/hook-regen/</guid>
-      <description>cdsctl experimental project repository hook-regen Regenerate hook secret for webhook signature
-Synopsis Regenerate hook secret for webhook signature
-cdsctl experimental project repository hook-regen [ PROJECT-KEY ] VCS-NAME REPOSITORY-NAME [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+      <guid>/docs/components/cdsctl/experimental/project/repository/hook-key/</guid>
+      <description>cdsctl experimental project repository hook-key Get repository webhook secret key
+Synopsis Get repository webhook secret key
+cdsctl experimental project repository hook-key [ PROJECT-KEY ] VCS-TYPE VCS-NAME REPOSITORY-NAME [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -47,7 +47,7 @@ cdsctl experimental project repository hook-regen [ PROJECT-KEY ] VCS-NAME REPOS
       <guid>/docs/components/cdsctl/experimental/project/repository/list/</guid>
       <description>cdsctl experimental project repository list List available repositories on a project
 Synopsis List available repositories on a project
-cdsctl experimental project repository list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --vcs-name string Specified a VCS by its name Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl experimental project repository list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --vcs-name string Specified a VCS by its name --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
   </channel>

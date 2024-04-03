@@ -417,11 +417,11 @@ export CDS_GITHUB_CLIENT_SECRET<span style="color:#f92672">=</span><span style="
 
 mkdir -p tools/smtpmock
 
-curl https://raw.githubusercontent.com/ovh/cds/v0.53.0/docker-compose.yml -o docker-compose.yml
+curl https://raw.githubusercontent.com/ovh/cds/v0.54.1/docker-compose.yml -o docker-compose.yml
 export HOSTNAME<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>hostname<span style="color:#66d9ef">)</span>
-export CDS_DOCKER_IMAGE<span style="color:#f92672">=</span>ovhcom/cds-engine:0.53.0
+export CDS_DOCKER_IMAGE<span style="color:#f92672">=</span>ovhcom/cds-engine:0.54.1
 
-docker pull ovhcom/cds-engine:0.53.0
+docker pull ovhcom/cds-engine:0.54.1
 docker-compose up -d cds-db cds-cache elasticsearch dockerhost
 sleep <span style="color:#ae81ff">3</span>
 docker-compose logs| grep <span style="color:#e6db74">&#39;database system is ready to accept connections&#39;</span>
@@ -455,9 +455,9 @@ sleep <span style="color:#ae81ff">3</span>
 docker-compose up -d cds-ui cds-cdn cds-hooks cds-elasticsearch cds-hatchery-swarm cds-vcs cds-repositories
 sleep <span style="color:#ae81ff">5</span>
 
-./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/v0.53.0/contrib/worker-models/maven3-jdk10-official.yml
+./cdsctl worker model import https://raw.githubusercontent.com/ovh/cds/v0.54.1/contrib/worker-models/maven3-jdk10-official.yml
 
-./cdsctl template push https://raw.githubusercontent.com/ovh/cds/v0.53.0/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
+./cdsctl template push https://raw.githubusercontent.com/ovh/cds/v0.54.1/contrib/workflow-templates/demo-workflow-hello-world/demo-workflow-hello-world.yml
 ./cdsctl project create DEMO FirstProject
 ./cdsctl template apply DEMO MyFirstWorkflow shared.infra/demo-workflow-hello-world --force --import-push --quiet
 ./cdsctl workflow run DEMO MyFirstWorkflow

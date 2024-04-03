@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Contexts - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="../../../../images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../css/solarized-light.css">
+
+<meta name="description"
+    content="Contexts Contexts are a way to access information inside a workflow run. Data can be access like this inside a job
+${{ &lt;contextName&gt;.data }} Contexts available:
+ cds: contains all the information about the workflow run git: contains the git information vars: contains the project variableset used by the current job env: contains environment variables jobs: contains all parent jobs results and outputs needs: contains all direct parents ( job.needs ) results and outputs inputs: contains all job inputs steps: contains all previous step status matrix: contains the curent value for each matrix variable integrations: contains data of integration linked to the current job gate: contains all gate inputs  Context CDS It contains all cds data related to the workflow execution">
+<meta property="og:description"
+    content="Contexts Contexts are a way to access information inside a workflow run. Data can be access like this inside a job
+${{ &lt;contextName&gt;.data }} Contexts available:
+ cds: contains all the information about the workflow run git: contains the git information vars: contains the project variableset used by the current job env: contains environment variables jobs: contains all parent jobs results and outputs needs: contains all direct parents ( job.needs ) results and outputs inputs: contains all job inputs steps: contains all previous step status matrix: contains the curent value for each matrix variable integrations: contains data of integration linked to the current job gate: contains all gate inputs  Context CDS It contains all cds data related to the workflow execution">
+<meta name="twitter:description"
+    content="Contexts Contexts are a way to access information inside a workflow run. Data can be access like this inside a job
+${{ &lt;contextName&gt;.data }} Contexts available:
+ cds: contains all the information about the workflow run git: contains the git information vars: contains the project variableset used by the current job env: contains environment variables jobs: contains all parent jobs results and outputs needs: contains all direct parents ( job.needs ) results and outputs inputs: contains all job inputs steps: contains all previous step status matrix: contains the curent value for each matrix variable integrations: contains data of integration linked to the current job gate: contains all gate inputs  Context CDS It contains all cds data related to the workflow execution">
+<meta property="og:url" content="/docs/concepts/cds_as_code/contexts/">
+<meta property="og:title" content="Contexts">
+<meta name="twitter:title" content="Contexts">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="../../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../../../js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+<script type="text/javascript" src="../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../index.json"></a>
+
+<script type="text/javascript" src="../../../../js/auto-complete.min.js"></script>
+<script type="text/javascript" src="../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../js/asciinema-player.min.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="../../../../" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="../../../../docs/" class="active">Documentation</a></li>
+					
+					<li><a href="../../../../hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="../../../../development/">CDS Developer Manual</a></li>
+					
+					<li><a href="../../../../about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="../../../../docs/">Home</a></li>
+			
+			
+				
+				<li><a href="../../../../docs/concepts/" class="menuSelected">Concepts</a></li>
+			
+				
+				<li><a href="../../../../docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="../../../../docs/components/">Components</a></li>
+			
+				
+				<li><a href="../../../../docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="../../../../docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Concepts" href="../../../../docs/concepts/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Authentication" href="../../../../docs/concepts/authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Job" href="../../../../docs/concepts/job/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="New CDS as Code">
+	<div class="container">
+		
+		<a class="item" data-title="New CDS as Code" href="../../../../docs/concepts/cds_as_code/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<div class="item" data-title="Permission">
+	<div class="container">
+		
+		<a class="item" data-title="Permission" href="../../../../docs/concepts/cds_as_code/rbac/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Global roles" href="../../../../docs/concepts/cds_as_code/rbac/global/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Hatchery roles" href="../../../../docs/concepts/cds_as_code/rbac/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Project roles" href="../../../../docs/concepts/cds_as_code/rbac/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Region roles" href="../../../../docs/concepts/cds_as_code/rbac/region/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow roles" href="../../../../docs/concepts/cds_as_code/rbac/workflow/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Project">
+	<div class="container">
+		
+		<a class="item" data-title="Project" href="../../../../docs/concepts/cds_as_code/project/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Repository Manager" href="../../../../docs/concepts/cds_as_code/project/repository_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Repository" href="../../../../docs/concepts/cds_as_code/project/repository/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="VariableSet" href="../../../../docs/concepts/cds_as_code/project/variableset/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notification" href="../../../../docs/concepts/cds_as_code/project/notification/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="As code entities">
+	<div class="container">
+		
+		<a class="item" data-title="As code entities" href="../../../../docs/concepts/cds_as_code/entities/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow" href="../../../../docs/concepts/cds_as_code/entities/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action" href="../../../../docs/concepts/cds_as_code/entities/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model" href="../../../../docs/concepts/cds_as_code/entities/worker_model/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Contexts" href="../../../../docs/concepts/cds_as_code/contexts/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Events" href="../../../../docs/concepts/cds_as_code/events/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Project" href="../../../../docs/concepts/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Permissions - ACLs" href="../../../../docs/concepts/permissions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline" href="../../../../docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Organization" href="../../../../docs/concepts/organization/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Variables" href="../../../../docs/concepts/variables/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Workflow">
+	<div class="container">
+		
+		<a class="item" data-title="Workflow" href="../../../../docs/concepts/workflow/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Payload" href="../../../../docs/concepts/workflow/payload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline Context" href="../../../../docs/concepts/workflow/pipeline-context/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Hooks">
+	<div class="container">
+		
+		<a class="item" data-title="Hooks" href="../../../../docs/concepts/workflow/hooks/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Webhook" href="../../../../docs/concepts/workflow/hooks/webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Scheduler" href="../../../../docs/concepts/workflow/hooks/scheduler/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Webhook" href="../../../../docs/concepts/workflow/hooks/git-repo-webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Poller" href="../../../../docs/concepts/workflow/hooks/git-repo-poller/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka hook" href="../../../../docs/concepts/workflow/hooks/kafka-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ hook" href="../../../../docs/concepts/workflow/hooks/rabbitmq-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Gerrit Hook" href="../../../../docs/concepts/workflow/hooks/gerrit/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Run conditions on pipeline" href="../../../../docs/concepts/workflow/run-conditions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Join" href="../../../../docs/concepts/workflow/join/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mutex" href="../../../../docs/concepts/workflow/mutex/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Sidebar" href="../../../../docs/concepts/workflow/sidebar/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run Number" href="../../../../docs/concepts/workflow/run-number/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notifications" href="../../../../docs/concepts/workflow/notifications/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Retention" href="../../../../docs/concepts/workflow/retention/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Requirement">
+	<div class="container">
+		
+		<a class="item" data-title="Requirement" href="../../../../docs/concepts/requirement/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Region Requirement" href="../../../../docs/concepts/requirement/requirement_region/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Secret Requirement" href="../../../../docs/concepts/requirement/requirement_secret/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Link" href="../../../../docs/concepts/requirement/requirement_service/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Memory" href="../../../../docs/concepts/requirement/requirement_memory/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OS &amp; Architecture" href="../../../../docs/concepts/requirement/requirement_os_arch/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Configuration files">
+	<div class="container">
+		
+		<a class="item" data-title="Configuration files" href="../../../../docs/concepts/files/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow configuration file" href="../../../../docs/concepts/files/workflow-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline configuration file" href="../../../../docs/concepts/files/pipeline-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model configuration file" href="../../../../docs/concepts/files/worker_model-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action configuration file" href="../../../../docs/concepts/files/action-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Application configuration file" href="../../../../docs/concepts/files/application-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Environment configuration file" href="../../../../docs/concepts/files/environment-syntax/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model" href="../../../../docs/concepts/worker-model/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="[Experimental] Ascode Worker Model" href="../../../../docs/concepts/worker-model/ascode/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model patterns" href="../../../../docs/concepts/worker-model/patterns/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model Variables" href="../../../../docs/concepts/worker-model/variables/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow Template" href="../../../../docs/concepts/template/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Contexts</h1>
+
+
+
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#context-cds">Context CDS</a></li>
+    <li><a href="#context-git">Context Git</a></li>
+    <li><a href="#context-jobs">Context Jobs</a></li>
+    <li><a href="#context-needs">Context Needs</a></li>
+    <li><a href="#context-steps">Context Steps</a></li>
+    <li><a href="#context-vars">Context vars</a></li>
+  </ul>
+</nav>
+
+<h1 id="contexts">Contexts</h1>
+<p>Contexts are a way to access information inside a workflow run. Data can be access like this inside a job</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">${{ &lt;contextName&gt;.data }}</span>
+</code></pre></div><p>Contexts available:</p>
+<ul>
+<li><code>cds</code>: contains all the information about the workflow run</li>
+<li><code>git</code>: contains the git information</li>
+<li><code>vars</code>: contains the project variableset used by the current job</li>
+<li><code>env</code>: contains environment variables</li>
+<li><code>jobs</code>: contains all parent jobs results and outputs</li>
+<li><code>needs</code>: contains all direct parents ( <code>job.needs</code> ) results and outputs</li>
+<li><code>inputs</code>: contains all job inputs</li>
+<li><code>steps</code>: contains all previous step status</li>
+<li><code>matrix</code>: contains the curent value for each <a href="../entities/workflow/#strategy">matrix</a> variable</li>
+<li><code>integrations</code>: contains data of integration linked to the current job</li>
+<li><code>gate</code>: contains all gate inputs</li>
+</ul>
+<h2 id="context-cds">Context CDS</h2>
+<p>It contains all cds data related to the workflow execution</p>
+<ul>
+<li><code>event_name</code>: the event name that trigger the workflow</li>
+<li><code>event</code>: the event payload received by CDS</li>
+<li><code>project_key</code>: the project identifier of the workflow</li>
+<li><code>run_id</code>: The identifier of the workflow run</li>
+<li><code>run_number</code>: The current run number</li>
+<li><code>run_attempt</code>: The current run attempt</li>
+<li><code>workflow</code>: The name of the workflow</li>
+<li><code>workflow_ref</code>: The git refs of the worklow definition used in the current workflow run</li>
+<li><code>workflow_sha</code>: The git commit of the workflow definition used in the current workflow run</li>
+<li><code>workflow_vcs_server</code>: The vcs server name of the workflow definition</li>
+<li><code>workflow_repository</code>: The name of the workflow definition repository</li>
+<li><code>triggering_actor</code>: Username that trigger the workflow run</li>
+<li><code>job</code>: The current job</li>
+<li><code>stage</code>: The current stage</li>
+<li><code>workspace</code>: Path of the current workspace</li>
+<li><code>integrations</code>: a map containing integration data linked to the current job. The key of the map is the integration name</li>
+</ul>
+<h2 id="context-git">Context Git</h2>
+<p>It contains all git information related to the workflow execution</p>
+<ul>
+<li><code>server</code>: The vcs server name linked to the workflow</li>
+<li><code>repository</code>: The repository linked to the workflow</li>
+<li><code>repositoryUrl</code>: Url of the linked repositoryy</li>
+<li><code>ref</code>: Current git refs</li>
+<li><code>sha</code>: Current commit</li>
+<li><code>connection</code>: Type of connection used: https/ssh</li>
+<li><code>ssh_key</code>: SSH Key name used</li>
+<li><code>ssh_private</code>: Private SSH Key used for git authentication</li>
+<li><code>username</code>: Username used to connect to the repository</li>
+<li><code>token</code>: User token used for git authentication</li>
+<li><code>semver_current</code>: Current semantic version computed by CDS</li>
+<li><code>semver_next</code>: Next semantic version computed by CDS</li>
+</ul>
+<h2 id="context-jobs">Context Jobs</h2>
+<p>It contains the status and outputs of all recursive parent jobs</p>
+<ul>
+<li><code>jobs.&lt;job_id&gt;.result</code>: status of the given parent job.</li>
+<li><code>jobs.&lt;job_id&gt;.outputs</code>: map of all job run result of type variable
+<ul>
+<li><code>jobs.&lt;job_id&gt;.outputs.&lt;run_result_name&gt;</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="context-needs">Context Needs</h2>
+<p>It contains the status and outputs of all direct parent jobs</p>
+<ul>
+<li><code>needs.&lt;job_id&gt;.result</code>: status of the given parent job.</li>
+<li><code>needs.&lt;job_id&gt;.outputs</code>: map of all job run results of type variable
+<ul>
+<li><code>needs.&lt;job_id&gt;.outputs.&lt;run_result_name&gt;</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="context-steps">Context Steps</h2>
+<p>It contains the status and outputs of all previous steps in the current jobs</p>
+<ul>
+<li><code>steps.&lt;step_id&gt;.outcome</code>: result of the given state before &lsquo;continue-on-error&rsquo;</li>
+<li><code>steps.&lt;step_id&gt;.conclusion</code>: result of the given state after &lsquo;continue-on-error&rsquo;</li>
+<li><code>steps.&lt;step_id&gt;.outputs</code>: map of all job run results of type variable by step
+<ul>
+<li><code>steps.&lt;step_id&gt;.outputs.&lt;run_result_name&gt;</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="context-vars">Context vars</h2>
+<ul>
+<li><code>vars.&lt;varset_name&gt;.&lt;item_name&gt;</code>: value of the given item. If the value is a JSON item, you can select any element like this <code>vars.&lt;varset_name&gt;.&lt;item_name&gt;.&lt;key&gt;.&lt;subkey&gt;</code></li>
+</ul>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

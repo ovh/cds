@@ -26,7 +26,7 @@ Resume on what you have to do before using the GitHub Authentication Integration
       <description>The GitHub Repository Manager Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by GitHub to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub. More information Send comments on your Pull-Requests when a workflow is failed.</description>
+ Git Repository Webhook Git Repository Poller Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on GitHub. More informations Send comments on your Pull-Requests when a workflow is failed.</description>
     </item>
     
   </channel>

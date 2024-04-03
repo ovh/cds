@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>variableset on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/experimental/project/variableset/</link>
+    <description>Recent content in variableset on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/experimental/project/variableset/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>add</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/add/</guid>
+      <description>cdsctl experimental project variableset add Create a new variableset inside the given project
+Synopsis Create a new variableset inside the given project
+cdsctl experimental project variableset add [ PROJECT-KEY ] NAME Examples cdsctl exp project variableset add MY-PROJECT MY-VARIABLESET-NAME Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/delete/</guid>
+      <description>cdsctl experimental project variableset delete Delete a variable set on a project
+Synopsis Delete a variable set on a project
+cdsctl experimental project variableset delete [ PROJECT-KEY ] NAME [flags] Options  --force Force delete without confirmation and exit 0 if resource does not exist --with-items Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/list/</guid>
+      <description>cdsctl experimental project variableset list List all variable sets in the given project
+Synopsis List all variable sets in the given project
+cdsctl experimental project variableset list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/show/</guid>
+      <description>cdsctl experimental project variableset show Get the given variable set
+Synopsis Get the given variable set
+cdsctl experimental project variableset show [ PROJECT-KEY ] NAME [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

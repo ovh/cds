@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html id="docs" lang="en" class="">
+	<head>
+	<meta charset="utf-8">
+<title>Repository - CDS - Continuous Delivery Service</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/png" href="../../../../../images/favicon.png">
+
+
+
+
+<link rel="stylesheet" href="../../../../../sass/styles.css" integrity="" media="screen">
+<link rel="stylesheet" href="../../../../../css/callouts.css">
+<link rel="stylesheet" href="../../../../../css/auto-complete.css">
+<link rel="stylesheet" href="../../../../../css/fontawesome.min.css">
+<link rel="stylesheet" href="../../../../../css/asciinema-player.css">
+<link rel="stylesheet" href="../../../../../css/solarized-light.css">
+
+<meta name="description"
+    content="Description A repository represents a link between your CDS project and a git repository.
+A repository is analyzed by CDS on each push event in order to detect cds files that represent CDS as code entities. During this analysis, CDS will retrieve the user and create/update found entities regarding his permissions.
+Permission To be able to manage repositories you will need the permission manage on your project
+Add a repository using CLI cdsctl experimental project repository add &lt;PROJECT-KEY&gt; &lt;VCS-NAME&gt; &lt;REPOSITORY-NAME&gt;  PROJECT-KEY: The project key VCS-NAME: The vcs name in which the repository is located.">
+<meta property="og:description"
+    content="Description A repository represents a link between your CDS project and a git repository.
+A repository is analyzed by CDS on each push event in order to detect cds files that represent CDS as code entities. During this analysis, CDS will retrieve the user and create/update found entities regarding his permissions.
+Permission To be able to manage repositories you will need the permission manage on your project
+Add a repository using CLI cdsctl experimental project repository add &lt;PROJECT-KEY&gt; &lt;VCS-NAME&gt; &lt;REPOSITORY-NAME&gt;  PROJECT-KEY: The project key VCS-NAME: The vcs name in which the repository is located.">
+<meta name="twitter:description"
+    content="Description A repository represents a link between your CDS project and a git repository.
+A repository is analyzed by CDS on each push event in order to detect cds files that represent CDS as code entities. During this analysis, CDS will retrieve the user and create/update found entities regarding his permissions.
+Permission To be able to manage repositories you will need the permission manage on your project
+Add a repository using CLI cdsctl experimental project repository add &lt;PROJECT-KEY&gt; &lt;VCS-NAME&gt; &lt;REPOSITORY-NAME&gt;  PROJECT-KEY: The project key VCS-NAME: The vcs name in which the repository is located.">
+<meta property="og:url" content="/docs/concepts/cds_as_code/project/repository/">
+<meta property="og:title" content="Repository">
+<meta name="twitter:title" content="Repository">
+<meta name="twitter:image:alt" content="CDS - Continuous Delivery Service">
+<meta property="og:image" content="/images/cds-transparent.png">
+<script type="text/javascript" src="../../../../../js/anchor.min.js"></script>
+<script type="text/javascript" src="../../../../../js/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="../../../../../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../../../../../js/highlight.pack.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+<script type="text/javascript" src="../../../../../js/script.js"></script>
+<script type="text/javascript" src="../../../../../js/lunr.min.js"></script>
+<a id="indexJSON" href="../../../../../index.json"></a>
+
+<script type="text/javascript" src="../../../../../js/auto-complete.min.js"></script>
+<script type="text/javascript" src="../../../../../js/search.js"></script>
+<script type="text/javascript" src="../../../../../js/asciinema-player.min.js"></script>
+
+	</head>
+	<body>
+		<section id="hero" class="light-text no-sub">
+			<a href="../../../../../" class="logo"></a>
+				<i id="tocburger" class="fa fa-bars" onclick='$("#toc").toggle()'></i><div class="nav-buttons" data-auto-burger="primary">
+				<ul class="global-nav">
+					
+					
+					<li><a href="../../../../../docs/" class="active">Documentation</a></li>
+					
+					<li><a href="../../../../../hosting/">Hosting your own instance</a></li>
+					
+					<li><a href="../../../../../development/">CDS Developer Manual</a></li>
+					
+					<li><a href="../../../../../about/">About</a></li>
+					
+					<li><i class="fa fa-search" onclick='$("#searchbox").toggle(); $("#search-query").focus().select()'></i></li>
+					<li>
+						<div id="btn-gh">
+							<a class="github-button" href="https://github.com/ovh/cds" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star CDS on GitHub">Star</a>
+							<script async defer src="https://buttons.github.io/buttons.js"></script>
+						</div>
+					</li>
+				</ul>
+				<div id="searchbox">
+					<input data-search-input id="search-query" type="text" placeholder="search...">
+					<span data-search-clear=""><i class="fa fa-close"></i></span>
+				</div>
+			</div>
+
+<div id="headSubMenu" class="light-text">
+
+
+
+
+	
+
+		
+
+		
+		<ul>
+			
+			
+			
+			<li><a href="../../../../../docs/">Home</a></li>
+			
+			
+				
+				<li><a href="../../../../../docs/concepts/" class="menuSelected">Concepts</a></li>
+			
+				
+				<li><a href="../../../../../docs/actions/">Actions</a></li>
+			
+				
+				<li><a href="../../../../../docs/components/">Components</a></li>
+			
+				
+				<li><a href="../../../../../docs/integrations/">Integrations</a></li>
+			
+				
+				<li><a href="../../../../../docs/tutorials/">Tutorials</a></li>
+			
+		</ul>
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+	
+
+		
+
+		
+	
+
+</div>
+
+
+		</section>
+		<section id="page-content-with-menu">
+			
+<div id="toc">
+     <div class="toc-container">
+        
+        
+        
+        
+        
+            
+                
+                    
+                        
+                            
+                                    
+                                    
+                            
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                        
+                    
+                        
+                    
+                        
+                    
+                
+            
+        
+            
+                
+                    
+                
+            
+        
+        
+        <i class="fa fa-bars" id="tocburger" onclick='$("#toc").toggle()'></i> 
+<a class="item" data-title="Concepts" href="../../../../../docs/concepts/"></a>
+
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Authentication" href="../../../../../docs/concepts/authentication/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Job" href="../../../../../docs/concepts/job/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="New CDS as Code">
+	<div class="container">
+		
+		<a class="item" data-title="New CDS as Code" href="../../../../../docs/concepts/cds_as_code/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<div class="item" data-title="Permission">
+	<div class="container">
+		
+		<a class="item" data-title="Permission" href="../../../../../docs/concepts/cds_as_code/rbac/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Global roles" href="../../../../../docs/concepts/cds_as_code/rbac/global/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Hatchery roles" href="../../../../../docs/concepts/cds_as_code/rbac/hatchery/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Project roles" href="../../../../../docs/concepts/cds_as_code/rbac/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Region roles" href="../../../../../docs/concepts/cds_as_code/rbac/region/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow roles" href="../../../../../docs/concepts/cds_as_code/rbac/workflow/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Project">
+	<div class="container">
+		
+		<a class="item" data-title="Project" href="../../../../../docs/concepts/cds_as_code/project/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Repository Manager" href="../../../../../docs/concepts/cds_as_code/project/repository_manager/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Repository" href="../../../../../docs/concepts/cds_as_code/project/repository/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="VariableSet" href="../../../../../docs/concepts/cds_as_code/project/variableset/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notification" href="../../../../../docs/concepts/cds_as_code/project/notification/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="As code entities">
+	<div class="container">
+		
+		<a class="item" data-title="As code entities" href="../../../../../docs/concepts/cds_as_code/entities/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow" href="../../../../../docs/concepts/cds_as_code/entities/workflow/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action" href="../../../../../docs/concepts/cds_as_code/entities/action/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model" href="../../../../../docs/concepts/cds_as_code/entities/worker_model/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Contexts" href="../../../../../docs/concepts/cds_as_code/contexts/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Events" href="../../../../../docs/concepts/cds_as_code/events/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Project" href="../../../../../docs/concepts/project/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Permissions - ACLs" href="../../../../../docs/concepts/permissions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline" href="../../../../../docs/concepts/pipeline/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Organization" href="../../../../../docs/concepts/organization/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Variables" href="../../../../../docs/concepts/variables/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Workflow">
+	<div class="container">
+		
+		<a class="item" data-title="Workflow" href="../../../../../docs/concepts/workflow/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Payload" href="../../../../../docs/concepts/workflow/payload/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline Context" href="../../../../../docs/concepts/workflow/pipeline-context/"></a>
+
+		
+	
+		
+			
+<div class="item" data-title="Hooks">
+	<div class="container">
+		
+		<a class="item" data-title="Hooks" href="../../../../../docs/concepts/workflow/hooks/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Webhook" href="../../../../../docs/concepts/workflow/hooks/webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Scheduler" href="../../../../../docs/concepts/workflow/hooks/scheduler/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Webhook" href="../../../../../docs/concepts/workflow/hooks/git-repo-webhook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Git Repository Poller" href="../../../../../docs/concepts/workflow/hooks/git-repo-poller/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Kafka hook" href="../../../../../docs/concepts/workflow/hooks/kafka-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="RabbitMQ hook" href="../../../../../docs/concepts/workflow/hooks/rabbitmq-hook/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Gerrit Hook" href="../../../../../docs/concepts/workflow/hooks/gerrit/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Run conditions on pipeline" href="../../../../../docs/concepts/workflow/run-conditions/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Join" href="../../../../../docs/concepts/workflow/join/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Mutex" href="../../../../../docs/concepts/workflow/mutex/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Sidebar" href="../../../../../docs/concepts/workflow/sidebar/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Run Number" href="../../../../../docs/concepts/workflow/run-number/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Notifications" href="../../../../../docs/concepts/workflow/notifications/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Retention" href="../../../../../docs/concepts/workflow/retention/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Requirement">
+	<div class="container">
+		
+		<a class="item" data-title="Requirement" href="../../../../../docs/concepts/requirement/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Region Requirement" href="../../../../../docs/concepts/requirement/requirement_region/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Secret Requirement" href="../../../../../docs/concepts/requirement/requirement_secret/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Service Link" href="../../../../../docs/concepts/requirement/requirement_service/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Memory" href="../../../../../docs/concepts/requirement/requirement_memory/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="OS &amp; Architecture" href="../../../../../docs/concepts/requirement/requirement_os_arch/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Configuration files">
+	<div class="container">
+		
+		<a class="item" data-title="Configuration files" href="../../../../../docs/concepts/files/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="Workflow configuration file" href="../../../../../docs/concepts/files/workflow-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Pipeline configuration file" href="../../../../../docs/concepts/files/pipeline-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model configuration file" href="../../../../../docs/concepts/files/worker_model-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Action configuration file" href="../../../../../docs/concepts/files/action-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Application configuration file" href="../../../../../docs/concepts/files/application-syntax/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Environment configuration file" href="../../../../../docs/concepts/files/environment-syntax/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<div class="item" data-title="Worker Model">
+	<div class="container">
+		
+		<a class="item" data-title="Worker Model" href="../../../../../docs/concepts/worker-model/"></a>
+		
+		
+	
+	
+	
+	
+		
+			
+<a class="item" data-title="[Experimental] Ascode Worker Model" href="../../../../../docs/concepts/worker-model/ascode/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model patterns" href="../../../../../docs/concepts/worker-model/patterns/"></a>
+
+		
+	
+		
+			
+<a class="item" data-title="Worker Model Variables" href="../../../../../docs/concepts/worker-model/variables/"></a>
+
+		
+	
+
+	</div>
+</div>
+
+		
+	
+		
+			
+<a class="item" data-title="Workflow Template" href="../../../../../docs/concepts/template/"></a>
+
+		
+	
+
+
+
+
+
+     </div>
+</div>
+
+
+			<div id="docsContent">
+        		
+
+<h1>Repository</h1>
+
+
+
+<nav id="TableOfContents"></nav>
+
+<h1 id="description">Description</h1>
+<p>A repository represents a link between your CDS project and a git repository.</p>
+<p>A repository is analyzed by CDS on each push event in order to detect cds files that represent <a href="./../entities/">CDS as code entities</a>.
+During this analysis, CDS will retrieve the user and create/update found entities regarding his <a href="./../rbac/">permissions</a>.</p>
+<h1 id="permission">Permission</h1>
+<p>To be able to manage repositories you will need the permission <code>manage</code> on your project</p>
+<h1 id="add-a-repository-using-cli">Add a repository using CLI</h1>
+<pre><code>cdsctl experimental project repository add &lt;PROJECT-KEY&gt; &lt;VCS-NAME&gt; &lt;REPOSITORY-NAME&gt; 
+</code></pre><ul>
+<li><code>PROJECT-KEY</code>: The project key</li>
+<li><code>VCS-NAME</code>: The vcs name in which the repository is located.</li>
+<li><code>REPOSITORY-NAME</code>: The repository name (<!-- raw HTML omitted -->/&lt;repo_name&gt;) to link</li>
+</ul>
+<p><a href="../../../../../docs/components/cdsctl/experimental/project/repository/">Full CLI documentation here</a></p>
+<h1 id="add-a-repository-using-ui">Add a repository using UI</h1>
+<p>Comming soon</p>
+
+
+
+
+			</div>
+		</section><footer>
+			<main>
+			<a href="https://www.ovh.com"><img src="https://ovh.github.io/cds/images/logo-ovh-white-72DPI.png"></a>
+			<div>
+				The CDS logos are copyrighted.
+				Icons made by <a href="https://www.flaticon.com/authors/eucalyp">Eucalyp</a> 
+				from <a href="https://www.flaticon.com/">www.flaticon.com</a>
+			</div>
+			</main>
+		</footer>
+
+	</body>
+</html>

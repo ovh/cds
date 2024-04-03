@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Permission on CDS - Continuous Delivery Service</title>
+    <link>/docs/concepts/cds_as_code/rbac/</link>
+    <description>Recent content in Permission on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/concepts/cds_as_code/rbac/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Global roles</title>
+      <link>/docs/concepts/cds_as_code/rbac/global/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/rbac/global/</guid>
+      <description>The global section allows users/groups to manage global CDS configuration:
+ users groups organization region hatcheries project creation  Available roles:
+ manage-permission: Allow users/groups to create/update/delete an permission manage-organization: Allow users/groups to create/delete an organization manage-region: Allow users/groups to create/delete a region manage-hatchery: Allow users/groups to create/update/delete a hatchery create-project: Allow users/groups to create a project  Yaml example:
+name: my-permission-name global: - role: manage-permission users: [foo,bar] groups: [grpFoo] List of fields:</description>
+    </item>
+    
+    <item>
+      <title>Hatchery roles</title>
+      <link>/docs/concepts/cds_as_code/rbac/hatchery/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/rbac/hatchery/</guid>
+      <description> start-worker: Allow the hatchery to spawn a worker in the given region  Yaml example:
+name: my-permission-name hatcheries: - role: start-worker region: nyc-infra hatchery: my-swarm-hatchery List of fields:
+ role: [mandatory]role to applied region: [mandatory]the region name hatchery: [mandatory]the hatchery name  </description>
+    </item>
+    
+    <item>
+      <title>Project roles</title>
+      <link>/docs/concepts/cds_as_code/rbac/project/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/rbac/project/</guid>
+      <description>These roles allow users/groups to manage resources on a project
+ read: Allow users/groups to list all resources defined inside a project manage: Allow users/groups to manage VCS and repository on a project manage-worker-model: Allow users/groups to create/update/delete a worker model manage-action: Allow users/groups to create/update/delete an action manage-workflow: Allow users/groups to create/update/delete a workflow  Yaml example:
+name: my-permission-name projects: - role: read all: true users: [foo,bar] groups: [grpFoo] - role: manage-worker-model users: [foo] projects: [PROJ_KEY1, PROJ_KEY2] List of fields:</description>
+    </item>
+    
+    <item>
+      <title>Region roles</title>
+      <link>/docs/concepts/cds_as_code/rbac/region/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/rbac/region/</guid>
+      <description>These roles allow users/groups to manage a region or start job on a region
+ list: Allow users/groups to list/get the given region manage: Allow users/groups to manage the given region execute: Allow users/groups to start jobs on the given region  Yaml example:
+name: my-permission-name regions: - role: execute region: nyc-infra all_users: true organization: US List of fields:
+ role: [mandatory]role to applied region: [mandatory]the region name all_users: applied the permission for all users organizations: organization allowed users: list of usernames groups: list of groups  </description>
+    </item>
+    
+    <item>
+      <title>Workflow roles</title>
+      <link>/docs/concepts/cds_as_code/rbac/workflow/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/rbac/workflow/</guid>
+      <description>These roles allow users/groups to realize action on workflows
+ trigger: Allow users/groups to trigger workflows  Yaml example:
+name: my-permission-name workflows: - role: trigger all_users: true project: MYPROJECT workflows: [wkf1,wkf2] all_workflows: false users: [foo,bar] groups: [grpFoo] List of fields:
+ role: [mandatory]role to applied all_users: applied the permission for all users project: [mandatory]the key of the project that contains the workflows workflows: list of workflows inside the given project all_workflows: applied the permission on all workflow inside the given project users: list of usernames groups: list of groups  </description>
+    </item>
+    
+  </channel>
+</rss>

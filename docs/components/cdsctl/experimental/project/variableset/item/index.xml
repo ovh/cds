@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>item on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/experimental/project/variableset/item/</link>
+    <description>Recent content in item on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/experimental/project/variableset/item/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>add</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/item/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/item/add/</guid>
+      <description>cdsctl experimental project variableset item add Create a new item inside a variable set
+Synopsis Create a new item inside a variable set
+cdsctl experimental project variableset item add [ PROJECT-KEY ] VARIABLESET-NAME ITEM-NAME ITEM-VALUE ITEM-TYPE [flags] Examples cdsctl exp project variableset item add MY-PROJECT MY-VARIABLESET-NAME ITEM-NAME ITEM-VALUE ITEM-TYPE(secret|string) Options  --force create the variable set if it not exists Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/item/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/item/delete/</guid>
+      <description>cdsctl experimental project variableset item delete Delete an item from a variable set
+Synopsis Delete an item from a variable set
+cdsctl experimental project variableset item delete [ PROJECT-KEY ] VARIABLESET-NAME ITEM-NAME [flags] Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/item/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/item/list/</guid>
+      <description>cdsctl experimental project variableset item list List the items of the given Variable Set
+Synopsis List the items of the given Variable Set
+cdsctl experimental project variableset item list [ PROJECT-KEY ] VARIABLESET-NAME [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/item/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/item/show/</guid>
+      <description>cdsctl experimental project variableset item show Get the given variable set item
+Synopsis Get the given variable set item
+cdsctl experimental project variableset item show [ PROJECT-KEY ] VARIABLESET-NAME ITEM-NAME [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>/docs/components/cdsctl/experimental/project/variableset/item/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/variableset/item/update/</guid>
+      <description>cdsctl experimental project variableset item update Update an item inside a variable set
+Synopsis Update an item inside a variable set
+cdsctl experimental project variableset item update [ PROJECT-KEY ] VARIABLESET-NAME ITEM-NAME ITEM-VALUE Examples cdsctl exp project variableset item update MY-PROJECT MY-VARIABLESET-NAME ITEM-NAME ITEM-VALUE Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

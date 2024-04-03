@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>notification on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/experimental/project/notification/</link>
+    <description>Recent content in notification on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/experimental/project/notification/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>delete</title>
+      <link>/docs/components/cdsctl/experimental/project/notification/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/notification/delete/</guid>
+      <description>cdsctl experimental project notification delete Delete a notification on a project
+Synopsis Delete a notification on a project
+cdsctl experimental project notification delete [ PROJECT-KEY ] NAME [flags] Options  --force Force delete without confirmation and exit 0 if resource does not exist Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>/docs/components/cdsctl/experimental/project/notification/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/notification/export/</guid>
+      <description>cdsctl experimental project notification export Export notification settings from a project
+Synopsis Export notification settings from a project
+cdsctl experimental project notification export [ PROJECT-KEY ] NAME Examples cdsctl notification export MY-PROJECT Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -n, --no-interactive Set to disable interaction with ctl --verbose Enable verbose output SEE ALSO  cdsctl experimental project notification	- Manage Notification on a CDS project  </description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>/docs/components/cdsctl/experimental/project/notification/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/notification/import/</guid>
+      <description>cdsctl experimental project notification import Import notification settings on a project from a yaml file
+Synopsis Import notification settings on a project from a yaml file
+cdsctl experimental project notification import [ PROJECT-KEY ] FILENAME [flags] Examples cdsctl project notification import MY-PROJECT file.yml Options  --force Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/experimental/project/notification/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/project/notification/list/</guid>
+      <description>cdsctl experimental project notification list List available notifications on a project
+Synopsis List available notifications on a project
+cdsctl experimental project notification list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

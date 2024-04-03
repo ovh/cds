@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>completion on CDS - Continuous Delivery Service</title>
+    <link>/docs/components/cdsctl/completion/</link>
+    <description>Recent content in completion on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/components/cdsctl/completion/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>bash</title>
+      <link>/docs/components/cdsctl/completion/bash/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/completion/bash/</guid>
+      <description>cdsctl completion bash Generate the autocompletion script for bash
+Synopsis Generate the autocompletion script for the bash shell.
+This script depends on the &amp;lsquo;bash-completion&amp;rsquo; package. If it is not installed already, you can install it via your OS&amp;rsquo;s package manager.
+To load completions in your current shell session:
+source &amp;lt;(cdsctl completion bash)  To load completions for every new session, execute once:
+Linux: cdsctl completion bash &amp;gt; /etc/bash_completion.d/cdsctl  macOS: cdsctl completion bash &amp;gt; $(brew --prefix)/etc/bash_completion.</description>
+    </item>
+    
+    <item>
+      <title>fish</title>
+      <link>/docs/components/cdsctl/completion/fish/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/completion/fish/</guid>
+      <description>cdsctl completion fish Generate the autocompletion script for fish
+Synopsis Generate the autocompletion script for the fish shell.
+To load completions in your current shell session:
+cdsctl completion fish | source  To load completions for every new session, execute once:
+cdsctl completion fish &amp;gt; ~/.config/fish/completions/cdsctl.fish  You will need to start a new shell for this setup to take effect.
+cdsctl completion fish [flags] Options  --no-descriptions disable completion descriptions Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>powershell</title>
+      <link>/docs/components/cdsctl/completion/powershell/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/completion/powershell/</guid>
+      <description>cdsctl completion powershell Generate the autocompletion script for powershell
+Synopsis Generate the autocompletion script for powershell.
+To load completions in your current shell session:
+cdsctl completion powershell | Out-String | Invoke-Expression  To load completions for every new session, add the output of the above command to your powershell profile.
+cdsctl completion powershell [flags] Options  --no-descriptions disable completion descriptions Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>zsh</title>
+      <link>/docs/components/cdsctl/completion/zsh/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/completion/zsh/</guid>
+      <description>cdsctl completion zsh Generate the autocompletion script for zsh
+Synopsis Generate the autocompletion script for the zsh shell.
+If shell completion is not already enabled in your environment you will need to enable it. You can execute the following once:
+echo &amp;quot;autoload -U compinit; compinit&amp;quot; &amp;gt;&amp;gt; ~/.zshrc  To load completions in your current shell session:
+source &amp;lt;(cdsctl completion zsh)  To load completions for every new session, execute once:</description>
+    </item>
+    
+  </channel>
+</rss>

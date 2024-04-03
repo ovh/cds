@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>New CDS as Code on CDS - Continuous Delivery Service</title>
+    <link>/docs/concepts/cds_as_code/</link>
+    <description>Recent content in New CDS as Code on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/concepts/cds_as_code/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Contexts</title>
+      <link>/docs/concepts/cds_as_code/contexts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/contexts/</guid>
+      <description>Contexts Contexts are a way to access information inside a workflow run. Data can be access like this inside a job
+${{ &amp;lt;contextName&amp;gt;.data }} Contexts available:
+ cds: contains all the information about the workflow run git: contains the git information vars: contains the project variableset used by the current job env: contains environment variables jobs: contains all parent jobs results and outputs needs: contains all direct parents ( job.needs ) results and outputs inputs: contains all job inputs steps: contains all previous step status matrix: contains the curent value for each matrix variable integrations: contains data of integration linked to the current job gate: contains all gate inputs  Context CDS It contains all cds data related to the workflow execution</description>
+    </item>
+    
+    <item>
+      <title>Events</title>
+      <link>/docs/concepts/cds_as_code/events/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/events/</guid>
+      <description>Description Each action on CDS triggers an event.
+Analysis events  AnalysisStart AnalysisDone  AsCode entity events  EntityCreated EntityUpdated EntityDeleted  Hachery events  HatcheryCreated HatcheryUpdated HatcheryDeleted  Integration model events  IntegrationModelCreated IntegrationModelUpdated IntegrationModelDeleted  Integration events  IntegrationCreated IntegrationUpdated IntegrationDeleted  Notification events  NotificationCreated NotificationUpdated NotificationDeleted  Organization events  OrganizationCreated OrganizationDeleted  Permission events  PermissionCreated PermissionUpdated PermissionDeleted  Plugin events  PluginCreated PluginUpdated PluginDeleted  Project events  ProjectCreated ProjectUpdated ProjectDeleted  Region events  RegionCreated RegionDeleted  Repository events  RepositoryCreated RepositoryDeleted  User events  UserCreated UserUpdated UserDeleted  User gpg events  UserGPGKeyCreated UserGPGKeyDeleted  VariableSet events  VariableSetCreated VariableSetDeleted  VariableSet item events  VariableSetItemCreated VariableSetItemUpdated VariableSetItemDeleted  Workflow Run events  RunCrafted RunBuilding RunEnded RunRestartFailedJob  Workflow Run Job events  RunJobEnqueued RunJobScheduled RunJobBuilding RunJobManualTriggered RunJobRunResultAdded RunJobRunResultUpdated RunJobEnded  </description>
+    </item>
+    
+  </channel>
+</rss>

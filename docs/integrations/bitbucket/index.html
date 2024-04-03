@@ -20,17 +20,17 @@
     content="The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More information Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More informations Send comments on your Pull-Requests when a workflow is failed  Create the Personal Access Token on Bitbucket Datacenter Generate a new token on https://your-bitbucket-datacenter/plugins/servlet/access-tokens/manage with the following scopes:">
 <meta property="og:description"
     content="The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More information Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More informations Send comments on your Pull-Requests when a workflow is failed  Create the Personal Access Token on Bitbucket Datacenter Generate a new token on https://your-bitbucket-datacenter/plugins/servlet/access-tokens/manage with the following scopes:">
 <meta name="twitter:description"
     content="The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More information Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:">
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More informations Send comments on your Pull-Requests when a workflow is failed  Create the Personal Access Token on Bitbucket Datacenter Generate a new token on https://your-bitbucket-datacenter/plugins/servlet/access-tokens/manage with the following scopes:">
 <meta property="og:url" content="/docs/integrations/bitbucket/">
 <meta property="og:title" content="Bitbucket Server">
 <meta name="twitter:title" content="Bitbucket Server">
@@ -449,14 +449,12 @@ This integration enables some features:
 
 <nav id="TableOfContents">
   <ul>
-    <li><a href="#how-to-configure-bitbucket-server-integration">How to configure Bitbucket Server integration</a>
+    <li>
       <ul>
-        <li><a href="#generate-rsa-key-pair">Generate RSA Key Pair</a></li>
-        <li><a href="#create-a-cds-application-in-bitbucket">Create a CDS application in Bitbucket</a></li>
-        <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
+        <li><a href="#create-the-personal-access-token-on-bitbucket-datacenter">Create the Personal Access Token on Bitbucket Datacenter</a></li>
+        <li><a href="#import-configuration">Import configuration</a></li>
       </ul>
     </li>
-    <li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
     <li><a href="#vcs-events">Vcs events</a></li>
   </ul>
 </nav>
@@ -468,145 +466,31 @@ to a CDS Application.</p>
 <ul>
 <li><a href="../../../docs/concepts/workflow/hooks/git-repo-webhook/">Git Repository Webhook</a></li>
 <li>Easy to use action <a href="../../../docs/actions/builtin-checkoutapplication/">CheckoutApplication</a> and <a href="../../../docs/actions/builtin-gitclone/">GitClone</a> for advanced usage</li>
-<li>Send <a href="https://developer.atlassian.com/server/bitbucket/how-tos/updating-build-status-for-commits/">build notifications</a> on your Pull-Requests and Commits on Bitbucket. <a href="../../../docs/concepts/workflow/notifications/#vcs-notifications">More information</a></li>
+<li>Send <a href="https://developer.atlassian.com/server/bitbucket/how-tos/updating-build-status-for-commits/">build notifications</a> on your Pull-Requests and Commits on Bitbucket. <a href="../../../docs/concepts/workflow/notifications/#vcs-notifications">More informations</a></li>
 <li><a href="../../../docs/concepts/workflow/notifications/#vcs-notifications">Send comments on your Pull-Requests when a workflow is failed</a></li>
 </ul>
-<h2 id="how-to-configure-bitbucket-server-integration">How to configure Bitbucket Server integration</h2>
-<p>You need to perform the following steps:</p>
+<h3 id="create-the-personal-access-token-on-bitbucket-datacenter">Create the Personal Access Token on Bitbucket Datacenter</h3>
+<p>Generate a new token on https://your-bitbucket-datacenter/plugins/servlet/access-tokens/manage with the following scopes:</p>
 <ul>
-<li>Bitbucket admin privileges</li>
-<li>A RSA Key Pair</li>
+<li><code>PROJECT READ</code></li>
+<li><code>REPOSITORY READ</code></li>
 </ul>
-<h3 id="generate-rsa-key-pair">Generate RSA Key Pair</h3>
-<p>Create the private RSA certificate:</p>
-<pre><code>$ openssl genrsa -out key.pem 1024
-</code></pre><p>The content of key.pem have to be used as <code>privateKey</code> below in CDS Configuration file.</p>
-<p>Generate the public RSA certificate:</p>
-<pre><code>$ openssl rsa -in key.pem -pubout
-</code></pre><p>This will display the public key, you will have to copy-paste it inside <code>Public Key</code> field on Bitbucket.</p>
-<h3 id="create-a-cds-application-in-bitbucket">Create a CDS application in Bitbucket</h3>
-<p>In Bitbucket go to <em>Administration Settings</em> / <em>Application Links</em>. Create a new Application with:</p>
-<ul>
-<li>Name: <strong>CDS</strong></li>
-<li>Type: <strong>Generic Application</strong></li>
-<li>Application URL: <em>Your CDS API URL</em></li>
-<li>Display URL: <em>Your CDS API URL</em></li>
-</ul>
-<p>On this application, you just have to set up <em>OAuth Incoming Authentication</em>:</p>
-<ul>
-<li>Consumer Key: <strong>CDS</strong> (you can change it in your configuration file)</li>
-<li>Consumer Name: <strong>CDS</strong></li>
-<li>Public Key: <em>Your CDS RSA public key</em></li>
-<li>Consumer Callback URL: None</li>
-<li>Allow 2-Legged OAuth: false</li>
-<li>Execute as: None</li>
-<li>Allow user impersonation through 2-Legged OAuth: false</li>
-</ul>
-<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
-<p>Set value to <code>privateKey</code>. You can modify <code>consumerKey</code> if you want.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"> [<span style="color:#ae81ff">vcs.servers]</span>
-
-    [<span style="color:#ae81ff">vcs.servers.Bitbucket]</span>
-
-      <span style="color:#75715e"># URL of this VCS Server</span>
-      <span style="color:#ae81ff">url = &#34;https://mybitbucket.com&#34;</span>
-
-      [<span style="color:#ae81ff">vcs.servers.Bitbucket.bitbucket]</span>
-
-        <span style="color:#75715e">#######</span>
-        <span style="color:#75715e"># CDS &lt;-&gt; Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/</span>
-        <span style="color:#75715e">########</span>
-        <span style="color:#75715e"># You can change the consumeKey if you want</span>
-        <span style="color:#ae81ff">consumerKey = &#34;CDS&#34;</span>
-
-        <span style="color:#75715e"># Does polling is supported by VCS Server</span>
-        <span style="color:#ae81ff">disablePolling = false</span>
-
-        <span style="color:#75715e"># Does webhooks are supported by VCS Server</span>
-        <span style="color:#ae81ff">disableWebHooks = false</span>
-        <span style="color:#ae81ff">privateKey = &#34;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&#34;</span>
-
-        <span style="color:#75715e"># If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK</span>
-        <span style="color:#75715e"># proxyWebhook = &#34;&#34;</span>
-
-        <span style="color:#75715e"># optional, Bitbucket Token associated to username, used to add comment on Pull Request</span>
-        <span style="color:#ae81ff">token = &#34;&#34;</span>
-
-        <span style="color:#75715e"># optional. Bitbucket username, used to add comment on Pull Request on failed build.</span>
-        <span style="color:#ae81ff">username = &#34;&#34;</span>
-
-        [<span style="color:#ae81ff">vcs.servers.Bitbucket.bitbucket.Status]</span>
-
-          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server</span>
-          <span style="color:#75715e"># disable = false</span>
-</code></pre></div><p>You can configure many instances of Bitbucket:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">
-[<span style="color:#ae81ff">vcs.servers]</span>
-
-    [<span style="color:#ae81ff">vcs.servers.mybitbucket_instance1]</span>
-
-      <span style="color:#75715e"># URL of this VCS Server</span>
-      <span style="color:#ae81ff">url = &#34;https://mybitbucket-instance1.localhost&#34;</span>
-
-      [<span style="color:#ae81ff">vcs.servers.mybitbucket_instance1.bitbucket]</span>
-        <span style="color:#ae81ff">consumerKey = &#34;CDS_Instance1&#34;</span>
-
-        <span style="color:#75715e"># Does polling is supported by VCS Server</span>
-        <span style="color:#ae81ff">disablePolling = true</span>
-
-        <span style="color:#75715e"># Does webhooks are supported by VCS Server</span>
-        <span style="color:#ae81ff">disableWebHooks = false</span>
-
-        <span style="color:#75715e"># Does webhooks creation are supported by VCS Server</span>
-        <span style="color:#ae81ff">disableWebHooksCreation = false</span>
-        <span style="color:#ae81ff">privateKey = &#34;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&#34;</span>
-
-        <span style="color:#75715e"># If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK</span>
-        <span style="color:#75715e"># proxyWebhook = &#34;https://myproxy.com&#34;</span>
-
-        [<span style="color:#ae81ff">vcs.servers.mybitbucket_instance1.bitbucket.Status]</span>
-
-          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server</span>
-          <span style="color:#ae81ff">disable = false</span>
-
-          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push CDS URL in statuses on the VCS server</span>
-          <span style="color:#ae81ff">showDetail = true</span>
-
-    [<span style="color:#ae81ff">vcs.servers.mybitbucket_instance2]</span>
-
-      <span style="color:#75715e"># URL of this VCS Server</span>
-      <span style="color:#ae81ff">url = &#34;https://mybitbucket-instance2.localhost&#34;</span>
-
-      [<span style="color:#ae81ff">vcs.servers.mybitbucket_instance2.bitbucket]</span>
-        <span style="color:#ae81ff">consumerKey = &#34;CDS_Instance2&#34;</span>
-
-        <span style="color:#75715e"># Does polling is supported by VCS Server</span>
-        <span style="color:#ae81ff">disablePolling = true</span>
-
-        <span style="color:#75715e"># Does webhooks are supported by VCS Server</span>
-        <span style="color:#ae81ff">disableWebHooks = false</span>
-
-        <span style="color:#75715e"># Does webhooks creation are supported by VCS Server</span>
-        <span style="color:#ae81ff">disableWebHooksCreation = false</span>
-        <span style="color:#ae81ff">privateKey = &#34;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&#34;</span>
-
-        <span style="color:#75715e"># If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK</span>
-        <span style="color:#75715e"># proxyWebhook = &#34;https://myproxy.com&#34;</span>
-
-        [<span style="color:#ae81ff">vcs.servers.mybitbucket_instance2.bitbucket.Status]</span>
-
-          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server</span>
-          <span style="color:#ae81ff">disable = false</span>
-
-          <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push CDS URL in statuses on the VCS server</span>
-          <span style="color:#ae81ff">showDetail = true</span>
-
-</code></pre></div><p>See how to generate <strong><a href="../../../hosting/configuration/">Configuration File</a></strong></p>
-<h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ engine start vcs
-
-<span style="color:#75715e"># you can also start CDS api and vcs in the same process:</span>
-$ engine start api vcs
+<h3 id="import-configuration">Import configuration</h3>
+<p>Create a yml file:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
+<span style="color:#f92672">name</span>: <span style="color:#ae81ff">bitbucket</span>
+<span style="color:#f92672">type</span>: <span style="color:#ae81ff">bitbucketserver</span>
+<span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;My Bitbucket Datacenter&#34;</span>
+<span style="color:#f92672">url</span>: <span style="color:#e6db74">&#34;http://localhost:7990/bitbucket&#34;</span>
+<span style="color:#f92672">auth</span>:
+    <span style="color:#f92672">user</span>: <span style="color:#ae81ff">username-on-bitbucket</span>
+    <span style="color:#f92672">token</span>: <span style="color:#ae81ff">the-long-token-here</span>
+<span style="color:#f92672">options</span>:
+    <span style="color:#f92672">disableStatus</span>: <span style="color:#66d9ef">false</span>    <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push statuses on the VCS server - optional</span>
+    <span style="color:#f92672">disableStatusDetails</span>: <span style="color:#66d9ef">false</span> <span style="color:#75715e"># Set to true if you don&#39;t want CDS to push CDS URL in statuses on the VCS server - optional</span>
+    <span style="color:#f92672">disablePolling</span>: <span style="color:#66d9ef">false</span>   <span style="color:#75715e"># Does polling is supported by VCS Server - optional</span>
+    <span style="color:#f92672">disableWebHooks</span>: <span style="color:#66d9ef">false</span>  <span style="color:#75715e"># Does webhooks are supported by VCS Server - optional</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl project vcs import YOUR_CDS_PROJECT_KEY vcs-bitbucket.yml
 </code></pre></div><h2 id="vcs-events">Vcs events</h2>
 <p>For now, CDS supports push events. CDS uses this push event to remove existing runs for deleted branches (24h after branch deletion).</p>
 

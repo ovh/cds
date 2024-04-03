@@ -25,7 +25,7 @@ cdsctl workflow applyTemplate [ PROJECT-KEY WORKFLOW-NAME ] [TEMPLATE-PATH] [fla
       <guid>/docs/components/cdsctl/workflow/ascode/</guid>
       <description>cdsctl workflow ascode Transform an existing workflow to an as code workflow
 Synopsis Transform an existing workflow to an as code workflow
-cdsctl workflow ascode [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  --branch string --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) --message string -q, --quiet Only display object&#39;s key --silent Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl workflow ascode [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  --branch string --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) --message string -q, --quiet Only display object&#39;s key --silent --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -58,7 +58,7 @@ cdsctl workflow favorite [ PROJECT-KEY WORKFLOW-NAME ] Options inherited from pa
       <guid>/docs/components/cdsctl/workflow/history/</guid>
       <description>cdsctl workflow history Display CDS workflow runs history
 Synopsis Display CDS workflow runs history
-cdsctl workflow history [ PROJECT-KEY WORKFLOW-NAME ] [OFFSET] [LIMIT] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl workflow history [ PROJECT-KEY WORKFLOW-NAME ] [OFFSET] [LIMIT] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -93,7 +93,7 @@ cdsctl workflow init [PROJECT-KEY] [flags] Options  --application string (Option
       <guid>/docs/components/cdsctl/workflow/list/</guid>
       <description>cdsctl workflow list List CDS workflows
 Synopsis List CDS workflows
-cdsctl workflow list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl workflow list [ PROJECT-KEY ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -149,7 +149,7 @@ cdsctl workflow run-delete [ PROJECT-KEY WORKFLOW-NAME ] RUN-NUMBER ... [flags] 
       <guid>/docs/components/cdsctl/workflow/show/</guid>
       <description>cdsctl workflow show Show a CDS workflow
 Synopsis Show a CDS workflow
-cdsctl workflow show [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl workflow show [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
@@ -160,7 +160,7 @@ cdsctl workflow show [ PROJECT-KEY WORKFLOW-NAME ] [flags] Options  --fields str
       <guid>/docs/components/cdsctl/workflow/status/</guid>
       <description>cdsctl workflow status Check the status of the run
 Synopsis Check the status of the run
-cdsctl workflow status [ PROJECT-KEY WORKFLOW-NAME ] [RUN-NUMBER] [flags] Options  --commit string Specify the git commit of the run you want --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --track Wait the workflow to be over Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+cdsctl workflow status [ PROJECT-KEY WORKFLOW-NAME ] [RUN-NUMBER] [flags] Options  --commit string Specify the git commit of the run you want --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -q, --quiet Only display object&#39;s key --track Wait the workflow to be over --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>

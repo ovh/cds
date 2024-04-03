@@ -30,6 +30,36 @@ Parameters  destination: (optional) Destination of this artifact. Use the name o
     </item>
     
     <item>
+      <title>artifactoryPromote</title>
+      <link>/docs/actions/artifactorypromote/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/artifactorypromote/</guid>
+      <description>Promote artifactory package from a repository to another
+Parameters  artifacts: Artifact name or wilcard pattern. maturity: The maturity you want to promote in. properties: Properties to add on the promoted artifacts  </description>
+    </item>
+    
+    <item>
+      <title>artifactoryRelease</title>
+      <link>/docs/actions/artifactoryrelease/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/artifactoryrelease/</guid>
+      <description>Release artifactory package from a repository to another
+Parameters  artifacts: Artifact name or wildcard pattern. maturity: The maturity you want to promote in. properties: Properties to add on the promoted artifacts releaseNotes: Notes associated to your Release.  </description>
+    </item>
+    
+    <item>
+      <title>checkout</title>
+      <link>/docs/actions/checkout/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/checkout/</guid>
+      <description>This action execute a git checkout
+Parameters  git-url: The repository url to clone path: Relative path under $CD_WORKSPACE to place the repository ref: The branch, tag to checkout sha: The commit sha to checkout ssh-key: The ssh-key used to fetch the repository submodules: Whether to checkout submodules: true to checkout submodules or recursive to recursively checkout submodules token: Token use for https authentication username: Username use for https authentication  </description>
+    </item>
+    
+    <item>
       <title>CheckoutApplication</title>
       <link>/docs/actions/builtin-checkoutapplication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -55,6 +85,16 @@ version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 s
     </item>
     
     <item>
+      <title>debianPush</title>
+      <link>/docs/actions/debianpush/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/debianpush/</guid>
+      <description>This pushes Debian package on an artifactory debian repository.
+Parameters  architectures: List of debian architectures (space separated) components: List of debian components (space separated) distributions: List of debian distributions (space separated) files: List of files (space separated) label: Fill the deb.release.label parameter origin: Fill the deb.release.origin parameter  </description>
+    </item>
+    
+    <item>
       <title>DeployApplication</title>
       <link>/docs/actions/builtin-deployapplication/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -66,6 +106,41 @@ Parameters No Parameter
 Requirements No Requirement
 YAML example Example of a pipeline using DeployApplication action:
 version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - deploy: &amp;#39;{{.cds.application}}&amp;#39; Example  Add a deployment platform on your application.   Create a workflow, add a pipeline and an application linked to a platform.</description>
+    </item>
+    
+    <item>
+      <title>deployArsenal</title>
+      <link>/docs/actions/deployarsenal/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/deployarsenal/</guid>
+      <description>This action trigger an arsenal deployment and retrieve the final status of it.
+Parameters  alternative-config: Alternative configuration to push with the deployment retry-delay: Time between try of getting the deployment final status retry-max: Maximum number of retry to get the deployment status token: Deployment token version: The version to deploy  </description>
+    </item>
+    
+    <item>
+      <title>dockerPush</title>
+      <link>/docs/actions/dockerpush/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/dockerpush/</guid>
+      <description>This pushes Docker image
+Parameters  image: Image name registry: Docker registry to push on.  This parameter can be empty when an Artifactory integration is set up.
+ registryAuth: Docker base64url-encoded auth configuration.  See docker authentication section for more details: https://docs.docker.com/engine/api/v1.41/#section/Authentication.
+This parameter can be empty when an Artifactory integration is set up.
+ tags: The tags to associate with the image on the registry.  This parameter can be empty if you want to keep the same tag.</description>
+    </item>
+    
+    <item>
+      <title>downloadArtifact</title>
+      <link>/docs/actions/downloadartifact/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/downloadartifact/</guid>
+      <description>Download a build artifact that was previously uploaded in the workflow by the upload-artifact action.
+Parameters   name: Artifact name or wilcard pattern. If empty, all the artifacts identifed as &amp;ldquo;generic&amp;rdquo; result previously uploaded in the workflow will be downloaded.
+  path: Destination path If empty, all the artifacts will be downloadded in the job workspace.
+  </description>
     </item>
     
     <item>
@@ -91,6 +166,17 @@ Parameters  path: (optional) The path to your git directory. prefix: (optional) 
     </item>
     
     <item>
+      <title>helmPush</title>
+      <link>/docs/actions/helmpush/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/helmpush/</guid>
+      <description>This push Helm chart on Chart Museum or Artifactory.
+Parameters  appVersion: (Optional) Override the app version before push to registry. chartFolder: Relative path to chart folder to be published chartVersion: (Optional) Override the chart version before push to registry. registryAccessToken: Send token in Authorization header  This parameter can be empty when an Artifactory integration is set up.
+ registryAuthHeader: Alternative header to use for token auth  This parameter can be empty when an Artifactory integration is set up.</description>
+    </item>
+    
+    <item>
       <title>JUnit</title>
       <link>/docs/actions/builtin-junit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -101,6 +187,16 @@ This action parses a given Junit formatted XML file to extract its test results.
 Parameters  path: Path to junit xml file.  Requirements No Requirement
 YAML example Example of a pipeline using JUnit action:
 version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - jUnitReport: &amp;#39;{{.cds.workspace}}/report.xml&amp;#39; Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
+    </item>
+    
+    <item>
+      <title>junit</title>
+      <link>/docs/actions/junit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/junit/</guid>
+      <description>Parse a junit report, create a run result of type test
+Parameters  path: File path to the junit report  </description>
     </item>
     
     <item>
@@ -145,26 +241,6 @@ Parameters  name: Release Bundle name token_variable: JFrog Distribution token v
     </item>
     
     <item>
-      <title>plugin-npm-audit-parser</title>
-      <link>/docs/actions/plugin-npm-audit-parser/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/plugin-npm-audit-parser/</guid>
-      <description>This is a plugin to parse npm audit report
-Parameters  file: Path to audit file (generally generated by npm audit &amp;ndash;json &amp;gt;{{.cds.workspace}}/audit.json for example)  </description>
-    </item>
-    
-    <item>
-      <title>plugin-script</title>
-      <link>/docs/actions/plugin-script/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/docs/actions/plugin-script/</guid>
-      <description>This action execute a script
-Parameters  content: The script to execute  </description>
-    </item>
-    
-    <item>
       <title>plugin-tmpl</title>
       <link>/docs/actions/plugin-tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -202,6 +278,18 @@ version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 s
     </item>
     
     <item>
+      <title>pythonPush</title>
+      <link>/docs/actions/pythonpush/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/pythonpush/</guid>
+      <description>This pushes python package
+Parameters  directory: Directory of the package package: The name of the package password: Password used to push the package  This parameter can be empty when an Artifactory integration is set up.
+ url: Python repository url to push on.  This parameter can be empty when an Artifactory integration is set up.
+ username: Username used to push the package  This parameter can be empty when an Artifactory integration is set up.</description>
+    </item>
+    
+    <item>
       <title>Release</title>
       <link>/docs/actions/builtin-release/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -234,6 +322,26 @@ This action executes a given script with a given interpreter.
 Parameters  script: Content of your script. You can put #!/bin/bash, or #!/bin/perl at first line. Make sure that the binary used is in the pre-requisites of action.  Requirements No Requirement
 YAML example Example of a pipeline using Script action:
 version: v1.0 name: Pipeline1 stages: - Stage1 jobs: - job: Job1 stage: Stage1 steps: - script: - &amp;#39;#!</description>
+    </item>
+    
+    <item>
+      <title>script</title>
+      <link>/docs/actions/script/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/script/</guid>
+      <description>This action execute a script
+Parameters  content: The script to execute  </description>
+    </item>
+    
+    <item>
+      <title>uploadArtifact</title>
+      <link>/docs/actions/uploadartifact/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/actions/uploadartifact/</guid>
+      <description>This uploads artifacts from your workflow allowing you to share data between jobs and store data once a workflow is complete.
+Parameters   if-no-files-found: The desired behavior if no files are found using the provided path. Available Options: warn: Output a warning but do not fail the action error: Fail the action with an error message ignore: Do not output any warnings or errors, the action does not fail</description>
     </item>
     
   </channel>

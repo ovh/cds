@@ -29,6 +29,17 @@ cdsctl experimental rbac import FILENAME [flags] Examples cdsctl rbac import fil
     </item>
     
     <item>
+      <title>list</title>
+      <link>/docs/components/cdsctl/experimental/rbac/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/components/cdsctl/experimental/rbac/list/</guid>
+      <description>cdsctl experimental rbac list List CDS permissions
+Synopsis List CDS permissions
+cdsctl experimental rbac list [flags] Examples cdsctl rbac list Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -q, --quiet Only display object&#39;s key --verbose Display all object fields Options inherited from parent commands  -c, --context string cdsctl context name -f, --file string set configuration file --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
       <title>show</title>
       <link>/docs/components/cdsctl/experimental/rbac/show/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

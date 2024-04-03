@@ -20,17 +20,17 @@
     content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.">
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Import configuration Create a yml file:">
 <meta property="og:description"
     content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.">
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Import configuration Create a yml file:">
 <meta name="twitter:description"
     content="The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.">
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/&#43;1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Import configuration Create a yml file:">
 <meta property="og:url" content="/docs/integrations/gerrit/">
 <meta property="og:title" content="Gerrit Repository Manager">
 <meta name="twitter:title" content="Gerrit Repository Manager">
@@ -451,7 +451,7 @@ This integration enables some features:
   <ul>
     <li><a href="#how-to-configure-gerrit-integration">How to configure Gerrit integration</a>
       <ul>
-        <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
+        <li><a href="#import-configuration">Import configuration</a></li>
       </ul>
     </li>
     <li><a href="#start-the-vcs-µservice">Start the vcs µService</a></li>
@@ -474,33 +474,20 @@ to a CDS application.</p>
 <li>An Administrator User ( with SSH KEY ), to get event from Gerrit Server</li>
 <li>An User on gerrit ( with httpPassword ), to comment changes with workflow result</li>
 </ul>
-<h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"> [<span style="color:#ae81ff">vcs.servers]</span>
-     [<span style="color:#ae81ff">vcs.servers.gerrit]</span>
-       <span style="color:#75715e"># URL of Gerrit</span>
-       <span style="color:#ae81ff">url = &#34;http://localhost:9080&#34;</span>
- 
-       [<span style="color:#ae81ff">vcs.servers.gerrit.gerrit]</span>
-         <span style="color:#75715e"># Disable event listener</span>
-         <span style="color:#ae81ff">disableGerritEvent = false</span>
- 
-         <span style="color:#75715e"># SSH port of gerrit</span>
-         <span style="color:#ae81ff">sshport = 29418</span>
- 
-         [<span style="color:#ae81ff">vcs.servers.gerrit.gerrit.EventStream]</span>
-           <span style="color:#75715e"># Private key of the user who access to gerrit event stream</span>
-           <span style="color:#ae81ff">privateKey = &#34;XXXXXXX&#34;</span>
- 
-           <span style="color:#75715e"># User to access to gerrit event stream</span>
-           <span style="color:#ae81ff">user = &#34;admin&#34;</span>
- 
-         [<span style="color:#ae81ff">vcs.servers.gerrit.gerrit.Reviewer]</span>
-           <span style="color:#75715e"># Http Password of the user that comment changes</span>
-           <span style="color:#ae81ff">token = &#34;XXXXXXXXXX&#34;</span>
- 
-           <span style="color:#75715e"># User that review changes</span>
-           <span style="color:#ae81ff">user = &#34;Verifier&#34;</span>
-
+<h3 id="import-configuration">Import configuration</h3>
+<p>Create a yml file:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">version</span>: <span style="color:#ae81ff">v1.0</span>
+<span style="color:#f92672">name</span>: <span style="color:#ae81ff">gerrit</span>
+<span style="color:#f92672">type</span>: <span style="color:#ae81ff">gerrit</span>
+<span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;gerrit new dev&#34;</span>
+<span style="color:#f92672">url</span>: <span style="color:#ae81ff">https://your-gerrit-instance:9080</span>
+<span style="color:#f92672">auth</span>:
+    <span style="color:#f92672">sshUsername</span>: <span style="color:#ae81ff">gerrit-username #</span> <span style="color:#75715e"># User to access to gerrit event stream</span>
+    <span style="color:#f92672">sshPort</span>: <span style="color:#ae81ff">29418</span>
+    <span style="color:#f92672">sshPrivateKey</span>: -----<span style="color:#ae81ff">BEGIN OPENSSH PRIVATE KEY-----\nfoofoofoo\non\none\nline\nhere\n-----END OPENSSH PRIVATE KEY-----&#34;</span> <span style="color:#75715e"># Private key of the user who access to gerrit event stream</span>
+    <span style="color:#f92672">user</span>: <span style="color:#ae81ff">admin</span> <span style="color:#75715e"># User that review changes</span>
+    <span style="color:#f92672">token</span>: <span style="color:#ae81ff">gerrit-generated-password</span> <span style="color:#75715e"># Http Password of the user that comment changes</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">cdsctl project vcs import YOUR_CDS_PROJECT_KEY vcs-gerrit.yml
 </code></pre></div><p>See how to generate <strong><a href="../../../hosting/configuration/">Configuration File</a></strong></p>
 <h2 id="start-the-vcs-µservice">Start the vcs µService</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">$ engine start vcs

@@ -27,7 +27,7 @@ This integration allows you:
       <description>The Bitbucket Cloud Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Cloud to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More information  How to configure Bitbucket Cloud integration  Follow documentation on https://support.</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket Cloud. More informations  How to configure Bitbucket Cloud integration  Follow the section Create a consumer on documentation https://support.</description>
     </item>
     
     <item>
@@ -39,7 +39,7 @@ This integration enables some features:
       <description>The Bitbucket Server Integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by your Bitbucket Server to a CDS Application.
 This integration enables some features:
- Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More information Send comments on your Pull-Requests when a workflow is failed  How to configure Bitbucket Server integration You need to perform the following steps:</description>
+ Git Repository Webhook Easy to use action CheckoutApplication and GitClone for advanced usage Send build notifications on your Pull-Requests and Commits on Bitbucket. More informations Send comments on your Pull-Requests when a workflow is failed  Create the Personal Access Token on Bitbucket Datacenter Generate a new token on https://your-bitbucket-datacenter/plugins/servlet/access-tokens/manage with the following scopes:</description>
     </item>
     
     <item>
@@ -64,7 +64,7 @@ $ cdsctl consumer new me \ --scopes=Hatchery,RunExecution,Service,WorkerModel \ 
       <description>The Gerrit Repository Manager integration have to be configured on your CDS by a CDS Administrator.
 This integration allows you to link a Git Repository hosted by Gerrit to a CDS application.
 This integration enables some features:
- Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/+1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Complete CDS Configuration File [vcs.</description>
+ Gerrit Hooks Easy to use action CheckoutApplication and GitClone for advanced usage Send comments on your Pull-Requests when a workflow is failed Add a vote -1/+1 on a change  How to configure Gerrit integration You will have to create 2 users on gerrit: [How to] An Administrator User ( with SSH KEY ), to get event from Gerrit Server An User on gerrit ( with httpPassword ), to comment changes with workflow result  Import configuration Create a yml file:</description>
     </item>
     
     <item>

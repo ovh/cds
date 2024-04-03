@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>As code entities on CDS - Continuous Delivery Service</title>
+    <link>/docs/concepts/cds_as_code/entities/</link>
+    <description>Recent content in As code entities on CDS - Continuous Delivery Service</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/docs/concepts/cds_as_code/entities/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Workflow</title>
+      <link>/docs/concepts/cds_as_code/entities/workflow/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/entities/workflow/</guid>
+      <description>Description The workflow is the main entity in CDS. It allows you to chain jobs, using conditional branching.
+As Code directory A workflow is described directly on your repository inside the directory .cds/workflows/.
+Permission The permission manage-workflow on your project is mandatory to manage a workflow.
+Fields name: cds repository: vcs: github name: ovh/cds commit-status: ... on: [push]  integrations: [my-artifactory] stages: ... jobs: ... env: VAR_1: value VAR_2: value2 gates: .</description>
+    </item>
+    
+    <item>
+      <title>Action</title>
+      <link>/docs/concepts/cds_as_code/entities/action/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/entities/action/</guid>
+      <description>Description An action is a sequence of steps that can be used within a job
+As Code directory An action is described directly on your repository inside the directory .cds/actions
+Permission To be able to manage actions you will need the permission manage-action on your project
+Fields name: test-parent-action2 description: simple parent action as code inputs: name: description: my description required: true default: Steven workflow: description: event receive default: ${{ cds.</description>
+    </item>
+    
+    <item>
+      <title>Worker Model</title>
+      <link>/docs/concepts/cds_as_code/entities/worker_model/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/docs/concepts/cds_as_code/entities/worker_model/</guid>
+      <description>Description Worker model can be defined ascode. That&amp;rsquo;s mean the definition of the worker model will be in a git repository, and each time you will push something, CDS will update it.
+As Code directory A workflow is described directly on your repository inside the directory .cds/worker-models
+Permission To be able to manage a workflow you will need the permission manage-worker-model on your project
+Files *: mandatory field
+Docker name: my-worker-model-name description: my description osarch: linux/amd64 type: docker spec: image: myregistry.</description>
+    </item>
+    
+  </channel>
+</rss>
