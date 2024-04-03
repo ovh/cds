@@ -434,6 +434,7 @@ type WorkflowV2Client interface {
 	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (sdk.CDNLogLinks, error)
 	WorkflowV2Stop(ctx context.Context, projKey, runIdentifier string) error
 	WorkflowV2StopJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) error
+	WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error)
 }
 
 // WorkflowClient exposes workflows functions

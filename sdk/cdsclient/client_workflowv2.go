@@ -98,6 +98,16 @@ func (c *client) WorkflowV2RunJob(ctx context.Context, projKey, runIdentifier, j
 	return &runJob, nil
 }
 
+func (c *client) WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error) {
+	var results []sdk.V2WorkflowRunResult
+	path := fmt.Sprintf("/v2/project/%s/run/%s/result", projKey, runIdentifier)
+	_, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &results)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
 func (c *client) WorkflowV2RunJobLogLinks(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (sdk.CDNLogLinks, error) {
 	var logsLinks sdk.CDNLogLinks
 	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/logs/links", projKey, runIdentifier, jobIdentifier)
