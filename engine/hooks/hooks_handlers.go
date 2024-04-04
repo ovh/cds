@@ -73,8 +73,8 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 	request, _ := json.Marshal(runRequest.UserRequest)
 	extractedData := sdk.HookRepositoryEventExtractData{
 		CDSEventName:   sdk.WorkflowHookManual,
-		Commit:         runRequest.Commit,
-		Ref:            runRequest.Ref,
+		Commit:         runRequest.WorkflowCommit,
+		Ref:            runRequest.WorkflowRef,
 		ProjectManual:  runRequest.Project,
 		WorkflowManual: runRequest.Workflow,
 	}

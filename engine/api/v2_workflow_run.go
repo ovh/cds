@@ -776,6 +776,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				Sha:           runRequest.Sha,
 				SemverCurrent: runRequest.SemverCurrent,
 				SemverNext:    runRequest.SemverNext,
+				ChangeSets:    runRequest.ChangeSets,
 				EntityUpdated: runRequest.EntityUpdated,
 				Payload:       runRequest.Payload,
 			}
@@ -1176,16 +1177,16 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			}
 
 			hookRequest := sdk.HookManualWorkflowRun{
-				UserRequest: runRequest,
-				Project:     proj.Key,
-				VCSType:     vcsProject.Type,
-				VCSServer:   vcsProject.Name,
-				Repository:  repo.Name,
-				Ref:         workflowRef,
-				Commit:      workflowCommit,
-				Workflow:    workflowName,
-				UserID:      u.AuthConsumerUser.AuthentifiedUserID,
-				Username:    u.AuthConsumerUser.AuthentifiedUser.Username,
+				UserRequest:    runRequest,
+				Project:        proj.Key,
+				VCSType:        vcsProject.Type,
+				VCSServer:      vcsProject.Name,
+				Repository:     repo.Name,
+				WorkflowRef:    workflowRef,
+				WorkflowCommit: workflowCommit,
+				Workflow:       workflowName,
+				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
+				Username:       u.AuthConsumerUser.AuthentifiedUser.Username,
 			}
 
 			// Send start request to hooks

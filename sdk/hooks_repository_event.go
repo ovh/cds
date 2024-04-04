@@ -37,30 +37,25 @@ const (
 	HookEventStatusAnalysis      = "Analyzing"
 	HookEventStatusWorkflowHooks = "WorkflowHooks"
 	HookEventStatusSignKey       = "SignKey"
+	HookEventStatusGitInfo       = "GitInfo"
 	HookEventStatusWorkflow      = "Workflow"
 	HookEventStatusDone          = "Done"
 	HookEventStatusError         = "Error"
 	HookEventStatusSkipped       = "Skipped"
 
 	HookEventWorkflowStatusScheduler = "Scheduled"
+	HookEventWorkflowStatusSkipped   = "Skipped"
+	HookEventWorkflowStatusError     = "Error"
 	HookEventWorkflowStatusDone      = "Done"
 )
 
 type HookEventCallback struct {
-	AnalysisCallback   *HookAnalysisCallback  `json:"analysis_callback"`
-	SigningKeyCallback *HookSigninKeyCallback `json:"signing_key_callback"`
-	HookEventUUID      string                 `json:"hook_event_uuid"`
-	VCSServerType      string                 `json:"vcs_server_type"`
-	VCSServerName      string                 `json:"vcs_server_name"`
-	RepositoryName     string                 `json:"repository_name"`
-}
-
-type HookSigninKeyCallback struct {
-	Status        OperationStatus `json:"status"`
-	SignKey       string          `json:"sign_key"`
-	SemverCurrent string          `json:"semver_current"`
-	SemverNext    string          `json:"semver_next"`
-	Error         string          `json:"error"`
+	AnalysisCallback   *HookAnalysisCallback `json:"analysis_callback"`
+	SigningKeyCallback *Operation            `json:"signing_key_callback"`
+	HookEventUUID      string                `json:"hook_event_uuid"`
+	HookEventKey       string                `json:"hook_event_key"`
+	VCSServerName      string                `json:"vcs_server_name"`
+	RepositoryName     string                `json:"repository_name"`
 }
 
 type HookAnalysisCallback struct {
@@ -102,24 +97,46 @@ type HookRepositoryEvent struct {
 	SignKey                   string                         `json:"sign_key"`
 	SigningKeyOperation       string                         `json:"signing_key_operation"`
 	SigningKeyOperationStatus OperationStatus                `json:"signing_key_operation_status"`
-	SemverCurrent             string                         `json:"semver_current"`
-	SemverNext                string                         `json:"semver_next"`
+}
+
+func (h *HookRepositoryEvent) IsTerminated() bool {
+	return h.Status == HookEventStatusDone || h.Status == HookEventStatusError || h.Status == HookEventStatusSkipped
 }
 
 type HookRepositoryEventWorkflow struct {
-	ProjectKey           string `json:"project_key"`
-	VCSIdentifier        string `json:"vcs_identifier"`
-	RepositoryIdentifier string `json:"repository_identifier"`
-	WorkflowName         string `json:"workflow_name"`
-	EntityID             string `json:"entity_id"`
-	Ref                  string `json:"ref"`
-	Type                 string `json:"type"`
-	Status               string `json:"status"`
-	TargetBranch         string `json:"target_branch,omitempty"`
-	TargetCommit         string `json:"target_commit,omitempty"`
-	ModelFullName        string `json:"model,omitempty"`
-	RunID                string `json:"run_id,omitempty"`
-	RunNumber            int64  `json:"run_number,omitempty"`
+	ProjectKey           string             `json:"project_key"`
+	VCSIdentifier        string             `json:"vcs_identifier"`
+	RepositoryIdentifier string             `json:"repository_identifier"`
+	WorkflowName         string             `json:"workflow_name"`
+	EntityID             string             `json:"entity_id"`
+	Ref                  string             `json:"ref"`
+	Commit               string             `json:"commit"`
+	Type                 string             `json:"type"`
+	Status               string             `json:"status"`
+	Error                string             `json:"error"`
+	TargetCommit         string             `json:"target_commit,omitempty"`
+	ModelFullName        string             `json:"model,omitempty"`
+	PathFilters          []string           `json:"path_filters,omitempty"`
+	Data                 V2WorkflowHookData `json:"data,omitempty"`
+
+	// Workflow run result
+	RunID     string `json:"run_id,omitempty"`
+	RunNumber int64  `json:"run_number,omitempty"`
+
+	// Git info to be able to start a new workflow run
+	SemverCurrent string   `json:"semver_current"`
+	SemverNext    string   `json:"semver_next"`
+	UpdatedFiles  []string `json:"updated_files"`
+
+	// Operation data to get gitInfo
+	OperationUUID   string          `json:"operation_uuid"`
+	OperationStatus OperationStatus `json:"operation_status"`
+	OperationError  string          `json:"operation_error"`
+	LastCheck       int64           `json:"last_check"`
+}
+
+func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
+	return wh.Status == HookEventWorkflowStatusError || wh.Status == HookEventWorkflowStatusSkipped || wh.Status == HookEventWorkflowStatusDone
 }
 
 type HookRepositoryEventExtractData struct {
@@ -155,6 +172,10 @@ type HookRetrieveSignKeyRequest struct {
 	Commit         string `json:"commit"`
 	Ref            string `json:"ref"`
 	HookEventUUID  string `json:"hook_event_uuid"`
+	HookEventKey   string `json:"hook_event_key"`
+	GetSigninKey   bool   `json:"get_signin_key"`
+	GetChangesets  bool   `json:"get_changesets"`
+	GetSemver      bool   `json:"get_semver"`
 }
 
 type HookRetrieveUserRequest struct {
@@ -179,6 +200,7 @@ type AnalysisRequest struct {
 	Ref           string `json:"ref"`
 	Commit        string `json:"commit"`
 	HookEventUUID string `json:"hook_event_uuid"`
+	HookEventKey  string `json:"hook_event_key`
 	UserID        string `json:"user_id"`
 }
 

@@ -93,6 +93,7 @@ type OperationCheckout struct {
 	Commit         string `json:"commit,omitempty"`
 	CheckSignature bool   `json:"check_signature,omitempty"`
 	ProcessSemver  bool   `json:"process_semver,omitempty"`
+	GetChangeSet   bool   `json:"get_changeset,omitempty"`
 	Result         struct {
 		SignKeyID      string `json:"sign_key_id"`
 		CommitVerified bool   `json:"verified"`
@@ -101,7 +102,13 @@ type OperationCheckout struct {
 			Current string `json:"current"`
 			Next    string `json:"next"`
 		} `json:"semver"`
+		Files map[string]OperationChangetsetFile
 	} `json:"result"`
+}
+
+type OperationChangetsetFile struct {
+	Filename string
+	Status   string
 }
 
 // OperationPush represents information about push operation

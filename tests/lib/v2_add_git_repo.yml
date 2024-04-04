@@ -41,7 +41,7 @@ steps:
   - script: >
       {{.input.cdsctl_command}} experimental project repository add {{.input.cds_project}} my_vcs_server {{.input.git_user}}/{{.input.git_repo}}
   - script: >
-      {{.input.cdsctl_command}} experimental project repository list {{.input.cds_project}} --vcs-name my_vcs_server --format json
+      {{.input.cdsctl_command}} experimental project repository list {{.input.cds_project}} --vcs-name my_vcs_server --filter reponame={{.input.git_user}}/{{.input.git_repo}} --format json
     assertions:
       - and:
         - result.code ShouldEqual 0

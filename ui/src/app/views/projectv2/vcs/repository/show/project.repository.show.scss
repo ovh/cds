@@ -1,3 +1,5 @@
+@import '../../../../../../common.scss';
+
 .repoShow {
   display: flex;
   flex-direction: column;
@@ -62,6 +64,9 @@
               font-family: inherit;
               white-space: pre-wrap;
             }
+            i {
+              font-size: 1.2em;
+            }
           }
       }
 
@@ -99,6 +104,10 @@ ul.nopoint {
             align-self: center;
         }
     }
+}
+
+.green {
+  color: $cds_color_green;
 }
 
 

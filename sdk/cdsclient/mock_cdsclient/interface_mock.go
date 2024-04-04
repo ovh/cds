@@ -5246,6 +5246,26 @@ func (m *MockHookClient) EXPECT() *MockHookClientMockRecorder {
 	return m.recorder
 }
 
+// EntityGet mocks base method.
+func (m *MockHookClient) EntityGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, entityType, entityName string, mods ...cdsclient.RequestModifier) (*sdk.Entity, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EntityGet", varargs...)
+	ret0, _ := ret[0].(*sdk.Entity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityGet indicates an expected call of EntityGet.
+func (mr *MockHookClientMockRecorder) EntityGet(ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityGet", reflect.TypeOf((*MockHookClient)(nil).EntityGet), varargs...)
+}
+
 // HookRepositoriesList mocks base method.
 func (m *MockHookClient) HookRepositoriesList(ctx context.Context, vcsServer, repoName string) ([]sdk.ProjectRepository, error) {
 	m.ctrl.T.Helper()
@@ -7433,6 +7453,26 @@ func (m *MockInterface) DownloadURLFromAPI(name, os, arch, variant string) strin
 func (mr *MockInterfaceMockRecorder) DownloadURLFromAPI(name, os, arch, variant interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadURLFromAPI", reflect.TypeOf((*MockInterface)(nil).DownloadURLFromAPI), name, os, arch, variant)
+}
+
+// EntityGet mocks base method.
+func (m *MockInterface) EntityGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, entityType, entityName string, mods ...cdsclient.RequestModifier) (*sdk.Entity, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}
+	for _, a := range mods {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "EntityGet", varargs...)
+	ret0, _ := ret[0].(*sdk.Entity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityGet indicates an expected call of EntityGet.
+func (mr *MockInterfaceMockRecorder) EntityGet(ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName interface{}, mods ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, projKey, vcsIdentifier, repoIdentifier, entityType, entityName}, mods...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityGet", reflect.TypeOf((*MockInterface)(nil).EntityGet), varargs...)
 }
 
 // EntityLint mocks base method.

@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,11 +51,12 @@ func TestManageAnalysisCallback(t *testing.T) {
 	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
+	eventKey := strings.ToLower(cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID))
 	callback := sdk.HookEventCallback{
 		RepositoryName: hr.RepositoryName,
 		VCSServerName:  hr.VCSServerName,
-		VCSServerType:  hr.VCSServerType,
 		HookEventUUID:  hr.UUID,
+		HookEventKey:   eventKey,
 		AnalysisCallback: &sdk.HookAnalysisCallback{
 			AnalysisID:     hr.Analyses[0].AnalyzeID,
 			AnalysisStatus: sdk.RepositoryAnalysisStatusSucceed,

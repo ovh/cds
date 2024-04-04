@@ -30,6 +30,7 @@ type V2WorkflowRunHookRequest struct {
 	EntityUpdated string                 `json:"entity_updated"`
 	SemverCurrent string                 `json:"semver_current"`
 	SemverNext    string                 `json:"semver_next"`
+	ChangeSets    []string               `json:"changesets"`
 }
 
 type V2WorkflowRun struct {
@@ -164,6 +165,7 @@ type V2WorkflowRunEvent struct {
 	Sha           string                 `json:"sha"`
 	SemverCurrent string                 `json:"semver_current"`
 	SemverNext    string                 `json:"semver_next"`
+	ChangeSets    []string               `json:"changesets"`
 	Payload       map[string]interface{} `json:"payload,omitempty"`
 	EntityUpdated string                 `json:"entity_updated,omitempty"`
 	Cron          string                 `json:"cron,omitempty"`
@@ -992,14 +994,14 @@ type V2QueueJobInfo struct {
 }
 
 type HookManualWorkflowRun struct {
-	UserRequest V2WorkflowRunManualRequest
-	Project     string
-	VCSType     string
-	VCSServer   string
-	Repository  string
-	Ref         string
-	Commit      string
-	Workflow    string
-	UserID      string
-	Username    string
+	UserRequest    V2WorkflowRunManualRequest
+	Project        string
+	VCSType        string
+	VCSServer      string
+	Repository     string
+	WorkflowRef    string
+	WorkflowCommit string
+	Workflow       string
+	UserID         string
+	Username       string
 }

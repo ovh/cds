@@ -97,5 +97,6 @@ export class RepositoryHookWorkflow {
     repository_identifier: string;
     workflow_name: string;
     type: string;
+    status: string;
 }
 
