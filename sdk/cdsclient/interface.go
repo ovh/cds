@@ -252,6 +252,8 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
 	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
 	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
+
+	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 }
 
 // ProjectClient exposes project related functions

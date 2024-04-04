@@ -90,16 +90,26 @@ func workflowV2RunResultDownloadFunc(v cli.Values) error {
 			fmt.Printf("Run result %s of type %s cannot be downloaded\n", r.Name(), r.Type)
 			return nil
 		default:
-			fileName = r.ArtifactManagerMetadata.Get("name")
-			md5 = r.ArtifactManagerMetadata.Get("md5")
 			cdnHTTPUrl = r.ArtifactManagerMetadata.Get("cdn_http_url")
 			cdnAPIRefHash = r.ArtifactManagerMetadata.Get("cdn_api_ref_hash")
 			artifactManagerPath = r.ArtifactManagerMetadata.Get("path")
 			artifactManagerRepo = r.ArtifactManagerMetadata.Get("repository")
 
-			detail, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
-			if detail != nil {
-				perm = detail.Mode
+			if artifactManagerRepo != "" {
+				fileName = r.ArtifactManagerMetadata.Get("name")
+				md5 = r.ArtifactManagerMetadata.Get("md5")
+			} else {
+				detail, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+				if detail != nil {
+					perm = detail.Mode
+					if fileName == "" {
+						fileName = detail.Name
+					}
+					md5 = detail.MD5
+				}
+			}
+			if fileName == "" {
+				return fmt.Errorf("enable to download result %s. Missing filename property", r.Name())
 			}
 		}
 
@@ -152,7 +162,7 @@ func workflowV2RunResultDownloadFunc(v cli.Values) error {
 				return cli.NewError("unable to open file %s: %s", fileName, err)
 			}
 			fmt.Printf("Downloading %s...\n", fileName)
-			if err := client.CDNItemDownload(context.Background(), cdnHTTPUrl, cdnAPIRefHash, sdk.CDNTypeItemRunResult, md5, f); err != nil {
+			if err := client.CDNItemDownload(context.Background(), cdnHTTPUrl, cdnAPIRefHash, sdk.CDNTypeItemRunResultV2, md5, f); err != nil {
 				_ = f.Close()
 				return err
 			}
