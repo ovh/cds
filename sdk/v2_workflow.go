@@ -496,3 +496,8 @@ type V2WorkflowRunManualRequest struct {
 	WorkflowBranch string `json:"workflow_branch,omitempty"`
 	WorkflowTag    string `json:"workflow_tag,omitempty"`
 }
+
+type V2WorkflowRunManualResponse struct {
+	HookEventUUID string `json:"string"`
+	UIUrl         string `json:"ui_url"`
+}
