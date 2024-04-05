@@ -112,7 +112,7 @@ var workflowRunSearchCmd = cli.Command{
 	Name:    "search",
 	Aliases: []string{""},
 	Short:   "Search a workflow run inside a project",
-	Example: "cdsctl experimental workflow project-search <proj_key>",
+	Example: "cdsctl experimental workflow search",
 	Ctx:     []cli.Arg{},
 	Args:    []cli.Arg{},
 	Flags: []cli.Flag{
