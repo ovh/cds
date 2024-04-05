@@ -498,6 +498,6 @@ type V2WorkflowRunManualRequest struct {
 }
 
 type V2WorkflowRunManualResponse struct {
-	HookEventUUID string `json:"string"`
+	HookEventUUID string `json:"hook_event_uuid"`
 	UIUrl         string `json:"ui_url"`
 }
