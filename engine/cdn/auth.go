@@ -2,7 +2,6 @@ package cdn
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	jwt "github.com/golang-jwt/jwt"
@@ -126,8 +125,10 @@ func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item s
 	case sdk.CDNTypeItemRunResultV2:
 		artRef, _ := item.GetCDNRunResultApiRefV2()
 		if sessionID != "" {
-			// TODO authenticate users session against workflow run v2
-			return errors.New("not yet implemented")
+			if err := s.Client.ProjectV2Access(ctx, projectKey, sessionID, sdk.CDNTypeItemRunResultV2); err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+			}
+			return nil
 		} else if signature != nil {
 			// Any worker associated to the current workflow run can get all run results
 			if artRef.ProjectKey == signature.ProjectKey &&

@@ -69,3 +69,11 @@ func (c *client) ProjectAccess(ctx context.Context, projectKey, sessionID string
 	}
 	return nil
 }
+
+func (c *client) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	url := fmt.Sprintf("/v2/project/%s/type/%s/access", projectKey, itemType)
+	if _, err := c.GetJSON(ctx, url, nil, SetHeader(sdk.CDSSessionID, sessionID)); err != nil {
+		return err
+	}
+	return nil
+}
