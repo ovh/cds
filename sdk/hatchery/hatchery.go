@@ -661,7 +661,17 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 		}
 		workerStarterModel.OpenstackSpec = openstackSpec
 	}
-	workerStarterModel.Memory = jobInf.RunJob.Job.RunsOn.Memory
+
+	var mem int64
+	if jobInf.RunJob.Job.RunsOn.Memory != "" {
+		var err error
+		mem, err = strconv.ParseInt(jobInf.RunJob.Job.RunsOn.Memory, 10, 64)
+		if err != nil {
+			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s is not an integer", jobInf.RunJob.Job.RunsOn.Memory)
+		}
+	}
+
+	workerStarterModel.Memory = mem
 	workerStarterModel.Flavor = jobInf.RunJob.Job.RunsOn.Flavor
 	return workerStarterModel, nil
 }

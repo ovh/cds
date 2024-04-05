@@ -49,6 +49,24 @@ type WorkflowRunEntityFinder struct {
 	userName              string
 }
 
+func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, username string) *WorkflowRunEntityFinder {
+	return &WorkflowRunEntityFinder{
+		project:               p,
+		run:                   run,
+		runRepo:               repo,
+		runVcsServer:          vcsServer,
+		actionsCache:          make(map[string]sdk.V2Action),
+		localActionsCache:     make(map[string]sdk.V2Action),
+		workerModelCache:      make(map[string]sdk.V2WorkerModel),
+		localWorkerModelCache: make(map[string]sdk.V2WorkerModel),
+		repoCache:             make(map[string]sdk.ProjectRepository),
+		vcsServerCache:        make(map[string]sdk.VCSProject),
+		repoDefaultRefCache:   make(map[string]string),
+		plugins:               make(map[string]sdk.GRPCPlugin),
+		userName:              username,
+	}
+}
+
 func (api *API) V2WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
@@ -161,22 +179,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		})
 	}
 	run.Contexts = *runContext
-
-	wref := WorkflowRunEntityFinder{
-		project:               *p,
-		run:                   *run,
-		runRepo:               *repo,
-		runVcsServer:          *vcsServer,
-		actionsCache:          make(map[string]sdk.V2Action),
-		localActionsCache:     make(map[string]sdk.V2Action),
-		workerModelCache:      make(map[string]sdk.V2WorkerModel),
-		localWorkerModelCache: make(map[string]sdk.V2WorkerModel),
-		repoCache:             make(map[string]sdk.ProjectRepository),
-		vcsServerCache:        make(map[string]sdk.VCSProject),
-		repoDefaultRefCache:   make(map[string]string),
-		plugins:               make(map[string]sdk.GRPCPlugin),
-		userName:              u.Username,
-	}
+	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, u.Username)
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
 	if err != nil {
@@ -196,7 +199,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
 
 		// Get actions and sub actions
-		msg, err := searchActions(ctx, api.mustDB(), api.Cache, &wref, j.Steps)
+		msg, err := searchActions(ctx, api.mustDB(), api.Cache, wref, j.Steps)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{

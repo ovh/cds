@@ -216,7 +216,7 @@ type V2Job struct {
 
 type V2JobRunsOn struct {
 	Model  string `json:"model"`
-	Memory int64  `json:"memory"`
+	Memory string `json:"memory"`
 	Flavor string `json:"flavor"`
 }
 
@@ -257,7 +257,7 @@ func (job V2Job) MarshalJSON() ([]byte, error) {
 	type Alias V2Job // prevent recursion
 	jobAlias := Alias(job)
 
-	if jobAlias.RunsOn.Memory == 0 && jobAlias.RunsOn.Flavor == "" {
+	if jobAlias.RunsOn.Memory == "" && jobAlias.RunsOn.Flavor == "" {
 		runOnsBts, err := json.Marshal(jobAlias.RunsOn.Model)
 		if err != nil {
 			return nil, WrapError(err, "unable to marshal RunsOn field")

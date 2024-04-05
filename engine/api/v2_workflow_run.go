@@ -944,8 +944,8 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 
 			jobIdentifier := vars["jobIdentifier"]
 
-			var gateInputs map[string]interface{}
-			if err := service.UnmarshalBody(req, &gateInputs); err != nil {
+			var userGateInputs map[string]interface{}
+			if err := service.UnmarshalBody(req, &userGateInputs); err != nil {
 				return err
 			}
 
@@ -995,14 +995,14 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "you are not part of the reviewers")
 			}
 
-			inputs := make(map[string]interface{})
+			allGateInputComputed := make(map[string]interface{})
 			for k, v := range gate.Inputs {
-				inputs[k] = v.Default
+				allGateInputComputed[k] = v.Default
 			}
 			// Check Gate inputs
-			for k, v := range gateInputs {
-				if _, has := inputs[k]; has {
-					inputs[k] = v
+			for k, v := range userGateInputs {
+				if _, has := allGateInputComputed[k]; has {
+					allGateInputComputed[k] = v
 				}
 			}
 
@@ -1020,7 +1020,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 			// retrieve previous jobs context
 			runJobsContexts := computeExistingRunJobContexts(runJobs, runResults)
 			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRun.JobID)
-			jobContext.Gate = inputs
+			jobContext.Gate = allGateInputComputed
 			bts, err := json.Marshal(jobContext)
 			if err != nil {
 				return sdk.WithStack(err)
@@ -1058,7 +1058,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return err
 			}
 			wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
-				Inputs:     gateInputs,
+				Inputs:     allGateInputComputed,
 				UserID:     u.AuthConsumerUser.AuthentifiedUserID,
 				Username:   u.GetUsername(),
 				JobID:      jobToRun.JobID,
@@ -1082,7 +1082,7 @@ func (api *API) putWorkflowRunJobV2Handler() ([]service.RbacChecker, service.Han
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRun.JobID, gateInputs, *u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRun.JobID, allGateInputComputed, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
