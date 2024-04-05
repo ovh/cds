@@ -3007,6 +3007,20 @@ func (mr *MockProjectClientV2MockRecorder) ProjectNotificationUpdate(ctx, pKey, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectNotificationUpdate", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectNotificationUpdate), ctx, pKey, notif)
 }
 
+// ProjectV2Access mocks base method.
+func (m *MockProjectClientV2) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectV2Access", ctx, projectKey, sessionID, itemType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectV2Access indicates an expected call of ProjectV2Access.
+func (mr *MockProjectClientV2MockRecorder) ProjectV2Access(ctx, projectKey, sessionID, itemType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectV2Access", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectV2Access), ctx, projectKey, sessionID, itemType)
+}
+
 // ProjectVariableSetCreate mocks base method.
 func (m *MockProjectClientV2) ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error {
 	m.ctrl.T.Helper()
@@ -5591,6 +5605,21 @@ func (m *MockWorkflowV2Client) WorkflowV2RunJobs(ctx context.Context, projKey, r
 func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunJobs(ctx, projKey, runIdentifier interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunJobs), ctx, projKey, runIdentifier)
+}
+
+// WorkflowV2RunResultList mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunResultList", ctx, projKey, runIdentifier)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunResultList indicates an expected call of WorkflowV2RunResultList.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunResultList(ctx, projKey, runIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunResultList", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunResultList), ctx, projKey, runIdentifier)
 }
 
 // WorkflowV2RunSearch mocks base method.
@@ -9051,6 +9080,20 @@ func (mr *MockInterfaceMockRecorder) ProjectUpdate(key, project interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectUpdate", reflect.TypeOf((*MockInterface)(nil).ProjectUpdate), key, project)
 }
 
+// ProjectV2Access mocks base method.
+func (m *MockInterface) ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectV2Access", ctx, projectKey, sessionID, itemType)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectV2Access indicates an expected call of ProjectV2Access.
+func (mr *MockInterfaceMockRecorder) ProjectV2Access(ctx, projectKey, sessionID, itemType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectV2Access", reflect.TypeOf((*MockInterface)(nil).ProjectV2Access), ctx, projectKey, sessionID, itemType)
+}
+
 // ProjectVCSDelete mocks base method.
 func (m *MockInterface) ProjectVCSDelete(ctx context.Context, projectKey, vcsName string) error {
 	m.ctrl.T.Helper()
@@ -11735,6 +11778,21 @@ func (m *MockInterface) WorkflowV2RunJobs(ctx context.Context, projKey, runIdent
 func (mr *MockInterfaceMockRecorder) WorkflowV2RunJobs(ctx, projKey, runIdentifier interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunJobs), ctx, projKey, runIdentifier)
+}
+
+// WorkflowV2RunResultList mocks base method.
+func (m *MockInterface) WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunResultList", ctx, projKey, runIdentifier)
+	ret0, _ := ret[0].([]sdk.V2WorkflowRunResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunResultList indicates an expected call of WorkflowV2RunResultList.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunResultList(ctx, projKey, runIdentifier interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunResultList", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunResultList), ctx, projKey, runIdentifier)
 }
 
 // WorkflowV2RunSearch mocks base method.

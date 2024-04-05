@@ -112,3 +112,19 @@ testcases:
       - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
     retry: 30
     delay: 5
+    vars:
+      runIdentifier:
+        from: result.systemoutjson.systemoutjson0.id
+
+  - name: List result
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.runIdentifier}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 2
+
+  - name: Download result
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result get {{.cds_project}} {{.runIdentifier}} --pattern generic:*"
+
+  - name: Check file foo 
+    script: "cat foo.txt && cat foo.txt | grep \"foobar\""
+
+     

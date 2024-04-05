@@ -98,7 +98,7 @@ func (actPlugin *pythonPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 		jobCtx, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
 		if err != nil {
 			res.Status = sdk.StatusFail
-			res.Details = "'wheel' input must be a boolean"
+			res.Details = "unable to retrieve job context"
 			return res, nil
 		}
 		if jobCtx == nil || jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager == "" {

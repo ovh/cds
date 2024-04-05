@@ -113,12 +113,12 @@ func (api *API) getWorkflowRunResultsV2Handler() ([]service.RbacChecker, service
 				}
 			}
 
-			runJobs, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID, attempt)
+			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID, attempt)
 			if err != nil {
 				return err
 			}
 
-			return service.WriteJSON(w, runJobs, http.StatusOK)
+			return service.WriteJSON(w, runResults, http.StatusOK)
 		}
 }
 

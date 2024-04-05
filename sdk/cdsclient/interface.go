@@ -252,6 +252,8 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemUpdate(ctx context.Context, pKey string, vsName string, item *sdk.ProjectVariableSetItem) error
 	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
 	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
+
+	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 }
 
 // ProjectClient exposes project related functions
@@ -436,6 +438,7 @@ type WorkflowV2Client interface {
 	WorkflowV2RunJobLogLinks(ctx context.Context, projKey, runIdentifier, jobIdentifier string) (sdk.CDNLogLinks, error)
 	WorkflowV2Stop(ctx context.Context, projKey, runIdentifier string) error
 	WorkflowV2StopJob(ctx context.Context, projKey, runIdentifier, jobIdentifier string) error
+	WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error)
 }
 
 // WorkflowClient exposes workflows functions

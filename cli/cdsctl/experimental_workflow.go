@@ -29,8 +29,10 @@ func experimentalWorkflow() *cobra.Command {
 		cli.NewGetCommand(workflowRunStatusCmd, workflowRunStatusFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowRunStopCmd, workflowRunStopFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(workflowLintCmd, workflowLintFunc, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowRunSearchCmd, workflowRunSearchFunc, nil, withAllCommandModifiers()...),
 		experimentalWorkflowRunLogs(),
 		experimentalWorkflowJob(),
+		experimentalWorkflowResult(),
 	})
 }
 
@@ -106,6 +108,82 @@ func workflowRunInfosListFunc(v cli.Values) (cli.ListResult, error) {
 	return cli.AsListResult(runInfos), nil
 }
 
+var workflowRunSearchCmd = cli.Command{
+	Name:    "search",
+	Aliases: []string{""},
+	Short:   "Search a workflow run inside a project",
+	Example: "cdsctl experimental workflow project-search <proj_key>",
+	Ctx:     []cli.Arg{},
+	Args:    []cli.Arg{},
+	Flags: []cli.Flag{
+		{Name: "commit"},
+		{Name: "workflow", Usage: "<vcs>/<repo>/<workflow_name>"},
+		{Name: "project"},
+		{Name: "branch"},
+		{Name: "status"},
+		{Name: "actor"},
+		{Name: "offset"},
+		{Name: "limit"},
+	},
+}
+
+func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
+	commit := v.GetString("commit")
+	workflow := v.GetString("workflow")
+	projKey := v.GetString("project")
+	branch := v.GetString("branch")
+	status := v.GetString("status")
+	actor := v.GetString("actor")
+
+	offset, err := v.GetInt64("offset")
+	if err != nil {
+		return nil, err
+	}
+	limit, err := v.GetInt64("limit")
+	if err != nil {
+		return nil, err
+	}
+	if limit == 0 {
+		limit = 1
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	mods := make([]cdsclient.RequestModifier, 0)
+	if commit != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("commit", commit))
+	}
+	if workflow != "" {
+		mods = append(mods, cdsclient.Workflows(workflow))
+	}
+	if branch != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("branch", branch))
+	}
+	if actor != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("actor", actor))
+	}
+	if status != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("status", status))
+	}
+
+	var runs []sdk.V2WorkflowRun
+	if projKey == "" {
+		// Search accross all project
+		runs, err = client.WorkflowV2RunSearchAllProjects(context.Background(), offset, limit, mods...)
+	} else {
+		mods = append(mods, cdsclient.WithQueryParameter("offset", fmt.Sprintf("%d", offset)))
+		mods = append(mods, cdsclient.WithQueryParameter("limit", fmt.Sprintf("%d", limit)))
+		runs, err = client.WorkflowV2RunSearch(context.Background(), projKey, mods...)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cli.AsListResult(runs), nil
+}
+
 var workflowRunHistoryCmd = cli.Command{
 	Name:    "history",
 	Aliases: []string{"h"},
@@ -118,6 +196,11 @@ var workflowRunHistoryCmd = cli.Command{
 		{Name: "repo_identifier"},
 		{Name: "workflow_name"},
 	},
+	Flags: []cli.Flag{
+		{
+			Name: "commit",
+		},
+	},
 }
 
 func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
@@ -125,10 +208,18 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	vcsId := v.GetString("vcs_identifier")
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
+	commit := v.GetString("commit")
 
 	wkfIdentifier := vcsId + "/" + repoId + "/" + wkfName
 
-	runs, err := client.WorkflowV2RunSearch(context.Background(), projKey, cdsclient.Workflows(wkfIdentifier))
+	mods := make([]cdsclient.RequestModifier, 0)
+	mods = append(mods, cdsclient.Workflows(wkfIdentifier))
+
+	if commit != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("commit", commit))
+	}
+
+	runs, err := client.WorkflowV2RunSearch(context.Background(), projKey, mods...)
 	if err != nil {
 		return nil, err
 	}
