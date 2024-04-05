@@ -112,7 +112,7 @@ var workflowRunSearchCmd = cli.Command{
 	Name:    "search",
 	Aliases: []string{""},
 	Short:   "Search a workflow run inside a project",
-	Example: "cdsctl experimental workflow project-search <proj_key>",
+	Example: "cdsctl experimental workflow search",
 	Ctx:     []cli.Arg{},
 	Args:    []cli.Arg{},
 	Flags: []cli.Flag{
@@ -328,7 +328,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		WorkflowTag:    workflowTag,
 	}
 
-	hookRunEvent, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)
+	runResp, err := client.WorkflowV2Run(context.Background(), projKey, vcsId, repoId, wkfName, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -338,11 +338,12 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 		RunNumber int64  `json:"run_number" cli:"run_number"`
 		RunID     string `json:"run_id" cli:"run_id"`
 		Error     string `json:"error" cli:"error"`
+		UIUrl     string `json:"uri_url" cli:"ui_url"`
 	}
 
 	retry := 0
 	for {
-		event, err := client.ProjectRepositoryEvent(context.Background(), projKey, vcsId, repoId, hookRunEvent.UUID)
+		event, err := client.ProjectRepositoryEvent(context.Background(), projKey, vcsId, repoId, runResp.HookEventUUID)
 		if err != nil {
 			return nil, err
 		}
@@ -352,6 +353,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 					Workflow:  wkfName,
 					RunNumber: event.WorkflowHooks[0].RunNumber,
 					RunID:     event.WorkflowHooks[0].RunID,
+					UIUrl:     fmt.Sprintf("%s/projectv2/%s/run/%s", runResp.UIUrl, projKey, event.WorkflowHooks[0].RunID),
 				}, nil
 			}
 			return nil, fmt.Errorf("workflow did not start")

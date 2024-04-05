@@ -181,4 +181,4 @@ testcases:
         - result.statuscode ShouldEqual 200
         - result.bodyjson.statuses ShouldHaveLength 1
         - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
-        - result.bodyjson.statuses.statuses0.context ShouldEqual "ITV2WFNOTIF-WorkflowNotificationsLog"
+        - "result.bodyjson.statuses.statuses0.context ShouldEqual \"ITV2WFNOTIF-WorkflowNotificationsLog #1\""

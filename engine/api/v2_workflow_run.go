@@ -1199,7 +1199,13 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			if errHooks != nil || code >= 400 {
 				return fmt.Errorf("unable to start workflow: %v", errHooks)
 			}
-			return service.WriteJSON(w, hookResponse, http.StatusCreated)
+
+			runResponse := sdk.V2WorkflowRunManualResponse{
+				HookEventUUID: hookResponse.UUID,
+				UIUrl:         api.Config.URL.UI,
+			}
+
+			return service.WriteJSON(w, runResponse, http.StatusCreated)
 		}
 }
 

@@ -5488,14 +5488,14 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2Restart(ctx, projectKey, r
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.HookRepositoryEvent, error) {
+func (m *MockWorkflowV2Client) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRunManualResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
-	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunManualResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -11661,14 +11661,14 @@ func (mr *MockInterfaceMockRecorder) WorkflowV2Restart(ctx, projectKey, runIdent
 }
 
 // WorkflowV2Run mocks base method.
-func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.HookRepositoryEvent, error) {
+func (m *MockInterface) WorkflowV2Run(ctx context.Context, projectKey, vcsIdentifier, repoIdentifier, wkfName string, payload sdk.V2WorkflowRunManualRequest, mods ...cdsclient.RequestModifier) (*sdk.V2WorkflowRunManualResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, projectKey, vcsIdentifier, repoIdentifier, wkfName, payload}
 	for _, a := range mods {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "WorkflowV2Run", varargs...)
-	ret0, _ := ret[0].(*sdk.HookRepositoryEvent)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunManualResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
