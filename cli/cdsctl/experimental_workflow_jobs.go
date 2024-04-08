@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var experimentalWorkflowJobCmd = cli.Command{
@@ -87,48 +88,82 @@ var workflowRunJobCmd = cli.Command{
 	Name:    "show",
 	Aliases: []string{"get"},
 	Short:   "Get the workflow run job status",
-	Example: "cdsctl experimental workflow run jobs status <proj_key> <workflow_run_id> <job_run_id>",
+	Example: "cdsctl experimental workflow run jobs status <proj_key> <workflow_run_id> <job_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
 		{Name: "workflow_run_id"},
-		{Name: "job_run_id"},
+		{Name: "job_identifier"},
 	},
 }
 
 func workflowRunJobFunc(v cli.Values) (interface{}, error) {
 	projKey := v.GetString("proj_key")
 	workflowRunID := v.GetString("workflow_run_id")
-	jobRunID := v.GetString("job_run_id")
-	runJob, err := client.WorkflowV2RunJob(context.Background(), projKey, workflowRunID, jobRunID)
+	jobIdentifier := v.GetString("job_identifier")
+
+	if sdk.IsValidUUID(jobIdentifier) {
+		runJob, err := client.WorkflowV2RunJob(context.Background(), projKey, workflowRunID, jobIdentifier)
+		if err != nil {
+			return nil, err
+		}
+		return runJob, nil
+	}
+
+	runJobs, err := client.WorkflowV2RunJobs(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return nil, err
 	}
-	return runJob, nil
+	for _, rj := range runJobs {
+		if rj.JobID == jobIdentifier {
+			return rj, nil
+		}
+	}
+
+	return nil, cli.NewError("not matching job found for given identifier %q", jobIdentifier)
 }
 
 var workflowRunJobInfoCmd = cli.Command{
 	Name:    "info",
 	Aliases: []string{"i", "infos"},
 	Short:   "Get the workflow run job infos",
-	Example: "cdsctl experimental workflow run jobs info <proj_key> <workflow_run_id> <job_run_id>",
+	Example: "cdsctl experimental workflow run jobs info <proj_key> <workflow_run_id> <job_identifier>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
 		{Name: "workflow_run_id"},
-		{Name: "job_run_id"},
+		{Name: "job_identifier"},
 	},
 }
 
 func workflowRunJobInfoFunc(v cli.Values) (cli.ListResult, error) {
 	projKey := v.GetString("proj_key")
 	workflowRunID := v.GetString("workflow_run_id")
-	jobRunID := v.GetString("job_run_id")
-	runJobInfoList, err := client.WorkflowV2RunJobInfoList(context.Background(), projKey, workflowRunID, jobRunID)
+	jobIdentifier := v.GetString("job_identifier")
+
+	if sdk.IsValidUUID(jobIdentifier) {
+		runJobInfoList, err := client.WorkflowV2RunJobInfoList(context.Background(), projKey, workflowRunID, jobIdentifier)
+		if err != nil {
+			return nil, err
+		}
+		return cli.AsListResult(runJobInfoList), nil
+	}
+
+	runJobs, err := client.WorkflowV2RunJobs(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(runJobInfoList), nil
+	for _, rj := range runJobs {
+		if rj.JobID == jobIdentifier {
+			runJobInfoList, err := client.WorkflowV2RunJobInfoList(context.Background(), projKey, workflowRunID, rj.ID)
+			if err != nil {
+				return nil, err
+			}
+			return cli.AsListResult(runJobInfoList), nil
+		}
+	}
+
+	return nil, cli.NewError("not matching job found for given identifier %q", jobIdentifier)
 }
 
 var workflowRunStopJobCmd = cli.Command{
