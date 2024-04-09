@@ -125,9 +125,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 
 	report := new(ProcessorReport)
 
-	_, next := telemetry.Span(ctx, "workflow.LoadNodeRunByID")
 	nodeRun, err := LoadNodeRunByID(ctx, db, job.WorkflowNodeRunID, LoadRunOptions{})
-	next()
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load node run id %d", job.WorkflowNodeRunID)
 	}
