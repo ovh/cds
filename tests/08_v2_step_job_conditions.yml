@@ -115,35 +115,35 @@ testcases:
       retry: 30
       delay: 5
       vars:
-        runIdentifier:
+        workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.runIdentifier}} stepIgnoreError --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.workflowRunID}} stepIgnoreError --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "stepIgnoreError"
         - result.systemoutjson.status ShouldEqual "Success"
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.runIdentifier}} wrongCondition --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.workflowRunID}} wrongCondition --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "wrongCondition"
         - result.systemoutjson.status ShouldEqual "Skipped"
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.runIdentifier}} alwaysCondition --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.workflowRunID}} alwaysCondition --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "alwaysCondition"
         - result.systemoutjson.status ShouldEqual "Success"
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.runIdentifier}} successCondition --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.workflowRunID}} successCondition --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "successCondition"
         - result.systemoutjson.status ShouldEqual "Success"
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.runIdentifier}} failedJob --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.workflowRunID}} failedJob --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "failedJob"
         - result.systemoutjson.status ShouldEqual "Fail"
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.runIdentifier}} conditionFailure --format json
+    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.workflowRunID}} conditionFailure --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "conditionFailure"

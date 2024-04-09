@@ -90,18 +90,18 @@ var workflowRunInfosListCmd = cli.Command{
 	Name:    "info",
 	Aliases: []string{"i", "infos"},
 	Short:   "List run informations",
-	Example: "cdsctl experimental workflow info <proj_key> <run_identifier>",
+	Example: "cdsctl experimental workflow info <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRunInfosListFunc(v cli.Values) (cli.ListResult, error) {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	runInfos, err := client.WorkflowV2RunInfoList(context.Background(), projKey, runIdentifier)
+	workflowRunID := v.GetString("workflow_run_id")
+	runInfos, err := client.WorkflowV2RunInfoList(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return nil, err
 	}
@@ -230,18 +230,18 @@ var workflowRunStatusCmd = cli.Command{
 	Name:    "status",
 	Aliases: []string{"st"},
 	Short:   "Get the workflow run status",
-	Example: "cdsctl experimental workflow status <proj_key> <run_identifier>",
+	Example: "cdsctl experimental workflow status <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRunStatusFunc(v cli.Values) (interface{}, error) {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	run, err := client.WorkflowV2RunStatus(context.Background(), projKey, runIdentifier)
+	workflowRunID := v.GetString("workflow_run_id")
+	run, err := client.WorkflowV2RunStatus(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return nil, err
 	}
@@ -252,21 +252,21 @@ var workflowRunStopCmd = cli.Command{
 	Name:    "stop",
 	Aliases: []string{""},
 	Short:   "Stop the workflow run",
-	Example: "cdsctl experimental workflow stop <proj_key> <run_identifier>",
+	Example: "cdsctl experimental workflow stop <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRunStopFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	if err := client.WorkflowV2Stop(context.Background(), projKey, runIdentifier); err != nil {
+	workflowRunID := v.GetString("workflow_run_id")
+	if err := client.WorkflowV2Stop(context.Background(), projKey, workflowRunID); err != nil {
 		return err
 	}
-	fmt.Printf("Workflow run %s has been stopped\n", runIdentifier)
+	fmt.Printf("Workflow run %s has been stopped\n", workflowRunID)
 	return nil
 }
 
@@ -374,18 +374,18 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 var workflowRestartCmd = cli.Command{
 	Name:    "restart",
 	Short:   "Restart workflow failed jobs",
-	Example: "cdsctl workflow restart <proj_key> <run_identifier>",
+	Example: "cdsctl workflow restart <proj_key> <workflow_run_id>",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "proj_key"},
-		{Name: "run_identifier"},
+		{Name: "workflow_run_id"},
 	},
 }
 
 func workflowRestartFunc(v cli.Values) error {
 	projKey := v.GetString("proj_key")
-	runIdentifier := v.GetString("run_identifier")
-	run, err := client.WorkflowV2Restart(context.Background(), projKey, runIdentifier)
+	workflowRunID := v.GetString("workflow_run_id")
+	run, err := client.WorkflowV2Restart(context.Background(), projKey, workflowRunID)
 	if err != nil {
 		return err
 	}
