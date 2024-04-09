@@ -125,7 +125,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 
 	report := new(ProcessorReport)
 
-	_, next := telemetry.Span(ctx, "workflow.LoadRunByID")
+	_, next := telemetry.Span(ctx, "workflow.LoadNodeRunByID")
 	nodeRun, err := LoadNodeRunByID(ctx, db, job.WorkflowNodeRunID, LoadRunOptions{})
 	next()
 	if err != nil {
@@ -149,6 +149,21 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		job.Start = time.Now()
 		job.Status = status
 
+		// we don't use UpdateNodeJobRun here, to avoid lock with the fk fk_workflow_node_run_job_workflow_node_run
+		// if err := UpdateNodeJobRun(ctx, db, job); err != nil {
+		// 	return nil, sdk.WrapError(err, "Cannot update WorkflowNodeJobRun %d", job.ID)
+		// }
+
+		if _, err := db.Exec("UPDATE workflow_node_run_job SET hatchery_name = $2, worker_name = $3, model_type = $4, start = $5, status = $6 WHERE id = $1",
+			job.ID,           // $1
+			job.HatcheryName, // $2
+			job.WorkerName,   // $3
+			job.Model,        // $4
+			job.Start,        // $5
+			job.Status,       // $6
+		); err != nil {
+			return nil, sdk.WrapError(err, "cannot update workflow_node_run_job in node job run %d", job.ID)
+		}
 	case sdk.StatusFail, sdk.StatusSuccess, sdk.StatusDisabled, sdk.StatusSkipped, sdk.StatusStopped:
 		if currentStatus != sdk.StatusWaiting && currentStatus != sdk.StatusBuilding && status != sdk.StatusDisabled && status != sdk.StatusSkipped {
 			log.Debug(ctx, "workflow.UpdateNodeJobRunStatus> Status is %s, cannot update %d to %s", currentStatus, job.ID, status)
@@ -169,12 +184,12 @@ func UpdateNodeJobRunStatus(ctx context.Context, db gorpmapper.SqlExecutorWithTx
 		if err := UpdateWorkflowRun(ctx, db, wf); err != nil {
 			return nil, sdk.WrapError(err, "Cannot update WorkflowRun %d", wf.ID)
 		}
+
+		if err := UpdateNodeJobRun(ctx, db, job); err != nil {
+			return nil, sdk.WrapError(err, "Cannot update WorkflowNodeJobRun %d", job.ID)
+		}
 	default:
 		return nil, sdk.WithStack(fmt.Errorf("cannot update WorkflowNodeJobRun %d to status %v", job.ID, status))
-	}
-
-	if err := UpdateNodeJobRun(ctx, db, job); err != nil {
-		return nil, sdk.WrapError(err, "Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
 	report.Add(ctx, *job)
