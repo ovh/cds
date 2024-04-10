@@ -10,16 +10,16 @@ export class V2WorkflowRunService {
         private _http: HttpClient
     ) { }
 
-    getRun(projKey: string, runIdentifier: string): Observable<V2WorkflowRun> {
-        return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}`);
+    getRun(projKey: string, workflowRunID: string): Observable<V2WorkflowRun> {
+        return this._http.get<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}`);
     }
 
-    restart(projKey: string, runIdentifier: string): Observable<V2WorkflowRun> {
-        return this._http.put<V2WorkflowRun>(`/v2/project/${projKey}/run/${runIdentifier}/restart`, null);
+    restart(projKey: string, workflowRunID: string): Observable<V2WorkflowRun> {
+        return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/restart`, null);
     }
 
-    stop(projKey: string, runIdentifier: string) {
-        return this._http.post(`/v2/project/${projKey}/run/${runIdentifier}/stop`, null);
+    stop(projKey: string, workflowRunID: string) {
+        return this._http.post(`/v2/project/${projKey}/run/${workflowRunID}/stop`, null);
     }
 
     getJobs(r: V2WorkflowRun, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {
@@ -42,15 +42,15 @@ export class V2WorkflowRunService {
         return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/run/${r.id}/infos`);
     }
 
-    getRunJobInfos(r: V2WorkflowRun, jobIdentifier: string): Observable<Array<WorkflowRunInfo>> {
-        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/run/${r.id}/job/${jobIdentifier}/infos`);
+    getRunJobInfos(r: V2WorkflowRun, jobRunID: string): Observable<Array<WorkflowRunInfo>> {
+        return this._http.get<Array<WorkflowRunInfo>>(`/v2/project/${r.project_key}/run/${r.id}/job/${jobRunID}/infos`);
     }
 
-    getAllLogsLinks(run: V2WorkflowRun, jobIdentifier: string): Observable<CDNLogLinks> {
-        return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobIdentifier}/logs/links`);
+    getAllLogsLinks(run: V2WorkflowRun, jobRunID: string): Observable<CDNLogLinks> {
+        return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobRunID}/logs/links`);
     }
 
-    triggerJob(run: V2WorkflowRun, jobIdentifier: string, inputs: {}): Observable<V2WorkflowRun> {
-        return this._http.put<V2WorkflowRun>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobIdentifier}/run`, inputs);
+    triggerJob(run: V2WorkflowRun, workflowRunID: string, inputs: {}): Observable<V2WorkflowRun> {
+        return this._http.post<V2WorkflowRun>(`/v2/project/${run.project_key}/run/${run.id}/job/${workflowRunID}/run`, inputs);
     }
 }

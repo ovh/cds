@@ -368,7 +368,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         if (type === 'click') {
             if (options && options['jobRunID']) {
                 this.onSelectJobRun.emit(options['jobRunID']);
-            } else if (options && options['gate']) {
+            } else if (options && options['gateName']) {
                 this.onSelectJobGate.emit(n);
             } else {
                 this.onSelectJob.emit(n.name);

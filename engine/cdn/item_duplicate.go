@@ -2,11 +2,12 @@ package cdn
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
 	"github.com/ovh/cds/sdk"
-	"net/http"
 
 	"github.com/ovh/cds/engine/service"
 )
@@ -32,7 +33,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			newItem := i
 			newItem.ID = ""
 			switch newItem.Type {
-			case sdk.CDNTypeItemJobStepLog:
+			case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 				logRef, _ := newItem.GetCDNLogApiRefV2()
 				logRef.RunJobID = duplicateRequest.ToJob
 				newItem.APIRef = logRef

@@ -165,18 +165,18 @@ testcases:
     retry: 30
     delay: 5
     vars:
-      runIdentifier:
+      workflowRunID:
         from: result.systemoutjson.systemoutjson0.id
 
   - name: Check the workflow run job info mentions the artifactory integration on the first job
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.runIdentifier}} First-Job"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.workflowRunID}} First-Job"
     assertions:
     - result.systemout ShouldContainSubstring Integration
     - result.systemout ShouldContainSubstring artifactory
     - result.systemout ShouldContainSubstring First-Job
 
   - name: Check the workflow run job info mentions the artifactory integration on the second job
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.runIdentifier}} Second-Job"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs info {{.cds_project}} {{.workflowRunID}} Second-Job"
     assertions:
     - result.systemout ShouldContainSubstring Integration
     - result.systemout ShouldContainSubstring artifactory
