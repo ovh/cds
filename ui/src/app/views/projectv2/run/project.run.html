@@ -99,6 +99,22 @@
                         </tr>
                     </tbody>
                 </nz-table>
+                <app-run-tests *ngIf="selectedTab && selectedTab.key === 'tests'" [tests]="tests"
+                    (onSelectTest)="openPanel('test', $event)"></app-run-tests>
+                <ng-template #tabTestsTemplate>
+                    <div class="tests">
+                        Tests
+                        <span class="ok" *ngIf="tests && tests.ok > 0">
+                            <span nz-icon nzType="check" nzTheme="outline"></span>{{tests.ok}}
+                        </span>
+                        <span class="skipped" *ngIf="tests && tests.skipped > 0">
+                            <span nz-icon nzType="warning" nzTheme="fill"></span>{{tests.skipped}}
+                        </span>
+                        <span class="ko" *ngIf="tests && tests.ko > 0">
+                            <span nz-icon nzType="close" nzTheme="outline"></span>{{tests.ko}}
+                        </span>
+                    </div>
+                </ng-template>
             </div>
         </app-resizable-panel>
     </div>
@@ -119,6 +135,7 @@
             (onClose)="closePanel()"></app-run-workflow>
         <app-run-contexts *ngIf="selectedItemType === 'contexts'" [run]="workflowRun"
             (onClose)="closePanel()"></app-run-contexts>
+        <app-run-test *ngIf="selectedItemType === 'test'" [test]="selectedTest" (onClose)="closePanel()"></app-run-test>
     </app-resizable-panel>
 
 </ng-container>

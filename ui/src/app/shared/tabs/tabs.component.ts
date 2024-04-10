@@ -59,8 +59,19 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
             delete this.selected;
         }
 
+        if (this.selected && this._route.snapshot.queryParams['tab'] && this.selected.key !== this._route.snapshot.queryParams['tab']) {
+            delete this.selected;
+        }
+
         if (!this.selected) {
-            this.select(this.getDefaultTab());
+            if (!this.disableNavigation) {
+                const tab = this.tabs.find(t => t.key === this._route.snapshot.queryParams['tab']);
+                if (tab) {
+                    this.select(tab);
+                } else {
+                    this.select(this.getDefaultTab());
+                }
+            }
         }
 
         this._cd.markForCheck();

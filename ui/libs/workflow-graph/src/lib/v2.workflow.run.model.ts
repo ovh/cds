@@ -188,8 +188,12 @@ export class WorkflowRunInfo {
 
 export class WorkflowRunResult {
     id: string;
-    type: string;
+    type: WorkflowRunResultType;
     detail: WorkflowRunResultDetail;
+}
+
+export enum WorkflowRunResultType {
+    tests = 'tests'
 }
 
 export class WorkflowRunResultDetail {

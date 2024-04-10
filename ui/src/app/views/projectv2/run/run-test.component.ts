@@ -1,38 +1,38 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
+import { TestCase } from "app/model/pipeline.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Tab } from "app/shared/tabs/tabs.component";
 import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
-import { WorkflowRunResult } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Component({
-	selector: 'app-run-result',
-	templateUrl: './run-result.html',
-	styleUrls: ['./run-result.scss'],
+	selector: 'app-run-test',
+	templateUrl: './run-test.html',
+	styleUrls: ['./run-test.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
+export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
-	@Input() result: WorkflowRunResult;
+	@Input() test: TestCase;
 	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
 	tabs: Array<Tab>;
 	selectedTab: Tab;
-	resultRaw: string;
+	testRaw: string;
 
 	constructor(
 		private _cd: ChangeDetectorRef,
 		private _store: Store
 	) {
 		this.tabs = [<Tab>{
-			title: 'Raw',
-			key: 'raw',
+			title: 'Output',
+			key: 'output',
 			default: true
 		}];
 	}
@@ -43,7 +43,8 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 		this.editorOption = {
 			language: 'json',
 			minimap: { enabled: false },
-			readOnly: true
+			readOnly: true,
+			wordWrap: 'on'
 		};
 
 		this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
@@ -54,7 +55,7 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(): void {
-		this.resultRaw = JSON.stringify(this.result, null, 2);
+		this.testRaw = JSON.stringify(this.test, null, 2);
 		this._cd.markForCheck();
 	}
 

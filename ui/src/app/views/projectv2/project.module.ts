@@ -26,9 +26,10 @@ import { ProjectV2ExploreComponent } from './explore/explore.component';
 import { ProjectV2WorkflowRunListSidebarComponent } from './run-list/run-list-sidebar.component';
 import { RunHookComponent } from './run/run-hook.component';
 import { RunResultComponent } from './run/run-result.component';
-import { RunResultTestsComponent } from './run/run-result-tests/run-result-tests.component';
 import { RunWorkflowComponent } from './run/run-workflow.component';
 import { RunContextsComponent } from './run/run-contexts.component';
+import { RunTestsComponent } from './run/run-tests.component';
+import { RunTestComponent } from './run/run-test.component';
 
 @NgModule({
     declarations: [
@@ -52,7 +53,8 @@ import { RunContextsComponent } from './run/run-contexts.component';
         RunJobComponent,
         RunJobLogsComponent,
         RunResultComponent,
-        RunResultTestsComponent,
+        RunTestComponent,
+        RunTestsComponent,
         RunWorkflowComponent
     ],
     imports: [

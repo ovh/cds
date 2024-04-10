@@ -135,8 +135,16 @@ export class WorkflowRunResult {
     workflow_node_run_id: number;
     workflow_run_job_id: number;
     sub_num: number;
-    type: string;
+    type: WorkflowRunResultType;
     data: any;
+}
+
+export enum WorkflowRunResultType {
+    generic = 'generic',
+    artifact = 'artifact',
+    coverage = 'coverage',
+    'artifact-manager' = 'artifact-manager',
+    'static-file' = 'static-file'
 }
 
 export class UIArtifact {
@@ -148,7 +156,6 @@ export class UIArtifact {
     type: string;
     file_type: string;
 }
-
 
 export class WorkflowRunResultArtifact {
     name: string

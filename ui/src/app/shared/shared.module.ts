@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+    CUSTOM_ELEMENTS_SCHEMA,
+    NgModule
+} from '@angular/core';
+import {
+    FormsModule,
+    ReactiveFormsModule
+} from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
@@ -59,7 +65,11 @@ import { RequirementsListComponent } from './requirements/list/requirements.list
 import { ScrollviewComponent } from './scrollview/scrollview.component';
 import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
-import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
+import {
+    DataTableComponent,
+    SelectorPipe,
+    SelectPipe
+} from './table/data-table.component';
 import { TabComponent } from './tabs/tab.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
@@ -97,7 +107,10 @@ import { WorkflowWNodeOutGoingHookComponent } from './workflow/wnode/outgoinghoo
 import { WorkflowWNodePipelineComponent } from './workflow/wnode/pipeline/wnode.pipeline.component';
 import { WorkflowWNodeComponent } from './workflow/wnode/wnode.component';
 import { NgxAutoScrollDirective } from 'app/shared/directives/auto-scroll.directive';
-import { NZ_CONFIG, NzConfig } from 'ng-zorro-antd/core/config';
+import {
+    NZ_CONFIG,
+    NzConfig
+} from 'ng-zorro-antd/core/config';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -107,13 +120,104 @@ import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
-import { en_US, NZ_I18N } from 'ng-zorro-antd/i18n';
+import {
+    en_US,
+    NZ_I18N
+} from 'ng-zorro-antd/i18n';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { IconDefinition } from '@ant-design/icons-angular';
 import {
-    AimOutline, ApartmentOutline, ApiOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, EyeInvisibleOutline, ExpandOutline, ExportOutline, EyeOutline, FieldTimeOutline, FileOutline, FileTextOutline, FilterOutline, FolderOpenOutline, FolderOutline, FontColorsOutline, KeyOutline,
-    GithubOutline, GitlabOutline, GlobalOutline, HomeOutline, HighlightFill, HistoryOutline, HourglassOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, MinusOutline, MoreOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, ProfileOutline, QuestionOutline, QuestionCircleOutline, RestOutline, RocketOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline,
-    TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill, SettingOutline, CloseCircleOutline, CheckCircleOutline, PauseCircleOutline, ArrowLeftOutline, ReloadOutline, ReadOutline
+    AimOutline,
+    ApartmentOutline,
+    ApiOutline,
+    ArrowDownOutline,
+    ArrowLeftOutline,
+    ArrowRightOutline,
+    AudioMutedOutline,
+    AudioOutline,
+    BellFill,
+    BellOutline,
+    BookOutline,
+    BorderOutline,
+    BranchesOutline,
+    BugOutline,
+    CalendarOutline,
+    CaretDownFill,
+    CaretRightFill,
+    CaretUpFill,
+    CheckCircleOutline,
+    CheckOutline,
+    CloseCircleOutline,
+    CloseOutline,
+    CodeOutline,
+    CompressOutline,
+    CopyOutline,
+    CrownOutline,
+    DeleteOutline,
+    DragOutline,
+    EllipsisOutline,
+    EnvironmentOutline,
+    ExpandOutline,
+    ExportOutline,
+    EyeInvisibleOutline,
+    EyeOutline,
+    FieldTimeOutline,
+    FileOutline,
+    FileTextOutline,
+    FilterOutline,
+    FolderOpenOutline,
+    FolderOutline,
+    FontColorsOutline,
+    GithubOutline,
+    GitlabOutline,
+    GlobalOutline,
+    HighlightFill,
+    HistoryOutline,
+    HomeOutline,
+    HourglassOutline,
+    IdcardOutline,
+    InfoCircleOutline,
+    KeyOutline,
+    LinkOutline,
+    LockOutline,
+    MailOutline,
+    MinusOutline,
+    MoreOutline,
+    PauseCircleOutline,
+    PhoneFill,
+    PlayCircleOutline,
+    PlusCircleFill,
+    PlusOutline,
+    PlusSquareOutline,
+    ProfileOutline,
+    QuestionCircleOutline,
+    QuestionOutline,
+    ReadOutline,
+    ReloadOutline,
+    RestOutline,
+    RocketOutline,
+    SafetyCertificateOutline,
+    SaveOutline,
+    SettingFill,
+    SettingOutline,
+    ShareAltOutline,
+    StarFill,
+    StarOutline,
+    StopOutline,
+    SyncOutline,
+    TableOutline,
+    TagOutline,
+    TagsOutline,
+    ToolFill,
+    UndoOutline,
+    UnlockFill,
+    UnorderedListOutline,
+    UploadOutline,
+    UsbOutline,
+    UserOutline,
+    UserSwitchOutline,
+    WarningFill,
+    WarningOutline
 } from '@ant-design/icons-angular/icons'
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -162,16 +266,109 @@ import { DateFromNowComponent } from './date-from-now/date-from-now';
 import { NzTreeModule } from 'ng-zorro-antd/tree';
 
 const ngZorroConfig: NzConfig = {
-    notification: { nzPauseOnHover: true, nzPlacement: "topRight" },
+    notification: {
+        nzPauseOnHover: true,
+        nzPlacement: "topRight"
+    },
     icon: { nzTheme: "outline" },
     codeEditor: {
         monacoEnvironment: { globalAPI: true }
     }
 };
 
-const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, ArrowDownOutline, ArrowRightOutline, AudioOutline, AudioMutedOutline, BellFill, BellOutline, BookOutline, BorderOutline, BranchesOutline, BugOutline, CalendarOutline, CaretDownFill, CaretRightFill, CaretUpFill, CheckOutline, CodeOutline, CompressOutline, CopyOutline, CrownOutline, DeleteOutline, DragOutline, EllipsisOutline, EnvironmentOutline, ExpandOutline, ExportOutline,
-    EyeInvisibleOutline, EyeOutline, FileOutline, FileTextOutline, FieldTimeOutline, FilterOutline, FolderOutline, FolderOpenOutline, FontColorsOutline, KeyOutline, GithubOutline, GitlabOutline, GlobalOutline, HomeOutline, HighlightFill, HistoryOutline, HourglassOutline, IdcardOutline, InfoCircleOutline, LinkOutline, LockOutline, MailOutline, MinusOutline, MoreOutline, PhoneFill, PlayCircleOutline, PlusOutline, PlusSquareOutline, PlusCircleFill, ProfileOutline, QuestionOutline, QuestionCircleOutline,
-    RestOutline, RocketOutline, SafetyCertificateOutline, SaveOutline, SettingFill, ShareAltOutline, StarOutline, StarFill, StopOutline, SyncOutline, TableOutline, TagOutline, TagsOutline, ToolFill, UndoOutline, UnlockFill, UnorderedListOutline, UploadOutline, UsbOutline, UserOutline, UserSwitchOutline, WarningOutline, WarningFill, SettingOutline, CloseCircleOutline, CheckCircleOutline, PauseCircleOutline, ArrowLeftOutline, ReloadOutline, ReadOutline];
+const icons: IconDefinition[] = [
+    AimOutline,
+    ApartmentOutline,
+    ApiOutline,
+    ArrowDownOutline,
+    ArrowLeftOutline,
+    ArrowRightOutline,
+    AudioMutedOutline,
+    AudioOutline,
+    BellFill,
+    BellOutline,
+    BookOutline,
+    BorderOutline,
+    BranchesOutline,
+    BugOutline,
+    CalendarOutline,
+    CaretDownFill,
+    CaretRightFill,
+    CaretUpFill,
+    CheckCircleOutline,
+    CheckOutline,
+    CloseCircleOutline,
+    CloseOutline,
+    CodeOutline,
+    CompressOutline,
+    CopyOutline,
+    CrownOutline,
+    DeleteOutline,
+    DragOutline,
+    EllipsisOutline,
+    EnvironmentOutline,
+    ExpandOutline,
+    ExportOutline,
+    EyeInvisibleOutline,
+    EyeOutline,
+    FieldTimeOutline,
+    FileOutline,
+    FileTextOutline,
+    FilterOutline,
+    FolderOpenOutline,
+    FolderOutline,
+    FontColorsOutline,
+    GithubOutline,
+    GitlabOutline,
+    GlobalOutline,
+    HighlightFill,
+    HistoryOutline,
+    HomeOutline,
+    HourglassOutline,
+    IdcardOutline,
+    InfoCircleOutline,
+    KeyOutline,
+    LinkOutline,
+    LockOutline,
+    MailOutline,
+    MinusOutline,
+    MoreOutline,
+    PauseCircleOutline,
+    PhoneFill,
+    PlayCircleOutline,
+    PlusCircleFill,
+    PlusOutline,
+    PlusSquareOutline,
+    ProfileOutline,
+    QuestionCircleOutline,
+    QuestionOutline,
+    ReadOutline,
+    ReloadOutline,
+    RestOutline,
+    RocketOutline,
+    SafetyCertificateOutline,
+    SaveOutline,
+    SettingFill,
+    SettingOutline,
+    ShareAltOutline,
+    StarFill,
+    StarOutline,
+    StopOutline,
+    SyncOutline,
+    TableOutline,
+    TagOutline,
+    TagsOutline,
+    ToolFill,
+    UndoOutline,
+    UnlockFill,
+    UnorderedListOutline,
+    UploadOutline,
+    UsbOutline,
+    UserOutline,
+    UserSwitchOutline,
+    WarningFill,
+    WarningOutline
+];
 
 @NgModule({
     imports: [
@@ -335,8 +532,14 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         APIConfigGuard,
         NoAuthenticationGuard,
         FeatureGuard,
-        { provide: NZ_CONFIG, useValue: ngZorroConfig },
-        { provide: NZ_I18N, useValue: en_US }
+        {
+            provide: NZ_CONFIG,
+            useValue: ngZorroConfig
+        },
+        {
+            provide: NZ_I18N,
+            useValue: en_US
+        }
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -477,5 +680,4 @@ const icons: IconDefinition[] = [AimOutline, ApartmentOutline, ApiOutline, Arrow
         WorkflowWNodeMenuEditComponent
     ]
 })
-export class SharedModule {
-}
+export class SharedModule { }

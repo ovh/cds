@@ -135,6 +135,25 @@
         }
     }
 
+    .tests {
+        [nz-icon] {
+            margin-left: 8px;
+            margin-right: 2px;
+        }
+
+        .ko {
+            color: $darkTheme_red;
+        }
+
+        .skipped {
+            color: $darkTheme_orange;
+        }
+
+        .ok {
+            color: $darkTheme_green;
+        }
+    }
+
     .bottom-panel {
         height: 100%;
         overflow: hidden;
