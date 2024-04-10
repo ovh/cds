@@ -35,7 +35,7 @@ func TestUnmarshalV2JobFullRunsOn(t *testing.T) {
     region: build
     runs-on:
       flavor: b2-7
-      memory: 4096
+      memory: "4096"
       model: docker-debian
     steps:
       - run: 'echo "Workflow: ${{cds.workflow}}"'

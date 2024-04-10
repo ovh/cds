@@ -65,7 +65,7 @@ testcases:
             init:
               runs-on: 
                 model: "{{.worker_model}}"
-                memory: 2048
+                memory: "2048"
               steps:
                 - id: checkout
                   uses: actions/checkout
