@@ -47,7 +47,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
         }
     }
 
-    @ViewChild('treeWorkspace') tree: TreeComponent
+    @ViewChild('treeWorkspace') tree: TreeComponent;
 
     loading: boolean = true;
     refreshWorkspace: boolean = false;

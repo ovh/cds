@@ -1,5 +1,5 @@
 import { ProjectIntegration } from 'app/model/integration.model';
-import { UIArtifact, WorkflowRunResult, WorkflowRunResultArtifact, WorkflowRunResultArtifactManager, WorkflowRunResultStaticFile } from 'app/model/workflow.run.model';
+import { UIArtifact, WorkflowRunResult, WorkflowRunResultArtifact, WorkflowRunResultArtifactManager, WorkflowRunResultStaticFile, WorkflowRunResultType } from 'app/model/workflow.run.model';
 
 export class WorkflowHelper {
     static toUIArtifact(results: Array<WorkflowRunResult>, artifactManagerIntegration?: ProjectIntegration): Array<UIArtifact> {
@@ -14,8 +14,8 @@ export class WorkflowHelper {
 
         return results.map(r => {
             switch (r.type) {
-                case 'artifact':
-                case 'coverage':
+                case WorkflowRunResultType.artifact:
+                case WorkflowRunResultType.coverage:
                     let data = <WorkflowRunResultArtifact>r.data;
                     let uiArtifact = new UIArtifact();
                     uiArtifact.link = `./cdscdn/item/run-result/${data.cdn_hash}/download`;
@@ -26,7 +26,7 @@ export class WorkflowHelper {
                     uiArtifact.type = r.type === 'artifact' ? 'file' : r.type;
                     uiArtifact.file_type = uiArtifact.type;
                     return uiArtifact;
-                case 'artifact-manager':
+                case WorkflowRunResultType['artifact-manager']:
                     let dataAM = <WorkflowRunResultArtifactManager>r.data;
                     let uiArtifactAM = new UIArtifact();
                     uiArtifactAM.link = `${integrationArtifactManagerURL}${dataAM.repository_name}/${dataAM.path}`;
@@ -37,7 +37,7 @@ export class WorkflowHelper {
                     uiArtifactAM.type = dataAM.repository_type;
                     uiArtifactAM.file_type = dataAM.file_type ? dataAM.file_type : dataAM.repository_type;
                     return uiArtifactAM;
-                case 'static-file':
+                case WorkflowRunResultType['static-file']:
                     let dataSF = <WorkflowRunResultStaticFile>r.data;
                     let uiArtifactSF = new UIArtifact();
                     uiArtifactSF.link = dataSF.remote_url;

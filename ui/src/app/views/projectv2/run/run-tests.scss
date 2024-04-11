@@ -1,4 +1,4 @@
-@import '../../../../../common';
+@import '../../../../common';
 
 :host {
   overflow: hidden;
@@ -33,4 +33,6 @@ nz-checkbox-group {
 
 nz-tree {
   margin: 0 10px;
+  flex: 1;
+  overflow: auto;
 }

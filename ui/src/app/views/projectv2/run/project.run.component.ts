@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, TemplateRef, ViewChild } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { from, interval, lastValueFrom, Subscription } from "rxjs";
 import { dump } from "js-yaml";
@@ -7,14 +7,14 @@ import { PreferencesState } from "app/store/preferences.state";
 import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
 import { Tab } from "app/shared/tabs/tabs.component";
-import { PipelineStatus } from "../../../model/pipeline.model";
+import { PipelineStatus, TestCase, Tests } from "../../../model/pipeline.model";
 import { concatMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { NavigationState } from "app/store/navigation.state";
 import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 
 @Component({
@@ -27,6 +27,7 @@ import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.mode
 export class ProjectV2WorkflowRunComponent implements OnDestroy {
     @ViewChild('graph') graph: WorkflowV2StagesGraphComponent;
     @ViewChild('autoHeightDirective') autoHeightDirective: NsAutoHeightTableDirective;
+    @ViewChild('tabTestsTemplate') tabTestsTemplate: TemplateRef<any>;
 
     workflowRun: V2WorkflowRun;
     workflowRunInfos: Array<WorkflowRunInfo>;
@@ -37,10 +38,12 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     selectedJobRunInfos: Array<WorkflowRunInfo>;
     selectedHookName: string;
     selectedRunResult: WorkflowRunResult;
+    selectedTest: TestCase;
     jobs: Array<V2WorkflowRunJob>;
     workflowGraph: any;
     selectedRunAttempt: number;
     results: Array<WorkflowRunResult>;
+    tests: Tests;
 
     // Subs
     sidebarSubs: Subscription;
@@ -98,10 +101,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         const projectKey = this._route.snapshot.parent.params['key'];
         const workflowRunID = this._route.snapshot.params['workflowRunID'];
 
-        delete this.selectedItemType;
-        delete this.selectedJobGate;
-        delete this.selectedJobRun;
-        delete this.selectedJobRunInfos;
+        this.clearPanel();
         delete this.workflowGraph;
         if (this.pollSubs) {
             this.pollSubs.unsubscribe();
@@ -122,6 +122,8 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     }
 
     async loadJobsAndResults() {
+        this.tabs = [...this.defaultTabs];
+
         try {
             this.jobs = await lastValueFrom(this._workflowService.getJobs(this.workflowRun, this.selectedRunAttempt));
         } catch (e) {
@@ -129,6 +131,14 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }
         try {
             this.results = await lastValueFrom(this._workflowService.getResults(this.workflowRun, this.selectedRunAttempt));
+            if (!!this.results.find(r => r.type === WorkflowRunResultType.tests)) {
+                this.computeTestsReport();
+                this.tabs = this.tabs.concat(<Tab>{
+                    title: 'Tests',
+                    key: 'tests',
+                    template: this.tabTestsTemplate
+                });
+            }
         } catch (e) {
             this._messageService.error(`Unable to get results: ${e?.error?.error}`, { nzDuration: 2000 });
         }
@@ -137,13 +147,14 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             if (!!this.workflowRunInfos.find(i => i.level === 'warning' || i.level === 'error')) {
                 this.tabs = [<Tab>{
                     title: 'Problems',
-                    key: 'problems',
-                    default: true
-                }, ...this.defaultTabs];
+                    key: 'problems'
+                }, ...this.tabs];
             }
         } catch (e) {
             this._messageService.error(`Unable to get run infos: ${e?.error?.error}`, { nzDuration: 2000 });
         }
+
+        this.tabs[0].default = true;
 
         await this.refreshPanel();
 
@@ -159,7 +170,28 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
             this.pollSubs.unsubscribe();
         }
 
-        this._cd.markForCheck();
+        this._cd.detectChanges();
+    }
+
+    computeTestsReport(): void {
+        this.tests = <Tests>{
+            ko: 0,
+            ok: 0,
+            skipped: 0,
+            total: 0,
+            test_suites: []
+        };
+
+        (this.results ?? []).filter(r => r.type === WorkflowRunResultType.tests).forEach(r => {
+            const suites = r.detail.data.tests_suites;
+            if (!suites.test_suites) { return; }
+            this.tests.test_suites.push(...suites.test_suites);
+            const stats = r.detail.data.tests_stats;
+            this.tests.ko += stats.ko ?? 0;
+            this.tests.ok += stats.ok ?? 0;
+            this.tests.skipped += stats.skipped ?? 0;
+            this.tests.total += stats.total ?? 0;
+        });
     }
 
     onBack(): void {
@@ -245,6 +277,9 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
                 this.selectedJobRun = this.jobs.find(j => j.id === data);
                 await this.selectJob(data);
                 break;
+            case 'test':
+                this.selectedTest = data;
+                break;
         }
 
 
@@ -289,6 +324,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         delete this.selectedJobGate;
         delete this.selectedJobRunInfos;
         delete this.selectedJobRun;
+        delete this.selectedTest;
     }
 
     closePanel(): void {
