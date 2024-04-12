@@ -107,7 +107,7 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
         this._store.dispatch(new actionPreferences.SetPanelResize({resizing: true}));
     }
 
-    panelEndResize(size: number): void {
+    panelEndResize(size: string): void {
         this._store.dispatch(new actionPreferences.SavePanelSize({
             panelKey: EntityFormComponent.PANEL_KEY,
             size: size

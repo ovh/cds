@@ -21,10 +21,6 @@ const routes: Routes = [
                     .then(m => m.ProjectModule), data: { title: 'Project' }
             },
             {
-                path: 'projectv2', loadChildren: () => import('app/views/projectv2/project.module')
-                    .then(m => m.ProjectV2Module), data: { title: 'Project' }
-            },
-            {
                 path: 'settings', loadChildren: () => import('app/views/settings/settings.module')
                     .then(m => m.SettingsModule), data: { title: 'Settings' }
             },

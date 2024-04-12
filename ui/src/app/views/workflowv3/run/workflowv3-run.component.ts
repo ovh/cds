@@ -48,8 +48,8 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
     selectJobRun: JobRun;
     eventSubscription: Subscription;
     results: Array<UIArtifact> = [];
-    infoPanelSize: number;
-    jobPanelSize: number;
+    infoPanelSize: string;
+    jobPanelSize: string;
     websocket: WebSocketSubject<any>;
     websocketSubscription: Subscription;
     cdnFilter: CDNStreamFilter;
@@ -110,7 +110,7 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
         });
 
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3RunComponent.INFO_PANEL_KEY));
-        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3RunComponent.JOB_PANEL_KEY));
+        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3RunComponent.JOB_PANEL_KEY)) ?? '50%';
     }
 
     async loadWorkflowRun() {
@@ -236,12 +236,12 @@ export class WorkflowV3RunComponent implements OnInit, OnDestroy {
         }
     }
 
-    infoPanelEndResize(size: number): void {
+    infoPanelEndResize(size: string): void {
         this.panelEndResize();
         this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: WorkflowV3RunComponent.INFO_PANEL_KEY, size: size }));
     }
 
-    jobPanelEndResize(size: number): void {
+    jobPanelEndResize(size: string): void {
         this.panelEndResize();
         this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: WorkflowV3RunComponent.JOB_PANEL_KEY, size: size }));
     }

@@ -31,9 +31,6 @@ export class WorkflowV3Graph<T extends WithHighlight> {
     static margin = 40; // let 40px on top and bottom of the graph
     static marginSubGraph = 20; // let 20px on top and bottom of the sub graph
     static maxOriginScale = 1;
-    static baseStageWidth = 300;
-    static minStageWidth = 200;
-    static minJobWidth = 60;
 
     nodesComponent = new Map<string, ComponentRef<T>>();
     nodes = new Array<Node>();

@@ -7,8 +7,10 @@ import {
     EventEmitter,
     HostListener,
     Input,
+    OnChanges,
     Output,
     Renderer2,
+    SimpleChanges,
     ViewChild
 } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -30,20 +32,21 @@ export enum PanelGrowDirection {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ResizablePanelComponent implements AfterViewInit {
+export class ResizablePanelComponent implements AfterViewInit, OnChanges {
     @ViewChild('grabber') grabber: ElementRef;
     @ViewChild('content') content: ElementRef;
 
     @Input() direction = PanelDirection.HORIZONTAL;
     @Input() growDirection = PanelGrowDirection.BEFORE;
-    @Input() minSize = null;
+    @Input() minSize: number = null;
     @Input() initialSize: number | string = null;
 
     @Output() onGrabbingStart = new EventEmitter<void>();
-    @Output() onGrabbingEnd = new EventEmitter<number>();
+    @Output() onGrabbingEnd = new EventEmitter<string>();
 
     grabbing = false;
-    size: number;
+    sizePixels: number;
+    sizePercents: number;
 
     constructor(
         private _cd: ChangeDetectorRef,
@@ -51,8 +54,16 @@ export class ResizablePanelComponent implements AfterViewInit {
         private _elementRef: ElementRef
     ) { }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        this.init();
+    }
+
     ngAfterViewInit(): void {
-        let initialSize = (this.minSize ?? (this.direction === PanelDirection.HORIZONTAL ? 600 : 200));
+        this.init();
+    }
+
+    init() {
+        let initialSize: number = 0;
         if (this.initialSize) {
             if (typeof this.initialSize === 'number') {
                 initialSize = this.initialSize;
@@ -63,8 +74,17 @@ export class ResizablePanelComponent implements AfterViewInit {
                 } catch (e) { }
             }
         }
-        this.size = initialSize;
+        const minSize = (this.minSize ?? (this.direction === PanelDirection.HORIZONTAL ? 600 : 200));
+        const maxSize = this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight;
+        if (initialSize < minSize) { initialSize = minSize; }
+        if (initialSize > maxSize) { initialSize = maxSize; }
+        this.sizePixels = initialSize;
+        this.computeSizePercents();
         this.redraw();
+    }
+
+    computeSizePercents(): void {
+        this.sizePercents = (this.sizePixels / (this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight)) * 100;
     }
 
     onMouseDownGrabber(): void {
@@ -80,7 +100,7 @@ export class ResizablePanelComponent implements AfterViewInit {
         }
         this.grabbing = false;
         this._cd.detectChanges();
-        this.onGrabbingEnd.emit(this.size);
+        this.onGrabbingEnd.emit(this.sizePercents + '%');
     }
 
     @HostListener('window:mousemove', ['$event'])
@@ -89,22 +109,36 @@ export class ResizablePanelComponent implements AfterViewInit {
             if (this.direction === PanelDirection.HORIZONTAL) {
                 const maxSize = this._elementRef.nativeElement.parentNode.clientWidth;
                 const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX : window.innerWidth - event.clientX, this.minSize ?? 600);
-                this.size = Math.min(newSize, maxSize);
+                this.sizePixels = Math.min(newSize, maxSize);
+                this.computeSizePercents();
             } else {
                 const maxSize = this._elementRef.nativeElement.parentNode.clientHeight;
                 const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY : window.innerHeight - event.clientY, this.minSize ?? 200);
-                this.size = Math.min(newSize, maxSize);
+                this.sizePixels = Math.min(newSize, maxSize);
+                this.computeSizePercents();
             }
             this.redraw();
         }
     }
 
+    @HostListener('window:resize', ['$event'])
+    onResize(event: any) {
+        let size = (this.sizePercents * (this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight)) / 100;
+        const minSize = (this.minSize ?? (this.direction === PanelDirection.HORIZONTAL ? 600 : 200));
+        const maxSize = this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight;
+        if (size < minSize) { size = minSize; }
+        if (size > maxSize) { size = maxSize; }
+        this.sizePixels = size;
+        this.redraw();
+    }
+
     redraw(): void {
+        if (!this.content) { return; }
         if (this.direction === PanelDirection.HORIZONTAL) {
-            this._renderer.setStyle(this.content.nativeElement, 'width', `${this.size - 4}px`);
+            this._renderer.setStyle(this.content.nativeElement, 'width', `${this.sizePixels - 4}px`);
             this._cd.detectChanges();
         } else {
-            this._renderer.setStyle(this.content.nativeElement, 'height', `${this.size - 4}px`);
+            this._renderer.setStyle(this.content.nativeElement, 'height', `${this.sizePixels - 4}px`);
             this._cd.detectChanges();
         }
     }

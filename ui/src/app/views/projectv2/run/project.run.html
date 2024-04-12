@@ -21,7 +21,7 @@
                 </nz-page-header-title>
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
-                        Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} by {{workflowRun.contexts.git.username}}
+                        Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} - {{workflowRun.contexts.git.ref}} by {{workflowRun.contexts.git.username}}
                         on
                         repository
                         {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
@@ -122,20 +122,26 @@
     <!--  RIGHT PANELS -->
 
     <app-resizable-panel *ngIf="selectedItemType" minSize="400" [initialSize]="jobPanelSize"
-        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)">
+        (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
+        (dblclick)="$event.stopPropagation(); dblClickOnPanel()">
+        <div class="controls">
+            <div class="control" (click)="clickClosePanel()">
+                <span nz-icon nzType="close" nzTheme="outline"></span>
+            </div>
+            <div class="control" [class.expand]="!panelExpanded" [class.expanded]="panelExpanded"
+                (click)="clickExpandPanel()">
+                <span nz-icon nzType="vertical-align-top" nzTheme="outline"></span>
+            </div>
+        </div>
         <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun" [jobRun]="selectedJobRun"
-            [jobRunInfos]="selectedJobRunInfos" (onClose)="closePanel()"></app-run-job>
-        <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate" [run]="workflowRun"
-            (onClose)="closePanel()"></app-run-gate>
-        <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"
-            (onClose)="closePanel()"></app-run-hook>
-        <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"
-            (onClose)="closePanel()"></app-run-result>
-        <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"
-            (onClose)="closePanel()"></app-run-workflow>
-        <app-run-contexts *ngIf="selectedItemType === 'contexts'" [run]="workflowRun"
-            (onClose)="closePanel()"></app-run-contexts>
-        <app-run-test *ngIf="selectedItemType === 'test'" [test]="selectedTest" (onClose)="closePanel()"></app-run-test>
+            [jobRunInfos]="selectedJobRunInfos"></app-run-job>
+        <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate"
+            [run]="workflowRun"></app-run-gate>
+        <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"></app-run-hook>
+        <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"></app-run-result>
+        <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"></app-run-workflow>
+        <app-run-contexts *ngIf="selectedItemType === 'contexts'" [run]="workflowRun"></app-run-contexts>
+        <app-run-test *ngIf="selectedItemType === 'test'" [test]="selectedTest"></app-run-test>
     </app-resizable-panel>
 
 </ng-container>

@@ -1,8 +1,6 @@
 <app-resizable-panel growDirection="after" minSize="250" [initialSize]="panelSize"
 	(onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="panelEndResize($event)">
-	<ng-container>
-		<app-projectv2-sidebar class="sidebar" [project]="project"></app-projectv2-sidebar>
-	</ng-container>
+	<app-projectv2-sidebar class="sidebar" [project]="project"></app-projectv2-sidebar>
 </app-resizable-panel>
 
 <div class="content">

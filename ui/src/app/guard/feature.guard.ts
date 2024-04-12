@@ -2,14 +2,16 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { FeatureEnabledResponse } from 'app/model/feature.model';
 import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
+import { RouterService } from 'app/service/services.module';
 import { Observable } from 'rxjs';
 import { filter, first, map } from 'rxjs/operators';
 
 @Injectable()
-export class FeatureGuard  {
+export class FeatureGuard {
     constructor(
         private _router: Router,
-        private _featureService: FeatureService
+        private _featureService: FeatureService,
+        private _routerService: RouterService
     ) { }
 
     isAllAsCodeActive(projectKey: string): Observable<boolean> | boolean {
@@ -30,33 +32,14 @@ export class FeatureGuard  {
             );
     }
 
-    isWorkflowV3Active(projectKey: string): Observable<boolean> | boolean {
-        if (!projectKey) {
-            return false;
-        }
-        return this._featureService.isEnabled(FeatureNames.WorkflowV3, { project_key: projectKey })
-            .pipe(
-                map((r: FeatureEnabledResponse): boolean => {
-                    if (!r.enabled) {
-                        this._router.navigate(['/']);
-                        return null;
-                    }
-                    return true;
-                }),
-                filter(active => active !== null),
-                first()
-            );
-    }
-
     canActivate(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean> | Promise<boolean> | boolean {
+        const allParamsSnapshot = this._routerService.getRouteSnapshotParams({}, state.root);
         switch (route.data.feature) {
-            case FeatureNames.WorkflowV3:
-                return this.isWorkflowV3Active(route.params.key);
             case FeatureNames.AllAsCode:
-                return this.isAllAsCodeActive(route.params.key);
+                return this.isAllAsCodeActive(allParamsSnapshot['key']);
             default:
                 return false;
         }

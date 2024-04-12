@@ -28,6 +28,7 @@ import { Subscription } from 'rxjs';
 import { filter, finalize, first } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { RouterService } from 'app/service/services.module';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -86,7 +87,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         private _keyService: KeyService,
         private _pipCoreService: PipelineCoreService,
         private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _routerService: RouterService
     ) {
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
@@ -137,7 +139,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         this.projectKey = this._routeActivated.snapshot.params['key'];
         this.pipName = this._routeActivated.snapshot.params['pipName'];
 
-        this._routeActivated.params.subscribe(params => {
+        this._routeActivated.params.subscribe(_ => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            
             if (!this.pipeline || this.projectKey !== params['key'] || this.pipName !== params['pipName']) {
                 this.projectKey = params['key'];
                 this.pipName = params['pipName'];

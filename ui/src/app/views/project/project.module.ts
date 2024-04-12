@@ -20,28 +20,34 @@ import { ProjectWorkflowListBlocsComponent } from './show/workflow/blocs/workflo
 import { ProjectWorkflowListLabelsComponent } from './show/workflow/labels/workflow.list.labels.component';
 import { ProjectWorkflowListLinesComponent } from './show/workflow/lines/workflow.list.lines.component';
 import { ProjectWorkflowListComponent } from './show/workflow/workflow.list.component';
+import { ProjectComponent } from './project.component';
+import { ProjectActivityBarComponent } from './activity-bar/activity-bar.component';
+import { ProjectSettingsComponent } from './settings/settings.component';
 
 @NgModule({
     declarations: [
+        ProjectActivityBarComponent,
         ProjectAddComponent,
-        ProjectListComponent,
         ProjectAdminComponent,
         ProjectApplicationListComponent,
+        ProjectComponent,
         ProjectEnvironmentListComponent,
-        ProjectKeysComponent,
-        ProjectPipelinesComponent,
-        ProjectVariablesComponent,
-        ProjectPermissionsComponent,
-        ProjectRepoManagerComponent,
-        ProjectShowComponent,
-        ProjectWorkflowListBlocsComponent,
-        ProjectWorkflowListLabelsComponent,
-        ProjectWorkflowListLinesComponent,
-        ProjectWorkflowListComponent,
         ProjectEnvironmentListComponent,
-        ProjectIntegrationsComponent,
         ProjectIntegrationFormComponent,
-        ProjectIntegrationListComponent
+        ProjectIntegrationListComponent,
+        ProjectIntegrationsComponent,
+        ProjectKeysComponent,
+        ProjectListComponent,
+        ProjectPermissionsComponent,
+        ProjectPipelinesComponent,
+        ProjectRepoManagerComponent,
+        ProjectSettingsComponent,
+        ProjectShowComponent,
+        ProjectVariablesComponent,
+        ProjectWorkflowListBlocsComponent,
+        ProjectWorkflowListComponent,
+        ProjectWorkflowListLabelsComponent,
+        ProjectWorkflowListLinesComponent
     ],
     imports: [
         SharedModule,
@@ -52,5 +58,4 @@ import { ProjectWorkflowListComponent } from './show/workflow/workflow.list.comp
         CUSTOM_ELEMENTS_SCHEMA
     ]
 })
-export class ProjectModule {
-}
+export class ProjectModule { }

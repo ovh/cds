@@ -25,7 +25,7 @@ export class WorkflowV3ShowComponent implements OnInit, OnDestroy {
     direction: GraphDirection = GraphDirection.VERTICAL;
     project: Project;
     resizing = false;
-    panelSize: number;
+    panelSize: string;
     resizingSubscription: Subscription;
 
     constructor(
@@ -36,7 +36,7 @@ export class WorkflowV3ShowComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
-        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3ShowComponent.PANEL_KEY));
+        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(WorkflowV3ShowComponent.PANEL_KEY)) ?? '50%';
 
         this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
             this.resizing = resizing;
@@ -55,7 +55,7 @@ export class WorkflowV3ShowComponent implements OnInit, OnDestroy {
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
-    panelEndResize(size: number): void {
+    panelEndResize(size: string): void {
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
         this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {

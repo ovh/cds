@@ -151,7 +151,7 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	buildStatus := sdk.VCSBuildStatus{
 		Title:              title,
 		Description:        description,
-		URLCDS:             fmt.Sprintf("%s/projectv2/%s/run/%s", cdsUIURL, event.ProjectKey, event.WorkflowRunID),
+		URLCDS:             fmt.Sprintf("%s/project/%s/run/%s", cdsUIURL, event.ProjectKey, event.WorkflowRunID),
 		Context:            fmt.Sprintf("%s-%s #%d", event.ProjectKey, run.WorkflowName, run.RunNumber),
 		Status:             event.Status,
 		RepositoryFullname: event.Repository,

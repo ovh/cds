@@ -56,6 +56,7 @@ export class ProjectV2WorkflowRunListSidebarComponent implements OnInit, OnDestr
 						}
 					}
 				});
+				if (s.sort) { params['sort'] = s.sort; }
 				return {
 					name: s.name,
 					params

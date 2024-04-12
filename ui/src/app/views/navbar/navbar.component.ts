@@ -17,9 +17,11 @@ import { ConfigState } from 'app/store/config.state';
 import { HelpState } from 'app/store/help.state';
 import { PreferencesState } from 'app/store/preferences.state';
 import { List } from 'immutable';
-import { Subscription } from 'rxjs';
+import { Subscription, lastValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import * as actionPreferences from 'app/store/preferences.action';
+import { ProjectService } from 'app/service/project/project.service';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
     selector: 'app-navbar',
@@ -42,7 +44,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     navbarSubscription: Subscription;
     authSubscription: Subscription;
     configSubscription: Subscription;
-    currentRoute: {};
     recentView = true;
     currentAuthSummary: AuthSummary;
     themeSubscription: Subscription;
@@ -57,6 +58,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     workflowsSubscription: Subscription;
     showNotif = false;
     apiConfig: APIConfig;
+    selectedProjectKey: string;
+    projectSubscription: Subscription;
+    projects: Array<Project> = [];
 
     constructor(
         private _navbarService: NavbarService,
@@ -65,7 +69,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private _workflowStore: WorkflowStore,
         private _router: Router,
         private _routerService: RouterService,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _projectService: ProjectService,
+        private _messageService: NzMessageService
     ) {
         this.authSubscription = this._store.select(AuthenticationState.summary).subscribe(s => {
             this.currentAuthSummary = s;
@@ -90,12 +96,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.help = help;
                 this._cd.markForCheck();
             });
-
-        this._router.events.pipe(
-            filter(e => e instanceof NavigationEnd),
-        ).forEach(() => {
-            this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
-        });
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -146,6 +146,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.items = this.recentItems;
                 this._cd.markForCheck();
             }
+        });
+
+        this._router.events.pipe(
+            filter(e => e instanceof NavigationEnd),
+        ).forEach(() => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            this.selectedProjectKey = params['key'] ?? null;
+            this._cd.markForCheck();
         });
     }
 
@@ -262,10 +270,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Listen change on project list.
-     */
-    getData(): void {
+    async getData() {
         this._navbarService.refreshData();
         this.navbarSubscription = this._navbarService.getObservable().subscribe(data => {
             if (Array.isArray(data) && data.length > 0) {
@@ -307,6 +312,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.loading = false;
             this._cd.markForCheck();
         });
+
+        try {
+            this.projects = await lastValueFrom(this._projectService.getProjects());
+        } catch (e) {
+            this._messageService.error(`Unable to list projects: ${e?.error?.error}`, { nzDuration: 2000 });
+        }
     }
 
     /**

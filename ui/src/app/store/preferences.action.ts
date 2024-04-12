@@ -1,6 +1,6 @@
 export class SavePanelSize {
     static readonly type = '[Preferences] Save panel size';
-    constructor(public payload: { panelKey: string, size: number }) { }
+    constructor(public payload: { panelKey: string, size: string }) { }
 }
 
 export class SetPanelResize {
@@ -15,10 +15,15 @@ export class SetTheme {
 
 export class SaveProjectWorkflowRunFilter {
     static readonly type = '[Preferences] Save project\'s workflow run filter';
-    constructor(public payload: { projectKey: string, name: string, value: string }) { }
+    constructor(public payload: { projectKey: string, name: string, value: string, sort: string }) { }
 }
 
 export class DeleteProjectWorkflowRunFilter {
     static readonly type = '[Preferences] Delete project\'s workflow run filter';
     constructor(public payload: { projectKey: string, name: string }) { }
+}
+
+export class SaveMessageState {
+    static readonly type = '[Preferences] Save message\'s state';
+    constructor(public payload: { messageKey: string, value: boolean }) { }
 }

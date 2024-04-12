@@ -7,17 +7,16 @@
   flex-direction: column;
   color: $polar_grey_1;
   background-color: $greyBackground;
+  border-right: 1px solid #f0f0f0;
 
   :host-context(.night) & {
     background-color: $darkBackground;
     color: $darkTheme_grey_6;
-  }
-
-  a:last-child {
-    margin-top: auto;
+    border-color: #303030;
   }
 
   a {
+    position: relative;
     color: inherit;
 
     [nz-button] {
@@ -35,6 +34,24 @@
         :host-context(.night) & {
           border-left: 3px solid $greyBackground;
         }
+      }
+    }
+
+    .label {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 18px;
+      height: 16px;
+      font-size: 10px;
+      background-color: $polar_grey_1;
+      text-align: center;
+      color: $darkTheme_grey_6;
+      border-radius: 10px;
+
+      :host-context(.night) & {
+        background-color: $greyBackground;
+        color: $darkBackground;
       }
     }
   }

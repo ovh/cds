@@ -17,7 +17,6 @@ export class RunWorkflowComponent implements OnInit, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
 	@Input() workflow: string;
-	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
@@ -54,10 +53,6 @@ export class RunWorkflowComponent implements OnInit, OnDestroy {
 	selectTab(tab: Tab): void {
 		this.selectedTab = tab;
 		this._cd.markForCheck();
-	}
-
-	clickClose(): void {
-		this.onClose.emit();
 	}
 
 }

@@ -21,24 +21,6 @@ app-tabs {
   }
 }
 
-.close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 38px;
-  width: 38px;
-  padding: 9px;
-  cursor: pointer;
-
-  &:hover {
-    color: white;
-  }
-
-  .icon {
-    margin: unset;
-  }
-}
-
 nz-code-editor {
   height: 100%;
   border-left: 1px solid #f0f0f0;

@@ -19,7 +19,6 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 
 	@Input() run: V2WorkflowRun;
 	@Input() hook: string;
-	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
@@ -64,10 +63,6 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 	selectTab(tab: Tab): void {
 		this.selectedTab = tab;
 		this._cd.markForCheck();
-	}
-
-	clickClose(): void {
-		this.onClose.emit();
 	}
 
 }

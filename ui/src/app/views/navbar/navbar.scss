@@ -84,6 +84,11 @@
             margin: 0 20px;
         }
     }
+
+    nz-select {
+        min-width: 100px;
+        margin-right: 20px;
+    }
 }
 
 i {
@@ -116,7 +121,6 @@ li {
         }
     }
 }
-
 
 nz-switch {
     margin-right: 10px;

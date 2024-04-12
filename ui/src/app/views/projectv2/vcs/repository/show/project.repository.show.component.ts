@@ -110,7 +110,7 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
             }))
             .subscribe(() => {
                 this._toastService.success('Repository has been removed', '');
-                this._router.navigate(['/', 'projectv2', this.project.key]);
+                this._router.navigate(['/', 'project', this.project.key]);
             });
     }
 
