@@ -1,7 +1,7 @@
-name: Upload and Download generic artifacts from Workflow as code v2
+name: Python / Debian / Helm push
 vars:
-  cds_project: "ITV2ARTIFACTSPYTHON"
-  git_repo: "it_v2_artifacts_python_artifactory_rt"
+  cds_project: "ITV2ARTIFACTORYPLUGINS"
+  git_repo: "it_v2_rt_plugins"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
   rt_url: "rt_url"
   rt_token: "rt_token"
@@ -140,6 +140,27 @@ testcases:
           package_dir={'':'quicksample/src'},
           install_requires=[]
         )
+      chart/Chart.yaml: |-
+        apiVersion: v2
+        name: mychart
+        description: A Helm chart for Kubernetes
+        type: application
+        version: 0.1.0
+        appVersion: "1.16.0"
+      chart/templates/deployment.yaml:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: coucou
+        spec:
+          selector:
+            matchLabels:
+              helm.sh/chart: toto
+      chart/values.yaml:
+        replicaCount: 1
+        image:
+          repository: nginx
+          pullPolicy: IfNotPresent
       worker-models/debian.yaml:
         name: docker-debian
         description: my debian worker model
@@ -152,11 +173,16 @@ testcases:
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
         jobs:
-          First-Job:
+          Helm-Job:
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/checkout
-              - run: python -m pip install --user --upgrade setuptools wheel
+              - uses: actions/helmPush
+          Python-Job:
+            runs-on: "{{.worker_model}}"
+            steps:
+              - uses: actions/checkout
+              - run: python3 -m pip install --user --upgrade setuptools wheel
               - uses: actions/pythonPush
                 with:
                   package: quicksample
@@ -209,6 +235,4 @@ testcases:
   - name: Check that we have 2 run results
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 2
-      - result.systemoutjson.systemoutjson0.type ShouldEqual "python"
-      - result.systemoutjson.systemoutjson1.type ShouldEqual "python"
+      - result.systemoutjson ShouldHaveLength 3 # 2 python + 1 helm
