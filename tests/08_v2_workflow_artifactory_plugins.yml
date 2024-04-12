@@ -113,12 +113,12 @@ testcases:
     git_password: "{{.git.password}}"
     gpg_key_id: "{{.gpg.key_id}}"
     files:
-      quicksample/src/quicksample.py: |-
+      quicksample/src/quicksample.py: |
         def quicktext():
           print('Hello, welcome to QuickSample package.')
-      README.md: |-
-        Hello    
-      setup.py: |-
+      README.md: |
+        Hello
+      setup.py: |
         import setuptools
         with open("README.md", "r") as fh:
           long_description = fh.read()
@@ -140,7 +140,7 @@ testcases:
           package_dir={'':'quicksample/src'},
           install_requires=[]
         )
-      chart/Chart.yaml: |-
+      chart/Chart.yaml: |
         apiVersion: v2
         name: mychart
         description: A Helm chart for Kubernetes
@@ -173,6 +173,16 @@ testcases:
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
         jobs:
+          Debian-Job:
+            runs-on: "{{.worker_model}}"
+            steps:
+              - uses: actions/checkout
+              - run: apt-get update -y && apt-get install -y python3-pip python3-stdeb fakeroot
+              - run: pip3 install stem stdeb
+              - run: python3 setup.py --command-packages=stdeb.command bdist_deb
+              - uses: actions/debianPush
+                with:
+                  files: deb_dist/*.deb
           Helm-Job:
             runs-on: "{{.worker_model}}"
             steps:
@@ -232,7 +242,15 @@ testcases:
       workflowRunID:
         from: result.systemoutjson.systemoutjson0.id
 
-  - name: Check that we have 2 run results
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --format json"  
+  - name: Check that we have 2 run results of type python
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 3 # 2 python + 1 helm
+      - result.systemoutjson ShouldHaveLength 2
+  - name: Check that we have 1 run result of type debian
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type helm
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=helm --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1   
