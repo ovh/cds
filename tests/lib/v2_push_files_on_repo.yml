@@ -18,6 +18,10 @@ steps:
       mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/worker-models
   - range: {{.input.files}}
     script: |-
+      directory=$(sed 's/\(.*\)\/.*/\1/' <<< {{.key}})
+      if [[ $directory == *"/"* ]]; then
+        mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/$directory
+      fi  
       /bin/bash -c cat | yq -P <<- 'EOF' > /tmp/repos/{{.input.git_repo}}/.cds/{{.key}}
       {{.value}}
       EOF

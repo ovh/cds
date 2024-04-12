@@ -113,12 +113,12 @@ testcases:
     git_password: "{{.git.password}}"
     gpg_key_id: "{{.gpg.key_id}}"
     files:
-      quicksample/src/quicksample.py: |
+      ../quicksample/src/quicksample.py: |
         def quicktext():
           print('Hello, welcome to QuickSample package.')
-      README.md: |
+      ../README.md: |
         Hello
-      setup.py: |
+      ../setup.py: |
         import setuptools
         with open("README.md", "r") as fh:
           long_description = fh.read()
@@ -140,14 +140,14 @@ testcases:
           package_dir={'':'quicksample/src'},
           install_requires=[]
         )
-      chart/Chart.yaml: |
+      ../chart/Chart.yaml: |
         apiVersion: v2
         name: mychart
         description: A Helm chart for Kubernetes
         type: application
         version: 0.1.0
         appVersion: "1.16.0"
-      chart/templates/deployment.yaml:
+      ../chart/templates/deployment.yaml:
         apiVersion: apps/v1
         kind: Deployment
         metadata:
@@ -156,7 +156,7 @@ testcases:
           selector:
             matchLabels:
               helm.sh/chart: toto
-      chart/values.yaml:
+      ../chart/values.yaml:
         replicaCount: 1
         image:
           repository: nginx
