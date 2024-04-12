@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -53,7 +54,32 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) PrepareSpecFiles(ctx cont
 	return &specFiles, nil
 }
 
+func (p *artifactoryReleaseBundleCreatePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
+		Status: sdk.StatusSuccess,
+	}
+	if err := p.perform(ctx, q); err != nil {
+		res.Status = sdk.StatusFail
+		res.Details = fmt.Sprintf("%v", err)
+	}
+	return stream.Send(res)
+}
+
 func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	res := &actionplugin.ActionResult{
+		Status: sdk.StatusSuccess,
+	}
+	if err := actPlugin.perform(ctx, q); err != nil {
+		res.Status = sdk.StatusFail
+		res.Details = fmt.Sprintf("%v", err)
+	}
+	return res, nil
+}
+
+func (actPlugin *artifactoryReleaseBundleCreatePlugin) perform(ctx context.Context, q *actionplugin.ActionQuery) error {
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	description := q.GetOptions()["description"]
@@ -71,17 +97,23 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 
 		if url == "" {
 			url = artiURL
+			if url == "" {
+				url = os.Getenv("CDS_INTEGRATION_ARTIFACT_MANAGER_URL")
+			}
 		}
 		if token == "" {
 			token = artiToken
+			if token == "" {
+				token = os.Getenv("CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN")
+			}
 		}
 	}
 
 	if url == "" {
-		return actionplugin.Fail("missing Artifactory URL")
+		return fmt.Errorf("missing Artifactory URL")
 	}
 	if token == "" {
-		return actionplugin.Fail("missing Artifactory Distribution Token")
+		return fmt.Errorf("missing Artifactory Distribution Token")
 	}
 
 	fmt.Printf("Preparing release bundle %q version %q\n", name, version)
@@ -93,7 +125,7 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 
 	releaseBundleSpecs, err := actPlugin.PrepareSpecFiles(ctx, specification)
 	if err != nil {
-		return actionplugin.Fail(err.Error())
+		return err
 	}
 
 	rtDetails := new(config.ServerDetails)
@@ -117,15 +149,9 @@ func (actPlugin *artifactoryReleaseBundleCreatePlugin) Run(ctx context.Context, 
 	}
 
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return &actionplugin.ActionResult{
-			Status: sdk.StatusFail,
-		}, nil
+		return err
 	}
-
-	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess,
-	}, nil
+	return nil
 }
 
 func main() {

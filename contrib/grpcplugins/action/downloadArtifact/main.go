@@ -43,9 +43,15 @@ func (actPlugin *runActionDownloadArtifactlugin) Manifest(_ context.Context, _ *
 	}, nil
 }
 
-// Run implements actionplugin.ActionPluginServer.
 func (actPlugin *runActionDownloadArtifactlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+	return nil, sdk.ErrNotImplemented
+}
+
+func (p *runActionDownloadArtifactlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
@@ -53,18 +59,17 @@ func (actPlugin *runActionDownloadArtifactlugin) Run(ctx context.Context, q *act
 	path := q.GetOptions()["path"]
 	_ = path
 
-	if err := actPlugin.perform(ctx, name, path); err != nil {
+	if err := p.perform(ctx, name, path); err != nil {
 		res.Status = sdk.StatusFail
-		res.Status = err.Error()
-		return res, err
+		res.Details = err.Error()
 	}
 
-	return res, nil
+	return stream.Send(res)
 }
 
 func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, name, path string) error {
 	if name == "" {
-		grpcplugins.Log("No artifact name specified, downloading all artifacts")
+		grpcplugins.Log(&actPlugin.Common, "No artifact name specified, downloading all artifacts")
 	}
 
 	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &actPlugin.Common)
@@ -85,13 +90,13 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 	}
 
 	if len(filteredRunResults) == 0 {
-		grpcplugins.Log("Unable to find any artifacts for the associated workflow")
+		grpcplugins.Log(&actPlugin.Common, "Unable to find any artifacts for the associated workflow")
 	}
 
 	var nbSuccess int
 	var hasError bool
 
-	grpcplugins.Logf("Total number of files that will be downloaded: %d", len(response.RunResults))
+	grpcplugins.Logf(&actPlugin.Common, "Total number of files that will be downloaded: %d", len(response.RunResults))
 
 	for _, r := range filteredRunResults {
 		t0 := time.Now()
@@ -100,11 +105,11 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		case r.ArtifactManagerIntegrationName == nil: // download from CDN
 			x, destinationFile, n, err := downloadFromCDN(ctx, &actPlugin.Common, r, response.CDNSignature, *workDirs, path)
 			if err != nil {
-				grpcplugins.Errorf(err.Error())
+				grpcplugins.Errorf(&actPlugin.Common, err.Error())
 				hasError = true
 				continue
 			}
-			grpcplugins.Logf("Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
+			grpcplugins.Logf(&actPlugin.Common, "Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
 		case r.ArtifactManagerIntegrationName != nil: // download from artifactory
 
 			// Get integration from the local cache, or from the worker
@@ -113,7 +118,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 			if !has {
 				integFromWorker, err := grpcplugins.GetIntegrationByName(ctx, &actPlugin.Common, *r.ArtifactManagerIntegrationName)
 				if err != nil {
-					grpcplugins.Errorf(err.Error())
+					grpcplugins.Errorf(&actPlugin.Common, err.Error())
 					hasError = true
 					actPlugin.lockCacheIntegrations.Unlock()
 					continue
@@ -125,11 +130,11 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 
 			x, destinationFile, n, err := downloadFromArtifactory(ctx, &actPlugin.Common, integ, *workDirs, r, path)
 			if err != nil {
-				grpcplugins.Errorf(err.Error())
+				grpcplugins.Errorf(&actPlugin.Common, err.Error())
 				hasError = true
 				continue
 			}
-			grpcplugins.Successf("Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
+			grpcplugins.Successf(&actPlugin.Common, "Artifact %q was downloaded to %s (%d bytes downloaded in %.3f seconds).", x.Name, destinationFile, n, time.Since(t0).Seconds())
 		}
 		nbSuccess++
 	}
@@ -138,7 +143,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		return errors.New("artifacts download failed")
 	}
 
-	grpcplugins.Logf("There were %d artifacts downloaded", nbSuccess)
+	grpcplugins.Logf(&actPlugin.Common, "There were %d artifacts downloaded", nbSuccess)
 
 	return nil
 }
@@ -157,7 +162,7 @@ func downloadFromArtifactory(ctx context.Context, c *actionplugin.Common, integr
 	rtToken := integration.Config[sdk.ArtifactoryConfigToken].Value
 	req.Header.Set("Authorization", "Bearer "+rtToken)
 
-	grpcplugins.Logf("Downloading file from %s...", downloadURI)
+	grpcplugins.Logf(c, "Downloading file from %s...", downloadURI)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {

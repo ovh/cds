@@ -11,6 +11,7 @@ import (
 const (
 	TypeAction      = "action"
 	TypeIntegration = "integration"
+	TypeStream      = "stream"
 
 	InputManagementStrict  = "strict"
 	InputManagementDefault = "default"

@@ -44,9 +44,11 @@ func (actPlugin *dockerPushPlugin) Manifest(_ context.Context, _ *empty.Empty) (
 	}, nil
 }
 
-// Run implements actionplugin.ActionPluginServer.
-func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *dockerPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
@@ -67,13 +69,17 @@ func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 		image = image + ":latest"
 	}
 
-	if err := actPlugin.perform(ctx, image, tagSlice, registry, auth); err != nil {
+	if err := p.perform(ctx, image, tagSlice, registry, auth); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
 	}
+	return stream.Send(res)
 
-	return res, nil
+}
+
+// Run implements actionplugin.ActionPluginServer.
+func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 type img struct {
@@ -134,10 +140,9 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	for _, tag := range tags {
 		result, d, err := actPlugin.performImage(ctx, cli, image, imgFound, registry, registryAuth, strings.TrimSpace(tag))
 		if err != nil {
-			grpcplugins.Error(err.Error())
 			return err
 		}
-		grpcplugins.Successf("Image %s pushed in %.3fs", result.Name(), d.Seconds())
+		grpcplugins.Successf(&actPlugin.Common, "Image %s pushed in %.3fs", result.Name(), d.Seconds())
 	}
 
 	return nil

@@ -34,7 +34,32 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Manifest(_ context.Co
 	}, nil
 }
 
+func (p *artifactoryReleaseBundleDistributePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
+		Status: sdk.StatusSuccess,
+	}
+	if err := p.perform(ctx, q); err != nil {
+		res.Status = sdk.StatusFail
+		res.Details = fmt.Sprintf("%v", err)
+	}
+	return stream.Send(res)
+}
+
 func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	res := &actionplugin.ActionResult{
+		Status: sdk.StatusSuccess,
+	}
+	if err := actPlugin.perform(ctx, q); err != nil {
+		res.Status = sdk.StatusFail
+		res.Details = fmt.Sprintf("%v", err)
+	}
+	return res, nil
+}
+
+func (actPlugin *artifactoryReleaseBundleDistributePlugin) perform(ctx context.Context, q *actionplugin.ActionQuery) error {
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	url := q.GetOptions()["url"]
@@ -50,17 +75,23 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 
 		if url == "" {
 			url = artiURL
+			if url == "" {
+				url = os.Getenv("CDS_INTEGRATION_ARTIFACT_MANAGER_URL")
+			}
 		}
 		if token == "" {
 			token = artiToken
+			if token == "" {
+				token = os.Getenv("CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN")
+			}
 		}
 	}
 
 	if url == "" {
-		return actionplugin.Fail("missing Artifactory URL")
+		return fmt.Errorf("missing Artifactory URL")
 	}
 	if token == "" {
-		return actionplugin.Fail("missing Artifactory Distribution Token")
+		return fmt.Errorf("missing Artifactory Distribution Token")
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
@@ -69,17 +100,17 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 	log.SetLogger(log.NewLogger(log.INFO, os.Stdout))
 	distriClient, err := art.CreateDistributionClient(ctx, url, token)
 	if err != nil {
-		return actionplugin.Fail("unable to create distribution client: %v", err)
+		return fmt.Errorf("unable to create distribution client: %v", err)
 	}
 
 	fmt.Printf("Listing Edge nodes to distribute the release\n")
 	edges, err := edge.ListEdgeNodes(distriClient)
 	if err != nil {
-		return actionplugin.Fail("%v", err)
+		return err
 	}
 
 	if len(edges) == 0 {
-		return actionplugin.Fail("No destination available. Please check your credentials", err)
+		return fmt.Errorf("No destination available. Please check your credentials")
 	}
 
 	distributionParams := distribution.NewDistributeReleaseBundleParams(name, version)
@@ -94,12 +125,9 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Conte
 	}
 
 	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10, false); err != nil {
-		return actionplugin.Fail("unable to distribute version: %v", err)
+		return fmt.Errorf("unable to distribute version: %v", err)
 	}
-
-	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess,
-	}, nil
+	return nil
 }
 
 func main() {

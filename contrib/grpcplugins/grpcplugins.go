@@ -28,40 +28,43 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-func Logf(s string, i ...any) {
-	fmt.Println(fmt.Sprintf(s, i...))
+func Logf(c *actionplugin.Common, s string, i ...any) {
+	Log(c, fmt.Sprintf(s, i...))
 }
 
-func Println(a ...interface{}) {
-	fmt.Println(a...)
+func Log(c *actionplugin.Common, s string) {
+	if c.StreamServer == nil {
+		fmt.Println(s)
+	} else {
+		if err := c.StreamServer.Send(&actionplugin.StreamResult{Logs: s}); err != nil {
+			fmt.Println("Unable to send logs %s: %v", s, err)
+		}
+	}
+
 }
 
-func Log(s string) {
-	fmt.Println(s)
+func Warnf(c *actionplugin.Common, s string, i ...any) {
+	Logf(c, WarnColor+"Warning: "+NoColor+s, i...)
 }
 
-func Warnf(s string, i ...any) {
-	Logf(WarnColor+"Warning: "+NoColor+s, i...)
+func Warn(c *actionplugin.Common, s string) {
+	Log(c, WarnColor+"Warning: "+NoColor+s)
 }
 
-func Warn(s string) {
-	Log(WarnColor + "Warning: " + NoColor + s)
+func Errorf(c *actionplugin.Common, s string, i ...any) {
+	Logf(c, ErrColor+"Error: "+NoColor+s, i...)
 }
 
-func Errorf(s string, i ...any) {
-	Logf(ErrColor+"Error: "+NoColor+s, i...)
+func Error(c *actionplugin.Common, s string) {
+	Log(c, ErrColor+"Error: "+NoColor+s)
 }
 
-func Error(s string) {
-	Log(ErrColor + "Error: " + NoColor + s)
+func Successf(c *actionplugin.Common, s string, i ...any) {
+	Logf(c, SuccessColor+s+NoColor, i...)
 }
 
-func Successf(s string, i ...any) {
-	Logf(SuccessColor+s+NoColor, i...)
-}
-
-func Success(s string) {
-	Log(SuccessColor + s + NoColor)
+func Success(c *actionplugin.Common, s string) {
+	Log(c, SuccessColor+s+NoColor)
 }
 
 const (
@@ -357,13 +360,13 @@ func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 200 {
-		Error(string(btes))
+		Error(c, string(btes))
 		return nil, errors.Errorf("unable to get Artifactory file info %s: error %d", uri, resp.StatusCode)
 	}
 
 	var res ArtifactoryFileInfo
 	if err := json.Unmarshal(btes, &res); err != nil {
-		Error(string(btes))
+		Error(c, string(btes))
 		return nil, errors.Errorf("unable to get Artifactory file info: %v", err)
 	}
 
@@ -392,13 +395,13 @@ func GetArtifactoryFolderInfo(ctx context.Context, c *actionplugin.Common, confi
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 200 {
-		Error(string(btes))
+		Error(c, string(btes))
 		return nil, errors.Errorf("unable to get Artifactory folder info %s: error %d", uri, resp.StatusCode)
 	}
 
 	var res ArtifactoryFolderInfo
 	if err := json.Unmarshal(btes, &res); err != nil {
-		Error(string(btes))
+		Error(c, string(btes))
 		return nil, errors.Errorf("unable to get Artifactory folder info: %v", err)
 	}
 
@@ -415,7 +418,7 @@ func GetArtifactoryRunResults(ctx context.Context, c *actionplugin.Common, patte
 		if response.RunResults[i].ArtifactManagerIntegrationName != nil {
 			final = append(final, response.RunResults[i])
 		} else {
-			Logf("skipping artifact %s, it has not been uploaded on artifactory.", response.RunResults[i].Name())
+			Logf(c, "skipping artifact %s, it has not been uploaded on artifactory.", response.RunResults[i].Name())
 		}
 	}
 	return &workerruntime.V2GetResultResponse{
@@ -520,7 +523,7 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, r 
 func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integrationCache *IntegrationCache, runresultReq *workerruntime.V2RunResultRequest, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) (*workerruntime.V2UpdateResultResponse, error) {
 	response, err := CreateRunResult(ctx, actplugin, runresultReq)
 	if err != nil {
-		Error(err.Error())
+		Error(actplugin, err.Error())
 		return nil, err
 	}
 
@@ -535,7 +538,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 		if ok {
 			item, d, err = CDNItemUpload(ctx, actplugin, response.CDNAddress, response.CDNSignature, reader)
 			if err != nil {
-				Error("An error occured during file upload upload: " + err.Error())
+				Error(actplugin, "An error occured during file upload upload: "+err.Error())
 				return nil, err
 			}
 		} else {
@@ -553,8 +556,8 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 			"cdn_type":         string(i.Item.Type),
 			"cdn_api_ref_hash": i.Item.APIRefHash,
 		}
-		Logf("  CDN API Ref Hash: %s", i.Item.APIRefHash)
-		Logf("  CDN HTTP URL: %s", i.CDNHttpURL)
+		Logf(actplugin, "  CDN API Ref Hash: %s", i.Item.APIRefHash)
+		Logf(actplugin, "  CDN HTTP URL: %s", i.CDNHttpURL)
 
 	case response.RunResult.ArtifactManagerIntegrationName != nil:
 		// Get integration from the local cache, or from the worker
@@ -563,7 +566,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 		if !has {
 			integFromWorker, err := GetIntegrationByName(ctx, actplugin, *response.RunResult.ArtifactManagerIntegrationName)
 			if err != nil {
-				Errorf(err.Error())
+				Errorf(actplugin, err.Error())
 				return nil, err
 			}
 			integrationCache.cacheIntegrations[*response.RunResult.ArtifactManagerIntegrationName] = *integFromWorker
@@ -572,13 +575,13 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 		integrationCache.lockCacheIntegrations.Unlock()
 		jobRun, err := GetJobRun(ctx, actplugin)
 		if err != nil {
-			Error(err.Error())
+			Error(actplugin, err.Error())
 			return nil, err
 		}
 
 		jobContext, err := GetJobContext(ctx, actplugin)
 		if err != nil {
-			Error(err.Error())
+			Error(actplugin, err.Error())
 			return nil, err
 		}
 
@@ -602,13 +605,13 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 			return nil, fmt.Errorf("unable to cast reader")
 		}
 
-		Logf("  Artifactory URL: %s", integ.Config[sdk.ArtifactoryConfigURL].Value)
-		Logf("  Artifactory repository: %s", repository)
+		Logf(actplugin, "  Artifactory URL: %s", integ.Config[sdk.ArtifactoryConfigURL].Value)
+		Logf(actplugin, "  Artifactory repository: %s", repository)
 
 		var res *ArtifactoryUploadResult
 		res, d, err = ArtifactoryItemUpload(ctx, actplugin, response.RunResult, integ, reader)
 		if err != nil {
-			Error(err.Error())
+			Error(actplugin, err.Error())
 			return nil, err
 		}
 
@@ -622,11 +625,11 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 
 		runResultRequest = workerruntime.V2RunResultRequest{RunResult: response.RunResult}
 
-		Logf("  Artifactory download URI: %s", res.DownloadURI)
+		Logf(actplugin, "  Artifactory download URI: %s", res.DownloadURI)
 
 	default:
 		err := errors.Errorf("unsupported run result %s", response.RunResult.ID)
-		Error(err.Error())
+		Error(actplugin, err.Error())
 		return nil, err
 	}
 
@@ -634,17 +637,17 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 	runResultRequest.RunResult.Status = sdk.V2WorkflowRunResultStatusCompleted
 	updateResponse, err := UpdateRunResult(ctx, actplugin, &runResultRequest)
 	if err != nil {
-		Error(err.Error())
+		Error(actplugin, err.Error())
 		return nil, err
 	}
 
-	Logf("  %d bytes uploaded in %.3fs", size, d.Seconds())
+	Logf(actplugin, "  %d bytes uploaded in %.3fs", size, d.Seconds())
 
 	if _, err := updateResponse.RunResult.GetDetail(); err != nil {
-		Error(err.Error())
+		Error(actplugin, err.Error())
 		return nil, err
 	}
-	Logf("  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID)
+	Logf(actplugin, "  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID)
 	return updateResponse, nil
 }
 
@@ -711,14 +714,14 @@ func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, runResul
 		} else {
 			bts, err := io.ReadAll(resp.Body)
 			if err != nil {
-				Error(err.Error())
+				Error(c, err.Error())
 			}
 			defer resp.Body.Close()
-			Error(string(bts))
-			Error(fmt.Sprintf("HTTP %d", resp.StatusCode))
+			Error(c, string(bts))
+			Error(c, fmt.Sprintf("HTTP %d", resp.StatusCode))
 		}
 
-		Log("retrying file upload...")
+		Log(c, "retrying file upload...")
 	}
 
 	return nil, time.Since(t0), errors.New("unable to upload artifact")
@@ -754,15 +757,15 @@ func CDNItemUpload(ctx context.Context, c *actionplugin.Common, cdnAddr string, 
 		} else {
 			bts, err := io.ReadAll(resp.Body)
 			if err != nil {
-				Error(err.Error())
+				Error(c, err.Error())
 			}
 			if err := sdk.DecodeError(bts); err != nil {
-				Error(err.Error())
+				Error(c, err.Error())
 			}
-			Error(fmt.Sprintf("HTTP %d", resp.StatusCode))
+			Error(c, fmt.Sprintf("HTTP %d", resp.StatusCode))
 		}
 
-		Log("retrying file upload...")
+		Log(c, "retrying file upload...")
 	}
 
 	return nil, time.Since(t0), errors.New("unable to upload artifact")
@@ -774,7 +777,7 @@ type ChecksumResult struct {
 	Sha256 string
 }
 
-func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]ChecksumResult, error) {
+func checksums(ctx context.Context, c *actionplugin.Common, dir fs.FS, path ...string) (map[string]ChecksumResult, error) {
 	pipe, err := checksum.NewPipe(dir, checksum.WithCtx(ctx), checksum.WithMD5(), checksum.WithSHA1(), checksum.WithSHA256())
 	if err != nil {
 		return nil, err
@@ -783,7 +786,7 @@ func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]Check
 	go func() {
 		for _, p := range path {
 			if err := pipe.Add(p); err != nil {
-				Error(p)
+				Error(c, p)
 			}
 		}
 		pipe.Close()
@@ -794,17 +797,17 @@ func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]Check
 	for out := range pipe.Out() {
 		md5, err := out.Sum(checksum.MD5)
 		if err != nil {
-			Error(err.Error())
+			Error(c, err.Error())
 			continue
 		}
 		sha1, err := out.Sum(checksum.SHA1)
 		if err != nil {
-			Error(err.Error())
+			Error(c, err.Error())
 			continue
 		}
 		sha256, err := out.Sum(checksum.SHA256)
 		if err != nil {
-			Error(err.Error())
+			Error(c, err.Error())
 			continue
 		}
 		result[out.Path()] = ChecksumResult{
@@ -817,7 +820,7 @@ func checksums(ctx context.Context, dir fs.FS, path ...string) (map[string]Check
 	return result, nil
 }
 
-func RetrieveFilesToUpload(ctx context.Context, dirFS fs.FS, filePath string, ifNoFilesFound string) (glob.Results, map[string]int64, map[string]os.FileMode, map[string]fs.File, map[string]ChecksumResult, error) {
+func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, filePath string, ifNoFilesFound string) (glob.Results, map[string]int64, map[string]os.FileMode, map[string]fs.File, map[string]ChecksumResult, error) {
 	results, err := glob.Glob(dirFS, ".", filePath)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
@@ -836,15 +839,15 @@ func RetrieveFilesToUpload(ctx context.Context, dirFS fs.FS, filePath string, if
 	if len(results) == 0 {
 		switch strings.ToUpper(ifNoFilesFound) {
 		case "ERROR":
-			Error(message)
+			Error(c, message)
 			return nil, nil, nil, nil, nil, errors.New("no files were found")
 		case "WARN":
-			Warn(message)
+			Warn(c, message)
 		default:
-			Log(message)
+			Log(c, message)
 		}
 	} else {
-		Log(message)
+		Log(c, message)
 	}
 
 	var files []string
@@ -855,12 +858,12 @@ func RetrieveFilesToUpload(ctx context.Context, dirFS fs.FS, filePath string, if
 		files = append(files, r.Path)
 		f, err := dirFS.Open(r.Path)
 		if err != nil {
-			Errorf("unable to open file %q: %v", r.Path, err)
+			Errorf(c, "unable to open file %q: %v", r.Path, err)
 			continue
 		}
 		stat, err := f.Stat()
 		if err != nil {
-			Errorf("unable to stat file %q: %v", r.Path, err)
+			Errorf(c, "unable to stat file %q: %v", r.Path, err)
 			f.Close()
 			continue
 		}
@@ -869,7 +872,7 @@ func RetrieveFilesToUpload(ctx context.Context, dirFS fs.FS, filePath string, if
 		openFiles[r.Path] = f
 	}
 
-	checksums, err := checksums(ctx, dirFS, files...)
+	checksums, err := checksums(ctx, c, dirFS, files...)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}

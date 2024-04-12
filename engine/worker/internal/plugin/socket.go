@@ -25,7 +25,7 @@ func createGRPCPluginSocket(ctx context.Context, pluginType string, pluginName s
 	var pluginBinaryInfos *sdk.GRPCPluginBinary
 	var currentPlugin *sdk.GRPCPlugin
 	switch pluginType {
-	case TypeAction:
+	case TypeAction, TypeStream:
 		currentPlugin = w.GetActionPlugin(pluginName)
 		if currentPlugin == nil {
 			var err error

@@ -34,9 +34,11 @@ func (p *rtPromotePlugin) Manifest(_ context.Context, _ *empty.Empty) (*actionpl
 	}, nil
 }
 
-// Run implements actionplugin.ActionPluginServer.
-func (p *rtPromotePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *rtPromotePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
@@ -47,10 +49,13 @@ func (p *rtPromotePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) 
 	if err := p.perform(ctx, artifacts, maturity, properties); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
 	}
+	return stream.Send(res)
+}
 
-	return res, nil
+// Run implements actionplugin.ActionPluginServer.
+func (p *rtPromotePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 func (p *rtPromotePlugin) perform(ctx context.Context, artifacts string, maturity string, properties string) (err error) {
@@ -80,7 +85,7 @@ func (p *rtPromotePlugin) perform(ctx context.Context, artifacts string, maturit
 		}
 	}
 
-	grpcplugins.Logf("Total number of artifacts that will be promoted: %d", len(results.RunResults))
+	grpcplugins.Logf(&p.Common, "Total number of artifacts that will be promoted: %d", len(results.RunResults))
 
 	for _, r := range results.RunResults {
 		if err := artifactorypluginslib.PromoteArtifactoryRunResult(ctx, &p.Common, r, maturity, props); err != nil {
