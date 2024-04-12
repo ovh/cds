@@ -35,6 +35,10 @@ func (actPlugin *simplePlugin) WorkerHTTPPort(ctx context.Context, q *actionplug
 	return &empty.Empty{}, nil
 }
 
+func (p *simplePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	return nil
+}
+
 func main() {
 	actPlugin := simplePlugin{}
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
