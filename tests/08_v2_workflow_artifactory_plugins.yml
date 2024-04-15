@@ -251,7 +251,7 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"    
 
   - name: Get run info
-    script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info ls {{.cds_project}} {{.workflowRunID}}"     
+    script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"     
 
   - name: Get job info
     script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"       
