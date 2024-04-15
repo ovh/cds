@@ -23,6 +23,7 @@ func projectVariableSet() *cobra.Command {
 		cli.NewDeleteCommand(projectVariableSetDeleteCmd, projectVariableSetDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetCreateCmd, projectVariableSetCreateFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectVariableSetShowCmd, projectVariableSetShowFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableSetCreateFromApplicationCmd, projectVariableSetCreateFromApplicationFunc, nil, withAllCommandModifiers()...),
 		projectVariableSetItem(),
 	})
 }
@@ -80,6 +81,29 @@ var projectVariableSetDeleteCmd = cli.Command{
 func projectVariableSetDeleteFunc(v cli.Values) error {
 	mod := cdsclient.WithQueryParameter("force", strconv.FormatBool(v.GetBool("with-items")))
 	return client.ProjectVariableSetDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("name"), mod)
+}
+
+var projectVariableSetCreateFromApplicationCmd = cli.Command{
+	Name:    "from-application",
+	Aliases: []string{"fa"},
+	Short:   "Create a new variableset inside the given project",
+	Example: "cdsctl exp project variableset from-application MY-PROJECT MY-VARIABLESET-NAME MY-APPLICATION",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "name"},
+		{Name: "application-name"},
+	},
+}
+
+func projectVariableSetCreateFromApplicationFunc(v cli.Values) error {
+	copyReq := sdk.CopyApplicationVariableToVariableSet{
+		ApplicationName: v.GetString("application-name"),
+		VariableSetName: v.GetString("name"),
+	}
+
+	return client.ProjectVariableSetCreateFromApplication(context.Background(), v.GetString(_ProjectKey), copyReq)
 }
 
 var projectVariableSetCreateCmd = cli.Command{
