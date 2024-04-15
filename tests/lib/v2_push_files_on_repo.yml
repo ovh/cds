@@ -24,7 +24,7 @@ steps:
       then
         mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/$directory
       fi 
-      firstChar=$(echo "{{.value}}" | cut -c1)
+      firstChar={{.value | substr 0 1}}
 
       if echo "${firstChar}" | grep -q "{"
       then
