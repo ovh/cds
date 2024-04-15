@@ -2,17 +2,18 @@ name: plugin initialization
 
 vars:
   plugins:
-    - script
-    - checkout
-    - uploadArtifact
-    - downloadArtifact
-    - dockerPush
-    - debianPush
-    - pythonPush
     - artifactoryPromote
     - artifactoryRelease
+    - checkout
+    - debianPush
     - deployArsenal
+    - dockerPush
+    - downloadArtifact
+    - helmPush
     - junit
+    - pythonPush
+    - script
+    - uploadArtifact
 
 testcases:
   - name: install plugins
