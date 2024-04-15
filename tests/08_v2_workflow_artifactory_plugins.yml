@@ -1,6 +1,7 @@
 name: Python / Debian / Helm push
 vars:
   cds_project: "ITV2ARTIFACTORYPLUGINS"
+  cds_workflow: "WorkflowA"
   git_repo: "it_v2_rt_plugins"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
   rt_url: "rt_url"
@@ -162,7 +163,7 @@ testcases:
         spec:
           image: buildpack-deps:buster
       workflows/workflowA.yaml:
-        name: WorkflowA
+        name: {{.cds_workflow}}
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
         jobs:
