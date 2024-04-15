@@ -6,6 +6,13 @@ vars:
     - checkout
     - uploadArtifact
     - downloadArtifact
+    - dockerPush
+    - debianPush
+    - pythonPush
+    - artifactoryPromote
+    - artifactoryRelease
+    - deployArsenal
+    - junit
 
 testcases:
   - name: install plugins
