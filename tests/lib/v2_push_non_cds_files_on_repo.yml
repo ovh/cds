@@ -15,9 +15,9 @@ steps:
   - range: {{.input.files}}
     script: |-
       pathToFile={{.key}}
-      directory="${pathToFile%/*}"
-      if echo "${directory}" | grep -q "/"
+      if echo "${pathToFile}" | grep -q "/"
       then
+        directory="${pathToFile%/*}"
         mkdir -p /tmp/repos/{{.input.git_repo}}/$directory
       fi 
 
