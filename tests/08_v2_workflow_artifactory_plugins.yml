@@ -212,13 +212,13 @@ testcases:
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
-    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson ShouldHaveLength 3
     retry: 20
     delay: 2
     vars:
       analysisID:
         from:
-          result.systemoutjson.systemoutjson1.id
+          result.systemoutjson.systemoutjson2.id
 
   - name: Get CDS project analysis
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
