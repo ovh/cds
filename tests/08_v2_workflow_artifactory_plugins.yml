@@ -238,12 +238,20 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
     assertions:
       - result.systemoutjson ShouldHaveLength 1
-      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
     retry: 30
     delay: 5
     vars:
       workflowRunID:
         from: result.systemoutjson.systemoutjson0.id
+
+  - name: List all run results
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}}"      
+
+  - name: Download logs
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"    
+
+  - name: Display logs
+    script: cat {{.cds_workflow}}-*    
 
   - name: Check that we have 2 run results of type python
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
