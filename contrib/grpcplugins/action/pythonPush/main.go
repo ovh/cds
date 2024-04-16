@@ -262,9 +262,10 @@ fi
 			} else {
 				// Create a new run result
 				runResult = &sdk.V2WorkflowRunResult{
-					IssuedAt: time.Now(),
-					Type:     sdk.V2WorkflowRunResultTypePython,
-					Status:   sdk.V2WorkflowRunResultStatusPending,
+					IssuedAt:                       time.Now(),
+					Type:                           sdk.V2WorkflowRunResultTypePython,
+					Status:                         sdk.V2WorkflowRunResultStatusPending,
+					ArtifactManagerIntegrationName: &integ.Name,
 					Detail: sdk.V2WorkflowRunResultDetail{
 						Data: sdk.V2WorkflowRunResultPythonDetail{
 							Name:      strings.TrimPrefix(c.URI, "/"),
