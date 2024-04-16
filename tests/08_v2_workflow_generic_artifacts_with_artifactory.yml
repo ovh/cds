@@ -82,7 +82,7 @@ testcases:
           value: ""
           type: password
         repo.prefix:
-          value: {{.rt_project}}
+          value: {{.rt_project}}-{{.rt_component}}
           type: string
         token:
           value: {{.rt_token}}
