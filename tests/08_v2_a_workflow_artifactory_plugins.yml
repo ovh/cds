@@ -252,7 +252,7 @@ testcases:
         - or:
           - result.systemoutjson.systemoutjson0.status ShouldEqual Success
           - result.systemoutjson.systemoutjson0.status ShouldEqual Fail
-    retry: 30
+    retry: 60
     delay: 5
     vars:
       workflowRunID:
