@@ -259,6 +259,8 @@ fi
 			var runResult *sdk.V2WorkflowRunResult
 			if c.URI == fmt.Sprintf("/%s-%s.%s", opts.packageName, opts.version, "tar.gz") {
 				runResult = result.RunResult
+				_, fileName := filepath.Split(fi.Path)
+				grpcplugins.ExtractFileInfoIntoRunResult(runResult, *fi, fileName, "pypi", localRepository, repository, maturity)
 			} else {
 				// Create a new run result
 				runResult = &sdk.V2WorkflowRunResult{
@@ -274,10 +276,9 @@ fi
 						},
 					},
 				}
+				grpcplugins.ExtractFileInfoIntoRunResult(runResult, *fi, strings.TrimPrefix(c.URI, "/"), "pypi", localRepository, repository, maturity)
 			}
-			grpcplugins.ExtractFileInfoIntoRunResult(runResult, *fi, opts.packageName, "python", localRepository, repository, maturity)
 			runResult.Status = sdk.V2WorkflowRunResultStatusCompleted
-
 			var runResultRequest = workerruntime.V2RunResultRequest{
 				RunResult: runResult,
 			}

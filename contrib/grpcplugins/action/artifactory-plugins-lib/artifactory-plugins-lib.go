@@ -86,11 +86,13 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, r 
 		RepoType: r.ArtifactManagerMetadata.Get("type"),
 		RepoName: r.ArtifactManagerMetadata.Get("repository"),
 		Name:     r.ArtifactManagerMetadata.Get("name"),
-		Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"), // strip the first "/" and remove "/manifest.json"
+		Path:     strings.TrimPrefix(r.ArtifactManagerMetadata.Get("path"), "/"), // strip the first "/"
 	}
 
 	switch r.Type {
 	case "docker":
+		// remove "/manifest.json"
+		data.Path = filepath.Dir(r.ArtifactManagerMetadata.Get("path")) // strip the first "/" and remove "/manifest.json"
 		if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
 			return errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
 		}
