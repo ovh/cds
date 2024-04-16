@@ -121,16 +121,16 @@ testcases:
       setup.py: |
         import setuptools
         setuptools.setup(
-          name="quicksample",
-          version="0.0.1",
-          author="sgu",
-          description="Quicksample Test Package",
+          name=\"quicksample\",
+          version=\"0.0.1\",
+          author=\"sgu\",
+          description=\"Quicksample Test Package\",
           long_description=coucou,
-          long_description_content_type="text/markdown",
+          long_description_content_type=\"text/markdown\",
           packages=setuptools.find_packages(),
-          python_requires='>=3.6',
-          py_modules=["quicksample"],
-          package_dir={'':'quicksample/src'},
+          python_requires=\">=3.6\",
+          py_modules=[\"quicksample\"],
+          package_dir={\"\":\"quicksample/src\"},
           install_requires=[]
         )
       chart/Chart.yaml:
