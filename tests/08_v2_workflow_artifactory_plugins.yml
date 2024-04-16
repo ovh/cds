@@ -138,7 +138,7 @@ testcases:
         name: mychart
         description: A Helm chart for Kubernetes
         type: application
-        version: 0.1.0
+        version: "0.1.0"
         appVersion: "1.16.0"
       chart/templates/deployment.yaml:
         apiVersion: apps/v1
@@ -276,7 +276,7 @@ testcases:
     assertions:
     - or:
       - workflowRunStatus ShouldEqual Success
-      - "{{.workflowRunID}} ShouldEqual Success"
+      - "{{.workflowRunStatus}} ShouldEqual Success"
 
   - name: Check that we have 2 run results of type python
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
