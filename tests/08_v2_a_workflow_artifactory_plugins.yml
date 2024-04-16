@@ -179,7 +179,10 @@ testcases:
             steps:
               - uses: actions/checkout
               - run: apt-get update -y && apt-get install -y python3-pip python3-stdeb fakeroot python3-setuptools
-              - run: pip3 install stem stdeb && sed -i 's/0.0.1/${{ git.semver_current }}/g' setup.py
+              - run: |
+                  pip3 install stem stdeb
+                  pkgVersion=0.0.$(date +%s)
+                  sed -i "s/0.0.1/${pkgVersion}/g" setup.py
               - run: python3 setup.py --command-packages=stdeb.command bdist_deb
               - uses: actions/debianPush
                 with:
@@ -198,7 +201,7 @@ testcases:
                 run: |
                   pkgVersion=0.0.$(date +%s)
                   worker export pkgVersion ${pkgVersion}
-                  python3 -m pip install --user --upgrade setuptools wheel && sed -i 's/0.0.1/${pkgVersion}/g' setup.py
+                  python3 -m pip install --user --upgrade setuptools wheel && sed -i "s/0.0.1/${pkgVersion}/g" setup.py
               - uses: actions/pythonPush
                 with:
                   pythonBinary: python3
