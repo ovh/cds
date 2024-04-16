@@ -83,7 +83,7 @@ testcases:
           value: ""
           type: password
         repo.prefix:
-          value: fsamin-v2
+          value: {{.rt_project}}
           type: string
         token:
           value: {{.rt_token}}
