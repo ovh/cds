@@ -178,7 +178,7 @@ testcases:
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/checkout
-              - run: apt-get update -y && apt-get install -y python3-pip python3-stdeb fakeroot
+              - run: apt-get update -y && apt-get install -y python3-pip python3-stdeb fakeroot python3-setuptools
               - run: pip3 install stem stdeb
               - run: python3 setup.py --command-packages=stdeb.command bdist_deb
               - uses: actions/debianPush
@@ -193,7 +193,7 @@ testcases:
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/checkout
-              - run: apt-get update -y && apt-get install -y python3-pip
+              - run: apt-get update -y && apt-get install -y python3-pip python3-setuptools
               - run: python3 -m pip install --user --upgrade setuptools wheel
               - uses: actions/pythonPush
                 with:
