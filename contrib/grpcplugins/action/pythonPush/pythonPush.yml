@@ -4,6 +4,10 @@ author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
 description: |
   This pushes python package
 inputs:
+  pythonBinary:
+    type: string
+    description: Python binary to use
+    default: python
   package:
     type: string
     description: The name of the package

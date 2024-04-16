@@ -125,7 +125,7 @@ testcases:
           version=\"0.0.1\",
           author=\"sgu\",
           description=\"Quicksample Test Package\",
-          long_description=coucou,
+          long_description=\"coucou\",
           long_description_content_type=\"text/markdown\",
           packages=setuptools.find_packages(),
           python_requires=\">=3.6\",
@@ -197,6 +197,7 @@ testcases:
               - run: python3 -m pip install --user --upgrade setuptools wheel
               - uses: actions/pythonPush
                 with:
+                  pythonBinary: python3
                   package: quicksample
                   version: "0.0.1"
                   wheel: "true"

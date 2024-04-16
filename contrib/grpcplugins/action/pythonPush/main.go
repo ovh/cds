@@ -46,6 +46,7 @@ type pythonOpts struct {
 	username    string
 	password    string
 	wheel       bool
+	binary      string
 }
 
 func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
@@ -63,7 +64,11 @@ func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 	urlRepo := q.GetOptions()["url"]
 	username := q.GetOptions()["username"]
 	password := q.GetOptions()["password"]
+	pythonBinary := q.GetOptions()["pythonBinary"]
 
+	if pythonBinary == "" {
+		pythonBinary = "python"
+	}
 	if pkg == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'package' input must not be empty"
@@ -91,6 +96,7 @@ func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		version:     version,
 		directory:   directory,
 		wheel:       wheel,
+		binary:      pythonBinary,
 	}
 
 	var integ *sdk.ProjectIntegration
@@ -187,11 +193,11 @@ username: %s
 password: %s
 EOF
 
-pythonBinary="python"
+pythonBinary="%s"
 if [[ -e venv/bin/python ]]; then
 	pythonBinary="venv/bin/python"
 fi
-`, opts.url, opts.username, opts.password)
+`, opts.url, opts.username, opts.password, opts.binary)
 	if opts.wheel {
 		pullScript += "$pythonBinary setup.py sdist bdist_wheel upload -r artifactory"
 	} else {
