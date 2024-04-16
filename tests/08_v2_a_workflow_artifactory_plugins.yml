@@ -194,12 +194,16 @@ testcases:
             steps:
               - uses: actions/checkout
               - run: apt-get update -y && apt-get install -y python3-pip python3-setuptools
-              - run: python3 -m pip install --user --upgrade setuptools wheel && sed -i 's/0.0.1/${{ git.semver_current }}/g' setup.py
+              - id: packagePython
+                run: |
+                  pkgVersion=0.0.$(date +%s)
+                  worker export pkgVersion ${pkgVersion}
+                  python3 -m pip install --user --upgrade setuptools wheel && sed -i 's/0.0.1/${pkgVersion}/g' setup.py
               - uses: actions/pythonPush
                 with:
                   pythonBinary: python3
                   package: quicksample
-                  version: ${{ git.semver_current }}
+                  version: ${{ steps.packagePython.outputs.pkgVersion }}
                   wheel: "true"
           PromoteAndRelease:
             needs: [Debian-Job, Python-Job, Helm-Job]
