@@ -281,10 +281,11 @@ testcases:
 
   - name: Display logs
     script: cat {{.cds_workflow}}-*
+
+  - name: Echo Status
+    script: echo {{.workflowRunStatus}}
     assertions:
-    - or:
-      - workflowRunStatus ShouldEqual Success
-      - "{{.workflowRunStatus}} ShouldEqual Success"
+    - result.systemout ShouldEqual Success
 
   - name: Check that we have 2 run results of type python
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
