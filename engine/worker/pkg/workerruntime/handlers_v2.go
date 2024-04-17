@@ -72,6 +72,25 @@ func V2_jobRunHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	}
 }
 
+func V2_projectKeyHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		name := vars["name"]
+		switch r.Method {
+		case http.MethodGet:
+			k, err := wk.V2GetProjectKey(r.Context(), name, true)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			writeJSON(w, k, http.StatusOK)
+		default:
+
+			return
+		}
+	}
+}
+
 func V2_contextHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

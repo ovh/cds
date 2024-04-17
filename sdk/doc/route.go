@@ -145,6 +145,8 @@ func CleanURLParameter(u string) string {
 		u = "workflow-run-id"
 	case "jobRunID":
 		u = "job-run-id"
+	case "keyName":
+		u = "key-name"
 	}
 	return u
 }

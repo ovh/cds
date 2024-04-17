@@ -1,0 +1,12 @@
+name: keyInstall
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  Install a ssh or gpg key inside the worker
+inputs:
+  keyName:
+    type: text
+    description: "Name of the project key to install. By default it will install the ssh key used by the vcs"
+  path:
+    type: text
+    description: ""  

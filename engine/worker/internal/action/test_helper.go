@@ -31,6 +31,10 @@ type TestWorker struct {
 	logBuffer        bytes.Buffer
 }
 
+func (*TestWorker) V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	panic("unimplemented")
+}
+
 // V2GetJobContext implements workerruntime.Runtime.
 func (*TestWorker) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
 	panic("unimplemented")

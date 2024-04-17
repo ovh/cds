@@ -465,6 +465,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/region", nil, r.POSTv2(api.postRegionHandler), r.GETv2(api.getRegionsHandler))
 	r.Handle("/v2/region/{regionIdentifier}", nil, r.GETv2(api.getRegionHandler), r.DELETEv2(api.deleteRegionHandler))
 
+	r.Handle("/v2/project/{projectKey}/key/{keyName}", nil, r.GETv2(api.getProjectV2KeyHandler))
+
 	r.Handle("/v2/project/{projectKey}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GETv2(api.getProjectV2AccessHandler))
 
 	r.Handle("/v2/project/{projectKey}/notification", nil, r.GETv2(api.getProjectNotifsHandler), r.POSTv2(api.postProjectNotificationHandler))
