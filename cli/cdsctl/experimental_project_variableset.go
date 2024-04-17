@@ -23,7 +23,6 @@ func projectVariableSet() *cobra.Command {
 		cli.NewDeleteCommand(projectVariableSetDeleteCmd, projectVariableSetDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetCreateCmd, projectVariableSetCreateFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectVariableSetShowCmd, projectVariableSetShowFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(projectVariableSetCreateFromApplicationCmd, projectVariableSetCreateFromApplicationFunc, nil, withAllCommandModifiers()...),
 		projectVariableSetItem(),
 	})
 }
@@ -83,29 +82,6 @@ func projectVariableSetDeleteFunc(v cli.Values) error {
 	return client.ProjectVariableSetDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("name"), mod)
 }
 
-var projectVariableSetCreateFromApplicationCmd = cli.Command{
-	Name:    "from-application",
-	Aliases: []string{"fa"},
-	Short:   "Create a new variableset inside the given project",
-	Example: "cdsctl exp project variableset from-application MY-PROJECT MY-VARIABLESET-NAME MY-APPLICATION",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-	},
-	Args: []cli.Arg{
-		{Name: "name"},
-		{Name: "application-name"},
-	},
-}
-
-func projectVariableSetCreateFromApplicationFunc(v cli.Values) error {
-	copyReq := sdk.CopyApplicationVariableToVariableSet{
-		ApplicationName: v.GetString("application-name"),
-		VariableSetName: v.GetString("name"),
-	}
-
-	return client.ProjectVariableSetCreateFromApplication(context.Background(), v.GetString(_ProjectKey), copyReq)
-}
-
 var projectVariableSetCreateCmd = cli.Command{
 	Name:    "add",
 	Aliases: []string{"create"},
@@ -117,6 +93,9 @@ var projectVariableSetCreateCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "name"},
 	},
+	Flags: []cli.Flag{
+		{Name: "application-name", Type: cli.FlagString},
+	},
 }
 
 func projectVariableSetCreateFunc(v cli.Values) error {
@@ -124,5 +103,12 @@ func projectVariableSetCreateFunc(v cli.Values) error {
 		Name: v.GetString("name"),
 	}
 
+	if v.GetString("application-name") != "" {
+		copyReq := sdk.CopyApplicationVariableToVariableSet{
+			ApplicationName: v.GetString("application-name"),
+			VariableSetName: v.GetString("name"),
+		}
+		return client.ProjectVariableSetCreateFromApplication(context.Background(), v.GetString(_ProjectKey), copyReq)
+	}
 	return client.ProjectVariableSetCreate(context.Background(), v.GetString(_ProjectKey), &vs)
 }
