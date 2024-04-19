@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	archiver "github.com/mholt/archiver/v3"
 	"github.com/olekukonko/tablewriter"
 	migrate "github.com/rubenv/sql-migrate"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/database"
@@ -181,9 +181,16 @@ func databaseDownloadSQLTarGz(currentVersion string, artifactName string, migrat
 	}
 
 	dest := tmpfile.Name() + "extract"
-	if err := archiver.DefaultTarGz.Unarchive(tmpfile.Name(), dest); err != nil {
-		return fmt.Errorf("Unarchive %s failed: %v", artifactName, err)
+	src, err := os.Open(tmpfile.Name())
+	if err != nil {
+		return fmt.Errorf("unable to open source file %s failed: %v", tmpfile.Name(), err)
 	}
+	defer src.Close()
+
+	if err := sdk.UntarGz(afero.NewOsFs(), dest, src); err != nil {
+		return fmt.Errorf("unarchive %s failed: %v", artifactName, err)
+	}
+
 	// the directory dest/sql/ -> contains all sql files
 	fmt.Printf("Unarchive to %s\n", dest)
 
