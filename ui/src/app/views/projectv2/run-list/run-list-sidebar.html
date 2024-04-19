@@ -1,12 +1,12 @@
 <ul *ngIf="project && authSummary" nz-menu nzMode="inline">
-	<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/projectv2', project.key, 'run']">All
+	<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/project', project.key, 'run']">All
 			workflows</a></li>
-	<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/projectv2', project.key, 'run']"
+	<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/project', project.key, 'run']"
 			[queryParams]="{actor: authSummary.user.username}">My workflows</a></li>
 	<li *ngIf="searches && searches.length> 0" nz-menu-group nzTitle="Saved filters">
 		<ul>
 			<ng-container *ngFor="let s of searches">
-				<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/projectv2', project.key, 'run']"
+				<li nz-menu-item nzMatchRouter nzMatchRouterExact><a [routerLink]="['/project', project.key, 'run']"
 						[queryParams]="s.params">{{s.name}}</a></li>
 			</ng-container>
 		</ul>

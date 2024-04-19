@@ -18,7 +18,6 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
 	@Input() result: WorkflowRunResult;
-	@Output() onClose = new EventEmitter<void>();
 
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
@@ -61,10 +60,6 @@ export class RunResultComponent implements OnInit, OnChanges, OnDestroy {
 	selectTab(tab: Tab): void {
 		this.selectedTab = tab;
 		this._cd.markForCheck();
-	}
-
-	clickClose(): void {
-		this.onClose.emit();
 	}
 
 }

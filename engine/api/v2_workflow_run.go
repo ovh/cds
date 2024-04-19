@@ -447,9 +447,9 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 					Example: "vcs_server/repository/workflow-name",
 				},
 				{
-					Key:     "branch",
+					Key:     "ref",
 					Options: refs,
-					Example: "branch-name",
+					Example: "ref/heads/main",
 				},
 				{
 					Key:     "status",
@@ -472,12 +472,13 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			offset := service.FormUInt(req, "offset")
 			limit := service.FormUInt(req, "limit")
+			sort := req.FormValue("sort")
 
 			filters := workflow_v2.SearchsRunsFilters{
 				Workflows:    req.URL.Query()["workflow"],
 				Actors:       req.URL.Query()["actor"],
 				Status:       req.URL.Query()["status"],
-				Branches:     req.URL.Query()["branch"],
+				Refs:         req.URL.Query()["ref"],
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
 			}
@@ -490,7 +491,7 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 				return service.WriteJSON(w, []sdk.V2WorkflowRun{}, http.StatusOK)
 			}
 
-			runs, err := workflow_v2.SearchAllRuns(ctx, api.mustDB(), filters, offset, limit)
+			runs, err := workflow_v2.SearchAllRuns(ctx, api.mustDB(), filters, offset, limit, sort)
 			if err != nil {
 				return err
 			}
@@ -509,12 +510,13 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 
 			offset := service.FormUInt(req, "offset")
 			limit := service.FormUInt(req, "limit")
+			sort := req.FormValue("sort")
 
 			filters := workflow_v2.SearchsRunsFilters{
 				Workflows:    req.URL.Query()["workflow"],
 				Actors:       req.URL.Query()["actor"],
 				Status:       req.URL.Query()["status"],
-				Branches:     req.URL.Query()["branch"],
+				Refs:         req.URL.Query()["ref"],
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
 			}
@@ -529,7 +531,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 				return err
 			}
 
-			runs, err := workflow_v2.SearchRuns(ctx, api.mustDB(), proj.Key, filters, offset, limit)
+			runs, err := workflow_v2.SearchRuns(ctx, api.mustDB(), proj.Key, filters, offset, limit, sort)
 			if err != nil {
 				return err
 			}

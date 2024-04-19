@@ -353,7 +353,7 @@ func workflowRunFunc(v cli.Values) (interface{}, error) {
 					Workflow:  wkfName,
 					RunNumber: event.WorkflowHooks[0].RunNumber,
 					RunID:     event.WorkflowHooks[0].RunID,
-					UIUrl:     fmt.Sprintf("%s/projectv2/%s/run/%s", runResp.UIUrl, projKey, event.WorkflowHooks[0].RunID),
+					UIUrl:     fmt.Sprintf("%s/project/%s/run/%s", runResp.UIUrl, projKey, event.WorkflowHooks[0].RunID),
 				}, nil
 			}
 			return nil, fmt.Errorf("workflow did not start")

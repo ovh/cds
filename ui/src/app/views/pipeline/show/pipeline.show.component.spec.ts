@@ -1,7 +1,7 @@
 import { HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
+import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
@@ -34,6 +34,8 @@ import { PipelineShowComponent } from './pipeline.show.component';
 import { ConfigService } from 'app/service/services.module';
 
 describe('CDS: Pipeline Show', () => {
+
+    let routerService: RouterService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -69,6 +71,9 @@ describe('CDS: Pipeline Show', () => {
                 HttpClientTestingModule
             ]
         }).compileComponents();
+        const injector = getTestBed();
+        routerService = injector.get(RouterService);
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({key: 'key1', pipName: 'pip1'}));
     });
 
     it('should load component', fakeAsync(() => {

@@ -7,7 +7,7 @@
 
 <div class="content">
 	<div class="header">
-		<button nz-button nzType="secondary" nz-popconfirm [nzPopconfirmTitle]="saveSearchTemplate"
+		<button nz-button nzType="secondary" nz-popconfirm [nzPopconfirmTitle]="saveSearchTemplate" title="Save search"
 			nzPopconfirmPlacement="bottom" (nzOnConfirm)="confirmSaveSearch()" #saveSearchButton=nzPopconfirm><span nz-icon
 				nzType="save"></span></button>
 		<ng-template #saveSearchTemplate>
@@ -48,7 +48,7 @@
 			</nz-form-item>
 			<nz-form-item>
 				<nz-form-control>
-					<button nz-button nzType="primary" (click)="refresh($event)"><span nz-icon
+					<button nz-button nzType="primary" (click)="refresh($event)" title="Refresh results"><span nz-icon
 							[nzType]="filterText === previousFilterText ? 'reload' : 'search'"></span></button>
 				</nz-form-control>
 			</nz-form-item>
@@ -71,15 +71,22 @@
 					</div>
 				</ng-template>
 				<ng-template #runTitle>
-					<a [routerLink]="['/projectv2', run.project_key, 'run', run.id]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
+					<a [routerLink]="['/project', run.project_key, 'run', run.id]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
 						#{{run.run_number}}</a>
 				</ng-template>
 				<ng-template #runDescription>
-					Commit {{run.contexts.git.sha?.substring(0,8)}} by {{run.contexts.git.username}} on repository
-					{{run.contexts.git.server}}/{{run.contexts.git.repository}}
+					<ng-container *ngIf="run.contexts.git">
+						Commit {{run.contexts.git.sha?.substring(0,8)}} by {{run.contexts.git.username}} on repository
+						{{run.contexts.git.server}}/{{run.contexts.git.repository}}
+					</ng-container>
 				</ng-template>
+				<ng-container *ngIf="run.contexts.git">
+					{{run.contexts.git.ref}}
+				</ng-container>
 				<ul nz-list-item-actions>
-					<nz-list-item-action><app-date-from-now [value]="run.started"></app-date-from-now></nz-list-item-action>
+					<nz-list-item-action>
+						<app-date-from-now [value]="run.started"></app-date-from-now>
+					</nz-list-item-action>
 				</ul>
 			</ng-container>
 		</nz-list-item>
@@ -89,7 +96,13 @@
 		<nz-empty nzNotFoundContent="No result found"></nz-empty>
 	</ng-template>
 	<div *ngIf="totalCount > 0" class="footer">
-		{{totalCount}} results
+		{{totalCount}} results - sorted by
+		<nz-select [ngModel]="sort" (ngModelChange)="onSortChange($event)" nzBorderless>
+			<nz-option nzValue="last_modified:desc" nzLabel="last modification desc"></nz-option>
+			<nz-option nzValue="last_modified:asc" nzLabel="last modification asc"></nz-option>
+			<nz-option nzValue="started:desc" nzLabel="started desc"></nz-option>
+			<nz-option nzValue="started:asc" nzLabel="started asc"></nz-option>
+		</nz-select>
 		<nz-pagination [nzPageIndex]="index" [nzPageSize]="20" [nzTotal]="totalCount"
 			(nzPageIndexChange)="pageIndexChange($event)"></nz-pagination>
 	</div>

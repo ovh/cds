@@ -21,28 +21,6 @@ app-tabs {
     }
 }
 
-.close {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 36px;
-    width: 36px;
-    padding: 8px;
-    cursor: pointer;
-
-    &:hover {
-        color: $darkTheme_grey_5;
-        
-        :host-context(.night) & {
-            color: white;
-        }
-    }
-
-    .icon {
-        margin: unset;
-    }
-}
-
 .problems,
 .infos {
     padding: 10px;

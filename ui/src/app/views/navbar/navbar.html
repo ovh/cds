@@ -3,9 +3,14 @@
         <img src="assets/images/cds.png" class="item" alt="CDS logo" title="{{'navbar_home' | translate}}" />
     </a>
     <ng-container *ngIf="currentAuthSummary">
-        <a nz-button nzType="link" class="item link" href="#" [routerLink]="['project', 'list', 'all']">
+        <a *ngIf="!selectedProjectKey" nz-button nzType="link" class="item link" href="#"
+            [routerLink]="['project', 'list', 'all']">
             {{ 'navbar_projects' | translate }}
         </a>
+        <nz-select *ngIf="selectedProjectKey" nzShowSearch [ngModel]="selectedProjectKey"
+            (ngModelChange)="navigateToProject($event)">
+            <nz-option *ngFor="let p of projects" [nzLabel]="p.name" [nzValue]="p.key"></nz-option>
+        </nz-select>
 
         <button nz-dropdown [nzDropdownMenu]="bookmarks" nz-button nzType="text" [nzClickHide]="true"
             class="dropdown title">

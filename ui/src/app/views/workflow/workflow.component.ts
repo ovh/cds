@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Select, Store } from '@ngxs/store';
+import { Store } from '@ngxs/store';
 import { Project } from 'app/model/project.model';
 import { Workflow } from 'app/model/workflow.model';
 import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
@@ -25,12 +25,13 @@ import {
     UpdateFavoriteWorkflow
 } from 'app/store/workflow.action';
 import { WorkflowState } from 'app/store/workflow.state';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import {
     WorkflowTemplateApplyModalComponent
 } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { RouterService } from 'app/service/services.module';
 
 
 @Component({
@@ -63,7 +64,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     selectedNodeID: number;
     selectedNodeRef: string;
     selectecHookRef: string;
-
     workflowV3Enabled: boolean;
     asCodeTagColor: string = '';
     templateTagColor: string = '';
@@ -78,7 +78,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         private _store: Store,
         private _cd: ChangeDetectorRef,
         private _featureService: FeatureService,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _routerService: RouterService
     ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -168,7 +169,8 @@ export class WorkflowComponent implements OnInit, OnDestroy {
         });
 
         // Workflow subscription
-        this.paramsRouteSubscription = this._activatedRoute.params.subscribe(params => {
+        this.paramsRouteSubscription = this._activatedRoute.params.subscribe(_ => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
             let projectKey = params['key'];
             let workflowName = params['workflowName'];
 

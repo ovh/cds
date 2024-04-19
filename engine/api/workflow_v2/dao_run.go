@@ -2,6 +2,7 @@ package workflow_v2
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -148,7 +149,7 @@ func LoadRunsRepositories(ctx context.Context, db gorp.SqlExecutor, projKey stri
 }
 
 func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters) (int64, error) {
-	_, next := telemetry.Span(ctx, "CountRuns")
+	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
 	count, err := db.SelectInt(`
 		SELECT COUNT(1)
@@ -176,11 +177,12 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 		pq.StringArray(filters.Workflows),
 		pq.StringArray(filters.Actors),
 		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Branches),
+		pq.StringArray(filters.Refs),
 		pq.StringArray(filters.Repositories),
 		pq.StringArray(filters.Commits))
 	return count, sdk.WithStack(err)
 }
+
 func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
@@ -211,7 +213,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 		pq.StringArray(filters.Workflows),
 		pq.StringArray(filters.Actors),
 		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Branches),
+		pq.StringArray(filters.Refs),
 		pq.StringArray(filters.Repositories),
 		pq.StringArray(filters.Commits))
 	return count, sdk.WithStack(err)
@@ -221,17 +223,33 @@ type SearchsRunsFilters struct {
 	Workflows    []string
 	Actors       []string
 	Status       []string
-	Branches     []string
+	Refs         []string
 	Repositories []string
 	Commits      []string
 }
 
-func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters, offset, limit uint, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func parseSortFilter(sort string) (string, error) {
+	if sort == "" {
+		return "started:desc", nil
+	}
+	splitted := strings.Split(sort, ":")
+	if len(splitted) != 2 || (splitted[0] != "started" && splitted[0] != "last_modified") || (splitted[1] != "asc" && splitted[1] != "desc") {
+		return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given value for sort param: %q", sort)
+	}
+	return sort, nil
+}
+
+func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
 	if limit == 0 {
 		limit = 10
+	}
+
+	sort, err := parseSortFilter(sort)
+	if err != nil {
+		return nil, err
 	}
 
 	query := gorpmapping.NewQuery(`
@@ -256,25 +274,34 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 			AND (
 				array_length($6::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY($6)
 			)
-		ORDER BY started desc
-    LIMIT $7 OFFSET $8
+			ORDER BY 
+				CASE WHEN $7 = 'last_modified:asc' THEN last_modified END asc,
+				CASE WHEN $7 = 'last_modified:desc' THEN last_modified END desc,
+				CASE WHEN $7 = 'started:asc' THEN started END asc,
+				CASE WHEN $7 = 'started:desc' THEN started END desc
+    LIMIT $8 OFFSET $9
 	`).Args(pq.StringArray(filters.Workflows),
 		pq.StringArray(filters.Actors),
 		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Branches),
+		pq.StringArray(filters.Refs),
 		pq.StringArray(filters.Repositories),
 		pq.StringArray(filters.Commits),
-		limit, offset)
+		sort, limit, offset)
 
 	return getRuns(ctx, db, query, opts...)
 }
 
-func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters, offset, limit uint, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
+func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters, offset, limit uint, sort string, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	ctx, next := telemetry.Span(ctx, "LoadRuns")
 	defer next()
 
 	if limit == 0 {
 		limit = 10
+	}
+
+	sort, err := parseSortFilter(sort)
+	if err != nil {
+		return nil, err
 	}
 
 	query := gorpmapping.NewQuery(`
@@ -300,16 +327,20 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 			AND (
 				array_length($7::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY($7)
 			)
-		ORDER BY started desc
-    LIMIT $8 OFFSET $9
+			ORDER BY 
+				CASE WHEN $8 = 'last_modified:asc' THEN last_modified END asc,
+				CASE WHEN $8 = 'last_modified:desc' THEN last_modified END desc,
+				CASE WHEN $8 = 'started:asc' THEN started END asc,
+				CASE WHEN $8 = 'started:desc' THEN started END desc
+    	LIMIT $9 OFFSET $10
 	`).Args(projKey,
 		pq.StringArray(filters.Workflows),
 		pq.StringArray(filters.Actors),
 		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Branches),
+		pq.StringArray(filters.Refs),
 		pq.StringArray(filters.Repositories),
 		pq.StringArray(filters.Commits),
-		limit, offset)
+		sort, limit, offset)
 
 	return getRuns(ctx, db, query, opts...)
 }

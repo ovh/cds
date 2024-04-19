@@ -42,9 +42,6 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     static margin = 40; // let 40px on top and bottom of the graph
     static marginSubGraph = 20; // let 20px on top and bottom of the sub graph
     static maxOriginScale = 1.5;
-    static baseStageWidth = 300;
-    static minStageWidth = 200;
-    static minJobWidth = 60;
 
     nodesComponent = new Map<string, ComponentRef<T>>();
     nodes = new Array<Node>();
@@ -270,9 +267,10 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             return;
         }
         let node = this.graph.node(nodeName);
+        if (!node) { return; }
         // calculate optimal scale for current graph
-        let oScale = Math.min((containerWidth - WorkflowV2Graph.margin * 2) / 300,
-            (containerHeight - WorkflowV2Graph.margin * 2) / 169);
+        let oScale = Math.min((containerWidth - WorkflowV2Graph.margin * 2) / node.width,
+            (containerHeight - WorkflowV2Graph.margin * 2) / node.width);
         // calculate final scale that fit min and max scale values
         let scale = Math.max(this.minScale, oScale);
         let nodeDeltaCenterX = containerWidth / 2 - node.x * scale;
@@ -451,8 +449,21 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         }
     }
 
-    createNode(key: string, type: GraphNodeType, componentRef: ComponentRef<T>, width: number = 200, height: number = 60): void {
-        this.nodes.push(<Node>{ type, key, width, height });
+    createNode(key: string, node: GraphNode, componentRef: ComponentRef<T>): void {
+        let width = 200
+        let height = 60;
+        switch (node.type) {
+            case GraphNodeType.Stage:
+                width = 300;
+                height = 170;
+                break;
+            case GraphNodeType.Matrix:
+                width = 240;
+                const alls = GraphNode.generateMatrixOptions(node.job.strategy.matrix);
+                height = 30 * alls.length + 10 * (alls.length - 1) + 60 + 20;
+                break;
+        }
+        this.nodes.push(<Node>{ type: node.type, key, width, height });
         this.nodesComponent.set(`node-${key}`, componentRef);
     }
 

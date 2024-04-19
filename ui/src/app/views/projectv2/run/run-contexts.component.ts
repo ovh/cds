@@ -18,8 +18,7 @@ export class RunContextsComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
 	@Input() run: V2WorkflowRun;
-	@Output() onClose = new EventEmitter<void>();
-
+	
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
 	tabs: Array<Tab>;
@@ -61,10 +60,6 @@ export class RunContextsComponent implements OnInit, OnChanges, OnDestroy {
 	selectTab(tab: Tab): void {
 		this.selectedTab = tab;
 		this._cd.markForCheck();
-	}
-
-	clickClose(): void {
-		this.onClose.emit();
 	}
 
 }

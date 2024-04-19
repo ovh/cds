@@ -5,15 +5,17 @@ import * as actionPreferences from './preferences.action';
 export class PreferencesStateModel {
     panel: {
         resizing: boolean;
-        sizes: { [key: string]: number };
+        sizes: { [key: string]: string };
     };
     theme: string;
     projectRunFilters: {
         [projectKey: string]: Array<{
             name: string;
             value: string;
+            sort: string;
         }>
     };
+    messages: { [projectKey: string]: boolean };
 }
 
 @State<PreferencesStateModel>({
@@ -24,7 +26,8 @@ export class PreferencesStateModel {
             sizes: {}
         },
         theme: 'light',
-        projectRunFilters: {}
+        projectRunFilters: {},
+        messages: {}
     }
 })
 @Injectable()
@@ -34,7 +37,7 @@ export class PreferencesState {
     static panelSize(key: string) {
         return createSelector(
             [PreferencesState],
-            (state: PreferencesStateModel): number => {
+            (state: PreferencesStateModel): string => {
                 return state.panel.sizes[key] ?? null;
             }
         );
@@ -55,6 +58,15 @@ export class PreferencesState {
             [PreferencesState],
             (state: PreferencesStateModel) => {
                 return state.projectRunFilters[projectKey] ?? [];
+            }
+        );
+    }
+
+    static selectMessageState(messageKey: string) {
+        return createSelector(
+            [PreferencesState],
+            (state: PreferencesStateModel) => {
+                return state.messages[messageKey] ?? false;
             }
         );
     }
@@ -93,7 +105,8 @@ export class PreferencesState {
         let searches = (projects[action.payload.projectKey] ?? []).filter(s => s.name !== action.payload.name);
         searches.push({
             name: action.payload.name,
-            value: action.payload.value
+            value: action.payload.value,
+            sort: action.payload.sort
         });
         projects[action.payload.projectKey] = searches;
         ctx.setState({
@@ -122,5 +135,13 @@ export class PreferencesState {
             ...state,
             theme: action.payload.theme === 'night' ? 'night' : 'light'
         });
+    }
+
+    @Action(actionPreferences.SaveMessageState)
+    saveMessageState(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveMessageState) {
+        const state = ctx.getState();
+        let messages = { ...state.messages };
+        messages[action.payload.messageKey] = action.payload.value;
+        ctx.setState({ ...state, messages });
     }
 }

@@ -34,7 +34,6 @@ export class RunJobComponent implements OnChanges, OnDestroy {
     @Input() workflowRun: V2WorkflowRun;
     @Input() jobRun: V2WorkflowRunJob;
     @Input() jobRunInfos: Array<WorkflowRunInfo>;
-    @Output() onClose = new EventEmitter<void>();
 
     defaultTabs: Array<Tab>;
     tabs: Array<Tab>;
@@ -141,10 +140,6 @@ export class RunJobComponent implements OnChanges, OnDestroy {
         this.variableKeys = Object.keys(this.variables).sort();
 
         this._cd.markForCheck();
-    }
-
-    clickClose(): void {
-        this.onClose.emit();
     }
 
     startStreamingLogsForJob() {

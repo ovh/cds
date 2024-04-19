@@ -71,7 +71,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
             minimap: { enabled: false }
         };
 
-        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectWorkflowEntityComponent.PANEL_KEY)) ?? '50%';
+        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectWorkflowEntityComponent.PANEL_KEY));
 
         this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
             this.resizing = resizing;
@@ -229,7 +229,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
-    panelEndResize(size: number): void {
+    panelEndResize(size: string): void {
         this._store.dispatch(new actionPreferences.SavePanelSize({
             panelKey: ProjectWorkflowEntityComponent.PANEL_KEY,
             size: size

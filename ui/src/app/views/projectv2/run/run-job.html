@@ -1,7 +1,4 @@
 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
-<div class="close" (click)="clickClose()">
-    <span nz-icon nzType="close" nzTheme="outline"></span>
-</div>
 <ng-container *ngIf="selectedTab.key === 'logs' && jobRun">
     <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun" (onScroll)="onJobScroll($event)"
         #runJobLogs></app-run-job-logs>

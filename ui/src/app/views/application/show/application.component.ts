@@ -21,6 +21,7 @@ import { Subscription } from 'rxjs';
 import { filter, finalize } from 'rxjs/operators';
 import { Tab } from 'app/shared/tabs/tabs.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { RouterService } from 'app/service/services.module';
 
 @Component({
     selector: 'app-application-show',
@@ -74,7 +75,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         public _translate: TranslateService,
         private _store: Store,
         private _cd: ChangeDetectorRef,
-        private _modalService: NzModalService
+        private _modalService: NzModalService,
+        private _routerService: RouterService
     ) {
         this.project = this._routeActivated.snapshot.data['project'];
 
@@ -91,7 +93,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 }
             );
 
-        this._routeParamsSub = this._routeActivated.params.subscribe(params => {
+        this._routeParamsSub = this._routeActivated.params.subscribe(_router => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+
             let projectKey = params['key'];
             this.urlAppName = params['appName'];
             if (this.application && this.application.name !== this.urlAppName) {

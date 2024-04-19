@@ -24,14 +24,14 @@ export class ProjectV2ExploreComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ExploreComponent.PANEL_KEY)) ?? '15%';
+		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ExploreComponent.PANEL_KEY));
 	}
 
 	panelStartResize(): void {
 		this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
 	}
 
-	panelEndResize(size: number): void {
+	panelEndResize(size: string): void {
 		this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: ProjectV2ExploreComponent.PANEL_KEY, size: size }));
 		this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
 	}

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, TemplateRef, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, TemplateRef, ViewChild } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { from, interval, lastValueFrom, Subscription } from "rxjs";
 import { dump } from "js-yaml";
@@ -16,6 +16,7 @@ import { NavigationState } from "app/store/navigation.state";
 import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
 import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
+import { RouterService } from "app/service/services.module";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -44,6 +45,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     selectedRunAttempt: number;
     results: Array<WorkflowRunResult>;
     tests: Tests;
+    projectKey: string;
 
     // Subs
     sidebarSubs: Subscription;
@@ -53,8 +55,9 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     // Panels
     resizing: boolean;
-    infoPanelSize: number;
-    jobPanelSize: number;
+    infoPanelSize: string;
+    jobPanelSize: string;
+    panelExpanded: boolean;
 
     defaultTabs: Array<Tab>;
     tabs: Array<Tab>;
@@ -69,21 +72,24 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         private _store: Store,
         private _router: Router,
         private _route: ActivatedRoute,
-        private _messageService: NzMessageService
+        private _messageService: NzMessageService,
+        private _routerService: RouterService
     ) {
         this._route.params.subscribe(_ => {
-            const workflowRunID = this._route.snapshot.params['workflowRunID'];
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            const workflowRunID = params['workflowRunID'];
             if (this.workflowRun && this.workflowRun.id === workflowRunID) {
                 return;
             }
-            this.load();
+            this.projectKey = params['key'];
+            this.load(workflowRunID);
         });
         this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
             this.resizing = resizing;
             this._cd.markForCheck();
         });
         this.infoPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.INFO_PANEL_KEY));
-        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.JOB_PANEL_KEY));
+        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.JOB_PANEL_KEY)) ?? '50%';
         this.defaultTabs = [<Tab>{
             title: 'Infos',
             key: 'infos'
@@ -97,10 +103,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
-    async load() {
-        const projectKey = this._route.snapshot.parent.params['key'];
-        const workflowRunID = this._route.snapshot.params['workflowRunID'];
-
+    async load(workflowRunID: string) {
         this.clearPanel();
         delete this.workflowGraph;
         if (this.pollSubs) {
@@ -108,7 +111,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }
 
         try {
-            this.workflowRun = await lastValueFrom(this._workflowService.getRun(projectKey, workflowRunID));
+            this.workflowRun = await lastValueFrom(this._workflowService.getRun(this.projectKey, workflowRunID));
             this.selectedRunAttempt = this.workflowRun.run_attempt;
         } catch (e) {
             this._messageService.error(`Unable to get workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
@@ -195,12 +198,11 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     }
 
     onBack(): void {
-        const projectKey = this._route.snapshot.parent.params['key'];
-        const lastFilters = this._store.selectSnapshot(NavigationState.selectActivityRunLastFilters(projectKey));
+        const lastFilters = this._store.selectSnapshot(NavigationState.selectActivityRunLastFilters(this.projectKey));
         if (lastFilters) {
             this._router.navigateByUrl(lastFilters);
         } else {
-            this._router.navigate(['/projectv2', projectKey, 'run']);
+            this._router.navigate(['/project', this.projectKey, 'run']);
         }
     }
 
@@ -212,7 +214,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
-    infoPanelEndResize(size: number): void {
+    infoPanelEndResize(size: string): void {
         this.panelEndResize();
         this._store.dispatch(new actionPreferences.SavePanelSize({
             panelKey: ProjectV2WorkflowRunComponent.INFO_PANEL_KEY,
@@ -220,7 +222,7 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         }));
     }
 
-    jobPanelEndResize(size: number): void {
+    jobPanelEndResize(size: string): void {
         this.panelEndResize();
         this._store.dispatch(new actionPreferences.SavePanelSize({
             panelKey: ProjectV2WorkflowRunComponent.JOB_PANEL_KEY,
@@ -282,8 +284,10 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
                 break;
         }
 
-
-        this._cd.markForCheck();
+        this._cd.detectChanges(); // force rendering to compute graph container size
+        if (this.graph) {
+            this.graph.resize();
+        }
     }
 
     async refreshPanel() {
@@ -327,15 +331,6 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
         delete this.selectedTest;
     }
 
-    closePanel(): void {
-        this.clearPanel();
-
-        this._cd.detectChanges(); // force rendering to compute graph container size
-        if (this.graph) {
-            this.graph.resize();
-        }
-    }
-
     async changeRunAttempt(value: number) {
         this.selectedRunAttempt = value;
         this._cd.markForCheck();
@@ -343,17 +338,47 @@ export class ProjectV2WorkflowRunComponent implements OnDestroy {
     }
 
     async clickRestartJobs() {
-        const projectKey = this._route.snapshot.parent.params['key'];
-        const workflowRunID = this._route.snapshot.params['workflowRunID'];
-        await lastValueFrom(this._workflowService.restart(projectKey, workflowRunID));
-        await this.load();
+        await lastValueFrom(this._workflowService.restart(this.projectKey, this.workflowRun.id));
+        await this.load(this.workflowRun.id);
     }
 
     async clickStopRun() {
-        const projectKey = this._route.snapshot.parent.params['key'];
-        const workflowRunID = this._route.snapshot.params['workflowRunID'];
-        await lastValueFrom(this._workflowService.stop(projectKey, workflowRunID));
-        await this.load();
+        await lastValueFrom(this._workflowService.stop(this.projectKey, this.workflowRun.id));
+        await this.load(this.workflowRun.id);
+    }
+
+    clickClosePanel(): void {
+        this.clearPanel();
+        this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.JOB_PANEL_KEY)) ?? '50%';
+        this.panelExpanded = false;
+
+        this._cd.detectChanges(); // force rendering to compute graph container size
+        if (this.graph) {
+            this.graph.clickOrigin();
+        }
+    }
+
+    clickExpandPanel(): void {
+        if (this.panelExpanded) {
+            this.jobPanelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunComponent.JOB_PANEL_KEY)) ?? '50%';
+            this.panelExpanded = false;
+        } else {
+            this.jobPanelSize = '90%';
+            this.panelExpanded = true;
+        }
+        this._cd.detectChanges();
+        if (this.graph) {
+            this.graph.resize();
+        }
+    }
+
+    @HostListener('window:keydown.escape', ['$event'])
+    handleKeyDown(event: KeyboardEvent) {
+        this.clickClosePanel();
+    }
+
+    dblClickOnPanel():void {
+        this.clickExpandPanel();
     }
 
 }

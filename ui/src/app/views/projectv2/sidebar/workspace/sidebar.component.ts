@@ -52,7 +52,6 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     loading: boolean = true;
     refreshWorkspace: boolean = false;
     currentWorkspace: FlatNodeItem[];
-    panels: boolean[] = [true, false];
 
     sidebarServiceSub: Subscription;
     analysisServiceSub: Subscription;
@@ -251,7 +250,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
             case EntityWorkflow:
                 return [<MenuItem>{
                     name: 'Display runs',
-                    route: ['/', 'projectv2', this.project.key, 'run', 'vcs', vcs, 'repository', repo, 'workflow', e.name]
+                    route: ['/', 'project', this.project.key, 'run', 'vcs', vcs, 'repository', repo, 'workflow', e.name]
                 }];
         }
         return null;
@@ -260,7 +259,7 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
     getVCSMenu(vcs: VCSProject): MenuItem[] {
         return [<MenuItem>{
             name: 'Add a repository',
-            route: ['/', 'projectv2', this.project.key, 'explore', 'vcs', vcs.name, 'repository']
+            route: ['/', 'project', this.project.key, 'explore', 'vcs', vcs.name, 'repository']
         }];
     }
 
@@ -271,38 +270,32 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
                 break;
             case 'repository':
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.name], {
+                    this._router.navigate(['/', 'project', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.name], {
                         queryParamsHandling: 'preserve'
                     }).then();
                 }
                 break;
             case EntityWorkerModel:
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], {
+                    this._router.navigate(['/', 'project', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workermodel', e.node.name], {
                         queryParamsHandling: 'preserve'
                     }).then();
                 }
                 break;
             case EntityAction:
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'action', e.node.name], {
+                    this._router.navigate(['/', 'project', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'action', e.node.name], {
                         queryParamsHandling: 'preserve'
                     }).then();
                 }
                 break;
             case EntityWorkflow:
                 if (e.eventType === 'select') {
-                    this._router.navigate(['/', 'projectv2', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workflow', e.node.name], {
+                    this._router.navigate(['/', 'project', this.project.key, 'explore', 'vcs', e.node.parentNames[0], 'repository', e.node.parentNames[1], 'workflow', e.node.name], {
                         queryParamsHandling: 'preserve'
                     }).then();
                 }
                 break;
         }
-    }
-
-    togglePanel(i: number): void {
-        this.panels[i] = !this.panels[i];
-        this.panels = Object.assign([], this.panels)
-        this._cd.markForCheck();
     }
 }

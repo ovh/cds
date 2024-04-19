@@ -84,6 +84,11 @@
         }
       }
     }
+
+    [nz-list-item-actions] {
+      min-width: 120px;
+      text-align: right;
+    }
   }
 
   .footer {
@@ -93,6 +98,20 @@
 
     nz-pagination {
       margin-left: auto;
+    }
+
+    nz-select {
+      margin-left: 4px;
+
+      ::ng-deep {
+        .ant-select-selector {
+          padding: unset;
+        }
+
+        .ant-select-arrow {
+          right: 4px;
+        }
+      }
     }
   }
 }

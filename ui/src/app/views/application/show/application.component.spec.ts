@@ -48,6 +48,7 @@ describe('CDS: Application', () => {
     let appStore: ApplicationStore;
     let store: Store;
     let router: Router;
+    let routerService: RouterService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -65,7 +66,6 @@ describe('CDS: Application', () => {
                 NavbarService,
                 ApplicationWorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
-                { provide: Router, useClass: MockRouter },
                 { provide: ToastService, useClass: MockToast },
                 TranslateService,
                 TranslateLoader,
@@ -94,6 +94,8 @@ describe('CDS: Application', () => {
         appStore = injector.get(ApplicationStore);
         store = injector.get(Store);
         router = injector.get(Router);
+        routerService = injector.get(RouterService);
+        spyOn(routerService, 'getRouteSnapshotParams').and.callFake(() => ({ key: 'key1', appName: 'app1' }));
     });
 
     afterEach(() => {
@@ -293,11 +295,6 @@ class MockToast {
     }
     error(title: string, msg: string) {
 
-    }
-}
-
-class MockRouter {
-    public navigate() {
     }
 }
 

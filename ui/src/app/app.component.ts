@@ -117,7 +117,6 @@ export class AppComponent implements OnInit, OnDestroy {
             }
         });
 
-
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT

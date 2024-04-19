@@ -103,13 +103,11 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
             switch (n.type) {
                 case GraphNodeType.Matrix:
                     component = this.createJobMatrixComponent(n);
-                    const alls = GraphNode.generateMatrixOptions(n.job.strategy.matrix);
-                    let height = 30 * alls.length + 10 * (alls.length - 1) + 60 + 20;
-                    this.graph.createNode(`${this.node.name}-${n.name}`, n.type, component, 240, height);
+                    this.graph.createNode(`${this.node.name}-${n.name}`, n, component);
                     break;
                 default:
                     component = this.createJobNodeComponent(n);
-                    this.graph.createNode(`${this.node.name}-${n.name}`, n.type, component);
+                    this.graph.createNode(`${this.node.name}-${n.name}`, n, component);
                     if (n.run) {
                         this.graph.setNodeStatus(`${this.node.name}-${n.name}`, n.run ? n.run.status : null);
                     }

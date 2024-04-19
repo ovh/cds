@@ -36,6 +36,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     hooks: Array<any> = [];
     selectedHook: string;
     hooksOn: any;
+    centeredNode: GraphNode;
 
     @Input() set workflow(data: any) {
         // Parse the workflow
@@ -165,11 +166,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     }
 
     onResize() {
-        const element = this.svgContainer.element.nativeElement;
-        if (!this.graph) {
-            return;
-        }
-        this.graph.resize(element.offsetWidth, element.offsetHeight);
+        this.resize();
     }
 
     changeDisplay(): void {
@@ -258,17 +255,15 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             switch (n.type) {
                 case GraphNodeType.Stage:
                     component = this.createSubGraphComponent(n);
-                    this.graph.createNode(n.name, n.type, component, 300, 170);
+                    this.graph.createNode(n.name, n, component);
                     break;
                 case GraphNodeType.Matrix:
                     component = this.createJobMatrixComponent(n);
-                    const alls = GraphNode.generateMatrixOptions(n.job.strategy.matrix);
-                    let height = 30 * alls.length + 10 * (alls.length - 1) + 60 + 20;
-                    this.graph.createNode(n.name, n.type, component, 240, height);
+                    this.graph.createNode(n.name, n, component);
                     break;
                 default:
                     component = this.createJobNodeComponent(n);
-                    this.graph.createNode(n.name, n.type, component);
+                    this.graph.createNode(n.name, n, component);
                     if (n.run) {
                         this.graph.setNodeStatus(n.name, n.run ? n.run.status : null);
                     }
@@ -302,6 +297,11 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             return;
         }
         this.graph.resize(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
+        if (this.centeredNode) {
+            this.centerNode(this.centeredNode);
+        } else {
+            this.clickOrigin();
+        }
     }
 
     clickOrigin() {
@@ -309,6 +309,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             return;
         }
         this.graph.center(this.svgContainer.element.nativeElement.offsetWidth, this.svgContainer.element.nativeElement.offsetHeight);
+        this.centeredNode = null;
     }
 
     clickHook(type: string): void {
@@ -344,17 +345,18 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         const componentRef = this.svgContainer.createComponent(WorkflowV2JobsGraphComponent);
         componentRef.instance.graphNode = node;
         componentRef.instance.direction = this.direction;
-        componentRef.instance.centerCallback = this.centerSubGraph.bind(this);
+        componentRef.instance.centerCallback = this.centerNode.bind(this);
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
         componentRef.instance.selectJobCallback = this.subGraphSelectJob.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
 
-    centerSubGraph(node: GraphNode): void {
+    centerNode(node: GraphNode): void {
         if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
             return;
         }
+        this.centeredNode = node;
         this.graph.centerNode(`node-${node.name}`,
             this.svgContainer.element.nativeElement.offsetWidth,
             this.svgContainer.element.nativeElement.offsetHeight);
@@ -373,6 +375,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             } else {
                 this.onSelectJob.emit(n.name);
             }
+            this.centerNode(n);
         }
         this.graph.nodeMouseEvent(type, n.name, options);
     }

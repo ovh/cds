@@ -180,3 +180,59 @@
         cursor: pointer;
     }
 }
+
+app-resizable-panel {
+    z-index: 2000;
+    position: relative;
+
+    .controls {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        top: 0;
+        left: -37px;
+        background-color: $greyBackground;
+        border-bottom-left-radius: 5px;
+        border: 1px solid #f0f0f0;
+        border-top: none;
+        border-right: none;
+
+        :host-context(.night) & {
+            background-color: $darkBackground;
+            border-color: #303030;
+        }
+
+        .control {
+            height: 38px;
+            width: 38px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 18px;
+            line-height: 38px;
+
+            :host-context(.night) & {
+                color: $darkTheme_grey_6;
+            }
+
+            &:hover {
+                color: $darkTheme_grey_5;
+
+                :host-context(.night) & {
+                    color: white;
+                }
+            }
+
+            &.expand {
+                [nz-icon] {
+                    transform: rotate(270deg);
+                }
+            }
+
+            &.expanded {
+                [nz-icon] {
+                    transform: rotate(90deg);
+                }
+            }
+        }
+    }
+}
