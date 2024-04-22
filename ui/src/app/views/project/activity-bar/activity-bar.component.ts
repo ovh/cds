@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges } from "@angular/core";
 import { NavigationEnd, Router } from "@angular/router";
 import { Store } from "@ngxs/store";
 import { Project } from "app/model/project.model";
@@ -13,7 +13,7 @@ import { FeatureNames, FeatureService } from "app/service/feature/feature.servic
 	styleUrls: ['./activity-bar.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectActivityBarComponent implements OnInit {
+export class ProjectActivityBarComponent implements OnInit, OnChanges {
 	@Input() project: Project;
 
 	homeActive: boolean;
@@ -33,6 +33,13 @@ export class ProjectActivityBarComponent implements OnInit {
 			this.updateRoute(e.url);
 		});
 		this.updateRoute(this._router.routerState.snapshot.url);
+		this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: this.project.key }).subscribe(f => {
+			this.v2Enabled = f.enabled;
+			this._cd.markForCheck();
+		});
+	}
+
+	ngOnChanges(changes: SimpleChanges): void {
 		this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: this.project.key }).subscribe(f => {
 			this.v2Enabled = f.enabled;
 			this._cd.markForCheck();

@@ -88,6 +88,19 @@
     nz-select {
         min-width: 100px;
         margin-right: 20px;
+
+        &.not-dark {
+            ::ng-deep {
+                .ant-select-selector {
+                    color: white;
+                    background-color: #24292e !important;
+                }
+
+                .ant-select-arrow {
+                    color: white;
+                }
+            }
+        }
     }
 }
 

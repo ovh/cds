@@ -8,7 +8,7 @@
             {{ 'navbar_projects' | translate }}
         </a>
         <nz-select *ngIf="selectedProjectKey" nzShowSearch [ngModel]="selectedProjectKey"
-            (ngModelChange)="navigateToProject($event)">
+            (ngModelChange)="navigateToProject($event)" [class.not-dark]="!darkActive">
             <nz-option *ngFor="let p of projects" [nzLabel]="p.name" [nzValue]="p.key"></nz-option>
         </nz-select>
 
