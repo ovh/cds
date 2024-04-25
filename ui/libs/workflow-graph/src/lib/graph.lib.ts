@@ -17,10 +17,9 @@ export enum GraphDirection {
 
 export interface WithHighlight {
     getNodes(): Array<GraphNode>;
-
     setHighlight(active: boolean, options?: any): void;
-
-    setSelect(active: boolean, options?: any): void;
+    selectNode(navigationKey: string): void;
+    activateNode(navigationKey: string): void;
 }
 
 export type ComponentFactory<T> = (nodes: Array<GraphNode>, type: string) => ComponentRef<T>;
@@ -61,7 +60,6 @@ export class WorkflowV2Graph<T extends WithHighlight> {
     forks: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     joins: { [key: string]: { parents: Array<string>, children: Array<string> } } = {};
     nodeStatus: { [key: string]: string } = {};
-    currentSelectedNodeKey: string = null;
 
     constructor(
         factory: ComponentFactory<T>,
@@ -227,11 +225,6 @@ export class WorkflowV2Graph<T extends WithHighlight> {
                     d3.zoomIdentity.translate(this.transformed.x, this.transformed.y).scale(this.transformed.k));
             }
         }
-
-        if (this.currentSelectedNodeKey) {
-            this.unselectAllNode();
-            this.selectNode(this.currentSelectedNodeKey);
-        }
     }
 
     center(containerWidth: number, containerHeight: number): void {
@@ -272,7 +265,10 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         let oScale = Math.min((containerWidth - WorkflowV2Graph.margin * 2) / node.width,
             (containerHeight - WorkflowV2Graph.margin * 2) / node.width);
         // calculate final scale that fit min and max scale values
-        let scale = Math.max(this.minScale, oScale);
+        let scale = Math.min(
+            WorkflowV2Graph.maxOriginScale,
+            Math.max(this.minScale, oScale)
+        );
         let nodeDeltaCenterX = containerWidth / 2 - node.x * scale;
         let nodeDeltaCenterY = containerHeight / 2 - node.y * scale;
         this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(nodeDeltaCenterX, nodeDeltaCenterY).scale(scale));
@@ -523,24 +519,15 @@ export class WorkflowV2Graph<T extends WithHighlight> {
             case 'out':
                 this.highlightNode(false, key, options);
                 break;
-            case 'click':
-                this.unselectAllNode();
-                this.selectNode(key, options);
-                break;
         }
     }
 
-    unselectAllNode(): void {
-        this.nodesComponent.forEach(n => n.instance.setSelect(false));
+    selectNode(navigationKey: string): void {
+        this.nodesComponent.forEach(n => n.instance.selectNode(navigationKey));
     }
 
-    selectNode(key: string, options?: any): void {
-        if (this.nodesComponent.has(`node-${key}`)) {
-            this.nodesComponent.get(`node-${key}`).instance.setSelect(true, options);
-            this.currentSelectedNodeKey = key;
-        } else {
-            this.currentSelectedNodeKey = null;
-        }
+    activateNode(navigationKey: string): void {
+        this.nodesComponent.forEach(n => n.instance.activateNode(navigationKey));
     }
 
     highlightNode(active: boolean, key: string, options?: any) {

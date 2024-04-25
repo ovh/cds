@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model'
 import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { Subscription, concatMap, from, interval } from 'rxjs';
@@ -30,7 +30,7 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         this.setHighlight.bind(this);
-        this.setSelect.bind(this);
+        this.selectNode.bind(this);
     }
 
     ngOnDestroy(): void {
@@ -108,9 +108,15 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    setSelect(active: boolean, options?: any): void {
-        this.selected = active;
+    selectNode(navigationKey: string): void {
+        this.selected = navigationKey === (this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name);
         this._cd.markForCheck();
+    }
+
+    activateNode(navigationKey: string): void {
+        if (this.mouseCallback && navigationKey === (this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name)) {
+            this.mouseCallback('click', this.node, { jobRunID: this.node.run ? this.node.run.id : null });
+        }
     }
 
     clickRunGate(event: Event): void {

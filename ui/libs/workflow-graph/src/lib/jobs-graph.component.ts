@@ -37,8 +37,7 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
 
     @Input() direction: GraphDirection;
     @Input() centerCallback: any;
-    @Input() mouseCallback: (type: string, node: GraphNode) => void;
-    @Input() selectJobCallback: (type: string, node: GraphNode, options?: any) => void;
+    @Input() mouseCallback: (type: string, node: GraphNode, options?: any) => void;
 
     ready: boolean;
     highlight = false;
@@ -72,8 +71,12 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
         this._cd.markForCheck();
     }
 
-    setSelect(active: boolean): void {
-        this.graph.unselectAllNode();
+    selectNode(navigationKey: string): void {
+        this.graph.selectNode(navigationKey);
+    }
+
+    activateNode(navigationKey: string): void {
+        this.graph.activateNode(navigationKey);
     }
 
     ngAfterViewInit(): void {
@@ -155,8 +158,8 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
     }
 
     nodeMouseEvent(type: string, n: GraphNode, options?: any) {
-        if (this.selectJobCallback) {
-            this.selectJobCallback(type, n, options);
+        if (this.mouseCallback) {
+            this.mouseCallback(type, n, options);
         }
         this.graph.nodeMouseEvent(type, `${this.node.name}-${n.name}`, options);
     }

@@ -5,6 +5,7 @@ import {
     Component,
     ComponentRef, ElementRef,
     EventEmitter,
+    HostListener,
     Input,
     OnDestroy,
     Output,
@@ -14,7 +15,7 @@ import {
 import { WorkflowV2JobsGraphComponent } from './jobs-graph.component';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
-import { GraphNode, GraphNodeType } from './graph.model';
+import { GraphNode, GraphNodeType, NavigationGraph } from './graph.model';
 import { GraphDirection, WorkflowV2Graph } from './graph.lib';
 import { load, LoadOptions } from 'js-yaml';
 import { V2Workflow, V2WorkflowRun, V2WorkflowRunJob } from './v2.workflow.run.model';
@@ -37,6 +38,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     selectedHook: string;
     hooksOn: any;
     centeredNode: GraphNode;
+    selectedNodeNavigationKey: string;
+    navigationGraph: NavigationGraph;
 
     @Input() set workflow(data: any) {
         // Parse the workflow
@@ -165,6 +168,37 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         this.changeDisplay();
     }
 
+    @HostListener('window:keydown', ['$event'])
+    handleKeyDown(event: KeyboardEvent) {
+        if (!this.navigationGraph || !this.selectedNodeNavigationKey) { return; }
+        let newSelected: string = null;
+        switch (event.key) {
+            case 'ArrowDown':
+                newSelected = this.direction === GraphDirection.HORIZONTAL ? this.navigationGraph.getSideNext(this.selectedNodeNavigationKey) : this.navigationGraph.getNext(this.selectedNodeNavigationKey);
+                break;
+            case 'ArrowUp':
+                newSelected = this.direction === GraphDirection.HORIZONTAL ? this.navigationGraph.getSidePrevious(this.selectedNodeNavigationKey) : this.navigationGraph.getPrevious(this.selectedNodeNavigationKey);
+                break;
+            case 'ArrowLeft':
+                newSelected = this.direction === GraphDirection.HORIZONTAL ? this.navigationGraph.getPrevious(this.selectedNodeNavigationKey) : this.navigationGraph.getSidePrevious(this.selectedNodeNavigationKey);
+                break;
+            case 'ArrowRight':
+                newSelected = this.direction === GraphDirection.HORIZONTAL ? this.navigationGraph.getNext(this.selectedNodeNavigationKey) : this.navigationGraph.getSideNext(this.selectedNodeNavigationKey);
+                break;
+            case 'Enter':
+                if (this.selectedNodeNavigationKey) {
+                    this.graph.activateNode(this.selectedNodeNavigationKey);
+                }
+                return;
+            default:
+                return;
+        }
+        if (newSelected) {
+            this.selectedNodeNavigationKey = newSelected;
+            this.graph.selectNode(this.selectedNodeNavigationKey);
+        }
+    }
+
     onResize() {
         this.resize();
     }
@@ -248,6 +282,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             this.graph = new WorkflowV2Graph(this.createForkJoinNodeComponent.bind(this), this.direction,
                 WorkflowV2StagesGraphComponent.minScale,
                 WorkflowV2StagesGraphComponent.maxScale);
+            this.navigationGraph = new NavigationGraph(this.nodes, this.direction);
         }
 
         this.nodes.forEach(n => {
@@ -319,7 +354,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
         const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
         componentRef.instance.node = node;
-        componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
+        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -327,7 +362,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     createJobMatrixComponent(node: GraphNode): ComponentRef<GraphMatrixNodeComponent> {
         const componentRef = this.svgContainer.createComponent(GraphMatrixNodeComponent);
         componentRef.instance.node = node;
-        componentRef.instance.mouseCallback = this.nodeJobMouseEvent.bind(this);
+        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -347,7 +382,6 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         componentRef.instance.direction = this.direction;
         componentRef.instance.centerCallback = this.centerNode.bind(this);
         componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
-        componentRef.instance.selectJobCallback = this.subGraphSelectJob.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -363,11 +397,10 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     }
 
     nodeMouseEvent(type: string, n: GraphNode, options?: any) {
-        this.graph.nodeMouseEvent(type, n.name, options);
-    }
-
-    nodeJobMouseEvent(type: string, n: GraphNode, options?: any) {
         if (type === 'click') {
+            this.selectedNodeNavigationKey = n.job.stage ? `${n.job.stage}-${n.name}` : n.name;
+            if (n.type === GraphNodeType.Matrix) { this.selectedNodeNavigationKey += '-' + options.jobMatrixKey; }
+            this.graph.selectNode(this.selectedNodeNavigationKey);
             if (options && options['jobRunID']) {
                 this.onSelectJobRun.emit(options['jobRunID']);
             } else if (options && options['gateName']) {
@@ -378,19 +411,6 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             this.centerNode(n);
         }
         this.graph.nodeMouseEvent(type, n.name, options);
-    }
-
-    subGraphSelectJob(type: string, n: GraphNode, options?: any): void {
-        if (type === 'click') {
-            this.graph.unselectAllNode();
-            if (options && options['jobRunID']) {
-                this.onSelectJobRun.emit(options['jobRunID']);
-            } else if (options && options['gateName']) {
-                this.onSelectJobGate.emit(n);
-            } else {
-                this.onSelectJob.emit(n.name);
-            }
-        }
     }
 
     changeDirection(): void {

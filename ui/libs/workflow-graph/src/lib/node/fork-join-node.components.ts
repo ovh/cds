@@ -21,7 +21,7 @@ export class GraphForkJoinNodeComponent implements OnInit {
         private _cd: ChangeDetectorRef
     ) {
         this.setHighlight.bind(this);
-        this.setSelect.bind(this);
+        this.selectNode.bind(this);
     }
 
     ngOnInit() {
@@ -53,5 +53,7 @@ export class GraphForkJoinNodeComponent implements OnInit {
         this._cd.markForCheck();
     }
 
-    setSelect(active: boolean, options?: any): void { }
+    selectNode(navigationKey: string): void { }
+
+    activateNode(navigationKey: string): void { }
 }
