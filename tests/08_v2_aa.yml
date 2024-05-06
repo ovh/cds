@@ -104,6 +104,8 @@ testcases:
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
+        workflowRunStatus:
+          from: result.systemoutjson.systemoutjson0.status
 
     - name: Download logs
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
@@ -113,9 +115,11 @@ testcases:
     - name: Checkssh key
       script: "cat {{.cds_workflow}}-1-1-init-step-0"  
     - name: Display gpg list
-      script: "cat {{.cds_workflow}}-1-1-init-displaypgp"  
+      script: "cat {{.cds_workflow}}-1-1-pgp-displaypgp"  
     - name: Checkssh key
       script: "cat {{.cds_workflow}}-1-1-init-displayssh && cat {{.cds_workflow}}-1-1-init-displayssh | grep \"**********\""
-    - name: exit
-      script: rm fake
+    - name: Echo Status
+      script: echo {{.workflowRunStatus}}
+      assertions:
+      - result.systemout ShouldEqual Success
     

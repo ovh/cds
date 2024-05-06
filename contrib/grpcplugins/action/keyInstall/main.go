@@ -89,11 +89,13 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 		if err := vcs.WriteKey(afero.NewOsFs(), absPath, key.Private); err != nil {
 			return fmt.Errorf("cannot setup ssh key %s : %v", key.Name, err)
 		}
+		grpcplugins.Logf(&actPlugin.Common, "sshkey %s has been created here: %s", key.Name, filePath)
 		return nil
 	case sdk.KeyTypePGP:
 		if _, _, err := sdk.ImportGPGKey("", key.Name, key.Private); err != nil {
 			return fmt.Errorf("unable to install pgp key %s: %v", keyName, err)
 		}
+		grpcplugins.Logf(&actPlugin.Common, "pgpkey %s has been imported", key.Name)
 		return nil
 	default:
 		return fmt.Errorf("unknown key type [%s]", key.Type)
