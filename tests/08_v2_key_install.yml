@@ -80,6 +80,8 @@ testcases:
                 - uses: actions/keyInstall
                   with:
                     keyName: proj-pgp-itv2keyinstall   
+                - run: gpg --list-key
+                  id: displaypgp    
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -110,6 +112,10 @@ testcases:
       script: "cat {{.cds_workflow}}-1-1-pgp-step-0"
     - name: Checkssh key
       script: "cat {{.cds_workflow}}-1-1-init-step-0"  
+    - name: Display gpg list
+      script: "cat {{.cds_workflow}}-1-1-init-displaypgp"  
     - name: Checkssh key
       script: "cat {{.cds_workflow}}-1-1-init-displayssh && cat {{.cds_workflow}}-1-1-init-displayssh | grep \"**********\""
+    - name: exit
+      script: rm fake
     
