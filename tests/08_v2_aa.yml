@@ -107,7 +107,9 @@ testcases:
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
 
     - name: Checkpgp key
-      script: "cat {{.cds_workflow}}-1-1-init-pgp"
+      script: "cat {{.cds_workflow}}-1-1-pgp-step-0"
+    - name: Checkssh key
+      script: "cat {{.cds_workflow}}-1-1-init-step-0"  
     - name: Checkssh key
       script: "cat {{.cds_workflow}}-1-1-init-displayssh && cat {{.cds_workflow}}-1-1-init-displayssh | grep \"**********\""
     
