@@ -274,6 +274,30 @@ func GetJobRun(ctx context.Context, c *actionplugin.Common) (*sdk.V2WorkflowRunJ
 	return &jobRun, nil
 }
 
+func GetProjectKey(ctx context.Context, c *actionplugin.Common, keyName string) (*sdk.ProjectKey, error) {
+	r, err := c.NewRequest(ctx, "GET", "/v2/key/"+keyName, nil)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to prepare request")
+	}
+
+	resp, err := c.DoRequest(r)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to get job context")
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+
+	defer resp.Body.Close()
+
+	var context sdk.ProjectKey
+	if err := sdk.JSONUnmarshal(btes, &context); err != nil {
+		return nil, sdk.WrapError(err, "unable to read response")
+	}
+	return &context, nil
+}
+
 func GetJobContext(ctx context.Context, c *actionplugin.Common) (*sdk.WorkflowRunJobsContext, error) {
 	r, err := c.NewRequest(ctx, "GET", "/v2/context", nil)
 	if err != nil {
