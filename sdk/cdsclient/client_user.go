@@ -94,6 +94,14 @@ func (c *client) UserUpdate(ctx context.Context, username string, u *sdk.Authent
 	return nil
 }
 
+func (c *client) UserContacts(ctx context.Context, username string) ([]sdk.UserContact, error) {
+	var res []sdk.UserContact
+	if _, err := c.GetJSON(ctx, "/user/"+url.QueryEscape(username)+"/contact", &res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (c *client) UserGpgKeyList(ctx context.Context, username string) ([]sdk.UserGPGKey, error) {
 	var keys []sdk.UserGPGKey
 	if _, err := c.GetJSON(ctx, fmt.Sprintf("/v2/user/%s/gpgkey", url.QueryEscape(username)), &keys); err != nil {
