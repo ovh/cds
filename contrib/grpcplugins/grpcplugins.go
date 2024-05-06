@@ -611,7 +611,12 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 
 		repository := integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-cds"
 		maturity := integ.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-		path := filepath.Join(jobRun.ProjectKey, jobRun.WorkflowName, jobContext.Git.SemverCurrent)
+		path := filepath.Join(
+			strings.ToLower(jobContext.Git.Server),
+			strings.ToLower(jobContext.Git.Repository),
+			jobRun.ProjectKey,
+			jobRun.WorkflowName,
+			jobContext.Git.SemverCurrent)
 
 		response.RunResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 		response.RunResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
