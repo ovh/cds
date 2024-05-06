@@ -8,6 +8,7 @@ import (
 	"github.com/fsamin/go-repo"
 	"github.com/golang/protobuf/ptypes/empty"
 
+	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
@@ -25,7 +26,10 @@ func (actPlugin *checkoutPlugin) Manifest(_ context.Context, _ *empty.Empty) (*a
 	}, nil
 }
 
-func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
 	gitURL := q.GetOptions()["git-url"]
 	ref := q.GetOptions()["ref"]
 	sha := q.GetOptions()["sha"]
@@ -42,38 +46,52 @@ func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.Action
 		authOption = repo.WithSSHAuth([]byte(sshKey))
 	}
 
-	fmt.Printf("Start cloning %s\n", gitURL)
+	grpcplugins.Logf(&p.Common, "Start cloning %s\n", gitURL)
+
+	res := &actionplugin.StreamResult{
+		Status: sdk.StatusSuccess,
+	}
 
 	clonedRepo, err := repo.Clone(ctx, path, gitURL, authOption)
 	if err != nil {
-		return nil, fmt.Errorf("unable to clone the repository %s: %v", gitURL, err)
+		res.Status = sdk.StatusFail
+		res.Details = fmt.Sprintf("unable to clone the repository %s: %v", gitURL, err)
+		return stream.Send(res)
 	}
 
 	switch {
 	case strings.HasPrefix(ref, sdk.GitRefTagPrefix):
 		tag := strings.TrimPrefix(ref, sdk.GitRefTagPrefix)
-		fmt.Printf("Checkout tag %s\n", tag)
+		grpcplugins.Logf(&p.Common, "Checkout tag %s\n", tag)
 		if err := clonedRepo.FetchRemoteTag(ctx, "origin", tag); err != nil {
-			return nil, fmt.Errorf("unable to get tag %s: %v", tag, err)
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to get tag %s: %v", tag, err)
+			return stream.Send(res)
 		}
 	default:
 		branch := strings.TrimPrefix(ref, sdk.GitRefBranchPrefix)
-		fmt.Printf("Checkout branch %s\n", branch)
+		grpcplugins.Logf(&p.Common, "Checkout branch %s\n", branch)
 		if err := clonedRepo.Checkout(ctx, branch); err != nil {
-			return nil, fmt.Errorf("unable to git checkout on branch %s: %v", branch, err)
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to git checkout on branch %s: %v", branch, err)
+			return stream.Send(res)
 		}
 
 		// Check commit
 		if sha != "" {
 			currentCommit, err := clonedRepo.LatestCommit(ctx)
 			if err != nil {
-				return nil, fmt.Errorf("unable to get current commit: %v", err)
+				res.Status = sdk.StatusFail
+				res.Details = fmt.Sprintf("unable to get current commit: %v", err)
+				return stream.Send(res)
 			}
 			if currentCommit.LongHash != sha {
 				// Not the same commit, reset HARD the commit
-				fmt.Printf("Reset to commit %s\n", sha)
+				grpcplugins.Logf(&p.Common, "Reset to commit %s\n", sha)
 				if err := clonedRepo.ResetHard(ctx, sha); err != nil {
-					return nil, fmt.Errorf("unable to reset hard commit %s: %v", sha, err)
+					res.Status = sdk.StatusFail
+					res.Details = fmt.Sprintf("unable to reset hard commit %s: %v", sha, err)
+					return stream.Send(res)
 				}
 			}
 		}
@@ -87,16 +105,20 @@ func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.Action
 		if submodules == "recursive" {
 			subMod.Recursive = true
 		}
-		fmt.Printf("Start updating submodules\n")
+		grpcplugins.Logf(&p.Common, "Start updating submodules\n")
 		if err := clonedRepo.SubmoduleUpdate(ctx, subMod); err != nil {
-			return nil, fmt.Errorf("unable to update submodule: %v", err)
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to update submodule: %v", err)
+			return stream.Send(res)
 		}
 	}
+	grpcplugins.Logf(&p.Common, "Checkout completed\n")
+	return stream.Send(res)
 
-	fmt.Printf("Checkout completed\n")
-	return &actionplugin.ActionResult{
-		Status: sdk.StatusSuccess,
-	}, nil
+}
+
+func (actPlugin *checkoutPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 func main() {

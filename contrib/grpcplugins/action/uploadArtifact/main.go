@@ -41,8 +41,11 @@ func (actPlugin *runActionUploadArtifactPlugin) Manifest(_ context.Context, _ *e
 	}, nil
 }
 
-func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *runActionUploadArtifactPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 	path := q.GetOptions()["path"]
@@ -53,34 +56,37 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 		runResultType = sdk.V2WorkflowRunResultType(sdk.V2WorkflowRunResultTypeCoverage)
 	}
 
-	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &actPlugin.Common)
+	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
 	if err != nil {
 		err := fmt.Errorf("unable to get working directory: %v", err)
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
+		return stream.Send(res)
 	}
 
 	var dirFS = os.DirFS(workDirs.WorkingDir)
 
-	if err := actPlugin.perform(ctx, dirFS, path, ifNoFilesFound, runResultType); err != nil {
+	if err := p.perform(ctx, dirFS, path, ifNoFilesFound, runResultType); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
 	}
 
-	return res, nil
+	return stream.Send(res)
+}
+
+func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dirFS fs.FS, path, ifNoFilesFound string, runResultType sdk.V2WorkflowRunResultType) error {
-	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, dirFS, path, ifNoFilesFound)
+	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, dirFS, path, ifNoFilesFound)
 	if err != nil {
 		return err
 	}
 
 	for _, r := range results {
 		message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s, Mode: %v", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256, permissions[r.Path])
-		grpcplugins.Log(message)
+		grpcplugins.Log(&actPlugin.Common, message)
 
 		// Create run result at status "pending"
 		var runResultRequest = workerruntime.V2RunResultRequest{

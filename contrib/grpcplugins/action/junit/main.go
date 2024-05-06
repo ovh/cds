@@ -30,34 +30,42 @@ func (actPlugin *junitPlugin) Manifest(_ context.Context, _ *empty.Empty) (*acti
 	}, nil
 }
 
-func (actPlugin *junitPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *junitPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 
 	filePath := q.GetOptions()["path"]
 
-	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &actPlugin.Common)
+	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
 	if err != nil {
 		err := fmt.Errorf("unable to get working directory: %v", err)
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
+		return stream.Send(res)
 	}
 
 	var dirFS = os.DirFS(workDirs.WorkingDir)
 
-	if err := actPlugin.perform(ctx, dirFS, filePath); err != nil {
+	if err := p.perform(ctx, dirFS, filePath); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
+		return stream.Send(res)
 	}
 
-	return res, nil
+	return stream.Send(res)
+
+}
+
+func (actPlugin *junitPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath string) error {
-	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, dirFS, filePath, "ERROR")
+	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, dirFS, filePath, "ERROR")
 	if err != nil {
 		return err
 	}
@@ -66,12 +74,11 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath
 	for _, r := range results {
 		bts, err := os.ReadFile(r.Path)
 		if err != nil {
-			grpcplugins.Error(fmt.Sprintf("Unable to read file %q: %v.", r.Path, err))
 			_ = openFiles[r.Path].Close()
-			return errors.New("unable to read file " + r.Path)
+			return errors.New(fmt.Sprintf("Unable to read file %q: %v.", r.Path, err))
 		}
 
-		runResultRequest, nbFailed, err := createRunResult(bts, r.Path, r.Result, sizes[r.Path], checksums[r.Path], permissions[r.Path])
+		runResultRequest, nbFailed, err := createRunResult(&actPlugin.Common, bts, r.Path, r.Result, sizes[r.Path], checksums[r.Path], permissions[r.Path])
 		if err != nil {
 			_ = openFiles[r.Path].Close()
 			return err
@@ -94,13 +101,13 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath
 	return nil
 }
 
-func createRunResult(fileContent []byte, filePath string, fileName string, size int64, checksum grpcplugins.ChecksumResult, perm fs.FileMode) (*workerruntime.V2RunResultRequest, int, error) {
+func createRunResult(p *actionplugin.Common, fileContent []byte, filePath string, fileName string, size int64, checksum grpcplugins.ChecksumResult, perm fs.FileMode) (*workerruntime.V2RunResultRequest, int, error) {
 	var ftests sdk.JUnitTestsSuites
 	if err := xml.Unmarshal(fileContent, &ftests); err != nil {
 		// Check if file contains testsuite only (and no testsuites)
 		var s sdk.JUnitTestSuite
 		if err := xml.Unmarshal([]byte(fileContent), &s); err != nil {
-			grpcplugins.Error(fmt.Sprintf("Unable to unmarshal junit file %q: %v.", filePath, err))
+			grpcplugins.Error(p, fmt.Sprintf("Unable to unmarshal junit file %q: %v.", filePath, err))
 			return nil, 0, errors.New("unable to read file " + filePath)
 		}
 
@@ -111,13 +118,13 @@ func createRunResult(fileContent []byte, filePath string, fileName string, size 
 
 	reportLogs := computeTestsReasons(ftests)
 	for _, l := range reportLogs {
-		grpcplugins.Log(l)
+		grpcplugins.Log(p, l)
 	}
 	ftests = ftests.EnsureData()
 	stats := ftests.ComputeStats()
 
 	message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s, Mode: %v", filePath, fileName, size, checksum.Md5, checksum.Sha1, checksum.Sha256, perm)
-	grpcplugins.Log(message)
+	grpcplugins.Log(p, message)
 
 	// Create run result at status "pending"
 	return &workerruntime.V2RunResultRequest{

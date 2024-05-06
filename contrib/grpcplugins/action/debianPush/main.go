@@ -52,9 +52,11 @@ type debianPushOptions struct {
 	integRepositoryName string
 }
 
-// Run implements actionplugin.ActionPluginServer.
-func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
-	res := &actionplugin.ActionResult{
+func (p *debianPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
 		Status: sdk.StatusSuccess,
 	}
 	opts := debianPushOptions{}
@@ -70,7 +72,7 @@ func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery)
 	if arch == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'architectures' input cannot be empty"
-		return res, nil
+		return stream.Send(res)
 	} else {
 		opts.architectures = strings.Split(arch, " ")
 	}
@@ -78,21 +80,21 @@ func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery)
 	if compo == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'components' input cannot be empty"
-		return res, nil
+		return stream.Send(res)
 	} else {
 		opts.components = strings.Split(compo, " ")
 	}
 	if distr == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'distributions' input cannot be empty"
-		return res, nil
+		return stream.Send(res)
 	} else {
 		opts.distributions = strings.Split(distr, " ")
 	}
 	if files == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "'files' input cannot be empty"
-		return res, nil
+		return stream.Send(res)
 	} else {
 		opts.files = strings.Split(files, " ")
 	}
@@ -101,19 +103,19 @@ func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = fmt.Sprintf("Unable to retrieve job integration: %v", err)
-		return res, nil
+		return stream.Send(res)
 	}
 	if jobContext == nil || jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "Unable to retrieve artifact manager integration for the current job"
-		return res, nil
+		return stream.Send(res)
 	}
 	opts.jobContext = *jobContext
 	integ, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, jobContext.Integrations.ArtifactManager)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = fmt.Sprintf("Unable to reget integration %s: %v", jobContext.Integrations.ArtifactManager, err)
-		return res, nil
+		return stream.Send(res)
 	}
 	opts.integ = *integ
 	url := opts.integ.Config[sdk.ArtifactoryConfigURL].Value
@@ -124,13 +126,13 @@ func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery)
 	url += opts.integRepositoryName
 	opts.repositoryURL = url
 
-	grpcplugins.Logf("  Debian repository URL: %s", opts.repositoryURL)
+	grpcplugins.Logf(&p.Common, "  Debian repository URL: %s", opts.repositoryURL)
 
 	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = fmt.Sprintf("unable to get working directory: %v", err)
-		return res, nil
+		return stream.Send(res)
 	}
 
 	dirFS := os.DirFS(workDirs.WorkingDir)
@@ -138,20 +140,26 @@ func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery)
 	if err := p.perform(ctx, dirFS, opts); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
-		return res, err
+		return stream.Send(res)
 	}
-	return res, nil
+	return stream.Send(res)
+
+}
+
+// Run implements actionplugin.ActionPluginServer.
+func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+	return nil, sdk.ErrNotImplemented
 }
 
 func (p *debianPushPlugin) perform(ctx context.Context, dirFS fs.FS, opts debianPushOptions) error {
 	for _, pattern := range opts.files {
-		results, sizes, _, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, dirFS, pattern, "ERROR")
+		results, sizes, _, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &p.Common, dirFS, pattern, "ERROR")
 		if err != nil {
 			return err
 		}
 		for _, r := range results {
 			message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256)
-			grpcplugins.Log(message)
+			grpcplugins.Log(&p.Common, message)
 
 			// Create run result at status "pending"
 			var runResultRequest = workerruntime.V2RunResultRequest{
@@ -235,7 +243,7 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 	var res *grpcplugins.ArtifactoryUploadResult
 	res, d, err = grpcplugins.ArtifactoryItemUpload(ctx, &p.Common, response.RunResult, opts.integ, reader)
 	if err != nil {
-		grpcplugins.Error(err.Error())
+		grpcplugins.Error(&p.Common, err.Error())
 		return nil, err
 	}
 
@@ -252,16 +260,16 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 	runResultRequest.RunResult.Status = sdk.V2WorkflowRunResultStatusCompleted
 	updateResponse, err := grpcplugins.UpdateRunResult(ctx, &p.Common, &runResultRequest)
 	if err != nil {
-		grpcplugins.Error(err.Error())
+		grpcplugins.Error(&p.Common, err.Error())
 		return nil, err
 	}
 
-	grpcplugins.Logf("  %d bytes uploaded in %.3fs", size, d.Seconds())
+	grpcplugins.Logf(&p.Common, "  %d bytes uploaded in %.3fs", size, d.Seconds())
 
 	if _, err := updateResponse.RunResult.GetDetail(); err != nil {
-		grpcplugins.Error(err.Error())
+		grpcplugins.Error(&p.Common, err.Error())
 		return nil, err
 	}
-	grpcplugins.Logf("  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID)
+	grpcplugins.Logf(&p.Common, "  Result %s (%s) created", updateResponse.RunResult.Name(), updateResponse.RunResult.ID)
 	return updateResponse, nil
 }

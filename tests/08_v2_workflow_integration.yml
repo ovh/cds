@@ -95,7 +95,7 @@ testcases:
 
 - name: Push workflow file
   steps:
-  - type: v2_push_files_on_repo
+  - type: v2_push_cds_files_on_repo
     git_repo: "{{.git_repo}}"
     git_host: "{{.git.host}}"
     git_user: "{{.git.user}}"

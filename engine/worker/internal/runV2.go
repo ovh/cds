@@ -410,7 +410,11 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 				opts[k] = vString
 			}
 		}
-		return w.runPlugin(ctx, actionPath[0], opts, nil)
+		env, err := w.GetEnvVariable(ctx, actionContext)
+		if err != nil {
+			return w.failJob(ctx, fmt.Sprintf("%v", err))
+		}
+		return w.runPlugin(ctx, actionPath[0], opts, env)
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
 		for stepIndex, step := range w.actions[name].Runs.Steps {
@@ -461,7 +465,7 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 }
 
 func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string, env map[string]string) sdk.V2WorkflowRunJobResult {
-	pluginClient, err := w.pluginFactory.NewClient(ctx, w, plugin.TypeAction, pluginName, plugin.InputManagementStrict, env)
+	pluginClient, err := w.pluginFactory.NewClient(ctx, w, plugin.TypeStream, pluginName, plugin.InputManagementStrict, env)
 	if pluginClient != nil {
 		defer pluginClient.Close(ctx)
 	}

@@ -28,7 +28,7 @@ type script struct {
 	opts    []string
 }
 
-func RunScript(ctx context.Context, chanRes chan *actionplugin.ActionResult, workingDir string, content string) error {
+func RunScript(ctx context.Context, actPlug *actionplugin.Common, chanRes chan *actionplugin.ActionResult, workingDir string, content string) error {
 	gores := &actionplugin.ActionResult{Status: sdk.StatusSuccess}
 
 	script := prepareScriptContent(content, workingDir)
@@ -75,7 +75,7 @@ func RunScript(ctx context.Context, chanRes chan *actionplugin.ActionResult, wor
 		for {
 			line, errs := reader.ReadString('\n')
 			if line != "" {
-				fmt.Printf("%s", line)
+				Log(actPlug, line)
 			}
 			if errs != nil {
 				close(outchan)

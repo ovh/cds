@@ -37,7 +37,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 	}
 
 	switch pluginType {
-	case TypeAction:
+	case TypeAction, TypeStream:
 		// Create grpc client
 		grpcClient, err := actionplugin.Client(context.Background(), pluginSocket.Socket)
 		if err != nil {
@@ -81,7 +81,7 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 func (c *client) Manifest(ctx context.Context) error {
 	var name, version string
 	switch c.pluginType {
-	case TypeAction:
+	case TypeAction, TypeStream:
 		m, err := c.grpcClient.(actionplugin.ActionPluginClient).Manifest(ctx, &empty.Empty{})
 		if err != nil {
 			return err
@@ -115,10 +115,15 @@ func (c *client) Run(ctx context.Context, opts map[string]string) *Result {
 		inputs = opts
 	}
 
-	if c.pluginType == TypeAction {
+	switch c.pluginType {
+	case TypeStream:
+		return c.runStreamActionPlugin(ctx, actionplugin.ActionQuery{Options: inputs})
+	case TypeAction:
 		return c.runActionPlugin(ctx, actionplugin.ActionQuery{Options: inputs})
+	default:
+		return c.runIntegrationPlugin(ctx, integrationplugin.RunQuery{Options: inputs})
 	}
-	return c.runIntegrationPlugin(ctx, integrationplugin.RunQuery{Options: inputs})
+
 }
 
 func (c *client) getInputs(ctx context.Context, opts map[string]string) map[string]string {
@@ -162,6 +167,47 @@ func (c *client) runIntegrationPlugin(ctx context.Context, query integrationplug
 	return result
 }
 
+func (c *client) runStreamActionPlugin(ctx context.Context, query actionplugin.ActionQuery) *Result {
+	stream, err := c.grpcClient.(actionplugin.ActionPluginClient).Stream(ctx, &query)
+	if err != nil {
+		return &Result{Status: sdk.StatusFail, Details: fmt.Sprintf("error while running plugin %s: %v", c.pluginName, err)}
+	}
+
+	res := &Result{
+		Status: sdk.StatusBuilding,
+	}
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			if res.Status == sdk.StatusBuilding {
+				res.Details = "unexpected end of plugin: connection closed"
+				res.Status = sdk.StatusFail
+			}
+			break
+		} else if err == nil {
+			if resp.GetLogs() != "" {
+				c.w.SendLog(ctx, workerruntime.LevelInfo, resp.Logs)
+			}
+			if resp.GetStatus() != "" {
+				res.Status = resp.GetStatus()
+			}
+			if resp.GetDetails() != "" {
+				res.Details = resp.Details
+			}
+		}
+		if err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = err.Error()
+			break
+		}
+	}
+
+	if !strings.EqualFold(res.Status, sdk.StatusSuccess) {
+		res.Status = sdk.StatusFail
+	}
+	return res
+}
+
 func (c *client) runActionPlugin(ctx context.Context, query actionplugin.ActionQuery) *Result {
 	if c.pluginType != TypeAction {
 		return &Result{Status: sdk.StatusFail, Details: "wrong plugin type"}
@@ -195,7 +241,7 @@ func (c *client) runActionPlugin(ctx context.Context, query actionplugin.ActionQ
 
 func (c *client) Close(ctx context.Context) {
 	switch c.pluginType {
-	case TypeAction:
+	case TypeAction, TypeStream:
 		if _, err := c.grpcClient.(actionplugin.ActionPluginClient).Stop(ctx, new(empty.Empty)); err != nil {
 			// Transport is closing is a "normal" error, as we requested plugin to stop
 			if !strings.Contains(err.Error(), "transport is closing") {

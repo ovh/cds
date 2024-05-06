@@ -86,11 +86,13 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, r 
 		RepoType: r.ArtifactManagerMetadata.Get("type"),
 		RepoName: r.ArtifactManagerMetadata.Get("repository"),
 		Name:     r.ArtifactManagerMetadata.Get("name"),
-		Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"), // strip the first "/" and remove "/manifest.json"
+		Path:     strings.TrimPrefix(r.ArtifactManagerMetadata.Get("path"), "/"), // strip the first "/"
 	}
 
 	switch r.Type {
 	case "docker":
+		// remove "/manifest.json"
+		data.Path = filepath.Dir(r.ArtifactManagerMetadata.Get("path")) // strip the first "/" and remove "/manifest.json"
 		if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
 			return errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
 		}
@@ -100,7 +102,7 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, r 
 		}
 	}
 
-	grpcplugins.Successf("%s Successfully promoted to %s", r.Name(), newPromotion.ToMaturity)
+	grpcplugins.Successf(c, "%s Successfully promoted to %s", r.Name(), newPromotion.ToMaturity)
 
 	r.Status = sdk.V2WorkflowRunResultStatusPromoted
 	r.DataSync.Promotions = append(r.DataSync.Promotions, newPromotion)
@@ -144,11 +146,11 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	}
 
 	if rtConfig.DistributionURL == "" {
-		fmt.Printf("Using %s to release\n", rtConfig.URL)
+		grpcplugins.Logf(c, "Using %s to release\n", rtConfig.URL)
 		rtConfig.DistributionURL = rtConfig.URL
 	}
 	if rtConfig.ReleaseToken == "" {
-		fmt.Println("Using artifactory token to release")
+		grpcplugins.Log(c, "Using artifactory token to release")
 		rtConfig.ReleaseToken = rtConfig.Token
 	}
 
@@ -242,34 +244,34 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		return errors.Errorf("There is no artifact to release.")
 	}
 
-	grpcplugins.Success("Promoted artifacts: ")
+	grpcplugins.Success(c, "Promoted artifacts: ")
 	for _, s := range promotedArtifacts {
-		grpcplugins.Successf("  * %s", s)
+		grpcplugins.Successf(c, "  * %s", s)
 	}
 
 	releaseVersion := strings.ReplaceAll(jobContext.Git.SemverCurrent, "+", "-")
 
-	releaseName, releaseVersion, err := createReleaseBundle(ctx, distriClient,
+	releaseName, releaseVersion, err := createReleaseBundle(ctx, c, distriClient,
 		jobContext.CDS.ProjectKey, jobContext.CDS.Workflow, releaseVersion, integration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value,
 		promotedArtifacts, maturity, releaseNotes)
 	if err != nil {
-		grpcplugins.Error("Unable to create Release Bundle")
+		grpcplugins.Error(c, "Unable to create Release Bundle")
 		return err
 	}
 
-	grpcplugins.Logf("Listing Edge nodes to distribute the Release Bundle...")
+	grpcplugins.Logf(c, "Listing Edge nodes to distribute the Release Bundle...")
 	edges, err := edge.ListEdgeNodes(distriClient)
 	if err != nil {
-		grpcplugins.Error("Unable to list release bundle")
+		grpcplugins.Error(c, "Unable to list release bundle")
 		return err
 	}
 
-	grpcplugins.Logf("Distributing Release Bundle %s %s...", releaseName, releaseVersion)
+	grpcplugins.Logf(c, "Distributing Release Bundle %s %s...", releaseName, releaseVersion)
 
 	distributionParams := distribution.NewDistributeReleaseBundleParams(releaseName, releaseVersion)
 	distributionParams.DistributionRules = make([]*distribution.DistributionCommonParams, 0, len(edges))
 	for _, e := range edges {
-		grpcplugins.Logf("  * Edge %s", e.Name)
+		grpcplugins.Logf(c, "  * Edge %s", e.Name)
 		distributionParams.DistributionRules = append(distributionParams.DistributionRules, &distribution.DistributionCommonParams{
 			SiteName:     e.SiteName,
 			CityName:     e.City.Name,
@@ -279,10 +281,10 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	if err := distriClient.Dsm.DistributeReleaseBundleSync(distributionParams, 10, false); err != nil {
 		return errors.Errorf("unable to distribute version: %v", err)
 	}
-	grpcplugins.Successf("Release Bundle %s %s successfully distributed on all edges...", releaseName, releaseVersion)
+	grpcplugins.Successf(c, "Release Bundle %s %s successfully distributed on all edges...", releaseName, releaseVersion)
 
 	// Get the SBOM
-	grpcplugins.Logf("Getting SBOM...")
+	grpcplugins.Logf(c, "Getting SBOM...")
 	var sbom json.RawMessage
 	until := time.Now().Add(3 * time.Minute)
 	for time.Now().Before(until) {
@@ -296,7 +298,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		return errors.Wrapf(err, "unable to get Release Bundle SBOM %s %s", releaseName, releaseVersion)
 	}
 
-	grpcplugins.Success("SBOM successfully downloaded")
+	grpcplugins.Success(c, "SBOM successfully downloaded")
 
 	_, err = grpcplugins.CreateRunResult(ctx, c, &workerruntime.V2RunResultRequest{
 		RunResult: &sdk.V2WorkflowRunResult{
@@ -323,7 +325,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	return nil
 }
 
-func createReleaseBundle(ctx context.Context, distriClient art.DistribClient, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
+func createReleaseBundle(ctx context.Context, c *actionplugin.Common, distriClient art.DistribClient, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
 
 	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
@@ -362,20 +364,20 @@ func createReleaseBundle(ctx context.Context, distriClient art.DistribClient, pr
 		}
 
 		params.SignImmediately = true
-		grpcplugins.Logf("Creating Release Bundle %s %s...", params.Name, params.Version)
+		grpcplugins.Logf(c, "Creating Release Bundle %s %s...", params.Name, params.Version)
 
 		if _, err := distriClient.Dsm.CreateReleaseBundle(params); err != nil {
 			return "", "", fmt.Errorf("unable to create Release Bundle %s/%s: %v", params.Name, params.Version, err)
 		}
 
-		grpcplugins.Successf("Release Bundle %s %s created", params.Name, params.Version)
+		grpcplugins.Successf(c, "Release Bundle %s %s created", params.Name, params.Version)
 	} else {
-		grpcplugins.Logf("Release Bundle %s/%s already exist\n", params.Name, params.Version)
+		grpcplugins.Logf(c, "Release Bundle %s/%s already exist\n", params.Name, params.Version)
 	}
 	return params.Name, params.Version, nil
 }
 
-func checkReleaseBundleExist(ctx context.Context, client art.DistribClient, name string, version string) (bool, error) {
+func checkReleaseBundleExist(_ context.Context, client art.DistribClient, name string, version string) (bool, error) {
 	getReleasePath := fmt.Sprintf("api/v1/release_bundle/%s/%s?format=json", name, version)
 
 	fakeService := services.NewCreateReleaseBundleService(client.Dsm.Client())
