@@ -80,8 +80,6 @@ testcases:
                 - uses: actions/keyInstall
                   with:
                     keyName: proj-pgp-itv2keyinstall   
-                - run: gpg --list-key
-                  id: displaypgp    
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -96,30 +94,19 @@ testcases:
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
-        - or:
-          - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-          - result.systemoutjson.systemoutjson0.status ShouldEqual "Fail"
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
       retry: 20
       delay: 5
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
-        workflowRunStatus:
-          from: result.systemoutjson.systemoutjson0.status
 
     - name: Download logs
       script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
 
     - name: Checkpgp key
-      script: "cat {{.cds_workflow}}-1-1-pgp-step-0"
+      script: "cat {{.cds_workflow}}-1-1-pgp-step-0 && cat {{.cds_workflow}}-1-1-pgp-step-0 | grep \"pgpkey proj-pgp-itv2keyinstall has been imported\""
     - name: Checkssh key
-      script: "cat {{.cds_workflow}}-1-1-init-step-0"  
-    - name: Display gpg list
-      script: "cat {{.cds_workflow}}-1-1-pgp-displaypgp"  
+      script: "cat {{.cds_workflow}}-1-1-init-step-0 && cat {{.cds_workflow}}-1-1-init-step-0 | grep \"sshkey proj-ssh-itv2keyinstall has been created\""
     - name: Checkssh key
       script: "cat {{.cds_workflow}}-1-1-init-displayssh && cat {{.cds_workflow}}-1-1-init-displayssh | grep \"**********\""
-    - name: Echo Status
-      script: echo {{.workflowRunStatus}}
-      assertions:
-      - result.systemout ShouldEqual Success
-    
