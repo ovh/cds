@@ -47,6 +47,7 @@ type CurrentJobV2 struct {
 	currentStepName  string
 	integrations     map[string]sdk.ProjectIntegration // contains integration with clearPassword
 	envFromHooks     map[string]string
+	sensitiveDatas   []string
 }
 
 type CurrentWorker struct {

@@ -256,6 +256,8 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...RequestModifier) error
 
 	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
+
+	ProjectGetKey(ctx context.Context, projectKey, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 // ProjectClient exposes project related functions
@@ -376,6 +378,8 @@ type V2WorkerClient interface {
 	V2WorkerRegister(ctx context.Context, authToken string, form sdk.WorkerRegistrationForm, region, runJobID string) (*sdk.V2Worker, error)
 	V2WorkerUnregister(ctx context.Context, region, runJobID string) error
 	V2WorkerRefresh(ctx context.Context, region, runJobID string) error
+
+	ProjectGetKey(ctx context.Context, projectKey, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 // WorkerClient exposes workers functions

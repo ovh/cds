@@ -83,6 +83,21 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 
 var _ workerruntime.Runtime = new(CurrentWorker)
 
+func (wk *CurrentWorker) V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	k, err := wk.clientV2.ProjectGetKey(ctx, wk.currentJobV2.runJob.ProjectKey, keyName, clear)
+	if err != nil {
+		return nil, err
+	}
+	if clear {
+		wk.currentJobV2.sensitiveDatas = append(wk.currentJobV2.sensitiveDatas, k.Private)
+		wk.blur, err = sdk.NewBlur(wk.currentJobV2.sensitiveDatas)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return k, err
+}
+
 func (wk *CurrentWorker) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
 	return wk.currentJobV2.runJob
 }

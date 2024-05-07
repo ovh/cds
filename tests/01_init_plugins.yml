@@ -11,6 +11,7 @@ vars:
     - downloadArtifact
     - helmPush
     - junit
+    - keyInstall
     - pythonPush
     - script
     - uploadArtifact

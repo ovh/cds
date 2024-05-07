@@ -468,6 +468,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/item", nil, r.POSTv2(api.postMigrateProjectVariableHandler))
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/application", nil, r.POSTv2(api.postMigrateApplicationVariableToVariableSetHandler))
 
+	r.Handle("/v2/project/{projectKey}/key/{keyName}", nil, r.GETv2(api.getProjectV2KeyHandler))
+
 	r.Handle("/v2/project/{projectKey}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GETv2(api.getProjectV2AccessHandler))
 
 	r.Handle("/v2/project/{projectKey}/notification", nil, r.GETv2(api.getProjectNotifsHandler), r.POSTv2(api.postProjectNotificationHandler))

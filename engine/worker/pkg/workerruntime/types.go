@@ -163,6 +163,7 @@ type Runtime interface {
 	V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error)
 	V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob
 	V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext
+	V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 func JobID(ctx context.Context) (int64, error) {
