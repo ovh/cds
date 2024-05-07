@@ -35,7 +35,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
         private _cd: ChangeDetectorRef
     ) {
         this.setHighlight.bind(this);
-        this.setSelect.bind(this);
+        this.selectNode.bind(this);
     }
 
     ngOnDestroy(): void {
@@ -84,7 +84,9 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
                 case V2WorkflowRunJobStatus.Fail:
                 case V2WorkflowRunJobStatus.Stopped:
                 case V2WorkflowRunJobStatus.Success:
-                    this.durations[key] = DurationService.duration(this.dates[key].started, this.dates[key].ended);
+                    if (this.dates[key].started) {
+                        this.durations[key] = DurationService.duration(this.dates[key].started, this.dates[key].ended);
+                    }
                     break;
                 default:
                     break;
@@ -133,13 +135,26 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    setSelect(active: boolean, options?: any): void {
-        if (options && options['jobMatrixKey'] && active) {
-            this.selectedKey = options['jobMatrixKey'];
-        } else {
-            this.selectedKey = null;
+    selectNode(navigationKey: string): void {
+        const baseKey = this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name;
+        this.selectedKey = null;
+        for (let i = 0; i < this.keys.length; i++) {
+            if (`${baseKey}-${this.keys[i]}` === navigationKey) {
+                this.selectedKey = this.keys[i];
+                break;
+            }
         }
         this._cd.markForCheck();
+    }
+
+    activateNode(navigationKey: string): void {
+        const baseKey = this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name;
+        if (this.mouseCallback && this.selectedKey && `${baseKey}-${this.selectedKey}` === navigationKey) {
+            this.mouseCallback('click', this.node, {
+                jobRunID: this.jobRunIDs[this.selectedKey] ?? null,
+                jobMatrixKey: this.selectedKey
+            });
+        }
     }
 
     clickRunGate(event: Event): void {
