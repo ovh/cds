@@ -57,3 +57,19 @@ func (c *client) ProjectVariableSetItemGet(ctx context.Context, pKey string, vsN
 	_, err := c.GetJSON(ctx, path, &item)
 	return &item, err
 }
+
+func (c *client) ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...RequestModifier) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/item", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil, mods...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) ProjectVariableSetCreateFromApplication(ctx context.Context, pKey string, req sdk.CopyApplicationVariableToVariableSet) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/application", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}

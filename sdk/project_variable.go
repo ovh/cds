@@ -25,3 +25,14 @@ type ProjectVariableSetItem struct {
 	Type                 string    `json:"type" cli:"type"`
 	Value                string    `json:"value" cli:"value"`
 }
+
+type CopyProjectVariableToVariableSet struct {
+	VariableName    string `json:"variable_name"`
+	VariableSetName string `json:"variable_set_name"`
+	NewName         string `json:"new_name,omitempty"`
+}
+
+type CopyApplicationVariableToVariableSet struct {
+	ApplicationName string `json:"application_name"`
+	VariableSetName string `json:"variable_set_name"`
+}

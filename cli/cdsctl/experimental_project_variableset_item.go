@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var projectVariableSetItemCmd = cli.Command{
@@ -23,6 +25,7 @@ func projectVariableSetItem() *cobra.Command {
 		cli.NewCommand(projectVariableSetItemCreateCmd, projectVariableSetItemCreateFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetItemUpdateCmd, projectVariableSetItemUpdateFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectVariableSetItemShowCmd, projectVariableSetItemShowFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableSetItemFromProjectCmd, projectVariableSetItemFromProjectFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -79,6 +82,49 @@ func projectVariableSetItemDeleteFunc(v cli.Values) error {
 	return client.ProjectVariableSetItemDelete(context.Background(), v.GetString(_ProjectKey), v.GetString("variableset-name"), v.GetString("item-name"))
 }
 
+var projectVariableSetItemFromProjectCmd = cli.Command{
+	Name:    "from-project",
+	Aliases: []string{"fp"},
+	Short:   "Copy a project variable to the given variable set",
+	Example: "cdsctl X project variableset item from-project PROJECT_KEY VARIABLE_NAME MY-VARIABLESET-NAME --rename NEW_NAME",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "variable-name"},
+		{Name: "variableset-name"},
+	},
+	Flags: []cli.Flag{
+		{
+			Name:  "rename",
+			Type:  cli.FlagString,
+			Usage: "New name for the variable",
+		},
+		{
+			Name:  "force",
+			Type:  cli.FlagBool,
+			Usage: "Create the variable set if it not exists",
+		},
+	},
+}
+
+func projectVariableSetItemFromProjectFunc(v cli.Values) error {
+	varName := v.GetString("variable-name")
+	vsName := v.GetString("variableset-name")
+	rename := v.GetString("rename")
+	force := strconv.FormatBool(v.GetBool("force"))
+
+	copyRequest := sdk.CopyProjectVariableToVariableSet{
+		VariableName:    varName,
+		VariableSetName: vsName,
+		NewName:         rename,
+	}
+	if copyRequest.NewName == "" {
+		copyRequest.NewName = varName
+	}
+	return client.ProjectVariableSetItemFromProjectVariable(context.Background(), v.GetString(_ProjectKey), copyRequest, cdsclient.WithQueryParameter("force", force))
+}
+
 var projectVariableSetItemCreateCmd = cli.Command{
 	Name:    "add",
 	Aliases: []string{"create"},
@@ -97,7 +143,7 @@ var projectVariableSetItemCreateCmd = cli.Command{
 		{
 			Name:  "force",
 			Type:  cli.FlagBool,
-			Usage: "create the variable set if it not exists",
+			Usage: "create the variable set if it does not exists",
 		},
 	},
 }
