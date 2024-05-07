@@ -2,6 +2,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
+    ElementRef,
     EventEmitter,
     Input,
     OnChanges,
@@ -19,6 +20,7 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { Subscription, delay, retryWhen } from 'rxjs';
 import { Router } from '@angular/router';
 import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from '../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model';
+import { ScrollTarget } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
 
 
 @Component({
@@ -47,6 +49,7 @@ export class RunJobComponent implements OnChanges, OnDestroy {
     cdnFilter: CDNStreamFilter;
 
     constructor(
+        private ref: ElementRef,
         private _cd: ChangeDetectorRef,
         private _router: Router
     ) {
@@ -93,7 +96,10 @@ export class RunJobComponent implements OnChanges, OnDestroy {
         }
     }
 
-    onJobScroll(target) { }
+    onJobScroll(target: ScrollTarget) {
+        this.ref.nativeElement.children[1].scrollTop = target === ScrollTarget.TOP ?
+            0 : this.ref.nativeElement.children[1].scrollHeight;
+    }
 
     setVariables(data: Array<Parameter>) {
         this.variables = {};

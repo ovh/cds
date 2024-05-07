@@ -118,7 +118,7 @@ export class RunJobLogsComponent implements OnDestroy {
                 let links = new CDNLogLinks();
                 links.item_type = itemType;
                 links.datas = itemLinks;
-                let results = await this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount, itemType).toPromise();
+                let results = await lastValueFrom(this._workflowService.getLogsLinesCount(links, this.initLoadLinesCount, itemType))
                 if (results) {
                     results.forEach(r => {
                         let logBlock = this.logBlocks.find(s => s.link.api_ref === r.api_ref);
@@ -133,32 +133,19 @@ export class RunJobLogsComponent implements OnDestroy {
         }
 
         this.computeStepFirstLineNumbers();
-
-        if (PipelineStatus.isDone(this.runJob.status)) {
-            await this.loadFirstFailedOrLastStep();
-        } else {
-            // TODO WEBSOCKET
-        }
-
         this._cd.markForCheck();
+        await this.loadStepsLogs();
+        this._cd.detectChanges();
+        this.clickScroll(ScrollTarget.BOTTOM);
     }
 
-    async loadFirstFailedOrLastStep() {
-        if (this.logBlocks.length <= 1) {
-            return;
+    async loadStepsLogs() {
+        let ps = [];
+        for (let i = 0; i < this.logBlocks.length; i++) {
+            ps.push(this.open(this.logBlocks[i]));
         }
-        if (PipelineStatus.SUCCESS === this.runJob.status) {
-            await this.clickOpen(this.logBlocks[this.logBlocks.length - 1]);
-            return;
-        }
-        for (let i = 1; i < this.logBlocks.length; i++) {
-            if (this.logBlocks[i].failed) {
-                await this.clickOpen(this.logBlocks[i]);
-                return;
-            }
-        }
+        await Promise.all(ps);
     }
-
 
     computeStepsDuration(): void {
         if (this.logBlocks) {
@@ -197,15 +184,18 @@ export class RunJobLogsComponent implements OnDestroy {
         this.onScroll.emit(target);
     }
 
-    async clickExpandStepDown(stepName: string) {
+    async clickExpandStepDown(stepName: string, event: MouseEvent) {
         let step = this.logBlocks.find(s => s.name === stepName);
         if (!step) {
             return;
         }
-
-        let result = await this._workflowService.getLogLines(step.link,
-            { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit: `${this.expandLoadLinesCount}` }
-        ).toPromise();
+        let limit = `${this.expandLoadLinesCount}`;
+        if (event.shiftKey) {
+            limit = '0';
+        }
+        let result = await lastValueFrom(this._workflowService.getLogLines(step.link,
+            { offset: `${step.lines[step.lines.length - 1].number + 1}`, limit }
+        ));
         step.totalLinesCount = result.totalCount;
         step.lines = step.lines.concat(result.lines.filter(l => !step.endLines.find(line => line.number === l.number)));
         this._cd.markForCheck();
@@ -216,9 +206,9 @@ export class RunJobLogsComponent implements OnDestroy {
         if (!step) {
             return;
         }
-        let result = await this._workflowService.getLogLines(step.link,
+        let result = await lastValueFrom(this._workflowService.getLogLines(step.link,
             { offset: `-${step.endLines.length + this.expandLoadLinesCount}`, limit: `${this.expandLoadLinesCount}` }
-        ).toPromise();
+        ));
         step.totalLinesCount = result.totalCount;
         step.endLines = result.lines.filter(l => !step.lines.find(line => line.number === l.number)
             && !step.endLines.find(line => line.number === l.number)).concat(step.endLines);
@@ -226,6 +216,11 @@ export class RunJobLogsComponent implements OnDestroy {
     }
 
     async clickOpen(logBlock: LogBlock) {
+        await this.open(logBlock);
+        this._cd.markForCheck();
+    }
+
+    async open(logBlock: LogBlock) {
         if (logBlock?.lines?.length > 0 || logBlock.open) {
             logBlock.clickOpen();
             return;
@@ -233,15 +228,14 @@ export class RunJobLogsComponent implements OnDestroy {
 
         logBlock.loading = true;
         let results = await Promise.all([
-            this._workflowService.getLogLines(logBlock.link, { limit: `${this.initLoadLinesCount}` }).toPromise(),
-            this._workflowService.getLogLines(logBlock.link, { offset: `-${this.initLoadLinesCount}` }).toPromise()
+            lastValueFrom(this._workflowService.getLogLines(logBlock.link, { limit: `${this.initLoadLinesCount}` })),
+            lastValueFrom(this._workflowService.getLogLines(logBlock.link, { offset: `-${this.initLoadLinesCount}` }))
         ]);
         logBlock.lines = results[0].lines;
         logBlock.endLines = results[1].lines.filter(l => !results[0].lines.find(line => line.number === l.number));
         logBlock.totalLinesCount = results[0].totalCount;
         logBlock.open = true;
         logBlock.loading = false;
-        this._cd.markForCheck();
     }
 
     receiveLogs(l: CDNLine): void {
@@ -263,5 +257,4 @@ export class RunJobLogsComponent implements OnDestroy {
         this.ref.nativeElement.children[0].scrollTop = target === ScrollTarget.TOP ?
             0 : this.ref.nativeElement.children[0].scrollHeight;
     }
-
 }

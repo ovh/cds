@@ -43,7 +43,7 @@
                 </div>
                 <div class="line expand"
                     *ngIf="logBlock.lines.length + logBlock.endLines.length < logBlock.totalLinesCount"
-                    (click)="clickExpandStepDown(logBlock.name)">
+                    (click)="clickExpandStepDown(logBlock.name, $event)">
                     <div class="number">
                         <i nz-icon nzType="caret-down" nzTheme="fill"></i>
                         {{logBlock.firstDisplayedLineNumber +

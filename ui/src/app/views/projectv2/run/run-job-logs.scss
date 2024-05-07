@@ -9,12 +9,12 @@
     display: flex;
     flex-direction: column;
     font-size: 12px;
-    line-height: 19px;
+    line-height: 21px;
     font-family: monospace;
     font-weight: 400;
 
     .line {
-        min-height: 19px;
+        min-height: 21px;
         display: flex;
         flex-direction: row;
 
@@ -33,14 +33,8 @@
 
             [nz-icon] {
                 position: absolute;
-                left: 5px;
-                top: 5px;
-            }
-
-            .loader {
-                position: absolute;
-                left: 15px;
-                display: block;
+                left: 3px;
+                top: 6px;
             }
         }
 
@@ -79,6 +73,8 @@
         &.info {
             background-color: #2B2B2B;
             cursor: pointer;
+            min-height: 25px;
+            line-height: 25px;
 
             .value {
                 color: #FFFF91;
@@ -104,10 +100,10 @@
             cursor: pointer;
         }
 
-
         .extra {
             display: flex;
             flex-direction: row;
+            align-items: center;
 
             div {
                 height: 15px;
@@ -117,7 +113,6 @@
                 font-size: 11px;
                 border-radius: 6px;
                 padding: 2px 4px;
-                margin-top: 2px;
                 margin-right: 4px;
             }
         }
@@ -125,10 +120,12 @@
         .action {
             display: flex;
             flex-direction: row;
+            align-items: center;
 
             a {
                 cursor: pointer;
                 color: #999999;
+                height: 20px;
 
                 &:hover {
                     color: #dddddd !important;
