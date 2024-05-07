@@ -12,6 +12,8 @@ const (
 	EntityNamePattern     = "^[a-zA-Z0-9._-]{1,}$"
 )
 
+var EntityTypes = []string{EntityTypeWorkerModel, EntityTypeAction, EntityTypeWorkflow}
+
 type EntityFullName struct {
 	Name       string `json:"name" db:"name"`
 	Ref        string `json:"ref" db:"ref"`

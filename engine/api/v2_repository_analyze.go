@@ -530,15 +530,16 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	skippedEntities := make([]sdk.EntityWithObject, 0)
 	skippedFiles := make(sdk.StringSlice, 0)
 
-	// For each entities, check user role for each entities
-	entitiesToUpdate := make([]sdk.EntityWithObject, 0)
-skipEntity:
-	for i := range entities {
-		e := &entities[i]
+	// Load existing entity on the current branch
+	existingEntities, err := entity.LoadByRepositoryAndRefAndCommit(ctx, api.mustDB(), analysis.ProjectRepositoryID, analysis.Ref, "HEAD")
+	if err != nil {
+		return api.stopAnalysis(ctx, analysis, err)
+	}
 
-		// Check user role
-		if _, has := userRoles[e.Type]; !has {
-			roleName, err := sdk.GetManageRoleByEntity(e.Type)
+	// Build user role map
+	for _, t := range sdk.EntityTypes {
+		if _, has := userRoles[t]; !has {
+			roleName, err := sdk.GetManageRoleByEntity(t)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, err)
 			}
@@ -546,9 +547,16 @@ skipEntity:
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
 			}
-			userRoles[e.Type] = b
-			log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, e.Type, b)
+			userRoles[t] = b
+			log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, t, b)
 		}
+	}
+
+	// For each entities, check user role for each entities
+	entitiesToUpdate := make([]sdk.EntityWithObject, 0)
+skipEntity:
+	for i := range entities {
+		e := &entities[i]
 
 		for entityIndex := range analysis.Data.Entities {
 			analysisEntity := &analysis.Data.Entities[entityIndex]
@@ -597,6 +605,7 @@ skipEntity:
 
 	eventInsertedEntities := make([]sdk.Entity, 0)
 	eventUpdatedEntities := make([]sdk.Entity, 0)
+	eventRemovedEntities := make([]sdk.Entity, 0)
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
@@ -631,7 +640,7 @@ skipEntity:
 		}
 		eventInsertedEntities = append(eventInsertedEntities, e.Entity)
 
-		// If it's a new entity or an update, add it to the list of entity updated (for hooks)
+		// If it's an update, add it to the list of entity updated (for hooks)
 		if entityUpdated {
 			entitiesUpdated = append(entitiesUpdated, e.Entity)
 		}
@@ -704,6 +713,30 @@ skipEntity:
 		}
 	}
 
+	// Remove entities for the head commit (branch or tag)
+	if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == analysis.Commit) || (currentAnalysisTag.Sha == analysis.Commit) || currentAnalysisTag.Sha == "" {
+		foundEntities := make(map[string]struct{})
+		for _, e := range entities {
+			foundEntities[e.Type+"-"+e.Name] = struct{}{}
+		}
+		for _, e := range existingEntities {
+			// If an existing entities has not been found in the current head commit,
+			// => remove the entity
+			if _, has := foundEntities[e.Type+"-"+e.Name]; !has {
+				// Check right
+				if !userRoles[e.Type] {
+					log.Warn(ctx, "user %s [%s] removed the entity %s [%s] but it has not the right to do it", u.Username, u.ID, e.Name, e.Type)
+					continue
+				}
+				// Remove HEAD entity
+				if err := entity.Delete(ctx, tx, &e); err != nil {
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to delete entity %s [%s] ", e.Name, e.Type)))
+				}
+				eventRemovedEntities = append(eventRemovedEntities, e)
+			}
+		}
+	}
+
 	// Update analysis
 	skippedFiles.Unique()
 	analysis.Data.Error = strings.Join(skippedFiles, "\n")
@@ -729,6 +762,9 @@ skipEntity:
 	}
 	for _, eUpdated := range eventUpdatedEntities {
 		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityUpdated, vcsProjectWithSecret.Name, repo.Name, eUpdated, &userDB)
+	}
+	for _, eRemoved := range eventRemovedEntities {
+		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityDeleted, vcsProjectWithSecret.Name, repo.Name, eRemoved, &userDB)
 	}
 
 	return nil
