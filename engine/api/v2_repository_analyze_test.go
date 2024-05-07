@@ -770,8 +770,6 @@ GDFkaTe3nUJdYV4=
 			},
 		)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any(), gomock.Any())
-
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
@@ -1909,8 +1907,6 @@ GDFkaTe3nUJdYV4=
 				return nil, 200, nil
 			},
 		)
-
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any(), gomock.Any())
 
 	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
 
