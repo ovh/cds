@@ -3,10 +3,9 @@ import {
     ChangeDetectorRef,
     Component,
     ElementRef,
-    EventEmitter,
     Input,
     OnDestroy,
-    Output
+    ViewChild
 } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { LogBlock, ScrollTarget } from "../../workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component";
@@ -25,6 +24,8 @@ import { DurationService } from "../../../../../libs/workflow-graph/src/lib/dura
 })
 @AutoUnsubscribe()
 export class RunJobLogsComponent implements OnDestroy {
+    @ViewChild('scrollWrapper') scrollWrapper: ElementRef;
+
     readonly initLoadLinesCount = 10;
     readonly expandLoadLinesCount = 100;
     readonly scrollTargets = ScrollTarget;
@@ -40,16 +41,13 @@ export class RunJobLogsComponent implements OnDestroy {
         return this._runJob;
     }
 
-    @Output() onScroll = new EventEmitter<ScrollTarget>();
-
     logBlocks: Array<LogBlock>;
     currentTabIndex = 0;
 
     constructor(
-        private ref: ElementRef,
         private _cd: ChangeDetectorRef,
         private _workflowRunService: V2WorkflowRunService,
-        private _workflowService: WorkflowService
+        private _workflowService: WorkflowService,
     ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -181,7 +179,8 @@ export class RunJobLogsComponent implements OnDestroy {
     }
 
     clickScroll(target: ScrollTarget): void {
-        this.onScroll.emit(target);
+        this.scrollWrapper.nativeElement.scrollTop = target === ScrollTarget.TOP ?
+            0 : this.scrollWrapper.nativeElement.scrollHeight;
     }
 
     async clickExpandStepDown(stepName: string, event: MouseEvent) {
@@ -251,10 +250,5 @@ export class RunJobLogsComponent implements OnDestroy {
             });
         }
         this._cd.markForCheck();
-    }
-
-    onJobScroll(target: ScrollTarget) {
-        this.ref.nativeElement.children[0].scrollTop = target === ScrollTarget.TOP ?
-            0 : this.ref.nativeElement.children[0].scrollHeight;
     }
 }

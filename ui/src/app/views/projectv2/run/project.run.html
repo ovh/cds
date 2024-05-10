@@ -21,7 +21,8 @@
                 </nz-page-header-title>
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
-                        Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} - {{workflowRun.contexts.git.ref}} by {{workflowRun.contexts.git.username}}
+                        Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} - {{workflowRun.contexts.git.ref}} by
+                        {{workflowRun.contexts.git.username}}
                         on
                         repository
                         {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
@@ -34,8 +35,9 @@
                 <span nz-icon nzType="stop" nzTheme="outline" title="Stop workflow run" (click)="clickStopRun()"></span>
             </div>
             <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
-                (onSelectJobGate)="openPanel('gate', $event)" (onSelectJobRun)="openPanel('job', $event)"
-                (onSelectHook)="openPanel('hook', $event)" #graph></app-stages-graph>
+                [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
+                (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
+                #graph></app-stages-graph>
         </div>
 
         <!--  BOTTOM PANELS -->

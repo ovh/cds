@@ -1,4 +1,4 @@
-<ng-container *ngIf="runJob">
+<div *ngIf="runJob" class="scrollWrapper" #scrollWrapper>
     <!-- Display job services and steps -->
     <ng-container *ngIf="currentTabIndex === 0">
         <div class="step" *ngFor="let logBlock of logBlocks; trackBy: trackStepElement; let i = index">
@@ -84,4 +84,4 @@
         <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i>
         </div>
     </div>
-</ng-container>
+</div>

@@ -200,6 +200,7 @@ export class NavigationGraph {
     }
 
     getPrevious(key: string, direction: number = null): string {
+        if (!key) { return this.getEntryNode(); }
         const parents = this.links.filter(l => l.out === key).sort((a, b) => a.priority < b.priority ? -1 : 1).map(l => l.in);
         if (parents.length === 0) { return this.nodes[key].type === NavigationGraphNodeType.Join ? null : key; }
         if (this.nodes[key].type !== NavigationGraphNodeType.Join && !direction) {
@@ -217,6 +218,7 @@ export class NavigationGraph {
     }
 
     getNext(key: string, depth: number = 0, direction: number = null): string {
+        if (!key) { return this.getEntryNode(); }
         const children = this.getChildren(key);
         if (children.length === 0) { return key; }
         if (this.nodes[key].type !== NavigationGraphNodeType.Join && !direction) {
@@ -234,6 +236,7 @@ export class NavigationGraph {
     }
 
     getSidePrevious(key: string, depth: number = 0): string {
+        if (!key) { return this.getEntryNode(); }
         const parents = this.getParents(key);
         if (parents.length === 0) { return (depth > 0 || this.nodes[key].type === NavigationGraphNodeType.Join) ? null : key; }
         const children = this.getChildren(parents[0]);
@@ -248,6 +251,7 @@ export class NavigationGraph {
     }
 
     getSideNext(key: string, depth: number = 0): string {
+        if (!key) { return this.getEntryNode(); }
         const parents = this.getParents(key);
         if (parents.length === 0) { return (depth > 0 || this.nodes[key].type === NavigationGraphNodeType.Join) ? null : key };
         const children = this.getChildren(parents[parents.length - 1]);
@@ -288,6 +292,10 @@ export class NavigationGraph {
             return Math.round(length / 2) - 1
         }
         return direction < 0 ? 0 : length - 1;
+    }
+
+    getEntryNode(): string {
+        return Object.keys(this.nodes).find(n => this.links.findIndex(l => l.out === n) === -1);
     }
 }
 
