@@ -1,9 +1,9 @@
 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
 <ng-container *ngIf="selectedTab.key === 'logs' && jobRun">
-    <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun" (onScroll)="onJobScroll($event)"
+    <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun" (dblclick)="$event.stopPropagation();"
         #runJobLogs></app-run-job-logs>
 </ng-container>
-<div class="problems" *ngIf="selectedTab.key === 'problems' && jobRun">
+<div class="problems" *ngIf="selectedTab.key === 'problems' && jobRun" (dblclick)="$event.stopPropagation();">
     <ul>
         <ng-container *ngFor="let info of jobRunInfos">
             <ul>
@@ -27,7 +27,7 @@
         </ng-container>
     </ul>
 </div>
-<div class="infos" *ngIf="selectedTab.key === 'infos' && jobRun">
+<div class="infos" *ngIf="selectedTab.key === 'infos' && jobRun" (dblclick)="$event.stopPropagation();">
     <ul>
         <ng-container *ngFor="let info of jobRunInfos">
             <ul>

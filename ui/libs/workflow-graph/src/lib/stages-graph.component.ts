@@ -123,6 +123,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         this.initGate();
     }
 
+    @Input() navigationDisabled: boolean = false;
+
     @Output() onSelectJob = new EventEmitter<string>();
     @Output() onSelectJobGate = new EventEmitter<GraphNode>();
     @Output() onSelectJobRun = new EventEmitter<string>();
@@ -170,7 +172,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
 
     @HostListener('window:keydown', ['$event'])
     handleKeyDown(event: KeyboardEvent) {
-        if (!this.navigationGraph || !this.selectedNodeNavigationKey) { return; }
+        if (!this.navigationGraph || this.navigationDisabled) { return; }
         let newSelected: string = null;
         switch (event.key) {
             case 'ArrowDown':
@@ -322,6 +324,10 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
 
         if (!this.graph.transformed) {
             this.clickOrigin();
+        }
+
+        if (this.selectedNodeNavigationKey) {
+            this.graph.selectNode(this.selectedNodeNavigationKey);
         }
 
         this._cd.markForCheck();

@@ -96,11 +96,6 @@ export class RunJobComponent implements OnChanges, OnDestroy {
         }
     }
 
-    onJobScroll(target: ScrollTarget) {
-        this.ref.nativeElement.children[1].scrollTop = target === ScrollTarget.TOP ?
-            0 : this.ref.nativeElement.children[1].scrollHeight;
-    }
-
     setVariables(data: Array<Parameter>) {
         this.variables = {};
         if (!data) {

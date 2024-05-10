@@ -1,7 +1,13 @@
 :host {
     background-color: #222222;
-    position: relative;
     color: #f1f1f1;
+    overflow: hidden;
+}
+
+.scrollWrapper {
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
     padding-bottom: 19px;
 }
 
