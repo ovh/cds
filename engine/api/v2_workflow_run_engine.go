@@ -900,13 +900,17 @@ func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string,
 		// Create empty input context to be able to interpolate gate condition.
 		currentJobContext.Gate = make(map[string]interface{})
 		for k, v := range run.WorkflowData.Workflow.Gates[jobDef.Gate].Inputs {
-			switch v.Type {
-			case "boolean":
-				currentJobContext.Gate[k] = false
-			case "number":
-				currentJobContext.Gate[k] = 0
-			default:
-				currentJobContext.Gate[k] = ""
+			if v.Default != nil {
+				currentJobContext.Gate[k] = v.Default
+			} else {
+				switch v.Type {
+				case "boolean":
+					currentJobContext.Gate[k] = false
+				case "number":
+					currentJobContext.Gate[k] = 0
+				default:
+					currentJobContext.Gate[k] = ""
+				}
 			}
 		}
 
@@ -930,10 +934,10 @@ func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string,
 		if jobDef.If == "" {
 			jobDef.If = "${{success()}}"
 		}
-		if !strings.HasPrefix(jobDef.If, "${{") {
-			jobDef.If = fmt.Sprintf("${{ %s }}", jobDef.If)
-		}
 		jobCondition = jobDef.If
+	}
+	if !strings.HasPrefix(jobCondition, "${{") {
+		jobCondition = fmt.Sprintf("${{ %s }}", jobCondition)
 	}
 
 	bts, err := json.Marshal(currentJobContext)
