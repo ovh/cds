@@ -468,7 +468,7 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 }
 
 func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
+	return service.RBAC(api.isAdmin),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			offset := service.FormUInt(req, "offset")
 			limit := service.FormUInt(req, "limit")
@@ -482,6 +482,7 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
 			}
+			filters.Lower()
 
 			count, err := workflow_v2.CountAllRuns(ctx, api.mustDB(), filters)
 			if err != nil {
@@ -520,6 +521,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
 			}
+			filters.Lower()
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {

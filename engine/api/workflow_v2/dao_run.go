@@ -228,6 +228,12 @@ type SearchsRunsFilters struct {
 	Commits      []string
 }
 
+func (s SearchsRunsFilters) Lower() {
+	for i := range s.Repositories {
+		s.Repositories[i] = strings.ToLower(s.Repositories[i])
+	}
+}
+
 func parseSortFilter(sort string) (string, error) {
 	if sort == "" {
 		return "started:desc", nil
