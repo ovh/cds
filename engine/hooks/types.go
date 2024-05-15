@@ -33,6 +33,8 @@ type Configuration struct {
 	HTTP                        service.HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################" json:"http"`
 	URL                         string                          `toml:"url" default:"http://localhost:8083" json:"url"`
 	URLPublic                   string                          `toml:"urlPublic" default:"http://localhost:8080/cdshooks" comment:"Public url for external call (webhook)" json:"urlPublic"`
+	OldRepositoryEventRetry     int64                           `toml:"oldRepositoryEventRetry" default:"1" comment:"Delay of old repository event check in minute" json:"oldRepositoryEventRetry"`
+	OldRepositoryEventQueueLen  int                             `toml:"oldRepositoryEventQueueLen" default:"200" comment:"Maximum queue len allowed to re-enqueue old repository events" json:"oldRepositoryEventQueueLen"`
 	DisableRepositoryEventRetry bool                            `toml:"disableRepositoryEventRetry" default:"false" comment:"" json:"disableRepositoryEventRetry"`
 	RetryDelay                  int64                           `toml:"retryDelay" default:"120" comment:"Execution retry delay in seconds" json:"retryDelay"`
 	RetryError                  int64                           `toml:"retryError" default:"3" comment:"Retry execution while this number of error is not reached" json:"retryError"`

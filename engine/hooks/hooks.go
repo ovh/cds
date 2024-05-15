@@ -124,7 +124,7 @@ func (s *Service) Serve(c context.Context) error {
 		})
 
 		// Reenqueue old repository event
-		if s.Cfg.DisableRepositoryEventRetry {
+		if !s.Cfg.DisableRepositoryEventRetry {
 			s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
 				s.manageOldRepositoryEvent(ctx)
 			})

@@ -91,7 +91,7 @@ func adminHooksRepoEventGetRun(v cli.Values) (interface{}, error) {
 	cli := HookEventCLI{
 		ID:                  event.UUID,
 		Created:             time.Unix(0, event.Created),
-		LastUpdate:          time.Unix(event.LastUpdate, 0),
+		LastUpdate:          time.UnixMilli(event.LastUpdate),
 		EventName:           event.EventName,
 		VCSServerName:       event.VCSServerName,
 		RepositoryName:      event.RepositoryName,
