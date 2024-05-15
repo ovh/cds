@@ -256,8 +256,6 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...RequestModifier) error
 
 	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
-
-	ProjectGetKey(ctx context.Context, projectKey, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 // ProjectClient exposes project related functions
