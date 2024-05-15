@@ -6,41 +6,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/authentication"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
-
-func (api *API) getProjectV2KeyHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.isWorker),
-		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			vars := mux.Vars(req)
-
-			projectKey := vars["projectKey"]
-			keyName := vars["keyName"]
-
-			clearKey := service.FormBool(req, "clearKey")
-			if clearKey && !isWorker(ctx) {
-				return sdk.WithStack(sdk.ErrForbidden)
-			}
-
-			opts := make([]project.LoadOptionFunc, 0, 1)
-			if clearKey {
-				opts = append(opts, project.LoadOptions.WithClearKeys)
-			}
-			p, err := project.Load(ctx, api.mustDB(), projectKey, opts...)
-			if err != nil {
-				return err
-			}
-			for _, k := range p.Keys {
-				if k.Name == keyName {
-					return service.WriteJSON(w, k, http.StatusOK)
-				}
-			}
-			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find key %s", keyName)
-		}
-}
 
 func (api *API) getProjectV2AccessHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.isCDNService),

@@ -9,6 +9,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) V2WorkerProjectGetKey(ctx context.Context, region, runJobID, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/key/%s?clearKey=%v", region, runJobID, keyName, clear)
+	var pk sdk.ProjectKey
+	if _, err := c.GetJSON(context.Background(), path, &pk); err != nil {
+		return nil, err
+	}
+	return &pk, nil
+}
+
 func (c *client) V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error) {
 	var workers []sdk.V2Worker
 	url := fmt.Sprintf("/v2/worker")

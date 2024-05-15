@@ -379,7 +379,7 @@ type V2WorkerClient interface {
 	V2WorkerUnregister(ctx context.Context, region, runJobID string) error
 	V2WorkerRefresh(ctx context.Context, region, runJobID string) error
 
-	ProjectGetKey(ctx context.Context, projectKey, keyName string, clear bool) (*sdk.ProjectKey, error)
+	V2WorkerProjectGetKey(ctx context.Context, region, runJobID, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 
 // WorkerClient exposes workers functions
