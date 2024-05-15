@@ -295,7 +295,11 @@ export class NavigationGraph {
     }
 
     getEntryNode(): string {
-        return Object.keys(this.nodes).find(n => this.links.findIndex(l => l.out === n) === -1);
+        const key = Object.keys(this.nodes).find(n => this.links.findIndex(l => l.out === n) === -1);
+        if(this.nodes[key].type === NavigationGraphNodeType.Job) {
+            return key
+        }
+        return this.getNext(key);
     }
 }
 

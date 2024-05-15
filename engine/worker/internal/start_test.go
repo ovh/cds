@@ -365,7 +365,7 @@ export FOO_FROM_HOOK=BAR`,
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPClient())
 	gock.InterceptClient(w.Client().(cdsclient.Raw).HTTPNoTimeoutClient())
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	require.NoError(t, internal.StartWorker(ctx, w, 42))

@@ -29,16 +29,7 @@ func (client *bitbucketcloudClient) Repos(ctx context.Context) ([]sdk.VCSRepo, e
 
 	responseRepos := make([]sdk.VCSRepo, 0, len(repos))
 	for _, repo := range repos {
-		r := sdk.VCSRepo{
-			ID:           repo.UUID,
-			Name:         repo.Name,
-			Slug:         repo.Slug,
-			Fullname:     repo.FullName,
-			URL:          repo.Links.HTML.Href,
-			HTTPCloneURL: repo.Links.Clone[0].Href,
-			SSHCloneURL:  repo.Links.Clone[1].Href,
-		}
-		responseRepos = append(responseRepos, r)
+		responseRepos = append(responseRepos, client.ToVCSRepo(repo))
 	}
 
 	return responseRepos, nil
@@ -92,16 +83,7 @@ func (client *bitbucketcloudClient) RepoByFullname(ctx context.Context, fullname
 		return sdk.VCSRepo{}, err
 	}
 
-	r := sdk.VCSRepo{
-		ID:           repo.UUID,
-		Name:         repo.Name,
-		Slug:         repo.Slug,
-		Fullname:     repo.FullName,
-		URL:          repo.Links.HTML.Href,
-		HTTPCloneURL: repo.Links.Clone[0].Href,
-		SSHCloneURL:  repo.Links.Clone[1].Href,
-	}
-	return r, nil
+	return client.ToVCSRepo(repo), nil
 }
 
 func (client *bitbucketcloudClient) repoByFullname(ctx context.Context, fullname string) (Repository, error) {
@@ -121,4 +103,30 @@ func (client *bitbucketcloudClient) repoByFullname(ctx context.Context, fullname
 	}
 
 	return repo, nil
+}
+
+func (client *bitbucketcloudClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
+	var sshURL, httpURL string
+	for _, c := range repo.Links.Clone {
+		if c.Name == "http" {
+			httpURL = c.Href
+		}
+		if c.Name == "ssh" {
+			sshURL = c.Href
+		}
+	}
+	webURL := repo.Links.HTML.Href
+
+	return sdk.VCSRepo{
+		ID:              repo.UUID,
+		Name:            repo.Name,
+		Slug:            repo.Slug,
+		Fullname:        repo.FullName,
+		URL:             repo.Links.HTML.Href,
+		URLCommitFormat: webURL + "/commits/%s",
+		URLTagFormat:    webURL + "/src/%s",
+		URLBranchFormat: webURL + "/src/%s",
+		HTTPCloneURL:    httpURL,
+		SSHCloneURL:     sshURL,
+	}
 }

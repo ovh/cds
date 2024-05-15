@@ -76,12 +76,15 @@
 				</ng-template>
 				<ng-template #runDescription>
 					<ng-container *ngIf="run.contexts.git">
-						Commit {{run.contexts.git.sha?.substring(0,8)}} by {{run.contexts.git.username}} on repository
-						{{run.contexts.git.server}}/{{run.contexts.git.repository}}
+						Commit <a class="repoLink dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
+							rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a> by {{run.contexts.git.username}} on
+						repository <a class="repoLink dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"
+							rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
 					</ng-container>
 				</ng-template>
 				<ng-container *ngIf="run.contexts.git">
-					{{run.contexts.git.ref}}
+					<a class="repoLink" href="{{run.contexts.git.ref_web_url}}" target="_blank"
+						rel="noopener noreferrer">{{run.contexts.git.ref}}</a>
 				</ng-container>
 				<ul nz-list-item-actions>
 					<nz-list-item-action>

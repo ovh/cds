@@ -720,20 +720,18 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 	if err != nil {
 		return nil, err
 	}
-
-	if gitContext.Repository == repo.Name {
-		gitContext.RepositoryURL = repo.CloneURL
-	} else {
-		vcsRepo, err := vcsClient.RepoByFullname(ctx, gitContext.Repository)
-		if err != nil {
-			return nil, err
-		}
-		if gitContext.SSHKey != "" {
-			gitContext.RepositoryURL = vcsRepo.SSHCloneURL
-		} else {
-			gitContext.RepositoryURL = vcsRepo.HTTPCloneURL
-		}
+	vcsRepo, err := vcsClient.RepoByFullname(ctx, gitContext.Repository)
+	if err != nil {
+		return nil, err
 	}
+	gitContext.RepositoryWebURL = vcsRepo.URL
+
+	if gitContext.SSHKey != "" {
+		gitContext.RepositoryURL = vcsRepo.SSHCloneURL
+	} else {
+		gitContext.RepositoryURL = vcsRepo.HTTPCloneURL
+	}
+
 	if gitContext.Ref == "" {
 		defaultBranch, err := vcsClient.Branch(ctx, gitContext.Repository, sdk.VCSBranchFilters{Default: true})
 		if err != nil {
@@ -762,6 +760,14 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p s
 			}
 			gitContext.Sha = t.Hash
 		}
+	}
+
+	gitContext.CommitWebURL = fmt.Sprintf(vcsRepo.URLCommitFormat, gitContext.Sha)
+	switch gitContext.RefType {
+	case sdk.GitRefTypeBranch:
+		gitContext.RefWebURL = fmt.Sprintf(vcsRepo.URLBranchFormat, gitContext.RefName)
+	case sdk.GitRefTypeTag:
+		gitContext.RefWebURL = fmt.Sprintf(vcsRepo.URLTagFormat, gitContext.RefName)
 	}
 
 	// Env context

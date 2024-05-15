@@ -45,32 +45,7 @@ func (b *bitbucketClient) ListForks(ctx context.Context, repo string) ([]sdk.VCS
 
 	repos := []sdk.VCSRepo{}
 	for _, r := range bbRepos {
-		var repoURL string
-		if r.Link != nil {
-			repoURL = r.Link.URL
-		}
-
-		var sshURL, httpURL string
-		if r.Links != nil && r.Links.Clone != nil {
-			for _, c := range r.Links.Clone {
-				if c.Name == "http" {
-					httpURL = c.URL
-				}
-				if c.Name == "ssh" {
-					sshURL = c.URL
-				}
-			}
-		}
-
-		repo := sdk.VCSRepo{
-			Name:         r.Name,
-			Slug:         r.Slug,
-			Fullname:     fmt.Sprintf("%s/%s", r.Project.Key, r.Slug),
-			URL:          fmt.Sprintf("%s%s", b.consumer.URL, repoURL),
-			HTTPCloneURL: httpURL,
-			SSHCloneURL:  sshURL,
-		}
-		repos = append(repos, repo)
+		repos = append(repos, b.ToVCSRepo(r))
 	}
 	return repos, nil
 }

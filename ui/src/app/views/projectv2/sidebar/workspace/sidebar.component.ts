@@ -250,7 +250,8 @@ export class ProjectV2SidebarComponent implements OnDestroy, AfterViewInit {
             case EntityWorkflow:
                 return [<MenuItem>{
                     name: 'Display runs',
-                    route: ['/', 'project', this.project.key, 'run', 'vcs', vcs, 'repository', repo, 'workflow', e.name]
+                    route: ['/', 'project', this.project.key, 'run'],
+                    queryParams: { workflow: `${vcs}/${repo}/${e.name}` }
                 }];
         }
         return null;

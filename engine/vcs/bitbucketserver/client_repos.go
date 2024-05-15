@@ -45,32 +45,7 @@ func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 
 	repos := []sdk.VCSRepo{}
 	for _, r := range bbRepos {
-		var repoURL string
-		if r.Link != nil {
-			repoURL = r.Link.URL
-		}
-
-		var sshURL, httpURL string
-		if r.Links != nil && r.Links.Clone != nil {
-			for _, c := range r.Links.Clone {
-				if c.Name == "http" {
-					httpURL = c.URL
-				}
-				if c.Name == "ssh" {
-					sshURL = c.URL
-				}
-			}
-		}
-
-		repo := sdk.VCSRepo{
-			Name:         r.Name,
-			Slug:         r.Slug,
-			Fullname:     fmt.Sprintf("%s/%s", r.Project.Key, r.Slug),
-			URL:          fmt.Sprintf("%s%s", b.consumer.URL, repoURL),
-			HTTPCloneURL: httpURL,
-			SSHCloneURL:  sshURL,
-		}
-		repos = append(repos, repo)
+		repos = append(repos, b.ToVCSRepo(r))
 	}
 	return repos, nil
 }
@@ -80,42 +55,11 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 	r := Repo{}
 	path := fmt.Sprintf("/projects/%s/repos/%s", t[0], t[1])
 
-	var repo sdk.VCSRepo
 	if err := b.do(ctx, "GET", "core", path, nil, nil, &r); err != nil {
-		return repo, sdk.WrapError(err, "Unable to get repo")
+		return sdk.VCSRepo{}, sdk.WrapError(err, "Unable to get repo")
 	}
 
-	var sshURL, httpURL, repoURL string
-	if r.Links != nil {
-		if r.Links.Clone != nil {
-			for _, c := range r.Links.Clone {
-				if c.Name == "http" {
-					httpURL = c.URL
-				}
-				if c.Name == "ssh" {
-					sshURL = c.URL
-				}
-			}
-		}
-
-		if r.Links.Self != nil {
-			for _, c := range r.Links.Self {
-				repoURL = c.URL
-				break
-			}
-		}
-	}
-
-	repo = sdk.VCSRepo{
-		Name:         r.Name,
-		Slug:         r.Slug,
-		Fullname:     fmt.Sprintf("%s/%s", r.Project.Key, r.Slug),
-		URL:          repoURL,
-		HTTPCloneURL: httpURL,
-		SSHCloneURL:  sshURL,
-	}
-
-	return repo, nil
+	return b.ToVCSRepo(r), nil
 }
 
 func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo string) (bool, error) {
@@ -142,4 +86,34 @@ func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo strin
 		}
 	}
 	return false, nil
+}
+
+func (b *bitbucketClient) ToVCSRepo(repo Repo) sdk.VCSRepo {
+	var webURL, sshURL, httpURL string
+	if repo.Links != nil {
+		for _, c := range repo.Links.Clone {
+			if c.Name == "http" {
+				httpURL = c.URL
+			}
+			if c.Name == "ssh" {
+				sshURL = c.URL
+			}
+		}
+		for _, s := range repo.Links.Self {
+			webURL = s.URL
+			break
+		}
+	}
+
+	return sdk.VCSRepo{
+		Name:            repo.Name,
+		Slug:            repo.Slug,
+		Fullname:        fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug),
+		URL:             webURL,
+		URLCommitFormat: strings.TrimSuffix(webURL, "/browse") + "/commits/%s",
+		URLTagFormat:    webURL + "?at=refs%%2Ftags%%2F%s",
+		URLBranchFormat: webURL + "?at=refs%%2Fheads%%2F%s",
+		HTTPCloneURL:    httpURL,
+		SSHCloneURL:     sshURL,
+	}
 }
