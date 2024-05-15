@@ -57,11 +57,17 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 
 	if !sdk.IsURL(s.Cfg.URLPublic) {
-		return fmt.Errorf("Invalid hooks configuration, urlPublic configuration is mandatory")
+		return fmt.Errorf("invalid hooks configuration, urlPublic configuration is mandatory")
 	}
 
 	if s.Cfg.RepositoryEventRetention == 0 {
 		s.Cfg.RepositoryEventRetention = 30
+	}
+	if s.Cfg.OldRepositoryEventQueueLen == 0 {
+		s.Cfg.OldRepositoryEventQueueLen = 200
+	}
+	if s.Cfg.OldRepositoryEventRetry == 0 {
+		s.Cfg.OldRepositoryEventRetry = 1
 	}
 
 	return nil
