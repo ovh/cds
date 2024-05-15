@@ -42,16 +42,7 @@ func (client *bitbucketcloudClient) ListForks(ctx context.Context, repo string) 
 
 	responseRepos := make([]sdk.VCSRepo, 0, len(repos))
 	for _, repo := range repos {
-		r := sdk.VCSRepo{
-			ID:           repo.UUID,
-			Name:         repo.Name,
-			Slug:         repo.Slug,
-			Fullname:     repo.FullName,
-			URL:          repo.Links.HTML.Href,
-			HTTPCloneURL: repo.Links.Clone[0].Href,
-			SSHCloneURL:  repo.Links.Clone[1].Href,
-		}
-		responseRepos = append(responseRepos, r)
+		responseRepos = append(responseRepos, client.ToVCSRepo(repo))
 	}
 
 	return responseRepos, nil

@@ -34,6 +34,15 @@
             :host-context(.night) & {
                 background-color: #141414;
             }
+
+            a {
+                color: inherit;
+                text-decoration: underline dotted;
+
+                &:hover {
+                    color: #177ddc;
+                }
+            }
         }
 
         .controls {

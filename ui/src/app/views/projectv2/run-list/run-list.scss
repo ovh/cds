@@ -61,6 +61,18 @@
     flex: 1;
     overflow-y: auto;
 
+    .repoLink {
+      color: inherit;
+
+      &.dotted {
+        text-decoration: underline dotted;
+      }
+
+      &:hover {
+        color: #177ddc;
+      }
+    }
+
     .run-avatar {
       display: flex;
       flex-direction: row;

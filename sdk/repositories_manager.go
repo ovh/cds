@@ -33,13 +33,16 @@ type VCSRelease struct {
 
 // VCSRepo represents data about repository even on stash, or github, etc...
 type VCSRepo struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`     //On Github: Name = Slug
-	Slug         string `json:"slug"`     //On Github: Slug = Name
-	Fullname     string `json:"fullname"` //On Stash : projectkey/slug, on Github : owner/slug
-	URL          string `json:"url"`      //Web URL
-	HTTPCloneURL string `json:"http_url"` //Git clone URL  "https://<baseURL>/scm/PRJ/my-repo.git"
-	SSHCloneURL  string `json:"ssh_url"`  //Git clone URL  "ssh://git@<baseURL>/PRJ/my-repo.git"
+	ID              string `json:"id"`
+	Name            string `json:"name"`              // On Github: Name = Slug
+	Slug            string `json:"slug"`              // On Github: Slug = Name
+	Fullname        string `json:"fullname"`          // On Stash : projectkey/slug, on Github : owner/slug
+	URL             string `json:"url"`               // Web URL
+	URLCommitFormat string `json:"url_commit_format"` // Web URL to commit
+	URLBranchFormat string `json:"url_branch_format"` // Web URL to branch
+	URLTagFormat    string `json:"url_tag_format"`    // Web URL to tag
+	HTTPCloneURL    string `json:"http_url"`          // Git clone URL  "https://<baseURL>/scm/PRJ/my-repo.git"
+	SSHCloneURL     string `json:"ssh_url"`           // Git clone URL  "ssh://git@<baseURL>/PRJ/my-repo.git"
 }
 
 // VCSAuthor represents the auhor for every commit

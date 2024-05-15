@@ -21,11 +21,15 @@
                 </nz-page-header-title>
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
-                        Commit {{workflowRun.contexts.git.sha?.substring(0,8)}} - {{workflowRun.contexts.git.ref}} by
+                        Commit <a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
+                            rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a> - <a
+                            href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
+                            rel="noopener noreferrer">{{workflowRun.contexts.git.ref}}</a> by
                         {{workflowRun.contexts.git.username}}
                         on
                         repository
-                        {{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}
+                        <a href="{{workflowRun.contexts.git.repository_web_url}}" target="_blank"
+                            rel="noopener noreferrer">{{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}</a>
                     </span>
                 </nz-page-header-content>
             </nz-page-header>

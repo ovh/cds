@@ -82,21 +82,24 @@ type CDSContext struct {
 }
 
 type GitContext struct {
-	Server        string   `json:"server,omitempty"`
-	Repository    string   `json:"repository,omitempty"`
-	RepositoryURL string   `json:"repositoryUrl,omitempty"`
-	Ref           string   `json:"ref,omitempty"`
-	RefName       string   `json:"ref_name,omitempty"`
-	Sha           string   `json:"sha,omitempty"`
-	RefType       string   `json:"ref_type,omitempty"`
-	Connection    string   `json:"connection,omitempty"`
-	SSHKey        string   `json:"ssh_key,omitempty"`
-	SSHPrivate    string   `json:"ssh_private,omitempty"`
-	Username      string   `json:"username,omitempty"`
-	Token         string   `json:"token,omitempty"`
-	SemverCurrent string   `json:"semver_current,omitempty"`
-	SemverNext    string   `json:"semver_next,omitempty"`
-	ChangeSets    []string `json:"changesets,omitempty"`
+	Server           string   `json:"server,omitempty"`
+	Repository       string   `json:"repository,omitempty"`
+	RepositoryURL    string   `json:"repositoryUrl,omitempty"`
+	RepositoryWebURL string   `json:"repository_web_url,omitempty"`
+	RefWebURL        string   `json:"ref_web_url,omitempty"`
+	CommitWebURL     string   `json:"commit_web_url,omitempty"`
+	Ref              string   `json:"ref,omitempty"`
+	RefName          string   `json:"ref_name,omitempty"`
+	Sha              string   `json:"sha,omitempty"`
+	RefType          string   `json:"ref_type,omitempty"`
+	Connection       string   `json:"connection,omitempty"`
+	SSHKey           string   `json:"ssh_key,omitempty"`
+	SSHPrivate       string   `json:"ssh_private,omitempty"`
+	Username         string   `json:"username,omitempty"`
+	Token            string   `json:"token,omitempty"`
+	SemverCurrent    string   `json:"semver_current,omitempty"`
+	SemverNext       string   `json:"semver_next,omitempty"`
+	ChangeSets       []string `json:"changesets,omitempty"`
 }
 
 type JobContext struct {

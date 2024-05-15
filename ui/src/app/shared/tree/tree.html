@@ -14,12 +14,13 @@
             <ng-container *ngIf="node?.menu?.length > 0">
                 <button nz-button nzType="text" nzSize="small">
                     <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"
-                       (click)="$event.stopPropagation()"></i>
+                        (click)="$event.stopPropagation()"></i>
                 </button>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
                         <ng-container *ngFor="let item of node.menu">
-                            <li nz-menu-item  [routerLink]="item.route">{{item.name}}</li>
+                            <li nz-menu-item [routerLink]="item.route" [queryParams]="item.queryParams">{{item.name}}
+                            </li>
                         </ng-container>
                     </ul>
                 </nz-dropdown-menu>
@@ -42,8 +43,9 @@
                     (click)="clickOnNodeLink(node, $event)">{{ node.name }}</span>
             </div>
             <ng-container *ngIf="node.expanded && node.select?.options">
-                <nz-select nzShowSearch nzSize="small" [nzCustomTemplate]="selectLabelTmpl" [(ngModel)]="node.select.selected"
-                    (ngModelChange)="node.select.onchange()" (click)="$event.stopPropagation()">
+                <nz-select nzShowSearch nzSize="small" [nzCustomTemplate]="selectLabelTmpl"
+                    [(ngModel)]="node.select.selected" (ngModelChange)="node.select.onchange()"
+                    (click)="$event.stopPropagation()">
                     <nz-option *ngFor="let opt of node.select.options" [nzValue]="opt.value"
                         [nzLabel]="opt.key"></nz-option>
                 </nz-select>
@@ -59,7 +61,8 @@
                 </button>
                 <nz-dropdown-menu #menu="nzDropdownMenu">
                     <ul nz-menu>
-                        <li nz-menu-item *ngFor="let item of node.menu" [routerLink]="item.route">{{item.name}}</li>
+                        <li nz-menu-item *ngFor="let item of node.menu" [routerLink]="item.route"
+                            [queryParams]="item.queryParams">{{item.name}}</li>
                     </ul>
                 </nz-dropdown-menu>
             </ng-container>

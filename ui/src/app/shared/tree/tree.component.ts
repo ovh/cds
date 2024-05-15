@@ -16,6 +16,7 @@ import {
 export interface MenuItem {
     name: string;
     route: string[];
+    queryParams: any;
     action: () => {};
 }
 
