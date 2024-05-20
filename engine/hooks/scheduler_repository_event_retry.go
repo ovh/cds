@@ -17,7 +17,7 @@ const (
 
 // Get from queue task execution
 func (s *Service) manageOldRepositoryEvent(ctx context.Context) {
-	tick := time.NewTicker(1 * time.Minute).C
+	tick := time.NewTicker(time.Duration(s.Cfg.OldRepositoryEventRetry) * time.Minute).C
 
 	for {
 		select {
@@ -27,6 +27,12 @@ func (s *Service) manageOldRepositoryEvent(ctx context.Context) {
 			}
 			return
 		case <-tick:
+			if s.Maintenance {
+				log.Info(ctx, "Maintenance enable, wait 1 minute")
+				time.Sleep(1 * time.Minute)
+				continue
+			}
+
 			repositoryEventKeys, err := s.Dao.ListInProgressRepositoryEvent(ctx)
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
@@ -86,8 +92,13 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 		return nil
 	}
 
+	queueLen, err := s.Dao.RepositoryEventQueueLen()
+	if err != nil {
+		return err
+	}
+
 	// Check last update time
-	if time.Now().UnixMilli()-hre.LastUpdate > RetryDelayMilli {
+	if time.Now().UnixMilli()-hre.LastUpdate > RetryDelayMilli && queueLen < s.Cfg.OldRepositoryEventQueueLen {
 		log.Info(ctx, "re-enqueue event %s", hre.GetFullName())
 		if err := s.Dao.EnqueueRepositoryEvent(ctx, &hre); err != nil {
 			return err

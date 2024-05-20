@@ -57,11 +57,17 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
 
 	if !sdk.IsURL(s.Cfg.URLPublic) {
-		return fmt.Errorf("Invalid hooks configuration, urlPublic configuration is mandatory")
+		return fmt.Errorf("invalid hooks configuration, urlPublic configuration is mandatory")
 	}
 
 	if s.Cfg.RepositoryEventRetention == 0 {
 		s.Cfg.RepositoryEventRetention = 30
+	}
+	if s.Cfg.OldRepositoryEventQueueLen == 0 {
+		s.Cfg.OldRepositoryEventQueueLen = 200
+	}
+	if s.Cfg.OldRepositoryEventRetry == 0 {
+		s.Cfg.OldRepositoryEventRetry = 1
 	}
 
 	return nil
@@ -124,9 +130,12 @@ func (s *Service) Serve(c context.Context) error {
 		})
 
 		// Reenqueue old repository event
-		s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
-			s.manageOldRepositoryEvent(ctx)
-		})
+		if !s.Cfg.DisableRepositoryEventRetry {
+			s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
+				s.manageOldRepositoryEvent(ctx)
+			})
+		}
+
 		// Delete old repository event
 		s.GoRoutines.RunWithRestart(ctx, "cleanRepositoryEvent", func(ctx context.Context) {
 			s.scheduleCleanOldRepositoryEvent(ctx)
