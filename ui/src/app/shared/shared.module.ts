@@ -115,6 +115,7 @@ import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzDrawerModule } from 'ng-zorro-antd/drawer';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
@@ -391,6 +392,7 @@ const icons: IconDefinition[] = [
         NzCodeEditorModule,
         NzCollapseModule,
         NzDividerModule,
+        NzDrawerModule,
         NzDropDownModule,
         NzEmptyModule,
         NzFormModule,
@@ -600,6 +602,7 @@ const icons: IconDefinition[] = [
         NzCodeEditorModule,
         NzCollapseModule,
         NzDividerModule,
+        NzDrawerModule,
         NzDropDownModule,
         NzEmptyModule,
         NzFormModule,

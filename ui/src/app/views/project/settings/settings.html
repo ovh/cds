@@ -1,6 +1,8 @@
 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
 <div class="content" *ngIf="selectedTab" [ngSwitch]="selectedTab.key">
-	<div *ngSwitchCase="'variables'"></div>
+	<div *ngSwitchCase="'variables'">
+		<app-project-variable-sets [project]="project"></app-project-variable-sets>
+	</div>
 	<div *ngSwitchCase="'keys'">
 		<app-project-keys [project]="project"></app-project-keys>
 	</div>

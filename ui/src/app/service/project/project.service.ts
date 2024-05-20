@@ -11,6 +11,7 @@ import { RepositoryAnalysis } from "../../model/analysis.model";
 import { Branch } from "../../model/repositories.model";
 import {Entity} from "../../model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
+import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 
 /**
  * Service to access Project from API.
@@ -181,5 +182,17 @@ export class ProjectService {
         return this._http.get<Schema>(`/v2/jsonschema/${type}`).pipe(
             map(s => Object.assign(new Schema(), s))
         );
+    }
+
+    getVariableSet(key: string, vsName: string): Observable<VariableSet> {
+        return this._http.get<VariableSet>(`/v2/project/${key}/variableset/${vsName}`)
+    }
+
+    postVariableSetItem(key: string, vsName: string, vsItem: VariableSetItem): Observable<VariableSetItem> {
+        return this._http.post<VariableSetItem>(`/v2/project/${key}/variableset/${vsName}/item`, vsItem)
+    }
+
+    deleteVariableSetItem(key: string, vsName: string, itemName: string): Observable<any> {
+        return this._http.delete(`/v2/project/${key}/variableset/${vsName}/item/${itemName}`);
     }
 }
