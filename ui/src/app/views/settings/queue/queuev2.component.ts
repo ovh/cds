@@ -36,9 +36,9 @@ export class QueueV2Component implements OnDestroy {
         private _routerActivated: ActivatedRoute, private _router: Router, private _workflowService: V2WorkflowRunService) {
         this.statusFilter = [];
         this.path = [<PathItem>{
-            translate: 'Settings'
+            text: 'Settings'
         }, <PathItem>{
-            translate: 'Current Jobs V2 queue'
+            text: 'Current Jobs V2 queue'
         }];
 
         this._routerActivated.queryParams.subscribe(q => {

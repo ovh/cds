@@ -2,7 +2,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { Observable } from 'rxjs';
-import { V2WorkflowRunJob } from '../../../../dist/workflow-graph/lib/v2.workflow.run.model';
 
 @Injectable()
 export class QueueService {
