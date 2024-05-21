@@ -8,6 +8,7 @@ import { Pipeline } from './pipeline.model';
 import { RepositoriesManager } from './repositories.model';
 import { Variable } from './variable.model';
 import { Workflow } from './workflow.model';
+import { VariableSet } from './variablesets.model';
 
 export class Project {
   key: string;
@@ -22,6 +23,7 @@ export class Project {
   application_names: Array<IdName>;
   groups: Array<GroupPermission>;
   variables: Array<Variable>;
+  variablesets: Array<VariableSet>;
   environments: Array<Environment>;
   environment_names: Array<IdName>;
   permissions: Permission;

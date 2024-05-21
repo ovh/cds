@@ -23,6 +23,8 @@ import { ProjectWorkflowListComponent } from './show/workflow/workflow.list.comp
 import { ProjectComponent } from './project.component';
 import { ProjectActivityBarComponent } from './activity-bar/activity-bar.component';
 import { ProjectSettingsComponent } from './settings/settings.component';
+import { ProjectVariableSetsComponent } from './show/variablesets/variablesets.component';
+import { ProjectVariableSetItemsComponent } from './show/variablesets/items/variableset.item.component';
 
 @NgModule({
     declarations: [
@@ -44,6 +46,8 @@ import { ProjectSettingsComponent } from './settings/settings.component';
         ProjectSettingsComponent,
         ProjectShowComponent,
         ProjectVariablesComponent,
+        ProjectVariableSetsComponent,
+        ProjectVariableSetItemsComponent,
         ProjectWorkflowListBlocsComponent,
         ProjectWorkflowListComponent,
         ProjectWorkflowListLabelsComponent,
