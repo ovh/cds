@@ -19,6 +19,7 @@ import { WorkerModelListComponent } from './worker-model/list/worker-model.list.
 import { WorkflowTemplateAddComponent } from './workflow-template/add/workflow-template.add.component';
 import { WorkflowTemplateEditComponent } from './workflow-template/edit/workflow-template.edit.component';
 import { WorkflowTemplateListComponent } from './workflow-template/list/workflow-template.list.component';
+import { QueueV2Component } from './queue/queuev2.component';
 
 const routes: Routes = [
     {
@@ -51,6 +52,7 @@ const routes: Routes = [
                 data: { title: '{actionName} • Action' }
             },
             { path: 'queue', component: QueueComponent, data: { title: 'Queue' } },
+            { path: 'queuev2', component: QueueV2Component, data: { title: 'Queue V2' } },
             { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } },
             { path: 'workflow-template', component: WorkflowTemplateListComponent, data: { title: 'Workflow template' } },
             { path: 'workflow-template/add', component: WorkflowTemplateAddComponent, data: { title: 'Add • Workflow template' } },

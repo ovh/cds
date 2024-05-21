@@ -9,15 +9,14 @@ import (
 )
 
 // jobRunList only the hatchery can list job runs
-func (api *API) jobRunList(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+func (api *API) jobRunListRegionalized(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	hatchConsumer := getHatcheryConsumer(ctx)
 	work := getWorker(ctx)
-	switch {
-	case hatchConsumer != nil && work == nil:
-		return hatcheryHasRoleOnRegion(ctx, db, hatchConsumer.AuthConsumerHatchery.HatcheryID, vars["regionName"], sdk.HatcheryRoleSpawn)
+
+	if hatchConsumer == nil || work != nil {
+		return sdk.WithStack(sdk.ErrForbidden)
 	}
-	// TODO manage users
-	return sdk.WithStack(sdk.ErrForbidden)
+	return hatcheryHasRoleOnRegion(ctx, db, hatchConsumer.AuthConsumerHatchery.HatcheryID, vars["regionName"], sdk.HatcheryRoleSpawn)
 }
 
 // jobRunRead only hatchery can read a job run for now

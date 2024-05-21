@@ -1,0 +1,44 @@
+<div class="wrapper">
+    <app-breadcrumb [path]="path"></app-breadcrumb>
+    <app-scrollview class="scrollview">
+    <h2>Job Queue ( {{totalJobs + ' jobs'}} ) <button nz-button><span nz-icon nzType="reload" (click)="reloadPage()"></span></button></h2>
+    Status : 
+    <nz-select
+    [nzMaxTagCount]="3"
+    nzMode="multiple"
+    nzPlaceHolder="Status filter"
+    [(ngModel)]="statusFilter"
+    (ngModelChange)="updateFilters()"
+    >
+        <nz-option *ngFor="let s of allStatus" [nzValue]="s" [nzLabel]="s"></nz-option>
+    </nz-select>
+    <nz-table #jobTable [nzData]="jobs" 
+    [nzPageSize]="pageSize" [nzPageIndex]="pageIndex" [nzLoading]="loading" 
+    [nzFrontPagination]="false" [nzTotal]="totalJobs" (nzPageIndexChange)="changePage($event)">
+        <thead>
+            <tr>
+                <th>Since</th>
+                <th>Status</th>
+                <th>Region / Hatchery</th>
+                <th>TriggeredBy</th>
+                <th>Run Number</th>
+                <th>JobName</th>
+                <th>Worker Model Type</th>
+                <th>Stop</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let data of jobTable.data">
+                <td>{{data.queued | amTimeAgo}}</td>
+                <td>{{data.status}}</td>
+                <td>{{data.region}}</td>
+                <td>{{data.username}}</td>
+                <td>{{data.run_number + "." + data.run_attempt}}</td>
+                <td>{{data.job_id}}</td>
+                <td>{{data.model_type}}</td>
+                <td><button nz-button nzDanger (click)="stopJob(data)">Stop job</button></td>
+            </tr>
+        </tbody>
+    </nz-table>
+    </app-scrollview>
+</div>

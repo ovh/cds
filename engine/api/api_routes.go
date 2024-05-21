@@ -525,7 +525,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult", nil, r.GETv2(api.getJobRunResultsHandler), r.POSTv2(api.postJobRunResultHandler), r.PUTv2(api.putJobRunResultHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runresult/{runResultID}", nil, r.GETv2(api.getJobRunResultHandler))
 
-	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedHandler))
+	r.Handle("/v2/queue/{regionName}", nil, r.GETv2(api.getJobsQueuedRegionalizedHandler))
+	r.Handle("/v2/queue", nil, r.GETv2(api.getJobsQueuedHandler))
 
 	r.Handle("/v2/worker", nil, r.GETv2(api.getWorkersV2Handler))
 	r.Handle("/v2/worker/{workerName}", nil, r.GETv2(api.getWorkerV2Handler))
