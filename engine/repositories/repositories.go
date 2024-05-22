@@ -47,7 +47,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	var ok bool
 	s.Cfg, ok = config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid Repositories configuration")
+		return fmt.Errorf("invalid Repositories configuration")
 	}
 
 	s.ServiceName = s.Cfg.Name
@@ -62,7 +62,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 func (s *Service) CheckConfiguration(config interface{}) error {
 	sConfig, ok := config.(Configuration)
 	if !ok {
-		return fmt.Errorf("Invalid Repositories configuration")
+		return fmt.Errorf("invalid Repositories configuration")
 	}
 
 	if sConfig.URL == "" {

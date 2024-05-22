@@ -404,6 +404,8 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 			signedProps["git.hash"] = run.Contexts.Git.Sha
 			props.AddProperty("git.ref", run.Contexts.Git.Ref)
 			signedProps["git.ref"] = run.Contexts.Git.Ref
+			props.AddProperty("cds.run_id", runID)
+			signedProps["cds.run_id"] = runID
 
 			// Prepare artifact signature
 			signedProps["repository"] = virtualRepository
@@ -441,13 +443,13 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	if artifactClient != nil && artifactoryIntegration != nil {
 		// Set the Buildinfo
 		buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
-			BuildInfoPrefix: artifactoryIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value,
-			ProjectKey:      run.ProjectKey,
-			WorkflowName:    run.WorkflowName,
-			Version:         run.Contexts.Git.SemverCurrent,
-			AgentName:       "cds-api",
-			TokenName:       rtTokenName,
-			//RunURL:                   "TODO", // TODO Run UI URL
+			BuildInfoPrefix:          artifactoryIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value,
+			ProjectKey:               run.ProjectKey,
+			WorkflowName:             run.WorkflowName,
+			Version:                  run.Contexts.Git.SemverCurrent,
+			AgentName:                "cds-api",
+			TokenName:                rtTokenName,
+			RunURL:                   fmt.Sprintf("%s/project/%s/run/%s", api.Config.URL.UI, run.ProjectKey, runID),
 			GitBranch:                run.Contexts.Git.Ref,
 			GitURL:                   run.Contexts.Git.RepositoryURL,
 			GitHash:                  run.Contexts.Git.Sha,

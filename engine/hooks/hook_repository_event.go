@@ -16,14 +16,14 @@ func (s *Service) extractDataFromPayload(headers http.Header, vcsServerType stri
 	case sdk.VCSTypeGitlab:
 		return s.extractDataFromGitlabRequest(body, eventName)
 	case sdk.VCSTypeGitea:
-		return s.extractDataFromGiteaRequest(headers, body, eventName)
+		return s.extractDataFromGiteaRequest(body, eventName)
 	default:
 		return "", sdk.HookRepositoryEventExtractData{}, sdk.WithStack(sdk.ErrNotImplemented)
 	}
 }
 
 // Update file paths are not is gitea payload
-func (s *Service) extractDataFromGiteaRequest(headers http.Header, body []byte, eventName string) (string, sdk.HookRepositoryEventExtractData, error) {
+func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (string, sdk.HookRepositoryEventExtractData, error) {
 	extractedData := sdk.HookRepositoryEventExtractData{}
 	var request GiteaEventPayload
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
