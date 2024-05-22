@@ -28,6 +28,10 @@ type V2Workflow struct {
 	Env          map[string]string        `json:"env,omitempty"`
 	Integrations []string                 `json:"integrations,omitempty"`
 	VariableSets []string                 `json:"vars,omitempty"`
+
+	// Template fields
+	From       string            `json:"from,omitempty"`
+	Parameters map[string]string `json:"parameters,omitempty"`
 }
 
 type CommitStatus struct {
@@ -367,6 +371,12 @@ func (w V2Workflow) GetName() string {
 }
 
 func (w V2Workflow) Lint() []error {
+	// Before anything, check if workflow inherits from a workflow template.
+	// Skip other checks if it is the case.
+	if w.From != "" {
+		return nil
+	}
+
 	errs := w.CheckStageAndJobNeeds()
 
 	errGates := w.CheckGates()

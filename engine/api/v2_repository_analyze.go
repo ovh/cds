@@ -1222,6 +1222,20 @@ func sortEntitiesFiles(filesContent map[string][]byte) []string {
 			if strings.HasPrefix(keys[j], ".cds/worker-models/") {
 				return false
 			}
+			if strings.HasPrefix(keys[j], ".cds/workflow-templates/") {
+				return true
+			}
+			if strings.HasPrefix(keys[j], ".cds/workflows/") {
+				return true
+			}
+			return keys[i] < keys[j]
+		case strings.HasPrefix(keys[i], ".cds/workflow-templates"):
+			if strings.HasPrefix(keys[j], ".cds/worker-models/") {
+				return false
+			}
+			if strings.HasPrefix(keys[j], ".cds/actions/") {
+				return false
+			}
 			if strings.HasPrefix(keys[j], ".cds/workflows/") {
 				return true
 			}
@@ -1252,6 +1266,9 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		case strings.HasPrefix(filePath, ".cds/workflows/"):
 			var w []sdk.V2Workflow
 			es, err = ReadEntityFile(api, dir, fileName, content, &w, sdk.EntityTypeWorkflow, *analysis)
+		case strings.HasPrefix(filePath, ".cds/workflow-templates/"):
+			var wt []sdk.V2WorkflowTemplate
+			es, err = ReadEntityFile(api, dir, fileName, content, &wt, sdk.EntityTypeWorkflowTemplate, *analysis)
 		default:
 			continue
 		}
@@ -1343,6 +1360,8 @@ func ReadEntityFile[T sdk.Lintable](api *API, directory, fileName string, conten
 			eo.Action = any(o).(sdk.V2Action)
 		case sdk.EntityTypeWorkflow:
 			eo.Workflow = any(o).(sdk.V2Workflow)
+		case sdk.EntityTypeWorkflowTemplate:
+			eo.Template = any(o).(sdk.V2WorkflowTemplate)
 		}
 
 		entities = append(entities, eo)

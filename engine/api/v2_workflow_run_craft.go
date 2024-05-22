@@ -42,6 +42,8 @@ type WorkflowRunEntityFinder struct {
 	localActionsCache     map[string]sdk.V2Action
 	localWorkerModelCache map[string]sdk.V2WorkerModel
 	workerModelCache      map[string]sdk.V2WorkerModel
+	localTemplatesCache   map[string]sdk.EntityWithObject
+	templatesCache        map[string]sdk.EntityWithObject
 	plugins               map[string]sdk.GRPCPlugin
 	run                   sdk.V2WorkflowRun
 	runVcsServer          sdk.VCSProject
@@ -59,6 +61,8 @@ func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.P
 		localActionsCache:     make(map[string]sdk.V2Action),
 		workerModelCache:      make(map[string]sdk.V2WorkerModel),
 		localWorkerModelCache: make(map[string]sdk.V2WorkerModel),
+		templatesCache:        make(map[string]sdk.EntityWithObject),
+		localTemplatesCache:   make(map[string]sdk.EntityWithObject),
 		repoCache:             make(map[string]sdk.ProjectRepository),
 		vcsServerCache:        make(map[string]sdk.VCSProject),
 		repoDefaultRefCache:   make(map[string]string),
@@ -180,6 +184,52 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	run.Contexts = *runContext
 	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, u.Username)
+
+	// Resolve workflow template if applicable
+	if run.WorkflowData.Workflow.From != "" {
+		e, msg, err := wref.checkWorkflowTemplate(ctx, api.mustDB(), api.Cache, run.WorkflowData.Workflow.From)
+		if err != nil {
+			return err
+		}
+		if msg != nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, *msg)
+		}
+
+		if err := e.Template.Resolve(ctx, &run.WorkflowData.Workflow); err != nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("Unable to resolve workflow template %s: %s", run.WorkflowData.Workflow.From, err),
+			})
+		}
+
+		// Build context for workflow
+		repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), e.Entity.ProjectRepositoryID)
+		if err != nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("Unable to resolve workflow template repository: %s", err),
+			})
+		}
+
+		vcsProj, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), repo.ProjectKey, repo.VCSProjectID)
+		if err != nil {
+			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("Unable to resolve workflow template vcs: %s", err),
+			})
+		}
+
+		run.Contexts.CDS.WorkflowTemplate = e.Entity.Name
+		run.Contexts.CDS.WorkflowTemplateRef = e.Entity.Ref
+		run.Contexts.CDS.WorkflowTemplateSha = e.Entity.Commit
+		run.Contexts.CDS.WorkflowTemplateVCSServer = vcsProj.Name
+		run.Contexts.CDS.WorkflowTemplateRepository = repo.Name
+		run.Contexts.CDS.WorkflowTemplateProjectKey = e.Entity.ProjectKey
+		run.Contexts.CDS.WorkflowTemplateParams = run.WorkflowData.Workflow.Parameters
+	}
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
 	if err != nil {
@@ -513,6 +563,15 @@ func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.
 			return "", nil, err
 		}
 		wref.workerModelCache[completePath] = wm
+	case sdk.EntityTypeWorkflowTemplate:
+		var wt sdk.V2WorkflowTemplate
+		if err := yaml.Unmarshal([]byte(entityDB.Data), &wt); err != nil {
+			return "", nil, err
+		}
+		wref.templatesCache[completePath] = sdk.EntityWithObject{
+			Entity:   *entityDB,
+			Template: wt,
+		}
 	default:
 		return "", nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "entity %s not implemented", entityType)
 	}
@@ -938,4 +997,43 @@ func (wref *WorkflowRunEntityFinder) checkIntegrations(ctx context.Context, db *
 	}
 
 	return integrations, infos, nil
+}
+
+func (wref *WorkflowRunEntityFinder) checkWorkflowTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, templateName string) (sdk.EntityWithObject, *sdk.V2WorkflowRunInfo, error) {
+	ctx, next := telemetry.Span(ctx, "wref.checkWorkflowTemplate", trace.StringAttribute(telemetry.TagWorkflowTemplate, templateName))
+	defer next()
+
+	var e sdk.EntityWithObject
+	if strings.HasPrefix(templateName, ".cds/workflow-templates/") {
+		// Find action from path
+		localEntity, has := wref.localTemplatesCache[templateName]
+		if !has {
+			wtEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.runRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha)
+			if err != nil {
+				msg := sdk.V2WorkflowRunInfo{
+					WorkflowRunID: wref.run.ID,
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("Unable to find workflow template %s %s %s %s", wref.runRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha),
+				}
+				return e, &msg, nil
+			}
+			if err := yaml.Unmarshal([]byte(wtEntity.Data), &localEntity.Template); err != nil {
+				return e, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read workflow template %s: %v", templateName, err)
+			}
+			localEntity.Entity = *wtEntity
+			wref.localTemplatesCache[templateName] = localEntity
+		}
+		e = localEntity
+	} else {
+		completeName, msg, err := wref.searchEntity(ctx, db, store, templateName, sdk.EntityTypeWorkflowTemplate)
+		if err != nil {
+			return e, nil, err
+		}
+		if msg != nil {
+			return e, msg, nil
+		}
+		e = wref.templatesCache[completeName]
+	}
+
+	return e, nil, nil
 }

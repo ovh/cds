@@ -1,7 +1,7 @@
 package sdk
 
 var (
-	ProjectRoles = []string{ProjectRoleRead, ProjectRoleManage, ProjectRoleManageNotification, ProjectRoleManageWorkerModel, ProjectRoleManageAction, ProjectRoleManageWorkflow}
+	ProjectRoles = []string{ProjectRoleRead, ProjectRoleManage, ProjectRoleManageNotification, ProjectRoleManageWorkerModel, ProjectRoleManageAction, ProjectRoleManageWorkflow, ProjectRoleManageWorkflowTemplate}
 )
 
 type RBACProject struct {

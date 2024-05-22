@@ -1,0 +1,157 @@
+name: Workflow Template
+vars:
+  cds_project: "ITV2WFTMPL"
+  git_repo: "it_v2_workflow_templates"
+  cds_workflow_template: "WorkflowTemplate"
+  cds_workflow_local: "WorkflowFromLocalTemplate"
+  cds_workflow_backend: "WorkflowFromBackendTemplate"
+  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian"
+  workflow_template: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/{{.cds_workflow_template}}"
+testcases:
+- name: Prepare test
+  steps:
+  - name: "Verify cdsctl configuration"
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+    vars:
+      cdsUser:
+        from: result.systemoutjson.username
+  - name: "Display username"
+    info: "Connected CDS user is {{.cdsUser}}"
+  - type: v2_create_project
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    cds_region: "{{.cds.region}}"
+
+  - type: v2_add_git_repo
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    cds_project: "{{.cds_project}}"
+    cds_hook_url: "{{.gitea.hook.url}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    git_repo: "{{.git_repo}}"
+
+  - type: v2_install_gpg_key
+    cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_password: "{{.git.password}}"
+    vars:
+      emailaddress:
+        from: result.emailaddress
+
+- name: Push workflow template files
+  steps:
+  - type: v2_push_cds_files_on_repo
+    git_repo: "{{.git_repo}}"
+    git_host: "{{.git.host}}"
+    git_user: "{{.git.user}}"
+    git_email: "{{.Prepare-test.emailaddress}}"
+    git_password: "{{.git.password}}"
+    gpg_key_id: "{{.gpg.key_id}}"
+    files:
+      worker-models/debian.yml:
+        name: docker-debian
+        osarch: linux/amd64
+        type: docker
+        spec:
+          image: buildpack-deps:buster
+      workflow-templates/test.yaml:
+        name: "{{.cds_workflow_template}}"
+        parameters:
+        - key: name
+          type: string
+        - key: subname
+          type: string
+        spec: |-
+          jobs:
+            hello:
+              runs-on:
+                model: "{{.worker_model}}"
+                memory: "512"
+              steps:
+              - run: |-
+                  #!/bin/bash
+                  env
+                  echo "Hello, [[.params.name]]"
+              [[- if .params.subname ]]
+              - run: |-
+                  #!/bin/bash
+                  echo "Hello [[.params.subname]]"
+              [[- end ]]
+      workflows/local.yaml:
+        name: "{{.cds_workflow_local}}"
+        on: [push]
+        from: ".cds/workflow-templates/test.yaml"
+        parameters:
+          name: foo
+          subname: bar
+      workflows/backend.yaml:
+        name: "{{.cds_workflow_backend}}"
+        on: [push]
+        from: "{{.workflow_template}}"
+        parameters:
+          name: foo
+          subname: bar
+
+  - name: Trigger manually an analysis
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis trigger {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+    assertions:
+    - result.systemoutjson.status ShouldEqual "InProgress"
+
+  - name: Check CDS project analyses status
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 2
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+    - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 20
+    delay: 5
+
+  - name: Trigger manually a workflow run from local template
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_local}} --format json"
+    assertions:
+    - result.systemoutjson.run_number ShouldEqual "1"
+
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_local}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 1
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+    retry: 40
+    delay: 5
+    vars:
+      workflowFromLocalRunID:
+        from: result.systemoutjson.systemoutjson0.id
+
+  - name: Trigger manually a workflow run from backend template
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_backend}} --format json"
+    assertions:
+    - result.systemoutjson.run_number ShouldEqual "1"
+
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_backend}} --format json"
+    assertions:
+    - result.systemoutjson ShouldHaveLength 1
+    - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+    retry: 40
+    delay: 5
+    vars:
+      workflowFromBackendRunID:
+        from: result.systemoutjson.systemoutjson0.id
+
+  - name: Download logs local
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromLocalRunID}}"
+
+  - name: Download logs backend
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromBackendRunID}}"
+
+  - name: Check workflow local log content
+    script: "cat {{.cds_workflow_local}}-*-hello-* | grep Hello"
+
+  - name: Check workflow backend log content
+    script: "cat {{.cds_workflow_backend}}-*-hello-* | grep Hello"

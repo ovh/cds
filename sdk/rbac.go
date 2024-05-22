@@ -14,12 +14,13 @@ const (
 	GlobalRoleProjectCreate      = "create-project"
 
 	// Project Role
-	ProjectRoleRead               = "read"
-	ProjectRoleManage             = "manage"
-	ProjectRoleManageNotification = "manage-notification"
-	ProjectRoleManageWorkerModel  = "manage-worker-model"
-	ProjectRoleManageAction       = "manage-action"
-	ProjectRoleManageWorkflow     = "manage-workflow"
+	ProjectRoleRead                   = "read"
+	ProjectRoleManage                 = "manage"
+	ProjectRoleManageNotification     = "manage-notification"
+	ProjectRoleManageWorkerModel      = "manage-worker-model"
+	ProjectRoleManageAction           = "manage-action"
+	ProjectRoleManageWorkflow         = "manage-workflow"
+	ProjectRoleManageWorkflowTemplate = "manage-workflow-template"
 
 	// Hatchery Role
 	HatcheryRoleSpawn = "start-worker"

@@ -16,6 +16,7 @@ steps:
       mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/workflows
       mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/actions
       mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/worker-models
+      mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/workflow-templates
   - range: {{.input.files}}
     script: |-
       /bin/bash -c cat | yq -P <<- 'EOF' > /tmp/repos/{{.input.git_repo}}/.cds/{{.key}}

@@ -125,6 +125,7 @@ const (
 	TagWorkflowNodeJobRun = "workflow_node_job_run"
 	TagWorkflowNodeRun    = "workflow_node_run"
 	TagWorkflowRun        = "workflow_run"
+	TagWorkflowTemplate   = "workflow_template"
 	TagWorkflowRunNumber  = "run_number"
 	TagEventID            = "event_id"
 )
