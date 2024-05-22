@@ -159,3 +159,16 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 
 	return workflowSchema
 }
+
+func GetWorkflowTemplateJsonSchema() *jsonschema.Schema {
+	reflector := jsonschema.Reflector{Anonymous: false}
+	templateSchema := reflector.Reflect(&V2WorkflowTemplate{})
+
+	// Replace spec with type string instead of object
+	templateSchema.Definitions["V2WorkflowTemplate"].Properties.Set("spec", &jsonschema.Schema{
+		Type: "string",
+	})
+	delete(templateSchema.Definitions, "WorkflowSpec")
+
+	return templateSchema
+}

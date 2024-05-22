@@ -74,6 +74,9 @@ steps:
         - role: manage-workflow
           projects: [{{.input.cds_project}}]
           users: [{{.cds_user.username}}]
+        - role: manage-workflow-template
+          projects: [{{.input.cds_project}}]
+          users: [{{.cds_user.username}}]
       workflows:
         - role: trigger
           all_users: true

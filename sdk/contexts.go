@@ -70,6 +70,15 @@ type CDSContext struct {
 	WorkflowRepository string                 `json:"workflow_repository,omitempty"`
 	TriggeringActor    string                 `json:"triggering_actor,omitempty"`
 
+	// Workflow Template
+	WorkflowTemplate           string            `json:"workflow_template,omitempty"`
+	WorkflowTemplateRef        string            `json:"workflow_template_ref,omitempty"`
+	WorkflowTemplateSha        string            `json:"workflow_template_sha,omitempty"`
+	WorkflowTemplateVCSServer  string            `json:"workflow_template_vcs_server,omitempty"`
+	WorkflowTemplateRepository string            `json:"workflow_template_repository,omitempty"`
+	WorkflowTemplateProjectKey string            `json:"workflow_template_project_key"`
+	WorkflowTemplateParams     map[string]string `json:"workflow_template_params"`
+
 	// Job
 	Job   string `json:"job,omitempty"`
 	Stage string `json:"stage,omitempty"`

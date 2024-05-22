@@ -17,6 +17,7 @@ VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 GITEA_USER := $(if ${GITEA_USER},${GITEA_USER},gituser)
 GITEA_PASSWORD := $(if ${GITEA_PASSWORD},${GITEA_PASSWORD},gitpwd)
 GITEA_DOMAIN := $(if ${GITEA_DOMAIN},${GITEA_DOMAIN},localhost)
+GITEA_SSH_PORT := $(if ${GITEA_SSH_PORT},${GITEA_SSH_PORT},2222)
 
 COVER_FILES = $(shell find . -name "*.coverprofile")
 
@@ -48,7 +49,7 @@ minio_reset_bucket:
 
 gitea_start:
 	@if [ -z "$(GITEA_CONTAINER_ID)" ]; then \
-  		docker run -d -p 3000:3000 -p 2222:2222 -e INSTALL_LOCK=true -e SSH_PORT=2222 -e GITEA__server__SSH_DOMAIN=$(GITEA_DOMAIN) -e GITEA__webhook__ALLOWED_HOST_LIST=* --name gitea gitea/gitea:$(GITEA_VERSION); \
+  		docker run -d -p 3000:3000 -p ${GITEA_SSH_PORT}:${GITEA_SSH_PORT} -e INSTALL_LOCK=true -e SSH_PORT=${GITEA_SSH_PORT} -e GITEA__server__SSH_DOMAIN=$(GITEA_DOMAIN) -e GITEA__webhook__ALLOWED_HOST_LIST=* --name gitea gitea/gitea:$(GITEA_VERSION); \
   		echo "Starting gitea..."; \
   		sleep 5; \
   		docker exec gitea su-exec git /app/gitea/gitea admin user create --username $(GITEA_USER) --password $(GITEA_PASSWORD) --email $(GITEA_USER)@gitea.eu --config /data/gitea/conf/app.ini; \
