@@ -21,6 +21,7 @@ type dbEnvironmentKey struct {
 func (e dbEnvironmentKey) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.EnvironmentID, e.ID, e.Name}
 	return gorpmapper.CanonicalForms{
+		"{{printf .EnvironmentID}}{{printf .ID}}{{.Name}}",
 		"{{print .EnvironmentID}}{{print .ID}}{{.Name}}",
 	}
 }
@@ -36,8 +37,9 @@ type dbEnvironmentVariable struct {
 }
 
 func (e dbEnvironmentVariable) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.EnvironmentID, e.ID, e.Name, e.Type}
+	var _ = []interface{}{e.EnvironmentID, e.ID, e.Name, e.Type, e.ClearValue}
 	return gorpmapper.CanonicalForms{
+		"{{printf .EnvironmentID}}{{printf .ID}}{{.Name}}{{.Type}}{{.ClearValue}}",
 		"{{print .EnvironmentID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }

@@ -47,8 +47,9 @@ type dbProjectIntegration struct {
 }
 
 func (e dbProjectIntegration) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.IntegrationModelID, e.ProjectID}
+	var _ = []interface{}{e.IntegrationModelID, e.ProjectID, e.Config}
 	return gorpmapper.CanonicalForms{
+		"{{.IntegrationModelID}}{{.ProjectID}}",
 		"{{.IntegrationModelID}}{{.ProjectID}}",
 	}
 }

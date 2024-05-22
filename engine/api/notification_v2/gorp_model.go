@@ -14,6 +14,7 @@ type dbProjectNotification struct {
 func (n dbProjectNotification) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{n.ID, n.ProjectKey, n.WebHookURL, n.Filters}
 	return gorpmapper.CanonicalForms{
+		"{{.ID}}{{.ProjectKey}}{{md5sum .WebHookURL}}{{md5sum .Filters}}",
 		"{{.ID}}{{.ProjectKey}}{{hash .WebHookURL}}{{hash .Filters}}",
 	}
 }

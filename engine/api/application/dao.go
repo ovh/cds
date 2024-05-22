@@ -22,6 +22,7 @@ type dbApplication struct {
 func (e dbApplication) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ProjectID, e.Name}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ProjectID}}{{.Name}}",
 		"{{print .ProjectID}}{{.Name}}",
 	}
 }

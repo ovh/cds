@@ -18,6 +18,7 @@ func init() {
 func (e dbWorker) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ID, e.Name}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ID}}{{.Name}}",
 		"{{print .ID}}{{.Name}}",
 	}
 }

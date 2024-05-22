@@ -18,8 +18,9 @@ type dbApplicationKey struct {
 }
 
 func (e dbApplicationKey) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.ApplicationID, e.ID, e.Name}
+	var _ = []interface{}{e.ApplicationID, e.ID, e.Name, e.Type}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ApplicationID}}{{printf .ID}}{{.Name}}{{.Type}}",
 		"{{print .ApplicationID}}{{print .ID}}{{.Name}}",
 	}
 }

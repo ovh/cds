@@ -1,14 +1,16 @@
 package gorpmapper
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"fmt"
-	"github.com/rockbears/yaml"
 	"reflect"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/rockbears/yaml"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -123,11 +125,24 @@ func (m *Mapper) NewTableMapping(target interface{}, name string, autoIncrement 
 			var err error
 
 			t = t.Funcs(template.FuncMap{
+				"printf": func(i interface{}) string {
+					return fmt.Sprintf("%v", i)
+				},
 				"print": func(i interface{}) string {
 					return fmt.Sprintf("%v", err)
 				},
 				"printDate": func(i time.Time) string {
 					return i.In(time.UTC).Format(time.RFC3339)
+				},
+				"md5sum": func(i interface{}) string {
+					var dataBts []byte
+					dataString, is := i.(string)
+					if is {
+						dataBts, _ = yaml.Marshal(i)
+					} else {
+						dataBts = []byte(dataString)
+					}
+					return fmt.Sprintf("%x", md5.Sum(dataBts))
 				},
 				"hash": func(i interface{}) string {
 					var dataBts []byte
@@ -147,6 +162,14 @@ func (m *Mapper) NewTableMapping(target interface{}, name string, autoIncrement 
 				err := fmt.Errorf("TableMapping error: target (%T) canonical function \"%s\" is invalid: %v", target, f.String(), err)
 				panic(err)
 			}
+
+			// Test the template
+			var out = bytes.Buffer{}
+			if err := t.Execute(&out, target); err != nil {
+				err := fmt.Errorf("TableMapping error: target (%T) template error: %v", target, err)
+				panic(err)
+			}
+
 			m.CanonicalFormTemplates.L.Lock()
 			m.CanonicalFormTemplates.M[sha] = t
 			m.CanonicalFormTemplates.L.Unlock()

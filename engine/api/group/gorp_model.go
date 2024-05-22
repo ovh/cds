@@ -14,6 +14,7 @@ type group struct { // group_authentified_user
 func (g group) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{g.ID, g.Name} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{.Name}}",
 		"{{print .ID}}{{.Name}}",
 	}
 }
@@ -30,6 +31,7 @@ type LinkGroupUser struct {
 func (c LinkGroupUser) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{c.ID, c.AuthentifiedUserID, c.GroupID, c.Admin} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{.AuthentifiedUserID}}{{printf .GroupID}}{{printf .Admin}}",
 		"{{print .ID}}{{.AuthentifiedUserID}}{{print .GroupID}}{{print .Admin}}",
 	}
 }
@@ -69,6 +71,7 @@ type LinkGroupProject struct {
 func (c LinkGroupProject) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{c.ID, c.ProjectID, c.GroupID, c.Role} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{printf .ProjectID}}{{printf .GroupID}}{{printf .Role}}",
 		"{{print .ID}}{{print .ProjectID}}{{print .GroupID}}{{print .Role}}",
 	}
 }
@@ -107,6 +110,7 @@ type GroupOrganization struct {
 func (o GroupOrganization) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{o.ID, o.GroupID, o.OrganizationID} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{printf .GroupID}}{{.OrganizationID}}",
 		"{{print .ID}}{{print .GroupID}}{{.OrganizationID}}",
 	}
 }
