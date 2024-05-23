@@ -37,7 +37,7 @@ func (p *keyInstallPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 	}
 
 	keyName := q.GetOptions()["keyName"]
-	path := q.GetOptions()["filePath"]
+	path := q.GetOptions()["path"]
 
 	workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
 	if err != nil {

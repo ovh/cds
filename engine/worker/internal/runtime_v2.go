@@ -84,7 +84,7 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 var _ workerruntime.Runtime = new(CurrentWorker)
 
 func (wk *CurrentWorker) V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error) {
-	k, err := wk.clientV2.ProjectGetKey(ctx, wk.currentJobV2.runJob.ProjectKey, keyName, clear)
+	k, err := wk.clientV2.V2WorkerProjectGetKey(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, keyName, clear)
 	if err != nil {
 		return nil, err
 	}

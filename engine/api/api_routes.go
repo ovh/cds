@@ -468,8 +468,6 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/item", nil, r.POSTv2(api.postMigrateProjectVariableHandler))
 	r.Handle("/v2/migrate/project/{projectKey}/variableset/application", nil, r.POSTv2(api.postMigrateApplicationVariableToVariableSetHandler))
 
-	r.Handle("/v2/project/{projectKey}/key/{keyName}", nil, r.GETv2(api.getProjectV2KeyHandler))
-
 	r.Handle("/v2/project/{projectKey}/type/{type}/access", Scope(sdk.AuthConsumerScopeService), r.GETv2(api.getProjectV2AccessHandler))
 
 	r.Handle("/v2/project/{projectKey}/notification", nil, r.GETv2(api.getProjectNotifsHandler), r.POSTv2(api.postProjectNotificationHandler))
@@ -514,6 +512,7 @@ func (api *API) InitRouter() {
 
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}", nil, r.GETv2(api.getJobRunQueueInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/info", nil, r.POSTv2(api.postJobRunInfoHandler))
+	r.Handle("/v2/queue/{regionName}/job/{runJobID}/key/{keyName}", nil, r.GETv2(api.getJobRunProjectV2KeyHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/runinfo", nil, r.POSTv2(api.postRunInfoHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/step", nil, r.POSTv2(api.postJobRunStepHandler))
 	r.Handle("/v2/queue/{regionName}/job/{runJobID}/worker/take", nil, r.POSTv2(api.postV2WorkerTakeJobHandler))

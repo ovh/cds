@@ -26,6 +26,38 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (api *API) getJobRunProjectV2KeyHandler() ([]service.RbacChecker, service.Handler) {
+	return []service.RbacChecker{api.jobRunUpdate, api.isWorker},
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+
+			runJobID := vars["runJobID"]
+			keyName := vars["keyName"]
+
+			clearKey := service.FormBool(req, "clearKey")
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), runJobID)
+			if err != nil {
+				return err
+			}
+
+			opts := make([]project.LoadOptionFunc, 0, 1)
+			if clearKey {
+				opts = append(opts, project.LoadOptions.WithClearKeys)
+			}
+			p, err := project.Load(ctx, api.mustDB(), runJob.ProjectKey, opts...)
+			if err != nil {
+				return err
+			}
+			for _, k := range p.Keys {
+				if k.Name == keyName {
+					return service.WriteJSON(w, k, http.StatusOK)
+				}
+			}
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find key %s", keyName)
+		}
+}
+
 func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Handler) {
 	return []service.RbacChecker{api.jobRunUpdate, api.isWorker}, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
