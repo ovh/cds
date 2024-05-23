@@ -56,7 +56,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	if hre.UserID != "" {
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
-			if wh.Status == sdk.HookEventWorkflowStatusScheduler {
+			if wh.Status == sdk.HookEventWorkflowStatusScheduled {
 				// Check path filter
 				canTrigger := false
 				if len(wh.PathFilters) > 0 {

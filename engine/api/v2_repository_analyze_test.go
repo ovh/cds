@@ -1273,7 +1273,6 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
-	sRepo, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeRepositories)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1283,7 +1282,6 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
-		_ = services.Delete(db, sRepo)
 		services.NewClient = services.NewDefaultClient
 	}()
 
@@ -1332,26 +1330,13 @@ GDFkaTe3nUJdYV4=
 						DisplayName: u.Username,
 						Email:       u.GetEmail(),
 					},
+					Verified: true,
+					KeyID:    "F344BDDCE15F17D7",
 				}
 				*(out.(*sdk.VCSCommit)) = *commit
 				return nil, 200, nil
 			},
-		).MaxTimes(1)
-
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/operations/"+analysis.Data.OperationUUID, gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(
-			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
-				op := &sdk.Operation{
-					Status: sdk.OperationStatusDone,
-					Setup: sdk.OperationSetup{
-						Checkout: sdk.OperationCheckout{},
-					},
-				}
-				op.Setup.Checkout.Result.SignKeyID = "F344BDDCE15F17D7"
-				op.Setup.Checkout.Result.CommitVerified = true
-				*(out.(*sdk.Operation)) = *op
-				return nil, 200, nil
-			})
+		).MaxTimes(2)
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/contents/.cds?commit=abcdef", gomock.Any(), gomock.Any(), gomock.Any()).

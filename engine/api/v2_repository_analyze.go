@@ -431,12 +431,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		// Check Commit Signature
 		var keyID, analysisError string
 		switch vcsProjectWithSecret.Type {
-		case sdk.VCSTypeBitbucketServer, sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab:
+		case sdk.VCSTypeBitbucketCloud, sdk.VCSTypeGitlab:
 			keyID, analysisError, err = api.analyzeCommitSignatureThroughOperation(ctx, analysis, *vcsProjectWithSecret, *repo)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
 			}
-		case sdk.VCSTypeGitea, sdk.VCSTypeGithub:
+		case sdk.VCSTypeGitea, sdk.VCSTypeGithub, sdk.VCSTypeBitbucketServer:
 			keyID, analysisError, err = api.analyzeCommitSignatureThroughVcsAPI(ctx, *analysis, *vcsProjectWithSecret, *repo)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check the commit signature"))
@@ -1078,6 +1078,8 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 			Error:          analysis.Data.Error,
 			Models:         make([]sdk.EntityFullName, 0),
 			Workflows:      make([]sdk.EntityFullName, 0),
+			Username:       analysis.Data.CDSUserName,
+			UserID:         analysis.Data.CDSUserID,
 		},
 	}
 	for _, e := range entities {
@@ -1398,15 +1400,16 @@ func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysi
 	if vcsCommit.Hash == "" {
 		return keyID, analyzesError, fmt.Errorf("commit %s not found", analysis.Commit)
 	}
-	if vcsCommit.Signature != "" {
-		keyId, err := gpg.GetKeyIdFromSignature(vcsCommit.Signature)
-		if err != nil {
-			return keyID, analyzesError, fmt.Errorf("unable to extract keyID from signature: %v", err)
+	keyID = vcsCommit.KeyID
+	if keyID == "" {
+		if vcsCommit.Signature != "" {
+			keyID, err = gpg.GetKeyIdFromSignature(vcsCommit.Signature)
+			if err != nil {
+				return keyID, analyzesError, fmt.Errorf("unable to extract keyID from signature: %v", err)
+			}
 		} else {
-			keyID = keyId
+			analyzesError = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
 		}
-	} else {
-		analyzesError = fmt.Sprintf("commit %s is not signed", vcsCommit.Hash)
 	}
 	return keyID, analyzesError, nil
 }

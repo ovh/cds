@@ -23,7 +23,7 @@ func TestTriggerWorkflow(t *testing.T) {
 		Body: []byte(`{"foo": "bar"}`),
 		WorkflowHooks: []sdk.HookRepositoryEventWorkflow{
 			{
-				Status: sdk.HookEventWorkflowStatusScheduler,
+				Status: sdk.HookEventWorkflowStatusScheduled,
 				PathFilters: []string{
 					"src/main/**/*.java",
 				},

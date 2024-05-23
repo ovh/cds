@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/rockbears/log"
 
@@ -77,7 +78,10 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 				Slug:        sc.Committer.Slug,
 				ID:          strconv.Itoa(sc.Committer.ID),
 			},
-			URL: urlCommit + sc.Hash,
+			URL:       urlCommit + sc.Hash,
+			Verified:  sc.Properties.Signature.IsVerified,
+			Signature: "",
+			KeyID:     strings.ReplaceAll(sc.Properties.Signature.Fingerprint, " ", ""),
 		}
 		if sc.Author.Slug != "" && sc.Author.Slug != "unknownSlug" {
 			c.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", b.consumer.URL, sc.Author.Slug)
@@ -120,7 +124,10 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 			Slug:        sc.Committer.Slug,
 			ID:          strconv.Itoa(sc.Committer.ID),
 		},
-		URL: urlCommit,
+		URL:       urlCommit,
+		Verified:  sc.Properties.Signature.IsVerified,
+		Signature: "",
+		KeyID:     strings.ReplaceAll(sc.Properties.Signature.Fingerprint, " ", ""),
 	}
 	if sc.Author.Slug != "" && sc.Author.Slug != "unknownSlug" {
 		commit.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", b.consumer.URL, sc.Author.Slug)
@@ -197,7 +204,10 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				Slug:        sc.Committer.Slug,
 				ID:          strconv.Itoa(sc.Committer.ID),
 			},
-			URL: urlCommit + sc.Hash,
+			URL:       urlCommit + sc.Hash,
+			Verified:  sc.Properties.Signature.IsVerified,
+			Signature: "",
+			KeyID:     strings.ReplaceAll(sc.Properties.Signature.Fingerprint, " ", ""),
 		}
 
 		if sc.Author.Slug != "" && sc.Author.Slug != "unknownSlug" {

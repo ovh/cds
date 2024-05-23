@@ -43,7 +43,7 @@ const (
 	HookEventStatusError         = "Error"
 	HookEventStatusSkipped       = "Skipped"
 
-	HookEventWorkflowStatusScheduler = "Scheduled"
+	HookEventWorkflowStatusScheduled = "Scheduled"
 	HookEventWorkflowStatusSkipped   = "Skipped"
 	HookEventWorkflowStatusError     = "Error"
 	HookEventWorkflowStatusDone      = "Done"
@@ -64,6 +64,8 @@ type HookAnalysisCallback struct {
 	Error          string           `json:"error"`
 	Models         []EntityFullName `json:"models"`
 	Workflows      []EntityFullName `json:"workflows"`
+	Username       string           `json:"username"`
+	UserID         string           `json:"user_id"`
 }
 
 type HookRepository struct {

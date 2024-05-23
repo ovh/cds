@@ -15,6 +15,7 @@ export class RepositoryAnalysis {
     branch: string;
     commit: string;
     data: AnalysisData;
+
 }
 
 export class AnalysisData {
@@ -26,7 +27,9 @@ export class AnalysisData {
     error: string;
     entities: DataEntity[];
 }
+
 export class DataEntity {
     file_name: string;
     path: string;
+    status: string;
 }

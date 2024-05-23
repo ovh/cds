@@ -145,6 +145,11 @@ export class ProjectService {
         return this._http.get<Array<RepositoryAnalysis>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/analysis`)
     }
 
+    getAnalysis(key: string, vcsName: string, repoName: string, id: string): Observable<RepositoryAnalysis> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<RepositoryAnalysis>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/analysis/${id}`)
+    }
+
     loadRepositoryHooks(key: string, vcsName: string, repoName: string): Observable<Array<RepositoryHookEvent>> {
         let encodedRepo = encodeURIComponent(repoName);
         return this._http.get<Array<RepositoryHookEvent>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/events`)
