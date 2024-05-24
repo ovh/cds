@@ -137,7 +137,7 @@ func (m *Mapper) NewTableMapping(target interface{}, name string, autoIncrement 
 				"md5sum": func(i interface{}) string {
 					var dataBts []byte
 					dataString, is := i.(string)
-					if is {
+					if !is {
 						dataBts, _ = yaml.Marshal(i)
 					} else {
 						dataBts = []byte(dataString)
