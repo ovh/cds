@@ -33,7 +33,7 @@ func GetOrganizationUsersToMigrate(ctx context.Context, db *gorp.DbMap) ([]UserO
 		return nil, err
 	}
 
-	userIds := make([]string, len(allUsers))
+	userIds := make([]string, 0, len(allUsers))
 	mapUsers := make(map[string]*sdk.AuthentifiedUser)
 	for i := range allUsers {
 		u := &allUsers[i]
