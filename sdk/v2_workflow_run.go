@@ -232,6 +232,16 @@ func NewV2WorkflowRunJobStatusFromString(s string) (V2WorkflowRunJobStatus, erro
 		return V2WorkflowRunJobStatusFail, nil
 	case StatusSuccess:
 		return V2WorkflowRunJobStatusSuccess, nil
+	case StatusWaiting:
+		return V2WorkflowRunJobStatusWaiting, nil
+	case StatusSkipped:
+		return V2WorkflowRunJobStatusSkipped, nil
+	case StatusScheduling:
+		return V2WorkflowRunJobStatusScheduling, nil
+	case StatusStopped:
+		return V2WorkflowRunJobStatusStopped, nil
+	case StatusBuilding:
+		return V2WorkflowRunJobStatusBuilding, nil
 	}
 	return V2WorkflowRunJobStatusUnknown, errors.Errorf("cannot convert given status value %q to workflow run job v2 status", s)
 }

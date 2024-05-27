@@ -121,31 +121,103 @@ func (api *API) postJobRunInfoHandler() ([]service.RbacChecker, service.Handler)
 	}
 }
 
-func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.jobRunList),
+func (api *API) getJobsQueuedRegionalizedHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunListRegionalized),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			regionName := vars["regionName"]
 			hatchConsumer := getHatcheryConsumer(ctx)
+
+			hatch, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), hatchConsumer.AuthConsumerHatchery.HatcheryID)
+			if err != nil {
+				return err
+			}
+			jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegion(ctx, api.mustDB(), regionName, hatch.ModelType)
+			if err != nil {
+				return err
+			}
+			return service.WriteJSON(w, jobs, http.StatusOK)
+		}
+}
+
+func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			u := getUserConsumer(ctx)
-			switch {
-			case hatchConsumer != nil:
-				hatch, err := hatchery.LoadHatcheryByID(ctx, api.mustDB(), hatchConsumer.AuthConsumerHatchery.HatcheryID)
-				if err != nil {
-					return err
-				}
-				jobs, err := workflow_v2.LoadQueuedRunJobByModelTypeAndRegion(ctx, api.mustDB(), regionName, hatch.ModelType)
-				if err != nil {
-					return err
-				}
-				return service.WriteJSON(w, jobs, http.StatusOK)
-			case u != nil:
-				// TODO
-				// check permission region / project / admin
-				return sdk.WithStack(sdk.ErrNotImplemented)
+
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
-			return nil
+			statuses := req.URL.Query()["status"]
+			offset := service.FormInt(req, "offset")
+			limit := service.FormInt(req, "limit")
+			if limit == 0 {
+				limit = 10
+			}
+
+			// Check status filter
+			statusFilter := make([]string, 0)
+			for _, s := range statuses {
+				jobStatus, err := sdk.NewV2WorkflowRunJobStatusFromString(s)
+				if err != nil {
+					return err
+				}
+				if jobStatus.IsTerminated() {
+					continue
+				}
+				statusFilter = append(statusFilter, s)
+			}
+
+			var err error
+			pKeys := make([]string, 0)
+			regionsFilter := make([]string, 0)
+			if !isAdmin(ctx) {
+				pKeys, err = rbac.LoadAllProjectKeysAllowed(ctx, api.mustDB(), sdk.ProjectRoleRead, u.AuthConsumerUser.AuthentifiedUserID)
+				if err != nil {
+					return err
+				}
+				if len(pKeys) == 0 {
+					w.Header().Set("X-Total-Count", "0")
+					return service.WriteJSON(w, []sdk.V2WorkflowRunJob{}, http.StatusOK)
+				}
+
+				rbacRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, api.mustDB(), sdk.RegionRoleExecute, u.AuthConsumerUser.AuthentifiedUserID)
+				if err != nil {
+					return err
+				}
+				regionIDs := sdk.StringSlice{}
+				for _, r := range rbacRegions {
+					regionIDs = append(regionIDs, r.RegionID)
+				}
+				regionIDs.Unique()
+
+				allowedRegions, err := region.LoadRegionByIDs(ctx, api.mustDB(), regionIDs)
+				if err != nil {
+					return err
+				}
+				for _, r := range allowedRegions {
+					regionsFilter = append(regionsFilter, r.Name)
+				}
+
+				if len(regionsFilter) == 0 {
+					w.Header().Set("X-Total-Count", "0")
+					return service.WriteJSON(w, []sdk.V2WorkflowRunJob{}, http.StatusOK)
+				}
+
+			}
+
+			count, err := workflow_v2.CountRunJobsByProjectStatusAndRegions(ctx, api.mustDB(), pKeys, statusFilter, regionsFilter)
+			if err != nil {
+				return err
+			}
+			jobs, err := workflow_v2.LoadRunJobsByProjectStatusAndRegions(ctx, api.mustDB(), pKeys, statusFilter, regionsFilter, offset, limit)
+			if err != nil {
+				return err
+			}
+
+			w.Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
+			return service.WriteJSON(w, jobs, http.StatusOK)
 		}
 }
 

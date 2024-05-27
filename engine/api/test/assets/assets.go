@@ -17,6 +17,7 @@ import (
 
 	workerauth "github.com/ovh/cds/engine/api/authentication/worker"
 	"github.com/ovh/cds/engine/api/organization"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/worker_v2"
 	sdkhatch "github.com/ovh/cds/sdk/hatchery"
@@ -58,6 +59,29 @@ projects:
 	var rb sdk.RBAC
 	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
 	rb.Projects[0].RBACProjectKeys = []string{projKey}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
+func InsertRBAcRegion(t *testing.T, db gorpmapper.SqlExecutorWithTx, org, regionName, role string, user sdk.AuthentifiedUser) {
+	reg, err := region.LoadRegionByName(context.TODO(), db, regionName)
+	require.NoError(t, err)
+
+	orga, err := organization.LoadOrganizationByName(context.TODO(), db, org)
+	require.NoError(t, err)
+
+	perm := fmt.Sprintf(`name: perm-%s-region-%s
+regions:
+  - role: %s
+    region: %s
+    organization: [%s]
+    users: [%s]
+`, role, reg.Name, role, reg.Name, orga.Name, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.Regions[0].RegionID = reg.ID
+	rb.Regions[0].RBACOrganizationIDs = []string{orga.ID}
+	rb.Regions[0].RBACUsersIDs = []string{user.ID}
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
 }
 

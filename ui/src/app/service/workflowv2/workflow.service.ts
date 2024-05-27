@@ -22,6 +22,10 @@ export class V2WorkflowRunService {
         return this._http.post(`/v2/project/${projKey}/run/${workflowRunID}/stop`, null);
     }
 
+    stopJob(projKey: string, workflowRunID: string, jobRunID: string) {
+        return this._http.post(`/v2/project/${projKey}/run/${workflowRunID}/job/${jobRunID}/stop`, null);
+    }
+
     getJobs(r: V2WorkflowRun, attempt: number = null): Observable<Array<V2WorkflowRunJob>> {
         let params = new HttpParams();
         if (attempt) {

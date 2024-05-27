@@ -20,4 +20,14 @@ export class QueueService {
     getJobInfos(jobID: number): Observable<WorkflowNodeJobRun> {
         return this._http.get<WorkflowNodeJobRun>(`/queue/workflows/${jobID}/infos`);
     }
+
+    getV2Jobs(statuses: string[], regions: string[], offset: number, limit: number): Observable<any> {
+        let params = new HttpParams();
+        if (statuses) {
+            statuses.forEach(s => {
+                params = params.append("status", s);
+            })
+        }
+        return this._http.get<any>(`/v2/queue?limit=${limit}&offset=${offset}`, { params: params, observe: 'response'});
+    }
 }

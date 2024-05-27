@@ -198,7 +198,78 @@ hatcheries:
 	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, jobRunDB.Status)
 }
 
-func TestGetJobsQueuedHandler(t *testing.T) {
+func TestUserGetJobsQueuedHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
+	db.Exec("DELETE FROM v2_workflow_run_job")
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	lambda, pwd := assets.InsertLambdaUser(t, db)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	proj2 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "myrepo")
+
+	wkfName := sdk.RandomString(10)
+	wr := sdk.V2WorkflowRun{
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		ProjectKey:   proj.Key,
+		UserID:       admin.ID,
+		WorkflowName: wkfName,
+		RepositoryID: repo.ID,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		Repository:   repo.Name,
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	jobRun := sdk.V2WorkflowRunJob{
+		ProjectKey:    proj.Key,
+		UserID:        admin.ID,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
+		JobID:         "job1",
+		ModelType:     "docker",
+		Region:        "default",
+		WorkflowRunID: wr.ID,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
+
+	jobRun2 := sdk.V2WorkflowRunJob{
+		ProjectKey:    proj2.Key,
+		UserID:        admin.ID,
+		Status:        sdk.V2WorkflowRunJobStatusWaiting,
+		JobID:         "job2",
+		ModelType:     "docker",
+		Region:        "default",
+		WorkflowRunID: wr.ID,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun2))
+
+	reg := sdk.Region{Name: "default"}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *lambda)
+	assets.InsertRBAcRegion(t, db, "default", "default", sdk.RegionRoleExecute, *lambda)
+
+	// Get jobs
+	uri := api.Router.GetRouteV2("GET", api.getJobsQueuedHandler, map[string]string{})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, lambda, pwd, "GET", uri, nil)
+
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+	var jobRunResponse []sdk.V2WorkflowRunJob
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &jobRunResponse))
+	require.Equal(t, 1, len(jobRunResponse))
+	require.Equal(t, "job1", jobRunResponse[0].JobID)
+}
+
+func TestGetJobsRegionalizedQueuedHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
 
@@ -291,7 +362,7 @@ hatcheries:
 	require.NoError(t, err)
 
 	// Take Job
-	uri := api.Router.GetRouteV2("GET", api.getJobsQueuedHandler, map[string]string{"regionName": "default"})
+	uri := api.Router.GetRouteV2("GET", api.getJobsQueuedRegionalizedHandler, map[string]string{"regionName": "default"})
 	test.NotEmpty(t, uri)
 	req := assets.NewJWTAuthentifiedRequest(t, jwt, "GET", uri, nil)
 

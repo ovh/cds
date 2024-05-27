@@ -161,3 +161,41 @@ func LoadDeadJobs(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowRun
   `).Args(sdk.StatusBuilding)
 	return getAllRunJobs(ctx, db, query)
 }
+
+func CountRunJobsByProjectStatusAndRegions(ctx context.Context, db gorp.SqlExecutor, pkeys []string, statusFilter, regionsFilter []string) (int64, error) {
+	query := `
+    SELECT count(v2_workflow_run_job.*)
+	FROM v2_workflow_run_job
+	WHERE 
+	(
+		array_length($1::text[], 1) IS NULL OR v2_workflow_run_job.project_key = ANY($1)
+	) AND
+	(
+		array_length($2::text[], 1) IS NULL OR v2_workflow_run_job.status = ANY($2)
+	) AND
+	(
+		array_length($3::text[], 1) IS NULL OR v2_workflow_run_job.region = ANY($3)
+	)`
+	count, err := db.SelectInt(query, pq.StringArray(pkeys), pq.StringArray(statusFilter), pq.StringArray(regionsFilter))
+	return count, sdk.WithStack(err)
+}
+
+func LoadRunJobsByProjectStatusAndRegions(ctx context.Context, db gorp.SqlExecutor, pkeys []string, statusFilter, regionsFilter []string, offset int, limit int) ([]sdk.V2WorkflowRunJob, error) {
+	query := gorpmapping.NewQuery(`
+    SELECT v2_workflow_run_job.*
+	FROM v2_workflow_run_job
+	WHERE 
+	(
+		array_length($1::text[], 1) IS NULL OR v2_workflow_run_job.project_key = ANY($1)
+	) AND
+	(
+		array_length($2::text[], 1) IS NULL OR v2_workflow_run_job.status = ANY($2)
+	) AND
+	(
+		array_length($3::text[], 1) IS NULL OR v2_workflow_run_job.region = ANY($3)
+	)
+    ORDER BY queued
+    OFFSET $4 LIMIT $5
+  `).Args(pq.StringArray(pkeys), pq.StringArray(statusFilter), pq.StringArray(regionsFilter), offset, limit)
+	return getAllRunJobs(ctx, db, query)
+}

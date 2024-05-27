@@ -159,7 +159,6 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	jobsToQueue, skippedJobs, runMsgs, err := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
-	log.Debug(ctx, "workflowRunV2Trigger> jobs to queue: %+v", jobsToQueue)
 	if err != nil {
 		tx, errTx := api.mustDB().Begin()
 		if errTx != nil {
