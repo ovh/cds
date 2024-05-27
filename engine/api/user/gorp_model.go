@@ -38,6 +38,7 @@ type dbGpgKey struct {
 func (g dbGpgKey) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{g.ID, g.AuthentifiedUserID, g.KeyID, g.PublicKey} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{.AuthentifiedUserID}}{{.KeyID}}{{.PublicKey}}",
 		"{{print .ID}}{{.AuthentifiedUserID}}{{.KeyID}}{{.PublicKey}}",
 	}
 }
@@ -52,6 +53,7 @@ type OrganizationOld struct {
 func (o OrganizationOld) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{o.ID, o.AuthentifiedUserID, o.Organization} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{.AuthentifiedUserID}}{{.Organization}}",
 		"{{print .ID}}{{.AuthentifiedUserID}}{{.Organization}}",
 	}
 }
@@ -66,6 +68,7 @@ type UserOrganization struct {
 func (o UserOrganization) Canonical() gorpmapper.CanonicalForms {
 	_ = []interface{}{o.ID, o.AuthentifiedUserID, o.OrganizationID} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{.AuthentifiedUserID}}{{.OrganizationID}}",
 		"{{print .ID}}{{.AuthentifiedUserID}}{{.OrganizationID}}",
 	}
 }

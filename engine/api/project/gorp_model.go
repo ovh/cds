@@ -36,6 +36,7 @@ type dbProjectVariableSetItemText struct {
 func (e dbProjectVariableSetItemText) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ID, e.ProjectVariableSetID, e.Name, e.Value}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ID}}{{printf .ProjectVariableSetID}}{{.Name}}{{.Value}}",
 		"{{print .ID}}{{print .ProjectVariableSetID}}{{.Name}}{{.Value}}",
 	}
 }
@@ -72,6 +73,7 @@ type dbProjectVariableSetItemSecret struct {
 func (e dbProjectVariableSetItemSecret) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ID, e.ProjectVariableSetID, e.Name}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ID}}{{printf .ProjectVariableSetID}}{{.Name}}",
 		"{{print .ID}}{{print .ProjectVariableSetID}}{{.Name}}",
 	}
 }
@@ -125,6 +127,7 @@ type dbProjectVariable struct {
 func (e dbProjectVariable) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{e.ProjectID, e.ID, e.Name, e.Type}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ProjectID}}{{printf .ID}}{{.Name}}{{.Type}}",
 		"{{print .ProjectID}}{{print .ID}}{{.Name}}{{.Type}}",
 	}
 }

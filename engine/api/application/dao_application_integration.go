@@ -25,8 +25,9 @@ type dbApplicationDeploymentStrategy struct {
 }
 
 func (e dbApplicationDeploymentStrategy) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{e.ProjectIntegrationID, e.ApplicationID}
+	var _ = []interface{}{e.ID, e.ProjectIntegrationID, e.ApplicationID}
 	return gorpmapper.CanonicalForms{
+		"{{printf .ID}}{{printf .ProjectIntegrationID}}{{printf .ApplicationID}}",
 		"{{print .ProjectIntegrationID}}{{print .ApplicationID}}",
 	}
 }
