@@ -6,6 +6,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -43,7 +44,12 @@ func (api *API) getCheckSessionProjectAccessHandler() ([]service.RbacChecker, se
 				if err != nil {
 					return err
 				}
-				if !hasRole {
+				user, err := user.LoadByID(ctx, api.mustDB(), userConsumer.AuthConsumerUser.AuthentifiedUserID)
+				if err != nil {
+					return err
+				}
+				userConsumer.AuthConsumerUser.AuthentifiedUser = user
+				if !userConsumer.Maintainer() && !hasRole {
 					return sdk.WrapError(sdk.ErrUnauthorized, "user with id %q doesn't have the right %q on project %q", userConsumer.AuthConsumerUser.AuthentifiedUserID, checkRequest.Role, checkRequest.ProjectKey)
 				}
 			}
