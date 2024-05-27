@@ -424,7 +424,7 @@ type VCSBuildStatus struct {
 	Description string `json:"description"`
 
 	// v1: fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", cdsUIURL, event.ProjectKey, event.WorkflowName, eventNR.Number)
-	// v2: TODO
+	// v2: fmt.Sprintf("%s/project/%s/run/%s", cdsUIURL, event.ProjectKey, event.WorkflowRunID)
 	URLCDS string `json:"url_cds"` //
 
 	// v1: fmt.Sprintf("%s-%s-%s", event.ProjectKey, event.WorkflowName, eventNR.NodeName)

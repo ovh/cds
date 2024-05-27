@@ -24,7 +24,7 @@ func (s *Service) scheduleCleanOldRepositoryEvent(ctx context.Context) {
 		case <-tick:
 			repos, err := s.Dao.ListRepositories(ctx, "")
 			if err != nil {
-
+				log.ErrorWithStackTrace(ctx, err)
 			}
 			for _, r := range repos {
 				if err := s.cleanRepositoryEvent(ctx, r); err != nil {
