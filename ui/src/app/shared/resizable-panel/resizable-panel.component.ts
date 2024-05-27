@@ -59,23 +59,24 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
     }
 
     ngAfterViewInit(): void {
-        this.init();
+        setTimeout(() => this.init(), 1);
     }
 
     init() {
+        const rect = this._elementRef.nativeElement.parentNode.getBoundingClientRect();
         let initialSize: number = 0;
         if (this.initialSize) {
             if (typeof this.initialSize === 'number') {
                 initialSize = this.initialSize;
             } else if ((<string>this.initialSize).endsWith('%')) {
                 try {
-                    const ratio = parseInt((<string>this.initialSize).replace('%', ''), 10);
-                    initialSize = (ratio * (this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight)) / 100;
+                    const ratio = parseFloat((<string>this.initialSize).replace('%', ''));
+                    initialSize = (ratio * (this.direction === PanelDirection.HORIZONTAL ? rect.width : rect.height)) / 100;
                 } catch (e) { }
             }
         }
         const minSize = (this.minSize ?? (this.direction === PanelDirection.HORIZONTAL ? 600 : 200));
-        const maxSize = this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight;
+        const maxSize = (this.direction === PanelDirection.HORIZONTAL ? rect.width : rect.height) - 10;
         if (initialSize < minSize) { initialSize = minSize; }
         if (initialSize > maxSize) { initialSize = maxSize; }
         this.sizePixels = initialSize;
@@ -84,7 +85,8 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
     }
 
     computeSizePercents(): void {
-        this.sizePercents = (this.sizePixels / (this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight)) * 100;
+        const rect = this._elementRef.nativeElement.parentNode.getBoundingClientRect();
+        this.sizePercents = (this.sizePixels / (this.direction === PanelDirection.HORIZONTAL ? rect.width : rect.height)) * 100;
     }
 
     onMouseDownGrabber(): void {
@@ -106,14 +108,15 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
     @HostListener('window:mousemove', ['$event'])
     onMouseMove(event: any): void {
         if (this.grabbing) {
+            const rect = this._elementRef.nativeElement.parentNode.getBoundingClientRect();
             if (this.direction === PanelDirection.HORIZONTAL) {
-                const maxSize = this._elementRef.nativeElement.parentNode.clientWidth;
-                const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX : window.innerWidth - event.clientX, this.minSize ?? 600);
+                const maxSize = rect.width - 10;
+                const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientX - rect.left : rect.right - event.clientX, this.minSize ?? 600);
                 this.sizePixels = Math.min(newSize, maxSize);
                 this.computeSizePercents();
             } else {
-                const maxSize = this._elementRef.nativeElement.parentNode.clientHeight;
-                const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY : window.innerHeight - event.clientY, this.minSize ?? 200);
+                const maxSize = rect.height - 10;
+                const newSize = Math.max(this.growDirection === PanelGrowDirection.AFTER ? event.clientY - rect.top : rect.bottom - event.clientY, this.minSize ?? 200);
                 this.sizePixels = Math.min(newSize, maxSize);
                 this.computeSizePercents();
             }
@@ -123,9 +126,10 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
 
     @HostListener('window:resize', ['$event'])
     onResize(event: any) {
-        let size = (this.sizePercents * (this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight)) / 100;
+        const rect = this._elementRef.nativeElement.parentNode.getBoundingClientRect();
+        let size = (this.sizePercents * (this.direction === PanelDirection.HORIZONTAL ? rect.width : rect.height)) / 100;
         const minSize = (this.minSize ?? (this.direction === PanelDirection.HORIZONTAL ? 600 : 200));
-        const maxSize = this.direction === PanelDirection.HORIZONTAL ? this._elementRef.nativeElement.parentNode.clientWidth : this._elementRef.nativeElement.parentNode.clientHeight;
+        const maxSize = this.direction === PanelDirection.HORIZONTAL ? rect.width : rect.height;
         if (size < minSize) { size = minSize; }
         if (size > maxSize) { size = maxSize; }
         this.sizePixels = size;
@@ -135,10 +139,10 @@ export class ResizablePanelComponent implements AfterViewInit, OnChanges {
     redraw(): void {
         if (!this.content) { return; }
         if (this.direction === PanelDirection.HORIZONTAL) {
-            this._renderer.setStyle(this.content.nativeElement, 'width', `${this.sizePixels - 4}px`);
+            this._renderer.setStyle(this.content.nativeElement, 'width', `${this.sizePixels}px`);
             this._cd.detectChanges();
         } else {
-            this._renderer.setStyle(this.content.nativeElement, 'height', `${this.sizePixels - 4}px`);
+            this._renderer.setStyle(this.content.nativeElement, 'height', `${this.sizePixels}px`);
             this._cd.detectChanges();
         }
     }

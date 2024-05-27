@@ -1,18 +1,17 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy} from "@angular/core";
-import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from "@angular/core";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import {
     Project,
     ProjectRepository
 } from "app/model/project.model";
-import {Schema} from "app/model/json-schema.model";
-import {Store} from "@ngxs/store";
-import {ActivatedRoute} from "@angular/router";
-import {ProjectService} from "app/service/project/project.service";
-import {SidebarEvent, SidebarService} from "app/service/sidebar/sidebar.service";
-import {ProjectState} from "app/store/project.state";
-import {forkJoin} from "rxjs";
-import {finalize} from "rxjs/operators";
-import {Entity, EntityAction} from "app/model/entity.model";
+import { Schema } from "app/model/json-schema.model";
+import { Store } from "@ngxs/store";
+import { ActivatedRoute } from "@angular/router";
+import { ProjectService } from "app/service/project/project.service";
+import { ProjectState } from "app/store/project.state";
+import { forkJoin } from "rxjs";
+import { finalize } from "rxjs/operators";
+import { Entity, EntityType } from "app/model/entity.model";
 import { VCSProject } from "app/model/vcs.model";
 
 @Component({
@@ -33,14 +32,13 @@ export class ProjectV2ActionShowComponent implements OnDestroy {
     currentActionName: string;
     currentBranch: string;
     errorNotFound: boolean;
-    entityType = EntityAction;
+    entityType = EntityType.Action;
 
     constructor(
         private _store: Store,
         private _routeActivated: ActivatedRoute,
         private _projectService: ProjectService,
-        private _cd: ChangeDetectorRef,
-        private _sidebarService: SidebarService
+        private _cd: ChangeDetectorRef
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
@@ -54,7 +52,7 @@ export class ProjectV2ActionShowComponent implements OnDestroy {
             forkJoin([
                 this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
                 this._projectService.getVCSProject(this.project.key, p['vcsName']),
-                this._projectService.getJSONSchema(EntityAction)
+                this._projectService.getJSONSchema(EntityType.Action)
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
@@ -78,7 +76,7 @@ export class ProjectV2ActionShowComponent implements OnDestroy {
     loadAction(actionName: string, branch?: string): void {
         this.loading = true;
         this._cd.markForCheck();
-        this._projectService.getRepoEntity(this.project.key, this.vcsProject.name, this.repository.name, EntityAction, actionName, branch)
+        this._projectService.getRepoEntity(this.project.key, this.vcsProject.name, this.repository.name, EntityType.Action, actionName, branch)
             .pipe(finalize(() => {
                 this.loading = false;
                 this._cd.markForCheck();
@@ -86,14 +84,10 @@ export class ProjectV2ActionShowComponent implements OnDestroy {
             .subscribe(act => {
                 this.errorNotFound = false;
                 this.action = act;
-                let selectEvent = new SidebarEvent(this.action.id, this.action.name, EntityAction, 'select', [this.vcsProject.id, this.repository.id]);
-                this._sidebarService.sendEvent(selectEvent);
                 this._cd.markForCheck();
             }, e => {
                 if (e?.status === 404) {
-                    let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', [this.vcsProject.id]);
                     delete this.action;
-                    this._sidebarService.sendEvent(selectEvent);
                     this.errorNotFound = true;
                     this._cd.markForCheck();
                 }

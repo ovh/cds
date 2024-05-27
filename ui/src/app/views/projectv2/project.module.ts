@@ -1,18 +1,12 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from 'app/shared/shared.module';
-import {
-    ProjectV2RepositoryAddComponent
-} from 'app/views/projectv2/vcs/repository/project.repository.add.component';
-import {
-    ProjectV2RepositoryShowComponent
-} from 'app/views/projectv2/vcs/repository/show/project.repository.show.component';
-import { ProjectV2WorkerModelShowComponent } from "./vcs/repository/workermodel/show/project.workermodel.show.component";
-import { ProjectV2ActionShowComponent } from "./vcs/repository/action/show/project.action.show.component";
-import { ProjectV2WorkflowShowComponent } from "./vcs/repository/workflow/show/project.workflow.show.component";
-import { ProjectWorkflowEntityComponent } from "./vcs/repository/workflow/show/entity/project.workflow.entity.component";
+import { ProjectV2WorkerModelShowComponent } from "./explore/vcs/repository/workermodel/show/project.workermodel.show.component";
+import { ProjectV2ActionShowComponent } from "./explore/vcs/repository/action/show/project.action.show.component";
+import { ProjectV2WorkflowShowComponent } from "./explore/vcs/repository/workflow/show/project.workflow.show.component";
+import { ProjectWorkflowEntityComponent } from "./explore/vcs/repository/workflow/show/entity/project.workflow.entity.component";
 import { ProjectV2WorkflowRunComponent } from "./run/project.run.component";
-import { ProjectV2SidebarComponent } from './sidebar/workspace/sidebar.component';
+import { ProjectV2SidebarComponent } from './explore/explore-sidebar.component';
 import { RunJobComponent } from "./run/run-job.component";
 import { RunJobLogsComponent } from "./run/run-job-logs.component";
 import { RunGateComponent } from "./run/gate/gate.component";
@@ -26,6 +20,8 @@ import { RunWorkflowComponent } from './run/run-workflow.component';
 import { RunContextsComponent } from './run/run-contexts.component';
 import { RunTestsComponent } from './run/run-tests.component';
 import { RunTestComponent } from './run/run-test.component';
+import { ProjectV2RepositoryShowComponent } from './explore/vcs/repository/show/project.repository.show.component';
+import { ProjectV2RepositoryAddComponent } from './explore/vcs/repository/project.repository.add.component';
 
 @NgModule({
     declarations: [

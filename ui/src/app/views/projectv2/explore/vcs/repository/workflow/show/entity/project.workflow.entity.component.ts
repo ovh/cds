@@ -20,7 +20,7 @@ import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { FlatSchema, JSONSchema } from "app/model/schema.model";
 import Debounce from "app/shared/decorator/debounce";
 import { dump, load, LoadOptions } from "js-yaml";
-import { EntityAction, EntityWorkflow } from "app/model/entity.model";
+import { EntityType } from "app/model/entity.model";
 import { EntityService } from "app/service/entity/entity.service";
 import { first } from "rxjs/operators";
 
@@ -55,7 +55,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
     resizing: boolean;
     resizingSubscription: Subscription;
     selectedJob: string;
-    actionEntity = EntityAction;
+    actionEntity = EntityType.Action;
 
     syntaxErrors: string[];
 
@@ -166,7 +166,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
 
     checkWorkflowSyntax(data: string): void {
         // Call api to check syntax
-        this._entityService.checkEntity(EntityWorkflow, data).pipe(first()).subscribe(resp => {
+        this._entityService.checkEntity(EntityType.Workflow, data).pipe(first()).subscribe(resp => {
             if (resp?.messages?.length > 0) {
                 this.syntaxErrors = resp.messages;
             } else {

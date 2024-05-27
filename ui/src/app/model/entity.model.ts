@@ -1,12 +1,14 @@
-export const EntityWorkerModel = "WorkerModel";
-export const EntityAction = "Action";
-export const EntityWorkflow = "Workflow";
-export const EntityJob = "Job";
+export enum EntityType {
+    WorkerModel = 'WorkerModel',
+    Action = 'Action',
+    Workflow = 'Workflow',
+    Job = 'Job'
+}
 
 export class Entity {
     id: string;
     name: string;
-    type: string;
+    type: EntityType;
     branch: string;
     data: string;
     file_path: string;

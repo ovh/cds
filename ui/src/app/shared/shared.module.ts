@@ -248,7 +248,6 @@ import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { BitbucketIconComponent } from 'app/shared/icons/bitbucket.icon.component';
 import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.success.component';
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
-import { TreeComponent } from 'app/shared/tree/tree.component';
 import { EntityFormComponent } from "./entity/entity.form.component";
 import { NzCodeEditorModule } from "ng-zorro-antd/code-editor";
 import { JSONFormComponent } from "./entity/form/json-form.component";
@@ -483,7 +482,6 @@ const icons: IconDefinition[] = [
         StatusIconComponent,
         TabComponent,
         TabsComponent,
-        TreeComponent,
         TruncatePipe,
         UploadButtonComponent,
         UsageApplicationsComponent,
@@ -651,7 +649,6 @@ const icons: IconDefinition[] = [
         StatusIconComponent,
         TabsComponent,
         TranslateModule,
-        TreeComponent,
         TruncatePipe,
         UploadButtonComponent,
         UsageApplicationsComponent,

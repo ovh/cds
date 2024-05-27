@@ -1,0 +1,82 @@
+<div class="header">
+    <div class="title">
+        Workspace
+    </div>
+    <button class="refresh" nz-button nzType="text" nzSize="small" nz-tooltip
+        nzTooltipTitle="Click to refresh the workspace" (click)="clickRefresh()">
+        <i nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline"></i>
+    </button>
+</div>
+<div class="content">
+    <ng-container *ngFor="let vcs of vcss">
+        <div class="tree-node-header" (click)="clickVCS(vcs)">
+            <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
+            <div class="name">{{vcs.name}}</div>
+            <button nz-button nzType="text" nzSize="small">
+                <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu" nzTrigger="click"
+                    (click)="$event.stopPropagation()"></i>
+            </button>
+            <nz-dropdown-menu #menu="nzDropdownMenu">
+                <ul nz-menu>
+                    <li nz-menu-item
+                        [routerLink]="['/', 'project', project.key, 'explore', 'vcs', vcs.name, 'repository']">
+                        Add a repository
+                    </li>
+                </ul>
+            </nz-dropdown-menu>
+        </div>
+        <div class="tree-node-content" *ngIf="treeExpandState[vcs.name]">
+            <ng-container *ngFor="let repo of repositories[vcs.name]">
+                <div class="tree-node-header" [ngStyle]="{'paddingLeft': '15px'}" (click)="clickRepository(vcs, repo)">
+                    <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
+                        nzTheme="fill"></span>
+                    <a class="name"
+                        [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
+                        routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)">{{repo.name}}</a>
+                    <nz-select *ngIf="treeExpandState[vcs.name+'/'+repo.name]" nzShowSearch nzSize="small"
+                        [nzCustomTemplate]="selectLabelTmpl" [ngModel]="branchSelectState[vcs.name+'/'+repo.name]"
+                        (ngModelChange)="selectRepositoryBranch(vcs, repo, $event)" (click)="$event.stopPropagation()">
+                        <nz-option *ngFor="let opt of branches[vcs.name+'/'+repo.name]" [nzValue]="opt.display_id"
+                            [nzLabel]="opt.display_id"></nz-option>
+                    </nz-select>
+                    <ng-template #selectLabelTmpl let-selected>
+                        <span nz-icon nzType="branches" nzTheme="outline"></span>
+                        {{ selected.nzLabel }}
+                    </ng-template>
+                </div>
+                <div class="tree-node-content" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
+                    <ng-container *ngFor="let entity of entities[vcs.name+'/'+repo.name] | keyvalue">
+                        <div class="tree-node-header" [ngStyle]="{'paddingLeft': '30px'}"
+                            (click)="clickEntityType(vcs, repo, entity.key)">
+                            <span nz-icon
+                                [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'caret-right' : 'caret-down'"
+                                nzTheme="fill"></span>
+                            <div class="name">{{entity.key}}</div>
+                        </div>
+                        <div class="tree-node-content" *ngIf="treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]">
+                            <ng-container *ngFor="let v of entity.value">
+                                <div class="tree-node-header" [ngStyle]="{'paddingLeft': '45px'}">
+                                    <a class="name"
+                                        [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
+                                        routerLinkActive="active">{{v.name}}</a>
+                                    <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small">
+                                        <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu"
+                                            nzTrigger="click"></i>
+                                    </button>
+                                    <nz-dropdown-menu #menu="nzDropdownMenu">
+                                        <ul nz-menu>
+                                            <li nz-menu-item [routerLink]="['/', 'project', project.key, 'run']"
+                                                [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name }">
+                                                Display runs
+                                            </li>
+                                        </ul>
+                                    </nz-dropdown-menu>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </ng-container>
+                </div>
+            </ng-container>
+        </div>
+    </ng-container>
+</div>

@@ -11,20 +11,20 @@ import {
     SimpleChanges,
     ViewChild
 } from "@angular/core";
-import {FlatElementTypeCondition} from "../../../../model/schema.model";
-import {JSONFormSchema, JSONFormSchemaOneOfItem} from "../json-form.component";
-import {ProjectService} from "../../../../service/project/project.service";
-import {ActivatedRoute} from "@angular/router";
-import {ProjectState} from "../../../../store/project.state";
-import {Store} from "@ngxs/store";
-import {load, LoadOptions} from 'js-yaml'
-import {PluginService} from "../../../../service/plugin.service";
-import {DragulaService} from "ng2-dragula";
-import {AutoUnsubscribe} from "app/shared/decorator/autoUnsubscribe";
-import {Subscription} from "rxjs";
-import {PreferencesState} from "app/store/preferences.state";
-import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
-import {EntityAction} from "../../../../model/entity.model";
+import { FlatElementTypeCondition } from "../../../../model/schema.model";
+import { JSONFormSchema, JSONFormSchemaOneOfItem } from "../json-form.component";
+import { ProjectService } from "../../../../service/project/project.service";
+import { ActivatedRoute } from "@angular/router";
+import { ProjectState } from "../../../../store/project.state";
+import { Store } from "@ngxs/store";
+import { load, LoadOptions } from 'js-yaml'
+import { PluginService } from "../../../../service/plugin.service";
+import { DragulaService } from "ng2-dragula";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { Subscription } from "rxjs";
+import { PreferencesState } from "app/store/preferences.state";
+import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
+import { EntityType } from "../../../../model/entity.model";
 
 export class FormItem {
     name: string;
@@ -163,7 +163,7 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
                     v.branch = itemSplit[1];
                 }
                 let pathSplit = itemSplit[0].split('/');
-                v.label = pathSplit[pathSplit.length -1];
+                v.label = pathSplit[pathSplit.length - 1];
                 v.description = itemSplit[0].replace('/' + v.label, '');
                 v.value = e;
                 this.values.push(v);
@@ -275,7 +275,7 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
                         return;
                 }
 
-                if (this.entityType === EntityAction && entitySplit.length === 1) {
+                if (this.entityType === EntityType.Action && entitySplit.length === 1) {
                     this._pluginService.getPlugin(entityName).subscribe(pl => {
                         if (pl.inputs) {
                             let keys = Object.keys(pl.inputs);
@@ -295,7 +295,7 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
                             }
                         });
                         switch (this.entityType) {
-                            case EntityAction:
+                            case EntityType.Action:
                                 if (ent.inputs) {
                                     let keys = Object.keys(ent.inputs);
                                     if (keys.length > 0) {

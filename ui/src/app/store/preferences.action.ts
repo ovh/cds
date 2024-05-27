@@ -18,6 +18,11 @@ export class SaveProjectWorkflowRunFilter {
     constructor(public payload: { projectKey: string, name: string, value: string, sort: string }) { }
 }
 
+export class SaveProjectTreeExpandState {
+    static readonly type = '[Preferences] Save project\'s explore tree expand state';
+    constructor(public payload: { projectKey: string, state: { [key: string]: boolean } }) { }
+}
+
 export class DeleteProjectWorkflowRunFilter {
     static readonly type = '[Preferences] Delete project\'s workflow run filter';
     constructor(public payload: { projectKey: string, name: string }) { }
