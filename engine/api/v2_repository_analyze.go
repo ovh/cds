@@ -636,7 +636,7 @@ skipEntity:
 
 		// Insert new entity for current branch and commit
 		if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
-			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s for ref %s and commit %s", e.Name, e.Type, e.Ref, e.Commit))
 		}
 		eventInsertedEntities = append(eventInsertedEntities, e.Entity)
 
@@ -676,6 +676,15 @@ skipEntity:
 
 	// For skipped entities, retrieve definition on head or default branch
 	for _, e := range skippedEntities {
+		// If entity already exist, ignore it.
+		existingEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, e.Commit)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on git ref %s", e.Name, e.Type, e.Ref))
+		}
+		if existingEntity != nil {
+			continue
+		}
+
 		// Check if head entity exist
 		existingHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, "HEAD")
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
@@ -686,7 +695,7 @@ skipEntity:
 			// Copy it for the current commit
 			e.Data = existingHeadEntity.Data
 			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save skipped entity from head %s of type %s", e.Name, e.Type))
 			}
 			entityInserted = true
 		} else {
@@ -699,7 +708,7 @@ skipEntity:
 				// Copy it for the current commit
 				e.Data = defaultBranchHeadEntity.Data
 				if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
-					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s", e.Name, e.Type))
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save skipped entity %s of type %s", e.Name, e.Type))
 				}
 				entityInserted = true
 			}
