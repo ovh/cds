@@ -79,7 +79,7 @@ export class PreferencesState {
         return createSelector(
             [PreferencesState],
             (state: PreferencesStateModel) => {
-                return Object.assign({}, state.projectTreeExpandState[projectKey]);
+                return Object.assign({}, state.projectTreeExpandState ? state.projectTreeExpandState[projectKey] : {});
             }
         );
     }
