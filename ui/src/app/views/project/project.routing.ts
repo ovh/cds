@@ -8,11 +8,11 @@ import { ProjectListComponent } from './list/project.list.component';
 import { ProjectShowComponent } from './show/project.component';
 import { ProjectComponent } from './project.component';
 import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.component';
-import { ProjectV2RepositoryAddComponent } from '../projectv2/vcs/repository/project.repository.add.component';
-import { ProjectV2RepositoryShowComponent } from '../projectv2/vcs/repository/show/project.repository.show.component';
-import { ProjectV2WorkerModelShowComponent } from '../projectv2/vcs/repository/workermodel/show/project.workermodel.show.component';
-import { ProjectV2ActionShowComponent } from '../projectv2/vcs/repository/action/show/project.action.show.component';
-import { ProjectV2WorkflowShowComponent } from '../projectv2/vcs/repository/workflow/show/project.workflow.show.component';
+import { ProjectV2RepositoryAddComponent } from '../projectv2/explore/vcs/repository/project.repository.add.component';
+import { ProjectV2RepositoryShowComponent } from '../projectv2/explore/vcs/repository/show/project.repository.show.component';
+import { ProjectV2WorkerModelShowComponent } from '../projectv2/explore/vcs/repository/workermodel/show/project.workermodel.show.component';
+import { ProjectV2ActionShowComponent } from '../projectv2/explore/vcs/repository/action/show/project.action.show.component';
+import { ProjectV2WorkflowShowComponent } from '../projectv2/explore/vcs/repository/workflow/show/project.workflow.show.component';
 import { ProjectV2WorkflowRunListComponent } from '../projectv2/run-list/run-list.component';
 import { ProjectV2WorkflowRunComponent } from '../projectv2/run/project.run.component';
 import { Projectv2Resolver } from 'app/service/services.module';
@@ -76,8 +76,16 @@ const projectRoutes: Routes = [
                             },
                             {
                                 path: 'vcs/:vcsName/repository/:repoName',
-                                component: ProjectV2RepositoryShowComponent,
-                                data: { title: '{repoName} • Repository' }
+                                children: [
+                                    {
+                                        path: '', redirectTo: 'settings', pathMatch: 'full'
+                                    },
+                                    {
+                                        path: 'settings',
+                                        component: ProjectV2RepositoryShowComponent,
+                                        data: { title: '{repoName} • Repository' }
+                                    }
+                                ]
                             },
                             {
                                 path: 'vcs/:vcsName/repository/:repoName/workermodel/:workerModelName',

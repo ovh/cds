@@ -15,6 +15,9 @@ export class PreferencesStateModel {
             sort: string;
         }>
     };
+    projectTreeExpandState: {
+        [projectKey: string]: { [key: string]: boolean };
+    };
     messages: { [projectKey: string]: boolean };
 }
 
@@ -27,6 +30,7 @@ export class PreferencesStateModel {
         },
         theme: 'light',
         projectRunFilters: {},
+        projectTreeExpandState: {},
         messages: {}
     }
 })
@@ -67,6 +71,15 @@ export class PreferencesState {
             [PreferencesState],
             (state: PreferencesStateModel) => {
                 return state.messages[messageKey] ?? false;
+            }
+        );
+    }
+
+    static selectProjectTreeExpandState(projectKey: string) {
+        return createSelector(
+            [PreferencesState],
+            (state: PreferencesStateModel) => {
+                return Object.assign({}, state.projectTreeExpandState[projectKey]);
             }
         );
     }
@@ -112,6 +125,17 @@ export class PreferencesState {
         ctx.setState({
             ...state,
             projectRunFilters: projects
+        });
+    }
+
+    @Action(actionPreferences.SaveProjectTreeExpandState)
+    saveProjectTreeExpandState(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveProjectTreeExpandState) {
+        const state = ctx.getState();
+        let projects = { ...state.projectTreeExpandState };
+        projects[action.payload.projectKey] = action.payload.state;
+        ctx.setState({
+            ...state,
+            projectTreeExpandState: projects
         });
     }
 

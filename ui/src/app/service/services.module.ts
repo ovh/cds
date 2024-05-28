@@ -60,13 +60,12 @@ import { WorkflowRunService } from './workflow/run/workflow.run.service';
 import { WorkflowCoreService } from './workflow/workflow.core.service';
 import { WorkflowService } from './workflow/workflow.service';
 import { WorkflowStore } from './workflow/workflow.store';
-import { SidebarService } from 'app/service/sidebar/sidebar.service';
-import {AnalysisService} from "./analysis/analysis.service";
-import {LinkService} from "./link/link.service";
-import {EntityService} from "./entity/entity.service";
-import {ActionAsCodeService} from "./action/actionAscode.service";
-import {PluginService} from "./plugin.service";
-import {V2WorkflowRunService} from "./workflowv2/workflow.service";
+import { AnalysisService } from "./analysis/analysis.service";
+import { LinkService } from "./link/link.service";
+import { EntityService } from "./entity/entity.service";
+import { ActionAsCodeService } from "./action/actionAscode.service";
+import { PluginService } from "./plugin.service";
+import { V2WorkflowRunService } from "./workflowv2/workflow.service";
 
 @NgModule({})
 export class ServicesModule {
@@ -127,7 +126,6 @@ export class ServicesModule {
                 RequirementService,
                 RouterService,
                 ServiceService,
-                SidebarService,
                 UserService,
                 VariableService,
                 WorkerModelService,
@@ -195,7 +193,6 @@ export {
     RequirementStore,
     RouterService,
     ServiceService,
-    SidebarService,
     UserService,
     VariableService,
     WorkerModelService,

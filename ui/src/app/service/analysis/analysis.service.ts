@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { FlatNodeItem } from 'app/shared/tree/tree.component';
 
 export class AnalysisEvent {
     vcsID: string

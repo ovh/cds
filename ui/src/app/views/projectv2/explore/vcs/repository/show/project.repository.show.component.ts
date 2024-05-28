@@ -8,10 +8,9 @@ import { forkJoin, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
-import { SidebarEvent, SidebarService } from 'app/service/sidebar/sidebar.service';
-import { RepositoryAnalysis } from "../../../../../model/analysis.model";
-import { AnalysisService } from "../../../../../service/analysis/analysis.service";
 import { VCSProject } from 'app/model/vcs.model';
+import { AnalysisService } from 'app/service/analysis/analysis.service';
+import { RepositoryAnalysis } from 'app/model/analysis.model';
 
 @Component({
     selector: 'app-projectv2-repository-show',
@@ -24,7 +23,7 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
 
     loading: boolean;
     loadingAnalysis: boolean;
-    loadingHooks : boolean;
+    loadingHooks: boolean;
     projectSubscriber: Subscription;
 
     project: Project;
@@ -40,8 +39,7 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
         private _analyzeService: AnalysisService,
         private _cd: ChangeDetectorRef,
         private _toastService: ToastService,
-        private _router: Router,
-        private _sidebarService: SidebarService
+        private _router: Router
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
@@ -55,14 +53,14 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
-                let selectEvent = new SidebarEvent(this.repository.id, this.repository.name, 'repository', 'select', [this.vcsProject.id]);
-                this._sidebarService.sendEvent(selectEvent);
                 this.loadAnalyses();
                 this.loadHookEvents();
                 this._cd.markForCheck();
             });
         });
     }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit() {
         this._analyzeService.getObservable().subscribe(e => {
@@ -113,6 +111,4 @@ export class ProjectV2RepositoryShowComponent implements OnDestroy, OnInit {
                 this._router.navigate(['/', 'project', this.project.key]);
             });
     }
-
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 }

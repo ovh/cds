@@ -13,10 +13,10 @@ import { Action } from 'app/model/action.model';
 import { AllKeys } from 'app/model/keys.model';
 import { Parameter } from 'app/model/parameter.model';
 import { Pipeline } from 'app/model/pipeline.model';
-import { Project} from 'app/model/project.model';
+import { Project } from 'app/model/project.model';
 import { Requirement } from 'app/model/requirement.model';
 import { Stage } from 'app/model/stage.model';
-import {ActionAsCode, ActionTypeAscode} from 'app/model/action.ascode.model';
+import { ActionAsCode, ActionTypeAscode } from 'app/model/action.ascode.model';
 import { WorkerModel } from 'app/model/worker-model.model';
 import { ActionService } from 'app/service/action/action.service';
 import { WorkerModelService } from 'app/service/worker-model/worker-model.service';
@@ -27,10 +27,10 @@ import { RequirementEvent } from 'app/shared/requirements/requirement.event.mode
 import { SharedService } from 'app/shared/shared.service';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { DragulaService } from 'ng2-dragula';
-import {finalize, first} from 'rxjs/operators';
-import {EntityService} from "../../service/entity/entity.service";
-import {ActionAsCodeService} from "../../service/action/actionAscode.service";
-import {EntityAction, EntityFullName, EntityWorkerModel} from "../../model/entity.model";
+import { finalize, first } from 'rxjs/operators';
+import { EntityService } from "../../service/entity/entity.service";
+import { ActionAsCodeService } from "../../service/action/actionAscode.service";
+import { EntityType, EntityFullName } from "../../model/entity.model";
 
 @Component({
     selector: 'app-action',
@@ -115,7 +115,7 @@ export class ActionComponent implements OnDestroy, OnInit {
             this._actionService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(as => {
                 this.initPublicActionsList(as);
             });
-            this._entityService.getEntities(EntityAction).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
+            this._entityService.getEntities(EntityType.Action).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
                 this.mapAsCodeActionNames = new Map<string, EntityFullName>();
                 this.initPublicActionsList(<Array<Action>>entities.map(e => {
                     let name = `${e.project_key}/${e.vcs_name}/${e.repo_name}/${e.name}@${e.branch}`;
@@ -129,10 +129,10 @@ export class ActionComponent implements OnDestroy, OnInit {
             this._workerModelService.getAllForProject(this.project.key).pipe(finalize(() => this._cd.markForCheck())).subscribe(wms => {
                 this.initWorkerModelList(wms);
             });
-            this._entityService.getEntities(EntityWorkerModel).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
+            this._entityService.getEntities(EntityType.WorkerModel).pipe(finalize(() => this._cd.markForCheck())).subscribe(entities => {
                 this.initWorkerModelList(<Array<WorkerModel>>entities.map(e => {
                     return {
-                        name:`${e.project_key}/${e.vcs_name}/${e.repo_name}/${e.name}@${e.branch}`
+                        name: `${e.project_key}/${e.vcs_name}/${e.repo_name}/${e.name}@${e.branch}`
                     }
                 }))
 
@@ -348,9 +348,9 @@ export class ActionComponent implements OnDestroy, OnInit {
     }
 
     async loadAndMergeAscodeActionParameters() {
-        let  tmpSteps = new Array<Action>();
+        let tmpSteps = new Array<Action>();
         if (this.editableAction.actions) {
-            for (let i = 0; i< this.editableAction.actions.length; i++) {
+            for (let i = 0; i < this.editableAction.actions.length; i++) {
                 let currentStep = cloneDeep(this.editableAction.actions[i]);
                 if (currentStep.type !== ActionTypeAscode) {
                     tmpSteps.push(currentStep);
@@ -388,7 +388,7 @@ export class ActionComponent implements OnDestroy, OnInit {
         this._cd.markForCheck();
     }
 
-    mergeAscodeActionParameters(currentStep: Action, ascodeAction: ActionAsCode):  void {
+    mergeAscodeActionParameters(currentStep: Action, ascodeAction: ActionAsCode): void {
         if (!currentStep.parameters || currentStep.parameters.length === 0) {
             let keys = Object.keys(ascodeAction.inputs);
             currentStep.parameters = new Array<Parameter>();

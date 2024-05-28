@@ -6,12 +6,11 @@ import { RetentionDryRunEvent } from 'app/model/purge.model';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AsCodeEvent } from 'app/store/ascode.action';
 import { UpdateMaintenance } from 'app/store/cds.action';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { concatMap, first } from 'rxjs/operators';
 import { Event, EventType } from './model/event.model';
 import { LoadOpts } from './model/project.model';
 import { NavbarService } from './service/navbar/navbar.service';
-import { RouterService, SidebarService } from './service/services.module';
+import { RouterService } from './service/services.module';
 import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
 import { ToastService } from './shared/toast/ToastService';
 import {
@@ -36,9 +35,7 @@ import {
     UpdateWorkflowRunList
 } from './store/workflow.action';
 import { WorkflowState } from './store/workflow.state';
-import { SidebarEvent } from 'app/service/sidebar/sidebar.service';
-import { FlatNodeItem } from 'app/shared/tree/tree.component';
-import {AnalysisEvent, AnalysisService} from "./service/analysis/analysis.service";
+import { AnalysisEvent, AnalysisService } from "./service/analysis/analysis.service";
 
 @Injectable()
 export class AppService {
@@ -56,7 +53,6 @@ export class AppService {
         private _workflowRunService: WorkflowRunService,
         private _store: Store,
         private _navbarService: NavbarService,
-        private _sidebarService: SidebarService,
         private _analysisService: AnalysisService
     ) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
@@ -121,8 +117,6 @@ export class AppService {
                     this._navbarService.refreshData();
                     break;
                 case EventType.PROJECT_REPOSITORY_REMOVE:
-                    let removeEvent = new SidebarEvent(event?.payload['repository']?.id, event?.payload['repository']?.name, 'repository', 'remove', [event?.payload['vcs']?.id]);
-                    this._sidebarService.sendEvent(removeEvent);
                     break;
             }
         }
