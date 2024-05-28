@@ -84,7 +84,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					wh.Status = sdk.HookEventWorkflowStatusSkipped
 				} else {
 					// Query params to select the right workflow version to run
-					mods := make([]cdsclient.RequestModifier, 2)
+					mods := make([]cdsclient.RequestModifier, 0, 2)
 					mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
 					runRequest := sdk.V2WorkflowRunHookRequest{
