@@ -31,6 +31,8 @@ env:
   VAR_1: value
   VAR_2: value2
 gates: ...
+from: ...
+parameters: ...
 ```
 
 - <span style="color:red">\*</span>`name`: The name of your workflow
@@ -42,6 +44,8 @@ gates: ...
 - [`stages`](#stages): List of stages
 - `env`: Define environment variable for the whole workflow
 - [`gates`](#gates): Manual gate for your workflow
+- [`from`](#from): Use a workflow template to generate this workflow
+- [`parameters`](#parameters): Parameters input to generate workflow from referenced workflow template
 
 <span style="color:red">\*</span> mandatory fields
 
@@ -321,6 +325,28 @@ stages:
 ```
 
 - `needs`: the list of stages that need to be executed before this one
+
+## From
+
+Specifying `from` will allow your workflow to use a workflow template.
+If set, all other fields will be generated from the template (except workflow name).
+
+You can reference either locally from the same repository (e.g. `.cds/workflow-templates/...`) or its entity path (e.g. `PROJECT_KEY/vcs/repository/name`).
+
+```yaml
+from: ".cds/workflow-templates/template.yaml"
+```
+
+## Parameters
+
+Specify inputs to use with referenced workflow template with `from`.
+It expects a map with string keys and string values.
+
+```yaml
+parameters:
+  var1: "value1"
+  var2: "value2"
+```
 
 # Conditions
 

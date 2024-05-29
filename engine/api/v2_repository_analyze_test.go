@@ -31,20 +31,24 @@ import (
 
 func TestSortEntitiesFiles(t *testing.T) {
 	filesContext := map[string][]byte{
-		".cds/workflows/w1.yml":      nil,
-		".cds/actions/act1.yml":      nil,
-		".cds/worker-models/wm1.yml": nil,
-		".cds/worker-models/wm2.yml": nil,
-		".cds/workflows/w2.yml":      nil,
-		".cds/actions/act2.yml":      nil,
+		".cds/workflows/w1.yml":           nil,
+		".cds/actions/act1.yml":           nil,
+		".cds/workflow-templates/wt2.yml": nil,
+		".cds/worker-models/wm1.yml":      nil,
+		".cds/worker-models/wm2.yml":      nil,
+		".cds/workflows/w2.yml":           nil,
+		".cds/actions/act2.yml":           nil,
+		".cds/workflow-templates/wt1.yml": nil,
 	}
 	keys := sortEntitiesFiles(filesContext)
 	require.Equal(t, ".cds/worker-models/wm1.yml", keys[0])
 	require.Equal(t, ".cds/worker-models/wm2.yml", keys[1])
 	require.Equal(t, ".cds/actions/act1.yml", keys[2])
 	require.Equal(t, ".cds/actions/act2.yml", keys[3])
-	require.Equal(t, ".cds/workflows/w1.yml", keys[4])
-	require.Equal(t, ".cds/workflows/w2.yml", keys[5])
+	require.Equal(t, ".cds/workflow-templates/wt1.yml", keys[4])
+	require.Equal(t, ".cds/workflow-templates/wt2.yml", keys[5])
+	require.Equal(t, ".cds/workflows/w1.yml", keys[6])
+	require.Equal(t, ".cds/workflows/w2.yml", keys[7])
 
 }
 func TestCleanAnalysis(t *testing.T) {

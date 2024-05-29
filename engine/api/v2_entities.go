@@ -99,6 +99,18 @@ func (api *API) postEntityCheckHandler() ([]service.RbacChecker, service.Handler
 					response.Messages = append(response.Messages, err.Error())
 				}
 			}
+		case sdk.EntityTypeWorkflowTemplate:
+			var wt sdk.V2WorkflowTemplate
+			err := service.UnmarshalRequest(ctx, req, &wt)
+			if err != nil {
+				response.Messages = append(response.Messages, fmt.Sprintf("%q", err))
+			}
+			if err == nil {
+				errs := wt.Lint()
+				for _, err := range errs {
+					response.Messages = append(response.Messages, err.Error())
+				}
+			}
 		}
 		return service.WriteJSON(w, response, http.StatusOK)
 	}

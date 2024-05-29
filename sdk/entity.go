@@ -5,14 +5,15 @@ import (
 )
 
 const (
-	EntityTypeWorkerModel = "WorkerModel"
-	EntityTypeAction      = "Action"
-	EntityTypeWorkflow    = "Workflow"
-	EntityTypeJob         = "Job"
-	EntityNamePattern     = "^[a-zA-Z0-9._-]{1,}$"
+	EntityTypeWorkerModel      = "WorkerModel"
+	EntityTypeAction           = "Action"
+	EntityTypeWorkflow         = "Workflow"
+	EntityTypeWorkflowTemplate = "WorkflowTemplate"
+	EntityTypeJob              = "Job"
+	EntityNamePattern          = "^[a-zA-Z0-9._-]{1,}$"
 )
 
-var EntityTypes = []string{EntityTypeWorkerModel, EntityTypeAction, EntityTypeWorkflow}
+var EntityTypes = []string{EntityTypeWorkerModel, EntityTypeAction, EntityTypeWorkflow, EntityTypeWorkflowTemplate}
 
 type EntityFullName struct {
 	Name       string `json:"name" db:"name"`
@@ -47,6 +48,7 @@ type EntityWithObject struct {
 	Workflow V2Workflow
 	Action   V2Action
 	Model    V2WorkerModel
+	Template V2WorkflowTemplate
 }
 
 func GetManageRoleByEntity(entityType string) (string, error) {
@@ -57,6 +59,8 @@ func GetManageRoleByEntity(entityType string) (string, error) {
 		return ProjectRoleManageAction, nil
 	case EntityTypeWorkflow:
 		return ProjectRoleManageWorkflow, nil
+	case EntityTypeWorkflowTemplate:
+		return ProjectRoleManageWorkflowTemplate, nil
 	}
 	return "", NewErrorFrom(ErrInvalidData, "unknown entity of type %s", entityType)
 }
