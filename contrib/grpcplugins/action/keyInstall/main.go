@@ -72,13 +72,12 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 		if filePath == "" {
 			filePath = ".ssh/id_rsa-" + keyName
 		}
-		if sdk.PathIsAbs(filePath) {
-			return fmt.Errorf("unable to use an absolute path: %s", filePath)
-		}
-
-		absPath, err := filepath.Abs(filepath.Join(workDirs.WorkingDir, filePath))
-		if err != nil {
-			return fmt.Errorf("unable to compute ssh key absolute path: %v", err)
+		absPath := filePath
+		if !sdk.PathIsAbs(filePath) {
+			absPath, err = filepath.Abs(filepath.Join(workDirs.WorkingDir, filePath))
+			if err != nil {
+				return fmt.Errorf("unable to compute ssh key absolute path: %v", err)
+			}
 		}
 
 		destinationDirectory := filepath.Dir(absPath)
