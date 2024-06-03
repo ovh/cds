@@ -10,7 +10,7 @@ import {
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectService } from 'app/service/project/project.service';
 import { Project, ProjectRepository } from 'app/model/project.model';
-import { lastValueFrom, Subscription } from 'rxjs';
+import { filter, lastValueFrom, Subscription } from 'rxjs';
 import { AnalysisService } from "app/service/analysis/analysis.service";
 import { Entity, EntityType } from "app/model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
@@ -19,6 +19,9 @@ import { Branch } from 'app/model/repositories.model';
 import { Store } from '@ngxs/store';
 import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { RouterService } from 'app/service/services.module';
+import { NzTextareaCountComponent } from 'ng-zorro-antd/input';
 
 @Component({
     selector: 'app-projectv2-explore-sidebar',
@@ -37,22 +40,32 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
     treeExpandState: { [key: string]: boolean } = {};
     branches: { [repositoryPath: string]: Array<Branch> } = {};
     branchSelectState: { [repositoryPath: string]: string } = {};
-
     analysisServiceSub: Subscription;
-
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
+    routerSub: Subscription;
 
     constructor(
         private _cd: ChangeDetectorRef,
         private _projectService: ProjectService,
         private _analysisService: AnalysisService,
         private _messageService: NzMessageService,
-        private _store: Store
+        private _store: Store,
+        private _router: Router,
+        private _routerService: RouterService,
+        private _activatedRoute: ActivatedRoute
     ) { }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.treeExpandState = this._store.selectSnapshot(PreferencesState.selectProjectTreeExpandState(this.project.key));
+        this.branchSelectState = this._store.selectSnapshot(PreferencesState.selectProjectBranchSelectState(this.project.key));
         this.load();
+        this.routerSub = this._router.events.pipe(
+            filter(e => e instanceof NavigationEnd),
+        ).subscribe(() => {
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            this.expandTreeToSelectedRoute(params);
+        });
     }
 
     ngAfterViewInit(): void {
@@ -73,6 +86,8 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
                 }
             });
             await this.loadRepositories();
+            const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+            await this.expandTreeToSelectedRoute(params);
         } catch (e: any) {
             this._messageService.error(`Unable to load vcs and repositories: ${e?.error?.error}`, { nzDuration: 2000 });
         }
@@ -159,11 +174,37 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
 
     async selectRepositoryBranch(vcs: VCSProject, repo: ProjectRepository, branch: string) {
         this.branchSelectState[vcs.name + '/' + repo.name] = branch;
+        this.saveBranchSelectState();
+
         try {
             await this.loadEntities(vcs, repo);
         } catch (e: any) {
             this._messageService.error(`Unable to load repository: ${e?.error?.error}`, { nzDuration: 2000 });
         }
+
+        const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
+        if (params['vcsName'] === vcs.name && params['repoName'] === repo.name) {
+            let entityType: EntityType = null;
+            let entityName: string;
+            if (params['workflowName']) {
+                entityType = EntityType.Workflow;
+                entityName = params['workflowName'];
+            } else if (params['actionName']) {
+                entityType = EntityType.Action;
+                entityName = params['actionName'];
+            } else if (params['workerModelName']) {
+                entityType = EntityType.WorkerModel;
+                entityName = params['workerModelName'];
+            }
+            if (entityType) {
+                this._router.navigate(['/project', this.project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, entityType.toLowerCase(), entityName], {
+                    queryParams: {
+                        branch: this.branchSelectState[vcs.name + '/' + repo.name]
+                    }
+                });
+            }
+        }
+
         this._cd.markForCheck();
     }
 
@@ -193,6 +234,60 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
             });
         });
         this._store.dispatch(new actionPreferences.SaveProjectTreeExpandState({ projectKey: this.project.key, state }));
+    }
+
+    async expandTreeToSelectedRoute(params: any) {
+        if (!params['vcsName'] || this.vcss.findIndex(vcs => vcs.name === params['vcsName']) < 0) {
+            return;
+        }
+        const vcs = this.vcss.find(vcs => vcs.name === params['vcsName']);
+        this.treeExpandState[vcs.name] = true;
+        if (!params['repoName'] || this.repositories[vcs.name].findIndex(repo => repo.name === params['repoName']) < 0) {
+            return;
+        }
+        let loadRepo = false;
+        const repo = this.repositories[vcs.name].find(repo => repo.name === params['repoName'])
+        if (!this.treeExpandState[vcs.name + '/' + repo.name]) {
+            this.treeExpandState[vcs.name + '/' + repo.name] = true;
+            loadRepo = true;
+        }
+        const branch = this._activatedRoute.snapshot.queryParams['branch'];
+        if (branch && this.branchSelectState[vcs.name + '/' + repo.name] !== branch) {
+            this.branchSelectState[vcs.name + '/' + repo.name] = branch;
+            loadRepo = true;
+        }
+        if (loadRepo) {
+            await this.loadRepository(vcs, repo);
+        }
+        let entityType: EntityType = null;
+        if (params['workflowName']) {
+            entityType = EntityType.Workflow;
+        } else if (params['actionName']) {
+            entityType = EntityType.Action;
+        } else if (params['workerModelName']) {
+            entityType = EntityType.WorkerModel;
+        }
+        if (entityType) {
+            this.treeExpandState[vcs.name + '/' + repo.name + '/' + entityType] = true;
+        }
+    }
+
+    saveBranchSelectState(): void {
+        let state: { [key: string]: string } = {};
+        this.vcss.forEach(vcs => {
+            // Persist selected branch only when different from default one
+            (this.repositories[vcs.name] ?? []).forEach(repo => {
+                if (!this.branches[vcs.name + '/' + repo.name]) {
+                    return;
+                }
+                const defaultBranch = this.branches[vcs.name + '/' + repo.name].find(b => b.default).display_id;
+                if (this.branchSelectState[vcs.name + '/' + repo.name] === defaultBranch) {
+                    return;
+                }
+                state[vcs.name + '/' + repo.name] = this.branchSelectState[vcs.name + '/' + repo.name];
+            });
+        });
+        this._store.dispatch(new actionPreferences.SaveProjectBranchSelectState({ projectKey: this.project.key, state }));
     }
 
 }

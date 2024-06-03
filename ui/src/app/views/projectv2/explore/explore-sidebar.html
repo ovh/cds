@@ -58,6 +58,7 @@
                                 <div class="tree-node-header" [ngStyle]="{'paddingLeft': '45px'}">
                                     <a class="name"
                                         [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
+                                        [queryParams]="{branch: branchSelectState[vcs.name+'/'+repo.name]}"
                                         routerLinkActive="active">{{v.name}}</a>
                                     <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small">
                                         <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu"

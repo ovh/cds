@@ -18,6 +18,9 @@ export class PreferencesStateModel {
     projectTreeExpandState: {
         [projectKey: string]: { [key: string]: boolean };
     };
+    projectBranchSelectState: {
+        [projectKey: string]: { [key: string]: string };
+    };
     messages: { [projectKey: string]: boolean };
 }
 
@@ -31,6 +34,7 @@ export class PreferencesStateModel {
         theme: 'light',
         projectRunFilters: {},
         projectTreeExpandState: {},
+        projectBranchSelectState: {},
         messages: {}
     }
 })
@@ -80,6 +84,15 @@ export class PreferencesState {
             [PreferencesState],
             (state: PreferencesStateModel) => {
                 return Object.assign({}, state.projectTreeExpandState ? state.projectTreeExpandState[projectKey] : {});
+            }
+        );
+    }
+
+    static selectProjectBranchSelectState(projectKey: string) {
+        return createSelector(
+            [PreferencesState],
+            (state: PreferencesStateModel) => {
+                return Object.assign({}, state.projectBranchSelectState ? state.projectBranchSelectState[projectKey] : {});
             }
         );
     }
@@ -136,6 +149,17 @@ export class PreferencesState {
         ctx.setState({
             ...state,
             projectTreeExpandState: projects
+        });
+    }
+
+    @Action(actionPreferences.SaveProjectBranchSelectState)
+    saveProjectBranchSelectState(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveProjectBranchSelectState) {
+        const state = ctx.getState();
+        let projects = { ...state.projectBranchSelectState };
+        projects[action.payload.projectKey] = action.payload.state;
+        ctx.setState({
+            ...state,
+            projectBranchSelectState: projects
         });
     }
 
