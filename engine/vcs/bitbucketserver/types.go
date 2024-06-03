@@ -68,11 +68,21 @@ type CommitsResponse struct {
 }
 
 type Commit struct {
-	Hash      string `json:"id"`
-	Author    Author `json:"author"`
-	Committer Author `json:"committer"`
-	Timestamp int64  `json:"authorTimestamp"`
-	Message   string `json:"message"`
+	Hash       string           `json:"id"`
+	Author     Author           `json:"author"`
+	Committer  Author           `json:"committer"`
+	Timestamp  int64            `json:"authorTimestamp"`
+	Message    string           `json:"message"`
+	Properties CommitProperties `json:"properties"`
+}
+
+type CommitProperties struct {
+	Signature CommitSignature `json:"signature"`
+}
+
+type CommitSignature struct {
+	IsVerified  bool   `json:"isVerified"`
+	Fingerprint string `json:"fingerprint"`
 }
 
 type Status struct {

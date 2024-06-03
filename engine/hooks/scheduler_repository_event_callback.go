@@ -90,6 +90,8 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 						a.Error = callback.AnalysisCallback.Error
 						hre.ModelUpdated = append(hre.ModelUpdated, callback.AnalysisCallback.Models...)
 						hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.AnalysisCallback.Workflows...)
+						hre.UserID = callback.AnalysisCallback.UserID
+						hre.Username = callback.AnalysisCallback.Username
 						if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
 							return err
 						}

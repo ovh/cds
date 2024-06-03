@@ -84,13 +84,39 @@ export class RepositoryHookEvent {
     event_name: string;
     extracted_data: RepositoryHookEventExtractedData;
     username: string;
-    error: string;
+    last_error: string;
+    vcs_server_name: string;
+    repository_name: string;
+    analyses: Array<RepositoryHookEventAnalysis>;
     workflows: Array<RepositoryHookWorkflow>;
+    sign_key: string;
+
+    // UI data
+    nbDone: number;
+    nbFailed: number;
+    nbScheduled: number;
+    nbSkipped: number;
 }
 
+export class RepositoryHookEventAnalysis {
+  analyze_id: string;
+  status: string;
+  project_key: string;
+}
+
+export enum HookEventWorkflowStatus {
+  Scheduled = "Scheduled",
+  Skipped   = "Skipped",
+  Error     = "Error",
+  Done      = "Done"
+}
+
+
+
 export class RepositoryHookEventExtractedData {
-    branch: string;
+    ref: string;
     commit: string;
+    cds_event_name: string;
 }
 
 export class RepositoryHookWorkflow {

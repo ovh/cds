@@ -69,6 +69,9 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 					if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 						return err
 					}
+					hre.SignKey = apiAnalysis.Data.SignKeyID
+					hre.Username = apiAnalysis.Data.CDSUserName
+					hre.UserID = apiAnalysis.Data.CDSUserID
 				}
 			}
 		}

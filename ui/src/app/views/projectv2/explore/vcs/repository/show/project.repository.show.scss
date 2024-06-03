@@ -6,9 +6,9 @@
   height: 100%;
   overflow: hidden;
 
-    h3 {
-        padding: 10px 30px;
-    }
+  h3 {
+    padding: 10px 30px;
+  }
 
   .repoShow-container {
     flex: 1;
@@ -18,55 +18,23 @@
     form {
       margin-top: 20px;
       padding: 0;
+
       nz-form-label {
         font-weight: bold;
       }
     }
-    .analyses {
-        h3 {
-            margin-left: -30px;
-            i {
-                margin-left: 10px;
-            }
+
+    .repoEvent {
+      h3 {
+        margin-left: -30px;
+
+        i {
+          margin-left: 10px;
         }
-        padding-top: 20px;
-
-        .error {
-            width: 400px;
-            word-break: break-word;
-            white-space: pre-line;
-        }
-    }
-      .hooks {
-          h3 {
-              margin-left: -30px;
-              i {
-                  margin-left: 10px;
-              }
-          }
-          padding-top: 20px;
-
-          .error {
-              width: 400px;
-              word-break: break-word;
-              white-space: pre-line;
-          }
-          ul {
-              list-style: none;
-              padding-left: 0;
-          }
-
-          td {
-            pre {
-              font-family: inherit;
-              white-space: pre-wrap;
-            }
-            i {
-              font-size: 1.2em;
-            }
-          }
       }
 
+      padding-top: 20px;
+    }
   }
 
   .footer {
@@ -81,6 +49,7 @@
 
     .buttons {
       margin-left: auto;
+
       button {
         margin-left: 10px;
       }
@@ -89,18 +58,18 @@
 }
 
 ul.nopoint {
-    list-style-type: none;
-    padding: 0;
-    max-height: 500px;
-    overflow-y: auto;
+  list-style-type: none;
+  padding: 0;
+  max-height: 500px;
+  overflow-y: auto;
 
-    .container {
-        display: flex;
+  .container {
+    display: flex;
 
-        .label {
-            align-self: center;
-        }
+    .label {
+      align-self: center;
     }
+  }
 }
 
 .green {
@@ -109,5 +78,33 @@ ul.nopoint {
 
 
 nz-spin {
-    margin-top: 50px;
+  margin-top: 50px;
+}
+
+.modalContent {
+  min-height: 400px;
+  max-height: 900px;
+
+  .section {
+    margin-bottom: 20px;
+  }
+
+  .entities {
+    cursor: pointer;
+  }
+
+  .field {
+    display: flex;
+
+    .label {
+      width: 105px;
+    }
+  }
+
+
+  .colWorkflow {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
 }
