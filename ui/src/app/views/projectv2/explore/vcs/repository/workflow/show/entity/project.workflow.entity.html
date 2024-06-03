@@ -1,6 +1,7 @@
 <ng-container *ngIf="workflowFlatSchema && data">
     <div class="leftPanel">
-        <app-stages-graph [navigationDisabled]="true" [workflow]="dataGraph" (onSelectJob)="selectJob($event)"></app-stages-graph>
+        <app-stages-graph [navigationDisabled]="true" [workflow]="dataGraph"
+            (onSelectJob)="selectJob($event)"></app-stages-graph>
         <div class="jobForm" *ngIf="selectedJob">
             <div (click)="selectedJob = undefined">
                 <button nz-button nzType="default">Return to workflow</button>
@@ -10,11 +11,9 @@
                 (dataChange)="onFormChange($event)"></app-json-form>
         </div>
     </div>
-
     <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"
         (onGrabbingEnd)="panelEndResize($event)">
         <nz-alert *ngIf="syntaxErrors?.length > 0" nzType="error" [nzMessage]="syntaxErrorTmpl">
-
             <ng-template #syntaxErrorTmpl>
                 <ul>
                     <li *ngFor="let e of syntaxErrors">

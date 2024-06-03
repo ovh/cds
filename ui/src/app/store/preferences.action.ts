@@ -23,6 +23,11 @@ export class SaveProjectTreeExpandState {
     constructor(public payload: { projectKey: string, state: { [key: string]: boolean } }) { }
 }
 
+export class SaveProjectBranchSelectState {
+    static readonly type = '[Preferences] Save project\'s explore branch select state';
+    constructor(public payload: { projectKey: string, state: { [key: string]: string } }) { }
+}
+
 export class DeleteProjectWorkflowRunFilter {
     static readonly type = '[Preferences] Delete project\'s workflow run filter';
     constructor(public payload: { projectKey: string, name: string }) { }
