@@ -21,7 +21,6 @@ import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { RouterService } from 'app/service/services.module';
-import { NzTextareaCountComponent } from 'ng-zorro-antd/input';
 
 @Component({
     selector: 'app-projectv2-explore-sidebar',
@@ -64,7 +63,9 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
             filter(e => e instanceof NavigationEnd),
         ).subscribe(() => {
             const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-            this.expandTreeToSelectedRoute(params);
+            this.expandTreeToSelectedRoute(params).then(() => {
+                this._cd.markForCheck();
+            });
         });
     }
 
@@ -144,14 +145,27 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
         this._cd.markForCheck();
     }
 
-    clickRepositoryLink(vcs: VCSProject, repo: ProjectRepository, e: Event): void {
-        if (this.treeExpandState[vcs.name + '/' + repo.name]) {
-            e.stopPropagation();
+    async clickRepositoryLink(vcs: VCSProject, repo: ProjectRepository, e: Event) {
+        e.stopPropagation();
+        
+        if (!this.treeExpandState[vcs.name + '/' + repo.name]) {
+            this.treeExpandState[vcs.name + '/' + repo.name] = true;
+            this.saveTreeExpandState();
+
+            if (this.treeExpandState[vcs.name + '/' + repo.name]) {
+                await this.loadRepository(vcs, repo);
+            }
+
+            this._cd.markForCheck();
         }
     }
 
     async loadEntities(vcs: VCSProject, repo: ProjectRepository) {
         const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, vcs.name, repo.name, this.branchSelectState[vcs.name + '/' + repo.name]));
+        if (resp.length === 0) {
+            this.entities[vcs.name + '/' + repo.name] = null;
+            return
+        }
         let m = {};
         resp.forEach(entity => {
             if (!m[entity.type]) { m[entity.type] = []; }
