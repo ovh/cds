@@ -508,6 +508,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if err != nil {
 		return sdk.WrapError(err, "wrong entity retention %s, bad format.", a.Config.Entity.Retention)
 	}
+	if a.Config.WorkflowV2.RunRetentionScheduling == 0 {
+		a.Config.WorkflowV2.RunRetentionScheduling = 15
+	}
 
 	// Checking downloadable binaries
 	if err := download.Init(ctx, a.getDownloadConf()); err != nil {

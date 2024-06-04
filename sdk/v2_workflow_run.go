@@ -55,7 +55,7 @@ type V2WorkflowRun struct {
 	Contexts      WorkflowRunContext     `json:"contexts" db:"contexts"`
 	RunEvent      V2WorkflowRunEvent     `json:"event" db:"event"`
 	RunJobEvent   V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
-	RetentionDate time.Time              `json:"retention_date,omitempty" db:"retention" cli:"-"`
+	RetentionDate time.Time              `json:"retention_date,omitempty" db:"retention_date" cli:"-"`
 }
 
 type V2WorkflowRunStatus string

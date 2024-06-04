@@ -32,7 +32,7 @@ func PurgeWorkflowRun(ctx context.Context, DBFunc func() *gorp.DbMap, purgeRouti
 				log.ErrorWithStackTrace(ctx, err)
 			}
 			for _, id := range ids {
-				if err := deleteRun(ctx, DBFunc(), id); err != nil {
+				if err := DeleteRun(ctx, DBFunc(), id); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			}
@@ -41,7 +41,7 @@ func PurgeWorkflowRun(ctx context.Context, DBFunc func() *gorp.DbMap, purgeRouti
 
 }
 
-func deleteRun(ctx context.Context, db *gorp.DbMap, id string) error {
+func DeleteRun(ctx context.Context, db *gorp.DbMap, id string) error {
 	ctx = context.WithValue(ctx, cdslog.WorkflowRunID, id)
 
 	tx, err := db.Begin()
@@ -57,7 +57,8 @@ func deleteRun(ctx context.Context, db *gorp.DbMap, id string) error {
 		}
 		return err
 	}
-	if err := gorpmapping.Delete(db, run); err != nil {
+	dbRun := dbWorkflowRun{V2WorkflowRun: *run}
+	if err := gorpmapping.Delete(db, &dbRun); err != nil {
 		return err
 	}
 
