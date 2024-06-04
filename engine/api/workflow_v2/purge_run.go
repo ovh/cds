@@ -11,10 +11,6 @@ import (
 	"github.com/rockbears/log"
 )
 
-const (
-	KeyV2RunPurge = "v2:purge:run"
-)
-
 func PurgeWorkflowRun(ctx context.Context, DBFunc func() *gorp.DbMap, purgeRoutineTIcker int64) {
 	tickPurge := time.NewTicker(time.Duration(purgeRoutineTIcker) * time.Minute)
 	defer tickPurge.Stop()
@@ -57,10 +53,17 @@ func DeleteRun(ctx context.Context, db *gorp.DbMap, id string) error {
 		}
 		return err
 	}
+	ctx = context.WithValue(ctx, cdslog.Project, run.ProjectKey)
+	ctx = context.WithValue(ctx, cdslog.Workflow, run.WorkflowName)
+
 	dbRun := dbWorkflowRun{V2WorkflowRun: *run}
 	if err := gorpmapping.Delete(db, &dbRun); err != nil {
 		return err
 	}
 
-	return sdk.WithStack(tx.Commit())
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+	log.Info(ctx, "run %s / %s / %s deleted", run.ProjectKey, run.WorkflowName, run.ID)
+	return nil
 }
