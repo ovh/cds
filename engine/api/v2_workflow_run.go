@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -1206,9 +1205,12 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	}
 	wr.RunNumber = wrNumber
 
-	retention := time.Duration(math.Abs(float64(proj.WorkflowRetention))*24) * time.Hour
-	if wk.Retention != 0 {
-		retention = time.Duration(math.Abs(float64(wk.Retention))*24) * time.Hour
+	if proj.WorkflowRetention < 0 {
+		proj.WorkflowRetention = 90
+	}
+	retention := time.Duration(proj.WorkflowRetention*24) * time.Hour
+	if wk.Retention > 0 {
+		retention = time.Duration(wk.Retention*24) * time.Hour
 	}
 	wr.RetentionDate = time.Now().Add(retention)
 
