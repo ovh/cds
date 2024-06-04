@@ -7,6 +7,7 @@ import { Property } from "../utils/property";
 import { Context, Project } from "./models";
 import { getGitLocalConfig, getGitRepositoryPath, setGitLocalConfig } from "../utils/git";
 import { Cache } from "../utils/cache";
+import { WorkflowGenerateRequest, WorkflowGenerateResponse } from "./models/WorkflowGenerated";
 
 const defaultConfigFile = '~/.cdsrc';
 
@@ -42,6 +43,19 @@ export class CDS {
         }
 
         return foundContext[0];
+    }
+
+    static async generateWorkflowFromTemplate(req: WorkflowGenerateRequest): Promise<WorkflowGenerateResponse> {
+        let args: string[] = [];
+        args.push("X", "template", "generate-from-file", req.filePath);
+        Object.keys(req.params).forEach(k => {
+            args.push("-p", k+"="+req.params[k]);
+        });
+        args.push("--format", "json");
+
+        const resp = (await CDS.getInstance().runCtl(...args));
+        const generatedWorkflow = JSON.parse(resp);
+        return generatedWorkflow;
     }
 
 

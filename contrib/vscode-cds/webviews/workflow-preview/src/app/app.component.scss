@@ -12,6 +12,27 @@
   border-color: var(--vscode-foreground) !important;
 }
 
+.pointer {
+  cursor: pointer;
+}
+
 foreignObject {
   overflow: visible;
 }
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  .templateButtons {
+    margin-top: 15px;
+  }
+
+  app-stages-graph {
+    flex: 1;
+  }
+}
+
+

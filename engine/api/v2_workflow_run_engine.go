@@ -199,8 +199,12 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 	defer tx.Rollback() // nolint
 
+	hasNoStepsJobs := false
 	for i := range runJobs {
 		rj := &runJobs[i]
+		if len(rj.Job.Steps) == 0 {
+			hasNoStepsJobs = true
+		}
 		if err := workflow_v2.InsertRunJob(ctx, tx, rj); err != nil {
 			return err
 		}
@@ -260,7 +264,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
 	}
 
-	if len(skippedJobs) > 0 {
+	if len(skippedJobs) > 0 || hasNoStepsJobs {
 		// Re enqueue workflow to trigger job after
 		api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
 	}
@@ -488,6 +492,9 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 	runJobInfos := make(map[string]sdk.V2WorkflowRunJobInfo)
 	runUpdated := false
 	for i := range runJobs {
+		if runJobs[i].Status.IsTerminated() {
+			continue
+		}
 		rj := &runJobs[i]
 		if !strings.HasPrefix(rj.Job.RunsOn.Model, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Flavor, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Memory, "${{") {
 			continue
@@ -609,6 +616,24 @@ func prepareRunJobs(_ context.Context, proj sdk.Project, run sdk.V2WorkflowRun, 
 
 	// Compute Matrix
 	for jobID, jobDef := range jobsToQueue {
+		if len(jobDef.Steps) == 0 {
+			runJob := sdk.V2WorkflowRunJob{
+				WorkflowRunID: run.ID,
+				Status:        sdk.V2WorkflowRunJobStatusSuccess,
+				JobID:         jobID,
+				Job:           jobDef,
+				UserID:        wrEnqueue.UserID,
+				Username:      u.Username,
+				ProjectKey:    run.ProjectKey,
+				Region:        jobDef.Region,
+				WorkflowName:  run.WorkflowName,
+				RunNumber:     run.RunNumber,
+				RunAttempt:    run.RunAttempt,
+			}
+			runJobs = append(runJobs, runJob)
+			continue
+		}
+
 		// Compute job matrix strategy
 		keys := make([]string, 0)
 		if jobDef.Strategy != nil {

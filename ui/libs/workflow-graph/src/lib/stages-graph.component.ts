@@ -333,7 +333,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         this._cd.markForCheck();
     }
 
-    resize() {
+    public resize() {
         if (!this.svgContainer?.element?.nativeElement?.offsetWidth || !this.svgContainer?.element?.nativeElement?.offsetHeight) {
             return;
         }
