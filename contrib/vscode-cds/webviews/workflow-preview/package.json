@@ -25,6 +25,7 @@
     "normalize.css": "^8.0.1",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
+    "vscode-messenger-common": "~0.4.5",
     "vscode-messenger-webview": "~0.4.5",
     "workflow-graph": "file:/../../../../ui/dist/workflow-graph/workflow-graph-1.0.0.tgz",
     "zone.js": "~0.13.3"

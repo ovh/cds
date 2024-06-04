@@ -78,7 +78,11 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 						Name:   "My super job",
 						If:     "cds.workflow == 'toto'",
 						Region: "build",
-						Steps:  []sdk.ActionStep{},
+						Steps: []sdk.ActionStep{
+							{
+								ID: "step1",
+							},
+						},
 					},
 				},
 			},
@@ -164,7 +168,11 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 						RunsOn: sdk.V2JobRunsOn{
 							Model: "myworker-model",
 						},
-						Steps: []sdk.ActionStep{},
+						Steps: []sdk.ActionStep{
+							{
+								ID: "step1",
+							},
+						},
 					},
 				},
 			},
