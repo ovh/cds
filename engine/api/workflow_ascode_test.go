@@ -172,8 +172,8 @@ func TestPostUpdateWorkflowAsCodeHandler(t *testing.T) {
 	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	proj := createProject(t, db, api)
-	pip := createPipeline(t, db, api, proj)
-	app := createApplication(t, db, api, proj)
+	pip := createPipeline(t, db, proj)
+	app := createApplication(t, db, proj)
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -381,10 +381,10 @@ func TestPostMigrateWorkflowAsCodeHandler(t *testing.T) {
 	proj := createProject(t, db, api)
 
 	// Create Pipeline
-	pip := createPipeline(t, db, api, proj)
+	pip := createPipeline(t, db, proj)
 
 	// Create Application
-	app := createApplication(t, db, api, proj)
+	app := createApplication(t, db, proj)
 
 	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
 	assert.NoError(t, err)
@@ -463,7 +463,7 @@ func createProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API) *sdk
 	return proj
 }
 
-func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Project) *sdk.Pipeline {
+func createPipeline(t *testing.T, db gorp.SqlExecutor, proj *sdk.Project) *sdk.Pipeline {
 	pip := sdk.Pipeline{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
@@ -472,7 +472,7 @@ func createPipeline(t *testing.T, db gorp.SqlExecutor, api *API, proj *sdk.Proje
 	return &pip
 }
 
-func createApplication(t *testing.T, db gorpmapper.SqlExecutorWithTx, api *API, proj *sdk.Project) *sdk.Application {
+func createApplication(t *testing.T, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project) *sdk.Application {
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),
 		ProjectID:          proj.ID,

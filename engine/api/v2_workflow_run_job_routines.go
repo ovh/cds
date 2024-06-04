@@ -179,7 +179,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	if err != nil {
 		return err
 	}
-	event_v2.PublishRunJobEvent(ctx, store, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob)
+	event_v2.PublishRunJobEvent(ctx, store, sdk.EventRunJobEnqueued, *run, *runJob)
 	return nil
 }
 
@@ -251,7 +251,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	}
 
 	// Trigger workflow
-	event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, *runJob)
+	event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, *runJob)
 	api.EnqueueWorkflowRun(ctx, runJob.WorkflowRunID, runJob.UserID, runJob.WorkflowName, runJob.RunNumber)
 	return nil
 }
