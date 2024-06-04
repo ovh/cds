@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Messenger, VsCodeApi } from 'vscode-messenger-webview';
 import { load, LoadOptions } from 'js-yaml';
 import { HOST_EXTENSION } from 'vscode-messenger-common';
-import { GenerateWorkflow, Parameter, WorkflowData, WorkflowRefresh, WorkflowTemplate, WorkflowTemplateGenerated } from '../../../../src/type';
+import { GenerateWorkflow, GenerateWorkflowDataResponse, Parameter, WorkflowData, WorkflowRefresh, WorkflowTemplate, WorkflowTemplateGenerated } from '../../../../src/type';
 import { WorkflowV2StagesGraphComponent } from 'workflow-graph';
 
 export declare function acquireVsCodeApi(): VsCodeApi;
@@ -100,8 +100,8 @@ export class AppComponent {
         }
     });
     const generatedWorkflow = await this.viewMessenger.sendRequest(GenerateWorkflow, HOST_EXTENSION, {parameters: params});
-    this.workflow = generatedWorkflow.workflow;
-    this.workflowError = generatedWorkflow.error;
+    this.workflow = (generatedWorkflow as GenerateWorkflowDataResponse).workflow;
+    this.workflowError = (generatedWorkflow as GenerateWorkflowDataResponse).error;
   }
 
   identify(index: number, item: {key: string, value: string}) {
