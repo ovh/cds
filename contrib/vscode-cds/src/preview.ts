@@ -6,7 +6,7 @@ import * as path from 'path';
 import { isCDSWorkflowFile, isCDSWorkflowTemplateFile } from "./cds/file_utils";
 import { Journal } from "./utils/journal";
 import { Messenger} from "vscode-messenger";
-import { GenerateWorkflow, GenerateWorkflowDataResponse, WorkflowRefresh, WorkflowTemplate, WorkflowTemplateGenerated } from "./type";
+import { GenerateWorkflow, GenerateWorkflowData, GenerateWorkflowDataResponse, WorkflowRefresh, WorkflowTemplate, WorkflowTemplateGenerated } from "./type";
 import { CDS } from "./cds";
 import { WorkflowGenerateRequest } from "./cds/models/WorkflowGenerated";
 
@@ -39,7 +39,7 @@ export class CDSWorkflowPreview extends vscode.Disposable {
         this.disposable = this.messenger.onRequest(GenerateWorkflow, async (request) => {
             Journal.logInfo('Calling CDS');
             if (this._resource?.path) {
-                let req: WorkflowGenerateRequest = {filePath: this._resource?.path, params: request.parameters};
+                let req: WorkflowGenerateRequest = {filePath: this._resource?.path, params: (request as GenerateWorkflowData).parameters};
                 const resp = await CDS.generateWorkflowFromTemplate(req);
                 if (resp['workflow']) {
                     // Create file with workflow data
