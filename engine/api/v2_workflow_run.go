@@ -1205,6 +1205,11 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	}
 	wr.RunNumber = wrNumber
 
+	wr.RetentionDate = time.Now().Add(-1 * time.Duration(proj.WorkflowRetention*24) * time.Hour)
+	if wk.Retention != 0 {
+		wr.RetentionDate = time.Now().Add(-1 * time.Duration(wk.Retention*24) * time.Hour)
+	}
+
 	telemetry.MainSpan(ctx).AddAttributes(trace.StringAttribute(telemetry.TagWorkflowRunNumber, strconv.FormatInt(wrNumber, 10)))
 
 	tx, err := api.mustDB().Begin()

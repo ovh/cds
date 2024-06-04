@@ -34,27 +34,28 @@ type V2WorkflowRunHookRequest struct {
 }
 
 type V2WorkflowRun struct {
-	ID           string                 `json:"id" db:"id" cli:"id"`
-	ProjectKey   string                 `json:"project_key" db:"project_key"`
-	VCSServerID  string                 `json:"vcs_server_id" db:"vcs_server_id"`
-	VCSServer    string                 `json:"vcs_server" db:"vcs_server"`
-	RepositoryID string                 `json:"repository_id" db:"repository_id"`
-	Repository   string                 `json:"repository" db:"repository"`
-	WorkflowName string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
-	WorkflowSha  string                 `json:"workflow_sha" db:"workflow_sha"`
-	WorkflowRef  string                 `json:"workflow_ref" db:"workflow_ref"`
-	Status       V2WorkflowRunStatus    `json:"status" db:"status" cli:"status"`
-	RunNumber    int64                  `json:"run_number" db:"run_number" cli:"run_number"`
-	RunAttempt   int64                  `json:"run_attempt" db:"run_attempt"`
-	Started      time.Time              `json:"started" db:"started" cli:"started"`
-	LastModified time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
-	ToDelete     bool                   `json:"to_delete" db:"to_delete"`
-	WorkflowData V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
-	UserID       string                 `json:"user_id" db:"user_id"`
-	Username     string                 `json:"username" db:"username" cli:"username"`
-	Contexts     WorkflowRunContext     `json:"contexts" db:"contexts"`
-	RunEvent     V2WorkflowRunEvent     `json:"event" db:"event"`
-	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
+	ID            string                 `json:"id" db:"id" cli:"id"`
+	ProjectKey    string                 `json:"project_key" db:"project_key"`
+	VCSServerID   string                 `json:"vcs_server_id" db:"vcs_server_id"`
+	VCSServer     string                 `json:"vcs_server" db:"vcs_server"`
+	RepositoryID  string                 `json:"repository_id" db:"repository_id"`
+	Repository    string                 `json:"repository" db:"repository"`
+	WorkflowName  string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
+	WorkflowSha   string                 `json:"workflow_sha" db:"workflow_sha"`
+	WorkflowRef   string                 `json:"workflow_ref" db:"workflow_ref"`
+	Status        V2WorkflowRunStatus    `json:"status" db:"status" cli:"status"`
+	RunNumber     int64                  `json:"run_number" db:"run_number" cli:"run_number"`
+	RunAttempt    int64                  `json:"run_attempt" db:"run_attempt"`
+	Started       time.Time              `json:"started" db:"started" cli:"started"`
+	LastModified  time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
+	ToDelete      bool                   `json:"to_delete" db:"to_delete"`
+	WorkflowData  V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
+	UserID        string                 `json:"user_id" db:"user_id"`
+	Username      string                 `json:"username" db:"username" cli:"username"`
+	Contexts      WorkflowRunContext     `json:"contexts" db:"contexts"`
+	RunEvent      V2WorkflowRunEvent     `json:"event" db:"event"`
+	RunJobEvent   V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
+	RetentionDate time.Time              `json:"retention_date,omitempty" db:"retention" cli:"-"`
 }
 
 type V2WorkflowRunStatus string

@@ -428,3 +428,19 @@ func LoadRunsUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowR
 
 	return runs, nil
 }
+
+func LoadRunIDsToDelete(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {
+	query := `SELECT * from v2_workflow_run WHERE retention_date < CURRENT_DATE ORDER BY started ASC`
+	var ids []string
+	if _, err := db.Select(&ids, query); err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
+func LoadAndLockRunByID(ctx context.Context, db gorp.SqlExecutor, id string, opts ...gorpmapper.GetOptionFunc) (*sdk.V2WorkflowRun, error) {
+	ctx, next := telemetry.Span(ctx, "LoadAndLockRunByID")
+	defer next()
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run WHERE id = $1 SKIP LOCKED").Args(id)
+	return getRun(ctx, db, query, opts...)
+}

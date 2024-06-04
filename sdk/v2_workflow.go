@@ -28,6 +28,7 @@ type V2Workflow struct {
 	Env          map[string]string        `json:"env,omitempty"`
 	Integrations []string                 `json:"integrations,omitempty"`
 	VariableSets []string                 `json:"vars,omitempty"`
+	Retention    int64                    `json:"retention,omitempty"`
 
 	// Template fields
 	From       string            `json:"from,omitempty"`
