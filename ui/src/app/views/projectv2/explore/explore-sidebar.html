@@ -9,7 +9,7 @@
 </div>
 <div class="content">
     <ng-container *ngFor="let vcs of vcss">
-        <div class="tree-node-header" (click)="clickVCS(vcs)">
+        <div class="tree-node-header large" (click)="clickVCS(vcs)">
             <span nz-icon [nzType]="!treeExpandState[vcs.name] ? 'caret-right' : 'caret-down'" nzTheme="fill"></span>
             <div class="name">{{vcs.name}}</div>
             <button nz-button nzType="text" nzSize="small">
@@ -25,9 +25,11 @@
                 </ul>
             </nz-dropdown-menu>
         </div>
-        <div class="tree-node-content" *ngIf="treeExpandState[vcs.name]">
+        <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name]">
+            <nz-alert *ngIf="repositories[vcs.name].length === 0" nzType="info"
+                nzMessage="No repository found"></nz-alert>
             <ng-container *ngFor="let repo of repositories[vcs.name]">
-                <div class="tree-node-header" [ngStyle]="{'paddingLeft': '15px'}" (click)="clickRepository(vcs, repo)">
+                <div class="tree-node-header large" (click)="clickRepository(vcs, repo)">
                     <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
                         nzTheme="fill"></span>
                     <a class="name"
@@ -44,22 +46,25 @@
                         {{ selected.nzLabel }}
                     </ng-template>
                 </div>
-                <div class="tree-node-content" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
+                <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
+                    <nz-alert *ngIf="!entities[vcs.name+'/'+repo.name]" nzType="info"
+                        nzMessage="No resource found"></nz-alert>
                     <ng-container *ngFor="let entity of entities[vcs.name+'/'+repo.name] | keyvalue">
-                        <div class="tree-node-header" [ngStyle]="{'paddingLeft': '30px'}"
-                            (click)="clickEntityType(vcs, repo, entity.key)">
+                        <div class="tree-node-header" (click)="clickEntityType(vcs, repo, entity.key)">
                             <span nz-icon
-                                [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'caret-right' : 'caret-down'"
-                                nzTheme="fill"></span>
+                                [nzType]="!treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key] ? 'folder' : 'folder-open'"
+                                nzTheme="outline"></span>
                             <div class="name">{{entity.key}}</div>
                         </div>
                         <div class="tree-node-content" *ngIf="treeExpandState[vcs.name+'/'+repo.name+'/'+entity.key]">
                             <ng-container *ngFor="let v of entity.value">
-                                <div class="tree-node-header" [ngStyle]="{'paddingLeft': '45px'}">
+                                <div class="tree-node-header">
                                     <a class="name"
                                         [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
                                         [queryParams]="{branch: branchSelectState[vcs.name+'/'+repo.name]}"
-                                        routerLinkActive="active">{{v.name}}</a>
+                                        routerLinkActive="active">
+                                        <span nz-icon nzType="file"></span>{{v.name}}
+                                    </a>
                                     <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small">
                                         <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu"
                                             nzTrigger="click"></i>
