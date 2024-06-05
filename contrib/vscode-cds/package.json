@@ -98,7 +98,9 @@
     "vsce": "vsce"
   },
   "dependencies": {
-    "vscode-uri": "^3.0.3"
+    "vscode-uri": "^3.0.3",
+    "vscode-messenger": "^0.4.5",
+    "vscode-messenger-common": "~0.4.5"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",

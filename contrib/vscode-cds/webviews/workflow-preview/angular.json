@@ -20,9 +20,9 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "baseHref": "/dist-web/",
+            "baseHref": "/dist-web/workflow-preview",
             "allowedCommonJsDependencies": ["clone-deep"],
-            "outputPath": "../../dist-web",
+            "outputPath": "../../dist-web/workflow-preview",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -44,7 +44,9 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/js-yaml/dist/js-yaml.js"
+            ]
           },
           "configurations": {
             "production": {

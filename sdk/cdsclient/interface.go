@@ -34,6 +34,10 @@ type TemplateClient interface {
 	TemplateDeleteInstance(groupName, templateSlug string, id int64) error
 }
 
+type TemplateV2Client interface {
+	TemplateGenerateWorkflowFromFile(ctx context.Context, req sdk.V2WorkflowTemplateGenerateRequest) (*sdk.V2WorkflowTemplateGenerateResponse, error)
+}
+
 // Admin expose all function to CDS administration
 type Admin interface {
 	AdminDatabaseMigrationDelete(service string, id string) error
@@ -548,6 +552,7 @@ type Interface interface {
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
+	TemplateV2Client
 	WebsocketClient
 	V2QueueClient
 	EntityLint(ctx context.Context, entityType string, data interface{}) (*sdk.EntityCheckResponse, error)
