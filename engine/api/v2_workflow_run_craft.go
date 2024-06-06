@@ -40,7 +40,7 @@ type WorkflowRunEntityFinder struct {
 }
 
 func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser) *WorkflowRunEntityFinder {
-	ef := NewEntityFinder(p.Key, run.Contexts.Git.Ref, run.Contexts.Git.Sha, repo, vcsServer, u)
+	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, u)
 	return &WorkflowRunEntityFinder{
 		ef:      ef,
 		run:     run,
