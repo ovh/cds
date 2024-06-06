@@ -246,7 +246,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+					Message:       fmt.Sprintf("unable to compute worker model %s: %v", j.RunsOn.Model, err),
 				})
 			}
 			if msg != nil {

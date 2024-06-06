@@ -14,8 +14,8 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
-	yaml "gopkg.in/yaml.v2"
 )
 
 type EntityFinder struct {
@@ -235,7 +235,6 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store 
 		}
 		return "", "", err
 	}
-
 	switch entityType {
 	case sdk.EntityTypeAction:
 		var act sdk.V2Action
