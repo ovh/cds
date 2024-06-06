@@ -23,14 +23,13 @@
             flex-direction: column;
             height: 100%;
 
-            app-json-form {
+            app-entity-json-form {
                 flex: 1;
                 overflow: hidden;
                 overflow-y: auto;
             }
         }
     }
-
 
     app-resizable-panel {
         height: 100%;

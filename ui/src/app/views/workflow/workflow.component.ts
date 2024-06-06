@@ -33,7 +33,6 @@ import {
 } from 'app/shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { RouterService } from 'app/service/services.module';
 
-
 @Component({
     selector: 'app-workflow',
     templateUrl: './workflow.html',

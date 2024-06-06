@@ -117,7 +117,12 @@
     }
 
     nz-alert {
-        margin:10px;
+        margin: 10px;
+    }
+
+    nz-spin {
+        align-self: center;
+        margin: 10px;
     }
 
     &:has(~ .tree-node-header) {

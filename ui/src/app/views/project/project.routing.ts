@@ -8,15 +8,13 @@ import { ProjectListComponent } from './list/project.list.component';
 import { ProjectShowComponent } from './show/project.component';
 import { ProjectComponent } from './project.component';
 import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.component';
-import { ProjectV2RepositoryAddComponent } from '../projectv2/explore/vcs/repository/project.repository.add.component';
-import { ProjectV2RepositoryShowComponent } from '../projectv2/explore/vcs/repository/show/project.repository.show.component';
-import { ProjectV2WorkerModelShowComponent } from '../projectv2/explore/vcs/repository/workermodel/show/project.workermodel.show.component';
-import { ProjectV2ActionShowComponent } from '../projectv2/explore/vcs/repository/action/show/project.action.show.component';
-import { ProjectV2WorkflowShowComponent } from '../projectv2/explore/vcs/repository/workflow/show/project.workflow.show.component';
 import { ProjectV2WorkflowRunListComponent } from '../projectv2/run-list/run-list.component';
 import { ProjectV2WorkflowRunComponent } from '../projectv2/run/project.run.component';
 import { Projectv2Resolver } from 'app/service/services.module';
 import { ProjectSettingsComponent } from './settings/settings.component';
+import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
+import { ProjectV2ExploreRepositoryAddComponent } from '../projectv2/explore/explore-repository-add.component';
+import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
 
 const projectRoutes: Routes = [
     {
@@ -71,7 +69,7 @@ const projectRoutes: Routes = [
                         children: [
                             {
                                 path: 'vcs/:vcsName/repository',
-                                component: ProjectV2RepositoryAddComponent,
+                                component: ProjectV2ExploreRepositoryAddComponent,
                                 data: { title: 'Add • Repository' }
                             },
                             {
@@ -82,25 +80,15 @@ const projectRoutes: Routes = [
                                     },
                                     {
                                         path: 'settings',
-                                        component: ProjectV2RepositoryShowComponent,
+                                        component: ProjectV2ExploreRepositoryComponent,
                                         data: { title: '{repoName} • Repository' }
                                     }
                                 ]
                             },
                             {
-                                path: 'vcs/:vcsName/repository/:repoName/workermodel/:workerModelName',
-                                component: ProjectV2WorkerModelShowComponent,
-                                data: { title: '{workerModelName} • Worker Model' }
-                            },
-                            {
-                                path: 'vcs/:vcsName/repository/:repoName/action/:actionName',
-                                component: ProjectV2ActionShowComponent,
-                                data: { title: '{actionName} • Action' }
-                            },
-                            {
-                                path: 'vcs/:vcsName/repository/:repoName/workflow/:workflowName',
-                                component: ProjectV2WorkflowShowComponent,
-                                data: { title: '{workflowName} • Workflow' }
+                                path: 'vcs/:vcsName/repository/:repoName/:entityType/:entityName',
+                                component: ProjectV2ExploreEntityComponent,
+                                data: { title: '{entityName} • Entity' }
                             }
                         ]
                     },

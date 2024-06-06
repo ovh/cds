@@ -1,4 +1,4 @@
-<ng-container *ngIf="workflowFlatSchema && data">
+<ng-container *ngIf="workflowFlatSchema && jobFlatSchema && data">
     <div class="leftPanel">
         <app-stages-graph [navigationDisabled]="true" [workflow]="dataGraph"
             (onSelectJob)="selectJob($event)"></app-stages-graph>
@@ -6,9 +6,9 @@
             <div (click)="selectedJob = undefined">
                 <button nz-button nzType="default">Return to workflow</button>
             </div>
-            <app-json-form [class.disableSelection]="resizing" [disabled]="resizing" [parentType]="'V2Job'"
+            <app-entity-json-form [class.disableSelection]="resizing" [disabled]="resizing" [parentType]="'V2Job'"
                 [entityType]="actionEntity" [schema]="jobFlatSchema" [data]="jobForm"
-                (dataChange)="onFormChange($event)"></app-json-form>
+                (dataChange)="onFormChange($event)"></app-entity-json-form>
         </div>
     </div>
     <app-resizable-panel minSize="400" [initialSize]="panelSize" (onGrabbingStart)="panelStartResize()"

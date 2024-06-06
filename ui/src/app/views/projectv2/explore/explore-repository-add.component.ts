@@ -13,13 +13,13 @@ import { ToastService } from 'app/shared/toast/ToastService';
 import { VCSProject } from 'app/model/vcs.model';
 
 @Component({
-    selector: 'app-projectv2-repository-add',
-    templateUrl: './project.repository.add.html',
-    styleUrls: ['./project.repository.add.scss'],
+    selector: 'app-projectv2-explore-repository-add',
+    templateUrl: './explore-repository-add.html',
+    styleUrls: ['./explore-repository-add.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2RepositoryAddComponent implements OnDestroy {
+export class ProjectV2ExploreRepositoryAddComponent implements OnDestroy {
 
     loading: boolean;
     loadingResync: boolean;
@@ -32,8 +32,15 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
     repositories: Repository[];
     filteredRepos: Repository[];
 
-    constructor(private _routeActivated: ActivatedRoute, private _store: Store, private _cd: ChangeDetectorRef, private _projectService: ProjectService,
-        private _repoManagerService: RepoManagerService, private _toastService: ToastService, private _router: Router) {
+    constructor(
+        private _routeActivated: ActivatedRoute,
+        private _store: Store,
+        private _cd: ChangeDetectorRef,
+        private _projectService: ProjectService,
+        private _repoManagerService: RepoManagerService,
+        private _toastService: ToastService,
+        private _router: Router
+    ) {
         // Get project and VCS, subscribe to react in case of project switch
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
@@ -48,6 +55,8 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
             });
         });
     }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     listRepositories(resync: boolean): void {
         this.loadingResync = true;
@@ -90,6 +99,4 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy {
             this._router.navigate(['/', 'projectv2', this.project.key, 'explore', 'vcs', this.vcsProject.name, 'repository', r.name]).then()
         });
     }
-
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 }

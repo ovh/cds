@@ -12,7 +12,7 @@ import { ProjectService } from 'app/service/project/project.service';
 import { Project, ProjectRepository } from 'app/model/project.model';
 import { filter, lastValueFrom, Subscription } from 'rxjs';
 import { AnalysisService } from "app/service/analysis/analysis.service";
-import { Entity, EntityType } from "app/model/entity.model";
+import { Entity, EntityType, EntityTypeUtil } from "app/model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Branch } from 'app/model/repositories.model';
@@ -29,10 +29,11 @@ import { RouterService } from 'app/service/services.module';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, AfterViewInit {
     @Input() project: Project;
 
     loading: boolean = true;
+    loadingEntities: { [repositoryPath: string]: boolean } = {};
     vcss: Array<VCSProject> = [];
     repositories: { [vcs: string]: Array<ProjectRepository> } = {};
     entities: { [repositoryPath: string]: { [entityType: string]: Array<Entity> } } = {};
@@ -139,23 +140,29 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
         this.saveTreeExpandState();
 
         if (this.treeExpandState[vcs.name + '/' + repo.name]) {
+            this.loadingEntities[vcs.name + '/' + repo.name] = true;
+            this._cd.markForCheck();
             await this.loadRepository(vcs, repo);
         }
 
+        this.loadingEntities[vcs.name + '/' + repo.name] = false;
         this._cd.markForCheck();
     }
 
     async clickRepositoryLink(vcs: VCSProject, repo: ProjectRepository, e: Event) {
         e.stopPropagation();
-        
+
         if (!this.treeExpandState[vcs.name + '/' + repo.name]) {
             this.treeExpandState[vcs.name + '/' + repo.name] = true;
             this.saveTreeExpandState();
 
             if (this.treeExpandState[vcs.name + '/' + repo.name]) {
+                this.loadingEntities[vcs.name + '/' + repo.name] = true;
+                this._cd.markForCheck();
                 await this.loadRepository(vcs, repo);
             }
 
+            this.loadingEntities[vcs.name + '/' + repo.name] = false;
             this._cd.markForCheck();
         }
     }
@@ -198,20 +205,10 @@ export class ProjectV2SidebarComponent implements OnInit, OnDestroy, AfterViewIn
 
         const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
         if (params['vcsName'] === vcs.name && params['repoName'] === repo.name) {
-            let entityType: EntityType = null;
-            let entityName: string;
-            if (params['workflowName']) {
-                entityType = EntityType.Workflow;
-                entityName = params['workflowName'];
-            } else if (params['actionName']) {
-                entityType = EntityType.Action;
-                entityName = params['actionName'];
-            } else if (params['workerModelName']) {
-                entityType = EntityType.WorkerModel;
-                entityName = params['workerModelName'];
-            }
-            if (entityType) {
-                this._router.navigate(['/project', this.project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, entityType.toLowerCase(), entityName], {
+            let entityType = EntityTypeUtil.fromURLParam(params['entityType']);
+            let entityName = params['entityName'];
+            if (entityType && entityName) {
+                this._router.navigate(['/project', this.project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, EntityTypeUtil.toURLParam(entityType), entityName], {
                     queryParams: {
                         branch: this.branchSelectState[vcs.name + '/' + repo.name]
                     }

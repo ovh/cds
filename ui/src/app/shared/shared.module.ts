@@ -248,10 +248,7 @@ import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { BitbucketIconComponent } from 'app/shared/icons/bitbucket.icon.component';
 import { BitbucketIconSuccessComponent } from 'app/shared/icons/bitbucket.icon.success.component';
 import { NzTreeViewModule } from 'ng-zorro-antd/tree-view';
-import { EntityFormComponent } from "./entity/entity.form.component";
 import { NzCodeEditorModule } from "ng-zorro-antd/code-editor";
-import { JSONFormComponent } from "./entity/form/json-form.component";
-import { JSONFormFieldComponent } from "./entity/form/form-item/json-form-field.component";
 import { APIConfigGuard } from 'app/guard/api-config.guard';
 import { FavoriteButtonComponent } from './favorite-button/favorite-button.component';
 import { ResizablePanelComponent } from './resizable-panel/resizable-panel.component';
@@ -451,12 +448,9 @@ const icons: IconDefinition[] = [
         DiffListComponent,
         DurationMsPipe,
         EditorInputComponent,
-        EntityFormComponent,
         FavoriteButtonComponent,
         FavoriteCardsComponent,
         ForMapPipe,
-        JSONFormComponent,
-        JSONFormFieldComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,
@@ -573,13 +567,11 @@ const icons: IconDefinition[] = [
         DragulaModule,
         DurationMsPipe,
         EditorInputComponent,
-        EntityFormComponent,
         FavoriteButtonComponent,
         FavoriteCardsComponent,
         ForMapPipe,
         FormsModule,
         InfiniteScrollModule,
-        JSONFormComponent,
         KeysFormComponent,
         KeysListComponent,
         KeysPipe,

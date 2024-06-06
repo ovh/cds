@@ -9,32 +9,17 @@ import {
     Output,
     SimpleChanges
 } from "@angular/core";
-import {FlatSchema} from "../../../model/schema.model";
-import {FormItem} from "./form-item/json-form-field.component";
-import {dump, DumpOptions, load, LoadOptions} from 'js-yaml'
-
-export class JSONFormSchema {
-    types: { [key: string]: JSONFormSchemaTypeItem };
-}
-
-export class JSONFormSchemaTypeItem {
-    fields: FormItem[];
-    required: string[];
-    oneOf: Map<string, JSONFormSchemaOneOfItem>;
-}
-
-export class JSONFormSchemaOneOfItem {
-    keyFormItem: FormItem;
-    fields: FormItem[];
-}
+import { FlatSchema } from "../../../../model/schema.model";
+import { dump, DumpOptions, load, LoadOptions } from 'js-yaml'
+import { FormItem, JSONFormSchema, JSONFormSchemaOneOfItem, JSONFormSchemaTypeItem } from "./form.model";
 
 @Component({
-    selector: 'app-json-form',
-    templateUrl: './json-form.html',
-    styleUrls: ['./json-form.scss'],
+    selector: 'app-entity-json-form',
+    templateUrl: './entity-json-form.html',
+    styleUrls: ['./entity-json-form.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class JSONFormComponent implements OnInit, OnChanges {
+export class EntityJSONFormComponent implements OnInit, OnChanges {
     @Input() schema: FlatSchema;
     @Input() parentType: string;
     @Input() disabled: boolean;
@@ -47,8 +32,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
 
     constructor(
         private _cd: ChangeDetectorRef
-    ) {
-    }
+    ) { }
 
     ngOnInit() {
         this.buildSchemaType();
@@ -126,7 +110,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
                 oneOf: oneOf
             };
         });
-        this.jsonFormSchema = {types: allTypes};
+        this.jsonFormSchema = { types: allTypes };
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -150,7 +134,7 @@ export class JSONFormComponent implements OnInit, OnChanges {
         this.model = value;
         this._cd.markForCheck();
         const cleanModel = this.cleanModel(this.parentType, this.model);
-        this.dataChange.emit(dump(cleanModel, <DumpOptions>{lineWidth: 120}));
+        this.dataChange.emit(dump(cleanModel, <DumpOptions>{ lineWidth: 120 }));
     }
 
     // For given data remove useless fields and empty values

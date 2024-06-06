@@ -23,25 +23,25 @@ import { dump, load, LoadOptions } from "js-yaml";
 import { EntityType } from "app/model/entity.model";
 import { EntityService } from "app/service/entity/entity.service";
 import { first } from "rxjs/operators";
+import { ProjectService } from "app/service/project/project.service";
 
 declare const monaco: any;
 
 @Component({
-    selector: 'app-project-workflow-entity',
-    templateUrl: './project.workflow.entity.html',
-    styleUrls: ['./project.workflow.entity.scss'],
+    selector: 'app-projectv2-explore-entity-workflow',
+    templateUrl: './explore-entity-workflow.html',
+    styleUrls: ['./explore-entity-workflow.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDestroy {
+export class ProjectV2ExploreEntityWorkflowComponent implements OnInit, OnChanges, OnDestroy {
     static PANEL_KEY = 'project-workflow-v2-entity-form';
 
     @ViewChild('editor') editor: NzCodeEditorComponent;
 
     @Input() path: string;
     @Input() data: string;
-    @Input() workflowSchema: Schema;
-    @Input() jobSchema: Schema;
+    @Input() schema: Schema;
     @Input() disabled: boolean;
     @Input() parentType: string;
 
@@ -62,8 +62,11 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
     constructor(
         private _cd: ChangeDetectorRef,
         private _store: Store,
-        private _entityService: EntityService
+        private _entityService: EntityService,
+        private _projectService: ProjectService
     ) { }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.editorOption = {
@@ -71,10 +74,17 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
             minimap: { enabled: false }
         };
 
-        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectWorkflowEntityComponent.PANEL_KEY));
+        this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2ExploreEntityWorkflowComponent.PANEL_KEY));
 
         this.resizingSubscription = this._store.select(PreferencesState.resizing).subscribe(resizing => {
             this.resizing = resizing;
+            this._cd.markForCheck();
+        });
+
+        this.listJobNames
+
+        this._projectService.getJSONSchema(EntityType.Job).subscribe(j => {
+            this.jobFlatSchema = JSONSchema.flat(j);
             this._cd.markForCheck();
         });
 
@@ -82,14 +92,11 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
     }
 
     ngOnChanges(): void {
-        this.workflowFlatSchema = JSONSchema.flat(this.workflowSchema);
-        this.jobFlatSchema = JSONSchema.flat(this.jobSchema);
+        this.workflowFlatSchema = JSONSchema.flat(this.schema);
         this.dataGraph = this.data;
         this.dataEditor = this.data;
         this._cd.markForCheck();
     }
-
-    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     selectJob(jobName: string) {
         this.selectedJob = jobName;
@@ -223,6 +230,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
                 schema: this.workflowFlatSchema
             }]
         });
+        this.editor.layout();
     }
 
     panelStartResize(): void {
@@ -231,7 +239,7 @@ export class ProjectWorkflowEntityComponent implements OnInit, OnChanges, OnDest
 
     panelEndResize(size: string): void {
         this._store.dispatch(new actionPreferences.SavePanelSize({
-            panelKey: ProjectWorkflowEntityComponent.PANEL_KEY,
+            panelKey: ProjectV2ExploreEntityWorkflowComponent.PANEL_KEY,
             size: size
         }));
         this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
