@@ -39,7 +39,7 @@ func (s *Service) processEventJobSummary(i interface{}) error {
 
 	// job v2 as code
 	if e.JobRunID != "" {
-		_, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexJobSummary, "cds_job", e.JobRunID, e)
+		_, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexJobSummary, e.JobRunID, e)
 		if err != nil {
 			return errors.Wrapf(err, "unable to index document ascode v2 %+v", e)
 		}
@@ -47,7 +47,7 @@ func (s *Service) processEventJobSummary(i interface{}) error {
 	}
 
 	// job v1
-	_, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexJobSummary, "cds_job", strconv.FormatInt(e.ID, 10), e)
+	_, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexJobSummary, strconv.FormatInt(e.ID, 10), e)
 	if err != nil {
 		return errors.Wrapf(err, "unable to index document %+v", e)
 	}
