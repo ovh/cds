@@ -430,7 +430,7 @@ func LoadRunsUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowR
 }
 
 func LoadRunIDsToDelete(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {
-	query := `SELECT id from v2_workflow_run WHERE retention_date < CURRENT_DATE ORDER BY started ASC`
+	query := `SELECT id from v2_workflow_run WHERE retention_date < CURRENT_DATE ORDER BY started ASC LIMIT 500`
 	var ids []string
 	if _, err := db.Select(&ids, query); err != nil {
 		return nil, err
