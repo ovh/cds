@@ -14,15 +14,15 @@ import (
 var _ Lintable = V2WorkflowTemplate{}
 
 type V2WorkflowTemplate struct {
-	Name        string                        `json:"name"`
-	Description string                        `json:"description,omitempty"`
-	Parameters  []V2WorkflowTemplateParameter `json:"parameters"`
-	Spec        WorkflowSpec                  `json:"spec"`
+	Name        string                        `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the workflow templates"`
+	Description string                        `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the workflow template"`
+	Parameters  []V2WorkflowTemplateParameter `json:"parameters" jsonschema_extras:"order=3" jsonschema_description:"Array of parameters"`
+	Spec        WorkflowSpec                  `json:"spec" jsonschema_extras:"order=4,code=true" jsonschema_description:"Workflow definition"`
 }
 
 type V2WorkflowTemplateParameter struct {
-	Key      string `json:"key"`
-	Required bool   `json:"required"`
+	Key      string `json:"key" jsonschema_extras:"order=1" jsonschema_description:"Name of the parameter"`
+	Required bool   `json:"required" jsonschema_extras:"order=2" jsonschema_description:"Indicate if the parameter is mandatory"`
 }
 
 func (wt V2WorkflowTemplate) Lint() (errs []error) {
