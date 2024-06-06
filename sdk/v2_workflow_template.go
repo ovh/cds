@@ -14,11 +14,16 @@ import (
 var _ Lintable = V2WorkflowTemplate{}
 
 type V2WorkflowTemplate struct {
-	Name         string                     `json:"name"`
-	Description  string                     `json:"description,omitempty"`
-	Parameters   WorkflowTemplateParameters `json:"parameters"`
-	CommitStatus *CommitStatus              `json:"commit-status,omitempty"`
-	Spec         WorkflowSpec               `json:"spec"`
+	Name         string                      `json:"name"`
+	Description  string                      `json:"description,omitempty"`
+	Parameters   V2WorkflowTemplateParameter `json:"parameters"`
+	CommitStatus *CommitStatus               `json:"commit-status,omitempty"`
+	Spec         WorkflowSpec                `json:"spec"`
+}
+
+type V2WorkflowTemplateParameter struct {
+	Key      string `json:"key"`
+	Required bool   `json:"required"`
 }
 
 func (wt V2WorkflowTemplate) Lint() (errs []error) {
@@ -69,7 +74,7 @@ func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (err er
 	}
 
 	var buf bytes.Buffer
-	if err := wt.Spec.tpl.Execute(&buf, map[string]any{
+	if err := wt.Spec.tpl.Execute(&buf, map[string]map[string]string{
 		"params": w.Parameters,
 	}); err != nil {
 		return err
