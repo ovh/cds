@@ -185,9 +185,9 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	runJobs := prepareRunJobs(ctx, *proj, *run, wrEnqueue, jobsToQueue, sdk.StatusWaiting, *u)
 
 	// Compute worker model on runJobs if needed
-	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, u.Username)
-	wref.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
-	wref.vcsServerCache[vcsServer.Name] = *vcsServer
+	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u)
+	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
+	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 
 	runJobsInfos, runUpdated := computeRunJobsWorkerModel(ctx, api.mustDB(), api.Cache, wref, run, runJobs)
 
@@ -549,9 +549,9 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 				continue
 			}
 			if strings.HasPrefix(model, ".cds/worker-models/") {
-				rj.ModelType = wref.localWorkerModelCache[model].Type
+				rj.ModelType = wref.ef.localWorkerModelCache[model].Type
 			} else {
-				rj.ModelType = wref.workerModelCache[completeName].Type
+				rj.ModelType = wref.ef.workerModelCache[completeName].Type
 			}
 			rj.Job.RunsOn.Model = completeName
 		}
@@ -586,14 +586,14 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 			rj.Job.RunsOn.Memory = mem
 		}
 
-		for _, def := range wref.localWorkerModelCache {
-			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, def.Name, wref.run.WorkflowRef)
+		for _, def := range wref.ef.localWorkerModelCache {
+			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, def.Name, wref.run.WorkflowRef)
 			if _, has := run.WorkflowData.WorkerModels[completeName]; !has {
 				runUpdated = true
 				run.WorkflowData.WorkerModels[completeName] = def
 			}
 		}
-		for name, def := range wref.workerModelCache {
+		for name, def := range wref.ef.workerModelCache {
 			if _, has := run.WorkflowData.WorkerModels[name]; !has {
 				runUpdated = true
 				run.WorkflowData.WorkerModels[name] = def

@@ -64,9 +64,7 @@ testcases:
         name: "{{.cds_workflow_template}}"
         parameters:
         - key: name
-          type: string
         - key: subname
-          type: string
         spec: |-
           jobs:
             hello:

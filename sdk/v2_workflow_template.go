@@ -14,11 +14,10 @@ import (
 var _ Lintable = V2WorkflowTemplate{}
 
 type V2WorkflowTemplate struct {
-	Name         string                      `json:"name"`
-	Description  string                      `json:"description,omitempty"`
-	Parameters   V2WorkflowTemplateParameter `json:"parameters"`
-	CommitStatus *CommitStatus               `json:"commit-status,omitempty"`
-	Spec         WorkflowSpec                `json:"spec"`
+	Name        string                        `json:"name"`
+	Description string                        `json:"description,omitempty"`
+	Parameters  []V2WorkflowTemplateParameter `json:"parameters"`
+	Spec        WorkflowSpec                  `json:"spec"`
 }
 
 type V2WorkflowTemplateParameter struct {

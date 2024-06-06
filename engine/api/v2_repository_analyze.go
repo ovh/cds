@@ -382,6 +382,11 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load analyze %s", analysis.ID))
 	}
 
+	proj, err := project.Load(ctx, api.mustDB(), analysis.ProjectKey)
+	if err != nil {
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to load project %s", analysis.ProjectKey))
+	}
+
 	if analysis.Status != sdk.RepositoryAnalysisStatusInProgress {
 		return nil
 	}
@@ -521,7 +526,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}
 
 	// Transform file content into entities
-	entities, multiErr := api.handleEntitiesFiles(ctx, filesContent, analysis)
+	entities, multiErr := api.handleEntitiesFiles(ctx, filesContent, analysis, *proj, *vcsProjectWithSecret, *repo, *u)
 	if multiErr != nil {
 		return api.stopAnalysis(ctx, analysis, multiErr...)
 	}
@@ -1257,11 +1262,12 @@ func sortEntitiesFiles(filesContent map[string][]byte) []string {
 	return keys
 }
 
-func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.EntityWithObject, []error) {
+func (api *API) handleEntitiesFiles(ctx context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis, proj sdk.Project, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) ([]sdk.EntityWithObject, []error) {
 	sortedKeys := sortEntitiesFiles(filesContent)
 
 	entities := make([]sdk.EntityWithObject, 0)
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
+	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, repo, vcsServer, u)
 	for _, filePath := range sortedKeys {
 		content := filesContent[filePath]
 		dir, fileName := filepath.Split(filePath)
@@ -1270,16 +1276,16 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 		switch {
 		case strings.HasPrefix(filePath, ".cds/worker-models/"):
 			var wms []sdk.V2WorkerModel
-			es, err = ReadEntityFile(api, dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis)
+			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &wms, sdk.EntityTypeWorkerModel, *analysis, ef)
 		case strings.HasPrefix(filePath, ".cds/actions/"):
 			var actions []sdk.V2Action
-			es, err = ReadEntityFile(api, dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis)
+			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &actions, sdk.EntityTypeAction, *analysis, ef)
 		case strings.HasPrefix(filePath, ".cds/workflows/"):
 			var w []sdk.V2Workflow
-			es, err = ReadEntityFile(api, dir, fileName, content, &w, sdk.EntityTypeWorkflow, *analysis)
+			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &w, sdk.EntityTypeWorkflow, *analysis, ef)
 		case strings.HasPrefix(filePath, ".cds/workflow-templates/"):
 			var wt []sdk.V2WorkflowTemplate
-			es, err = ReadEntityFile(api, dir, fileName, content, &wt, sdk.EntityTypeWorkflowTemplate, *analysis)
+			es, err = ReadEntityFile(ctx, api, dir, fileName, content, &wt, sdk.EntityTypeWorkflowTemplate, *analysis, ef)
 		default:
 			continue
 		}
@@ -1296,7 +1302,7 @@ func (api *API) handleEntitiesFiles(_ context.Context, filesContent map[string][
 
 }
 
-func Lint[T sdk.Lintable](api *API, o T) []error {
+func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, analyzedEntities []sdk.EntityWithObject, ef *EntityFinder) []error {
 	// 1. Static lint
 	if err := o.Lint(); err != nil {
 		return err
@@ -1326,6 +1332,48 @@ func Lint[T sdk.Lintable](api *API, o T) []error {
 				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "image %q is not allowed", dockerSpec.Image))
 			}
 		}
+	case sdk.V2Workflow:
+		if x.From == "" {
+			break
+		}
+		var tmpl *sdk.V2WorkflowTemplate
+		if strings.HasPrefix(x.From, ".cds/workflow-templates/") {
+			// Retrieve tmpl from current analysis
+			tmplName := strings.TrimPrefix(x.From, ".cds/workflow-templates/")
+			for i := range analyzedEntities {
+				e := &analyzedEntities[i]
+				if e.Type != sdk.EntityTypeWorkflowTemplate {
+					continue
+				}
+				if e.Name == tmplName {
+					tmpl = &e.Template
+					break
+				}
+			}
+		} else {
+			// Retrieve existing template in DB
+			path, msg, errSearch := ef.searchEntity(ctx, api.mustDB(), api.Cache, x.From, sdk.EntityTypeWorkflowTemplate)
+			if err != nil {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to retrieve entity %s of type %s: %v", x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
+				break
+			}
+			if msg != "" {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, msg))
+				break
+			}
+			t := ef.templatesCache[path]
+			tmpl = &t.Template
+		}
+		if tmpl == nil || tmpl.Name == "" {
+			err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unknown workflow template %s", x.From))
+		} else {
+			// Check required parameters
+			for _, v := range tmpl.Parameters {
+				if wkfP, has := x.Parameters[v.Key]; (!has || len(wkfP) == 0) && v.Required {
+					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "required template parameter %s is missing or empty", x.From))
+				}
+			}
+		}
 	}
 
 	if len(err) > 0 {
@@ -1335,7 +1383,7 @@ func Lint[T sdk.Lintable](api *API, o T) []error {
 	return nil
 }
 
-func ReadEntityFile[T sdk.Lintable](api *API, directory, fileName string, content []byte, out *[]T, t string, analysis sdk.ProjectRepositoryAnalysis) ([]sdk.EntityWithObject, []error) {
+func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fileName string, content []byte, out *[]T, t string, analysis sdk.ProjectRepositoryAnalysis, ef *EntityFinder) ([]sdk.EntityWithObject, []error) {
 	namePattern, err := regexp.Compile(sdk.EntityNamePattern)
 	if err != nil {
 		return nil, []error{sdk.WrapError(err, "unable to compile regexp %s", namePattern)}
@@ -1346,7 +1394,7 @@ func ReadEntityFile[T sdk.Lintable](api *API, directory, fileName string, conten
 	}
 	var entities []sdk.EntityWithObject
 	for _, o := range *out {
-		if err := o.Lint(); err != nil {
+		if err := Lint(ctx, api, o, entities, ef); err != nil {
 			return nil, err
 		}
 		eo := sdk.EntityWithObject{
