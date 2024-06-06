@@ -128,7 +128,7 @@ func NewEventJobSummaryV2(wr sdk.V2WorkflowRun, jobrun sdk.V2WorkflowRunJob) sdk
 		GitCommit:            wr.WorkflowSha,
 	}
 
-	if !jobrun.Started.IsZero() {
+	if jobrun.Started != nil && !jobrun.Started.IsZero() {
 		ejs.Started = jobrun.Started
 		ejs.InQueueDuration = int(jobrun.Started.UnixMilli() - jobrun.Queued.UnixMilli())
 		ejs.WorkerModel = jobrun.Job.RunsOn.Model
@@ -138,7 +138,7 @@ func NewEventJobSummaryV2(wr sdk.V2WorkflowRun, jobrun sdk.V2WorkflowRunJob) sdk
 		ejs.Region = jobrun.Region
 	}
 
-	if !jobrun.Ended.IsZero() {
+	if jobrun.Ended != nil && !jobrun.Ended.IsZero() && jobrun.Started != nil {
 		ejs.Ended = jobrun.Ended
 		ejs.TotalDuration = int(jobrun.Ended.UnixMilli() - jobrun.Queued.UnixMilli())
 		ejs.BuildDuration = int(jobrun.Ended.UnixMilli() - jobrun.Started.UnixMilli())
