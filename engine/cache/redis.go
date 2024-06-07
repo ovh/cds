@@ -257,6 +257,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 	var elem string
 	ticker := time.NewTicker(waitDuration)
 	defer ticker.Stop()
+forloop:
 	for elem == "" {
 		select {
 		case <-ticker.C:
@@ -273,7 +274,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 			}
 			if err == nil && len(res) == 2 {
 				elem = res[1]
-				break
+				break forloop
 			}
 		case <-c.Done():
 			return c.Err()
@@ -282,7 +283,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 	if elem != "" {
 		b := []byte(elem)
 		if err := sdk.JSONUnmarshal(b, value); err != nil {
-			return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s", queueName)
+			return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s elem:%v", queueName, elem)
 		}
 	}
 	return nil
