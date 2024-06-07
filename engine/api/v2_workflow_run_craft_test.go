@@ -211,7 +211,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(wrInfos))
-	require.Equal(t, "obsolete workflow dependency used: myworker-model", wrInfos[0].Message)
+	require.Equal(t, "unable to find workflow dependency: myworker-model", wrInfos[0].Message)
 }
 
 func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {

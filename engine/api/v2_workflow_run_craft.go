@@ -34,40 +34,17 @@ import (
 )
 
 type WorkflowRunEntityFinder struct {
-	project               sdk.Project
-	vcsServerCache        map[string]sdk.VCSProject
-	repoCache             map[string]sdk.ProjectRepository
-	repoDefaultRefCache   map[string]string
-	actionsCache          map[string]sdk.V2Action
-	localActionsCache     map[string]sdk.V2Action
-	localWorkerModelCache map[string]sdk.V2WorkerModel
-	workerModelCache      map[string]sdk.V2WorkerModel
-	localTemplatesCache   map[string]sdk.EntityWithObject
-	templatesCache        map[string]sdk.EntityWithObject
-	plugins               map[string]sdk.GRPCPlugin
-	run                   sdk.V2WorkflowRun
-	runVcsServer          sdk.VCSProject
-	runRepo               sdk.ProjectRepository
-	userName              string
+	run     sdk.V2WorkflowRun
+	ef      *EntityFinder
+	project sdk.Project
 }
 
-func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, username string) *WorkflowRunEntityFinder {
+func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser) *WorkflowRunEntityFinder {
+	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, u)
 	return &WorkflowRunEntityFinder{
-		project:               p,
-		run:                   run,
-		runRepo:               repo,
-		runVcsServer:          vcsServer,
-		actionsCache:          make(map[string]sdk.V2Action),
-		localActionsCache:     make(map[string]sdk.V2Action),
-		workerModelCache:      make(map[string]sdk.V2WorkerModel),
-		localWorkerModelCache: make(map[string]sdk.V2WorkerModel),
-		templatesCache:        make(map[string]sdk.EntityWithObject),
-		localTemplatesCache:   make(map[string]sdk.EntityWithObject),
-		repoCache:             make(map[string]sdk.ProjectRepository),
-		vcsServerCache:        make(map[string]sdk.VCSProject),
-		repoDefaultRefCache:   make(map[string]string),
-		plugins:               make(map[string]sdk.GRPCPlugin),
-		userName:              username,
+		ef:      ef,
+		run:     run,
+		project: p,
 	}
 }
 
@@ -183,7 +160,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		})
 	}
 	run.Contexts = *runContext
-	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, u.Username)
+	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, *u)
 
 	// Resolve workflow template if applicable
 	if run.WorkflowData.Workflow.From != "" {
@@ -236,7 +213,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 	for _, p := range plugins {
-		wref.plugins[p.Name] = p
+		wref.ef.plugins[p.Name] = p
 	}
 
 	allVariableSets, err := project.LoadVariableSetsByProject(ctx, api.mustDB(), p.Key)
@@ -272,7 +249,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 				return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 					WorkflowRunID: run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+					Message:       fmt.Sprintf("unable to compute worker model %s: %v", j.RunsOn.Model, err),
 				})
 			}
 			if msg != nil {
@@ -300,19 +277,19 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	run.WorkflowData.Actions = make(map[string]sdk.V2Action)
-	for k, v := range wref.actionsCache {
+	for k, v := range wref.ef.actionsCache {
 		run.WorkflowData.Actions[k] = v
 	}
-	for _, v := range wref.localActionsCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, v.Name, wref.run.WorkflowRef)
+	for _, v := range wref.ef.localActionsCache {
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.run.WorkflowRef)
 		run.WorkflowData.Actions[completeName] = v
 	}
 	run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
-	for k, v := range wref.workerModelCache {
+	for k, v := range wref.ef.workerModelCache {
 		run.WorkflowData.WorkerModels[k] = v
 	}
-	for _, v := range wref.localWorkerModelCache {
-		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, v.Name, wref.run.WorkflowRef)
+	for _, v := range wref.ef.localWorkerModelCache {
+		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.run.WorkflowRef)
 		run.WorkflowData.WorkerModels[completeName] = v
 	}
 
@@ -376,211 +353,6 @@ func checkWorkflowVariableSets(run sdk.V2WorkflowRun, currentJob sdk.V2Job, proj
 	return nil
 }
 
-// Return the complete path of the entity
-func (wref *WorkflowRunEntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (string, *sdk.V2WorkflowRunInfo, error) {
-	ctx, end := telemetry.Span(ctx, "WorkflowRunEntityFinder.searchEntity", trace.StringAttribute("entity-type", entityType), trace.StringAttribute("entity-name", name))
-	defer end()
-
-	var ref, branchOrTag, entityName, repoName, vcsName, projKey string
-
-	if name == "" {
-		return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: entityType + " cannot be empty"}, nil
-	}
-
-	// Get branch if present
-	splitBranch := strings.Split(name, "@")
-	if len(splitBranch) == 2 {
-		branchOrTag = splitBranch[1]
-	}
-	entityFullPath := splitBranch[0]
-
-	entityPathSplit := strings.Split(entityFullPath, "/")
-	embeddedEntity := false
-	switch len(entityPathSplit) {
-	case 1:
-		entityName = entityFullPath
-		embeddedEntity = true
-	case 2:
-		return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("invalid workflow: unable to get repository from %s", entityFullPath)}, nil
-	case 3:
-		repoName = fmt.Sprintf("%s/%s", entityPathSplit[0], entityPathSplit[1])
-		entityName = entityPathSplit[2]
-	case 4:
-		vcsName = entityPathSplit[0]
-		repoName = fmt.Sprintf("%s/%s", entityPathSplit[1], entityPathSplit[2])
-		entityName = entityPathSplit[3]
-	case 5:
-		projKey = entityPathSplit[0]
-		vcsName = entityPathSplit[1]
-		repoName = fmt.Sprintf("%s/%s", entityPathSplit[2], entityPathSplit[3])
-		entityName = entityPathSplit[4]
-	default:
-		return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("unable to parse the %s: %s", entityType, name)}, nil
-	}
-
-	var entityVCS sdk.VCSProject
-	var entityRepo sdk.ProjectRepository
-
-	// If no project key in path, get it from workflow run
-	if projKey == "" || projKey == wref.run.ProjectKey {
-		projKey = wref.run.ProjectKey
-	} else {
-		// Verify project read permission
-		can, err := rbac.HasRoleOnProjectAndUserID(ctx, db, sdk.ProjectRoleRead, wref.run.UserID, projKey)
-		if err != nil {
-			return "", nil, err
-		}
-		if !can {
-			return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("user %s do not have the permission to access %s", wref.userName, name)}, nil
-		}
-	}
-
-	// If no vcs in path, get it from workflow run
-	if vcsName == "" || (vcsName == wref.runVcsServer.Name && projKey == wref.run.ProjectKey) {
-		vcsName = wref.runVcsServer.Name
-		entityVCS = wref.runVcsServer
-	} else {
-		vcsFromCache, has := wref.vcsServerCache[projKey+"/"+vcsName]
-		if has {
-			entityVCS = vcsFromCache
-		} else {
-			vcsDB, err := vcs.LoadVCSByProject(ctx, db, projKey, vcsName)
-			if err != nil {
-				if sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("vcs %s not found on project %s", vcsName, projKey)}, nil
-				}
-				return "", nil, err
-			}
-			entityVCS = *vcsDB
-			wref.vcsServerCache[projKey+"/"+vcsName] = *vcsDB
-		}
-	}
-	// If no repo in path, get it from workflow run
-	if repoName == "" || (vcsName == wref.runVcsServer.Name && repoName == wref.runRepo.Name && projKey == wref.run.ProjectKey) {
-		repoName = wref.runRepo.Name
-		entityRepo = wref.runRepo
-	} else {
-		entityFromCache, has := wref.repoCache[projKey+"/"+vcsName+"/"+repoName]
-		if has {
-			entityRepo = entityFromCache
-		} else {
-			repoDB, err := repository.LoadRepositoryByName(ctx, db, entityVCS.ID, repoName)
-			if err != nil {
-				if sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("repository %s not found on vcs %s into project %s", repoName, vcsName, projKey)}, nil
-				}
-				return "", nil, err
-			}
-			entityRepo = *repoDB
-			wref.repoCache[projKey+"/"+vcsName+"/"+repoName] = *repoDB
-		}
-	}
-
-	if branchOrTag == "" {
-		if embeddedEntity || (projKey == wref.run.ProjectKey && entityVCS.ID == wref.runVcsServer.ID && entityRepo.ID == wref.runRepo.ID) {
-			// Get current git.branch parameters
-			ref = wref.run.WorkflowRef
-		} else {
-			defaultCache, has := wref.repoDefaultRefCache[projKey+"/"+entityVCS.Name+"/"+entityRepo.Name]
-			if has {
-				ref = defaultCache
-			} else {
-				// Get default branch
-				client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projKey, entityVCS.Name)
-				if err != nil {
-					return "", nil, err
-				}
-				b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{Default: true})
-				if err != nil {
-					return "", nil, err
-				}
-				ref = b.ID
-				wref.repoDefaultRefCache[projKey+"/"+entityVCS.Name+"/"+entityRepo.Name] = ref
-			}
-		}
-	} else if strings.HasPrefix(branchOrTag, sdk.GitRefBranchPrefix) || strings.HasPrefix(branchOrTag, sdk.GitRefTagPrefix) {
-		ref = branchOrTag
-	} else {
-		// Need to known if branchOrTag is a tag or a branch
-		client, err := repositoriesmanager.AuthorizedClient(ctx, db, store, projKey, entityVCS.Name)
-		if err != nil {
-			return "", nil, err
-		}
-		b, err := client.Branch(ctx, entityRepo.Name, sdk.VCSBranchFilters{BranchName: branchOrTag})
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return "", nil, err
-		}
-
-		if b == nil {
-			// try to get tag
-			t, err := client.Tag(ctx, entityRepo.Name, branchOrTag)
-			if err != nil {
-				return "", nil, err
-			}
-			ref = sdk.GitRefTagPrefix + t.Tag
-		} else {
-			ref = b.ID
-		}
-	}
-
-	completePath := fmt.Sprintf("%s/%s/%s/%s", projKey, vcsName, repoName, entityName)
-	if ref != "" {
-		completePath += "@" + ref
-	}
-
-	switch entityType {
-	case sdk.EntityTypeAction:
-		if _, has := wref.actionsCache[completePath]; has {
-			return completePath, nil, nil
-		}
-	case sdk.EntityTypeWorkerModel:
-		if _, has := wref.workerModelCache[completePath]; has {
-			return completePath, nil, nil
-		}
-	}
-
-	var entityDB *sdk.Entity
-	var err error
-	if projKey != wref.run.ProjectKey || entityVCS.Name != wref.runVcsServer.Name || entityRepo.Name != wref.runRepo.Name || ref != wref.run.WorkflowRef {
-		entityDB, err = entity.LoadByRefTypeNameCommit(ctx, db, entityRepo.ID, ref, entityType, entityName, "HEAD")
-	} else {
-		entityDB, err = entity.LoadByRefTypeNameCommit(ctx, db, entityRepo.ID, wref.run.WorkflowRef, entityType, entityName, wref.run.WorkflowSha)
-	}
-	if err != nil {
-		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: fmt.Sprintf("obsolete workflow dependency used: %s", name)}, nil
-		}
-		return "", nil, err
-	}
-
-	switch entityType {
-	case sdk.EntityTypeAction:
-		var act sdk.V2Action
-		if err := yaml.Unmarshal([]byte(entityDB.Data), &act); err != nil {
-			return "", nil, err
-		}
-		wref.actionsCache[completePath] = act
-	case sdk.EntityTypeWorkerModel:
-		var wm sdk.V2WorkerModel
-		if err := yaml.Unmarshal([]byte(entityDB.Data), &wm); err != nil {
-			return "", nil, err
-		}
-		wref.workerModelCache[completePath] = wm
-	case sdk.EntityTypeWorkflowTemplate:
-		var wt sdk.V2WorkflowTemplate
-		if err := yaml.Unmarshal([]byte(entityDB.Data), &wt); err != nil {
-			return "", nil, err
-		}
-		wref.templatesCache[completePath] = sdk.EntityWithObject{
-			Entity:   *entityDB,
-			Template: wt,
-		}
-	default:
-		return "", nil, sdk.NewErrorFrom(sdk.ErrNotImplemented, "entity %s not implemented", entityType)
-	}
-	return completePath, nil, nil
-}
-
 func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, steps []sdk.ActionStep) (*sdk.V2WorkflowRunInfo, error) {
 	ctx, end := telemetry.Span(ctx, "searchActions")
 	defer end()
@@ -592,9 +364,9 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 
 		if strings.HasPrefix(step.Uses, ".cds/actions/") {
 			// Find action from path
-			localAct, has := wref.localActionsCache[step.Uses]
+			localAct, has := wref.ef.localActionsCache[step.Uses]
 			if !has {
-				actionEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.runRepo.ID, step.Uses, wref.run.WorkflowRef, wref.run.WorkflowSha)
+				actionEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.ef.currentRepo.ID, step.Uses, wref.run.WorkflowRef, wref.run.WorkflowSha)
 				if err != nil {
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: wref.run.ID,
@@ -606,13 +378,13 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 				if err := yaml.Unmarshal([]byte(actionEntity.Data), &localAct); err != nil {
 					return nil, err
 				}
-				wref.localActionsCache[step.Uses] = localAct
+				wref.ef.localActionsCache[step.Uses] = localAct
 				msg, err := searchActions(ctx, db, store, wref, localAct.Runs.Steps)
 				if msg != nil || err != nil {
 					return msg, err
 				}
 			}
-			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, localAct.Name, wref.run.WorkflowRef)
+			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, localAct.Name, wref.run.WorkflowRef)
 			step.Uses = "actions/" + completeName
 		} else {
 			actionName := strings.TrimPrefix(step.Uses, "actions/")
@@ -620,7 +392,7 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 			// If plugins
 			if strings.HasPrefix(step.Uses, "actions/") && len(actionSplit) == 1 {
 				// Check plugins
-				if _, has := wref.plugins[actionSplit[0]]; !has {
+				if _, has := wref.ef.plugins[actionSplit[0]]; !has {
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: wref.run.ID,
 						Level:         sdk.WorkflowRunInfoLevelError,
@@ -630,16 +402,16 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 				}
 				continue
 			} else {
-				completeName, msg, err := wref.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
-				if msg != nil || err != nil {
-					return msg, err
+				completeName, msg, err := wref.ef.searchEntity(ctx, db, store, actionName, sdk.EntityTypeAction)
+				if msg != "" || err != nil {
+					return &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, err
 				}
 				// rewrite step with full path
 				step.Uses = "actions/" + completeName
-				act := wref.actionsCache[completeName]
-				msg, err = searchActions(ctx, db, store, wref, act.Runs.Steps)
-				if msg != nil || err != nil {
-					return msg, err
+				act := wref.ef.actionsCache[completeName]
+				runInfo, err := searchActions(ctx, db, store, wref, act.Runs.Steps)
+				if runInfo != nil || err != nil {
+					return runInfo, err
 				}
 			}
 		}
@@ -876,9 +648,9 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 	if workerModel != "" {
 		if strings.HasPrefix(workerModel, ".cds/worker-models/") {
 			// Find action from path
-			localWM, has := wref.localWorkerModelCache[workerModel]
+			localWM, has := wref.ef.localWorkerModelCache[workerModel]
 			if !has {
-				wmEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.runRepo.ID, workerModel, wref.run.WorkflowRef, wref.run.WorkflowSha)
+				wmEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.ef.currentRepo.ID, workerModel, wref.run.WorkflowRef, wref.run.WorkflowSha)
 				if err != nil {
 					msg := sdk.V2WorkflowRunInfo{
 						WorkflowRunID: wref.run.ID,
@@ -890,19 +662,19 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 				if err := yaml.Unmarshal([]byte(wmEntity.Data), &localWM); err != nil {
 					return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read worker model %s: %v", workerModel, err)
 				}
-				wref.localWorkerModelCache[workerModel] = localWM
+				wref.ef.localWorkerModelCache[workerModel] = localWM
 			}
-			modelCompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.runVcsServer.Name, wref.runRepo.Name, localWM.Name, wref.run.WorkflowRef)
+			modelCompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, localWM.Name, wref.run.WorkflowRef)
 			modelType = localWM.Type
 		} else {
-			completeName, msg, err := wref.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
+			completeName, msg, err := wref.ef.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
 			if err != nil {
 				return "", nil, err
 			}
-			if msg != nil {
-				return "", msg, nil
+			if msg != "" {
+				return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, nil
 			}
-			modelType = wref.workerModelCache[completeName].Type
+			modelType = wref.ef.workerModelCache[completeName].Type
 			modelCompleteName = completeName
 		}
 
@@ -1009,14 +781,14 @@ func (wref *WorkflowRunEntityFinder) checkWorkflowTemplate(ctx context.Context, 
 	var e sdk.EntityWithObject
 	if strings.HasPrefix(templateName, ".cds/workflow-templates/") {
 		// Find action from path
-		localEntity, has := wref.localTemplatesCache[templateName]
+		localEntity, has := wref.ef.localTemplatesCache[templateName]
 		if !has {
-			wtEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.runRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha)
+			wtEntity, err := entity.LoadEntityByPathAndRefAndCommit(ctx, db, wref.ef.currentRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha)
 			if err != nil {
 				msg := sdk.V2WorkflowRunInfo{
 					WorkflowRunID: wref.run.ID,
 					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       fmt.Sprintf("Unable to find workflow template %s %s %s %s", wref.runRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha),
+					Message:       fmt.Sprintf("Unable to find workflow template %s %s %s %s", wref.ef.currentRepo.ID, templateName, wref.run.WorkflowRef, wref.run.WorkflowSha),
 				}
 				return e, &msg, nil
 			}
@@ -1024,18 +796,18 @@ func (wref *WorkflowRunEntityFinder) checkWorkflowTemplate(ctx context.Context, 
 				return e, nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read workflow template %s: %v", templateName, err)
 			}
 			localEntity.Entity = *wtEntity
-			wref.localTemplatesCache[templateName] = localEntity
+			wref.ef.localTemplatesCache[templateName] = localEntity
 		}
 		e = localEntity
 	} else {
-		completeName, msg, err := wref.searchEntity(ctx, db, store, templateName, sdk.EntityTypeWorkflowTemplate)
+		completeName, msg, err := wref.ef.searchEntity(ctx, db, store, templateName, sdk.EntityTypeWorkflowTemplate)
 		if err != nil {
 			return e, nil, err
 		}
-		if msg != nil {
-			return e, msg, nil
+		if msg != "" {
+			return e, &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, nil
 		}
-		e = wref.templatesCache[completeName]
+		e = wref.ef.templatesCache[completeName]
 	}
 
 	return e, nil, nil
