@@ -30,6 +30,13 @@
                         nzMessage="Your file is too large (max 100Ko)"></nz-alert>
                 </nz-form-control>
             </nz-form-item>
+            <nz-form-item *ngIf="v2Enabled">
+                <nz-form-label [nzSpan]="3">As-code workflow run retention</nz-form-label>
+                <nz-form-control>
+                    <input nz-input type="number" name="formProjectUpdateName" placeholder="Workflow retention"
+                        [(ngModel)]="project.workflow_retention" [disabled]="loading" required #formProjectUpdateName="ngModel">
+                </nz-form-control>
+            </nz-form-item>
             <nz-form-item nzJustify="end">
                 <button nz-button nzType="primary" name="btnrename" [nzLoading]="loading"
                     [disabled]="projectUpdateFrom.invalid">Rename</button>

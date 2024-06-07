@@ -54,6 +54,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/featureflipping"
@@ -245,7 +246,8 @@ type Configuration struct {
 		WorkerModelDockerImageWhiteList []string         `toml:"workerModelDockerImageWhiteList" comment:"White list for docker image worker model " json:"workerModelDockerImageWhiteList" commented:"true"`
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	WorkflowV2 struct {
-		JobSchedulingTimeout int64 `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+		JobSchedulingTimeout   int64 `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
+		RunRetentionScheduling int64 `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"RunRetentionScheduling" default:"15"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
 		Retention string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
@@ -505,6 +507,9 @@ func (a *API) Serve(ctx context.Context) error {
 	entityRetention, err := time.ParseDuration(a.Config.Entity.Retention)
 	if err != nil {
 		return sdk.WrapError(err, "wrong entity retention %s, bad format.", a.Config.Entity.Retention)
+	}
+	if a.Config.WorkflowV2.RunRetentionScheduling == 0 {
+		a.Config.WorkflowV2.RunRetentionScheduling = 15
 	}
 
 	// Checking downloadable binaries
@@ -1022,6 +1027,11 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.Run(ctx, "Purge-Workflow",
 		func(ctx context.Context) {
 			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
+		})
+
+	a.GoRoutines.Run(ctx, "Purge-WorkflowRunV2",
+		func(ctx context.Context) {
+			workflow_v2.PurgeWorkflowRun(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Config.WorkflowV2.RunRetentionScheduling)
 		})
 
 	// Check maintenance on redis

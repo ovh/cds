@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { APIConfig } from 'app/model/config.service';
 import { Project } from 'app/model/project.model';
+import { FeatureNames, FeatureService } from 'app/service/feature/feature.service';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { ConfigState } from 'app/store/config.state';
@@ -26,16 +27,22 @@ export class ProjectAdminComponent implements OnInit {
     fileTooLarge = false;
     configSubscription: Subscription;
     apiConfig: APIConfig;
+    v2Enabled: boolean = false;
 
     constructor(
         private _toast: ToastService,
         public _translate: TranslateService,
         private _router: Router,
         private _store: Store,
-        private _cd: ChangeDetectorRef
+        private _cd: ChangeDetectorRef,
+        private _featureService: FeatureService
     ) { }
 
     ngOnInit(): void {
+        this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: this.project.key }).subscribe(f => {
+            this.v2Enabled = f.enabled;
+            this._cd.markForCheck();
+        });
         if (!this.project.permissions.writable) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }

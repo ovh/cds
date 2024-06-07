@@ -27,6 +27,88 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPurgeWorkflowRun(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM v2_workflow_run")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, proj.ID, "vcs", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcs.ID, sdk.RandomString(10))
+
+	wr1 := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcs.ID,
+		VCSServer:    vcs.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now().Add(-24 * 365 * time.Hour),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     "github",
+				Repository: "ovh/cds",
+				Ref:        "refs/heads/master",
+				Sha:        "123456",
+			},
+		},
+		RetentionDate: time.Now().Add(-24 * time.Hour),
+		WorkflowData:  sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr1))
+
+	wr2 := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcs.ID,
+		VCSServer:    vcs.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   0,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.StatusSuccess,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		Contexts: sdk.WorkflowRunContext{
+			Git: sdk.GitContext{
+				Server:     "github",
+				Repository: "ovh/cds",
+				Ref:        "refs/heads/master",
+				Sha:        "123456",
+			},
+		},
+		RetentionDate: time.Now().Add(24 * time.Hour * 90),
+		WorkflowData:  sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr2))
+
+	ids, err := workflow_v2.LoadRunIDsToDelete(context.TODO(), db)
+	require.NoError(t, err)
+	require.Len(t, ids, 1)
+	require.Equal(t, wr1.ID, ids[0])
+
+	require.NoError(t, workflow_v2.DeleteRun(context.TODO(), db.DbMap, ids[0]))
+
+	_, err = workflow_v2.LoadRunByID(context.TODO(), db, ids[0])
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
+}
+
 func TestSearchAllWorkflow(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
