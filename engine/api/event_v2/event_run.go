@@ -124,8 +124,6 @@ func NewEventJobSummaryV2(wr sdk.V2WorkflowRun, jobrun sdk.V2WorkflowRunJob) sdk
 		Job:                  jobrun.JobID,
 		GitVCS:               wr.VCSServer,
 		GitRepo:              wr.Repository,
-		GitBranch:            wr.Contexts.Git.Ref,
-		GitTag:               wr.Contexts.Git.Ref,
 		GitCommit:            wr.Contexts.Git.Sha,
 	}
 
