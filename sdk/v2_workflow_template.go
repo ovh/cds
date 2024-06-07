@@ -7,6 +7,7 @@ import (
 	"errors"
 	"text/template"
 
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/rockbears/yaml"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -23,6 +24,16 @@ type V2WorkflowTemplate struct {
 type V2WorkflowTemplateParameter struct {
 	Key      string `json:"key" jsonschema_extras:"order=1" jsonschema_description:"Name of the parameter"`
 	Required bool   `json:"required" jsonschema_extras:"order=2" jsonschema_description:"Indicate if the parameter is mandatory"`
+}
+
+type V2WorkflowTemplateGenerateRequest struct {
+	Template V2WorkflowTemplate `json:"template"`
+	Params   map[string]string  `json:"params"`
+}
+
+type V2WorkflowTemplateGenerateResponse struct {
+	Error    string `json:"error" cli:"error"`
+	Workflow string `json:"workflow" cli:"workflow"`
 }
 
 func (wt V2WorkflowTemplate) Lint() (errs []error) {
@@ -58,7 +69,7 @@ func (wt V2WorkflowTemplate) GetName() string {
 	return wt.Name
 }
 
-func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (err error) {
+func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (string, error) {
 	type innerWorkflow struct {
 		Stages       map[string]WorkflowStage `json:"stages,omitempty"`
 		Gates        map[string]V2JobGate     `json:"gates,omitempty"`
@@ -69,19 +80,19 @@ func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (err er
 	}
 
 	if wt.Spec.tpl == nil {
-		return errors.New("uninitiliazed workflow spec")
+		return "", errors.New("uninitiliazed workflow spec")
 	}
 
 	var buf bytes.Buffer
 	if err := wt.Spec.tpl.Execute(&buf, map[string]map[string]string{
 		"params": w.Parameters,
 	}); err != nil {
-		return err
+		return "", err
 	}
 
 	var in innerWorkflow
 	if err := yaml.Unmarshal(buf.Bytes(), &in); err != nil {
-		return err
+		return buf.String(), err
 	}
 
 	// fill workflow
@@ -104,7 +115,7 @@ func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (err er
 		w.VariableSets = in.VariableSets
 	}
 
-	return nil
+	return buf.String(), nil
 }
 
 type WorkflowSpec struct {
@@ -120,12 +131,12 @@ func (t *WorkflowSpec) UnmarshalJSON(data []byte) error {
 	t.raw = data
 	var strData string
 	if err := json.Unmarshal(data, &strData); err != nil {
-		return err
+		return WithStack(err)
 	}
 
-	tpl, err := template.New("workflow_template").Delims("[[", "]]").Parse(strData)
+	tpl, err := template.New("workflow_template").Funcs(interpolate.InterpolateHelperFuncs).Delims("[[", "]]").Parse(strData)
 	if err != nil {
-		return err
+		return WithStack(err)
 	}
 
 	t.tpl = tpl

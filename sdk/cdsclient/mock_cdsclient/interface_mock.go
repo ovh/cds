@@ -197,6 +197,44 @@ func (mr *MockTemplateClientMockRecorder) TemplatePush(tarContent interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplatePush", reflect.TypeOf((*MockTemplateClient)(nil).TemplatePush), tarContent)
 }
 
+// MockTemplateV2Client is a mock of TemplateV2Client interface.
+type MockTemplateV2Client struct {
+	ctrl     *gomock.Controller
+	recorder *MockTemplateV2ClientMockRecorder
+}
+
+// MockTemplateV2ClientMockRecorder is the mock recorder for MockTemplateV2Client.
+type MockTemplateV2ClientMockRecorder struct {
+	mock *MockTemplateV2Client
+}
+
+// NewMockTemplateV2Client creates a new mock instance.
+func NewMockTemplateV2Client(ctrl *gomock.Controller) *MockTemplateV2Client {
+	mock := &MockTemplateV2Client{ctrl: ctrl}
+	mock.recorder = &MockTemplateV2ClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTemplateV2Client) EXPECT() *MockTemplateV2ClientMockRecorder {
+	return m.recorder
+}
+
+// TemplateGenerateWorkflowFromFile mocks base method.
+func (m *MockTemplateV2Client) TemplateGenerateWorkflowFromFile(ctx context.Context, req sdk.V2WorkflowTemplateGenerateRequest) (*sdk.V2WorkflowTemplateGenerateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemplateGenerateWorkflowFromFile", ctx, req)
+	ret0, _ := ret[0].(*sdk.V2WorkflowTemplateGenerateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TemplateGenerateWorkflowFromFile indicates an expected call of TemplateGenerateWorkflowFromFile.
+func (mr *MockTemplateV2ClientMockRecorder) TemplateGenerateWorkflowFromFile(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateGenerateWorkflowFromFile", reflect.TypeOf((*MockTemplateV2Client)(nil).TemplateGenerateWorkflowFromFile), ctx, req)
+}
+
 // MockAdmin is a mock of Admin interface.
 type MockAdmin struct {
 	ctrl     *gomock.Controller
@@ -10293,6 +10331,21 @@ func (m *MockInterface) TemplateDeleteInstance(groupName, templateSlug string, i
 func (mr *MockInterfaceMockRecorder) TemplateDeleteInstance(groupName, templateSlug, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateDeleteInstance", reflect.TypeOf((*MockInterface)(nil).TemplateDeleteInstance), groupName, templateSlug, id)
+}
+
+// TemplateGenerateWorkflowFromFile mocks base method.
+func (m *MockInterface) TemplateGenerateWorkflowFromFile(ctx context.Context, req sdk.V2WorkflowTemplateGenerateRequest) (*sdk.V2WorkflowTemplateGenerateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemplateGenerateWorkflowFromFile", ctx, req)
+	ret0, _ := ret[0].(*sdk.V2WorkflowTemplateGenerateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TemplateGenerateWorkflowFromFile indicates an expected call of TemplateGenerateWorkflowFromFile.
+func (mr *MockInterfaceMockRecorder) TemplateGenerateWorkflowFromFile(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateGenerateWorkflowFromFile", reflect.TypeOf((*MockInterface)(nil).TemplateGenerateWorkflowFromFile), ctx, req)
 }
 
 // TemplateGet mocks base method.

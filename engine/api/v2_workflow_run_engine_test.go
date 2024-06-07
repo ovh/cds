@@ -226,9 +226,20 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
-				"job1": {},
+				"job1": {
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
+				},
 				"job2": {
 					Needs: []string{"job1"},
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
 				},
 			},
 		}},
@@ -605,9 +616,19 @@ func TestWorkflowTriggerStage(t *testing.T) {
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
 					Stage: "stage1",
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
 				},
 				"job2": {
 					Stage: "stage2",
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
 				},
 			},
 		}},
@@ -694,9 +715,19 @@ func TestWorkflowStageNeeds(t *testing.T) {
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
 					Stage: "stage1",
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
 				},
 				"job2": {
 					Stage: "stage2",
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
 				},
 			},
 		}},
@@ -1058,14 +1089,30 @@ func TestWorkflowSkippedJob(t *testing.T) {
 		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Jobs: map[string]sdk.V2Job{
-				"job1": {},
+				"job1": {
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
+				},
 				"job2": {
 					Needs: []string{"job1"},
 					If:    "1 == 2",
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
 				},
 				"job3": {
 					If:    "${{always()}}",
 					Needs: []string{"job2"},
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
 				},
 			},
 		}},

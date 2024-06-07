@@ -1302,7 +1302,7 @@ func (api *API) handleEntitiesFiles(ctx context.Context, filesContent map[string
 
 }
 
-func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, analyzedEntities []sdk.EntityWithObject, ef *EntityFinder) []error {
+func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) []error {
 	// 1. Static lint
 	if err := o.Lint(); err != nil {
 		return err
@@ -1339,14 +1339,9 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, analyzedEntities [
 		var tmpl *sdk.V2WorkflowTemplate
 		if strings.HasPrefix(x.From, ".cds/workflow-templates/") {
 			// Retrieve tmpl from current analysis
-			tmplName := strings.TrimPrefix(x.From, ".cds/workflow-templates/")
-			for i := range analyzedEntities {
-				e := &analyzedEntities[i]
-				if e.Type != sdk.EntityTypeWorkflowTemplate {
-					continue
-				}
-				if e.Name == tmplName {
-					tmpl = &e.Template
+			for _, v := range ef.templatesCache {
+				if v.FilePath == x.From {
+					tmpl = &v.Template
 					break
 				}
 			}
@@ -1394,7 +1389,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 	}
 	var entities []sdk.EntityWithObject
 	for _, o := range *out {
-		if err := Lint(ctx, api, o, entities, ef); err != nil {
+		if err := Lint(ctx, api, o, ef); err != nil {
 			return nil, err
 		}
 		eo := sdk.EntityWithObject{
@@ -1415,15 +1410,15 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 		switch t {
 		case sdk.EntityTypeWorkerModel:
 			eo.Model = any(o).(sdk.V2WorkerModel)
-			ef.workerModelCache[fmt.Sprint("%s/%s/%s/%s@%s", analysis.ProjectKey, analysis, ef.currentVCS.Name, ef.currentRepo.Name, eo.Model.Name, analysis.Ref)] = eo.Model
+			ef.workerModelCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Model.Name, analysis.Ref)] = eo.Model
 		case sdk.EntityTypeAction:
 			eo.Action = any(o).(sdk.V2Action)
-			ef.actionsCache[fmt.Sprint("%s/%s/%s/%s@%s", analysis.ProjectKey, analysis, ef.currentVCS.Name, ef.currentRepo.Name, eo.Action.Name, analysis.Ref)] = eo.Action
+			ef.actionsCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Action.Name, analysis.Ref)] = eo.Action
 		case sdk.EntityTypeWorkflow:
 			eo.Workflow = any(o).(sdk.V2Workflow)
 		case sdk.EntityTypeWorkflowTemplate:
 			eo.Template = any(o).(sdk.V2WorkflowTemplate)
-			ef.templatesCache[fmt.Sprint("%s/%s/%s/%s@%s", analysis.ProjectKey, analysis, ef.currentVCS.Name, ef.currentRepo.Name, eo.Template.Name, analysis.Ref)] = eo
+			ef.templatesCache[fmt.Sprintf("%s/%s/%s/%s@%s", analysis.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, eo.Template.Name, analysis.Ref)] = eo
 		}
 
 		entities = append(entities, eo)

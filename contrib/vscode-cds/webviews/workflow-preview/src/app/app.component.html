@@ -1,1 +1,34 @@
-<app-stages-graph [workflow]="fileContent">
+
+    <nz-alert nzType="error" [nzMessage]="templateError" *ngIf="templateError"></nz-alert>
+    <form nz-form *ngIf="workflowTemplate">
+        <nz-row *ngIf="templatesInputs">
+            <nz-col nzSpan="24" (click)="toggleTemplateParameters()" class="pointer">
+                <h2>
+                    <span nz-icon nzType="caret-right" nzTheme="outline" *ngIf="!collapsedParameters"></span>
+                    <span nz-icon nzType="caret-down" nzTheme="outline" *ngIf="collapsedParameters"></span>
+                    Template parameters:
+                </h2>
+            </nz-col>
+            <ng-container *ngIf="collapsedParameters">
+                <nz-col nzSpan="12" *ngFor="let p of templatesInputs | keyvalue trackBy:identify">
+                    <nz-form-item>
+                        <nz-form-label nzSpan="10">{{p.key}}</nz-form-label>
+                        <nz-form-control nzSpan="10">
+                            <input nz-input name="{{p.key}}" [(ngModel)]="templatesInputs[p.key]" />
+                        </nz-form-control>
+                    </nz-form-item>
+                </nz-col>
+            </ng-container>
+        </nz-row>
+    </form>
+    <div *ngIf="workflowTemplate" class="templateButtons">
+        <h2>
+            Workflow:
+            <button nz-button *ngIf="templatesInputs" (click)="generateWorkflow()">Generate</button>
+        </h2>
+        <nz-alert nzType="error" [nzMessage]="workflowError" *ngIf="workflowError"></nz-alert>
+    </div>
+    <app-stages-graph [workflow]="workflow" #stageGraph></app-stages-graph>
+
+
+

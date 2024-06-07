@@ -2,6 +2,17 @@ import * as vscode from "vscode";
 import * as uri from "vscode-uri";
 import * as path from "path";
 
+export function isCDSWorkflowTemplateFile(document: vscode.TextDocument) {
+    if (!isCDSFile(document)) {
+        return false;
+    }
+
+    if (getParentDirectory(document?.uri) !== 'workflow-templates') {
+        return false;
+    }
+
+    return true;
+}
 
 export function isCDSWorkflowFile(document: vscode.TextDocument) {
     if (!isCDSFile(document)) {
