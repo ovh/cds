@@ -21,9 +21,7 @@ The permission `manage-workflow-template` on your project is mandatory to manage
 name: workflow-template
 parameters:
   - key: var1
-    type: string
   - key: var2
-    type: string
 spec: |-
   commit-status: ...
   on: [push]
