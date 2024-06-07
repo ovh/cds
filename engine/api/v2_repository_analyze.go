@@ -1361,8 +1361,8 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, analyzedEntities [
 				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, msg))
 				break
 			}
-			t := ef.templatesCache[path]
-			tmpl = &t.Template
+			t := ef.templatesCache[path].Template
+			tmpl = &t
 		}
 		if tmpl == nil || tmpl.Name == "" {
 			err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unknown workflow template %s", x.From))
@@ -1415,12 +1415,15 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 		switch t {
 		case sdk.EntityTypeWorkerModel:
 			eo.Model = any(o).(sdk.V2WorkerModel)
+			ef.workerModelCache[fmt.Sprint("%s/%s/%s/%s@%s", analysis.ProjectKey, analysis, ef.currentVCS.Name, ef.currentRepo.Name, eo.Model.Name, analysis.Ref)] = eo.Model
 		case sdk.EntityTypeAction:
 			eo.Action = any(o).(sdk.V2Action)
+			ef.actionsCache[fmt.Sprint("%s/%s/%s/%s@%s", analysis.ProjectKey, analysis, ef.currentVCS.Name, ef.currentRepo.Name, eo.Action.Name, analysis.Ref)] = eo.Action
 		case sdk.EntityTypeWorkflow:
 			eo.Workflow = any(o).(sdk.V2Workflow)
 		case sdk.EntityTypeWorkflowTemplate:
 			eo.Template = any(o).(sdk.V2WorkflowTemplate)
+			ef.templatesCache[fmt.Sprint("%s/%s/%s/%s@%s", analysis.ProjectKey, analysis, ef.currentVCS.Name, ef.currentRepo.Name, eo.Template.Name, analysis.Ref)] = eo
 		}
 
 		entities = append(entities, eo)

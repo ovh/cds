@@ -220,6 +220,10 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store 
 		if _, has := ef.workerModelCache[completePath]; has {
 			return completePath, "", nil
 		}
+	case sdk.EntityTypeWorkflowTemplate:
+		if _, has := ef.templatesCache[completePath]; has {
+			return completePath, "", nil
+		}
 	}
 
 	var entityDB *sdk.Entity
