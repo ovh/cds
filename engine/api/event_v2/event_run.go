@@ -122,8 +122,8 @@ func NewEventJobSummaryV2(wr sdk.V2WorkflowRun, jobrun sdk.V2WorkflowRunJob) sdk
 		Created:              &jobrun.Queued,
 		CreatedHour:          jobrun.Queued.Hour(),
 		Job:                  jobrun.JobID,
-		GitVCS:               wr.VCSServer,
-		GitRepo:              wr.Repository,
+		GitVCS:               wr.Contexts.Git.Server,
+		GitRepo:              wr.Contexts.Git.Repository,
 		GitCommit:            wr.Contexts.Git.Sha,
 	}
 
