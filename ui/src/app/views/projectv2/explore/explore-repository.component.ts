@@ -12,13 +12,13 @@ import { VCSProject } from 'app/model/vcs.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
 
 @Component({
-    selector: 'app-projectv2-repository-show',
-    templateUrl: './project.repository.show.html',
-    styleUrls: ['./project.repository.show.scss'],
+    selector: 'app-projectv2-explore-repository',
+    templateUrl: './explore-repository.html',
+    styleUrls: ['./explore-repository.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2RepositoryShowComponent implements OnDestroy {
+export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
 
     loading: boolean;
     loadingHooks: boolean;

@@ -11,47 +11,36 @@ import {
     SimpleChanges,
     ViewChild
 } from "@angular/core";
-import { FlatElementTypeCondition } from "../../../../model/schema.model";
-import { JSONFormSchema, JSONFormSchemaOneOfItem } from "../json-form.component";
-import { ProjectService } from "../../../../service/project/project.service";
-import { ActivatedRoute } from "@angular/router";
-import { ProjectState } from "../../../../store/project.state";
-import { Store } from "@ngxs/store";
-import { load, LoadOptions } from 'js-yaml'
-import { PluginService } from "../../../../service/plugin.service";
-import { DragulaService } from "ng2-dragula";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
-import { Subscription } from "rxjs";
-import { PreferencesState } from "app/store/preferences.state";
+import { FormItem, JSONFormSchema, JSONFormSchemaOneOfItem } from "./form.model";
+import { EntityType } from "app/model/entity.model";
 import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
-import { EntityType } from "../../../../model/entity.model";
+import { FlatElementTypeCondition } from "app/model/schema.model";
+import { Subscription } from "rxjs";
+import { ProjectService } from "app/service/project/project.service";
+import { PluginService } from "app/service/plugin.service";
+import { Store } from "@ngxs/store";
+import { ActivatedRoute } from "@angular/router";
+import { DragulaService } from "ng2-dragula";
+import { PreferencesState } from "app/store/preferences.state";
+import { ProjectState } from "app/store/project.state";
+import { LoadOptions, load } from "js-yaml";
 
-export class FormItem {
-    name: string;
-    type: string;
-    objectType?: string;
-    keyMapType?: string;
-    keyMapPattern?: string;
-    enum?: string[];
-    formOrder: number;
-    condition: FlatElementTypeCondition[];
+class selectValues {
+    label: string;
     description: string;
-    pattern: string;
-    onchange: string;
-    mode: string;
-    prefix: string;
-    code: boolean;
-    textarea: boolean;
+    branch: string;
+    value: string;
 }
 
 @Component({
-    selector: 'app-json-form-field',
-    templateUrl: './json-form-field.html',
-    styleUrls: ['./json-form-field.scss'],
+    selector: 'app-entity-json-form-field',
+    templateUrl: './entity-json-form-field.html',
+    styleUrls: ['./entity-json-form-field.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
+export class EntityJSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('editor') editor: NzCodeEditorComponent;
 
     @Input() field: FormItem;
@@ -60,7 +49,7 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
     @Input() parentType: string;
     @Input() disabled: boolean;
     @Input() hideLabel: boolean;
-    @Input() entityType: string;
+    @Input() entityType: EntityType;
     @Input() indent: number = 0;
     @Output() modelChange = new EventEmitter();
 
@@ -74,7 +63,6 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
     selectedCondition: FlatElementTypeCondition;
     conditionRefProperties: string[];
     resizingSubscription: Subscription;
-
     values: selectValues[] = [];
 
     constructor(
@@ -87,6 +75,8 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
     ) {
         this.trackByIndex = this.trackByIndex.bind(this);
     }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         if (!this._dragulaService.find('array-field')) {
@@ -115,9 +105,6 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
             this._cd.markForCheck();
         });
     }
-
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnChanges(changes: SimpleChanges): void {
         if (!this.jsonFormSchema || !this.field || !this.model) {
@@ -176,7 +163,7 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
                     valueWithoutBranch.value = v.description + '/' + v.label;
                     this.values.push(valueWithoutBranch);
                 }
-            })
+            });
         }
 
         this._cd.markForCheck();
@@ -340,11 +327,4 @@ export class JSONFormFieldComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.markForCheck();
         this.modelChange.emit(this.currentModel);
     }
-}
-
-class selectValues {
-    label: string;
-    description: string;
-    branch: string;
-    value: string;
 }

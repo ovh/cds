@@ -4,12 +4,12 @@ import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Schema } from 'app/model/json-schema.model';
 import { Key } from 'app/model/keys.model';
-import {LoadOpts, Project, ProjectRepository, RepositoryHookEvent} from 'app/model/project.model';
+import { LoadOpts, Project, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RepositoryAnalysis } from "../../model/analysis.model";
 import { Branch } from "../../model/repositories.model";
-import {Entity} from "../../model/entity.model";
+import { Entity, EntityType } from "../../model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
 
@@ -173,14 +173,13 @@ export class ProjectService {
         return this._http.get<Array<Entity>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`, { params });
     }
 
-    getRepoEntity(key: string, vcsName: string, repoName: string, entityType: string, entityName: string, branch?: string): Observable<Entity> {
+    getRepoEntity(key: string, vcsName: string, repoName: string, entityType: EntityType, entityName: string, branch?: string): Observable<Entity> {
         let encodedRepo = encodeURIComponent(repoName);
         let params = new HttpParams();
         if (branch) {
             params = params.append('branch', branch);
         }
         return this._http.get<Entity>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities/${entityType}/${entityName}`, { params });
-
     }
 
     getJSONSchema(type: string): Observable<Schema> {

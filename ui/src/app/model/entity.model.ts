@@ -1,8 +1,24 @@
 export enum EntityType {
     WorkerModel = 'WorkerModel',
+    WorkflowTemplate = 'WorkflowTemplate',
     Action = 'Action',
     Workflow = 'Workflow',
     Job = 'Job'
+}
+
+export class EntityTypeUtil {
+    public static toURLParam(t: EntityType): string {
+        return t.toLowerCase();
+    }
+
+    public static fromURLParam(p: string): EntityType {
+        for (const [key, value] of Object.entries(EntityType)) {
+            if (value.toLowerCase() === p) {
+                return value;
+            }
+        }
+        throw `Given param ${p} is not matching any entity type`;
+    }
 }
 
 export class Entity {

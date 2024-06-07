@@ -1,0 +1,15 @@
+<ng-container *ngIf="entity && !loading">
+	<app-entity-form *ngIf="entity.type !== 'Workflow'" [path]="entity.file_path" [data]="entity.data"
+		[schema]="jsonSchema" [entityType]="entity.type" [parentType]="'V2'+entity.type"></app-entity-form>
+	<app-projectv2-explore-entity-workflow *ngIf="entity.type === 'Workflow'" [parentType]="'V2'+entity.type"
+		[schema]="jsonSchema" [data]="entity.data" [path]="entity.file_path"></app-projectv2-explore-entity-workflow>
+	<div class="footer">
+		<div class="buttons">
+			<button nz-button nzType="primary" [nzLoading]="loading" [disabled]="true">
+				Save
+			</button>
+		</div>
+	</div>
+</ng-container>
+<nz-alert *ngIf="error && !loading" nzType="warning" nzDescription="error" nzShowIcon></nz-alert>
+<nz-spin *ngIf="loading" nzTip="Loading entity"></nz-spin>

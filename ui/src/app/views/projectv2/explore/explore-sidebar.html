@@ -47,8 +47,9 @@
                     </ng-template>
                 </div>
                 <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
-                    <nz-alert *ngIf="!entities[vcs.name+'/'+repo.name]" nzType="info"
-                        nzMessage="No resource found"></nz-alert>
+                    <nz-alert *ngIf="!entities[vcs.name+'/'+repo.name] && !loadingEntities[vcs.name+'/'+repo.name]"
+                        nzType="info" nzMessage="No resource found"></nz-alert>
+                    <nz-spin *ngIf="loadingEntities[vcs.name+'/'+repo.name]" nzSimple></nz-spin>
                     <ng-container *ngFor="let entity of entities[vcs.name+'/'+repo.name] | keyvalue">
                         <div class="tree-node-header" (click)="clickEntityType(vcs, repo, entity.key)">
                             <span nz-icon

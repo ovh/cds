@@ -1,12 +1,9 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from 'app/shared/shared.module';
-import { ProjectV2WorkerModelShowComponent } from "./explore/vcs/repository/workermodel/show/project.workermodel.show.component";
-import { ProjectV2ActionShowComponent } from "./explore/vcs/repository/action/show/project.action.show.component";
-import { ProjectV2WorkflowShowComponent } from "./explore/vcs/repository/workflow/show/project.workflow.show.component";
-import { ProjectWorkflowEntityComponent } from "./explore/vcs/repository/workflow/show/entity/project.workflow.entity.component";
 import { ProjectV2WorkflowRunComponent } from "./run/project.run.component";
-import { ProjectV2SidebarComponent } from './explore/explore-sidebar.component';
+import { ProjectV2ExploreSidebarComponent } from './explore/explore-sidebar.component';
+import { ProjectV2ExploreEntityComponent } from './explore/explore-entity.component';
 import { RunJobComponent } from "./run/run-job.component";
 import { RunJobLogsComponent } from "./run/run-job-logs.component";
 import { RunGateComponent } from "./run/gate/gate.component";
@@ -20,22 +17,27 @@ import { RunWorkflowComponent } from './run/run-workflow.component';
 import { RunContextsComponent } from './run/run-contexts.component';
 import { RunTestsComponent } from './run/run-tests.component';
 import { RunTestComponent } from './run/run-test.component';
-import { ProjectV2RepositoryShowComponent } from './explore/vcs/repository/show/project.repository.show.component';
-import { ProjectV2RepositoryAddComponent } from './explore/vcs/repository/project.repository.add.component';
+import { ProjectV2ExploreRepositoryComponent } from './explore/explore-repository.component';
+import { ProjectV2ExploreRepositoryAddComponent } from './explore/explore-repository-add.component';
+import { ProjectV2ExploreEntityWorkflowComponent } from './explore/explore-entity-workflow.component';
+import { EntityFormComponent } from './explore/entity/entity-form.component';
+import { EntityJSONFormComponent } from './explore/entity/entity-json-form.component';
+import { EntityJSONFormFieldComponent } from './explore/entity/entity-json-form-field.component';
 
 @NgModule({
     declarations: [
-        ProjectV2ActionShowComponent,
+        EntityFormComponent,
+        EntityJSONFormFieldComponent,
+        EntityJSONFormComponent,
         ProjectV2ExploreComponent,
-        ProjectV2RepositoryAddComponent,
-        ProjectV2RepositoryShowComponent,
-        ProjectV2SidebarComponent,
-        ProjectV2WorkerModelShowComponent,
+        ProjectV2ExploreEntityComponent,
+        ProjectV2ExploreEntityWorkflowComponent,
+        ProjectV2ExploreRepositoryAddComponent,
+        ProjectV2ExploreRepositoryComponent,
+        ProjectV2ExploreSidebarComponent,
         ProjectV2WorkflowRunComponent,
         ProjectV2WorkflowRunListComponent,
         ProjectV2WorkflowRunListSidebarComponent,
-        ProjectV2WorkflowShowComponent,
-        ProjectWorkflowEntityComponent,
         RunContextsComponent,
         RunGateComponent,
         RunHookComponent,
@@ -47,8 +49,8 @@ import { ProjectV2RepositoryAddComponent } from './explore/vcs/repository/projec
         RunWorkflowComponent
     ],
     imports: [
-        SharedModule,
         RouterModule,
+        SharedModule,
         WorkflowGraphModule
     ],
     schemas: [

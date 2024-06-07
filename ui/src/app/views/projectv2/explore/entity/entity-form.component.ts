@@ -8,26 +8,26 @@ import {
     OnInit,
     ViewChild
 } from "@angular/core";
-import {AutoUnsubscribe} from "../decorator/autoUnsubscribe";
-import {editor,} from 'monaco-editor';
-import {FlatSchema, JSONSchema} from "app/model/schema.model";
-import {EditorOptions} from "ng-zorro-antd/code-editor/typings";
-import {NzCodeEditorComponent} from "ng-zorro-antd/code-editor";
-import {Store} from "@ngxs/store";
-import {PreferencesState} from "app/store/preferences.state";
+import { AutoUnsubscribe } from "../../../../shared/decorator/autoUnsubscribe";
+import { editor, } from 'monaco-editor';
+import { FlatSchema, JSONSchema } from "app/model/schema.model";
+import { EditorOptions } from "ng-zorro-antd/code-editor/typings";
+import { NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
+import { Store } from "@ngxs/store";
+import { PreferencesState } from "app/store/preferences.state";
 import * as actionPreferences from 'app/store/preferences.action';
-import {Subscription} from 'rxjs';
-import Debounce from "../decorator/debounce";
-import {Schema} from "app/model/json-schema.model";
-import {EntityService} from "app/service/entity/entity.service";
-import {first} from "rxjs/operators";
+import { Subscription } from 'rxjs';
+import Debounce from "../../../../shared/decorator/debounce";
+import { Schema } from "app/model/json-schema.model";
+import { EntityService } from "app/service/entity/entity.service";
+import { first } from "rxjs/operators";
 
 declare const monaco: any;
 
 @Component({
-    selector: 'app-entity',
-    templateUrl: './entity.form.component.html',
-    styleUrls: ['./entity.form.component.scss'],
+    selector: 'app-entity-form',
+    templateUrl: './entity-form.html',
+    styleUrls: ['./entity-form.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
@@ -56,13 +56,14 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
         private _cd: ChangeDetectorRef,
         private _store: Store,
         private _entityService: EntityService
-    ) {
-    }
+    ) { }
+
+    ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.editorOption = {
             language: 'yaml',
-            minimap: {enabled: false}
+            minimap: { enabled: false }
         };
 
         this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(EntityFormComponent.PANEL_KEY)) ?? '50%';
@@ -82,11 +83,9 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.markForCheck();
     }
 
-    ngOnDestroy(): void {
-    } // Should be set to use @AutoUnsubscribe with AOT
-
     onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
-        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({schemas: [{uri: '', schema: this.flatSchema}]});
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ schemas: [{ uri: '', schema: this.flatSchema }] });
+        this.editor.layout();
     }
 
     onEditorChange(data: string): void {
@@ -104,7 +103,7 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     panelStartResize(): void {
-        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: true}));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: true }));
     }
 
     panelEndResize(size: string): void {
@@ -112,7 +111,7 @@ export class EntityFormComponent implements OnInit, OnChanges, OnDestroy {
             panelKey: EntityFormComponent.PANEL_KEY,
             size: size
         }));
-        this._store.dispatch(new actionPreferences.SetPanelResize({resizing: false}));
+        this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
         this.editor.layout();
     }
 }
