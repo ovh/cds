@@ -31,8 +31,21 @@ env:
   VAR_1: value
   VAR_2: value2
 gates: ...
-from: ...
-parameters: ...
+```
+
+Workflow from a template
+
+```yaml
+name: cds
+repository:
+  vcs: github
+  name: ovh/cds
+commit-status: ...
+on: [push]
+from: .cds/workflow-templates/mtemplate.yml
+parameters:
+  - key: param1
+    required: true
 ```
 
 - <span style="color:red">\*</span>`name`: The name of your workflow
@@ -46,6 +59,7 @@ parameters: ...
 - [`gates`](#gates): Manual gate for your workflow
 - [`from`](#from): Use a workflow template to generate this workflow
 - [`parameters`](#parameters): Parameters input to generate workflow from referenced workflow template
+- [`retention`](#retention): Workflow run retention in days. It override the workflow retention set on the project
 
 <span style="color:red">\*</span> mandatory fields
 
