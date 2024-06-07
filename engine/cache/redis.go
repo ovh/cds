@@ -283,7 +283,7 @@ forloop:
 	if elem != "" {
 		b := []byte(elem)
 		if err := sdk.JSONUnmarshal(b, value); err != nil {
-			return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s elem:%v", queueName, elem)
+			return sdk.WrapError(err, "redis.DequeueWithContext> error on unmarshal value on queue:%s", queueName)
 		}
 	}
 	return nil

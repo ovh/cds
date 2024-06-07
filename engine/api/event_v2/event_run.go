@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -86,7 +87,7 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType string
 	publish(ctx, store, e)
 
 	ev := NewEventJobSummaryV2(wr, rj)
-	publish(ctx, store, ev)
+	event.PublishEventJobSummary(ctx, ev, nil)
 }
 
 func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, u sdk.AuthentifiedUser) {

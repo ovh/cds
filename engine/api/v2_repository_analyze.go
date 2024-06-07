@@ -423,7 +423,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	entitiesUpdated := make([]sdk.Entity, 0)
 	defer func() {
-		if err := sendAnalysisHookCallback(ctx, api.mustDB(), *analysis, entitiesUpdated, vcsProjectWithSecret.Type, vcsProjectWithSecret.Name, repo.Name); err != nil {
+		if err := sendAnalysisHookCallback(ctx, api.mustDB(), *analysis, entitiesUpdated, vcsProjectWithSecret.Name, repo.Name); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 	}()
@@ -1063,7 +1063,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	return nil
 }
 
-func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, entities []sdk.Entity, vcsServerType, vcsServerName, repoName string) error {
+func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, entities []sdk.Entity, vcsServerName, repoName string) error {
 	// Remove hooks
 	srvs, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
 	if err != nil {
