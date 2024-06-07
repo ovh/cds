@@ -121,7 +121,7 @@ func NewEventJobSummaryV2(wr sdk.V2WorkflowRun, jobrun sdk.V2WorkflowRunJob) sdk
 		WorkflowRunSubNumber: int(jobrun.RunAttempt),
 		Created:              &jobrun.Queued,
 		CreatedHour:          jobrun.Queued.Hour(),
-		Job:                  jobrun.Job.Name,
+		Job:                  jobrun.JobID,
 		GitVCS:               wr.VCSServer,
 		GitRepo:              wr.Repository,
 		GitBranch:            wr.WorkflowRef,
