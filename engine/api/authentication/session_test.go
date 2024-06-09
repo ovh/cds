@@ -19,7 +19,7 @@ import (
 )
 
 func Test_CheckSessionJWT(t *testing.T) {
-	_, _ = test.SetupPG(t, bootstrap.InitiliazeDB)
+	_, _ = test.SetupPG(t, bootstrap.InitializeDB)
 	now := time.Now()
 
 	session := &sdk.AuthSession{
@@ -47,13 +47,13 @@ func Test_CheckSessionJWT(t *testing.T) {
 func Test_SessionCleaner(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second)
 	defer cancel()
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	authentication.SessionCleaner(ctx, func() *gorp.DbMap { return db.DbMap }, 100*time.Millisecond)
 }
 
 func Test_CheckSession(t *testing.T) {
-	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{Username: sdk.RandomString(10)}
 	require.NoError(t, user.Insert(context.TODO(), db, &u))

@@ -49,7 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }
     const yamlExtensionAPI = await yamlExtension.activate();
 
-    // instanciate the preview component
+    // instantiate the preview component
     const workflowPreview = new CDSWorkflowPreview(context);
 
     // register the commands

@@ -16,7 +16,7 @@ const (
 	TaskExecutionScheduled = "SCHEDULED"
 )
 
-// Service is the stuct representing a hooks µService
+// Service is the struct representing a hooks µService
 type Service struct {
 	service.Common
 	Cfg                     Configuration

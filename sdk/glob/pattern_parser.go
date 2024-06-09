@@ -361,7 +361,7 @@ func (p *innerParser) parseAndMatch(s string) (result string, err error) {
 			contentToken, contentLit := contentParser.scan()
 			Debug("### ? current buffer: %q, read content: [%v] %q, nextToken: [%v] %q", buf.String(), contentToken, contentLit, nextToken, nextLit)
 
-			if contentToken == EOF { // the pattern token is a litteral but there is nothing left in the content parser
+			if contentToken == EOF { // the pattern token is a literal but there is nothing left in the content parser
 				return "", nil
 			}
 			if contentToken != LITERAL { // the pattern token is a ? but the next token from the content is not a literral
@@ -372,7 +372,7 @@ func (p *innerParser) parseAndMatch(s string) (result string, err error) {
 			contentToken, contentLit := contentParser.scan()
 			Debug("### L current buffer: %q, read content: [%v] %q, nextToken: [%v] %q", buf.String(), contentToken, contentLit, nextToken, nextLit)
 
-			if contentToken == EOF { // the pattern token is a litteral but there is nothing left in the content parser
+			if contentToken == EOF { // the pattern token is a literal but there is nothing left in the content parser
 				return "", nil
 			}
 			if contentToken == SLASH {

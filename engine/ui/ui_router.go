@@ -82,7 +82,7 @@ func (s *Service) getReverseProxy(ctx context.Context, path, urlRemote string) h
 			clientIP = req.Header.Get(s.Cfg.HTTP.HeaderXForwardedFor)
 		}
 		if clientIP == "" {
-			// If the header has not been found, fallback on the remote adress from the http request
+			// If the header has not been found, fallback on the remote address from the http request
 			clientIP = req.RemoteAddr
 		}
 

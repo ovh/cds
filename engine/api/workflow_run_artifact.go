@@ -24,7 +24,7 @@ func (api *API) getWorkflowRunArtifactLinksHandler() service.Handler {
 			return err
 		}
 
-		wr, err := workflow.LoadRun(ctx, api.mustDB(), projectKey, workflowName, runNumber, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wr, err := workflow.LoadRun(ctx, api.mustDB(), projectKey, workflowName, runNumber, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 		if err != nil {
 			return err
 		}

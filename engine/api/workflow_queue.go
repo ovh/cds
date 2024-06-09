@@ -108,11 +108,11 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		// FIXME remove CDN info from payload, this information should be injected by the hatchery
-		pbji.GelfServiceAddr, pbji.GelfServiceAddrEnableTLS, err = services.GetCDNPublicTCPAdress(ctx, api.mustDB())
+		pbji.GelfServiceAddr, pbji.GelfServiceAddrEnableTLS, err = services.GetCDNPublicTCPAddress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
-		pbji.CDNHttpAddr, err = services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+		pbji.CDNHttpAddr, err = services.GetCDNPublicHTTPAddress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
@@ -277,7 +277,7 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		wnr, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), jobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wnr, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), jobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 		if err != nil {
 			return err
 		}
@@ -729,7 +729,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		if nodeRun.ID == 0 {
-			nodeRunP, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+			nodeRunP, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 			if err != nil {
 				log.Warn(ctx, "postWorkflowJobStepStatusHandler> Unable to load node run for event: %v", err)
 				return nil
@@ -744,7 +744,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		wr, err := workflow.LoadRunByID(ctx, api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
+			DisableDetailedNodeRun: true,
 		})
 		if err != nil {
 			log.Warn(ctx, "postWorkflowJobStepStatusHandler> Unable to load workflow run for event: %v", err)
@@ -1003,7 +1003,7 @@ func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "only CDN and worker can call this route")
 		}
 
-		wr, err := workflow.LoadRunByJobID(ctx, api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wr, err := workflow.LoadRunByJobID(ctx, api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 		if err != nil {
 			return err
 		}
@@ -1045,7 +1045,7 @@ func (api *API) workflowRunResultPromoteHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		wr, err := workflow.LoadRunByJobID(ctx, api.mustDB(), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wr, err := workflow.LoadRunByJobID(ctx, api.mustDB(), jobID, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 		if err != nil {
 			return err
 		}
@@ -1096,7 +1096,7 @@ func (api *API) workflowRunResultReleaseHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		wr, err := workflow.LoadRunByJobID(ctx, api.mustDB(), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wr, err := workflow.LoadRunByJobID(ctx, api.mustDB(), jobID, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 		if err != nil {
 			return err
 		}
@@ -1147,7 +1147,7 @@ func (api *API) postWorkflowRunResultsHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		wr, err := workflow.LoadRunByJobID(ctx, api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		wr, err := workflow.LoadRunByJobID(ctx, api.mustDBWithCtx(ctx), jobID, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 		if err != nil {
 			return err
 		}

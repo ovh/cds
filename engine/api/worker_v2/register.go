@@ -23,7 +23,7 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, spawnA
 		return nil, err
 	}
 
-	// Instanciate a new worker
+	// Instantiate a new worker
 	w := &sdk.V2Worker{
 		Name:         spawnArgs.WorkerName,
 		Status:       sdk.StatusWaiting,

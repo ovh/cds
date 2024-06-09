@@ -118,7 +118,7 @@ func loadVariables(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) 
 }
 
 func loadVariablesWithClearPassword(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project) error {
-	vars, err := LoadAllVariablesWithDecrytion(ctx, db, proj.ID)
+	vars, err := LoadAllVariablesWithDecryption(ctx, db, proj.ID)
 	if err != nil {
 		return err
 	}

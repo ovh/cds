@@ -17,7 +17,7 @@ import (
 )
 
 func TestLoadGroup(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))

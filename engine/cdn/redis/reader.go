@@ -79,7 +79,7 @@ func (r *Reader) loadMoreLines() error {
 	}
 	lineCount := uint(maxScore) + 1
 
-	// If from is less than 0 try to substract given value to lines count
+	// If from is less than 0 try to subtract given value to lines count
 	if r.From < 0 {
 		r.From = int64(lineCount) + r.From
 		if r.From < 0 {

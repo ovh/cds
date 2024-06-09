@@ -27,7 +27,7 @@ import (
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, *Router) {
 	log.Factory = log.NewTestingWrapper(t)
-	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
+	bootstrapFunc = append(bootstrapFunc, bootstrap.InitializeDB)
 	db, factory, store := apiTest.SetupPGWithFactory(t, bootstrapFunc...)
 	router := newRouter(mux.NewRouter(), "/"+test.GetTestName(t))
 	var cancel context.CancelFunc
@@ -84,7 +84,7 @@ func newRouter(m *mux.Router, p string) *Router {
 }
 
 func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.FakeTransaction, string) {
-	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
+	bootstrapFunc = append(bootstrapFunc, bootstrap.InitializeDB)
 	db, factory, cache := apiTest.SetupPGWithFactory(t, bootstrapFunc...)
 	router := newRouter(mux.NewRouter(), "")
 	var cancel context.CancelFunc

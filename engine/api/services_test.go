@@ -65,7 +65,7 @@ func TestServicesHandlers(t *testing.T) {
 	require.Equal(t, 403, rec.Code)
 
 	// Service 1 should be able to post a heartbeat
-	uri = api.Router.GetRoute(http.MethodPost, api.postServiceHearbeatHandler, nil)
+	uri = api.Router.GetRoute(http.MethodPost, api.postServiceHeartbeatHandler, nil)
 	require.NotEmpty(t, uri)
 	req = assets.NewJWTAuthentifiedRequest(t, jwtSrv1, http.MethodPost, uri, sdk.MonitoringStatus{})
 	rec = httptest.NewRecorder()

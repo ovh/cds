@@ -27,7 +27,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// New instanciates a new hatchery local
+// New instantiates a new hatchery local
 func New() *HatcheryKubernetes {
 	s := new(HatcheryKubernetes)
 	s.GoRoutines = sdk.NewGoRoutines(context.Background())
@@ -199,7 +199,7 @@ func (h *HatcheryKubernetes) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModel
 	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
 }
 
-// CanSpawn return wether or not hatchery can spawn model.
+// CanSpawn return whether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "kubernetes.CanSpawn")
@@ -567,7 +567,7 @@ func (h *HatcheryKubernetes) WorkersStarted(ctx context.Context) ([]string, erro
 	return workerNames, nil
 }
 
-// NeedRegistration return true if worker model need regsitration
+// NeedRegistration return true if worker model need registration
 func (h *HatcheryKubernetes) NeedRegistration(_ context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 		return true

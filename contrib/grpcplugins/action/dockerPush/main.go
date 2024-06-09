@@ -97,7 +97,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return sdk.Errorf("unable to get instanciate docker client: %v", err)
+		return sdk.Errorf("unable to instantiate docker client: %v", err)
 	}
 
 	imageSummaries, err := cli.ImageList(ctx, types.ImageListOptions{All: false})

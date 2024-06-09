@@ -108,7 +108,7 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 		return fail(p, "unable to retrieve a deployment integration")
 	}
 	if deploymentIntgration.Model.Name != "Arsenal" {
-		return fail(p, "deploymnet integration is not Arsenal")
+		return fail(p, "deployment integration is not Arsenal")
 	}
 
 	host := deploymentIntgration.Config["host"]

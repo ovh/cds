@@ -15,7 +15,7 @@ import (
 )
 
 func TestDAO_LinkGroupUser(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u1, _ := assets.InsertLambdaUser(t, db)
 	u2, _ := assets.InsertLambdaUser(t, db)

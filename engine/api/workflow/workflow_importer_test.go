@@ -92,10 +92,10 @@ func TestImport(t *testing.T) {
 	hookModels, err := workflow.LoadHookModels(db)
 	test.NoError(t, err)
 
-	var schedulModelID int64
+	var scheduleModelID int64
 	for _, m := range hookModels {
 		if m.Name == sdk.SchedulerModel.Name {
-			schedulModelID = m.ID
+			scheduleModelID = m.ID
 		}
 	}
 
@@ -304,7 +304,7 @@ func TestImport(t *testing.T) {
 							},
 							Hooks: []sdk.NodeHook{
 								{
-									HookModelID: schedulModelID,
+									HookModelID: scheduleModelID,
 									Config: sdk.WorkflowNodeHookConfig{
 										sdk.SchedulerModelCron: sdk.WorkflowNodeHookConfigValue{
 											Value:        "* * * * *",

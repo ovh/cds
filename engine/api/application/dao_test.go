@@ -19,7 +19,7 @@ import (
 )
 
 func TestLoadByNameAsAdmin(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.Background(), db.DbMap, cache, nil)
 	key := sdk.RandomString(10)
@@ -39,7 +39,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 }
 
 func TestLoadByNameAsUser(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -60,7 +60,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 }
 
 func TestLoadByIDAsAdmin(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -79,7 +79,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 }
 
 func TestLoadByIDAsUser(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 
@@ -101,7 +101,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 }
 
 func TestLoadAllAsAdmin(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -134,7 +134,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 }
 
 func TestLoadAllAsUser(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key)
@@ -158,7 +158,7 @@ func TestLoadAllAsUser(t *testing.T) {
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 
@@ -209,7 +209,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 }
 
 func TestWithRepositoryStrategy(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 
@@ -266,7 +266,7 @@ func TestWithRepositoryStrategy(t *testing.T) {
 }
 
 func Test_LoadAllVCStrategyAllApps(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 

@@ -269,7 +269,7 @@ type GPGKey struct {
 	PublicKey string `toml:"publicKey" comment:"gpg public key" json:"publicKey"`
 }
 
-// DefaultValues is the struc for API Default configuration default values
+// DefaultValues is the struct for API Default configuration default values
 type DefaultValues struct {
 	ServerSecretsKey     string
 	AuthSharedInfraToken string
@@ -283,7 +283,7 @@ type DefaultValues struct {
 
 const permProjectKey = "permProjectKey"
 
-// New instanciates a new API object
+// New instantiates a new API object
 func New() *API {
 	return &API{}
 }
@@ -495,7 +495,7 @@ type StartupConfigConsumer struct {
 func (a *API) Serve(ctx context.Context) error {
 
 	// Skip this verbose log
-	log.Skip(cdslog.Handler, "api.(*API).postServiceHearbeatHandler-fm.(*API).postServiceHearbeatHandler")
+	log.Skip(cdslog.Handler, "api.(*API).postServiceHeartbeatHandler-fm.(*API).postServiceHeartbeatHandler")
 
 	log.Info(ctx, "Starting CDS API Server %s", sdk.VERSION)
 
@@ -640,7 +640,7 @@ func (a *API) Serve(ctx context.Context) error {
 		for _, s := range a.Config.Workflow.WorkerModelDockerImageWhiteList {
 			r, err := regexp.Compile(s)
 			if err != nil {
-				return sdk.WrapError(err, "wront WorkerModelDockerImageWhiteList regexp %q", s)
+				return sdk.WrapError(err, "wrong WorkerModelDockerImageWhiteList regexp %q", s)
 			}
 			a.WorkerModelDockerImageWhiteList = append(a.WorkerModelDockerImageWhiteList, *r)
 		}
@@ -927,8 +927,8 @@ func (a *API) Serve(ctx context.Context) error {
 	a.GoRoutines.RunWithRestart(ctx, "api.TriggerBlockedWorkflowRuns", func(ctx context.Context) {
 		a.TriggerBlockedWorkflowRuns(ctx)
 	})
-	a.GoRoutines.RunWithRestart(ctx, "api.CancelAbandonnedRunResults", func(ctx context.Context) {
-		a.CancelAbandonnedRunResults(ctx)
+	a.GoRoutines.RunWithRestart(ctx, "api.CancelAbandonedRunResults", func(ctx context.Context) {
+		a.CancelAbandonedRunResults(ctx)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "api.repositoryAnalysisPoller", func(ctx context.Context) {
@@ -969,7 +969,7 @@ func (a *API) Serve(ctx context.Context) error {
 	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: a.Config.Auth.DefaultGroup,
 	}
-	if err := bootstrap.InitiliazeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)); err != nil {
+	if err := bootstrap.InitializeDB(ctx, defaultValues, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)); err != nil {
 		return fmt.Errorf("cannot setup databases: %v", err)
 	}
 
@@ -1087,7 +1087,7 @@ func (a *API) Serve(ctx context.Context) error {
 	return nil
 }
 
-// SetCookieSession on given response writter, automatically add domain and path based on api config.
+// SetCookieSession on given response writer, automatically add domain and path based on api config.
 // This will returns a cookie with no expiration date that should be dropped by browser when closed.
 func (a *API) SetCookieSession(w http.ResponseWriter, name, value string) {
 	a.setCookie(w, &http.Cookie{
@@ -1097,7 +1097,7 @@ func (a *API) SetCookieSession(w http.ResponseWriter, name, value string) {
 	})
 }
 
-// SetCookie on given response writter, automatically add domain and path based on api config.
+// SetCookie on given response writer, automatically add domain and path based on api config.
 func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.Time, httpOnly bool) {
 	a.setCookie(w, &http.Cookie{
 		Name:     name,
@@ -1107,7 +1107,7 @@ func (a *API) SetCookie(w http.ResponseWriter, name, value string, expires time.
 	})
 }
 
-// UnsetCookie on given response writter, automatically add domain and path based on api config.
+// UnsetCookie on given response writer, automatically add domain and path based on api config.
 func (a *API) UnsetCookie(w http.ResponseWriter, name string, httpOnly bool) {
 	a.setCookie(w, &http.Cookie{
 		Name:     name,

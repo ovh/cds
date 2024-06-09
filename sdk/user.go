@@ -108,8 +108,8 @@ func (u AuthentifiedUser) GetEmail() string {
 		return ""
 	}
 	byEmails := u.Contacts.Filter(UserContactTypeEmail)
-	primaryEmailAdress := byEmails.Primary()
-	return primaryEmailAdress.Value
+	primaryEmailAddress := byEmails.Primary()
+	return primaryEmailAddress.Value
 }
 
 func (u AuthentifiedUser) GetFullname() string {

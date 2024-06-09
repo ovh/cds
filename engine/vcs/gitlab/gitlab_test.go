@@ -34,14 +34,14 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	glConsummer := New("https://gitlab.com", "http://localhost:8081", "", cache, gitlabUsername, gitlabToken)
+	glConsumer := New("https://gitlab.com", "http://localhost:8081", "", cache, gitlabUsername, gitlabToken)
 
 	vcsAuth := sdk.VCSAuth{
 		Type:     sdk.VCSTypeGitlab,
 		Username: gitlabUsername,
 		Token:    gitlabToken,
 	}
-	cli, err := glConsummer.GetAuthorizedClient(context.Background(), vcsAuth)
+	cli, err := glConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}

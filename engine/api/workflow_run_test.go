@@ -1202,7 +1202,7 @@ func Test_workflowRunCraft(t *testing.T) {
 
 /**
  * This test does
- * 1. Create worklow
+ * 1. Create workflow
  * 2. Migrate as code => this will create PR.id = 1
  * 3. Run workflow :  Must fail on getting PR.id = 1
  */

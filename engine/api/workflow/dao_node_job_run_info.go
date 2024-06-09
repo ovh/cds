@@ -47,7 +47,7 @@ func LoadNodeRunJobInfo(ctx context.Context, db gorp.SqlExecutor, nodeRunID int6
 
 // insertNodeRunJobInfo inserts spawninfos for a Workflow Node Job Run. This is
 // a temporary data, as workflow_node_job_run table. After the end of the Job,
-// swpawninfos values will be in WorfklowRun table in stages column
+// swpawninfos values will be in WorkflowRun table in stages column
 func insertNodeRunJobInfo(db gorp.SqlExecutor, info *sdk.WorkflowNodeJobRunInfo) error {
 	spawnJSON, err := json.Marshal(info.SpawnInfos)
 	if err != nil {

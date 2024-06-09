@@ -123,7 +123,7 @@ func get(ctx context.Context, db gorp.SqlExecutor, key string, query gorpmapping
 
 func getWithClearVCSStrategyPassword(ctx context.Context, db gorp.SqlExecutor, key string, query gorpmapping.Query, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	dbApp := dbApplication{}
-	// Allways load with decryption to get all the data for vcs_strategy
+	// Always load with decryption to get all the data for vcs_strategy
 	found, err := gorpmapping.Get(ctx, db, query, &dbApp, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func Insert(db gorpmapper.SqlExecutorWithTx, proj sdk.Project, app *sdk.Applicat
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
 	*app = dbApp.Application
-	// Reset the vcs_stragegy except the passowrd because it as been erased by the encryption layed
+	// Reset the vcs_strategy except the password because it as been erased by the encryption layer
 	app.RepositoryStrategy = copyVCSStrategy
 	app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 	app.RepositoryStrategy.SSHKeyContent = ""
@@ -208,7 +208,7 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, app *sdk.Appli
 	if err := gorpmapping.UpdateAndSign(context.Background(), db, &dbApp); err != nil {
 		return sdk.WrapError(err, "application.Update %s(%d)", app.Name, app.ID)
 	}
-	// Reset the vcs_stragegy except the passowrd because it as been erased by the encryption layed
+	// Reset the vcs_strategy except the password because it as been erased by the encryption layer
 	app.RepositoryStrategy = copyVCSStrategy
 	app.RepositoryStrategy.Password = sdk.PasswordPlaceholder
 	app.RepositoryStrategy.SSHKeyContent = ""

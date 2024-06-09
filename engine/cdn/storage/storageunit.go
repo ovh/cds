@@ -107,7 +107,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("redis driver is not a buffer unit driver"))
 			}
-			bd.New(gorts, AbstractUnitConfig{syncBandwidth: math.MaxFloat64, syncParrallel: 1})
+			bd.New(gorts, AbstractUnitConfig{syncBandwidth: math.MaxFloat64, syncParallel: 1})
 			if err := bd.Init(ctx, bu.Redis, bu.BufferType); err != nil {
 				return nil, err
 			}
@@ -122,7 +122,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("local driver is not a buffer unit driver"))
 			}
-			bd.New(gorts, AbstractUnitConfig{syncBandwidth: math.MaxFloat64, syncParrallel: 1})
+			bd.New(gorts, AbstractUnitConfig{syncBandwidth: math.MaxFloat64, syncParallel: 1})
 			if err := bd.Init(ctx, bu.Local, bu.BufferType); err != nil {
 				return nil, err
 			}
@@ -137,7 +137,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("nfs buffer driver is not a buffer unit driver"))
 			}
-			bd.New(gorts, AbstractUnitConfig{syncBandwidth: math.MaxFloat64, syncParrallel: 1})
+			bd.New(gorts, AbstractUnitConfig{syncBandwidth: math.MaxFloat64, syncParallel: 1})
 			if err := bd.Init(ctx, bu.Nfs, bu.BufferType); err != nil {
 				return nil, err
 			}
@@ -192,7 +192,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("local driver is not a storage unit driver"))
 			}
-			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParrallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
+			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.Local); err != nil {
 				return nil, err
@@ -205,7 +205,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("swift driver is not a storage unit driver"))
 			}
-			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParrallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
+			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.Swift); err != nil {
 				return nil, err
@@ -218,7 +218,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("webdav driver is not a storage unit driver"))
 			}
-			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParrallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
+			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.Webdav); err != nil {
 				return nil, err
@@ -231,7 +231,7 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 			if !is {
 				return nil, sdk.WithStack(fmt.Errorf("s3 driver is not a storage unit driver"))
 			}
-			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParrallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
+			sd.New(gorts, AbstractUnitConfig{syncBandwidth: float64(cfg.SyncBandwidth) * 1024 * 1024, syncParallel: cfg.SyncParallel, disableSync: cfg.DisableSync}) // convert from MBytes to Bytes
 
 			if err := sd.Init(ctx, cfg.S3); err != nil {
 				return nil, err

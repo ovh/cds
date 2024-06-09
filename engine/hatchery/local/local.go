@@ -26,7 +26,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// New instanciates a new hatchery local
+// New instantiates a new hatchery local
 func New() *HatcheryLocal {
 	s := new(HatcheryLocal)
 	s.GoRoutines = sdk.NewGoRoutines(context.Background())
@@ -222,7 +222,7 @@ func (h *HatcheryLocal) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
 
-// CanSpawn return wether or not hatchery can spawn model.
+// CanSpawn return whether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryLocal) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "local.CanSpawn")

@@ -32,13 +32,13 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New("", "", "http://localhost", "", "", cache)
+	ghConsumer := New("", "", "http://localhost", "", "", cache)
 	vcsAuth := sdk.VCSAuth{
 		Type:     sdk.VCSTypeGithub,
 		Token:    githubToken,
 		Username: githubUsername,
 	}
-	cli, err := ghConsummer.GetAuthorizedClient(context.Background(), vcsAuth)
+	cli, err := ghConsumer.GetAuthorizedClient(context.Background(), vcsAuth)
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}

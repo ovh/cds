@@ -320,7 +320,7 @@ export FOO_FROM_HOOK=BAR`,
 						t.Fail()
 					}
 				default:
-					t.Logf("This case should not happend")
+					t.Logf("This case should not happen")
 					t.Fail()
 				}
 			case "http://cds-api.local/queue/workflows/42/result":

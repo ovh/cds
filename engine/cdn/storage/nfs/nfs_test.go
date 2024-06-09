@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// To run export the mentionned env variables: NFS_HOST, NFS_PARTITION
+// To run export the mentioned env variables: NFS_HOST, NFS_PARTITION
 // If not set, the test is skipped
 func TestNfs(t *testing.T) {
 	t.Run("group", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestNFSReadWrite(t *testing.T) {
 			},
 		},
 	}, storage.CDNBufferTypeFile)
-	require.NoError(t, err, "unable to initialiaze nfs driver")
+	require.NoError(t, err, "unable to initialize nfs driver")
 	itemUnit := sdk.CDNItemUnit{
 		Type:    sdk.CDNTypeItemRunResult,
 		Locator: sdk.RandomString(10),

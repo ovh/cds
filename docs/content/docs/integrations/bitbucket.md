@@ -14,7 +14,7 @@ This integration enables some features:
 
  - [Git Repository Webhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
  - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/builtin-gitclone.md">}}) for advanced usage
- - Send [build notifications](https://developer.atlassian.com/server/bitbucket/how-tos/updating-build-status-for-commits/) on your Pull-Requests and Commits on Bitbucket. [More informations]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
+ - Send [build notifications](https://developer.atlassian.com/server/bitbucket/how-tos/updating-build-status-for-commits/) on your Pull-Requests and Commits on Bitbucket. [More information]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
  - [Send comments on your Pull-Requests when a workflow is failed]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
 
 ### Create the Personal Access Token on Bitbucket Datacenter

@@ -78,7 +78,7 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, infos ...sdk.SpawnMsg) {
 
 // computeRunStatus is useful to compute number of runs in success, building and fail
 type statusCounter struct {
-	success, building, failed, stoppped, skipped, disabled int
+	success, building, failed, stopped, skipped, disabled int
 }
 
 // getRunStatus return the status depending on number of runs in success, building, stopped and fail
@@ -88,7 +88,7 @@ func getRunStatus(counter statusCounter) string {
 		return sdk.StatusBuilding
 	case counter.failed > 0:
 		return sdk.StatusFail
-	case counter.stoppped > 0:
+	case counter.stopped > 0:
 		return sdk.StatusStopped
 	case counter.success > 0:
 		return sdk.StatusSuccess
@@ -110,7 +110,7 @@ func computeRunStatus(status string, counter *statusCounter) {
 	case sdk.StatusFail:
 		counter.failed++
 	case sdk.StatusStopped:
-		counter.stoppped++
+		counter.stopped++
 	case sdk.StatusSkipped:
 		counter.skipped++
 	case sdk.StatusDisabled:

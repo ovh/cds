@@ -59,7 +59,7 @@ func GetUserWorkflowEvents(ctx context.Context, db gorp.SqlExecutor, store cache
 			switch notif.Type {
 			case sdk.EmailUserNotification:
 				jn := &notif.Settings
-				//Get recipents from groups
+				//Get recipients from groups
 				if jn.SendToGroups != nil && *jn.SendToGroups {
 					u, err := projectPermissionUserIDs(ctx, db, store, projectID, sdk.PermissionRead)
 					if err != nil {

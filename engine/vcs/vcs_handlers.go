@@ -642,16 +642,16 @@ func (s *Service) postReleaseHandler() service.Handler {
 		}
 
 		body := struct {
-			Tag        string `json:"tag"`
-			Title      string `json:"title"`
-			Descrition string `json:"description"`
+			Tag         string `json:"tag"`
+			Title       string `json:"title"`
+			Description string `json:"description"`
 		}{}
 
 		if err := service.UnmarshalBody(r, &body); err != nil {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		re, err := client.Release(ctx, fmt.Sprintf("%s/%s", owner, repo), body.Tag, body.Title, body.Descrition)
+		re, err := client.Release(ctx, fmt.Sprintf("%s/%s", owner, repo), body.Tag, body.Title, body.Description)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to create release %s %s/%s", name, owner, repo)
 		}

@@ -124,10 +124,10 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 			continue
 		}
 		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
-			CreatedAt:  s.CreatedAt,
-			Decription: s.Context,
-			Ref:        ref,
-			State:      processGithubState(s),
+			CreatedAt:   s.CreatedAt,
+			Description: s.Context,
+			Ref:         ref,
+			State:       processGithubState(s),
 		})
 	}
 

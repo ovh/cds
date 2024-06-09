@@ -64,7 +64,7 @@ func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s Storag
 		log.Info(ctx, "FillWithUnknownItems> Get %d items", len(itemsToSync))
 		k := cache.Key(KeyBackendSync, s.Name())
 		for _, item := range itemsToSync {
-			ctx = context.WithValue(ctx, FielID, item.ItemID)
+			ctx = context.WithValue(ctx, FieldID, item.ItemID)
 			if err := x.cache.ScoredSetAdd(ctx, k, item.ItemID, float64(item.Created.Unix())); err != nil {
 				log.Error(ctx, "FillWithUnknownItems> unable to push item %s into %s", item.ItemID, k)
 				continue

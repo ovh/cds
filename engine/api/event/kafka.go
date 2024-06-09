@@ -13,7 +13,7 @@ import (
 	"github.com/rockbears/log"
 )
 
-// KafkaClient enbeddes the Kafka connecion
+// KafkaClient enbeddes the Kafka connection
 type KafkaClient struct {
 	options  event.KafkaConfig
 	producer sarama.SyncProducer

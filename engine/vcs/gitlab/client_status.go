@@ -102,10 +102,10 @@ func (c *gitlabClient) ListStatuses(ctx context.Context, repo string, ref string
 			continue
 		}
 		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
-			CreatedAt:  *s.CreatedAt,
-			Decription: s.Description,
-			Ref:        ref,
-			State:      processGitlabState(*s),
+			CreatedAt:   *s.CreatedAt,
+			Description: s.Description,
+			Ref:         ref,
+			State:       processGitlabState(*s),
 		})
 	}
 

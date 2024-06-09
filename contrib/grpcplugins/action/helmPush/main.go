@@ -119,7 +119,7 @@ func (p *helmPushPlugin) perform(
 ) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
 
-	// Prepare teh chart package
+	// Prepare the chart package
 	chart, err := helm.GetChartByName(chartFolder)
 	if err != nil {
 		return nil, time.Since(t0), errors.Errorf("unable to get chart: %v", err)

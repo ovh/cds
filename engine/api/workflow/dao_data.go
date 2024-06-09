@@ -13,9 +13,9 @@ import (
 // CountPipeline Count the number of workflow that use the given pipeline
 func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 	query := `SELECT count(1) FROM w_node_context WHERE pipeline_id= $1`
-	nbWorkfow := -1
-	err := db.QueryRow(query, pipelineID).Scan(&nbWorkfow)
-	return nbWorkfow != 0, err
+	nbWorkflow := -1
+	err := db.QueryRow(query, pipelineID).Scan(&nbWorkflow)
+	return nbWorkflow != 0, err
 }
 
 // DeleteWorkflowData delete the relation representation of the workflow
@@ -45,7 +45,7 @@ func deleteJoinData(db gorp.SqlExecutor, n sdk.Node) error {
 	return nil
 }
 
-//deleteNode deletes nodes and all its children
+// deleteNode deletes nodes and all its children
 func deleteNodeData(db gorp.SqlExecutor, node sdk.Node) error {
 	dbwn := dbNodeData(node)
 	if _, err := db.Delete(&dbwn); err != nil {

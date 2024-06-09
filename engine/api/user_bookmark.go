@@ -25,7 +25,7 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			project.LoadOptions.WithFavorites(consumer.AuthConsumerUser.AuthentifiedUser.ID),
 		)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		switch params.Type {

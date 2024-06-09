@@ -103,8 +103,8 @@ func LoadAllVariables(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]
 	return loadAllVariables(ctx, db, query)
 }
 
-// LoadAllVariablesWithDecrytion Get all variable for the given application, it also decrypt all the secure content
-func LoadAllVariablesWithDecrytion(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationVariable, error) {
+// LoadAllVariablesWithDecryption Get all variable for the given application, it also decrypt all the secure content
+func LoadAllVariablesWithDecryption(ctx context.Context, db gorp.SqlExecutor, appID int64) ([]sdk.ApplicationVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM application_variable
@@ -187,7 +187,7 @@ func InsertVariable(db gorpmapper.SqlExecutorWithTx, appID int64, v *sdk.Applica
 		Versionned:    time.Now(),
 	}
 
-	if err := inserAudit(db, ava); err != nil {
+	if err := insertAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %d", v.ID)
 	}
 	return nil
@@ -222,7 +222,7 @@ func UpdateVariable(db gorpmapper.SqlExecutorWithTx, appID int64, variable *sdk.
 		Versionned:     time.Now(),
 	}
 
-	if err := inserAudit(db, ava); err != nil {
+	if err := insertAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 
@@ -255,7 +255,7 @@ func DeleteVariable(db gorp.SqlExecutor, appID int64, variable *sdk.ApplicationV
 		Versionned:     time.Now(),
 	}
 
-	if err := inserAudit(db, ava); err != nil {
+	if err := insertAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 	return nil

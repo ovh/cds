@@ -80,11 +80,11 @@ func (a *AbstractUnit) Set(u sdk.CDNUnit) { a.u = u }
 
 func (a *AbstractUnit) New(gorts *sdk.GoRoutines, config AbstractUnitConfig) {
 	a.GoRoutines = gorts
-	a.syncChan = make(chan string, config.syncParrallel)
+	a.syncChan = make(chan string, config.syncParallel)
 	if config.syncBandwidth <= 0 {
 		config.syncBandwidth = math.MaxFloat64
 	}
-	a.syncBandwidth = config.syncBandwidth / float64(config.syncParrallel)
+	a.syncBandwidth = config.syncBandwidth / float64(config.syncParallel)
 	a.disableSync = config.disableSync
 }
 
@@ -125,7 +125,7 @@ type FileBufferUnit interface {
 }
 
 type AbstractUnitConfig struct {
-	syncParrallel int64
+	syncParallel  int64
 	syncBandwidth float64
 	disableSync   bool
 }
@@ -171,7 +171,7 @@ const (
 
 type StorageConfiguration struct {
 	SyncParallel  int64                       `toml:"syncParallel" json:"sync_parallel" comment:"number of parallel sync processes"`
-	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" comment:"global bandwith shared by the sync processes (in Mb)"`
+	SyncBandwidth int64                       `toml:"syncBandwidth" json:"sync_bandwidth" comment:"global bandwidth shared by the sync processes (in Mb)"`
 	DisableSync   bool                        `toml:"disableSync" json:"disable_sync" comment:"flag to disabled backend synchronization"`
 	Local         *LocalStorageConfiguration  `toml:"local" json:"local,omitempty" mapstructure:"local"`
 	Swift         *SwiftStorageConfiguration  `toml:"swift" json:"swift,omitempty" mapstructure:"swift"`

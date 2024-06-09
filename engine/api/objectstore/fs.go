@@ -36,7 +36,7 @@ func (fss *FilesystemStore) TemporaryURLSupported() bool {
 	return false
 }
 
-// GetProjectIntegration returns current projet Integration, nil otherwise
+// GetProjectIntegration returns current project Integration, nil otherwise
 func (fss *FilesystemStore) GetProjectIntegration() sdk.ProjectIntegration {
 	return fss.projectIntegration
 }

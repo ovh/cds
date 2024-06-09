@@ -79,7 +79,7 @@ var templateInstancesExportCmd = cli.Command{
 		{
 			Type:    cli.FlagArray,
 			Name:    "filter-params",
-			Usage:   "Specify filter on params for template like --filter-params paramKey=paramValue, wil return only instances that have params that match.",
+			Usage:   "Specify filter on params for template like --filter-params paramKey=paramValue, will return only instances that have params that match.",
 			Default: "",
 		},
 	},

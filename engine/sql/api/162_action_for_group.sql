@@ -70,7 +70,7 @@ UPDATE action_audit SET data_type = 'json';
 ALTER TABLE action_audit ALTER COLUMN user_id DROP NOT NULL;
 ALTER TABLE action_audit ALTER COLUMN versionned DROP NOT NULL;
 
--- TODO remove action.public, action_audit.change, action_audit.user_id, action_audit.versionned, action_audit.action_json in futur script
+-- TODO remove action.public, action_audit.change, action_audit.user_id, action_audit.versionned, action_audit.action_json in future script
 
 -- +migrate Down
 

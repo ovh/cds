@@ -73,7 +73,7 @@ func Test_websocketWrongFilters(t *testing.T) {
 }
 
 func Test_websocketFilterRetroCompatibility(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)

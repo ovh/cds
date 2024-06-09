@@ -57,7 +57,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet %s", key)
+			return sdk.WrapError(err, "unable to load project %s", key)
 		}
 
 		groupIDs := make([]int64, len(proj.ProjectGroups))
@@ -510,7 +510,7 @@ func (api *API) postActionAuditRollbackHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		// set group id on given action, if no group given use shared.infra fo backward compatibility
+		// set group id on given action, if no group given use shared.infra for backward compatibility
 		// current user should be admin if the group
 		var newGrp *sdk.Group
 		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {
@@ -705,7 +705,7 @@ func (api *API) importActionHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		// set group id on given action, if no group given use shared.infra fo backward compatibility
+		// set group id on given action, if no group given use shared.infra for backward compatibility
 		// current user should be admin if the group
 		var grp *sdk.Group
 		if ea.Group == sdk.SharedInfraGroupName || ea.Group == "" {

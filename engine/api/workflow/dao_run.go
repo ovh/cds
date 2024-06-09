@@ -46,10 +46,10 @@ workflow_run.header
 
 // LoadRunOptions are options for loading a run (node or workflow)
 type LoadRunOptions struct {
-	WithTests               bool
-	WithLightTests          bool
-	WithDeleted             bool
-	DisableDetailledNodeRun bool
+	WithTests              bool
+	WithLightTests         bool
+	WithDeleted            bool
+	DisableDetailedNodeRun bool
 }
 
 // insertWorkflowRun inserts in table "workflow_run""

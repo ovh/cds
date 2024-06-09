@@ -27,7 +27,7 @@ type Redis struct {
 	store   cache.Store
 }
 
-// NewRedisLRU instanciates a new Redis LRU
+// NewRedisLRU instantiates a new Redis LRU
 func NewRedisLRU(db *gorp.DbMap, maxSize int64, host string, password string, dbindex int) (*Redis, error) {
 	c, err := cache.New(host, password, dbindex, -1)
 	if err != nil {
@@ -89,11 +89,11 @@ func (s *Redis) Card(itemID string) (int, error) {
 
 // Size of the cache
 func (r *Redis) Size() (int64, error) {
-	lenght, err := r.Len()
+	length, err := r.Len()
 	if err != nil {
 		return 0, err
 	}
-	if lenght == 0 {
+	if length == 0 {
 		return 0, nil
 	}
 
@@ -120,7 +120,7 @@ func (r *Redis) Clear() error {
 	return r.store.Delete(redisLruKeyCacheKey)
 }
 
-// NewWriter instanciates a new writer
+// NewWriter instantiates a new writer
 func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 	return &writer{
 		redis.Writer{
@@ -131,7 +131,7 @@ func (r *Redis) NewWriter(itemID string) io.WriteCloser {
 	}
 }
 
-// NewReader instanciates a new reader
+// NewReader instantiates a new reader
 func (r *Redis) NewReader(item sdk.CDNItem, format sdk.CDNReaderFormat, from int64, size uint, sort int64) io.ReadCloser {
 	return &redis.Reader{
 		Store:      r.store,
@@ -171,11 +171,11 @@ func (r *Redis) Evict(ctx context.Context) {
 }
 
 func (r *Redis) eviction() (bool, error) {
-	lenght, err := r.Len()
+	length, err := r.Len()
 	if err != nil {
 		return false, err
 	}
-	if lenght == 0 {
+	if length == 0 {
 		return false, nil
 	}
 	size, err := r.Size()

@@ -350,7 +350,7 @@ parameters:
 
 # Conditions
 
-Condition can be use at different level but share the same syntaxe
+Condition can be use at different level but share the same syntax
 
 - workflow gate
 - job.if

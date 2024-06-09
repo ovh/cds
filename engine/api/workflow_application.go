@@ -96,7 +96,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		if len(resultToUpload) == 0 {
 			return nil
 		}
-		cdnHTTP, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+		cdnHTTP, err := services.GetCDNPublicHTTPAddress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}

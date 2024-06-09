@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// New instanciates a new Hatchery vsphere
+// New instantiates a new Hatchery vsphere
 func New() *HatcheryVSphere {
 	s := new(HatcheryVSphere)
 	s.GoRoutines = sdk.NewGoRoutines(context.Background())
@@ -142,7 +142,7 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
-// CanSpawn return wether or not hatchery can spawn model
+// CanSpawn return whether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "vsphere.CanSpawn")
@@ -258,7 +258,7 @@ func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) 
 	return &annot
 }
 
-// NeedRegistration return true if worker model need regsitration
+// NeedRegistration return true if worker model need registration
 func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	model, err := h.getVirtualMachineTemplateByName(ctx, m.Name)
 	if err != nil {

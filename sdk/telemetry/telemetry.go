@@ -97,7 +97,7 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 	return ctx, nil
 }
 
-// Tags contants
+// Tags constants
 const (
 	TagGoroutine          = "goroutine"
 	TagHostname           = "hostname"

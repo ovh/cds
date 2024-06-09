@@ -1082,7 +1082,7 @@ func Test_postWorkflowJobSetVersionHandler(t *testing.T) {
 
 func Test_workflowRunResultsAdd(t *testing.T) {
 	featureflipping.Init(gorpmapping.Mapper)
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitializeDB)
 
 	cdnServices, _, jwtCDN := assets.InitCDNService(t, db)
 	t.Cleanup(func() { _ = services.Delete(db, cdnServices) })
@@ -1163,7 +1163,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 
 func Test_workflowRunResultCheckUpload(t *testing.T) {
 	featureflipping.Init(gorpmapping.Mapper)
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)

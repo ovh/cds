@@ -380,7 +380,7 @@ func processNode(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 	//Check the context.mutex to know if we are allowed to run it
 	if n.Context.Mutex {
-		//Check if there are previous waiting or builing workflownoderun
+		//Check if there are previous waiting or building workflownoderun
 		// with the same workflow_node_name for the same workflow
 
 		// in this sql, we use 'and workflow_node_run.id < $2' and not and workflow_node_run.id <> $2

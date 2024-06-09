@@ -19,7 +19,7 @@ import (
 )
 
 func TestInsertProject(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	project.Delete(db, "key")
 
@@ -31,7 +31,7 @@ func TestInsertProject(t *testing.T) {
 }
 
 func TestInsertProject_withWrongKey(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	proj := sdk.Project{
 		Name: "test proj",
@@ -54,7 +54,7 @@ func TestExist(t *testing.T) {
 }
 
 func TestLoadAllByRepo(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.Background(), db.DbMap, cache, nil)
 
@@ -84,7 +84,7 @@ func TestLoadAllByRepo(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	project.Delete(db, "test_TestLoadAll1")
 	project.Delete(db, "test_TestLoadAll2")
@@ -148,7 +148,7 @@ func TestLoadAll(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(6)
 	name := key + sdk.RandomString(6)

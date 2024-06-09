@@ -136,9 +136,9 @@ func Test_purgeDryRunHandler(t *testing.T) {
 	var result sdk.PurgeDryRunResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
 
-	require.Equal(t, int64(2), result.NbRunsToAnalize)
+	require.Equal(t, int64(2), result.NbRunsToAnalyze)
 
-	run1DB, err := workflow.LoadRunByID(context.Background(), api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+	run1DB, err := workflow.LoadRunByID(context.Background(), api.mustDB(), run2.ID, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 	require.NoError(t, err)
 	require.False(t, run1DB.ToDelete)
 

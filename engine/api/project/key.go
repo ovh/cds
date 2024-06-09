@@ -24,10 +24,10 @@ func init() {
 }
 
 type dbEncryptedData struct {
-	ProjectID       int64  `db:"project_id"`
-	Name            string `db:"content_name"`
-	Token           string `db:"token"`
-	EncyptedContent []byte `db:"encrypted_content"`
+	ProjectID        int64  `db:"project_id"`
+	Name             string `db:"content_name"`
+	Token            string `db:"token"`
+	EncryptedContent []byte `db:"encrypted_content"`
 }
 
 func ListEncryptedData(ctx context.Context, db gorp.SqlExecutor, projectID int64) ([]sdk.Secret, error) {
@@ -88,10 +88,10 @@ func EncryptWithBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID i
 	token[6] = token[6]&^0xf0 | 0x40
 
 	bded := dbEncryptedData{
-		ProjectID:       projectID,
-		Name:            name,
-		Token:           fmt.Sprintf("%x%x%x%x%x", token[0:4], token[4:6], token[6:8], token[8:10], token[10:]),
-		EncyptedContent: []byte(s),
+		ProjectID:        projectID,
+		Name:             name,
+		Token:            fmt.Sprintf("%x%x%x%x%x", token[0:4], token[4:6], token[6:8], token[8:10], token[10:]),
+		EncryptedContent: []byte(s),
 	}
 
 	if existingToken != "" {
@@ -120,7 +120,7 @@ func DecryptWithBuiltinKey(ctx context.Context, db gorp.SqlExecutor, projectID i
 		return "", sdk.WrapError(sdk.ErrProjectSecretDataUnknown, "Unable to load builtin key")
 	}
 
-	b, err := base64.StdEncoding.DecodeString(string(dbed.EncyptedContent))
+	b, err := base64.StdEncoding.DecodeString(string(dbed.EncryptedContent))
 	if err != nil {
 		return "", sdk.WrapError(err, "Unable to decode content")
 	}

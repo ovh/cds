@@ -13,7 +13,7 @@ import (
 )
 
 func TestInsert(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	mig1 := sdk.Migration{
 		Name:      "firstOne",

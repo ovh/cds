@@ -52,7 +52,7 @@ func InsertStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	return insertStageConditions(db, s)
 }
 
-// insertStageConditions insert prequisite for given stage in database
+// insertStageConditions insert prerequisite for given stage in database
 func insertStageConditions(db gorp.SqlExecutor, s *sdk.Stage) error {
 	if s.Conditions.LuaScript != "" {
 		s.Conditions.PlainConditions = nil
@@ -233,14 +233,14 @@ func updateStageOrder(db gorp.SqlExecutor, id int64, order int) error {
 	return sdk.WithStack(err)
 }
 
-// UpdateStage update Stage and all its prequisites
+// UpdateStage update Stage and all its prerequisites
 func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	query := `UPDATE pipeline_stage SET name=$1, build_order=$2, enabled=$3 WHERE id=$4`
 	if _, err := db.Exec(query, s.Name, s.BuildOrder, s.Enabled, s.ID); err != nil {
 		return err
 	}
 
-	//Insert all prequisites
+	//Insert all prerequisites
 	return insertStageConditions(db, s)
 }
 

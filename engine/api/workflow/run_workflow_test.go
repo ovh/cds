@@ -22,7 +22,7 @@ import (
 )
 
 func TestManualRun1(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
@@ -182,7 +182,7 @@ func TestManualRun1(t *testing.T) {
 }
 
 func TestManualRun2(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
@@ -301,7 +301,7 @@ func TestManualRun2(t *testing.T) {
 }
 
 func TestManualRun3(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
@@ -750,7 +750,7 @@ queueRun:
 }
 
 func TestNoStage(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	key := sdk.RandomString(10)
@@ -820,7 +820,7 @@ func TestNoStage(t *testing.T) {
 }
 
 func TestNoJob(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)

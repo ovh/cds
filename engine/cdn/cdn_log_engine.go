@@ -16,8 +16,8 @@ var (
 	keyJobLogSize  = cache.Key("cdn", "log", "incoming", "size")
 
 	// Dequeue keys
-	keyJobHearbeat = cache.Key("cdn", "log", "heartbeat")
-	keyJobLock     = cache.Key("cdn", "log", "lock")
+	keyJobHeartbeat = cache.Key("cdn", "log", "heartbeat")
+	keyJobLock      = cache.Key("cdn", "log", "lock")
 )
 
 // Check all job queues to know and start dequeue if needed
@@ -79,7 +79,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 
 	defer func() {
 		// Remove heartbeat
-		_ = s.Cache.Delete(cache.Key(keyJobHearbeat, queueIdentifier))
+		_ = s.Cache.Delete(cache.Key(keyJobHeartbeat, queueIdentifier))
 	}()
 
 	tick := time.NewTicker(5 * time.Second)
@@ -101,9 +101,9 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 				return nil
 			}
 			// heartbeat
-			heartbeatKey := cache.Key(keyJobHearbeat, queueIdentifier)
+			heartbeatKey := cache.Key(keyJobHeartbeat, queueIdentifier)
 			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
-				err = sdk.WrapError(err, "unable to hearbeat %s", heartbeatKey)
+				err = sdk.WrapError(err, "unable to heartbeat %s", heartbeatKey)
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
 				continue
@@ -147,7 +147,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 // Return queue name if jobID need to be dequeue or empty
 func (s *Service) canDequeue(ctx context.Context, jobID string) (string, error) {
 	jobQueueKey := cache.Key(keyJobLogQueue, jobID)
-	heartbeatKey := cache.Key(keyJobHearbeat, jobID)
+	heartbeatKey := cache.Key(keyJobHeartbeat, jobID)
 
 	// Take a lock
 	lockKey := cache.Key(keyJobLock, jobID)
@@ -171,7 +171,7 @@ func (s *Service) canDequeue(ctx context.Context, jobID string) (string, error) 
 		return "", nil
 	}
 
-	//hearbeat
+	//heartbeat
 	log.Info(ctx, "heartbeat: take job %s", jobQueueKey)
 	if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 		return "", err

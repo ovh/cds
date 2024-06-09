@@ -663,7 +663,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 
 	log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
 
-	// Instanciate artifactory client
+	// Instantiate artifactory client
 	artifactClient, err := artifact_manager.NewClient(rtName, rtURL, rtToken)
 	if err != nil {
 		return err

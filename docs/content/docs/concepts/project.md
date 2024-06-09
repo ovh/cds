@@ -9,7 +9,7 @@ card:
 A CDS Project brings together several entities such as pipelines, applications, workflows, environments. 
 A project also allows to link one or more repository manager such as github, bitbucket, gitlab...
 
-A project is often associated with one or more groups with differents ACLs.
+A project is often associated with one or more groups with different ACLs.
 
 ## Metadata
 

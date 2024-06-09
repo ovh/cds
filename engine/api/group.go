@@ -147,11 +147,11 @@ func (api *API) putGroupHandler() service.Handler {
 
 		// In case of rename, checks that new name is not already used
 		if data.Name != oldGroup.Name {
-			exstingGroup, err := group.LoadByName(ctx, tx, data.Name)
+			existingGroup, err := group.LoadByName(ctx, tx, data.Name)
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return err
 			}
-			if exstingGroup != nil {
+			if existingGroup != nil {
 				return sdk.WithStack(sdk.ErrGroupPresent)
 			}
 		}

@@ -46,7 +46,7 @@ func LoadApplicationSecrets(ctx context.Context, db gorp.SqlExecutor, id int64) 
 
 	secretsVariables := make([]sdk.Variable, 0)
 
-	vars := sdk.VariablesFilter(sdk.FromAplicationVariables(appDB.Variables), sdk.SecretVariable, sdk.KeyVariable)
+	vars := sdk.VariablesFilter(sdk.FromApplicationVariables(appDB.Variables), sdk.SecretVariable, sdk.KeyVariable)
 	for _, v := range vars {
 		secretsVariables = append(secretsVariables, sdk.Variable{
 			Name:  fmt.Sprintf("cds.app.%s", v.Name),
@@ -85,7 +85,7 @@ func LoadApplicationSecrets(ctx context.Context, db gorp.SqlExecutor, id int64) 
 
 func LoadEnvironmentSecrets(db gorp.SqlExecutor, id int64) ([]sdk.Variable, error) {
 	secretsVariables := make([]sdk.Variable, 0)
-	envVars, err := environment.LoadAllVariablesWithDecrytion(db, id)
+	envVars, err := environment.LoadAllVariablesWithDecryption(db, id)
 	if err != nil {
 		return nil, err
 	}

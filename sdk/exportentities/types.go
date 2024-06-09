@@ -17,7 +17,7 @@ type (
 		Regen *bool  `json:"regen,omitempty" yaml:"regen,omitempty"`
 	}
 
-	// ParameterValue is a struct to export a defautl value of Parameter
+	// ParameterValue is a struct to export a default value of Parameter
 	ParameterValue struct {
 		Type         string `json:"type,omitempty" yaml:"type,omitempty"`
 		DefaultValue string `json:"default,omitempty" yaml:"default,omitempty"`
@@ -26,7 +26,7 @@ type (
 	}
 )
 
-//All the consts
+// All the consts
 const (
 	FormatJSON Format = iota
 	FormatYAML

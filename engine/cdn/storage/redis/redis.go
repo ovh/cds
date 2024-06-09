@@ -79,7 +79,7 @@ func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
 	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
 }
 
-// NewReader instanciate a reader that it able to iterate over Redis storage unit
+// NewReader instantiate a reader that it able to iterate over Redis storage unit
 // with a score step of 100.0, starting at score 0
 func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, error) {
 	return &redis.Reader{
@@ -91,7 +91,7 @@ func (s *Redis) NewReader(_ context.Context, i sdk.CDNItemUnit) (io.ReadCloser, 
 	}, nil
 }
 
-// NewAdvancedReader instanciate a reader from given option, format can be JSON or Text. If from is < 0, read end lines (ex: from=-100 size=0 means read the last 100 lines)
+// NewAdvancedReader instantiate a reader from given option, format can be JSON or Text. If from is < 0, read end lines (ex: from=-100 size=0 means read the last 100 lines)
 func (s *Redis) NewAdvancedReader(_ context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error) {
 	return &redis.Reader{
 		Store:      s.store,

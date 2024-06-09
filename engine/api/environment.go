@@ -252,7 +252,7 @@ func (api *API) updateAsCodeEnvironmentHandler() service.Handler {
 		}
 
 		// replace placeholder before export
-		envVarsClear, err := environment.LoadAllVariablesWithDecrytion(api.mustDB(), envDB.ID)
+		envVarsClear, err := environment.LoadAllVariablesWithDecryption(api.mustDB(), envDB.ID)
 		if err != nil {
 			return err
 		}

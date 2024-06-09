@@ -17,7 +17,7 @@ import (
 )
 
 func TestDAO(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	workers, err := worker.LoadAll(context.TODO(), db)
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestDeadWorkers(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
-	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g := assets.InsertGroup(t, db)
 	h, _, hatcheryConsumer, _ := assets.InsertHatchery(t, db, *g)

@@ -10,8 +10,8 @@ import (
 func Valid(s string) bool { return Convert(s) == s && s != "" }
 
 // Convert returns a slug for the given string, a slug is a lower case text without special
-// caracters or space, only letters, numbers and dashes.
-// This func converts many known special caracters to letters.
+// characters or space, only letters, numbers and dashes.
+// This func converts many known special characters to letters.
 func Convert(source string) string {
 	defaultDiacriticsRemovalMap := map[string][]string{
 		"A":  {"\u0041", "\u24B6", "\uFF21", "\u00C0", "\u00C1", "\u00C2", "\u1EA6", "\u1EA4", "\u1EAA", "\u1EA8", "\u00C3", "\u0100", "\u0102", "\u1EB0", "\u1EAE", "\u1EB4", "\u1EB2", "\u0226", "\u01E0", "\u00C4", "\u01DE", "\u1EA2", "\u00C5", "\u01FA", "\u01CD", "\u0200", "\u0202", "\u1EA0", "\u1EAC", "\u1EB6", "\u1E00", "\u0104", "\u023A", "\u2C6F"},
@@ -122,7 +122,7 @@ func Convert(source string) string {
 		}
 	}
 
-	// replace special caracters with "-"
+	// replace special characters with "-"
 	re := regexp.MustCompile("[^a-zA-Z0-9]")
 	cleanSource = re.ReplaceAllLiteralString(cleanSource, "-")
 

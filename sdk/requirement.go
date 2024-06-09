@@ -5,7 +5,7 @@ import "regexp"
 const (
 	//BinaryRequirement refers to the need to a specific binary on host running the action
 	BinaryRequirement = "binary"
-	// ModelRequirement refers to the need fo a specific model
+	// ModelRequirement refers to the need for a specific model
 	ModelRequirement = "model"
 	// HostnameRequirement checks the hostname of the worker
 	HostnameRequirement = "hostname"

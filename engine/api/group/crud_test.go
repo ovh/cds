@@ -14,7 +14,7 @@ import (
 )
 
 func Test_CreateUpdateDelete(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u1, _ := assets.InsertLambdaUserInOrganization(t, db, "one")
 	u2, _ := assets.InsertLambdaUser(t, db)

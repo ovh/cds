@@ -14,7 +14,7 @@ import (
 )
 
 func TestInsertRegistration(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	r1 := sdk.UserRegistration{
 		Username: sdk.RandomString(10),

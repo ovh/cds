@@ -139,7 +139,7 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.String(flagToken, "", "CDS Token")
 	flags.String(flagName, "", "Name of worker")
 	flags.String(flagModel, "", "Model of worker")
-	flags.String(flagHatcheryName, "", "Hatchery Name spawing worker")
+	flags.String(flagHatcheryName, "", "Hatchery Name spawning worker")
 }
 
 // FlagBool replaces viper.GetBool

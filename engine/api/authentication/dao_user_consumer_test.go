@@ -17,7 +17,7 @@ import (
 )
 
 func TestLoadConsumer(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	assets.DeleteConsumers(t, db)
 
@@ -96,7 +96,7 @@ func TestLoadConsumer(t *testing.T) {
 }
 
 func TestInsertConsumer(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -121,7 +121,7 @@ func TestInsertConsumer(t *testing.T) {
 }
 
 func TestUpdateConsumer(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -148,7 +148,7 @@ func TestUpdateConsumer(t *testing.T) {
 }
 
 func TestDeleteConsumer(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),

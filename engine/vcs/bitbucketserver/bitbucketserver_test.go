@@ -13,8 +13,8 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	ghConsummer := getNewConsumer(t)
-	assert.NotNil(t, ghConsummer)
+	ghConsumer := getNewConsumer(t)
+	assert.NotNil(t, ghConsumer)
 }
 
 func getNewConsumer(t *testing.T) sdk.VCSServer {

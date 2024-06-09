@@ -24,7 +24,7 @@ type HatcheryLocal struct {
 	workers           map[string]workerCmd
 	LocalWorkerRunner LocalWorkerRunner
 	// BasedirDedicated = basedir + hatchery.name
-	// this directory contains the worker donwloaded from api at startup
+	// this directory contains the worker downloaded from api at startup
 	BasedirDedicated string
 }
 

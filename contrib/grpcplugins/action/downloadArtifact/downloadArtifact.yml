@@ -7,9 +7,9 @@ inputs:
   name:
     type: string
     description: >
-      Artifact name or wilcard pattern.
+      Artifact name or wildcard pattern.
 
-      If empty, all the artifacts identifed as "generic" result previously uploaded in the workflow will be downloaded.
+      If empty, all the artifacts identified as "generic" result previously uploaded in the workflow will be downloaded.
   path:
     type: string
     description: >

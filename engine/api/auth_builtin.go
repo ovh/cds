@@ -59,7 +59,7 @@ func (api *API) postAuthBuiltinSigninHandler() service.Handler {
 			return err
 		}
 
-		// Check the Token validity againts the IAT attribute
+		// Check the Token validity against the IAT attribute
 		if _, err := builtin.CheckSigninConsumerTokenIssuedAt(ctx, token, consumer); err != nil {
 			return sdk.NewError(sdk.ErrForbidden, err)
 		}

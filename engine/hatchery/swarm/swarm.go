@@ -27,7 +27,7 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
-// New instanciates a new Hatchery Swarm
+// New instantiates a new Hatchery Swarm
 func New() *HatcherySwarm {
 	s := new(HatcherySwarm)
 	s.GoRoutines = sdk.NewGoRoutines(context.Background())
@@ -412,7 +412,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		LabelJobID:              spawnArgs.JobID,
 	}
 
-	// Add new options on hatchery swarm to allow advanced docker option such as addHost, priviledge, port mapping and so one: #4594
+	// Add new options on hatchery swarm to allow advanced docker option such as addHost, privileged, port mapping and so one: #4594
 	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
 	if errDockerOpts != nil {
 		return errDockerOpts
@@ -794,7 +794,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 	return h.killAwolNetworks(ctx)
 }
 
-// NeedRegistration return true if worker model need regsitration
+// NeedRegistration return true if worker model need registration
 func (h *HatcherySwarm) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
 		return true

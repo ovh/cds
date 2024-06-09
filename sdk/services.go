@@ -41,7 +41,7 @@ type Service struct {
 	Uptodate         bool             `json:"up_to_date" db:"-" mapstructure:"up_to_date"`
 }
 
-// ServiceStatus contains the status for a service. The status can be attached to a sesion_id : all services except api
+// ServiceStatus contains the status for a service. The status can be attached to a session_id : all services except api
 // or a serviceId for API instance.
 type ServiceStatus struct {
 	ID               int64            `json:"-" db:"id"`

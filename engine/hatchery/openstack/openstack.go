@@ -38,7 +38,7 @@ var (
 
 var _ hatchery.InterfaceWithModels = new(HatcheryOpenstack)
 
-// New instanciates a new Hatchery Openstack
+// New instantiates a new Hatchery Openstack
 func New() *HatcheryOpenstack {
 	s := new(HatcheryOpenstack)
 	s.GoRoutines = sdk.NewGoRoutines(context.Background())
@@ -230,7 +230,7 @@ func (h *HatcheryOpenstack) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelS
 	return h.CDSClient().WorkerModelSecretList(m.Group.Name, m.Name)
 }
 
-// CanSpawn return wether or not hatchery can spawn model
+// CanSpawn return whether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryOpenstack) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, _ string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "openstack.CanSpawn")
@@ -504,7 +504,7 @@ func (h *HatcheryOpenstack) WorkersStarted(ctx context.Context) ([]string, error
 	return res, nil
 }
 
-// NeedRegistration return true if worker model need regsitration
+// NeedRegistration return true if worker model need registration
 func (h *HatcheryOpenstack) NeedRegistration(ctx context.Context, m *sdk.Model) bool {
 	if m.NeedRegistration {
 		log.Debug(ctx, "NeedRegistration> true as worker model %s model.NeedRegistration=true", m.Name)

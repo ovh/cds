@@ -28,7 +28,7 @@ func (g *githubClient) RateLimit(ctx context.Context) error {
 		log.Warn(ctx, "githubClient.RateLimit> Error %s", err)
 		return err
 	}
-	// If the GitHub instance does not have Rate Limitting enabled you will see a 404.
+	// If the GitHub instance does not have Rate Limiting enabled you will see a 404.
 	if status == http.StatusNotFound && strings.Contains(string(body), "Rate limiting is not enabled.") {
 		return nil
 	}

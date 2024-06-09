@@ -106,14 +106,14 @@ func ParseAndImport(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache 
 
 		var oldKey *sdk.ApplicationKey
 		var keepOldValue bool
-		//If application doesn't exist, skip the regen mecanism to generate key
+		//If application doesn't exist, skip the regen mechanism to generate key
 		if oldApp == nil {
 			kval.Regen = nil
 			log.Debug(ctx, "ParseAndImport> Skipping regen feature")
 		} else {
 			//If application exist, check the key exist
 			oldKey = oldApp.GetKey(kname)
-			//If the key doesn't exist, skip the regen mecanism to generate key
+			//If the key doesn't exist, skip the regen mechanism to generate key
 			if oldKey == nil {
 				kval.Regen = nil
 				log.Debug(ctx, "ParseAndImport> Skipping regen feature")

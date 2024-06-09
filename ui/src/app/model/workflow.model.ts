@@ -368,7 +368,7 @@ export class WorkflowNodeConditions {
     plain: Array<WorkflowNodeCondition>;
 }
 
-// WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowTriggerCondition represents a condition to trigger or not a pipeline in a workflow. Operator can be =, !=, regex
 export class WorkflowNodeCondition {
     variable: string;
     operator: string;

@@ -278,7 +278,7 @@ export class WorkflowShowComponent implements OnInit, OnDestroy, AfterViewInit {
             })).pipe(first()).subscribe(() => {
                 this._modalService.create({
                     nzWidth: '900px',
-                    nzTitle: 'Run worklow',
+                    nzTitle: 'Run workflow',
                     nzContent: WorkflowNodeRunParamComponent,
                 })
             });

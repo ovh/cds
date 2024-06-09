@@ -13,7 +13,7 @@ import (
 )
 
 func TestResetConsumerToken(t *testing.T) {
-	_, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	_, store := test.SetupPG(t, bootstrap.InitializeDB)
 
 	consumerUUID := sdk.UUID()
 	token, err := local.NewResetConsumerToken(store, consumerUUID)

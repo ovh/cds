@@ -6,7 +6,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// getGraylogEnv fetch the graylog aconfiguration from viper and return environement variable in a slice
+// getGraylogEnv fetch the graylog aconfiguration from viper and return environment variable in a slice
 func (h *HatcheryVSphere) getGraylogEnv(model sdk.Model) []string {
 	env := []string{}
 

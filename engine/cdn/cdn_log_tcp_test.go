@@ -54,7 +54,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 		Signature: cdn.Signature{
 			ProjectKey:   sdk.RandomString(10),
 			WorkflowID:   1,
-			WorkflowName: "MyWorklow",
+			WorkflowName: "MyWorkflow",
 			RunID:        1,
 			NodeRunID:    1,
 			NodeRunName:  "MyPipeline",

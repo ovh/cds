@@ -16,7 +16,7 @@ import (
 )
 
 func TestLoadSession(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{Username: sdk.RandomString(10)}
 	require.NoError(t, user.Insert(context.TODO(), db, &u))
@@ -58,7 +58,7 @@ func TestLoadSession(t *testing.T) {
 }
 
 func TestInsertSession(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -78,7 +78,7 @@ func TestInsertSession(t *testing.T) {
 }
 
 func TestDeleteSession(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),

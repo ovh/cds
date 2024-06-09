@@ -185,7 +185,7 @@ func (s *Service) ComputeMetrics(ctx context.Context) {
 				continue
 			}
 			for _, stat := range statsPercentils {
-				// Export only 50, 75, 90, 95, 99, 100 percentil
+				// Export only 50, 75, 90, 95, 99, 100 percentil 
 				switch stat.Percentile {
 				case 50, 75, 90, 95, 99, 100:
 					ctxItem := telemetry.ContextWithTag(ctx, telemetry.TagType, stat.Type, telemetry.TagPercentil, stat.Percentile)

@@ -11,7 +11,7 @@ var deployExample = exportentities.StepDeploy("{{.cds.application}}")
 var DeployApplication = Manifest{
 	Action: sdk.Action{
 		Name:        sdk.DeployApplicationAction,
-		Description: `Deploy an application, useful only if you have a Deployment Plaftorm associated to your current application.`,
+		Description: `Deploy an application, useful only if you have a Deployment Platform associated to your current application.`,
 	},
 	Example: exportentities.PipelineV1{
 		Version: exportentities.PipelineVersion1,

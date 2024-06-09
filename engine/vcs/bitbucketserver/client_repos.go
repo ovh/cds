@@ -75,12 +75,12 @@ func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo strin
 	params := url.Values{}
 	params.Add("filter", b.username)
 
-	var reponse UsersPermissionResponse
-	if err := b.do(ctx, "GET", "core", path, params, nil, &reponse); err != nil {
+	var response UsersPermissionResponse
+	if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
 		return false, sdk.WithStack(err)
 	}
 
-	for _, v := range reponse.Values {
+	for _, v := range response.Values {
 		if v.User.Slug == b.username {
 			return v.Permission == "REPO_WRITE" || v.Permission == "REPO_ADMIN", nil
 		}

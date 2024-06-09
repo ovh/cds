@@ -85,7 +85,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		ms = 0
 	}
 
-	// Build the score from the "countLine" as the interger part and "ms" as floating part
+	// Build the score from the "countLine" as the integer part and "ms" as floating part
 	if err := bufferUnit.Add(*iu, uint(countLine), uint(ms), content); err != nil {
 		return err
 	}

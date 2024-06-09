@@ -5,12 +5,13 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"strings"
+	"text/template"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"gopkg.in/ldap.v2"
-	"strings"
-	"text/template"
 )
 
 const errUserNotFound = "ldap::user not found"
@@ -137,7 +138,7 @@ func (l *ldapDriver) openLDAP(ctx context.Context, conf Config) error {
 	if l.conf.ManagerDN != "" {
 		log.Info(ctx, "LDAP> bind manager %s", l.conf.ManagerDN)
 		if err := l.conn.Bind(l.conf.ManagerDN, l.conf.ManagerPassword); err != nil {
-			if shoudRetry(ctx, err) {
+			if shouldRetry(ctx, err) {
 				if err := l.openLDAP(ctx, l.conf); err != nil {
 					return err
 				}
@@ -159,7 +160,7 @@ func (l *ldapDriver) bind(ctx context.Context, term, password string) error {
 	log.Debug(ctx, "LDAP> bind user %s", bindRequest)
 
 	if err := l.conn.Bind(bindRequest, password); err != nil {
-		if !shoudRetry(ctx, err) {
+		if !shouldRetry(ctx, err) {
 			return sdk.WithStack(err)
 		}
 		if err := l.openLDAP(ctx, l.conf); err != nil {
@@ -193,7 +194,7 @@ func (l *ldapDriver) search(ctx context.Context, term string, attributes ...stri
 
 	sr, err := l.conn.Search(searchRequest)
 	if err != nil {
-		if !shoudRetry(ctx, err) {
+		if !shouldRetry(ctx, err) {
 			return nil, err
 		}
 		if err := l.openLDAP(ctx, l.conf); err != nil {

@@ -4,7 +4,7 @@
 ALTER TABLE workflow_node ADD COLUMN workflow_trigger_src_id BIGINT;
 ALTER TABLE workflow_node ADD COLUMN workflow_trigger_join_src_id BIGINT;
 
--- workflow_node : Add constaint with cascade
+-- workflow_node : Add constraint with cascade
 ALTER TABLE workflow_node
 ADD CONSTRAINT FK_WORKFLOW_NODE_TRIGGER
 FOREIGN KEY(workflow_trigger_src_id) REFERENCES workflow_node_trigger(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;

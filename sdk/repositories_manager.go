@@ -189,10 +189,10 @@ type VCSHook struct {
 
 // VCSCommitStatus represents a status on a VCS repository
 type VCSCommitStatus struct {
-	Ref        string    `json:"ref"`
-	CreatedAt  time.Time `json:"created_at"`
-	State      string    `json:"state"`
-	Decription string    `json:"description"`
+	Ref         string    `json:"ref"`
+	CreatedAt   time.Time `json:"created_at"`
+	State       string    `json:"state"`
+	Description string    `json:"description"`
 }
 
 func VCSIsSameCommit(sha1, sha1b string) bool {

@@ -125,7 +125,7 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 		}
 	}
 
-	// Instanciate a new worker
+	// Instantiate a new worker
 	w := &sdk.Worker{
 		ID:           sdk.UUID(),
 		Name:         spawnArgs.WorkerName,

@@ -433,7 +433,7 @@ func TestDeleteStageByIDShouldDeleteStageConditions(t *testing.T) {
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
 				{
-					Variable: ".git.banch",
+					Variable: ".git.branch",
 					Operator: "regex",
 					Value:    "master",
 				},
@@ -493,7 +493,7 @@ func TestUpdateStageShouldUpdateStageConditions(t *testing.T) {
 		Conditions: sdk.WorkflowNodeConditions{
 			PlainConditions: []sdk.WorkflowNodeCondition{
 				{
-					Variable: ".git.banch",
+					Variable: ".git.branch",
 					Operator: "regex",
 					Value:    "master",
 				},

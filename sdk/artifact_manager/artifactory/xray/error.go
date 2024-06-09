@@ -9,7 +9,7 @@ import (
 var (
 	InternalServerError = errors.New("internal server error")
 	ErrNotFound         = errors.New("not found")
-	ErrConfict          = errors.New("conflict")
+	ErrConflict         = errors.New("conflict")
 	ErrBadRequest       = errors.New("bad request")
 )
 
@@ -22,7 +22,7 @@ func CheckError(code int) error {
 	case 0:
 		return nil
 	case 409:
-		return ErrConfict
+		return ErrConflict
 	case 404:
 		return ErrNotFound
 	case 400:

@@ -14,7 +14,7 @@ This integration enables some features:
 
  - [Git Repository Webhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
  - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/builtin-gitclone.md">}}) for advanced usage
- - Send [build notifications](https://confluence.atlassian.com/bitbucket/check-build-status-in-a-pull-request-945541505.html) on your Pull-Requests and Commits on Bitbucket Cloud. [More informations]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
+ - Send [build notifications](https://confluence.atlassian.com/bitbucket/check-build-status-in-a-pull-request-945541505.html) on your Pull-Requests and Commits on Bitbucket Cloud. [More information]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
 
 ## How to configure Bitbucket Cloud integration
 

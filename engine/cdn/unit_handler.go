@@ -125,9 +125,9 @@ func (s *Service) postAdminResyncBackendWithDatabaseHandler() service.Handler {
 
 		for _, u := range s.Units.Buffers {
 			if u.ID() == unitID {
-				choosenUnit := u
+				chosenUnit := u
 				s.GoRoutines.Exec(context.Background(), "ResyncWithDB-"+unitID, func(ctx context.Context) {
-					choosenUnit.ResyncWithDatabase(ctx, s.mustDBWithCtx(ctx), it, dryRun)
+					chosenUnit.ResyncWithDatabase(ctx, s.mustDBWithCtx(ctx), it, dryRun)
 				})
 			}
 		}

@@ -14,7 +14,7 @@ import (
 )
 
 func TestProcessJoinDefaultCondition(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
@@ -73,7 +73,7 @@ func TestProcessJoinDefaultCondition(t *testing.T) {
 }
 
 func TestProcessJoinCustomCondition(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)

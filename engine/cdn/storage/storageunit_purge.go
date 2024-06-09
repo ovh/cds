@@ -12,7 +12,7 @@ import (
 const (
 	FieldAPIRef = log.Field("item_apiref")
 	FieldSize   = log.Field("item_size_num")
-	FielID      = log.Field("item_id")
+	FieldID     = log.Field("item_id")
 )
 
 func init() {

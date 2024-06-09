@@ -19,7 +19,7 @@ import (
 )
 
 func Test_deleteWorkflowRunsHistory(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -59,7 +59,7 @@ func Test_deleteWorkflowRunsHistory(t *testing.T) {
 }
 
 func Test_applyRetentionPolicyOnRun(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 	wf := sdk.Workflow{
 		RetentionPolicy: "return run_days_before < 2",
 	}
@@ -80,7 +80,7 @@ func Test_applyRetentionPolicyOnRun(t *testing.T) {
 }
 
 func Test_applyRetentionPolicyOnRunWithError(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	// check empty rule
 	keep, err := applyRetentionPolicyOnRun(context.TODO(), db.DbMap, sdk.Workflow{

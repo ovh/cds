@@ -19,7 +19,7 @@ func Export(ctx context.Context, db gorp.SqlExecutor, key string, envName string
 	}
 
 	// Reload variables with clear password
-	variables, err := LoadAllVariablesWithDecrytion(db, env.ID)
+	variables, err := LoadAllVariablesWithDecryption(db, env.ID)
 	if err != nil {
 		return exportentities.Environment{}, err
 	}

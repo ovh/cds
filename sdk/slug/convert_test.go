@@ -14,7 +14,7 @@ func TestConvert(t *testing.T) {
 			result: "hello-world",
 		},
 		{
-			name:   "With spaces and special caracters",
+			name:   "With spaces and special characters",
 			value:  "Hello World !",
 			result: "hello-world",
 		},
@@ -24,7 +24,7 @@ func TestConvert(t *testing.T) {
 			result: "hello-world",
 		},
 		{
-			name:   "Only special caracters",
+			name:   "Only special characters",
 			value:  "    &+=:/.;?,\"'(§!)$☀☠   ",
 			result: "",
 		},

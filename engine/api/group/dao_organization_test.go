@@ -2,9 +2,10 @@ package group_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -15,7 +16,7 @@ import (
 )
 
 func TestDAO_GroupOrganization(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_, err := db.Exec("DELETE FROM organization")
 	require.NoError(t, err)

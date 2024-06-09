@@ -50,7 +50,7 @@ func (s *SwiftStore) TemporaryURLSupported() bool {
 	return !s.disableTempURL
 }
 
-// GetProjectIntegration returns current projet Integration, nil otherwise
+// GetProjectIntegration returns current project Integration, nil otherwise
 func (s *SwiftStore) GetProjectIntegration() sdk.ProjectIntegration {
 	return s.projectIntegration
 }

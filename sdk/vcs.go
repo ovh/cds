@@ -405,7 +405,7 @@ func GetDefaultBranch(branches []VCSBranch) VCSBranch {
 	return VCSBranch{}
 }
 
-// VCSCommitStatusContextV1 return a node formated status Context for workflow V1
+// VCSCommitStatusContextV1 return a node formatted status Context for workflow V1
 func VCSCommitStatusContextV1(projKey, workflowName string, evt EventRunWorkflowNode) string {
 	key := fmt.Sprintf("%s-%s-%s",
 		projKey,

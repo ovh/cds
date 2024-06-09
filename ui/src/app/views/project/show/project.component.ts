@@ -57,7 +57,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy, AfterViewInit {
                 projState.project.key !== null && !projState.project.externalChange &&
                 this._activatedRoute.snapshot.parent.params['key'] === projState.project.key))
             .subscribe((projState: ProjectStateModel) => {
-                let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is usefull to skip readonly
+                let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is useful to skip readonly
                 if (proj.labels) {
                     proj.labels = proj.labels.map((lbl) => {
                         lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);

@@ -15,7 +15,7 @@ import (
 )
 
 func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -71,7 +71,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX(t *testing.T) {
 }
 
 func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -110,7 +110,7 @@ func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization(t *testing.T) {
 }
 
 func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX_Node(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 
@@ -168,7 +168,7 @@ func TestCheckWorkflowGroups_UserShouldBeGroupAdminForRWAndRWX_Node(t *testing.T
 }
 
 func TestCheckWorkflowGroups_OnlyReadForDifferentOrganization_Node(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 

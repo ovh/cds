@@ -15,12 +15,12 @@ func vcsStrategy(ctx context.Context, wk workerruntime.Runtime, params []sdk.Par
 	var gitURL string
 	auth := new(git.AuthOpts)
 	// Get connection type
-	connetionType := sdk.ParameterFind(params, "git.connection.type")
-	if connetionType == nil || (connetionType.Value != "ssh" && connetionType.Value != "https") {
+	connectionType := sdk.ParameterFind(params, "git.connection.type")
+	if connectionType == nil || (connectionType.Value != "ssh" && connectionType.Value != "https") {
 		return gitURL, nil, fmt.Errorf("git connection type is not set. nothing to perform")
 	}
 
-	switch connetionType.Value {
+	switch connectionType.Value {
 	case "ssh":
 		keyName := sdk.ParameterFind(params, "git.ssh.key")
 		if keyName == nil || keyName.Value == "" {

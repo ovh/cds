@@ -21,7 +21,7 @@ import (
 )
 
 func TestCheckAndExecuteTemplate(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := proj.ProjectGroups[0].Group
@@ -171,7 +171,7 @@ version: v2.0`)),
 }
 
 func TestUpdateTemplateInstanceWithWorkflow(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
 	grp := proj.ProjectGroups[0].Group

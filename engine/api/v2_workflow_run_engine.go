@@ -949,7 +949,7 @@ func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string,
 				continue
 			}
 
-			// Ovveride with value sent by user
+			// Override with value sent by user
 			for k, v := range je.Inputs {
 				if _, has := currentJobContext.Gate[k]; has {
 					currentJobContext.Gate[k] = v

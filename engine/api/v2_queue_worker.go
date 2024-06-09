@@ -306,7 +306,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}
 	}
 
-	contexts.Integrations = &sdk.JobIntegrationsContext{}                    // The context only contais name of integration by function (artifact_manager / deployment)
+	contexts.Integrations = &sdk.JobIntegrationsContext{}                    // The context only contains name of integration by function (artifact_manager / deployment)
 	integs, err := integration.LoadIntegrationsByProjectID(ctx, db, proj.ID) // Here
 	if err != nil {
 		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")

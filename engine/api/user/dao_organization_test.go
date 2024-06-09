@@ -13,7 +13,7 @@ import (
 )
 
 func TestDAO_AuthentifiedUserOrganization(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertLambdaUser(t, db)
 

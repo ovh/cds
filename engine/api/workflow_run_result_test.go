@@ -19,7 +19,7 @@ import (
 )
 
 func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitializeDB)
 
 	u, pass := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)

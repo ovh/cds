@@ -14,8 +14,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// InitiliazeDB inits the database
-func InitiliazeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
+// InitializeDB inits the database
+func InitializeDB(ctx context.Context, defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
 	tx, err := DBFunc().Begin()
 	if err != nil {
 		return sdk.WithStack(err)

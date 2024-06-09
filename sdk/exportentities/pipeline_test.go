@@ -2,8 +2,9 @@ package exportentities_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/sdk/exportentities"
 
@@ -395,7 +396,7 @@ var (
 		},
 	}
 
-	tRealease = pipelineTestCase{
+	tRelease = pipelineTestCase{
 		name: "Pipeline with 1 stages and 1 release job",
 		arg: sdk.Pipeline{
 			Name: "MyPipeline tRelease",
@@ -489,7 +490,7 @@ var (
 			},
 		},
 	}
-	testcases = []pipelineTestCase{t1_1, t1_2, t2_2, tRealease}
+	testcases = []pipelineTestCase{t1_1, t1_2, t2_2, tRelease}
 )
 
 func TestExportPipeline_YAML(t *testing.T) {
@@ -671,7 +672,7 @@ jobs:
 - job: build
   requirements:
   - binary: git
-  - os-archicture: freebsd/amd64
+  - os-architecture: freebsd/amd64
   - region: graxyz
   steps:
   - gitClone:

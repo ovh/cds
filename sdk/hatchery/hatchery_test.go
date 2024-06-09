@@ -144,7 +144,7 @@ func TestCreate(t *testing.T) {
 			time.Sleep(2 * time.Second) // Wait
 			jobs <- j                   // This will trigger a second call on SpawnWorker should fail the job (nbAttempts: > 2) and call QueueSendResult
 			time.Sleep(3 * time.Second) // Wait
-			jobs <- j                   // This shoud not trigger the call on SpawnWorker but should fail the job (nbAttempts: > 2) and call QueueSendResult
+			jobs <- j                   // This should not trigger the call on SpawnWorker but should fail the job (nbAttempts: > 2) and call QueueSendResult
 
 			<-ctx.Done()
 			return ctx.Err()

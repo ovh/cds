@@ -298,7 +298,7 @@ func (w *Workflow) Normalize() {
 		}
 	}
 
-	// Set the node names in the notifactions
+	// Set the node names in the notifications
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
 		if len(n.NodeIDs) != 0 {
@@ -411,7 +411,7 @@ func (w *WorkflowNodeConditions) Scan(src interface{}) error {
 	return WrapError(JSONUnmarshal(source, w), "cannot unmarshal WorkflowNodeConditions")
 }
 
-// WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowNodeCondition represents a condition to trigger or not a pipeline in a workflow. Operator can be =, !=, regex
 type WorkflowNodeCondition struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Operator string `json:"operator" yaml:"operator"`

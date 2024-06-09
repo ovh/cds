@@ -71,7 +71,7 @@ type ConditionEntry struct {
 	LuaScript       string                `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
-// WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowNodeCondition represents a condition to trigger or not a pipeline in a workflow. Operator can be =, !=, regex
 type PlainConditionEntry struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Operator string `json:"operator" yaml:"operator"`
@@ -441,7 +441,7 @@ func (w Workflow) GetWorkflow(ctx context.Context) (*sdk.Workflow, error) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	var attempt int
 	fakeID := r.Int63n(5000)
-	// attempt is there to avoid infinite loop, but it should not happened becase we check validity and dependencies earlier
+	// attempt is there to avoid infinite loop, but it should not happened because we check validity and dependencies earlier
 	for len(w.Workflow) != 0 && attempt < 10000 {
 		for name, entry := range w.Workflow {
 			entry.ID = fakeID

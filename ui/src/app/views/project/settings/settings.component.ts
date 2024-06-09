@@ -40,7 +40,7 @@ export class ProjectSettingsComponent implements OnInit, OnDestroy {
 				projState.project.key !== null && !projState.project.externalChange &&
 				this._activatedRoute.snapshot.parent.params['key'] === projState.project.key))
 			.subscribe((projState: ProjectStateModel) => {
-				let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is usefull to skip readonly
+				let proj = cloneDeep(projState.project); // TODO: to delete when all will be in store, here it is useful to skip readonly
 
 				if (!this.project || this.project.key !== proj?.key) {
 					let data = { 'project_key': proj.key }

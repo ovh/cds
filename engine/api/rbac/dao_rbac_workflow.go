@@ -59,7 +59,7 @@ func getAllRBACWorkflows(ctx context.Context, db gorp.SqlExecutor, q gorpmapping
 		return nil, err
 	}
 
-	worflowsFiltered := make([]rbacWorkflow, 0, len(rbacWorkflows))
+	workflowsFiltered := make([]rbacWorkflow, 0, len(rbacWorkflows))
 	for _, wDatas := range rbacWorkflows {
 		isValid, err := gorpmapping.CheckSignature(wDatas, wDatas.Signature)
 		if err != nil {
@@ -69,9 +69,9 @@ func getAllRBACWorkflows(ctx context.Context, db gorp.SqlExecutor, q gorpmapping
 			log.Error(ctx, "rbac.getAllRBACWorkflows> rbac_workflow %d data corrupted", wDatas.ID)
 			continue
 		}
-		worflowsFiltered = append(worflowsFiltered, wDatas)
+		workflowsFiltered = append(workflowsFiltered, wDatas)
 	}
-	return worflowsFiltered, nil
+	return workflowsFiltered, nil
 }
 
 func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, workflowName string) (bool, error) {

@@ -1,6 +1,6 @@
 package repositories
 
-// Service is the stuct representing a vcs µService
+// Service is the struct representing a vcs µService
 import (
 	"path/filepath"
 
@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// Service is the repostories service
+// Service is the repositories service
 type Service struct {
 	service.Common
 	Cfg       Configuration

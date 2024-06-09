@@ -29,7 +29,7 @@ import (
 )
 
 func TestCommitListWorkflowRun(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 

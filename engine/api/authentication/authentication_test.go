@@ -19,7 +19,7 @@ type myPayload struct {
 }
 
 func TestSignJWS(t *testing.T) {
-	_, _ = test.SetupPG(t, bootstrap.InitiliazeDB)
+	_, _ = test.SetupPG(t, bootstrap.InitializeDB)
 
 	p := myPayload{
 		RandomID: sdk.UUID(),

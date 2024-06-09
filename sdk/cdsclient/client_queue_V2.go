@@ -77,7 +77,7 @@ func (c *client) V2QueueJobRunResultUpdate(ctx context.Context, regionName strin
 	return nil
 }
 
-// V2HatcheryTakeJob job status pssed to crafting and other hatcheries cannot work on it
+// V2HatcheryTakeJob job status passed to crafting and other hatcheries cannot work on it
 func (c *client) V2HatcheryTakeJob(ctx context.Context, regionName string, jobRunID string) (*sdk.V2WorkflowRunJob, error) {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/hatchery/take", regionName, jobRunID)
 	var jobRun sdk.V2WorkflowRunJob

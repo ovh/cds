@@ -22,7 +22,7 @@ type Check struct {
 	ctx                      context.Context
 }
 
-// NewCheck instanciates a check
+// NewCheck instantiates a check
 func NewCheck() (*Check, error) {
 	state := lua.NewState(
 		lua.Options{
@@ -110,7 +110,7 @@ func (c *Check) EnableStrict() error {
 	return nil
 }
 
-//Perform the lua script
+// Perform the lua script
 func (c *Check) Perform(script string) error {
 	var ok bool
 

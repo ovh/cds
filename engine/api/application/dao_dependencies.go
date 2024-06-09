@@ -27,7 +27,7 @@ var (
 	}
 
 	loadVariablesWithClearPassword = func(ctx context.Context, db gorp.SqlExecutor, app *sdk.Application) error {
-		variables, err := LoadAllVariablesWithDecrytion(ctx, db, app.ID)
+		variables, err := LoadAllVariablesWithDecryption(ctx, db, app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load variables for application %d", app.ID)
 		}

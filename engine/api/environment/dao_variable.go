@@ -84,8 +84,8 @@ func LoadAllVariables(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentVariab
 	return loadAllVariables(db, query)
 }
 
-// LoadAllVariablesWithDecrytion Get all variable for the given environment, it also decrypt all the secure content
-func LoadAllVariablesWithDecrytion(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentVariable, error) {
+// LoadAllVariablesWithDecryption Get all variable for the given environment, it also decrypt all the secure content
+func LoadAllVariablesWithDecryption(db gorp.SqlExecutor, envID int64) ([]sdk.EnvironmentVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM environment_variable

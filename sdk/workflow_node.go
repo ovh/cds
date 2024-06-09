@@ -58,7 +58,7 @@ type NodeContext struct {
 	Mutex                     bool                   `json:"mutex" db:"mutex"`
 }
 
-// FilterHooksConfig filter all hooks configuration and remove somme configuration key
+// FilterHooksConfig filter all hooks configuration and remove some configuration key
 func (n *Node) FilterHooksConfig(s ...string) {
 	if n == nil {
 		return

@@ -64,7 +64,7 @@ func (m *GoRoutines) Stop(name string) {
 	}
 }
 
-// NewGoRoutines instanciates a new GoRoutineManager
+// NewGoRoutines instantiates a new GoRoutineManager
 func NewGoRoutines(ctx context.Context) *GoRoutines {
 	m := &GoRoutines{}
 	m.Exec(ctx, "GoRoutines-restart", func(ctx context.Context) {

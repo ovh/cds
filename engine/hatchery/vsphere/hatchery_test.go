@@ -148,7 +148,7 @@ func TestHatcheryVSphere_NeedRegistration(t *testing.T) {
 	})
 	assert.True(t, h.NeedRegistration(ctx, &validModel), "without any VM returned by vSphere, it should return True")
 
-	// vSphere returns a VM Template maching to te model, it should return False
+	// vSphere returns a VM Template matching to te model, it should return False
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(func(ctx context.Context) ([]mo.VirtualMachine, error) {
 		return []mo.VirtualMachine{
 			{
@@ -166,7 +166,7 @@ func TestHatcheryVSphere_NeedRegistration(t *testing.T) {
 			},
 		}, nil
 	}).AnyTimes()
-	assert.False(t, h.NeedRegistration(ctx, &validModel), "vSphere returns a VM Template maching to te model, it should return False")
+	assert.False(t, h.NeedRegistration(ctx, &validModel), "vSphere returns a VM Template matching to te model, it should return False")
 
 }
 
@@ -295,7 +295,7 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 						},
 					},
 					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "someting"}`,
+						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "something"}`,
 					},
 				},
 				{
@@ -403,7 +403,7 @@ func TestHatcheryVSphere_Status(t *testing.T) {
 						},
 					},
 					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "someting"}`,
+						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "something"}`,
 					},
 				},
 				{

@@ -437,7 +437,7 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 		JobName:     "job_name",
 		JobID:       "666",
 		NodeRunID:   999,
-		NodeRunName: "nore_run_name",
+		NodeRunName: "node_run_name",
 		Requirements: []sdk.Requirement{
 			{
 				Type:  sdk.ModelRequirement,
@@ -625,7 +625,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		JobName:     "job_name",
 		JobID:       "666",
 		NodeRunID:   999,
-		NodeRunName: "nore_run_name",
+		NodeRunName: "node_run_name",
 		Requirements: []sdk.Requirement{
 			{
 				Type:  sdk.ModelRequirement,

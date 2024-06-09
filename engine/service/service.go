@@ -178,7 +178,7 @@ func (c *Common) Unregister(ctx context.Context) error {
 		return nil
 	}
 
-	log.Info(ctx, "Unregisting service %s(%T) %s", c.Type(), c, c.Name())
+	log.Info(ctx, "Unregistering service %s(%T) %s", c.Type(), c, c.Name())
 	return c.Client.AuthConsumerSignout()
 }
 
@@ -200,7 +200,7 @@ func (c *Common) Heartbeat(ctx context.Context, status func(ctx context.Context)
 
 			// if register failed too many time, stop heartbeat
 			if heartbeatFailures > c.MaxHeartbeatFailures {
-				return sdk.WithStack(fmt.Errorf("%s> Heartbeat failed excedeed", c.Name()))
+				return sdk.WithStack(fmt.Errorf("%s> Heartbeat failed exceeded", c.Name()))
 			}
 			return nil
 		}

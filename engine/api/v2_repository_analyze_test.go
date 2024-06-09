@@ -1447,7 +1447,7 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(repoWebHooks))
 
-	// Local workflow so worklow update hook must not be saved
+	// Local workflow so workflow update hook must not be saved
 	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))
 
@@ -1510,7 +1510,7 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 	require.True(t, hookWithCommit)
 	require.True(t, hookWithHead)
 
-	// Distant workflow so worklow update hook must be saved
+	// Distant workflow so workflow update hook must be saved
 	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
@@ -1563,7 +1563,7 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(repoWebHooks))
 
-	// Distant workflow so worklow update hook must be saved
+	// Distant workflow so workflow update hook must be saved
 	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)
@@ -1616,7 +1616,7 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 	require.NoError(t, err)
 	require.Equal(t, 1, len(repoWebHooks))
 
-	// Distant workflow so worklow update hook must be saved
+	// Distant workflow so workflow update hook must be saved
 	workflowUpdateHooks, err := workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
 	require.NoError(t, err)
 	require.NotNil(t, workflowUpdateHooks)

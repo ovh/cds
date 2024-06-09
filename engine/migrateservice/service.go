@@ -45,7 +45,7 @@ type Configuration struct {
 	} `toml:"serviceCDN" comment:"################################################\n CDS DB Migrate configuration for CDN service \n###############################################" json:"service_cdn"`
 }
 
-// New instanciates a new API object
+// New instantiates a new API object
 func New() service.Service {
 	s := &dbmigservice{}
 	s.GoRoutines = sdk.NewGoRoutines(context.Background())

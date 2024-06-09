@@ -6,7 +6,8 @@
                 <nz-form-item>
                     <nz-form-label>Project name</nz-form-label>
                     <nz-form-control>
-                        <input nz-input name="projectname" [(ngModel)]="project.name" (keyup)="generateKey($event.target.value)">
+                        <input nz-input name="projectname" [(ngModel)]="project.name"
+                            (keyup)="generateKey($event.target.value)">
                     </nz-form-control>
                 </nz-form-item>
                 <nz-alert *ngIf="nameError" nzType="error" nzMessage="project name is mandatory"></nz-alert>
@@ -16,7 +17,8 @@
                         <input nz-input name="projectkey" [(ngModel)]="project.key">
                     </nz-form-control>
                 </nz-form-item>
-                <nz-alert *ngIf="keyError" nzType="error" nzMessage="project unique key is mandatory and must be in upper case"></nz-alert>
+                <nz-alert *ngIf="keyError" nzType="error"
+                    nzMessage="project unique key is mandatory and must be in upper case"></nz-alert>
                 <nz-form-item>
                     <nz-form-label>Description</nz-form-label>
                     <nz-form-control>
@@ -27,9 +29,10 @@
                     <nz-form-label>Project icon (Optional)</nz-form-label>
                     <nz-form-control>
                         <div *ngIf="!fileTooLarge && project.icon">
-                            <img class="proj-icon" [src]="project.icon" alt="icon"/>
+                            <img class="proj-icon" [src]="project.icon" alt="icon" />
                         </div>
-                        <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEvent($event)"></app-upload-button>
+                        <app-upload-button accept=".png,.jpg,.jpeg" image="true"
+                            (event)="fileEvent($event)"></app-upload-button>
                     </nz-form-control>
                 </nz-form-item>
                 <nz-alert *ngIf="fileTooLarge" nzType="error" nzMessage="Your file is too large (max 100Ko)"></nz-alert>
@@ -37,7 +40,9 @@
                 <nz-alert nzType="info" nzMessage="{{'project_add_group_help' | translate}}"></nz-alert>
                 <nz-form-item>
                     <nz-form-label>
-                        {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="groupModalVisible = true">{{ 'project_permission_form_wizard_new' | translate }}</a>
+                        {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing"
+                            (click)="groupModalVisible = true">{{ 'project_permission_form_wizard_new' | translate
+                            }}</a>
                     </nz-form-label>
                     <nz-form-control>
                         <nz-select name="group" nzShowSearch [ngModel]="group?.id" (ngModelChange)="setGroup($event)">
@@ -60,7 +65,7 @@
     <div *nzModalContent>
         <form nz-form>
             <nz-form-item>
-                <nz-form-label>Groupe name</nz-form-label>
+                <nz-form-label>Group name</nz-form-label>
                 <nz-form-control>
                     <input nz-input type="text" name="groupname" [(ngModel)]="newGroup.name">
                 </nz-form-control>
@@ -69,6 +74,7 @@
     </div>
     <div *nzModalFooter>
         <button nz-button (click)="groupModalVisible = false">Cancel</button>
-        <button nz-button nzType="primary" name="creategroup" (click)="createGroup()" [nzLoading]="loading" [disabled]="loading">Create</button>
+        <button nz-button nzType="primary" name="creategroup" (click)="createGroup()" [nzLoading]="loading"
+            [disabled]="loading">Create</button>
     </div>
 </nz-modal>

@@ -41,7 +41,7 @@ func Test_DAOVariable(t *testing.T) {
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, sdk.PasswordPlaceholder, vs[1].Value)
 
-	vs, err = environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	vs, err = environment.LoadAllVariablesWithDecryption(db, env.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "clear_value", vs[0].Value)
 	assert.Equal(t, "secret_value", vs[1].Value)

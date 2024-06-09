@@ -110,7 +110,7 @@ func (api *API) getRetentionPolicySuggestionHandler() service.Handler {
 		}
 
 		varsPayload := make(map[string]string, 0)
-		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		run, err := workflow.LoadLastRun(ctx, api.mustDB(), key, name, workflow.LoadRunOptions{DisableDetailedNodeRun: true})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return err
 		}
@@ -209,7 +209,7 @@ func (api *API) postWorkflowRetentionPolicyDryRun() service.Handler {
 				event.PublishWorkflowRetentionDryRun(ctx, key, name, "ERROR", httpErr.Error(), nil, nil, 0, u.AuthConsumerUser.AuthentifiedUser)
 			}
 		})
-		return service.WriteJSON(w, sdk.PurgeDryRunResponse{NbRunsToAnalize: int64(count)}, http.StatusOK)
+		return service.WriteJSON(w, sdk.PurgeDryRunResponse{NbRunsToAnalyze: int64(count)}, http.StatusOK)
 	}
 }
 
@@ -233,7 +233,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		opts := workflow.LoadOptions{

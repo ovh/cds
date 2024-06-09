@@ -339,7 +339,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				})
 			}
 
-			httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+			httpURL, err := services.GetCDNPublicHTTPAddress(ctx, api.mustDB())
 			if err != nil {
 				return err
 			}

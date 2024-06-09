@@ -3,17 +3,18 @@ package migrate
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/organization"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestGetOrganizationUsersToMigrate_UserWithoutOrga(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u := sdk.AuthentifiedUser{
 		Username: sdk.RandomString(10),
@@ -27,7 +28,7 @@ func TestGetOrganizationUsersToMigrate_UserWithoutOrga(t *testing.T) {
 
 func TestGetOrganizationUsersToMigrate_OK(t *testing.T) {
 
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_, err := db.Exec("DELETE FROM organization")
 	require.NoError(t, err)

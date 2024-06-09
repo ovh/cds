@@ -34,7 +34,7 @@ func FromProjectVariables(appVars []ProjectVariable) []Variable {
 	return vars
 }
 
-func FromAplicationVariables(appVars []ApplicationVariable) []Variable {
+func FromApplicationVariables(appVars []ApplicationVariable) []Variable {
 	vars := make([]Variable, len(appVars))
 	for i, a := range appVars {
 		vars[i] = Variable{

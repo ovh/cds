@@ -14,7 +14,7 @@ This integration enables some features:
 
  - [Git Repository Webhook]({{<relref "/docs/concepts/workflow/hooks/git-repo-webhook.md" >}})
  - Easy to use action [CheckoutApplication]({{<relref "/docs/actions/builtin-checkoutapplication.md" >}}) and [GitClone]({{<relref "/docs/actions/builtin-gitclone.md">}}) for advanced usage
- - Send build notifications on your Pull-Requests and Commits on GitLab. [More informations]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
+ - Send build notifications on your Pull-Requests and Commits on GitLab. [More information]({{<relref "/docs/concepts/workflow/notifications.md#vcs-notifications" >}})
 
 
 ### Create the Personal Access Token on GitLab

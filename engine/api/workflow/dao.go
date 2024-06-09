@@ -718,7 +718,7 @@ func MarkAsDeleteWithDependencies(ctx context.Context, db gorpmapper.SqlExecutor
 	defer end()
 
 	// In this case, don't unlink workflow dependencies in the workflow structure
-	// We want to keep the relatioship in the database
+	// We want to keep the relationship in the database
 	wf.ToDeleteWithDependencies = &sdk.True
 	wf.ToDelete = true
 	if err := Update(ctx, db, cache, proj, wf, UpdateOptions{DisableHookManagement: true}); err != nil {

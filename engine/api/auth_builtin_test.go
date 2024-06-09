@@ -34,16 +34,16 @@ func AuthentififyBuiltinConsumer(t *testing.T, api *API, jwsToken string, srv *s
 	api.Router.Mux.ServeHTTP(rec, req)
 	require.Equal(t, 200, rec.Code)
 
-	var signinReponse sdk.AuthConsumerSigninResponse
-	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &signinReponse))
-	require.NotEmpty(t, signinReponse.Token, "session token should not be empty")
-	require.NotNil(t, signinReponse.User, "user should not be nil")
+	var signinResponse sdk.AuthConsumerSigninResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &signinResponse))
+	require.NotEmpty(t, signinResponse.Token, "session token should not be empty")
+	require.NotNil(t, signinResponse.User, "user should not be nil")
 
-	t.Logf("consumer authentified. jwt: %s", signinReponse.Token)
+	t.Logf("consumer authentified. jwt: %s", signinResponse.Token)
 
 	require.NotEmpty(t, rec.Header().Get("X-Api-Pub-Signing-Key"))
 
-	return signinReponse.Token
+	return signinResponse.Token
 }
 
 func Test_postAuthBuiltinSigninHandler(t *testing.T) {

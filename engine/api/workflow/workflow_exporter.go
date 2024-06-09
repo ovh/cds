@@ -68,7 +68,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 	// Reload app to retrieve secrets
 	for i := range wf.Applications {
 		app := wf.Applications[i]
-		vars, err := application.LoadAllVariablesWithDecrytion(ctx, db, app.ID)
+		vars, err := application.LoadAllVariablesWithDecryption(ctx, db, app.ID)
 		if err != nil {
 			return wp, sdk.WrapError(err, "cannot load application variables %s", app.Name)
 		}
@@ -92,7 +92,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj sdk.
 	// Reload env to retrieve secrets
 	for i := range wf.Environments {
 		env := wf.Environments[i]
-		vars, err := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+		vars, err := environment.LoadAllVariablesWithDecryption(db, env.ID)
 		if err != nil {
 			return wp, sdk.WrapError(err, "cannot load environment variables %s", env.Name)
 		}

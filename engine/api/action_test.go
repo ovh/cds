@@ -63,7 +63,7 @@ func Test_postActionImportHandler(t *testing.T) {
 
 	a := exportentities.Action{
 		Name:        "myAction",
-		Description: "MyDecription",
+		Description: "MyDescription",
 		Requirements: []exportentities.Requirement{
 			{
 				Binary: "bash",

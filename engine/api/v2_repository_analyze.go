@@ -1179,7 +1179,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, sha, 
 		}
 
 		if commit.Committer.ID == "" {
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find committer for commit %s", sha), nil
 		}
 
 		// Retrieve user link by external ID
@@ -1308,7 +1308,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 		return err
 	}
 
-	// 2. Lint againt some API specific rules
+	// 2. Lint against some API specific rules
 
 	var err []error
 	switch x := any(o).(type) {
@@ -1316,7 +1316,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 		// 2.1 Validate docker image against the whitelist from API configuration
 		var dockerSpec sdk.V2WorkerModelDockerSpec
 		if err := json.Unmarshal(x.Spec, &dockerSpec); err != nil {
-			// Check only docker spec, so we skipp other errors
+			// Check only docker spec, so we skip other errors
 			break
 		}
 		// Verify the image if any whitelist is setup

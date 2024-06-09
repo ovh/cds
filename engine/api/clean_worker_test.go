@@ -17,7 +17,7 @@ import (
 
 func TestDeleteDisabledWorkers(t *testing.T) {
 	ctx := context.TODO()
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	db.Exec("DELETE FROM v2_worker")
 	db.Exec("DELETE FROM v2_workflow_run_job")
@@ -115,7 +115,7 @@ func TestDeleteDisabledWorkers(t *testing.T) {
 
 func TestDisabledDeadWorkers(t *testing.T) {
 	ctx := context.TODO()
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	db.Exec("DELETE FROM v2_worker")
 	db.Exec("DELETE FROM v2_workflow_run_job")

@@ -75,10 +75,10 @@ func (client *bitbucketClient) ListStatuses(ctx context.Context, repo string, re
 			continue
 		}
 		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
-			CreatedAt:  time.Unix(s.Timestamp/1000, 0),
-			Decription: s.Description,
-			Ref:        ref,
-			State:      processBitbucketState(s),
+			CreatedAt:   time.Unix(s.Timestamp/1000, 0),
+			Description: s.Description,
+			Ref:         ref,
+			State:       processBitbucketState(s),
 		})
 	}
 

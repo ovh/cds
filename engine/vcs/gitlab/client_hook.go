@@ -28,7 +28,7 @@ func (c *gitlabClient) GetHookByID(ctx context.Context, repo, idS string) (*gitl
 	return hook, nil
 }
 
-//CreateHook enables the defaut HTTP POST Hook in Gitlab
+// CreateHook enables the default HTTP POST Hook in Gitlab
 func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	url := c.buildUrlWithProxy(hook.URL)
 
@@ -98,7 +98,7 @@ func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	return nil
 }
 
-//UpdateHook updates a gitlab webhook
+// UpdateHook updates a gitlab webhook
 func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	gitlabHook, err := c.GetHookByID(ctx, repo, hook.ID)
 	if err != nil {
@@ -157,7 +157,7 @@ func (c *gitlabClient) UpdateHook(ctx context.Context, repo string, hook *sdk.VC
 	return nil
 }
 
-//DeleteHook disables the defaut HTTP POST Hook in Gitlab
+// DeleteHook disables the default HTTP POST Hook in Gitlab
 func (c *gitlabClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	c.buildUrlWithProxy(hook.URL)
 

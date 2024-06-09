@@ -28,7 +28,7 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 	}
 	for _, wnr := range report.Nodes() {
 		wr, err := workflow.LoadRunByID(ctx, db, wnr.WorkflowRunID, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
+			DisableDetailedNodeRun: true,
 		})
 		if err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
@@ -48,7 +48,7 @@ func (api *API) WorkflowSendEvent(ctx context.Context, proj sdk.Project, report 
 		}
 
 		nr, err := workflow.LoadNodeRunByID(ctx, db, wnr.ID, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: false, // load build parameters, used in notif interpolate below
+			DisableDetailedNodeRun: false, // load build parameters, used in notif interpolate below
 		})
 		if err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)

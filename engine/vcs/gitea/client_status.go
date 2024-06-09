@@ -93,10 +93,10 @@ func (client *giteaClient) ListStatuses(ctx context.Context, fullname string, re
 	var vcsStatuses []sdk.VCSCommitStatus
 	for _, s := range statuses {
 		vcsStatuses = append(vcsStatuses, sdk.VCSCommitStatus{
-			CreatedAt:  s.Created,
-			Decription: s.Context,
-			Ref:        ref,
-			State:      processGiteaState(s.State),
+			CreatedAt:   s.Created,
+			Description: s.Context,
+			Ref:         ref,
+			State:       processGiteaState(s.State),
 		})
 	}
 

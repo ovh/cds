@@ -64,7 +64,7 @@ type Router struct {
 	Config                service.HTTPRouterConfiguration
 }
 
-// HandlerConfigFunc is a type used in the router configuration fonction "Handle"
+// HandlerConfigFunc is a type used in the router configuration function "Handle"
 type HandlerConfigFunc func(service.Handler, ...service.HandlerConfigParam) *service.HandlerConfig
 
 func (r *Router) pprofLabel(config map[string]*service.HandlerConfig, fn http.HandlerFunc) http.HandlerFunc {
@@ -343,7 +343,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			clientIP = req.Header.Get(r.Config.HeaderXForwardedFor)
 		}
 		if clientIP == "" {
-			// If the header has not been found, fallback on the remote adress from the http request
+			// If the header has not been found, fallback on the remote address from the http request
 			clientIP = req.RemoteAddr
 		}
 
@@ -611,7 +611,7 @@ func (r *Router) NotFoundHandler(w http.ResponseWriter, req *http.Request) {
 		clientIP = req.Header.Get(r.Config.HeaderXForwardedFor)
 	}
 	if clientIP == "" {
-		// If the header has not been found, fallback on the remote adress from the http request
+		// If the header has not been found, fallback on the remote address from the http request
 		clientIP = req.RemoteAddr
 	}
 

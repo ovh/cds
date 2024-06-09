@@ -37,7 +37,7 @@ type mockServiceClient struct {
 
 // Payload: nothing
 func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
@@ -230,7 +230,7 @@ func TestHookRunWithoutPayloadProcessNodeBuildParameter(t *testing.T) {
 
 // Payload: commit only
 func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	consumer, _ := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
@@ -415,7 +415,7 @@ func TestHookRunWithHashOnlyProcessNodeBuildParameter(t *testing.T) {
 
 // Payload: branch only
 func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -568,7 +568,7 @@ func TestManualRunWithPayloadProcessNodeBuildParameter(t *testing.T) {
 
 // Payload: branch and commit
 func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -714,7 +714,7 @@ func TestManualRunBranchAndCommitInPayloadProcessNodeBuildParameter(t *testing.T
 
 // Payload: branch and repository (we want to build a fork)
 func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -941,7 +941,7 @@ func TestManualRunBranchAndRepositoryInPayloadProcessNodeBuildParameter(t *testi
 
 // Payload: multi application, multi repo
 func TestManualRunBuildParameterMultiApplication(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -1182,7 +1182,7 @@ func TestManualRunBuildParameterMultiApplication(t *testing.T) {
 }
 
 func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 	u, _ := assets.InsertAdminUser(t, db)
 
 	// Create project
@@ -1411,7 +1411,7 @@ func TestManualRunBuildParameterNoApplicationOnRoot(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -1596,7 +1596,7 @@ func TestGitParamOnPipelineWithoutApplication(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -1776,7 +1776,7 @@ func TestGitParamOnApplicationWithoutRepo(t *testing.T) {
 }
 
 func TestGitParamRunWithTag(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -1928,7 +1928,7 @@ func TestGitParamRunWithTag(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -2122,7 +2122,7 @@ func TestGitParamOn2ApplicationSameRepo(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamWithJoin(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -2334,7 +2334,7 @@ func TestGitParamWithJoin(t *testing.T) {
 
 // Test with artifact manager parameter
 func TestIntegrationParam(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -2451,7 +2451,7 @@ func TestIntegrationParam(t *testing.T) {
 
 // Payload: branch only
 func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -2661,7 +2661,7 @@ func TestGitParamOn2ApplicationSameRepoWithFork(t *testing.T) {
 
 // Payload: branch only  + run condition on git.branch
 func TestManualRunWithPayloadAndRunCondition(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 

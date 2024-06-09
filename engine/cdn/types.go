@@ -27,7 +27,7 @@ type handledMessage struct {
 	IsTerminated bool
 }
 
-// Service is the stuct representing a CDN µService
+// Service is the struct representing a CDN µService
 type Service struct {
 	service.Common
 	Cfg                 Configuration

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// This is the buitin integration model
+// This is the builtin integration model
 const (
 	KafkaIntegrationModel           = "Kafka"
 	RabbitMQIntegrationModel        = "RabbitMQ"
@@ -410,7 +410,7 @@ func (p IntegrationModel) IsBuiltin() bool {
 	return false
 }
 
-// ProjectIntegration is an instanciation of a integration model
+// ProjectIntegration is an instantiation of a integration model
 type ProjectIntegration struct {
 	ID                 int64             `json:"id" db:"id" yaml:"-"`
 	ProjectID          int64             `json:"project_id" db:"project_id" yaml:"-"`
@@ -418,7 +418,7 @@ type ProjectIntegration struct {
 	IntegrationModelID int64             `json:"integration_model_id" db:"integration_model_id" yaml:"-"`
 	Model              IntegrationModel  `json:"model" db:"-" yaml:"model"`
 	Config             IntegrationConfig `json:"config" db:"cipher_config" yaml:"config" gorpmapping:"encrypted,ProjectID,IntegrationModelID"`
-	// GRPCPlugin field is used to get all plugins associatied to an integration
+	// GRPCPlugin field is used to get all plugins associated to an integration
 	// when we GET /project/{permProjectKey}/integrations/{integrationName}
 	GRPCPlugins []GRPCPlugin `json:"integration_plugins,omitempty" db:"-" yaml:"-"`
 }

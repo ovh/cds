@@ -274,7 +274,7 @@ type AuthConsumerCreateResponse struct {
 	Consumer *AuthUserConsumer `json:"consumer"`
 }
 
-// AuthDriverUserInfo struct discribed a user returns by a auth driver.
+// AuthDriverUserInfo struct described a user returns by a auth driver.
 type AuthDriverUserInfo struct {
 	ExternalID      string
 	Username        string
@@ -648,7 +648,7 @@ type Expiration int
 
 const AuthSigninConsumerTokenDuration time.Duration = time.Minute * 5
 
-// AuthSigninConsumerToken discribes the payload for a signin state token.
+// AuthSigninConsumerToken describes the payload for a signin state token.
 type AuthSigninConsumerToken struct {
 	IssuedAt          int64  `json:"issued_at"`
 	Origin            string `json:"origin,omitempty"`

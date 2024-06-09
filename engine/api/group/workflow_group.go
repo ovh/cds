@@ -168,7 +168,7 @@ type LinkWorkflowGroupPermission struct {
 	Role       int    `db:"role"`
 }
 
-// LoadWorkflowGroupsByWorkflowIDs returns a map with key: workflowID and value the slite of groups
+// LoadWorkflowGroupsByWorkflowIDs returns a map with key: workflowID and value the slice of groups
 func LoadWorkflowGroupsByWorkflowIDs(ctx context.Context, db gorp.SqlExecutor, workflowIDs []int64) (map[int64][]sdk.GroupPermission, error) {
 	result := make(map[int64][]sdk.GroupPermission, len(workflowIDs))
 	query := gorpmapping.NewQuery(`

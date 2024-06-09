@@ -136,7 +136,7 @@ func StartWorkflowRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
 			}
 
-			// check permission fo workflow node on handler layer
+			// check permission for workflow node on handler layer
 			if !permission.AccessToWorkflowNode(ctx, db, &wr.Workflow, fromNode, u, sdk.PermissionReadExecute) {
 				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wr.Workflow.WorkflowData.Node.ID)
 			}
@@ -148,7 +148,7 @@ func StartWorkflowRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, stor
 			}
 			report.Merge(ctx, r1)
 		} else {
-			// heck permission fo workflow node on handler layer
+			// check permission for workflow node on handler layer
 			// MANUAL RUN FROM ROOT NODE
 			if !permission.AccessToWorkflowNode(ctx, db, &wr.Workflow, &wr.Workflow.WorkflowData.Node, u, sdk.PermissionReadExecute) {
 				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wr.Workflow.WorkflowData.Node.ID)

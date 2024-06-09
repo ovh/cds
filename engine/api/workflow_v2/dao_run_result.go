@@ -50,7 +50,7 @@ func LoadRunResultsByRunID(ctx context.Context, db gorp.SqlExecutor, runID strin
 	return getAllRunResults(ctx, db, query)
 }
 
-func LoadAbandonnedRunResultsID(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {
+func LoadAbandonedRunResultsID(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {
 	query := `
     SELECT v2_workflow_run_result.id 
     FROM v2_workflow_run_result 
@@ -60,7 +60,7 @@ func LoadAbandonnedRunResultsID(ctx context.Context, db gorp.SqlExecutor) ([]str
 	`
 	var results pq.StringArray
 	if _, err := db.Select(&results, query); err != nil {
-		return nil, sdk.WrapError(err, "unable to load abandonned run results")
+		return nil, sdk.WrapError(err, "unable to load abandoned run results")
 	}
 	return results, nil
 }

@@ -6,7 +6,7 @@ description: |
 inputs:
   artifacts:
     type: string
-    description: Artifact name or wilcard pattern.
+    description: Artifact name or wildcard pattern.
     required: true
   maturity:
     type: string

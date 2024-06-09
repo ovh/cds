@@ -24,7 +24,7 @@ type Configuration struct {
 		Level          string   `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, error" json:"level"`
 		Format         string   `toml:"format" default:"text" comment:"Stdout format: text, json, discard" json:"format"`
 		TextFields     []string `toml:"textFields" default:"" json:"textFields" commented:"true" comment:"Can be used only with text format. Empty values = all fields will be displayed, example: [\"request_uri\",\"request_id\",\"stack_trace\",\"status\"]".`
-		SkipTextFields []string `toml:"skipTextFields" default:"" json:"skipTextFields" commented:"true" comment:"Can be used only with text format. Skip logs with some fields. Empty values = all logs will be displayed, example: [\"handler=api.(*API).postServiceHearbeatHandler-fm.(*API).postServiceHearbeatHandler\"]".`
+		SkipTextFields []string `toml:"skipTextFields" default:"" json:"skipTextFields" commented:"true" comment:"Can be used only with text format. Skip logs with some fields. Empty values = all logs will be displayed, example: [\"handler=api.(*API).postServiceHeartbeatHandler-fm.(*API).postServiceHeartbeatHandler\"]".`
 		Graylog        struct {
 			Host       string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
 			Port       int    `toml:"port" comment:"Example: 12202" json:"port"`
@@ -52,5 +52,5 @@ type HatcheryConfiguration struct {
 	Kubernetes *kubernetes.HatcheryConfiguration `toml:"kubernetes" comment:"Hatchery Kubernetes. Doc: https://ovh.github.io/cds/docs/integrations/kubernetes/" json:"kubernetes"`
 	Openstack  *openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/docs/integrations/openstack/" json:"openstack"`
 	Swarm      *swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/docs/integrations/swarm/" json:"swarm"`
-	VSphere    *vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/docs/integrations/vsphere/" json:"vshpere"`
+	VSphere    *vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VSphere. Doc: https://ovh.github.io/cds/docs/integrations/vsphere/" json:"vsphere"`
 }

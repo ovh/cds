@@ -137,7 +137,7 @@ func (c CorpSSODriver) GetUserInfoFromDriver(ctx context.Context, req sdk.AuthCo
 		return u, sdk.NewError(sdk.ErrUnauthorized, fmt.Errorf("token verification failed: %v", err))
 	}
 
-	// Define wich public Key we have to take care about to verify the token
+	// Define which public Key we have to take care about to verify the token
 	var publicKey interface{}
 	switch {
 	case cfg.KeySigningKey.KeySigningKey != "":

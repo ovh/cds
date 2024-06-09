@@ -82,7 +82,7 @@ var (
 	MsgWorkflowImportedUpdated              = &Message{"MsgWorkflowImportedUpdated", trad{FR: "Le workflow %s a été mis à jour", EN: "Workflow %s has been updated"}, nil, RunInfoTypInfo}
 	MsgWorkflowImportedInserted             = &Message{"MsgWorkflowImportedInserted", trad{FR: "Le workflow %s a été créé", EN: "Workflow %s has been created"}, nil, RunInfoTypInfo}
 	MsgSpawnInfoHatcheryCannotStartJob      = &Message{"MsgSpawnInfoHatcheryCannotStart", trad{FR: "Aucune hatchery n'a pu démarrer de worker respectant vos pré-requis de job, merci de les vérifier.", EN: "No hatchery can spawn a worker corresponding your job's requirements. Please check your job's requirements."}, nil, RunInfoTypeWarning}
-	MsgWorkflowRunBranchDeleted             = &Message{"MsgWorkflowRunBranchDeleted", trad{FR: "La branche %s  a été supprimée", EN: "Branch %s has been deleted"}, nil, RunInfoTypInfo}
+	MsgWorkflowRunBranchDeleted             = &Message{"MsgWorkflowRunBranchDeleted", trad{FR: "La branche %s a été supprimée", EN: "Branch %s has been deleted"}, nil, RunInfoTypInfo}
 	MsgWorkflowTemplateImportedInserted     = &Message{"MsgWorkflowTemplateImportedInserted", trad{FR: "Le template de workflow %s/%s a été créé", EN: "Workflow template %s/%s has been created"}, nil, RunInfoTypInfo}
 	MsgWorkflowTemplateImportedUpdated      = &Message{"MsgWorkflowTemplateImportedUpdated", trad{FR: "Le template de workflow %s/%s a été mis à jour", EN: "Workflow template %s/%s has been updated"}, nil, RunInfoTypInfo}
 	MsgWorkflowErrorBadPipelineName         = &Message{"MsgWorkflowErrorBadPipelineName", trad{FR: "Le pipeline %s indiqué dans votre fichier yaml de workflow n'existe pas", EN: "The pipeline %s mentioned in your workflow's yaml file doesn't exist"}, nil, RunInfoTypeError}
@@ -196,7 +196,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoJobFailedCauseByWorkerLost.ID:  MsgSpawnInfoJobFailedCauseByWorkerLost,
 }
 
-// Message represent a struc format translated messages
+// Message represent a struct format translated messages
 type Message struct {
 	ID     string
 	Format trad
@@ -226,7 +226,7 @@ var (
 	}
 )
 
-// String returns formated string for the specified language
+// String returns formatted string for the specified language
 func (m *Message) String() string {
 	return fmt.Sprintf(m.Format[EN], m.Args...)
 }

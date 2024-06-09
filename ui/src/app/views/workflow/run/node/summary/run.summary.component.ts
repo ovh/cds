@@ -103,7 +103,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit, OnDestroy {
     runNewWithParameter(): void {
         this._modalService.create({
             nzWidth: '900px',
-            nzTitle: 'Run worklow',
+            nzTitle: 'Run workflow',
             nzContent: WorkflowNodeRunParamComponent,
         });
     }

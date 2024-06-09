@@ -125,7 +125,7 @@ func createPullRequest(ctx context.Context, db *gorp.DbMap, store cache.Store, p
 		},
 	}
 
-	// Try to reuse a PR for the branche if exists else create a new one
+	// Try to reuse a PR for the branch if exists else create a new one
 	var pr *sdk.VCSPullRequest
 	prs, err := client.PullRequests(ctx, rootApp.RepositoryFullname, sdk.VCSRequestModifierWithState(sdk.VCSPullRequestStateOpen))
 	if err != nil {

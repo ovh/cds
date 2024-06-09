@@ -21,7 +21,7 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 	}
 	log.Debug(ctx, "processCheckout> repo cloned with current branch: %s", currentBranch)
 
-	// Clean no commited changes if exists
+	// Clean no committed changes if exists
 	if err := gitRepo.ResetHard(ctx, "HEAD"); err != nil {
 		return sdk.WithStack(err)
 	}

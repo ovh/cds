@@ -47,8 +47,8 @@ func LoadAllVariables(ctx context.Context, db gorp.SqlExecutor, projID int64) ([
 	return loadAllVariables(ctx, db, query)
 }
 
-// LoadAllVariablesWithDecrytion Get all variable for the given project, it also decrypt all the secure content
-func LoadAllVariablesWithDecrytion(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
+// LoadAllVariablesWithDecryption Get all variable for the given project, it also decrypt all the secure content
+func LoadAllVariablesWithDecryption(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectVariable, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT *
 		FROM project_variable

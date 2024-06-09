@@ -73,7 +73,7 @@ func TestInsertPipeline(t *testing.T) {
 	}
 }
 
-func TestInsertPipelineWithParemeters(t *testing.T) {
+func TestInsertPipelineWithParameters(t *testing.T) {
 	db, _ := test.SetupPG(t)
 
 	pk := sdk.RandomString(8)
@@ -111,7 +111,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 	assert.Equal(t, len(pip.Parameter), len(pip1.Parameter))
 }
 
-func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
+func TestInsertPipelineWithWithWrongParameters(t *testing.T) {
 	db, _ := test.SetupPG(t)
 
 	pk := sdk.RandomString(8)
@@ -143,7 +143,7 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key := sdk.RandomString(10)
 
@@ -192,7 +192,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 }
 
 func TestLoadByWorkerModel(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g1 := group.SharedInfraGroup
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))

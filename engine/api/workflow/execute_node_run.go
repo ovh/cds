@@ -690,7 +690,7 @@ func syncStage(ctx context.Context, db gorp.SqlExecutor, store cache.Store, stag
 	for indexJob := range stage.RunJobs {
 		runJob := &stage.RunJobs[indexJob]
 
-		// If job is runnning, sync it
+		// If job is running, sync it
 		if runJob.Status == sdk.StatusBuilding || runJob.Status == sdk.StatusWaiting {
 			runJobDB, errJob := LoadNodeJobRun(ctx, db, store, runJob.ID)
 			if errJob != nil {

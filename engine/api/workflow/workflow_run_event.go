@@ -129,7 +129,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 
 	var statusFound *sdk.VCSCommitStatus
 	for i, status := range statuses {
-		if status.Decription == expected {
+		if status.Description == expected {
 			statusFound = &statuses[i]
 			break
 		}

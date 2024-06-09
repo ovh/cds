@@ -18,7 +18,7 @@ const (
 	GerritIcon    = "git"
 )
 
-//NodeHook represents a hook which cann trigger the workflow from a given node
+// NodeHook represents a hook which can trigger the workflow from a given node
 type NodeHook struct {
 	ID            int64                  `json:"id" db:"id"`
 	UUID          string                 `json:"uuid" db:"uuid"`
@@ -91,7 +91,7 @@ func (h NodeHook) ConfigValueContainsEventsDefault() bool {
 	return atLeastOneFound
 }
 
-//Equals checks functional equality between two hooks
+// Equals checks functional equality between two hooks
 func (h NodeHook) Equals(h1 NodeHook) bool {
 	var areRepoWebHook = (h1.HookModelID == h.HookModelID) && (h.HookModelID == RepositoryWebHookModel.ID)
 	var isEventFilter = func(s string) bool { return s == HookConfigEventFilter }
@@ -154,7 +154,7 @@ func (w *Workflow) FilterHooksConfig(s ...string) {
 // WorkflowHookModelBuiltin is a constant for the builtin hook models
 const WorkflowHookModelBuiltin = "builtin"
 
-//WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
+// WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
 
 // Value returns driver.Value from WorkflowNodeHookConfig request.
@@ -224,7 +224,7 @@ func GetBuiltinOutgoingHookModelByName(name string) *WorkflowHookModel {
 	return nil
 }
 
-//Values return values of the WorkflowNodeHookConfig
+// Values return values of the WorkflowNodeHookConfig
 func (cfg WorkflowNodeHookConfig) Values(model WorkflowNodeHookConfig) map[string]string {
 	r := make(map[string]string)
 	for k, v := range cfg {
@@ -267,7 +267,7 @@ const (
 	HookConfigTypeMultiChoice = "multiple"
 )
 
-//WorkflowHookModel represents a hook which can be used in workflows.
+// WorkflowHookModel represents a hook which can be used in workflows.
 type WorkflowHookModel struct {
 	ID            int64                  `json:"id" db:"id" cli:"-"`
 	Name          string                 `json:"name" db:"name" cli:"name"`

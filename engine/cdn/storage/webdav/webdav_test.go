@@ -77,7 +77,7 @@ func TestWebdav(t *testing.T) {
 			},
 		},
 	})
-	require.NoError(t, err, "unable to initialiaze webdav driver")
+	require.NoError(t, err, "unable to initialize webdav driver")
 
 	itemUnit := sdk.CDNItemUnit{
 		Locator: "a_locator",

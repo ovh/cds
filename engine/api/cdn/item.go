@@ -53,7 +53,7 @@ func ListItems(ctx context.Context, db gorp.SqlExecutor, itemtype sdk.CDNItemTyp
 		return result, sdk.WithStack(err)
 	}
 
-	httpURL, err := services.GetCDNPublicHTTPAdress(ctx, db)
+	httpURL, err := services.GetCDNPublicHTTPAddress(ctx, db)
 	if err != nil {
 		return result, err
 	}

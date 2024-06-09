@@ -96,7 +96,7 @@ type WorkflowAsCodeInterface interface {
 	WorkflowAsCodePerform(projectKey string, operationID string) ([]string, error)
 }
 
-// RepositoriesManagerInterface exposes all repostories manager functions
+// RepositoriesManagerInterface exposes all repositories manager functions
 type RepositoriesManagerInterface interface {
 	RepositoriesList(projectKey string, repoManager string, resync bool) ([]sdk.VCSRepo, error)
 }

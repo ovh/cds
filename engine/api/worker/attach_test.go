@@ -17,7 +17,7 @@ import (
 )
 
 func TestReleaseAllFromHatchery(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	// Remove all existing workers in database
 	workers, err := worker.LoadAll(context.TODO(), db)
@@ -69,7 +69,7 @@ func TestReleaseAllFromHatchery(t *testing.T) {
 }
 
 func TestReAttachAllToHatchery(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	// Remove all existing workers in database
 	workers, err := worker.LoadAll(context.TODO(), db)

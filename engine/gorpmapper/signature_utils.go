@@ -35,8 +35,8 @@ func (m *Mapper) ListCanonicalFormsByEntity(db gorp.SqlExecutor, entity string) 
 	}
 
 	x := e.Target.(Canonicaller)
-	lastestCanonicalForm, _ := x.Canonical().Latest()
-	sha := getSigner(lastestCanonicalForm)
+	latestCanonicalForm, _ := x.Canonical().Latest()
+	sha := getSigner(latestCanonicalForm)
 
 	for i := range res {
 		if res[i].Signer == sha {

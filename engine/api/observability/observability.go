@@ -105,19 +105,19 @@ func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.S
 
 	if pkey == "" {
 		id, _ := strconv.ParseInt(vars["id"], 10, 64)
-		//The ID found may be a node run job, let's try to find the project key behing
+		//The ID found may be a node run job, let's try to find the project key behind
 		if id <= 0 {
 			id, _ = strconv.ParseInt(vars["permJobID"], 10, 64)
 		}
 		if id != 0 {
 			var err error
-			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
+			cacheKey := cache.Key("api:FindProjectKeyForNodeRunJob:", fmt.Sprintf("%v", id))
 			find, errGet := store.Get(cacheKey, &pkey)
 			if errGet != nil {
 				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, errGet)
 			}
 			if !find {
-				pkey, err = findProjetKeyForNodeRunJob(ctx, db, id)
+				pkey, err = findProjectKeyForNodeRunJob(ctx, db, id)
 				if err != nil {
 					log.Error(ctx, "tracingMiddleware> %v", err)
 					return "", false

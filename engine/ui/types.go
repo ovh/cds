@@ -7,7 +7,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 )
 
-// Service is the stuct representing a ui µService
+// Service is the struct representing a ui µService
 type Service struct {
 	service.Common
 	Cfg     Configuration

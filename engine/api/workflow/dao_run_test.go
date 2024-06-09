@@ -79,7 +79,7 @@ func TestCanBeRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRun(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
@@ -254,7 +254,7 @@ vcs_ssh_key: proj-blabla
 }
 
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
@@ -343,7 +343,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
@@ -542,7 +542,7 @@ vcs_ssh_key: proj-blabla
 }
 
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
@@ -713,7 +713,7 @@ vcs_ssh_key: proj-blabla
 }
 
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
@@ -799,7 +799,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_ = event.Initialize(context.TODO(), db.DbMap, cache, nil)
 
@@ -885,7 +885,7 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 }
 
 func TestLoadRunsIDsToDelete(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	_, _ = db.Exec("update workflow_run set to_delete=false ")
 

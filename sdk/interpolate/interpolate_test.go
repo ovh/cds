@@ -308,7 +308,7 @@ func TestDo(t *testing.T) {
 			enable: true,
 		},
 		{
-			name: "espace func",
+			name: "escape func",
 			args: args{
 				input: `a {{.cds.foo}} here, {{.cds.title | title}}, {{.cds.upper | upper}}, {{.cds.lower | lower}}, {{.cds.escape | escape}}`,
 				vars: map[string]string{

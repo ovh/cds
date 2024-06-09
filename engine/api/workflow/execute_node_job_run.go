@@ -322,7 +322,7 @@ func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workfl
 	if nodeRun != nil {
 		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 		if node == nil {
-			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d in worflow run", nodeRun.WorkflowNodeID)
+			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d in workflow run", nodeRun.WorkflowNodeID)
 		}
 
 		if node.Context != nil {

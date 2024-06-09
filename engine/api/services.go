@@ -132,7 +132,7 @@ func (api *API) serviceRegister(ctx context.Context, tx gorpmapper.SqlExecutorWi
 	return nil
 }
 
-func (api *API) postServiceHearbeatHandler() service.Handler {
+func (api *API) postServiceHeartbeatHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if ok := isService(ctx); !ok {
 			return sdk.WithStack(sdk.ErrForbidden)

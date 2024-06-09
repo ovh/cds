@@ -27,4 +27,4 @@ cdsctl experimental project repository add <PROJECT-KEY> <VCS-NAME> <REPOSITORY-
 
 # Add a repository using UI
 
-Comming soon
+Coming soon

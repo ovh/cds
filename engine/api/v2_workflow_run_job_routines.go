@@ -18,7 +18,7 @@ import (
 
 const jobLockKey = "jobs:lock"
 
-func (api *API) CancelAbandonnedRunResults(ctx context.Context) {
+func (api *API) CancelAbandonedRunResults(ctx context.Context) {
 	tick := time.NewTicker(5 * time.Minute)
 	defer tick.Stop()
 	for {
@@ -29,13 +29,13 @@ func (api *API) CancelAbandonnedRunResults(ctx context.Context) {
 			}
 			return
 		case <-tick.C:
-			ids, err := workflow_v2.LoadAbandonnedRunResultsID(ctx, api.mustDB())
+			ids, err := workflow_v2.LoadAbandonedRunResultsID(ctx, api.mustDB())
 			if err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 				continue
 			}
 			for _, id := range ids {
-				if err := api.cancelAbandonnedRunResult(ctx, api.mustDB(), id); err != nil {
+				if err := api.cancelAbandonedRunResult(ctx, api.mustDB(), id); err != nil {
 					log.ErrorWithStackTrace(ctx, err)
 				}
 			}
@@ -43,7 +43,7 @@ func (api *API) CancelAbandonnedRunResults(ctx context.Context) {
 	}
 }
 
-func (api *API) cancelAbandonnedRunResult(ctx context.Context, db *gorp.DbMap, id string) error {
+func (api *API) cancelAbandonedRunResult(ctx context.Context, db *gorp.DbMap, id string) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -61,7 +61,7 @@ func (api *API) cancelAbandonnedRunResult(ctx context.Context, db *gorp.DbMap, i
 		return nil
 	}
 
-	log.Debug(ctx, "cancelAbandonnedRunResult: %s", id)
+	log.Debug(ctx, "cancelAbandonedRunResult: %s", id)
 
 	runResult.Status = sdk.V2WorkflowRunResultStatusCanceled
 	if err := workflow_v2.UpdateRunResult(ctx, tx, runResult); err != nil {

@@ -31,7 +31,7 @@ func TestSwift(t *testing.T) {
 		t.Logf("skipping this test: %v", err)
 		t.SkipNow()
 	}
-	require.NoError(t, err, "unable to initialiaze swift driver")
+	require.NoError(t, err, "unable to initialize swift driver")
 
 	err = driver.client.ApplyEnvironment()
 	if err != nil {

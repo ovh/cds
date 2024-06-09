@@ -49,11 +49,11 @@ func (api *API) configVCSGerritHandler() service.Handler {
 
 func (api *API) configCDNHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		tcpURL, tcpURLEnableTLS, err := services.GetCDNPublicTCPAdress(ctx, api.mustDB())
+		tcpURL, tcpURLEnableTLS, err := services.GetCDNPublicTCPAddress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}
-		httpURL, err := services.GetCDNPublicHTTPAdress(ctx, api.mustDB())
+		httpURL, err := services.GetCDNPublicHTTPAddress(ctx, api.mustDB())
 		if err != nil {
 			return err
 		}

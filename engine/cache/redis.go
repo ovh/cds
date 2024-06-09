@@ -189,7 +189,7 @@ func (s *RedisStore) Delete(key string) error {
 	return nil
 }
 
-// DeleteAll delete all mathing keys in redis
+// DeleteAll delete all matching keys in redis
 func (s *RedisStore) DeleteAll(pattern string) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))

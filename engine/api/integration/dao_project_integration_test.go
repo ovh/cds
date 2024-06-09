@@ -17,7 +17,7 @@ import (
 )
 
 func TestCRUDIntegration(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	project.Delete(db, "key")
 
@@ -57,7 +57,7 @@ func TestCRUDIntegration(t *testing.T) {
 }
 
 func TestLoadAllIntegrationForAllProject(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	key1 := sdk.RandomString(10)
 	proj1 := assets.InsertTestProject(t, db, cache, key1, key1)

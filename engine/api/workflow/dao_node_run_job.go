@@ -116,7 +116,7 @@ func LoadNodeJobRunQueueByGroupIDs(ctx context.Context, db gorp.SqlExecutor, sto
 	--  $2: Queue until
 	--  $3: List of status
 	--  $4: List of model types
-	--  $5: Comman separated list of groups ID
+	--  $5: Comma separated list of groups ID
 	--  $6: shared infra group ID
 	--  $7: minimum level of permission
     --  $8: List of regions

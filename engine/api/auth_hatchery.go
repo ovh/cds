@@ -65,7 +65,7 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 			}
 			defer tx.Rollback() // nolint
 
-			// Check the Token validity againts the IAT attribute
+			// Check the Token validity against the IAT attribute
 			if _, err := hatchery.CheckSigninConsumerTokenIssuedAt(ctx, req.Token, consumer); err != nil {
 				return sdk.NewError(sdk.ErrForbidden, err)
 			}

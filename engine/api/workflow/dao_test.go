@@ -209,7 +209,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 }
 
 func TestUpdateWorkflowIntegration(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 
@@ -1589,7 +1589,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 }
 
 func TestInsertAndDeleteMultiHook(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	u, _ := assets.InsertAdminUser(t, db)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db.DbMap))
@@ -1926,7 +1926,7 @@ func TestDeleteWorkflowWithDependencies(t *testing.T) {
 	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	bootstrap.InitiliazeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
+	bootstrap.InitializeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
 	a, _ := assets.InsertService(t, db, "TestDeleteWorkflowWithDependenciesVCS", sdk.TypeVCS)
 	b, _ := assets.InsertService(t, db, "TestDeleteWorkflowWithDependenciesHook", sdk.TypeHooks)
 
@@ -2111,7 +2111,7 @@ func TestDeleteWorkflowWithDependencies2(t *testing.T) {
 	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID, authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
 	require.NoError(t, err)
 
-	bootstrap.InitiliazeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
+	bootstrap.InitializeDB(ctx, sdk.DefaultValues{}, func() *gorp.DbMap { return db.DbMap })
 	a, _ := assets.InsertService(t, db, "TestDeleteWorkflowWithDependenciesVCS", sdk.TypeVCS)
 	b, _ := assets.InsertService(t, db, "TestDeleteWorkflowWithDependenciesHook", sdk.TypeHooks)
 

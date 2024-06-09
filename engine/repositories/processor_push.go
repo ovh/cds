@@ -68,7 +68,7 @@ func (s *Service) processPush(ctx context.Context, op *sdk.Operation) (globalErr
 		}
 	}
 
-	// In case of error, we have to clean the filesystem, to avoid pending local branches or uncommited modification
+	// In case of error, we have to clean the filesystem, to avoid pending local branches or uncommitted modification
 	defer func() {
 		if globalErr != nil {
 			r := s.Repo(*op)

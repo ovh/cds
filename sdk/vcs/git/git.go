@@ -17,7 +17,7 @@ import (
 
 var (
 	verbose bool
-	//LogFunc can be overrided
+	//LogFunc can be overridden
 	LogFunc = log.Printf
 )
 

@@ -52,10 +52,10 @@ var workflowLogListCmd = cli.Command{
 	Short: "List logs from a workflow run",
 	Long: `List logs from a workflow run. There on log file for each step.
 
-	# list all logs files from projet KEY, with workflow named WD on latest run
+	# list all logs files from project KEY, with workflow named WD on latest run
 	$ cdsctl workflow logs list KEY WF
 
-	# list all logs files from projet KEY, with workflow named WD on run 1
+	# list all logs files from project KEY, with workflow named WD on run 1
 	$ cdsctl workflow logs list KEY WF 1
 `,
 	Ctx: []cli.Arg{

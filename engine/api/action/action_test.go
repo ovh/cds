@@ -16,7 +16,7 @@ import (
 )
 
 func TestCRUD(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
@@ -168,7 +168,7 @@ func TestCRUD(t *testing.T) {
 }
 
 func Test_RetrieveForGroupAndName(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
@@ -200,7 +200,7 @@ func Test_RetrieveForGroupAndName(t *testing.T) {
 }
 
 func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
@@ -237,7 +237,7 @@ func Test_CheckChildrenForGroupIDsWithLoop(t *testing.T) {
 	// test valid use case
 	assert.NoError(t, action.CheckChildrenForGroupIDsWithLoop(context.TODO(), db, &two, []int64{grp1.ID}))
 
-	// test invalid recusive
+	// test invalid recursive
 	one.Actions = append(one.Actions, sdk.Action{
 		ID: two.ID,
 	})

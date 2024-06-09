@@ -92,7 +92,7 @@ func DumpContext(ctx context.Context) string {
 	)
 }
 
-// ContextToSpanContext instanciates a span context from a context.Context
+// ContextToSpanContext instantiates a span context from a context.Context
 func ContextToSpanContext(ctx context.Context) (trace.SpanContext, bool) {
 	if ctx == nil {
 		return trace.SpanContext{}, false

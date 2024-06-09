@@ -177,7 +177,7 @@ func checkFlavorRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 
 // checkPlugins returns true if current job:
 //   - is not linked to a deployment integration
-//   - is linked to a deployement integration, plugin well downloaded (in this func) and
+//   - is linked to a deployment integration, plugin well downloaded (in this func) and
 //     requirements on the plugins are OK too
 func checkPlugins(ctx context.Context, w *CurrentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
 

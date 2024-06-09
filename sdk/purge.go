@@ -5,7 +5,7 @@ type PurgeDryRunRequest struct {
 }
 
 type PurgeDryRunResponse struct {
-	NbRunsToAnalize int64 `json:"nb_runs_to_analyze"`
+	NbRunsToAnalyze int64 `json:"nb_runs_to_analyze"`
 }
 
 type WorkflowRunToKeep struct {

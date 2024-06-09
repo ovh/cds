@@ -325,7 +325,7 @@ export class WorkflowWNodeComponent implements OnInit, OnDestroy {
     run(): void {
         this._modalService.create({
             nzWidth: '900px',
-            nzTitle: 'Run worklow',
+            nzTitle: 'Run workflow',
             nzContent: WorkflowNodeRunParamComponent,
         });
     }

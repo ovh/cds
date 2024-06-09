@@ -7,7 +7,7 @@ import (
 	"gopkg.in/ldap.v2"
 )
 
-func shoudRetry(ctx context.Context, err error) bool {
+func shouldRetry(ctx context.Context, err error) bool {
 	if err == nil {
 		return false
 	}

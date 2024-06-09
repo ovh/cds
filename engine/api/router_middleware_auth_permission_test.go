@@ -758,8 +758,8 @@ func Test_checkGroupPermissions(t *testing.T) {
 
 	type setup struct {
 		currentUser           string
-		currenUserIsAdmin     bool
-		currenUserIsMaitainer bool
+		currentUserIsAdmin     bool
+		currentUserIsMaitainer bool
 		groupAdmins           []string
 		groupMembers          []string
 	}
@@ -786,7 +786,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 			wantErr: false,
 			setup: setup{
 				currentUser:       "admin",
-				currenUserIsAdmin: true,
+				currentUserIsAdmin: true,
 			},
 			args: args{
 				groupName:       "my_group",
@@ -798,7 +798,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 			wantErr: false,
 			setup: setup{
 				currentUser:           "maintainer",
-				currenUserIsMaitainer: true,
+				currentUserIsMaitainer: true,
 			},
 			args: args{
 				groupName:       "my_group",
@@ -810,7 +810,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 			wantErr: false,
 			setup: setup{
 				currentUser:       "admin",
-				currenUserIsAdmin: true,
+				currentUserIsAdmin: true,
 			},
 			args: args{
 				groupName:       "my_group",
@@ -822,7 +822,7 @@ func Test_checkGroupPermissions(t *testing.T) {
 			wantErr: true,
 			setup: setup{
 				currentUser:           "maintainer",
-				currenUserIsMaitainer: true,
+				currentUserIsMaitainer: true,
 			},
 			args: args{
 				groupName:       "my_group",
@@ -909,9 +909,9 @@ func Test_checkGroupPermissions(t *testing.T) {
 			currentUser := sdk.AuthentifiedUser{
 				Username: prefix + tt.setup.currentUser,
 			}
-			if tt.setup.currenUserIsAdmin {
+			if tt.setup.currentUserIsAdmin {
 				currentUser.Ring = sdk.UserRingAdmin
-			} else if tt.setup.currenUserIsMaitainer {
+			} else if tt.setup.currentUserIsMaitainer {
 				currentUser.Ring = sdk.UserRingMaintainer
 			} else {
 				currentUser.Ring = sdk.UserRingUser

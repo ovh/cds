@@ -24,7 +24,7 @@ You can use « built-in » actions, such as checkoutApplication, script, jUnit, 
 - The [jUnit]({{< relref "/docs/actions/builtin-junit.md" >}}) action parses a given Junit-formatted XML file to extract its test results
 
 
-**Notice**: you cannot share a workspace between jobs or between two runs of the same job. Actions [Artifact Upload]({{< relref "/docs/actions/builtin-artifact-upload.md" >}}) and [Artifact Download]({{< relref "/docs/actions/builtin-artifact-download.md" >}}) can be used to transfert artifacts between jobs.
+**Notice**: you cannot share a workspace between jobs or between two runs of the same job. Actions [Artifact Upload]({{< relref "/docs/actions/builtin-artifact-upload.md" >}}) and [Artifact Download]({{< relref "/docs/actions/builtin-artifact-download.md" >}}) can be used to transfer artifacts between jobs.
 
 A Job is executed by a **worker**. CDS will select a worker for the job dependending on the [Requirements]({{< relref "/docs/concepts/requirement/_index.md" >}}) the job's requirements.
 

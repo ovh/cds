@@ -40,7 +40,7 @@ func (c *client) ApplicationList(key string) ([]sdk.Application, error) {
 	return apps, nil
 }
 
-//ApplicationAttachToReposistoriesManager attachs the application to the repo identified by its fullname in the reposManager
+// ApplicationAttachToReposistoriesManager attaches the application to the repo identified by its fullname in the reposManager
 func (c *client) ApplicationAttachToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error {
 	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/application/%s/attach?fullname=%s", projectKey, reposManager, appName, url.QueryEscape(repoFullname))
 	_, _, _, err := c.Request(context.Background(), "POST", uri, nil)

@@ -114,7 +114,7 @@ func wrapHelpers(fs template.FuncMap) template.FuncMap {
 		wrappedHelpers[key] = func(ps ...interface{}) interface{} {
 			// if the helper func need more params than ps length, throw an error
 			if len(ps) < paramsCount {
-				// panic will be catched be text/template executor
+				// panic will be caught be text/template executor
 				panic(fmt.Sprintf("missing params (expected: %s)", strings.Join(paramsTypes, ", ")))
 			}
 

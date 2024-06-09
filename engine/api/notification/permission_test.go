@@ -16,7 +16,7 @@ import (
 
 // Test_projectPermissionUserIDs test the usernames selected to send notifications
 func Test_projectPermissionUserIDs(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))

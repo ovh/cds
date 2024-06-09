@@ -162,14 +162,14 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	variables, errLoadVars := environment.LoadAllVariablesWithDecryption(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables1, errLoadVariables := environment.LoadAllVariablesWithDecrytion(db, env1.ID)
+	variables1, errLoadVariables := environment.LoadAllVariablesWithDecryption(db, env1.ID)
 	test.NoError(t, errLoadVariables)
 	env1.Variables = variables1
 
@@ -279,14 +279,14 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	variables, errLoadVars := environment.LoadAllVariablesWithDecryption(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
 
 	env1, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables1, errLoadVariables := environment.LoadAllVariablesWithDecrytion(db, env1.ID)
+	variables1, errLoadVariables := environment.LoadAllVariablesWithDecryption(db, env1.ID)
 	test.NoError(t, errLoadVariables)
 	env1.Variables = variables1
 
@@ -340,14 +340,14 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 	env, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars = environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	variables, errLoadVars = environment.LoadAllVariablesWithDecryption(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
 
 	env1, err = environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv-1")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables1, errLoadVariables = environment.LoadAllVariablesWithDecrytion(db, env1.ID)
+	variables1, errLoadVariables = environment.LoadAllVariablesWithDecryption(db, env1.ID)
 	test.NoError(t, errLoadVariables)
 	env1.Variables = variables1
 
@@ -416,7 +416,7 @@ keys:
 	env, err := environment.LoadEnvironmentByName(db, proj.Key, "myNewEnv")
 	require.NoError(t, err)
 	// reload variables with clear password
-	variables, errLoadVars := environment.LoadAllVariablesWithDecrytion(db, env.ID)
+	variables, errLoadVars := environment.LoadAllVariablesWithDecryption(db, env.ID)
 	test.NoError(t, errLoadVars)
 	env.Variables = variables
 

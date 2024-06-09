@@ -68,7 +68,7 @@ func ExtractInfo(ctx context.Context, dir string, opts *CloneOpts) (Info, error)
 
 	if info.GitDescribe == "" && opts.ForceGetGitDescribe {
 		tagsRemote, tagsRemoteErr := gitRawCommandString(cmdlsRemoteTags)
-		// check the output of stdout and stderr -> git outpout some standard logs on stderr
+		// check the output of stdout and stderr -> git output some standard logs on stderr
 		if strings.Contains(tagsRemote, "refs/tags") || strings.Contains(tagsRemoteErr.Error(), "refs/tags") {
 			tagsfetched, tagsfetchedErr := gitRawCommandString(cmdFetchTags)
 			if strings.Contains(tagsfetched, "new tag") || strings.Contains(tagsfetchedErr.Error(), "new tag") {

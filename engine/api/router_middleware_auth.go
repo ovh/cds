@@ -62,7 +62,7 @@ func (api *API) authMaintainerMiddleware(ctx context.Context, w http.ResponseWri
 		return ctx, err
 	}
 
-	// Excluse consumers not maintainer or admin that are used for services
+	// Exclude consumers not maintainer or admin that are used for services
 	if !isMaintainer(ctx) || isService(ctx) {
 		return ctx, sdk.WithStack(sdk.ErrForbidden)
 	}

@@ -1,4 +1,4 @@
-name: Job ouput
+name: Job output
 vars:
   cds_project: "ITV2JOBOUTPUT"
   git_repo: "it_v2_en"

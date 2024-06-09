@@ -16,7 +16,7 @@ import (
 )
 
 func TestCRUD(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
@@ -100,7 +100,7 @@ func TestCRUD(t *testing.T) {
 }
 
 func TestCRUD_Audit(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	grp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer assets.DeleteTestGroup(t, db, grp)

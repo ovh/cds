@@ -59,7 +59,7 @@ type ConditionEntry struct {
 	LuaScript       string                `json:"script,omitempty" yaml:"script,omitempty"`
 }
 
-// WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+// WorkflowNodeCondition represents a condition to trigger or not a pipeline in a workflow. Operator can be =, !=, regex
 type PlainConditionEntry struct {
 	Variable string `json:"variable" yaml:"variable"`
 	Operator string `json:"operator" yaml:"operator"`

@@ -19,7 +19,7 @@ import (
 
 // create handler tests
 func TestCreateModel(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -50,7 +50,7 @@ func TestCreateModel(t *testing.T) {
 }
 
 func TestUpdateModel(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	g2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
@@ -136,7 +136,7 @@ func TestUpdateModel(t *testing.T) {
 // rename worker model to aaa-bar
 // the pipeline should keep the name aaa-foo
 func TestUpdateModelInPipeline(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -239,7 +239,7 @@ func TestUpdateModelInPipeline(t *testing.T) {
 }
 
 func TestUpdateModelInPipelineSimple(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	u, _ := assets.InsertLambdaUser(t, db)
@@ -350,7 +350,7 @@ func TestCopyModelTypeData_OldRestricted(t *testing.T) {
 		Type:        sdk.Docker,
 		Restricted:  false,
 		PatternName: "",
-	}), "an error should occured as the is no pattern given and we can't reuse custom commands from old not restricted model")
+	}), "an error should occurred as the is no pattern given and we can't reuse custom commands from old not restricted model")
 
 	assert.NoError(t, workermodel.CopyModelTypeData(&old, &sdk.Model{
 		Type:        sdk.Docker,
@@ -360,7 +360,7 @@ func TestCopyModelTypeData_OldRestricted(t *testing.T) {
 }
 
 func TestUpdateModel_NeedRegister(t *testing.T) {
-	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store := test.SetupPG(t, bootstrap.InitializeDB)
 
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 

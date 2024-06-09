@@ -20,7 +20,7 @@ func cmdTag() *cobra.Command {
 		Long: `
 On the workflow view, the sidebar on the left displays a select box to filter on CDS Tags.
 
-So, what's a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment.
+So, what's a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, triggered_by and environment.
 
 Inside a job, you can add a Tag with the worker command:
 

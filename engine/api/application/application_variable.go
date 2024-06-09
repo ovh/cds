@@ -57,8 +57,8 @@ func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableA
 	return audits, nil
 }
 
-// insertAudit  insert an application variable audit
-func inserAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
+// insertAudit insert an application variable audit
+func insertAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
 	dbAppVarAudit := dbApplicationVariableAudit(*ava)
 	if err := db.Insert(&dbAppVarAudit); err != nil {
 		return sdk.WrapError(err, "Cannot Insert Audit for variable %d", ava.VariableID)

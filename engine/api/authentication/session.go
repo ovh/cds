@@ -49,7 +49,7 @@ func NewSessionWithMFACustomDuration(ctx context.Context, db gorpmapper.SqlExecu
 		return nil, err
 	}
 
-	// Initialy set activity for new session
+	// Initially set activity for new session
 	if err := SetSessionActivity(store, durationMFA, s.ID); err != nil {
 		return nil, err
 	}

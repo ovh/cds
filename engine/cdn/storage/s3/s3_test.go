@@ -16,7 +16,7 @@ import (
 )
 
 // To run the test, run the make minio_start && make minio_reset_bucket from the tests directory
-// Then export the mentionned env variables: S3_BUCKET, AWS_DEFAULT_REGION, MINIO_ACCESS_KEY, MINIO_SECRET_KEY and AWS_ENDPOINT_URL
+// Then export the mentioned env variables: S3_BUCKET, AWS_DEFAULT_REGION, MINIO_ACCESS_KEY, MINIO_SECRET_KEY and AWS_ENDPOINT_URL
 // If not set, the test is skipped
 func TestS3(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
@@ -42,7 +42,7 @@ func TestS3(t *testing.T) {
 		t.Logf("skipping this test: %v", err)
 		t.SkipNow()
 	}
-	require.NoError(t, err, "unable to initialiaze s3 driver")
+	require.NoError(t, err, "unable to initialize s3 driver")
 
 	itemUnit := sdk.CDNItemUnit{
 		Locator: "a_locator",

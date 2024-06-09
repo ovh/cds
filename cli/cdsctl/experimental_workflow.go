@@ -169,7 +169,7 @@ func workflowRunSearchFunc(v cli.Values) (cli.ListResult, error) {
 
 	var runs []sdk.V2WorkflowRun
 	if projKey == "" {
-		// Search accross all project
+		// Search across all project
 		runs, err = client.WorkflowV2RunSearchAllProjects(context.Background(), offset, limit, mods...)
 	} else {
 		mods = append(mods, cdsclient.WithQueryParameter("offset", fmt.Sprintf("%d", offset)))
@@ -389,6 +389,6 @@ func workflowRestartFunc(v cli.Values) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Worflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
+	fmt.Printf("Workflow %s #%d.%d restarted", run.WorkflowName, run.RunNumber, run.RunAttempt)
 	return nil
 }
