@@ -283,10 +283,6 @@ func (p *innerParser) parseAndMatch(s string) (result string, err error) {
 					break
 				}
 
-				if tok == DOUBLESTARSLASH && nextToken != STAR && contentToken == SLASH {
-					stopGLobing = true
-				}
-
 				if contentToken == LITERAL {
 					accumulator.WriteString(contentLit)
 					continue

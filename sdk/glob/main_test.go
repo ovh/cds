@@ -10,10 +10,26 @@ import (
 )
 
 func TestGlob(t *testing.T) {
-	pattern := "path/to/**/* !path/to/**/*.tmp"
+	pattern := "path/**/* !path/**/*.tmp"
 	result, err := glob.Glob(os.DirFS("tests/"), "fixtures", pattern)
 	require.NoError(t, err)
 	require.Equal(t, "path/to/artifacts/bar, path/to/artifacts/foo, path/to/results/foo.bin", result.String())
+}
+
+func TestGlobDoubleStarMatchString(t *testing.T) {
+	g := glob.New("**/newfile")
+	result, err := g.MatchString("root/app/sub/newfile")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Equal(t, "root/app/sub/newfile", result.String())
+}
+
+func TestGlobDoubleStarMatchString2(t *testing.T) {
+	g := glob.New("**/cd/rtgc")
+	result, err := g.MatchString("root/app/sub/cd/rtgc")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Equal(t, "root/app/sub/cd/rtgc", result.String())
 }
 
 func TestGlobWithDot(t *testing.T) {
