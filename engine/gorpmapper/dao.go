@@ -17,7 +17,7 @@ import (
 
 func checkDatabase(db gorp.SqlExecutor) error {
 	if db == nil {
-		return sdk.NewErrorFrom(sdk.ErrServiceUnavailable, "database unavailabe")
+		return sdk.NewErrorFrom(sdk.ErrServiceUnavailable, "database unavailable")
 	}
 	return nil
 }
@@ -29,7 +29,7 @@ func (m *Mapper) Insert(db gorp.SqlExecutor, i interface{}) error {
 	}
 
 	if _, has := m.GetTableMapping(i); !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 
 	err := db.Insert(i)
@@ -62,7 +62,7 @@ func (m *Mapper) UpdateColumns(db gorp.SqlExecutor, i interface{}, columnFilter 
 	}
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 
 	val := reflect.ValueOf(i)
@@ -273,7 +273,7 @@ func (m *Mapper) GetInt(db gorp.SqlExecutor, q Query) (int64, error) {
 func (m *Mapper) dbMappingPKey(i interface{}) (string, string, interface{}, error) {
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return "", "", nil, sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return "", "", nil, sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 
 	if len(mapping.Keys) > 1 {

@@ -841,7 +841,7 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 				e.LastError = TaskExecutionDone
 				e.NbErrors = s.Cfg.RetryError + 1
 				s.Dao.SaveTaskExecution(e)
-				log.Info(ctx, "Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stoppped", uuid, timestamp)
+				log.Info(ctx, "Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stopped", uuid, timestamp)
 				return nil
 			}
 		}
