@@ -51,7 +51,7 @@ spec: |-
 ```
 
 - <span style="color:red">\*</span>`name`: The name of your workflow template
-- [`parameters`](#parameters): Input parameters for the template, accssible with `.params`
+- [`parameters`](#parameters): Input parameters for the template, accessible with `.params`
 - <span style="color:red">\*</span>[`spec`](#spec): Template of the workflow
 
 <span style="color:red">\*</span> mandatory fields
