@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -85,7 +86,17 @@ func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role s
 	if allWorkflowAllowed {
 		return true, nil
 	}
-	return sdk.IsInArray(workflowName, workflows), nil
+	for _, item := range workflows {
+		g := glob.New(item)
+		r, err := g.MatchString(workflowName)
+		if err != nil {
+			return false, err
+		}
+		if r != nil {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func LoadAllWorkflowsAllowed(ctx context.Context, db gorp.SqlExecutor, role string, projectKey string, userID string) (sdk.StringSlice, bool, error) {
