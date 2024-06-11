@@ -100,7 +100,7 @@ func (s *Service) retryTaskExecutionsRoutine(ctx context.Context) error {
 							log.Warn(ctx, "retryTaskExecutionsRoutine> unable to save task execution for old hook %s: %v", e.UUID, err)
 							continue
 						}
-						log.Warn(ctx, "retryTaskExecutionsRoutine > Enqueing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
+						log.Warn(ctx, "retryTaskExecutionsRoutine > Enqueuing very old hooks %s %d/%d type:%s status:%s timestamp:%d err:%v", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, e.Timestamp, e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(ctx, &e); err != nil {
 							log.Error(ctx, "retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 						}
@@ -120,7 +120,7 @@ func (s *Service) retryTaskExecutionsRoutine(ctx context.Context) error {
 							log.Warn(ctx, "retryTaskExecutionsRoutine> unable to save task execution for %s: %v", e.UUID, err)
 							continue
 						}
-						log.Warn(ctx, "retryTaskExecutionsRoutine > Enqueing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
+						log.Warn(ctx, "retryTaskExecutionsRoutine > Enqueuing with lastError %s %d/%d type:%s status:%s len:%d err:%s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.Type, e.Status, len(e.LastError), e.LastError)
 						if err := s.Dao.EnqueueTaskExecution(ctx, &e); err != nil {
 							log.Error(ctx, "retryTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 						}
@@ -166,7 +166,7 @@ func (s *Service) enqueueScheduledTaskExecutionsRoutine(ctx context.Context) err
 						} else {
 							e.Status = TaskExecutionEnqueued
 							s.Dao.SaveTaskExecution(&e)
-							log.Info(ctx, "enqueueScheduledTaskExecutionsRoutine > Enqueing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
+							log.Info(ctx, "enqueueScheduledTaskExecutionsRoutine > Enqueuing %s task %s:%d", e.Type, e.UUID, e.Timestamp)
 							if err := s.Dao.EnqueueTaskExecution(ctx, &e); err != nil {
 								log.Error(ctx, "enqueueScheduledTaskExecutionsRoutine > error on EnqueueTaskExecution: %v", err)
 							}

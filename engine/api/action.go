@@ -57,7 +57,7 @@ func (api *API) getActionsForProjectHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithGroups)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet %s", key)
+			return sdk.WrapError(err, "unable to load project %s", key)
 		}
 
 		groupIDs := make([]int64, len(proj.ProjectGroups))

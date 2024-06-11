@@ -562,7 +562,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 		if ok {
 			item, d, err = CDNItemUpload(ctx, actplugin, response.CDNAddress, response.CDNSignature, reader)
 			if err != nil {
-				Error(actplugin, "An error occured during file upload upload: "+err.Error())
+				Error(actplugin, "An error occurred during file upload upload: "+err.Error())
 				return nil, err
 			}
 		} else {

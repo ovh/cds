@@ -233,7 +233,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		proj, err := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIntegrations)
 		if err != nil {
-			return sdk.WrapError(err, "unable to load projet")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		opts := workflow.LoadOptions{

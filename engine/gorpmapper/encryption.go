@@ -63,7 +63,7 @@ func (m *Mapper) Decrypt(src []byte, dest interface{}, extra []interface{}) erro
 func (m *Mapper) updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 
 	if !mapping.EncryptedEntity {
@@ -126,7 +126,7 @@ func (m *Mapper) updateEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 func (m *Mapper) resetEncryptedData(db gorp.SqlExecutor, i interface{}) error {
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 	if !mapping.EncryptedEntity {
 		return nil
@@ -168,7 +168,7 @@ func getEncryptedData(ctx context.Context, m *Mapper, db gorp.SqlExecutor, i int
 	// Get the TableMapping for the concrete type. If the type entity is not encrypt, let's skip all the things
 	mapping, has := m.GetTableMapping(i)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 	if !mapping.EncryptedEntity {
 		return nil
@@ -246,7 +246,7 @@ func (m *Mapper) getEncryptedSliceData(ctx context.Context, db gorp.SqlExecutor,
 	// Find the tabble mapping for the contained type of the slice
 	mapping, has := m.GetTableMapping(ieval)
 	if !has {
-		return sdk.WithStack(fmt.Errorf("unkown entity %T", i))
+		return sdk.WithStack(fmt.Errorf("unknown entity %T", i))
 	}
 	// If the entity is not encrypted, let's skip all the things
 	if !mapping.EncryptedEntity {

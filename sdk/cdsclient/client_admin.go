@@ -272,7 +272,7 @@ func (c *client) AdminDatabaseSignaturesRollEntity(service string, e string, idx
 	}
 
 	if _, has := resume[e]; !has {
-		return errors.New("unkown entity")
+		return errors.New("unknown entity")
 	}
 
 	for _, s := range resume[e] {
