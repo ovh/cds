@@ -325,7 +325,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		mods := []workflowtemplate.TemplateRequestModifierFunc{
 			workflowtemplate.TemplateRequestModifiers.DefaultKeys(*proj),
 		}
-		if pushOptions != nil && pushOptions.FromRepository != "" {
+		if pushOptions.FromRepository != "" {
 			mods = append(mods, workflowtemplate.TemplateRequestModifiers.DefaultNameAndRepositories(*proj, pushOptions.FromRepository))
 		}
 		var allMsg []sdk.Message

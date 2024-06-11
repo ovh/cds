@@ -250,7 +250,7 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 
 			for i := range runJobs {
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, runJobs[i])
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
 			}
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 
@@ -640,7 +640,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			}
 
 			for _, rj := range runJobs {
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, rj)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, rj)
 			}
 			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, *u.AuthConsumerUser.AuthentifiedUser)
 

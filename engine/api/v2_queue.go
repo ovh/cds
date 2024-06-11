@@ -296,7 +296,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, *jobRun)
 			})
 
 			return nil
@@ -490,7 +490,7 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, *jobRun)
 			})
 			return nil
 		}
@@ -580,7 +580,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobScheduled, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobScheduled, *run, *jobRun)
 			})
 			return service.WriteJSON(w, jobRun, http.StatusOK)
 

@@ -37,7 +37,17 @@ func (s *Service) processEventJobSummary(i interface{}) error {
 		return errors.Errorf("unsupported type %T", i)
 	}
 
-	_, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexJobSummary, "cds_job", strconv.FormatInt(e.ID, 10), e)
+	// job v2 as code
+	if e.JobRunID != "" {
+		_, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexJobSummary, e.JobRunID, e)
+		if err != nil {
+			return errors.Wrapf(err, "unable to index document ascode v2 %+v", e)
+		}
+		return nil
+	}
+
+	// job v1
+	_, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexJobSummary, strconv.FormatInt(e.ID, 10), e)
 	if err != nil {
 		return errors.Wrapf(err, "unable to index document %+v", e)
 	}
