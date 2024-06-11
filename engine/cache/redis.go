@@ -257,7 +257,6 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, wai
 	var elem string
 	ticker := time.NewTicker(waitDuration)
 	defer ticker.Stop()
-forloop:
 	for elem == "" {
 		select {
 		case <-ticker.C:
@@ -274,7 +273,7 @@ forloop:
 			}
 			if err == nil && len(res) == 2 {
 				elem = res[1]
-				break forloop
+				break
 			}
 		case <-c.Done():
 			return c.Err()
