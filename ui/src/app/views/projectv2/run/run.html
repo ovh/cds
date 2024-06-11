@@ -2,7 +2,6 @@
     <div class="content" [class.disableSelection]="resizing">
 
         <!--  GRAPH -->
-
         <div class="graph">
             <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
                 <nz-page-header-title>
@@ -14,10 +13,11 @@
                             [nzValue]="workflowRun.run_attempt-i" [nzLabel]="workflowRun.run_attempt-i"></nz-option>
                     </nz-select>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow sources"
-                        (click)="openPanel('workflow')"><span nz-icon nzType="file-text"
+                        (click)="navigatePanel('workflow')"><span nz-icon nzType="file-text"
                             nzTheme="outline"></span></button>
                     <button nz-button nzType="default" nzSize="small" title="Show workflow run contexts"
-                        (click)="openPanel('contexts')"><span nz-icon nzType="read" nzTheme="outline"></span></button>
+                        (click)="navigatePanel('contexts')"><span nz-icon nzType="read"
+                            nzTheme="outline"></span></button>
                 </nz-page-header-title>
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
@@ -30,6 +30,26 @@
                         repository
                         <a href="{{workflowRun.contexts.git.repository_web_url}}" target="_blank"
                             rel="noopener noreferrer">{{workflowRun.contexts.git.server}}/{{workflowRun.contexts.git.repository}}</a>
+                        <span *ngIf="workflowRun.contexts.cds.workflow_template">
+                            <br />
+                            Generated from template
+                            <a
+                                [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.contexts.cds.workflow_template_vcs_server, 'repository', workflowRun.contexts.cds.workflow_template_repository, 'workflowtemplate', workflowRun.contexts.cds.workflow_template]">
+                                {{workflowRun.contexts.cds.workflow_template_vcs_server}}/{{workflowRun.contexts.cds.workflow_template_repository}}/{{workflowRun.contexts.cds.workflow_template}}</a>
+                            <span class="templateDetails" nz-icon nzType="eye" nzTheme="outline" nz-tooltip
+                                [nzTooltipTitle]="templateTooltip"></span>
+                            <ng-template #templateTooltip>
+                                Repository: <a href="{{workflowRun.contexts.cds.workflow_template_repository_web_url}}"
+                                    target="_blank"
+                                    rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_repository}}</a>
+                                <br /> Commit: <a href="{{workflowRun.contexts.cds.workflow_template_commit_web_url}}"
+                                    target="_blank"
+                                    rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_sha?.substring(0,8)}}</a>
+                                <br />Ref: <a href="{{workflowRun.contexts.cds.workflow_template_ref_web_url}}"
+                                    target="_blank"
+                                    rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_ref}}</a>
+                            </ng-template>
+                        </span>
                     </span>
                 </nz-page-header-content>
             </nz-page-header>
@@ -40,12 +60,11 @@
             </div>
             <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
                 [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
-                (onSelectJobRun)="openPanel('job', $event)" (onSelectHook)="openPanel('hook', $event)"
+                (onSelectJobRun)="navigatePanel('job', $event)" (onSelectHook)="navigatePanel('hook', $event)"
                 #graph></app-stages-graph>
         </div>
 
         <!--  BOTTOM PANELS -->
-
         <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
 
@@ -90,7 +109,7 @@
                     </thead>
                     <tbody>
                         <tr class="result" *ngFor="let result of resultsTable.data"
-                            (click)="openPanel('result', result)">
+                            (click)="navigatePanel('result', result.id)">
                             <td>
                                 {{result.type}}
                             </td>
@@ -126,7 +145,6 @@
     </div>
 
     <!--  RIGHT PANELS -->
-
     <app-resizable-panel *ngIf="selectedItemType" minSize="400" [initialSize]="jobPanelSize"
         (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="jobPanelEndResize($event)"
         (dblclick)="$event.stopPropagation(); dblClickOnPanel()">

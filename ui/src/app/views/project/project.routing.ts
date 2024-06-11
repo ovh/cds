@@ -8,8 +8,8 @@ import { ProjectListComponent } from './list/project.list.component';
 import { ProjectShowComponent } from './show/project.component';
 import { ProjectComponent } from './project.component';
 import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.component';
-import { ProjectV2WorkflowRunListComponent } from '../projectv2/run-list/run-list.component';
-import { ProjectV2WorkflowRunComponent } from '../projectv2/run/project.run.component';
+import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.component';
+import { ProjectV2RunComponent } from '../projectv2/run/run.component';
 import { Projectv2Resolver } from 'app/service/services.module';
 import { ProjectSettingsComponent } from './settings/settings.component';
 import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
@@ -99,12 +99,12 @@ const projectRoutes: Routes = [
                         children: [
                             {
                                 path: '',
-                                component: ProjectV2WorkflowRunListComponent,
+                                component: ProjectV2RunListComponent,
                                 data: { title: 'List • Workflow Runs' }
                             },
                             {
                                 path: ':workflowRunID',
-                                component: ProjectV2WorkflowRunComponent,
+                                component: ProjectV2RunComponent,
                                 data: { title: '{workflowRunID} • Workflow Run' }
                             }
                         ]

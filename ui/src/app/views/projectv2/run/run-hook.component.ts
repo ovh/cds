@@ -6,6 +6,7 @@ import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
 import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { editor } from "monaco-editor";
 
 @Component({
 	selector: 'app-run-hook',
@@ -63,6 +64,10 @@ export class RunHookComponent implements OnInit, OnChanges, OnDestroy {
 	selectTab(tab: Tab): void {
 		this.selectedTab = tab;
 		this._cd.markForCheck();
+	}
+
+	onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
+		this.editor.layout();
 	}
 
 }

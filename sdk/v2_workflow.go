@@ -201,7 +201,7 @@ type V2Job struct {
 	Name            string                  `json:"name,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Name of the job"`
 	If              string                  `json:"if,omitempty" jsonschema_extras:"order=5,textarea=true" jsonschema_description:"Condition to execute the job"`
 	Gate            string                  `json:"gate,omitempty" jsonschema_extras:"order=5" jsonschema_description:"Gate allows to trigger manually a job"`
-	Inputs          map[string]string       `json:"inputs,omitempty" jsonschema_extras:"order=8,mode=edit" jsonschema_description:"Input of thejob"`
+	Inputs          map[string]string       `json:"inputs,omitempty" jsonschema_extras:"order=8,mode=edit" jsonschema_description:"Input of the job"`
 	Steps           []ActionStep            `json:"steps,omitempty" jsonschema_extras:"order=11" jsonschema_description:"List of steps"`
 	Needs           []string                `json:"needs,omitempty" jsonschema_extras:"order=6,mode=tags" jsonschema_description:"Job dependencies"`
 	Stage           string                  `json:"stage,omitempty" jsonschema_extras:"order=2"`

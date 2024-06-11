@@ -165,10 +165,13 @@ func GetWorkflowTemplateJsonSchema() *jsonschema.Schema {
 	templateSchema := reflector.Reflect(&V2WorkflowTemplate{})
 
 	// Replace spec with type string instead of object
-	templateSchema.Definitions["V2WorkflowTemplate"].Properties.Set("spec", &jsonschema.Schema{
-		Type: "string",
-	})
-	delete(templateSchema.Definitions, "WorkflowSpec")
+	spec, _ := templateSchema.Definitions["V2WorkflowTemplate"].Properties.Get("spec")
+	if schema, ok := spec.(*jsonschema.Schema); ok {
+		schema.Type = "string"
+		schema.Ref = ""
+		templateSchema.Definitions["V2WorkflowTemplate"].Properties.Set("spec", schema)
+		delete(templateSchema.Definitions, "WorkflowSpec")
+	}
 
 	return templateSchema
 }

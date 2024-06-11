@@ -148,74 +148,58 @@ func LoadRunsRepositories(ctx context.Context, db gorp.SqlExecutor, projKey stri
 	return names, nil
 }
 
+func LoadRunsTemplates(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var names []string
+	_, next := telemetry.Span(ctx, "LoadRunsTemplates")
+	defer next()
+	if _, err := db.Select(&names, `
+		SELECT DISTINCT ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template'))
+		FROM v2_workflow_run
+		WHERE project_key = $1 AND contexts -> 'cds' ->> 'workflow_template' IS NOT NULL
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return names, nil
+}
+
+const runQueryFilters = `
+	(array_length(:workflows::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY(:workflows))
+	AND (array_length(:actors::text[], 1) IS NULL OR username = ANY(:actors))
+	AND (array_length(:status::text[], 1) IS NULL OR status = ANY(:status))
+	AND (array_length(:refs::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY(:refs))
+	AND (array_length(:repositories::text[], 1) IS NULL OR ((contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository')) = ANY(:repositories))
+	AND (array_length(:commits::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY(:commits))
+	AND (array_length(:templates::text[], 1) IS NULL OR ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template')) = ANY(:templates))
+`
+
 func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
-	count, err := db.SelectInt(`
-		SELECT COUNT(1)
-    FROM v2_workflow_run
-    WHERE 
-			(
-				array_length($1::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY($1)
-			)
-			AND (
-				array_length($2::text[], 1) IS NULL OR username = ANY($2)
-			)
-			AND (
-				array_length($3::text[], 1) IS NULL OR status = ANY($3)
-			)
-			AND (
-				array_length($4::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($4)
-			)
-			AND (
-				array_length($5::text[], 1) IS NULL OR ( (contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository') ) = ANY($5)
-			)
-			AND (
-				array_length($6::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY($6)
-			)
-	`,
-		pq.StringArray(filters.Workflows),
-		pq.StringArray(filters.Actors),
-		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Refs),
-		pq.StringArray(filters.Repositories),
-		pq.StringArray(filters.Commits))
+	count, err := db.SelectInt("SELECT COUNT(1) FROM v2_workflow_run WHERE "+runQueryFilters, map[string]interface{}{
+		"workflows":    pq.StringArray(filters.Workflows),
+		"actors":       pq.StringArray(filters.Actors),
+		"status":       pq.StringArray(filters.Status),
+		"refs":         pq.StringArray(filters.Refs),
+		"repositories": pq.StringArray(filters.Repositories),
+		"commits":      pq.StringArray(filters.Commits),
+		"templates":    pq.StringArray(filters.Templates),
+	})
 	return count, sdk.WithStack(err)
 }
 
 func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
-	count, err := db.SelectInt(`
-		SELECT COUNT(1)
-    FROM v2_workflow_run
-    WHERE 
-			project_key = $1 
-			AND (
-				array_length($2::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY($2)
-			)
-			AND (
-				array_length($3::text[], 1) IS NULL OR username = ANY($3)
-			)
-			AND (
-				array_length($4::text[], 1) IS NULL OR status = ANY($4)
-			)
-			AND (
-				array_length($5::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($5)
-			)
-			AND (
-				array_length($6::text[], 1) IS NULL OR ( (contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository') ) = ANY($6)
-			)
-			AND (
-				array_length($7::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY($7)
-			)
-	`, projKey,
-		pq.StringArray(filters.Workflows),
-		pq.StringArray(filters.Actors),
-		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Refs),
-		pq.StringArray(filters.Repositories),
-		pq.StringArray(filters.Commits))
+	count, err := db.SelectInt("SELECT COUNT(1) FROM v2_workflow_run WHERE project_key = :projKey AND "+runQueryFilters, map[string]interface{}{
+		"projKey":      projKey,
+		"workflows":    pq.StringArray(filters.Workflows),
+		"actors":       pq.StringArray(filters.Actors),
+		"status":       pq.StringArray(filters.Status),
+		"refs":         pq.StringArray(filters.Refs),
+		"repositories": pq.StringArray(filters.Repositories),
+		"commits":      pq.StringArray(filters.Commits),
+		"templates":    pq.StringArray(filters.Templates),
+	})
 	return count, sdk.WithStack(err)
 }
 
@@ -226,6 +210,7 @@ type SearchsRunsFilters struct {
 	Refs         []string
 	Repositories []string
 	Commits      []string
+	Templates    []string
 }
 
 func (s SearchsRunsFilters) Lower() {
@@ -261,38 +246,26 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM v2_workflow_run
-    WHERE 
-			(
-				array_length($1::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY($1)
-			)
-			AND (
-				array_length($2::text[], 1) IS NULL OR username = ANY($2)
-			)
-			AND (
-				array_length($3::text[], 1) IS NULL OR status = ANY($3)
-			)
-			AND (
-				array_length($4::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($4)
-			)
-			AND (
-				array_length($5::text[], 1) IS NULL OR ( (contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository') ) = ANY($5)
-			)
-			AND (
-				array_length($6::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY($6)
-			)
-			ORDER BY 
-				CASE WHEN $7 = 'last_modified:asc' THEN last_modified END asc,
-				CASE WHEN $7 = 'last_modified:desc' THEN last_modified END desc,
-				CASE WHEN $7 = 'started:asc' THEN started END asc,
-				CASE WHEN $7 = 'started:desc' THEN started END desc
-    LIMIT $8 OFFSET $9
-	`).Args(pq.StringArray(filters.Workflows),
-		pq.StringArray(filters.Actors),
-		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Refs),
-		pq.StringArray(filters.Repositories),
-		pq.StringArray(filters.Commits),
-		sort, limit, offset)
+    WHERE ` + runQueryFilters + `			
+		ORDER BY 
+			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
+			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
+			CASE WHEN :sort = 'started:asc' THEN started END asc,
+			CASE WHEN :sort = 'started:desc' THEN started END desc
+    LIMIT :limit OFFSET :offset
+	`).Args(
+		map[string]interface{}{
+			"workflows":    pq.StringArray(filters.Workflows),
+			"actors":       pq.StringArray(filters.Actors),
+			"status":       pq.StringArray(filters.Status),
+			"refs":         pq.StringArray(filters.Refs),
+			"repositories": pq.StringArray(filters.Repositories),
+			"commits":      pq.StringArray(filters.Commits),
+			"templates":    pq.StringArray(filters.Templates),
+			"sort":         sort,
+			"limit":        limit,
+			"offset":       offset,
+		})
 
 	return getRuns(ctx, db, query, opts...)
 }
@@ -313,40 +286,26 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 	query := gorpmapping.NewQuery(`
     SELECT *
     FROM v2_workflow_run
-    WHERE 
-			project_key = $1
-			AND (
-				array_length($2::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY($2)
-			)
-			AND (
-				array_length($3::text[], 1) IS NULL OR username = ANY($3)
-			)
-			AND (
-				array_length($4::text[], 1) IS NULL OR status = ANY($4)
-			)
-			AND (
-				array_length($5::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY($5)
-			)
-			AND (
-				array_length($6::text[], 1) IS NULL OR ( (contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository') ) = ANY($6)
-			)
-			AND (
-				array_length($7::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY($7)
-			)
-			ORDER BY 
-				CASE WHEN $8 = 'last_modified:asc' THEN last_modified END asc,
-				CASE WHEN $8 = 'last_modified:desc' THEN last_modified END desc,
-				CASE WHEN $8 = 'started:asc' THEN started END asc,
-				CASE WHEN $8 = 'started:desc' THEN started END desc
-    	LIMIT $9 OFFSET $10
-	`).Args(projKey,
-		pq.StringArray(filters.Workflows),
-		pq.StringArray(filters.Actors),
-		pq.StringArray(filters.Status),
-		pq.StringArray(filters.Refs),
-		pq.StringArray(filters.Repositories),
-		pq.StringArray(filters.Commits),
-		sort, limit, offset)
+    WHERE project_key = :projKey AND ` + runQueryFilters + `
+		ORDER BY 
+			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
+			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
+			CASE WHEN :sort = 'started:asc' THEN started END asc,
+			CASE WHEN :sort = 'started:desc' THEN started END desc
+		LIMIT :limit OFFSET :offset
+	`).Args(map[string]interface{}{
+		"projKey":      projKey,
+		"workflows":    pq.StringArray(filters.Workflows),
+		"actors":       pq.StringArray(filters.Actors),
+		"status":       pq.StringArray(filters.Status),
+		"refs":         pq.StringArray(filters.Refs),
+		"repositories": pq.StringArray(filters.Repositories),
+		"commits":      pq.StringArray(filters.Commits),
+		"templates":    pq.StringArray(filters.Templates),
+		"sort":         sort,
+		"limit":        limit,
+		"offset":       offset,
+	})
 
 	return getRuns(ctx, db, query, opts...)
 }
