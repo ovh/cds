@@ -62,18 +62,26 @@ export class ProjectActivityBarComponent implements OnInit, OnChanges {
 	}
 
 	clickActivity(event: Event, activityKey: string): void {
+		let stopPropagation = false;
 		const lastRoute = this._store.selectSnapshot(NavigationState.selectActivityLastRoute(this.project.key, activityKey));
 		if (lastRoute) {
 			if (activityKey == 'run') {
 				const lastFilters = this._store.selectSnapshot(NavigationState.selectActivityRunLastFilters(this.project.key));
-				if (lastFilters && this._router.isActive(lastRoute, { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' })) {
-					this._router.navigateByUrl(lastFilters);
+				if (this._router.isActive(lastRoute, { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' })) {
+					if (lastFilters) {
+						this._router.navigateByUrl(lastFilters);
+						stopPropagation = true;
+					}
 				} else {
 					this._router.navigateByUrl(lastRoute);
+					stopPropagation = true;
 				}
 			} else {
 				this._router.navigateByUrl(lastRoute);
+				stopPropagation = true;
 			}
+		}
+		if (stopPropagation) {
 			event.stopPropagation();
 			event.preventDefault();
 		}

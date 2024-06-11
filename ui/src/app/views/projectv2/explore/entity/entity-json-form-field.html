@@ -61,21 +61,19 @@
                     </div>
                     <div class="array-form">
                         <ng-container *ngFor="let f of oneOf.get(oneOfSelected[index]).fields">
-                            <app-entity-json-form-field [hideLabel]="f.name === oneOfSelected[index]" [entityType]="entityType"
-                                [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema" [field]="f"
-                                [model]="currentModel[field.name][index]" (modelChange)="onValueChanged($event, index)"
+                            <app-entity-json-form-field [hideLabel]="f.name === oneOfSelected[index]"
+                                [entityType]="entityType" [parentType]="field.objectType"
+                                [jsonFormSchema]="jsonFormSchema" [field]="f" [model]="currentModel[field.name][index]"
+                                (modelChange)="onValueChanged($event, index)"
                                 [indent]="indent+10"></app-entity-json-form-field>
                         </ng-container>
                     </div>
                 </ng-container>
                 <ng-container *ngIf="!oneOf">
-                    <ng-container *ngFor="let f of currentModel[field.name]; let i=index">
-                        <ng-container *ngIf="field.objectType === 'string'">
-                            <input nz-input [name]="field.name+'-value-' + i" [disabled]="disabled"
-                                [ngModel]="currentModel[field.name][i]" (ngModelChange)="onValueChanged($event, i)">
-                        </ng-container>
-                    </ng-container>
-
+                    <app-entity-json-form-field *ngFor="let f of jsonFormSchema.types[field.objectType].fields"
+                        [entityType]="entityType" [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema"
+                        [field]="f" [model]="currentModel[field.name][index]"
+                        (modelChange)="onValueChanged($event, index)" [indent]="indent+10"></app-entity-json-form-field>
                 </ng-container>
             </div>
         </div>
@@ -121,7 +119,8 @@
                     <app-entity-json-form-field *ngFor="let f of jsonFormSchema.types[field.objectType].fields"
                         [entityType]="entityType" [parentType]="field.objectType" [jsonFormSchema]="jsonFormSchema"
                         [field]="f" [model]="currentModel[field.name][item.key]"
-                        (modelChange)="onValueChanged($event, item.key)" [indent]="indent+10"></app-entity-json-form-field>
+                        (modelChange)="onValueChanged($event, item.key)"
+                        [indent]="indent+10"></app-entity-json-form-field>
                 </ng-template>
             </div>
         </div>
@@ -129,8 +128,7 @@
 </div>
 
 <!-- Simple array field ([]string) -->
-<nz-form-item
-    *ngIf="field && currentModel && jsonFormSchema && field.type === 'array' && field.objectType === 'string'">
+<nz-form-item *ngIf="field && currentModel && jsonFormSchema && field.type === 'array' && field.objectType === 'string'">
     <nz-form-label nzFlex="120px">
         <span *ngIf="required" class="red">{{ '* '}}</span>
         {{field.name.charAt(0).toUpperCase() + field.name.substring(1, field.name.length)}}
@@ -203,7 +201,6 @@
                 (ngModelChange)="onValueChanged($event)"></label>
         </ng-container>
         <ng-container *ngIf="!field.enum && !field.code && !field.textarea && field.type !== 'boolean'">
-
             <input nz-input [pattern]="field.pattern" [name]="field.name" [disabled]="disabled"
                 [ngModel]="currentModel[field.name]" (ngModelChange)="onValueChanged($event)">
         </ng-container>

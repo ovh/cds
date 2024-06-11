@@ -435,6 +435,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			templates, err := workflow_v2.LoadRunsTemplates(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			filters := []sdk.V2WorkflowRunSearchFilter{
 				{
 					Key:     "actor",
@@ -461,6 +466,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 					Options: repositories,
 					Example: "vcs_server/repository",
 				},
+				{
+					Key:     "template",
+					Options: templates,
+					Example: "vcs_server/repository/template-name",
+				},
 			}
 
 			return service.WriteJSON(w, filters, http.StatusOK)
@@ -481,6 +491,7 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 				Refs:         req.URL.Query()["ref"],
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
+				Templates:    req.URL.Query()["template"],
 			}
 			filters.Lower()
 
@@ -520,6 +531,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 				Refs:         req.URL.Query()["ref"],
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
+				Templates:    req.URL.Query()["template"],
 			}
 			filters.Lower()
 

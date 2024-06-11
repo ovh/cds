@@ -151,7 +151,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// Build run context
-	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *p, *run, *vcsServer, *repo, *u)
+	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u)
 	if err != nil {
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -199,6 +199,15 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 			})
 		}
 
+		vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, e.Entity.ProjectKey, vcsProj.Name)
+		if err != nil {
+			return err
+		}
+		vcsRepo, err := vcsClient.RepoByFullname(ctx, repo.Name)
+		if err != nil {
+			return err
+		}
+
 		run.Contexts.CDS.WorkflowTemplate = e.Entity.Name
 		run.Contexts.CDS.WorkflowTemplateRef = e.Entity.Ref
 		run.Contexts.CDS.WorkflowTemplateSha = e.Entity.Commit
@@ -206,6 +215,13 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		run.Contexts.CDS.WorkflowTemplateRepository = repo.Name
 		run.Contexts.CDS.WorkflowTemplateProjectKey = e.Entity.ProjectKey
 		run.Contexts.CDS.WorkflowTemplateParams = run.WorkflowData.Workflow.Parameters
+		run.Contexts.CDS.WorkflowTemplateCommitWebURL = fmt.Sprintf(vcsRepo.URLCommitFormat, e.Entity.Commit)
+		run.Contexts.CDS.WorkflowTemplateRepositoryWebURL = vcsRepo.URL
+		if strings.HasPrefix(e.Entity.Ref, sdk.GitRefTagPrefix) {
+			run.Contexts.CDS.WorkflowTemplateRefWebURL = fmt.Sprintf(vcsRepo.URLTagFormat, strings.TrimPrefix(e.Entity.Ref, sdk.GitRefTagPrefix))
+		} else if strings.HasPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix) {
+			run.Contexts.CDS.WorkflowTemplateRefWebURL = fmt.Sprintf(vcsRepo.URLBranchFormat, strings.TrimPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix))
+		}
 	}
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
@@ -453,7 +469,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 	return nil
 }
 
-func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, p sdk.Project, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
+func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
 	var runContext sdk.WorkflowRunContext
 
 	cdsContext := sdk.CDSContext{

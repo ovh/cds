@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Tab } from "app/shared/tabs/tabs.component";
@@ -6,6 +6,7 @@ import { PreferencesState } from "app/store/preferences.state";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
 import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { editor } from "monaco-editor";
 
 @Component({
 	selector: 'app-run-contexts',
@@ -18,7 +19,7 @@ export class RunContextsComponent implements OnInit, OnChanges, OnDestroy {
 	@ViewChild('editor') editor: NzCodeEditorComponent;
 
 	@Input() run: V2WorkflowRun;
-	
+
 	editorOption: EditorOptions;
 	resizingSubscription: Subscription;
 	tabs: Array<Tab>;
@@ -60,6 +61,10 @@ export class RunContextsComponent implements OnInit, OnChanges, OnDestroy {
 	selectTab(tab: Tab): void {
 		this.selectedTab = tab;
 		this._cd.markForCheck();
+	}
+
+	onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
+		this.editor.layout();
 	}
 
 }

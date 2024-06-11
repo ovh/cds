@@ -1,5 +1,5 @@
 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
 <ng-container *ngIf="selectedTab && selectedTab.key === 'raw'">
 	<nz-code-editor #editor [ngModel]="resultRaw" [nzEditorOption]="editorOption"
-		(dblclick)="$event.stopPropagation();"></nz-code-editor>
+		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
 </ng-container>
