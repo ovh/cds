@@ -10,7 +10,7 @@ card:
 
 A CDS project is the root entity for a team.
 
-It brings together all your as-code entites ( workflows, actions, worker models)
+It brings together all your as-code entities ( workflows, actions, worker models)
 
 The following resources can be created/linked on a project:
 
