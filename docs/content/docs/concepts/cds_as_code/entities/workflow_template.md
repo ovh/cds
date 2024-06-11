@@ -20,10 +20,8 @@ The permission `manage-workflow-template` on your project is mandatory to manage
 ```yaml
 name: workflow-template
 parameters:
-- key: var1
-  type: string
-- key: var2
-  type: string
+  - key: var1
+  - key: var2
 spec: |-
   commit-status: ...
   on: [push]
@@ -61,23 +59,12 @@ spec: |-
 Input parameters for the workflow template.
 
 ```yaml
-key:  varname
-type: string
+key: varname
+required: true
 ```
 
 - <span style="color:red">\*</span>`key`: Name of the parameter
-- <span style="color:red">\*</span>`type`: Type of the parameter
-
-### Parameter type
-
-Available types for a parameter:
-
-- `string`: String primitive type
-- `boolean`: Boolean primitive type
-- `repository`: Reference to a repository
-- `ssh-key`: SSH key
-- `pgp-key`: PGP key
-- `json`: JSON value
+- `required`: Indicate if the parameter is mandatory
 
 ## Spec
 
