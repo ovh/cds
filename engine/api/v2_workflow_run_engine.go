@@ -848,7 +848,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelInfo,
-			Message:       fmt.Sprintf("Job %s: The condition is not satisfied.", jobID),
+			Message:       fmt.Sprintf("Job %q: The condition is not satisfied", jobID),
 		})
 	}
 	return canRun, runInfos, nil
