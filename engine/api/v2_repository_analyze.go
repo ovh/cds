@@ -612,11 +612,14 @@ skipEntity:
 	eventUpdatedEntities := make([]sdk.Entity, 0)
 	eventRemovedEntities := make([]sdk.Entity, 0)
 
+	newHooks := make([]sdk.V2WorkflowHook, 0)
+
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 	defer tx.Rollback() // nolint
+
 	for i := range entitiesToUpdate {
 		e := &entities[i]
 
@@ -630,7 +633,7 @@ skipEntity:
 			entityUpdated = true
 		}
 
-		// If entity already exist, ignore it.
+		// If entity already exist for this, ignore it.
 		existingEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, e.Commit)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on git ref %s", e.Name, e.Type, e.Ref))
@@ -673,13 +676,15 @@ skipEntity:
 
 		// Insert workflow hook
 		if e.Type == sdk.EntityTypeWorkflow {
-			if err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch); err != nil {
+			hooks, err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch)
+			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
+			newHooks = append(newHooks, hooks...)
 		}
 	}
 
-	// For skipped entities, retrieve definition on head or default branch
+	// For skipped entities (user has no right to manage them), retrieve definition on head or default branch
 	for _, e := range skippedEntities {
 		// If entity already exist, ignore it.
 		existingEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, e.Commit)
@@ -721,20 +726,30 @@ skipEntity:
 
 		// Insert workflow hook
 		if entityInserted && e.Type == sdk.EntityTypeWorkflow {
-			if err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch); err != nil {
+			hooks, err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch)
+			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
+			newHooks = append(newHooks, hooks...)
 		}
 	}
 
-	// Remove entities for the head commit (branch or tag)
+	srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+	if err != nil {
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to retrieve hook service"))
+	}
+	if len(srvs) < 1 {
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find 1 hook service"))
+	}
+
+	// For head commit, check if entities are missing and delete them
 	if (currentAnalysisBranch != nil && currentAnalysisBranch.LatestCommit == analysis.Commit) || (currentAnalysisTag.Sha == analysis.Commit) || currentAnalysisTag.Sha == "" {
 		foundEntities := make(map[string]struct{})
 		for _, e := range entities {
 			foundEntities[e.Type+"-"+e.Name] = struct{}{}
 		}
 		for _, e := range existingEntities {
-			// If an existing entities has not been found in the current head commit,
+			// If an existing entities has not been found in the current head commit (deleted or renamed)
 			// => remove the entity
 			if _, has := foundEntities[e.Type+"-"+e.Name]; !has {
 				// Check right
@@ -742,12 +757,18 @@ skipEntity:
 					log.Warn(ctx, "user %s [%s] removed the entity %s [%s] but it has not the right to do it", u.Username, u.ID, e.Name, e.Type)
 					continue
 				}
-				// Remove HEAD entity
-				if err := entity.Delete(ctx, tx, &e); err != nil {
+				if err := DeleteEntity(ctx, tx, &e, srvs); err != nil {
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to delete entity %s [%s] ", e.Name, e.Type)))
 				}
 				eventRemovedEntities = append(eventRemovedEntities, e)
 			}
+		}
+	}
+
+	schedulers := make([]sdk.V2WorkflowHook, 0)
+	for _, h := range newHooks {
+		if h.Type == sdk.WorkflowHookTypeScheduler {
+			schedulers = append(schedulers, h)
 		}
 	}
 
@@ -759,7 +780,7 @@ skipEntity:
 		if len(analysis.Data.Entities) == 0 {
 			analysis.Data.Error = "no file found"
 		}
-	} else {
+	} else if len(schedulers) == 0 {
 		analysis.Status = sdk.RepositoryAnalysisStatusSucceed
 	}
 
@@ -781,20 +802,29 @@ skipEntity:
 		event_v2.PublishEntityEvent(ctx, api.Cache, sdk.EventEntityDeleted, vcsProjectWithSecret.Name, repo.Name, eRemoved, &userDB)
 	}
 
+	if len(schedulers) != 0 {
+		// Instantiate Schedulers on hooks µservice
+		if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/scheduler", schedulers, nil); err != nil {
+			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to instantiate scheduler on hook service"))
+		}
+	}
+
 	return nil
 }
 
-func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch) error {
+func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch) ([]sdk.V2WorkflowHook, error) {
 	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
 	defer next()
 
+	hooks := make([]sdk.V2WorkflowHook, 0)
+
 	// Remove existing hook for the current branch
 	if err := workflow_v2.DeleteWorkflowHooks(ctx, db, e.ID); err != nil {
-		return err
+		return nil, err
 	}
 
 	if e.Workflow.On == nil {
-		return nil
+		return nil, nil
 	}
 
 	targetVCS := workflowDefVCSName
@@ -832,14 +862,15 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				},
 			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
-				return err
+				return nil, err
 			}
+			hooks = append(hooks, wh)
 
 			if e.Commit == defaultBranch.LatestCommit {
 				// Load existing head hook
 				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPush)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return err
+					return nil, err
 				}
 				if existingHook != nil {
 					// Update data and ref
@@ -853,7 +884,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 					}
 					existingHook.Ref = e.Ref
 					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
-						return err
+						return nil, err
 					}
 				} else {
 					// Create head hook
@@ -876,7 +907,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 						},
 					}
 					if err := workflow_v2.InsertWorkflowHook(ctx, db, &newHeadHook); err != nil {
-						return err
+						return nil, err
 					}
 				}
 			}
@@ -904,14 +935,15 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				},
 			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
-				return err
+				return nil, err
 			}
+			hooks = append(hooks, wh)
 
 			if e.Commit == defaultBranch.LatestCommit {
 				// Load existing head hook
 				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPullRequest)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return err
+					return nil, err
 				}
 				if existingHook != nil {
 					// Update data and ref
@@ -925,7 +957,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 					}
 					existingHook.Ref = e.Ref
 					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
-						return err
+						return nil, err
 					}
 				} else {
 					// Create head hook
@@ -948,7 +980,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 						},
 					}
 					if err := workflow_v2.InsertWorkflowHook(ctx, db, &newHeadHook); err != nil {
-						return err
+						return nil, err
 					}
 				}
 			}
@@ -976,8 +1008,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				},
 			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
-				return err
+				return nil, err
 			}
+			hooks = append(hooks, wh)
 		}
 	}
 
@@ -1001,8 +1034,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				},
 			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
-				return err
+				return nil, err
 			}
+			hooks = append(hooks, wh)
 		}
 	}
 
@@ -1053,14 +1087,52 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 						},
 					}
 					if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
-						return err
+						return nil, err
 					}
+					hooks = append(hooks, wh)
 				}
 			}
 		}
 	}
 
-	return nil
+	// Only save schedule:
+	// * workflow repo declaration on default branch and latest commit
+	if e.Workflow.On.Schedule != nil {
+		if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
+			destVCS := workflowDefVCSName
+			destRepo := workflowDefRepositoryName
+			if e.Workflow.Repository != nil {
+				destVCS = e.Workflow.Repository.VCSServer
+				destRepo = e.Workflow.Repository.Name
+			}
+
+			for _, s := range e.Workflow.On.Schedule {
+				// Add in data desitnation vcs / repo
+				wh := sdk.V2WorkflowHook{
+					VCSName:        workflowDefVCSName,
+					EntityID:       e.ID,
+					ProjectKey:     e.ProjectKey,
+					Type:           sdk.WorkflowHookTypeScheduler,
+					Ref:            e.Ref,
+					Commit:         e.Commit,
+					WorkflowName:   e.Name,
+					RepositoryName: workflowDefRepositoryName,
+					Data: sdk.V2WorkflowHookData{
+						Cron:           s.Cron,
+						CronTimeZone:   s.Timezone,
+						VCSServer:      destVCS,
+						RepositoryName: destRepo,
+					},
+				}
+				if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
+					return nil, err
+				}
+				hooks = append(hooks, wh)
+			}
+		}
+	}
+
+	return hooks, nil
 }
 
 func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.ProjectRepositoryAnalysis, entities []sdk.Entity, vcsServerName, repoName string) error {

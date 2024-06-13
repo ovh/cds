@@ -85,6 +85,12 @@ func UpdateWorkflowHook(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h 
 	return nil
 }
 
+func LoadHooksByEntityID(ctx context.Context, db gorp.SqlExecutor, entityID string) ([]sdk.V2WorkflowHook, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
+    entity_id = $1`).Args(entityID)
+	return getAllHooks(ctx, db, q)
+}
+
 func LoadHooksByRepositoryEvent(ctx context.Context, db gorp.SqlExecutor, vcsName, repoName, eventName string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
     type = $1 AND

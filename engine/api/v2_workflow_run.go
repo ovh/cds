@@ -731,6 +731,8 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				ChangeSets:    runRequest.ChangeSets,
 				EntityUpdated: runRequest.EntityUpdated,
 				Payload:       runRequest.Payload,
+				Cron:          runRequest.Cron,
+				CronTimezone:  runRequest.CronTimezone,
 			}
 
 			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u)
@@ -1144,7 +1146,6 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 			hookRequest := sdk.HookManualWorkflowRun{
 				UserRequest:    runRequest,
 				Project:        proj.Key,
-				VCSType:        vcsProject.Type,
 				VCSServer:      vcsProject.Name,
 				Repository:     repo.Name,
 				WorkflowRef:    workflowRef,
@@ -1186,8 +1187,10 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		msg = fmt.Sprintf("Workflow was triggered by the workflow-update hook by user %s", u.Username)
 	case sdk.WorkflowHookTypeWorkerModel:
 		msg = fmt.Sprintf("Workflow was triggered by the model-update hook by user %s", u.Username)
+	case sdk.WorkflowHookTypeScheduler:
+		msg = fmt.Sprintf("Workflow was triggered by the scheduler %s %s", runEvent.Cron, runEvent.CronTimezone)
 	default:
-		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event not implemented")
+		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event %s not implemented", runEvent.HookType)
 	}
 
 	wr := sdk.V2WorkflowRun{

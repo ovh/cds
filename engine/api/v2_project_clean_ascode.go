@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -13,8 +15,11 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -87,6 +92,14 @@ func workerCleanProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 }
 
 func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, pKey string, entityRetention time.Duration) error {
+	hookServices, err := services.LoadAllByType(ctx, db, sdk.TypeHooks)
+	if err != nil {
+		return err
+	}
+	if len(hookServices) < 1 {
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find 1 hook service")
+	}
+
 	vcsRepos, err := vcs.LoadAllVCSByProject(ctx, db, pKey)
 	if err != nil {
 		return err
@@ -131,11 +144,11 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				// Clean entities that exists on deleted branches
 				if currentHEAD, has := cleaner.refs[branchName]; has {
 					// Clean non head commits on existing branch
-					if err := cleaner.cleanNonHeadEntities(ctx, db, store, branchName, currentHEAD, branchEntities); err != nil {
+					if err := cleaner.cleanNonHeadEntities(ctx, db, store, branchName, currentHEAD, branchEntities, hookServices); err != nil {
 						return err
 					}
 				} else {
-					if err := cleaner.cleanEntitiesByDeletedRef(ctx, db, store, branchName, branchEntities); err != nil {
+					if err := cleaner.cleanEntitiesByDeletedRef(ctx, db, store, branchName, branchEntities, hookServices); err != nil {
 						return err
 					}
 				}
@@ -172,7 +185,7 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 	return nil
 }
 
-func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, refHeadCommit string, entitiesByBranch []sdk.Entity) error {
+func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, refHeadCommit string, entitiesByBranch []sdk.Entity, hookServices []sdk.Service) error {
 	deletedEntities := make([]sdk.Entity, 0)
 
 	tx, err := db.Begin()
@@ -184,7 +197,7 @@ func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbM
 	log.Info(ctx, "Deleting entities on  %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
 	for _, e := range entitiesByBranch {
 		if e.Commit != "HEAD" && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
-			if err := entity.Delete(ctx, tx, &e); err != nil {
+			if err := DeleteEntity(ctx, tx, &e, hookServices); err != nil {
 				return err
 			}
 			deletedEntities = append(deletedEntities, e)
@@ -201,7 +214,7 @@ func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbM
 	return nil
 }
 
-func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, entitiesByBranch []sdk.Entity) error {
+func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, entitiesByBranch []sdk.Entity, hookServices []sdk.Service) error {
 	deletedEntities := make([]sdk.Entity, 0)
 
 	tx, err := db.Begin()
@@ -212,7 +225,7 @@ func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gor
 
 	log.Info(ctx, "Deleting entities on  %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
 	for _, e := range entitiesByBranch {
-		if err := entity.Delete(ctx, tx, &e); err != nil {
+		if err := DeleteEntity(ctx, tx, &e, hookServices); err != nil {
 			return err
 		}
 		deletedEntities = append(deletedEntities, e)
@@ -225,5 +238,29 @@ func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gor
 	for _, e := range deletedEntities {
 		event_v2.PublishEntityEvent(ctx, store, sdk.EventEntityDeleted, c.vcsName, c.repoName, e, nil)
 	}
+	return nil
+}
+
+func DeleteEntity(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, e *sdk.Entity, srvs []sdk.Service) error {
+	if e.Type == sdk.EntityTypeWorkflow {
+		whooks, err := workflow_v2.LoadHooksByEntityID(ctx, tx, e.ID)
+		if err != nil {
+			return err
+		}
+		for _, h := range whooks {
+			if h.Type != sdk.WorkflowHookTypeScheduler {
+				continue
+			}
+			path := fmt.Sprintf("/v2/workflow/scheduler/%s/%s/%s/%s", h.VCSName, h.RepositoryName, h.WorkflowName, h.ID)
+			if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, path, nil, nil); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := entity.Delete(ctx, tx, e); err != nil {
+		return err
+	}
+
 	return nil
 }

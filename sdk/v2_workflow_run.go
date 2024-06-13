@@ -31,6 +31,8 @@ type V2WorkflowRunHookRequest struct {
 	SemverCurrent string                 `json:"semver_current"`
 	SemverNext    string                 `json:"semver_next"`
 	ChangeSets    []string               `json:"changesets"`
+	Cron          string                 `json:"cron"`
+	CronTimezone  string                 `json:"cron_timezone"`
 }
 
 type V2WorkflowRun struct {
@@ -170,6 +172,7 @@ type V2WorkflowRunEvent struct {
 	Payload       map[string]interface{} `json:"payload,omitempty"`
 	EntityUpdated string                 `json:"entity_updated,omitempty"`
 	Cron          string                 `json:"cron,omitempty"`
+	CronTimezone  string                 `json:"timezone,omitempty"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {
@@ -1007,7 +1010,6 @@ type V2QueueJobInfo struct {
 type HookManualWorkflowRun struct {
 	UserRequest    V2WorkflowRunManualRequest
 	Project        string
-	VCSType        string
 	VCSServer      string
 	Repository     string
 	WorkflowRef    string
