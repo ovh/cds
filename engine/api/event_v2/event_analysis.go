@@ -3,6 +3,7 @@ package event_v2
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -16,6 +17,7 @@ func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoN
 			Type:       sdk.EventAnalysisStart,
 			Payload:    bts,
 			ProjectKey: a.ProjectKey,
+			Timestamp:  time.Now(),
 		},
 		VCSName:    vcsName,
 		Repository: repoName,
@@ -32,6 +34,7 @@ func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoNa
 			Type:       sdk.EventAnalysisStart,
 			Payload:    bts,
 			ProjectKey: a.ProjectKey,
+			Timestamp:  time.Now(),
 		},
 		VCSName:    vcsName,
 		Repository: repoName,

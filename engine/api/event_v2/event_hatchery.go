@@ -3,6 +3,7 @@ package event_v2
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -12,9 +13,10 @@ func PublishHatcheryEvent(ctx context.Context, store cache.Store, eventType stri
 	bts, _ := json.Marshal(h)
 	e := sdk.HatcheryEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
-			ID:      sdk.UUID(),
-			Type:    eventType,
-			Payload: bts,
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
 		},
 		Hatchery: h.Name,
 	}
