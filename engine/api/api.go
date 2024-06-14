@@ -250,7 +250,7 @@ type Configuration struct {
 		RunRetentionScheduling int64 `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"RunRetentionScheduling" default:"15"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
-		RoutineDelay int64  `toml:"routine_delay" comment:"Delay in minutes between to run of entities purge" json:"routine_delay" default:"15"`
+		RoutineDelay int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
 		Retention    string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
 	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
 	Project struct {
