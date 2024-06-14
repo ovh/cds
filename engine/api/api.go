@@ -250,7 +250,8 @@ type Configuration struct {
 		RunRetentionScheduling int64 `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"RunRetentionScheduling" default:"15"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
-		Retention string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
+		RoutineDelay int64  `toml:"routine_delay" comment:"Delay in minutes between to run of entities purge" json:"routine_delay" default:"15"`
+		Retention    string `toml:"retention" comment:"Retention (in hours) of ascode entity for on non head commit" json:"retention" default:"24h"`
 	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
@@ -501,6 +502,9 @@ func (a *API) Serve(ctx context.Context) error {
 
 	a.StartupTime = time.Now()
 
+	if a.Config.Entity.RoutineDelay == 0 {
+		a.Config.Entity.RoutineDelay = 15
+	}
 	if a.Config.Entity.Retention == "" {
 		a.Config.Entity.Retention = "24h"
 	}
@@ -941,7 +945,7 @@ func (a *API) Serve(ctx context.Context) error {
 		workflow.ResyncWorkflowRunResultsRoutine(ctx, a.mustDB, a.Cache, 5*time.Second)
 	})
 	a.GoRoutines.RunWithRestart(ctx, "project.CleanAsCodeEntities", func(ctx context.Context) {
-		a.cleanProjectEntities(ctx, 1*time.Minute, entityRetention)
+		a.cleanProjectEntities(ctx, entityRetention)
 	})
 
 	a.GoRoutines.RunWithRestart(ctx, "worker.DeleteDisabledWorkers", func(ctx context.Context) {
