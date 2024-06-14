@@ -115,6 +115,7 @@ type FullEventV2 struct {
 	Notification     string          `json:"notification,omitempty"`
 	VariableSet      string          `json:"variable_set,omitempty"`
 	Item             string          `json:"item,omitempty"`
+	Timestamp        time.Time       `json:"timestamp"`
 }
 
 type GlobalEventV2 struct {
