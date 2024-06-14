@@ -3,6 +3,7 @@ package event_v2
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -16,6 +17,7 @@ func PublishVCSEvent(ctx context.Context, store cache.Store, eventType string, p
 			Type:       eventType,
 			Payload:    bts,
 			ProjectKey: projectKey,
+			Timestamp:  time.Now(),
 		},
 		VCSName:  vcs.Name,
 		UserID:   u.ID,

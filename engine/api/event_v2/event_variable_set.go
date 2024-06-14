@@ -3,6 +3,7 @@ package event_v2
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -16,6 +17,7 @@ func PublishProjectVariableSetEvent(ctx context.Context, store cache.Store, even
 			Type:       eventType,
 			Payload:    bts,
 			ProjectKey: projectKey,
+			Timestamp:  time.Now(),
 		},
 		VariableSet: vs.Name,
 		UserID:      u.ID,
@@ -32,6 +34,7 @@ func PublishProjectVariableSetItemEvent(ctx context.Context, store cache.Store, 
 			Type:       eventType,
 			Payload:    bts,
 			ProjectKey: projectKey,
+			Timestamp:  time.Now(),
 		},
 		VariableSet: vsName,
 		Item:        item.Name,

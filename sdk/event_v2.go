@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"encoding/json"
+	"time"
 )
 
 const (
@@ -114,12 +115,14 @@ type FullEventV2 struct {
 	Notification     string          `json:"notification,omitempty"`
 	VariableSet      string          `json:"variable_set,omitempty"`
 	Item             string          `json:"item,omitempty"`
+	Timestamp        time.Time       `json:"timestamp"`
 }
 
 type GlobalEventV2 struct {
-	ID      string          `json:"id"`
-	Type    string          `json:"type"`
-	Payload json.RawMessage `json:"payload"`
+	ID        string          `json:"id"`
+	Type      string          `json:"type"`
+	Payload   json.RawMessage `json:"payload"`
+	Timestamp time.Time       `json:"timestamp"`
 }
 
 type ProjectEventV2 struct {
@@ -127,6 +130,7 @@ type ProjectEventV2 struct {
 	Type       string          `json:"type"`
 	ProjectKey string          `json:"project_key"`
 	Payload    json.RawMessage `json:"payload"`
+	Timestamp  time.Time       `json:"timestamp"`
 }
 
 type AnalysisEvent struct {
