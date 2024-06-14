@@ -251,8 +251,7 @@ func DeleteEntity(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, e *sdk.E
 			if h.Type != sdk.WorkflowHookTypeScheduler {
 				continue
 			}
-			path := fmt.Sprintf("/v2/workflow/scheduler/%s/%s/%s/%s", h.VCSName, h.RepositoryName, h.WorkflowName, h.ID)
-			if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, path, nil, nil); err != nil {
+			if err := DeleteEntitySchedulerHook(ctx, tx, &h, srvs); err != nil {
 				return err
 			}
 		}
@@ -262,5 +261,13 @@ func DeleteEntity(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, e *sdk.E
 		return err
 	}
 
+	return nil
+}
+
+func DeleteEntitySchedulerHook(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, h *sdk.V2WorkflowHook, srvs []sdk.Service) error {
+	path := fmt.Sprintf("/v2/workflow/scheduler/%s/%s/%s/%s", h.VCSName, h.RepositoryName, h.WorkflowName, h.ID)
+	if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, path, nil, nil); err != nil {
+		return err
+	}
 	return nil
 }

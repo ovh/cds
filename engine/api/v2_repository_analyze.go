@@ -614,6 +614,14 @@ skipEntity:
 
 	newHooks := make([]sdk.V2WorkflowHook, 0)
 
+	srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+	if err != nil {
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to retrieve hook service"))
+	}
+	if len(srvs) < 1 {
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find 1 hook service"))
+	}
+
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -676,7 +684,7 @@ skipEntity:
 
 		// Insert workflow hook
 		if e.Type == sdk.EntityTypeWorkflow {
-			hooks, err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch)
+			hooks, err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
@@ -726,20 +734,12 @@ skipEntity:
 
 		// Insert workflow hook
 		if entityInserted && e.Type == sdk.EntityTypeWorkflow {
-			hooks, err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch)
+			hooks, err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
 			newHooks = append(newHooks, hooks...)
 		}
-	}
-
-	srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
-	if err != nil {
-		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to retrieve hook service"))
-	}
-	if len(srvs) < 1 {
-		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find 1 hook service"))
 	}
 
 	// For head commit, check if entities are missing and delete them
@@ -812,7 +812,7 @@ skipEntity:
 	return nil
 }
 
-func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch) ([]sdk.V2WorkflowHook, error) {
+func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch, hookSrvs []sdk.Service) ([]sdk.V2WorkflowHook, error) {
 	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
 	defer next()
 
@@ -821,10 +821,6 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Remove existing hook for the current branch
 	if err := workflow_v2.DeleteWorkflowHooks(ctx, db, e.ID); err != nil {
 		return nil, err
-	}
-
-	if e.Workflow.On == nil {
-		return nil, nil
 	}
 
 	targetVCS := workflowDefVCSName
@@ -841,7 +837,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 
 	// Only save hook push if
 	// * workflow repo declaration == workflow.repository || default branch
-	if e.Workflow.On.Push != nil {
+	if e.Workflow.On != nil && e.Workflow.On.Push != nil {
 		if workflowSameRepo || e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
@@ -914,7 +910,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 		}
 	}
 
-	if e.Workflow.On.PullRequest != nil {
+	if e.Workflow.On != nil && e.Workflow.On.PullRequest != nil {
 		if workflowSameRepo || e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
@@ -987,7 +983,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 		}
 	}
 
-	if e.Workflow.On.PullRequestComment != nil {
+	if e.Workflow.On != nil && e.Workflow.On.PullRequestComment != nil {
 		if workflowSameRepo || e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				EntityID:       e.ID,
@@ -1016,7 +1012,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 
 	// Only save workflow_update hook if :
 	// * workflow.repository declaration != workflow.repository && default branch
-	if e.Workflow.On.WorkflowUpdate != nil {
+	if e.Workflow.On != nil && e.Workflow.On.WorkflowUpdate != nil {
 		if !workflowSameRepo && e.Ref == defaultBranch.ID {
 			wh := sdk.V2WorkflowHook{
 				VCSName:        workflowDefVCSName,
@@ -1043,7 +1039,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// Only save model_update hook if :
 	// * workflow and model on the same repo
 	// * workflow repo declaration != workflow.repository && default branch
-	if e.Workflow.On.ModelUpdate != nil {
+	if e.Workflow.On != nil && e.Workflow.On.ModelUpdate != nil {
 		if e.Ref == defaultBranch.ID {
 			for _, m := range e.Workflow.On.ModelUpdate.Models {
 				mSplit := strings.Split(m, "/")
@@ -1095,10 +1091,27 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 		}
 	}
 
-	// Only save schedule:
-	// * workflow repo declaration on default branch and latest commit
-	if e.Workflow.On.Schedule != nil {
-		if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
+	// Manage scheduler
+	// * On default branch, latest commit:
+	//   1. remove old definition of the scheduler in DB + in hooks
+	//   2. insert new definition
+	if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
+
+		// Search old scheduler definition and remove them from hooks uservice
+		whs, err := workflow_v2.LoadHookSchedulerByWorkflow(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		log.Error(ctx, ">>>>REMOVING PREVIOUS SCHEDULER: %+v", whs)
+		for _, h := range whs {
+			if err := DeleteEntitySchedulerHook(ctx, db, &h, hookSrvs); err != nil {
+				return nil, err
+			}
+		}
+
+		if e.Workflow.On != nil {
+			// Insert new scheduler definition
 			destVCS := workflowDefVCSName
 			destRepo := workflowDefRepositoryName
 			if e.Workflow.Repository != nil {
@@ -1131,7 +1144,6 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 			}
 		}
 	}
-
 	return hooks, nil
 }
 
