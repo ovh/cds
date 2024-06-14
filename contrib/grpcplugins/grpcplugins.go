@@ -670,7 +670,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 		return nil, err
 	}
 
-	Logf(actplugin, "  %d bytes uploaded in %.3fs", size, d.Seconds())
+	Successf(actplugin, "  %d bytes uploaded in %.3fs", size, d.Seconds())
 
 	if _, err := updateResponse.RunResult.GetDetail(); err != nil {
 		Error(actplugin, err.Error())
