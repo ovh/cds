@@ -17,6 +17,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -515,7 +516,7 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 	vcsName := modelPath[1]
 	modelName := modelPath[len(modelPath)-1]
 	repoName := strings.Join(modelPath[2:len(modelPath)-1], "/")
-	var branch string
+	branch := "master"
 	if len(branchSplit) == 2 {
 		branch = branchSplit[1]
 	}
@@ -568,6 +569,12 @@ fi`
 			oldModel.ModelDocker.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
 			oldModel.ModelDocker.Shell = "sh -c"
 		}
+		oldModel.ModelDocker.Image, err = interpolate.Do(oldModel.ModelDocker.Image, map[string]string{
+			"git.ref_name": branch,
+		})
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
 	case sdk.WorkerModelTypeVSphere:
 		var vsphereSpec sdk.V2WorkerModelVSphereSpec
 		if err := yaml.Unmarshal(model.Spec, &vsphereSpec); err != nil {
@@ -580,6 +587,12 @@ fi`
 			User:     vsphereSpec.Username,
 			Password: vsphereSpec.Password,
 			Image:    vsphereSpec.Image,
+		}
+		oldModel.ModelVirtualMachine.Image, err = interpolate.Do(oldModel.ModelVirtualMachine.Image, map[string]string{
+			"git.ref_name": branch,
+		})
+		if err != nil {
+			return nil, sdk.WithStack(err)
 		}
 	case sdk.WorkerModelTypeOpenstack:
 		var openstackSpec sdk.V2WorkerModelOpenstackSpec
@@ -597,6 +610,12 @@ fi`
 				oldModel.ModelVirtualMachine.Flavor = r.Value
 				break
 			}
+		}
+		oldModel.ModelVirtualMachine.Image, err = interpolate.Do(oldModel.ModelVirtualMachine.Image, map[string]string{
+			"git.ref_name": branch,
+		})
+		if err != nil {
+			return nil, sdk.WithStack(err)
 		}
 	}
 
