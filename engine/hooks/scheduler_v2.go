@@ -99,7 +99,7 @@ func (s *Service) removeSchedulersAndNextExecution(ctx context.Context, vcs, rep
 		if !found {
 			continue
 		}
-		log.Error(ctx, "delete scheduler definition and next execution for workflow %s/%s/%s %s %s", vcs, repo, workflow, h.Data.Cron, h.Data.CronTimeZone)
+		log.Info(ctx, "delete scheduler definition and next execution for workflow %s/%s/%s %s %s", vcs, repo, workflow, h.Data.Cron, h.Data.CronTimeZone)
 		if err := s.Dao.RemoveScheduler(ctx, vcs, repo, workflow, h.ID); err != nil {
 			return err
 		}

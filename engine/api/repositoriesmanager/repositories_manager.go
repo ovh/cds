@@ -258,7 +258,10 @@ func (c *vcsClient) Branches(ctx context.Context, fullname string, filters sdk.V
 	}
 
 	branches := []sdk.VCSBranch{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/branches?limit=%d&noCache=%v", c.name, fullname, filters.Limit, filters.NoCache)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches?limit=%d", c.name, fullname, filters.Limit)
+	if filters.NoCache {
+		path += fmt.Sprintf("&noCache=%v", filters.NoCache)
+	}
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branches); err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to find branches on repository %s from %s", fullname, c.name)
 	}
@@ -279,7 +282,10 @@ func (c *vcsClient) SearchPullRequest(ctx context.Context, repoFullName, commit,
 
 func (c *vcsClient) Branch(ctx context.Context, fullname string, filters sdk.VCSBranchFilters) (*sdk.VCSBranch, error) {
 	branch := sdk.VCSBranch{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s&default=%v&noCache=%v", c.name, fullname, url.QueryEscape(filters.BranchName), filters.Default, filters.NoCache)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s&default=%v", c.name, fullname, url.QueryEscape(filters.BranchName), filters.Default)
+	if filters.NoCache {
+		path += fmt.Sprintf("&noCache=%v", filters.NoCache)
+	}
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branch); err != nil {
 		return nil, sdk.NewErrorFrom(err, "unable to find branch %q (default: %t) on repository %s from %s", filters.BranchName, filters.Default, fullname, c.name)
 	}
