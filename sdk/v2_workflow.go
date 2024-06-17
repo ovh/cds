@@ -339,6 +339,10 @@ type V2WorkflowHook struct {
 	Data           V2WorkflowHookData `json:"data" db:"data"`
 }
 
+type V2WorkflowScheduleEvent struct {
+	Schedule string `json:"schedule"`
+}
+
 type V2WorkflowHookData struct {
 	VCSServer       string   `json:"vcs_server,omitempty"`
 	RepositoryName  string   `json:"repository_name,omitempty"`

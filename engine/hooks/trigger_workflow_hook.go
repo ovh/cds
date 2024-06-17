@@ -45,21 +45,21 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 }
 
 func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
-	var schedulerDef sdk.V2WorkflowHook
-	if err := json.Unmarshal(hre.Body, &schedulerDef); err != nil {
-		return err
-	}
-
 	wh := sdk.HookRepositoryEventWorkflow{
 		Type:                 sdk.WorkflowHookTypeScheduler,
 		Status:               sdk.HookEventWorkflowStatusScheduled,
-		ProjectKey:           schedulerDef.ProjectKey,
-		VCSIdentifier:        schedulerDef.VCSName,
-		RepositoryIdentifier: schedulerDef.RepositoryName,
-		WorkflowName:         schedulerDef.WorkflowName,
-		Ref:                  schedulerDef.Ref,
-		Commit:               schedulerDef.Commit,
-		Data:                 schedulerDef.Data,
+		ProjectKey:           hre.ExtractData.Scheduler.TargetProject,
+		VCSIdentifier:        hre.VCSServerName,
+		RepositoryIdentifier: hre.RepositoryName,
+		WorkflowName:         hre.ExtractData.Scheduler.TargetWorkflow,
+		Ref:                  hre.ExtractData.Ref,
+		Commit:               hre.ExtractData.Commit,
+		Data: sdk.V2WorkflowHookData{
+			VCSServer:      hre.ExtractData.Scheduler.TargetVCS,
+			RepositoryName: hre.ExtractData.Scheduler.TargetRepo,
+			TargetBranch:   "",
+			TargetTag:      "",
+		},
 	}
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
 	return nil
@@ -161,8 +161,8 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 		Data: sdk.V2WorkflowHookData{
 			VCSServer:      workflowVCS,
 			RepositoryName: workflowRepo,
-			TargetBranch:   userRequest.Branch,
-			TargetTag:      userRequest.Tag,
+			Cron:           hre.ExtractData.Scheduler.Cron,
+			CronTimeZone:   hre.ExtractData.Scheduler.Timezone,
 		},
 	}
 	// Create Manual Hook

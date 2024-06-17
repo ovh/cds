@@ -154,10 +154,12 @@ type HookRepositoryEventExtractData struct {
 }
 
 type HookRepositoryEventExtractDataScheduler struct {
-	TargetVCS  string `json:"target_vcs"`
-	TargetRepo string `json:"target_repo"`
-	Cron       string `json:"cron"`
-	Timezone   string `json:"timezone"`
+	TargetVCS      string `json:"target_vcs"`
+	TargetRepo     string `json:"target_repo"`
+	TargetWorkflow string `json:"target_workflow"`
+	TargetProject  string `json:"target_project"`
+	Cron           string `json:"cron"`
+	Timezone       string `json:"timezone"`
 }
 
 type GenerateRepositoryWebhook struct {

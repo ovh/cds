@@ -172,21 +172,25 @@ func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e S
 	}
 
 	// Create HookRepositoryEvent
-	bts, _ := json.Marshal(updatedExecution.SchedulerDef)
+	bts, _ := json.Marshal(sdk.V2WorkflowScheduleEvent{Schedule: updatedExecution.SchedulerDef.Data.Cron})
 	he := &sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		Created:        time.Now().UnixNano(),
 		EventName:      sdk.WorkflowHookScheduler,
-		VCSServerName:  updatedExecution.SchedulerDef.Data.VCSServer,
-		RepositoryName: updatedExecution.SchedulerDef.Data.RepositoryName,
+		VCSServerName:  updatedExecution.SchedulerDef.VCSName,
+		RepositoryName: updatedExecution.SchedulerDef.RepositoryName,
 		Body:           bts,
 		ExtractData: sdk.HookRepositoryEventExtractData{
+			Commit:       updatedExecution.SchedulerDef.Commit,
+			Ref:          updatedExecution.SchedulerDef.Ref,
 			CDSEventName: sdk.WorkflowHookTypeScheduler,
 			Scheduler: sdk.HookRepositoryEventExtractDataScheduler{
-				TargetVCS:  updatedExecution.SchedulerDef.Data.VCSServer,
-				TargetRepo: updatedExecution.SchedulerDef.Data.RepositoryName,
-				Cron:       updatedExecution.SchedulerDef.Data.Cron,
-				Timezone:   updatedExecution.SchedulerDef.Data.CronTimeZone,
+				TargetVCS:      updatedExecution.SchedulerDef.Data.VCSServer,
+				TargetRepo:     updatedExecution.SchedulerDef.Data.RepositoryName,
+				TargetWorkflow: updatedExecution.SchedulerDef.WorkflowName,
+				TargetProject:  updatedExecution.SchedulerDef.ProjectKey,
+				Cron:           updatedExecution.SchedulerDef.Data.Cron,
+				Timezone:       updatedExecution.SchedulerDef.Data.CronTimeZone,
 			},
 		},
 		Status:              sdk.HookEventStatusScheduled,
