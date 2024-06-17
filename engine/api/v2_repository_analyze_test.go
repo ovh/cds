@@ -132,6 +132,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -141,9 +142,11 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
@@ -200,6 +203,7 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -209,8 +213,11 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -277,6 +284,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -286,8 +294,11 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -412,6 +423,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -421,8 +433,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -493,7 +508,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -546,6 +561,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -555,8 +571,11 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -681,6 +700,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -688,10 +708,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -763,7 +786,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -895,6 +918,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -904,8 +928,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -1057,6 +1084,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1066,8 +1094,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `name: docker-debian
 description: my debian worker model
@@ -1143,7 +1174,7 @@ spec:
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -1273,6 +1304,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1282,8 +1314,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -1372,7 +1407,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -1873,6 +1908,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1880,10 +1916,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -1955,7 +1994,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -2106,6 +2145,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -2113,10 +2153,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -2188,7 +2231,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -2319,6 +2362,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -2326,10 +2370,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	workflow := `name: myworkflow
 from: mytemplate
@@ -2395,7 +2442,7 @@ parameters:
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
