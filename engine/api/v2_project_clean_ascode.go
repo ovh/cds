@@ -27,8 +27,8 @@ type EntitiesCleaner struct {
 	retention time.Duration
 }
 
-func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration, entityRetention time.Duration) {
-	ticker := time.NewTicker(delay)
+func (a *API) cleanProjectEntities(ctx context.Context, entityRetention time.Duration) {
+	ticker := time.NewTicker(time.Duration(a.Config.Entity.RoutineDelay) * time.Minute)
 	defer ticker.Stop()
 
 	for {
