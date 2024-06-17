@@ -46,6 +46,17 @@ func Test_cleanAsCodeEntities(t *testing.T) {
 	}
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
+	wkfDelete := sdk.Entity{
+		Name:                "model1",
+		Commit:              "123456",
+		Ref:                 "refs/heads/temp",
+		Type:                sdk.EntityTypeWorkflow,
+		ProjectRepositoryID: repo.ID,
+		ProjectKey:          p.Key,
+		Data:                `name: workflow1`,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &wkfDelete))
+
 	etoDelete := sdk.Entity{
 		Name:                "model1",
 		Commit:              "123456",
@@ -78,6 +89,7 @@ spec:
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHook, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -87,6 +99,7 @@ spec:
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHook)
 		services.NewClient = services.NewDefaultClient
 	}()
 

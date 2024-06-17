@@ -819,6 +819,18 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	hooks := make([]sdk.V2WorkflowHook, 0)
 
 	// Remove existing hook for the current branch
+	if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
+		// Search old scheduler definition and remove them from hooks uservice
+		whs, err := workflow_v2.LoadHookSchedulerByWorkflow(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name)
+		if err != nil {
+			return nil, err
+		}
+		if len(whs) > 0 {
+			if err := DeleteAllEntitySchedulerHook(ctx, db, whs[0].VCSName, whs[0].RepositoryName, whs[0].WorkflowName, hookSrvs); err != nil {
+				return nil, err
+			}
+		}
+	}
 	if err := workflow_v2.DeleteWorkflowHooks(ctx, db, e.ID); err != nil {
 		return nil, err
 	}
@@ -1095,51 +1107,39 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	// * On default branch, latest commit:
 	//   1. remove old definition of the scheduler in DB + in hooks
 	//   2. insert new definition
-	if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
-		// Search old scheduler definition and remove them from hooks uservice
-		whs, err := workflow_v2.LoadHookSchedulerByWorkflow(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name)
-		if err != nil {
-			return nil, err
+	if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit && e.Workflow.On != nil {
+		// Insert new scheduler definition
+		destVCS := workflowDefVCSName
+		destRepo := workflowDefRepositoryName
+		if e.Workflow.Repository != nil {
+			destVCS = e.Workflow.Repository.VCSServer
+			destRepo = e.Workflow.Repository.Name
 		}
-		if len(whs) > 0 {
-			if err := DeleteAllEntitySchedulerHook(ctx, db, whs[0].VCSName, whs[0].RepositoryName, whs[0].WorkflowName, hookSrvs); err != nil {
+
+		for _, s := range e.Workflow.On.Schedule {
+			// Add in data desitnation vcs / repo
+			wh := sdk.V2WorkflowHook{
+				VCSName:        workflowDefVCSName,
+				EntityID:       e.ID,
+				ProjectKey:     e.ProjectKey,
+				Type:           sdk.WorkflowHookTypeScheduler,
+				Ref:            e.Ref,
+				Commit:         e.Commit,
+				WorkflowName:   e.Name,
+				RepositoryName: workflowDefRepositoryName,
+				Data: sdk.V2WorkflowHookData{
+					Cron:           s.Cron,
+					CronTimeZone:   s.Timezone,
+					VCSServer:      destVCS,
+					RepositoryName: destRepo,
+				},
+			}
+			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
 				return nil, err
 			}
+			hooks = append(hooks, wh)
 		}
 
-		if e.Workflow.On != nil {
-			// Insert new scheduler definition
-			destVCS := workflowDefVCSName
-			destRepo := workflowDefRepositoryName
-			if e.Workflow.Repository != nil {
-				destVCS = e.Workflow.Repository.VCSServer
-				destRepo = e.Workflow.Repository.Name
-			}
-
-			for _, s := range e.Workflow.On.Schedule {
-				// Add in data desitnation vcs / repo
-				wh := sdk.V2WorkflowHook{
-					VCSName:        workflowDefVCSName,
-					EntityID:       e.ID,
-					ProjectKey:     e.ProjectKey,
-					Type:           sdk.WorkflowHookTypeScheduler,
-					Ref:            e.Ref,
-					Commit:         e.Commit,
-					WorkflowName:   e.Name,
-					RepositoryName: workflowDefRepositoryName,
-					Data: sdk.V2WorkflowHookData{
-						Cron:           s.Cron,
-						CronTimeZone:   s.Timezone,
-						VCSServer:      destVCS,
-						RepositoryName: destRepo,
-					},
-				}
-				if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
-					return nil, err
-				}
-				hooks = append(hooks, wh)
-			}
-		}
 	}
 	return hooks, nil
 }
