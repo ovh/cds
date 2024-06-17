@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -165,7 +166,7 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 		return err
 	}
 
-	branches, err := vcsClient.Branches(ctx, c.repoName, sdk.VCSBranchesFilter{Limit: 50})
+	branches, err := vcsClient.Branches(ctx, c.repoName, sdk.VCSBranchesFilter{Limit: 100, NoCache: true})
 	if err != nil {
 		return err
 	}
@@ -251,9 +252,10 @@ func DeleteEntity(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, e *sdk.E
 			if h.Type != sdk.WorkflowHookTypeScheduler {
 				continue
 			}
-			if err := DeleteEntitySchedulerHook(ctx, tx, &h, srvs); err != nil {
+			if err := DeleteAllEntitySchedulerHook(ctx, tx, h.VCSName, h.RepositoryName, h.WorkflowName, srvs); err != nil {
 				return err
 			}
+			break
 		}
 	}
 
@@ -264,8 +266,8 @@ func DeleteEntity(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, e *sdk.E
 	return nil
 }
 
-func DeleteEntitySchedulerHook(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, h *sdk.V2WorkflowHook, srvs []sdk.Service) error {
-	path := fmt.Sprintf("/v2/workflow/scheduler/%s/%s/%s/%s", h.VCSName, h.RepositoryName, h.WorkflowName, h.ID)
+func DeleteAllEntitySchedulerHook(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, vcs, repo, workflow string, srvs []sdk.Service) error {
+	path := fmt.Sprintf("/v2/workflow/scheduler/%s/%s/%s", vcs, url.PathEscape(repo), workflow)
 	if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, path, nil, nil); err != nil {
 		return err
 	}

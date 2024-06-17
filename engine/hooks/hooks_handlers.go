@@ -57,9 +57,12 @@ func (s *Service) deleteSchedulerHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 		workflowName := vars["workflowName"]
-		hookID := vars["hookID"]
 
-		return s.Dao.RemoveScheduler(ctx, vcsServerName, repoName, workflowName, hookID)
+		if err := s.removeSchedulersAndNextExecution(ctx, vcsServerName, repoName, workflowName); err != nil {
+			return err
+		}
+
+		return nil
 	}
 }
 

@@ -229,14 +229,14 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 						}
 						analysis.Commit = giventTag.Sha
 					default:
-						givenBranch, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix)})
+						givenBranch, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix), NoCache: true})
 						if err != nil {
 							return err
 						}
 						analysis.Commit = givenBranch.LatestCommit
 					}
 				} else if analysis.Ref == "" {
-					defaultBranch, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+					defaultBranch, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true, NoCache: true})
 					if err != nil {
 						return err
 					}
@@ -585,7 +585,7 @@ skipEntity:
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve vcs_server %s on project %s", vcsProjectWithSecret.Name, analysis.ProjectKey))
 	}
-	defaultBranch, err := vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true})
+	defaultBranch, err := vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true, NoCache: true})
 	if err != nil {
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve default branch on repository %s", repo.Name))
 	}
@@ -601,7 +601,7 @@ skipEntity:
 				return err
 			}
 		} else {
-			currentAnalysisBranch, err = vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix)})
+			currentAnalysisBranch, err = vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(analysis.Ref, sdk.GitRefBranchPrefix), NoCache: true})
 			if err != nil {
 				return err
 			}
@@ -1096,16 +1096,13 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 	//   1. remove old definition of the scheduler in DB + in hooks
 	//   2. insert new definition
 	if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
-
 		// Search old scheduler definition and remove them from hooks uservice
 		whs, err := workflow_v2.LoadHookSchedulerByWorkflow(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name)
 		if err != nil {
 			return nil, err
 		}
-
-		log.Error(ctx, ">>>>REMOVING PREVIOUS SCHEDULER: %+v", whs)
-		for _, h := range whs {
-			if err := DeleteEntitySchedulerHook(ctx, db, &h, hookSrvs); err != nil {
+		if len(whs) > 0 {
+			if err := DeleteAllEntitySchedulerHook(ctx, db, whs[0].VCSName, whs[0].RepositoryName, whs[0].WorkflowName, hookSrvs); err != nil {
 				return nil, err
 			}
 		}

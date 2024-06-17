@@ -15,7 +15,7 @@ func GetSchedulerDefinitionKey(vcs, repo, workflow, whID string) string {
 
 // SchedulerKeysByWorkflow returns all the scheduler definition keys for the given workflow
 func (d *dao) SchedulerKeysByWorkflow(ctx context.Context, vcs, repo, workflow string) ([]string, error) {
-	return d.store.Keys(cache.Key(scheduleDefinitionRootKey, vcs, repo, workflow))
+	return d.store.Keys(cache.Key(scheduleDefinitionRootKey, vcs, repo, workflow, "*"))
 }
 
 func (d *dao) GetSchedulerDefinition(ctx context.Context, vcs, repo, workflow, whID string) (*sdk.V2WorkflowHook, error) {

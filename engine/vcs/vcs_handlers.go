@@ -91,6 +91,7 @@ func (s *Service) getBranchesHandler() service.Handler {
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
 		limitS := r.URL.Query().Get("limit")
+		noCacheS := r.URL.Query().Get("noCache")
 
 		var limit int64
 		if limitS != "" {
@@ -100,6 +101,7 @@ func (s *Service) getBranchesHandler() service.Handler {
 			}
 			limit = int64(l)
 		}
+		noCache := noCacheS == "true"
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
@@ -116,7 +118,7 @@ func (s *Service) getBranchesHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
-		branches, err := client.Branches(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchesFilter{Limit: limit})
+		branches, err := client.Branches(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchesFilter{Limit: limit, NoCache: noCache})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get repo %s/%s", owner, repo)
 		}
@@ -131,11 +133,14 @@ func (s *Service) getBranchHandler() service.Handler {
 		repo := muxVar(r, "repo")
 		branch := r.URL.Query().Get("branch")
 		defaultBranchS := r.URL.Query().Get("default")
+		noCacheS := r.URL.Query().Get("noCache")
 
 		var defaultBranch bool
 		if defaultBranchS == "true" {
 			defaultBranch = true
 		}
+
+		noCache := noCacheS == "true"
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
@@ -152,7 +157,7 @@ func (s *Service) getBranchHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
-		ghBranch, err := client.Branch(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchFilters{BranchName: branch, Default: defaultBranch})
+		ghBranch, err := client.Branch(ctx, fmt.Sprintf("%s/%s", owner, repo), sdk.VCSBranchFilters{BranchName: branch, Default: defaultBranch, NoCache: noCache})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to get repo %s/%s branch %s", owner, repo, branch)
 		}
