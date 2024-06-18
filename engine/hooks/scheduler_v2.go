@@ -116,6 +116,12 @@ func (s *Service) schedulerExecutionRoutine(ctx context.Context) {
 			log.Error(ctx, "schedulerExecutionRoutine > exiting goroutine: %v", ctx.Err())
 			return
 		case <-tick.C:
+			if s.Maintenance {
+				log.Info(ctx, "schedulerExecutionRoutine> Maintenance enable, wait 1 minute")
+				time.Sleep(1 * time.Minute)
+				continue
+			}
+
 			schedulerExecutions, err := s.Dao.GetAllSchedulerExecutions(ctx)
 			if err != nil {
 				log.Error(ctx, "schedulerExecutionRoutine > unable to load all scheduler executions")
