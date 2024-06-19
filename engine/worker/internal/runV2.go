@@ -219,12 +219,12 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 	}()
 
 	// Interpolate job context
-	actionContext, err := w.computeContextForAction(ctx, w.currentJobV2.runJobContext, w.currentJobV2.runJob.Job.Inputs)
+	currentJobContext, err := w.computeContextForAction(ctx, w.currentJobV2.runJobContext, w.currentJobV2.runJob.Job.Inputs)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to compute job context: %v", err))
 	}
-	actionContext.Matrix = w.currentJobV2.runJob.Matrix
-	w.currentJobV2.runJobContext = actionContext
+	currentJobContext.Matrix = w.currentJobV2.runJob.Matrix
+	w.currentJobV2.runJobContext = currentJobContext
 
 	// Init step context
 	w.currentJobV2.runJob.StepsStatus = sdk.JobStepsStatus{}
@@ -235,35 +235,16 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		w.currentJobV2.currentStepIndex = jobStepIndex
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 
+		// Set step in context
 		w.currentJobV2.currentStepName = sdk.GetJobStepName(step.ID, jobStepIndex)
 		ctx = workerruntime.SetStepName(ctx, w.currentJobV2.currentStepName)
 
-		currentStepStatus := sdk.JobStepStatus{
-			Started: time.Now(),
-		}
-		w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName] = currentStepStatus
-		actionContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
-
-		currentStepContext := actionContext
-		currentStepContext.Env = make(map[string]string)
-		for k, v := range actionContext.Env {
-			currentStepContext.Env[k] = v
-		}
-		if len(step.Env) > 0 {
-			mapContextBts, _ := json.Marshal(actionContext)
-			var parserContext map[string]interface{}
-			if err := json.Unmarshal(mapContextBts, &parserContext); err != nil {
-				return w.failJob(ctx, fmt.Sprintf("unable to unmarshal current step context: %v", err))
-			}
-			ap := sdk.NewActionParser(parserContext, sdk.DefaultFuncs)
-			for k, v := range step.Env {
-				// Interpolate current step env variable
-				resultString, err := ap.InterpolateToString(ctx, v)
-				if err != nil {
-					return w.failJob(ctx, fmt.Sprintf("unable to interpolate env variable %s [%s]: %v", k, v, err))
-				}
-				currentStepContext.Env[k] = resultString
-			}
+		// Set current step status + create step context
+		w.createStepStatus(w.currentJobV2.runJob.StepsStatus, w.currentJobV2.currentStepName)
+		currentJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
+		currentStepContext, err := w.createStepContext(ctx, currentJobContext, step)
+		if err != nil {
+			w.failJob(ctx, err.Error())
 		}
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
@@ -272,27 +253,11 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepName))
 
-		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, currentStepContext)
+		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, *currentStepContext)
 		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepName))
 		w.gelfLogger.hook.Flush()
 
-		// retrieve from runJob,  it may have been updated with `worker output` cmd
-		currentStepStatus = w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName]
-		currentStepStatus.Ended = time.Now()
-		currentStepStatus.Outcome = stepRes.Status
-
-		if stepRes.Status == sdk.V2WorkflowRunJobStatusFail && jobResult.Status != sdk.V2WorkflowRunJobStatusFail && !step.ContinueOnError {
-			jobResult.Status = sdk.V2WorkflowRunJobStatusFail
-			jobResult.Error = stepRes.Error
-		}
-
-		if step.ContinueOnError {
-			currentStepStatus.Conclusion = sdk.V2WorkflowRunJobStatusSuccess
-		} else {
-			currentStepStatus.Conclusion = currentStepStatus.Outcome
-		}
-
-		w.currentJobV2.runJob.StepsStatus[w.currentJobV2.currentStepName] = currentStepStatus
+		w.updateStepResult(w.currentJobV2.runJob.StepsStatus, &jobResult, stepRes, step, w.currentJobV2.currentStepName)
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
@@ -301,7 +266,41 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 	return jobResult
 }
 
-func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, stepName string, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
+func (w *CurrentWorker) createStepStatus(stepsStatus sdk.JobStepsStatus, stepName string) {
+	currentStepStatus := sdk.JobStepStatus{
+		Started: time.Now(),
+	}
+	stepsStatus[stepName] = currentStepStatus
+}
+
+func (w *CurrentWorker) createStepContext(ctx context.Context, jobContext sdk.WorkflowRunJobsContext, step sdk.ActionStep) (*sdk.WorkflowRunJobsContext, error) {
+	//currentJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
+	currentStepContext := jobContext
+	if currentStepContext.Env == nil {
+		currentStepContext.Env = make(map[string]string)
+	}
+
+	// Add step.env in step context
+	if len(step.Env) > 0 {
+		mapContextBts, _ := json.Marshal(jobContext)
+		var parserContext map[string]interface{}
+		if err := json.Unmarshal(mapContextBts, &parserContext); err != nil {
+			return nil, fmt.Errorf("unable to read context: %v", err)
+		}
+		ap := sdk.NewActionParser(parserContext, sdk.DefaultFuncs)
+		for k, v := range step.Env {
+			// Interpolate current step env variable
+			resultString, err := ap.InterpolateToString(ctx, v)
+			if err != nil {
+				return nil, fmt.Errorf("unable to interpolate env variable %s [%s]: %v", k, v, err)
+			}
+			currentStepContext.Env[k] = resultString
+		}
+	}
+	return &currentStepContext, nil
+}
+
+func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, stepName string, currentStepContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
 	if step.If == "" {
 		step.If = "${{ success() }}"
 	}
@@ -309,7 +308,7 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	if !strings.HasPrefix(step.If, "${{") {
 		step.If = fmt.Sprintf("${{ %s }}", step.If)
 	}
-	bts, err := json.Marshal(runJobContext)
+	bts, err := json.Marshal(currentStepContext)
 	if err != nil {
 		return sdk.V2WorkflowRunJobResult{
 			Status: sdk.V2WorkflowRunJobStatusFail,
@@ -347,16 +346,16 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 	var result sdk.V2WorkflowRunJobResult
 	switch {
 	case step.Uses != "":
-		result = w.runJobStepAction(ctx, step, runJobContext, stepName, step.With)
+		result = w.runJobStepAction(ctx, step, currentStepContext, stepName, step.With)
 	case step.Run != "":
-		result = w.runJobStepScript(ctx, step, runJobContext)
+		result = w.runJobStepScript(ctx, step, currentStepContext)
 	default:
 		return w.failJob(ctx, "invalid action definition. Missing uses or run keys")
 	}
 	return result
 }
 
-func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, parentContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]string) sdk.V2WorkflowRunJobResult {
+func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, currentStepContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]string) sdk.V2WorkflowRunJobResult {
 	name := strings.TrimPrefix(step.Uses, "actions/")
 	actionRefSplit := strings.Split(name, "@")
 	actionPath := strings.Split(actionRefSplit[0], "/")
@@ -366,6 +365,10 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	defer func() {
 		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\"", stepName))
 	}()
+
+	actionResult := sdk.V2WorkflowRunJobResult{
+		Status: sdk.V2WorkflowRunJobStatusSuccess,
+	}
 
 	// Set action inputs
 	inputs := make(map[string]string)
@@ -397,7 +400,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		}
 	}
 	// Compute context
-	actionContext, err := w.computeContextForAction(ctx, parentContext, inputs)
+	actionContext, err := w.computeContextForAction(ctx, currentStepContext, inputs)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to compute context for action %s: %v", name, err))
 	}
@@ -417,17 +420,45 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		return w.runPlugin(ctx, actionPath[0], opts, env)
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
+		subStepStatus := sdk.JobStepsStatus{}
 		for stepIndex, step := range w.actions[name].Runs.Steps {
-			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, actionContext)
+
+			subStepName := sdk.GetJobStepName(step.ID, stepIndex)
+			w.createStepStatus(subStepStatus, subStepName)
+			actionContext.Steps = subStepStatus.ToStepContext()
+			currentStepContext, err := w.createStepContext(ctx, actionContext, step)
+			if err != nil {
+				w.failJob(ctx, err.Error())
+			}
+
+			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, *currentStepContext)
 			if stepRes.Status == sdk.V2WorkflowRunJobStatusFail {
 				return stepRes
 			}
+			w.updateStepResult(subStepStatus, &actionResult, stepRes, step, subStepName)
 		}
 	default:
 	}
 	return sdk.V2WorkflowRunJobResult{
 		Status: sdk.V2WorkflowRunJobStatusSuccess,
 	}
+}
+
+func (w *CurrentWorker) updateStepResult(stepStatus sdk.JobStepsStatus, actionResult *sdk.V2WorkflowRunJobResult, stepRes sdk.V2WorkflowRunJobResult, step sdk.ActionStep, stepName string) {
+	currentStepStatus := stepStatus[stepName]
+	currentStepStatus.Ended = time.Now()
+	currentStepStatus.Outcome = stepRes.Status
+	if stepRes.Status == sdk.V2WorkflowRunJobStatusFail && actionResult.Status != sdk.V2WorkflowRunJobStatusFail && !step.ContinueOnError {
+		actionResult.Status = sdk.V2WorkflowRunJobStatusFail
+		actionResult.Error = stepRes.Error
+	}
+
+	if step.ContinueOnError {
+		currentStepStatus.Conclusion = sdk.V2WorkflowRunJobStatusSuccess
+	} else {
+		currentStepStatus.Conclusion = currentStepStatus.Outcome
+	}
+	stepStatus[w.currentJobV2.currentStepName] = currentStepStatus
 }
 
 func (w *CurrentWorker) runSubActionStep(ctx context.Context, step sdk.ActionStep, stepName string, stepIndex int, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
@@ -501,6 +532,7 @@ func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2Workfl
 }
 
 func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]string) (sdk.WorkflowRunJobsContext, error) {
+	// No input
 	if len(inputs) == 0 {
 		mapContextBts, _ := json.Marshal(parentContext)
 		var parserContext map[string]interface{}
@@ -519,9 +551,13 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		}
 		return parentContext, nil
 	}
+
 	actionContext := sdk.WorkflowRunJobsContext{
 		Inputs: make(map[string]interface{}),
 		Steps:  parentContext.Steps,
+		WorkflowRunContext: sdk.WorkflowRunContext{
+			Env: parentContext.Env,
+		},
 	}
 
 	mapContextBytes, _ := json.Marshal(parentContext)
@@ -539,6 +575,7 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		}
 		actionContext.Inputs[k] = interpolatedInput
 	}
+
 	return actionContext, nil
 }
 

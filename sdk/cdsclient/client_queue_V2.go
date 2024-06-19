@@ -187,7 +187,8 @@ func (c *client) V2QueuePolling(ctx context.Context, regionName string, goRoutin
 
 				jobInfo, err := c.V2QueueGetJobRun(ctx, regionName, queueFiltered[i].ID)
 				if err != nil {
-					return err
+					log.Error(ctx, "unable to retrieve run %s: %v", queueFiltered[i].ID, err)
+					continue
 				}
 				jobs <- *jobInfo
 			}
