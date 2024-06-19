@@ -126,4 +126,4 @@ testcases:
     - name: Check log in sub action
       script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Hello Foo Doe from project {{.cds_project}}\""
     - name: Check env log in sub action
-      script: cat {{.cds_workflow}}-1-1-init-action && cat {{.cds_workflow}}-1-1-init-action | grep \"Env FOO-BAR\"  
+      script: "cat {{.cds_workflow}}-1-1-init-action && cat {{.cds_workflow}}-1-1-init-action | grep \"Env FOO-BAR\""
