@@ -276,8 +276,11 @@ func (w *CurrentWorker) createStepStatus(stepsStatus sdk.JobStepsStatus, stepNam
 func (w *CurrentWorker) createStepContext(ctx context.Context, jobContext sdk.WorkflowRunJobsContext, step sdk.ActionStep) (*sdk.WorkflowRunJobsContext, error) {
 	//currentJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 	currentStepContext := jobContext
-	if currentStepContext.Env == nil {
-		currentStepContext.Env = make(map[string]string)
+
+	// Copy parent env context
+	currentStepContext.Env = make(map[string]string)
+	for k, v := range jobContext.Env {
+		currentStepContext.Env[k] = v
 	}
 
 	// Add step.env in step context
