@@ -23,7 +23,6 @@ const (
 	INTEROGATION_MARK
 	DOUBLESTAR
 	SQUARE_BRACKET
-	DOUBLESTARSLASH
 )
 
 const (
@@ -73,16 +72,17 @@ func (f *pattern) Match(s string) (string, error) {
 }
 
 type innerScanner struct {
-	f *pattern
-	r *bufio.Reader
-	n int64
+	f            *pattern
+	r            *bufio.Reader
+	n            int64
+	lastTokenLen int64
 }
 
 func (f *pattern) newScanner() *innerScanner {
 	return &innerScanner{f: f, r: bufio.NewReader(strings.NewReader(f.raw))}
 }
 func (s *innerScanner) clone() *innerScanner {
-	pattern := &pattern{raw: s.f.raw[s.n-1:]}
+	pattern := &pattern{raw: s.f.raw[s.n-s.lastTokenLen:]}
 	return &innerScanner{
 		f: pattern,
 		r: bufio.NewReader(strings.NewReader(pattern.raw)),
@@ -90,8 +90,8 @@ func (s *innerScanner) clone() *innerScanner {
 }
 
 func (s *innerScanner) read() rune {
-	ch, _, err := s.r.ReadRune()
-	s.n++
+	ch, size, err := s.r.ReadRune()
+	s.n = s.n + int64(size)
 	if err != nil {
 		return eof
 	}
@@ -103,6 +103,9 @@ func (s *innerScanner) unread() {
 }
 
 func (s *innerScanner) scan() (tok Token, lit string) {
+	defer func() {
+		s.lastTokenLen = int64(len(lit))
+	}()
 	ch := s.read()
 	switch {
 	case isEOF(ch):
@@ -153,12 +156,6 @@ func (s *innerScanner) scanStar() (tok Token, lit string) {
 func (s *innerScanner) scanDoubleStar() (tok Token, lit string) {
 	var buf bytes.Buffer
 	buf.WriteRune(s.read())
-	nextCh := s.read()
-	if isSlash(nextCh) {
-		return DOUBLESTARSLASH, "**/"
-	} else {
-		s.unread()
-	}
 	return DOUBLESTAR, buf.String()
 }
 
@@ -233,7 +230,8 @@ func (p *innerParser) parseAndMatch(s string) (result string, err error) {
 
 	buf := new(strings.Builder)
 
-	var inWildcard bool
+	var inStar bool
+	var inDoubleStar bool
 	for {
 		tok, lit := p.scan()
 		Debug("## current token: %v %v", tok, lit)
@@ -257,68 +255,60 @@ func (p *innerParser) parseAndMatch(s string) (result string, err error) {
 		case SLASH:
 			contentToken, contentLit := contentParser.scan()
 			Debug("### / current buffer: %q, read content: [%v] %q, nextToken: [%v] %q", buf.String(), contentToken, contentLit, nextToken, nextLit)
+			// The pattern starts with SLASH but the content is not SLASH
+			if p.s.n == 1 && contentToken != SLASH {
+				return "", nil
+			}
+
 			if contentToken == EOF {
 				continue
 			}
-			if !inWildcard {
+			if !inStar && !inDoubleStar {
 				buf.Reset() // reset the buff
 			} else {
-				buf.WriteString(lit)
-				if contentToken != SLASH {
+				if inStar && contentToken != SLASH {
 					contentParser.unscan()
+				} else if inDoubleStar && contentToken != SLASH {
+					buf.WriteString(contentLit)
 				}
+				buf.WriteString(lit)
 			}
-		case DOUBLESTAR, DOUBLESTARSLASH:
-			var contentParserIndex = contentParser.index
-			var lastSlashIndex = -1
-			var index = -1
+		case DOUBLESTAR:
 			var accumulator = new(strings.Builder)
-			var stopGLobing bool
-			inWildcard = true
-			for !stopGLobing {
-				index++
+
+			for {
+				inDoubleStar = true
+				var leftover = contentParser.leftover()
+
+				// Consume the next token of the content
 				contentToken, contentLit := contentParser.scan()
-				Debug("### ** current buffer: %q, read content: [%v] %q, nextToken: [%v] %q", buf.String(), contentToken, contentLit, nextToken, nextLit)
 				if contentToken == EOF {
 					break
 				}
 
-				if tok == DOUBLESTARSLASH && nextToken != STAR && contentToken == SLASH {
-					stopGLobing = true
-				}
+				var index = contentParser.index // keep the index, if we need to rewind
+				var subP = p.clone()
 
-				if contentToken == LITERAL {
+				subPatternMatch, _ := subP.parseAndMatch(leftover)
+				if subPatternMatch == "" {
+					// The subpattern doesn't match teh content leftover
+					// rewind and consume the content normaly
+					contentParser.rewindTo(index)
 					accumulator.WriteString(contentLit)
 					continue
-				} else if contentToken == SLASH && nextToken != EOF {
-					lastSlashIndex = index
-					accumulator.WriteString(contentLit)
-					continue
-				} else if nextToken == EOF {
-					accumulator.WriteString(contentLit)
-					continue
+				} else {
+					contentParser.unscan() // exiting the glob and consider nothing has been consumed
+					// the subpattern match, don't be greedy and stop consumming the content
+					Debug("#### Stop globbing because %s match with %v", subP.s.f.raw, leftover)
+					break
 				}
-				Debug("### exiting globstar")
-				break
 			}
-			if lastSlashIndex > -1 {
-				str := accumulator.String()
-				str = str[:lastSlashIndex]
-				Debug("### str: %q", str)
-				Debug("### rewindTo: %d", contentParserIndex+lastSlashIndex)
-				contentParser.rewindTo(contentParserIndex + lastSlashIndex)
-				buf.WriteString(str)
-				if tok == DOUBLESTARSLASH {
-					buf.WriteRune('/')
-					contentParser.scan()
-				}
-			} else {
-				buf.WriteString(accumulator.String())
-			}
-			Debug("### buffer at the end of DOUBLESTAR: %q", buf.String())
+
+			buf.WriteString(accumulator.String())
+
 		case STAR:
 			// Star will consume the content until the next '/' of EOF
-			inWildcard = true
+			inStar = true
 			for {
 				contentToken, contentLit := contentParser.scan()
 				Debug("### * current buffer: %q, read content: [%v] %q, nextToken: [%v] %q", buf.String(), contentToken, contentLit, nextToken, nextLit)
