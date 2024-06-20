@@ -31,8 +31,8 @@ type EntityFinder struct {
 	repoDefaultRefCache   map[string]string
 	actionsCache          map[string]sdk.V2Action
 	localActionsCache     map[string]sdk.V2Action
-	localWorkerModelCache map[string]sdk.V2WorkerModel
-	workerModelCache      map[string]sdk.V2WorkerModel
+	localWorkerModelCache map[string]sdk.EntityWithObject
+	workerModelCache      map[string]sdk.EntityWithObject
 	localTemplatesCache   map[string]sdk.EntityWithObject
 	templatesCache        map[string]sdk.EntityWithObject
 	plugins               map[string]sdk.GRPCPlugin
@@ -49,8 +49,8 @@ func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectReposi
 		currentSha:            currentSha,
 		actionsCache:          make(map[string]sdk.V2Action),
 		localActionsCache:     make(map[string]sdk.V2Action),
-		workerModelCache:      make(map[string]sdk.V2WorkerModel),
-		localWorkerModelCache: make(map[string]sdk.V2WorkerModel),
+		workerModelCache:      make(map[string]sdk.EntityWithObject),
+		localWorkerModelCache: make(map[string]sdk.EntityWithObject),
 		templatesCache:        make(map[string]sdk.EntityWithObject),
 		localTemplatesCache:   make(map[string]sdk.EntityWithObject),
 		repoCache:             make(map[string]sdk.ProjectRepository),
@@ -251,7 +251,11 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store 
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &wm); err != nil {
 			return "", "", err
 		}
-		ef.workerModelCache[completePath] = wm
+		eo := sdk.EntityWithObject{Entity: *entityDB, Model: wm}
+		if err := eo.Interpolate(ctx); err != nil {
+			return "", "", err
+		}
+		ef.workerModelCache[completePath] = eo
 	case sdk.EntityTypeWorkflowTemplate:
 		var wt sdk.V2WorkflowTemplate
 		if err := yaml.Unmarshal([]byte(entityDB.Data), &wt); err != nil {

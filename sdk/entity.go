@@ -1,6 +1,9 @@
 package sdk
 
 import (
+	"context"
+	"encoding/json"
+	"strings"
 	"time"
 )
 
@@ -49,6 +52,60 @@ type EntityWithObject struct {
 	Action   V2Action
 	Model    V2WorkerModel
 	Template V2WorkflowTemplate
+}
+
+func (e *EntityWithObject) Interpolate(ctx context.Context) error {
+	var refName string
+	switch {
+	case strings.HasPrefix(e.Entity.Ref, GitRefTagPrefix):
+		refName = strings.TrimPrefix(e.Entity.Ref, GitRefTagPrefix)
+	default:
+		refName = strings.TrimPrefix(e.Entity.Ref, GitRefBranchPrefix)
+	}
+	ap := NewActionParser(map[string]interface{}{"git": map[string]interface{}{"ref_name": refName}}, nil)
+	var err error
+	switch e.Model.Type {
+	case WorkerModelTypeDocker:
+		var dockerSpec V2WorkerModelDockerSpec
+		if err := json.Unmarshal(e.Model.Spec, &dockerSpec); err != nil {
+			return WrapError(err, "unable to unmarshal docker spec")
+		}
+		dockerSpec.Image, err = ap.InterpolateToString(ctx, dockerSpec.Image)
+		if err != nil {
+			return WithStack(err)
+		}
+		e.Model.Spec, err = json.Marshal(dockerSpec)
+		if err != nil {
+			return WrapError(err, "unable to marshal docker spec")
+		}
+	case WorkerModelTypeVSphere:
+		var vsphereSpec V2WorkerModelVSphereSpec
+		if err := json.Unmarshal(e.Model.Spec, &vsphereSpec); err != nil {
+			return WrapError(err, "unable to unmarshal vsphere spec")
+		}
+		vsphereSpec.Image, err = ap.InterpolateToString(ctx, vsphereSpec.Image)
+		if err != nil {
+			return WithStack(err)
+		}
+		e.Model.Spec, err = json.Marshal(vsphereSpec)
+		if err != nil {
+			return WrapError(err, "unable to marshal vsphere spec")
+		}
+	case WorkerModelTypeOpenstack:
+		var openstackSpec V2WorkerModelOpenstackSpec
+		if err := json.Unmarshal(e.Model.Spec, &openstackSpec); err != nil {
+			return WrapError(err, "unable to unmarshal openstack spec")
+		}
+		openstackSpec.Image, err = ap.InterpolateToString(ctx, openstackSpec.Image)
+		if err != nil {
+			return WithStack(err)
+		}
+		e.Model.Spec, err = json.Marshal(openstackSpec)
+		if err != nil {
+			return WrapError(err, "unable to marshal openstack spec")
+		}
+	}
+	return nil
 }
 
 func GetManageRoleByEntity(entityType string) (string, error) {

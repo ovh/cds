@@ -17,7 +17,6 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -550,6 +549,12 @@ else
 	exit 1;
 fi`
 
+	ap := sdk.NewActionParser(map[string]interface{}{
+		"git": map[string]interface{}{
+			"ref_name": branch,
+		},
+	}, nil)
+
 	switch model.Type {
 	case sdk.WorkerModelTypeDocker:
 		var dockerSpec sdk.V2WorkerModelDockerSpec
@@ -569,9 +574,7 @@ fi`
 			oldModel.ModelDocker.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
 			oldModel.ModelDocker.Shell = "sh -c"
 		}
-		oldModel.ModelDocker.Image, err = interpolate.Do(oldModel.ModelDocker.Image, map[string]string{
-			"git.ref_name": branch,
-		})
+		oldModel.ModelDocker.Image, err = ap.InterpolateToString(ctx, oldModel.ModelDocker.Image)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
@@ -588,9 +591,7 @@ fi`
 			Password: vsphereSpec.Password,
 			Image:    vsphereSpec.Image,
 		}
-		oldModel.ModelVirtualMachine.Image, err = interpolate.Do(oldModel.ModelVirtualMachine.Image, map[string]string{
-			"git.ref_name": branch,
-		})
+		oldModel.ModelVirtualMachine.Image, err = ap.InterpolateToString(ctx, oldModel.ModelVirtualMachine.Image)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
@@ -611,9 +612,7 @@ fi`
 				break
 			}
 		}
-		oldModel.ModelVirtualMachine.Image, err = interpolate.Do(oldModel.ModelVirtualMachine.Image, map[string]string{
-			"git.ref_name": branch,
-		})
+		oldModel.ModelVirtualMachine.Image, err = ap.InterpolateToString(ctx, oldModel.ModelVirtualMachine.Image)
 		if err != nil {
 			return nil, sdk.WithStack(err)
 		}
@@ -660,7 +659,6 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 			return nil, sdk.WrapError(err, "unable to get docker spec")
 		}
 		workerStarterModel.DockerSpec = dockerSpec
-
 	case sdk.WorkerModelTypeVSphere:
 		workerStarterModel.Cmd = "PATH=$PATH ./worker"
 		workerStarterModel.PreCmd = preCmd

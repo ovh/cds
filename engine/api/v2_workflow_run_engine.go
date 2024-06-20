@@ -182,7 +182,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	// Enqueue JOB
-	runJobs := prepareRunJobs(ctx, *proj, *run, wrEnqueue, jobsToQueue, sdk.StatusWaiting, *u)
+	runJobs := prepareRunJobs(ctx, *run, wrEnqueue, jobsToQueue, sdk.StatusWaiting, *u)
 
 	// Compute worker model on runJobs if needed
 	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u)
@@ -191,7 +191,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	runJobsInfos, runUpdated := computeRunJobsWorkerModel(ctx, api.mustDB(), api.Cache, wref, run, runJobs)
 
-	runJobs = append(runJobs, prepareRunJobs(ctx, *proj, *run, wrEnqueue, skippedJobs, sdk.StatusSkipped, *u)...)
+	runJobs = append(runJobs, prepareRunJobs(ctx, *run, wrEnqueue, skippedJobs, sdk.StatusSkipped, *u)...)
 
 	tx, errTx := api.mustDB().Begin()
 	if errTx != nil {
@@ -597,13 +597,13 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, def.Name, wref.run.WorkflowRef)
 			if _, has := run.WorkflowData.WorkerModels[completeName]; !has {
 				runUpdated = true
-				run.WorkflowData.WorkerModels[completeName] = def
+				run.WorkflowData.WorkerModels[completeName] = def.Model
 			}
 		}
 		for name, def := range wref.ef.workerModelCache {
 			if _, has := run.WorkflowData.WorkerModels[name]; !has {
 				runUpdated = true
-				run.WorkflowData.WorkerModels[name] = def
+				run.WorkflowData.WorkerModels[name] = def.Model
 			}
 		}
 	}
@@ -611,7 +611,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 	return runJobInfos, runUpdated
 }
 
-func prepareRunJobs(_ context.Context, proj sdk.Project, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, jobStatus sdk.V2WorkflowRunJobStatus, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
+func prepareRunJobs(_ context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, jobStatus sdk.V2WorkflowRunJobStatus, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 
 	// Compute Matrix
