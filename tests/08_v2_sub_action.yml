@@ -61,7 +61,7 @@ testcases:
           runs:
             steps:
               - run: |-
-                  echo "Welcome in action parent-action"
+                  echo "Welcome in action parent-action on workflow ${{ cds.workflow }}"
               - uses: actions/{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/child-action@master
                 with:
                   projectName: ${{ cds.project_key }}
@@ -122,7 +122,7 @@ testcases:
     - name: Display log
       script: cat {{.cds_workflow}}-1-1-init-action
     - name: Check log content
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Welcome in action parent-action\""
+      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Welcome in action parent-action on workflow {{.cds_workflow}}\""
     - name: Check log in sub action
       script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Hello Foo Doe from project {{.cds_project}}\""
     - name: Check env log in sub action

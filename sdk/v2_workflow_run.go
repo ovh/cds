@@ -101,14 +101,14 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
-	Jobs         JobsResultContext       `json:"jobs"`
-	Needs        NeedsContext            `json:"needs"`
-	Inputs       map[string]interface{}  `json:"inputs"`
-	Steps        StepsContext            `json:"steps"`
-	Matrix       map[string]string       `json:"matrix"`
-	Integrations *JobIntegrationsContext `json:"integrations,omitempty"`
-	Gate         map[string]interface{}  `json:"gate"`
-	Vars         map[string]interface{}  `json:"vars"`
+	Inputs       map[string]string        `json:"inputs,omitempty"`
+	Jobs         JobsResultContext        `json:"jobs"`
+	Needs        NeedsContext             `json:"needs"`
+	Steps        StepsContext             `json:"steps"`
+	Matrix       map[string]string        `json:"matrix"`
+	Integrations *JobIntegrationsContexts `json:"integrations,omitempty"`
+	Gate         map[string]interface{}   `json:"gate"`
+	Vars         map[string]interface{}   `json:"vars"`
 }
 
 type V2WorkflowRunData struct {
@@ -255,20 +255,25 @@ func (s V2WorkflowRunJobStatus) IsTerminated() bool {
 	return true
 }
 
-type JobIntegrationsContext struct {
-	ArtifactManager string `json:"artifact_manager,omitempty"`
-	Deployment      string `json:"deployment,omitempty"`
+type JobIntegrationsContexts struct {
+	ArtifactManager JobIntegrationsContext `json:"artifact_manager,omitempty"`
+	Deployment      JobIntegrationsContext `json:"deployment,omitempty"`
 }
 
-func (c JobIntegrationsContext) All() []string {
-	var res []string
-	if c.ArtifactManager != "" {
-		res = append(res, c.ArtifactManager)
+func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
+	integs := make([]JobIntegrationsContext, 0)
+	if jics.ArtifactManager.Name != "" {
+		integs = append(integs, jics.ArtifactManager)
 	}
-	if c.Deployment != "" {
-		res = append(res, c.Deployment)
+	if jics.Deployment.Name != "" {
+		integs = append(integs, jics.Deployment)
 	}
-	return res
+	return integs
+}
+
+type JobIntegrationsContext struct {
+	Name   string            `json:"name,omitempty"`
+	Config map[string]string `json:"config,omitempty"`
 }
 
 type JobStepsStatus map[string]JobStepStatus

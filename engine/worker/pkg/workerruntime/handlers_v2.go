@@ -3,6 +3,7 @@ package workerruntime
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -169,10 +170,10 @@ func V2_integrationsHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			writeError(w, r, sdk.ErrNotFound)
 			return
 		}
-		integ, err := wk.V2GetIntegrationByName(r.Context(), name)
-		if err != nil {
+		integ := wk.V2GetIntegrationByName(r.Context(), name)
+		if integ == nil {
 			log.Error(ctx, "unable to get integration %q", name)
-			writeError(w, r, err)
+			writeError(w, r, fmt.Errorf("unable to get integration %q", name))
 			return
 		}
 		writeJSON(w, integ, http.StatusOK)
