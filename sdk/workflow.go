@@ -29,7 +29,7 @@ type WorkflowName struct {
 // Workflow represents a pipeline based workflow
 type Workflow struct {
 	ID                       int64                        `json:"id" db:"id" cli:"-"`
-	Name                     string                       `json:"name" db:"name" cli:"name,key"`
+	Name                     string                       `json:"name" db:"name" cli:"name,key" action_metadata:"workflow-name"`
 	Description              string                       `json:"description,omitempty" db:"description" cli:"description"`
 	Icon                     string                       `json:"icon,omitempty" db:"icon" cli:"-"`
 	LastModified             time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`

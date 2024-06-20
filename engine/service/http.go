@@ -94,8 +94,34 @@ func Write(w http.ResponseWriter, r io.Reader, status int, contentType string) e
 	return nil
 }
 
+// map to avoid to register twice the same action_metadata field
+var registeredActionMetadataFiels = new(sync.Map)
+
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
 func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
+	if responseTracker := UnwrapResponseWriter(w); responseTracker != nil {
+		dataV := sdk.ValueFromInterface(data)
+		dataT := dataV.Type()
+		var tag string
+		var value interface{}
+		for i := 0; i < dataT.NumField(); i++ {
+			v := dataV.Field(i)
+			t, hasTag := dataT.Field(i).Tag.Lookup("action_metadata")
+			if hasTag {
+				tag = t
+				value = v
+				break // We only consider one field
+			}
+		}
+		if tag != "" {
+			var f = log.Field("action_metadata_" + tag)
+			if _, exist := registeredActionMetadataFiels.Load(f); !exist {
+				registeredActionMetadataFiels.Store(f, struct{}{})
+				log.RegisterField(f)
+			}
+			SetTracker(responseTracker, f, value)
+		}
+	}
 	b, err := json.Marshal(data)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal json data")
