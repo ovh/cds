@@ -473,6 +473,10 @@ func (c *Common) GenerateWorkerConfig(ctx context.Context, h hatchery.Interface,
 			Level:                      h.Configuration().Provision.WorkerLogsOptions.Level,
 			GraylogFieldCDSServiceType: "worker",
 			GraylogFieldCDSServiceName: spawnArgs.WorkerName,
+			SyslogHost:                 h.Configuration().Provision.WorkerLogsOptions.Syslog.Host,
+			SyslogPort:                 strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Syslog.Port),
+			SyslogProtocol:             h.Configuration().Provision.WorkerLogsOptions.Syslog.Protocol,
+			SyslogExtraTag:             h.Configuration().Provision.WorkerLogsOptions.Syslog.ExtraTag,
 		},
 	}
 

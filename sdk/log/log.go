@@ -5,11 +5,14 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"log/syslog"
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
+	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/log/hook"
@@ -31,6 +34,10 @@ type Conf struct {
 	GraylogFieldCDSVersion     string
 	GraylogFieldCDSOS          string
 	GraylogFieldCDSArch        string
+	SyslogHost                 string
+	SyslogPort                 string
+	SyslogProtocol             string
+	SyslogExtraTag             string
 }
 
 const (
@@ -75,13 +82,31 @@ func Initialize(ctx context.Context, conf *Conf) {
 	}
 
 	if conf.GraylogHost != "" && conf.GraylogPort != "" {
-		if err := initGraylokHook(ctx, conf); err != nil {
+		if err := initGraylogHook(ctx, conf); err != nil {
+			logrus.Error(err)
+		}
+	}
+
+	if conf.SyslogHost != "" && conf.SyslogPort != "" {
+		if err := initSyslogHook(conf); err != nil {
 			logrus.Error(err)
 		}
 	}
 }
 
-func initGraylokHook(ctx context.Context, conf *Conf) error {
+func initSyslogHook(conf *Conf) error {
+	logrus.Infoln("initializing Syslog hook...")
+	hook, err := lSyslog.NewSyslogHook(conf.SyslogProtocol, conf.SyslogHost+":"+conf.SyslogPort, syslog.LOG_INFO, conf.SyslogExtraTag)
+	if err != nil {
+		return errors.Wrap(err, "unable to init syslog hook")
+	}
+
+	logrus.AddHook(hook)
+	return nil
+}
+
+func initGraylogHook(ctx context.Context, conf *Conf) error {
+	logrus.Infoln("initializing Graylog hook...")
 	graylogcfg := &hook.Config{
 		Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
 		Protocol:  conf.GraylogProtocol,
@@ -93,7 +118,7 @@ func initGraylokHook(ctx context.Context, conf *Conf) error {
 		keys := strings.Split(conf.GraylogExtraKey, ",")
 		values := strings.Split(conf.GraylogExtraValue, ",")
 		if len(keys) != len(values) {
-			return fmt.Errorf("Error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
+			return errors.Errorf("error while initialize log: extraKey (len:%d) does not have same corresponding number of values on extraValue (len:%d)", len(keys), len(values))
 		} else {
 			for i := range keys {
 				extra[keys[i]] = values[i]
