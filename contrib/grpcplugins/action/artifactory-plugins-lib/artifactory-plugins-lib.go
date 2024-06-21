@@ -133,7 +133,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		return err
 	}
 
-	integration, err := grpcplugins.GetIntegrationByName(ctx, c, jobContext.Integrations.ArtifactManager)
+	integration, err := grpcplugins.GetIntegrationByName(ctx, c, jobContext.Integrations.ArtifactManager.Name)
 	if err != nil {
 		return err
 	}

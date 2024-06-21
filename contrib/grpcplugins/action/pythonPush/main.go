@@ -109,12 +109,12 @@ func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 			res.Details = "unable to retrieve job context"
 			return stream.Send(res)
 		}
-		if jobCtx == nil || jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager == "" {
+		if jobCtx == nil || jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
 			res.Status = sdk.StatusFail
 			res.Details = "unable to upload package, no integration found on the current job"
 			return stream.Send(res)
 		}
-		integ, err = grpcplugins.GetIntegrationByName(ctx, &p.Common, jobCtx.Integrations.ArtifactManager)
+		integ, err = grpcplugins.GetIntegrationByName(ctx, &p.Common, jobCtx.Integrations.ArtifactManager.Name)
 		if err != nil {
 			res.Status = sdk.StatusFail
 			res.Details = fmt.Sprintf("unable to get integration %s", jobCtx.Integrations.ArtifactManager)

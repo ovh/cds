@@ -105,13 +105,13 @@ func (p *debianPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		res.Details = fmt.Sprintf("Unable to retrieve job integration: %v", err)
 		return stream.Send(res)
 	}
-	if jobContext == nil || jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager == "" {
+	if jobContext == nil || jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager.Name == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "Unable to retrieve artifact manager integration for the current job"
 		return stream.Send(res)
 	}
 	opts.jobContext = *jobContext
-	integ, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, jobContext.Integrations.ArtifactManager)
+	integ, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, jobContext.Integrations.ArtifactManager.Name)
 	if err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = fmt.Sprintf("Unable to reget integration %s: %v", jobContext.Integrations.ArtifactManager, err)
