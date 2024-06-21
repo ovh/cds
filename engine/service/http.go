@@ -99,7 +99,7 @@ func Write(w http.ResponseWriter, r io.Reader, status int, contentType string) e
 var registeredActionMetadataFiels = new(sync.Map)
 
 func TrackActionMetadataFromFields(w http.ResponseWriter, data interface{}) {
-	if responseTracker := UnwrapResponseWriter(w); responseTracker != nil {
+	if responseTracker := UnwrapResponseWriter(w); responseTracker != nil && data != nil {
 		dataV := sdk.ValueFromInterface(data)
 		dataT := dataV.Type()
 		if dataT.Kind() == reflect.Struct {
