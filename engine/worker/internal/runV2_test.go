@@ -257,11 +257,6 @@ func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
 			return nil, sdk.ErrNotFound
 		},
 	)
-	mockClient.EXPECT().ProjectIntegrationGet(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
-			return sdk.ProjectIntegration{}, nil
-		},
-	)
 
 	// Setup test worker
 	wk := &CurrentWorker{
@@ -288,7 +283,12 @@ func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
 	}
 	wk.SetContextForTestJobV2(t, context.TODO())
 	wk.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
-	wk.currentJobV2.runJobContext.Integrations = &sdk.JobIntegrationsContext{ArtifactManager: "foo"}
+	wk.currentJobV2.runJobContext.Integrations = &sdk.JobIntegrationsContexts{
+		ArtifactManager: sdk.JobIntegrationsContext{
+			Name:   "foo",
+			Config: map[string]string{},
+		},
+	}
 	wk.currentJobV2.integrations = make(map[string]sdk.ProjectIntegration)
 
 	wk.hooks = []workerHook{{
