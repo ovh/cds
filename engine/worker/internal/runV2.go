@@ -618,7 +618,9 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid context found: %v", err)
 		}
 		ap := sdk.NewActionParser(parserContext, sdk.DefaultFuncs)
-		for k, e := range actionContext.Inputs {
+
+		// Interpolate step inputs and set them in context
+		for k, e := range inputs {
 			interpolatedValue, err := ap.InterpolateToString(ctx, e)
 			if err != nil {
 				return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate env variabke %s: %v", k, err)
