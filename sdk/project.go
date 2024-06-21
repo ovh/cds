@@ -26,7 +26,7 @@ func (projects Projects) Keys() []string {
 // Project represent a team with group of users and pipelines
 type Project struct {
 	ID           int64     `json:"-" yaml:"-" db:"id" cli:"-"`
-	Key          string    `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Key          string    `json:"key" yaml:"key" db:"projectkey" cli:"key,key" action_metadata:"project-key"`
 	Name         string    `json:"name" yaml:"name" db:"name" cli:"name"`
 	Description  string    `json:"description" yaml:"description" db:"description" cli:"description"`
 	Icon         string    `json:"icon" yaml:"icon" db:"icon" cli:"-"`

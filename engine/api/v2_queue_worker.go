@@ -41,6 +41,8 @@ func (api *API) getJobRunProjectV2KeyHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
+			service.TrackActionMetadataFromFields(w, runJob)
+
 			opts := make([]project.LoadOptionFunc, 0, 1)
 			if clearKey {
 				opts = append(opts, project.LoadOptions.WithClearKeys)
@@ -487,6 +489,9 @@ func (api *API) postV2RegisterWorkerHandler() ([]service.RbacChecker, service.Ha
 		if err != nil {
 			return err
 		}
+
+		service.TrackActionMetadataFromFields(w, runJob)
+
 		if runJob.Status != sdk.V2WorkflowRunJobStatusScheduling || runJob.HatcheryName != hatch.Name || runJob.ID != jobRunID || runJob.Region != regionName {
 			return sdk.WrapError(sdk.ErrForbidden, "unable to take job %s, current status: %s, hatchery: %s, region: %s", runJob.ID, runJob.Status, runJob.HatcheryName, runJob.Region)
 		}

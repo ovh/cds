@@ -1,62 +1,75 @@
-package api
+package service
 
 import (
 	"io"
 	"net/http"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 )
 
-type responseTracker struct {
-	statusCode int
-	statusLine string
-	writer     http.ResponseWriter
-	reqSize    int64
-	respSize   int64
-	fields     map[log.Field]interface{}
+type ResponseTracker struct {
+	StatusCode int
+	StatusLine string
+	Writer     http.ResponseWriter
+	ReqSize    int64
+	RespSize   int64
+	Fields     map[log.Field]interface{}
 }
 
 func SetTracker(resp http.ResponseWriter, k log.Field, v interface{}) {
-	tracker, ok := resp.(*responseTracker)
+	tracker, ok := resp.(*ResponseTracker)
 	if !ok {
 		return
 	}
-	if tracker.fields == nil {
-		tracker.fields = make(map[log.Field]interface{})
+	if tracker.Fields == nil {
+		tracker.Fields = make(map[log.Field]interface{})
 	}
-	tracker.fields[k] = v
+	tracker.Fields[k] = v
 }
 
 // Compile time assertion for ResponseWriter interface
-var _ http.ResponseWriter = (*responseTracker)(nil)
+var _ http.ResponseWriter = (*ResponseTracker)(nil)
 
-func (t *responseTracker) Header() http.Header {
-	return t.writer.Header()
+func (t *ResponseTracker) Header() http.Header {
+	return t.Writer.Header()
 }
 
-func (t *responseTracker) Write(data []byte) (int, error) {
-	n, err := t.writer.Write(data)
-	t.respSize += int64(n)
+func (t *ResponseTracker) Write(data []byte) (int, error) {
+	n, err := t.Writer.Write(data)
+	t.RespSize += int64(n)
 	return n, err
 }
 
-func (t *responseTracker) WriteHeader(statusCode int) {
-	t.writer.WriteHeader(statusCode)
-	t.statusCode = statusCode
-	t.statusLine = http.StatusText(t.statusCode)
+func (t *ResponseTracker) WriteHeader(statusCode int) {
+	t.Writer.WriteHeader(statusCode)
+	t.StatusCode = statusCode
+	t.StatusLine = http.StatusText(t.StatusCode)
+}
+
+func UnwrapResponseWriter(w http.ResponseWriter) *ResponseTracker {
+	v := sdk.ValueFromInterface(w)
+	x := v.Field(0).Interface()
+	t, is := x.(*ResponseTracker)
+	if is {
+		return t
+	}
+	return nil
 }
 
 // wrappedResponseWriter returns a wrapped version of the original
-//  ResponseWriter and only implements the same combination of additional
+//
+//	ResponseWriter and only implements the same combination of additional
+//
 // interfaces as the original.
 // This implementation is based on https://github.com/felixge/httpsnoop.
-func (t *responseTracker) wrappedResponseWriter() http.ResponseWriter {
+func (t *ResponseTracker) WrappedResponseWriter() http.ResponseWriter {
 	var (
-		hj, i0 = t.writer.(http.Hijacker)
-		cn, i1 = t.writer.(http.CloseNotifier)
-		pu, i2 = t.writer.(http.Pusher)
-		fl, i3 = t.writer.(http.Flusher)
-		rf, i4 = t.writer.(io.ReaderFrom)
+		hj, i0 = t.Writer.(http.Hijacker)
+		cn, i1 = t.Writer.(http.CloseNotifier)
+		pu, i2 = t.Writer.(http.Pusher)
+		fl, i3 = t.Writer.(http.Flusher)
+		rf, i4 = t.Writer.(io.ReaderFrom)
 	)
 
 	switch {

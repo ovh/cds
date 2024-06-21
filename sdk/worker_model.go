@@ -39,7 +39,7 @@ var (
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 type Model struct {
 	ID                  int64               `json:"id" db:"id" cli:"-"`
-	Name                string              `json:"name" db:"name" cli:"name,key"`
+	Name                string              `json:"name" db:"name" cli:"name,key" action_metadata:"model-name"`
 	Description         string              `json:"description" db:"description" cli:"description"`
 	Type                string              `json:"type" db:"type" cli:"type"`
 	Disabled            bool                `json:"disabled" db:"disabled" cli:"disabled"`
