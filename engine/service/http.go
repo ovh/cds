@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strconv"
 	"sync"
 	"time"
@@ -97,31 +98,34 @@ func Write(w http.ResponseWriter, r io.Reader, status int, contentType string) e
 // map to avoid to register twice the same action_metadata field
 var registeredActionMetadataFiels = new(sync.Map)
 
-// WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
-func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
+func TrackActionMetadataFromFields(w http.ResponseWriter, data interface{}) {
 	if responseTracker := UnwrapResponseWriter(w); responseTracker != nil {
 		dataV := sdk.ValueFromInterface(data)
 		dataT := dataV.Type()
-		var tag string
-		var value interface{}
-		for i := 0; i < dataT.NumField(); i++ {
-			v := dataV.Field(i)
-			t, hasTag := dataT.Field(i).Tag.Lookup("action_metadata")
-			if hasTag {
-				tag = t
-				value = v
-				break // We only consider one field
+		if dataT.Kind() == reflect.Struct {
+			for i := 0; i < dataT.NumField(); i++ {
+				v := dataV.Field(i)
+				t, hasTag := dataT.Field(i).Tag.Lookup("action_metadata")
+				if v.Kind() == reflect.Struct && hasTag {
+					TrackActionMetadataFromFields(w, v.Interface())
+				} else {
+					if hasTag {
+						var f = log.Field("action_metadata_" + t)
+						if _, exist := registeredActionMetadataFiels.Load(f); !exist {
+							registeredActionMetadataFiels.Store(f, struct{}{})
+							log.RegisterField(f)
+						}
+						SetTracker(responseTracker, f, v.Interface())
+					}
+				}
 			}
-		}
-		if tag != "" {
-			var f = log.Field("action_metadata_" + tag)
-			if _, exist := registeredActionMetadataFiels.Load(f); !exist {
-				registeredActionMetadataFiels.Store(f, struct{}{})
-				log.RegisterField(f)
-			}
-			SetTracker(responseTracker, f, value)
 		}
 	}
+}
+
+// WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
+func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
+	TrackActionMetadataFromFields(w, data)
 	b, err := json.Marshal(data)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal json data")
@@ -133,6 +137,8 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 // Response format could be application/json or appliation/x-yaml, depends on the Accept header
 // default response is application/x-yaml
 func WriteMarshal(w http.ResponseWriter, req *http.Request, data interface{}, status int) error {
+	TrackActionMetadataFromFields(w, data)
+
 	var contentType string
 	var body []byte
 	var err error
