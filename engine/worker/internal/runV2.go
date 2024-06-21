@@ -595,27 +595,10 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		Inputs:       make(map[string]string),
 	}
 
-	for k, v := range parentContext.Env {
-		actionContext.Env[k] = v
-	}
-	if len(step.Env) > 0 {
-		mapContextBts, _ := json.Marshal(parentContext)
-		var parserContext map[string]interface{}
-		if err := json.Unmarshal(mapContextBts, &parserContext); err != nil {
-			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid context found: %v", err)
-		}
-		ap := sdk.NewActionParser(parserContext, sdk.DefaultFuncs)
-		for k, e := range step.Env {
-			interpolatedValue, err := ap.InterpolateToString(ctx, e)
-			if err != nil {
-				return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate env variabke %s: %v", k, err)
-			}
-			actionContext.Env[k] = interpolatedValue
-		}
-	}
-
+	// Interpolate step input
 	if len(inputs) > 0 {
-		mapContextBts, _ := json.Marshal(actionContext)
+		// Compute temp context with parent + step env.
+		mapContextBts, _ := json.Marshal(parentContext)
 		var parserContext map[string]interface{}
 		if err := json.Unmarshal(mapContextBts, &parserContext); err != nil {
 			return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid context found: %v", err)
