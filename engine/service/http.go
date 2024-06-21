@@ -109,7 +109,7 @@ func TrackActionMetadataFromFields(w http.ResponseWriter, data interface{}) {
 				if v.Kind() == reflect.Struct && hasTag {
 					TrackActionMetadataFromFields(w, v.Interface())
 				} else {
-					if hasTag {
+					if hasTag && fmt.Sprintf("%v", v.Interface()) != "" {
 						var f = log.Field("action_metadata_" + t)
 						if _, exist := registeredActionMetadataFiels.Load(f); !exist {
 							registeredActionMetadataFiels.Store(f, struct{}{})
