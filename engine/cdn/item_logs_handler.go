@@ -116,7 +116,7 @@ func (s *Service) getItemLogsStreamHandler() service.Handler {
 			return err
 		}
 
-		log.Debug(ctx, "getItemLogsStreamHandler> stop listenning for client %s", wsClient.UUID())
+		log.Debug(ctx, "getItemLogsStreamHandler> stop listening for client %s", wsClient.UUID())
 		return nil
 	}
 }
@@ -210,7 +210,7 @@ func (s *Service) getItemLogsStreamV2Handler() service.Handler {
 			return err
 		}
 
-		log.Debug(ctx, "getItemLogsStreamHandler> stop listenning for client %s", wsClient.UUID())
+		log.Debug(ctx, "getItemLogsStreamHandler> stop listening for client %s", wsClient.UUID())
 		return nil
 	}
 }

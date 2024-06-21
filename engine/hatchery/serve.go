@@ -499,7 +499,7 @@ func (c *Common) HeartbeatV2(ctx context.Context, status func(ctx context.Contex
 
 			// if register failed too many time, stop heartbeat
 			if heartbeatFailures > c.MaxHeartbeatFailures {
-				return sdk.WithStack(fmt.Errorf("%s> HeartbeatV2 failed excedeed", c.Name()))
+				return sdk.WithStack(fmt.Errorf("%s> HeartbeatV2 failed exceeded", c.Name()))
 			}
 			return nil
 		}

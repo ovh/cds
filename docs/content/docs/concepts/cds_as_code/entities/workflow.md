@@ -31,8 +31,21 @@ env:
   VAR_1: value
   VAR_2: value2
 gates: ...
-from: ...
-parameters: ...
+```
+
+Workflow from a template
+
+```yaml
+name: cds
+repository:
+  vcs: github
+  name: ovh/cds
+commit-status: ...
+on: [push]
+from: .cds/workflow-templates/mtemplate.yml
+parameters:
+  - key: param1
+    required: true
 ```
 
 - <span style="color:red">\*</span>`name`: The name of your workflow
@@ -46,6 +59,7 @@ parameters: ...
 - [`gates`](#gates): Manual gate for your workflow
 - [`from`](#from): Use a workflow template to generate this workflow
 - [`parameters`](#parameters): Parameters input to generate workflow from referenced workflow template
+- [`retention`](#retention): Workflow run retention in days. It override the workflow retention set on the project
 
 <span style="color:red">\*</span> mandatory fields
 
@@ -140,13 +154,13 @@ Jobs field is a map that contains all the jobs of your workflow. The key of the 
 ```yaml
 jobs:
   myJob:
-    runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+    runs-on: .cds/worker-models/my-custom-ubuntu.yml
     vars: [varset1, varset2]
     integrations: [my-artifactory]
     steps:
       run: echo 'Hello World'
   mySecondJob:
-    runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+    runs-on: .cds/worker-models/my-custom-ubuntu.yml
     needs: [myJob]
     steps:
       run: echo 'Bye'
@@ -176,14 +190,14 @@ Runs-on represents the worker model that will be used to execute your job.
 If you don't need any customization, you can write it like this:
 
 ```yaml
-runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+runs-on: .cds/worker-models/my-custom-ubuntu.yml
 ```
 
 If you need to adjust memory used by the worker or the flavor to use:
 
 ```yaml
 runs-on:
-  model: ./cds/worker-models/my-custom-ubuntu.yml
+  model: .cds/worker-models/my-custom-ubuntu.yml
   flavor: b2-7 # Only for openstack model
   memory: 4096 # Only for docker model
 ```
@@ -350,7 +364,7 @@ parameters:
 
 # Conditions
 
-Condition can be use at different level but share the same syntaxe
+Condition can be use at different level but share the same syntax
 
 - workflow gate
 - job.if

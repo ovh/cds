@@ -250,7 +250,7 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 
 			for i := range runJobs {
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, runJobs[i])
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
 			}
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
 
@@ -435,6 +435,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			templates, err := workflow_v2.LoadRunsTemplates(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			filters := []sdk.V2WorkflowRunSearchFilter{
 				{
 					Key:     "actor",
@@ -461,6 +466,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 					Options: repositories,
 					Example: "vcs_server/repository",
 				},
+				{
+					Key:     "template",
+					Options: templates,
+					Example: "vcs_server/repository/template-name",
+				},
 			}
 
 			return service.WriteJSON(w, filters, http.StatusOK)
@@ -481,6 +491,7 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 				Refs:         req.URL.Query()["ref"],
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
+				Templates:    req.URL.Query()["template"],
 			}
 			filters.Lower()
 
@@ -520,6 +531,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 				Refs:         req.URL.Query()["ref"],
 				Repositories: req.URL.Query()["repository"],
 				Commits:      req.URL.Query()["commit"],
+				Templates:    req.URL.Query()["template"],
 			}
 			filters.Lower()
 
@@ -628,7 +640,7 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			}
 
 			for _, rj := range runJobs {
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, wr.Contexts.Git.Server, wr.Contexts.Git.Repository, rj)
+				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, rj)
 			}
 			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, *u.AuthConsumerUser.AuthentifiedUser)
 
@@ -1025,7 +1037,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				WorkflowRunID: wr.ID,
 				Level:         sdk.WorkflowRunInfoLevelInfo,
 				IssuedAt:      time.Now(),
-				Message:       fmt.Sprintf("%s manually trigger the job %s", u.GetFullname(), jobToRuns[0].JobID),
+				Message:       fmt.Sprintf("%s has manually triggered the job %q", u.GetFullname(), jobToRuns[0].JobID),
 			}
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runMsg); err != nil {
 				return err

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, TemplateRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
@@ -54,9 +54,18 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
         });
     }
 
-    ngOnChanges() {
+    ngOnChanges(changes: SimpleChanges): void {
         if (this.selected && !this.tabs.find(t => t.key === this.selected.key)) {
             delete this.selected;
+        }
+
+        if (this.disableNavigation) {
+            const defaultChanged = changes.tabs && (changes.tabs.previousValue ?? []).find(t => t.default)?.key !== (changes.tabs.currentValue ?? []).find(t => t.default)?.key;
+            if (!this.selected || defaultChanged) {
+                this.select(this.getDefaultTab());
+                this._cd.markForCheck();
+            }
+            return;
         }
 
         if (this.selected && this._route.snapshot.queryParams['tab'] && this.selected.key !== this._route.snapshot.queryParams['tab']) {
@@ -64,13 +73,11 @@ export class TabsComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         if (!this.selected) {
-            if (!this.disableNavigation) {
-                const tab = this.tabs.find(t => t.key === this._route.snapshot.queryParams['tab']);
-                if (tab) {
-                    this.select(tab);
-                } else {
-                    this.select(this.getDefaultTab());
-                }
+            const tab = this.tabs.find(t => t.key === this._route.snapshot.queryParams['tab']);
+            if (tab) {
+                this.select(tab);
+            } else {
+                this.select(this.getDefaultTab());
             }
         }
 

@@ -29,7 +29,7 @@ export class WorkflowRunFilterValue {
 	styleUrls: ['./run-list.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit {
+export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 	static PANEL_KEY = 'project-v2-run-list-sidebar';
 	static DEFAULT_SORT = 'started:desc';
 
@@ -52,7 +52,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 	index: number = 1;
 	panelSize: number | string;
 	searchName: string = '';
-	sort: string = ProjectV2WorkflowRunListComponent.DEFAULT_SORT;
+	sort: string = ProjectV2RunListComponent.DEFAULT_SORT;
 
 	constructor(
 		private _http: HttpClient,
@@ -66,7 +66,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 	}
 
 	ngOnInit(): void {
-		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2WorkflowRunListComponent.PANEL_KEY));
+		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunListComponent.PANEL_KEY));
 		this.loadFilters();
 		this._activatedRoute.queryParams.subscribe(values => {
 			this.filterText = Object.keys(values).filter(key => key !== 'page' && key !== 'sort').map(key => {
@@ -75,7 +75,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 				}).join(' ');
 			}).join(' ');
 			this.index = values['page'] ?? 1;
-			this.sort = values['sort'] ?? ProjectV2WorkflowRunListComponent.DEFAULT_SORT;
+			this.sort = values['sort'] ?? ProjectV2RunListComponent.DEFAULT_SORT;
 			this.search();
 		});
 	}
@@ -157,7 +157,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 			offset: this.index ? (this.index - 1) * 20 : 0,
 			limit: 20
 		};
-		if (this.sort !== ProjectV2WorkflowRunListComponent.DEFAULT_SORT) {
+		if (this.sort !== ProjectV2RunListComponent.DEFAULT_SORT) {
 			params['sort'] = this.sort;
 		}
 
@@ -196,7 +196,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 		if (this.index > 1) {
 			queryParams['page'] = this.index;
 		}
-		if (this.sort !== ProjectV2WorkflowRunListComponent.DEFAULT_SORT) {
+		if (this.sort !== ProjectV2RunListComponent.DEFAULT_SORT) {
 			queryParams['sort'] = this.sort;
 		}
 
@@ -263,7 +263,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 	}
 
 	panelEndResize(size: string): void {
-		this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: ProjectV2WorkflowRunListComponent.PANEL_KEY, size: size }));
+		this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: ProjectV2RunListComponent.PANEL_KEY, size: size }));
 		this._store.dispatch(new actionPreferences.SetPanelResize({ resizing: false }));
 	}
 
@@ -277,7 +277,7 @@ export class ProjectV2WorkflowRunListComponent implements OnInit, AfterViewInit 
 			projectKey: this.project.key,
 			name: this.searchName,
 			value: this.filterText,
-			sort: this.sort !== ProjectV2WorkflowRunListComponent.DEFAULT_SORT ? this.sort : null
+			sort: this.sort !== ProjectV2RunListComponent.DEFAULT_SORT ? this.sort : null
 		}));
 		this.searchName = '';
 	}

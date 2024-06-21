@@ -77,7 +77,7 @@ func (s *Service) postEventHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		if _, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexEvents, fmt.Sprintf("%T", sdk.Event{}), "", e); err != nil {
+		if _, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexEvents, "", e); err != nil {
 			return sdk.WrapError(err, "Unable to insert event")
 		}
 		return nil
@@ -143,7 +143,7 @@ func (s *Service) postMetricsHandler() service.Handler {
 			s.mergeMetric(&metric, existingMetric.Value)
 		}
 
-		if _, err := s.esClient.IndexDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics, fmt.Sprintf("%T", sdk.Metric{}), id, metric); err != nil {
+		if _, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexMetrics, id, metric); err != nil {
 			return sdk.WrapError(err, "Unable to insert event")
 		}
 		return nil

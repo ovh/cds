@@ -159,7 +159,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 			SensitiveDatas: sensitiveDatas,
 		}
 
-		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobBuilding, run.Contexts.Git.Server, run.Contexts.Git.Repository, *jobRun)
+		event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobBuilding, *run, *jobRun)
 		return service.WriteJSON(w, takeResponse, http.StatusOK)
 	}
 }

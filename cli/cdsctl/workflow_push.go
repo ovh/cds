@@ -72,7 +72,7 @@ func workflowPushRun(c cli.Values) error {
 			dir = filepath.Dir(file)
 		}
 		if dir != filepath.Dir(file) {
-			return cli.NewError("files must be ine the same directory")
+			return cli.NewError("files must be in the same directory")
 		}
 
 		filesToRead = append(filesToRead, file)

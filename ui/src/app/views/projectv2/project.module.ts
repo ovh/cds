@@ -1,16 +1,16 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SharedModule } from 'app/shared/shared.module';
-import { ProjectV2WorkflowRunComponent } from "./run/project.run.component";
+import { ProjectV2RunComponent } from "./run/run.component";
 import { ProjectV2ExploreSidebarComponent } from './explore/explore-sidebar.component';
 import { ProjectV2ExploreEntityComponent } from './explore/explore-entity.component';
 import { RunJobComponent } from "./run/run-job.component";
 import { RunJobLogsComponent } from "./run/run-job-logs.component";
 import { RunGateComponent } from "./run/gate/gate.component";
-import { ProjectV2WorkflowRunListComponent } from './run-list/run-list.component';
+import { ProjectV2RunListComponent } from './run-list/run-list.component';
 import { WorkflowGraphModule } from '../../../../libs/workflow-graph/src/public-api';
 import { ProjectV2ExploreComponent } from './explore/explore.component';
-import { ProjectV2WorkflowRunListSidebarComponent } from './run-list/run-list-sidebar.component';
+import { ProjectV2RunListSidebarComponent } from './run-list/run-list-sidebar.component';
 import { RunHookComponent } from './run/run-hook.component';
 import { RunResultComponent } from './run/run-result.component';
 import { RunWorkflowComponent } from './run/run-workflow.component';
@@ -27,17 +27,17 @@ import { EntityJSONFormFieldComponent } from './explore/entity/entity-json-form-
 @NgModule({
     declarations: [
         EntityFormComponent,
-        EntityJSONFormFieldComponent,
         EntityJSONFormComponent,
+        EntityJSONFormFieldComponent,
         ProjectV2ExploreComponent,
         ProjectV2ExploreEntityComponent,
         ProjectV2ExploreEntityWorkflowComponent,
         ProjectV2ExploreRepositoryAddComponent,
         ProjectV2ExploreRepositoryComponent,
         ProjectV2ExploreSidebarComponent,
-        ProjectV2WorkflowRunComponent,
-        ProjectV2WorkflowRunListComponent,
-        ProjectV2WorkflowRunListSidebarComponent,
+        ProjectV2RunComponent,
+        ProjectV2RunListComponent,
+        ProjectV2RunListSidebarComponent,
         RunContextsComponent,
         RunGateComponent,
         RunHookComponent,

@@ -27,8 +27,8 @@ type EntitiesCleaner struct {
 	retention time.Duration
 }
 
-func (a *API) cleanProjectEntities(ctx context.Context, delay time.Duration, entityRetention time.Duration) {
-	ticker := time.NewTicker(delay)
+func (a *API) cleanProjectEntities(ctx context.Context, entityRetention time.Duration) {
+	ticker := time.NewTicker(time.Duration(a.Config.Entity.RoutineDelay) * time.Minute)
 	defer ticker.Stop()
 
 	for {
@@ -175,24 +175,27 @@ func (c *EntitiesCleaner) getBranches(ctx context.Context, db *gorp.DbMap, store
 func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, refHeadCommit string, entitiesByBranch []sdk.Entity) error {
 	deletedEntities := make([]sdk.Entity, 0)
 
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback()
-
-	log.Info(ctx, "Deleting entities on  %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
-	for _, e := range entitiesByBranch {
-		if e.Commit != "HEAD" && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
-			if err := entity.Delete(ctx, tx, &e); err != nil {
-				return err
-			}
-			deletedEntities = append(deletedEntities, e)
+	if len(entitiesByBranch) > 0 {
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WithStack(err)
 		}
-	}
+		defer tx.Rollback()
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(tx.Commit())
+		log.Info(ctx, "Deleting non head entities on %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
+		for _, e := range entitiesByBranch {
+			if e.Commit != "HEAD" && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
+				if err := entity.Delete(ctx, tx, &e); err != nil {
+					return err
+				}
+				log.Info(ctx, "entity %s of type %s deleted", e.Name, e.Type)
+				deletedEntities = append(deletedEntities, e)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(tx.Commit())
+		}
 	}
 
 	for _, e := range deletedEntities {
@@ -204,22 +207,25 @@ func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbM
 func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gorp.DbMap, store cache.Store, ref string, entitiesByBranch []sdk.Entity) error {
 	deletedEntities := make([]sdk.Entity, 0)
 
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WithStack(err)
-	}
-	defer tx.Rollback()
-
-	log.Info(ctx, "Deleting entities on  %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
-	for _, e := range entitiesByBranch {
-		if err := entity.Delete(ctx, tx, &e); err != nil {
-			return err
+	if len(entitiesByBranch) > 0 {
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WithStack(err)
 		}
-		deletedEntities = append(deletedEntities, e)
-	}
+		defer tx.Rollback()
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(tx.Commit())
+		log.Info(ctx, "Deleting entities on old branches: %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
+		for _, e := range entitiesByBranch {
+			if err := entity.Delete(ctx, tx, &e); err != nil {
+				return err
+			}
+			log.Info(ctx, "entity %s of type %s deleted", e.Name, e.Type)
+			deletedEntities = append(deletedEntities, e)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(tx.Commit())
+		}
 	}
 
 	for _, e := range deletedEntities {

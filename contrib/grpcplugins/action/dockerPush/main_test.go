@@ -24,7 +24,7 @@ import (
 func Test_dockerPushPlugin_perform(t *testing.T) {
 	// If we don't have docker client, skip this test
 	if _, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); err != nil {
-		t.Logf("unable to get instanciate docker client: %v", err)
+		t.Logf("unable to get instantiate docker client: %v", err)
 		t.SkipNow()
 	}
 

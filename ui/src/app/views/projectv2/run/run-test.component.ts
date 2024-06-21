@@ -4,6 +4,7 @@ import { TestCase } from "app/model/pipeline.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { Tab } from "app/shared/tabs/tabs.component";
 import { PreferencesState } from "app/store/preferences.state";
+import { editor } from "monaco-editor";
 import { EditorOptions, NzCodeEditorComponent } from "ng-zorro-antd/code-editor";
 import { Subscription } from "rxjs";
 
@@ -61,6 +62,10 @@ export class RunTestComponent implements OnInit, OnChanges, OnDestroy {
 	selectTab(tab: Tab): void {
 		this.selectedTab = tab;
 		this._cd.markForCheck();
+	}
+
+	onEditorInit(e: editor.ICodeEditor | editor.IEditor): void {
+		this.editor.layout();
 	}
 
 }

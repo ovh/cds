@@ -3,6 +3,7 @@ package event_v2
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
@@ -16,6 +17,7 @@ func PublishProjectNotificationEvent(ctx context.Context, store cache.Store, eve
 			Type:       eventType,
 			Payload:    bts,
 			ProjectKey: projectKey,
+			Timestamp:  time.Now(),
 		},
 		Notification: notif.Name,
 		UserID:       u.ID,

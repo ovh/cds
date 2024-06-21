@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -25,18 +24,14 @@ func (b *bitbucketClient) Branches(ctx context.Context, fullname string, filters
 
 	path := fmt.Sprintf("/projects/%s/repos/%s/branches", t[0], t[1])
 	params := url.Values{}
+	params.Set("orderBy", "MODIFICATION")
 
 	nextPage := 0
 	for {
 		if ctx.Err() != nil {
 			break
 		}
-
-		if filters.Limit != 0 && filters.Limit < 100 {
-			params.Set("limit", strconv.FormatInt(filters.Limit, 10))
-		} else {
-			params.Set("limit", "100")
-		}
+		params.Set("limit", "100")
 		if nextPage != 0 {
 			params.Set("start", fmt.Sprintf("%d", nextPage))
 		}
@@ -54,6 +49,7 @@ func (b *bitbucketClient) Branches(ctx context.Context, fullname string, filters
 		}
 	}
 
+	hasDefaultBranch := false
 	for _, sb := range stashBranches {
 		b := sdk.VCSBranch{
 			ID:           sb.ID,
@@ -61,7 +57,18 @@ func (b *bitbucketClient) Branches(ctx context.Context, fullname string, filters
 			LatestCommit: sb.LatestHash,
 			Default:      sb.IsDefault,
 		}
+		if sb.IsDefault {
+			hasDefaultBranch = true
+		}
 		branches = append(branches, b)
+	}
+
+	if !hasDefaultBranch {
+		br, err := b.GetDefaultBranch(ctx, fullname)
+		if err != nil {
+			return nil, err
+		}
+		branches = append(branches, *br)
 	}
 
 	return branches, nil

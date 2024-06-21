@@ -24,7 +24,7 @@ Contexts available:
 - `needs`: contains all direct parents ( `job.needs` ) results and outputs
 - `inputs`: contains all job inputs
 - `steps`: contains all previous step status
-- `matrix`: contains the curent value for each [matrix](../entities/workflow/#strategy) variable
+- `matrix`: contains the current value for each [matrix](../entities/workflow/#strategy) variable
 - `integrations`: contains data of integration linked to the current job
 - `gate`: contains all gate inputs
 
@@ -39,7 +39,7 @@ It contains all cds data related to the workflow execution
 - `run_number`: The current run number
 - `run_attempt`: The current run attempt
 - `workflow`: The name of the workflow
-- `workflow_ref`: The git refs of the worklow definition used in the current workflow run
+- `workflow_ref`: The git refs of the workflow definition used in the current workflow run
 - `workflow_sha`: The git commit of the workflow definition used in the current workflow run
 - `workflow_vcs_server`: The vcs server name of the workflow definition
 - `workflow_repository`: The name of the workflow definition repository

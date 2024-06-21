@@ -158,11 +158,11 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	jobsToQueue, skippedJobs, runMsgs, err := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
-	if err != nil {
-		tx, errTx := api.mustDB().Begin()
-		if errTx != nil {
-			return sdk.WithStack(errTx)
+	jobsToQueue, skippedJobs, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
+	if errRetrieve != nil {
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
 		}
 		defer tx.Rollback()
 		for i := range runMsgs {
@@ -174,11 +174,11 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 			return err
 		}
-		if errTx := tx.Commit(); errTx != nil {
-			return sdk.WithStack(errTx)
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
 		}
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
-		return err
+		return errRetrieve
 	}
 
 	// Enqueue JOB
@@ -273,9 +273,9 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	for _, rj := range runJobs {
 		switch rj.Status {
 		case sdk.V2WorkflowRunJobStatusFail:
-			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
+			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, rj)
 		default:
-			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, run.Contexts.Git.Server, run.Contexts.Git.Repository, rj)
+			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, rj)
 		}
 	}
 	return nil
@@ -848,7 +848,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelInfo,
-			Message:       fmt.Sprintf("Job %s: The condition is not satisfied.", jobID),
+			Message:       fmt.Sprintf("Job %q: The condition is not satisfied", jobID),
 		})
 	}
 	return canRun, runInfos, nil

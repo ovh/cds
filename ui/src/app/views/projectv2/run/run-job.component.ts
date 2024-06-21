@@ -2,12 +2,9 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    ElementRef,
-    EventEmitter,
     Input,
     OnChanges,
     OnDestroy,
-    Output,
     ViewChild
 } from '@angular/core';
 import { Parameter } from 'app/model/parameter.model';
@@ -20,8 +17,6 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { Subscription, delay, retryWhen } from 'rxjs';
 import { Router } from '@angular/router';
 import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo } from '../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model';
-import { ScrollTarget } from 'app/views/workflow/run/node/pipeline/workflow-run-job/workflow-run-job.component';
-
 
 @Component({
     selector: 'app-run-job',
@@ -49,7 +44,6 @@ export class RunJobComponent implements OnChanges, OnDestroy {
     cdnFilter: CDNStreamFilter;
 
     constructor(
-        private ref: ElementRef,
         private _cd: ChangeDetectorRef,
         private _router: Router
     ) {
@@ -60,7 +54,7 @@ export class RunJobComponent implements OnChanges, OnDestroy {
             title: 'Infos',
             key: 'infos'
         }];
-        this.tabs = [...this.defaultTabs];
+        this.tabs = [...this.defaultTabs.map(t => Object.assign({}, t))];
         this.tabs[0].default = true;
     }
 
@@ -74,9 +68,9 @@ export class RunJobComponent implements OnChanges, OnDestroy {
                 iconTheme: 'fill',
                 key: 'problems',
                 default: true,
-            }, ...this.defaultTabs];
+            }, ...this.defaultTabs.map(t => Object.assign({}, t))];
         } else {
-            this.tabs = [...this.defaultTabs];
+            this.tabs = [...this.defaultTabs.map(t => Object.assign({}, t))];
             this.tabs[0].default = true;
         }
 
