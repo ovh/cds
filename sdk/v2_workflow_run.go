@@ -272,8 +272,8 @@ func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
 }
 
 type JobIntegrationsContext struct {
-	Name   string            `json:"name,omitempty"`
-	Config map[string]string `json:"config,omitempty"`
+	Name   string                 `json:"name,omitempty"`
+	Config map[string]interface{} `json:"config,omitempty"`
 }
 
 type JobStepsStatus map[string]JobStepStatus

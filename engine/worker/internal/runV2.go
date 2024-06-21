@@ -292,6 +292,7 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		w.gelfLogger.hook.Flush()
 
 		w.updateStepResult(w.currentJobV2.runJob.StepsStatus, &jobResult, stepRes, step, w.currentJobV2.currentStepName)
+		w.currentJobV2.runJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
@@ -485,6 +486,8 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 				return stepRes
 			}
 			w.updateStepResult(subStepStatus, &actionResult, stepRes, step, subStepName)
+			actionContext.Steps = subStepStatus.ToStepContext()
+
 		}
 	default:
 	}
@@ -694,18 +697,38 @@ func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.Workflo
 	return newEnvVar, nil
 }
 
-func computeIntegrationConfigToEnvVar(config sdk.JobIntegrationsContext, prefix string) map[string]string {
+func computeIntegrationConfigToEnvVar(integ sdk.JobIntegrationsContext, prefix string) map[string]string {
 	envVars := make(map[string]string)
-	for k, v := range config.Config {
-		suffix := strings.Replace(k, "-", "_", -1)
-		suffix = strings.Replace(suffix, ".", "_", -1)
-		key := fmt.Sprintf("CDS_INTEGRATION_%s_%s", prefix, suffix)
-		envVars[strings.ToUpper(key)] = sdk.OneLineValue(v)
+	configValues := flatMap(integ.Config)
+	for k, v := range configValues {
+		key := fmt.Sprintf("CDS_INTEGRATION_%s_%s", prefix, strings.ToUpper(k))
+		envVars[key] = sdk.OneLineValue(v)
 	}
-	// integration name
-	key := fmt.Sprintf("CDS_INTEGRATION_%s", prefix)
-	envVars[strings.ToUpper(key)] = config.Name
+	envVars[fmt.Sprintf("CDS_INTEGRATION_%s_NAME", prefix)] = integ.Name
 	return envVars
+}
+
+func flatMap(m map[string]interface{}) map[string]string {
+	result := make(map[string]string)
+
+	var walk func(map[string]interface{}, string)
+	walk = func(m map[string]interface{}, prefix string) {
+		for k, v := range m {
+			currentKey := k
+			if prefix != "" {
+				currentKey = prefix + "_" + k
+			}
+
+			switch value := v.(type) {
+			case map[string]interface{}:
+				walk(value, currentKey)
+			case string:
+				result[currentKey] = value
+			}
+		}
+	}
+	walk(m, "")
+	return result
 }
 
 func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs) error {

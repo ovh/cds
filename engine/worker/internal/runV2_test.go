@@ -22,6 +22,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestIntegToEnvVar(t *testing.T) {
+	integ := sdk.JobIntegrationsContext{
+		Name: "myInteg",
+		Config: map[string]interface{}{
+			"build": map[string]interface{}{
+				"info": map[string]interface{}{
+					"prefix": "myvalue",
+					"prefixx": map[string]interface{}{
+						"tot": "titi",
+					},
+				},
+				"titi": map[string]interface{}{
+					"subPrefix": "my2ndValue",
+				},
+			},
+			"url": "myurl",
+		},
+	}
+
+	vars := computeIntegrationConfigToEnvVar(integ, "ARTIFACT_MANAGER")
+
+	require.Equal(t, 5, len(vars))
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_INFO_PREFIX"], "myvalue")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_INFO_PREFIXX_TOT"], "titi")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_TITI_SUBPREFIX"], "my2ndValue")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_URL"], "myurl")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_NAME"], "myInteg")
+}
+
 func TestRunJobContinueOnError(t *testing.T) {
 	var w = new(CurrentWorker)
 	w.pluginFactory = &mock.MockFactory{Result: []string{sdk.StatusFail, sdk.StatusSuccess}}
@@ -286,7 +315,7 @@ func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
 	wk.currentJobV2.runJobContext.Integrations = &sdk.JobIntegrationsContexts{
 		ArtifactManager: sdk.JobIntegrationsContext{
 			Name:   "foo",
-			Config: map[string]string{},
+			Config: map[string]interface{}{},
 		},
 	}
 	wk.currentJobV2.integrations = make(map[string]sdk.ProjectIntegration)

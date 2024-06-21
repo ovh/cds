@@ -332,10 +332,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			}
 			contexts.Integrations.ArtifactManager = sdk.JobIntegrationsContext{
 				Name:   integ.Name,
-				Config: make(map[string]string),
-			}
-			for k, v := range integ.Config {
-				contexts.Integrations.ArtifactManager.Config[k] = v.Value
+				Config: integ.Config.ToJobRunContextConfig(),
 			}
 		case integ.Model.Deployment:
 			if contexts.Integrations.Deployment.Name != "" {
@@ -343,10 +340,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			}
 			contexts.Integrations.ArtifactManager = sdk.JobIntegrationsContext{
 				Name:   integ.Name,
-				Config: make(map[string]string),
-			}
-			for k, v := range integ.Config {
-				contexts.Integrations.ArtifactManager.Config[k] = v.Value
+				Config: integ.Config.ToJobRunContextConfig(),
 			}
 		default:
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not supported", i)

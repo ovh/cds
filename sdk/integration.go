@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -443,6 +444,27 @@ func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
 		}
 		config[k] = val
 	}
+}
+
+func (config IntegrationConfig) ToJobRunContextConfig() map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for key, configValue := range config {
+		parts := strings.Split(key, ".")
+		current := result
+
+		for i, part := range parts {
+			if i == len(parts)-1 {
+				current[part] = configValue.Value
+			} else {
+				if _, exists := current[part]; !exists {
+					current[part] = make(map[string]interface{})
+				}
+				current = current[part].(map[string]interface{})
+			}
+		}
+	}
+	return result
 }
 
 // HideSecrets replaces password with a placeholder
