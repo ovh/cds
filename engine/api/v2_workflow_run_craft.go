@@ -694,7 +694,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			if msg != "" {
 				return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, nil
 			}
-			modelType = wref.ef.workerModelCache[completeName].Type
+			modelType = wref.ef.workerModelCache[completeName].Model.Type
 			modelCompleteName = completeName
 		}
 	}
@@ -719,7 +719,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 		WorkflowRunID: wref.run.ID,
 		Level:         sdk.WorkflowRunInfoLevelError,
 		IssuedAt:      time.Now(),
-		Message:       fmt.Sprintf("wrong configuration on job %q (region: %s, type: %s). No hatchery can run it", jobName, currentRegion.Name, modelType),
+		Message:       fmt.Sprintf("wrong configuration on job %q. No hatchery can run it", jobName),
 	}, nil
 }
 
