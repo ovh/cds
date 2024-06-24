@@ -45,11 +45,6 @@ func (*TestWorker) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
 	panic("unimplemented")
 }
 
-// V2GetIntegrationByName implements workerruntime.Runtime.
-func (*TestWorker) V2GetIntegrationByName(ctx context.Context, name string) *sdk.JobIntegrationsContext {
-	panic("unimplemented")
-}
-
 func (*TestWorker) V2GetRunResult(ctx context.Context, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
 	panic("unimplemented")
 }

@@ -404,20 +404,6 @@ func (mr *MockRuntimeMockRecorder) V2AddRunResult(ctx, req interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2AddRunResult", reflect.TypeOf((*MockRuntime)(nil).V2AddRunResult), ctx, req)
 }
 
-// V2GetIntegrationByName mocks base method.
-func (m *MockRuntime) V2GetIntegrationByName(ctx context.Context, name string) *sdk.JobIntegrationsContext {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2GetIntegrationByName", ctx, name)
-	ret0, _ := ret[0].(*sdk.JobIntegrationsContext)
-	return ret0
-}
-
-// V2GetIntegrationByName indicates an expected call of V2GetIntegrationByName.
-func (mr *MockRuntimeMockRecorder) V2GetIntegrationByName(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetIntegrationByName", reflect.TypeOf((*MockRuntime)(nil).V2GetIntegrationByName), ctx, name)
-}
-
 // V2GetJobContext mocks base method.
 func (m *MockRuntime) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
 	m.ctrl.T.Helper()

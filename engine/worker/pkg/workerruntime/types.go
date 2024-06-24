@@ -160,7 +160,6 @@ type Runtime interface {
 	V2UpdateRunResult(ctx context.Context, req V2RunResultRequest) (*V2UpdateResultResponse, error)
 	AddStepOutput(ctx context.Context, outputName string, outputValue string)
 	V2GetRunResult(ctx context.Context, filter V2FilterRunResult) (*V2GetResultResponse, error)
-	V2GetIntegrationByName(ctx context.Context, name string) *sdk.JobIntegrationsContext
 	V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob
 	V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext
 	V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error)
