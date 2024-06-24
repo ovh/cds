@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -174,17 +175,22 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 	result := response.RunResult
 
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
+	if err != nil {
+		return nil, time.Since(t0), err
+	}
+
 	var destination string
 	// Upload the file to an artifactory or the docker registry
 	switch {
 	case result.ArtifactManagerIntegrationName != nil:
-		integration, err := grpcplugins.GetIntegrationByName(ctx, &actPlugin.Common, *response.RunResult.ArtifactManagerIntegrationName)
-		if err != nil {
-			return nil, time.Since(t0), err
+		if jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
+			return nil, time.Since(t0), errors.New("artifactory integration not found")
 		}
+		integration := jobCtx.Integrations.ArtifactManager
 
-		repository := integration.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-docker"
-		rtURLRaw := integration.Config[sdk.ArtifactoryConfigURL].Value
+		repository := fmt.Sprintf("%s-docker", integration.Config[sdk.ArtifactoryConfigRepositoryPrefix])
+		rtURLRaw := fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigURL])
 		if !strings.HasSuffix(rtURLRaw, "/") {
 			rtURLRaw = rtURLRaw + "/"
 		}
@@ -210,8 +216,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		}
 
 		auth := registry.AuthConfig{
-			Username:      integration.Config[sdk.ArtifactoryConfigTokenName].Value,
-			Password:      integration.Config[sdk.ArtifactoryConfigToken].Value,
+			Username:      fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigTokenName]),
+			Password:      fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigToken]),
 			ServerAddress: repository + "." + rtURL.Host,
 		}
 		buf, _ := json.Marshal(auth)
@@ -228,7 +234,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 		var rtConfig = grpcplugins.ArtifactoryConfig{
 			URL:   rtURL.String(),
-			Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
+			Token: fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigToken]),
 		}
 
 		rtFolderPath := img.repository + "/" + tag
@@ -245,8 +251,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 					return nil, time.Since(t0), err
 				}
 				manifestFound = true
-				localRepo := repository + "-" + integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-				maturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+				localRepo := fmt.Sprintf("%s-%s", repository, integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity])
+				maturity := fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity])
 
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
 				result.ArtifactManagerMetadata.Set("id", img.imageID)

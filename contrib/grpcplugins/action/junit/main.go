@@ -70,6 +70,11 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath
 		return err
 	}
 
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Unable to get job context: %v", err))
+	}
+
 	testFailed := 0
 	for _, r := range results {
 		bts, err := os.ReadFile(r.Path)
@@ -85,8 +90,7 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath
 		}
 		testFailed += nbFailed
 
-		integrationCache := grpcplugins.NewIntegrationCache()
-		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, integrationCache, runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
+		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, *jobCtx, runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
 			_ = openFiles[r.Path].Close()
 			return err
 		}

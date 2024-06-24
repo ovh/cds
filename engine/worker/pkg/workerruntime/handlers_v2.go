@@ -3,7 +3,6 @@ package workerruntime
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -155,28 +154,6 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 		default:
 			writeError(w, r, sdk.ErrNotFound)
 		}
-	}
-}
-
-func V2_integrationsHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		name := vars["name"]
-		if name == "" && len(r.URL.Query()["name"]) > 0 {
-			name = r.URL.Query()["name"][0] // This part if for unit test
-		}
-		if name == "" {
-			log.Error(ctx, "missing parameter 'name'")
-			writeError(w, r, sdk.ErrNotFound)
-			return
-		}
-		integ := wk.V2GetIntegrationByName(r.Context(), name)
-		if integ == nil {
-			log.Error(ctx, "unable to get integration %q", name)
-			writeError(w, r, fmt.Errorf("unable to get integration %q", name))
-			return
-		}
-		writeJSON(w, integ, http.StatusOK)
 	}
 }
 

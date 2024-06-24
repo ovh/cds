@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -20,13 +21,10 @@ import (
 
 type runActionUploadArtifactPlugin struct {
 	actionplugin.Common
-	integrationCache *grpcplugins.IntegrationCache
 }
 
 func main() {
-	actPlugin := runActionUploadArtifactPlugin{
-		integrationCache: grpcplugins.NewIntegrationCache(),
-	}
+	actPlugin := runActionUploadArtifactPlugin{}
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
@@ -79,6 +77,11 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 }
 
 func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dirFS fs.FS, path, ifNoFilesFound string, runResultType sdk.V2WorkflowRunResultType) error {
+	jobContext, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
+	if err != nil {
+		return errors.New(fmt.Sprintf("unable to retrieve job context: %v", err))
+	}
+
 	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, dirFS, path, ifNoFilesFound)
 	if err != nil {
 		return err
@@ -107,7 +110,7 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dir
 			},
 		}
 
-		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, actPlugin.integrationCache, &runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
+		if _, err := grpcplugins.UploadRunResult(ctx, &actPlugin.Common, *jobContext, &runResultRequest, r.Result, openFiles[r.Path], sizes[r.Path], checksums[r.Path]); err != nil {
 			_ = openFiles[r.Path].Close()
 			return err
 		}

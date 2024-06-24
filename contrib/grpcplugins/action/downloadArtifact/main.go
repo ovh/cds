@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -20,15 +19,10 @@ import (
 
 type runActionDownloadArtifactlugin struct {
 	actionplugin.Common
-	cacheIntegrations     map[string]sdk.ProjectIntegration
-	lockCacheIntegrations *sync.Mutex
 }
 
 func main() {
-	actPlugin := runActionDownloadArtifactlugin{
-		cacheIntegrations:     make(map[string]sdk.ProjectIntegration),
-		lockCacheIntegrations: new(sync.Mutex),
-	}
+	actPlugin := runActionDownloadArtifactlugin{}
 	if err := actionplugin.Start(context.Background(), &actPlugin); err != nil {
 		panic(err)
 	}
@@ -96,6 +90,12 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 	var nbSuccess int
 	var hasError bool
 
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
+	if err != nil {
+		grpcplugins.Errorf(&actPlugin.Common, err.Error())
+		return errors.New("unable to retrieve job context")
+	}
+
 	grpcplugins.Logf(&actPlugin.Common, "Total number of files that will be downloaded: %d", len(response.RunResults))
 
 	for _, r := range filteredRunResults {
@@ -113,21 +113,11 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		case r.ArtifactManagerIntegrationName != nil: // download from artifactory
 
 			// Get integration from the local cache, or from the worker
-			actPlugin.lockCacheIntegrations.Lock()
-			integ, has := actPlugin.cacheIntegrations[*r.ArtifactManagerIntegrationName]
-			if !has {
-				integFromWorker, err := grpcplugins.GetIntegrationByName(ctx, &actPlugin.Common, *r.ArtifactManagerIntegrationName)
-				if err != nil {
-					grpcplugins.Errorf(&actPlugin.Common, err.Error())
-					hasError = true
-					actPlugin.lockCacheIntegrations.Unlock()
-					continue
-				}
-				actPlugin.cacheIntegrations[*r.ArtifactManagerIntegrationName] = *integFromWorker
-				integ = *integFromWorker
+			if jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
+				grpcplugins.Errorf(&actPlugin.Common, "unable to retrieve artifactory integration")
+				return errors.New("artifactory integration not found")
 			}
-			actPlugin.lockCacheIntegrations.Unlock()
-
+			integ := jobCtx.Integrations.ArtifactManager
 			x, destinationFile, n, err := downloadFromArtifactory(ctx, &actPlugin.Common, integ, *workDirs, r, path)
 			if err != nil {
 				grpcplugins.Errorf(&actPlugin.Common, err.Error())
@@ -148,7 +138,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 	return nil
 }
 
-func downloadFromArtifactory(ctx context.Context, c *actionplugin.Common, integration sdk.ProjectIntegration, workDirs sdk.WorkerDirectories, r sdk.V2WorkflowRunResult, path string) (*sdk.V2WorkflowRunResultGenericDetail, string, int64, error) {
+func downloadFromArtifactory(ctx context.Context, c *actionplugin.Common, integration sdk.JobIntegrationsContext, workDirs sdk.WorkerDirectories, r sdk.V2WorkflowRunResult, path string) (*sdk.V2WorkflowRunResultGenericDetail, string, int64, error) {
 	downloadURI := r.ArtifactManagerMetadata.Get("downloadURI")
 	if downloadURI == "" {
 		return nil, "", 0, sdk.Errorf("no downloadURI specified")
@@ -159,7 +149,7 @@ func downloadFromArtifactory(ctx context.Context, c *actionplugin.Common, integr
 		return nil, "", 0, err
 	}
 
-	rtToken := integration.Config[sdk.ArtifactoryConfigToken].Value
+	rtToken := fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigToken])
 	req.Header.Set("Authorization", "Bearer "+rtToken)
 
 	grpcplugins.Logf(c, "Downloading file from %s...", downloadURI)

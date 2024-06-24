@@ -99,7 +99,7 @@ func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		binary:      pythonBinary,
 	}
 
-	var integ *sdk.ProjectIntegration
+	var integ *sdk.JobIntegrationsContext
 
 	// If not url provided, check integration
 	if urlRepo == "" {
@@ -114,16 +114,11 @@ func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 			res.Details = "unable to upload package, no integration found on the current job"
 			return stream.Send(res)
 		}
-		integ, err = grpcplugins.GetIntegrationByName(ctx, &p.Common, jobCtx.Integrations.ArtifactManager.Name)
-		if err != nil {
-			res.Status = sdk.StatusFail
-			res.Details = fmt.Sprintf("unable to get integration %s", jobCtx.Integrations.ArtifactManager)
-			return stream.Send(res)
-		}
-		completeURL := fmt.Sprintf("%sapi/pypi/%s", integ.Config[sdk.ArtifactoryConfigURL].Value, integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value+"-pypi")
+		integ = &jobCtx.Integrations.ArtifactManager
+		completeURL := fmt.Sprintf("%sapi/pypi/%s-pypi", integ.Config[sdk.ArtifactoryConfigURL], integ.Config[sdk.ArtifactoryConfigRepositoryPrefix])
 		opts.url = completeURL
-		opts.username = integ.Config[sdk.ArtifactoryConfigTokenName].Value
-		opts.password = integ.Config[sdk.ArtifactoryConfigToken].Value
+		opts.username = fmt.Sprintf("%s", integ.Config[sdk.ArtifactoryConfigTokenName])
+		opts.password = fmt.Sprintf("%s", integ.Config[sdk.ArtifactoryConfigToken])
 	} else {
 		opts.url = urlRepo
 		if username == "" {
@@ -160,7 +155,7 @@ func (actPlugin *pythonPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	return nil, sdk.ErrNotImplemented
 }
 
-func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceDir string, opts pythonOpts, integ *sdk.ProjectIntegration) error {
+func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceDir string, opts pythonOpts, integ *sdk.JobIntegrationsContext) error {
 	grpcplugins.Logf(&actPlugin.Common, "Pushing %s on version %s", opts.packageName, opts.version)
 
 	var runResultRequest = workerruntime.V2RunResultRequest{
@@ -229,13 +224,13 @@ fi
 	}
 
 	if integ != nil {
-		repository := integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-pypi"
-		maturity := integ.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+		repository := fmt.Sprintf("%s-pypi", integ.Config[sdk.ArtifactoryConfigRepositoryPrefix])
+		maturity := fmt.Sprintf("%s", integ.Config[sdk.ArtifactoryConfigPromotionLowMaturity])
 		localRepository := repository + "-" + maturity
 
 		rtConfig := grpcplugins.ArtifactoryConfig{
-			URL:   integ.Config[sdk.ArtifactoryConfigURL].Value,
-			Token: integ.Config[sdk.ArtifactoryConfigToken].Value,
+			URL:   fmt.Sprintf("%s", integ.Config[sdk.ArtifactoryConfigURL]),
+			Token: fmt.Sprintf("%s", integ.Config[sdk.ArtifactoryConfigToken]),
 		}
 		if !strings.HasSuffix(rtConfig.URL, "/") {
 			rtConfig.URL = rtConfig.URL + "/"

@@ -234,15 +234,3 @@ func (wk *CurrentWorker) AddStepOutput(ctx context.Context, outputName string, o
 	stepStatus.Outputs[outputName] = outputValue
 	wk.currentJobV2.runJob.StepsStatus[wk.currentJobV2.currentStepName] = stepStatus
 }
-
-func (wk *CurrentWorker) V2GetIntegrationByName(ctx context.Context, name string) *sdk.JobIntegrationsContext {
-	if wk.currentJobV2.runJobContext.Integrations != nil {
-		if wk.currentJobV2.runJobContext.Integrations.ArtifactManager.Name == name {
-			return &wk.currentJobV2.runJobContext.Integrations.ArtifactManager
-		}
-		if wk.currentJobV2.runJobContext.Integrations.Deployment.Name == name {
-			return &wk.currentJobV2.runJobContext.Integrations.Deployment
-		}
-	}
-	return nil
-}
