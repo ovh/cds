@@ -108,12 +108,12 @@ func LoadByTypeAndRefCommit(ctx context.Context, db gorp.SqlExecutor, projectRep
 }
 
 // LoadByRefTypeNameCommit loads an entity by its repository, ref, type, name and commit
-func LoadByRefTypeNameCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, t string, name string, commit string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
+func LoadByRefTypeNameCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, entityType string, name string, commit string, opts ...gorpmapping.GetOptionFunc) (*sdk.Entity, error) {
 	ctx, next := telemetry.Span(ctx, "entity.LoadByRefTypeNameCommit")
 	defer next()
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
-		WHERE project_repository_id = $1 AND ref = $2 AND type = $3 AND name = $4 AND commit = $5`).Args(projectRepositoryID, ref, t, name, commit)
+		WHERE project_repository_id = $1 AND ref = $2 AND type = $3 AND name = $4 AND commit = $5`).Args(projectRepositoryID, ref, entityType, name, commit)
 	return getEntity(ctx, db, query, opts...)
 }
 
@@ -139,9 +139,9 @@ func UnsafeLoadAllByType(_ context.Context, db gorp.SqlExecutor, t string) ([]sd
     FROM entity
     JOIN project_repository ON entity.project_repository_id = project_repository.id
     JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
-    WHERE entity.type = $1
+    WHERE entity.type = $1 AND commit = 'HEAD'
     ORDER BY entity.project_key, vcs_project.name, project_repository.name, entity.name, entity.ref
-`
+  `
 	var entities []sdk.EntityFullName
 	if _, err := db.Select(&entities, query, t); err != nil {
 		return nil, err
@@ -159,9 +159,9 @@ func UnsafeLoadAllByTypeAndProjectKeys(_ context.Context, db gorp.SqlExecutor, t
     FROM entity
     JOIN project_repository ON entity.project_repository_id = project_repository.id
     JOIN vcs_project ON project_repository.vcs_project_id = vcs_project.id
-    WHERE entity.type = $1 AND entity.project_key = ANY($2)
+    WHERE entity.type = $1 AND entity.project_key = ANY($2) AND commit = 'HEAD'
     ORDER BY entity.project_key, vcs_project.name, project_repository.name, entity.name, entity.ref
-    `
+  `
 	var entities []sdk.EntityFullName
 	if _, err := db.Select(&entities, query, t, pq.StringArray(keys)); err != nil {
 		return nil, err

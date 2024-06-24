@@ -2,11 +2,10 @@
     (mouseenter)="onMouseEnter()" (mouseleave)="onMouseOut()" [class.success]="node?.run?.status === statusEnum.Success"
     [class.inactive]="node?.run?.status === statusEnum.Skipped"
     [class.fail]="node?.run?.status === statusEnum.Fail || node?.run?.status === statusEnum.Stopped"
-    [class.building]="node?.run?.status === statusEnum.Building || node?.run?.status === statusEnum.Waiting"
-    [class.scheduling]="node?.run?.status === statusEnum.Scheduling">
+    [class.building]="node?.run?.status === statusEnum.Building || node?.run?.status === statusEnum.Waiting || node?.run?.status === statusEnum.Scheduling">
     <span *ngIf="node?.gate && !node.event" class="gate" nz-icon nzType="play-circle" nzTheme="outline"
         title="Run job gate" (click)="clickRunGate($event)"></span>
-    <div *ngIf="node?.name" class="name" title="{{node?.name}}">
+    <div *ngIf="node?.name" class="name">
         {{node?.name}}
     </div>
     <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
@@ -19,5 +18,8 @@
                 <div *ngIf="dates.ended"><b>Ended:</b>&nbsp;{{dates.ended | date: 'long'}}</div>
             </div>
         </ng-template>
+    </div>
+    <div *ngIf="node?.run?.status" class="status">
+        {{node?.run?.status.toLowerCase()}}
     </div>
 </div>

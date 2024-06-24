@@ -678,14 +678,14 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 				if err := yaml.Unmarshal([]byte(wmEntity.Data), &wm); err != nil {
 					return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read worker model %s: %v", workerModel, err)
 				}
-				localWM := sdk.EntityWithObject{Entity: *wmEntity, Model: wm}
+				localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm}
 				if err := localWM.Interpolate(ctx); err != nil {
 					return "", nil, err
 				}
 				wref.ef.localWorkerModelCache[workerModel] = localWM
 			}
 			modelCompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, localWM.Name, wref.run.WorkflowRef)
-			modelType = localWM.Type
+			modelType = localWM.Model.Type
 		} else {
 			completeName, msg, err := wref.ef.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
 			if err != nil {
@@ -697,7 +697,6 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			modelType = wref.ef.workerModelCache[completeName].Type
 			modelCompleteName = completeName
 		}
-
 	}
 
 	for _, h := range hatcheries {
@@ -720,7 +719,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 		WorkflowRunID: wref.run.ID,
 		Level:         sdk.WorkflowRunInfoLevelError,
 		IssuedAt:      time.Now(),
-		Message:       fmt.Sprintf("wrong configuration on job %q. No hatchery can run it", jobName),
+		Message:       fmt.Sprintf("wrong configuration on job %q (region: %s, type: %s). No hatchery can run it", jobName, currentRegion.Name, modelType),
 	}, nil
 }
 

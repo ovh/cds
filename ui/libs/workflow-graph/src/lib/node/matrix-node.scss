@@ -84,12 +84,12 @@
 
             .name {
                 flex: 1;
-                font-size: 1em;
+                font-size: 0.9em;
                 font-weight: bold;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                margin: 0 10px;
+                margin: 0 5px;
 
                 .key {
                     font-size: 0.8em;
@@ -97,14 +97,27 @@
                 }
             }
 
-            .duration {
-                font-size: 0.8em;
-                margin-right: 10px;
-            }
-
-            .durationTooltip {
+            .infos {
                 display: flex;
                 flex-direction: column;
+                margin-right: 5px;
+                align-items: end;
+
+                .duration {
+                    font-size: 0.7em;
+                    line-height: 0.7em;
+                }
+
+                .durationTooltip {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .status {
+                    margin-top: 4px;
+                    font-size: 0.5em;
+                    line-height: 0.5em;
+                }
             }
 
             &.success {
@@ -119,10 +132,6 @@
 
             &.building {
                 background-color: $cds_color_light_teal;
-                border-color: $cds_color_teal;
-            }
-
-            &.scheduling {
                 border-color: $cds_color_teal;
             }
 
@@ -157,10 +166,6 @@
 
                 &.building {
                     background-color: $darkTheme_night_blue;
-                    border-color: $darkTheme_blue;
-                }
-
-                &.scheduling {
                     border-color: $darkTheme_blue;
                 }
 
