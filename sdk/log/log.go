@@ -8,6 +8,7 @@ import (
 	"log/syslog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
@@ -94,19 +95,39 @@ func Initialize(ctx context.Context, conf *Conf) {
 	}
 }
 
-func initSyslogHook(conf *Conf) error {
+func initSyslogHook(conf *Conf) (err error) {
 	logrus.Infoln("initializing Syslog hook...")
+	defer func() {
+		time.Sleep(time.Second)
+		if err != nil {
+			log.Error(context.Background(), "unable to initialize syslog hook on %s: %v", conf.SyslogHost+":"+conf.SyslogPort, err)
+		} else {
+			log.Info(context.Background(), "syslog hook initialized")
+		}
+	}()
+
 	hook, err := lSyslog.NewSyslogHook(conf.SyslogProtocol, conf.SyslogHost+":"+conf.SyslogPort, syslog.LOG_INFO, conf.SyslogExtraTag)
 	if err != nil {
 		return errors.Wrap(err, "unable to init syslog hook")
 	}
 
 	logrus.AddHook(hook)
+
 	return nil
 }
 
-func initGraylogHook(ctx context.Context, conf *Conf) error {
+func initGraylogHook(ctx context.Context, conf *Conf) (err error) {
 	logrus.Infoln("initializing Graylog hook...")
+
+	defer func() {
+		time.Sleep(time.Second)
+		if err != nil {
+			log.Error(context.Background(), "unable to initialize graylog hook on %s: %v", conf.GraylogHost+":"+conf.GraylogPort, err)
+		} else {
+			log.Info(context.Background(), "graylog hook initialized")
+		}
+	}()
+
 	graylogcfg := &hook.Config{
 		Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
 		Protocol:  conf.GraylogProtocol,
@@ -146,7 +167,6 @@ func initGraylogHook(ctx context.Context, conf *Conf) error {
 	hostname, _ := os.Hostname()
 	extra["CDSHostname"] = hostname
 
-	var err error
 	graylogHook, err = hook.NewHook(ctx, graylogcfg, extra)
 	if err != nil {
 		return fmt.Errorf("unable to initialize graylog hook: %v", err)
