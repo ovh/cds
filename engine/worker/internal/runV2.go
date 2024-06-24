@@ -594,6 +594,9 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		Integrations: parentContext.Integrations,
 		Inputs:       make(map[string]string),
 	}
+	for k, v := range parentContext.Env {
+		actionContext.Env[k] = v
+	}
 
 	// Interpolate step input
 	if len(inputs) > 0 {
