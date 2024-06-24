@@ -107,9 +107,6 @@ func (api *API) postAuthHatcherySigninHandler() ([]service.RbacChecker, service.
 			m := hatchery.GetManifest()
 			driverManifest = &m
 
-			if driverManifest == nil {
-				return sdk.WrapError(sdk.ErrUnauthorized, "consumer driver (%s) was not found", consumer.Type)
-			}
 			ctx = context.WithValue(ctx, contextDriverManifest, driverManifest)
 
 			// Set a cookie with the jwt token
