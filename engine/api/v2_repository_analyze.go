@@ -583,10 +583,12 @@ skipEntity:
 	// Insert / Update entities
 	vcsAuthClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsProjectWithSecret.Name)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve vcs_server %s on project %s", vcsProjectWithSecret.Name, analysis.ProjectKey))
 	}
 	defaultBranch, err := vcsAuthClient.Branch(ctx, repo.Name, sdk.VCSBranchFilters{Default: true, NoCache: true})
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to retrieve default branch on repository %s", repo.Name))
 	}
 
@@ -616,10 +618,11 @@ skipEntity:
 
 	srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to retrieve hook service"))
 	}
 	if len(srvs) < 1 {
-		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find 1 hook service"))
+		return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find hook service"))
 	}
 
 	tx, err := api.mustDB().Begin()
@@ -805,6 +808,7 @@ skipEntity:
 	if len(schedulers) != 0 {
 		// Instantiate Schedulers on hooks µservice
 		if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/scheduler", schedulers, nil); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to instantiate scheduler on hook service"))
 		}
 	}
