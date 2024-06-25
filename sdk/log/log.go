@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"log/syslog"
 	"os"
 	"strings"
 	"time"
@@ -13,10 +12,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
-	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 
 	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
+	"github.com/ovh/cds/sdk/log/hook/syslog"
 )
 
 // Conf contains log configuration
@@ -49,7 +48,7 @@ const (
 )
 
 var (
-	graylogHook *hook.Hook
+	graylogHook *graylog.Hook
 )
 
 // Initialize init log level
@@ -106,9 +105,17 @@ func initSyslogHook(conf *Conf) (err error) {
 		}
 	}()
 
-	hook, err := lSyslog.NewSyslogHook(conf.SyslogProtocol, conf.SyslogHost+":"+conf.SyslogPort, syslog.LOG_INFO, conf.SyslogExtraTag)
+	hook, err := syslog.NewHook(syslog.Config{
+		Protocol: "tcp+lts",
+		Address:  conf.SyslogHost + ":" + conf.SyslogPort,
+		TLSConfig: &tls.Config{
+			ServerName:         conf.SyslogHost,
+			InsecureSkipVerify: true,
+		},
+	})
+
 	if err != nil {
-		return errors.Wrap(err, "unable to init syslog hook")
+		return err
 	}
 
 	logrus.AddHook(hook)
@@ -128,7 +135,7 @@ func initGraylogHook(ctx context.Context, conf *Conf) (err error) {
 		}
 	}()
 
-	graylogcfg := &hook.Config{
+	graylogcfg := &graylog.Config{
 		Addr:      fmt.Sprintf("%s:%s", conf.GraylogHost, conf.GraylogPort),
 		Protocol:  conf.GraylogProtocol,
 		TLSConfig: &tls.Config{ServerName: conf.GraylogHost},
@@ -167,7 +174,7 @@ func initGraylogHook(ctx context.Context, conf *Conf) (err error) {
 	hostname, _ := os.Hostname()
 	extra["CDSHostname"] = hostname
 
-	graylogHook, err = hook.NewHook(ctx, graylogcfg, extra)
+	graylogHook, err = graylog.NewHook(ctx, graylogcfg, extra)
 	if err != nil {
 		return fmt.Errorf("unable to initialize graylog hook: %v", err)
 	}
@@ -195,10 +202,10 @@ func (m Message) ServiceKey() string {
 	return fmt.Sprintf("%s-%s", m.Signature.RunJobID, m.Signature.HatcheryService.ServiceName)
 }
 
-func New(ctx context.Context, graylogcfg *hook.Config) (*logrus.Logger, *hook.Hook, error) {
+func New(ctx context.Context, graylogcfg *graylog.Config) (*logrus.Logger, *graylog.Hook, error) {
 	newLogger := logrus.New()
 	extra := map[string]interface{}{}
-	hook, err := hook.NewHook(ctx, graylogcfg, extra)
+	hook, err := graylog.NewHook(ctx, graylogcfg, extra)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to add hook: %v", err)
 	}
@@ -206,22 +213,22 @@ func New(ctx context.Context, graylogcfg *hook.Config) (*logrus.Logger, *hook.Ho
 	return newLogger, hook, nil
 }
 
-func ReplaceAllHooks(ctx context.Context, l *logrus.Logger, graylogcfg *hook.Config) error {
+func ReplaceAllHooks(ctx context.Context, l *logrus.Logger, graylogcfg *graylog.Config) error {
 	emptyHooks := logrus.LevelHooks{}
 	oldHooks := l.ReplaceHooks(emptyHooks)
 	for _, hooks := range oldHooks {
 		for _, h := range hooks {
 			varType := fmt.Sprintf("%T", h)
 
-			if varType == fmt.Sprintf("%T", &hook.Hook{}) {
+			if varType == fmt.Sprintf("%T", &graylog.Hook{}) {
 				logrus.Info("hatchery.ReplaceAllHooks> stopping previous hook")
-				h.(*hook.Hook).Stop()
+				h.(*graylog.Hook).Stop()
 			}
 		}
 	}
 
 	extra := map[string]interface{}{}
-	hook, err := hook.NewHook(ctx, graylogcfg, extra)
+	hook, err := graylog.NewHook(ctx, graylogcfg, extra)
 	if err != nil {
 		return fmt.Errorf("unable to add hook: %v", err)
 	}
@@ -233,7 +240,7 @@ func ReplaceAllHooks(ctx context.Context, l *logrus.Logger, graylogcfg *hook.Con
 func Flush(ctx context.Context, l *logrus.Logger) {
 	for _, hs := range logrus.StandardLogger().Hooks {
 		for _, h := range hs {
-			if graylogHook, ok := h.(*hook.Hook); ok {
+			if graylogHook, ok := h.(*graylog.Hook); ok {
 				log.Info(ctx, "Draining logs...")
 				graylogHook.Flush()
 			}

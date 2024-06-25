@@ -7,6 +7,7 @@ require (
 	contrib.go.opencensus.io/exporter/jaeger v0.2.1
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
 	github.com/Masterminds/semver/v3 v3.2.1
+	github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91
 	github.com/Shopify/sarama v1.36.0
 	github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230321174746-8dcc6526cfb1
