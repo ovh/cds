@@ -37,8 +37,8 @@ type HatcheryStatus struct {
 }
 
 type Hatchery struct {
-	ID            string        `json:"id" db:"id" cli:"id,key"`
-	Name          string        `json:"name" db:"name" cli:"name"`
+	ID            string        `json:"id" db:"id" cli:"id,key" action_metadata:"hatchery-identifier"`
+	Name          string        `json:"name" db:"name" cli:"name" action_metadata:"hatchery-name"`
 	ModelType     string        `json:"model_type" db:"model_type" cli:"model_type"`
 	Config        ServiceConfig `json:"config" db:"config"`
 	LastHeartbeat time.Time     `json:"last_heartbeat,omitempty" db:"last_heartbeat" cli:"last_heartbeat"`
@@ -47,7 +47,7 @@ type Hatchery struct {
 }
 
 type HatcheryGetResponse struct {
-	Hatchery
+	Hatchery           `action_metadata:"hatchery"`
 	ConsumerExpiration string `json:"consumer_expiration,omitempty" db:"-" cli:"consumer_expiration,omitempty"`
 	Token              string `json:"token,omitempty" db:"-" cli:"token,omitempty"`
 }

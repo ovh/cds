@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	cdslog "github.com/ovh/cds/sdk/log"
 )
@@ -129,7 +130,7 @@ func isMFA(ctx context.Context) bool {
 
 func trackSudo(ctx context.Context, w http.ResponseWriter) {
 	if isAdmin(ctx) && !isService(ctx) && !isWorker(ctx) {
-		SetTracker(w, cdslog.Sudo, true)
+		service.SetTracker(w, cdslog.Sudo, true)
 	}
 }
 

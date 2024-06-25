@@ -41,6 +41,8 @@ func (api *API) getJobRunProjectV2KeyHandler() ([]service.RbacChecker, service.H
 				return err
 			}
 
+			service.TrackActionMetadataFromFields(w, runJob)
+
 			opts := make([]project.LoadOptionFunc, 0, 1)
 			if clearKey {
 				opts = append(opts, project.LoadOptions.WithClearKeys)
@@ -116,7 +118,7 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		}
 		defer tx.Rollback() // nolint
 
-		contexts, sensitiveDatas, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun, *wk)
+		contexts, sensitiveDatas, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun)
 		if err != nil {
 			return err
 		}
@@ -174,7 +176,7 @@ func buildSensitiveData(value string) []string {
 	return datas
 }
 
-func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob, wk sdk.V2Worker) (*sdk.WorkflowRunJobsContext, []string, error) {
+func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, proj *sdk.Project, vcs *sdk.VCSProject, vss []sdk.ProjectVariableSet, run sdk.V2WorkflowRun, jobRun sdk.V2WorkflowRunJob) (*sdk.WorkflowRunJobsContext, []string, error) {
 	contexts := &sdk.WorkflowRunJobsContext{}
 	contexts.CDS = run.Contexts.CDS
 	contexts.CDS.Job = jobRun.JobID
@@ -487,6 +489,9 @@ func (api *API) postV2RegisterWorkerHandler() ([]service.RbacChecker, service.Ha
 		if err != nil {
 			return err
 		}
+
+		service.TrackActionMetadataFromFields(w, runJob)
+
 		if runJob.Status != sdk.V2WorkflowRunJobStatusScheduling || runJob.HatcheryName != hatch.Name || runJob.ID != jobRunID || runJob.Region != regionName {
 			return sdk.WrapError(sdk.ErrForbidden, "unable to take job %s, current status: %s, hatchery: %s, region: %s", runJob.ID, runJob.Status, runJob.HatcheryName, runJob.Region)
 		}

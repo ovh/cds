@@ -1039,7 +1039,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				WorkflowRunID: wr.ID,
 				Level:         sdk.WorkflowRunInfoLevelInfo,
 				IssuedAt:      time.Now(),
-				Message:       fmt.Sprintf("%s manually trigger the job %s", u.GetFullname(), jobToRuns[0].JobID),
+				Message:       fmt.Sprintf("%s has manually triggered the job %q", u.GetFullname(), jobToRuns[0].JobID),
 			}
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runMsg); err != nil {
 				return err

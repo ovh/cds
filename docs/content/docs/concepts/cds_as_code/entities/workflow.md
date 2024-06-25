@@ -154,13 +154,13 @@ Jobs field is a map that contains all the jobs of your workflow. The key of the 
 ```yaml
 jobs:
   myJob:
-    runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+    runs-on: .cds/worker-models/my-custom-ubuntu.yml
     vars: [varset1, varset2]
     integrations: [my-artifactory]
     steps:
       run: echo 'Hello World'
   mySecondJob:
-    runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+    runs-on: .cds/worker-models/my-custom-ubuntu.yml
     needs: [myJob]
     steps:
       run: echo 'Bye'
@@ -190,14 +190,14 @@ Runs-on represents the worker model that will be used to execute your job.
 If you don't need any customization, you can write it like this:
 
 ```yaml
-runs-on: ./cds/worker-models/my-custom-ubuntu.yml
+runs-on: .cds/worker-models/my-custom-ubuntu.yml
 ```
 
 If you need to adjust memory used by the worker or the flavor to use:
 
 ```yaml
 runs-on:
-  model: ./cds/worker-models/my-custom-ubuntu.yml
+  model: .cds/worker-models/my-custom-ubuntu.yml
   flavor: b2-7 # Only for openstack model
   memory: 4096 # Only for docker model
 ```

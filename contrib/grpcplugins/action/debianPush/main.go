@@ -264,7 +264,7 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 		return nil, err
 	}
 
-	grpcplugins.Logf(&p.Common, "  %d bytes uploaded in %.3fs", size, d.Seconds())
+	grpcplugins.Successf(&p.Common, "  %d bytes uploaded in %.3fs", size, d.Seconds())
 
 	if _, err := updateResponse.RunResult.GetDetail(); err != nil {
 		grpcplugins.Error(&p.Common, err.Error())

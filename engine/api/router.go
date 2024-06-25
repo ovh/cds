@@ -290,13 +290,13 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 			ctx = context.WithValue(ctx, contextDate, dateReq)
 		}
 
-		responseWriter := &responseTracker{
-			writer: w,
+		responseWriter := &service.ResponseTracker{
+			Writer: w,
 		}
 		if req.Body == nil {
-			responseWriter.reqSize = -1
+			responseWriter.ReqSize = -1
 		} else if req.ContentLength > 0 {
-			responseWriter.reqSize = req.ContentLength
+			responseWriter.ReqSize = req.ContentLength
 		}
 
 		// Close indicates  to close the connection after replying to this request
@@ -376,7 +376,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		}
 
 		// By default track all request as not sudo, TrackSudo will be enabled when required
-		SetTracker(responseWriter, cdslog.Sudo, false)
+		service.SetTracker(responseWriter, cdslog.Sudo, false)
 
 		// Log request start
 		start := time.Now()
@@ -384,28 +384,28 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 
 		// Defer log request end
 		deferFunc := func(ctx context.Context) {
-			if responseWriter.statusCode == 0 {
-				responseWriter.statusCode = 200
+			if responseWriter.StatusCode == 0 {
+				responseWriter.StatusCode = 200
 			}
 
-			ctx = telemetry.ContextWithTag(ctx, telemetry.StatusCode, responseWriter.statusCode)
+			ctx = telemetry.ContextWithTag(ctx, telemetry.StatusCode, responseWriter.StatusCode)
 			end := time.Now()
 			latency := end.Sub(start)
 
 			ctx = context.WithValue(ctx, cdslog.Latency, latency)
 			ctx = context.WithValue(ctx, cdslog.LatencyNum, latency.Nanoseconds())
-			ctx = context.WithValue(ctx, cdslog.Status, responseWriter.statusCode)
-			ctx = context.WithValue(ctx, cdslog.StatusNum, responseWriter.statusCode)
+			ctx = context.WithValue(ctx, cdslog.Status, responseWriter.StatusCode)
+			ctx = context.WithValue(ctx, cdslog.StatusNum, responseWriter.StatusCode)
 
-			for k, v := range responseWriter.fields {
+			for k, v := range responseWriter.Fields {
 				ctx = context.WithValue(ctx, k, v)
 			}
 
-			log.Info(ctx, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.statusCode)
+			log.Info(ctx, "%s | END   | %s [%s] | [%d]", req.Method, req.URL, rc.Name, responseWriter.StatusCode)
 
 			telemetry.RecordFloat64(ctx, ServerLatency, float64(latency)/float64(time.Millisecond))
-			telemetry.Record(ctx, ServerRequestBytes, responseWriter.reqSize)
-			telemetry.Record(ctx, ServerResponseBytes, responseWriter.respSize)
+			telemetry.Record(ctx, ServerRequestBytes, responseWriter.ReqSize)
+			telemetry.Record(ctx, ServerResponseBytes, responseWriter.RespSize)
 		}
 
 		telemetry.Record(r.Background, Hits, 1)
@@ -452,7 +452,7 @@ func (r *Router) handle(uri string, scope HandlerScope, handlers ...*service.Han
 		telemetry.MainSpan(ctx).AddAttributes(traceTags...)
 		ctx, end = telemetry.SpanFromMain(ctx, "router.handle")
 
-		if err := rc.Handler(ctx, responseWriter.wrappedResponseWriter(), req); err != nil {
+		if err := rc.Handler(ctx, responseWriter.WrappedResponseWriter(), req); err != nil {
 			telemetry.Record(r.Background, Errors, 1)
 			telemetry.End(ctx, responseWriter, req) // nolint
 			service.WriteError(ctx, responseWriter, req, err)

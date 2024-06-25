@@ -41,6 +41,8 @@ func (api *API) postJobRunStepHandler() ([]service.RbacChecker, service.Handler)
 			return err
 		}
 
+		service.TrackActionMetadataFromFields(w, runjob)
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -74,6 +76,8 @@ func (api *API) postRunInfoHandler() ([]service.RbacChecker, service.Handler) {
 
 		runInfo.WorkflowRunID = runjob.WorkflowRunID
 
+		service.TrackActionMetadataFromFields(w, runjob)
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WithStack(err)
@@ -100,6 +104,8 @@ func (api *API) postJobRunInfoHandler() ([]service.RbacChecker, service.Handler)
 		if err != nil {
 			return err
 		}
+
+		service.TrackActionMetadataFromFields(w, runjob)
 
 		runJobInfo := &sdk.V2WorkflowRunJobInfo{
 			Level:            jobInfo.Level,
@@ -237,6 +243,8 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 			if err != nil {
 				return err
 			}
+			service.TrackActionMetadataFromFields(w, jobRun)
+
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
@@ -313,6 +321,7 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 			if err != nil {
 				return err
 			}
+			service.TrackActionMetadataFromFields(w, runJob)
 
 			var runResult sdk.V2WorkflowRunResult
 			if err := service.UnmarshalBody(req, &runResult); err != nil {
@@ -359,6 +368,8 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 			if err != nil {
 				return err
 			}
+
+			service.TrackActionMetadataFromFields(w, runJob)
 
 			var runResult sdk.V2WorkflowRunResult
 			if err := service.UnmarshalBody(req, &runResult); err != nil {
@@ -455,6 +466,8 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s taken by hatchery %s", jobRun.ID, regionName, hatch.Name)
 			}
 
+			service.TrackActionMetadataFromFields(w, jobRun)
+
 			jobRun.Status = sdk.V2WorkflowRunJobStatusWaiting
 			jobRun.HatcheryName = ""
 
@@ -530,6 +543,8 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			if err != nil {
 				return err
 			}
+			service.TrackActionMetadataFromFields(w, jobRun)
+
 			if jobRun.Region != regionName {
 				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown job %s on region %s", jobRun.ID, regionName)
 			}
@@ -606,6 +621,8 @@ func (api *API) getJobRunQueueInfoHandler() ([]service.RbacChecker, service.Hand
 			if err != nil {
 				return err
 			}
+
+			service.TrackActionMetadataFromFields(w, run)
 
 			hatch := getHatcheryConsumer(ctx)
 			switch {

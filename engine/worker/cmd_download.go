@@ -34,7 +34,7 @@ Inside a job, there are two ways to download an artifact:
 
 Worker Command:
 
-	worker download --tag=<tag> <path>
+	worker download --tag=<tag>
 
 Example:
 
@@ -50,7 +50,7 @@ Theses two commands have the same result:
 	}
 	c.Flags().StringVar(&cmdDownloadWorkflowName, "workflow", "", "Workflow name to download from. Optional, default: current workflow")
 	c.Flags().StringVar(&cmdDownloadNumber, "number", "", "Workflow Number to download from. Optional, default: current workflow run")
-	c.Flags().StringVar(&cmdDownloadArtifactName, "pattern", "", "Pattern matching files to download. Optional, default: *")
+	c.Flags().StringVar(&cmdDownloadArtifactName, "pattern", "", "Pattern matching files to download. Optional, default: .*")
 	c.Flags().StringVar(&cmdDownloadTag, "tag", "", "Tag matching files to download. Optional")
 	return c
 }

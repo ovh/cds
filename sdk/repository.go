@@ -22,7 +22,7 @@ const (
 type ProjectRepository struct {
 	ID           string    `json:"id" db:"id"`
 	ProjectKey   string    `json:"project_key" db:"project_key"`
-	Name         string    `json:"name" db:"name" cli:"name,key"`
+	Name         string    `json:"name" db:"name" cli:"name,key" action_metadata_name:"name"`
 	Created      time.Time `json:"created" db:"created"`
 	CreatedBy    string    `json:"created_by" db:"created_by"`
 	VCSProjectID string    `json:"-" db:"vcs_project_id"`

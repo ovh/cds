@@ -12,7 +12,7 @@ const (
 type ProjectVariableSet struct {
 	ID         string                   `json:"id" db:"id"`
 	ProjectKey string                   `json:"project_key" db:"project_key"`
-	Name       string                   `json:"name" db:"name" cli:"name"`
+	Name       string                   `json:"name" db:"name" cli:"name" action_metadata:"variable-set-name"`
 	Created    time.Time                `json:"created" db:"created" cli:"created"`
 	Items      []ProjectVariableSetItem `json:"items" db:"-"`
 }

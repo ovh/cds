@@ -3,6 +3,7 @@ package event_v2
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/cache"
@@ -68,6 +69,7 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType string
 			Type:       eventType,
 			Payload:    bts,
 			ProjectKey: rj.ProjectKey,
+			Timestamp:  time.Now(),
 		},
 		VCSName:       wr.Contexts.Git.Server,
 		Repository:    wr.Contexts.Git.Repository,
@@ -98,6 +100,7 @@ func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, w
 			Type:       eventType,
 			Payload:    bts,
 			ProjectKey: wr.ProjectKey,
+			Timestamp:  time.Now(),
 		},
 		VCSName:       wr.Contexts.Git.Server,
 		Repository:    wr.Contexts.Git.Repository,

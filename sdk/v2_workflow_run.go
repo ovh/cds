@@ -36,24 +36,24 @@ type V2WorkflowRunHookRequest struct {
 }
 
 type V2WorkflowRun struct {
-	ID            string                 `json:"id" db:"id" cli:"id"`
-	ProjectKey    string                 `json:"project_key" db:"project_key"`
+	ID            string                 `json:"id" db:"id" cli:"id" action_metadata:"workflow-run-id"`
+	ProjectKey    string                 `json:"project_key" db:"project_key" action_metadata:"project-key"`
 	VCSServerID   string                 `json:"vcs_server_id" db:"vcs_server_id"`
-	VCSServer     string                 `json:"vcs_server" db:"vcs_server"`
+	VCSServer     string                 `json:"vcs_server" db:"vcs_server" action_metadata:"vcs-server"`
 	RepositoryID  string                 `json:"repository_id" db:"repository_id"`
-	Repository    string                 `json:"repository" db:"repository"`
-	WorkflowName  string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name"`
+	Repository    string                 `json:"repository" db:"repository" action_metadata:"repository-identifier"`
+	WorkflowName  string                 `json:"workflow_name" db:"workflow_name" cli:"workflow_name" action_metadata:"workflow-name"`
 	WorkflowSha   string                 `json:"workflow_sha" db:"workflow_sha"`
 	WorkflowRef   string                 `json:"workflow_ref" db:"workflow_ref"`
 	Status        V2WorkflowRunStatus    `json:"status" db:"status" cli:"status"`
-	RunNumber     int64                  `json:"run_number" db:"run_number" cli:"run_number"`
+	RunNumber     int64                  `json:"run_number" db:"run_number" cli:"run_number" action_metadata:"run-number"`
 	RunAttempt    int64                  `json:"run_attempt" db:"run_attempt"`
 	Started       time.Time              `json:"started" db:"started" cli:"started"`
 	LastModified  time.Time              `json:"last_modified" db:"last_modified" cli:"last_modified"`
 	ToDelete      bool                   `json:"to_delete" db:"to_delete"`
 	WorkflowData  V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
 	UserID        string                 `json:"user_id" db:"user_id"`
-	Username      string                 `json:"username" db:"username" cli:"username"`
+	Username      string                 `json:"username" db:"username" cli:"username" action_metadata:"username"`
 	Contexts      WorkflowRunContext     `json:"contexts" db:"contexts"`
 	RunEvent      V2WorkflowRunEvent     `json:"event" db:"event"`
 	RunJobEvent   V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
@@ -194,10 +194,10 @@ func (w *V2WorkflowRunEvent) Scan(src interface{}) error {
 type V2WorkflowRunJob struct {
 	ID            string                 `json:"id" db:"id"`
 	JobID         string                 `json:"job_id" db:"job_id" cli:"job_id"`
-	WorkflowRunID string                 `json:"workflow_run_id" db:"workflow_run_id"`
-	ProjectKey    string                 `json:"project_key" db:"project_key"`
-	WorkflowName  string                 `json:"workflow_name" db:"workflow_name"`
-	RunNumber     int64                  `json:"run_number" db:"run_number"`
+	WorkflowRunID string                 `json:"workflow_run_id" db:"workflow_run_id" action_metadata:"workflow-run-id"`
+	ProjectKey    string                 `json:"project_key" db:"project_key" action_metadata:"project-key"`
+	WorkflowName  string                 `json:"workflow_name" db:"workflow_name" action_metadata:"workflow-name"`
+	RunNumber     int64                  `json:"run_number" db:"run_number" action_metadata:"run-number"`
 	RunAttempt    int64                  `json:"run_attempt" db:"run_attempt"`
 	Status        V2WorkflowRunJobStatus `json:"status" db:"status" cli:"status"`
 	Queued        time.Time              `json:"queued" db:"queued"`
@@ -206,11 +206,11 @@ type V2WorkflowRunJob struct {
 	Ended         *time.Time             `json:"ended,omitempty" db:"ended"`
 	Job           V2Job                  `json:"job" db:"job"`
 	WorkerID      string                 `json:"worker_id,omitempty" db:"worker_id"`
-	WorkerName    string                 `json:"worker_name" db:"worker_name"`
-	HatcheryName  string                 `json:"hatchery_name" db:"hatchery_name"`
+	WorkerName    string                 `json:"worker_name" db:"worker_name" action_metadata:"worker-name"`
+	HatcheryName  string                 `json:"hatchery_name" db:"hatchery_name" action_metadata:"hatchery-name"`
 	StepsStatus   JobStepsStatus         `json:"steps_status" db:"steps_status"`
 	UserID        string                 `json:"user_id" db:"user_id"`
-	Username      string                 `json:"username" db:"username"`
+	Username      string                 `json:"username" db:"username" action_metadata:"username"`
 	Region        string                 `json:"region,omitempty" db:"region"`
 	ModelType     string                 `json:"model_type,omitempty" db:"model_type"`
 	Matrix        JobMatrix              `json:"matrix,omitempty" db:"matrix"`

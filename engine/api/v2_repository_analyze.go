@@ -1433,7 +1433,7 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 		} else {
 			// Retrieve existing template in DB
 			path, msg, errSearch := ef.searchEntity(ctx, api.mustDB(), api.Cache, x.From, sdk.EntityTypeWorkflowTemplate)
-			if err != nil {
+			if errSearch != nil {
 				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to retrieve entity %s of type %s: %v", x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
 				break
 			}
