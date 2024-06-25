@@ -273,19 +273,24 @@ func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
 }
 
 type JobIntegrationsContext struct {
-	Name   string                      `json:"name,omitempty"`
-	Config JobIntegratiosContextConfig `json:"config,omitempty"`
+	Name      string                      `json:"name,omitempty"`
+	Config    JobIntegratiosContextConfig `json:"config,omitempty"`
+	ModelName string                      `json:"model_name,omitempty"`
 }
 
 type JobIntegratiosContextConfig map[string]interface{}
 
-func (j JobIntegratiosContextConfig) Get(key string) string {
+func (j JobIntegrationsContext) Get(key string) string {
 	keySplit := strings.Split(key, ".")
 	if len(keySplit) == 1 {
-		return fmt.Sprintf("%s", j[key])
+		return fmt.Sprintf("%s", j.Config[key])
 	}
 
-	currentValue := j
+	if j.ModelName == ArtifactoryIntegrationModelName && key == ArtifactoryConfigTokenName {
+		keySplit = []string{"token_name"}
+	}
+
+	currentValue := j.Config
 	for _, k := range keySplit {
 		if itemMap, ok := currentValue[k].(map[string]interface{}); ok {
 			currentValue = itemMap

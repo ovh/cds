@@ -110,11 +110,11 @@ func (p *debianPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		return stream.Send(res)
 	}
 	opts.jobContext = *jobContext
-	url := opts.jobContext.Integrations.ArtifactManager.Config.Get(sdk.ArtifactoryConfigURL)
+	url := opts.jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigURL)
 	if !strings.HasSuffix(url, "/") {
 		url += "/"
 	}
-	opts.integRepositoryName = jobContext.Integrations.ArtifactManager.Config.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-debian"
+	opts.integRepositoryName = jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-debian"
 	url += opts.integRepositoryName
 	opts.repositoryURL = url
 
@@ -211,8 +211,8 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 	debInfo := fmt.Sprintf("%s;%s;%s", distribLayout, componentLayout, archLayout)
 	cdsInfo := fmt.Sprintf("cds_version=%s;cds_workflow=%s", opts.jobContext.Git.SemverCurrent, opts.jobContext.CDS.Workflow)
 	buildInfo := fmt.Sprintf("build.name=%s/%s/%s;build.number=%d;build.timestamp=%d",
-		opts.jobContext.Integrations.ArtifactManager.Config.Get(sdk.ArtifactoryConfigBuildInfoPrefix), opts.jobContext.CDS.ProjectKey, opts.jobContext.CDS.Workflow, opts.jobContext.CDS.RunNumber, time.Now().Unix())
-	maturity := opts.jobContext.Integrations.ArtifactManager.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+		opts.jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigBuildInfoPrefix), opts.jobContext.CDS.ProjectKey, opts.jobContext.CDS.Workflow, opts.jobContext.CDS.RunNumber, time.Now().Unix())
+	maturity := opts.jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 	path := fmt.Sprintf("/pool/%s;%s;%s;%s;deb.release.origin=%s;deb.release.label=%s",
 		fileName, debInfo, cdsInfo, buildInfo, opts.origin, opts.label)
 

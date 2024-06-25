@@ -446,15 +446,18 @@ func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
 	}
 }
 
-func (config IntegrationConfig) ToJobRunContextConfig() JobIntegratiosContextConfig {
+func (pi *ProjectIntegration) ToJobRunContextConfig() JobIntegratiosContextConfig {
 	result := make(map[string]interface{})
 
-	for key, configValue := range config {
+	for key, configValue := range pi.Config {
 		parts := strings.Split(key, ".")
 		current := result
 
 		for i, part := range parts {
-			if i == len(parts)-1 {
+			// Hack for artifactory
+			if pi.Model.Name == ArtifactoryIntegrationModelName && i == (len(parts)-2) && part == "token" {
+				current[part+"_"+parts[len(parts)-1]] = configValue.Value
+			} else if i == len(parts)-1 {
 				current[part] = configValue.Value
 			} else {
 				if _, exists := current[part]; !exists {

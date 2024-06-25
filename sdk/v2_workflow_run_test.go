@@ -7,7 +7,9 @@ import (
 )
 
 func TestGetContextConfig(t *testing.T) {
+
 	j := JobIntegrationsContext{
+		ModelName: ArtifactoryIntegrationModelName,
 		Config: JobIntegratiosContextConfig{
 			"repo": map[string]interface{}{
 				"build": map[string]interface{}{
@@ -16,9 +18,13 @@ func TestGetContextConfig(t *testing.T) {
 					},
 				},
 			},
-			"url": "myurl",
+			"url":        "myurl",
+			"token":      "mytoken",
+			"token_name": "username",
 		},
 	}
-	require.Equal(t, "myurl", j.Config.Get("url"))
-	require.Equal(t, "foo", j.Config.Get("repo.build.info.data"))
+	require.Equal(t, "myurl", j.Get("url"))
+	require.Equal(t, "foo", j.Get("repo.build.info.data"))
+	require.Equal(t, "mytoken", j.Get(ArtifactoryConfigToken))
+	require.Equal(t, "username", j.Get(ArtifactoryConfigTokenName))
 }

@@ -149,7 +149,7 @@ func downloadFromArtifactory(ctx context.Context, c *actionplugin.Common, integr
 		return nil, "", 0, err
 	}
 
-	rtToken := integration.Config.Get(sdk.ArtifactoryConfigToken)
+	rtToken := integration.Get(sdk.ArtifactoryConfigToken)
 	req.Header.Set("Authorization", "Bearer "+rtToken)
 
 	grpcplugins.Logf(c, "Downloading file from %s...", downloadURI)

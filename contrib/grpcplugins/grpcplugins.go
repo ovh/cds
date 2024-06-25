@@ -486,8 +486,8 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 
 		integ := jobContext.Integrations.ArtifactManager
 
-		repository := integ.Config.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-cds"
-		maturity := integ.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+		repository := integ.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-cds"
+		maturity := integ.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 		path := filepath.Join(
 			strings.ToLower(jobContext.Git.Server),
 			strings.ToLower(jobContext.Git.Repository),
@@ -511,7 +511,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 			return nil, fmt.Errorf("unable to cast reader")
 		}
 
-		Logf(actplugin, "  Artifactory URL: %s", integ.Config.Get(sdk.ArtifactoryConfigURL))
+		Logf(actplugin, "  Artifactory URL: %s", integ.Get(sdk.ArtifactoryConfigURL))
 		Logf(actplugin, "  Artifactory repository: %s", repository)
 
 		var res *ArtifactoryUploadResult
@@ -584,8 +584,8 @@ func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, runResul
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
-	rtURL := integ.Config.Get(sdk.ArtifactoryConfigURL)
-	rtToken := integ.Config.Get(sdk.ArtifactoryConfigToken)
+	rtURL := integ.Get(sdk.ArtifactoryConfigURL)
+	rtToken := integ.Get(sdk.ArtifactoryConfigToken)
 
 	repo := runResult.ArtifactManagerMetadata.Get("repository")
 	path := runResult.ArtifactManagerMetadata.Get("path")

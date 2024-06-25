@@ -189,8 +189,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		}
 		integration := jobCtx.Integrations.ArtifactManager
 
-		repository := integration.Config.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-docker"
-		rtURLRaw := integration.Config.Get(sdk.ArtifactoryConfigURL)
+		repository := integration.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-docker"
+		rtURLRaw := integration.Get(sdk.ArtifactoryConfigURL)
 		if !strings.HasSuffix(rtURLRaw, "/") {
 			rtURLRaw = rtURLRaw + "/"
 		}
@@ -216,8 +216,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		}
 
 		auth := registry.AuthConfig{
-			Username:      integration.Config.Get(sdk.ArtifactoryConfigTokenName),
-			Password:      integration.Config.Get(sdk.ArtifactoryConfigToken),
+			Username:      integration.Get(sdk.ArtifactoryConfigTokenName),
+			Password:      integration.Get(sdk.ArtifactoryConfigToken),
 			ServerAddress: repository + "." + rtURL.Host,
 		}
 		buf, _ := json.Marshal(auth)
@@ -234,7 +234,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 		var rtConfig = grpcplugins.ArtifactoryConfig{
 			URL:   rtURL.String(),
-			Token: integration.Config.Get(sdk.ArtifactoryConfigToken),
+			Token: integration.Get(sdk.ArtifactoryConfigToken),
 		}
 
 		rtFolderPath := img.repository + "/" + tag
@@ -251,8 +251,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 					return nil, time.Since(t0), err
 				}
 				manifestFound = true
-				localRepo := fmt.Sprintf("%s-%s", repository, integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
-				maturity := integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+				localRepo := fmt.Sprintf("%s-%s", repository, integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
+				maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
 				result.ArtifactManagerMetadata.Set("id", img.imageID)

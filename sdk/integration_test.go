@@ -7,18 +7,27 @@ import (
 )
 
 func TestIntegConfigToJobContext(t *testing.T) {
-	config := IntegrationConfig{}
-	config["build.info.prefix"] = IntegrationConfigValue{
+	pi := ProjectIntegration{
+		Config: IntegrationConfig{},
+		Model:  ArtifactoryIntegration,
+	}
+	pi.Config["build.info.prefix"] = IntegrationConfigValue{
 		Value: "pref",
 	}
-	config["build.info.toto"] = IntegrationConfigValue{
+	pi.Config["build.info.toto"] = IntegrationConfigValue{
 		Value: "tata",
 	}
-	config["url"] = IntegrationConfigValue{
+	pi.Config["url"] = IntegrationConfigValue{
 		Value: "myurl",
 	}
+	pi.Config["token"] = IntegrationConfigValue{
+		Value: "mytoken",
+	}
+	pi.Config["token.name"] = IntegrationConfigValue{
+		Value: "myuser",
+	}
 
-	result := config.ToJobRunContextConfig()
+	result := pi.ToJobRunContextConfig()
 
 	require.Equal(t, result["url"], "myurl")
 	require.NotNil(t, result["build"])
@@ -29,4 +38,7 @@ func TestIntegConfigToJobContext(t *testing.T) {
 	infoMap := buildMap["info"].(map[string]interface{})
 	require.Equal(t, infoMap["prefix"], "pref")
 	require.Equal(t, infoMap["toto"], "tata")
+
+	require.Equal(t, result["token"], "mytoken")
+	require.Equal(t, result["token_name"], "myuser")
 }

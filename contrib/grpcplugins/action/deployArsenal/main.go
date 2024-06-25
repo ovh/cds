@@ -93,7 +93,7 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 	}
 	deploymentIntgration := contexts.Integrations.Deployment
 
-	host := deploymentIntgration.Config.Get("host")
+	host := deploymentIntgration.Get("host")
 	if host == "" {
 		return fail(p, "missing arsenal host")
 	}

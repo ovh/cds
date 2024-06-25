@@ -115,10 +115,10 @@ func (p *pythonPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 			return stream.Send(res)
 		}
 		integ = &jobCtx.Integrations.ArtifactManager
-		completeURL := fmt.Sprintf("%sapi/pypi/%s-pypi", integ.Config.Get(sdk.ArtifactoryConfigURL), integ.Config.Get(sdk.ArtifactoryConfigRepositoryPrefix))
+		completeURL := fmt.Sprintf("%sapi/pypi/%s-pypi", integ.Get(sdk.ArtifactoryConfigURL), integ.Get(sdk.ArtifactoryConfigRepositoryPrefix))
 		opts.url = completeURL
-		opts.username = integ.Config.Get(sdk.ArtifactoryConfigTokenName)
-		opts.password = integ.Config.Get(sdk.ArtifactoryConfigToken)
+		opts.username = integ.Get(sdk.ArtifactoryConfigTokenName)
+		opts.password = integ.Get(sdk.ArtifactoryConfigToken)
 	} else {
 		opts.url = urlRepo
 		if username == "" {
@@ -224,13 +224,13 @@ fi
 	}
 
 	if integ != nil {
-		repository := integ.Config.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-pypi"
-		maturity := integ.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+		repository := integ.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-pypi"
+		maturity := integ.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 		localRepository := repository + "-" + maturity
 
 		rtConfig := grpcplugins.ArtifactoryConfig{
-			URL:   integ.Config.Get(sdk.ArtifactoryConfigURL),
-			Token: integ.Config.Get(sdk.ArtifactoryConfigToken),
+			URL:   integ.Get(sdk.ArtifactoryConfigURL),
+			Token: integ.Get(sdk.ArtifactoryConfigToken),
 		}
 		if !strings.HasSuffix(rtConfig.URL, "/") {
 			rtConfig.URL = rtConfig.URL + "/"

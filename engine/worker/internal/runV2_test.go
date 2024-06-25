@@ -37,18 +37,22 @@ func TestIntegToEnvVar(t *testing.T) {
 					"subPrefix": "my2ndValue",
 				},
 			},
-			"url": "myurl",
+			"url":        "myurl",
+			"token":      "mytoken",
+			"token_name": "myuser",
 		},
 	}
 
 	vars := computeIntegrationConfigToEnvVar(integ, "ARTIFACT_MANAGER")
 
-	require.Equal(t, 5, len(vars))
+	require.Equal(t, 7, len(vars))
 	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_INFO_PREFIX"], "myvalue")
 	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_INFO_PREFIXX_TOT"], "titi")
 	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_BUILD_TITI_SUBPREFIX"], "my2ndValue")
 	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_URL"], "myurl")
 	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_NAME"], "myInteg")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN"], "mytoken")
+	require.Equal(t, vars["CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME"], "myuser")
 }
 
 func TestRunJobContinueOnError(t *testing.T) {

@@ -52,8 +52,8 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 	integration := jobContext.Integrations.ArtifactManager
 
 	rtConfig := grpcplugins.ArtifactoryConfig{
-		URL:   integration.Config.Get(sdk.ArtifactoryConfigURL),
-		Token: integration.Config.Get(sdk.ArtifactoryConfigToken),
+		URL:   integration.Get(sdk.ArtifactoryConfigURL),
+		Token: integration.Get(sdk.ArtifactoryConfigToken),
 	}
 
 	artifactClient, err := artifact_manager.NewClient("artifactory", rtConfig.URL, rtConfig.Token)
@@ -68,13 +68,13 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 	}
 
 	latestPromotion := r.DataSync.LatestPromotionOrRelease()
-	currentMaturity := integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+	currentMaturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 	if latestPromotion != nil {
 		currentMaturity = latestPromotion.ToMaturity
 	}
 
 	if maturity == "" {
-		maturity = integration.Config.Get(sdk.ArtifactoryConfigPromotionHighMaturity)
+		maturity = integration.Get(sdk.ArtifactoryConfigPromotionHighMaturity)
 	}
 
 	newPromotion := sdk.WorkflowRunResultPromotion{
@@ -141,10 +141,10 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	integration := jobContext.Integrations.ArtifactManager
 
 	rtConfig := &grpcplugins.ArtifactoryConfig{
-		URL:             integration.Config.Get(sdk.ArtifactoryConfigURL),
-		Token:           integration.Config.Get(sdk.ArtifactoryConfigToken),
-		DistributionURL: integration.Config.Get(sdk.ArtifactoryConfigDistributionURL),
-		ReleaseToken:    integration.Config.Get(sdk.ArtifactoryConfigReleaseToken),
+		URL:             integration.Get(sdk.ArtifactoryConfigURL),
+		Token:           integration.Get(sdk.ArtifactoryConfigToken),
+		DistributionURL: integration.Get(sdk.ArtifactoryConfigDistributionURL),
+		ReleaseToken:    integration.Get(sdk.ArtifactoryConfigReleaseToken),
 	}
 
 	if rtConfig.DistributionURL == "" {
@@ -157,7 +157,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	}
 
 	if maturity == "" {
-		maturity = integration.Config.Get(sdk.ArtifactoryConfigPromotionHighMaturity)
+		maturity = integration.Get(sdk.ArtifactoryConfigPromotionHighMaturity)
 	}
 
 	artifactClient, err := artifact_manager.NewClient("artifactory", rtConfig.URL, rtConfig.Token)
@@ -173,7 +173,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		}
 
 		latestPromotion := r.DataSync.LatestPromotionOrRelease()
-		currentMaturity := integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+		currentMaturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 		if latestPromotion != nil {
 			currentMaturity = latestPromotion.ToMaturity
 		}
@@ -250,7 +250,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	releaseVersion := strings.ReplaceAll(jobContext.Git.SemverCurrent, "+", "-")
 
 	releaseName, releaseVersion, err := createReleaseBundle(ctx, c, distriClient,
-		jobContext.CDS.ProjectKey, jobContext.CDS.Workflow, releaseVersion, integration.Config.Get(sdk.ArtifactoryConfigBuildInfoPrefix),
+		jobContext.CDS.ProjectKey, jobContext.CDS.Workflow, releaseVersion, integration.Get(sdk.ArtifactoryConfigBuildInfoPrefix),
 		promotedArtifacts, maturity, releaseNotes)
 	if err != nil {
 		grpcplugins.Error(c, "Unable to create Release Bundle")
