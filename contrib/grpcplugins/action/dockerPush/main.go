@@ -251,7 +251,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 					return nil, time.Since(t0), err
 				}
 				manifestFound = true
-				localRepo := fmt.Sprintf("%s-%s", repository, integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+				localRepo := fmt.Sprintf("%s-%s", repository, integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
 				maturity := integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
