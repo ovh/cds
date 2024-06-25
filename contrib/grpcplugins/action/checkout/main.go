@@ -39,18 +39,26 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 	authToken := q.GetOptions()["token"]
 	submodules := q.GetOptions()["submodules"]
 
+	res := &actionplugin.StreamResult{
+		Status: sdk.StatusSuccess,
+	}
+
+	var key *sdk.ProjectKey
 	var authOption repo.Option
 	if sshKey == "" {
 		authOption = repo.WithHTTPAuth(authUsername, authToken)
 	} else {
-		authOption = repo.WithSSHAuth([]byte(sshKey))
+		var err error
+		key, err = grpcplugins.GetProjectKey(ctx, &p.Common, sshKey)
+		if err != nil {
+			res.Status = sdk.StatusFail
+			res.Details = fmt.Sprintf("unable to retrieve sshkey %s: %v", sshKey, err)
+			return stream.Send(res)
+		}
+		authOption = repo.WithSSHAuth([]byte(key.Private))
 	}
 
 	grpcplugins.Logf(&p.Common, "Start cloning %s\n", gitURL)
-
-	res := &actionplugin.StreamResult{
-		Status: sdk.StatusSuccess,
-	}
 
 	clonedRepo, err := repo.Clone(ctx, path, gitURL, authOption)
 	if err != nil {
@@ -113,6 +121,24 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 		}
 	}
 	grpcplugins.Logf(&p.Common, "Checkout completed\n")
+
+	if key != nil {
+		// Install key
+		workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
+		if err != nil {
+			err := fmt.Errorf("unable to get working directory: %v", err)
+			res.Status = sdk.StatusFail
+			res.Details = err.Error()
+			return stream.Send(res)
+		}
+		if err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, "", key.Private); err != nil {
+			err := fmt.Errorf("unable to install sshkey on worker: %v", err)
+			res.Status = sdk.StatusFail
+			res.Details = err.Error()
+			return stream.Send(res)
+		}
+	}
+
 	return stream.Send(res)
 
 }

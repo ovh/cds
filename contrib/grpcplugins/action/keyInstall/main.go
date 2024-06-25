@@ -3,16 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-	"github.com/ovh/cds/sdk/vcs"
 )
 
 type keyInstallPlugin struct {
@@ -69,27 +65,7 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 
 	switch key.Type {
 	case sdk.KeyTypeSSH:
-		if filePath == "" {
-			filePath = ".ssh/id_rsa-" + keyName
-		}
-		absPath := filePath
-		if !sdk.PathIsAbs(filePath) {
-			absPath, err = filepath.Abs(filepath.Join(workDirs.WorkingDir, filePath))
-			if err != nil {
-				return fmt.Errorf("unable to compute ssh key absolute path: %v", err)
-			}
-		}
-
-		destinationDirectory := filepath.Dir(absPath)
-		if err := afero.NewOsFs().MkdirAll(destinationDirectory, os.FileMode(0755)); err != nil {
-			return fmt.Errorf("unable to create directory %s: %v", destinationDirectory, err)
-		}
-
-		if err := vcs.WriteKey(afero.NewOsFs(), absPath, key.Private); err != nil {
-			return fmt.Errorf("cannot setup ssh key %s : %v", key.Name, err)
-		}
-		grpcplugins.Logf(&actPlugin.Common, "sshkey %s has been created here: %s", key.Name, filePath)
-		return nil
+		return grpcplugins.InstallSSHKey(ctx, &actPlugin.Common, workDirs, keyName, filePath, key.Private)
 	case sdk.KeyTypePGP:
 		if _, _, err := sdk.ImportGPGKey("", key.Name, key.Private); err != nil {
 			return fmt.Errorf("unable to install pgp key %s: %v", keyName, err)
