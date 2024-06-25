@@ -29,7 +29,7 @@ func (client *bitbucketClient) SetStatus(ctx context.Context, buildStatus sdk.VC
 
 	values, err := json.Marshal(status)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshall status")
+		return sdk.WrapError(err, "unable to marshal status")
 	}
 
 	log.Info(ctx, "sending build status for %s : %s %s - %s", buildStatus.GitHash, status.Key, status.Name, state)

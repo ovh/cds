@@ -138,7 +138,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 	if statusFound == nil || statusFound.State == "" {
 		for i := range notifs {
 			log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-			if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
+			if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], cdsUIURL); err != nil {
 				return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 			}
 		}
@@ -169,7 +169,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		if !skipStatus {
 			for i := range notifs {
 				log.Info(ctx, "status %q %s not found, sending a new one %+v", expected, nodeRun.Status, notifs[i])
-				if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], vcsServerName, cdsUIURL); err != nil {
+				if err := e.sendVCSEventStatus(ctx, db, store, proj.Key, wr, &nodeRun, notifs[i], cdsUIURL); err != nil {
 					return sdk.WrapError(err, "can't sendVCSEventStatus vcs %v/%v", proj.Key, vcsServerName)
 				}
 			}
@@ -180,7 +180,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 		return nil
 	}
 	for i := range notifs {
-		if err := e.sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notifs[i], vcsServerName); err != nil {
+		if err := e.sendVCSPullRequestComment(ctx, db, wr, &nodeRun, notifs[i]); err != nil {
 			return sdk.WrapError(err, "can't sendVCSPullRequestComment vcs %v/%v", proj.Key, vcsServerName)
 		}
 	}
@@ -189,7 +189,7 @@ func (e *VCSEventMessenger) SendVCSEvent(ctx context.Context, db *gorp.DbMap, st
 }
 
 // sendVCSEventStatus send status
-func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string, cdsUIURL string) error {
+func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, projectKey string, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, cdsUIURL string) error {
 	if notif.Settings.Template == nil || (notif.Settings.Template.DisableStatus != nil && *notif.Settings.Template.DisableStatus) {
 		return nil
 	}
@@ -325,7 +325,7 @@ func (e *VCSEventMessenger) sendVCSEventStatus(ctx context.Context, db gorp.SqlE
 	return nil
 }
 
-func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification, vcsServerName string) error {
+func (e *VCSEventMessenger) sendVCSPullRequestComment(ctx context.Context, db gorp.SqlExecutor, wr sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, notif sdk.WorkflowNotification) error {
 	log.Info(ctx, "Send pull-request comment for node run %d", nodeRun.ID)
 	if notif.Settings.Template == nil {
 		log.Info(ctx, "nothing to do: template is empty", nodeRun.ID)

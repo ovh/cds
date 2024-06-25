@@ -47,8 +47,8 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 			log.Error(ctx, "EventV2.DequeueEvent> Exiting: %v", err)
 			return
 		}
-		var e sdk.FullEventV2
-		if err := store.DequeueWithContext(ctx, eventQueue, 50*time.Millisecond, &e); err != nil {
+		var event sdk.FullEventV2
+		if err := store.DequeueWithContext(ctx, eventQueue, 50*time.Millisecond, &event); err != nil {
 			ctx := sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "EventV2.DequeueEvent> store.DequeueWithContext err: %v", err)
 			continue
@@ -60,7 +60,7 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		wg.Add(1)
 		goroutines.Exec(ctx, "event.pushToElasticSearch", func(ctx context.Context) {
 			defer wg.Done()
-			if err := pushToElasticSearch(ctx, db, e); err != nil {
+			if err := pushToElasticSearch(ctx, db, event); err != nil {
 				log.Error(ctx, "EventV2.pushToElasticSearch: %v", err)
 			}
 		})
@@ -76,14 +76,14 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		wg.Add(1)
 		goroutines.Exec(ctx, "event.websockets", func(ctx context.Context) {
 			defer wg.Done()
-			pushToWebsockets(ctx, store, e)
+			pushToWebsockets(ctx, store, event)
 		})
 
 		// Project notifications
 		wg.Add(1)
 		goroutines.Exec(ctx, "event.notifications", func(ctx context.Context) {
 			defer wg.Done()
-			if err := pushNotifications(ctx, db, e); err != nil {
+			if err := pushNotifications(ctx, db, event); err != nil {
 				log.Error(ctx, "EventV2.pushNotifications: %v", err)
 			}
 		})
@@ -92,7 +92,7 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		wg.Add(1)
 		goroutines.Exec(ctx, "event.workflow.notifications", func(ctx context.Context) {
 			defer wg.Done()
-			if err := workflowNotifications(ctx, db, store, e, cdsUIURL); err != nil {
+			if err := workflowNotifications(ctx, db, store, event, cdsUIURL); err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "EventV2.workflowNotifications: %v", err)
 			}
@@ -120,8 +120,11 @@ func pushToWebsockets(ctx context.Context, store cache.Store, event sdk.FullEven
 }
 
 func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Store, event sdk.FullEventV2, cdsUIURL string) error {
-	// EventRunEnded
-	if event.Type != sdk.EventRunEnded || event.ProjectKey == "" {
+	if event.ProjectKey == "" {
+		return nil
+	}
+
+	if event.Type != sdk.EventRunEnded && event.Type != sdk.EventRunBuilding {
 		return nil
 	}
 
@@ -159,6 +162,10 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	}
 	if err := vcsClient.SetStatus(ctx, buildStatus); err != nil {
 		return sdk.WrapError(err, "can't send the build status for %v/%v", event.ProjectKey, event.VCSName)
+	}
+
+	if event.Type != sdk.EventRunEnded {
+		return nil
 	}
 
 	if run.WorkflowData.Workflow.On == nil {
