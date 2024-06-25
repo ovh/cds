@@ -98,7 +98,7 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		return err
 	}
 	if len(hookServices) < 1 {
-		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find 1 hook service")
+		return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find hook service")
 	}
 
 	vcsRepos, err := vcs.LoadAllVCSByProject(ctx, db, pKey)
