@@ -466,7 +466,7 @@ func (config IntegrationConfig) ToJobRunContextConfig() JobIntegratiosContextCon
 	}
 	ctxConfig := JobIntegratiosContextConfig{}
 	for k, v := range result {
-		result[k] = v
+		ctxConfig[k] = v
 	}
 	return ctxConfig
 }
