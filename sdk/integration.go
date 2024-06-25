@@ -446,7 +446,7 @@ func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
 	}
 }
 
-func (config IntegrationConfig) ToJobRunContextConfig() map[string]interface{} {
+func (config IntegrationConfig) ToJobRunContextConfig() JobIntegratiosContextConfig {
 	result := make(map[string]interface{})
 
 	for key, configValue := range config {
@@ -464,7 +464,11 @@ func (config IntegrationConfig) ToJobRunContextConfig() map[string]interface{} {
 			}
 		}
 	}
-	return result
+	ctxConfig := JobIntegratiosContextConfig{}
+	for k, v := range result {
+		result[k] = v
+	}
+	return ctxConfig
 }
 
 // HideSecrets replaces password with a placeholder

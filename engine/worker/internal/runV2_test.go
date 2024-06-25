@@ -25,7 +25,7 @@ import (
 func TestIntegToEnvVar(t *testing.T) {
 	integ := sdk.JobIntegrationsContext{
 		Name: "myInteg",
-		Config: map[string]interface{}{
+		Config: sdk.JobIntegratiosContextConfig{
 			"build": map[string]interface{}{
 				"info": map[string]interface{}{
 					"prefix": "myvalue",
@@ -315,7 +315,7 @@ func TestCurrentWorker_executeHooksSetupV2(t *testing.T) {
 	wk.currentJobV2.runJobContext.Integrations = &sdk.JobIntegrationsContexts{
 		ArtifactManager: sdk.JobIntegrationsContext{
 			Name:   "foo",
-			Config: map[string]interface{}{},
+			Config: sdk.JobIntegratiosContextConfig{},
 		},
 	}
 	wk.currentJobV2.integrations = make(map[string]sdk.ProjectIntegration)

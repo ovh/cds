@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -272,8 +273,27 @@ func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
 }
 
 type JobIntegrationsContext struct {
-	Name   string                 `json:"name,omitempty"`
-	Config map[string]interface{} `json:"config,omitempty"`
+	Name   string                      `json:"name,omitempty"`
+	Config JobIntegratiosContextConfig `json:"config,omitempty"`
+}
+
+type JobIntegratiosContextConfig map[string]interface{}
+
+func (j JobIntegratiosContextConfig) Get(key string) string {
+	keySplit := strings.Split(key, ".")
+	if len(keySplit) == 1 {
+		return fmt.Sprintf("%s", j[key])
+	}
+
+	currentValue := j
+	for _, k := range keySplit {
+		if itemMap, ok := currentValue[k].(map[string]interface{}); ok {
+			currentValue = itemMap
+		} else {
+			return fmt.Sprintf("%s", currentValue[k])
+		}
+	}
+	return ""
 }
 
 type JobStepsStatus map[string]JobStepStatus

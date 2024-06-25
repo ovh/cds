@@ -124,8 +124,10 @@ func Test_dockerPushPlugin_perform(t *testing.T) {
 			},
 		},
 	}
-
-	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigRepositoryPrefix] = artifactoryRepoPrefix
+	mprefix := map[string]interface{}{
+		"prefix": artifactoryRepoPrefix,
+	}
+	jobCtx.Integrations.ArtifactManager.Config["repo"] = mprefix
 	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigURL] = artifactoryURL
 	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigToken] = artifactoryToken
 	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigTokenName] = artifactoryUsername

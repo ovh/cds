@@ -101,7 +101,10 @@ func Test_helmPushPlugin(t *testing.T) {
 		},
 	}
 
-	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigRepositoryPrefix] = artifactoryRepoPrefix
+	mPrefix := map[string]interface{}{
+		"prefix": artifactoryRepoPrefix,
+	}
+	jobCtx.Integrations.ArtifactManager.Config["repo"] = mPrefix
 	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigURL] = artifactoryURL
 	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigToken] = artifactoryToken
 	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigTokenName] = artifactoryUsername

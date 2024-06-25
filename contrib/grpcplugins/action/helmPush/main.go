@@ -182,8 +182,8 @@ func (p *helmPushPlugin) perform(
 	case result.ArtifactManagerIntegrationName != nil:
 		integration := jobCtx.Integrations.ArtifactManager
 		rtConfig := grpcplugins.ArtifactoryConfig{
-			URL:   fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigURL]),
-			Token: fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigToken]),
+			URL:   integration.Config.Get(sdk.ArtifactoryConfigURL),
+			Token: integration.Config.Get(sdk.ArtifactoryConfigToken),
 		}
 
 		if !strings.HasSuffix(rtConfig.URL, "/") {
@@ -254,7 +254,7 @@ func (p *helmPushPlugin) pushChartMuseum(ctx context.Context, result *sdk.V2Work
 }
 
 func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2WorkflowRunResult, chart *helm.Chart, chartPackagePath string, integration sdk.JobIntegrationsContext, rtConfig grpcplugins.ArtifactoryConfig) error {
-	repository := fmt.Sprintf("%s-helm", integration.Config[sdk.ArtifactoryConfigRepositoryPrefix])
+	repository := integration.Config.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-helm"
 
 	resp, err := p.UploadChartPackageToArtifactory(ctx, repository, chart.Metadata.Name, chartPackagePath, rtConfig)
 	if err != nil {
@@ -277,7 +277,7 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 		return errors.Errorf("unable to get Artifactory file info %s: %v", chartPackagePath, err)
 	}
 
-	maturity := fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity])
+	maturity := integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 	localRepository := repository + "-" + maturity
 	grpcplugins.ExtractFileInfoIntoRunResult(result, *fi, chart.Metadata.Name, "helm", localRepository, repository, maturity)
 	grpcplugins.Success(&p.Common, "Done.")

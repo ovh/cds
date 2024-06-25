@@ -189,8 +189,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		}
 		integration := jobCtx.Integrations.ArtifactManager
 
-		repository := fmt.Sprintf("%s-docker", integration.Config[sdk.ArtifactoryConfigRepositoryPrefix])
-		rtURLRaw := fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigURL])
+		repository := integration.Config.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-docker"
+		rtURLRaw := integration.Config.Get(sdk.ArtifactoryConfigURL)
 		if !strings.HasSuffix(rtURLRaw, "/") {
 			rtURLRaw = rtURLRaw + "/"
 		}
@@ -216,8 +216,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		}
 
 		auth := registry.AuthConfig{
-			Username:      fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigTokenName]),
-			Password:      fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigToken]),
+			Username:      integration.Config.Get(sdk.ArtifactoryConfigTokenName),
+			Password:      integration.Config.Get(sdk.ArtifactoryConfigToken),
 			ServerAddress: repository + "." + rtURL.Host,
 		}
 		buf, _ := json.Marshal(auth)
@@ -234,7 +234,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 
 		var rtConfig = grpcplugins.ArtifactoryConfig{
 			URL:   rtURL.String(),
-			Token: fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigToken]),
+			Token: integration.Config.Get(sdk.ArtifactoryConfigToken),
 		}
 
 		rtFolderPath := img.repository + "/" + tag
@@ -251,8 +251,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 					return nil, time.Since(t0), err
 				}
 				manifestFound = true
-				localRepo := fmt.Sprintf("%s-%s", repository, integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity])
-				maturity := fmt.Sprintf("%s", integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity])
+				localRepo := fmt.Sprintf("%s-%s", repository, integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+				maturity := integration.Config.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
 				result.ArtifactManagerMetadata.Set("id", img.imageID)
