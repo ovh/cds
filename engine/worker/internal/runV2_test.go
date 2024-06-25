@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
@@ -49,7 +49,7 @@ func TestRunJobContinueOnError(t *testing.T) {
 	w.SetContextForTestJobV2(t, ctx)
 	w.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
 
-	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
+	l, h, err := cdslog.New(ctx, &graylog.Config{Hostname: ""})
 	require.NoError(t, err)
 	w.SetGelfLogger(h, l)
 
@@ -102,7 +102,7 @@ func TestRunJobContinueAlways(t *testing.T) {
 	w.SetContextForTestJobV2(t, ctx)
 	w.currentJobV2.runJobContext = sdk.WorkflowRunJobsContext{}
 
-	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
+	l, h, err := cdslog.New(ctx, &graylog.Config{Hostname: ""})
 	require.NoError(t, err)
 	w.SetGelfLogger(h, l)
 

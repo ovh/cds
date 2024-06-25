@@ -28,7 +28,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 func TestMarkItemToDeleteHandler(t *testing.T) {
@@ -118,7 +118,7 @@ func TestGetItemLogsDownloadHandler(t *testing.T) {
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
 	hm := handledMessage{
-		Msg: hook.Message{
+		Msg: graylog.Message{
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,

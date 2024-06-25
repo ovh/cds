@@ -178,14 +178,14 @@ func (hook *Hook) Stop() {
 // Fire is called when a log event is fired.
 // We assume the entry will be altered by another hook,
 // otherwise we might logging something wrong to Graylog
-func (hook *Hook) Fire(entry *logrus.Entry) error {
+func (h *Hook) Fire(entry *logrus.Entry) error {
 	// get caller file and line here, it won't be available inside the goroutine
 	// 1 for the function that called us.
 	// we also make most of the work out of the lock scope to reduce
 	// performance impact due to locking
 	file, line := getCallerIgnoringLogMulti(1)
-	msg := hook.messageFromEntry(entry, file, line)
-	return hook.FireMessage(*msg)
+	msg := h.messageFromEntry(entry, file, line)
+	return h.FireMessage(*msg)
 }
 
 type FireMessageFunc func(msg Message) error

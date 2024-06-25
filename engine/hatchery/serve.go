@@ -23,7 +23,7 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 type Common struct {
@@ -310,7 +310,7 @@ func (c *Common) initServiceLogger(ctx context.Context) error {
 		c.Signer = signer
 	}
 
-	var graylogCfg = &hook.Config{
+	var graylogCfg = &graylog.Config{
 		Addr:     c.CDNConfig.TCPURL,
 		Protocol: "tcp",
 	}

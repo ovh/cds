@@ -27,7 +27,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 func init() {
@@ -265,7 +265,7 @@ export FOO_FROM_HOOK=BAR`,
 		Reply(200).
 		JSON(nil)
 
-	var logMessages []hook.Message
+	var logMessages []graylog.Message
 	listener, err := net.Listen("tcp", "localhost:8090")
 	require.NoError(t, err)
 	defer listener.Close()
@@ -281,7 +281,7 @@ export FOO_FROM_HOOK=BAR`,
 			}
 			// remove byte(0)
 			bytes = bytes[:len(bytes)-1]
-			m := hook.Message{}
+			m := graylog.Message{}
 			require.NoError(t, m.UnmarshalJSON(bytes))
 			logMessages = append(logMessages, m)
 		}
