@@ -556,9 +556,9 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 				continue
 			}
 			if strings.HasPrefix(model, ".cds/worker-models/") {
-				rj.ModelType = wref.ef.localWorkerModelCache[model].Type
+				rj.ModelType = wref.ef.localWorkerModelCache[model].Model.Type
 			} else {
-				rj.ModelType = wref.ef.workerModelCache[completeName].Type
+				rj.ModelType = wref.ef.workerModelCache[completeName].Model.Type
 			}
 			rj.Job.RunsOn.Model = completeName
 		}
@@ -594,7 +594,7 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 		}
 
 		for _, def := range wref.ef.localWorkerModelCache {
-			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, def.Name, wref.run.WorkflowRef)
+			completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, def.Model.Name, wref.run.WorkflowRef)
 			if _, has := run.WorkflowData.WorkerModels[completeName]; !has {
 				runUpdated = true
 				run.WorkflowData.WorkerModels[completeName] = def.Model
