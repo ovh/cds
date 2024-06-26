@@ -116,6 +116,7 @@ type LogBufferUnit interface {
 	Card(i sdk.CDNItemUnit) (int, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
 	Keys() ([]string, error)
+	Copy(srcItemID, destItemID string) error
 }
 
 type FileBufferUnit interface {

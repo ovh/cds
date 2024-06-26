@@ -36,7 +36,9 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
 				logRef, _ := newItem.GetCDNLogApiRefV2()
 				logRef.RunJobID = duplicateRequest.ToJob
+				logRef.RunAttempt++
 				newItem.APIRef = logRef
+
 				hashRef, err := logRef.ToHash()
 				if err != nil {
 					return err
@@ -45,6 +47,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			case sdk.CDNTypeItemRunResultV2:
 				logRef, _ := newItem.GetCDNRunResultApiRefV2()
 				logRef.RunJobID = duplicateRequest.ToJob
+				logRef.RunAttempt++
 				newItem.APIRef = logRef
 				hashRef, err := logRef.ToHash()
 				if err != nil {
@@ -71,8 +74,15 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 				if err := storage.InsertItemUnit(ctx, s.Mapper, tx, &newSUI); err != nil {
 					return err
 				}
+
+				if sui.UnitID == s.Units.LogsBuffer().ID() {
+					// Copy logs in buffer
+					if err := s.Units.LogsBuffer().Copy(i.ID, newItem.ID); err != nil {
+						return err
+					}
+				}
 			}
 		}
-		return nil
+		return sdk.WithStack(tx.Commit())
 	}
 }

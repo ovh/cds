@@ -993,6 +993,10 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			if err := json.Unmarshal(bts, &mapContexts); err != nil {
 				return sdk.WithStack(err)
 			}
+
+			if !strings.HasPrefix(gate.If, "${{") {
+				gate.If = fmt.Sprintf("${{ %s }}", gate.If)
+			}
 			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 			booleanResult, err := ap.InterpolateToBool(ctx, gate.If)
 			if err != nil {

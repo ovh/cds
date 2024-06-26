@@ -17,12 +17,12 @@ type PubSub interface {
 	GetMessage(c context.Context) (string, error)
 }
 
-//Key make a key as expected
+// Key make a key as expected
 func Key(args ...string) string {
 	return strings.Join(args, ":")
 }
 
-//Store is an interface
+// Store is an interface
 type Store interface {
 	Get(key string, value interface{}) (bool, error)
 	Set(key string, value interface{}) error
@@ -46,6 +46,7 @@ type HealthStore interface {
 	DBSize() (int64, error)
 	Size(key string) (int64, error)
 	Keys(pattern string) ([]string, error)
+	Copy(src, dest string) error
 }
 
 type QueueStore interface {
@@ -95,12 +96,12 @@ type SetValueWithScore struct {
 	Value json.RawMessage
 }
 
-//New init a cache
+// New init a cache
 func New(redisHost, redisPassword string, dbindex, TTL int) (Store, error) {
 	return NewRedisStore(redisHost, redisPassword, dbindex, TTL)
 }
 
-//NewWriteCloser returns a write closer
+// NewWriteCloser returns a write closer
 func NewWriteCloser(store Store, key string, ttl int) io.WriteCloser {
 	return &writerCloser{
 		store: store,

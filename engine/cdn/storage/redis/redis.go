@@ -75,6 +75,10 @@ func (s *Redis) Add(i sdk.CDNItemUnit, score uint, since uint, value string) err
 	return s.store.ScoredSetAdd(context.Background(), cache.Key(keyBuffer, i.ItemID), value, float64(score))
 }
 
+func (s *Redis) Copy(srcItemID, destItemID string) error {
+	return s.store.Copy(cache.Key(keyBuffer, srcItemID), cache.Key(keyBuffer, destItemID))
+}
+
 func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
 	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
 }
