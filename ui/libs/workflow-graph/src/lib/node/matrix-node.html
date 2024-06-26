@@ -9,23 +9,30 @@
             [class.active]="selectedKey === key" (click)="onMouseClick(key)" (mouseenter)="onMouseEnter(key)"
             (mouseleave)="onMouseOut(key)" [class.success]="status[key] && status[key] === statusEnum.Success"
             [class.inactive]="status[key] && status[key] === statusEnum.Skipped"
-            [class.fail]="(status[key] && status[key] === statusEnum.Fail) || (status[key] && status[key] === statusEnum.Stopped)"
-            [class.building]="(status[key] && status[key] === statusEnum.Building) || (status[key] && status[key] === statusEnum.Waiting)"
-            [class.scheduling]="status[key] && status[key] === statusEnum.Scheduling">
+            [class.fail]="status[key] && (status[key] === statusEnum.Fail || status[key] === statusEnum.Stopped)"
+            [class.building]="status[key] && (status[key] === statusEnum.Building || status[key] === statusEnum.Waiting || status[key] === statusEnum.Scheduling)">
             <div *ngIf="node?.name" class="name" title="{{node?.name}} - {{key}}">
                 {{node?.name}}&nbsp;<span class="key">{{key}}</span>
             </div>
-            <div *ngIf="durations[key]" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
-                {{durations[key]}}
-                <ng-template #durationTooltip>
-                    <div class="durationTooltip">
-                        <div *ngIf="dates[key].queued"><b>Queued:</b>&nbsp;{{dates[key].queued | date: 'long'}}</div>
-                        <div *ngIf="dates[key].scheduled"><b>Scheduled:</b>&nbsp;{{dates[key].scheduled | date: 'long'}}
+            <div class="infos">
+                <div *ngIf="durations[key]" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
+                    {{durations[key]}}
+                    <ng-template #durationTooltip>
+                        <div class="durationTooltip">
+                            <div *ngIf="dates[key].queued"><b>Queued:</b>&nbsp;{{dates[key].queued | date: 'long'}}
+                            </div>
+                            <div *ngIf="dates[key].scheduled"><b>Scheduled:</b>&nbsp;{{dates[key].scheduled | date:
+                                'long'}}
+                            </div>
+                            <div *ngIf="dates[key].started"><b>Started:</b>&nbsp;{{dates[key].started | date: 'long'}}
+                            </div>
+                            <div *ngIf="dates[key].ended"><b>Ended:</b>&nbsp;{{dates[key].ended | date: 'long'}}</div>
                         </div>
-                        <div *ngIf="dates[key].started"><b>Started:</b>&nbsp;{{dates[key].started | date: 'long'}}</div>
-                        <div *ngIf="dates[key].ended"><b>Ended:</b>&nbsp;{{dates[key].ended | date: 'long'}}</div>
-                    </div>
-                </ng-template>
+                    </ng-template>
+                </div>
+                <div *ngIf="status[key]" class="status">
+                    {{status[key].toLowerCase()}}
+                </div>
             </div>
         </div>
     </div>

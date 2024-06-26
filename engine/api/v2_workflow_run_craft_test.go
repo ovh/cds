@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -508,7 +509,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	hatch := sdk.Hatchery{Name: sdk.RandomString(10), ModelType: ""}
 	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
 
-	perm := sdk.RBAC{
+	require.NoError(t, rbac.Insert(ctx, db, &sdk.RBAC{
 		Name: sdk.RandomString(10),
 		Hatcheries: []sdk.RBACHatchery{
 			{
@@ -517,15 +518,14 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 				Role:       sdk.HatcheryRoleSpawn,
 			},
 		},
-	}
-	require.NoError(t, rbac.Insert(ctx, db, &perm))
+	}))
 
 	require.NoError(t, api.craftWorkflowRunV2(ctx, wr.ID))
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, wrDB.Status, sdk.V2WorkflowRunStatusBuilding)
+	assert.Equal(t, wrDB.Status, sdk.V2WorkflowRunStatusBuilding)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
 	require.NoError(t, err)
-	require.Equal(t, 0, len(wrInfos))
+	require.Equal(t, 0, len(wrInfos), "Error found: %v", wrInfos)
 }

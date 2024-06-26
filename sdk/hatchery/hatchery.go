@@ -515,7 +515,7 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 	vcsName := modelPath[1]
 	modelName := modelPath[len(modelPath)-1]
 	repoName := strings.Join(modelPath[2:len(modelPath)-1], "/")
-	var branch string
+	branch := "master"
 	if len(branchSplit) == 2 {
 		branch = branchSplit[1]
 	}
@@ -549,6 +549,12 @@ else
 	exit 1;
 fi`
 
+	ap := sdk.NewActionParser(map[string]interface{}{
+		"git": map[string]interface{}{
+			"ref_name": branch,
+		},
+	}, nil)
+
 	switch model.Type {
 	case sdk.WorkerModelTypeDocker:
 		var dockerSpec sdk.V2WorkerModelDockerSpec
@@ -568,6 +574,10 @@ fi`
 			oldModel.ModelDocker.Cmd = "curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 && chmod +x worker && exec ./worker"
 			oldModel.ModelDocker.Shell = "sh -c"
 		}
+		oldModel.ModelDocker.Image, err = ap.InterpolateToString(ctx, oldModel.ModelDocker.Image)
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
 	case sdk.WorkerModelTypeVSphere:
 		var vsphereSpec sdk.V2WorkerModelVSphereSpec
 		if err := yaml.Unmarshal(model.Spec, &vsphereSpec); err != nil {
@@ -580,6 +590,10 @@ fi`
 			User:     vsphereSpec.Username,
 			Password: vsphereSpec.Password,
 			Image:    vsphereSpec.Image,
+		}
+		oldModel.ModelVirtualMachine.Image, err = ap.InterpolateToString(ctx, oldModel.ModelVirtualMachine.Image)
+		if err != nil {
+			return nil, sdk.WithStack(err)
 		}
 	case sdk.WorkerModelTypeOpenstack:
 		var openstackSpec sdk.V2WorkerModelOpenstackSpec
@@ -597,6 +611,10 @@ fi`
 				oldModel.ModelVirtualMachine.Flavor = r.Value
 				break
 			}
+		}
+		oldModel.ModelVirtualMachine.Image, err = ap.InterpolateToString(ctx, oldModel.ModelVirtualMachine.Image)
+		if err != nil {
+			return nil, sdk.WithStack(err)
 		}
 	}
 
@@ -641,7 +659,6 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 			return nil, sdk.WrapError(err, "unable to get docker spec")
 		}
 		workerStarterModel.DockerSpec = dockerSpec
-
 	case sdk.WorkerModelTypeVSphere:
 		workerStarterModel.Cmd = "PATH=$PATH ./worker"
 		workerStarterModel.PreCmd = preCmd

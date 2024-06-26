@@ -302,11 +302,11 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	run.WorkflowData.WorkerModels = make(map[string]sdk.V2WorkerModel)
 	for k, v := range wref.ef.workerModelCache {
-		run.WorkflowData.WorkerModels[k] = v
+		run.WorkflowData.WorkerModels[k] = v.Model
 	}
 	for _, v := range wref.ef.localWorkerModelCache {
 		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Name, wref.run.WorkflowRef)
-		run.WorkflowData.WorkerModels[completeName] = v
+		run.WorkflowData.WorkerModels[completeName] = v.Model
 	}
 
 	_, infos, err := wref.checkIntegrations(ctx, api.mustDB())
@@ -655,7 +655,6 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			return "", msg, nil
 		}
 		return "", nil, err
-
 	}
 
 	modelCompleteName := ""
@@ -675,13 +674,18 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 					}
 					return "", &msg, nil
 				}
-				if err := yaml.Unmarshal([]byte(wmEntity.Data), &localWM); err != nil {
+				var wm sdk.V2WorkerModel
+				if err := yaml.Unmarshal([]byte(wmEntity.Data), &wm); err != nil {
 					return "", nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read worker model %s: %v", workerModel, err)
+				}
+				localWM = sdk.EntityWithObject{Entity: *wmEntity, Model: wm}
+				if err := localWM.Interpolate(ctx); err != nil {
+					return "", nil, err
 				}
 				wref.ef.localWorkerModelCache[workerModel] = localWM
 			}
 			modelCompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, localWM.Name, wref.run.WorkflowRef)
-			modelType = localWM.Type
+			modelType = localWM.Model.Type
 		} else {
 			completeName, msg, err := wref.ef.searchEntity(ctx, db, store, workerModel, sdk.EntityTypeWorkerModel)
 			if err != nil {
@@ -690,10 +694,9 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 			if msg != "" {
 				return "", &sdk.V2WorkflowRunInfo{WorkflowRunID: wref.run.ID, Level: sdk.WorkflowRunInfoLevelError, Message: msg}, nil
 			}
-			modelType = wref.ef.workerModelCache[completeName].Type
+			modelType = wref.ef.workerModelCache[completeName].Model.Type
 			modelCompleteName = completeName
 		}
-
 	}
 
 	for _, h := range hatcheries {
