@@ -21,16 +21,6 @@ import (
  *
  */
 
-var (
-	repositoryLock               = cache.Key("hooks", "lock", "repository")
-	repositoryRootKey            = cache.Key("hooks", "repository")
-	repositoryEventRootKey       = cache.Key("hooks", "events", "repository")
-	repositoryEventInProgressKey = cache.Key(repositoryEventQueue, "inprogress")
-	repositoryEventQueue         = cache.Key("hooks", "queue", "repository", "event")
-	repositoryEventCallbackQueue = cache.Key("hooks", "queue", "repository", "event", "callback")
-	repositoryEventLockRootKey   = cache.Key("hooks", "events", "lock")
-)
-
 func (d *dao) GetRepositoryMemberKey(vcsName, repoName string) string {
 	return fmt.Sprintf("%s-%s", vcsName, repoName)
 }
@@ -48,14 +38,13 @@ func (d *dao) FindRepository(ctx context.Context, repoKey string) *sdk.HookRepos
 	return nil
 }
 
-func (d *dao) CreateRepository(ctx context.Context, vcsServerType, vcsServerName, repoName string) (*sdk.HookRepository, error) {
+func (d *dao) CreateRepository(ctx context.Context, vcsServerName, repoName string) (*sdk.HookRepository, error) {
 	// Create a task for the current repository
 	repoKey := d.GetRepositoryMemberKey(vcsServerName, repoName)
 	log.Info(ctx, "creating repository %s", repoKey)
 	hr := &sdk.HookRepository{
 		RepositoryName: repoName,
 		VCSServerName:  vcsServerName,
-		VCSServerType:  vcsServerType,
 	}
 	if err := d.store.SetAdd(repositoryRootKey, repoKey, hr); err != nil {
 		return nil, err

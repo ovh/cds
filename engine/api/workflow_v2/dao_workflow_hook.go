@@ -85,12 +85,28 @@ func UpdateWorkflowHook(ctx context.Context, db gorpmapper.SqlExecutorWithTx, h 
 	return nil
 }
 
+func LoadHooksByEntityID(ctx context.Context, db gorp.SqlExecutor, entityID string) ([]sdk.V2WorkflowHook, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
+    entity_id = $1`).Args(entityID)
+	return getAllHooks(ctx, db, q)
+}
+
 func LoadHooksByRepositoryEvent(ctx context.Context, db gorp.SqlExecutor, vcsName, repoName, eventName string) ([]sdk.V2WorkflowHook, error) {
 	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
     type = $1 AND
     data->>'vcs_server'::text = $2 AND
     data->>'repository_name'::text = $3 AND
     data->>'repository_event'::text = $4`).Args(sdk.WorkflowHookTypeRepository, vcsName, repoName, eventName)
+	return getAllHooks(ctx, db, q)
+}
+
+func LoadHookSchedulerByWorkflow(ctx context.Context, db gorp.SqlExecutor, projKey, vcsName, repoName, workflowName string) ([]sdk.V2WorkflowHook, error) {
+	q := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE
+    type = $1 AND
+    project_key = $2 AND
+    vcs_name = $3 AND
+    repository_name = $4 AND
+    workflow_name = $5`).Args(sdk.WorkflowHookTypeScheduler, projKey, vcsName, repoName, workflowName)
 	return getAllHooks(ctx, db, q)
 }
 

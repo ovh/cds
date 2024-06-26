@@ -34,7 +34,7 @@ func (client *bitbucketClient) SetStatus(ctx context.Context, buildStatus sdk.VC
 
 	log.Info(ctx, "sending build status for %s : %s %s - %s", buildStatus.GitHash, status.Key, status.Name, state)
 
-	if err := client.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", buildStatus.GitHash), nil, values, nil); err != nil {
+	if err := client.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", buildStatus.GitHash), nil, values, nil, Options{}); err != nil {
 		return sdk.WrapError(err, "Unable to post build-status name:%s status:%s", status.Name, state)
 	}
 	return nil
@@ -56,7 +56,7 @@ func (client *bitbucketClient) ListStatuses(ctx context.Context, repo string, re
 		}
 
 		var response ResponseStatus
-		if err := client.do(ctx, "GET", "build-status", path, params, nil, &response); err != nil {
+		if err := client.do(ctx, "GET", "build-status", path, params, nil, &response, Options{}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get statuses")
 		}
 

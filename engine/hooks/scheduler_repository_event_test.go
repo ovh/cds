@@ -31,7 +31,6 @@ func TestManageAnalysisCallback(t *testing.T) {
 	hr := sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		VCSServerName:  "private-github",
-		VCSServerType:  "github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusAnalysis,
 		EventName:      "push",
@@ -48,7 +47,7 @@ func TestManageAnalysisCallback(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
 	eventKey := strings.ToLower(cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID))
@@ -90,7 +89,6 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	hr := sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		VCSServerName:  "private-github",
-		VCSServerType:  "github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusScheduled,
 		EventName:      "push",
@@ -104,7 +102,7 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().HookRepositoriesList(gomock.Any(), hr.VCSServerName, hr.RepositoryName).Return([]sdk.ProjectRepository{
@@ -136,7 +134,6 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	hr := sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		VCSServerName:  "private-github",
-		VCSServerType:  "github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusScheduled,
 		EventName:      "pull_request",
@@ -147,7 +144,7 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
 
 	// Create repo
-	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerType, hr.VCSServerName, hr.RepositoryName)
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
 	require.NoError(t, err)
 
 	s.Client.(*mock_cdsclient.MockInterface).EXPECT().ListWorkflowToTrigger(gomock.Any(), gomock.Any()).Return([]sdk.V2WorkflowHook{

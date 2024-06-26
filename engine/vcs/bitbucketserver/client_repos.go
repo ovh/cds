@@ -30,7 +30,7 @@ func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 		}
 
 		var response Response
-		if err := b.do(ctx, "GET", "core", path, params, nil, &response); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, Options{}); err != nil {
 			return nil, sdk.WrapError(err, "Unable to get repos")
 		}
 
@@ -55,7 +55,7 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 	r := Repo{}
 	path := fmt.Sprintf("/projects/%s/repos/%s", t[0], t[1])
 
-	if err := b.do(ctx, "GET", "core", path, nil, nil, &r); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &r, Options{}); err != nil {
 		return sdk.VCSRepo{}, sdk.WrapError(err, "Unable to get repo")
 	}
 
@@ -76,7 +76,7 @@ func (b *bitbucketClient) UserHasWritePermission(ctx context.Context, repo strin
 	params.Add("filter", b.username)
 
 	var reponse UsersPermissionResponse
-	if err := b.do(ctx, "GET", "core", path, params, nil, &reponse); err != nil {
+	if err := b.do(ctx, "GET", "core", path, params, nil, &reponse, Options{}); err != nil {
 		return false, sdk.WithStack(err)
 	}
 

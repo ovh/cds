@@ -48,6 +48,38 @@ func (s *Service) postRepositoryEventAnalysisCallbackHandler() service.Handler {
 	}
 }
 
+func (s *Service) deleteSchedulerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcsServerName := vars["vcsServer"]
+		repoName, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		workflowName := vars["workflowName"]
+
+		if err := s.removeSchedulersAndNextExecution(ctx, vcsServerName, repoName, workflowName); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (s *Service) postInstantiateSchedulerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var hooks []sdk.V2WorkflowHook
+		if err := service.UnmarshalBody(r, &hooks); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		if err := s.instantiateScheduler(ctx, hooks); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 func (s *Service) workflowManualHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var runRequest sdk.HookManualWorkflowRun
@@ -65,7 +97,7 @@ func (s *Service) workflowManualHandler() service.Handler {
 func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.HookManualWorkflowRun) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(runRequest.VCSServer, runRequest.Repository)
 	if s.Dao.FindRepository(ctx, repoKey) == nil {
-		if _, err := s.Dao.CreateRepository(ctx, runRequest.VCSType, runRequest.VCSServer, runRequest.Repository); err != nil {
+		if _, err := s.Dao.CreateRepository(ctx, runRequest.VCSServer, runRequest.Repository); err != nil {
 			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
 		}
 	}
@@ -84,7 +116,6 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		UserID:         runRequest.UserID,
 		Username:       runRequest.Username,
 		EventName:      sdk.WorkflowHookManual,
-		VCSServerType:  runRequest.VCSType,
 		VCSServerName:  runRequest.VCSServer,
 		RepositoryName: runRequest.Repository,
 		Body:           request,
@@ -169,7 +200,7 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType string, vcsServerName string, repoName string, extractedData sdk.HookRepositoryEventExtractData, event []byte) (*sdk.HookRepositoryEvent, error) {
 	repoKey := s.Dao.GetRepositoryMemberKey(vcsServerName, repoName)
 	if s.Dao.FindRepository(ctx, repoKey) == nil {
-		if _, err := s.Dao.CreateRepository(ctx, vcsServerType, vcsServerName, repoName); err != nil {
+		if _, err := s.Dao.CreateRepository(ctx, vcsServerName, repoName); err != nil {
 			return nil, sdk.WrapError(err, "unable to create repository %s", repoKey)
 		}
 	}
@@ -178,7 +209,6 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType strin
 		UUID:           sdk.UUID(),
 		EventName:      extractedData.CDSEventName, // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest, sdk.WorkflowHookEventPullRequestComment
 		EventType:      extractedData.CDSEventType, // WorkflowHookEventPullRequestTypeOpened, WorkflowHookEventPullRequestTypeEdited, etc...
-		VCSServerType:  vcsServerType,
 		VCSServerName:  vcsServerName,
 		RepositoryName: repoName,
 		Body:           event,

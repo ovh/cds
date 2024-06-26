@@ -20,6 +20,8 @@ const (
 	WorkflowHookEventPush           = "push"
 	WorkflowHookManual              = "manual"
 
+	WorkflowHookScheduler = "scheduler"
+
 	WorkflowHookEventPullRequest             = "pull-request"
 	WorkflowHookEventPullRequestTypeOpened   = "opened"
 	WorkflowHookEventPullRequestTypeReopened = "reopened"
@@ -80,7 +82,6 @@ type HookRepositoryEvent struct {
 	Created                   int64                          `json:"created"`
 	EventName                 string                         `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
 	EventType                 string                         `json:"event_type"` // created, deleted, edited, opened
-	VCSServerType             string                         `json:"vcs_server_type"`
 	VCSServerName             string                         `json:"vcs_server_name"`
 	RepositoryName            string                         `json:"repository_name"`
 	Body                      []byte                         `json:"body"`
@@ -142,13 +143,23 @@ func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
 }
 
 type HookRepositoryEventExtractData struct {
-	CDSEventName   string   `json:"cds_event_name"`
-	CDSEventType   string   `json:"cds_event_type"`
-	Commit         string   `json:"commit"`
-	Paths          []string `json:"paths"`
-	Ref            string   `json:"ref"`
-	ProjectManual  string   `json:"manual_project"`
-	WorkflowManual string   `json:"manual_workflow"`
+	CDSEventName   string                                  `json:"cds_event_name"`
+	CDSEventType   string                                  `json:"cds_event_type"`
+	Commit         string                                  `json:"commit"`
+	Paths          []string                                `json:"paths"`
+	Ref            string                                  `json:"ref"`
+	ProjectManual  string                                  `json:"manual_project"`
+	WorkflowManual string                                  `json:"manual_workflow"`
+	Scheduler      HookRepositoryEventExtractDataScheduler `json:"scheduler"`
+}
+
+type HookRepositoryEventExtractDataScheduler struct {
+	TargetVCS      string `json:"target_vcs"`
+	TargetRepo     string `json:"target_repo"`
+	TargetWorkflow string `json:"target_workflow"`
+	TargetProject  string `json:"target_project"`
+	Cron           string `json:"cron"`
+	Timezone       string `json:"timezone"`
 }
 
 type GenerateRepositoryWebhook struct {
@@ -156,7 +167,7 @@ type GenerateRepositoryWebhook struct {
 }
 
 func (h *HookRepositoryEvent) GetFullName() string {
-	return fmt.Sprintf("%s/%s/%s/%s", h.VCSServerType, h.VCSServerName, h.RepositoryName, h.UUID)
+	return fmt.Sprintf("%s/%s/%s", h.VCSServerName, h.RepositoryName, h.UUID)
 }
 
 type HookRepositoryEventAnalysis struct {
@@ -168,7 +179,6 @@ type HookRepositoryEventAnalysis struct {
 
 type HookRetrieveSignKeyRequest struct {
 	ProjectKey     string `json:"projectKey"`
-	VCSServerType  string `json:"vcs_server_type"`
 	VCSServerName  string `json:"vcs_server_name"`
 	RepositoryName string `json:"repository_name"`
 	Commit         string `json:"commit"`
@@ -182,7 +192,6 @@ type HookRetrieveSignKeyRequest struct {
 
 type HookRetrieveUserRequest struct {
 	ProjectKey     string `json:"projectKey"`
-	VCSServerType  string `json:"vcs_server_type"`
 	VCSServerName  string `json:"vcs_server_name"`
 	RepositoryName string `json:"repository_name"`
 	Commit         string `json:"commit"`

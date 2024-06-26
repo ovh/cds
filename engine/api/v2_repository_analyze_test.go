@@ -132,6 +132,7 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -141,9 +142,11 @@ func TestAnalyzeGithubWithoutHash(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(
@@ -200,6 +203,7 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -209,8 +213,11 @@ func TestAnalyzeGithubWrongSignature(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -277,6 +284,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -286,8 +294,11 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -412,6 +423,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -421,8 +433,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -493,7 +508,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -546,6 +561,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -555,8 +571,11 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -681,6 +700,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -688,10 +708,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -763,7 +786,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -895,6 +918,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -904,8 +928,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
@@ -1057,6 +1084,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1066,8 +1094,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `name: docker-debian
 description: my debian worker model
@@ -1143,7 +1174,7 @@ spec:
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -1273,6 +1304,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1282,8 +1314,11 @@ GDFkaTe3nUJdYV4=
 	}
 	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
 	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -1372,7 +1407,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -1386,7 +1421,6 @@ GDFkaTe3nUJdYV4=
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
-	t.Logf("%+v", analysisUpdated)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, analysisUpdated.Status)
 
 	es, err := entity.LoadByTypeAndRefCommit(context.TODO(), db, repo.ID, sdk.EntityTypeWorkerModel, "refs/heads/master", "abcdef")
@@ -1394,7 +1428,6 @@ GDFkaTe3nUJdYV4=
 
 	require.Equal(t, 1, len(es))
 	require.Equal(t, model, es[0].Data)
-	t.Logf("%+v", es[0])
 
 	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian", "abcdef")
 	require.NoError(t, err)
@@ -1436,16 +1469,55 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 				ModelUpdate: &sdk.WorkflowOnModelUpdate{
 					Models: []string{"MyModel"},
 				},
+				Schedule: []sdk.WorkflowOnSchedule{
+					{
+						Cron: "* * * * *",
+					},
+				},
 			},
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
 
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "main"}))
+	// INSERT OLD SCHEDULER DEFINITION
+	oldSche := sdk.V2WorkflowHook{
+		ProjectKey:     proj.Key,
+		VCSName:        "github",
+		RepositoryName: "sgu/mydefrepo",
+		EntityID:       e.ID,
+		WorkflowName:   e.Name,
+		Ref:            "refs/heads/master",
+		Commit:         "123456",
+		Type:           sdk.WorkflowHookTypeScheduler,
+		Data: sdk.V2WorkflowHookData{
+			Cron: "1 1 1 1 1",
+		},
+	}
+	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &oldSche))
+
+	srvs, err := services.LoadAllByType(context.TODO(), api.mustDB(), sdk.TypeHooks)
+	require.NoError(t, err)
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	// Setup a mock for all services called by the API
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer t.Cleanup(func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	})
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/v2/workflow/scheduler/github/sgu%2Fmydefrepo/"+e.Name, gomock.Any(), gomock.Any()).Times(1)
+
+	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/master", LatestCommit: "123456"}, srvs)
+	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, repoDef.Name, "push")
 	require.NoError(t, err)
-	require.Equal(t, 1, len(repoWebHooks))
+	require.Equal(t, 2, len(repoWebHooks)) // commit + HEAD
 
 	// Local workflow so worklow update hook must not be saved
 	_, err = workflow_v2.LoadHooksByWorkflowUpdated(context.TODO(), db, proj.Key, vcsServer.Name, repoDef.Name, e.Name, "123456")
@@ -1455,6 +1527,14 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{"MyModel"})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(hooks))
+
+	// Check scheduler config
+	scheds, err := workflow_v2.LoadHookSchedulerByWorkflow(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(scheds))
+	require.Equal(t, "sgu/mydefrepo", scheds[0].Data.RepositoryName)
+	require.Equal(t, "sgu/mydefrepo", scheds[0].RepositoryName)
+	require.Equal(t, "* * * * *", scheds[0].Data.Cron)
 }
 
 func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
@@ -1488,11 +1568,21 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 				ModelUpdate: &sdk.WorkflowOnModelUpdate{
 					Models: []string{"MyModel"},
 				},
+				Schedule: []sdk.WorkflowOnSchedule{
+					{
+						Cron: "0 12 * * 5",
+					},
+				},
 			},
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main", LatestCommit: "123456"}))
+
+	srvs, err := services.LoadAllByType(context.TODO(), api.mustDB(), sdk.TypeHooks)
+	require.NoError(t, err)
+
+	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main", LatestCommit: "123456"}, srvs)
+	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
@@ -1520,6 +1610,12 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 	hooks, err := workflow_v2.LoadHooksByModelUpdated(context.TODO(), db, "123456", []string{modelKey})
 	require.NoError(t, err)
 	require.Equal(t, 1, len(hooks))
+
+	scheds, err := workflow_v2.LoadHookSchedulerByWorkflow(context.TODO(), db, proj.Key, vcsServer.Name, "sgu/mydefrepo", e.Name)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(scheds))
+	require.Equal(t, "sgu/myapp", scheds[0].Data.RepositoryName)
+	require.Equal(t, "sgu/mydefrepo", scheds[0].RepositoryName)
 }
 
 func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
@@ -1557,7 +1653,8 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}))
+	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
+	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
@@ -1610,7 +1707,8 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}))
+	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
+	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
@@ -1659,11 +1757,17 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 				ModelUpdate: &sdk.WorkflowOnModelUpdate{
 					Models: []string{"MyModel"},
 				},
+				Schedule: []sdk.WorkflowOnSchedule{
+					{
+						Cron: "* * * * *",
+					},
+				},
 			},
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	require.NoError(t, manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}))
+	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
+	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
 	require.NoError(t, err)
@@ -1804,6 +1908,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -1811,10 +1916,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -1886,7 +1994,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -2037,6 +2145,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -2044,10 +2153,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	model := `
     name: docker-debian
@@ -2119,7 +2231,7 @@ GDFkaTe3nUJdYV4=
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
@@ -2250,6 +2362,7 @@ GDFkaTe3nUJdYV4=
 
 	// Mock VCS
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
 	// Setup a mock for all services called by the API
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -2257,10 +2370,13 @@ GDFkaTe3nUJdYV4=
 	services.NewClient = func(_ []sdk.Service) services.Client {
 		return servicesClients
 	}
-	defer t.Cleanup(func() {
+	defer func() {
 		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
 		services.NewClient = services.NewDefaultClient
-	})
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
 
 	workflow := `name: myworkflow
 from: mytemplate
@@ -2326,7 +2442,7 @@ parameters:
 			},
 		).MaxTimes(1)
 
-	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/branches/?branch=&default=true&noCache=true", gomock.Any(), gomock.Any(), gomock.Any()).Times(1).
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				contents := sdk.VCSBranch{
