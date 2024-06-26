@@ -46,7 +46,6 @@ type HealthStore interface {
 	DBSize() (int64, error)
 	Size(key string) (int64, error)
 	Keys(pattern string) ([]string, error)
-	Copy(src, dest string) error
 }
 
 type QueueStore interface {

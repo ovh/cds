@@ -105,11 +105,6 @@ func (s *RedisStore) Keys(pattern string) ([]string, error) {
 	return keys, nil
 }
 
-func (s *RedisStore) Copy(src, dest string) error {
-	cmd := s.Client.Do("COPY", src, dest)
-	return sdk.WrapError(cmd.Err(), "redis> copy failed from %s to %s", src, dest)
-}
-
 // Get a key from redis
 func (s *RedisStore) Get(key string, value interface{}) (bool, error) {
 	if s.Client == nil {

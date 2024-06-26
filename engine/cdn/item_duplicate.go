@@ -77,7 +77,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 
 				if sui.UnitID == s.Units.LogsBuffer().ID() {
 					// Copy logs in buffer
-					if err := s.Units.LogsBuffer().Copy(i.ID, newItem.ID); err != nil {
+					if err := s.Units.LogsBuffer().Copy(ctx, i.ID, newItem.ID); err != nil {
 						return err
 					}
 				}
