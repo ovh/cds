@@ -701,6 +701,9 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunSignature", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateRunSignatureWithoutContext(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)(), 50)
 	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHookSignature", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateWorkflowHookSignatureWithoutData(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
 	if err != nil {

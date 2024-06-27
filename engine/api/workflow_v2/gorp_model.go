@@ -38,9 +38,10 @@ type dbWorkflowHook struct {
 }
 
 func (r dbWorkflowHook) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{r.ID, r.Data, r.ProjectKey, r.VCSName, r.RepositoryName, r.EntityID, r.WorkflowName, r.Ref, r.Commit}
+	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSName, r.RepositoryName, r.EntityID, r.WorkflowName, r.Ref, r.Commit}
 	return gorpmapper.CanonicalForms{
-		"{{.ID}}{{.Data}}{{.ProjectKey}}{{.VCSName}}{{.RepositoryName}}{{.EntityID}}{{.WorkflowName}}{{.Ref}}{{.Commit}}",
+		"{{.ID}}{{.ProjectKey}}{{.VCSName}}{{.RepositoryName}}{{.EntityID}}{{.WorkflowName}}{{.Ref}}{{.Commit}}",
+		// TODO add data
 	}
 }
 
