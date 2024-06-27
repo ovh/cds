@@ -830,6 +830,7 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 	}
 
 	wg := new(sync.WaitGroup)
+<<<<<<< Updated upstream
 	wgErrors := new(sync.WaitGroup)
 	chanErr := make(chan error)
 	var lastError error
@@ -841,6 +842,9 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 			wgErrors.Done()
 		}
 	})
+=======
+	chanErr := make(chan error, len(runJobsToKeep))
+>>>>>>> Stashed changes
 
 	// Duplicate runJob to keep
 	for _, rj := range runJobsToKeep {
@@ -870,18 +874,18 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 			req := sdk.CDNDuplicateItemRequest{FromJob: rj.ID, ToJob: duplicatedRJ.ID}
 			_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
 			if err != nil || code >= 400 {
+				log.ErrorWithStackTrace(ctx, err)
 				chanErr <- fmt.Errorf("unable to duplicate cdn item for runjob %s. Code result %d: %v", rj.ID, code, err)
-				wgErrors.Add(1)
 			}
 		})
 	}
 	wg.Wait()
 	close(chanErr)
-	<-chanErr
-	wgErrors.Wait()
 
-	if lastError != nil {
-		return lastError
+	for err := range chanErr {
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
