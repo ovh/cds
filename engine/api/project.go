@@ -245,6 +245,10 @@ func (api *API) updateProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "updateProject> bad Project key %s/%s ", key, proj.Key)
 		}
 
+		if proj.WorkflowRetention <= 0 {
+			proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
+		}
+
 		// Check is project exist
 		p, errProj := project.Load(ctx, api.mustDB(), key, project.LoadOptions.WithIcon)
 		if errProj != nil {
@@ -485,7 +489,9 @@ func (api *API) postProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidProjectName, "project name must no be empty")
 		}
 
-		prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
+		if prj.WorkflowRetention <= 0 {
+			prj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
+		}
 
 		// Create a project within a transaction
 		tx, err := api.mustDB().Begin()
