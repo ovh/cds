@@ -24,3 +24,6 @@ package: $(TARGET_DIST) build
 
 clean:
 	rm -f $(DIST)/vscode-cds-*.vsix
+
+install:
+	code --install-extension $(DIST)/vscode-cds-*.vsix
