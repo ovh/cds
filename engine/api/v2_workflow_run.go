@@ -1220,8 +1220,8 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	}
 	wr.RunNumber = wrNumber
 
-	if proj.WorkflowRetention < 0 {
-		proj.WorkflowRetention = 90
+	if proj.WorkflowRetention <= 0 {
+		proj.WorkflowRetention = api.Config.WorkflowV2.WorkflowRunRetention
 	}
 	retention := time.Duration(proj.WorkflowRetention*24) * time.Hour
 	if wk.Retention > 0 {
