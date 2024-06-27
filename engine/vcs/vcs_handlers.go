@@ -599,7 +599,7 @@ func (s *Service) postStatusHandler() service.Handler {
 
 		buildStatus := sdk.VCSBuildStatus{}
 		if err := service.UnmarshalBody(r, &buildStatus); err != nil {
-			return sdk.WrapError(err, "Unable to read body")
+			return sdk.WrapError(err, "unable to read body")
 		}
 
 		vcsAuth, err := getVCSAuth(ctx)
@@ -614,11 +614,11 @@ func (s *Service) postStatusHandler() service.Handler {
 
 		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to get authorized client")
+			return sdk.WrapError(err, "unable to get authorized client")
 		}
 
 		if err := client.SetStatus(ctx, buildStatus); err != nil {
-			return sdk.WrapError(err, "Unable to set status on %s", name)
+			return sdk.WrapError(err, "unable to set status on %s", name)
 		}
 
 		return nil
