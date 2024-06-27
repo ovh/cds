@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -792,7 +793,7 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 			}
 			defer tx.Rollback() // nolint
 
-			if err := restartWorkflowRun(ctx, tx, wr, runJobsToKeep); err != nil {
+			if err := api.restartWorkflowRun(ctx, tx, wr, runJobsToKeep); err != nil {
 				return err
 			}
 
@@ -818,7 +819,7 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 		}
 }
 
-func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun, runJobsToKeep map[string]sdk.V2WorkflowRunJob) error {
+func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun, runJobsToKeep map[string]sdk.V2WorkflowRunJob) error {
 	wr.RunAttempt++
 	wr.Status = sdk.V2WorkflowRunStatusBuilding
 	wr.Contexts.CDS.RunAttempt = wr.RunAttempt
@@ -827,6 +828,19 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 	if err != nil {
 		return err
 	}
+
+	wg := new(sync.WaitGroup)
+	wgErrors := new(sync.WaitGroup)
+	chanErr := make(chan error)
+	var lastError error
+
+	api.GoRoutines.Exec(ctx, "duplicatioj-errors", func(ctx context.Context) {
+		for err := range chanErr {
+			log.Error(ctx, err.Error())
+			lastError = err
+			wgErrors.Done()
+		}
+	})
 
 	// Duplicate runJob to keep
 	for _, rj := range runJobsToKeep {
@@ -849,11 +863,25 @@ func restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, wr
 				return err
 			}
 		}
-		req := sdk.CDNDuplicateItemRequest{FromJob: rj.ID, ToJob: duplicatedRJ.ID}
-		_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
-		if err != nil || code >= 400 {
-			return fmt.Errorf("unable to duplicate cdn item for runjob %s. Code result %d: %v", rj.ID, code, err)
-		}
+
+		wg.Add(1)
+		api.GoRoutines.Exec(ctx, "CDNDuplicateItem-"+rj.ID, func(ctx context.Context) {
+			defer wg.Done()
+			req := sdk.CDNDuplicateItemRequest{FromJob: rj.ID, ToJob: duplicatedRJ.ID}
+			_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/item/duplicate", req, nil)
+			if err != nil || code >= 400 {
+				chanErr <- fmt.Errorf("unable to duplicate cdn item for runjob %s. Code result %d: %v", rj.ID, code, err)
+				wgErrors.Add(1)
+			}
+		})
+	}
+	wg.Wait()
+	close(chanErr)
+	<-chanErr
+	wgErrors.Wait()
+
+	if lastError != nil {
+		return lastError
 	}
 
 	if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
@@ -1023,7 +1051,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			}
 			defer tx.Rollback() // nolint
 
-			if err := restartWorkflowRun(ctx, tx, wr, runJobsToKeep); err != nil {
+			if err := api.restartWorkflowRun(ctx, tx, wr, runJobsToKeep); err != nil {
 				return err
 			}
 			wr.RunJobEvent = append(wr.RunJobEvent, sdk.V2WorkflowRunJobEvent{
