@@ -174,6 +174,11 @@ testcases:
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
         jobs:
+          ctx:
+            runs-on: "{{.worker_model}}"
+            steps:
+              - id: ctxstep
+                run: echo "${{ integrations.artifact_manager.config.build.info.prefix }}"
           Debian-Job:
             runs-on: "{{.worker_model}}"
             steps:
@@ -302,4 +307,6 @@ testcases:
   - name: Check that we have 1 run result of type release
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=release --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 1       
+      - result.systemoutjson ShouldHaveLength 1    
+  - name: Check integration context
+    script: "cat {{.cds_workflow}}-1-1-ctx-ctxstep && cat {{.cds_workflow}}-1-1-ctx-ctxstep | grep \"{{.rt_project}}/{{.rt_component}}\""  

@@ -87,8 +87,13 @@ func (p *rtPromotePlugin) perform(ctx context.Context, artifacts string, maturit
 
 	grpcplugins.Logf(&p.Common, "Total number of artifacts that will be promoted: %d", len(results.RunResults))
 
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
+	if err != nil {
+		return errors.Errorf("unable to parse given properties: %v", err)
+	}
+
 	for _, r := range results.RunResults {
-		if err := artifactorypluginslib.PromoteArtifactoryRunResult(ctx, &p.Common, r, maturity, props); err != nil {
+		if err := artifactorypluginslib.PromoteArtifactoryRunResult(ctx, &p.Common, *jobCtx, r, maturity, props); err != nil {
 			return err
 		}
 	}

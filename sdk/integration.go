@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -443,6 +444,34 @@ func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
 		}
 		config[k] = val
 	}
+}
+
+func (pi *ProjectIntegration) ToJobRunContextConfig() JobIntegratiosContextConfig {
+	result := make(map[string]interface{})
+
+	for key, configValue := range pi.Config {
+		parts := strings.Split(key, ".")
+		current := result
+
+		for i, part := range parts {
+			// Hack for artifactory
+			if pi.Model.Name == ArtifactoryIntegrationModelName && i == (len(parts)-2) && part == "token" {
+				current[part+"_"+parts[len(parts)-1]] = configValue.Value
+			} else if i == len(parts)-1 {
+				current[part] = configValue.Value
+			} else {
+				if _, exists := current[part]; !exists {
+					current[part] = make(map[string]interface{})
+				}
+				current = current[part].(map[string]interface{})
+			}
+		}
+	}
+	ctxConfig := JobIntegratiosContextConfig{}
+	for k, v := range result {
+		ctxConfig[k] = v
+	}
+	return ctxConfig
 }
 
 // HideSecrets replaces password with a placeholder

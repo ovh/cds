@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -103,14 +104,14 @@ func (m *WorkflowRunContext) Scan(src interface{}) error {
 
 type WorkflowRunJobsContext struct {
 	WorkflowRunContext
-	Jobs         JobsResultContext       `json:"jobs"`
-	Needs        NeedsContext            `json:"needs"`
-	Inputs       map[string]interface{}  `json:"inputs"`
-	Steps        StepsContext            `json:"steps"`
-	Matrix       map[string]string       `json:"matrix"`
-	Integrations *JobIntegrationsContext `json:"integrations,omitempty"`
-	Gate         map[string]interface{}  `json:"gate"`
-	Vars         map[string]interface{}  `json:"vars"`
+	Inputs       map[string]string        `json:"inputs,omitempty"`
+	Jobs         JobsResultContext        `json:"jobs"`
+	Needs        NeedsContext             `json:"needs"`
+	Steps        StepsContext             `json:"steps"`
+	Matrix       map[string]string        `json:"matrix"`
+	Integrations *JobIntegrationsContexts `json:"integrations,omitempty"`
+	Gate         map[string]interface{}   `json:"gate"`
+	Vars         map[string]interface{}   `json:"vars"`
 }
 
 type V2WorkflowRunData struct {
@@ -258,20 +259,49 @@ func (s V2WorkflowRunJobStatus) IsTerminated() bool {
 	return true
 }
 
-type JobIntegrationsContext struct {
-	ArtifactManager string `json:"artifact_manager,omitempty"`
-	Deployment      string `json:"deployment,omitempty"`
+type JobIntegrationsContexts struct {
+	ArtifactManager JobIntegrationsContext `json:"artifact_manager,omitempty"`
+	Deployment      JobIntegrationsContext `json:"deployment,omitempty"`
 }
 
-func (c JobIntegrationsContext) All() []string {
-	var res []string
-	if c.ArtifactManager != "" {
-		res = append(res, c.ArtifactManager)
+func (jics *JobIntegrationsContexts) All() []JobIntegrationsContext {
+	integs := make([]JobIntegrationsContext, 0)
+	if jics.ArtifactManager.Name != "" {
+		integs = append(integs, jics.ArtifactManager)
 	}
-	if c.Deployment != "" {
-		res = append(res, c.Deployment)
+	if jics.Deployment.Name != "" {
+		integs = append(integs, jics.Deployment)
 	}
-	return res
+	return integs
+}
+
+type JobIntegrationsContext struct {
+	Name      string                      `json:"name,omitempty"`
+	Config    JobIntegratiosContextConfig `json:"config,omitempty"`
+	ModelName string                      `json:"model_name,omitempty"`
+}
+
+type JobIntegratiosContextConfig map[string]interface{}
+
+func (j JobIntegrationsContext) Get(key string) string {
+	keySplit := strings.Split(key, ".")
+	if len(keySplit) == 1 {
+		return fmt.Sprintf("%s", j.Config[key])
+	}
+
+	if j.ModelName == ArtifactoryIntegrationModelName && key == ArtifactoryConfigTokenName {
+		keySplit = []string{"token_name"}
+	}
+
+	currentValue := j.Config
+	for _, k := range keySplit {
+		if itemMap, ok := currentValue[k].(map[string]interface{}); ok {
+			currentValue = itemMap
+		} else {
+			return fmt.Sprintf("%s", currentValue[k])
+		}
+	}
+	return ""
 }
 
 type JobStepsStatus map[string]JobStepStatus

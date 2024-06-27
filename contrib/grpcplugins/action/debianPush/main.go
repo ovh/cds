@@ -48,7 +48,6 @@ type debianPushOptions struct {
 	label               string
 	origin              string
 	jobContext          sdk.WorkflowRunJobsContext
-	integ               sdk.ProjectIntegration
 	integRepositoryName string
 }
 
@@ -105,24 +104,17 @@ func (p *debianPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		res.Details = fmt.Sprintf("Unable to retrieve job integration: %v", err)
 		return stream.Send(res)
 	}
-	if jobContext == nil || jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager == "" {
+	if jobContext == nil || jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager.Name == "" {
 		res.Status = sdk.StatusFail
 		res.Details = "Unable to retrieve artifact manager integration for the current job"
 		return stream.Send(res)
 	}
 	opts.jobContext = *jobContext
-	integ, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, jobContext.Integrations.ArtifactManager)
-	if err != nil {
-		res.Status = sdk.StatusFail
-		res.Details = fmt.Sprintf("Unable to reget integration %s: %v", jobContext.Integrations.ArtifactManager, err)
-		return stream.Send(res)
-	}
-	opts.integ = *integ
-	url := opts.integ.Config[sdk.ArtifactoryConfigURL].Value
+	url := opts.jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigURL)
 	if !strings.HasSuffix(url, "/") {
 		url += "/"
 	}
-	opts.integRepositoryName = integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-debian"
+	opts.integRepositoryName = jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-debian"
 	url += opts.integRepositoryName
 	opts.repositoryURL = url
 
@@ -219,8 +211,8 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 	debInfo := fmt.Sprintf("%s;%s;%s", distribLayout, componentLayout, archLayout)
 	cdsInfo := fmt.Sprintf("cds_version=%s;cds_workflow=%s", opts.jobContext.Git.SemverCurrent, opts.jobContext.CDS.Workflow)
 	buildInfo := fmt.Sprintf("build.name=%s/%s/%s;build.number=%d;build.timestamp=%d",
-		opts.integ.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value, opts.jobContext.CDS.ProjectKey, opts.jobContext.CDS.Workflow, opts.jobContext.CDS.RunNumber, time.Now().Unix())
-	maturity := opts.integ.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+		opts.jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigBuildInfoPrefix), opts.jobContext.CDS.ProjectKey, opts.jobContext.CDS.Workflow, opts.jobContext.CDS.RunNumber, time.Now().Unix())
+	maturity := opts.jobContext.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 	path := fmt.Sprintf("/pool/%s;%s;%s;%s;deb.release.origin=%s;deb.release.label=%s",
 		fileName, debInfo, cdsInfo, buildInfo, opts.origin, opts.label)
 
@@ -241,7 +233,7 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 	}
 
 	var res *grpcplugins.ArtifactoryUploadResult
-	res, d, err = grpcplugins.ArtifactoryItemUpload(ctx, &p.Common, response.RunResult, opts.integ, reader)
+	res, d, err = grpcplugins.ArtifactoryItemUpload(ctx, &p.Common, response.RunResult, opts.jobContext.Integrations.ArtifactManager, reader)
 	if err != nil {
 		grpcplugins.Error(&p.Common, err.Error())
 		return nil, err

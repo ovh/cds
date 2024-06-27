@@ -157,28 +157,6 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	}
 }
 
-func V2_integrationsHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		name := vars["name"]
-		if name == "" && len(r.URL.Query()["name"]) > 0 {
-			name = r.URL.Query()["name"][0] // This part if for unit test
-		}
-		if name == "" {
-			log.Error(ctx, "missing parameter 'name'")
-			writeError(w, r, sdk.ErrNotFound)
-			return
-		}
-		integ, err := wk.V2GetIntegrationByName(r.Context(), name)
-		if err != nil {
-			log.Error(ctx, "unable to get integration %q", name)
-			writeError(w, r, err)
-			return
-		}
-		writeJSON(w, integ, http.StatusOK)
-	}
-}
-
 func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 	b, _ := json.Marshal(data)
 	w.Header().Add("Content-Type", "application/json")

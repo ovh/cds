@@ -98,22 +98,6 @@ func Test_dockerPushPlugin_perform(t *testing.T) {
 		},
 	)
 
-	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "GET", URLPath: "/v2/integrations/artifactory-integration"}).DoAndReturn(
-		func(req *http.Request) (*http.Response, error) {
-			h := workerruntime.V2_integrationsHandler(context.TODO(), mockWorker)
-			rec := httptest.NewRecorder()
-			apiReq := http.Request{
-				Method: "POST",
-				URL:    &url.URL{},
-			}
-			q := apiReq.URL.Query()
-			q.Add("name", "artifactory-integration")
-			apiReq.URL.RawQuery = q.Encode()
-			h(rec, &apiReq)
-			return rec.Result(), nil
-		},
-	)
-
 	mockHTTPClient.EXPECT().Do(sdk.ReqHostMatcher{Host: rtHost}).DoAndReturn(
 		func(req *http.Request) (*http.Response, error) {
 			return http.DefaultClient.Do(req)
@@ -132,22 +116,39 @@ func Test_dockerPushPlugin_perform(t *testing.T) {
 		},
 	)
 
-	integ := sdk.ProjectIntegration{
-		ID:                 1,
-		ProjectID:          1,
-		Name:               "artifactory-integration",
-		IntegrationModelID: 1,
-		Model:              sdk.ArtifactoryIntegration,
-		Config:             sdk.ArtifactoryIntegration.DefaultConfig.Clone(),
+	jobCtx := sdk.WorkflowRunJobsContext{
+		Integrations: &sdk.JobIntegrationsContexts{
+			ArtifactManager: sdk.JobIntegrationsContext{
+				Name:   "artifactory-integration",
+				Config: map[string]interface{}{},
+			},
+		},
 	}
+	mprefix := map[string]interface{}{
+		"prefix": artifactoryRepoPrefix,
+	}
+	jobCtx.Integrations.ArtifactManager.Config["repo"] = mprefix
+	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigURL] = artifactoryURL
+	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigToken] = artifactoryToken
+	jobCtx.Integrations.ArtifactManager.Config[sdk.ArtifactoryConfigTokenName] = artifactoryUsername
 
-	integ.Config.SetValue(sdk.ArtifactoryConfigRepositoryPrefix, artifactoryRepoPrefix)
-	integ.Config.SetValue(sdk.ArtifactoryConfigURL, artifactoryURL)
-	integ.Config.SetValue(sdk.ArtifactoryConfigToken, artifactoryToken)
-	integ.Config.SetValue(sdk.ArtifactoryConfigTokenName, artifactoryUsername)
-
-	mockWorker.EXPECT().V2GetIntegrationByName(gomock.Any(), "artifactory-integration").Return(
-		&integ, nil,
+	mockWorker.EXPECT().V2GetJobContext(gomock.Any()).Return(
+		&jobCtx,
+	)
+	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "GET", URLPath: "/v2/context"}).DoAndReturn(
+		func(req *http.Request) (*http.Response, error) {
+			h := workerruntime.V2_contextHandler(context.TODO(), mockWorker)
+			rec := httptest.NewRecorder()
+			apiReq := http.Request{
+				Method: "GET",
+				URL:    &url.URL{},
+			}
+			q := apiReq.URL.Query()
+			q.Add("name", "artifactory-integration")
+			apiReq.URL.RawQuery = q.Encode()
+			h(rec, &apiReq)
+			return rec.Result(), nil
+		},
 	)
 
 	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "PUT", URLPath: "/v2/result"}).DoAndReturn(

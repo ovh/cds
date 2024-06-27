@@ -76,8 +76,8 @@ type CDSContext struct {
 	WorkflowTemplateSha              string            `json:"workflow_template_sha,omitempty"`
 	WorkflowTemplateVCSServer        string            `json:"workflow_template_vcs_server,omitempty"`
 	WorkflowTemplateRepository       string            `json:"workflow_template_repository,omitempty"`
-	WorkflowTemplateProjectKey       string            `json:"workflow_template_project_key"`
-	WorkflowTemplateParams           map[string]string `json:"workflow_template_params"`
+	WorkflowTemplateProjectKey       string            `json:"workflow_template_project_key,omitempty"`
+	WorkflowTemplateParams           map[string]string `json:"workflow_template_params,omitempty"`
 	WorkflowTemplateCommitWebURL     string            `json:"workflow_template_commit_web_url,omitempty"`
 	WorkflowTemplateRefWebURL        string            `json:"workflow_template_ref_web_url,omitempty"`
 	WorkflowTemplateRepositoryWebURL string            `json:"workflow_template_repository_web_url,omitempty"`

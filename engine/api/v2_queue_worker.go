@@ -308,8 +308,8 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}
 	}
 
-	contexts.Integrations = &sdk.JobIntegrationsContext{}                    // The context only contais name of integration by function (artifact_manager / deployment)
-	integs, err := integration.LoadIntegrationsByProjectID(ctx, db, proj.ID) // Here
+	contexts.Integrations = &sdk.JobIntegrationsContexts{}
+	integs, err := integration.LoadIntegrationsByProjectIDWithClearPassword(ctx, db, proj.ID) // Here
 	if err != nil {
 		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "unable to load integration")
 	}
@@ -329,15 +329,23 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		}
 		switch {
 		case integ.Model.ArtifactManager:
-			if contexts.Integrations.ArtifactManager != "" {
+			if contexts.Integrations.ArtifactManager.Name != "" {
 				return nil // If it's already set, it's by job integration
 			}
-			contexts.Integrations.ArtifactManager = integ.Name
+			contexts.Integrations.ArtifactManager = sdk.JobIntegrationsContext{
+				Name:      integ.Name,
+				Config:    integ.ToJobRunContextConfig(),
+				ModelName: integ.Model.Name,
+			}
 		case integ.Model.Deployment:
-			if contexts.Integrations.Deployment != "" {
+			if contexts.Integrations.Deployment.Name != "" {
 				return nil // If it's already set, it's by job integration
 			}
-			contexts.Integrations.Deployment = integ.Name
+			contexts.Integrations.ArtifactManager = sdk.JobIntegrationsContext{
+				Name:      integ.Name,
+				Config:    integ.ToJobRunContextConfig(),
+				ModelName: integ.Model.Name,
+			}
 		default:
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "integration %q not supported", i)
 		}
