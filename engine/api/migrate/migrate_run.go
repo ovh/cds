@@ -106,25 +106,26 @@ func MigrateRunRepositoryInfo(ctx context.Context, db *gorp.DbMap) error {
 	return nil
 }
 
-func MigrateRunSignatureWithoutContext(ctx context.Context, db *gorp.DbMap, limit int) error {
+func MigrateRunSignatureWithoutContext(ctx context.Context, db *gorp.DbMap) error {
+	limit := 50
+
 	offset := 0
 	for {
-		tx, err := db.Begin()
-		if err != nil {
-			return err
-		}
 		runs, err := workflow_v2.LoadRunsUnsafeWithPagination(ctx, db, offset, limit)
 		if err != nil {
 			return err
 		}
 		for _, r := range runs {
-
+			tx, err := db.Begin()
+			if err != nil {
+				return err
+			}
 			if err := workflow_v2.UpdateRun(ctx, tx, &r); err != nil {
 				return err
 			}
-		}
-		if err := tx.Commit(); err != nil {
-			return err
+			if err := tx.Commit(); err != nil {
+				return err
+			}
 		}
 		if len(runs) < limit {
 			break
