@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os/user"
 	"strings"
 
 	"github.com/fsamin/go-repo"
@@ -131,12 +132,21 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 			res.Details = err.Error()
 			return stream.Send(res)
 		}
-		if err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, "", key.Private); err != nil {
-			err := fmt.Errorf("unable to install sshkey on worker: %v", err)
+		u, err := user.Current()
+		if err != nil {
 			res.Status = sdk.StatusFail
-			res.Details = err.Error()
+			res.Details = fmt.Sprintf("unable to get current user: %v", err)
 			return stream.Send(res)
 		}
+		if u != nil && u.HomeDir != "" {
+			if err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, u.HomeDir+"/.ssh/id_rsa", key.Private, gitURL); err != nil {
+				err := fmt.Errorf("unable to install sshkey on worker: %v", err)
+				res.Status = sdk.StatusFail
+				res.Details = err.Error()
+				return stream.Send(res)
+			}
+		}
+
 	}
 
 	return stream.Send(res)
