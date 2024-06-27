@@ -834,7 +834,7 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 	chanErr := make(chan error)
 	var lastError error
 
-	api.GoRoutines.Exec(ctx, "duplicatioj-errors", func(ctx context.Context) {
+	api.GoRoutines.Exec(ctx, "duplication-errors", func(ctx context.Context) {
 		for err := range chanErr {
 			log.Error(ctx, err.Error())
 			lastError = err
