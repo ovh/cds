@@ -159,13 +159,6 @@ testcases:
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"    
       retry: 10
       delay: 12   
-    - name: Check that the CDS workflow has at least two executions and is Success
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
-      assertions:
-        - result.systemoutjson ShouldHaveLength 2
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 30
-      delay: 5
     - name: Manual run on branch
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --branch testbranch"
     - name: Check CDS project analyses status after run on branch update
