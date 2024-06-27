@@ -830,21 +830,7 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 	}
 
 	wg := new(sync.WaitGroup)
-<<<<<<< Updated upstream
-	wgErrors := new(sync.WaitGroup)
-	chanErr := make(chan error)
-	var lastError error
-
-	api.GoRoutines.Exec(ctx, "duplication-errors", func(ctx context.Context) {
-		for err := range chanErr {
-			log.Error(ctx, err.Error())
-			lastError = err
-			wgErrors.Done()
-		}
-	})
-=======
 	chanErr := make(chan error, len(runJobsToKeep))
->>>>>>> Stashed changes
 
 	// Duplicate runJob to keep
 	for _, rj := range runJobsToKeep {
