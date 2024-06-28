@@ -5,7 +5,9 @@
         <div class="graph">
             <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
                 <nz-page-header-title>
-                    {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}
+                    <a [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.vcs_server, 'repository', workflowRun.repository, 'workflow', workflowRun.workflow_name]"
+                        [queryParams]="{branch: workflowRun.contexts.git.ref_name}">
+                        {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}</a>&nbsp;
                     #{{workflowRun.run_number}}
                     <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
                         (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">

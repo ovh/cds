@@ -7,11 +7,13 @@ input:
   git_password: ""
   files: ""
   gpg_key_id: ""
+  branch: "master"
 
 steps:
   # Git clone the repo
   - script: mkdir -p /tmp/repos/ && rm -rf /tmp/repos/{{.input.git_repo}}
   - script: git clone http://{{.input.git_user}}:{{.input.git_password}}@localhost:3000/{{.input.git_user}}/{{.input.git_repo}}.git /tmp/repos/{{.input.git_repo}}
+  - script: cd /tmp/repos/{{.input.git_repo}} && git checkout -B {{.input.branch}}
   - script: >
       mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/workflows
       mkdir -p /tmp/repos/{{.input.git_repo}}/.cds/actions
@@ -25,6 +27,6 @@ steps:
   - script: cd /tmp/repos/{{.input.git_repo}} && git config user.name {{.input.git_user}} && git config user.email {{.input.git_email}}
   - script: cd /tmp/repos/{{.input.git_repo}} && git add --all
   - script: cd /tmp/repos/{{.input.git_repo}} && git commit --gpg-sign={{.input.gpg_key_id}} -m "add file and sign" --author "{{.input.git_user}} <{{.input.git_email}}>"
-  - script: cd /tmp/repos/{{.input.git_repo}} && git push
+  - script: cd /tmp/repos/{{.input.git_repo}} && git push -u origin {{.input.branch}}
 
 output: {}

@@ -27,13 +27,13 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 
 		for _, wh := range hre.WorkflowHooks {
 			switch wh.Type {
-			case sdk.WorkflowHookTypeRepository:
-				changesets = true
-				semver = true
-				signinkey = true
 			case sdk.WorkflowHookTypeWorkflow:
 				signinkey = true
 			case sdk.WorkflowHookTypeWorkerModel:
+				signinkey = true
+			default:
+				changesets = true
+				semver = true
 				signinkey = true
 			}
 		}
@@ -41,14 +41,21 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		if strings.HasPrefix(hre.ExtractData.Ref, sdk.GitRefTagPrefix) {
 			changesets = false
 		}
+		vcs := hre.VCSServerName
+		repo := hre.RepositoryName
+
+		// For scheduler we need to take target repository information
+		if hre.EventName == sdk.WorkflowHookTypeScheduler {
+			vcs = hre.ExtractData.Scheduler.TargetVCS
+			repo = hre.ExtractData.Scheduler.TargetRepo
+		}
 
 		ope, err := s.Client.RetrieveHookEventSigningKey(ctx, sdk.HookRetrieveSignKeyRequest{
 			HookEventUUID:  hre.UUID,
 			HookEventKey:   cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
 			ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
-			VCSServerName:  hre.VCSServerName,
-			VCSServerType:  hre.VCSServerType,
-			RepositoryName: hre.RepositoryName,
+			VCSServerName:  vcs,
+			RepositoryName: repo,
 			Commit:         hre.ExtractData.Commit,
 			Ref:            hre.ExtractData.Ref,
 			GetSigninKey:   signinkey,
@@ -61,10 +68,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		hre.SigningKeyOperationStatus = ope.Status
 		hre.SigningKeyOperation = ope.UUID
 
-		// For repository webhook, signin operation == gitinfo operation
+		// For repository webhook and scheduler, signin operation == gitinfo operation
 		for i := range hre.WorkflowHooks {
 			wh := &hre.WorkflowHooks[i]
-			if wh.Type == sdk.WorkflowHookTypeRepository {
+			if wh.Type == sdk.WorkflowHookTypeRepository || wh.Type == sdk.WorkflowHookTypeScheduler {
 				wh.OperationUUID = ope.UUID
 				wh.OperationStatus = ope.Status
 			}

@@ -19,15 +19,11 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 	ctx = workerruntime.SetRunJobID(ctx, wk.currentJobV2.runJob.ID)
 	var (
 		runResult = req.RunResult
-		integ     *sdk.ProjectIntegration
+		integ     *sdk.JobIntegrationsContext
 	)
 
-	if wk.currentJobV2.runJobContext.Integrations.ArtifactManager != "" {
-		var err error
-		integ, err = wk.V2GetIntegrationByName(ctx, wk.currentJobV2.runJobContext.Integrations.ArtifactManager)
-		if err != nil {
-			return nil, sdk.WrapError(err, "unable to find integration %q", wk.currentJobV2.runJobContext.Integrations.ArtifactManager)
-		}
+	if wk.currentJobV2.runJobContext.Integrations.ArtifactManager.Name != "" {
+		integ = &wk.currentJobV2.runJobContext.Integrations.ArtifactManager
 	}
 
 	// Create the run result on API side
@@ -237,19 +233,4 @@ func (wk *CurrentWorker) AddStepOutput(ctx context.Context, outputName string, o
 	}
 	stepStatus.Outputs[outputName] = outputValue
 	wk.currentJobV2.runJob.StepsStatus[wk.currentJobV2.currentStepName] = stepStatus
-}
-
-func (wk *CurrentWorker) V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error) {
-	integ, has := wk.currentJobV2.integrations[name]
-	if has {
-		return &integ, nil
-	}
-
-	integFromAPI, err := wk.clientV2.ProjectIntegrationGet(wk.currentJobV2.runJob.ProjectKey, name, true)
-	if err != nil {
-		return nil, err
-	}
-
-	wk.currentJobV2.integrations[name] = integFromAPI
-	return &integFromAPI, nil
 }

@@ -78,10 +78,6 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 		delayRetry = 10
 	}
 
-	jobRun, err := grpcplugins.GetJobRun(ctx, &p.Common)
-	if err != nil {
-		return fail(p, err.Error())
-	}
 	contexts, err := grpcplugins.GetJobContext(ctx, &p.Common)
 	if err != nil {
 		return fail(p, err.Error())
@@ -92,30 +88,16 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 		return fail(p, err.Error())
 	}
 
-	var deploymentIntgration *sdk.ProjectIntegration
-	for _, integrationName := range jobRun.Job.Integrations {
-		integ, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, integrationName)
-		if err != nil {
-			return fail(p, err.Error())
-		}
-		if integ.Model.Deployment {
-			deploymentIntgration = integ
-			break
-		}
-	}
-
-	if deploymentIntgration == nil {
+	if contexts.Integrations == nil || contexts.Integrations.Deployment.Name == "" {
 		return fail(p, "unable to retrieve a deployment integration")
 	}
-	if deploymentIntgration.Model.Name != "Arsenal" {
-		return fail(p, "deployment integration is not Arsenal")
-	}
+	deploymentIntgration := contexts.Integrations.Deployment
 
-	host := deploymentIntgration.Config["host"]
-	if host.Value == "" {
+	host := deploymentIntgration.Get("host")
+	if host == "" {
 		return fail(p, "missing arsenal host")
 	}
-	arsenalClient := arsenal.NewClient(host.Value, token)
+	arsenalClient := arsenal.NewClient(host, token)
 	altConfig, err := createAlternative(ctx, &p.Common, arsenalClient, alternativeConfig, *contexts, mapContexts)
 	if err != nil {
 		return fail(p, err.Error())
@@ -145,7 +127,7 @@ func (p *deployArsenalPlugin) Stream(q *actionplugin.ActionQuery, stream actionp
 		if retry > 0 {
 			time.Sleep(time.Duration(10) * time.Second)
 		}
-		grpcplugins.Logf(&p.Common, "Deploying (%s) on Arsenal at %s...\n", deployReq, host.Value)
+		grpcplugins.Logf(&p.Common, "Deploying (%s) on Arsenal at %s...\n", deployReq, host)
 		deploymentResult, err = arsenalClient.Deploy(deployReq)
 		if err != nil {
 			if _, ok := err.(*arsenal.RequestError); ok {

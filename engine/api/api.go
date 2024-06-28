@@ -248,6 +248,7 @@ type Configuration struct {
 	WorkflowV2 struct {
 		JobSchedulingTimeout   int64 `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
 		RunRetentionScheduling int64 `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"RunRetentionScheduling" default:"15"`
+		WorkflowRunRetention   int64 `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
 	Entity struct {
 		RoutineDelay int64  `toml:"routineDelay" comment:"Delay in minutes between to run of entities purge" json:"routineDelay" default:"15"`
@@ -516,6 +517,10 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.WorkflowV2.RunRetentionScheduling = 15
 	}
 
+	if a.Config.WorkflowV2.WorkflowRunRetention <= 0 {
+		a.Config.WorkflowV2.WorkflowRunRetention = 90
+	}
+
 	// Checking downloadable binaries
 	if err := download.Init(ctx, a.getDownloadConf()); err != nil {
 		return sdk.WrapError(err, "unable to initialize downloadable binaries")
@@ -697,6 +702,12 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	migrate.Add(ctx, sdk.Migration{Name: "MigrateHeadEntity", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateHeadEntity(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateRunSignature", Release: "0.53.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateRunSignatureWithoutContext(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: "MigrateHookSignature", Release: "0.53.0", Blocker: true, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateWorkflowHookSignatureWithoutData(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())

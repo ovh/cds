@@ -166,37 +166,41 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		hre.ProcessingTimestamp = time.Now().UnixNano()
 		hre.LastError = ""
 		hre.NbErrors = 0
-		if hre.EventName == sdk.RepoEventPush || hre.EventName == sdk.WorkflowHookManual {
+		switch hre.EventName {
+		case sdk.RepoEventPush, sdk.WorkflowHookManual:
 			// analyze have to be trigger only on push event
 			hre.Status = sdk.HookEventStatusAnalysis
 			if err := s.triggerAnalyses(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger analyses")
 			}
-		} else {
+		default:
+			// Retrieve workflow to trigger
 			hre.Status = sdk.HookEventStatusWorkflowHooks
 			if err := s.triggerGetWorkflowHooks(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger workflow hooks")
 			}
 		}
-
 		// Check if all analysis are ended
 	case sdk.HookEventStatusAnalysis:
 		if err := s.triggerAnalyses(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger analyses")
 		}
-		// Check if all workflow triggered has been sent
+		// Retrieve workflow hooks
 	case sdk.HookEventStatusWorkflowHooks:
 		if err := s.triggerGetWorkflowHooks(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger workflow hooks")
 		}
+		// Retrieve signing key if we don't have it
 	case sdk.HookEventStatusSignKey:
 		if err := s.triggerGetSigningKey(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to get signing key")
 		}
+		// Compute git info ( semver )
 	case sdk.HookEventStatusGitInfo:
 		if err := s.triggerGetGitInfo(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to get signing key")
 		}
+		// Trigger workflows
 	case sdk.HookEventStatusWorkflow:
 		if err := s.triggerWorkflows(ctx, hre); err != nil {
 			return sdk.WrapError(err, "unable to trigger workflow")

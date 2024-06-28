@@ -388,6 +388,20 @@ func LoadRunsUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowR
 	return runs, nil
 }
 
+func LoadRunsUnsafeWithPagination(ctx context.Context, db gorp.SqlExecutor, offset, limit int) ([]sdk.V2WorkflowRun, error) {
+	query := gorpmapping.NewQuery(`SELECT * from v2_workflow_run ORDER BY started OFFSET $1 LIMIT $2`).Args(offset, limit)
+	var dbWkfRuns []dbWorkflowRun
+	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfRuns); err != nil {
+		return nil, err
+	}
+	runs := make([]sdk.V2WorkflowRun, 0, len(dbWkfRuns))
+	for _, dbWkfRun := range dbWkfRuns {
+		runs = append(runs, dbWkfRun.V2WorkflowRun)
+	}
+
+	return runs, nil
+}
+
 func LoadRunIDsToDelete(ctx context.Context, db gorp.SqlExecutor) ([]string, error) {
 	query := `SELECT id from v2_workflow_run WHERE retention_date < CURRENT_DATE ORDER BY started ASC LIMIT 500`
 	var ids []string

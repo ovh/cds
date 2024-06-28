@@ -36,7 +36,7 @@
                         <th>Error</th>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let h of hooksTable.data" (click)="displayDetail(h)">
+                        <tr *ngFor="let h of hooksTable.data" (click)="displayDetail(h)" class="pointing">
                             <td>
                                 <app-status-icon [status]="h.status" nz-tooltip="{{h.last_error}}"></app-status-icon>
                             </td>
@@ -147,7 +147,12 @@
             </div>
             <div class="section">
                 <h3>Analysis</h3>
-                <nz-row>
+                <nz-row *ngIf="!selectedAnalysis">
+                    <nz-col nzSpan="24">
+                        <nz-alert [nzMessage]="'No analysis'" nzType="info"></nz-alert>
+                    </nz-col>
+                </nz-row>
+                <nz-row *ngIf="selectedAnalysis">
                     <nz-col nzSpan="12">
                         <div class="field">
                             <div class="label">Status:</div>

@@ -3,10 +3,11 @@ package api
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
-	"testing"
 
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/sdk"
@@ -30,6 +31,8 @@ func TestHasRoleWorkflowExecute(t *testing.T) {
 	targetWorkflow := "my-workflow"
 
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, proj.ID, "myvcs", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcs.ID, "my/repo")
 
 	tests := []struct {
 		name   string
@@ -42,7 +45,7 @@ func TestHasRoleWorkflowExecute(t *testing.T) {
 workflows:
 - role: trigger
   users: [%s]
-  workflows: [my-workflow]
+  workflows: ["**/my-workflow"]
   project: %s`, user1.Username, proj.Key),
 			result: true,
 		},
@@ -53,7 +56,7 @@ workflows:
 workflows:
 - role: trigger
   groups: [%s]
-  workflows: [my-workflow]
+  workflows: [myvcs/**/my-workflow]
   project: %s`, g.Name, proj.Key),
 			result: true,
 		},
@@ -90,6 +93,16 @@ workflows:
   project: %s`, user2.Username, proj.Key),
 			result: false,
 		},
+		{
+			name: "user has nodirect right - missing vcs and repo",
+			rabc: fmt.Sprintf(`name: test-perm
+workflows:
+- role: trigger
+  users: [%s]
+  workflows: [my-workflow]
+  project: %s`, user1.Username, proj.Key),
+			result: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -104,7 +117,12 @@ workflows:
 			require.NoError(t, rbacLoader.FillRBACWithIDs(context.TODO(), &r))
 			require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
-			err = api.workflowTrigger(context.TODO(), &auth, api.Cache, api.mustDB(), map[string]string{"projectKey": proj.Key, "workflowName": targetWorkflow})
+			err = api.workflowTrigger(context.TODO(), &auth, api.Cache, api.mustDB(), map[string]string{
+				"projectKey":           proj.Key,
+				"vcsIdentifier":        vcs.Name,
+				"repositoryIdentifier": repo.Name,
+				"workflowName":         targetWorkflow,
+			})
 			if tt.result {
 				require.NoError(t, err)
 			} else {

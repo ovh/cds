@@ -32,7 +32,7 @@ export class Entity {
 
 export class EntityFullName {
     name: string;
-    branch: string;
+    ref: string;
     vcs_name: string;
     repo_name: string;
     project_key: string;

@@ -9,21 +9,17 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	"github.com/pkg/errors"
 	"github.com/srerickson/checksum"
 
-	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/artifact_manager"
 	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
@@ -222,32 +218,6 @@ func UpdateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 		return nil, errors.Wrap(err, "unable to parse run result response")
 	}
 	return &response, nil
-}
-
-func GetIntegrationByName(ctx context.Context, c *actionplugin.Common, name string) (*sdk.ProjectIntegration, error) {
-	req, err := c.NewRequest(ctx, http.MethodGet, fmt.Sprintf("/v2/integrations/%s", url.QueryEscape(name)), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.DoRequest(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get integration")
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	if resp.StatusCode >= 300 {
-		return nil, errors.Errorf("unable to get integration (status code %d) %v", resp.StatusCode, string(body))
-	}
-
-	var response sdk.ProjectIntegration
-	if err := sdk.JSONUnmarshal(body, &response); err != nil {
-		return nil, errors.Wrap(err, "unable to parse response")
-	}
-	return &response, nil
-
 }
 
 func GetJobRun(ctx context.Context, c *actionplugin.Common) (*sdk.V2WorkflowRunJob, error) {
@@ -467,84 +437,7 @@ func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi Artifac
 	runResult.ArtifactManagerMetadata.Set("localRepository", localRepository)
 }
 
-func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, r sdk.V2WorkflowRunResult, promotionType sdk.WorkflowRunResultPromotionType, maturity string, props *utils.Properties) error {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
-	defer cancel()
-
-	integration, err := GetIntegrationByName(ctx, c, *r.ArtifactManagerIntegrationName)
-	if err != nil {
-		return err
-	}
-
-	rtConfig := ArtifactoryConfig{
-		URL:   integration.Config[sdk.ArtifactoryConfigURL].Value,
-		Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
-	}
-
-	artifactClient, err := artifact_manager.NewClient("artifactory", rtConfig.URL, rtConfig.Token)
-	if err != nil {
-		return errors.Errorf("Failed to create artifactory client: %v", err)
-	}
-
-	if r.DataSync == nil {
-		r.DataSync = &sdk.WorkflowRunResultSync{}
-	}
-
-	latestPromotion := r.DataSync.LatestPromotionOrRelease()
-	currentMaturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-	if latestPromotion != nil {
-		currentMaturity = latestPromotion.ToMaturity
-	}
-
-	if maturity == "" {
-		maturity = integration.Config[sdk.ArtifactoryConfigPromotionHighMaturity].Value
-	}
-
-	newPromotion := sdk.WorkflowRunResultPromotion{
-		Date:         time.Now(),
-		FromMaturity: currentMaturity,
-		ToMaturity:   maturity,
-	}
-
-	data := art.FileToPromote{
-		RepoType: r.ArtifactManagerMetadata.Get("type"),
-		RepoName: r.ArtifactManagerMetadata.Get("repository"),
-		Name:     r.ArtifactManagerMetadata.Get("name"),
-		Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"), // strip the first "/" and remove "/manifest.json"
-	}
-
-	switch r.Type {
-	case "docker":
-		if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
-			return errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
-		}
-	default:
-		if err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
-			return errors.Errorf("unable to promote file: %s: %v", data.Name, err)
-		}
-	}
-
-	switch promotionType {
-	case sdk.WorkflowRunResultPromotionTypePromote:
-		r.Status = sdk.V2WorkflowRunResultStatusPromoted
-		r.DataSync.Promotions = append(r.DataSync.Promotions, newPromotion)
-	case sdk.WorkflowRunResultPromotionTypeRelease:
-		r.Status = sdk.V2WorkflowRunResultStatusReleased
-		r.DataSync.Releases = append(r.DataSync.Releases, newPromotion)
-	}
-
-	// Update metadata
-	r.ArtifactManagerMetadata.Set("localRepository", r.ArtifactManagerMetadata.Get("repository")+"-"+newPromotion.ToMaturity)
-	r.ArtifactManagerMetadata.Set("maturity", newPromotion.ToMaturity)
-
-	if _, err := UpdateRunResult(ctx, c, &workerruntime.V2RunResultRequest{RunResult: &r}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integrationCache *IntegrationCache, runresultReq *workerruntime.V2RunResultRequest, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) (*workerruntime.V2UpdateResultResponse, error) {
+func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) (*workerruntime.V2UpdateResultResponse, error) {
 	response, err := CreateRunResult(ctx, actplugin, runresultReq)
 	if err != nil {
 		Error(actplugin, err.Error())
@@ -585,37 +478,21 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 
 	case response.RunResult.ArtifactManagerIntegrationName != nil:
 		// Get integration from the local cache, or from the worker
-		integrationCache.lockCacheIntegrations.Lock()
-		integ, has := integrationCache.cacheIntegrations[*response.RunResult.ArtifactManagerIntegrationName]
-		if !has {
-			integFromWorker, err := GetIntegrationByName(ctx, actplugin, *response.RunResult.ArtifactManagerIntegrationName)
-			if err != nil {
-				Errorf(actplugin, err.Error())
-				return nil, err
-			}
-			integrationCache.cacheIntegrations[*response.RunResult.ArtifactManagerIntegrationName] = *integFromWorker
-			integ = *integFromWorker
-		}
-		integrationCache.lockCacheIntegrations.Unlock()
-		jobRun, err := GetJobRun(ctx, actplugin)
-		if err != nil {
-			Error(actplugin, err.Error())
+		if jobContext.Integrations == nil || jobContext.Integrations.ArtifactManager.Name == "" {
+			err := errors.New("unable to find artifactory integration")
+			Errorf(actplugin, err.Error())
 			return nil, err
 		}
 
-		jobContext, err := GetJobContext(ctx, actplugin)
-		if err != nil {
-			Error(actplugin, err.Error())
-			return nil, err
-		}
+		integ := jobContext.Integrations.ArtifactManager
 
-		repository := integ.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-cds"
-		maturity := integ.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+		repository := integ.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-cds"
+		maturity := integ.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 		path := filepath.Join(
 			strings.ToLower(jobContext.Git.Server),
 			strings.ToLower(jobContext.Git.Repository),
-			jobRun.ProjectKey,
-			jobRun.WorkflowName,
+			jobContext.CDS.ProjectKey,
+			jobContext.CDS.Workflow,
 			jobContext.Git.SemverCurrent)
 
 		response.RunResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
@@ -634,7 +511,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, integr
 			return nil, fmt.Errorf("unable to cast reader")
 		}
 
-		Logf(actplugin, "  Artifactory URL: %s", integ.Config[sdk.ArtifactoryConfigURL].Value)
+		Logf(actplugin, "  Artifactory URL: %s", integ.Get(sdk.ArtifactoryConfigURL))
 		Logf(actplugin, "  Artifactory repository: %s", repository)
 
 		var res *ArtifactoryUploadResult
@@ -701,14 +578,14 @@ type ArtifactoryUploadResult struct {
 	URI string `json:"uri"`
 }
 
-func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, runResult *sdk.V2WorkflowRunResult, integ sdk.ProjectIntegration, reader io.ReadSeeker) (*ArtifactoryUploadResult, time.Duration, error) {
+func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, runResult *sdk.V2WorkflowRunResult, integ sdk.JobIntegrationsContext, reader io.ReadSeeker) (*ArtifactoryUploadResult, time.Duration, error) {
 	t0 := time.Now()
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
-	rtURL := integ.Config[sdk.ArtifactoryConfigURL].Value
-	rtToken := integ.Config[sdk.ArtifactoryConfigToken].Value
+	rtURL := integ.Get(sdk.ArtifactoryConfigURL)
+	rtToken := integ.Get(sdk.ArtifactoryConfigToken)
 
 	repo := runResult.ArtifactManagerMetadata.Get("repository")
 	path := runResult.ArtifactManagerMetadata.Get("path")

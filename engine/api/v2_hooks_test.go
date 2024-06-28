@@ -35,7 +35,6 @@ func TestPostRetrieveEventUserHandler(t *testing.T) {
 		VCSServerName:  vcs.Name,
 		RepositoryName: "myrepo",
 		Commit:         "123",
-		VCSServerType:  "github",
 		SignKey:        "AZERTY",
 	}
 
@@ -113,7 +112,6 @@ func TestPostHookEventRetrieveSignKeyHandler(t *testing.T) {
 		Commit:         "123",
 		Ref:            "refs/heads/master",
 		HookEventUUID:  "123456",
-		VCSServerType:  "github",
 	}
 	uri := api.Router.GetRouteV2("POST", api.postHookEventRetrieveSignKeyHandler, nil)
 	test.NotEmpty(t, uri)

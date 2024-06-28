@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gorhill/cronexpr"
 	"github.com/rockbears/yaml"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -14,6 +15,7 @@ const (
 	WorkflowHookTypeWorkerModel = "WorkerModelUpdate"
 	WorkflowHookTypeWorkflow    = "WorkflowUpdate"
 	WorkflowHookTypeManual      = "Manual"
+	WorkflowHookTypeScheduler   = "Scheduler"
 )
 
 type V2Workflow struct {
@@ -46,6 +48,12 @@ type WorkflowOn struct {
 	PullRequestComment *WorkflowOnPullRequestComment `json:"pull-request-comment,omitempty"`
 	ModelUpdate        *WorkflowOnModelUpdate        `json:"model-update,omitempty"`
 	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow-update,omitempty"`
+	Schedule           []WorkflowOnSchedule          `json:"schedule,omitempty"`
+}
+
+type WorkflowOnSchedule struct {
+	Cron     string `json:"cron"`
+	Timezone string `json:"timezone"`
 }
 
 type WorkflowOnPush struct {
@@ -331,6 +339,10 @@ type V2WorkflowHook struct {
 	Data           V2WorkflowHookData `json:"data" db:"data"`
 }
 
+type V2WorkflowScheduleEvent struct {
+	Schedule string `json:"schedule"`
+}
+
 type V2WorkflowHookData struct {
 	VCSServer       string   `json:"vcs_server,omitempty"`
 	RepositoryName  string   `json:"repository_name,omitempty"`
@@ -342,6 +354,8 @@ type V2WorkflowHookData struct {
 	TypesFilter     []string `json:"types_filter,omitempty"`
 	TargetBranch    string   `json:"target_branch,omitempty"`
 	TargetTag       string   `json:"target_tag,omitempty"`
+	Cron            string   `json:"cron,omitempty"`
+	CronTimeZone    string   `json:"cron_timezone,omitempty"`
 }
 
 func (w V2WorkflowHookData) Value() (driver.Value, error) {
@@ -398,9 +412,17 @@ func (w V2Workflow) Lint() []error {
 	}
 	documentLoader := gojsonschema.NewStringLoader(string(modelJson))
 
+	if w.On != nil {
+		for _, s := range w.On.Schedule {
+			if _, err := cronexpr.Parse(s.Cron); err != nil {
+				errs = append(errs, NewErrorFrom(err, "unable to parse cron expression: %s", s.Cron))
+			}
+		}
+	}
+
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to validate workflow")}
+		return []error{NewErrorFrom(ErrInvalidData, "unable to validate workflow: "+err.Error())}
 	}
 
 	for _, e := range result.Errors() {

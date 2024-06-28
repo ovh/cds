@@ -51,6 +51,7 @@ func RunScript(ctx context.Context, actPlug *actionplugin.Common, chanRes chan *
 	cmd.Dir = script.dir
 	cmd.Stdout = pw
 	cmd.Stderr = pw
+	cmd.Env = os.Environ()
 
 	workerpath, err := osext.Executable()
 	if err != nil {

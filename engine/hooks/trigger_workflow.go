@@ -24,7 +24,6 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		r, err := s.Client.RetrieveHookEventUser(ctx, sdk.HookRetrieveUserRequest{
 			ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
 			VCSServerName:  hre.VCSServerName,
-			VCSServerType:  hre.VCSServerType,
 			RepositoryName: hre.RepositoryName,
 			Commit:         hre.ExtractData.Commit,
 			SignKey:        hre.SignKey,
@@ -117,6 +116,9 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 						runRequest.EntityUpdated = wh.ModelFullName
 						runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
 						runRequest.Sha = wh.TargetCommit
+					case sdk.WorkflowHookTypeScheduler:
+						runRequest.Cron = hre.ExtractData.Scheduler.Cron
+						runRequest.CronTimezone = hre.ExtractData.Scheduler.Timezone
 					}
 
 					wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

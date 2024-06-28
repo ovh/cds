@@ -87,7 +87,7 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 		}
 
 		// Check commit
-		if sha != "" {
+		if sha != "" && sha != "HEAD" {
 			currentCommit, err := clonedRepo.LatestCommit(ctx)
 			if err != nil {
 				res.Status = sdk.StatusFail

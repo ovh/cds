@@ -98,11 +98,8 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
     }
 
     displayDetail(h: RepositoryHookEvent): void {
-        let a = h.analyses.filter(a => a.project_key === this.project.key);
-        if (h.workflows) {
-
-        }
-        if (a.length === 1) {
+        let a = h?.analyses?.filter(a => a.project_key === this.project.key);
+        if (a?.length === 1) {
             this._projectService.getAnalysis(this.project.key, h.vcs_server_name, h.repository_name, a[0].analyze_id)
                 .pipe(finalize(() => {
                     this.selectedHookEvent = h;

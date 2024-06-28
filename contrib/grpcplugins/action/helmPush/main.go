@@ -173,16 +173,17 @@ func (p *helmPushPlugin) perform(
 
 	result := response.RunResult
 
+	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
+	if err != nil {
+		return nil, time.Since(t0), err
+	}
+
 	switch {
 	case result.ArtifactManagerIntegrationName != nil:
-		integration, err := grpcplugins.GetIntegrationByName(ctx, &p.Common, *result.ArtifactManagerIntegrationName)
-		if err != nil {
-			return nil, time.Since(t0), err
-		}
-
+		integration := jobCtx.Integrations.ArtifactManager
 		rtConfig := grpcplugins.ArtifactoryConfig{
-			URL:   integration.Config[sdk.ArtifactoryConfigURL].Value,
-			Token: integration.Config[sdk.ArtifactoryConfigToken].Value,
+			URL:   integration.Get(sdk.ArtifactoryConfigURL),
+			Token: integration.Get(sdk.ArtifactoryConfigToken),
 		}
 
 		if !strings.HasSuffix(rtConfig.URL, "/") {
@@ -252,8 +253,8 @@ func (p *helmPushPlugin) pushChartMuseum(ctx context.Context, result *sdk.V2Work
 	return nil
 }
 
-func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2WorkflowRunResult, chart *helm.Chart, chartPackagePath string, integration *sdk.ProjectIntegration, rtConfig grpcplugins.ArtifactoryConfig) error {
-	repository := integration.Config[sdk.ArtifactoryConfigRepositoryPrefix].Value + "-helm"
+func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2WorkflowRunResult, chart *helm.Chart, chartPackagePath string, integration sdk.JobIntegrationsContext, rtConfig grpcplugins.ArtifactoryConfig) error {
+	repository := integration.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-helm"
 
 	resp, err := p.UploadChartPackageToArtifactory(ctx, repository, chart.Metadata.Name, chartPackagePath, rtConfig)
 	if err != nil {
@@ -276,7 +277,7 @@ func (p *helmPushPlugin) pushArtifactory(ctx context.Context, result *sdk.V2Work
 		return errors.Errorf("unable to get Artifactory file info %s: %v", chartPackagePath, err)
 	}
 
-	maturity := integration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+	maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 	localRepository := repository + "-" + maturity
 	grpcplugins.ExtractFileInfoIntoRunResult(result, *fi, chart.Metadata.Name, "helm", localRepository, repository, maturity)
 	grpcplugins.Success(&p.Common, "Done.")

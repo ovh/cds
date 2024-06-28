@@ -304,10 +304,12 @@ type VCSServer interface {
 type VCSBranchFilters struct {
 	BranchName string
 	Default    bool
+	NoCache    bool
 }
 
 type VCSBranchesFilter struct {
-	Limit int64
+	Limit   int64
+	NoCache bool
 }
 
 type VCSArchiveRequest struct {

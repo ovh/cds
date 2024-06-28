@@ -404,21 +404,6 @@ func (mr *MockRuntimeMockRecorder) V2AddRunResult(ctx, req interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2AddRunResult", reflect.TypeOf((*MockRuntime)(nil).V2AddRunResult), ctx, req)
 }
 
-// V2GetIntegrationByName mocks base method.
-func (m *MockRuntime) V2GetIntegrationByName(ctx context.Context, name string) (*sdk.ProjectIntegration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "V2GetIntegrationByName", ctx, name)
-	ret0, _ := ret[0].(*sdk.ProjectIntegration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// V2GetIntegrationByName indicates an expected call of V2GetIntegrationByName.
-func (mr *MockRuntimeMockRecorder) V2GetIntegrationByName(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetIntegrationByName", reflect.TypeOf((*MockRuntime)(nil).V2GetIntegrationByName), ctx, name)
-}
-
 // V2GetJobContext mocks base method.
 func (m *MockRuntime) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
 	m.ctrl.T.Helper()
@@ -445,6 +430,21 @@ func (m *MockRuntime) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
 func (mr *MockRuntimeMockRecorder) V2GetJobRun(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetJobRun", reflect.TypeOf((*MockRuntime)(nil).V2GetJobRun), ctx)
+}
+
+// V2GetProjectKey mocks base method.
+func (m *MockRuntime) V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2GetProjectKey", ctx, keyName, clear)
+	ret0, _ := ret[0].(*sdk.ProjectKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2GetProjectKey indicates an expected call of V2GetProjectKey.
+func (mr *MockRuntimeMockRecorder) V2GetProjectKey(ctx, keyName, clear interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetProjectKey", reflect.TypeOf((*MockRuntime)(nil).V2GetProjectKey), ctx, keyName, clear)
 }
 
 // V2GetRunResult mocks base method.

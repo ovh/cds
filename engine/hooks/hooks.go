@@ -156,6 +156,10 @@ func (s *Service) Serve(c context.Context) error {
 				cancel()
 			}
 		}()
+
+		s.GoRoutines.RunWithRestart(ctx, "schedulerv2", func(ctx context.Context) {
+			s.schedulerExecutionRoutine(ctx)
+		})
 	}
 
 	if s.Cfg.WebhooksPublicKeySign != "" {

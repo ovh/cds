@@ -16,6 +16,19 @@ const (
 	TaskExecutionScheduled = "SCHEDULED"
 )
 
+const (
+	repositoryEventRootKey        = "hooks:events:repository"
+	repositoryEventLockRootKey    = "hooks:events:lock"
+	repositoryLock                = "hooks:lock:repository"
+	repositoryRootKey             = "hooks:repository"
+	repositoryEventQueue          = "hooks:queue:repository:event"
+	repositoryEventCallbackQueue  = "hooks:queue:repository:event:callback"
+	repositoryEventInProgressKey  = "hooks:queue:repository:event:inprogress"
+	schedulerNextExecutionRootKey = "hooks:queue:schedulers"
+	scheduleDefinitionRootKey     = "hooks:v2:definition:schedulers"
+	schedulerExecutionLockRootKey = "hooks:v2:executions:lock"
+)
+
 // Service is the stuct representing a hooks µService
 type Service struct {
 	service.Common

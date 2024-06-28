@@ -34,15 +34,6 @@
             :host-context(.night) & {
                 background-color: #141414;
             }
-
-            a {
-                color: inherit;
-                text-decoration: underline dotted;
-
-                &:hover {
-                    color: #177ddc;
-                }
-            }
         }
 
         .controls {
@@ -99,6 +90,14 @@
             nz-select {
                 margin-left: 5px;
             }
+
+            a {
+                color: inherit;
+
+                &:hover {
+                    color: #177ddc;
+                }
+            }
         }
 
         nz-page-header-content {
@@ -106,6 +105,15 @@
 
             .templateDetails {
                 margin-left: 5px;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: underline dotted;
+
+                &:hover {
+                    color: #177ddc;
+                }
             }
         }
     }

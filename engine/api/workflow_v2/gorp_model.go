@@ -14,8 +14,8 @@ type dbWorkflowRun struct {
 func (r dbWorkflowRun) Canonical() gorpmapper.CanonicalForms {
 	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSServerID, r.RepositoryID, r.WorkflowName, r.WorkflowData, r.UserID, r.Contexts}
 	return gorpmapper.CanonicalForms{
-		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.VCSServer}}{{.RepositoryID}}{{.Repository}}{{md5sum .WorkflowData}}{{.UserID}}{{md5sum .Contexts}}",
-		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.VCSServer}}{{.RepositoryID}}{{.Repository}}{{hash .WorkflowData}}{{.UserID}}{{hash .Contexts}}",
+		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.VCSServer}}{{.RepositoryID}}{{.Repository}}{{md5sum .WorkflowData}}{{.UserID}}",
+		// TODO add context
 	}
 }
 
@@ -38,9 +38,10 @@ type dbWorkflowHook struct {
 }
 
 func (r dbWorkflowHook) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{r.ID, r.Data, r.ProjectKey, r.VCSName, r.RepositoryName, r.EntityID, r.WorkflowName, r.Ref, r.Commit}
+	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSName, r.RepositoryName, r.EntityID, r.WorkflowName, r.Ref, r.Commit}
 	return gorpmapper.CanonicalForms{
-		"{{.ID}}{{.Data}}{{.ProjectKey}}{{.VCSName}}{{.RepositoryName}}{{.EntityID}}{{.WorkflowName}}{{.Ref}}{{.Commit}}",
+		"{{.ID}}{{.ProjectKey}}{{.VCSName}}{{.RepositoryName}}{{.EntityID}}{{.WorkflowName}}{{.Ref}}{{.Commit}}",
+		// TODO add data
 	}
 }
 
