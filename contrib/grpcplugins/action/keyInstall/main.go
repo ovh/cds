@@ -65,7 +65,7 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 
 	switch key.Type {
 	case sdk.KeyTypeSSH:
-		return grpcplugins.InstallSSHKey(ctx, &actPlugin.Common, workDirs, keyName, filePath, key.Private)
+		return grpcplugins.InstallSSHKey(ctx, &actPlugin.Common, workDirs, keyName, filePath, key.Private, "")
 	case sdk.KeyTypePGP:
 		if _, _, err := sdk.ImportGPGKey("", key.Name, key.Private); err != nil {
 			return fmt.Errorf("unable to install pgp key %s: %v", keyName, err)
