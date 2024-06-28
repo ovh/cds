@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { CDNLogLinks } from "../../model/pipeline.model";
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunManualRequest, V2WorkflowRunManualResponse, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 
 @Injectable()
 export class V2WorkflowRunService {
@@ -16,6 +16,11 @@ export class V2WorkflowRunService {
 
     restart(projKey: string, workflowRunID: string): Observable<V2WorkflowRun> {
         return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/restart`, null);
+    }
+
+    start(projKey: string, vcsName: string, repoName: string, workflowName: string, data: V2WorkflowRunManualRequest) {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.post<V2WorkflowRunManualResponse>(`/v2/project/${projKey}/vcs/${vcsName}/repository/${encodedRepo}/workflow/${workflowName}/run`, data);
     }
 
     stop(projKey: string, workflowRunID: string) {

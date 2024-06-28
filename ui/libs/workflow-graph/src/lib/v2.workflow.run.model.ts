@@ -207,3 +207,16 @@ export class WorkflowRunResultDetail {
     data: any;
     type: string;
 }
+
+export class V2WorkflowRunManualRequest {
+    branch: string;
+    tag: string;
+    sha: string;
+    workflow_branch: string;
+    workflow_tag: string;
+}
+
+export class V2WorkflowRunManualResponse {
+    hook_event_uuid: string;
+    ui_url: string;
+}

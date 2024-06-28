@@ -425,12 +425,22 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			workflowRefs, err := workflow_v2.LoadRunsWorkflowRefs(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			refs, err := workflow_v2.LoadRunsGitRefs(ctx, api.mustDB(), proj.Key)
 			if err != nil {
 				return err
 			}
 
-			repositories, err := workflow_v2.LoadRunsRepositories(ctx, api.mustDB(), proj.Key)
+			repositories, err := workflow_v2.LoadRunsGitRepositories(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
+			workflowRepositories, err := workflow_v2.LoadRunsWorkflowRepositories(ctx, api.mustDB(), proj.Key)
 			if err != nil {
 				return err
 			}
@@ -457,6 +467,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 					Example: "ref/heads/main",
 				},
 				{
+					Key:     "workflow_ref",
+					Options: workflowRefs,
+					Example: "ref/heads/main",
+				},
+				{
 					Key:     "status",
 					Options: []string{sdk.StatusFail, sdk.StatusSuccess, sdk.StatusBuilding, sdk.StatusStopped},
 					Example: "Success, Failure, etc.",
@@ -464,6 +479,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				{
 					Key:     "repository",
 					Options: repositories,
+					Example: "vcs_server/repository",
+				},
+				{
+					Key:     "workflow_repository",
+					Options: workflowRepositories,
 					Example: "vcs_server/repository",
 				},
 				{
@@ -485,13 +505,15 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 			sort := req.FormValue("sort")
 
 			filters := workflow_v2.SearchsRunsFilters{
-				Workflows:    req.URL.Query()["workflow"],
-				Actors:       req.URL.Query()["actor"],
-				Status:       req.URL.Query()["status"],
-				Refs:         req.URL.Query()["ref"],
-				Repositories: req.URL.Query()["repository"],
-				Commits:      req.URL.Query()["commit"],
-				Templates:    req.URL.Query()["template"],
+				Workflows:            req.URL.Query()["workflow"],
+				Actors:               req.URL.Query()["actor"],
+				Status:               req.URL.Query()["status"],
+				Refs:                 req.URL.Query()["ref"],
+				WorkflowRefs:         req.URL.Query()["workflow_ref"],
+				Repositories:         req.URL.Query()["repository"],
+				WorkflowRepositories: req.URL.Query()["workflow_repository"],
+				Commits:              req.URL.Query()["commit"],
+				Templates:            req.URL.Query()["template"],
 			}
 			filters.Lower()
 
@@ -525,13 +547,15 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 			sort := req.FormValue("sort")
 
 			filters := workflow_v2.SearchsRunsFilters{
-				Workflows:    req.URL.Query()["workflow"],
-				Actors:       req.URL.Query()["actor"],
-				Status:       req.URL.Query()["status"],
-				Refs:         req.URL.Query()["ref"],
-				Repositories: req.URL.Query()["repository"],
-				Commits:      req.URL.Query()["commit"],
-				Templates:    req.URL.Query()["template"],
+				Workflows:            req.URL.Query()["workflow"],
+				Actors:               req.URL.Query()["actor"],
+				Status:               req.URL.Query()["status"],
+				Refs:                 req.URL.Query()["ref"],
+				WorkflowRefs:         req.URL.Query()["workflow_ref"],
+				Repositories:         req.URL.Query()["repository"],
+				WorkflowRepositories: req.URL.Query()["workflow_repository"],
+				Commits:              req.URL.Query()["commit"],
+				Templates:            req.URL.Query()["template"],
 			}
 			filters.Lower()
 
@@ -1120,9 +1144,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 					return err
 				}
 				workflowRef = defaultBranch.ID
-				if workflowCommit == "" || workflowCommit == "HEAD" {
-					workflowCommit = defaultBranch.LatestCommit
-				}
+				workflowCommit = defaultBranch.LatestCommit
 			}
 			if workflowCommit == "" || workflowCommit == "HEAD" {
 				switch {
@@ -1161,9 +1183,9 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				return err
 			}
 			var hookResponse sdk.HookRepositoryEvent
-			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/manual", hookRequest, &hookResponse)
-			if errHooks != nil || code >= 400 {
-				return fmt.Errorf("unable to start workflow: %v", errHooks)
+			_, code, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/manual", hookRequest, &hookResponse)
+			if err != nil || code >= 400 {
+				return sdk.WrapError(err, "unable to start workflow")
 			}
 
 			runResponse := sdk.V2WorkflowRunManualResponse{

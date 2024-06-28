@@ -134,9 +134,37 @@ func LoadRunsGitRefs(ctx context.Context, db gorp.SqlExecutor, projKey string) (
 	return refs, nil
 }
 
-func LoadRunsRepositories(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+func LoadRunsWorkflowRefs(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var refs []string
+	_, next := telemetry.Span(ctx, "LoadRunsWorkflowRefs")
+	defer next()
+	if _, err := db.Select(&refs, `
+		SELECT DISTINCT workflow_ref
+		FROM v2_workflow_run
+		WHERE project_key = $1
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return refs, nil
+}
+
+func LoadRunsGitRepositories(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
 	var names []string
-	_, next := telemetry.Span(ctx, "LoadRunsRepositories")
+	_, next := telemetry.Span(ctx, "LoadRunsGitRepositories")
+	defer next()
+	if _, err := db.Select(&names, `
+		SELECT DISTINCT ((contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository'))
+		FROM v2_workflow_run
+		WHERE project_key = $1 AND contexts -> 'git' ->> 'repository' IS NOT NULL
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return names, nil
+}
+
+func LoadRunsWorkflowRepositories(ctx context.Context, db gorp.SqlExecutor, projKey string) ([]string, error) {
+	var names []string
+	_, next := telemetry.Span(ctx, "LoadRunsWorkflowRepositories")
 	defer next()
 	if _, err := db.Select(&names, `
 		SELECT DISTINCT (vcs_server || '/' || repository)
@@ -167,7 +195,9 @@ const runQueryFilters = `
 	AND (array_length(:actors::text[], 1) IS NULL OR username = ANY(:actors))
 	AND (array_length(:status::text[], 1) IS NULL OR status = ANY(:status))
 	AND (array_length(:refs::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY(:refs))
+	AND (array_length(:workflow_refs::text[], 1) IS NULL OR workflow_ref = ANY(:workflow_refs))
 	AND (array_length(:repositories::text[], 1) IS NULL OR ((contexts -> 'git' ->> 'server') || '/' || (contexts -> 'git' ->> 'repository')) = ANY(:repositories))
+	AND (array_length(:workflow_repositories::text[], 1) IS NULL OR (vcs_server || '/' || repository) = ANY(:workflow_repositories))
 	AND (array_length(:commits::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY(:commits))
 	AND (array_length(:templates::text[], 1) IS NULL OR ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template')) = ANY(:templates))
 `
@@ -176,13 +206,15 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
 	count, err := db.SelectInt("SELECT COUNT(1) FROM v2_workflow_run WHERE "+runQueryFilters, map[string]interface{}{
-		"workflows":    pq.StringArray(filters.Workflows),
-		"actors":       pq.StringArray(filters.Actors),
-		"status":       pq.StringArray(filters.Status),
-		"refs":         pq.StringArray(filters.Refs),
-		"repositories": pq.StringArray(filters.Repositories),
-		"commits":      pq.StringArray(filters.Commits),
-		"templates":    pq.StringArray(filters.Templates),
+		"workflows":             pq.StringArray(filters.Workflows),
+		"actors":                pq.StringArray(filters.Actors),
+		"status":                pq.StringArray(filters.Status),
+		"refs":                  pq.StringArray(filters.Refs),
+		"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
+		"repositories":          pq.StringArray(filters.Repositories),
+		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+		"commits":               pq.StringArray(filters.Commits),
+		"templates":             pq.StringArray(filters.Templates),
 	})
 	return count, sdk.WithStack(err)
 }
@@ -191,26 +223,30 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
 	count, err := db.SelectInt("SELECT COUNT(1) FROM v2_workflow_run WHERE project_key = :projKey AND "+runQueryFilters, map[string]interface{}{
-		"projKey":      projKey,
-		"workflows":    pq.StringArray(filters.Workflows),
-		"actors":       pq.StringArray(filters.Actors),
-		"status":       pq.StringArray(filters.Status),
-		"refs":         pq.StringArray(filters.Refs),
-		"repositories": pq.StringArray(filters.Repositories),
-		"commits":      pq.StringArray(filters.Commits),
-		"templates":    pq.StringArray(filters.Templates),
+		"projKey":               projKey,
+		"workflows":             pq.StringArray(filters.Workflows),
+		"actors":                pq.StringArray(filters.Actors),
+		"status":                pq.StringArray(filters.Status),
+		"refs":                  pq.StringArray(filters.Refs),
+		"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
+		"repositories":          pq.StringArray(filters.Repositories),
+		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+		"commits":               pq.StringArray(filters.Commits),
+		"templates":             pq.StringArray(filters.Templates),
 	})
 	return count, sdk.WithStack(err)
 }
 
 type SearchsRunsFilters struct {
-	Workflows    []string
-	Actors       []string
-	Status       []string
-	Refs         []string
-	Repositories []string
-	Commits      []string
-	Templates    []string
+	Workflows            []string
+	Actors               []string
+	Status               []string
+	Refs                 []string
+	WorkflowRefs         []string
+	Repositories         []string
+	WorkflowRepositories []string
+	Commits              []string
+	Templates            []string
 }
 
 func (s SearchsRunsFilters) Lower() {
@@ -255,16 +291,18 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
     LIMIT :limit OFFSET :offset
 	`).Args(
 		map[string]interface{}{
-			"workflows":    pq.StringArray(filters.Workflows),
-			"actors":       pq.StringArray(filters.Actors),
-			"status":       pq.StringArray(filters.Status),
-			"refs":         pq.StringArray(filters.Refs),
-			"repositories": pq.StringArray(filters.Repositories),
-			"commits":      pq.StringArray(filters.Commits),
-			"templates":    pq.StringArray(filters.Templates),
-			"sort":         sort,
-			"limit":        limit,
-			"offset":       offset,
+			"workflows":             pq.StringArray(filters.Workflows),
+			"actors":                pq.StringArray(filters.Actors),
+			"status":                pq.StringArray(filters.Status),
+			"refs":                  pq.StringArray(filters.Refs),
+			"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
+			"repositories":          pq.StringArray(filters.Repositories),
+			"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+			"commits":               pq.StringArray(filters.Commits),
+			"templates":             pq.StringArray(filters.Templates),
+			"sort":                  sort,
+			"limit":                 limit,
+			"offset":                offset,
 		})
 
 	return getRuns(ctx, db, query, opts...)
@@ -294,17 +332,19 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 			CASE WHEN :sort = 'started:desc' THEN started END desc
 		LIMIT :limit OFFSET :offset
 	`).Args(map[string]interface{}{
-		"projKey":      projKey,
-		"workflows":    pq.StringArray(filters.Workflows),
-		"actors":       pq.StringArray(filters.Actors),
-		"status":       pq.StringArray(filters.Status),
-		"refs":         pq.StringArray(filters.Refs),
-		"repositories": pq.StringArray(filters.Repositories),
-		"commits":      pq.StringArray(filters.Commits),
-		"templates":    pq.StringArray(filters.Templates),
-		"sort":         sort,
-		"limit":        limit,
-		"offset":       offset,
+		"projKey":               projKey,
+		"workflows":             pq.StringArray(filters.Workflows),
+		"actors":                pq.StringArray(filters.Actors),
+		"status":                pq.StringArray(filters.Status),
+		"refs":                  pq.StringArray(filters.Refs),
+		"workflow_refs":         pq.StringArray(filters.WorkflowRefs),
+		"repositories":          pq.StringArray(filters.Repositories),
+		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
+		"commits":               pq.StringArray(filters.Commits),
+		"templates":             pq.StringArray(filters.Templates),
+		"sort":                  sort,
+		"limit":                 limit,
+		"offset":                offset,
 	})
 
 	return getRuns(ctx, db, query, opts...)
@@ -398,7 +438,6 @@ func LoadRunsUnsafeWithPagination(ctx context.Context, db gorp.SqlExecutor, offs
 	for _, dbWkfRun := range dbWkfRuns {
 		runs = append(runs, dbWkfRun.V2WorkflowRun)
 	}
-
 	return runs, nil
 }
 

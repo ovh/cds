@@ -61,7 +61,7 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
     loadHookEvents(): void {
         this.loadingHooks = true;
         this._cd.markForCheck();
-        this._projectService.loadRepositoryHooks(this.project.key, this.vcsProject.name, this.repository.name)
+        this._projectService.listRepositoryEvents(this.project.key, this.vcsProject.name, this.repository.name)
             .pipe(finalize(() => {
                 this.loadingHooks = false;
                 this._cd.markForCheck();

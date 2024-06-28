@@ -104,6 +104,11 @@
             background-color: rgba(255, 255, 255, 0.08);
         }
     }
+
+    nz-select {
+        overflow: hidden;
+        max-width: 50%;
+    }
 }
 
 .tree-node-content {

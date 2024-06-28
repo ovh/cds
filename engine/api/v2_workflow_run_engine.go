@@ -254,7 +254,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 
 	// Synchronize run result in a separate transaction
-	api.GoRoutines.Run(ctx, "api.synchronizeRunResults", func(ctx context.Context) {
+	api.GoRoutines.Exec(ctx, "api.synchronizeRunResults", func(ctx context.Context) {
 		if err := api.synchronizeRunResults(ctx, api.mustDBWithCtx(ctx), run.ID); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
