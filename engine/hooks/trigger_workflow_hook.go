@@ -57,8 +57,8 @@ func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEv
 		Data: sdk.V2WorkflowHookData{
 			VCSServer:      hre.ExtractData.Scheduler.TargetVCS,
 			RepositoryName: hre.ExtractData.Scheduler.TargetRepo,
-			TargetBranch:   "",
-			TargetTag:      "",
+			Cron:           hre.ExtractData.Scheduler.Cron,
+			CronTimeZone:   hre.ExtractData.Scheduler.Timezone,
 		},
 	}
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
@@ -161,8 +161,8 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 		Data: sdk.V2WorkflowHookData{
 			VCSServer:      workflowVCS,
 			RepositoryName: workflowRepo,
-			Cron:           hre.ExtractData.Scheduler.Cron,
-			CronTimeZone:   hre.ExtractData.Scheduler.Timezone,
+			TargetBranch:   userRequest.Branch,
+			TargetTag:      userRequest.Tag,
 		},
 	}
 	// Create Manual Hook
