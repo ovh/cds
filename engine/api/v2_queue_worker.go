@@ -183,6 +183,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	contexts.CDS.Stage = jobRun.Job.Stage
 	contexts.Git = run.Contexts.Git
 	contexts.Gate = jobRun.GateInputs
+	contexts.Matrix = jobRun.Matrix
 
 	sensitiveDatas := sdk.StringSlice{}
 
