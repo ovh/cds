@@ -71,7 +71,7 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 				return fmt.Errorf("unable to get current user: %v", err)
 			}
 			if u != nil && u.HomeDir != "" {
-				filePath = u.HomeDir + "/.ssh/id-rsa-" + keyName
+				filePath = u.HomeDir + "/.ssh/id_rsa-" + keyName
 			}
 		}
 		return grpcplugins.InstallSSHKey(ctx, &actPlugin.Common, workDirs, keyName, filePath, key.Private, "")
