@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os/user"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
@@ -62,9 +63,17 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 	if err != nil {
 		return err
 	}
-
 	switch key.Type {
 	case sdk.KeyTypeSSH:
+		if filePath == "" {
+			u, err := user.Current()
+			if err != nil {
+				return fmt.Errorf("unable to get current user: %v", err)
+			}
+			if u != nil && u.HomeDir != "" {
+				filePath = u.HomeDir + "/" + keyName
+			}
+		}
 		return grpcplugins.InstallSSHKey(ctx, &actPlugin.Common, workDirs, keyName, filePath, key.Private, "")
 	case sdk.KeyTypePGP:
 		if _, _, err := sdk.ImportGPGKey("", key.Name, key.Private); err != nil {
