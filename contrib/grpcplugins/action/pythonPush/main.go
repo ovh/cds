@@ -188,6 +188,7 @@ username: %s
 password: %s
 EOF
 
+cat .pypirc
 pythonBinary="%s"
 if [[ -e venv/bin/python ]]; then
 	pythonBinary="venv/bin/python"
