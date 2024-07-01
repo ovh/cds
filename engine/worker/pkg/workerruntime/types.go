@@ -85,7 +85,6 @@ type FilePath struct {
 type OutputRequest struct {
 	Name             string `json:"name"`
 	Value            string `json:"value"`
-	StepOnly         bool   `json:"step_only"`
 	WorkflowRunID    string `json:"workflow_run_id"`
 	WorkflowRunJobID string `json:"workflow_run_job_id"`
 }
