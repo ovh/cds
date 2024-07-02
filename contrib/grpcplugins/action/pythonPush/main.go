@@ -179,7 +179,7 @@ func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceD
 
 	pullScript := fmt.Sprintf(`#!/bin/bash
 # write .pypirc file
-cat <<EOF >> .pypirc
+cat <<EOF >> ${HOME}/.pypirc
 [distutils]
 index-servers = artifactory
 [artifactory]
