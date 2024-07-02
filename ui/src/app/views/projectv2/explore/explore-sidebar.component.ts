@@ -21,6 +21,8 @@ import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { RouterService } from 'app/service/services.module';
+import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../run-start/run-start.component';
+import { NzDrawerService } from 'ng-zorro-antd/drawer';
 
 @Component({
     selector: 'app-projectv2-explore-sidebar',
@@ -51,7 +53,8 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         private _store: Store,
         private _router: Router,
         private _routerService: RouterService,
-        private _activatedRoute: ActivatedRoute
+        private _activatedRoute: ActivatedRoute,
+        private _drawerService: NzDrawerService
     ) { }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -120,7 +123,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         try {
             const branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, vcs.name, repo.name, 50));
             this.branches[vcs.name + '/' + repo.name] = branches;
-            if (!this.branchSelectState[vcs.name + '/' + repo.name]) {
+            if (!this.branchSelectState[vcs.name + '/' + repo.name] || !branches.find(b => b.display_id === this.branchSelectState[vcs.name + '/' + repo.name])) {
                 this.branchSelectState[vcs.name + '/' + repo.name] = branches.find(b => b.default).display_id;
             }
             await this.loadEntities(vcs, repo);
@@ -299,6 +302,21 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
             });
         });
         this._store.dispatch(new actionPreferences.SaveProjectBranchSelectState({ projectKey: this.project.key, state }));
+    }
+
+    openRunStartDrawer(workflow: string, ref: string): void {
+        const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
+            nzTitle: 'Start new worklfow run',
+            nzContent: ProjectV2RunStartComponent,
+            nzContentParams: {
+                params: <ProjectV2RunStartComponentParams>{
+                    workflow,
+                    workflow_ref: ref
+                }
+            },
+            nzSize: 'large'
+        });
+        drawerRef.afterClose.subscribe(data => { });
     }
 
 }

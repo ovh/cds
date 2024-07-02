@@ -7,9 +7,8 @@
 
 <div class="content">
 	<div class="header">
-		<button nz-button nzType="secondary" nz-popconfirm [nzPopconfirmTitle]="saveSearchTemplate" title="Save search"
-			nzPopconfirmPlacement="bottom" (nzOnConfirm)="confirmSaveSearch()" #saveSearchButton=nzPopconfirm><span nz-icon
-				nzType="save"></span></button>
+		<button nz-button nzType="secondary" title="Start new run" (click)="openRunStartDrawer()"><span nz-icon
+				nzType="caret-right" nzTheme="fill"></span> New run</button>
 		<ng-template #saveSearchTemplate>
 			<form class="save-search-form" nz-form (ngSubmit)="submitSaveSearch()">
 				<nz-form-item>
@@ -53,6 +52,19 @@
 				</nz-form-control>
 			</nz-form-item>
 		</form>
+		<button nz-button nzType="secondary" nz-popconfirm [nzPopconfirmTitle]="saveSearchTemplate" title="Save search"
+			nzPopconfirmPlacement="bottom" (nzOnConfirm)="confirmSaveSearch()" #saveSearchButton=nzPopconfirm><span nz-icon
+				nzType="save"></span></button>
+		<ng-template #saveSearchTemplate>
+			<form class="save-search-form" nz-form (ngSubmit)="submitSaveSearch()">
+				<nz-form-item>
+					<nz-form-control>
+						<input placeholder="Name" [ngModel]="searchName" (ngModelChange)="onSearchNameChange($event)" nz-input
+							ngDefaultControl [ngModelOptions]="{standalone: true}" />
+					</nz-form-control>
+				</nz-form-item>
+			</form>
+		</ng-template>
 	</div>
 
 	<nz-list class="run-list" [nzLoading]="loading" nzSize="small" nzNoResult="test">

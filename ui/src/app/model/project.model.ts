@@ -71,32 +71,32 @@ export class Label {
 }
 
 export class ProjectRepository {
-    id: string;
-    name: string;
-    clone_url: string;
-    created: Date;
-    created_by: string;
+  id: string;
+  name: string;
+  clone_url: string;
+  created: Date;
+  created_by: string;
 }
 
 export class RepositoryHookEvent {
-    uuid: string;
-    created: number;
-    status: string;
-    event_name: string;
-    extracted_data: RepositoryHookEventExtractedData;
-    username: string;
-    last_error: string;
-    vcs_server_name: string;
-    repository_name: string;
-    analyses: Array<RepositoryHookEventAnalysis>;
-    workflows: Array<RepositoryHookWorkflow>;
-    sign_key: string;
+  uuid: string;
+  created: number;
+  status: string;
+  event_name: string;
+  extracted_data: RepositoryHookEventExtractedData;
+  username: string;
+  last_error: string;
+  vcs_server_name: string;
+  repository_name: string;
+  analyses: Array<RepositoryHookEventAnalysis>;
+  workflows: Array<RepositoryHookWorkflow>;
+  sign_key: string;
 
-    // UI data
-    nbDone: number;
-    nbFailed: number;
-    nbScheduled: number;
-    nbSkipped: number;
+  // UI data
+  nbDone: number;
+  nbFailed: number;
+  nbScheduled: number;
+  nbSkipped: number;
 }
 
 export class RepositoryHookEventAnalysis {
@@ -107,25 +107,26 @@ export class RepositoryHookEventAnalysis {
 
 export enum HookEventWorkflowStatus {
   Scheduled = "Scheduled",
-  Skipped   = "Skipped",
-  Error     = "Error",
-  Done      = "Done"
+  Skipped = "Skipped",
+  Error = "Error",
+  Done = "Done"
 }
 
 
 
 export class RepositoryHookEventExtractedData {
-    ref: string;
-    commit: string;
-    cds_event_name: string;
+  ref: string;
+  commit: string;
+  cds_event_name: string;
 }
 
 export class RepositoryHookWorkflow {
-    project_key: string;
-    vcs_identifier: string;
-    repository_identifier: string;
-    workflow_name: string;
-    type: string;
-    status: string;
+  project_key: string;
+  vcs_identifier: string;
+  repository_identifier: string;
+  workflow_name: string;
+  type: string;
+  status: string;
+  run_id: string;
 }
 

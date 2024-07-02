@@ -11,6 +11,8 @@ import * as actionPreferences from 'app/store/preferences.action';
 import { PreferencesState } from "app/store/preferences.state";
 import { NzPopconfirmDirective } from "ng-zorro-antd/popconfirm";
 import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { NzDrawerService } from "ng-zorro-antd/drawer";
+import { ProjectV2RunStartComponent } from "../run-start/run-start.component";
 
 export class WorkflowRunFilter {
 	key: string;
@@ -60,7 +62,8 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		private _cd: ChangeDetectorRef,
 		private _store: Store,
 		private _router: Router,
-		private _activatedRoute: ActivatedRoute
+		private _activatedRoute: ActivatedRoute,
+		private _drawerService: NzDrawerService
 	) {
 		this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 	}
@@ -286,13 +289,15 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		this.searchName = name;
 	}
 
-	refresh(e: Event): void {
+	refresh(e: Event = null): void {
 		if (this.filterText !== this.previousFilterText) {
 			return;
 		}
 		this.search();
-		e.preventDefault();
-		e.stopPropagation();
+		if (e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
 	}
 
 	onSortChange(sort: string): void {
@@ -301,4 +306,31 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		this.saveSearchInQueryParams();
 	}
 
+	openRunStartDrawer(): void {
+		let mFilters = {};
+		this.filterText.split(' ').forEach(f => {
+			const s = f.split(':');
+			if (s.length === 2) {
+				if (!mFilters[s[0]]) {
+					mFilters[s[0]] = [];
+				}
+				mFilters[s[0]].push(s[1]);
+			}
+		});
+		const drawerRef = this._drawerService.create<ProjectV2RunStartComponent, { value: string }, string>({
+			nzTitle: 'Start new worklfow run',
+			nzContent: ProjectV2RunStartComponent,
+			nzContentParams: {
+				params: {
+					workflow_repository: mFilters['workflow_repository'] ? mFilters['workflow_repository'][0] : null,
+					repository: mFilters['repository'] ? mFilters['repository'][0] : null,
+					workflow_ref: mFilters['workflow_ref'] ? mFilters['workflow_ref'][0] : null,
+					ref: mFilters['ref'] ? mFilters['ref'][0] : null,
+					workflow: mFilters['workflow'] ? mFilters['workflow'][0] : null
+				}
+			},
+			nzSize: 'large'
+		});
+		drawerRef.afterClose.subscribe(data => { });
+	}
 }

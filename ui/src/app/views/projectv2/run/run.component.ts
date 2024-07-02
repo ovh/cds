@@ -365,11 +365,13 @@ export class ProjectV2RunComponent implements OnDestroy {
 
     async clickRestartJobs() {
         await lastValueFrom(this._workflowService.restart(this.projectKey, this.workflowRun.id));
+        this._messageService.success('Workflow run jobs restarted', { nzDuration: 2000 });
         await this.load(this.workflowRun.id);
     }
 
     async clickStopRun() {
         await lastValueFrom(this._workflowService.stop(this.projectKey, this.workflowRun.id));
+        this._messageService.success('Workflow run stopped', { nzDuration: 2000 });
         await this.load(this.workflowRun.id);
     }
 

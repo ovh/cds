@@ -1,0 +1,12 @@
+nz-result {
+  .message {
+    width: 100%;
+    text-align: center;
+  }
+
+  [nz-result-extra] {
+    [nz-button] {
+      color: inherit;
+    }
+  }
+}

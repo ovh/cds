@@ -150,7 +150,12 @@ export class ProjectService {
         return this._http.get<RepositoryAnalysis>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/analysis/${id}`)
     }
 
-    loadRepositoryHooks(key: string, vcsName: string, repoName: string): Observable<Array<RepositoryHookEvent>> {
+    getRepositoryEvent(key: string, vcsName: string, repoName: string, eventID: string): Observable<RepositoryHookEvent> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<RepositoryHookEvent>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/events/${eventID}`)
+    }
+
+    listRepositoryEvents(key: string, vcsName: string, repoName: string): Observable<Array<RepositoryHookEvent>> {
         let encodedRepo = encodeURIComponent(repoName);
         return this._http.get<Array<RepositoryHookEvent>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/events`)
     }

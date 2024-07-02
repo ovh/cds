@@ -37,7 +37,8 @@
                         routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)">{{repo.name}}</a>
                     <nz-select *ngIf="treeExpandState[vcs.name+'/'+repo.name]" nzShowSearch nzSize="small"
                         [nzCustomTemplate]="selectLabelTmpl" [ngModel]="branchSelectState[vcs.name+'/'+repo.name]"
-                        (ngModelChange)="selectRepositoryBranch(vcs, repo, $event)" (click)="$event.stopPropagation()">
+                        [nzDropdownMatchSelectWidth]="false" (ngModelChange)="selectRepositoryBranch(vcs, repo, $event)"
+                        (click)="$event.stopPropagation()">
                         <nz-option *ngFor="let opt of branches[vcs.name+'/'+repo.name]" [nzValue]="opt.display_id"
                             [nzLabel]="opt.display_id"></nz-option>
                     </nz-select>
@@ -63,21 +64,20 @@
                                     <a class="name"
                                         [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
                                         [queryParams]="{branch: branchSelectState[vcs.name+'/'+repo.name]}"
-                                        routerLinkActive="active">
+                                        routerLinkActive="active" [title]="'Open entity '+v.name">
                                         <span nz-icon nzType="file"></span>{{v.name}}
                                     </a>
-                                    <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small">
-                                        <i nz-icon nzType="more" nzTheme="outline" nz-dropdown [nzDropdownMenu]="menu"
-                                            nzTrigger="click"></i>
+                                    <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
+                                        (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, 'refs/heads/'+branchSelectState[vcs.name+'/'+repo.name])"
+                                        title="Start workflow">
+                                        <span nz-icon nzType="caret-right" nzTheme="fill"></span>
                                     </button>
-                                    <nz-dropdown-menu #menu="nzDropdownMenu">
-                                        <ul nz-menu>
-                                            <li nz-menu-item [routerLink]="['/', 'project', project.key, 'run']"
-                                                [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name }">
-                                                Display runs
-                                            </li>
-                                        </ul>
-                                    </nz-dropdown-menu>
+                                    <a *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
+                                        [routerLink]="['/', 'project', project.key, 'run']"
+                                        [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name, workflow_ref: 'refs/heads/'+branchSelectState[vcs.name+'/'+repo.name]}"
+                                        (click)="$event.stopPropagation();" title="Display workflow runs">
+                                        <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
+                                    </a>
                                 </div>
                             </ng-container>
                         </div>

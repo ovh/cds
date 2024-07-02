@@ -1,0 +1,81 @@
+<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()" s>
+  <nz-form-item>
+    <nz-form-label [nzSpan]="6" nzFor="repository">Repository</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a repository" formControlName="repository"
+        id="repository" (ngModelChange)="repositoryChange($event)">
+        <ng-container *ngFor="let entry of repositories | keyvalue">
+          <nz-option *ngFor="let repo of entry.value" [nzLabel]="entry.key+'/'+repo.name"
+            [nzValue]="entry.key+'/'+repo.name"></nz-option>
+        </ng-container>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label [nzSpan]="6" nzFor="branch">Branch</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a branch" formControlName="branch" id="branch"
+        (ngModelChange)="branchChange($event)">
+        <nz-option *ngFor="let branch of branches" [nzLabel]="branch" [nzValue]="branch"></nz-option>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label [nzSpan]="6" nzFor="workflow">Workflow</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a workflow" formControlName="workflow" id="workflow"
+        (ngModelChange)="workflowChange($event)">
+        <nz-option *ngFor="let workflow of workflows" [nzLabel]="workflow" [nzValue]="workflow"></nz-option>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item *ngIf="this.validateForm.controls.sourceRepository.value">
+    <nz-form-label [nzSpan]="6" nzFor="sourceRepository">Source repository</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <input formControlName="sourceRepository" nz-input type="text" />
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item *ngIf="this.validateForm.controls.sourceRepository.value">
+    <nz-form-label [nzSpan]="6" nzFor="sourceBranch">Source branch</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a branch" formControlName="sourceBranch"
+        id="sourceBranch">
+        <nz-option *ngFor="let branch of sourceBranches" [nzLabel]="branch" [nzValue]="branch"></nz-option>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item *ngIf="!event">
+    <nz-form-control [nzSpan]="12" [nzOffset]="6">
+      <button nz-button nzType="primary">Start</button>
+    </nz-form-control>
+  </nz-form-item>
+</form>
+
+<nz-result *ngIf="event && (!event.workflows || event.workflows[0].status !== 'Done')" [nzIcon]="iconTemplate"
+  nzTitle="Workflow run triggered!" [nzSubTitle]="subTitle">
+  <ng-template #iconTemplate>
+    <span nz-icon nzType="loading" nzTheme="outline"></span>
+  </ng-template>
+  <ng-template #subTitle>
+    <div class="message">
+      Event ID: {{event?.uuid}}<br />
+      Status: {{event?.status}}
+    </div>
+  </ng-template>
+</nz-result>
+
+<nz-result *ngIf="event && event.workflows && event.workflows[0].status === 'Done'" nzStatus="success"
+  nzTitle="Successfully started a new Workflow Run!" [nzSubTitle]="subTitle">
+  <ng-template #subTitle>
+    <div class="message">
+      Event ID: {{event?.uuid}}<br />
+      Run ID: {{event.workflows[0].run_id}}
+    </div>
+  </ng-template>
+  <div nz-result-extra>
+    <a nz-button nzType="primary" [routerLink]="['/', 'project', this.project.key, 'run', event.workflows[0].run_id]"
+      (click)="close()">Go
+      to Run</a>
+    <button nz-button (click)="clearForm()">Clear</button>
+  </div>
+</nz-result>

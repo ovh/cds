@@ -23,6 +23,7 @@ import { ProjectV2ExploreEntityWorkflowComponent } from './explore/explore-entit
 import { EntityFormComponent } from './explore/entity/entity-form.component';
 import { EntityJSONFormComponent } from './explore/entity/entity-json-form.component';
 import { EntityJSONFormFieldComponent } from './explore/entity/entity-json-form-field.component';
+import { ProjectV2RunStartComponent } from './run-start/run-start.component';
 
 @NgModule({
     declarations: [
@@ -38,6 +39,7 @@ import { EntityJSONFormFieldComponent } from './explore/entity/entity-json-form-
         ProjectV2RunComponent,
         ProjectV2RunListComponent,
         ProjectV2RunListSidebarComponent,
+        ProjectV2RunStartComponent,
         RunContextsComponent,
         RunGateComponent,
         RunHookComponent,

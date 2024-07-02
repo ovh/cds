@@ -261,6 +261,7 @@ import { NsAutoHeightTableDirective } from './directives/ns-auto-height-table.di
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { DateFromNowComponent } from './date-from-now/date-from-now';
 import { NzTreeModule } from 'ng-zorro-antd/tree';
+import { NzResultModule } from 'ng-zorro-antd/result';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -406,6 +407,7 @@ const icons: IconDefinition[] = [
         NzPopoverModule,
         NzProgressModule,
         NzRadioModule,
+        NzResultModule,
         NzSelectModule,
         NzSpinModule,
         NzStepsModule,
@@ -610,6 +612,7 @@ const icons: IconDefinition[] = [
         NzPopoverModule,
         NzProgressModule,
         NzRadioModule,
+        NzResultModule,
         NzSelectModule,
         NzSpinModule,
         NzStepsModule,
