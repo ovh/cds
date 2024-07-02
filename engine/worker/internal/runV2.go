@@ -267,32 +267,32 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 	for jobStepIndex, step := range w.currentJobV2.runJob.Job.Steps {
 		// Reset step log line to 0
 		w.stepLogLine = 0
-		w.currentJobV2.currentStepIndex = jobStepIndex
+		w.currentJobV2.currentStepIndexForLog = jobStepIndex
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 
 		// Set step in context
-		w.currentJobV2.currentStepName = sdk.GetJobStepName(step.ID, jobStepIndex)
-		ctx = workerruntime.SetStepName(ctx, w.currentJobV2.currentStepName)
+		w.currentJobV2.currentStepNameForLog = sdk.GetJobStepName(step.ID, jobStepIndex)
+		ctx = workerruntime.SetStepName(ctx, w.currentJobV2.currentStepNameForLog)
 
 		// Set current step status + create step context
-		w.createStepStatus(w.currentJobV2.currentStepName)
+		w.createStepStatus(w.currentJobV2.currentStepNameForLog)
 		w.currentJobV2.runJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
-		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepName))
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepNameForLog))
 
 		// Step context = parent context + env set on step
 		currentStepContext, err := w.createStepContext(ctx, step, w.currentJobV2.runJobContext)
 		if err != nil {
 			w.failJob(ctx, err.Error())
 		}
-		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, *currentStepContext)
-		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepName))
+		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepNameForLog, *currentStepContext)
+		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepNameForLog))
 		w.gelfLogger.hook.Flush()
 
-		w.updateStepResult(&jobResult, stepRes, step, w.currentJobV2.currentStepName)
+		w.updateStepResult(&jobResult, stepRes, step, w.currentJobV2.currentStepNameForLog)
 		w.currentJobV2.runJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
@@ -338,6 +338,7 @@ func (w *CurrentWorker) createStepStatus(stepName string) {
 		Started: time.Now(),
 	}
 	w.GetCurrentStepsStatus()[stepName] = currentStepStatus
+	w.SetSubStepName(stepName)
 }
 
 func (w *CurrentWorker) createStepContext(ctx context.Context, step sdk.ActionStep, parentContext sdk.WorkflowRunJobsContext) (*sdk.WorkflowRunJobsContext, error) {
@@ -503,6 +504,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 
 		// Save current step status before running a subaction
 		parentStepStatus := w.GetCurrentStepsStatus()
+		parentStepName := w.GetSubStepName()
 
 		// create new steps status for the child action
 		subStepStatus := sdk.JobStepsStatus{}
@@ -531,8 +533,10 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, *actionContext, w.actions[name].Outputs); err != nil {
 			return w.failJob(ctx, err.Error())
 		}
+
 		// Set previous current step status with new output
 		w.SetCurrentStepsStatus(parentStepStatus)
+		w.SetSubStepName(parentStepName)
 	default:
 	}
 	return sdk.V2WorkflowRunJobResult{

@@ -40,15 +40,16 @@ type logger struct {
 }
 
 type CurrentJobV2 struct {
-	runJob            *sdk.V2WorkflowRunJob
-	runJobContext     sdk.WorkflowRunJobsContext
-	context           context.Context
-	currentStepIndex  int
-	currentStepName   string
-	integrations      map[string]sdk.ProjectIntegration // contains integration with clearPassword
-	envFromHooks      map[string]string
-	sensitiveDatas    []string
-	runningStepStatus sdk.JobStepsStatus
+	runJob                 *sdk.V2WorkflowRunJob
+	runJobContext          sdk.WorkflowRunJobsContext
+	context                context.Context
+	currentStepIndexForLog int
+	currentStepNameForLog  string
+	integrations           map[string]sdk.ProjectIntegration // contains integration with clearPassword
+	envFromHooks           map[string]string
+	sensitiveDatas         []string
+	runningStepStatus      sdk.JobStepsStatus
+	subStepName            string
 }
 
 type CurrentWorker struct {
@@ -121,6 +122,14 @@ func (wk *CurrentWorker) SetCurrentStepsStatus(stepStatus sdk.JobStepsStatus) {
 
 func (wk *CurrentWorker) GetCurrentStepsStatus() sdk.JobStepsStatus {
 	return wk.currentJobV2.runningStepStatus
+}
+
+func (wk *CurrentWorker) GetSubStepName() string {
+	return wk.currentJobV2.subStepName
+}
+
+func (wk *CurrentWorker) SetSubStepName(name string) {
+	wk.currentJobV2.subStepName = name
 }
 
 func (wk *CurrentWorker) GetJobIdentifiers() (int64, int64, int64) {
