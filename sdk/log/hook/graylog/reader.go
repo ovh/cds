@@ -2,7 +2,7 @@
 // license that can be found in the LICENSE file.
 // inspired from github.com/gemnasium/logrus-graylog-hook
 
-package hook
+package graylog
 
 import (
 	"bytes"

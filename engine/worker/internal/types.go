@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	loghook "github.com/ovh/cds/sdk/log/hook"
+	loghook "github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 const (

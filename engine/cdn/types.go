@@ -18,12 +18,12 @@ import (
 	"github.com/ovh/cds/engine/websocket"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 )
 
 type handledMessage struct {
 	Signature    cdn.Signature
-	Msg          hook.Message
+	Msg          graylog.Message
 	IsTerminated bool
 }
 

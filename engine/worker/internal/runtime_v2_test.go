@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +31,7 @@ func TestGetRunResult(t *testing.T) {
 	require.NoError(t, err)
 	w.signer = signer
 
-	l, h, err := cdslog.New(ctx, &hook.Config{Hostname: ""})
+	l, h, err := cdslog.New(ctx, &graylog.Config{Hostname: ""})
 	require.NoError(t, err)
 	w.SetGelfLogger(h, l)
 

@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/sdk/cdn"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -47,7 +47,7 @@ func TestStoreTruncatedLogs(t *testing.T) {
 	s.Units = cdnUnits
 
 	hm := handledMessage{
-		Msg: hook.Message{
+		Msg: graylog.Message{
 			Full: "Bim bam boum",
 		},
 		IsTerminated: false,

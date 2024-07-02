@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/rockbears/log"
 )
 
@@ -74,12 +74,12 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	w.signer = signer
 
 	log.Info(ctx, "Setup step logger %s", w.cfg.GelfServiceAddr)
-	throttlePolicy := hook.NewDefaultThrottlePolicy()
+	throttlePolicy := graylog.NewDefaultThrottlePolicy()
 
-	var graylogCfg = &hook.Config{
+	var graylogCfg = &graylog.Config{
 		Addr:     w.cfg.GelfServiceAddr,
 		Protocol: "tcp",
-		ThrottlePolicy: &hook.ThrottlePolicyConfig{
+		ThrottlePolicy: &graylog.ThrottlePolicyConfig{
 			Amount: 100,
 			Period: 10 * time.Millisecond,
 			Policy: throttlePolicy,

@@ -19,7 +19,7 @@ import (
 	"github.com/ovh/cds/sdk/cdn"
 	"github.com/ovh/cds/sdk/jws"
 	cdslog "github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/log/hook"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -121,7 +121,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 
 // Handle Message: Worker/Hatchery
 func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
-	msg := hook.Message{}
+	msg := graylog.Message{}
 	if err := msg.UnmarshalJSON(messageReceived); err != nil {
 		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
 	}
@@ -154,7 +154,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 }
 
 // Handle Message from worker (job logs). Enqueue in Redis
-func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, msg hook.Message) error {
+func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, msg graylog.Message) error {
 	var signature cdn.Signature
 
 	switch {
@@ -214,7 +214,7 @@ func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string,
 	}
 	if currentSize >= s.Cfg.Log.StepMaxSize && hm.IsTerminated {
 		hm.Msg.Full = "...truncated\n"
-		hm.Msg.Level = int32(hook.LOG_WARNING)
+		hm.Msg.Level = int32(graylog.LOG_WARNING)
 	}
 
 	if err := s.Cache.Enqueue(incomingQueue, hm); err != nil {
@@ -241,7 +241,7 @@ func buildMessage(hm handledMessage) string {
 	return val
 }
 
-func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, msg hook.Message) error {
+func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature, sig interface{}, msg graylog.Message) error {
 	var signature cdn.Signature
 	var pk *rsa.PublicKey
 
