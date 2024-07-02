@@ -12,7 +12,6 @@ import (
 )
 
 func CmdOutput() *cobra.Command {
-	var stepFlag bool
 	c := &cobra.Command{
 		Use:     "output",
 		Aliases: []string{"export"},
@@ -24,9 +23,8 @@ func CmdOutput() *cobra.Command {
 			}
 
 			outputRequest := workerruntime.OutputRequest{
-				Name:     args[0],
-				Value:    args[1],
-				StepOnly: stepFlag,
+				Name:  args[0],
+				Value: args[1],
 			}
 			req := MustNewWorkerHTTPRequest(http.MethodPost, "/v2/output", outputRequest)
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -37,6 +35,5 @@ func CmdOutput() *cobra.Command {
 			return nil
 		},
 	}
-	c.PersistentFlags().BoolVar(&stepFlag, "step", false, "create an output only for the next job steps, available through the steps context")
 	return c
 }

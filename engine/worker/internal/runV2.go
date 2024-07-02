@@ -262,50 +262,83 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 
 	// Init step context
 	w.currentJobV2.runJob.StepsStatus = sdk.JobStepsStatus{}
+	w.SetCurrentStepsStatus(w.currentJobV2.runJob.StepsStatus)
 
 	for jobStepIndex, step := range w.currentJobV2.runJob.Job.Steps {
 		// Reset step log line to 0
 		w.stepLogLine = 0
-		w.currentJobV2.currentStepIndex = jobStepIndex
+		w.currentJobV2.currentStepIndexForLog = jobStepIndex
 		ctx = workerruntime.SetStepOrder(ctx, jobStepIndex)
 
 		// Set step in context
-		w.currentJobV2.currentStepName = sdk.GetJobStepName(step.ID, jobStepIndex)
-		ctx = workerruntime.SetStepName(ctx, w.currentJobV2.currentStepName)
+		w.currentJobV2.currentStepNameForLog = sdk.GetJobStepName(step.ID, jobStepIndex)
+		ctx = workerruntime.SetStepName(ctx, w.currentJobV2.currentStepNameForLog)
 
 		// Set current step status + create step context
-		w.createStepStatus(w.currentJobV2.runJob.StepsStatus, w.currentJobV2.currentStepName)
+		w.createStepStatus(w.currentJobV2.currentStepNameForLog)
 		w.currentJobV2.runJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
-		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepName))
+		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepNameForLog))
 
 		// Step context = parent context + env set on step
 		currentStepContext, err := w.createStepContext(ctx, step, w.currentJobV2.runJobContext)
 		if err != nil {
 			w.failJob(ctx, err.Error())
 		}
-		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepName, *currentStepContext)
-		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepName))
+		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepNameForLog, *currentStepContext)
+		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepNameForLog))
 		w.gelfLogger.hook.Flush()
 
-		w.updateStepResult(w.currentJobV2.runJob.StepsStatus, &jobResult, stepRes, step, w.currentJobV2.currentStepName)
+		w.updateStepResult(&jobResult, stepRes, step, w.currentJobV2.currentStepNameForLog)
 		w.currentJobV2.runJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
 
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
 	}
+
+	resolvedOutputs, err := w.computeOutputs(ctx, w.currentJobV2.runJobContext, w.currentJobV2.runJob.Job.Outputs)
+	if err != nil {
+		return w.failJob(ctx, err.Error())
+	}
+
+	// Create run result
+	for name, value := range resolvedOutputs {
+		result := workerruntime.V2RunResultRequest{
+			RunResult: &sdk.V2WorkflowRunResult{
+				IssuedAt:         time.Now(),
+				Status:           sdk.StatusSuccess,
+				WorkflowRunID:    w.currentJobV2.runJob.WorkflowRunID,
+				WorkflowRunJobID: w.currentJobV2.runJob.ID,
+				Type:             sdk.V2WorkflowRunResultTypeVariable,
+				Detail: sdk.V2WorkflowRunResultDetail{
+					Data: sdk.V2WorkflowRunResultVariableDetail{
+						Name:  name,
+						Value: value,
+					},
+				},
+			},
+		}
+
+		response, err := w.V2AddRunResult(ctx, result)
+		if err != nil {
+			w.failJob(ctx, err.Error())
+		}
+		log.Info(ctx, "run result %s created", response.RunResult.ID)
+	}
+
 	return jobResult
 }
 
-func (w *CurrentWorker) createStepStatus(stepsStatus sdk.JobStepsStatus, stepName string) {
+func (w *CurrentWorker) createStepStatus(stepName string) {
 	currentStepStatus := sdk.JobStepStatus{
 		Started: time.Now(),
 	}
-	stepsStatus[stepName] = currentStepStatus
+	w.GetCurrentStepsStatus()[stepName] = currentStepStatus
+	w.SetSubStepName(stepName)
 }
 
 func (w *CurrentWorker) createStepContext(ctx context.Context, step sdk.ActionStep, parentContext sdk.WorkflowRunJobsContext) (*sdk.WorkflowRunJobsContext, error) {
@@ -454,7 +487,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	}
 
 	// Compute action/plugin context
-	actionContext, err := w.computeContextForAction(ctx, currentStepContext, inputs, step)
+	actionContext, err := w.computeContextForAction(ctx, currentStepContext, inputs)
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("unable to compute context for action %s: %v", name, err))
 	}
@@ -463,32 +496,47 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	case 1:
 		env, err := w.GetEnvVariable(ctx, *actionContext)
 		if err != nil {
-			return w.failJob(ctx, fmt.Sprintf("%v", err))
+			return w.failJob(ctx, err.Error())
 		}
 		return w.runPlugin(ctx, actionPath[0], actionContext.Inputs, env)
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
+
+		// Save current step status before running a subaction
+		parentStepStatus := w.GetCurrentStepsStatus()
+		parentStepName := w.GetSubStepName()
+
+		// create new steps status for the child action
 		subStepStatus := sdk.JobStepsStatus{}
+		w.SetCurrentStepsStatus(subStepStatus)
+
 		for stepIndex, step := range w.actions[name].Runs.Steps {
 
 			// Create dedicated step status for the given action and set it on his context
 			subStepName := sdk.GetJobStepName(step.ID, stepIndex)
-			w.createStepStatus(subStepStatus, subStepName)
+			w.createStepStatus(subStepName)
 			actionContext.Steps = subStepStatus.ToStepContext()
 
 			// Create step context: (parent context + current set env)
 			currentStepContext, err := w.createStepContext(ctx, step, *actionContext)
 			if err != nil {
-				w.failJob(ctx, err.Error())
+				return w.failJob(ctx, err.Error())
 			}
 			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, *currentStepContext)
 			if stepRes.Status == sdk.V2WorkflowRunJobStatusFail {
 				return stepRes
 			}
-			w.updateStepResult(subStepStatus, &actionResult, stepRes, step, subStepName)
-			actionContext.Steps = subStepStatus.ToStepContext()
-
+			w.updateStepResult(&actionResult, stepRes, step, subStepName)
+			actionContext.Steps = w.GetCurrentStepsStatus().ToStepContext()
 		}
+
+		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, *actionContext, w.actions[name].Outputs); err != nil {
+			return w.failJob(ctx, err.Error())
+		}
+
+		// Set previous current step status with new output
+		w.SetCurrentStepsStatus(parentStepStatus)
+		w.SetSubStepName(parentStepName)
 	default:
 	}
 	return sdk.V2WorkflowRunJobResult{
@@ -496,8 +544,49 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	}
 }
 
-func (w *CurrentWorker) updateStepResult(stepStatus sdk.JobStepsStatus, actionResult *sdk.V2WorkflowRunJobResult, stepRes sdk.V2WorkflowRunJobResult, step sdk.ActionStep, stepName string) {
-	currentStepStatus := stepStatus[stepName]
+func (w *CurrentWorker) updateParentStepStatusWithOutputs(ctx context.Context, parentStepStatus sdk.JobStepsStatus, parentStepName string, actionContext sdk.WorkflowRunJobsContext, outputs map[string]sdk.ActionOutput) error {
+	parentStep := parentStepStatus[parentStepName]
+	parentStep.Outputs = sdk.JobResultOutput{}
+
+	resolvedOutpus, err := w.computeOutputs(ctx, actionContext, outputs)
+	if err != nil {
+		return err
+	}
+
+	for name, value := range resolvedOutpus {
+		parentStep.Outputs[name] = value
+	}
+	parentStepStatus[parentStepName] = parentStep
+	return nil
+}
+func (w *CurrentWorker) computeOutputs(ctx context.Context, actionContext sdk.WorkflowRunJobsContext, outputs map[string]sdk.ActionOutput) (map[string]string, error) {
+	resolvedOutput := make(map[string]string)
+
+	// Compute action output
+	bts, err := json.Marshal(actionContext)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal contexts: %v", err)
+	}
+	var mapContexts map[string]interface{}
+	if err := json.Unmarshal(bts, &mapContexts); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal contexts: %v", err)
+	}
+
+	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+
+	for outputName, o := range outputs {
+		contentString, err := ap.InterpolateToString(ctx, o.Value)
+		if err != nil {
+			return nil, fmt.Errorf("unable to interpolate script content: %v", err)
+		}
+		resolvedOutput[outputName] = contentString
+	}
+	return resolvedOutput, nil
+}
+
+func (w *CurrentWorker) updateStepResult(actionResult *sdk.V2WorkflowRunJobResult, stepRes sdk.V2WorkflowRunJobResult, step sdk.ActionStep, stepName string) {
+	currentStepsStatus := w.GetCurrentStepsStatus()
+	currentStepStatus := currentStepsStatus[stepName]
 	currentStepStatus.Ended = time.Now()
 	currentStepStatus.Outcome = stepRes.Status
 	if stepRes.Status == sdk.V2WorkflowRunJobStatusFail && actionResult.Status != sdk.V2WorkflowRunJobStatusFail && !step.ContinueOnError {
@@ -510,7 +599,7 @@ func (w *CurrentWorker) updateStepResult(stepStatus sdk.JobStepsStatus, actionRe
 	} else {
 		currentStepStatus.Conclusion = currentStepStatus.Outcome
 	}
-	stepStatus[w.currentJobV2.currentStepName] = currentStepStatus
+	currentStepsStatus[stepName] = currentStepStatus
 }
 
 func (w *CurrentWorker) runSubActionStep(ctx context.Context, step sdk.ActionStep, stepName string, stepIndex int, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
@@ -584,7 +673,7 @@ func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2Workfl
 }
 
 // For actions, only pass CDS/GIT/ENV/Integration context from parrent
-func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]string, step sdk.ActionStep) (*sdk.WorkflowRunJobsContext, error) {
+func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]string) (*sdk.WorkflowRunJobsContext, error) {
 	actionContext := sdk.WorkflowRunJobsContext{
 		WorkflowRunContext: sdk.WorkflowRunContext{
 			CDS: parentContext.CDS,
