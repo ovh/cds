@@ -1470,7 +1470,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 	}
 
 	if err := yaml.UnmarshalMultipleDocuments(content, out); err != nil {
-		return nil, []error{sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read %s%s: %v", directory, fileName, err)}
+		return nil, []error{sdk.NewErrorFrom(sdk.ErrInvalidData, "%s%s: %s", directory, fileName, err)}
 	}
 	var entities []sdk.EntityWithObject
 	for _, o := range *out {
@@ -1696,7 +1696,7 @@ func (api *API) stopAnalysis(ctx context.Context, analysis *sdk.ProjectRepositor
 	for _, e := range originalErrors {
 		analysisErrors = append(analysisErrors, sdk.ExtractHTTPError(e).From)
 	}
-	analysis.Data.Error = strings.Join(analysisErrors, "\n")
+	analysis.Data.Error = strings.Join(analysisErrors, ".\n")
 	if err := repository.UpdateAnalysis(ctx, tx, analysis); err != nil {
 		return err
 	}
