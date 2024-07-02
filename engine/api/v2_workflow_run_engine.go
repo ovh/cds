@@ -342,6 +342,14 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 
 	for i := range runResults {
 		result := &runResults[i]
+
+		jobRun, err := workflow_v2.LoadRunJobByID(ctx, db, result.WorkflowRunJobID)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to load run job by ID %s: %v", result.WorkflowRunJobID, err)
+			continue
+		}
+
 		if result.ArtifactManagerIntegrationName == nil {
 			continue
 		}
@@ -409,6 +417,9 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 			signedProps["git.ref"] = run.Contexts.Git.Ref
 			props.AddProperty("cds.run_id", runID)
 			signedProps["cds.run_id"] = runID
+			signedProps["cds.region"] = jobRun.Region
+			signedProps["cds.worker"] = jobRun.WorkerName
+			signedProps["cds.hatchery"] = jobRun.HatcheryName
 
 			// Prepare artifact signature
 			signedProps["repository"] = virtualRepository
