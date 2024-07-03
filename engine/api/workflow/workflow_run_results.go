@@ -701,6 +701,19 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			continue
 		}
 
+		noderun, err := LoadNodeRunByID(ctx, db, result.WorkflowNodeRunID, LoadRunOptions{DisableDetailledNodeRun: true})
+		if err != nil {
+			ctx = log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to load node run %d: %v", result.WorkflowNodeRunID, err)
+			continue
+		}
+
+		jobrun := noderun.GetJobRunByID(result.WorkflowRunJobID)
+		if jobrun == nil {
+			log.Error(ctx, "unable to load job run %d from node %d", result.WorkflowRunJobID, result.WorkflowNodeRunID)
+			continue
+		}
+
 		artifact, err := result.GetArtifactManager()
 		if err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
@@ -778,6 +791,14 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 		signedProps["type"] = artifact.RepoType
 		signedProps["path"] = artifact.Path
 		signedProps["name"] = artifact.Name
+		var region = ""
+		if jobrun.Region != nil {
+			region = *jobrun.Region
+		}
+		signedProps["cds.region"] = region
+		signedProps["cds.worker"] = jobrun.WorkerName
+		signedProps["cds.hatchery"] = jobrun.HatcheryName
+
 		if fi.Checksums == nil {
 			log.Error(ctx, "unable to get checksums for artifact %s %s", artifact.RepoName, artifact.Path)
 		} else {

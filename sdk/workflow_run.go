@@ -398,6 +398,17 @@ type WorkflowNodeRun struct {
 	VCSReport              string                               `json:"vcs_report,omitempty"`
 }
 
+func (nodeRun *WorkflowNodeRun) GetJobRunByID(id int64) *WorkflowNodeJobRun {
+	for i := range nodeRun.Stages {
+		for j := range nodeRun.Stages[i].RunJobs {
+			if nodeRun.Stages[i].RunJobs[j].ID == id {
+				return &nodeRun.Stages[i].RunJobs[j]
+			}
+		}
+	}
+	return nil
+}
+
 func (nodeRun *WorkflowNodeRun) GetStageIndex(job *WorkflowNodeJobRun) int {
 	var stageIndex = -1
 	for i := range nodeRun.Stages {
