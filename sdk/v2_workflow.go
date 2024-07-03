@@ -341,10 +341,10 @@ type V2WorkflowHook struct {
 }
 
 type V2WorkflowHookShort struct {
-	ID             string `json:"id" db:"id"`
-	VCSName        string `json:"vcs_name" db:"vcs_name"`
-	RepositoryName string `json:"repository_name" db:"repository_name"`
-	WorkflowName   string `json:"workflow_name" db:"workflow_name"`
+	ID             string `json:"id" `
+	VCSName        string `json:"vcs_name"`
+	RepositoryName string `json:"repository_name"`
+	WorkflowName   string `json:"workflow_name"`
 }
 
 type V2WorkflowScheduleEvent struct {

@@ -75,6 +75,9 @@ func (s *Service) deleteSchedulerHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+		if exec == nil {
+			return nil
+		}
 
 		if err := s.Dao.RemoveScheduler(ctx, exec.SchedulerDef.VCSName, exec.SchedulerDef.RepositoryName, exec.SchedulerDef.WorkflowName, hookID); err != nil {
 			return err
@@ -121,8 +124,10 @@ func (s *Service) geSchedulerExecutionHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-
-		return service.WriteJSON(w, exec, http.StatusOK)
+		if exec != nil {
+			return service.WriteJSON(w, exec, http.StatusOK)
+		}
+		return sdk.WithStack(sdk.ErrNotFound)
 	}
 }
 

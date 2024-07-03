@@ -19,10 +19,9 @@ var adminHooksSchedulerCmd = cli.Command{
 
 func adminHooksSchedulers() *cobra.Command {
 	return cli.NewCommand(adminHooksSchedulerCmd, nil, []*cobra.Command{
-		cli.NewListCommand(adminHooksSchedulersListAllCmd, adminHooksSchedulersListAllRun, nil),
-		cli.NewGetCommand(adminHooksGetSchedulerCmd, adminHooksGetSchedulerRun, nil),
+		cli.NewListCommand(adminHooksSchedulersListAllCmd, adminHooksSchedulersListAllRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(adminHooksGetSchedulerCmd, adminHooksGetSchedulerRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(adminHookSchedulerDeleteCmd, adminHookSchedulerDeleteRun, nil),
-		adminHooksRepositoryEvents(),
 	})
 }
 
@@ -73,9 +72,6 @@ var adminHooksGetSchedulerCmd = cli.Command{
 	Short:   "Get a scheduler by his identifier",
 	Flags: []cli.Flag{
 		{Name: "hookID"},
-		{Name: "vcs"},
-		{Name: "repository"},
-		{Name: "workflow"},
 	},
 }
 
@@ -102,7 +98,7 @@ func adminHooksGetSchedulerRun(v cli.Values) (interface{}, error) {
 		Timezone      string    `cli:"timezone"`
 		Ref           string    `cli:"ref"`
 		Commit        string    `cli:"commit"`
-		NextExecution time.Time `cli:"new_execution"`
+		NextExecution time.Time `cli:"next_execution"`
 	}{
 		Vcs:           exec.SchedulerDef.VCSName,
 		Repository:    exec.SchedulerDef.RepositoryName,
@@ -164,6 +160,7 @@ func adminHooksSchedulersListAllRun(v cli.Values) (cli.ListResult, error) {
 				Timezone:   s.Data.CronTimeZone,
 				Ref:        s.Ref,
 				Commit:     s.Commit,
+				HookID:     s.ID,
 			})
 		}
 		return cli.AsListResult(hookSchedulers), nil
@@ -189,6 +186,7 @@ func adminHooksSchedulersListAllRun(v cli.Values) (cli.ListResult, error) {
 				Vcs:        s.VCSName,
 				Repository: s.RepositoryName,
 				Workflow:   s.WorkflowName,
+				HookID:     s.ID,
 			})
 		}
 		return cli.AsListResult(hookSchedulers), nil
