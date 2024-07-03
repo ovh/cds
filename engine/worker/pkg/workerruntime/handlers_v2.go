@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
@@ -29,32 +28,6 @@ func V2_outputHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 
 		// Create step output
 		wk.AddStepOutput(ctx, output.Name, output.Value)
-
-		// Create run result
-		if !output.StepOnly {
-			result := V2RunResultRequest{
-				RunResult: &sdk.V2WorkflowRunResult{
-					IssuedAt:         time.Now(),
-					Status:           sdk.StatusSuccess,
-					WorkflowRunID:    output.WorkflowRunID,
-					WorkflowRunJobID: output.WorkflowRunJobID,
-					Type:             sdk.V2WorkflowRunResultTypeVariable,
-					Detail: sdk.V2WorkflowRunResultDetail{
-						Data: sdk.V2WorkflowRunResultVariableDetail{
-							Name:  output.Name,
-							Value: output.Value,
-						},
-					},
-				},
-			}
-
-			response, err := wk.V2AddRunResult(ctx, result)
-			if err != nil {
-				writeError(w, r, err)
-				return
-			}
-			log.Info(ctx, "run result %s created", response.RunResult.ID)
-		}
 
 		writeJSON(w, nil, http.StatusNoContent)
 	}

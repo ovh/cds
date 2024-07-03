@@ -222,6 +222,7 @@ type V2Job struct {
 	VariableSets    []string                `json:"vars,omitempty" jsonschema_extras:"required,order=10" jsonschema_description:"VariableSet linked to the job"`
 	Env             map[string]string       `json:"env,omitempty"  jsonschema_extras:"order=12,mode=edit" jsonschema_description:"Environment variable available in the job"`
 	Services        map[string]V2JobService `json:"services,omitempty"`
+	Outputs         map[string]ActionOutput `json:"outputs,omitempty"`
 
 	// TODO
 	Concurrency V2JobConcurrency `json:"-"`
