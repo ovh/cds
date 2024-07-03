@@ -342,7 +342,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			if contexts.Integrations.Deployment.Name != "" {
 				return nil // If it's already set, it's by job integration
 			}
-			contexts.Integrations.ArtifactManager = sdk.JobIntegrationsContext{
+			contexts.Integrations.Deployment = sdk.JobIntegrationsContext{
 				Name:      integ.Name,
 				Config:    integ.ToJobRunContextConfig(),
 				ModelName: integ.Model.Name,
