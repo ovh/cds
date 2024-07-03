@@ -48,7 +48,7 @@ func (s *Service) postRepositoryEventAnalysisCallbackHandler() service.Handler {
 	}
 }
 
-func (s *Service) deleteSchedulerHandler() service.Handler {
+func (s *Service) deleteSchedulerByWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		vcsServerName := vars["vcsServer"]
@@ -63,6 +63,66 @@ func (s *Service) deleteSchedulerHandler() service.Handler {
 		}
 
 		return nil
+	}
+}
+
+func (s *Service) deleteSchedulerHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		hookID := vars["hookID"]
+
+		exec, err := s.Dao.GetSchedulerExecution(ctx, hookID)
+		if err != nil {
+			return err
+		}
+
+		if err := s.Dao.RemoveScheduler(ctx, exec.SchedulerDef.VCSName, exec.SchedulerDef.RepositoryName, exec.SchedulerDef.WorkflowName, hookID); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func (s *Service) getAllSchedulersHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		schedulers, err := s.listAllSchedulers(ctx)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, schedulers, http.StatusOK)
+	}
+}
+
+func (s *Service) getWorkflowSchedulersHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		workflowName := vars["workflowName"]
+		vcsServerName := vars["vcsServer"]
+		repoName, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return err
+		}
+
+		schedulers, err := s.listSchedulersByWorkflow(ctx, vcsServerName, repoName, workflowName)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, schedulers, http.StatusOK)
+	}
+}
+
+func (s *Service) geSchedulerExecutionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		hookID := vars["hookID"]
+
+		exec, err := s.Dao.GetSchedulerExecution(ctx, hookID)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, exec, http.StatusOK)
 	}
 }
 
