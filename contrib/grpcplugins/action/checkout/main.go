@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/url"
 	"os/user"
 	"strings"
 
@@ -139,14 +141,45 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 			return stream.Send(res)
 		}
 		if u != nil && u.HomeDir != "" {
-			if err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, u.HomeDir+"/.ssh/id_rsa", key.Private, gitURL); err != nil {
+			sshFilePath := u.HomeDir + "/.ssh/id_rsa"
+			if _, err := grpcplugins.InstallSSHKey(ctx, &p.Common, workDirs, sshKey, sshFilePath, key.Private); err != nil {
 				err := fmt.Errorf("unable to install sshkey on worker: %v", err)
 				res.Status = sdk.StatusFail
 				res.Details = err.Error()
 				return stream.Send(res)
 			}
-		}
 
+			urlParsed, err := url.Parse(gitURL)
+			if err != nil {
+				return fmt.Errorf("unable to parse git url: %s", gitURL)
+			}
+			host, port, _ := net.SplitHostPort(urlParsed.Host)
+			if port == "" {
+				port = "22"
+			}
+
+			goRoutines := sdk.NewGoRoutines(ctx)
+			workDirs, err := grpcplugins.GetWorkerDirectories(ctx, &p.Common)
+			if err != nil {
+				return fmt.Errorf("unable to get working directory: %v", err)
+			}
+
+			scriptContent := fmt.Sprintf("ssh-keyscan -t rsa -p %s %s >> %s/.ssh/known_hosts", port, host, u.HomeDir)
+
+			chanRes := make(chan *actionplugin.ActionResult)
+			goRoutines.Exec(ctx, "InstallSSHKey-runScript", func(ctx context.Context) {
+				grpcplugins.RunScript(ctx, &p.Common, chanRes, workDirs.WorkingDir, scriptContent)
+			})
+
+			select {
+			case <-ctx.Done():
+				return fmt.Errorf("CDS Worker execution canceled: " + ctx.Err().Error())
+			case result := <-chanRes:
+				if result.Status == sdk.StatusFail {
+					return stream.Send(res)
+				}
+			}
+		}
 	}
 
 	return stream.Send(res)
