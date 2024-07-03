@@ -151,7 +151,7 @@ func (w *V2Workflow) UnmarshalJSON(data []byte) error {
 	type Alias V2Workflow // prevent recursion
 	var workflowAlias Alias
 	if err := JSONUnmarshal(data, &workflowAlias); err != nil {
-		return WrapError(err, "unable to unmarshal workflow")
+		return err
 	}
 	if workflowAlias.OnRaw != nil {
 		bts, _ := json.Marshal(workflowAlias.OnRaw)
@@ -159,7 +159,7 @@ func (w *V2Workflow) UnmarshalJSON(data []byte) error {
 		if err := JSONUnmarshal(bts, &on); err != nil {
 			var onSlice []string
 			if err := JSONUnmarshal(bts, &onSlice); err != nil {
-				return WrapError(err, "unable to unmarshal On in Workflow")
+				return err
 			}
 			if len(onSlice) > 0 {
 				workflowAlias.On = &WorkflowOn{}
@@ -479,6 +479,7 @@ func (w V2Workflow) CheckStageAndJobNeeds() []error {
 		for k, j := range w.Jobs {
 			if j.Stage == "" {
 				errs = append(errs, NewErrorFrom(ErrInvalidData, "Missing stage on job %s", k))
+				continue
 			}
 			if _, stageExist := stages[j.Stage]; !stageExist {
 				errs = append(errs, NewErrorFrom(ErrInvalidData, "Stage %s on job %s does not exist", j.Stage, k))

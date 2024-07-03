@@ -344,7 +344,7 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 	d.UseNumber()
 	err := d.Decode(i)
 	if err != nil {
-		return NewErrorFrom(ErrInvalidData, "%v", err)
+		return NewErrorWithStack(err, ErrInvalidData)
 	}
 	return nil
 }
