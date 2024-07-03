@@ -187,13 +187,6 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 
 	sensitiveDatas := sdk.StringSlice{}
 
-	for _, k := range proj.Keys {
-		if k.Name == vcs.Auth.SSHKeyName {
-			contexts.Git.SSHPrivate = k.Private
-			sensitiveDatas = append(sensitiveDatas, buildSensitiveData(k.Private)...)
-			break
-		}
-	}
 	if vcs.Auth.Token != "" {
 		contexts.Git.Token = vcs.Auth.Token
 		sensitiveDatas = append(sensitiveDatas, buildSensitiveData(vcs.Auth.Token)...)

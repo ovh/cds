@@ -19,7 +19,7 @@ inputs:
   ssh-key:
     type: text
     description: "The ssh-key used to fetch the repository"
-    default: ${{git.ssh_private}}
+    default: ${{git.ssh_key}}
   path:
     type: text
     description: Relative path under $CD_WORKSPACE to place the repository

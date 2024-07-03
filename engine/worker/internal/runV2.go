@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -47,7 +48,7 @@ func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 		}
 	}()
 
-	wdFile, wdAbs, err := w.setupWorkingDirectory(ctx, w.currentJobV2.runJob.JobID)
+	wdFile, wdAbs, err := w.setupWorkingDirectoryV2(ctx, w.currentJobV2.runJob.JobID)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return w.failJob(ctx, fmt.Sprintf("Error: unable to setup working directory: %v", err))
@@ -882,6 +883,63 @@ func (w *CurrentWorker) executeHooksSetupV2(ctx context.Context, fs afero.Fs) er
 	}
 	w.currentJobV2.envFromHooks = result
 	return nil
+}
+
+func (w *CurrentWorker) setupWorkingDirectoryV2(ctx context.Context, jobName string) (afero.File, string, error) {
+	wd, err := setupDirectory(ctx, w.basedir, jobName, "run")
+	if err != nil {
+		return nil, "", err
+	}
+
+	wdFile, err := setupWorkingDirectoryV2(ctx, w.basedir, wd)
+	if err != nil {
+		log.Debug(ctx, "setupWorkingDirectory error:%s", err)
+		return nil, "", err
+	}
+
+	wdAbs, err := filepath.Abs(wdFile.Name())
+	if err != nil {
+		log.Debug(ctx, "setupWorkingDirectory error:%s", err)
+		return nil, "", err
+	}
+
+	switch x := w.basedir.(type) {
+	case *afero.BasePathFs:
+		wdAbs, err = x.RealPath(wdFile.Name())
+		if err != nil {
+			return nil, "", err
+		}
+
+		wdAbs, err = filepath.Abs(wdAbs)
+		if err != nil {
+			log.Debug(ctx, "setupWorkingDirectory error:%s", err)
+			return nil, "", err
+		}
+	}
+
+	return wdFile, wdAbs, nil
+}
+
+func setupWorkingDirectoryV2(ctx context.Context, fs afero.Fs, wd string) (afero.File, error) {
+	log.Debug(ctx, "creating directory %s in Filesystem %s", wd, fs.Name())
+	if err := fs.MkdirAll(wd, 0755); err != nil {
+		return nil, err
+	}
+
+	u, err := user.Current()
+	if err != nil {
+		log.Error(ctx, "Error while getting current user %v", err)
+	} else if u != nil && u.HomeDir != "" {
+		if err := os.Setenv("HOME_CDS_PLUGINS", u.HomeDir); err != nil {
+			log.Error(ctx, "Error while setting home_plugin %v", err)
+		}
+	}
+
+	fi, err := fs.Open(wd)
+	if err != nil {
+		return nil, err
+	}
+	return fi, nil
 }
 
 func (w *CurrentWorker) setupHooksV2(ctx context.Context, currentJob CurrentJobV2, fs afero.Fs, workingDir string) error {
