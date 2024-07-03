@@ -80,6 +80,7 @@ func (actPlugin *keyInstallPlugin) perform(ctx context.Context, workDirs *sdk.Wo
 		}
 		grpcplugins.Logf(&actPlugin.Common, "To be able to use git command in a further step, you must run this command first:")
 		grpcplugins.Successf(&actPlugin.Common, "export GIT_SSH_COMMAND=\"ssh -i %s -o StrictHostKeyChecking=no\"", filePath)
+		return nil
 	case sdk.KeyTypePGP:
 		if _, _, err := sdk.ImportGPGKey("", key.Name, key.Private); err != nil {
 			return fmt.Errorf("unable to install pgp key %s: %v", keyName, err)
