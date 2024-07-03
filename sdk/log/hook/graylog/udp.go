@@ -2,7 +2,7 @@
 // license that can be found in the LICENSE file.
 // inspired from github.com/gemnasium/logrus-graylog-hook
 
-package hook
+package graylog
 
 import (
 	"bytes"
@@ -82,8 +82,8 @@ func NewUDPWriter(addr string) (*UDPWriter, error) {
 // of GELF chunked messages.  The header format is documented at
 // https://github.com/Graylog2/graylog2-docs/wiki/GELF as:
 //
-//     2-byte magic (0x1e 0x0f), 8 byte id, 1 byte sequence id, 1 byte
-//     total, chunk-data
+//	2-byte magic (0x1e 0x0f), 8 byte id, 1 byte sequence id, 1 byte
+//	total, chunk-data
 func (w *UDPWriter) writeChunked(zBytes []byte) (err error) {
 	b := make([]byte, 0, ChunkSize)
 	buf := bytes.NewBuffer(b)

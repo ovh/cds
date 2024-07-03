@@ -76,6 +76,8 @@ github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b h1:sSQK05nvxs4Uk
 github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b/go.mod h1:oX5x61PbNXchhh0oikYAH+4Pcfw5LKv21+Jnpr6r6Pc=
 github.com/ProtonMail/go-crypto v1.0.0 h1:LRuvITjQWX+WIfr930YHG2HNfjR1uOfyf5vE0kC2U78=
 github.com/ProtonMail/go-crypto v1.0.0/go.mod h1:EjAoLdwvbIOoOQr3ihjnSoLZRtE8azugULFRteWMNc0=
+github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91 h1:vX+gnvBc56EbWYrmlhYbFYRaeikAke1GL84N4BEYOFE=
+github.com/RackSec/srslog v0.0.0-20180709174129-a4725f04ec91/go.mod h1:cDLGBht23g0XQdLjzn6xOGXDkLK182YfINAaZEQLCHQ=
 github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752 h1:NMpC6M+PtNNDYpq7ozB7kINpv10L5yeli5GJpka2PX8=
 github.com/SSSaaS/sssa-golang v0.0.0-20170502204618-d37d7782d752/go.mod h1:PbJ8S5YaSYAvDPTiEuUsBHQwTUlPs6VM+Av8Oi3v570=
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d h1:UrqY+r/OJnIp5u0s1SbQ8dVfLCZJsnvazdBP5hS4iRs=

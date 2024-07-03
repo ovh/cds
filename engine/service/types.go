@@ -82,6 +82,12 @@ type HatcheryCommonConfiguration struct {
 				ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb" json:"extraKey"`
 				ExtraValue string `toml:"extraValue" comment:"value for extraKey field. For many keys: valueaaa,valuebbb" json:"-"`
 			} `toml:"graylog" json:"graylog"`
+			Syslog struct {
+				Host     string `toml:"host" comment:"Example: thot.ovh.com" json:"host"`
+				Port     int    `toml:"port" comment:"Example: 12202" json:"port"`
+				Protocol string `toml:"protocol" default:"tcp" comment:"tcp or udp" json:"protocol"`
+				ExtraTag string `toml:"extraTag" comment:"Example: X-OVH-TOKEN. You can use many keys: aaa,bbb" json:"extraTag"`
+			} `toml:"syslog" json:"syslog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration" json:"workerLogsOptions"`
 		MaxAttemptsNumberBeforeFailure int `toml:"maxAttemptsNumberBeforeFailure" default:"5" commented:"true" comment:"Maximum attempts to start a same job. -1 to disable failing jobs when to many attempts" json:"maxAttemptsNumberBeforeFailure"`
 	} `toml:"provision" json:"provision"`

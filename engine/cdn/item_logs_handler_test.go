@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/sdk/cdn"
+	"github.com/ovh/cds/sdk/log/hook/graylog"
 
 	jwt "github.com/golang-jwt/jwt"
 	"github.com/mitchellh/hashstructure"
@@ -27,7 +28,6 @@ import (
 	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/log/hook"
 )
 
 func TestGetItemsAllLogsLinesHandler(t *testing.T) {
@@ -44,7 +44,7 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 
 	// Add step 1
 	hm1 := handledMessage{
-		Msg: hook.Message{
+		Msg: graylog.Message{
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,
@@ -209,7 +209,7 @@ func TestGetItemLogsLinesHandler(t *testing.T) {
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
 	hm := handledMessage{
-		Msg: hook.Message{
+		Msg: graylog.Message{
 			Full: "this is a message",
 		},
 		IsTerminated: sdk.StatusTerminated,
@@ -340,7 +340,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 	var messageCounter int64
 	sendMessage := func() {
 		hm := handledMessage{
-			Msg:          hook.Message{Full: fmt.Sprintf("message %d", messageCounter)},
+			Msg:          graylog.Message{Full: fmt.Sprintf("message %d", messageCounter)},
 			IsTerminated: sdk.StatusNotTerminated,
 			Signature:    signature,
 		}
