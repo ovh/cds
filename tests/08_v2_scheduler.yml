@@ -103,7 +103,7 @@ testcases:
         - result.systemoutjson.next_execution ShouldNotBeEmpty
 
     - name: Delete a scheduler by ID
-      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler delete --hookID {{.hookID}}
+      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler delete --hookID {{.hookID}} --force
       assertions:
         - result.code ShouldEqual 0
 
