@@ -15,7 +15,7 @@ import (
 
 // getProjectVariableSetHandler retrieve the given variable set
 func (api *API) getProjectVariableSetHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectRead),
+	return service.RBAC(api.variableSetManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -102,7 +102,7 @@ func (api *API) postProjectVariableSetHandler() ([]service.RbacChecker, service.
 
 // deleteProjectVariableSetHandler delete the given variable set
 func (api *API) deleteProjectVariableSetHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectManage),
+	return service.RBAC(api.variableSetManage),
 		func(ctx context.Context, _ http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]

@@ -32,17 +32,18 @@ const (
 )
 
 type RBAC struct {
-	ID           string         `json:"id" db:"id"`
-	Name         string         `json:"name" db:"name" cli:"name"`
-	Created      time.Time      `json:"created" db:"created"`
-	LastModified time.Time      `json:"last_modified" db:"last_modified" cli:"last_modified"`
-	Global       []RBACGlobal   `json:"global,omitempty" db:"-"`
-	Projects     []RBACProject  `json:"projects,omitempty" db:"-"`
-	Regions      []RBACRegion   `json:"regions,omitempty" db:"-"`
-	Hatcheries   []RBACHatchery `json:"hatcheries,omitempty" db:"-"`
-	Workflows    []RBACWorkflow `json:"workflows,omitempty" db:"-"`
+	ID           string            `json:"id" db:"id"`
+	Name         string            `json:"name" db:"name" cli:"name"`
+	Created      time.Time         `json:"created" db:"created"`
+	LastModified time.Time         `json:"last_modified" db:"last_modified" cli:"last_modified"`
+	Global       []RBACGlobal      `json:"global,omitempty" db:"-"`
+	Projects     []RBACProject     `json:"projects,omitempty" db:"-"`
+	Regions      []RBACRegion      `json:"regions,omitempty" db:"-"`
+	Hatcheries   []RBACHatchery    `json:"hatcheries,omitempty" db:"-"`
+	Workflows    []RBACWorkflow    `json:"workflows,omitempty" db:"-"`
+	VariableSets []RBACVariableSet `json:"variablesets,omitempty" db:"-"`
 }
 
 func (rbac *RBAC) IsEmpty() bool {
-	return len(rbac.Projects) == 0 && len(rbac.Hatcheries) == 0 && len(rbac.Global) == 0 && len(rbac.Regions) == 0
+	return len(rbac.Projects) == 0 && len(rbac.Hatcheries) == 0 && len(rbac.Global) == 0 && len(rbac.Regions) == 0 && len(rbac.VariableSets) == 0 && len(rbac.Workflows) == 0
 }
