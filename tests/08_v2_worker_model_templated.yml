@@ -77,22 +77,28 @@ testcases:
     - result.systemoutjson ShouldHaveLength 2
     - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
     - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-    retry: 20
-    delay: 5
+    retry: 100
+    delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
     assertions:
     - result.systemoutjson ShouldHaveLength 1
     - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-    retry: 40
-    delay: 5
+    retry: 200
+    delay: 1
     vars:
       workflowRunID:
         from: result.systemoutjson.systemoutjson0.id
 
-  - name: Download logs
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"
-
-  - name: Check workflow log content
-    script: "cat {{.cds_workflow}}-1-1-init-hello | grep \"Hello World!\""
+  - name: Download and check logs
+    script: |-
+      #!/bin/bash
+      set -e
+      FILE=/tmp/`uuidgen`
+      mkdir -p $FILE && cd $FILE
+      {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+      # Check workflow log content
+      cat {{.cds_workflow}}-1-1-init-hello | grep "Hello World!"
+    retry: 60
+    delay: 1

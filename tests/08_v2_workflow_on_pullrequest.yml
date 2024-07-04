@@ -84,8 +84,8 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
 - name: Work on another git branch
   steps:
@@ -105,8 +105,8 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
 - name: Create Pull-Request
   steps:
@@ -140,45 +140,55 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 40
-      delay: 5
+      retry: 200
+      delay: 1
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
-    - name: Download logs
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"
-
-    - name: Check workflowEnv log content
-      script: "cat {{.cds_workflow}}-*-myjob* | grep \"job done\""
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Check workflowEnv log content
+        cat {{.cds_workflow}}-*-myjob* | grep "job done"
+      retry: 60
+      delay: 1
 
 - name: Check comment created on gitea
   steps:
-    - name: Get pull-request from gitea and check comment
-      type: http
-      method: GET
-      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
-      basic_auth_user: "{{.git.user}}"
-      basic_auth_password: "{{.git.password}}"
-      headers:
-        Content-Type: application/json
-      assertions:
-        - result.statuscode ShouldEqual 200
-        - result.bodyjson ShouldHaveLength 1
-        - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
+  - name: Get pull-request from gitea and check comment
+    type: http
+    method: GET
+    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
+    basic_auth_user: "{{.git.user}}"
+    basic_auth_password: "{{.git.password}}"
+    headers:
+      Content-Type: application/json
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson ShouldHaveLength 1
+      - result.bodyjson.bodyjson0.body ShouldEqual "a comment here"
+    retry: 10
+    delay: 1
 
 - name: Check status created on gitea
   steps:
-    - name: Get status from gitea
-      type: http
-      method: GET
-      url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/commits/{{.Create-Pull-Request.gitSha}}/status"
-      basic_auth_user: "{{.git.user}}"
-      basic_auth_password: "{{.git.password}}"
-      headers:
-        Content-Type: application/json
-      assertions:
-        - result.statuscode ShouldEqual 200
-        - result.bodyjson.statuses ShouldHaveLength 1
-        - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
-        - "result.bodyjson.statuses.statuses0.context ShouldEqual \"ITV2WFNOTIF-WorkflowNotificationsLog #1\""
+  - name: Get status from gitea
+    type: http
+    method: GET
+    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/commits/{{.Create-Pull-Request.gitSha}}/status"
+    basic_auth_user: "{{.git.user}}"
+    basic_auth_password: "{{.git.password}}"
+    headers:
+      Content-Type: application/json
+    assertions:
+      - result.statuscode ShouldEqual 200
+      - result.bodyjson.statuses ShouldHaveLength 1
+      - result.bodyjson.statuses.statuses0.status ShouldEqual "success"
+      - "result.bodyjson.statuses.statuses0.context ShouldEqual \"ITV2WFNOTIF-WorkflowNotificationsLog #1\""
+    retry: 10
+    delay: 1

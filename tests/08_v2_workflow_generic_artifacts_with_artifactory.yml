@@ -151,8 +151,8 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
     - result.systemoutjson ShouldHaveLength 2
-    retry: 20
-    delay: 2
+    retry: 40
+    delay: 1
     vars:
       analysisID:
         from:
@@ -162,8 +162,8 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
     assertions:
     - 'result.systemout ShouldContainSubstring "status: Success"'
-    retry: 20
-    delay: 2
+    retry: 40
+    delay: 1
 
   - name: Get hook event status
     script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event list my_vcs_server {{.git.user}}/{{.git_repo}} --format json
@@ -177,13 +177,13 @@ testcases:
     info: "hook event {{.value.uuid}} ({{.value.created}} - {{.result.systemoutjson.last_error}}) status is {{.result.systemoutjson.status}}"
     assertions:
     - result.systemoutjson.status ShouldEqual Done
-    retry: 30
-    delay: 5
+    retry: 150
+    delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
     assertions:
       - result.systemoutjson ShouldHaveLength 1
       - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-    retry: 30
-    delay: 5
+    retry: 150
+    delay: 1

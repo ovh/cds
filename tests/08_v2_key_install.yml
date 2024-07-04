@@ -105,23 +105,28 @@ testcases:
           from: result.systemoutjson.systemoutjson0.id
         workflowRunStatus:  
           from: result.systemoutjson.systemoutjson0.status
-           
-
-    - name: Download logs
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"
 
     - name: Get run info
-      script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"     
+      script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"
 
     - name: Get job info
       script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"      
-
-    - name: Checkpgp key
-      script: "cat {{.cds_workflow}}-1-1-pgp-step-0 && cat {{.cds_workflow}}-1-1-pgp-step-0 | grep \"pgpkey proj-pgp-itv2keyinstall has been imported\""
-    - name: Checkssh key
-      script: "cat {{.cds_workflow}}-1-1-init-step-0 && cat {{.cds_workflow}}-1-1-init-step-0 | grep \"sshkey proj-ssh-itv2keyinstall has been created\""
-    - name: Checkssh key
-      script: "cat {{.cds_workflow}}-1-1-init-displayssh && cat {{.cds_workflow}}-1-1-init-displayssh | grep \"**********\""
+           
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Checkpgp key
+        cat {{.cds_workflow}}-1-1-pgp-step-0 && cat {{.cds_workflow}}-1-1-pgp-step-0 | grep "pgpkey proj-pgp-itv2keyinstall has been imported"
+        # Checkssh key
+        cat {{.cds_workflow}}-1-1-init-step-0 && cat {{.cds_workflow}}-1-1-init-step-0 | grep "sshkey proj-ssh-itv2keyinstall has been created"
+        # Checkssh key
+        cat {{.cds_workflow}}-1-1-init-displayssh && cat {{.cds_workflow}}-1-1-init-displayssh | grep "**********"
+      retry: 60
+      delay: 1
 
     - name: Echo Status
       script: echo {{.workflowRunStatus}}

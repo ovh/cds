@@ -77,8 +77,8 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 10
-      delay: 12
+      retry: 120
+      delay: 1
 
     - name: Save current git commit
       script: cd /tmp/repos/{{.git_repo}} && git rev-parse HEAD
@@ -118,8 +118,8 @@ testcases:
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success" 
         - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"    
-      retry: 10
-      delay: 12                   
+      retry: 120
+      delay: 1              
 
     - name: Run workflow on previous commit
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --branch master --commit {{.Push-workflow-file.commitToRun}}"
@@ -129,21 +129,27 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 30
-      delay: 5
+      retry: 150
+      delay: 1
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
-    - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
-
-    - name: Check checkout log content
-      script: "cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout completed\""
-    - name: Check checkout log content 2
-      script: "cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep \"Checkout branch master\""  
-    - name: Check commit
-      script: "cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep \"{{.Push-workflow-file.commitToRun}}\"" 
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Check checkout log content
+        cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout completed"
+        # Check checkout log content 2
+        cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout branch master"
+        # Check commit
+        cat {{.cds_workflow}}-1-1-init-gitvariables && cat {{.cds_workflow}}-1-1-init-gitvariables | grep "{{.Push-workflow-file.commitToRun}}"
+      retry: 60
+      delay: 1
 
 - name: Git create branch
   steps:
@@ -154,8 +160,8 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 5
         - result.systemoutjson.systemoutjson4.status ShouldEqual "Success"    
-      retry: 10
-      delay: 12   
+      retry: 120
+      delay: 1
     - name: Manual run on branch testbranch
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow run {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --branch testbranch"
     - name: Check CDS project analyses status after run onbranch testbranch
@@ -163,12 +169,12 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 6
         - result.systemoutjson.systemoutjson5.status ShouldEqual "Success"    
-      retry: 10
-      delay: 12   
+      retry: 120
+      delay: 1
     - name: Check that the CDS workflow has been executed
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 30
-      delay: 5    
+      retry: 150
+      delay: 1 
