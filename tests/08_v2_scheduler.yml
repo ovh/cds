@@ -96,14 +96,14 @@ testcases:
           from: result.systemoutjson.systemoutjson0.id 
 
     - name: Get a scheduler by ID
-      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler get {{.workflowRunID}} --format json
+      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler get --hookID {{.workflowRunID}} --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.cron ShouldEqual "0 0 * * *"
         - result.systemoutjson.next_execution ShouldNotBeEmpty
 
     - name: Delete a scheduler by ID
-      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler delete {{.workflowRunID}}
+      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler delete --hookID {{.workflowRunID}}
       assertions:
         - result.code ShouldEqual 0
 
