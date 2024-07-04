@@ -233,6 +233,53 @@
                     </nz-col>
                 </nz-row>
             </div>
+            <div *ngSwitchCase="'gpgkeys'">
+                <div class="wide column">
+                    <h2>Add a GPG Key</h2>
+                    <form nz-form>
+                        <nz-row>
+                            <nz-col [nzSpan]="15">
+                                <nz-form-item>
+                                    <nz-form-control>
+                                        <nz-input-group>
+                                            <textarea rows="4" nz-input [(ngModel)]="importPublicGPGKey" [ngModelOptions]="{standalone: true}" placeholder="Paste here a GPG public key "></textarea>
+                                        </nz-input-group>
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </nz-col>
+                            <nz-col [nzSpan]="2" [nzOffset]="1">
+                                <nz-form-item>
+                                    <nz-form-control>
+                                        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="loading || importPublicGPGKey === ''" (click)="addGPGKey()">Add</button>
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </nz-col>
+                        </nz-row>
+                    </form>
+
+                    <h2>My GPG Keys</h2>
+                    <nz-table #gpgKeysTable [nzData]="gpgKeys">
+                        <thead>
+                          <tr>
+                            <th width="150px">Key ID</th>
+                            <th>Public Key</th>
+                            <th width="150px"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let data of gpgKeysTable.data">
+                            <td>{{data.key_id}}</td>
+                            <td>
+                                <textarea nz-input [ngModel]="data.public_key" readonly rows="10"></textarea>
+                            </td>
+                            <td>
+                                <button nz-button nzDanger nzType="primary" nz-popconfirm nzPopconfirmTitle="Are you sure you want to delete this key ?" (nzOnConfirm)="deleteGPGKey(data)">Delete</button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </nz-table>
+                </div>
+            </div>
         </app-scrollview>
     </div>
 </div>
