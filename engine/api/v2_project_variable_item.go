@@ -15,7 +15,7 @@ import (
 
 // getProjectVariableSetItemHandler Retrieve the given item in the variable set
 func (api *API) getProjectVariableSetItemHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.variableSetManage),
+	return service.RBAC(api.variableSetItemRead),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -38,7 +38,7 @@ func (api *API) getProjectVariableSetItemHandler() ([]service.RbacChecker, servi
 
 // postProjectVariableSetItemHandler creates a new item on the given variable set
 func (api *API) postProjectVariableSetItemHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.variableSetManage),
+	return service.RBAC(api.variableSetItemManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -109,7 +109,7 @@ func (api *API) postProjectVariableSetItemHandler() ([]service.RbacChecker, serv
 
 // putProjectVariableSetItemHandler updates an item on the given variable set
 func (api *API) putProjectVariableSetItemHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.variableSetManage),
+	return service.RBAC(api.variableSetItemManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -170,7 +170,7 @@ func (api *API) putProjectVariableSetItemHandler() ([]service.RbacChecker, servi
 
 // deleteProjectVariableSetItemHandler delete the given variable set item
 func (api *API) deleteProjectVariableSetItemHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.variableSetManage),
+	return service.RBAC(api.variableSetItemManage),
 		func(ctx context.Context, _ http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]

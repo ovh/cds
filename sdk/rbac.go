@@ -21,6 +21,7 @@ const (
 	ProjectRoleManageAction           = "manage-action"
 	ProjectRoleManageWorkflow         = "manage-workflow"
 	ProjectRoleManageWorkflowTemplate = "manage-workflow-template"
+	ProjectRoleManageVariableSet      = "manage-variableset"
 
 	// Hatchery Role
 	HatcheryRoleSpawn = "start-worker"

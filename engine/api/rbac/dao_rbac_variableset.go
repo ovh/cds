@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
@@ -85,7 +86,17 @@ func HasRoleOnVariableSetAndUserID(ctx context.Context, db gorp.SqlExecutor, rol
 	if allVariablesetAllowed {
 		return true, nil
 	}
-	return variableSets.Contains(vsName), nil
+	for _, item := range variableSets {
+		g := glob.New(item)
+		r, err := g.MatchString(vsName)
+		if err != nil {
+			return false, err
+		}
+		if r != nil {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func HasRoleOnVariableSetsAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, vsNames []string) (bool, string, error) {

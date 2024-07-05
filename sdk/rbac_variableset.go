@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	VariableSetRoleManage = "manage"
-	VariableSetRoleUse    = "use"
-	VariableSetRoles      = []string{VariableSetRoleUse, VariableSetRoleManage}
+	VariableSetRoleUse        = "use"
+	VariableSetRoleManageItem = "manage-item"
+	VariableSetRoles          = []string{VariableSetRoleManageItem, VariableSetRoleUse}
 )
 
 type RBACVariableSet struct {

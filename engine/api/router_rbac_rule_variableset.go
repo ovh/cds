@@ -30,9 +30,16 @@ func hasRoleOnVariableSet(ctx context.Context, auth *sdk.AuthUserConsumer, store
 }
 
 // workflowTrigger return nil if the current AuthUserConsumer have the WorkflowRoleTrigger on current workflow
-func (api *API) variableSetManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+func (api *API) variableSetItemManage(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]
 	vsName := vars["variableSetName"]
 
-	return hasRoleOnVariableSet(ctx, auth, store, db, projectKey, vsName, sdk.VariableSetRoleManage)
+	return hasRoleOnVariableSet(ctx, auth, store, db, projectKey, vsName, sdk.VariableSetRoleManageItem)
+}
+
+func (api *API) variableSetItemRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+	projectKey := vars["projectKey"]
+	vsName := vars["variableSetName"]
+
+	return hasRoleOnVariableSet(ctx, auth, store, db, projectKey, vsName, sdk.VariableSetRoleUse)
 }

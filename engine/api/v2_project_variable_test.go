@@ -21,7 +21,7 @@ func Test_CrudProjectVariableSet(t *testing.T) {
 
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManage, proj.Key, *user1)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *user1)
-	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleManage, proj.Key, "vs-1", *user1)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageVariableSet, proj.Key, *user1)
 
 	// INSERT Variable set
 	vs := sdk.ProjectVariableSet{
@@ -99,6 +99,7 @@ func TestLoadVariableSetWithItems(t *testing.T) {
 
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManage, proj.Key, *user1)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *user1)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageVariableSet, proj.Key, *user1)
 
 	// Create variable SET
 	vs := sdk.ProjectVariableSet{
@@ -107,7 +108,8 @@ func TestLoadVariableSetWithItems(t *testing.T) {
 	}
 	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
 
-	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleManage, proj.Key, vs.Name, *user1)
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleManageItem, proj.Key, vs.Name, *user1)
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleUse, proj.Key, vs.Name, *user1)
 
 	// ADD ITEM TEXT
 	itt := sdk.ProjectVariableSetItem{

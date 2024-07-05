@@ -41,9 +41,9 @@ func TestHasRoleVariableSetExecute(t *testing.T) {
 			name: "user has direct right",
 			rbac: fmt.Sprintf(`name: test-perm
 variablesets:
-- role: manage
+- role: manage-item
   users: [%s]
-  variablesets: [vs1]
+  variablesets: ["*"]
   project: %s`, user1.Username, proj.Key),
 			result: true,
 		},
@@ -52,9 +52,9 @@ variablesets:
 			name: "user has right through a group",
 			rbac: fmt.Sprintf(`name: test-perm
 variablesets:
-- role: manage
+- role: manage-item
   groups: [%s]
-  variablesets: [vs1]
+  variablesets: ["vs*"]
   project: %s`, g.Name, proj.Key),
 			result: true,
 		},
@@ -63,7 +63,7 @@ variablesets:
 			name: "all variablesets are allowed on project",
 			rbac: fmt.Sprintf(`name: test-perm
 variablesets:
-- role: manage
+- role: manage-item
   groups: [%s]
   all_variablesets: true
   project: %s`, g.Name, proj.Key),
@@ -74,9 +74,9 @@ variablesets:
 			name: "all users are allowed on project",
 			rbac: fmt.Sprintf(`name: test-perm
 variablesets:
-- role: manage
+- role: manage-item
   all_users: true
-  all_variablesets: true
+  variablesets: ["*s1"]
   project: %s`, proj.Key),
 			result: true,
 		},
@@ -85,7 +85,7 @@ variablesets:
 			name: "user does not have the right",
 			rbac: fmt.Sprintf(`name: test-perm
 variablesets:
-- role: manage
+- role: manage-item
   users: [%s]
   all_workflows: true
   project: %s`, user2.Username, proj.Key),
@@ -105,7 +105,7 @@ variablesets:
 			require.NoError(t, rbacLoader.FillRBACWithIDs(context.TODO(), &r))
 			require.NoError(t, rbac.Insert(context.TODO(), db, &r))
 
-			err = api.variableSetManage(context.TODO(), &auth, api.Cache, api.mustDB(), map[string]string{
+			err = api.variableSetItemManage(context.TODO(), &auth, api.Cache, api.mustDB(), map[string]string{
 				"projectKey":      proj.Key,
 				"variableSetName": targetVariableSet,
 			})

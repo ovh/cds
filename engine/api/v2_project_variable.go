@@ -9,19 +9,35 @@ import (
 
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 // getProjectVariableSetHandler retrieve the given variable set
 func (api *API) getProjectVariableSetHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.variableSetManage),
+	return service.RBAC(api.projectManageVariableSet),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 			name := vars["variableSetName"]
 
-			variableSet, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, name, project.WithVariableSetItems)
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			canUseItem, err := rbac.HasRoleOnVariableSetAndUserID(ctx, api.mustDB(), sdk.VariableSetRoleUse, u.AuthConsumerUser.AuthentifiedUserID, pKey, name)
+			if err != nil {
+				return err
+			}
+
+			var opts []gorpmapper.GetOptionFunc
+			if canUseItem {
+				opts = append(opts, project.WithVariableSetItems)
+			}
+			variableSet, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, name, opts...)
 			if err != nil {
 				return err
 			}
@@ -47,7 +63,7 @@ func (api *API) getProjectVariableSetsHandler() ([]service.RbacChecker, service.
 
 // postProjectVariableSetHandler creates a new variable set on the given project
 func (api *API) postProjectVariableSetHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.projectManage),
+	return service.RBAC(api.projectManageVariableSet),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
@@ -102,7 +118,7 @@ func (api *API) postProjectVariableSetHandler() ([]service.RbacChecker, service.
 
 // deleteProjectVariableSetHandler delete the given variable set
 func (api *API) deleteProjectVariableSetHandler() ([]service.RbacChecker, service.Handler) {
-	return service.RBAC(api.variableSetManage),
+	return service.RBAC(api.projectManageVariableSet),
 		func(ctx context.Context, _ http.ResponseWriter, req *http.Request) error {
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
