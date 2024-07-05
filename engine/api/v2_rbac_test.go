@@ -47,7 +47,12 @@ workflows:
     all_users: true  
     all_workflows: true
     project: %s
-`, p.Key, u.Username, g.Name, u.Username, g.Name, p.Key)
+variablesets:
+  - role: manage
+    all_users: true
+    all_variablesets: true
+    project: %s	
+`, p.Key, u.Username, g.Name, u.Username, g.Name, p.Key, p.Key)
 
 	// Here, we insert the vcs server as a CDS administrator
 	req.Body = io.NopCloser(strings.NewReader(body))
@@ -84,6 +89,8 @@ workflows:
 	require.Equal(t, g.Name, rbacGET.Projects[0].RBACGroupsName[0])
 
 	require.Equal(t, 1, len(rbacGET.Workflows))
+
+	require.Equal(t, 1, len(rbacGET.VariableSets))
 
 	// Delete
 	varsDelete := map[string]string{"rbacIdentifier": rbacGET.ID}

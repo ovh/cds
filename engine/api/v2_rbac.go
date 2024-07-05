@@ -208,7 +208,7 @@ func (rl *RBACLoader) FillRBACWithNames(ctx context.Context, r *sdk.RBAC) error 
 			return err
 		}
 	}
-	for vsID := range r.Workflows {
+	for vsID := range r.VariableSets {
 		rbacVS := &r.VariableSets[vsID]
 		if err := rl.fillRBACVariableSetWithNames(ctx, rbacVS); err != nil {
 			return err
