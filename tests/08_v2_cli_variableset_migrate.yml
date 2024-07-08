@@ -1,6 +1,6 @@
 name: Project VariableSet Command TestSuite
 vars:
-  cds_project: "ITV2VARIABLESET"
+  cds_project: "ITV2VARIABLESETMIG"
 testcases:
 - name: prepare test
   steps:
