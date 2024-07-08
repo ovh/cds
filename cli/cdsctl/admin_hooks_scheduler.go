@@ -28,7 +28,7 @@ func adminHooksSchedulers() *cobra.Command {
 var adminHookSchedulerDeleteCmd = cli.Command{
 	Name:    "delete",
 	Aliases: []string{"rm", "remove", "del"},
-	Short:   "Delete a specific scheduler by his identifier",
+	Short:   "Delete a scheduler by its identifier",
 	Flags: []cli.Flag{
 		{Name: "hookID"},
 		{Name: "vcs"},
@@ -69,7 +69,7 @@ func adminHookSchedulerDeleteRun(v cli.Values) error {
 var adminHooksGetSchedulerCmd = cli.Command{
 	Name:    "get",
 	Aliases: []string{"show"},
-	Short:   "Get a scheduler by his identifier",
+	Short:   "Get a scheduler by its identifier",
 	Flags: []cli.Flag{
 		{Name: "hookID"},
 	},
