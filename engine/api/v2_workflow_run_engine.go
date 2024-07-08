@@ -158,7 +158,24 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	jobsToQueue, skippedJobs, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), run, wrEnqueue, u, api.Config.Workflow.JobDefaultRegion)
+	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), run.ID, run.RunAttempt)
+	if err != nil {
+		return sdk.WrapError(err, "unable to load workflow run results for run %s", wrEnqueue.RunID)
+	}
+
+	allRunJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), run.ID, run.RunAttempt)
+	if err != nil {
+		return sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
+	}
+
+	runJobsContexts, runGatesContexts := computeExistingRunJobContexts(allRunJobs, runResults)
+
+	// Compute annotations
+	if err := api.computeWorkflowRunAnnotations(ctx, run, runJobsContexts, runGatesContexts); err != nil {
+		return err
+	}
+
+	jobsToQueue, skippedJobs, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), run, allRunJobs, runJobsContexts, u, api.Config.Workflow.JobDefaultRegion)
 	if errRetrieve != nil {
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -243,10 +260,11 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 		if finalStatus != run.Status || runUpdated {
 			run.Status = finalStatus
-			if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
-				return err
-			}
 		}
+	}
+
+	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -276,6 +294,73 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *run, rj)
 		default:
 			event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, rj)
+		}
+	}
+	return nil
+}
+
+type computeAnnotationsContext struct {
+	sdk.WorkflowRunContext
+	Jobs map[string]computeAnnotationsJobContext `json:"jobs"`
+}
+
+type computeAnnotationsJobContext struct {
+	Results sdk.JobResultContext `json:"results"`
+	Gate    sdk.GateInputs       `json:"gate"`
+}
+
+func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2WorkflowRun, runJobsContexts sdk.JobsResultContext, runGatesContexts sdk.JobsGateContext) error {
+	for k, v := range run.WorkflowData.Workflow.Annotations {
+		if _, exist := run.Annotations[k]; exist { // If the annotation has already been set: next
+			continue
+		}
+		// Build the context that is available for expression syntax
+		computeAnnotationsJosbCtx := make(map[string]computeAnnotationsJobContext)
+		for jobID, jobResult := range runJobsContexts {
+			computeAnnotationsJosbCtx[jobID] = computeAnnotationsJobContext{
+				Results: jobResult,
+				Gate:    runGatesContexts[jobID],
+			}
+		}
+
+		computeAnnotationsCtx := computeAnnotationsContext{
+			WorkflowRunContext: run.Contexts,
+			Jobs:               computeAnnotationsJosbCtx,
+		}
+
+		bts, _ := json.Marshal(computeAnnotationsCtx)
+		var mapContexts map[string]interface{}
+		_ = json.Unmarshal(bts, &mapContexts) // error cannot happen here
+
+		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+		value, err := ap.InterpolateToString(ctx, v)
+		if err != nil {
+			// If error, insert a run info
+			runInfo := sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				Level:         sdk.WorkflowRunInfoLevelWarning,
+				IssuedAt:      time.Now(),
+				Message:       fmt.Sprintf("unable to compute annotation %q: %v", v, err),
+			}
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback()
+			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+			continue
+		}
+		annotationValue := strings.TrimSpace(value)
+		if annotationValue != "" {
+			if run.Annotations == nil {
+				run.Annotations = sdk.WorkflowRunAnnotations{}
+			}
+			run.Annotations[k] = annotationValue
 		}
 	}
 	return nil
@@ -739,23 +824,11 @@ func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, cur
 }
 
 // Return jobToQueue, skippedJob, runInfos, error
-func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]sdk.V2Job, map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, error) {
+func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob, runJobsContexts sdk.JobsResultContext, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]sdk.V2Job, map[string]sdk.V2Job, []sdk.V2WorkflowRunInfo, error) {
 	ctx, next := telemetry.Span(ctx, "retrieveJobToQueue")
 	defer next()
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	jobToQueue := make(map[string]sdk.V2Job)
-
-	runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, db, run.ID, run.RunAttempt)
-	if err != nil {
-		return nil, nil, nil, sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
-	}
-
-	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, run.ID, run.RunAttempt)
-	if err != nil {
-		return nil, nil, nil, sdk.WrapError(err, "unable to load workflow run results for run %s", wrEnqueue.RunID)
-	}
-
-	runJobsContexts := computeExistingRunJobContexts(runJobs, runResults)
 
 	// temp map of run jobs
 	allrunJobsMap := make(map[string]sdk.V2WorkflowRunJob)

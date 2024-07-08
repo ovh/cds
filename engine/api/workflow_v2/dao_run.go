@@ -190,8 +190,33 @@ func LoadRunsTemplates(ctx context.Context, db gorp.SqlExecutor, projKey string)
 	return names, nil
 }
 
+type AnnotationsFilter struct {
+	Key    string         `db:"key"`
+	Values pq.StringArray `db:"values"`
+}
+
+type AnnotationsFilters []AnnotationsFilter
+
+func LoadRunsAnnotations(ctx context.Context, db gorp.SqlExecutor, projKey string) (AnnotationsFilters, error) {
+	var annotations AnnotationsFilters
+	_, next := telemetry.Span(ctx, "LoadRunsAnnotations")
+	defer next()
+
+	if _, err := db.Select(&annotations, `
+	select annotations.key as "key", array_agg(annotations.value) as "values"
+	from 
+		v2_workflow_run,
+		jsonb_each_text(annotations) as annotations
+	where project_key = $1 AND annotations IS NOT NULL
+	group  by annotations.key;
+	`, projKey); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return annotations, nil
+}
+
 const runQueryFilters = `
-	(array_length(:workflows::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY(:workflows))
+	AND (array_length(:workflows::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY(:workflows))
 	AND (array_length(:actors::text[], 1) IS NULL OR username = ANY(:actors))
 	AND (array_length(:status::text[], 1) IS NULL OR status = ANY(:status))
 	AND (array_length(:refs::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY(:refs))
@@ -200,12 +225,24 @@ const runQueryFilters = `
 	AND (array_length(:workflow_repositories::text[], 1) IS NULL OR (vcs_server || '/' || repository) = ANY(:workflow_repositories))
 	AND (array_length(:commits::text[], 1) IS NULL OR contexts -> 'git' ->> 'sha' = ANY(:commits))
 	AND (array_length(:templates::text[], 1) IS NULL OR ((contexts -> 'cds' ->> 'workflow_template_vcs_server') || '/' || (contexts -> 'cds' ->> 'workflow_template_repository') || '/' || (contexts -> 'cds' ->> 'workflow_template')) = ANY(:templates))
+	AND (array_length(:annotation_keys::text[], 1) IS NULL OR annotation_keys @> :annotation_keys)
+	AND (array_length(:annotation_values::text[], 1) IS NULL OR annotation_values @> :annotation_values)
 `
 
 func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountAllRuns")
 	defer next()
-	count, err := db.SelectInt("SELECT COUNT(1) FROM v2_workflow_run WHERE "+runQueryFilters, map[string]interface{}{
+
+	query := `SELECT COUNT(1) 
+	FROM v2_workflow_run, (
+		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		GROUP BY v2_workflow_run.id
+	) v2_workflow_run_annotations
+	WHERE 
+		v2_workflow_run.id = v2_workflow_run_annotations.id ` + runQueryFilters
+
+	params := map[string]interface{}{
 		"workflows":             pq.StringArray(filters.Workflows),
 		"actors":                pq.StringArray(filters.Actors),
 		"status":                pq.StringArray(filters.Status),
@@ -215,14 +252,30 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
-	})
+		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
+		"annotation_values":     pq.StringArray(filters.AnnotationValues),
+	}
+
+	count, err := db.SelectInt(query, params)
 	return count, sdk.WithStack(err)
 }
 
 func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters SearchsRunsFilters) (int64, error) {
 	_, next := telemetry.Span(ctx, "CountRuns")
 	defer next()
-	count, err := db.SelectInt("SELECT COUNT(1) FROM v2_workflow_run WHERE project_key = :projKey AND "+runQueryFilters, map[string]interface{}{
+
+	query := `SELECT COUNT(1) 
+	FROM v2_workflow_run , (
+		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		GROUP BY v2_workflow_run.id
+	) v2_workflow_run_annotations
+	WHERE 
+		v2_workflow_run.id = v2_workflow_run_annotations.id 
+	AND 
+		project_key = :projKey ` + runQueryFilters
+
+	params := map[string]interface{}{
 		"projKey":               projKey,
 		"workflows":             pq.StringArray(filters.Workflows),
 		"actors":                pq.StringArray(filters.Actors),
@@ -233,7 +286,11 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
-	})
+		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
+		"annotation_values":     pq.StringArray(filters.AnnotationValues),
+	}
+
+	count, err := db.SelectInt(query, params)
 	return count, sdk.WithStack(err)
 }
 
@@ -247,6 +304,8 @@ type SearchsRunsFilters struct {
 	WorkflowRepositories []string
 	Commits              []string
 	Templates            []string
+	AnnotationKeys       []string
+	AnnotationValues     []string
 }
 
 func (s SearchsRunsFilters) Lower() {
@@ -281,8 +340,12 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 
 	query := gorpmapping.NewQuery(`
     SELECT *
-    FROM v2_workflow_run
-    WHERE ` + runQueryFilters + `			
+    FROM v2_workflow_run, (
+		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
+		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		GROUP BY v2_workflow_run.id
+	) v2_workflow_run_annotations
+    WHERE v2_workflow_run.id = v2_workflow_run_annotations.id ` + runQueryFilters + `			
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
@@ -300,6 +363,8 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 			"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
 			"commits":               pq.StringArray(filters.Commits),
 			"templates":             pq.StringArray(filters.Templates),
+			"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
+			"annotation_values":     pq.StringArray(filters.AnnotationValues),
 			"sort":                  sort,
 			"limit":                 limit,
 			"offset":                offset,
@@ -323,8 +388,12 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 
 	query := gorpmapping.NewQuery(`
     SELECT *
-    FROM v2_workflow_run
-    WHERE project_key = :projKey AND ` + runQueryFilters + `
+    FROM v2_workflow_run, (
+		SELECT v2_workflow_run.id, ARRAY_AGG(annotation_object.key) as "annotation_keys", ARRAY_AGG(annotation_object.value) as "annotation_values"
+		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		GROUP BY v2_workflow_run.id
+	) v2_workflow_run_annotations
+    WHERE v2_workflow_run.id = v2_workflow_run_annotations.id  AND project_key = :projKey ` + runQueryFilters + `
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
@@ -342,6 +411,8 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 		"workflow_repositories": pq.StringArray(filters.WorkflowRepositories),
 		"commits":               pq.StringArray(filters.Commits),
 		"templates":             pq.StringArray(filters.Templates),
+		"annotation_keys":       pq.StringArray(filters.AnnotationKeys),
+		"annotation_values":     pq.StringArray(filters.AnnotationValues),
 		"sort":                  sort,
 		"limit":                 limit,
 		"offset":                offset,

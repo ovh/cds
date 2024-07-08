@@ -6,7 +6,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) sdk.JobsResultContext {
+func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) (sdk.JobsResultContext, sdk.JobsGateContext) {
 	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
 	for _, rr := range runResults {
 		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
@@ -23,7 +23,9 @@ func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []
 
 	// Compute jobs context
 	jobsContext := sdk.JobsResultContext{}
+	gatesContext := sdk.JobsGateContext{}
 	matrixJobs := make(map[string][]sdk.JobResultContext)
+
 	for _, rj := range runJobs {
 		if rj.Status.IsTerminated() && len(rj.Matrix) == 0 {
 			result := sdk.JobResultContext{
@@ -36,6 +38,9 @@ func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []
 				}
 			}
 			jobsContext[rj.JobID] = result
+			if len(rj.GateInputs) > 0 {
+				gatesContext[rj.JobID] = rj.GateInputs
+			}
 		} else if len(rj.Matrix) > 0 {
 			jobs, has := matrixJobs[rj.JobID]
 			if !has {
@@ -53,6 +58,9 @@ func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []
 			}
 			jobs = append(jobs, jobResultContext)
 			matrixJobs[rj.JobID] = jobs
+			if len(rj.GateInputs) > 0 {
+				gatesContext[rj.JobID] = rj.GateInputs
+			}
 		}
 	}
 
@@ -89,7 +97,7 @@ nextjob:
 		jobsContext[k] = result
 	}
 
-	return jobsContext
+	return jobsContext, gatesContext
 }
 
 func buildContextForJob(_ context.Context, allJobs map[string]sdk.V2Job, runJobsContexts sdk.JobsResultContext, runContext sdk.WorkflowRunContext, jobID string) sdk.WorkflowRunJobsContext {

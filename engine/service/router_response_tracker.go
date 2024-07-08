@@ -49,10 +49,12 @@ func (t *ResponseTracker) WriteHeader(statusCode int) {
 
 func UnwrapResponseWriter(w http.ResponseWriter) *ResponseTracker {
 	v := sdk.ValueFromInterface(w)
-	x := v.Field(0).Interface()
-	t, is := x.(*ResponseTracker)
-	if is {
-		return t
+	if v.Field(0).CanInterface() {
+		x := v.Field(0).Interface()
+		t, is := x.(*ResponseTracker)
+		if is {
+			return t
+		}
 	}
 	return nil
 }

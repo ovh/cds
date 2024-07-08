@@ -128,6 +128,8 @@ type JobContextService struct {
 
 type JobsResultContext map[string]JobResultContext
 
+type JobsGateContext map[string]GateInputs
+
 type JobResultContext struct {
 	Result  V2WorkflowRunJobStatus `json:"result"`
 	Outputs JobResultOutput        `json:"outputs"`
