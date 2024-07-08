@@ -1,8 +1,8 @@
 name: Manual job
 vars:
-  cds_project: "ITV2MANUAL"
-  git_repo: "it_v2_manual"
-  cds_workflow: "WorkflowManual"
+  cds_project: "ITV2MANUALJOB"
+  git_repo: "it_v2_manual_job"
+  cds_workflow: "WorkflowManualJob"
 testcases:
 - name: Prepare test
   steps:
@@ -84,16 +84,16 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 10
-      delay: 12
+      retry: 120
+      delay: 1
 
     - name: Check that the CDS workflow has at least one execution
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 10
-      delay: 12
+      retry: 120
+      delay: 1
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
@@ -106,13 +106,17 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 10
-      delay: 12
+      retry: 120
+      delay: 1
 
-    - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
-
-    - name: Check log content
-      script: "cat {{.cds_workflow}}-1-2-manual-step2 | grep \"World\""
-
-
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Check log content
+        cat {{.cds_workflow}}-1-2-manual-step2 | grep "World"
+      retry: 60
+      delay: 1

@@ -115,23 +115,30 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
     - name: Check that the CDS workflow has at least one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_code}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 30
-      delay: 5
+      retry: 150
+      delay: 1
       vars:
-        runIdentifier:
+        workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
-    - name: Download logs
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.runIdentifier}}"
-    - name: Check git_sha
-      script: "cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep \"GIT_SHA={{.PushMyfile.commitSrc}}\""
-    - name: Check workflow_sha
-      script: "cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep \"CDS_WORKFLOW_SHA={{.PushCode.commitCode}}\""  
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Check git_sha
+        cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep "GIT_SHA={{.PushMyfile.commitSrc}}"
+        # Check workflow_sha
+        cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.PushCode.commitCode}}"
+      retry: 60
+      delay: 1

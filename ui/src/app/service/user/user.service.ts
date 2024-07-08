@@ -7,7 +7,7 @@ import {
 } from 'app/model/authentication.model';
 import { Bookmark } from 'app/model/bookmark.model';
 import { Group } from 'app/model/group.model';
-import {AuthentifiedUser, Schema, UserContact, UserLink} from 'app/model/user.model';
+import {AuthentifiedUser, Schema, UserContact, UserGPGKey, UserLink} from 'app/model/user.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -89,5 +89,15 @@ export class UserService {
         return this._http.get<Schema>('/user/schema', {params: p});
     }
 
+    getGPGKeys(username: string): Observable<Array<UserGPGKey>> {
+        return this._http.get<Array<UserGPGKey>>(`/v2/user/${username}/gpgkey`);
+    }
 
+    deleteGPGKey(username: string, keyID: string): Observable<any> {
+        return this._http.delete(`/v2/user/${username}/gpgkey/${keyID}`);
+    }
+
+    addGPGKey(username: string, k: UserGPGKey): Observable<any> {
+        return this._http.post(`/v2/user/${username}/gpgkey`, k);
+    }
 }

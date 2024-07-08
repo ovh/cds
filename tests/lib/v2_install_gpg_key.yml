@@ -7,72 +7,13 @@ input:
   git_password: ""
 
 steps:
-  # Export the gpg public key in armor format and save it in a variable
-  - script: gpg --export --armor {{.input.gpg_key_id}} | tee /tmp/{{.input.gpg_key_id}}.gpg.out.pub
-    vars:
-      gpgPubKey:
-        from: result.systemout
-
-  # Write this variable to a file
-  - script: |-
-      /bin/bash -c cat <<- EOF > /tmp/{{.input.gpg_key_id}}.gpg.pub
-      {{.gpgPubKey}}
-      EOF
-
-  # Base64 encode this in a file
-  - script: |-
-      /bin/bash -c cat <<- EOF > /tmp/{{.input.gpg_key_id}}.gpg.pub.b64
-      {{.gpgPubKey | quote | b64enc}}
-      EOF
-
-  - script: base64 -d /tmp/{{.input.gpg_key_id}}.gpg.pub.b64 > /tmp/{{.input.gpg_key_id}}.gpg.pub.quoted
-
-  - script: cat /tmp/{{.input.gpg_key_id}}.gpg.pub.quoted
-
-  # Prepare the json payload from the base64 encoded public key
-  - script: |-
-      /bin/bash -c cat <<- EOF > /tmp/{{.input.gpg_key_id}}.gpg.pub.json
-      {
-        "armored_public_key" : $(cat /tmp/{{.input.gpg_key_id}}.gpg.pub.quoted)
-      }
-      EOF
-      cat /tmp/{{.input.gpg_key_id}}.gpg.pub.json
-
-  # Get exiting gpg key for users
-  - type: http
-    method: GET
-    url: "{{.input.git_host}}/api/v1/user/gpg_keys"
-    headers:
-      Content-Type: application/json
-    basic_auth_user: "{{.input.git_user}}"
-    basic_auth_password: "{{.input.git_password}}"
-    assertions:
-    - result.statuscode ShouldEqual 200
-    vars:
-      keys:
-        from: result.bodyjson
-
-  # Delete them all
-  - range: "{{.keys}}"
-    type: http
-    method: DELETE
-    url: "{{.input.git_host}}/api/v1/user/gpg_keys/{{.value.id}}"
-    basic_auth_user: "{{.input.git_user}}"
-    basic_auth_password: "{{.input.git_password}}"
-    assertions:
-    - result.statuscode ShouldEqual 204
-
-  # display secret key info
-  - script: gpg --list-secret-keys
-    info: "input.gpg_key_id is {{.input.gpg_key_id}}"
-  # Get the email address associated with the gpg key
+  # Add the emailaddress on the gitea user
   - script: >
       gpg --list-secret-keys | grep {{.input.gpg_key_id}} -A 1 | tail -n 1 | grep --only-matching --extended-regexp "<.*>" | head -n 1 | cut -c2- | rev | cut -c2- | rev
     vars:
-      emailaddress:
+      emailAddress:
         from: result.systemout
 
-  # Add the emailaddress on the gitea user
   - type: http
     method: POST
     url: "{{.input.git_host}}/api/v1/user/emails"
@@ -82,31 +23,41 @@ steps:
     basic_auth_password: "{{.input.git_password}}"
     body: >
       {
-        "emails": ["{{.emailaddress}}"]
+        "emails": ["{{.emailAddress}}"]
       }
     assertions:
     - or:
       - result.statuscode ShouldEqual 201
       - result.bodyjson.message ShouldContainSubstring "Email address has been used"
 
-  # Upload the key
-  #- type: http
-  #  method: POST
-  #  url: "{{.input.git_host}}/api/v1/user/gpg_keys"
-  #  bodyFile: "/tmp/{{.input.gpg_key_id}}.gpg.pub.json"
-  #  headers:
-  #    Content-Type: "application/json"
-  #  basic_auth_user: "{{.input.git_user}}"
-  #  basic_auth_password: "{{.input.git_password}}"
-  #  assertions:
-  #  - or:
-  #    - result.statuscode ShouldEqual 201
-  #    - result.bodyjson.message ShouldContainSubstring "A key with the same id already exists"
+  # Export the gpg public key in armor format and save it in a variable
+  - script: gpg --export --armor {{.input.gpg_key_id}} | awk '{printf "%s\\n", $0}'
+    vars:
+      gpgPubKey:
+        from: result.systemout
 
-  - script: 'curl --silent --fail -X POST {{.input.git_host}}/api/v1/user/gpg_keys -u "{{.input.git_user}}:{{.input.git_password}}" -H "Content-type: application/json" -d @/tmp/{{.input.gpg_key_id}}.gpg.pub.json'
+  # Add the user gpg on gitea  
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/gpg_keys"
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    headers:
+      Content-Type: application/json
+    body: >
+      {
+        "armored_public_key": "{{.gpgPubKey}}"
+      }
+    assertions:
+    - or:
+      - result.statuscode ShouldEqual 201
+      - result.systemout ShouldContainSubstring "A key with the same id already exists"
 
   # Add the GPG key on cd CDS user
-  - script: "{{.input.cdsctl_command}} user gpg import --pub-key-file /tmp/{{.input.gpg_key_id}}.gpg.out.pub"
+  - script: |-
+      FILE=/tmp/`uuidgen`.pub
+      gpg --export --armor {{.input.gpg_key_id}} > $FILE
+      {{.input.cdsctl_command}} user gpg import --pub-key-file $FILE
     assertions:
     - or:
       - result.code ShouldEqual 0

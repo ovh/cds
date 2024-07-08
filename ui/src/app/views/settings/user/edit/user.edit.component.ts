@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngxs/store';
 import { AuthConsumer, AuthDriverManifest, AuthSession } from 'app/model/authentication.model';
 import { Group } from 'app/model/group.model';
-import { AuthentifiedUser, AuthSummary, UserContact, UserLink } from 'app/model/user.model';
+import { AuthentifiedUser, AuthSummary, UserContact, UserLink, UserGPGKey } from 'app/model/user.model';
 import { AuthenticationService } from 'app/service/authentication/authentication.service';
 import { UserService } from 'app/service/user/user.service';
 import { PathItem } from 'app/shared/breadcrumb/breadcrumb.component';
@@ -72,6 +72,9 @@ export class UserEditComponent implements OnInit {
     sessions: Array<AuthSession>;
     loadingLocalReset: boolean;
     showLDAPSigninForm: boolean;
+    loadingGPGKeys: boolean;
+    gpgKeys: Array<UserGPGKey>;
+    importPublicGPGKey: string;
 
     linkDriver: string[] = [];
 
@@ -541,6 +544,9 @@ export class UserEditComponent implements OnInit {
             case 'authentication':
                 this.getAuthData();
                 break;
+            case 'gpgkeys':
+                this.getGPGKeys();
+                break;
         }
         this.selectedItem = item;
         this._router.navigate([], {
@@ -586,6 +592,7 @@ export class UserEditComponent implements OnInit {
             this.menuItems.set("contacts", "Contacts");
             this.menuItems.set("authentication", "Authentication");
         }
+        this.menuItems.set("gpgkeys", "GPG Keys");
 
         // Enable revoke session button only if editable
         this.columnsSessions[4].disabled = !this.editable;
@@ -684,5 +691,41 @@ export class UserEditComponent implements OnInit {
             this.getAuthData();
             return;
         }
+    }
+
+    getGPGKeys(): void {
+        this.loadingGPGKeys = true;
+        this._cd.markForCheck();
+        this._userService.getGPGKeys(this.username).pipe(
+            finalize(() => {
+                this.loadingGPGKeys = false;
+                this._cd.markForCheck();
+            }
+        )).subscribe(result => {
+            this.gpgKeys = result;
+        });
+    }
+
+    deleteGPGKey(k: UserGPGKey): void {
+        this.loadingGPGKeys = true;
+        this._cd.markForCheck();
+        this._userService.deleteGPGKey(this.username, k.key_id).pipe(
+            finalize(() => {
+                this.getGPGKeys();
+            }
+        )).subscribe();
+    }
+
+    addGPGKey(): void {
+        this.loadingGPGKeys = true;
+        this._cd.markForCheck();
+        
+        let k = new UserGPGKey();
+        k.public_key = this.importPublicGPGKey;
+        this._userService.addGPGKey(this.username, k).pipe(
+            finalize(() => {
+                this.getGPGKeys();
+            }
+        )).subscribe(() => this.importPublicGPGKey = null);;
     }
 }

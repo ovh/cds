@@ -30,7 +30,7 @@ steps:
 
   # Prepare VCS Server configuration for the project
   - script: |-
-      /bin/bash -c cat <<- EOF > /tmp/project_vcs.yml
+      /bin/bash -c cat <<- EOF > /tmp/project_vcs_{{.input.cds_project}}.yml
       version: v1.0
       name: my_vcs_server
       type: gitea
@@ -43,7 +43,7 @@ steps:
       EOF
   # Import VCS Server configuration on the project
   - script: >
-      {{.input.cdsctl_command}} project vcs import {{.input.cds_project}} /tmp/project_vcs.yml
+      {{.input.cdsctl_command}} project vcs import {{.input.cds_project}} /tmp/project_vcs_{{.input.cds_project}}.yml
   # Assert the project has the VCS Server
   - script: >
       {{.input.cdsctl_command}} project vcs list {{.input.cds_project}} --format json
@@ -56,7 +56,7 @@ steps:
 
   # Setup RBAC on project
   - script: |-
-      /bin/bash -c cat <<- EOF > /tmp/project_rbac.yml
+      /bin/bash -c cat <<- EOF > /tmp/project_rbac_{{.input.cds_project}}.yml
       name: perm-{{.input.cds_project}}
       projects:
         - role: read
@@ -91,22 +91,9 @@ steps:
         - role: manage-permission
           users: [{{.cds_user.username}}]
       EOF
-  - script: "{{.input.cdsctl_command}} experimental rbac import /tmp/project_rbac.yml --force"
+  - script: "{{.input.cdsctl_command}} experimental rbac import /tmp/project_rbac_{{.input.cds_project}}.yml --force"
 
-  # Put the project ssh key as SSH Key on gitea
-  - type: http
-    method: DELETE
-    url: "{{.input.git_host}}/api/v1/user/keys/{{.sshKeyName}}"
-    basic_auth_user: "{{.input.git_user}}"
-    basic_auth_password: "{{.input.git_password}}"
-    headers:
-      Content-Type: application/json
-    assertions:
-    - or:
-      - result.statuscode ShouldEqual 204
-      - result.statuscode ShouldEqual 404
-
-  # Drop existing ssh key for user
+  # Drop existing ssh key for user with the same name
   - type: http
     method: GET
     url: "{{.input.git_host}}/api/v1/user/keys"
