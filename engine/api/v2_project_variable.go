@@ -34,7 +34,7 @@ func (api *API) getProjectVariableSetHandler() ([]service.RbacChecker, service.H
 			}
 
 			var opts []gorpmapper.GetOptionFunc
-			if canUseItem {
+			if canUseItem || u.Maintainer() {
 				opts = append(opts, project.WithVariableSetItems)
 			}
 			variableSet, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, name, opts...)
