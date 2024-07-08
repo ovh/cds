@@ -4,7 +4,6 @@ vars:
 testcases:
 - name: prepare test
   steps:
-  - script: "{{.cdsctl}} -f {{.cdsctl.config}} application remove --force {{.cds_project}} app1"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force {{.cds_project}}"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force {{.cds_project}}"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} group add {{.cds_project}}"
