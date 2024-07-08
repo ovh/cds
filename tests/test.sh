@@ -167,16 +167,37 @@ cli_tests() {
 }
 
 workflow_tests() {
-    echo "Running Workflow tests:"
+    max_children=10
+    echo "Running Workflow tests"
     for f in $(ls -1 04_*.yml); do
-        CMD="${VENOM} run ${VENOM_OPTS} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
-        echo -e "  ${YELLOW}${f} ${DARKGRAY}[${CMD}]${NOCOLOR}"
-        START="$(date +%s)"
-        ${CMD} >${f}.output 2>&1
-        check_failure $? ${f}.output
-        echo -e "  ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
-        mv_results ${f}
+        run_workflow_tests $f &
+        local my_pid=$$
+        local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
+        children=$((children-1))
+        if [[ $children -ge $max_children ]]; then
+            wait -n
+        fi
     done
+    wait
+}
+
+run_workflow_tests() {
+    f=$1
+    rm -rf ./results/${f} && mkdir -p ./results/${f}
+    CMD="${VENOM} run ${VENOM_OPTS} --output-dir ./results/${f} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user"
+    echo -e "  ${YELLOW}${f} ${BLUE}STARTING ${DARKGRAY}cmd: ${CMD}${NOCOLOR}"
+    START="$(date +%s)"
+    ${CMD} > ./results/${f}/${f}.output 2>&1
+    exit_status=$?    
+    if [ $exit_status -ne 0 ]; then
+        out=`cat ./results/${f}/${f}.output`
+        echo -e "  ${YELLOW}${f} ${LIGHTRED}FAILURE ${DARKGRAY}code: ${exit_status}\n${RED}${out}${NOCOLOR}"
+        mv ./results/${f}/venom.log ./results/${f}/${f}-venom.log
+    else
+        echo -e "  ${YELLOW}${f} ${GREEN}SUCCESS ${DARKGRAY}duration: $[ $(date +%s) - ${START} ]${NOCOLOR}"
+    fi
+    mv ./results/${f}/* ./results
+    exit $exit_status
 }
 
 workflow_with_integration_tests() {
@@ -240,7 +261,7 @@ cds_v2_tests() {
     curl --fail -I -X GET ${GITEA_HOST}/api/swagger
     echo "Running CDS v2 tests:"
     for f in $(ls -1 08_*.yml); do
-        run $f &
+        run_cds_v2_tests $f &
         local my_pid=$$
         local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
         children=$((children-1))
@@ -251,7 +272,7 @@ cds_v2_tests() {
     wait
 }
 
-run() {
+run_cds_v2_tests() {
     f=$1
     rm -rf ./results/${f} && mkdir -p ./results/${f}
     CMD="${VENOM} run ${VENOM_OPTS} --output-dir ./results/${f} ${f} --var cdsctl=${CDSCTL} --var cdsctl.config=${CDSCTL_CONFIG}_admin --var api.url=${CDS_API_URL} --var ui.url=${CDS_UI_URL} --var smtpmock.url=${SMTP_MOCK_URL} --var ro_username=cds.integration.tests.ro --var cdsctl.config_ro_user=${CDSCTL_CONFIG}_user --var gitea.hook.url=${GITEA_CDS_HOOKS_URL} --var git.host=${GITEA_HOST} --var git.user=${GITEA_USER} --var git.password=${GITEA_PASSWORD} --var engine=${CDS_ENGINE_CTL} --var hatchery.name=${CDS_HATCHERY_NAME} --var gpg.key_id=${GPG_KEY_ID} --var cds.region=${CDS_REGION}"

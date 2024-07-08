@@ -17,8 +17,8 @@ testcases:
   - type: http
     method: GET
     url: '{{.smtpmock.url}}'
-    retry: 5
-    delay: 5
+    retry: 25
+    delay: 1
     
 - name: create-admin-user
   steps:
@@ -39,8 +39,8 @@ testcases:
     url: '{{.smtpmock.url}}/messages/{{.email}}/latest'
     assertions:
     - result.statuscode ShouldEqual 200
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     vars:
       verify: 
         from: result.bodyjson.content-decoded
