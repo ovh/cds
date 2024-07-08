@@ -21,7 +21,7 @@ testcases:
       token:
         from: result.systemout
         regex: (ey.+)
-  - script: {{.engine}} config edit /tmp/hatchery.local.new.toml hatchery.local.commonConfiguration.api.token={{.token}} hatchery.local.commonConfiguration.api.tokenV2={{.hatcheryToken}} hatchery.local.commonConfiguration.name=my-local-hatchery hatchery.local.commonConfiguration.api.http.url=http://$(hostname -I | awk '{print $1}'):8081 > /tmp/hatchery.local.toml
+  - script: {{.engine}} config edit /tmp/hatchery.local.new.toml hatchery.local.commonConfiguration.api.token={{.token}} hatchery.local.basedir=/tmp hatchery.local.commonConfiguration.api.tokenV2={{.hatcheryToken}} hatchery.local.commonConfiguration.name=my-local-hatchery hatchery.local.commonConfiguration.api.http.url=http://$(hostname -I | awk '{print $1}'):8081 > /tmp/hatchery.local.toml
 
 - name: startHatchery
   steps:
@@ -30,7 +30,7 @@ testcases:
       vars:
         pid:
           from: result.systemout
-    - script: sleep 5
+    - script: sleep 10
       info: "PID to kill {{.pid}}"
     - script: kill {{.pid}}
     - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental hatchery get my-local-hatchery
