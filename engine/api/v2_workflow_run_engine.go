@@ -310,29 +310,30 @@ type computeAnnotationsJobContext struct {
 }
 
 func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2WorkflowRun, runJobsContexts sdk.JobsResultContext, runGatesContexts sdk.JobsGateContext) error {
+	// Build the context that is available for expression syntax
+	computeAnnotationsJosbCtx := make(map[string]computeAnnotationsJobContext)
+	for jobID, jobResult := range runJobsContexts {
+		computeAnnotationsJosbCtx[jobID] = computeAnnotationsJobContext{
+			Results: jobResult,
+			Gate:    runGatesContexts[jobID],
+		}
+	}
+
+	computeAnnotationsCtx := computeAnnotationsContext{
+		WorkflowRunContext: run.Contexts,
+		Jobs:               computeAnnotationsJosbCtx,
+	}
+
+	bts, _ := json.Marshal(computeAnnotationsCtx)
+	var mapContexts map[string]interface{}
+	_ = json.Unmarshal(bts, &mapContexts) // error cannot happen here
+
+	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+
 	for k, v := range run.WorkflowData.Workflow.Annotations {
 		if _, exist := run.Annotations[k]; exist { // If the annotation has already been set: next
 			continue
 		}
-		// Build the context that is available for expression syntax
-		computeAnnotationsJosbCtx := make(map[string]computeAnnotationsJobContext)
-		for jobID, jobResult := range runJobsContexts {
-			computeAnnotationsJosbCtx[jobID] = computeAnnotationsJobContext{
-				Results: jobResult,
-				Gate:    runGatesContexts[jobID],
-			}
-		}
-
-		computeAnnotationsCtx := computeAnnotationsContext{
-			WorkflowRunContext: run.Contexts,
-			Jobs:               computeAnnotationsJosbCtx,
-		}
-
-		bts, _ := json.Marshal(computeAnnotationsCtx)
-		var mapContexts map[string]interface{}
-		_ = json.Unmarshal(bts, &mapContexts) // error cannot happen here
-
-		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 		value, err := ap.InterpolateToString(ctx, v)
 		if err != nil {
 			// If error, insert a run info
@@ -346,11 +347,12 @@ func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2Wo
 			if err != nil {
 				return sdk.WithStack(err)
 			}
-			defer tx.Rollback()
 			if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
+				tx.Rollback()
 				return err
 			}
 			if err := tx.Commit(); err != nil {
+				tx.Rollback()
 				return sdk.WithStack(err)
 			}
 			continue
