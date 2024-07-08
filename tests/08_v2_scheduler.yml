@@ -73,8 +73,8 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
     - name: List all schedulers
       script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler list --format json
