@@ -13,7 +13,7 @@ import (
 
 var adminHooksSchedulerCmd = cli.Command{
 	Name:    "scheduler",
-	Aliases: []string{"s", "schedule", "scheudlers"},
+	Aliases: []string{"s", "schedule", "schedulers"},
 	Short:   "Manage repositories where there were events",
 }
 
