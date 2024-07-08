@@ -108,7 +108,7 @@ steps:
         from: result.bodyjson
 
   - script: >
-      echo '{{.keys}}' | jq -c 'map(select(.title | contains("{{.sshKeyName}}")))'
+      echo '{{.keys}}' | jq -c 'map(select(.title=="{{.sshKeyName}}"))'
     vars:
       keys_filtered:
         from: result.systemout
