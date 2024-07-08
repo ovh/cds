@@ -826,27 +826,27 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 
-	if u.Ring != sdk.UserRingAdmin && u.Ring != sdk.UserRingMaintainer {
-		// Check user region right
-		hasRight, err := checkUserRegionRight(ctx, db, jobDef, u, defaultRegion)
-		if err != nil {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("job %s: unable to check right for user %s: %v", jobID, u.Username, err),
-			})
-			return false, runInfos, err
-		}
-		if !hasRight {
-			runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				Level:         sdk.WorkflowRunInfoLevelWarning,
-				Message:       fmt.Sprintf("job %s: user %s does not have enough right on region %q", jobID, u.Username, jobDef.Region),
-			})
-			return false, runInfos, nil
-		}
+	// Check user region right
+	hasRight, err := checkUserRegionRight(ctx, db, jobDef, u, defaultRegion)
+	if err != nil {
+		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("job %s: unable to check right for user %s: %v", jobID, u.Username, err),
+		})
+		return false, runInfos, err
+	}
+	if !hasRight {
+		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelWarning,
+			Message:       fmt.Sprintf("job %s: user %s does not have enough right on region %q", jobID, u.Username, jobDef.Region),
+		})
+		return false, runInfos, nil
+	}
 
-		// check varset right
+	// check varset right
+	if u.Ring != sdk.UserRingAdmin && u.Ring != sdk.UserRingMaintainer {
 		varsets := append(run.WorkflowData.Workflow.VariableSets, jobDef.VariableSets...)
 		has, vInError, err := rbac.HasRoleOnVariableSetsAndUserID(ctx, db, sdk.VariableSetRoleUse, u.ID, run.ProjectKey, varsets)
 		if err != nil {
@@ -916,22 +916,27 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, jobDef *sdk.
 		jobDef.Region = defaultRegion
 	}
 
-	wantedRegion, err := region.LoadRegionByName(ctx, db, jobDef.Region)
-	if err != nil {
-		return false, err
+	if u.Ring != sdk.UserRingAdmin && u.Ring != sdk.UserRingMaintainer {
+		wantedRegion, err := region.LoadRegionByName(ctx, db, jobDef.Region)
+		if err != nil {
+			return false, err
+		}
+
+		allowedRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, u.ID)
+		if err != nil {
+			next()
+			return false, err
+		}
+		next()
+		for _, r := range allowedRegions {
+			if r.RegionID == wantedRegion.ID {
+				return true, nil
+			}
+		}
+	} else {
+		return true, nil
 	}
 
-	allowedRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, u.ID)
-	if err != nil {
-		next()
-		return false, err
-	}
-	next()
-	for _, r := range allowedRegions {
-		if r.RegionID == wantedRegion.ID {
-			return true, nil
-		}
-	}
 	return false, nil
 }
 
