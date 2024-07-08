@@ -2973,21 +2973,6 @@ func (m *MockProjectClientV2) EXPECT() *MockProjectClientV2MockRecorder {
 	return m.recorder
 }
 
-// ProjectGetKey mocks base method.
-func (m *MockProjectClientV2) ProjectGetKey(ctx context.Context, projectKey, keyName string, clear bool) (*sdk.ProjectKey, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectGetKey", ctx, projectKey, keyName, clear)
-	ret0, _ := ret[0].(*sdk.ProjectKey)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectGetKey indicates an expected call of ProjectGetKey.
-func (mr *MockProjectClientV2MockRecorder) ProjectGetKey(ctx, projectKey, keyName, clear interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectGetKey", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectGetKey), ctx, projectKey, keyName, clear)
-}
-
 // ProjectNotificationCreate mocks base method.
 func (m *MockProjectClientV2) ProjectNotificationCreate(ctx context.Context, pKey string, notif *sdk.ProjectNotification) error {
 	m.ctrl.T.Helper()
@@ -3100,6 +3085,20 @@ func (m *MockProjectClientV2) ProjectVariableSetCreateFromApplication(ctx contex
 func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetCreateFromApplication(ctx, pKey, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromApplication", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetCreateFromApplication), ctx, pKey, req)
+}
+
+// ProjectVariableSetCreateFromEnvironment mocks base method.
+func (m *MockProjectClientV2) ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreateFromEnvironment", ctx, pKey, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreateFromEnvironment indicates an expected call of ProjectVariableSetCreateFromEnvironment.
+func (mr *MockProjectClientV2MockRecorder) ProjectVariableSetCreateFromEnvironment(ctx, pKey, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromEnvironment", reflect.TypeOf((*MockProjectClientV2)(nil).ProjectVariableSetCreateFromEnvironment), ctx, pKey, req)
 }
 
 // ProjectVariableSetDelete mocks base method.
@@ -8794,21 +8793,6 @@ func (mr *MockInterfaceMockRecorder) ProjectGet(projectKey interface{}, opts ...
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectGet", reflect.TypeOf((*MockInterface)(nil).ProjectGet), varargs...)
 }
 
-// ProjectGetKey mocks base method.
-func (m *MockInterface) ProjectGetKey(ctx context.Context, projectKey, keyName string, clear bool) (*sdk.ProjectKey, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProjectGetKey", ctx, projectKey, keyName, clear)
-	ret0, _ := ret[0].(*sdk.ProjectKey)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProjectGetKey indicates an expected call of ProjectGetKey.
-func (mr *MockInterfaceMockRecorder) ProjectGetKey(ctx, projectKey, keyName, clear interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectGetKey", reflect.TypeOf((*MockInterface)(nil).ProjectGetKey), ctx, projectKey, keyName, clear)
-}
-
 // ProjectGroupAdd mocks base method.
 func (m *MockInterface) ProjectGroupAdd(projectKey, groupName string, permission int, projectOnly bool) error {
 	m.ctrl.T.Helper()
@@ -9387,6 +9371,20 @@ func (m *MockInterface) ProjectVariableSetCreateFromApplication(ctx context.Cont
 func (mr *MockInterfaceMockRecorder) ProjectVariableSetCreateFromApplication(ctx, pKey, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromApplication", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetCreateFromApplication), ctx, pKey, req)
+}
+
+// ProjectVariableSetCreateFromEnvironment mocks base method.
+func (m *MockInterface) ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProjectVariableSetCreateFromEnvironment", ctx, pKey, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProjectVariableSetCreateFromEnvironment indicates an expected call of ProjectVariableSetCreateFromEnvironment.
+func (mr *MockInterfaceMockRecorder) ProjectVariableSetCreateFromEnvironment(ctx, pKey, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectVariableSetCreateFromEnvironment", reflect.TypeOf((*MockInterface)(nil).ProjectVariableSetCreateFromEnvironment), ctx, pKey, req)
 }
 
 // ProjectVariableSetDelete mocks base method.

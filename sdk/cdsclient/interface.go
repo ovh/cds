@@ -249,6 +249,7 @@ type ProjectClientV2 interface {
 
 	ProjectVariableSetCreate(ctx context.Context, pKey string, vs *sdk.ProjectVariableSet) error
 	ProjectVariableSetCreateFromApplication(ctx context.Context, pKey string, req sdk.CopyApplicationVariableToVariableSet) error
+	ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error
 	ProjectVariableSetDelete(ctx context.Context, pKey string, vsName string, mod ...RequestModifier) error
 	ProjectVariableSetList(ctx context.Context, pKey string) ([]sdk.ProjectVariableSet, error)
 	ProjectVariableSetShow(ctx context.Context, pKey string, vsName string) (*sdk.ProjectVariableSet, error)
