@@ -123,16 +123,16 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
 
     - name: Check that the CDS workflow has at least one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 20
-      delay: 5
+      retry: 100
+      delay: 1
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
@@ -140,22 +140,28 @@ testcases:
     - name: Get Workflow run info
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"
         
-    - name: Download logs
-      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
-    - name: Display log
-      script: cat {{.cds_workflow}}-1-1-init-action
-    - name: Check log content
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Welcome in action parent-action on workflow {{.cds_workflow}}\""
-    - name: Check log in sub action
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Hello Foo Doe from project {{.cds_project}}\""
-    - name: Check env log in sub action
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Env FOO-BAR\""
-    - name: Check Child var1
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"ChildVar=childvalue1\""  
-    - name: Check Parent tag
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"Tag=foo\""    
-    - name: Check Parent tag
-      script: "cat {{.cds_workflow}}-1-1-init-action | grep \"ChildInParent=childvalue2\""          
+    - name: Download and check logs
+      script: |-
+        #!/bin/bash
+        set -e
+        FILE=/tmp/`uuidgen`
+        mkdir -p $FILE && cd $FILE
+        {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        # Check log content
+        cat {{.cds_workflow}}-1-1-init-action | grep "Welcome in action parent-action on workflow {{.cds_workflow}}"
+        # Check log in sub action
+        cat {{.cds_workflow}}-1-1-init-action | grep "Hello Foo Doe from project {{.cds_project}}"
+        # Check env log in sub action
+        cat {{.cds_workflow}}-1-1-init-action | grep "Env FOO-BAR"
+        # Check Child var1
+        cat {{.cds_workflow}}-1-1-init-action | grep "ChildVar=childvalue1"
+        # Check Parent tag
+        cat {{.cds_workflow}}-1-1-init-action | grep "Tag=foo"
+        # Check Parent tag
+        cat {{.cds_workflow}}-1-1-init-action | grep "ChildInParent=childvalue2"
+      retry: 60
+      delay: 1
+
     - name: Check that we have 1 run result of type variable
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=variable --format json"  
       assertions:

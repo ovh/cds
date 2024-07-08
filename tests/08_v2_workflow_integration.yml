@@ -143,8 +143,8 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
     - result.systemoutjson ShouldHaveLength 2
-    retry: 10
-    delay: 2
+    retry: 20
+    delay: 1
     vars:
       analysisID:
         from:
@@ -154,16 +154,16 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis show {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.analysisID}}"
     assertions:
     - 'result.systemout ShouldContainSubstring "status: Success"'
-    retry: 10
-    delay: 2
+    retry: 20
+    delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Fail
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} WorkflowA --format json"
     assertions:
       - result.systemoutjson ShouldHaveLength 1
       - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-    retry: 30
-    delay: 5
+    retry: 150
+    delay: 1
     vars:
       workflowRunID:
         from: result.systemoutjson.systemoutjson0.id

@@ -102,16 +102,16 @@ testcases:
     - result.systemoutjson ShouldHaveLength 2
     - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
     - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-    retry: 20
-    delay: 5
+    retry: 100
+    delay: 1
 
   - name: Check that the CDS workflow has at least one execution and is Success
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow_local}} --format json"
     assertions:
     - result.systemoutjson ShouldHaveLength 1
     - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-    retry: 40
-    delay: 5
+    retry: 200
+    delay: 1
     vars:
       workflowFromLocalRunID:
         from: result.systemoutjson.systemoutjson0.id
@@ -121,20 +121,32 @@ testcases:
     assertions:
     - result.systemoutjson ShouldHaveLength 1
     - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-    retry: 40
-    delay: 5
+    retry: 200
+    delay: 1
     vars:
       workflowFromBackendRunID:
         from: result.systemoutjson.systemoutjson0.id
 
-  - name: Download logs local
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromLocalRunID}}"
-
-  - name: Download logs backend
-    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromBackendRunID}}"
-
-  - name: Check workflow local log content
-    script: "cat {{.cds_workflow_local}}-*-hello-* | grep Hello"
-
-  - name: Check workflow backend log content
-    script: "cat {{.cds_workflow_backend}}-*-hello-* | grep Hello"
+  - name: Download and check local logs
+    script: |-
+      #!/bin/bash
+      set -e
+      FILE=/tmp/`uuidgen`
+      mkdir -p $FILE && cd $FILE
+      {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromLocalRunID}}
+      # Check workflow local log content
+      cat {{.cds_workflow_local}}-*-hello-* | grep Hello
+    retry: 60
+    delay: 1
+      
+  - name: Download and check backend logs
+    script: |-
+      #!/bin/bash
+      set -e
+      FILE=/tmp/`uuidgen`
+      mkdir -p $FILE && cd $FILE
+      {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowFromBackendRunID}}
+      # Check workflow local log content
+      cat {{.cds_workflow_backend}}-*-hello-* | grep Hello
+    retry: 60
+    delay: 1
