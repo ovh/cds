@@ -73,3 +73,11 @@ func (c *client) ProjectVariableSetCreateFromApplication(ctx context.Context, pK
 	}
 	return nil
 }
+
+func (c *client) ProjectVariableSetCreateFromEnvironment(ctx context.Context, pKey string, req sdk.CopyEnvironmentVariableToVariableSet) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/environment", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}
