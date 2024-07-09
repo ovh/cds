@@ -8,8 +8,8 @@ testcases:
   - type: http
     method: GET
     url: '{{.smtpmock.url}}'
-    retry: 5
-    delay: 5
+    retry: 25
+    delay: 1
 
 - name: assert filepath, your current directory must be at the root of this project
   steps:
@@ -40,8 +40,8 @@ testcases:
 - name: check workflow 04SCWorkflowRunNotif-WORKFLOW
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW 1 --format json
-    retry: 20
-    delay: 10
+    retry: 200
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -97,8 +97,8 @@ testcases:
 - name: check workflow 04SCWorkflowRunNotif-WORKFLOW-EMPTY
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNNOTIF 04SCWorkflowRunNotif-WORKFLOW-EMPTY 1 --format json
-    retry: 20
-    delay: 10
+    retry: 200
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -114,5 +114,5 @@ testcases:
     assertions:
     - result.statuscode ShouldEqual 200
     - result.bodyjson.__len__ ShouldEqual 1
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1

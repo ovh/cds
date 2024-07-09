@@ -35,8 +35,8 @@ testcases:
     assertions:
       - result.code ShouldEqual 0
       - result.systemoutjson.need_registration ShouldEqual false
-    retry: 30
-    delay: 10
+    retry: 300
+    delay: 1
 
 - name: run workflow
   steps:
@@ -51,5 +51,5 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Success
-    retry: 30
-    delay: 10
+    retry: 300
+    delay: 1

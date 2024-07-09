@@ -28,8 +28,8 @@ testcases:
 - name: run workflow by sending a kafka event
   steps:
   - script: kcat -b localhost:9092 -t test.hook -T -P -l ./fixtures/ITSCWRKFLW18/input-kafka.json
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
     timeout: 100
 
 - name: check event in topic test.eventsproject
@@ -40,8 +40,8 @@ testcases:
     - result.code ShouldEqual 0
     - 'result.systemout MustNotContainSubstring "Leader not available"'
     - "result.systemoutjson.id ShouldNotBeEmpty"
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
     timeout: 100
 
 - name: check event in topic test.eventspublic
@@ -65,8 +65,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW18 ITSCWRKFLW18-WORKFLOW 1 --format json
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
