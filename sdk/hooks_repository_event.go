@@ -146,6 +146,8 @@ type HookRepositoryEventExtractData struct {
 	CDSEventName   string                                  `json:"cds_event_name"`
 	CDSEventType   string                                  `json:"cds_event_type"`
 	Commit         string                                  `json:"commit"`
+	CommitFrom     string                                  `json:"commit_from`
+	CommitMessage  string                                  `json:"commit_message"`
 	Paths          []string                                `json:"paths"`
 	Ref            string                                  `json:"ref"`
 	ProjectManual  string                                  `json:"manual_project"`
@@ -178,16 +180,17 @@ type HookRepositoryEventAnalysis struct {
 }
 
 type HookRetrieveSignKeyRequest struct {
-	ProjectKey     string `json:"projectKey"`
-	VCSServerName  string `json:"vcs_server_name"`
-	RepositoryName string `json:"repository_name"`
-	Commit         string `json:"commit"`
-	Ref            string `json:"ref"`
-	HookEventUUID  string `json:"hook_event_uuid"`
-	HookEventKey   string `json:"hook_event_key"`
-	GetSigninKey   bool   `json:"get_signin_key"`
-	GetChangesets  bool   `json:"get_changesets"`
-	GetSemver      bool   `json:"get_semver"`
+	ProjectKey       string `json:"projectKey"`
+	VCSServerName    string `json:"vcs_server_name"`
+	RepositoryName   string `json:"repository_name"`
+	Commit           string `json:"commit"`
+	Ref              string `json:"ref"`
+	HookEventUUID    string `json:"hook_event_uuid"`
+	HookEventKey     string `json:"hook_event_key"`
+	GetSigninKey     bool   `json:"get_signin_key"`
+	GetChangesets    bool   `json:"get_changesets"`
+	GetSemver        bool   `json:"get_semver"`
+	GetCommitMessage bool   `json:"commit_message"`
 }
 
 type HookRetrieveUserRequest struct {

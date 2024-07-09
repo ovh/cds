@@ -60,6 +60,7 @@ type WorkflowOnPush struct {
 	Branches []string `json:"branches,omitempty"`
 	Tags     []string `json:"tags,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
+	Commit   string   `json:"commit,omitempty"`
 }
 
 type WorkflowOnPullRequest struct {
@@ -349,6 +350,7 @@ type V2WorkflowHookData struct {
 	RepositoryName  string   `json:"repository_name,omitempty"`
 	RepositoryEvent string   `json:"repository_event,omitempty"`
 	Model           string   `json:"model,omitempty"`
+	CommitFilter    string   `json:"commit_filter,omitempty"`
 	BranchFilter    []string `json:"branch_filter,omitempty"`
 	TagFilter       []string `json:"tag_filter,omitempty"`
 	PathFilter      []string `json:"path_filter,omitempty"`

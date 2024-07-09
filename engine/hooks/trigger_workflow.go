@@ -57,7 +57,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			wh := &hre.WorkflowHooks[i]
 			if wh.Status == sdk.HookEventWorkflowStatusScheduled {
 				// Check path filter
-				canTrigger := false
+				canTriggerWithChangeSet := false
 				if len(wh.PathFilters) > 0 {
 				pathLoop:
 					for _, hookPathFilter := range wh.PathFilters {
@@ -71,15 +71,29 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 							if result == nil {
 								continue
 							}
-							canTrigger = true
+							canTriggerWithChangeSet = true
 							break pathLoop
 						}
 					}
 				} else {
-					canTrigger = true
+					canTriggerWithChangeSet = true
 				}
 
-				if !canTrigger {
+				canTriggerWithCommitMessage := false
+				if wh.Data.CommitFilter != "" {
+					g := glob.New(wh.Data.CommitFilter)
+					r, err := g.MatchString(hre.ExtractData.CommitMessage)
+					if err != nil {
+						hre.LastError = err.Error()
+					}
+					if r != nil {
+						canTriggerWithCommitMessage = true
+					}
+				} else {
+					canTriggerWithCommitMessage = true
+				}
+
+				if !canTriggerWithChangeSet || !canTriggerWithCommitMessage {
 					wh.Status = sdk.HookEventWorkflowStatusSkipped
 				} else {
 					// Query params to select the right workflow version to run

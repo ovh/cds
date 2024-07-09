@@ -68,6 +68,14 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		}
 	}
 
+	if op.Setup.Checkout.GetMessage {
+		currentCommit, err := gitRepo.LatestCommit(ctx)
+		if err != nil {
+			return err
+		}
+		op.Setup.Checkout.Result.CommitMessage = currentCommit.Subject
+	}
+
 	if op.Setup.Checkout.ProcessSemver {
 		describe, err := gitRepo.Describe(ctx, nil)
 		if err != nil {

@@ -94,6 +94,7 @@ type OperationCheckout struct {
 	CheckSignature bool   `json:"check_signature,omitempty"`
 	ProcessSemver  bool   `json:"process_semver,omitempty"`
 	GetChangeSet   bool   `json:"get_changeset,omitempty"`
+	GetMessage     bool   `json:"get_message,omitempty"`
 	Result         struct {
 		SignKeyID      string `json:"sign_key_id"`
 		CommitVerified bool   `json:"verified"`
@@ -102,7 +103,8 @@ type OperationCheckout struct {
 			Current string `json:"current"`
 			Next    string `json:"next"`
 		} `json:"semver"`
-		Files map[string]OperationChangetsetFile
+		CommitMessage string `json:"commit_message"`
+		Files         map[string]OperationChangetsetFile
 	} `json:"result"`
 }
 
