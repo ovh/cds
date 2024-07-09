@@ -31,8 +31,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNSIMPLESERVICE 04SCWorkflowRunSimpleService-WORKFLOW 1 --format json
-    retry: 30
-    delay: 10
+    retry: 300
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty

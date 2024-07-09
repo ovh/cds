@@ -37,8 +37,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
-    retry: 10
-    delay: 3
+    retry: 60
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -51,8 +51,8 @@ testcases:
 - name: check log
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1; grep "ITSCWRKFLW2-APPLICATION" *.log
-      retry: 10
-      delay: 3
+      retry: 60
+      delay: 1
       assertions:
       - result.code ShouldEqual 0
 
@@ -71,8 +71,8 @@ testcases:
 - name: check workflow run 2
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2 --format json
-    retry: 10
-    delay: 3
+    retry: 60
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -85,7 +85,7 @@ testcases:
 - name: check log 2
   steps:
     - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 2; grep "ITSCWRKFLW2-ANOTHER-APPLICATION" *.log
-      retry: 10
-      delay: 3
+      retry: 60
+      delay: 1
       assertions:
       - result.code ShouldEqual 0

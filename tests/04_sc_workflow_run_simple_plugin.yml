@@ -38,8 +38,8 @@ testcases:
 - name: check workflow
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow status 04SCWORKFLOWRUNSIMPLEPLUGIN 04SCWorkflowRunSimplePlugin-WORKFLOW 1 --format json
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
@@ -51,5 +51,5 @@ testcases:
 - name: check workflow log
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} workflow logs download 04SCWORKFLOWRUNSIMPLEPLUGIN 04SCWorkflowRunSimplePlugin-WORKFLOW 1 --pattern Build; grep "Hello, I'm the simple plugin" *.log
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
