@@ -846,7 +846,7 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, u sdk.AuthentifiedUser, 
 	}
 
 	// check varset right
-	if u.Ring != sdk.UserRingAdmin && u.Ring != sdk.UserRingMaintainer {
+	if u.Ring != sdk.UserRingAdmin {
 		varsets := append(run.WorkflowData.Workflow.VariableSets, jobDef.VariableSets...)
 		has, vInError, err := rbac.HasRoleOnVariableSetsAndUserID(ctx, db, sdk.VariableSetRoleUse, u.ID, run.ProjectKey, varsets)
 		if err != nil {
@@ -916,7 +916,7 @@ func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, jobDef *sdk.
 		jobDef.Region = defaultRegion
 	}
 
-	if u.Ring != sdk.UserRingAdmin && u.Ring != sdk.UserRingMaintainer {
+	if u.Ring != sdk.UserRingAdmin {
 		wantedRegion, err := region.LoadRegionByName(ctx, db, jobDef.Region)
 		if err != nil {
 			return false, err
