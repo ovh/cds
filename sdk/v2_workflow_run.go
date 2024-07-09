@@ -26,6 +26,7 @@ type V2WorkflowRunHookRequest struct {
 	EventName     string                 `json:"event_name"`
 	Ref           string                 `json:"ref,omitempty"`
 	Sha           string                 `json:"sha,omitempty"`
+	CommitMessage string                 `json:"commit_message,omitempty"`
 	Payload       map[string]interface{} `json:"payload"`
 	HookType      string                 `json:"hook_type"`
 	EntityUpdated string                 `json:"entity_updated"`
@@ -167,6 +168,7 @@ type V2WorkflowRunEvent struct {
 	EventName     string                 `json:"event_name"`
 	Ref           string                 `json:"ref"`
 	Sha           string                 `json:"sha"`
+	CommitMessage string                 `json:"commit_message"`
 	SemverCurrent string                 `json:"semver_current"`
 	SemverNext    string                 `json:"semver_next"`
 	ChangeSets    []string               `json:"changesets"`

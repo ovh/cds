@@ -100,6 +100,7 @@ type GitContext struct {
 	RepositoryWebURL string   `json:"repository_web_url,omitempty"`
 	RefWebURL        string   `json:"ref_web_url,omitempty"`
 	CommitWebURL     string   `json:"commit_web_url,omitempty"`
+	CommitMessage    string   `json:"commit_message,omitempty"`
 	Ref              string   `json:"ref,omitempty"`
 	RefName          string   `json:"ref_name,omitempty"`
 	Sha              string   `json:"sha,omitempty"`

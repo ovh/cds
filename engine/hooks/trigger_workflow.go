@@ -105,6 +105,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 						UserID:        hre.UserID,
 						Ref:           hre.ExtractData.Ref,
 						Sha:           hre.ExtractData.Commit,
+						CommitMessage: hre.ExtractData.CommitMessage,
 						Payload:       event,
 						EventName:     hre.EventName,
 						HookType:      wh.Type,

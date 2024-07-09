@@ -130,10 +130,12 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 			}
 
 			opts := sdk.OperationCheckout{
-				Commit:         commit,
-				CheckSignature: hookRetrieveSignKey.GetSigninKey,
-				ProcessSemver:  hookRetrieveSignKey.GetSemver,
-				GetChangeSet:   hookRetrieveSignKey.GetChangesets,
+				Commit:               commit,
+				CheckSignature:       hookRetrieveSignKey.GetSigninKey,
+				ProcessSemver:        hookRetrieveSignKey.GetSemver,
+				GetChangeSet:         hookRetrieveSignKey.GetChangesets,
+				ChangeSetCommitSince: hookRetrieveSignKey.ChangesetsCommitSince,
+				GetMessage:           hookRetrieveSignKey.GetCommitMessage,
 			}
 			ope, err := operation.CheckoutAndAnalyzeOperation(ctx, api.mustDB(), *proj, *vcsProjectWithSecret, repo.Fullname, cloneURL, refToClone, opts)
 			if err != nil {

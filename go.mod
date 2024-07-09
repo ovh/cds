@@ -26,7 +26,7 @@ require (
 	github.com/eapache/go-resiliency v1.3.0
 	github.com/fatih/color v1.14.1
 	github.com/fsamin/go-dump v1.0.9
-	github.com/fsamin/go-repo v0.4.1
+	github.com/fsamin/go-repo v0.4.1-0.20240709092227-ec6723c91106
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/go-gorp/gorp v2.0.0+incompatible

@@ -7,6 +7,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const (
+	NoCommit = "0000000000000000000000000000000000000000"
+)
+
 func (s *Service) extractDataFromPayload(headers http.Header, vcsServerType string, body []byte, eventName string) (string, sdk.HookRepositoryEventExtractData, error) {
 	switch vcsServerType {
 	case sdk.VCSTypeBitbucketServer:
@@ -41,7 +45,9 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 		extractedData.CDSEventType = "" // nothing here
 		extractedData.Ref = request.Ref
 		extractedData.Commit = request.After
-		extractedData.CommitFrom = request.Before
+		if request.Before != NoCommit {
+			extractedData.CommitFrom = request.Before
+		}
 	case "pull_request":
 		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.Commit = request.PullRequest.Head.Sha
@@ -78,7 +84,9 @@ func (s *Service) extractDataFromGitlabRequest(body []byte, eventName string) (s
 	}
 	extractedData.Ref = request.Ref
 	extractedData.Commit = request.After
-	extractedData.CommitFrom = request.Before
+	if request.Before != NoCommit {
+		extractedData.CommitFrom = request.Before
+	}
 
 	for _, c := range request.Commits {
 		extractedData.Paths = append(extractedData.Paths, c.Added...)
@@ -110,7 +118,9 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 	}
 	extractedData.Ref = request.Ref
 	extractedData.Commit = request.After
-	extractedData.CommitFrom = request.Before
+	if request.Before != NoCommit {
+		extractedData.CommitFrom = request.Before
+	}
 
 	var repoName string
 	if request.Repository != nil {
@@ -151,7 +161,9 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 	case "repo:refs_changed":
 		extractedData.Ref = request.Changes[0].RefID
 		extractedData.Commit = request.Changes[0].ToHash
-		extractedData.CommitFrom = request.Changes[0].FromHash
+		if request.Changes[0].FromHash != NoCommit {
+			extractedData.CommitFrom = request.Changes[0].FromHash
+		}
 		extractedData.CDSEventName = sdk.WorkflowHookEventPush
 		extractedData.CDSEventType = "" // no type here
 	case "pr:opened":
