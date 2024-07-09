@@ -387,7 +387,7 @@ func TestPurgeItem(t *testing.T) {
 
 	var err error
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, cfg["redisHost"], cfg["redisPassword"], 0)
+	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
 
 	// Add Item in CDS and FS

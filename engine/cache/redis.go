@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,36 +27,44 @@ type RedisStore struct {
 }
 
 // NewRedisStore initiate a new redisStore
-func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error) {
+func NewRedisStore(redisConf sdk.RedisConf, ttl int) (*RedisStore, error) {
 	var client *redis.Client
 
+	var tlsConfig *tls.Config
+
+	if redisConf.EnableTLS {
+		tlsConfig = &tls.Config{InsecureSkipVerify: redisConf.InsecureSkipVerifyTLS}
+	}
+
 	//if host is line master@localhost:26379,localhost:26380 => it's a redis sentinel cluster
-	if strings.Contains(host, "@") {
-		masterName := strings.Split(host, "@")[0]
-		sentinelsStr := strings.Split(host, "@")[1]
+	if strings.Contains(redisConf.Host, "@") {
+		masterName := strings.Split(redisConf.Host, "@")[0]
+		sentinelsStr := strings.Split(redisConf.Host, "@")[1]
 		sentinels := strings.Split(sentinelsStr, ",")
 		opts := &redis.FailoverOptions{
 			MasterName:         masterName,
 			SentinelAddrs:      sentinels,
-			Password:           password,
-			DB:                 dbindex,
+			Password:           redisConf.Password,
+			DB:                 redisConf.DbIndex,
 			IdleCheckFrequency: 10 * time.Second,
 			IdleTimeout:        10 * time.Second,
 			PoolSize:           25,
 			MaxRetries:         10,
 			MinRetryBackoff:    30 * time.Millisecond,
 			MaxRetryBackoff:    100 * time.Millisecond,
+			TLSConfig:          tlsConfig,
 		}
 		client = redis.NewFailoverClient(opts)
 	} else {
 		client = redis.NewClient(&redis.Options{
-			Addr:               host,
-			Password:           password, // no password set
-			DB:                 dbindex,
+			Addr:               redisConf.Host,
+			Password:           redisConf.Password, // no password set
+			DB:                 redisConf.DbIndex,
 			IdleCheckFrequency: 30 * time.Second,
 			MaxRetries:         10,
 			MinRetryBackoff:    30 * time.Millisecond,
 			MaxRetryBackoff:    100 * time.Millisecond,
+			TLSConfig:          tlsConfig,
 		})
 	}
 
@@ -63,10 +72,10 @@ func NewRedisStore(host, password string, dbindex, ttl int) (*RedisStore, error)
 
 	pong, err := client.Ping().Result()
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to connect to redis %s:%d", host, dbindex)
+		return nil, sdk.WrapError(err, "unable to connect to redis %s:%d", redisConf.Host, redisConf.DbIndex)
 	}
 	if pong != "PONG" {
-		return nil, fmt.Errorf("cannot ping Redis on %s", host)
+		return nil, fmt.Errorf("cannot ping Redis on %s", redisConf.Host)
 	}
 	return &RedisStore{
 		ttl:    ttl,
