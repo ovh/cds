@@ -26,7 +26,7 @@ testcases:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} X project vs add {{.cds_project}} vsFromEnv --environment-name env1
     assertions:
       - result.code ShouldEqual 0  
-  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project vs item from-project add {{.cds_project}} v1proj vs2 --rename v1new --force
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project vs item from-project {{.cds_project}} v1proj vs2 --rename v1new --force
     assertions:
       - result.code ShouldEqual 0
 - name: Check
