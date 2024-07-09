@@ -20,13 +20,13 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "arsenal-dev"
       - result.systemout ShouldContainSubstring "arsenal-prod"
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project add ITCLIPFARSENAL2 ITCLIPFARSENAL2
   - script: {{.cdsctl}} -f {{.cdsctl.config}} project integration list ITCLIPFARSENAL2
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "arsenal-dev"
       - result.systemout ShouldContainSubstring "arsenal-prod"
-    retry: 10
-    delay: 10
+    retry: 100
+    delay: 1

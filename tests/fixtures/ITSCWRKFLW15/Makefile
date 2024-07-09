@@ -2,7 +2,7 @@
 build: plugin-simple-linux-amd64 plugin-simple-darwin-amd64
 
 clean:
-	@rm plugin-simple-linux-amd64 plugin-simple-darwin-amd64
+	@rm -f plugin-simple-linux-amd64 plugin-simple-darwin-amd64
 
 plugin-simple-linux-amd64:
 	$(MAKE) build-plugin OS=linux ARCH=amd64
@@ -16,6 +16,6 @@ build-plugin:
 	--rm \
 	-e "GOOS=$(OS)" \
 	-e "GOARCH=$(ARCH)" \
-	golang:1.22 \
-	/bin/bash -c \
+	golang:1.22-alpine \
+	/bin/sh -c \
 	"cd /go/src/github.com/ovh/cds/tests/fixtures/ITSCWRKFLW15 && go version && CGO_ENABLED=0 go build -installsuffix cgo -ldflags '-extldflags "-static"' -o plugin-simple-integ-$(OS)-$(ARCH) ."

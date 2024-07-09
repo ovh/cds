@@ -43,20 +43,20 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #2 has been launched"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.status ShouldEqual Building
     - result.systemoutjson.num ShouldContainSubstring 2
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow stop ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
       - result.code ShouldEqual 0
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
-    retry: 10
-    delay: 3
+    retry: 30
+    delay: 1
     assertions:
       - result.code ShouldEqual 0
       - result.systemoutjson.status ShouldEqual Stopped
