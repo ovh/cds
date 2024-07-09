@@ -52,7 +52,7 @@ func TestCleanSynchronizedItem(t *testing.T) {
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {
-				Redis: &storage.RedisBufferConfiguration{
+				Redis: &sdk.RedisConf{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 					DbIndex:  0,
@@ -182,7 +182,7 @@ func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"redis_buffer": {
-				Redis: &storage.RedisBufferConfiguration{
+				Redis: &sdk.RedisConf{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 					DbIndex:  0,

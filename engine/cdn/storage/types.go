@@ -157,7 +157,7 @@ type Configuration struct {
 }
 
 type BufferConfiguration struct {
-	Redis      *RedisBufferConfiguration `toml:"redis" json:"redis" mapstructure:"redis"`
+	Redis      *sdk.RedisConf            `toml:"redis" json:"redis" mapstructure:"redis"`
 	Local      *LocalBufferConfiguration `toml:"local" json:"local" mapstructure:"local"`
 	Nfs        *NFSBufferConfiguration   `toml:"nfs" json:"nfs,omitempty" mapstructure:"nfs"`
 	BufferType CDNBufferType             `toml:"bufferType" json:"bufferType" comment:"it can be 'log' to receive logs or 'file' to receive artifacts"`
@@ -218,12 +218,6 @@ type WebdavStorageConfiguration struct {
 	Password   string                                  `toml:"password" json:"password"`
 	Path       string                                  `toml:"path" json:"path"`
 	Encryption []convergent.ConvergentEncryptionConfig `toml:"encryption" json:"-" mapstructure:"encryption"`
-}
-
-type RedisBufferConfiguration struct {
-	Host     string `toml:"host" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
-	Password string `toml:"password" json:"-"`
-	DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
 }
 
 type LocalBufferConfiguration struct {

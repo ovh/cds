@@ -22,7 +22,7 @@ var (
 
 type Redis struct {
 	storage.AbstractUnit
-	config     storage.RedisBufferConfiguration
+	config     sdk.RedisConf
 	store      cache.ScoredSetStore
 	bufferType storage.CDNBufferType
 }
@@ -38,13 +38,13 @@ func (s *Redis) GetDriverName() string {
 }
 
 func (s *Redis) Init(_ context.Context, cfg interface{}, bufferType storage.CDNBufferType) error {
-	config, is := cfg.(*storage.RedisBufferConfiguration)
+	config, is := cfg.(*sdk.RedisConf)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
 	s.config = *config
 	var err error
-	s.store, err = cache.New(sdk.RedisConf{Host: s.config.Host, Password: s.config.Password, DbIndex: s.config.DbIndex}, 60)
+	s.store, err = cache.New(s.config, 60)
 	if err != nil {
 		return err
 	}
