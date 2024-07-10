@@ -236,7 +236,7 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 	query := `SELECT COUNT(1) 
 	FROM v2_workflow_run, (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
 	) v2_workflow_run_annotations
 	WHERE 
@@ -267,7 +267,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	query := `SELECT COUNT(1) 
 	FROM v2_workflow_run , (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
 	) v2_workflow_run_annotations
 	WHERE 
@@ -342,7 +342,7 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
     SELECT *
     FROM v2_workflow_run, (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
 	) v2_workflow_run_annotations
     WHERE v2_workflow_run.id = v2_workflow_run_annotations.id ` + runQueryFilters + `			
@@ -390,7 +390,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
     SELECT *
     FROM v2_workflow_run, (
 		SELECT v2_workflow_run.id, ARRAY_AGG(annotation_object.key) as "annotation_keys", ARRAY_AGG(annotation_object.value) as "annotation_values"
-		FROM v2_workflow_run, jsonb_each_text(annotations) as annotation_object
+		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
 	) v2_workflow_run_annotations
     WHERE v2_workflow_run.id = v2_workflow_run_annotations.id  AND project_key = :projKey ` + runQueryFilters + `
