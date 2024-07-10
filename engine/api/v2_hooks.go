@@ -317,20 +317,16 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 		// Check configuration : branch filter + path filter
 		switch hookRequest.RepositoryEventName {
 		case sdk.WorkflowHookEventPush:
-			validBranch := sdk.IsValidHookRefs(ctx, w.Data.BranchFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefBranchPrefix))
-			validTag := sdk.IsValidHookRefs(ctx, w.Data.TagFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefTagPrefix))
-			if validBranch && validTag {
+			if w.Data.ValidateRef(ctx, hookRequest.Ref) {
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue
 		case sdk.WorkflowHookEventPullRequest, sdk.WorkflowHookEventPullRequestComment:
-			validBranch := sdk.IsValidHookRefs(ctx, w.Data.BranchFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefBranchPrefix))
-			validTag := sdk.IsValidHookRefs(ctx, w.Data.TagFilter, strings.TrimPrefix(hookRequest.Ref, sdk.GitRefTagPrefix))
 			validType := true
 			if len(w.Data.TypesFilter) > 0 {
 				validType = sdk.IsInArray(hookRequest.RepositoryEventType, w.Data.TypesFilter)
 			}
-			if validBranch && validTag && validType {
+			if w.Data.ValidateRef(ctx, hookRequest.Ref) && validType {
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue
