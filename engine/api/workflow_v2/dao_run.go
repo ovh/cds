@@ -276,7 +276,7 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	ON  
 		v2_workflow_run.id = v2_workflow_run_annotations.id 
 	WHERE 
-		project_key = :projKey ` + runQueryFilters
+		project_key = :projKey AND ` + runQueryFilters
 
 	params := map[string]interface{}{
 		"projKey":               projKey,
@@ -402,7 +402,7 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 	) v2_workflow_run_annotations 
 	ON  
 		v2_workflow_run.id = v2_workflow_run_annotations.id 
-	WHERE project_key = :projKey ` + runQueryFilters + `
+	WHERE project_key = :projKey AND ` + runQueryFilters + `
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
