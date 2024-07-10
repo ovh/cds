@@ -64,7 +64,6 @@ testcases:
             push:
               branches:
               - ma*
-              commit: "add file *"
           jobs:
             init:
               runs-on: 
