@@ -258,8 +258,6 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 		"annotation_values":     pq.StringArray(filters.AnnotationValues),
 	}
 
-	log.Debug(ctx, "params=%+v", params)
-
 	count, err := db.SelectInt(query, params)
 	return count, sdk.WithStack(err)
 }
