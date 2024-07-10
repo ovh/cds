@@ -64,6 +64,8 @@ testcases:
             push:
               branches:
               - ma*
+              tags:
+              - v*
           jobs:
             init:
               runs-on: 
