@@ -348,16 +348,22 @@ func (api *API) getProjectRepositoryBranchesHandler() ([]service.RbacChecker, se
 				return err
 			}
 
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
-				return err
+			var repoName string
+			if sdk.IsValidUUID(repositoryIdentifier) {
+				repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
+				if err != nil {
+					return err
+				}
+				repoName = repo.Name
+			} else {
+				repoName = repositoryIdentifier
 			}
 
 			client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
 			if err != nil {
 				return err
 			}
-			branches, err := client.Branches(ctx, repo.Name, sdk.VCSBranchesFilter{Limit: int64(limit)})
+			branches, err := client.Branches(ctx, repoName, sdk.VCSBranchesFilter{Limit: int64(limit)})
 			if err != nil {
 				return err
 			}
