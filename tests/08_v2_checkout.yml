@@ -62,9 +62,9 @@ testcases:
           name: {{.cds_workflow}}
           on:
             push:
-              branch:
+              branches:
               - ma*
-              commit: "add file*"
+              commit: "add file *"
           jobs:
             init:
               runs-on: 
