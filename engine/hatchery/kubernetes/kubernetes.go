@@ -108,6 +108,10 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		return sdk.WithStack(fmt.Errorf("invalid configuration"))
 	}
 
+	if h.Config.OSArch == "" {
+		h.Config.OSArch = "linux/amd64"
+	}
+
 	var err error
 	h.kubeClient, err = initKubeClient(h.Config)
 	if err != nil {

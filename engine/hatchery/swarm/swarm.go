@@ -56,6 +56,10 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		return err
 	}
 
+	if h.Config.OSArch == "" {
+		h.Config.OSArch = "linux/amd64"
+	}
+
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
