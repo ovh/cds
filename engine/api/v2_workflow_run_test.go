@@ -148,7 +148,7 @@ func TestSearchAllWorkflow(t *testing.T) {
 
 	uri := api.Router.GetRouteV2("GET", api.getWorkflowRunsSearchAllProjectV2Handler, map[string]string{})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri+"?commit=123456&branch=refs/heads/master&offset=0&limit=1", nil)
+	req := assets.NewAuthentifiedRequest(t, admin, pwd, "GET", uri+"?commit=123456&offset=0&limit=1", nil)
 	w := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(w, req)
 	require.Equal(t, 200, w.Code)

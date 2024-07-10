@@ -216,7 +216,7 @@ func LoadRunsAnnotations(ctx context.Context, db gorp.SqlExecutor, projKey strin
 }
 
 const runQueryFilters = `
-	AND (array_length(:workflows::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY(:workflows))
+	(array_length(:workflows::text[], 1) IS NULL OR (vcs_server || '/' || repository || '/' || workflow_name) = ANY(:workflows))
 	AND (array_length(:actors::text[], 1) IS NULL OR username = ANY(:actors))
 	AND (array_length(:status::text[], 1) IS NULL OR status = ANY(:status))
 	AND (array_length(:refs::text[], 1) IS NULL OR contexts -> 'git' ->> 'ref' = ANY(:refs))
@@ -234,13 +234,15 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 	defer next()
 
 	query := `SELECT COUNT(1) 
-	FROM v2_workflow_run, (
+	FROM v2_workflow_run
+	LEFT JOIN (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations
-	WHERE 
-		v2_workflow_run.id = v2_workflow_run_annotations.id ` + runQueryFilters
+	) v2_workflow_run_annotations 
+	ON  
+		v2_workflow_run.id = v2_workflow_run_annotations.id 
+	WHERE ` + runQueryFilters
 
 	params := map[string]interface{}{
 		"workflows":             pq.StringArray(filters.Workflows),
@@ -256,6 +258,8 @@ func CountAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRunsF
 		"annotation_values":     pq.StringArray(filters.AnnotationValues),
 	}
 
+	log.Debug(ctx, "params=%+v", params)
+
 	count, err := db.SelectInt(query, params)
 	return count, sdk.WithStack(err)
 }
@@ -265,14 +269,15 @@ func CountRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filters
 	defer next()
 
 	query := `SELECT COUNT(1) 
-	FROM v2_workflow_run , (
+	FROM v2_workflow_run
+	LEFT JOIN (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations
-	WHERE 
+	) v2_workflow_run_annotations 
+	ON  
 		v2_workflow_run.id = v2_workflow_run_annotations.id 
-	AND 
+	WHERE 
 		project_key = :projKey ` + runQueryFilters
 
 	params := map[string]interface{}{
@@ -339,13 +344,16 @@ func SearchAllRuns(ctx context.Context, db gorp.SqlExecutor, filters SearchsRuns
 	}
 
 	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM v2_workflow_run, (
+    SELECT v2_workflow_run.*
+    FROM v2_workflow_run
+	LEFT JOIN (
 		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations
-    WHERE v2_workflow_run.id = v2_workflow_run_annotations.id ` + runQueryFilters + `			
+	) v2_workflow_run_annotations 
+	ON  
+		v2_workflow_run.id = v2_workflow_run_annotations.id 
+	WHERE ` + runQueryFilters + `			
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,
@@ -387,13 +395,16 @@ func SearchRuns(ctx context.Context, db gorp.SqlExecutor, projKey string, filter
 	}
 
 	query := gorpmapping.NewQuery(`
-    SELECT *
-    FROM v2_workflow_run, (
-		SELECT v2_workflow_run.id, ARRAY_AGG(annotation_object.key) as "annotation_keys", ARRAY_AGG(annotation_object.value) as "annotation_values"
+    SELECT v2_workflow_run.*
+    FROM v2_workflow_run
+	LEFT JOIN (
+		SELECT v2_workflow_run.id, array_agg(annotation_object.key) as "annotation_keys", array_agg(annotation_object.value) as "annotation_values"
 		FROM v2_workflow_run, jsonb_each_text(COALESCE(annotations, '{}'::jsonb)) as annotation_object
 		GROUP BY v2_workflow_run.id
-	) v2_workflow_run_annotations
-    WHERE v2_workflow_run.id = v2_workflow_run_annotations.id  AND project_key = :projKey ` + runQueryFilters + `
+	) v2_workflow_run_annotations 
+	ON  
+		v2_workflow_run.id = v2_workflow_run_annotations.id 
+	WHERE project_key = :projKey ` + runQueryFilters + `
 		ORDER BY 
 			CASE WHEN :sort = 'last_modified:asc' THEN last_modified END asc,
 			CASE WHEN :sort = 'last_modified:desc' THEN last_modified END desc,

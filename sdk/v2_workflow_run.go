@@ -84,6 +84,9 @@ func (s V2WorkflowRunStatus) IsTerminated() bool {
 type WorkflowRunAnnotations map[string]string
 
 func (m WorkflowRunAnnotations) Value() (driver.Value, error) {
+	if m == nil {
+		return []byte("{}"), nil
+	}
 	j, err := json.Marshal(m)
 	return j, WrapError(err, "cannot marshal WorkflowRunAnnotations")
 }
