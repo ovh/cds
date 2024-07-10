@@ -84,6 +84,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					g := glob.New(wh.Data.CommitFilter)
 					r, err := g.MatchString(hre.ExtractData.CommitMessage)
 					if err != nil {
+						log.ErrorWithStackTrace(ctx, err)
 						hre.LastError = err.Error()
 					}
 					if r != nil {
