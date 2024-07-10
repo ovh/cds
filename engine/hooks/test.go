@@ -24,7 +24,7 @@ func setupTestHookService(t *testing.T) (Service, func()) {
 
 	s.Cfg.RetryError = 1
 
-	store, err := cache.NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
+	store, err := cache.NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	if err != nil {
 		t.Fatalf("Unable to connect to redis: %v", err)
 	}

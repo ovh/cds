@@ -62,7 +62,7 @@ func TestPostUploadHandler(t *testing.T) {
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"refis_buffer": {
-				Redis: &storage.RedisBufferConfiguration{
+				Redis: &sdk.RedisConf{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 					DbIndex:  0,
@@ -273,7 +273,7 @@ func TestPostUploadHandler_WorkflowV2(t *testing.T) {
 		HashLocatorSalt: "thisismysalt",
 		Buffers: map[string]storage.BufferConfiguration{
 			"refis_buffer": {
-				Redis: &storage.RedisBufferConfiguration{
+				Redis: &sdk.RedisConf{
 					Host:     cfg["redisHost"],
 					Password: cfg["redisPassword"],
 					DbIndex:  0,

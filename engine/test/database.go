@@ -147,7 +147,7 @@ func SetupPGToCancel(t require.TestingT, m *gorpmapper.Mapper, serviceType strin
 		require.NoError(t, f(context.TODO(), sdk.DefaultValues{}, factory.GetDBMap(m)))
 	}
 
-	store, err := cache.NewRedisStore(redisHost, redisPassword, int(redisDbIndex), 60)
+	store, err := cache.NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err, "unable to connect to redis")
 
 	cancel := func() {

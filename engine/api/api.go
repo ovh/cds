@@ -83,12 +83,8 @@ type Configuration struct {
 	} `toml:"secrets" json:"secrets"`
 	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
-		TTL   int `toml:"ttl" default:"60" json:"ttl"`
-		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
-			Password string `toml:"password" json:"-"`
-			DbIndex  int    `toml:"dbindex" default:"0" json:"dbindex"`
-		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
+		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
+		Redis sdk.RedisConf `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################" json:"cache"`
 	Download struct {
 		Directory          string   `toml:"directory" default:"/var/lib/cds-engine" json:"directory" comment:"this directory contains cds binaries. If it's empty, cds will download binaries from GitHub (property downloadFromGitHub) or from an artifactory instance (property artifactory) to it"`
@@ -636,9 +632,7 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache
 	a.Cache, err = cache.New(
-		a.Config.Cache.Redis.Host,
-		a.Config.Cache.Redis.Password,
-		a.Config.Cache.Redis.DbIndex,
+		a.Config.Cache.Redis,
 		a.Config.Cache.TTL)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to cache store")
