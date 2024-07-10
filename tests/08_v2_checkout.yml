@@ -60,7 +60,11 @@ testcases:
             image: buildpack-deps:buster
         workflows/checkout.yaml:
           name: {{.cds_workflow}}
-          on: [push]
+          on:
+            push:
+              branch:
+              - ma*
+              commit: "add file*"
           jobs:
             init:
               runs-on: 
