@@ -573,6 +573,15 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 	ctx, end := telemetry.Span(ctx, "swarm.CanSpawn", telemetry.Tag(telemetry.TagWorker, model.GetName()))
 	defer end()
 
+	// For workflow v2, check os/arch of worker model
+	if model.ModelV2 != nil {
+		modelOSArch := model.ModelV2.OSArch
+		if h.Config.OSArch != modelOSArch {
+			log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, modelOSArch, h.Config.OSArch)
+			return false
+		}
+	}
+
 	// Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
