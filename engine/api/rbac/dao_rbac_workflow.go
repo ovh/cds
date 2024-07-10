@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 	"github.com/rockbears/log"
@@ -75,9 +76,11 @@ func getAllRBACWorkflows(ctx context.Context, db gorp.SqlExecutor, q gorpmapping
 	return worflowsFiltered, nil
 }
 
-func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, workflowName string) (bool, error) {
+func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role string, userID string, projectKey string, vcs, repo, workflowName string) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnWorkflowAndUserID")
 	defer next()
+
+	workflowNamePerm := fmt.Sprintf("%s/%s/%s", vcs, repo, workflowName)
 
 	workflows, allWorkflowAllowed, err := LoadAllWorkflowsAllowed(ctx, db, role, projectKey, userID)
 	if err != nil {
@@ -88,7 +91,7 @@ func HasRoleOnWorkflowAndUserID(ctx context.Context, db gorp.SqlExecutor, role s
 	}
 	for _, item := range workflows {
 		g := glob.New(item)
-		r, err := g.MatchString(workflowName)
+		r, err := g.MatchString(workflowNamePerm)
 		if err != nil {
 			return false, err
 		}
