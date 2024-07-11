@@ -6,11 +6,6 @@ testcases:
       - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_b/pipeline.pip.yml ]'
       - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_a/workflow.yml ]'
       - script: '[ -f ./fixtures/ITSCWRKFLW16/edit_b/workflow.yml ]'
-      - script: |-
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-          if [ $? -ne 0 ]; then
-              {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-          fi
 
   - name: prepare test
     steps:

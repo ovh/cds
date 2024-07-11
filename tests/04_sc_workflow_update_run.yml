@@ -13,11 +13,6 @@ testcases:
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} project add ITSCWRKFLW2 ITSCWRKFLW2"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-APPLICATION"
   - script: "{{.cdsctl}} -f {{.cdsctl.config}} application add ITSCWRKFLW2 ITSCWRKFLW2-ANOTHER-APPLICATION"
-  - script: |-
-      {{.cdsctl}} -f {{.cdsctl.config}} worker model show buildpack-deps
-      if [ $? -ne 0 ]; then
-          {{.cdsctl}} -f {{.cdsctl.config}} worker model import --force ./fixtures/models/buildpack-deps.yml
-      fi
 
 - name: import pipeline
   steps:
