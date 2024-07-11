@@ -1,0 +1,48 @@
+name: Project VariableSet Command TestSuite
+vars:
+  cds_project: "ITV2VARIABLESETMIG"
+testcases:
+- name: prepare test
+  steps:
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} project remove --force {{.cds_project}}"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group remove --force {{.cds_project}}"
+  - script: "{{.cdsctl}} -f {{.cdsctl.config}} group add {{.cds_project}}"
+  - script: >
+      {{.cdsctl}} -f {{.cdsctl.config}} project create {{.cds_project}} "Test Project {{.cds_project}}" {{.cds_project}}
+
+- name: Init variable to migrate
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} project variable add {{.cds_project}} v1proj string valueProj
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application create {{.cds_project}} app1
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} application variable add {{.cds_project}} app1 v1app string value
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} environment create {{.cds_project}} env1
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} environment variable add {{.cds_project}} env1 v1env string envValue
+
+- name: Migrate var  
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project vs add {{.cds_project}} vs1 --application-name app1
+    assertions:
+      - result.code ShouldEqual 0
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project vs add {{.cds_project}} vsFromEnv --environment-name env1
+    assertions:
+      - result.code ShouldEqual 0  
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project vs item from-project {{.cds_project}} v1proj vs2 --rename v1new --force
+    assertions:
+      - result.code ShouldEqual 0
+- name: Check
+  steps:
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item ls {{.cds_project}} vs1 --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.systemoutjson0.name ShouldEqual "v1app"   
+      - result.systemoutjson.systemoutjson0.value ShouldEqual "value"
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item ls {{.cds_project}} vs2 --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.systemoutjson0.name ShouldEqual "v1new"   
+      - result.systemoutjson.systemoutjson0.value ShouldEqual "valueProj"    
+  - script: {{.cdsctl}} -f {{.cdsctl.config}} X project variableset item ls {{.cds_project}} vsFromEnv --format json
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemoutjson.systemoutjson0.name ShouldEqual "v1env"   
+      - result.systemoutjson.systemoutjson0.value ShouldEqual "envValue"      

@@ -175,7 +175,7 @@ func configBootstrap(args []string) Configuration {
 			conf.CDN.Units.Buffers = map[string]storage.BufferConfiguration{
 				"redis": {
 					BufferType: storage.CDNBufferTypeLog,
-					Redis: &storage.RedisBufferConfiguration{
+					Redis: &sdk.RedisConf{
 						Host: "localhost:6379",
 					},
 				},

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/go-gorp/gorp"
@@ -14,12 +13,12 @@ import (
 	cdslog "github.com/ovh/cds/sdk/log"
 )
 
-func hasRoleOnWorkflow(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, workflowName string, role string) error {
+func hasRoleOnWorkflow(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, projectKey string, vcs, repo, workflowName string, role string) error {
 	if auth == nil {
 		return sdk.WithStack(sdk.ErrForbidden)
 	}
 
-	hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID, projectKey, workflowName)
+	hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, db, role, auth.AuthConsumerUser.AuthentifiedUser.ID, projectKey, vcs, repo, workflowName)
 	if err != nil {
 		return err
 	}
@@ -38,15 +37,15 @@ func (api *API) workflowTrigger(ctx context.Context, auth *sdk.AuthUserConsumer,
 	workflowName := vars["workflowName"]
 	workflowRunID := vars["workflowRunID"]
 
+	var vcsName, repoName string
 	if workflowRunID != "" {
 		run, err := workflow_v2.LoadRunByID(ctx, db, workflowRunID)
 		if err != nil {
 			return err
 		}
-		workflowName = fmt.Sprintf("%s/%s/%s", run.Contexts.Git.Server, run.Contexts.Git.Repository, run.WorkflowName)
+		vcsName = run.Contexts.Git.Server
+		repoName = run.Contexts.Git.Repository
 	} else {
-		var vcsName, repoName string
-
 		// Retrieve VCSName
 		vcsIdentifier, err := url.PathUnescape(vars["vcsIdentifier"])
 		if err != nil {
@@ -72,8 +71,6 @@ func (api *API) workflowTrigger(ctx context.Context, auth *sdk.AuthUserConsumer,
 		} else {
 			repoName = repositoryIdentifier
 		}
-
-		workflowName = fmt.Sprintf("%s/%s/%s", vcsName, repoName, workflowName)
 	}
-	return hasRoleOnWorkflow(ctx, auth, store, db, projectKey, workflowName, sdk.WorkflowRoleTrigger)
+	return hasRoleOnWorkflow(ctx, auth, store, db, projectKey, vcsName, repoName, workflowName, sdk.WorkflowRoleTrigger)
 }

@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/gorhill/cronexpr"
@@ -17,11 +18,6 @@ hooks:v2:schedulers:<vcs>:<repo>:<workflow>:<whID>: Scheduler definition (sdk.V2
 hooks:queue:schedulers: Contains the next Scheduler executions. MemberKey = whID
 hooks:v2:executions:lock:<whID>
 */
-
-type SchedulerExecution struct {
-	SchedulerDef      sdk.V2WorkflowHook
-	NextExecutionTime int64
-}
 
 func (s *Service) instantiateScheduler(ctx context.Context, hooks []sdk.V2WorkflowHook) error {
 	// sort hooks by entity
@@ -75,7 +71,7 @@ func (s *Service) createSchedulerNextExecution(ctx context.Context, h sdk.V2Work
 	//Compute a new date
 	t0 := time.Now().In(loc)
 	nextSchedule := cronExpr.Next(t0)
-	nextExecution := SchedulerExecution{
+	nextExecution := sdk.SchedulerExecution{
 		SchedulerDef:      h,
 		NextExecutionTime: nextSchedule.UnixNano(),
 	}
@@ -141,7 +137,7 @@ func (s *Service) schedulerExecutionRoutine(ctx context.Context) {
 	}
 }
 
-func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e SchedulerExecution) error {
+func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e sdk.SchedulerExecution) error {
 	// Lock execution
 	lockKey := cache.Key(schedulerExecutionLockRootKey, e.SchedulerDef.ID)
 	b, err := s.Dao.store.Lock(lockKey, 20*time.Second, 10, 1)
@@ -221,4 +217,47 @@ func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e S
 	}
 
 	return nil
+}
+
+func (s *Service) listAllSchedulers(ctx context.Context) ([]sdk.V2WorkflowHookShort, error) {
+	keys, err := s.Dao.AllSchedulerKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
+	schedulers := make([]sdk.V2WorkflowHookShort, 0, len(keys))
+	// hooks:v2:definition:schedulers:vcs:repo:workflow:id
+	for _, k := range keys {
+		keySplit := strings.Split(k, ":")
+		if len(keySplit) != 8 {
+			continue
+		}
+		h := sdk.V2WorkflowHookShort{
+			VCSName:        keySplit[4],
+			RepositoryName: keySplit[5],
+			WorkflowName:   keySplit[6],
+			ID:             keySplit[7],
+		}
+		schedulers = append(schedulers, h)
+	}
+	return schedulers, nil
+}
+
+func (s *Service) listSchedulersByWorkflow(ctx context.Context, vcs, repo, workflowName string) ([]sdk.V2WorkflowHook, error) {
+	keys, err := s.Dao.SchedulerKeysByWorkflow(ctx, vcs, repo, workflowName)
+	if err != nil {
+		return nil, err
+	}
+	schedulers := make([]sdk.V2WorkflowHook, 0, len(keys))
+	for _, k := range keys {
+		var h sdk.V2WorkflowHook
+		found, err := s.Dao.store.Get(k, &h)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			continue
+		}
+		schedulers = append(schedulers, h)
+	}
+	return schedulers, nil
 }

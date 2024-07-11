@@ -343,6 +343,13 @@ type V2WorkflowHook struct {
 	Data           V2WorkflowHookData `json:"data" db:"data"`
 }
 
+type V2WorkflowHookShort struct {
+	ID             string `json:"id" `
+	VCSName        string `json:"vcs_name"`
+	RepositoryName string `json:"repository_name"`
+	WorkflowName   string `json:"workflow_name"`
+}
+
 type V2WorkflowScheduleEvent struct {
 	Schedule string `json:"schedule"`
 }
@@ -549,4 +556,9 @@ type V2WorkflowRunManualRequest struct {
 type V2WorkflowRunManualResponse struct {
 	HookEventUUID string `json:"hook_event_uuid"`
 	UIUrl         string `json:"ui_url"`
+}
+
+type SchedulerExecution struct {
+	SchedulerDef      V2WorkflowHook
+	NextExecutionTime int64
 }
