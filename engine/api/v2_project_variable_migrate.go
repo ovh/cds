@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 func (api *API) postMigrateEnvironmentVariableToVariableSetHandler() ([]service.RbacChecker, service.Handler) {
@@ -60,7 +61,7 @@ func (api *API) postMigrateEnvironmentVariableToVariableSetHandler() ([]service.
 				}
 				it := &sdk.ProjectVariableSetItem{
 					ProjectVariableSetID: vs.ID,
-					Name:                 v.Name,
+					Name:                 slug.Convert(v.Name),
 					Type:                 itemType,
 					Value:                v.Value,
 				}
@@ -125,7 +126,7 @@ func (api *API) postMigrateApplicationVariableToVariableSetHandler() ([]service.
 				}
 				it := &sdk.ProjectVariableSetItem{
 					ProjectVariableSetID: vs.ID,
-					Name:                 v.Name,
+					Name:                 slug.Convert(v.Name),
 					Type:                 itemType,
 					Value:                v.Value,
 				}
