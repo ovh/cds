@@ -59,6 +59,7 @@ type V2WorkflowRun struct {
 	RunEvent      V2WorkflowRunEvent     `json:"event" db:"event"`
 	RunJobEvent   V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
 	RetentionDate time.Time              `json:"retention_date,omitempty" db:"retention_date" cli:"-"`
+	Annotations   WorkflowRunAnnotations `json:"annotations,omitempty" db:"annotations" cli:"-"`
 }
 
 type V2WorkflowRunStatus string
@@ -78,6 +79,27 @@ func (s V2WorkflowRunStatus) IsTerminated() bool {
 		return false
 	}
 	return true
+}
+
+type WorkflowRunAnnotations map[string]string
+
+func (m WorkflowRunAnnotations) Value() (driver.Value, error) {
+	if m == nil {
+		return []byte("{}"), nil
+	}
+	j, err := json.Marshal(m)
+	return j, WrapError(err, "cannot marshal WorkflowRunAnnotations")
+}
+
+func (m *WorkflowRunAnnotations) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
+	}
+	return WrapError(json.Unmarshal(source, m), "cannot unmarshal WorkflowRunAnnotations")
 }
 
 type WorkflowRunContext struct {

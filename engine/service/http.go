@@ -186,7 +186,7 @@ func WriteError(ctx context.Context, w http.ResponseWriter, r *http.Request, err
 	if httpErr.Status < 500 {
 		log.Info(ctx, "%s", err)
 	} else {
-		log.Error(ctx, "%s", err)
+		log.ErrorWithStackTrace(ctx, err)
 	}
 
 	// safely ignore error returned by WriteJSON

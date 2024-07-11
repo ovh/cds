@@ -97,6 +97,23 @@
       }
     }
 
+    .run-annotation {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      color: rgba(0,0,0,.45);
+      font-size: 9px;
+      line-height: 1.5715;
+      text-align: center;
+      border-color: rgba(0,0,0,.45);
+      border-width: 1px;
+      border-style: dotted;
+      background-color: rgba(0,0,0,.15);
+      margin-left: 1px;
+      margin-right: 1px;
+      padding: 1px;
+    }
+
     [nz-list-item-actions] {
       min-width: 120px;
       text-align: right;

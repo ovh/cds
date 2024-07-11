@@ -52,6 +52,11 @@
                                     rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_ref}}</a>
                             </ng-template>
                         </span>
+                        <span *ngIf="workflowRun.annotations">
+                            <span *ngFor="let annotation of workflowRun.annotations | keyvalue">
+                                <br />{{annotation.key}}: {{annotation.value}}
+                            </span>
+                        </span>
                     </span>
                 </nz-page-header-content>
             </nz-page-header>

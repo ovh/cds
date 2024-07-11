@@ -94,6 +94,11 @@
 							rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
 					</ng-container>
 				</ng-template>
+				<ng-container *ngIf="run.annotations">
+					<span *ngFor="let annotation of run.annotations | keyvalue" class="run-annotation">
+						{{annotation.key}}: {{annotation.value}}
+					</span>
+				</ng-container>
 				<ng-container *ngIf="run.contexts.git">
 					<a class="repoLink" href="{{run.contexts.git.ref_web_url}}" target="_blank"
 						rel="noopener noreferrer">{{run.contexts.git.ref}}</a>
