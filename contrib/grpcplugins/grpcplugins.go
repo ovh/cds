@@ -33,10 +33,9 @@ func Log(c *actionplugin.Common, s string) {
 		fmt.Println(s)
 	} else {
 		if err := c.StreamServer.Send(&actionplugin.StreamResult{Logs: s}); err != nil {
-			fmt.Println("Unable to send logs %s: %v", s, err)
+			fmt.Printf("Unable to send logs %s: %v\n", s, err)
 		}
 	}
-
 }
 
 func Warnf(c *actionplugin.Common, s string, i ...any) {

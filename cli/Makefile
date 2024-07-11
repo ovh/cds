@@ -1,21 +1,25 @@
 .PHONY: clean
 
 TARGET_DIR = ./dist
-GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
-GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
-GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 PKGS_COMMA_SEP = go list -f '{{ join .Deps "\n" }}{{"\n"}}{{.ImportPath}}' . | grep github.com/ovh/cds | grep -v vendor | tr '\n' ',' | sed 's/,$$//'
 TEST_PKGS = $(shell go list ./...)
 TEST_CMD = go test -tags skipkeychaintests -v -timeout 600s -coverprofile=profile.coverprofile
 
+GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 $(GO_COV_MERGE):
-	go get -u github.com/wadey/gocovmerge
+	go install github.com/wadey/gocovmerge@latest
 
+GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 $(GO_GOJUNIT):
-	go get -u github.com/jstemmer/go-junit-report
+	go install github.com/jstemmer/go-junit-report@latest
 
+GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 $(GO_COBERTURA):
-	go get -u github.com/richardlt/gocover-cobertura
+	go install github.com/richardlt/gocover-cobertura@latest
+
+GO_XUTOOLS = $(GOPATH)/bin/xutools
+$(GO_XUTOOLS):
+	go install github.com/richardlt/xutools@latest
 
 $(TARGET_DIR):
 	@mkdir -p $(TARGET_DIR)
@@ -40,11 +44,9 @@ test: clean
     else \
 		  $(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
     fi; \
-	done; \
-	echo "Lancement du coverage"
+	done
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
-
 
 test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@echo "Generating unit tests coverage..."
@@ -53,7 +55,7 @@ test-coverage: $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
-test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
+test-xunit-report: $(GO_GOJUNIT) $(GO_XUTOOLS) $(TARGET_DIR)
 	@echo "Generating xUnit Report..."
 	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
@@ -83,8 +85,8 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 			echo "Ignoring empty file \t\t$$TST"; \
 		fi; \
 	done; \
-	xutools pretty --show-failures ./dist/*.xml > $(TARGET_DIR)/report; \
-  xutools sort-duration ./dist/*.xml > $(TARGET_DIR)/duration; \
+	$(GO_XUTOOLS) pretty --show-failures ./dist/*.xml > $(TARGET_DIR)/report; \
+  $(GO_XUTOOLS) sort-duration ./dist/*.xml > $(TARGET_DIR)/duration; \
 	if [ -e $(TARGET_DIR)/report ]; then \
     echo "Report:"; \
 		cat $(TARGET_DIR)/report; \
