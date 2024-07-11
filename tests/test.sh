@@ -139,12 +139,6 @@ initialization_tests() {
     ${CMD} >01_init_hatchery.yml.output 2>&1
     check_failure $? 01_init_hatchery.yml.output
     mv_results ${f}
-
-    CMD="${VENOM} run ${VENOM_OPTS} 01_init_model.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL}"
-    echo -e "  ${YELLOW}01_init_model.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
-    ${CMD} >01_init_model.yml.output 2>&1
-    check_failure $? 01_init_model.yml.output
-    mv_results ${f}    
 }
 
 smoke_tests_services() {
@@ -174,6 +168,12 @@ cli_tests() {
 }
 
 workflow_tests() {
+    CMD="${VENOM} run ${VENOM_OPTS} 01_init_model.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL}"
+    echo -e "  ${YELLOW}01_init_model.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_init_model.yml.output 2>&1
+    check_failure $? 01_init_model.yml.output
+    mv_results ${f}    
+
     echo "Running Workflow tests"
     for f in $(ls -1 04_*.yml); do
         run_workflow_tests $f &
