@@ -35,6 +35,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits", nil, r.GET(s.getCommitsBetweenRefsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}", nil, r.GET(s.getCommitHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}/statuses", nil, r.GET(s.getCommitStatusHandler))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}/insight/{insightKey}", nil, r.POST(s.postInsightHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/contents/{filePath}", nil, r.GET(s.getListContentsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/content/{filePath}", nil, r.GET(s.getFileContentHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/archive", nil, r.POST(s.archiveHandler))

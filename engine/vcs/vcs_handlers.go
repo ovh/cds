@@ -323,6 +323,42 @@ func (s *Service) getCommitHandler() service.Handler {
 	}
 }
 
+func (s *Service) postInsightHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		commit := muxVar(r, "commit")
+		insightKey := muxVar(r, "insightKey")
+
+		var report sdk.VCSInsight
+		if err := service.UnmarshalBody(r, &report); err != nil {
+			return sdk.WrapError(err, "Unable to read body")
+		}
+
+		vcsAuth, err := getVCSAuth(ctx)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrUnauthorized, "unable to get access token header")
+		}
+
+		consumer, err := s.getConsumer(name, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, vcsAuth)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
+		}
+
+		if err := client.CreateInsightReport(ctx, fmt.Sprintf("%s/%s", owner, repo), commit, insightKey, report); err != nil {
+			return sdk.WrapError(err, "Unable to create insight report on commit %s on %s/%s", commit, owner, repo)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (s *Service) getCommitStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

@@ -24,6 +24,11 @@ type statusData struct {
 	context      string
 }
 
+func (g *githubClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, vcsReport sdk.VCSInsight) error {
+	// not implemented
+	return nil
+}
+
 // SetStatus Users with push access can create commit statuses for a given ref:
 // https://developer.github.com/v3/repos/statuses/#create-a-status
 func (g *githubClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {

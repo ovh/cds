@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"fmt"
+	"net/url"
 
 	"crypto/sha512"
 	"encoding/base64"
@@ -104,6 +105,41 @@ type HookRepositoryEvent struct {
 
 func (h *HookRepositoryEvent) IsTerminated() bool {
 	return h.Status == HookEventStatusDone || h.Status == HookEventStatusError || h.Status == HookEventStatusSkipped
+}
+
+func (h *HookRepositoryEvent) ToInsightReport(uiURL string) VCSInsight {
+	report := VCSInsight{
+		Title:  "OVH CDS Event",
+		Detail: fmt.Sprintf("Event %s with ID %s: %s", h.EventName, h.UUID, h.Status),
+		Datas:  make([]VCSInsightData, 0),
+	}
+	if h.Status != HookEventStatusDone {
+		report.Detail += "\n\n" + h.LastError
+	}
+
+	for _, a := range h.Analyses {
+		report.Datas = append(report.Datas, VCSInsightData{
+			Title: "Analysis on " + a.ProjectKey,
+			Type:  "LINK",
+			Text:  a.Status,
+			Href:  fmt.Sprintf("%s/project/%s/explore/vcs/%s/repository/%s/settings", uiURL, a.ProjectKey, h.VCSServerName, url.PathEscape(h.RepositoryName)),
+		})
+	}
+	for _, w := range h.WorkflowHooks {
+		da := VCSInsightData{
+			Title: fmt.Sprintf("%s #%d", w.WorkflowName, w.RunNumber),
+			Type:  "LINK",
+			Text:  w.Status,
+		}
+
+		if w.Status == string(V2WorkflowRunStatusSuccess) {
+			da.Href = fmt.Sprintf("%s/project/%s/run/%s", uiURL, w.ProjectKey, w.RunID)
+		} else {
+			da.Href = fmt.Sprintf("%s/project/%s/explore/vcs/%s/repository/%s/settings", uiURL, w.ProjectKey, h.VCSServerName, url.PathEscape(h.RepositoryName))
+		}
+		report.Datas = append(report.Datas, da)
+	}
+	return report
 }
 
 type HookRepositoryEventWorkflow struct {

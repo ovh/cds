@@ -105,6 +105,13 @@ func (s *Service) Serve(c context.Context) error {
 	//Init the DAO
 	s.Dao = dao{store: s.Cache}
 
+	// Get ui rul
+	config, err := s.Client.ConfigUser()
+	if err != nil {
+		return err
+	}
+	s.UIURL = config.URLUI
+
 	// Get current maintenance state
 	var b bool
 	if _, err := s.Dao.store.Get(MaintenanceHookKey, &b); err != nil {

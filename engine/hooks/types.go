@@ -39,6 +39,7 @@ type Service struct {
 	Dao                     dao
 	Maintenance             bool
 	WebHooksParsedPublicKey *rsa.PublicKey
+	UIURL                   string
 }
 
 // Configuration is the hooks configuration structure

@@ -96,7 +96,7 @@ testcases:
           from: result.systemoutjson.systemoutjson0.id 
 
     - name: Get a scheduler by ID
-      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler get --hookID {{.hookID}} --format json
+      script: {{.cdsctl}} -f {{.cdsctl.config}} admin hooks scheduler get {{.hookID}} --format json
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.cron ShouldEqual "0 0 * * *"

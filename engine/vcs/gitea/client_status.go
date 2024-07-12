@@ -11,6 +11,11 @@ import (
 	"github.com/rockbears/log"
 )
 
+func (client *giteaClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, vcsReport sdk.VCSInsight) error {
+	// not implemented
+	return nil
+}
+
 func (client *giteaClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
 
 	// POST /repos/{owner}/{repo}/statuses/{sha}

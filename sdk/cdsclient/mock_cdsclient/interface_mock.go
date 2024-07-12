@@ -5375,6 +5375,20 @@ func (m *MockHookClient) EXPECT() *MockHookClientMockRecorder {
 	return m.recorder
 }
 
+// CreateInsightReport mocks base method.
+func (m *MockHookClient) CreateInsightReport(ctx context.Context, projKey, vcsName, repoName, commit, insightKey string, insightReport sdk.VCSInsight) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInsightReport", ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateInsightReport indicates an expected call of CreateInsightReport.
+func (mr *MockHookClientMockRecorder) CreateInsightReport(ctx, projKey, vcsName, repoName, commit, insightKey, insightReport interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInsightReport", reflect.TypeOf((*MockHookClient)(nil).CreateInsightReport), ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
+}
+
 // EntityGet mocks base method.
 func (m *MockHookClient) EntityGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, entityType, entityName string, mods ...cdsclient.RequestModifier) (*sdk.Entity, error) {
 	m.ctrl.T.Helper()
@@ -7548,6 +7562,20 @@ func (m *MockInterface) ConfigVCSGPGKeys() (map[string][]sdk.Key, error) {
 func (mr *MockInterfaceMockRecorder) ConfigVCSGPGKeys() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigVCSGPGKeys", reflect.TypeOf((*MockInterface)(nil).ConfigVCSGPGKeys))
+}
+
+// CreateInsightReport mocks base method.
+func (m *MockInterface) CreateInsightReport(ctx context.Context, projKey, vcsName, repoName, commit, insightKey string, insightReport sdk.VCSInsight) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInsightReport", ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateInsightReport indicates an expected call of CreateInsightReport.
+func (mr *MockInterfaceMockRecorder) CreateInsightReport(ctx, projKey, vcsName, repoName, commit, insightKey, insightReport interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInsightReport", reflect.TypeOf((*MockInterface)(nil).CreateInsightReport), ctx, projKey, vcsName, repoName, commit, insightKey, insightReport)
 }
 
 // DeleteJSON mocks base method.

@@ -42,6 +42,11 @@ func getGitlabStateFromStatus(s string) gitlab.BuildStateValue {
 	return gitlab.Failed
 }
 
+func (c *gitlabClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, vcsReport sdk.VCSInsight) error {
+	// not implemented
+	return nil
+}
+
 // SetStatus set build status on Gitlab
 func (c *gitlabClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
 	if c.disableStatus {

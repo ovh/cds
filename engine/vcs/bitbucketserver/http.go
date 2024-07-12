@@ -38,6 +38,8 @@ func (b *bitbucketClient) getFullAPIURL(api string) string {
 		url = fmt.Sprintf("%s/rest/api/1.0", b.consumer.URL)
 	case "build-status":
 		url = fmt.Sprintf("%s/rest/build-status/1.0", b.consumer.URL)
+	case "insights":
+		url = fmt.Sprintf("%s/rest/insights/1.0", b.consumer.URL)
 	}
 
 	return url

@@ -426,6 +426,7 @@ type HookClient interface {
 	RetrieveHookEventSigningKeyOperation(ctx context.Context, operationUUID string) (sdk.Operation, error)
 	RetrieveHookEventUser(ctx context.Context, req sdk.HookRetrieveUserRequest) (sdk.HookRetrieveUserResponse, error)
 	EntityGet(ctx context.Context, projKey string, vcsIdentifier string, repoIdentifier string, entityType string, entityName string, mods ...RequestModifier) (*sdk.Entity, error)
+	CreateInsightReport(ctx context.Context, projKey string, vcsName string, repoName string, commit string, insightKey string, insightReport sdk.VCSInsight) error
 }
 
 // ServiceClient exposes functions used for services

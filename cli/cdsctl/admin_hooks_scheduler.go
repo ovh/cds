@@ -70,7 +70,7 @@ var adminHooksGetSchedulerCmd = cli.Command{
 	Name:    "get",
 	Aliases: []string{"show"},
 	Short:   "Get a scheduler by its identifier",
-	Flags: []cli.Flag{
+	Args: []cli.Arg{
 		{Name: "hookID"},
 	},
 }
