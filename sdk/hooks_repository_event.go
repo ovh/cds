@@ -148,14 +148,7 @@ func (h *HookRepositoryEvent) ToInsightReport(uiURL string) VCSInsight {
 	}
 
 	// Check if workflows have been triggered
-	if len(h.WorkflowHooks) == 0 {
-		report.Datas = append(report.Datas, VCSInsightData{
-			Title: "Nb of workflows triggered",
-			Type:  "TEXT",
-			Text:  strconv.Itoa(0),
-		})
-		// Check if we can display a data for each workflow
-	} else if len(h.WorkflowHooks)+len(report.Datas) < 7 {
+	if len(h.WorkflowHooks)+len(report.Datas) < 7 {
 		for _, w := range h.WorkflowHooks {
 			da := VCSInsightData{
 				Title: fmt.Sprintf("%s #%d", w.WorkflowName, w.RunNumber),

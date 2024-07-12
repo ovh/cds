@@ -236,9 +236,7 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 
 func (s *Service) pushInsightReport(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
 	var projKey string
-	if hre.ExtractData.ProjectManual != "" {
-		return nil
-	} else if len(hre.Analyses) > 0 {
+	if len(hre.Analyses) > 0 {
 		projKey = hre.Analyses[0].ProjectKey
 	} else if len(hre.WorkflowHooks) > 0 {
 		projKey = hre.WorkflowHooks[0].ProjectKey
