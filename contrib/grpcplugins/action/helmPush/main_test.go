@@ -25,9 +25,9 @@ func Test_helmPushPlugin(t *testing.T) {
 	artifactoryURL := os.Getenv("ARTIFACTORY_URL")
 	artifactoryToken := os.Getenv("ARTIFACTORY_TOKEN")
 	artifactoryUsername := os.Getenv("ARTIFACTORY_USERNAME")
-
-	if artifactoryRepoPrefix == "" {
-		artifactoryRepoPrefix = "fsamin-default"
+	if artifactoryRepoPrefix == "" || artifactoryURL == "" || artifactoryToken == "" || artifactoryUsername == "" {
+		t.Logf("unable to get Artifactory credentials")
+		t.SkipNow()
 	}
 
 	log.Factory = log.NewTestingWrapper(t)

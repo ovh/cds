@@ -24,7 +24,7 @@ import (
 func Test_dockerPushPlugin_perform(t *testing.T) {
 	// If we don't have docker client, skip this test
 	if _, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); err != nil {
-		t.Logf("unable to get instantiate docker client: %v", err)
+		t.Logf("unable to get instantiate Docker client: %v", err)
 		t.SkipNow()
 	}
 
@@ -32,18 +32,9 @@ func Test_dockerPushPlugin_perform(t *testing.T) {
 	artifactoryURL := os.Getenv("ARTIFACTORY_URL")
 	artifactoryToken := os.Getenv("ARTIFACTORY_TOKEN")
 	artifactoryUsername := os.Getenv("ARTIFACTORY_USERNAME")
-
-	if artifactoryRepoPrefix == "" {
-		artifactoryRepoPrefix = "fsamin-default"
-	}
-	if artifactoryURL == "" {
-		artifactoryURL = "https://artifactory.localhost.local/artifactory"
-	}
-	if artifactoryToken == "" {
-		artifactoryToken = "xxxx"
-	}
-	if artifactoryUsername == "" {
-		artifactoryUsername = "workflow_v2_test_it"
+	if artifactoryRepoPrefix == "" || artifactoryURL == "" || artifactoryToken == "" || artifactoryUsername == "" {
+		t.Logf("unable to get Artifactory credentials")
+		t.SkipNow()
 	}
 
 	rtURL, err := url.Parse(artifactoryURL)

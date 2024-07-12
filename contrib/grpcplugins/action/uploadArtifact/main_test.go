@@ -31,6 +31,23 @@ func Test_perform(t *testing.T) {
 	mockHTTPClient := mock_cdsclient.NewMockHTTPClient(ctrl)
 	mockWorker := mock_workerruntime.NewMockRuntime(ctrl)
 
+	mockWorker.EXPECT().V2GetJobContext(gomock.Any()).Return(
+		&sdk.WorkflowRunJobsContext{},
+	)
+
+	mockHTTPClient.EXPECT().Do(sdk.ReqMatcher{Method: "GET", URLPath: "/v2/context"}).DoAndReturn(
+		func(req *http.Request) (*http.Response, error) {
+			h := workerruntime.V2_contextHandler(context.TODO(), mockWorker)
+			rec := httptest.NewRecorder()
+			apiReq := http.Request{
+				Method: "GET",
+				URL:    &url.URL{},
+			}
+			h(rec, &apiReq)
+			return rec.Result(), nil
+		},
+	)
+
 	mockHTTPClient.EXPECT().Do(reqMatcher{method: "POST", urlPath: "/v2/result"}).DoAndReturn(
 		func(req *http.Request) (*http.Response, error) {
 			var rrRequest workerruntime.V2RunResultRequest
