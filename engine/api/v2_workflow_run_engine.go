@@ -358,7 +358,7 @@ func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2Wo
 			continue
 		}
 		annotationValue := strings.TrimSpace(value)
-		if annotationValue != "" {
+		if annotationValue != "" && strings.ToLower(annotationValue) != sdk.FalseString {
 			if run.Annotations == nil {
 				run.Annotations = sdk.WorkflowRunAnnotations{}
 			}

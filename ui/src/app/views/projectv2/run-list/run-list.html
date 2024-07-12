@@ -94,15 +94,22 @@
 							rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
 					</ng-container>
 				</ng-template>
-				<ng-container *ngIf="run.annotations">
-					<span *ngFor="let annotation of run.annotations | keyvalue" class="run-annotation">
-						{{annotation.key}}: {{annotation.value}}
-					</span>
-				</ng-container>
-				<ng-container *ngIf="run.contexts.git">
-					<a class="repoLink" href="{{run.contexts.git.ref_web_url}}" target="_blank"
-						rel="noopener noreferrer">{{run.contexts.git.ref}}</a>
-				</ng-container>
+				<div *ngIf="run.annotations" class="annotations">
+					<ng-container *ngFor="let annotation of run.annotations | keyvalue">
+						<nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
+							title="key; {{annotation.key}} - value: {{annotation.value}}">
+							<b>{{annotation.key}}:</b> {{annotation.key}}
+						</nz-tag>
+						<span *ngIf="annotation.value === 'true'" nzColor="default"
+							title="key; {{annotation.key}} - value: {{annotation.value}}">
+							{{annotation.key}}
+						</span>
+					</ng-container>
+				</div>
+				<div *ngIf="run.contexts.git" class="ref">
+					<a class="repoLink" href="{{run.contexts.git.ref_web_url}}" target="_blank" rel="noopener noreferrer"
+						[title]="run.contexts.git.ref">{{run.contexts.git.ref}}</a>
+				</div>
 				<ul nz-list-item-actions>
 					<nz-list-item-action>
 						<app-date-from-now [value]="run.started"></app-date-from-now>

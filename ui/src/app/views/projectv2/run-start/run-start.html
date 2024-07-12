@@ -51,25 +51,40 @@
   </nz-form-item>
 </form>
 
-<nz-result *ngIf="event && (!event.workflows || event.workflows[0].status !== 'Done')" [nzIcon]="iconTemplate"
+<nz-result *ngIf="event && (event.status !== 'Done' && event.status !== 'Error')" [nzIcon]="iconTemplate"
   nzTitle="Workflow run triggered!" [nzSubTitle]="subTitle">
   <ng-template #iconTemplate>
     <span nz-icon nzType="loading" nzTheme="outline"></span>
   </ng-template>
   <ng-template #subTitle>
     <div class="message">
-      Event ID: {{event?.uuid}}<br />
-      Status: {{event?.status}}
+      <b>Event ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{event.uuid}}"></span><br />
+      <b>Status:</b> {{event?.status}}
     </div>
   </ng-template>
 </nz-result>
 
-<nz-result *ngIf="event && event.workflows && event.workflows[0].status === 'Done'" nzStatus="success"
+<nz-result *ngIf="event && event.status === 'Error'" nzStatus="error" nzTitle="Error starting Workflow Run!"
+  [nzSubTitle]="subTitle">
+  <ng-template #subTitle>
+    <div class="message">
+      <b>Event ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{event.uuid}}"></span><br />
+      <b>Last error:</b>
+      <pre>{{event.last_error}}</pre>
+    </div>
+  </ng-template>
+  <div nz-result-extra>
+    <button nz-button (click)="clearForm()">Clear</button>
+  </div>
+</nz-result>
+
+<nz-result *ngIf="event && event.status === 'Done'" nzStatus="success"
   nzTitle="Successfully started a new Workflow Run!" [nzSubTitle]="subTitle">
   <ng-template #subTitle>
     <div class="message">
-      Event ID: {{event?.uuid}}<br />
-      Run ID: {{event.workflows[0].run_id}}
+      <b>Event ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{event.uuid}}"></span><br />
+      <b>Run ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null"
+        nzContent="{{event.workflows[0].run_id}}"></span>
     </div>
   </ng-template>
   <div nz-result-extra>
