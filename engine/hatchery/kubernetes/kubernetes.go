@@ -108,6 +108,10 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		return sdk.WithStack(fmt.Errorf("invalid configuration"))
 	}
 
+	if h.Config.OSArch == "" {
+		h.Config.OSArch = "linux/amd64"
+	}
+
 	var err error
 	h.kubeClient, err = initKubeClient(h.Config)
 	if err != nil {
@@ -201,9 +205,19 @@ func (h *HatcheryKubernetes) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModel
 
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
-func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, _ sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
+func (h *HatcheryKubernetes) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "kubernetes.CanSpawn")
 	defer end()
+
+	// For workflow v2, check os/arch of worker model
+	if model.ModelV2 != nil {
+		modelOSArch := model.ModelV2.OSArch
+		if h.Config.OSArch != modelOSArch {
+			log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, modelOSArch, h.Config.OSArch)
+			return false
+		}
+	}
+
 	// Service and Hostname requirement are not supported
 	for _, r := range requirements {
 		if r.Type == sdk.HostnameRequirement {
