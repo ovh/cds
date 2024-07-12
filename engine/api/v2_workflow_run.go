@@ -503,7 +503,7 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				filters = append(filters, sdk.V2WorkflowRunSearchFilter{
 					Key:     x.Key,
 					Options: sdk.Unique(x.Values),
-					Example: "value",
+					Example: "Annotation value.",
 				})
 			}
 
