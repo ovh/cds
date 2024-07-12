@@ -451,6 +451,11 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				return err
 			}
 
+			annotations, err := workflow_v2.LoadRunsAnnotations(ctx, api.mustDB(), proj.Key)
+			if err != nil {
+				return err
+			}
+
 			filters := []sdk.V2WorkflowRunSearchFilter{
 				{
 					Key:     "actor",
@@ -494,6 +499,14 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 				},
 			}
 
+			for _, x := range annotations {
+				filters = append(filters, sdk.V2WorkflowRunSearchFilter{
+					Key:     x.Key,
+					Options: sdk.Unique(x.Values),
+					Example: "Annotation value.",
+				})
+			}
+
 			return service.WriteJSON(w, filters, http.StatusOK)
 		}
 }
@@ -505,22 +518,40 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 			limit := service.FormUInt(req, "limit")
 			sort := req.FormValue("sort")
 
-			filters := workflow_v2.SearchsRunsFilters{
-				Workflows:            req.URL.Query()["workflow"],
-				Actors:               req.URL.Query()["actor"],
-				Status:               req.URL.Query()["status"],
-				Refs:                 req.URL.Query()["ref"],
-				WorkflowRefs:         req.URL.Query()["workflow_ref"],
-				Repositories:         req.URL.Query()["repository"],
-				WorkflowRepositories: req.URL.Query()["workflow_repository"],
-				Commits:              req.URL.Query()["commit"],
-				Templates:            req.URL.Query()["template"],
+			filters := workflow_v2.SearchsRunsFilters{}
+
+			for k, v := range req.URL.Query() {
+				switch k {
+				case "workflow":
+					filters.Workflows = v
+				case "actor":
+					filters.Actors = v
+				case "status":
+					filters.Status = v
+				case "ref":
+					filters.Refs = v
+				case "workflow_ref":
+					filters.WorkflowRefs = v
+				case "repository":
+					filters.Repositories = v
+				case "workflow_repository":
+					filters.WorkflowRepositories = v
+				case "commit":
+					filters.Commits = v
+				case "template":
+					filters.Templates = v
+				case "offset", "limit", "sort":
+				default:
+					filters.AnnotationKeys = append(filters.AnnotationKeys, k)
+					filters.AnnotationValues = append(filters.AnnotationValues, v...)
+				}
 			}
+
 			filters.Lower()
 
 			count, err := workflow_v2.CountAllRuns(ctx, api.mustDB(), filters)
 			if err != nil {
-				return err
+				return sdk.WrapError(err, "unable to count all runs")
 			}
 			if count == 0 {
 				return service.WriteJSON(w, []sdk.V2WorkflowRun{}, http.StatusOK)
@@ -528,7 +559,7 @@ func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecke
 
 			runs, err := workflow_v2.SearchAllRuns(ctx, api.mustDB(), filters, offset, limit, sort)
 			if err != nil {
-				return err
+				return sdk.WrapError(err, "unable to search all runs")
 			}
 
 			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
@@ -547,18 +578,34 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 			limit := service.FormUInt(req, "limit")
 			sort := req.FormValue("sort")
 
-			filters := workflow_v2.SearchsRunsFilters{
-				Workflows:            req.URL.Query()["workflow"],
-				Actors:               req.URL.Query()["actor"],
-				Status:               req.URL.Query()["status"],
-				Refs:                 req.URL.Query()["ref"],
-				WorkflowRefs:         req.URL.Query()["workflow_ref"],
-				Repositories:         req.URL.Query()["repository"],
-				WorkflowRepositories: req.URL.Query()["workflow_repository"],
-				Commits:              req.URL.Query()["commit"],
-				Templates:            req.URL.Query()["template"],
+			filters := workflow_v2.SearchsRunsFilters{}
+
+			for k, v := range req.URL.Query() {
+				switch k {
+				case "workflow":
+					filters.Workflows = v
+				case "actor":
+					filters.Actors = v
+				case "status":
+					filters.Status = v
+				case "ref":
+					filters.Refs = v
+				case "workflow_ref":
+					filters.WorkflowRefs = v
+				case "repository":
+					filters.Repositories = v
+				case "workflow_repository":
+					filters.WorkflowRepositories = v
+				case "commit":
+					filters.Commits = v
+				case "template":
+					filters.Templates = v
+				case "offset", "limit", "sort":
+				default:
+					filters.AnnotationKeys = append(filters.AnnotationKeys, k)
+					filters.AnnotationValues = append(filters.AnnotationValues, v...)
+				}
 			}
-			filters.Lower()
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -567,12 +614,12 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 
 			count, err := workflow_v2.CountRuns(ctx, api.mustDB(), proj.Key, filters)
 			if err != nil {
-				return err
+				return sdk.WrapError(err, "unable to count runs")
 			}
 
 			runs, err := workflow_v2.SearchRuns(ctx, api.mustDB(), proj.Key, filters, offset, limit, sort)
 			if err != nil {
-				return err
+				return sdk.WrapError(err, "unable to search runs")
 			}
 
 			w.Header().Add("X-Total-Count", fmt.Sprintf("%d", count))
@@ -730,7 +777,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, wk.Name)
+			hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, vcsProject.Name, repo.Name, wk.Name)
 			if err != nil {
 				return err
 			}
@@ -751,6 +798,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				EventName:     runRequest.EventName,
 				Ref:           runRequest.Ref,
 				Sha:           runRequest.Sha,
+				CommitMessage: runRequest.CommitMessage,
 				SemverCurrent: runRequest.SemverCurrent,
 				SemverNext:    runRequest.SemverNext,
 				ChangeSets:    runRequest.ChangeSets,
@@ -1026,7 +1074,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 
 			// Check gate condition
 			// retrieve previous jobs context
-			runJobsContexts := computeExistingRunJobContexts(runJobs, runResults)
+			runJobsContexts, _ := computeExistingRunJobContexts(runJobs, runResults)
 			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRuns[0].JobID)
 			jobContext.Gate = allGateInputComputed
 			bts, err := json.Marshal(jobContext)

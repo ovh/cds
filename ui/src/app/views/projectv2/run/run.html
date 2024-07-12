@@ -52,6 +52,18 @@
                                     rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_ref}}</a>
                             </ng-template>
                         </span>
+                        <div *ngIf="workflowRun.annotations" class="annotations">
+                            <ng-container *ngFor="let annotation of workflowRun.annotations | keyvalue">
+                                <nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
+                                    title="key; {{annotation.key}} - value: {{annotation.value}}">
+                                    <b>{{annotation.key}}:</b> {{annotation.key}}
+                                </nz-tag>
+                                <span *ngIf="annotation.value === 'true'" nzColor="default"
+                                    title="key; {{annotation.key}} - value: {{annotation.value}}">
+                                    {{annotation.key}}
+                                </span>
+                            </ng-container>
+                        </div>
                     </span>
                 </nz-page-header-content>
             </nz-page-header>

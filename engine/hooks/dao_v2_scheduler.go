@@ -13,6 +13,10 @@ func GetSchedulerDefinitionKey(vcs, repo, workflow, whID string) string {
 	return cache.Key(scheduleDefinitionRootKey, vcs, repo, workflow, whID)
 }
 
+func (d *dao) AllSchedulerKeys(ctx context.Context) ([]string, error) {
+	return d.store.Keys(cache.Key(scheduleDefinitionRootKey, "*"))
+}
+
 // SchedulerKeysByWorkflow returns all the scheduler definition keys for the given workflow
 func (d *dao) SchedulerKeysByWorkflow(ctx context.Context, vcs, repo, workflow string) ([]string, error) {
 	return d.store.Keys(cache.Key(scheduleDefinitionRootKey, vcs, repo, workflow, "*"))
@@ -51,7 +55,7 @@ func (d *dao) CreateSchedulerDefinition(ctx context.Context, h sdk.V2WorkflowHoo
 	return nil
 }
 
-func (d *dao) CreateSchedulerNextExecution(ctx context.Context, exec SchedulerExecution) error {
+func (d *dao) CreateSchedulerNextExecution(ctx context.Context, exec sdk.SchedulerExecution) error {
 	if err := d.RemoveSchedulerExecution(ctx, exec.SchedulerDef.ID); err != nil {
 		return err
 	}
@@ -61,28 +65,28 @@ func (d *dao) CreateSchedulerNextExecution(ctx context.Context, exec SchedulerEx
 	return nil
 }
 
-func (d *dao) GetAllSchedulerExecutions(ctx context.Context) ([]SchedulerExecution, error) {
+func (d *dao) GetAllSchedulerExecutions(ctx context.Context) ([]sdk.SchedulerExecution, error) {
 	nbExec, err := d.store.SetCard(schedulerNextExecutionRootKey)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", schedulerNextExecutionRootKey)
 	}
-	schedulerExecs := make([]*SchedulerExecution, nbExec, nbExec)
+	schedulerExecs := make([]*sdk.SchedulerExecution, nbExec, nbExec)
 	for i := 0; i < nbExec; i++ {
-		schedulerExecs[i] = &SchedulerExecution{}
+		schedulerExecs[i] = &sdk.SchedulerExecution{}
 	}
 	if err := d.store.SetScan(ctx, schedulerNextExecutionRootKey, sdk.InterfaceSlice(schedulerExecs)...); err != nil {
 		return nil, sdk.WrapError(err, "Unable to scan %s", schedulerNextExecutionRootKey)
 	}
 
-	allExec := make([]SchedulerExecution, nbExec)
+	allExec := make([]sdk.SchedulerExecution, nbExec)
 	for i := 0; i < nbExec; i++ {
 		allExec[i] = *schedulerExecs[i]
 	}
 	return allExec, nil
 }
 
-func (d *dao) GetSchedulerExecution(ctx context.Context, hookID string) (*SchedulerExecution, error) {
-	var e SchedulerExecution
+func (d *dao) GetSchedulerExecution(ctx context.Context, hookID string) (*sdk.SchedulerExecution, error) {
+	var e sdk.SchedulerExecution
 	found, err := d.store.Get(cache.Key(schedulerNextExecutionRootKey, hookID), &e)
 	if err != nil {
 		return nil, err

@@ -37,16 +37,17 @@ func (s *Service) triggerGetGitInfo(ctx context.Context, hre *sdk.HookRepository
 				}
 
 				ope, err := s.Client.RetrieveHookEventSigningKey(ctx, sdk.HookRetrieveSignKeyRequest{
-					HookEventUUID:  hre.UUID,
-					HookEventKey:   cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
-					ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
-					VCSServerName:  wh.Data.VCSServer,
-					RepositoryName: wh.Data.RepositoryName,
-					Commit:         wh.TargetCommit,
-					Ref:            ref,
-					GetSigninKey:   false,
-					GetChangesets:  withChangeSet,
-					GetSemver:      true,
+					HookEventUUID:    hre.UUID,
+					HookEventKey:     cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
+					ProjectKey:       hre.WorkflowHooks[0].ProjectKey,
+					VCSServerName:    wh.Data.VCSServer,
+					RepositoryName:   wh.Data.RepositoryName,
+					Commit:           wh.TargetCommit,
+					Ref:              ref,
+					GetSigninKey:     false,
+					GetChangesets:    withChangeSet,
+					GetSemver:        true,
+					GetCommitMessage: true,
 				})
 				if err != nil {
 					return err

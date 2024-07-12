@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
-import { FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
+import { ControlContainer, FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
 import { Store } from "@ngxs/store";
 import { EntityType } from "app/model/entity.model";
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent } from "app/model/project.model";
@@ -182,6 +182,9 @@ export class ProjectV2RunStartComponent implements OnInit {
       });
       return;
     }
+    this.validateForm.disable();
+    this._cd.markForCheck();
+
     const splitted = this.splitRepository(this.validateForm.controls.repository.value);
     let req = <V2WorkflowRunManualRequest>{
       branch: this.validateForm.value.sourceBranch ?? this.validateForm.value.branch,
@@ -207,6 +210,7 @@ export class ProjectV2RunStartComponent implements OnInit {
 
   clearForm(): void {
     this.event = null;
+    this.validateForm.enable();
     this._cd.markForCheck();
   }
 }

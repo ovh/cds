@@ -1,9 +1,11 @@
 package sdk
 
 import (
+	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/gorhill/cronexpr"
 	"github.com/rockbears/yaml"
@@ -31,6 +33,7 @@ type V2Workflow struct {
 	Integrations []string                 `json:"integrations,omitempty"`
 	VariableSets []string                 `json:"vars,omitempty"`
 	Retention    int64                    `json:"retention,omitempty"`
+	Annotations  map[string]string        `json:"annotations,omitempty"`
 
 	// Template fields
 	From       string            `json:"from,omitempty"`
@@ -60,6 +63,7 @@ type WorkflowOnPush struct {
 	Branches []string `json:"branches,omitempty"`
 	Tags     []string `json:"tags,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
+	Commit   string   `json:"commit,omitempty"`
 }
 
 type WorkflowOnPullRequest struct {
@@ -340,6 +344,13 @@ type V2WorkflowHook struct {
 	Data           V2WorkflowHookData `json:"data" db:"data"`
 }
 
+type V2WorkflowHookShort struct {
+	ID             string `json:"id" `
+	VCSName        string `json:"vcs_name"`
+	RepositoryName string `json:"repository_name"`
+	WorkflowName   string `json:"workflow_name"`
+}
+
 type V2WorkflowScheduleEvent struct {
 	Schedule string `json:"schedule"`
 }
@@ -349,6 +360,7 @@ type V2WorkflowHookData struct {
 	RepositoryName  string   `json:"repository_name,omitempty"`
 	RepositoryEvent string   `json:"repository_event,omitempty"`
 	Model           string   `json:"model,omitempty"`
+	CommitFilter    string   `json:"commit_filter,omitempty"`
 	BranchFilter    []string `json:"branch_filter,omitempty"`
 	TagFilter       []string `json:"tag_filter,omitempty"`
 	PathFilter      []string `json:"path_filter,omitempty"`
@@ -357,6 +369,16 @@ type V2WorkflowHookData struct {
 	TargetTag       string   `json:"target_tag,omitempty"`
 	Cron            string   `json:"cron,omitempty"`
 	CronTimeZone    string   `json:"cron_timezone,omitempty"`
+}
+
+func (d V2WorkflowHookData) ValidateRef(ctx context.Context, ref string) bool {
+	valid := false
+	if strings.HasPrefix(ref, GitRefBranchPrefix) {
+		valid = IsValidHookRefs(ctx, d.BranchFilter, strings.TrimPrefix(ref, GitRefBranchPrefix))
+	} else {
+		valid = IsValidHookRefs(ctx, d.TagFilter, strings.TrimPrefix(ref, GitRefTagPrefix))
+	}
+	return valid
 }
 
 func (w V2WorkflowHookData) Value() (driver.Value, error) {
@@ -535,4 +557,9 @@ type V2WorkflowRunManualRequest struct {
 type V2WorkflowRunManualResponse struct {
 	HookEventUUID string `json:"hook_event_uuid"`
 	UIUrl         string `json:"ui_url"`
+}
+
+type SchedulerExecution struct {
+	SchedulerDef      V2WorkflowHook
+	NextExecutionTime int64
 }

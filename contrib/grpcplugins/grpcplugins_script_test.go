@@ -1,13 +1,14 @@
-package main
+package grpcplugins
 
 import (
 	"context"
 	"fmt"
-	"github.com/ovh/cds/engine/test"
-	"github.com/spf13/afero"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/engine/test"
+	"github.com/spf13/afero"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"

@@ -56,6 +56,7 @@ PLUGINS_DIRECTORY="${PLUGINS_DIRECTORY:-dist}"
 CDS_REGION_REQ="${CDS_REGION_REQ:-""}"
 
 HOSTNAME="${HOSTNAME:-localhost}"
+MAX_CHILDREN="${MAX_CHILDREN:-10}"
 
 # The default values below fit to default minio installation.
 # Run "make minio_start" to start a minio docker container
@@ -167,14 +168,19 @@ cli_tests() {
 }
 
 workflow_tests() {
-    max_children=10
+    CMD="${VENOM} run ${VENOM_OPTS} 01_init_model.yml --var cdsctl.config=${CDSCTL_CONFIG}_admin --var cdsctl=${CDSCTL} --var api.url=${CDS_API_URL} --var engine.ctl=${CDS_ENGINE_CTL}"
+    echo -e "  ${YELLOW}01_init_model.yml ${DARKGRAY}[${CMD}]${NOCOLOR}"
+    ${CMD} >01_init_model.yml.output 2>&1
+    check_failure $? 01_init_model.yml.output
+    mv_results ${f}    
+
     echo "Running Workflow tests"
     for f in $(ls -1 04_*.yml); do
         run_workflow_tests $f &
         local my_pid=$$
         local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
         children=$((children-1))
-        if [[ $children -ge $max_children ]]; then
+        if [[ $children -ge $MAX_CHILDREN ]]; then
             wait -n
         fi
     done
@@ -256,7 +262,6 @@ admin_tests() {
 }
 
 cds_v2_tests() {
-    max_children=10
     echo "Check if gitea is running"
     curl --fail -I -X GET ${GITEA_HOST}/api/swagger
     echo "Running CDS v2 tests:"
@@ -265,7 +270,7 @@ cds_v2_tests() {
         local my_pid=$$
         local children=$(ps -eo ppid | grep -w $my_pid | wc -w)
         children=$((children-1))
-        if [[ $children -ge $max_children ]]; then
+        if [[ $children -ge $MAX_CHILDREN ]]; then
             wait -n
         fi
     done

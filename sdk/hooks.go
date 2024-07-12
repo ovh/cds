@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/ovh/cds/sdk/glob"
 	"github.com/rockbears/log"
 
 	"database/sql/driver"
@@ -57,12 +58,13 @@ func IsValidHookRefs(ctx context.Context, configuredRefs []string, currentEventR
 		return true
 	}
 	for _, b := range configuredRefs {
-		regexpB, err := regexp.Compile(b)
+		g := glob.New(b)
+		result, err := g.MatchString(currentEventRef)
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 			continue
 		}
-		if regexpB.MatchString(currentEventRef) {
+		if result != nil {
 			return true
 		}
 	}

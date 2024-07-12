@@ -7,6 +7,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const (
+	NoCommit = "0000000000000000000000000000000000000000"
+)
+
 func (s *Service) extractDataFromPayload(headers http.Header, vcsServerType string, body []byte, eventName string) (string, sdk.HookRepositoryEventExtractData, error) {
 	switch vcsServerType {
 	case sdk.VCSTypeBitbucketServer:
@@ -41,9 +45,13 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 		extractedData.CDSEventType = "" // nothing here
 		extractedData.Ref = request.Ref
 		extractedData.Commit = request.After
+		if request.Before != NoCommit {
+			extractedData.CommitFrom = request.Before
+		}
 	case "pull_request":
 		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.Commit = request.PullRequest.Head.Sha
+		extractedData.CommitFrom = request.PullRequest.Base.Sha
 		switch request.Action {
 		case "opened":
 			extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
@@ -77,6 +85,9 @@ func (s *Service) extractDataFromGitlabRequest(body []byte, eventName string) (s
 	}
 	extractedData.Ref = request.Ref
 	extractedData.Commit = request.After
+	if request.Before != NoCommit {
+		extractedData.CommitFrom = request.Before
+	}
 
 	for _, c := range request.Commits {
 		extractedData.Paths = append(extractedData.Paths, c.Added...)
@@ -108,6 +119,9 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 	}
 	extractedData.Ref = request.Ref
 	extractedData.Commit = request.After
+	if request.Before != NoCommit {
+		extractedData.CommitFrom = request.Before
+	}
 
 	var repoName string
 	if request.Repository != nil {
@@ -127,9 +141,23 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 	case "pull_request":
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
 		extractedData.CDSEventType = request.Action
+		if request.Head != nil {
+			extractedData.Commit = request.Head.Sha
+			extractedData.Ref = sdk.GitRefBranchPrefix + request.Head.Ref
+		}
+		if request.Base != nil {
+			extractedData.CommitFrom = request.Base.Sha
+		}
 	case "pull_request_comment":
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
 		extractedData.CDSEventType = request.Action
+		if request.Head != nil {
+			extractedData.Commit = request.Head.Sha
+			extractedData.Ref = sdk.GitRefBranchPrefix + request.Head.Ref
+		}
+		if request.Base != nil {
+			extractedData.CommitFrom = request.Base.Sha
+		}
 	}
 	return repoName, extractedData, nil
 }
@@ -148,6 +176,9 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 	case "repo:refs_changed":
 		extractedData.Ref = request.Changes[0].RefID
 		extractedData.Commit = request.Changes[0].ToHash
+		if request.Changes[0].FromHash != NoCommit {
+			extractedData.CommitFrom = request.Changes[0].FromHash
+		}
 		extractedData.CDSEventName = sdk.WorkflowHookEventPush
 		extractedData.CDSEventType = "" // no type here
 	case "pr:opened":
@@ -155,37 +186,44 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeOpened
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:reopened":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeReopened
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:declined":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeClosed
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:from_ref_updated":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeEdited
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:added":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestCommentTypeCreated
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:edited":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestCommentTypeEdited
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:deleted":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestCommentTypeDeleted
+		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	}
 
 	if extractedData.Ref == "" {

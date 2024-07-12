@@ -95,6 +95,7 @@ var projectVariableSetCreateCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{Name: "application-name", Type: cli.FlagString},
+		{Name: "environment-name", Type: cli.FlagString},
 	},
 }
 
@@ -109,6 +110,12 @@ func projectVariableSetCreateFunc(v cli.Values) error {
 			VariableSetName: v.GetString("name"),
 		}
 		return client.ProjectVariableSetCreateFromApplication(context.Background(), v.GetString(_ProjectKey), copyReq)
+	} else if v.GetString("environment-name") != "" {
+		copyReq := sdk.CopyEnvironmentVariableToVariableSet{
+			EnvironmentName: v.GetString("environment-name"),
+			VariableSetName: v.GetString("name"),
+		}
+		return client.ProjectVariableSetCreateFromEnvironment(context.Background(), v.GetString(_ProjectKey), copyReq)
 	}
 	return client.ProjectVariableSetCreate(context.Background(), v.GetString(_ProjectKey), &vs)
 }

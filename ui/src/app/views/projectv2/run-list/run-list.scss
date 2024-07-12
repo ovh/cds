@@ -61,6 +61,14 @@
     flex: 1;
     overflow-y: auto;
 
+    nz-list-item-meta {
+      ::ng-deep {
+        .ant-list-item-meta-content {
+          width: unset !important;
+        }
+      }
+    }
+
     .repoLink {
       color: inherit;
 
@@ -97,9 +105,38 @@
       }
     }
 
+    .annotations {
+      flex: 1;
+      display: flex;
+      flex-direction: row-reverse;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 0 10px;
+      overflow: hidden;
+
+      &>* {
+        margin: 4px;
+        max-width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .ref {
+      margin: 0 10px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      direction: rtl;
+      text-align: left;
+      max-width: 250px;
+    }
+
     [nz-list-item-actions] {
-      min-width: 120px;
       text-align: right;
+      margin: 0 0 0 10px;
+      min-width: 120px;
     }
   }
 

@@ -549,6 +549,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		RefName:       strings.TrimPrefix(strings.TrimPrefix(ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix),
 		RefType:       refType,
 		Sha:           commit,
+		CommitMessage: wr.RunEvent.CommitMessage,
 		SemverCurrent: semverCurrent,
 		SemverNext:    semverNext,
 		ChangeSets:    wr.RunEvent.ChangeSets,

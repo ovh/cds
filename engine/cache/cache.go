@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 )
 
@@ -96,8 +97,8 @@ type SetValueWithScore struct {
 }
 
 // New init a cache
-func New(redisHost, redisPassword string, dbindex, TTL int) (Store, error) {
-	return NewRedisStore(redisHost, redisPassword, dbindex, TTL)
+func New(redisConf sdk.RedisConf, TTL int) (Store, error) {
+	return NewRedisStore(redisConf, TTL)
 }
 
 // NewWriteCloser returns a write closer

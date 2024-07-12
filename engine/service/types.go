@@ -33,6 +33,7 @@ type HTTPRouterConfiguration struct {
 // HatcheryCommonConfiguration is the base configuration for all hatcheries
 type HatcheryCommonConfiguration struct {
 	Name          string                  `toml:"name" default:"" comment:"Name of Hatchery" json:"name"`
+	OSArch        string                  `toml:"osArch" default:"linux/amd64" comment:"Define which os/architecture of worker model the hatchery can spawn" json:"osArch"`
 	RSAPrivateKey string                  `toml:"rsaPrivateKey" default:"" comment:"The RSA Private Key used by the hatchery.\nThis is mandatory." json:"-"`
 	HTTP          HTTPRouterConfiguration `toml:"http" comment:"######################\n CDS Hatchery HTTP Configuration \n######################" json:"http"`
 	URL           string                  `toml:"url" default:"http://localhost:8086" comment:"URL of this Hatchery" json:"url"`

@@ -20,6 +20,7 @@ export class V2WorkflowRun {
     contexts: any;
     event: WorkflowEvent;
     job_events: V2WorkflowRunJobEvent[];
+    annotations: any;
 }
 export enum V2WorkflowRunStatus {
     Crafting = "Crafting",

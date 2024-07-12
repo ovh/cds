@@ -34,6 +34,16 @@
             :host-context(.night) & {
                 background-color: #141414;
             }
+
+            .annotations {
+                display: flex;
+                align-items: center;
+                margin: 8px 0;
+
+                &>* {
+                    margin-right: 8px;
+                }
+            }
         }
 
         .controls {

@@ -36,3 +36,8 @@ type CopyApplicationVariableToVariableSet struct {
 	ApplicationName string `json:"application_name"`
 	VariableSetName string `json:"variable_set_name"`
 }
+
+type CopyEnvironmentVariableToVariableSet struct {
+	EnvironmentName string `json:"environment_name"`
+	VariableSetName string `json:"variable_set_name"`
+}
