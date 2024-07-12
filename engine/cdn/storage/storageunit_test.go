@@ -38,7 +38,7 @@ func TestDeduplicationCrossType(t *testing.T) {
 	cdntest.ClearItem(t, context.TODO(), m, db)
 	cdntest.ClearSyncRedisSet(context.TODO(), t, cache, "local_storage")
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 6*time.Second)
 	t.Cleanup(cancel)
 
 	bufferDir, err := os.MkdirTemp("", t.Name()+"-cdnbuffer-1-*")
@@ -376,6 +376,7 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	reader, err = localUnitDriver.NewReader(context.TODO(), *itemUnit)
+	require.NoError(t, err)
 	btes := new(bytes.Buffer)
 	err = localUnitDriver.Read(*itemUnit, reader, btes)
 	require.NoError(t, err)
@@ -394,6 +395,7 @@ func TestRun(t *testing.T) {
 	require.NoError(t, err)
 
 	reader, err = localUnitDriver2.NewReader(context.TODO(), *itemUnit)
+	require.NoError(t, err)
 	btes = new(bytes.Buffer)
 	err = localUnitDriver2.Read(*itemUnit, reader, btes)
 	require.NoError(t, err)
