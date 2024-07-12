@@ -14,7 +14,7 @@ import (
 
 // PubSub represents a subscriber
 type PubSub interface {
-	Unsubscribe(channels ...string) error
+	Unsubscribe(c context.Context, channels ...string) error
 	GetMessage(c context.Context) (string, error)
 }
 
