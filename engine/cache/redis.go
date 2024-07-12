@@ -38,7 +38,7 @@ func NewRedisStore(redisConf sdk.RedisConf, ttl int) (*RedisStore, error) {
 	var tlsConfig *tls.Config
 
 	if redisConf.EnableTLS {
-		tlsConfig = &tls.Config{InsecureSkipVerify: redisConf.InsecureSkipVerifyTLS}
+		tlsConfig = &tls.Config{InsecureSkipVerify: redisConf.InsecureSkipVerifyTLS, MinVersion: tls.VersionTLS13}
 	}
 
 	//if host is line master@localhost:26379,localhost:26380 => it's a redis sentinel cluster
