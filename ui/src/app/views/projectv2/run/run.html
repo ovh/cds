@@ -56,7 +56,7 @@
                             <ng-container *ngFor="let annotation of workflowRun.annotations | keyvalue">
                                 <nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
                                     title="key; {{annotation.key}} - value: {{annotation.value}}">
-                                    <b>{{annotation.key}}:</b> {{annotation.key}}
+                                    <b>{{annotation.key}}:</b> {{annotation.value}}
                                 </nz-tag>
                                 <span *ngIf="annotation.value === 'true'" nzColor="default"
                                     title="key; {{annotation.key}} - value: {{annotation.value}}">
