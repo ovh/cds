@@ -24,6 +24,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		changesets := false
 		semver := false
 		signinkey := true
+		commitMessage := false
 
 		for _, wh := range hre.WorkflowHooks {
 			switch wh.Type {
@@ -35,6 +36,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 				changesets = true
 				semver = true
 				signinkey = true
+				commitMessage = true
 			}
 		}
 
@@ -50,18 +52,23 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 			repo = hre.ExtractData.Scheduler.TargetRepo
 		}
 
-		ope, err := s.Client.RetrieveHookEventSigningKey(ctx, sdk.HookRetrieveSignKeyRequest{
-			HookEventUUID:  hre.UUID,
-			HookEventKey:   cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
-			ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
-			VCSServerName:  vcs,
-			RepositoryName: repo,
-			Commit:         hre.ExtractData.Commit,
-			Ref:            hre.ExtractData.Ref,
-			GetSigninKey:   signinkey,
-			GetChangesets:  changesets,
-			GetSemver:      semver,
-		})
+		req := sdk.HookRetrieveSignKeyRequest{
+			HookEventUUID:    hre.UUID,
+			HookEventKey:     cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
+			ProjectKey:       hre.WorkflowHooks[0].ProjectKey,
+			VCSServerName:    vcs,
+			RepositoryName:   repo,
+			Commit:           hre.ExtractData.Commit,
+			Ref:              hre.ExtractData.Ref,
+			GetSigninKey:     signinkey,
+			GetChangesets:    changesets,
+			GetSemver:        semver,
+			GetCommitMessage: commitMessage,
+		}
+		if changesets {
+			req.ChangesetsCommitSince = hre.ExtractData.CommitFrom
+		}
+		ope, err := s.Client.RetrieveHookEventSigningKey(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -135,6 +142,9 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 	computeChangeSets := make([]string, 0, len(ope.Setup.Checkout.Result.Files))
 	for _, v := range ope.Setup.Checkout.Result.Files {
 		computeChangeSets = append(computeChangeSets, v.Filename)
+	}
+	if hre.ExtractData.CommitMessage == "" {
+		hre.ExtractData.CommitMessage = ope.Setup.Checkout.Result.CommitMessage
 	}
 
 	// Update repository hook status

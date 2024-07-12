@@ -1,9 +1,11 @@
 package sdk
 
 import (
+	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/gorhill/cronexpr"
 	"github.com/rockbears/yaml"
@@ -61,6 +63,7 @@ type WorkflowOnPush struct {
 	Branches []string `json:"branches,omitempty"`
 	Tags     []string `json:"tags,omitempty"`
 	Paths    []string `json:"paths,omitempty"`
+	Commit   string   `json:"commit,omitempty"`
 }
 
 type WorkflowOnPullRequest struct {
@@ -357,6 +360,7 @@ type V2WorkflowHookData struct {
 	RepositoryName  string   `json:"repository_name,omitempty"`
 	RepositoryEvent string   `json:"repository_event,omitempty"`
 	Model           string   `json:"model,omitempty"`
+	CommitFilter    string   `json:"commit_filter,omitempty"`
 	BranchFilter    []string `json:"branch_filter,omitempty"`
 	TagFilter       []string `json:"tag_filter,omitempty"`
 	PathFilter      []string `json:"path_filter,omitempty"`
@@ -365,6 +369,16 @@ type V2WorkflowHookData struct {
 	TargetTag       string   `json:"target_tag,omitempty"`
 	Cron            string   `json:"cron,omitempty"`
 	CronTimeZone    string   `json:"cron_timezone,omitempty"`
+}
+
+func (d V2WorkflowHookData) ValidateRef(ctx context.Context, ref string) bool {
+	valid := false
+	if strings.HasPrefix(ref, GitRefBranchPrefix) {
+		valid = IsValidHookRefs(ctx, d.BranchFilter, strings.TrimPrefix(ref, GitRefBranchPrefix))
+	} else {
+		valid = IsValidHookRefs(ctx, d.TagFilter, strings.TrimPrefix(ref, GitRefTagPrefix))
+	}
+	return valid
 }
 
 func (w V2WorkflowHookData) Value() (driver.Value, error) {

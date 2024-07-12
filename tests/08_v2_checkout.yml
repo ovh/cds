@@ -60,7 +60,12 @@ testcases:
             image: buildpack-deps:buster
         workflows/checkout.yaml:
           name: {{.cds_workflow}}
-          on: [push]
+          on:
+            push:
+              branches:
+              - ma*
+              tags:
+              - v*
           jobs:
             init:
               runs-on: 
