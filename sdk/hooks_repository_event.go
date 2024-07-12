@@ -3,6 +3,7 @@ package sdk
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"crypto/sha512"
 	"encoding/base64"
@@ -117,25 +118,68 @@ func (h *HookRepositoryEvent) ToInsightReport(uiURL string) VCSInsight {
 		report.Detail += "\n\n" + h.LastError
 	}
 
-	for _, a := range h.Analyses {
+	// Check if there is max 5 analysis to display all of them
+	if len(h.Analyses) < 6 {
+		for _, a := range h.Analyses {
+			report.Datas = append(report.Datas, VCSInsightData{
+				Title: "Analysis on " + a.ProjectKey,
+				Type:  "LINK",
+				Text:  a.Status,
+				Href:  fmt.Sprintf("%s/project/%s/explore/vcs/%s/repository/%s/settings", uiURL, a.ProjectKey, h.VCSServerName, url.PathEscape(h.RepositoryName)),
+			})
+		}
+
+		// Else only create 1 data for the first one
+	} else if len(h.Analyses) > 0 {
+		a := h.Analyses[0]
 		report.Datas = append(report.Datas, VCSInsightData{
 			Title: "Analysis on " + a.ProjectKey,
 			Type:  "LINK",
 			Text:  a.Status,
 			Href:  fmt.Sprintf("%s/project/%s/explore/vcs/%s/repository/%s/settings", uiURL, a.ProjectKey, h.VCSServerName, url.PathEscape(h.RepositoryName)),
 		})
+		// If no analysis
+	} else {
+		report.Datas = append(report.Datas, VCSInsightData{
+			Title: "Nb of Analysis triggered",
+			Type:  "TEXT",
+			Text:  strconv.Itoa(0),
+		})
 	}
-	for _, w := range h.WorkflowHooks {
-		da := VCSInsightData{
-			Title: fmt.Sprintf("%s #%d", w.WorkflowName, w.RunNumber),
-			Type:  "LINK",
-			Text:  w.Status,
-		}
 
-		if w.Status == string(V2WorkflowRunStatusSuccess) {
-			da.Href = fmt.Sprintf("%s/project/%s/run/%s", uiURL, w.ProjectKey, w.RunID)
-		} else {
-			da.Href = fmt.Sprintf("%s/project/%s/explore/vcs/%s/repository/%s/settings", uiURL, w.ProjectKey, h.VCSServerName, url.PathEscape(h.RepositoryName))
+	// Check if workflows have been triggered
+	if len(h.WorkflowHooks) == 0 {
+		report.Datas = append(report.Datas, VCSInsightData{
+			Title: "Nb of workflows triggered",
+			Type:  "TEXT",
+			Text:  strconv.Itoa(0),
+		})
+		// Check if we can display a data for each workflow
+	} else if len(h.WorkflowHooks)+len(report.Datas) < 7 {
+		for _, w := range h.WorkflowHooks {
+			da := VCSInsightData{
+				Title: fmt.Sprintf("%s #%d", w.WorkflowName, w.RunNumber),
+				Type:  "LINK",
+				Text:  w.Status,
+			}
+
+			if w.Status == string(V2WorkflowRunStatusSuccess) {
+				da.Href = fmt.Sprintf("%s/project/%s/run/%s", uiURL, w.ProjectKey, w.RunID)
+			} else {
+				da.Href = fmt.Sprintf("%s/project/%s/explore/vcs/%s/repository/%s/settings", uiURL, w.ProjectKey, h.VCSServerName, url.PathEscape(h.RepositoryName))
+			}
+			report.Datas = append(report.Datas, da)
+		}
+		// Else display 1 data for all workflows + link to the run view with filter
+	} else {
+		repoFilter := fmt.Sprintf("%s/%s", h.VCSServerName, h.RepositoryName)
+
+		w := h.WorkflowHooks[0]
+		da := VCSInsightData{
+			Title: "Nb of workflows triggered",
+			Type:  "LINK",
+			Text:  strconv.Itoa(len(h.WorkflowHooks)),
+			Href:  fmt.Sprintf("%s/project/%s/run?workflow_ref=%s&repository=%s", uiURL, w.ProjectKey, url.PathEscape(w.Ref), url.PathEscape(repoFilter)),
 		}
 		report.Datas = append(report.Datas, da)
 	}
