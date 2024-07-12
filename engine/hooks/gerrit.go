@@ -27,18 +27,18 @@ type gerritTaskInfo struct {
 }
 
 // RegisterGerritRepoHook register hook on gerrit repository
-func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) error {
-	return d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
+func (d *dao) RegisterGerritRepoHook(ctx context.Context, vcsServer string, repo string, g gerritTaskInfo) error {
+	return d.store.SetAdd(ctx, cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
 }
 
-func (d *dao) RemoveGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) {
-	d.store.SetRemove(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
+func (d *dao) RemoveGerritRepoHook(ctx context.Context, vcsServer string, repo string, g gerritTaskInfo) {
+	d.store.SetRemove(ctx, cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
 }
 
 // FindGerritTasksByRepo get all gerrit hooks on the given repository
 func (d *dao) FindGerritTasksByRepo(ctx context.Context, vcsServer string, repo string) ([]gerritTaskInfo, error) {
 	key := cache.Key(gerritRepoKey, vcsServer, repo)
-	nbGerritHooks, err := d.store.SetCard(key)
+	nbGerritHooks, err := d.store.SetCard(ctx, key)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", key)
 	}
@@ -59,12 +59,12 @@ func (d *dao) FindGerritTasksByRepo(ctx context.Context, vcsServer string, repo 
 	return allHooks, nil
 }
 
-func (s *Service) startGerritHookTask(t *sdk.Task) error {
+func (s *Service) startGerritHookTask(ctx context.Context, t *sdk.Task) error {
 	g := gerritTaskInfo{
 		UUID:   t.UUID,
 		Events: strings.Split(t.Config[sdk.HookConfigEventFilter].Value, ";"),
 	}
-	s.Dao.RegisterGerritRepoHook(t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
+	s.Dao.RegisterGerritRepoHook(ctx, t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
 
 	// Check if the stream is open
 	if _, has := gerritRepoHooks[t.Config[sdk.HookConfigVCSServer].Value]; !has {
@@ -78,12 +78,12 @@ func (s *Service) startGerritHookTask(t *sdk.Task) error {
 	return nil
 }
 
-func (s *Service) stopGerritHookTask(t *sdk.Task) {
+func (s *Service) stopGerritHookTask(ctx context.Context, t *sdk.Task) {
 	g := gerritTaskInfo{
 		UUID:   t.UUID,
 		Events: strings.Split(t.Config[sdk.HookConfigEventFilter].Value, ";"),
 	}
-	s.Dao.RemoveGerritRepoHook(t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
+	s.Dao.RemoveGerritRepoHook(ctx, t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
 }
 
 func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
@@ -232,7 +232,7 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 				}
 
 				//Save the web hook execution
-				s.Dao.SaveTaskExecution(exec)
+				s.Dao.SaveTaskExecution(ctx, exec)
 
 				//Push the webhook execution in the queue, so it will be executed
 				if err := s.Dao.EnqueueTaskExecution(ctx, exec); err != nil {
@@ -323,7 +323,7 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 
 			// Avoid that 2 hook uservice dispatch the same event
 			// Take the lock to dispatch an event
-			locked, err := store.Lock(lockKey, time.Minute, 100, 15)
+			locked, err := store.Lock(ctx, lockKey, time.Minute, 100, 15)
 			if err != nil {
 				log.Error(ctx, "gerrit: unable to lock %s: %v", lockKey, err)
 			}
@@ -336,16 +336,16 @@ func ListenGerritStreamEvent(ctx context.Context, store cache.Store, goRoutines 
 			// check if this event has already been dispatched
 			k := cache.Key("gerrit", "event", "id", md5)
 			var existString string
-			b, _ := store.Get(k, &existString)
+			b, _ := store.Get(ctx, k, &existString)
 			if !b {
-				if err := store.SetWithTTL(k, md5, 300); err != nil {
+				if err := store.SetWithTTL(ctx, k, md5, 300); err != nil {
 					log.Warn(ctx, "gerrit: unable to set %s", k)
 				}
 			}
 
 			// release lock
 			if locked {
-				if err := store.Unlock(lockKey); err != nil {
+				if err := store.Unlock(ctx, lockKey); err != nil {
 					log.Error(ctx, "gerrit: unable to unlock %s: %v", lockKey, err)
 				}
 			}

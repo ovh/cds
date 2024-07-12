@@ -96,7 +96,7 @@ func (api *API) initHatcheryWebsocket(pubSubKey string) error {
 	})
 
 	log.Info(api.Router.Background, "Initializing WS events broker")
-	pubSub, err := api.Cache.Subscribe(pubSubKey)
+	pubSub, err := api.Cache.Subscribe(api.Router.Background, pubSubKey)
 	if err != nil {
 		return sdk.WrapError(err, "unable to subscribe to %s", pubSubKey)
 	}

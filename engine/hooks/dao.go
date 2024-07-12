@@ -39,7 +39,7 @@ func (d *dao) TaskExecutionsBalance() (int64, int64) {
 }
 
 func (d *dao) FindAllTasks(ctx context.Context) ([]sdk.Task, error) {
-	nbTasks, err := d.store.SetCard(rootKey)
+	nbTasks, err := d.store.SetCard(ctx, rootKey)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", rootKey)
 	}
@@ -59,14 +59,14 @@ func (d *dao) FindAllTasks(ctx context.Context) ([]sdk.Task, error) {
 	return alltasks, nil
 }
 
-func (d *dao) FindAllKeysMatchingPattern(pattern string) ([]string, error) {
-	return d.store.SetSearch(rootKey, pattern)
+func (d *dao) FindAllKeysMatchingPattern(ctx context.Context, pattern string) ([]string, error) {
+	return d.store.SetSearch(ctx, rootKey, pattern)
 }
 
 func (d *dao) FindTask(ctx context.Context, uuid string) *sdk.Task {
 	key := cache.Key(rootKey, uuid)
 	t := &sdk.Task{}
-	find, err := d.store.Get(key, t)
+	find, err := d.store.Get(ctx, key, t)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", key, err)
 	}
@@ -76,43 +76,43 @@ func (d *dao) FindTask(ctx context.Context, uuid string) *sdk.Task {
 	return nil
 }
 
-func (d *dao) SaveTask(r *sdk.Task) error {
-	return d.store.SetAdd(rootKey, r.UUID, r)
+func (d *dao) SaveTask(ctx context.Context, r *sdk.Task) error {
+	return d.store.SetAdd(ctx, rootKey, r.UUID, r)
 }
 
 func (d *dao) DeleteTask(ctx context.Context, r *sdk.Task) error {
-	if err := d.store.SetRemove(rootKey, r.UUID, r); err != nil {
+	if err := d.store.SetRemove(ctx, rootKey, r.UUID, r); err != nil {
 		return err
 	}
 	execs, _ := d.FindAllTaskExecutions(ctx, r)
 	for _, e := range execs {
-		if err := d.DeleteTaskExecution(&e); err != nil {
+		if err := d.DeleteTaskExecution(ctx, &e); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (d *dao) SaveTaskExecution(r *sdk.TaskExecution) error {
+func (d *dao) SaveTaskExecution(ctx context.Context, r *sdk.TaskExecution) error {
 	setKey := cache.Key(executionRootKey, r.Type, r.UUID)
 	execKey := fmt.Sprintf("%d", r.Timestamp)
-	return d.store.SetAdd(setKey, execKey, r)
+	return d.store.SetAdd(ctx, setKey, execKey, r)
 }
 
-func (d *dao) DeleteTaskExecution(r *sdk.TaskExecution) error {
+func (d *dao) DeleteTaskExecution(ctx context.Context, r *sdk.TaskExecution) error {
 	setKey := cache.Key(executionRootKey, r.Type, r.UUID)
 	execKey := fmt.Sprintf("%d", r.Timestamp)
-	return d.store.SetRemove(setKey, execKey, r)
+	return d.store.SetRemove(ctx, setKey, execKey, r)
 }
 
 func (d *dao) EnqueueTaskExecution(ctx context.Context, r *sdk.TaskExecution) error {
 	k := cache.Key(executionRootKey, r.Type, r.UUID, fmt.Sprintf("%d", r.Timestamp))
 	// before enqueue, be sure that it's not in queue
-	if err := d.store.RemoveFromQueue(schedulerQueueKey, k); err != nil {
+	if err := d.store.RemoveFromQueue(ctx, schedulerQueueKey, k); err != nil {
 		log.Error(ctx, "error on cache RemoveFromQueue %s: %v", schedulerQueueKey, err)
 	}
 
-	if err := d.store.Enqueue(schedulerQueueKey, k); err != nil {
+	if err := d.store.Enqueue(ctx, schedulerQueueKey, k); err != nil {
 		return err
 	}
 	d.enqueuedIncr()
@@ -120,12 +120,12 @@ func (d *dao) EnqueueTaskExecution(ctx context.Context, r *sdk.TaskExecution) er
 	return nil
 }
 
-func (d *dao) QueueLen() (int, error) {
-	return d.store.QueueLen(schedulerQueueKey)
+func (d *dao) QueueLen(ctx context.Context) (int, error) {
+	return d.store.QueueLen(ctx, schedulerQueueKey)
 }
 
 func (d *dao) FindAllTaskExecutions(ctx context.Context, t *sdk.Task) ([]sdk.TaskExecution, error) {
-	nbExecutions, err := d.store.SetCard(cache.Key(executionRootKey, t.Type, t.UUID))
+	nbExecutions, err := d.store.SetCard(ctx, cache.Key(executionRootKey, t.Type, t.UUID))
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %s", cache.Key(executionRootKey, t.Type, t.UUID))
 	}

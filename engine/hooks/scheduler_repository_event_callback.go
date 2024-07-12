@@ -17,7 +17,7 @@ func (s *Service) dequeueRepositoryEventCallback(ctx context.Context) {
 			log.ErrorWithStackTrace(ctx, ctx.Err())
 			return
 		}
-		size, err := s.Dao.RepositoryEventCallbackQueueLen()
+		size, err := s.Dao.RepositoryEventCallbackQueueLen(ctx)
 		if err != nil {
 			log.Error(ctx, "dequeueRepositoryEventCallback > Unable to get queueLen: %v", err)
 			continue
@@ -56,7 +56,7 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 	ctx, next := telemetry.Span(ctx, "s.updateHookEventWithCallback")
 	defer next()
 
-	b, err := s.Dao.LockRepositoryEvent(callback.VCSServerName, callback.RepositoryName, callback.HookEventUUID)
+	b, err := s.Dao.LockRepositoryEvent(ctx, callback.VCSServerName, callback.RepositoryName, callback.HookEventUUID)
 	if err != nil {
 		return sdk.WrapError(err, "unable to lock hook event %s to manage callback", callback.HookEventUUID)
 	}
@@ -66,11 +66,11 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 			return sdk.WrapError(err, "unable to reenqueue repository hook callback")
 		}
 	}
-	defer s.Dao.UnlockRepositoryEvent(callback.VCSServerName, callback.RepositoryName, callback.HookEventUUID)
+	defer s.Dao.UnlockRepositoryEvent(ctx, callback.VCSServerName, callback.RepositoryName, callback.HookEventUUID)
 
 	// Load the event
 	var hre sdk.HookRepositoryEvent
-	find, err := s.Cache.Get(callback.HookEventKey, &hre)
+	find, err := s.Cache.Get(ctx, callback.HookEventKey, &hre)
 	if err != nil {
 		return sdk.WrapError(err, "unable to get hook event %s", callback.HookEventKey)
 	}

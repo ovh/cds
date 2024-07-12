@@ -79,7 +79,7 @@ func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap
 
 	_, next = telemetry.Span(ctx, "deleteDisabledWorker.lock")
 	lockKey := cache.Key(workerLockKey, workerID)
-	b, err := store.Lock(lockKey, 1*time.Minute, 0, 1)
+	b, err := store.Lock(ctx, lockKey, 1*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
@@ -90,7 +90,7 @@ func DeleteDisabledWorker(ctx context.Context, store cache.Store, db *gorp.DbMap
 	}
 	next()
 	defer func() {
-		_ = store.Unlock(lockKey)
+		_ = store.Unlock(ctx, lockKey)
 	}()
 
 	worker, err := worker_v2.LoadByID(ctx, db, workerID)
@@ -128,7 +128,7 @@ func DisableDeadWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, w
 
 	_, next = telemetry.Span(ctx, "disableDeadWorker.lock")
 	lockKey := cache.Key(workerLockKey, workerID)
-	b, err := store.Lock(lockKey, 1*time.Minute, 0, 1)
+	b, err := store.Lock(ctx, lockKey, 1*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
@@ -139,7 +139,7 @@ func DisableDeadWorker(ctx context.Context, store cache.Store, db *gorp.DbMap, w
 	}
 	next()
 	defer func() {
-		_ = store.Unlock(lockKey)
+		_ = store.Unlock(ctx, lockKey)
 	}()
 
 	worker, err := worker_v2.LoadByID(ctx, db, workerID)

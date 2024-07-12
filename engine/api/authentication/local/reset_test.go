@@ -1,6 +1,7 @@
 package local_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,10 +17,10 @@ func TestResetConsumerToken(t *testing.T) {
 	_, store := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	consumerUUID := sdk.UUID()
-	token, err := local.NewResetConsumerToken(store, consumerUUID)
+	token, err := local.NewResetConsumerToken(context.TODO(), store, consumerUUID)
 	require.NoError(t, err)
 
-	res, err := local.CheckResetConsumerToken(store, token)
+	res, err := local.CheckResetConsumerToken(context.TODO(), store, token)
 	require.NoError(t, err)
 
 	assert.Equal(t, consumerUUID, res)

@@ -88,7 +88,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item s
 
 	keyPermissionForSession := cache.Key(keyPermission, string(item.Type), item.APIRefHash, sessionID)
 	if sessionID != "" {
-		exists, err := s.Cache.Exist(keyPermissionForSession)
+		exists, err := s.Cache.Exist(ctx, keyPermissionForSession)
 		if err != nil {
 			return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to check if permission %s exists", keyPermissionForSession), sdk.ErrUnauthorized)
 		}
@@ -154,7 +154,7 @@ func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item s
 		return sdk.WithStack(sdk.ErrNotFound)
 	}
 
-	if err := s.Cache.SetWithTTL(keyPermissionForSession, true, 3600); err != nil {
+	if err := s.Cache.SetWithTTL(ctx, keyPermissionForSession, true, 3600); err != nil {
 		return sdk.NewErrorWithStack(sdk.WrapError(err, "unable to store permission %s", keyPermissionForSession), sdk.ErrUnauthorized)
 	}
 	return nil

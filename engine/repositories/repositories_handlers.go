@@ -55,11 +55,11 @@ func (s *Service) postOperationHandler() service.Handler {
 		}
 
 		op.Status = sdk.OperationStatusPending
-		if err := s.dao.saveOperation(op); err != nil {
+		if err := s.dao.saveOperation(ctx, op); err != nil {
 			return err
 		}
 
-		if err := s.dao.pushOperation(op); err != nil {
+		if err := s.dao.pushOperation(ctx, op); err != nil {
 			return err
 		}
 

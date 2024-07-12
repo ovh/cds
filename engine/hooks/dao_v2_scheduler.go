@@ -14,17 +14,17 @@ func GetSchedulerDefinitionKey(vcs, repo, workflow, whID string) string {
 }
 
 func (d *dao) AllSchedulerKeys(ctx context.Context) ([]string, error) {
-	return d.store.Keys(cache.Key(scheduleDefinitionRootKey, "*"))
+	return d.store.Keys(ctx, cache.Key(scheduleDefinitionRootKey, "*"))
 }
 
 // SchedulerKeysByWorkflow returns all the scheduler definition keys for the given workflow
 func (d *dao) SchedulerKeysByWorkflow(ctx context.Context, vcs, repo, workflow string) ([]string, error) {
-	return d.store.Keys(cache.Key(scheduleDefinitionRootKey, vcs, repo, workflow, "*"))
+	return d.store.Keys(ctx, cache.Key(scheduleDefinitionRootKey, vcs, repo, workflow, "*"))
 }
 
 func (d *dao) GetSchedulerDefinition(ctx context.Context, vcs, repo, workflow, whID string) (*sdk.V2WorkflowHook, error) {
 	var h sdk.V2WorkflowHook
-	found, err := d.store.Get(GetSchedulerDefinitionKey(vcs, repo, workflow, whID), &h)
+	found, err := d.store.Get(ctx, GetSchedulerDefinitionKey(vcs, repo, workflow, whID), &h)
 	if err != nil {
 		return nil, err
 	}
@@ -41,15 +41,15 @@ func (d *dao) RemoveScheduler(ctx context.Context, vcs, repo, workflow, whID str
 		return err
 	}
 	//Remove the definition
-	return d.store.Delete(GetSchedulerDefinitionKey(vcs, repo, workflow, whID))
+	return d.store.Delete(ctx, GetSchedulerDefinitionKey(vcs, repo, workflow, whID))
 }
 
 func (d *dao) RemoveSchedulerExecution(ctx context.Context, whID string) error {
-	return d.store.Delete(cache.Key(schedulerNextExecutionRootKey, whID))
+	return d.store.Delete(ctx, cache.Key(schedulerNextExecutionRootKey, whID))
 }
 
 func (d *dao) CreateSchedulerDefinition(ctx context.Context, h sdk.V2WorkflowHook) error {
-	if err := d.store.SetWithTTL(GetSchedulerDefinitionKey(h.VCSName, h.RepositoryName, h.WorkflowName, h.ID), h, 0); err != nil {
+	if err := d.store.SetWithTTL(ctx, GetSchedulerDefinitionKey(h.VCSName, h.RepositoryName, h.WorkflowName, h.ID), h, 0); err != nil {
 		return err
 	}
 	return nil
@@ -59,14 +59,14 @@ func (d *dao) CreateSchedulerNextExecution(ctx context.Context, exec sdk.Schedul
 	if err := d.RemoveSchedulerExecution(ctx, exec.SchedulerDef.ID); err != nil {
 		return err
 	}
-	if err := d.store.SetAdd(schedulerNextExecutionRootKey, exec.SchedulerDef.ID, exec); err != nil {
+	if err := d.store.SetAdd(ctx, schedulerNextExecutionRootKey, exec.SchedulerDef.ID, exec); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (d *dao) GetAllSchedulerExecutions(ctx context.Context) ([]sdk.SchedulerExecution, error) {
-	nbExec, err := d.store.SetCard(schedulerNextExecutionRootKey)
+	nbExec, err := d.store.SetCard(ctx, schedulerNextExecutionRootKey)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", schedulerNextExecutionRootKey)
 	}
@@ -87,7 +87,7 @@ func (d *dao) GetAllSchedulerExecutions(ctx context.Context) ([]sdk.SchedulerExe
 
 func (d *dao) GetSchedulerExecution(ctx context.Context, hookID string) (*sdk.SchedulerExecution, error) {
 	var e sdk.SchedulerExecution
-	found, err := d.store.Get(cache.Key(schedulerNextExecutionRootKey, hookID), &e)
+	found, err := d.store.Get(ctx, cache.Key(schedulerNextExecutionRootKey, hookID), &e)
 	if err != nil {
 		return nil, err
 	}

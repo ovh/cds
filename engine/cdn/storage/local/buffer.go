@@ -55,7 +55,7 @@ func (b *Buffer) Init(ctx context.Context, cfg interface{}, bufferType storage.C
 	return nil
 }
 
-func (b *Buffer) Size(_ sdk.CDNItemUnit) (int64, error) {
+func (b *Buffer) Size(_ context.Context, _ sdk.CDNItemUnit) (int64, error) {
 	return b.size, nil
 }
 

@@ -364,7 +364,7 @@ func (s *Service) webhookHandler() service.Handler {
 		}
 
 		//Save the web hook execution
-		s.Dao.SaveTaskExecution(exec)
+		s.Dao.SaveTaskExecution(ctx, exec)
 
 		//Return the execution
 		return service.WriteJSON(w, exec, http.StatusOK)
@@ -546,7 +546,7 @@ func (s *Service) putTaskHandler() service.Handler {
 		}
 
 		//Save it
-		if err := s.Dao.SaveTask(t); err != nil {
+		if err := s.Dao.SaveTask(ctx, t); err != nil {
 			return sdk.WrapError(err, "Unable to save task %v", t)
 		}
 
@@ -653,7 +653,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
 		for i := range execs {
-			if err := s.Dao.DeleteTaskExecution(&execs[i]); err != nil {
+			if err := s.Dao.DeleteTaskExecution(ctx, &execs[i]); err != nil {
 				return err
 			}
 		}
@@ -726,7 +726,7 @@ func (s *Service) addTask(ctx context.Context, h *sdk.NodeHook) error {
 	}
 
 	//Save the task
-	if err := s.Dao.SaveTask(t); err != nil {
+	if err := s.Dao.SaveTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "unable to addTask %v", t)
 	}
 
@@ -744,7 +744,7 @@ func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun)
 		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable to parse node run (%+v)", nr)
 	}
 	// Save the task
-	if err := s.Dao.SaveTask(&t); err != nil {
+	if err := s.Dao.SaveTask(ctx, &t); err != nil {
 		return t, sdk.TaskExecution{}, sdk.WrapError(err, "unable to save task %v", t)
 	}
 
@@ -776,7 +776,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 	execs, _ := s.Dao.FindAllTaskExecutions(ctx, t)
 	for _, e := range execs {
 		if e.Status == TaskExecutionScheduled {
-			if err := s.Dao.DeleteTaskExecution(&e); err != nil {
+			if err := s.Dao.DeleteTaskExecution(ctx, &e); err != nil {
 				log.Error(ctx, "unable to delete previous task execution: %v", err)
 			}
 		}
@@ -785,7 +785,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 		return sdk.WrapError(err, "Unable start task %+v", t)
 	}
 	// Save the task
-	if err := s.Dao.SaveTask(t); err != nil {
+	if err := s.Dao.SaveTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "unable to save task %v", t)
 	}
 	return nil
@@ -794,7 +794,7 @@ func (s *Service) updateTask(ctx context.Context, h *sdk.NodeHook) error {
 func (s *Service) deleteTask(ctx context.Context, t *sdk.Task) error {
 	switch t.Type {
 	case TypeGerrit:
-		s.stopGerritHookTask(t)
+		s.stopGerritHookTask(ctx, t)
 	}
 
 	//Delete the task
@@ -811,7 +811,7 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 
 	// hook queue in status
 	status := sdk.MonitoringStatusOK
-	size, errQ := s.Dao.QueueLen()
+	size, errQ := s.Dao.QueueLen(ctx)
 	if errQ != nil {
 		log.Error(ctx, "Status> Unable to retrieve queue len: %v", errQ)
 	}
@@ -935,7 +935,7 @@ func (s *Service) postStopTaskExecutionHandler() service.Handler {
 				e.Status = TaskExecutionDone
 				e.LastError = TaskExecutionDone
 				e.NbErrors = s.Cfg.RetryError + 1
-				s.Dao.SaveTaskExecution(e)
+				s.Dao.SaveTaskExecution(ctx, e)
 				log.Info(ctx, "Hooks> postStopTaskExecutionHandler> task executions %s:%v has been stopped", uuid, timestamp)
 				return nil
 			}
@@ -954,7 +954,7 @@ func (s *Service) postMaintenanceHandler() service.Handler {
 			return sdk.WrapError(err, "unable to parse maintenance params")
 		}
 
-		if err := s.Dao.store.SetWithTTL(MaintenanceHookKey, enable, 0); err != nil {
+		if err := s.Dao.store.SetWithTTL(ctx, MaintenanceHookKey, enable, 0); err != nil {
 			return sdk.WrapError(err, "unable to save maintenance state")
 		}
 		if err := s.Dao.store.Publish(ctx, MaintenanceHookQueue, fmt.Sprintf("%v", enable)); err != nil {

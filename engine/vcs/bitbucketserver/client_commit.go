@@ -27,7 +27,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 
 	var stashCommitsKey = cache.Key("vcs", "bitbucket", b.consumer.URL, repo, "commits", "since@"+since, "until@"+until)
 
-	find, err := b.consumer.cache.Get(stashCommitsKey, &stashCommits)
+	find, err := b.consumer.cache.Get(ctx, stashCommitsKey, &stashCommits)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", stashCommitsKey, err)
 	}
@@ -53,7 +53,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 		stashCommits = response.Values
 
 		//3 hours
-		if err := b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60); err != nil {
+		if err := b.consumer.cache.SetWithTTL(ctx, stashCommitsKey, stashCommits, 3*60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", stashCommitsKey, err)
 		}
 	}
@@ -146,7 +146,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 
 	var stashCommitsKey = cache.Key("vcs", "bitbucket", b.consumer.URL, repo, "compare/commits", "from@"+base, "to@"+head)
 
-	find, err := b.consumer.cache.Get(stashCommitsKey, &stashCommits)
+	find, err := b.consumer.cache.Get(ctx, stashCommitsKey, &stashCommits)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", stashCommitsKey, err)
 	}
@@ -179,7 +179,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 			}
 		}
 		//3 hours
-		if err := b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60); err != nil {
+		if err := b.consumer.cache.SetWithTTL(ctx, stashCommitsKey, stashCommits, 3*60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", stashCommitsKey, err)
 		}
 	}

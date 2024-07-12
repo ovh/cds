@@ -73,7 +73,7 @@ func (s *Service) nodeRunToTask(nr sdk.WorkflowNodeRun) (sdk.Task, error) {
 	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", nr.OutgoingHook.Config[sdk.HookConfigModelName].Value)
 }
 
-func (s *Service) startOutgoingWebHookTask(t *sdk.Task) (*sdk.TaskExecution, error) {
+func (s *Service) startOutgoingWebHookTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecution, error) {
 	now := time.Now()
 
 	u := t.Config["URL"].Value
@@ -100,13 +100,13 @@ func (s *Service) startOutgoingWebHookTask(t *sdk.Task) (*sdk.TaskExecution, err
 		},
 	}
 
-	s.Dao.SaveTaskExecution(exec) //We don't push in queue, we will the scheduler to run it
+	s.Dao.SaveTaskExecution(ctx, exec) //We don't push in queue, we will the scheduler to run it
 	log.Debug(context.TODO(), "Hooks> Outgoing hook task  %s ready", t.UUID)
 
 	return exec, nil
 }
 
-func (s *Service) startOutgoingWorkflowTask(t *sdk.Task) (*sdk.TaskExecution, error) {
+func (s *Service) startOutgoingWorkflowTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecution, error) {
 	now := time.Now()
 
 	//Craft a new execution
@@ -118,7 +118,7 @@ func (s *Service) startOutgoingWorkflowTask(t *sdk.Task) (*sdk.TaskExecution, er
 		Config:    t.Config,
 	}
 
-	s.Dao.SaveTaskExecution(exec) //We don't push in queue, we will the scheduler to run it
+	s.Dao.SaveTaskExecution(ctx, exec) //We don't push in queue, we will the scheduler to run it
 	log.Debug(context.TODO(), "Hooks> Outgoing hook task  %s ready", t.UUID)
 
 	return exec, nil

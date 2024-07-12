@@ -17,7 +17,7 @@ import (
 
 var nbKafkaConsumers int64
 
-func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
+func (s *Service) saveKafkaExecution(ctx context.Context, t *sdk.Task, error string, nbError int64) {
 	exec := &sdk.TaskExecution{
 		Timestamp: time.Now().UnixNano(),
 		Type:      t.Type,
@@ -27,7 +27,7 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 		LastError: error,
 		NbErrors:  nbError,
 	}
-	s.Dao.SaveTaskExecution(exec)
+	s.Dao.SaveTaskExecution(ctx, exec)
 }
 
 func (s *Service) stopKafkaHook(t *sdk.Task) {
@@ -92,7 +92,7 @@ func (s *Service) startKafkaHook(ctx context.Context, t *sdk.Task) error {
 	// Track errors
 	go func() {
 		for err := range consumerGroup.Errors() {
-			s.saveKafkaExecution(t, err.Error(), 1)
+			s.saveKafkaExecution(ctx, t, err.Error(), 1)
 		}
 	}()
 
@@ -141,7 +141,7 @@ func (h *handler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama
 			Timestamp: time.Now().UnixNano(),
 			Kafka:     &sdk.KafkaTaskExecution{Message: message.Value},
 		}
-		h.dao.SaveTaskExecution(&exec)
+		h.dao.SaveTaskExecution(context.Background(), &exec)
 		session.MarkMessage(message, "delivered")
 	}
 	return nil

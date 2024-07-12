@@ -115,7 +115,7 @@ func (s *Service) Start(ctx context.Context) error {
 
 	var err error
 	log.Info(ctx, "Initializing redis cache on %s...", s.Cfg.Cache.Redis.Host)
-	s.Cache, err = cache.New(s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
+	s.Cache, err = cache.New(ctx, s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to redis instance")
 	}
@@ -140,7 +140,7 @@ func (s *Service) Start(ctx context.Context) error {
 	storage.InitDBMapping(s.Mapper)
 
 	log.Info(ctx, "Initializing lru connection...")
-	s.LogCache, err = lru.NewRedisLRU(s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis)
+	s.LogCache, err = lru.NewRedisLRU(ctx, s.mustDBWithCtx(ctx), s.Cfg.Cache.LruSize, s.Cfg.Cache.Redis)
 	if err != nil {
 		return sdk.WrapError(err, "cannot connect to redis instance for lru")
 	}
@@ -183,7 +183,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	log.Info(ctx, "Initializing HTTP router")
 	s.initRouter(ctx)
-	if err := s.initWebsocket(); err != nil {
+	if err := s.initWebsocket(ctx); err != nil {
 		return err
 	}
 	server := &http.Server{

@@ -62,7 +62,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *test.Fak
 		cancel()
 		// Clean all the pending crafting workflow runs
 		lockKey := cache.Key("api:workflowRunCraft")
-		require.NoError(t, store.DeleteAll(lockKey))
+		require.NoError(t, store.DeleteAll(context.TODO(), lockKey))
 		ids, _ := workflow.LoadCraftingWorkflowRunIDs(api.mustDB())
 		for _, id := range ids {
 			require.NoError(t, workflow.UpdateCraftedWorkflowRun(api.mustDB(), id))

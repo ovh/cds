@@ -126,7 +126,7 @@ func (s *Service) cleanItemToDelete(ctx context.Context) error {
 					continue
 				}
 
-				if err := s.LogCache.Remove([]string{id}); err != nil {
+				if err := s.LogCache.Remove(ctx, []string{id}); err != nil {
 					return sdk.WrapError(err, "cdn:purge:item: unable to remove from logCache for item %q", id)
 				}
 				if err := item.DeleteByID(s.mustDBWithCtx(ctx), id); err != nil {

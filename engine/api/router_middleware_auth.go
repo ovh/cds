@@ -295,7 +295,7 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	session := getAuthSession(ctx)
 
 	xsrfToken := req.Header.Get(xsrfHeaderName)
-	existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(api.Cache, session.ID)
+	existingXSRFToken, existXSRFTokenInCache := authentication.GetSessionXSRFToken(ctx, api.Cache, session.ID)
 
 	xsrfTokenCookie, _ := req.Cookie(xsrfCookieName)
 	xsrfTokenCookieExistInCookie := xsrfTokenCookie != nil
@@ -311,7 +311,7 @@ func (api *API) xsrfMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if !existXSRFTokenInCache || !xsrfTokenCookieExistInCookie {
 			sessionSecondsBeforeExpiration := int(session.ExpireAt.Sub(time.Now()).Seconds())
 			var err error
-			existingXSRFToken, err = authentication.NewSessionXSRFToken(api.Cache, session.ID, sessionSecondsBeforeExpiration)
+			existingXSRFToken, err = authentication.NewSessionXSRFToken(ctx, api.Cache, session.ID, sessionSecondsBeforeExpiration)
 			if err != nil {
 				return ctx, err
 			}

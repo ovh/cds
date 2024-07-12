@@ -39,7 +39,7 @@ func (api *API) putBookWorkerModelHandler() service.Handler {
 			return err
 		}
 
-		if err := workermodel.BookForRegister(api.Cache, m.ID, s.ID); err != nil {
+		if err := workermodel.BookForRegister(ctx, api.Cache, m.ID, s.ID); err != nil {
 			return err
 		}
 

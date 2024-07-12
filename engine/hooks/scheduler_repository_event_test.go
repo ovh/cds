@@ -66,7 +66,7 @@ func TestManageAnalysisCallback(t *testing.T) {
 
 	k := cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID)
 	var hreUpdate sdk.HookRepositoryEvent
-	f, err := s.Cache.Get(k, &hreUpdate)
+	f, err := s.Cache.Get(context.TODO(), k, &hreUpdate)
 	require.NoError(t, err)
 	require.True(t, f)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSucceed, hreUpdate.Analyses[0].Status)

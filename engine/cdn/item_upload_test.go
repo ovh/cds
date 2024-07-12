@@ -43,7 +43,7 @@ func TestPostUploadHandler(t *testing.T) {
 
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
-	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
+	cdntest.ClearSyncRedisSet(context.TODO(), t, s.Cache, "local_storage")
 
 	// Start CDN
 	ctx, cancel := context.WithCancel(context.Background())
@@ -318,7 +318,7 @@ func TestPostUploadHandler_WorkflowV2(t *testing.T) {
 
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
-	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
+	cdntest.ClearSyncRedisSet(context.TODO(), t, s.Cache, "local_storage")
 
 	ctrl := gomock.NewController(t)
 	t.Cleanup(func() { ctrl.Finish() })

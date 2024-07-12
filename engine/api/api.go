@@ -632,6 +632,7 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info(ctx, "Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
 	// Init the cache
 	a.Cache, err = cache.New(
+		ctx,
 		a.Config.Cache.Redis,
 		a.Config.Cache.TTL)
 	if err != nil {
@@ -1044,7 +1045,7 @@ func (a *API) Serve(ctx context.Context) error {
 		})
 
 	// Check maintenance on redis
-	if _, err := a.Cache.Get(sdk.MaintenanceAPIKey, &a.Maintenance); err != nil {
+	if _, err := a.Cache.Get(ctx, sdk.MaintenanceAPIKey, &a.Maintenance); err != nil {
 		return err
 	}
 

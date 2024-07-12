@@ -43,7 +43,7 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
 			k := cache.Key("vcs", "github", "forks", sdk.Hash512(g.OAuthToken+g.username), "/user/", repo, "/forks")
-			if _, err := g.Cache.Get(k, &repos); err != nil {
+			if _, err := g.Cache.Get(ctx, k, &repos); err != nil {
 				log.Error(ctx, "cannot get from cache %s: %v", k, err)
 			}
 			if len(repos) != 0 || attempt > 5 {
@@ -66,7 +66,7 @@ func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRep
 
 	//Put the body on cache for one hour and one minute
 	k := cache.Key("vcs", "github", "forks", sdk.Hash512(g.OAuthToken+g.username), "/user/", repo, "/forks")
-	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
+	if err := g.Cache.SetWithTTL(ctx, k, repos, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 

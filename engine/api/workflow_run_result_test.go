@@ -55,7 +55,7 @@ func Test_getWorkflowRunAndNodeRunResults(t *testing.T) {
 		WorkflowRunID:     wrDB.ID,
 		DataRaw:           bts,
 	}
-	api.Cache.SetWithTTL(workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name), true, 60)
+	api.Cache.SetWithTTL(context.TODO(), workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name), true, 60)
 	require.NoError(t, workflow.AddResult(context.TODO(), db.DbMap, api.Cache, wrDB, &result))
 
 	//Prepare request

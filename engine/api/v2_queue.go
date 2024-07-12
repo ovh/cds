@@ -518,7 +518,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 
 			_, next := telemetry.Span(ctx, "api.postHatcheryTakeJobRunHandler.lock")
 			lockKey := cache.Key(JobRunHatcheryTakeKey, jobRunID)
-			b, err := api.Cache.Lock(lockKey, 30*time.Second, 0, 1)
+			b, err := api.Cache.Lock(ctx, lockKey, 30*time.Second, 0, 1)
 			if err != nil {
 				next()
 				return err
@@ -530,7 +530,7 @@ func (api *API) postHatcheryTakeJobRunHandler() ([]service.RbacChecker, service.
 			}
 			next()
 			defer func() {
-				_ = api.Cache.Unlock(lockKey)
+				_ = api.Cache.Unlock(ctx, lockKey)
 			}()
 
 			hatchConsumer := getHatcheryConsumer(ctx)

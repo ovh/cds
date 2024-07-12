@@ -28,8 +28,8 @@ type Redis struct {
 }
 
 // NewRedisLRU instanciates a new Redis LRU
-func NewRedisLRU(db *gorp.DbMap, maxSize int64, redisConf sdk.RedisConf) (*Redis, error) {
-	c, err := cache.New(redisConf, -1)
+func NewRedisLRU(ctx context.Context, db *gorp.DbMap, maxSize int64, redisConf sdk.RedisConf) (*Redis, error) {
+	c, err := cache.New(ctx, redisConf, -1)
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +37,8 @@ func NewRedisLRU(db *gorp.DbMap, maxSize int64, redisConf sdk.RedisConf) (*Redis
 }
 
 // Exist returns true is the item ID exists
-func (r *Redis) Exist(itemID string) (bool, error) {
-	s, err := r.store.ScoredSetGetScore(redisLruKeyCacheKey, itemID)
+func (r *Redis) Exist(ctx context.Context, itemID string) (bool, error) {
+	s, err := r.store.ScoredSetGetScore(ctx, redisLruKeyCacheKey, itemID)
 	if err != nil {
 		if err.Error() == "redis: nil" {
 			return false, nil
@@ -49,11 +49,11 @@ func (r *Redis) Exist(itemID string) (bool, error) {
 }
 
 // Remove remove an itemID
-func (r *Redis) Remove(itemIDs []string) error {
+func (r *Redis) Remove(ctx context.Context, itemIDs []string) error {
 	for _, itemID := range itemIDs {
 		// Delete item
 		itemKey := cache.Key(redisLruItemCacheKey, itemID)
-		if err := r.store.Delete(itemKey); err != nil {
+		if err := r.store.Delete(ctx, itemKey); err != nil {
 			return err
 		}
 		// Delete usage
@@ -66,7 +66,7 @@ func (r *Redis) Remove(itemIDs []string) error {
 }
 
 // RemoveOldest removes the oldest entry
-func (r *Redis) RemoveOldest() error {
+func (r *Redis) RemoveOldest(ctx context.Context) error {
 	var keys []string
 	if err := r.store.ScoredSetRange(context.Background(), redisLruKeyCacheKey, 0, 0, &keys); err != nil {
 		return err
@@ -74,22 +74,22 @@ func (r *Redis) RemoveOldest() error {
 	if len(keys) == 0 {
 		return nil
 	}
-	return sdk.WithStack(r.Remove(keys))
+	return sdk.WithStack(r.Remove(ctx, keys))
 }
 
 // Len returns the number of elements in that cache
-func (r *Redis) Len() (int, error) {
-	return r.store.SetCard(redisLruKeyCacheKey)
+func (r *Redis) Len(ctx context.Context) (int, error) {
+	return r.store.SetCard(ctx, redisLruKeyCacheKey)
 }
 
-func (s *Redis) Card(itemID string) (int, error) {
+func (s *Redis) Card(ctx context.Context, itemID string) (int, error) {
 	itemKey := cache.Key(redisLruItemCacheKey, itemID)
-	return s.store.SetCard(itemKey)
+	return s.store.SetCard(ctx, itemKey)
 }
 
 // Size of the cache
-func (r *Redis) Size() (int64, error) {
-	lenght, err := r.Len()
+func (r *Redis) Size(ctx context.Context) (int64, error) {
+	lenght, err := r.Len(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -112,12 +112,12 @@ func (r *Redis) MaxSize() int64 {
 }
 
 // Clear clears the cache, removing old item keys
-func (r *Redis) Clear() error {
+func (r *Redis) Clear(ctx context.Context) error {
 	itemKeys := cache.Key(redisLruItemCacheKey, "*")
-	if err := r.store.DeleteAll(itemKeys); err != nil {
+	if err := r.store.DeleteAll(ctx, itemKeys); err != nil {
 		return err
 	}
-	return r.store.Delete(redisLruKeyCacheKey)
+	return r.store.Delete(ctx, redisLruKeyCacheKey)
 }
 
 // NewWriter instanciates a new writer
@@ -157,7 +157,7 @@ func (r *Redis) Evict(ctx context.Context) {
 			return
 		case <-tick.C:
 			for {
-				loop, err := r.eviction()
+				loop, err := r.eviction(ctx)
 				if err != nil {
 					log.Error(ctx, "cdn:lru:evict: %v", err)
 					break
@@ -170,32 +170,32 @@ func (r *Redis) Evict(ctx context.Context) {
 	}
 }
 
-func (r *Redis) eviction() (bool, error) {
-	lenght, err := r.Len()
+func (r *Redis) eviction(ctx context.Context) (bool, error) {
+	lenght, err := r.Len(ctx)
 	if err != nil {
 		return false, err
 	}
 	if lenght == 0 {
 		return false, nil
 	}
-	size, err := r.Size()
+	size, err := r.Size(ctx)
 	if err != nil {
 		return false, err
 	}
 	if size <= r.MaxSize() {
 		return false, err
 	}
-	if err := r.RemoveOldest(); err != nil {
+	if err := r.RemoveOldest(ctx); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
 // Get a value from the cache + update last usage
-func (r *Redis) get(itemID string, from, to uint) ([]string, error) {
+func (r *Redis) get(ctx context.Context, itemID string, from, to uint) ([]string, error) {
 	var res = make([]string, to-from+1)
 	itemKey := cache.Key(redisLruItemCacheKey, itemID)
-	if err := r.store.ScoredSetScan(context.Background(), itemKey, float64(from), float64(to), &res); err != nil {
+	if err := r.store.ScoredSetScan(ctx, itemKey, float64(from), float64(to), &res); err != nil {
 		return res, err
 	}
 	return res, nil
@@ -203,7 +203,7 @@ func (r *Redis) get(itemID string, from, to uint) ([]string, error) {
 
 // Status returns the monitoring status
 func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
-	if err := r.store.Ping(); err != nil {
+	if err := r.store.Ping(ctx); err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: "cache/log/ping",
 			Value:     "connect KO",
@@ -211,7 +211,7 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 		}}
 	}
 
-	dbsize, err := r.store.DBSize()
+	dbsize, err := r.store.DBSize(ctx)
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: "cache/log/redis_dbsize",
@@ -219,7 +219,7 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 			Status:    sdk.MonitoringStatusAlert,
 		}}
 	}
-	size, err := r.Size()
+	size, err := r.Size(ctx)
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: "cache/log/size",
@@ -227,7 +227,7 @@ func (r *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
 			Status:    sdk.MonitoringStatusAlert,
 		}}
 	}
-	len, err := r.Len()
+	len, err := r.Len(ctx)
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: "cache/log/nb",

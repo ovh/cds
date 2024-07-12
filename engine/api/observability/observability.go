@@ -112,7 +112,7 @@ func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.S
 		if id != 0 {
 			var err error
 			cacheKey := cache.Key("api:FindProjetKeyForNodeRunJob:", fmt.Sprintf("%v", id))
-			find, errGet := store.Get(cacheKey, &pkey)
+			find, errGet := store.Get(ctx, cacheKey, &pkey)
 			if errGet != nil {
 				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, errGet)
 			}
@@ -122,7 +122,7 @@ func findPrimaryKeyFromRequest(ctx context.Context, req *http.Request, db gorp.S
 					log.Error(ctx, "tracingMiddleware> %v", err)
 					return "", false
 				}
-				if err := store.SetWithTTL(cacheKey, pkey, 60*15); err != nil {
+				if err := store.SetWithTTL(ctx, cacheKey, pkey, 60*15); err != nil {
 					log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 				}
 			}

@@ -267,7 +267,7 @@ func (n *Buffer) filename(target *gonfs.Target, i sdk.CDNItemUnit) (string, erro
 	return filepath.Join(string(i.Type), i.Item.APIRefHash), nil
 }
 
-func (n *Buffer) Size(_ sdk.CDNItemUnit) (int64, error) {
+func (n *Buffer) Size(_ context.Context, _ sdk.CDNItemUnit) (int64, error) {
 	return n.size, nil
 }
 

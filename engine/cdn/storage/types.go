@@ -105,7 +105,7 @@ type BufferUnit interface {
 	Interface
 	Unit
 	Init(ctx context.Context, cfg interface{}, bufferType CDNBufferType) error
-	Size(i sdk.CDNItemUnit) (int64, error)
+	Size(ctx context.Context, i sdk.CDNItemUnit) (int64, error)
 	Read(i sdk.CDNItemUnit, r io.Reader, w io.Writer) error
 	BufferType() CDNBufferType
 }
@@ -113,9 +113,9 @@ type BufferUnit interface {
 type LogBufferUnit interface {
 	BufferUnit
 	Add(i sdk.CDNItemUnit, score uint, since uint, value string) error
-	Card(i sdk.CDNItemUnit) (int, error)
+	Card(ctx context.Context, i sdk.CDNItemUnit) (int, error)
 	NewAdvancedReader(ctx context.Context, i sdk.CDNItemUnit, format sdk.CDNReaderFormat, from int64, size uint, sort int64) (io.ReadCloser, error)
-	Keys() ([]string, error)
+	Keys(ctx context.Context) ([]string, error)
 	Copy(ctx context.Context, srcItemID, destItemID string) error
 }
 

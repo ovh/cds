@@ -24,18 +24,18 @@ func (d *dao) dequeuedRepositoryEventIncr() {
 	atomic.AddInt64(&d.dequeuedRepositoryEvents, 1)
 }
 
-func (d *dao) RepositoryEventQueueLen() (int, error) {
-	return d.store.QueueLen(repositoryEventQueue)
+func (d *dao) RepositoryEventQueueLen(ctx context.Context) (int, error) {
+	return d.store.QueueLen(ctx, repositoryEventQueue)
 }
 
-func (d *dao) SaveRepositoryEvent(_ context.Context, e *sdk.HookRepositoryEvent) error {
+func (d *dao) SaveRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
 	e.LastUpdate = time.Now().UnixMilli()
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerName, e.RepositoryName)))
-	return d.store.SetAdd(k, e.UUID, e)
+	return d.store.SetAdd(ctx, k, e.UUID, e)
 }
 
 func (d *dao) RemoveRepositoryEventFromInProgressList(ctx context.Context, e sdk.HookRepositoryEvent) error {
-	return d.store.SetRemove(repositoryEventInProgressKey, e.UUID, e)
+	return d.store.SetRemove(ctx, repositoryEventInProgressKey, e.UUID, e)
 }
 
 func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryEvent) error {
@@ -43,32 +43,32 @@ func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryE
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(e.VCSServerName, e.RepositoryName), e.UUID))
 	log.Debug(ctx, "enqueue event: %s", k)
 
-	if err := d.store.SetRemove(repositoryEventInProgressKey, e.UUID, k); err != nil {
+	if err := d.store.SetRemove(ctx, repositoryEventInProgressKey, e.UUID, k); err != nil {
 		return err
 	}
-	if err := d.store.SetAdd(repositoryEventInProgressKey, e.UUID, k); err != nil {
+	if err := d.store.SetAdd(ctx, repositoryEventInProgressKey, e.UUID, k); err != nil {
 		return err
 	}
 
-	return d.store.Enqueue(repositoryEventQueue, k)
+	return d.store.Enqueue(ctx, repositoryEventQueue, k)
 }
 
 func (d *dao) getRepositoryEventLockKey(vcsName, repoName, hookEventUUID string) string {
 	return strings.ToLower(cache.Key(repositoryEventLockRootKey, d.GetRepositoryMemberKey(vcsName, repoName), hookEventUUID))
 }
 
-func (d *dao) LockRepositoryEvent(vcsName, repoName, hookEventUUID string) (bool, error) {
+func (d *dao) LockRepositoryEvent(ctx context.Context, vcsName, repoName, hookEventUUID string) (bool, error) {
 	lockKey := d.getRepositoryEventLockKey(vcsName, repoName, hookEventUUID)
-	return d.store.Lock(lockKey, 30*time.Second, 200, 60)
+	return d.store.Lock(ctx, lockKey, 30*time.Second, 200, 60)
 }
 
-func (d *dao) UnlockRepositoryEvent(vcsName, repoName, hookEventUUID string) error {
+func (d *dao) UnlockRepositoryEvent(ctx context.Context, vcsName, repoName, hookEventUUID string) error {
 	lockKey := d.getRepositoryEventLockKey(vcsName, repoName, hookEventUUID)
-	return d.store.Unlock(lockKey)
+	return d.store.Unlock(ctx, lockKey)
 }
 
 func (d *dao) ListInProgressRepositoryEvent(ctx context.Context) ([]string, error) {
-	nbHookEventInProgress, err := d.store.SetCard(repositoryEventInProgressKey)
+	nbHookEventInProgress, err := d.store.SetCard(ctx, repositoryEventInProgressKey)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to setCard %v", repositoryEventInProgressKey)
 	}
@@ -91,7 +91,7 @@ func (d *dao) ListInProgressRepositoryEvent(ctx context.Context) ([]string, erro
 
 func (d *dao) DeleteRepositoryEvent(ctx context.Context, vcsServer, repository, uuid string) error {
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(vcsServer, repository)))
-	if err := d.store.SetRemove(k, uuid, nil); err != nil {
+	if err := d.store.SetRemove(ctx, k, uuid, nil); err != nil {
 		return err
 	}
 	return nil
@@ -100,7 +100,7 @@ func (d *dao) DeleteRepositoryEvent(ctx context.Context, vcsServer, repository, 
 func (d *dao) GetRepositoryEvent(ctx context.Context, vcsServer, repository, uuid string) (*sdk.HookRepositoryEvent, error) {
 	k := cache.Key(repositoryEventRootKey, vcsServer+"-"+repository, uuid)
 	var e sdk.HookRepositoryEvent
-	found, err := d.store.Get(k, &e)
+	found, err := d.store.Get(ctx, k, &e)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (d *dao) DeleteAllRepositoryEvent(ctx context.Context, vcsServer, repoName 
 		}
 	}
 	k := strings.ToLower(cache.Key(repositoryEventRootKey, d.GetRepositoryMemberKey(vcsServer, repoName)))
-	if err := d.store.Delete(k); err != nil {
+	if err := d.store.Delete(ctx, k); err != nil {
 		return err
 	}
 	return nil
@@ -130,7 +130,7 @@ func (d *dao) DeleteAllRepositoryEvent(ctx context.Context, vcsServer, repoName 
 func (d *dao) ListRepositoryEvents(ctx context.Context, vcsServer, repository string) ([]sdk.HookRepositoryEvent, error) {
 	k := cache.Key(repositoryEventRootKey, vcsServer+"-"+repository)
 
-	nbEvents, err := d.store.SetCard(k)
+	nbEvents, err := d.store.SetCard(ctx, k)
 	if err != nil {
 		return nil, err
 	}

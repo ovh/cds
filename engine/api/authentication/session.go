@@ -50,7 +50,7 @@ func NewSessionWithMFACustomDuration(ctx context.Context, db gorpmapper.SqlExecu
 	}
 
 	// Initialy set activity for new session
-	if err := SetSessionActivity(store, durationMFA, s.ID); err != nil {
+	if err := SetSessionActivity(ctx, store, durationMFA, s.ID); err != nil {
 		return nil, err
 	}
 
@@ -69,7 +69,7 @@ func CheckSessionWithCustomMFADuration(ctx context.Context, db gorp.SqlExecutor,
 		return nil, sdk.WithStack(sdk.ErrUnauthorized)
 	}
 	if s.MFA {
-		active, _, err := GetSessionActivity(store, s.ID)
+		active, _, err := GetSessionActivity(ctx, store, s.ID)
 		if err != nil {
 			log.Error(ctx, "CheckSession> unable to get session %s activity: %v", s.ID, err)
 		}
@@ -78,7 +78,7 @@ func CheckSessionWithCustomMFADuration(ctx context.Context, db gorp.SqlExecutor,
 			s.MFA = false
 		} else {
 			// If the session is valid we can update its activity
-			if err := SetSessionActivity(store, durationMFA, s.ID); err != nil {
+			if err := SetSessionActivity(ctx, store, durationMFA, s.ID); err != nil {
 				return nil, err
 			}
 		}
@@ -153,19 +153,19 @@ func SessionCleaner(ctx context.Context, dbFunc func() *gorp.DbMap, tickerDurati
 }
 
 // SetSessionActivity store activity in cache for given session.
-func SetSessionActivity(store cache.Store, durationMFA time.Duration, sessionID string) error {
+func SetSessionActivity(ctx context.Context, store cache.Store, durationMFA time.Duration, sessionID string) error {
 	k := cache.Key("api", "session", "mfa", "activity", sessionID)
-	if err := store.SetWithTTL(k, time.Now().UnixNano(), int(durationMFA.Seconds())); err != nil {
+	if err := store.SetWithTTL(ctx, k, time.Now().UnixNano(), int(durationMFA.Seconds())); err != nil {
 		return err
 	}
 	return nil
 }
 
 // GetSessionActivity returns if given session is active.
-func GetSessionActivity(store cache.Store, sessionID string) (exists bool, lastActivity time.Time, err error) {
+func GetSessionActivity(ctx context.Context, store cache.Store, sessionID string) (exists bool, lastActivity time.Time, err error) {
 	k := cache.Key("api", "session", "mfa", "activity", sessionID)
 	var lastActivityUnixNano int64
-	exists, err = store.Get(k, &lastActivityUnixNano)
+	exists, err = store.Get(ctx, k, &lastActivityUnixNano)
 	if err != nil {
 		return
 	}

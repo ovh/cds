@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -16,7 +17,7 @@ type resetLocalConsumerToken struct {
 }
 
 // NewResetConsumerToken returns a new reset consumer token for given consumer id.
-func NewResetConsumerToken(store cache.Store, consumerID string) (string, error) {
+func NewResetConsumerToken(ctx context.Context, store cache.Store, consumerID string) (string, error) {
 	var now = time.Now()
 	payload := resetLocalConsumerToken{
 		ConsumerID: consumerID,
@@ -24,7 +25,7 @@ func NewResetConsumerToken(store cache.Store, consumerID string) (string, error)
 	}
 
 	cacheKey := cache.Key("authentication:consumer:reset", consumerID)
-	if err := store.SetWithDuration(cacheKey, payload.Nonce, resetLocalConsumerTokenDuration); err != nil {
+	if err := store.SetWithDuration(ctx, cacheKey, payload.Nonce, resetLocalConsumerTokenDuration); err != nil {
 		return "", err
 	}
 
@@ -32,7 +33,7 @@ func NewResetConsumerToken(store cache.Store, consumerID string) (string, error)
 }
 
 // CheckResetConsumerToken checks that the given signature is a valid reset consumer token.
-func CheckResetConsumerToken(store cache.Store, signature string) (string, error) {
+func CheckResetConsumerToken(ctx context.Context, store cache.Store, signature string) (string, error) {
 	var payload resetLocalConsumerToken
 	if err := authentication.VerifyJWS(signature, &payload); err != nil {
 		return "", err
@@ -40,7 +41,7 @@ func CheckResetConsumerToken(store cache.Store, signature string) (string, error
 
 	cacheKey := cache.Key("authentication:consumer:reset", payload.ConsumerID)
 	var nonce int64
-	if ok, _ := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
+	if ok, _ := store.Get(ctx, cacheKey, &nonce); !ok || nonce != payload.Nonce {
 		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given reset consumer token")
 	}
 
@@ -48,7 +49,7 @@ func CheckResetConsumerToken(store cache.Store, signature string) (string, error
 }
 
 // CleanResetConsumerToken deletes a consumer reset token from cache if exists.
-func CleanResetConsumerToken(store cache.Store, consumerID string) {
+func CleanResetConsumerToken(ctx context.Context, store cache.Store, consumerID string) {
 	cacheKey := cache.Key("authentication:consumer:reset", consumerID)
-	_ = store.Delete(cacheKey)
+	_ = store.Delete(ctx, cacheKey)
 }

@@ -81,7 +81,7 @@ func (s *Service) startRabbitMQHook(ctx context.Context, t *sdk.Task) error {
 				Timestamp: time.Now().UnixNano(),
 				RabbitMQ:  &sdk.RabbitMQTaskExecution{Message: d.Body},
 			}
-			s.Dao.SaveTaskExecution(&exec)
+			s.Dao.SaveTaskExecution(context.Background(), &exec)
 		}
 		consumer.done <- nil
 	}()

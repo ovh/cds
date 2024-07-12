@@ -54,7 +54,7 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 	defer next()
 
 	var repoEventTmp sdk.HookRepositoryEvent
-	find, err := s.Cache.Get(repoEventKey, &repoEventTmp)
+	find, err := s.Cache.Get(ctx, repoEventKey, &repoEventTmp)
 	if err != nil {
 		return err
 	}
@@ -70,17 +70,17 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 		telemetry.Tag(telemetry.TagRepository, repoEventTmp.RepositoryName),
 		telemetry.Tag(telemetry.TagEventID, repoEventTmp.UUID))
 
-	b, err := s.Dao.LockRepositoryEvent(repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
+	b, err := s.Dao.LockRepositoryEvent(ctx, repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 	if err != nil {
 		return sdk.WrapError(err, "unable to lock repository event %s", repoEventTmp.GetFullName())
 	}
 	if !b {
 		return nil
 	}
-	defer s.Dao.UnlockRepositoryEvent(repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
+	defer s.Dao.UnlockRepositoryEvent(ctx, repoEventTmp.VCSServerName, repoEventTmp.RepositoryName, repoEventTmp.UUID)
 
 	var hre sdk.HookRepositoryEvent
-	find, err = s.Cache.Get(repoEventKey, &hre)
+	find, err = s.Cache.Get(ctx, repoEventKey, &hre)
 	if err != nil {
 		return sdk.WrapError(err, "unable to retrieve repository event")
 	}
@@ -92,7 +92,7 @@ func (s *Service) checkInProgressEvent(ctx context.Context, repoEventKey string)
 		return nil
 	}
 
-	queueLen, err := s.Dao.RepositoryEventQueueLen()
+	queueLen, err := s.Dao.RepositoryEventQueueLen(ctx)
 	if err != nil {
 		return err
 	}

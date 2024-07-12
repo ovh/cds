@@ -198,15 +198,15 @@ func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 	sizeQueueKey := cache.Key(keyJobLogSize, strconv.Itoa(int(hm.Signature.JobID)))
 	jobQueue := cache.Key(keyJobLogQueue, strconv.Itoa(int(hm.Signature.JobID)))
 
-	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
+	if err := s.sendIntoIncomingQueue(ctx, hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string, sizeKey string) error {
+func (s *Service) sendIntoIncomingQueue(ctx context.Context, hm handledMessage, incomingQueue string, sizeKey string) error {
 	var currentSize int64
-	if _, err := s.Cache.Get(sizeKey, &currentSize); err != nil {
+	if _, err := s.Cache.Get(ctx, sizeKey, &currentSize); err != nil {
 		return err
 	}
 	if currentSize >= s.Cfg.Log.StepMaxSize && !hm.IsTerminated {
@@ -217,16 +217,16 @@ func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string,
 		hm.Msg.Level = int32(graylog.LOG_WARNING)
 	}
 
-	if err := s.Cache.Enqueue(incomingQueue, hm); err != nil {
+	if err := s.Cache.Enqueue(ctx, incomingQueue, hm); err != nil {
 		return err
 	}
 
 	if hm.IsTerminated {
-		_ = s.Cache.Delete(sizeKey)
+		_ = s.Cache.Delete(ctx, sizeKey)
 	} else {
 		// Update size for the job
 		newSize := currentSize + int64(len(hm.Msg.Full))
-		if err := s.Cache.SetWithTTL(sizeKey, newSize, 3600*24); err != nil {
+		if err := s.Cache.SetWithTTL(ctx, sizeKey, newSize, 3600*24); err != nil {
 			return err
 		}
 	}
@@ -310,7 +310,7 @@ func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature
 	sizeQueueKey := cache.Key(keyJobLogSize, key)
 	jobQueue := cache.Key(keyJobLogQueue, key)
 
-	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
+	if err := s.sendIntoIncomingQueue(ctx, hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}
 	return nil

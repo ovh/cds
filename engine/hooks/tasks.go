@@ -125,7 +125,7 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 			log.Error(ctx, "Hook> Unable to transform hook to task %+v: %v", h, err)
 			continue
 		}
-		if err := s.Dao.SaveTask(t); err != nil {
+		if err := s.Dao.SaveTask(ctx, t); err != nil {
 			log.Error(ctx, "Hook> Unable to save task %+v: %v", h, err)
 			continue
 		}
@@ -280,7 +280,7 @@ func (s *Service) stopTasks(ctx context.Context) error {
 
 func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecution, error) {
 	t.Stopped = false
-	if err := s.Dao.SaveTask(t); err != nil {
+	if err := s.Dao.SaveTask(ctx, t); err != nil {
 		return nil, sdk.WrapError(err, "unable to save task")
 	}
 
@@ -294,11 +294,11 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	case TypeRabbitMQ:
 		return nil, s.startRabbitMQHook(ctx, t)
 	case TypeOutgoingWebHook:
-		return s.startOutgoingWebHookTask(t)
+		return s.startOutgoingWebHookTask(ctx, t)
 	case TypeOutgoingWorkflow:
-		return s.startOutgoingWorkflowTask(t)
+		return s.startOutgoingWorkflowTask(ctx, t)
 	case TypeGerrit:
-		return nil, s.startGerritHookTask(t)
+		return nil, s.startGerritHookTask(ctx, t)
 	default:
 		return nil, fmt.Errorf("Unsupported task type %s", t.Type)
 	}
@@ -366,7 +366,7 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 		},
 	}
 
-	s.Dao.SaveTaskExecution(exec)
+	s.Dao.SaveTaskExecution(ctx, exec)
 	//We don't push in queue, we will the scheduler to run it
 
 	log.Debug(ctx, "Hooks> Scheduled task %v:%d ready. Next execution scheduled on %v, len:%d", t.UUID, exec.Timestamp, time.Unix(0, exec.Timestamp), len(execs))
@@ -377,7 +377,7 @@ func (s *Service) prepareNextScheduledTaskExecution(ctx context.Context, t *sdk.
 func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 	log.Info(ctx, "Hooks> Stopping task %s", t.UUID)
 	t.Stopped = true
-	if err := s.Dao.SaveTask(t); err != nil {
+	if err := s.Dao.SaveTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "unable to save task %v", t)
 	}
 
@@ -390,7 +390,7 @@ func (s *Service) stopTask(ctx context.Context, t *sdk.Task) error {
 		log.Debug(ctx, "Hooks> Kafka Task %s has been stopped", t.UUID)
 		return nil
 	case TypeGerrit:
-		s.stopGerritHookTask(t)
+		s.stopGerritHookTask(ctx, t)
 		log.Debug(ctx, "Hooks> Gerrit Task %s has been stopped", t.UUID)
 		return nil
 	default:

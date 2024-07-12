@@ -97,7 +97,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 	_, next = telemetry.Span(ctx, "api.craftWorkflowRunV2.lock")
 	lockKey := cache.Key("api:craftWorkflowRunV2", id)
-	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
+	b, err := api.Cache.Lock(ctx, lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
@@ -109,7 +109,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 	next()
 	defer func() {
-		_ = api.Cache.Unlock(lockKey)
+		_ = api.Cache.Unlock(ctx, lockKey)
 	}()
 
 	run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), id)

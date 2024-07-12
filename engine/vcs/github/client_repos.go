@@ -47,7 +47,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
 			k := cache.Key("vcs", "github", "repos", sdk.Hash512(g.OAuthToken+g.username), "/user/repos")
-			if _, err := g.Cache.Get(k, &repos); err != nil {
+			if _, err := g.Cache.Get(ctx, k, &repos); err != nil {
 				log.Error(ctx, "cannot get from cache %s: %v", k, err)
 			}
 			if len(repos) != 0 || attempt > 5 {
@@ -70,7 +70,7 @@ func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 
 	//Put the body on cache for one hour and one minute
 	k := cache.Key("vcs", "github", "repos", sdk.Hash512(g.OAuthToken+g.username), "/user/repos")
-	if err := g.Cache.SetWithTTL(k, repos, 61*60); err != nil {
+	if err := g.Cache.SetWithTTL(ctx, k, repos, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 
@@ -113,7 +113,7 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "repo", sdk.Hash512(g.OAuthToken+g.username), url)
-		if _, err := g.Cache.Get(k, &repo); err != nil {
+		if _, err := g.Cache.Get(ctx, k, &repo); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
@@ -123,7 +123,7 @@ func (g *githubClient) repoByFullname(ctx context.Context, fullname string) (Rep
 		}
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "repo", sdk.Hash512(g.OAuthToken+g.username), url)
-		if err := g.Cache.SetWithTTL(k, repo, 61*60); err != nil {
+		if err := g.Cache.SetWithTTL(ctx, k, repo, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
@@ -155,14 +155,14 @@ func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname stri
 	}
 	var permResp UserPermissionResponse
 	if status == http.StatusNotModified {
-		if _, err := g.Cache.Get(k, &permResp); err != nil {
+		if _, err := g.Cache.Get(ctx, k, &permResp); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
 		if err := sdk.JSONUnmarshal(resp, &permResp); err != nil {
 			return false, sdk.WrapError(err, "unable to unmarshal: %s", string(resp))
 		}
-		if err := g.Cache.SetWithTTL(k, permResp, 61*60); err != nil {
+		if err := g.Cache.SetWithTTL(ctx, k, permResp, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}

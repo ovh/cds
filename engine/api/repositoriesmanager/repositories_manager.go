@@ -68,13 +68,13 @@ func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store
 
 	cacheKey := cache.Key("reposmanager", "repos", proj.Key, vcsServerName)
 	if opts.Sync {
-		if err := store.Delete(cacheKey); err != nil {
+		if err := store.Delete(ctx, cacheKey); err != nil {
 			log.Error(ctx, "GetReposForProjectVCSServer> error on delete cache key %v: %s", cacheKey, err)
 		}
 	}
 
 	var repos []sdk.VCSRepo
-	find, err := store.Get(cacheKey, &repos)
+	find, err := store.Get(ctx, cacheKey, &repos)
 	if err != nil {
 		log.Error(ctx, "GetReposForProjectVCSServer> cannot get from cache %s: %v", cacheKey, err)
 	}
@@ -83,7 +83,7 @@ func GetReposForProjectVCSServer(ctx context.Context, db gorp.SqlExecutor, store
 		if err != nil {
 			return nil, sdk.NewErrorFrom(err, "cannot get repositories")
 		}
-		if err := store.SetWithTTL(cacheKey, repos, 0); err != nil {
+		if err := store.SetWithTTL(ctx, cacheKey, repos, 0); err != nil {
 			log.Error(ctx, "GetReposForProjectVCSServer> cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}

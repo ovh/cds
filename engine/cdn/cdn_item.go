@@ -175,12 +175,12 @@ func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, a
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug(ctx, "getItemLogLines> Getting logs from buffer")
-		lines, err := s.Units.LogsBuffer().Card(*itemUnit)
+		lines, err := s.Units.LogsBuffer().Card(ctx, *itemUnit)
 		return int64(lines), err
 	}
 
 	// Get from cache
-	if ok, _ := s.LogCache.Exist(it.ID); !ok {
+	if ok, _ := s.LogCache.Exist(ctx, it.ID); !ok {
 		log.Debug(ctx, "getItemLogLines> Getting logs from storage and push to cache")
 		// Retrieve item and push it into the cache
 		if err := s.pushItemLogIntoCache(ctx, *it, ""); err != nil {
@@ -188,7 +188,7 @@ func (s *Service) getItemLogLinesCount(ctx context.Context, t sdk.CDNItemType, a
 		}
 	}
 
-	linesCount, err := s.LogCache.Card(it.ID)
+	linesCount, err := s.LogCache.Card(ctx, it.ID)
 	return int64(linesCount), err
 }
 
@@ -256,7 +256,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	// If item is in Buffer, get from it
 	if itemUnit != nil {
 		log.Debug(ctx, "getItemLogValue> Getting logs from buffer")
-		linesCount, err := s.Units.LogsBuffer().Card(*itemUnit)
+		linesCount, err := s.Units.LogsBuffer().Card(ctx, *itemUnit)
 		if err != nil {
 			return nil, 0, nil, "", err
 		}
@@ -270,13 +270,13 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 	}
 
 	if opts.cacheClean {
-		if err := s.LogCache.Remove([]string{it.ID}); err != nil {
+		if err := s.LogCache.Remove(ctx, []string{it.ID}); err != nil {
 			return nil, 0, nil, "", err
 		}
 	}
 
 	// Get from cache
-	if ok, _ := s.LogCache.Exist(it.ID); !ok {
+	if ok, _ := s.LogCache.Exist(ctx, it.ID); !ok {
 		log.Debug(ctx, "getItemLogValue> Getting logs from storage and push to cache")
 		// Retrieve item and push it into the cache
 		if err := s.pushItemLogIntoCache(ctx, *it, opts.cacheSource); err != nil {
@@ -284,7 +284,7 @@ func (s *Service) getItemLogValue(ctx context.Context, t sdk.CDNItemType, apiRef
 		}
 	}
 
-	linesCount, err := s.LogCache.Card(it.ID)
+	linesCount, err := s.LogCache.Card(ctx, it.ID)
 	if err != nil {
 		return nil, 0, nil, "", err
 	}

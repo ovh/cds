@@ -53,7 +53,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string, filters sd
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
 			k := cache.Key("vcs", "github", "branches", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/branches")
-			_, err := g.Cache.Get(k, &branches)
+			_, err := g.Cache.Get(ctx, k, &branches)
 			if err != nil {
 				log.Error(ctx, "cannot get from cache %s: %v", k, err)
 			}
@@ -77,7 +77,7 @@ func (g *githubClient) Branches(ctx context.Context, fullname string, filters sd
 
 	//Put the body on cache for one hour and one minute
 	k := cache.Key("vcs", "github", "branches", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/branches")
-	if err := g.Cache.SetWithTTL(k, branches, 61*60); err != nil {
+	if err := g.Cache.SetWithTTL(ctx, k, branches, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 
@@ -117,7 +117,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.
 	url := "/repos/" + fullname + "/branches/" + filters.BranchName
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {
-		if err := g.Cache.Delete(cacheBranchKey); err != nil {
+		if err := g.Cache.Delete(ctx, cacheBranchKey); err != nil {
 			log.Error(ctx, "githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
 		}
 		return nil, err
@@ -126,7 +126,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.
 		return nil, sdk.WithStack(sdk.ErrNoBranch)
 	}
 	if status >= 400 {
-		if err := g.Cache.Delete(cacheBranchKey); err != nil {
+		if err := g.Cache.Delete(ctx, cacheBranchKey); err != nil {
 			log.Error(ctx, "githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
 		}
 		return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
@@ -136,7 +136,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.
 	var branch Branch
 	if status == http.StatusNotModified {
 		//If repos aren't updated, lets get them from cache
-		find, err := g.Cache.Get(cacheBranchKey, &branch)
+		find, err := g.Cache.Get(ctx, cacheBranchKey, &branch)
 		if err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", cacheBranchKey, err)
 		}
@@ -152,7 +152,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.
 
 	if branch.Name == "" {
 		log.Warn(ctx, "githubClient.Branch> Cannot find branch %v: %s", branch, filters.BranchName)
-		if err := g.Cache.Delete(cacheBranchKey); err != nil {
+		if err := g.Cache.Delete(ctx, cacheBranchKey); err != nil {
 			log.Error(ctx, "githubClient.Branch> unable to delete cache key %v: %v", cacheBranchKey, err)
 		}
 		return nil, fmt.Errorf("githubClient.Branch > Cannot find branch %s", filters.BranchName)
@@ -160,7 +160,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname string, filters sdk.
 
 	//Put the body on cache for one hour and one minute
 	k := cache.Key("vcs", "github", "branches", sdk.Hash512(g.OAuthToken+g.username), "/repos/"+fullname+"/branch/"+filters.BranchName)
-	if err := g.Cache.SetWithTTL(k, branch, 61*60); err != nil {
+	if err := g.Cache.SetWithTTL(ctx, k, branch, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 	}
 

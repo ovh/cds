@@ -227,7 +227,7 @@ func (a *API) initWebsocket(pubSubKey string) error {
 	})
 
 	log.Info(a.Router.Background, "Initializing WS events broker")
-	pubSub, err := a.Cache.Subscribe(pubSubKey)
+	pubSub, err := a.Cache.Subscribe(a.Router.Background, pubSubKey)
 	if err != nil {
 		return sdk.WrapError(err, "unable to subscribe to %s", pubSubKey)
 	}

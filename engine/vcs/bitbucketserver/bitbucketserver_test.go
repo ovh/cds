@@ -31,7 +31,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 		t.SkipNow()
 	}
 
-	cache, err := cache.New(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: 0}, 30)
+	cache, err := cache.New(context.TODO(), sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: 0}, 30)
 	if err != nil {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
@@ -54,7 +54,7 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.SkipNow()
 	}
 
-	cache, err := cache.New(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: 0}, 30)
+	cache, err := cache.New(context.TODO(), sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: 0}, 30)
 	if err != nil {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}

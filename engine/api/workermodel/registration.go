@@ -112,12 +112,12 @@ func KeyBookWorkerModel(id int64) string {
 }
 
 // BookForRegister books a worker model for register, used by hatcheries
-func BookForRegister(store cache.Store, id int64, serviceID int64) error {
+func BookForRegister(ctx context.Context, store cache.Store, id int64, serviceID int64) error {
 	k := KeyBookWorkerModel(id)
 	var bookedByServiceID int64
-	if ok, _ := store.Get(k, &bookedByServiceID); !ok {
+	if ok, _ := store.Get(ctx, k, &bookedByServiceID); !ok {
 		// worker model not already booked, book it for 6 min
-		if err := store.SetWithTTL(k, serviceID, bookRegisterTTLInSeconds); err != nil {
+		if err := store.SetWithTTL(ctx, k, serviceID, bookRegisterTTLInSeconds); err != nil {
 			return err
 		}
 		return nil
@@ -128,7 +128,7 @@ func BookForRegister(store cache.Store, id int64, serviceID int64) error {
 // UnbookForRegister release the book
 func UnbookForRegister(ctx context.Context, store cache.Store, id int64) {
 	k := KeyBookWorkerModel(id)
-	if err := store.Delete(k); err != nil {
+	if err := store.Delete(ctx, k); err != nil {
 		log.Error(ctx, "unable to delete cache key %v: %v", k, err)
 	}
 }

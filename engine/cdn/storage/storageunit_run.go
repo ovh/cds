@@ -40,7 +40,7 @@ func (x *RunningStorageUnits) FillSyncItemChannel(ctx context.Context, s Storage
 
 func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s StorageUnit, maxItemByLoop int64) error {
 	lockKey := cache.Key("cdn", "backend", "lock", "sync", s.Name())
-	b, err := x.cache.Lock(lockKey, 10*time.Minute, 0, 1)
+	b, err := x.cache.Lock(ctx, lockKey, 10*time.Minute, 0, 1)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s Storag
 		return nil
 	}
 	defer func() {
-		if err := x.cache.Unlock(lockKey); err != nil {
+		if err := x.cache.Unlock(ctx, lockKey); err != nil {
 			log.Error(ctx, "unable to release lock %s", lockKey)
 		}
 	}()
@@ -80,7 +80,7 @@ func (x *RunningStorageUnits) FillWithUnknownItems(ctx context.Context, s Storag
 
 func (x *RunningStorageUnits) processItem(ctx context.Context, db *gorp.DbMap, s StorageUnit, id string) error {
 	lockKey := cache.Key("cdn", "sync", "item", id)
-	hasLock, err := x.cache.Lock(lockKey, 20*time.Minute, 0, 1)
+	hasLock, err := x.cache.Lock(ctx, lockKey, 20*time.Minute, 0, 1)
 	if err != nil {
 		log.Error(ctx, "unable to get lock %s: %v", lockKey, err)
 	}
@@ -88,7 +88,7 @@ func (x *RunningStorageUnits) processItem(ctx context.Context, db *gorp.DbMap, s
 		return nil
 	}
 	defer func() {
-		_ = x.cache.Unlock(lockKey)
+		_ = x.cache.Unlock(ctx, lockKey)
 	}()
 
 	it, err := item.LoadByID(ctx, x.m, db, id, gorpmapper.GetOptions.WithDecryption)

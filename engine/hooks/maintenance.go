@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Service) listenMaintenance(c context.Context) error {
-	pubSub, err := s.Dao.store.Subscribe(MaintenanceHookQueue)
+	pubSub, err := s.Dao.store.Subscribe(c, MaintenanceHookQueue)
 	if err != nil {
 		return sdk.WrapError(err, "listenMaintenance> unable to subscribe to %s", MaintenanceHookQueue)
 	}

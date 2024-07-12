@@ -21,10 +21,10 @@ func TestSortedSet(t *testing.T) {
 	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
 	require.NoError(t, err, "error when unmarshal config")
 
-	s, err := NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
+	s, err := NewRedisStore(context.TODO(), sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err)
 
-	s.Delete("test")
+	s.Delete(context.TODO(), "test")
 
 	require.NoError(t, s.ScoredSetAdd(context.TODO(), "test", "value", 1.0))
 	var res []string
@@ -39,18 +39,18 @@ func TestDequeueJSONRawMessagesWithContext(t *testing.T) {
 	redisPassword := cfg["redisPassword"]
 	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
 	require.NoError(t, err, "error when unmarshal config")
-	s, err := NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
+	s, err := NewRedisStore(context.TODO(), sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err)
 
-	s.Delete("test")
+	s.Delete(context.TODO(), "test")
 
 	msgs := make([]string, 100)
 	for i := 0; i < 100; i++ {
 		msgs[i] = sdk.RandomString(10)
-		require.NoError(t, s.Enqueue("test", msgs[i]))
+		require.NoError(t, s.Enqueue(context.TODO(), "test", msgs[i]))
 	}
 
-	l, err := s.QueueLen("test")
+	l, err := s.QueueLen(context.TODO(), "test")
 	require.NoError(t, err)
 	require.Equal(t, 100, l)
 
@@ -79,18 +79,18 @@ func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
 	redisPassword := cfg["redisPassword"]
 	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
 	require.NoError(t, err, "error when unmarshal config")
-	s, err := NewRedisStore(sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
+	s, err := NewRedisStore(context.TODO(), sdk.RedisConf{Host: redisHost, Password: redisPassword, DbIndex: int(redisDbIndex)}, 60)
 	require.NoError(t, err)
 
-	s.Delete("test")
+	s.Delete(context.TODO(), "test")
 
 	msgs := make([]string, 100)
 	for i := 0; i < 100; i++ {
 		msgs[i] = sdk.RandomString(10)
-		require.NoError(t, s.Enqueue("test", msgs[i]))
+		require.NoError(t, s.Enqueue(context.TODO(), "test", msgs[i]))
 	}
 
-	l, err := s.QueueLen("test")
+	l, err := s.QueueLen(context.TODO(), "test")
 	require.NoError(t, err)
 	require.Equal(t, 100, l)
 
@@ -105,7 +105,7 @@ func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 5, len(data2))
 
-	l2, err := s.QueueLen("test")
+	l2, err := s.QueueLen(context.TODO(), "test")
 	require.NoError(t, err)
 	require.Equal(t, 95, l2)
 }

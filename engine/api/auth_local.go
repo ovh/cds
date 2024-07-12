@@ -101,7 +101,7 @@ func (api *API) postAuthLocalSignupHandler() service.Handler {
 		}
 
 		// Generate a token to verify registration
-		regToken, err := local.NewRegistrationToken(api.Cache, reg.ID, countAdmins == 0)
+		regToken, err := local.NewRegistrationToken(ctx, api.Cache, reg.ID, countAdmins == 0)
 		if err != nil {
 			return err
 		}
@@ -309,7 +309,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 		initToken := reqData.String("init_token")
 		hasInitToken := initToken != ""
 
-		registrationID, err := local.CheckRegistrationToken(api.Cache, reqData.String("token"))
+		registrationID, err := local.CheckRegistrationToken(ctx, api.Cache, reqData.String("token"))
 		if err != nil {
 			return err
 		}
@@ -421,7 +421,7 @@ func (api *API) postAuthLocalVerifyHandler() service.Handler {
 
 		event_v2.PublishUserEvent(ctx, api.Cache, sdk.EventUserCreated, *usr)
 
-		local.CleanVerifyConsumerToken(api.Cache, consumer.ID)
+		local.CleanVerifyConsumerToken(ctx, api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
 		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt, true)
@@ -494,7 +494,7 @@ func (api *API) postAuthLocalAskResetHandler() service.Handler {
 			return err
 		}
 
-		resetToken, err := local.NewResetConsumerToken(api.Cache, existingLocalConsumer.ID)
+		resetToken, err := local.NewResetConsumerToken(ctx, api.Cache, existingLocalConsumer.ID)
 		if err != nil {
 			return err
 		}
@@ -538,7 +538,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return err
 		}
 
-		consumerID, err := local.CheckResetConsumerToken(api.Cache, token)
+		consumerID, err := local.CheckResetConsumerToken(ctx, api.Cache, token)
 		if err != nil {
 			return err
 		}
@@ -598,7 +598,7 @@ func (api *API) postAuthLocalResetHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		local.CleanResetConsumerToken(api.Cache, consumer.ID)
+		local.CleanResetConsumerToken(ctx, api.Cache, consumer.ID)
 
 		// Set a cookie with the jwt token
 		api.SetCookie(w, service.JWTCookieName, jwt, session.ExpireAt, true)

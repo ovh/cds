@@ -1022,7 +1022,7 @@ func (api *API) workflowRunResultCheckUploadHandler() service.Handler {
 		}
 
 		// Save check
-		if err := api.Cache.SetWithTTL(workflow.GetRunResultKey(runResultCheck.RunID, runResultCheck.ResultType, runResultCheck.Name), true, 600); err != nil {
+		if err := api.Cache.SetWithTTL(ctx, workflow.GetRunResultKey(runResultCheck.RunID, runResultCheck.ResultType, runResultCheck.Name), true, 600); err != nil {
 			return sdk.WrapError(err, "unable to cache result artifact check %s ", runResultCheck.Name)
 		}
 		return nil

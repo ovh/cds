@@ -74,7 +74,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	}
 
 	bufferUnit := s.Units.LogsBuffer()
-	countLine, err := bufferUnit.Card(*iu)
+	countLine, err := bufferUnit.Card(ctx, *iu)
 	if err != nil {
 		return err
 	}

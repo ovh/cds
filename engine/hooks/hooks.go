@@ -97,7 +97,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Init the cache
 	var errCache error
-	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
+	s.Cache, errCache = cache.New(c, s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
 	if errCache != nil {
 		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
 	}
@@ -107,7 +107,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	// Get current maintenance state
 	var b bool
-	if _, err := s.Dao.store.Get(MaintenanceHookKey, &b); err != nil {
+	if _, err := s.Dao.store.Get(c, MaintenanceHookKey, &b); err != nil {
 		return fmt.Errorf("cannot get %s from redis: %v", MaintenanceHookKey, err)
 	}
 	s.Maintenance = b

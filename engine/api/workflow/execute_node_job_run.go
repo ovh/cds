@@ -296,7 +296,7 @@ func checkStatusWaiting(ctx context.Context, store cache.Store, jobID int64, sta
 	if status != sdk.StatusWaiting {
 		k := keyBookJob(jobID)
 		h := sdk.Service{}
-		find, err := store.Get(k, &h)
+		find, err := store.Get(ctx, k, &h)
 		if err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
@@ -355,7 +355,7 @@ func LoadDecryptSecrets(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workfl
 func BookNodeJobRun(ctx context.Context, store cache.Store, defaultBookDelay int64, customBookDelay map[string]int64, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(id)
 	h := sdk.Service{}
-	find, err := store.Get(k, &h)
+	find, err := store.Get(ctx, k, &h)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
@@ -370,7 +370,7 @@ func BookNodeJobRun(ctx context.Context, store cache.Store, defaultBookDelay int
 				delay = int(d)
 			}
 		}
-		if err := store.SetWithTTL(k, hatchery, delay); err != nil {
+		if err := store.SetWithTTL(ctx, k, hatchery, delay); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 		return nil, nil
@@ -382,12 +382,12 @@ func BookNodeJobRun(ctx context.Context, store cache.Store, defaultBookDelay int
 func FreeNodeJobRun(ctx context.Context, store cache.Store, id int64) error {
 	k := keyBookJob(id)
 	h := sdk.Service{}
-	find, err := store.Get(k, &h)
+	find, err := store.Get(ctx, k, &h)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}
 	if find {
-		if err := store.Delete(k); err != nil {
+		if err := store.Delete(ctx, k); err != nil {
 			log.Error(ctx, "error on cache delete %v: %v", k, err)
 		}
 		return nil

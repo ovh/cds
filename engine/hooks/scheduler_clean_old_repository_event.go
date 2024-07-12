@@ -37,17 +37,17 @@ func (s *Service) scheduleCleanOldRepositoryEvent(ctx context.Context) {
 
 func (s *Service) cleanRepositoryEvent(ctx context.Context, repoKey string) error {
 	lockKey := cache.Key(repositoryLock, repoKey)
-	b, err := s.Dao.store.Lock(lockKey, time.Minute, 100, 1)
+	b, err := s.Dao.store.Lock(ctx, lockKey, time.Minute, 100, 1)
 	if err != nil {
 		return err
 	}
 	if !b {
 		return nil
 	}
-	defer s.Dao.store.Unlock(lockKey)
+	defer s.Dao.store.Unlock(ctx, lockKey)
 
 	var hookRepo sdk.HookRepository
-	exist, err := s.Dao.store.Get(cache.Key(repositoryRootKey, repoKey), &hookRepo)
+	exist, err := s.Dao.store.Get(ctx, cache.Key(repositoryRootKey, repoKey), &hookRepo)
 	if err != nil {
 		return err
 	}

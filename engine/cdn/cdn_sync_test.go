@@ -61,12 +61,12 @@ func TestSyncBuffer(t *testing.T) {
 	})
 	require.NoError(t, err)
 	s.Units = cdnUnits
-
-	_ = cache.Set("cdn:buffer:my-item", "foo")
+	ctx := context.TODO()
+	_ = cache.Set(ctx, "cdn:buffer:my-item", "foo")
 
 	s.Units.SyncBuffer(context.Background())
 
-	b, err := cache.Exist("cdn:buffer:my-item")
+	b, err := cache.Exist(ctx, "cdn:buffer:my-item")
 	require.NoError(t, err)
 	require.False(t, b)
 }

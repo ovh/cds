@@ -23,12 +23,12 @@ func TestRedisLRU(t *testing.T) {
 	cdntest.ClearItem(t, context.TODO(), m, db)
 
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
-	r, err := NewRedisLRU(db.DbMap, 100, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
+	r, err := NewRedisLRU(context.TODO(), db.DbMap, 100, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
 
-	l, _ := r.Len()
+	l, _ := r.Len(context.TODO())
 	for i := 0; i < l; i++ {
-		_ = r.RemoveOldest()
+		_ = r.RemoveOldest(context.TODO())
 	}
 
 	item1 := sdk.CDNItem{
@@ -58,10 +58,10 @@ func TestRedisLRU(t *testing.T) {
 	_, err = io.Copy(writer1, strings.NewReader("this is the first line\nthis is the second line\nthis is the third line\n"))
 	require.NoError(t, writer1.Close())
 	require.NoError(t, err)
-	length, err := r.Len()
+	length, err := r.Len(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, 1, length)
-	size, err := r.Size()
+	size, err := r.Size(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, int64(45), size)
 
@@ -97,10 +97,10 @@ func TestRedisLRU(t *testing.T) {
 	require.NoError(t, reader4.Close())
 	require.NoError(t, err)
 	require.Equal(t, "this is the first line\nthis is the second line\n", buf4.String())
-	length, err = r.Len()
+	length, err = r.Len(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, 2, length)
-	size, err = r.Size()
+	size, err = r.Size(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, int64(88), size)
 
@@ -109,23 +109,23 @@ func TestRedisLRU(t *testing.T) {
 	_, err = io.Copy(writer3, strings.NewReader("this is the third value\n"))
 	require.NoError(t, writer3.Close())
 	require.NoError(t, err)
-	length, err = r.Len()
+	length, err = r.Len(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, 3, length)
 
 	// Remove oldest
-	cont, err := r.eviction()
+	cont, err := r.eviction(context.TODO())
 	require.NoError(t, err)
 	require.True(t, cont)
-	cont, err = r.eviction()
+	cont, err = r.eviction(context.TODO())
 	require.NoError(t, err)
 	require.False(t, cont)
 
-	length, err = r.Len()
+	length, err = r.Len(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, 2, length)
 
-	size, err = r.Size()
+	size, err = r.Size(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, int64(63), size)
 }

@@ -28,7 +28,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "users", sdk.Hash512(g.OAuthToken+g.username), url)
-		if _, err := g.Cache.Get(k, &user); err != nil {
+		if _, err := g.Cache.Get(ctx, k, &user); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
@@ -37,7 +37,7 @@ func (g *githubClient) User(ctx context.Context, username string) (User, error) 
 		}
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "users", sdk.Hash512(g.OAuthToken+g.username), url)
-		if err := g.Cache.SetWithTTL(k, user, 61*60); err != nil {
+		if err := g.Cache.SetWithTTL(ctx, k, user, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}

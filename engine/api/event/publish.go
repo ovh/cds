@@ -30,7 +30,7 @@ func publishEvent(ctx context.Context, e sdk.Event) error {
 		return nil
 	}
 
-	if err := store.Enqueue("events", e); err != nil {
+	if err := store.Enqueue(ctx, "events", e); err != nil {
 		return err
 	}
 	b, err := json.Marshal(e)

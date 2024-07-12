@@ -30,7 +30,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 		default:
 			// List all queues
 			keyListQueue := cache.Key(keyJobLogQueue, "*")
-			listKeys, err := s.Cache.Keys(keyListQueue)
+			listKeys, err := s.Cache.Keys(ctx, keyListQueue)
 			if err != nil {
 				err = sdk.WrapError(err, "unable to list jobs queues %s", keyListQueue)
 				ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -79,7 +79,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 
 	defer func() {
 		// Remove heartbeat
-		_ = s.Cache.Delete(cache.Key(keyJobHearbeat, queueIdentifier))
+		_ = s.Cache.Delete(ctx, cache.Key(keyJobHearbeat, queueIdentifier))
 	}()
 
 	tick := time.NewTicker(5 * time.Second)
@@ -89,7 +89,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-tick.C:
-			b, err := s.Cache.Exist(jobLogsQueueKey)
+			b, err := s.Cache.Exist(ctx, jobLogsQueueKey)
 			if err != nil {
 				err = sdk.WrapError(err, "unable to check if queue still exist")
 				ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -102,7 +102,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 			}
 			// heartbeat
 			heartbeatKey := cache.Key(keyJobHearbeat, queueIdentifier)
-			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
+			if err := s.Cache.SetWithTTL(ctx, heartbeatKey, true, 30); err != nil {
 				err = sdk.WrapError(err, "unable to heartbeat %s", heartbeatKey)
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, err.Error())
@@ -151,18 +151,18 @@ func (s *Service) canDequeue(ctx context.Context, jobID string) (string, error) 
 
 	// Take a lock
 	lockKey := cache.Key(keyJobLock, jobID)
-	b, err := s.Cache.Lock(lockKey, 5*time.Second, 0, 1)
+	b, err := s.Cache.Lock(ctx, lockKey, 5*time.Second, 0, 1)
 	if err != nil {
 		return "", err
 	}
 	defer func() {
-		_ = s.Cache.Unlock(lockKey)
+		_ = s.Cache.Unlock(ctx, lockKey)
 	}()
 	if !b {
 		return "", nil
 	}
 
-	exist, err := s.Cache.Exist(heartbeatKey)
+	exist, err := s.Cache.Exist(ctx, heartbeatKey)
 	if err != nil {
 		return "", err
 	}
@@ -173,7 +173,7 @@ func (s *Service) canDequeue(ctx context.Context, jobID string) (string, error) 
 
 	//hearbeat
 	log.Info(ctx, "heartbeat: take job %s", jobQueueKey)
-	if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
+	if err := s.Cache.SetWithTTL(ctx, heartbeatKey, true, 30); err != nil {
 		return "", err
 	}
 	return jobQueueKey, nil

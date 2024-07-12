@@ -1147,7 +1147,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 	assert.Equal(t, 403, rec.Code)
 
 	// add check
-	require.NoError(t, api.Cache.SetWithTTL(workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name), true, 60))
+	require.NoError(t, api.Cache.SetWithTTL(context.TODO(), workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name), true, 60))
 
 	//Do the request
 	reqOK := assets.NewJWTAuthentifiedRequest(t, jwtCDN, "POST", uri, addResultRequest)
@@ -1155,7 +1155,7 @@ func Test_workflowRunResultsAdd(t *testing.T) {
 	router.Mux.ServeHTTP(recOK, reqOK)
 	assert.Equal(t, 204, recOK.Code)
 
-	b, err := api.Cache.Exist(workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name))
+	b, err := api.Cache.Exist(context.TODO(), workflow.GetRunResultKey(wrCreate.ID, sdk.WorkflowRunResultTypeArtifact, artiData.Name))
 	require.NoError(t, err)
 	require.False(t, b)
 

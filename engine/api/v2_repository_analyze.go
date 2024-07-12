@@ -362,7 +362,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	ctx = context.WithValue(ctx, cdslog.AnalyzeID, analysisID)
 
 	lockKey := cache.Key("api:analyzeRepository", analysisID)
-	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
+	b, err := api.Cache.Lock(ctx, lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
 		return err
 	}
@@ -371,7 +371,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 	defer func() {
-		_ = api.Cache.Unlock(lockKey)
+		_ = api.Cache.Unlock(ctx, lockKey)
 	}()
 
 	analysis, err := repository.LoadRepositoryAnalysisById(ctx, api.mustDB(), projectRepoID, analysisID)
@@ -403,7 +403,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 
 	// Check if there is an analysis on the current repository
 	lockKeyRepo := cache.Key("api:repository:analyzeRepository", repo.ID)
-	bRepoLock, err := api.Cache.Lock(lockKeyRepo, 5*time.Minute, 0, 1)
+	bRepoLock, err := api.Cache.Lock(ctx, lockKeyRepo, 5*time.Minute, 0, 1)
 	if err != nil {
 		return err
 	}
@@ -412,7 +412,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return nil
 	}
 	defer func() {
-		_ = api.Cache.Unlock(lockKeyRepo)
+		_ = api.Cache.Unlock(ctx, lockKeyRepo)
 	}()
 
 	var userDB sdk.AuthentifiedUser

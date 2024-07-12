@@ -28,7 +28,7 @@ func (g *githubClient) ListContent(ctx context.Context, repo string, commit, dir
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "content", sdk.Hash512(g.OAuthToken+g.username), url)
-		if _, err := g.Cache.Get(k, &c); err != nil {
+		if _, err := g.Cache.Get(ctx, k, &c); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
@@ -38,7 +38,7 @@ func (g *githubClient) ListContent(ctx context.Context, repo string, commit, dir
 		}
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "content", sdk.Hash512(g.OAuthToken+g.username), url)
-		if err := g.Cache.SetWithTTL(k, c, 61*60); err != nil {
+		if err := g.Cache.SetWithTTL(ctx, k, c, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}
@@ -66,7 +66,7 @@ func (g *githubClient) GetContent(ctx context.Context, repo string, commit, file
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
 		k := cache.Key("vcs", "github", "content", sdk.Hash512(g.OAuthToken+g.username), url)
-		if _, err := g.Cache.Get(k, &c); err != nil {
+		if _, err := g.Cache.Get(ctx, k, &c); err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", k, err)
 		}
 	} else {
@@ -76,7 +76,7 @@ func (g *githubClient) GetContent(ctx context.Context, repo string, commit, file
 		}
 		//Put the body on cache for one hour and one minute
 		k := cache.Key("vcs", "github", "content", sdk.Hash512(g.OAuthToken+g.username), url)
-		if err := g.Cache.SetWithTTL(k, c, 61*60); err != nil {
+		if err := g.Cache.SetWithTTL(ctx, k, c, 61*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", k, err)
 		}
 	}

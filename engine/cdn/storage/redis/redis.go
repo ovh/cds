@@ -37,14 +37,14 @@ func (s *Redis) GetDriverName() string {
 	return driverName
 }
 
-func (s *Redis) Init(_ context.Context, cfg interface{}, bufferType storage.CDNBufferType) error {
+func (s *Redis) Init(ctx context.Context, cfg interface{}, bufferType storage.CDNBufferType) error {
 	config, is := cfg.(*sdk.RedisConf)
 	if !is {
 		return sdk.WithStack(fmt.Errorf("invalid configuration: %T", cfg))
 	}
 	s.config = *config
 	var err error
-	s.store, err = cache.New(s.config, 60)
+	s.store, err = cache.New(ctx, s.config, 60)
 	if err != nil {
 		return err
 	}
@@ -56,18 +56,18 @@ func (s *Redis) BufferType() storage.CDNBufferType {
 	return s.bufferType
 }
 
-func (s *Redis) Keys() ([]string, error) {
-	return s.store.Keys(cache.Key(keyBuffer, "*"))
+func (s *Redis) Keys(ctx context.Context) ([]string, error) {
+	return s.store.Keys(ctx, cache.Key(keyBuffer, "*"))
 }
 
-func (s *Redis) ItemExists(_ context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
-	size, _ := s.store.SetCard(cache.Key(keyBuffer, i.ID))
+func (s *Redis) ItemExists(ctx context.Context, _ *gorpmapper.Mapper, _ gorp.SqlExecutor, i sdk.CDNItem) (bool, error) {
+	size, _ := s.store.SetCard(ctx, cache.Key(keyBuffer, i.ID))
 	return size > 0, nil
 }
 
-func (s *Redis) Size(i sdk.CDNItemUnit) (int64, error) {
+func (s *Redis) Size(ctx context.Context, i sdk.CDNItemUnit) (int64, error) {
 	k := cache.Key(keyBuffer, i.ItemID)
-	return s.store.Size(k)
+	return s.store.Size(ctx, k)
 }
 
 func (s *Redis) Add(i sdk.CDNItemUnit, score uint, since uint, value string) error {
@@ -88,8 +88,8 @@ func (s *Redis) Copy(ctx context.Context, srcItemID, destItemID string) error {
 	return nil
 }
 
-func (s *Redis) Card(i sdk.CDNItemUnit) (int, error) {
-	return s.store.SetCard(cache.Key(keyBuffer, i.ItemID))
+func (s *Redis) Card(ctx context.Context, i sdk.CDNItemUnit) (int, error) {
+	return s.store.SetCard(ctx, cache.Key(keyBuffer, i.ItemID))
 }
 
 // NewReader instanciate a reader that it able to iterate over Redis storage unit
@@ -123,8 +123,8 @@ func (s *Redis) Read(_ sdk.CDNItemUnit, r io.Reader, w io.Writer) error {
 	return sdk.WithStack(err)
 }
 
-func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
-	if err := s.store.Ping(); err != nil {
+func (s *Redis) Status(ctx context.Context) []sdk.MonitoringStatusLine {
+	if err := s.store.Ping(ctx); err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: fmt.Sprintf("storage/%s/ping", s.Name()),
 			Value:     "connect KO",
@@ -132,7 +132,7 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		}}
 	}
 
-	size, err := s.store.DBSize()
+	size, err := s.store.DBSize(ctx)
 	if err != nil {
 		return []sdk.MonitoringStatusLine{{
 			Component: fmt.Sprintf("storage/%s/size", s.Name()),
@@ -154,8 +154,8 @@ func (s *Redis) Status(_ context.Context) []sdk.MonitoringStatusLine {
 		}}
 }
 
-func (s *Redis) Remove(_ context.Context, i sdk.CDNItemUnit) error {
-	return sdk.WithStack(s.store.Delete(cache.Key(keyBuffer, i.ItemID)))
+func (s *Redis) Remove(ctx context.Context, i sdk.CDNItemUnit) error {
+	return sdk.WithStack(s.store.Delete(ctx, cache.Key(keyBuffer, i.ItemID)))
 }
 
 func (s *Redis) ResyncWithDatabase(ctx context.Context, _ gorp.SqlExecutor, _ sdk.CDNItemType, _ bool) {

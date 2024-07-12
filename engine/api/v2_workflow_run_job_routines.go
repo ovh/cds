@@ -131,7 +131,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 
 	_, next = telemetry.Span(ctx, "reEnqueueScheduledJob.lock")
 	lockKey := cache.Key(jobLockKey, runJobID)
-	b, err := store.Lock(lockKey, 1*time.Minute, 0, 1)
+	b, err := store.Lock(ctx, lockKey, 1*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
@@ -142,7 +142,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 	}
 	next()
 	defer func() {
-		_ = store.Unlock(lockKey)
+		_ = store.Unlock(ctx, lockKey)
 	}()
 
 	runJob, err := workflow_v2.LoadRunJobByID(ctx, db, runJobID)
@@ -189,7 +189,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 
 	_, next = telemetry.Span(ctx, "stopDeadJob.lock")
 	lockKey := cache.Key(jobLockKey, runJobID)
-	b, err := store.Lock(lockKey, 1*time.Minute, 0, 1)
+	b, err := store.Lock(ctx, lockKey, 1*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
@@ -200,7 +200,7 @@ func (api *API) stopDeadJob(ctx context.Context, store cache.Store, db *gorp.DbM
 	}
 	next()
 	defer func() {
-		_ = store.Unlock(lockKey)
+		_ = store.Unlock(ctx, lockKey)
 	}()
 
 	runJob, err := workflow_v2.LoadRunJobByID(ctx, db, runJobID)

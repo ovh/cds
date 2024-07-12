@@ -38,7 +38,7 @@ func TestGetItemsAllLogsLinesHandler(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cdntest.ClearItem(t, ctx, s.Mapper, db)
-	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
+	cdntest.ClearSyncRedisSet(context.TODO(), t, s.Cache, "local_storage")
 
 	s.Units = newRunningStorageUnits(t, s.Mapper, db.DbMap, ctx, s.Cache)
 
@@ -289,7 +289,7 @@ func TestGetItemLogsStreamHandler(t *testing.T) {
 
 	// Create cdn service with need storage and test item
 	s, db := newTestService(t)
-	require.NoError(t, s.initWebsocket())
+	require.NoError(t, s.initWebsocket(context.TODO()))
 	ts := httptest.NewServer(s.Router.Mux)
 
 	_, err := db.Exec("DELETE FROM storage_unit_item")

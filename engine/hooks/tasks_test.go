@@ -121,7 +121,7 @@ func Test_dequeueTaskExecutions_ScheduledTask(t *testing.T) {
 
 	// Create a new task
 	scheduledTask, err := s.nodeHookToTask(h)
-	require.NoError(t, s.Dao.SaveTask(scheduledTask))
+	require.NoError(t, s.Dao.SaveTask(context.TODO(), scheduledTask))
 	require.NoError(t, s.startTasks(ctx))
 
 	// Check that the task has been correctly saved
@@ -202,19 +202,19 @@ func Test_synchronizeTasks(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, tasks, 0)
 
-	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+	require.NoError(t, s.Dao.SaveTask(context.TODO(), &sdk.Task{
 		UUID: "1",
 		Type: TypeScheduler,
 	}))
-	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+	require.NoError(t, s.Dao.SaveTask(context.TODO(), &sdk.Task{
 		UUID: sdk.UUID(),
 		Type: TypeScheduler,
 	}))
-	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+	require.NoError(t, s.Dao.SaveTask(context.TODO(), &sdk.Task{
 		UUID: "2",
 		Type: TypeOutgoingWorkflow,
 	}))
-	require.NoError(t, s.Dao.SaveTask(&sdk.Task{
+	require.NoError(t, s.Dao.SaveTask(context.TODO(), &sdk.Task{
 		UUID: sdk.UUID(),
 		Type: TypeOutgoingWorkflow,
 	}))

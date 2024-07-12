@@ -36,7 +36,7 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 	url := "/user"
 	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", sdk.Hash512(client.username), url)
 
-	find, err := client.Cache.Get(cacheKey, &user)
+	find, err := client.Cache.Get(ctx, cacheKey, &user)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
@@ -53,7 +53,7 @@ func (client *bitbucketcloudClient) CurrentUser(ctx context.Context) (User, erro
 			return user, sdk.WithStack(err)
 		}
 		//Put the body on cache for 1 hour
-		if err := client.Cache.SetWithTTL(cacheKey, user, 60*60); err != nil {
+		if err := client.Cache.SetWithTTL(ctx, cacheKey, user, 60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}
@@ -68,7 +68,7 @@ func (client *bitbucketcloudClient) Workspaces(ctx context.Context) (Workspaces,
 
 	cacheKey := cache.Key("vcs", "bitbucketcloud", "users", "workspaces", sdk.Hash512(client.username), url)
 
-	find, err := client.Cache.Get(cacheKey, &workspaces)
+	find, err := client.Cache.Get(ctx, cacheKey, &workspaces)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
@@ -85,7 +85,7 @@ func (client *bitbucketcloudClient) Workspaces(ctx context.Context) (Workspaces,
 			return workspaces, sdk.WithStack(err)
 		}
 		// Put the body on cache for 1 hour
-		if err := client.Cache.SetWithTTL(cacheKey, workspaces, 60*60); err != nil {
+		if err := client.Cache.SetWithTTL(ctx, cacheKey, workspaces, 60*60); err != nil {
 			log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 		}
 	}

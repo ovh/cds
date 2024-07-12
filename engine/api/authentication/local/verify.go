@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"time"
 
 	"github.com/ovh/cds/engine/api/authentication"
@@ -18,7 +19,7 @@ type verifyLocalRegistrationToken struct {
 }
 
 // NewRegistrationToken returns a new token for given registration id.
-func NewRegistrationToken(store cache.Store, regID string, isFirstConnection bool) (string, error) {
+func NewRegistrationToken(ctx context.Context, store cache.Store, regID string, isFirstConnection bool) (string, error) {
 	payload := verifyLocalRegistrationToken{
 		RegistrationID:    regID,
 		Nonce:             sdk.UUID(),
@@ -26,7 +27,7 @@ func NewRegistrationToken(store cache.Store, regID string, isFirstConnection boo
 	}
 
 	cacheKey := cache.Key("authentication:registration:verify", payload.RegistrationID)
-	if err := store.SetWithDuration(cacheKey, payload.Nonce, verifyLocalRegistrationTokenDuration); err != nil {
+	if err := store.SetWithDuration(ctx, cacheKey, payload.Nonce, verifyLocalRegistrationTokenDuration); err != nil {
 		return "", err
 	}
 
@@ -34,7 +35,7 @@ func NewRegistrationToken(store cache.Store, regID string, isFirstConnection boo
 }
 
 // CheckRegistrationToken checks that the given signature is a valid registration token.
-func CheckRegistrationToken(store cache.Store, signature string) (string, error) {
+func CheckRegistrationToken(ctx context.Context, store cache.Store, signature string) (string, error) {
 	var payload verifyLocalRegistrationToken
 	if err := authentication.VerifyJWS(signature, &payload); err != nil {
 		return "", err
@@ -42,7 +43,7 @@ func CheckRegistrationToken(store cache.Store, signature string) (string, error)
 
 	cacheKey := cache.Key("authentication:registration:verify", payload.RegistrationID)
 	var nonce string
-	if ok, _ := store.Get(cacheKey, &nonce); !ok || nonce != payload.Nonce {
+	if ok, _ := store.Get(ctx, cacheKey, &nonce); !ok || nonce != payload.Nonce {
 		return "", sdk.NewErrorFrom(sdk.ErrUnauthorized, "invalid given registration token")
 	}
 
@@ -50,7 +51,7 @@ func CheckRegistrationToken(store cache.Store, signature string) (string, error)
 }
 
 // CleanVerifyConsumerToken deletes a consumer verify token from cache if exists.
-func CleanVerifyConsumerToken(store cache.Store, consumerID string) {
+func CleanVerifyConsumerToken(ctx context.Context, store cache.Store, consumerID string) {
 	cacheKey := cache.Key("authentication:registration:verify", consumerID)
-	_ = store.Delete(cacheKey)
+	_ = store.Delete(ctx, cacheKey)
 }

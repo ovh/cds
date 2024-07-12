@@ -1000,7 +1000,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 	// We lock the repository in redis
 	if wf.FromRepository != "" {
 		cackeKey := cache.Key("api", "initworkflow", "repository", wf.FromRepository)
-		ok, err := api.Cache.Lock(cackeKey, time.Minute, 100, 5)
+		ok, err := api.Cache.Lock(ctx, cackeKey, time.Minute, 100, 5)
 		if err != nil {
 			r := failInitWorkflowRun(ctx, api.mustDB(), wfRun, sdk.WrapError(err, "unable lock repository in cache"))
 			report.Merge(ctx, r)
@@ -1009,7 +1009,7 @@ func (api *API) initWorkflowRun(ctx context.Context, projKey string, wf *sdk.Wor
 		if !ok {
 			return nil
 		}
-		defer api.Cache.Unlock(cackeKey) // nolint
+		defer api.Cache.Unlock(ctx, cackeKey) // nolint
 	}
 
 	defer func() {

@@ -264,7 +264,7 @@ func Test_Purge_DeleteArtifactsFromRepositoryManager(t *testing.T) {
 		return mockArtifactory, nil
 	}
 
-	api.Cache.SetWithTTL(workflow.GetRunResultKey(wr.ID, sdk.WorkflowRunResultTypeArtifactManager, data.Name), true, 60)
+	api.Cache.SetWithTTL(context.TODO(), workflow.GetRunResultKey(wr.ID, sdk.WorkflowRunResultTypeArtifactManager, data.Name), true, 60)
 	require.NoError(t,
 		workflow.AddResult(ctx, db.DbMap, api.Cache, wr,
 			&sdk.WorkflowRunResult{

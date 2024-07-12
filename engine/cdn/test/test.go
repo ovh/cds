@@ -2,8 +2,9 @@ package test
 
 import (
 	"context"
-	"github.com/ovh/cds/engine/cache"
 	"testing"
+
+	"github.com/ovh/cds/engine/cache"
 
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -11,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ClearSyncRedisSet(t *testing.T, store cache.Store, name string) {
-	require.NoError(t, store.Delete(cache.Key(storage.KeyBackendSync, name)))
+func ClearSyncRedisSet(ctx context.Context, t *testing.T, store cache.Store, name string) {
+	require.NoError(t, store.Delete(ctx, cache.Key(storage.KeyBackendSync, name)))
 }
 
 func ClearItem(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx) {

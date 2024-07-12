@@ -88,7 +88,7 @@ func (s *Service) removeSchedulersAndNextExecution(ctx context.Context, vcs, rep
 	}
 	for _, k := range keys {
 		var h sdk.V2WorkflowHook
-		found, err := s.Dao.store.Get(k, &h)
+		found, err := s.Dao.store.Get(ctx, k, &h)
 		if err != nil {
 			return err
 		}
@@ -140,14 +140,14 @@ func (s *Service) schedulerExecutionRoutine(ctx context.Context) {
 func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e sdk.SchedulerExecution) error {
 	// Lock execution
 	lockKey := cache.Key(schedulerExecutionLockRootKey, e.SchedulerDef.ID)
-	b, err := s.Dao.store.Lock(lockKey, 20*time.Second, 10, 1)
+	b, err := s.Dao.store.Lock(ctx, lockKey, 20*time.Second, 10, 1)
 	if err != nil {
 		return err
 	}
 	if !b {
 		return nil
 	}
-	defer s.Dao.store.Unlock(lockKey)
+	defer s.Dao.store.Unlock(ctx, lockKey)
 
 	// Reload execution to check execution time
 	updatedExecution, err := s.Dao.GetSchedulerExecution(ctx, e.SchedulerDef.ID)
@@ -250,7 +250,7 @@ func (s *Service) listSchedulersByWorkflow(ctx context.Context, vcs, repo, workf
 	schedulers := make([]sdk.V2WorkflowHook, 0, len(keys))
 	for _, k := range keys {
 		var h sdk.V2WorkflowHook
-		found, err := s.Dao.store.Get(k, &h)
+		found, err := s.Dao.store.Get(ctx, k, &h)
 		if err != nil {
 			return nil, err
 		}

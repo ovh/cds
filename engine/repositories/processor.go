@@ -30,7 +30,7 @@ func (s *Service) processor(ctx context.Context) error {
 						op.NbRetries++
 						log.Info(ctx, "repositories > processor > lock unavailable. retry")
 						time.Sleep(time.Duration(2*op.NbRetries) * time.Second)
-						if err := s.dao.pushOperation(op); err != nil {
+						if err := s.dao.pushOperation(ctx, op); err != nil {
 							log.Error(ctx, "repositories > processor > %v", err)
 						}
 					})
@@ -50,7 +50,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 	log.Debug(ctx, "processing > %v", op.UUID)
 
 	r := s.Repo(op)
-	if s.dao.lock(r.ID()) == errLockUnavailable {
+	if s.dao.lock(ctx, r.ID()) == errLockUnavailable {
 		return errLockUnavailable
 	}
 	defer func() {
@@ -58,7 +58,7 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		ttl := 3600 * 24 * s.Cfg.RepositoriesRetention
 		ttlTime := time.Now().Add(time.Duration(ttl) * time.Second)
 		log.Info(ctx, "%s protected until %s", r.ID(), ttlTime.String())
-		s.dao.store.SetWithTTL(cache.Key(lastAccessKey, r.ID()), ttlTime, ttl)
+		s.dao.store.SetWithTTL(ctx, cache.Key(lastAccessKey, r.ID()), ttlTime, ttl)
 	}()
 
 	switch {
@@ -116,5 +116,5 @@ func (s *Service) do(ctx context.Context, op sdk.Operation) error {
 		log.Error(ctx, "operation %s error %s", op.UUID, op.Error.Message)
 	}
 
-	return s.dao.saveOperation(&op)
+	return s.dao.saveOperation(ctx, &op)
 }

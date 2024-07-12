@@ -99,14 +99,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	_, next = telemetry.Span(ctx, "api.workflowRunV2Trigger.lock")
 	lockKey := cache.Key("api:workflow:engine", wrEnqueue.RunID)
-	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
+	b, err := api.Cache.Lock(ctx, lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
 	}
 	if !b {
 		log.Debug(ctx, "api.workflowRunV2Trigger> run %s is locked in cache", wrEnqueue.RunID)
-		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, wrEnqueue); err != nil {
+		if err := api.Cache.Enqueue(ctx, workflow_v2.WorkflowEngineKey, wrEnqueue); err != nil {
 			next()
 			return err
 		}
@@ -115,7 +115,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 	next()
 	defer func() {
-		_ = api.Cache.Unlock(lockKey)
+		_ = api.Cache.Unlock(ctx, lockKey)
 	}()
 
 	// Load run by id
@@ -1077,7 +1077,7 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 
 	_, next = telemetry.Span(ctx, "api.triggerBlockedWorkflowRun.lock")
 	lockKey := cache.Key("api:workflow:engine", wr.ID)
-	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
+	b, err := api.Cache.Lock(ctx, lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
@@ -1088,7 +1088,7 @@ func (api *API) triggerBlockedWorkflowRun(ctx context.Context, wr sdk.V2Workflow
 	}
 	next()
 	defer func() {
-		_ = api.Cache.Unlock(lockKey)
+		_ = api.Cache.Unlock(ctx, lockKey)
 	}()
 
 	log.Info(ctx, "triggerBlockedWorkflowRun: trigger workflow %s for run %d", wr.WorkflowName, wr.RunNumber)
@@ -1131,7 +1131,7 @@ func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, userID str
 	case api.workflowRunTriggerChan <- enqueueRequest:
 		log.Debug(ctx, "workflow run %s %d trigger in chan", workflowName, runNumber)
 	default:
-		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
+		if err := api.Cache.Enqueue(ctx, workflow_v2.WorkflowEngineKey, enqueueRequest); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
 		}
 	}

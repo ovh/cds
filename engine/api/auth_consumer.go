@@ -2,9 +2,10 @@ package api
 
 import (
 	"context"
-	builtindriver "github.com/ovh/cds/engine/api/driver/builtin"
 	"net/http"
 	"time"
+
+	builtindriver "github.com/ovh/cds/engine/api/driver/builtin"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
@@ -260,7 +261,7 @@ func (api *API) getSessionsByUserHandler() service.Handler {
 				ss[i].Current = true
 			}
 			if ss[i].MFA {
-				active, lastActivity, err := authentication.GetSessionActivity(api.Cache, ss[i].ID)
+				active, lastActivity, err := authentication.GetSessionActivity(ctx, api.Cache, ss[i].ID)
 				if err != nil {
 					log.Warn(ctx, "getSessionsByUserHandler> cannot get session activity for %s", ss[i].ID)
 					continue

@@ -69,7 +69,7 @@ func newTestService(t *testing.T) (*Service, error) {
 
 	//Init the cache
 	var err error
-	service.Cache, err = cache.New(service.Cfg.Cache.Redis, service.Cfg.Cache.TTL)
+	service.Cache, err = cache.New(context.TODO(), service.Cfg.Cache.Redis, service.Cfg.Cache.TTL)
 	if err != nil {
 		log.Error(ctx, "Unable to init cache (%s): %v", service.Cfg.Cache.Redis.Host, err)
 		return nil, err

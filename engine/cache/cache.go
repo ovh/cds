@@ -14,8 +14,8 @@ import (
 
 // PubSub represents a subscriber
 type PubSub interface {
-	Unsubscribe(channels ...string) error
-	GetMessage(c context.Context) (string, error)
+	Unsubscribe(ctx context.Context, channels ...string) error
+	GetMessage(ctx context.Context) (string, error)
 }
 
 // Key make a key as expected
@@ -25,15 +25,15 @@ func Key(args ...string) string {
 
 // Store is an interface
 type Store interface {
-	Get(key string, value interface{}) (bool, error)
-	Set(key string, value interface{}) error
-	SetWithTTL(key string, value interface{}, ttl int) error
-	SetWithDuration(key string, value interface{}, duration time.Duration) error
-	UpdateTTL(key string, ttl int) error
-	Delete(key string) error
-	DeleteAll(key string) error
-	Exist(key string) (bool, error)
-	Eval(expr string, args ...string) (string, error)
+	Get(ctx context.Context, key string, value interface{}) (bool, error)
+	Set(ctx context.Context, key string, value interface{}) error
+	SetWithTTL(ctx context.Context, key string, value interface{}, ttl int) error
+	SetWithDuration(ctx context.Context, key string, value interface{}, duration time.Duration) error
+	UpdateTTL(ctx context.Context, key string, ttl int) error
+	Delete(ctx context.Context, key string) error
+	DeleteAll(ctx context.Context, key string) error
+	Exist(ctx context.Context, key string) (bool, error)
+	Eval(ctx context.Context, expr string, args ...string) (string, error)
 	HealthStore
 	LockStore
 	QueueStore
@@ -43,40 +43,40 @@ type Store interface {
 }
 
 type HealthStore interface {
-	Ping() error
-	DBSize() (int64, error)
-	Size(key string) (int64, error)
-	Keys(pattern string) ([]string, error)
+	Ping(ctx context.Context) error
+	DBSize(ctx context.Context) (int64, error)
+	Size(ctx context.Context, key string) (int64, error)
+	Keys(ctx context.Context, pattern string) ([]string, error)
 }
 
 type QueueStore interface {
-	Enqueue(queueName string, value interface{}) error
-	DequeueWithContext(c context.Context, queueName string, waitDuration time.Duration, value interface{}) error
-	DequeueJSONRawMessagesWithContext(c context.Context, queueName string, waitDuration time.Duration, maxElements int) ([]json.RawMessage, error)
-	QueueLen(queueName string) (int, error)
-	RemoveFromQueue(queueName string, memberKey string) error
+	Enqueue(ctx context.Context, queueName string, value interface{}) error
+	DequeueWithContext(ctx context.Context, queueName string, waitDuration time.Duration, value interface{}) error
+	DequeueJSONRawMessagesWithContext(ctx context.Context, queueName string, waitDuration time.Duration, maxElements int) ([]json.RawMessage, error)
+	QueueLen(ctx context.Context, queueName string) (int, error)
+	RemoveFromQueue(ctx context.Context, queueName string, memberKey string) error
 }
 
 type SetStore interface {
-	SetAdd(rootKey string, memberKey string, member interface{}) error
-	SetRemove(rootKey string, memberKey string, member interface{}) error
-	SetCard(key string) (int, error)
+	SetAdd(ctx context.Context, rootKey string, memberKey string, member interface{}) error
+	SetRemove(ctx context.Context, rootKey string, memberKey string, member interface{}) error
+	SetCard(ctx context.Context, key string) (int, error)
 	SetScan(ctx context.Context, key string, members ...interface{}) error
-	SetSearch(key, pattern string) ([]string, error)
+	SetSearch(ctx context.Context, key, pattern string) ([]string, error)
 }
 
 type PubSubStore interface {
 	Publish(ctx context.Context, queueName string, value interface{}) error
-	Subscribe(queueName string) (PubSub, error)
+	Subscribe(ctx context.Context, queueName string) (PubSub, error)
 }
 
 type LockStore interface {
-	Lock(key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) (bool, error)
-	Unlock(key string) error
+	Lock(ctx context.Context, key string, expiration time.Duration, retryWaitDurationMillisecond int, retryCount int) (bool, error)
+	Unlock(ctx context.Context, key string) error
 }
 
 type ScoredSetStore interface {
-	Delete(key string) error
+	Delete(ctx context.Context, key string) error
 	ScoredSetAdd(ctx context.Context, key string, value interface{}, score float64) error
 	ScoredSetAppend(ctx context.Context, key string, value interface{}) error
 	ScoredSetScan(ctx context.Context, key string, from, to float64, dest interface{}) error
@@ -85,9 +85,9 @@ type ScoredSetStore interface {
 	ScoredSetRange(ctx context.Context, key string, from, to int64, dest interface{}) error
 	ScoredSetRevRange(_ context.Context, key string, offset int64, limit int64, dest interface{}) error
 	ScoredSetRem(ctx context.Context, key string, members ...string) error
-	ScoredSetGetScore(key string, member interface{}) (float64, error)
-	SetCard(key string) (int, error)
-	Eval(expr string, args ...string) (string, error)
+	ScoredSetGetScore(ctx context.Context, key string, member interface{}) (float64, error)
+	SetCard(ctx context.Context, key string) (int, error)
+	Eval(ctx context.Context, expr string, args ...string) (string, error)
 	HealthStore
 }
 
@@ -97,8 +97,8 @@ type SetValueWithScore struct {
 }
 
 // New init a cache
-func New(redisConf sdk.RedisConf, TTL int) (Store, error) {
-	return NewRedisStore(redisConf, TTL)
+func New(ctx context.Context, redisConf sdk.RedisConf, TTL int) (Store, error) {
+	return NewRedisStore(ctx, redisConf, TTL)
 }
 
 // NewWriteCloser returns a write closer
@@ -118,7 +118,7 @@ type writerCloser struct {
 }
 
 func (w *writerCloser) Close() error {
-	if err := w.store.SetWithTTL(w.key, w.String(), w.ttl); err != nil {
+	if err := w.store.SetWithTTL(context.Background(), w.key, w.String(), w.ttl); err != nil {
 		log.Error(context.TODO(), "cannot SetWithTTL: %s: %v", w.key, err)
 	}
 	return nil

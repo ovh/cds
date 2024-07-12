@@ -315,7 +315,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						log.Info(ctx, "processItem: %s", id)
 						for {
 							lockKey := cache.Key("cdn", "backend", "lock", "sync", s.Name())
-							if b, err := r.cache.Exist(lockKey); err != nil || b {
+							if b, err := r.cache.Exist(ctx, lockKey); err != nil || b {
 								log.Info(ctx, "RunningStorageUnits.Start.%s > waiting for processItem %s: %v", s.Name(), id, err)
 								time.Sleep(30 * time.Second)
 								continue
@@ -450,7 +450,7 @@ func (r *RunningStorageUnits) SyncBuffer(ctx context.Context) {
 	keysDeleted := 0
 	bu := r.LogsBuffer()
 
-	keys, err := bu.Keys()
+	keys, err := bu.Keys(ctx)
 	if err != nil {
 		log.Error(ctx, "[SyncBuffer] unable to list keys: %v", err)
 		return

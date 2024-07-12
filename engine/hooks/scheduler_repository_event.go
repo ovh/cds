@@ -20,7 +20,7 @@ func (s *Service) dequeueRepositoryEvent(ctx context.Context) {
 			log.ErrorWithStackTrace(ctx, ctx.Err())
 			return
 		}
-		size, err := s.Dao.RepositoryEventQueueLen()
+		size, err := s.Dao.RepositoryEventQueueLen(ctx)
 		if err != nil {
 			log.Error(ctx, "dequeueRepositoryEvent > Unable to get queueLen: %v", err)
 			continue
@@ -64,7 +64,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 
 	// Load the event
 	var hre sdk.HookRepositoryEvent
-	find, err := s.Cache.Get(eventKey, &hre)
+	find, err := s.Cache.Get(ctx, eventKey, &hre)
 	if err != nil {
 		log.Error(ctx, "dequeueRepositoryEvent> cannot get repository event from cache %s: %v", eventKey, err)
 	}
@@ -80,11 +80,11 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		telemetry.Tag(telemetry.TagRepository, hre.RepositoryName),
 		telemetry.Tag(telemetry.TagEventID, hre.UUID))
 
-	b, err := s.Dao.LockRepositoryEvent(hre.VCSServerName, hre.RepositoryName, hre.UUID)
+	b, err := s.Dao.LockRepositoryEvent(ctx, hre.VCSServerName, hre.RepositoryName, hre.UUID)
 	if err != nil {
 		return sdk.WrapError(err, "unable to lock hook event %s", hre.GetFullName())
 	}
-	defer s.Dao.UnlockRepositoryEvent(hre.VCSServerName, hre.RepositoryName, hre.UUID)
+	defer s.Dao.UnlockRepositoryEvent(ctx, hre.VCSServerName, hre.RepositoryName, hre.UUID)
 
 	if !b {
 		// reenqueue
@@ -93,7 +93,7 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 		}
 	}
 
-	find, err = s.Cache.Get(eventKey, &hre)
+	find, err = s.Cache.Get(ctx, eventKey, &hre)
 	if err != nil {
 		log.Error(ctx, "dequeueRepositoryEvent> cannot get repository event from cache %s: %v", eventKey, err)
 	}

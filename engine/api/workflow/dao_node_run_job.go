@@ -394,7 +394,7 @@ func keyBookJob(id int64) string {
 func getHatcheryInfo(ctx context.Context, store cache.Store, j *JobRun) {
 	h := sdk.Service{}
 	k := keyBookJob(j.ID)
-	find, err := store.Get(k, &h)
+	find, err := store.Get(ctx, k, &h)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", k, err)
 	}

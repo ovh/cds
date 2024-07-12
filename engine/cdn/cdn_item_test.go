@@ -33,7 +33,7 @@ func TestGetItemValue(t *testing.T) {
 	t.Cleanup(cancel)
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
-	cdntest.ClearSyncRedisSet(t, cache, "local_storage")
+	cdntest.ClearSyncRedisSet(context.TODO(), t, cache, "local_storage")
 
 	// Create cdn service
 	s := Service{
@@ -50,9 +50,9 @@ func TestGetItemValue(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
+	s.LogCache, err = lru.NewRedisLRU(context.TODO(), db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
-	require.NoError(t, s.LogCache.Clear())
+	require.NoError(t, s.LogCache.Clear(context.TODO()))
 
 	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),
@@ -114,7 +114,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "Line 3\nLine 4\nLine 5\nLine 6\nLine 7\n", buf.String())
-	n, err := s.LogCache.Len()
+	n, err := s.LogCache.Len(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, 0, n)
 
@@ -141,7 +141,7 @@ func TestGetItemValue(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "Line 3\nLine 4\nLine 5\n", buf2.String())
-	n, err = s.LogCache.Len()
+	n, err = s.LogCache.Len(context.TODO())
 	require.NoError(t, err)
 	require.Equal(t, 1, n)
 
@@ -209,9 +209,9 @@ func TestGetItemValue_ThousandLines(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
+	s.LogCache, err = lru.NewRedisLRU(context.TODO(), db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
-	require.NoError(t, s.LogCache.Clear())
+	require.NoError(t, s.LogCache.Clear(context.TODO()))
 
 	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),
@@ -316,9 +316,9 @@ func TestGetItemValue_Reverse(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
+	s.LogCache, err = lru.NewRedisLRU(context.TODO(), db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
-	require.NoError(t, s.LogCache.Clear())
+	require.NoError(t, s.LogCache.Clear(context.TODO()))
 
 	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),
@@ -426,9 +426,9 @@ func TestGetItemValue_ThousandLinesReverse(t *testing.T) {
 	cdnUnits := newRunningStorageUnits(t, m, db.DbMap, ctx, cache)
 	s.Units = cdnUnits
 	var err error
-	s.LogCache, err = lru.NewRedisLRU(db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
+	s.LogCache, err = lru.NewRedisLRU(context.TODO(), db.DbMap, 1000, sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0})
 	require.NoError(t, err)
-	require.NoError(t, s.LogCache.Clear())
+	require.NoError(t, s.LogCache.Clear(context.TODO()))
 
 	apiRef := &sdk.CDNLogAPIRef{
 		ProjectKey:     sdk.RandomString(10),

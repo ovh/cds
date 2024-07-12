@@ -139,13 +139,13 @@ func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.W
 	switch runResult.Type {
 	case sdk.WorkflowRunResultTypeArtifact:
 		var err error
-		cacheKey, err = verifyAddResultArtifact(store, runResult)
+		cacheKey, err = verifyAddResultArtifact(ctx, store, runResult)
 		if err != nil {
 			return err
 		}
 	case sdk.WorkflowRunResultTypeCoverage:
 		var err error
-		cacheKey, err = verifyAddResultCoverage(store, runResult)
+		cacheKey, err = verifyAddResultCoverage(ctx, store, runResult)
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.W
 		}
 	case sdk.WorkflowRunResultTypeStaticFile:
 		var err error
-		cacheKey, err = verifyAddResultStaticFile(store, runResult)
+		cacheKey, err = verifyAddResultStaticFile(ctx, store, runResult)
 		if err != nil {
 			return err
 		}
@@ -177,7 +177,7 @@ func AddResult(ctx context.Context, db *gorp.DbMap, store cache.Store, wr *sdk.W
 	if err := tx.Commit(); err != nil {
 		return err
 	}
-	return sdk.WithStack(store.Delete(cacheKey))
+	return sdk.WithStack(store.Delete(ctx, cacheKey))
 }
 
 // Check validity of the request + complete runResult with md5,size,type
@@ -294,7 +294,7 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	}
 
 	cacheKey := GetRunResultKey(newRunResult.WorkflowRunID, newRunResult.Type, artNewResult.Name)
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	if err != nil {
 		return cacheKey, err
 	}
@@ -304,7 +304,7 @@ func verifyAddResultArtifactManager(ctx context.Context, db gorp.SqlExecutor, st
 	return cacheKey, nil
 }
 
-func verifyAddResultCoverage(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
+func verifyAddResultCoverage(ctx context.Context, store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
 	coverageRunResult, err := runResult.GetCoverage()
 	if err != nil {
 		return "", err
@@ -314,7 +314,7 @@ func verifyAddResultCoverage(store cache.Store, runResult *sdk.WorkflowRunResult
 	}
 
 	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, coverageRunResult.Name)
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	if err != nil {
 		return cacheKey, err
 	}
@@ -324,7 +324,7 @@ func verifyAddResultCoverage(store cache.Store, runResult *sdk.WorkflowRunResult
 	return cacheKey, nil
 }
 
-func verifyAddResultArtifact(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
+func verifyAddResultArtifact(ctx context.Context, store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
 	artifactRunResult, err := runResult.GetArtifact()
 	if err != nil {
 		return "", err
@@ -334,7 +334,7 @@ func verifyAddResultArtifact(store cache.Store, runResult *sdk.WorkflowRunResult
 	}
 
 	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, artifactRunResult.Name)
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	if err != nil {
 		return cacheKey, err
 	}
@@ -344,7 +344,7 @@ func verifyAddResultArtifact(store cache.Store, runResult *sdk.WorkflowRunResult
 	return cacheKey, nil
 }
 
-func verifyAddResultStaticFile(store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
+func verifyAddResultStaticFile(ctx context.Context, store cache.Store, runResult *sdk.WorkflowRunResult) (string, error) {
 	staticFileRunResult, err := runResult.GetStaticFile()
 	if err != nil {
 		return "", err
@@ -354,7 +354,7 @@ func verifyAddResultStaticFile(store cache.Store, runResult *sdk.WorkflowRunResu
 	}
 
 	cacheKey := GetRunResultKey(runResult.WorkflowRunID, runResult.Type, staticFileRunResult.Name)
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	if err != nil {
 		return cacheKey, err
 	}
@@ -440,7 +440,7 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 				}
 				for _, id := range ids {
 					lockKey := cache.Key("api:resyncWorkflowRunResults", fmt.Sprintf("%d", id))
-					b, err := store.Lock(lockKey, 5*time.Minute, 0, 1)
+					b, err := store.Lock(ctx, lockKey, 5*time.Minute, 0, 1)
 					if err != nil {
 						log.ErrorWithStackTrace(ctx, err)
 						continue
@@ -452,22 +452,22 @@ func ResyncWorkflowRunResultsRoutine(ctx context.Context, DBFunc func() *gorp.Db
 					tx, err := DBFunc().Begin()
 					if err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
-						_ = store.Unlock(lockKey)
+						_ = store.Unlock(ctx, lockKey)
 						continue
 					}
 					if err := SyncRunResultArtifactManagerByRunID(ctx, tx, id); err != nil {
 						log.ErrorWithStackTrace(ctx, err)
 						tx.Rollback()
-						_ = store.Unlock(lockKey)
+						_ = store.Unlock(ctx, lockKey)
 						continue
 					}
 					if err := tx.Commit(); err != nil {
 						log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
 						tx.Rollback()
-						_ = store.Unlock(lockKey)
+						_ = store.Unlock(ctx, lockKey)
 						continue
 					}
-					_ = store.Unlock(lockKey)
+					_ = store.Unlock(ctx, lockKey)
 				}
 			}
 		}

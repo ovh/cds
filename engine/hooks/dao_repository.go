@@ -28,7 +28,7 @@ func (d *dao) GetRepositoryMemberKey(vcsName, repoName string) string {
 func (d *dao) FindRepository(ctx context.Context, repoKey string) *sdk.HookRepository {
 	key := cache.Key(repositoryRootKey, repoKey)
 	hr := &sdk.HookRepository{}
-	find, err := d.store.Get(key, hr)
+	find, err := d.store.Get(ctx, key, hr)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, sdk.WrapError(err, "cannot get from cache %s", key))
 	}
@@ -46,7 +46,7 @@ func (d *dao) CreateRepository(ctx context.Context, vcsServerName, repoName stri
 		RepositoryName: repoName,
 		VCSServerName:  vcsServerName,
 	}
-	if err := d.store.SetAdd(repositoryRootKey, repoKey, hr); err != nil {
+	if err := d.store.SetAdd(ctx, repositoryRootKey, repoKey, hr); err != nil {
 		return nil, err
 	}
 	return hr, nil
@@ -54,12 +54,12 @@ func (d *dao) CreateRepository(ctx context.Context, vcsServerName, repoName stri
 
 func (d *dao) DeleteRepository(ctx context.Context, vcsserver, repo string) error {
 	key := cache.Key(repositoryRootKey, d.GetRepositoryMemberKey(vcsserver, repo))
-	return d.store.Delete(key)
+	return d.store.Delete(ctx, key)
 }
 
 func (d *dao) ListRepositories(ctx context.Context, filter string) ([]string, error) {
 	var filteredRepos []string
-	repos, err := d.store.Keys(cache.Key(repositoryRootKey, "*"))
+	repos, err := d.store.Keys(ctx, cache.Key(repositoryRootKey, "*"))
 	if err != nil {
 		return nil, err
 	}

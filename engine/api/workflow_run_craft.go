@@ -55,7 +55,7 @@ func (api *API) WorkflowRunCraft(ctx context.Context, tick time.Duration) {
 func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 	_, next := telemetry.Span(ctx, "api.workflowRunCraft.lock")
 	lockKey := cache.Key("api:workflowRunCraft", strconv.FormatInt(id, 10))
-	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
+	b, err := api.Cache.Lock(ctx, lockKey, 5*time.Minute, 0, 1)
 	if err != nil {
 		next()
 		return err
@@ -67,7 +67,7 @@ func (api *API) workflowRunCraft(ctx context.Context, id int64) error {
 	}
 	next()
 	defer func() {
-		_ = api.Cache.Unlock(lockKey)
+		_ = api.Cache.Unlock(ctx, lockKey)
 	}()
 
 	_, next = telemetry.Span(ctx, "api.workflowRunCraft.LoadRunByID")

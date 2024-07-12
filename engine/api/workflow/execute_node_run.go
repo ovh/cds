@@ -1137,7 +1137,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 
 	// Try to get the data from cache
 	cacheKey := cache.Key("api:workflow:getVCSInfos:", applicationVCSServer, applicationRepositoryFullname, vcsInfos.String())
-	find, err := store.Get(cacheKey, &vcsInfos)
+	find, err := store.Get(ctx, cacheKey, &vcsInfos)
 	if err != nil {
 		log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 	}
@@ -1224,7 +1224,7 @@ func getVCSInfos(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store cac
 		vcsInfos.Message = commit.Message
 	}
 
-	if err := store.Set(cacheKey, vcsInfos); err != nil {
+	if err := store.Set(ctx, cacheKey, vcsInfos); err != nil {
 		log.Error(ctx, "unable to cache set %v: %v", cacheKey, err)
 	}
 	return &vcsInfos, nil

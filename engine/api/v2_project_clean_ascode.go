@@ -78,14 +78,14 @@ func workerCleanProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	ctx = context.WithValue(ctx, "action_metadata_project_key", pKey)
 	log.Info(ctx, "Clean ascode entities on project %s", pKey)
 	lockKey := cache.Key("ascode", "clean", pKey)
-	locked, err := store.Lock(lockKey, 5*time.Minute, 500, 1)
+	locked, err := store.Lock(ctx, lockKey, 5*time.Minute, 500, 1)
 	if err != nil {
 		return err
 	}
 	if !locked {
 		return nil
 	}
-	defer store.Unlock(lockKey)
+	defer store.Unlock(ctx, lockKey)
 	if err := cleanAscodeProject(ctx, db, store, pKey, entityRetention); err != nil {
 		return err
 	}

@@ -17,7 +17,7 @@ import (
 
 const wbBrokerPubSubKey = "cdn_ws_broker_pubsub"
 
-func (s *Service) initWebsocket() error {
+func (s *Service) initWebsocket(ctx context.Context) error {
 	log.Info(s.Router.Background, "Initializing WS server")
 	s.WSServer = &websocketServer{
 		server:     websocket.NewServer(),
@@ -25,7 +25,7 @@ func (s *Service) initWebsocket() error {
 	}
 
 	log.Info(s.Router.Background, "Initializing WS events broker")
-	pubSub, err := s.Cache.Subscribe(wbBrokerPubSubKey)
+	pubSub, err := s.Cache.Subscribe(ctx, wbBrokerPubSubKey)
 	if err != nil {
 		return sdk.WrapError(err, "unable to subscribe to %s", wbBrokerPubSubKey)
 	}

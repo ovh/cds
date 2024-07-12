@@ -12,7 +12,7 @@ import (
 )
 
 func (a *API) listenMaintenance(c context.Context) error {
-	pubSub, err := a.Cache.Subscribe(sdk.MaintenanceQueueName)
+	pubSub, err := a.Cache.Subscribe(c, sdk.MaintenanceQueueName)
 	if err != nil {
 		return sdk.WrapError(err, "listenMaintenance> unable to subscribe to %s", sdk.MaintenanceQueueName)
 	}

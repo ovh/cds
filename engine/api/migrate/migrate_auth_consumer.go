@@ -13,7 +13,7 @@ import (
 )
 
 func MigrateConsumers(ctx context.Context, db *gorp.DbMap, c cache.Store) error {
-	b, err := c.Lock(cache.Key("migrate", "consumer", "lock"), 300*time.Second, -1, -1)
+	b, err := c.Lock(ctx, cache.Key("migrate", "consumer", "lock"), 300*time.Second, -1, -1)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, sdk.WithStack(err))
 		return err

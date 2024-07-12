@@ -33,7 +33,7 @@ var httpClient = cdsclient.NewHTTPClient(10*time.Second, false)
 
 // Enqueue event into cache
 func publish(ctx context.Context, store cache.Store, event interface{}) {
-	if err := store.Enqueue(eventQueue, event); err != nil {
+	if err := store.Enqueue(ctx, eventQueue, event); err != nil {
 		log.Error(ctx, "EventV2.publish: %s", err)
 		return
 	}

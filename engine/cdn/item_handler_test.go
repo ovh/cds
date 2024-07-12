@@ -341,7 +341,7 @@ func TestGetItemsArtefactHandler(t *testing.T) {
 
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
 	cdntest.ClearItem(t, context.TODO(), s.Mapper, db)
-	cdntest.ClearSyncRedisSet(t, s.Cache, "local_storage")
+	cdntest.ClearSyncRedisSet(context.TODO(), t, s.Cache, "local_storage")
 
 	workerSignature := cdn.Signature{
 		Timestamp:    time.Now().Unix(),

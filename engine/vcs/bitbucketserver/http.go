@@ -96,7 +96,7 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	if v != nil && method == "GET" && !opts.DisableCache {
-		find, err := b.consumer.cache.Get(cacheKey, v)
+		find, err := b.consumer.cache.Get(ctx, cacheKey, v)
 		if err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
@@ -132,7 +132,7 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	}
 
 	if method != "GET" {
-		if err := b.consumer.cache.Delete(cacheKey); err != nil {
+		if err := b.consumer.cache.Delete(ctx, cacheKey); err != nil {
 			log.Error(ctx, "bitbucketClient.do> unable to delete cache key %v: %v", cacheKey, err)
 		}
 	}
@@ -154,7 +154,7 @@ func (b *bitbucketClient) do(ctx context.Context, method, api, path string, para
 			}
 		}
 		if method == "GET" {
-			if err := b.consumer.cache.Set(cacheKey, v); err != nil {
+			if err := b.consumer.cache.Set(ctx, cacheKey, v); err != nil {
 				log.Error(ctx, "unable to cache set %v: %v", cacheKey, err)
 			}
 		}

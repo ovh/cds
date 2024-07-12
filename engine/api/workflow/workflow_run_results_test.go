@@ -138,9 +138,9 @@ func TestCanUploadArtifactAlreadyExist(t *testing.T) {
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
-	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
+	require.NoError(t, store.SetWithTTL(ctx, cacheKey, true, 60))
 	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
 
@@ -186,9 +186,9 @@ func TestCanUploadArtifactAlreadyExistInMoreRecentSubNum(t *testing.T) {
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
-	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
+	require.NoError(t, store.SetWithTTL(ctx, cacheKey, true, 60))
 	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
 
@@ -247,9 +247,9 @@ func TestCanUploadArtifactAlreadyExistInAPreviousSubNum(t *testing.T) {
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeArtifact, artiData.Name)
-	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
+	require.NoError(t, store.SetWithTTL(ctx, cacheKey, true, 60))
 	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
 
@@ -291,9 +291,9 @@ func TestCanUploadStaticFile(t *testing.T) {
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeStaticFile, artiData.Name)
-	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
+	require.NoError(t, store.SetWithTTL(ctx, cacheKey, true, 60))
 	require.NoError(t, workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result))
-	b, err := store.Exist(cacheKey)
+	b, err := store.Exist(ctx, cacheKey)
 	require.NoError(t, err)
 	require.False(t, b)
 
@@ -327,7 +327,7 @@ func TestCanUploadStaticFileInvalid(t *testing.T) {
 	result.DataRaw = bts
 
 	cacheKey := workflow.GetRunResultKey(result.WorkflowRunID, sdk.WorkflowRunResultTypeStaticFile, artiData.Name)
-	require.NoError(t, store.SetWithTTL(cacheKey, true, 60))
+	require.NoError(t, store.SetWithTTL(ctx, cacheKey, true, 60))
 
 	err = workflow.AddResult(ctx, db.DbMap, store, &workflowRun, &result)
 	require.Contains(t, err.Error(), "missing remote url")

@@ -130,7 +130,7 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 		//Github may return 304 status because we are using conditional request with ETag based headers
 		if status == http.StatusNotModified {
 			//If repos aren't updated, lets get them from cache
-			find, err := g.Cache.Get(cacheKey, &webhooks)
+			find, err := g.Cache.Get(ctx, cacheKey, &webhooks)
 			if err != nil {
 				log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 			}
@@ -151,7 +151,7 @@ func (g *githubClient) getHooks(ctx context.Context, fullname string) ([]Webhook
 	}
 
 	//Put the body on cache for one hour and one minute
-	if err := g.Cache.SetWithTTL(cacheKey, webhooks, 61*60); err != nil {
+	if err := g.Cache.SetWithTTL(ctx, cacheKey, webhooks, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 	}
 	return webhooks, nil
@@ -198,7 +198,7 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repos aren't updated, lets get them from cache
-		find, err := g.Cache.Get(cacheKey, &webhook)
+		find, err := g.Cache.Get(ctx, cacheKey, &webhook)
 		if err != nil {
 			log.Error(ctx, "cannot get from cache %s: %v", cacheKey, err)
 		}
@@ -213,7 +213,7 @@ func (g *githubClient) getHookByID(ctx context.Context, fullname, id string) (We
 	}
 
 	//Put the body on cache for one hour and one minute
-	if err := g.Cache.SetWithTTL(cacheKey, webhook, 61*60); err != nil {
+	if err := g.Cache.SetWithTTL(ctx, cacheKey, webhook, 61*60); err != nil {
 		log.Error(ctx, "cannot SetWithTTL: %s: %v", cacheKey, err)
 	}
 	return webhook, nil

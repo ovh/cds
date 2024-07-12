@@ -1,6 +1,7 @@
 package redis_test
 
 import (
+	"context"
 	"io"
 	"strings"
 	"testing"
@@ -15,7 +16,7 @@ import (
 func TestReader_EOF(t *testing.T) {
 	cfg := test.LoadTestingConf(t, sdk.TypeCDN)
 
-	c, err := cache.New(sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0}, -1)
+	c, err := cache.New(context.TODO(), sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: 0}, -1)
 	require.NoError(t, err)
 
 	cacheKey := cache.Key("test:cdn:item")
