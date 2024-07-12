@@ -4,20 +4,17 @@ import (
 	"context"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
-func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) (sdk.JobsResultContext, sdk.JobsGateContext) {
-	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
+func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) (sdk.JobsResultContext, sdk.JobsGateContext) {
+	runResultMap := make(map[string][]sdk.V2WorkflowRunResult)
 	for _, rr := range runResults {
-		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
-			continue
-		}
-		detail := rr.Detail.Data.(*sdk.V2WorkflowRunResultVariableDetail)
 		jobResults, has := runResultMap[rr.WorkflowRunJobID]
 		if !has {
-			jobResults = make([]sdk.V2WorkflowRunResultVariableDetail, 0)
+			jobResults = make([]sdk.V2WorkflowRunResult, 0)
 		}
-		jobResults = append(jobResults, *detail)
+		jobResults = append(jobResults, rr)
 		runResultMap[rr.WorkflowRunJobID] = jobResults
 	}
 
@@ -34,7 +31,20 @@ func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []
 			}
 			if rr, has := runResultMap[rj.ID]; has {
 				for _, r := range rr {
-					result.Outputs[r.Name] = r.Value
+					switch r.Type {
+					case "V2WorkflowRunResultTestDetail":
+						x, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
+						if err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+							continue
+						}
+						result.Outputs[x.Name] = x.Value
+					default:
+						if result.JobRunResults == nil {
+							result.JobRunResults = sdk.JobRunResults{}
+						}
+						result.JobRunResults[r.Name()], _ = r.GetDetail()
+					}
 				}
 			}
 			jobsContext[rj.JobID] = result
@@ -53,7 +63,20 @@ func computeExistingRunJobContexts(runJobs []sdk.V2WorkflowRunJob, runResults []
 			rr, has := runResultMap[rj.ID]
 			if has {
 				for _, r := range rr {
-					jobResultContext.Outputs[r.Name] = r.Value
+					switch r.Type {
+					case "V2WorkflowRunResultTestDetail":
+						x, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
+						if err != nil {
+							log.ErrorWithStackTrace(ctx, err)
+							continue
+						}
+						jobResultContext.Outputs[x.Name] = x.Value
+					default:
+						if jobResultContext.JobRunResults == nil {
+							jobResultContext.JobRunResults = sdk.JobRunResults{}
+						}
+						jobResultContext.JobRunResults[r.Name()], _ = r.GetDetail()
+					}
 				}
 			}
 			jobs = append(jobs, jobResultContext)

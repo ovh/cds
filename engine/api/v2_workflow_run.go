@@ -1063,7 +1063,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 
 				// Check gate condition
 				// retrieve previous jobs context
-				runJobsContexts, _ := computeExistingRunJobContexts(runJobs, runResults)
+				runJobsContexts, _ := computeExistingRunJobContexts(ctx, runJobs, runResults)
 				jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRuns[0].JobID)
 				jobContext.Gate = allGateInputComputed
 				bts, err := json.Marshal(jobContext)

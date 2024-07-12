@@ -139,6 +139,16 @@ type WorkflowRunJobsContext struct {
 	Vars         map[string]interface{}   `json:"vars"`
 }
 
+type ComputeAnnotationsContext struct {
+	WorkflowRunContext
+	Jobs map[string]ComputeAnnotationsJobContext `json:"jobs"`
+}
+
+type ComputeAnnotationsJobContext struct {
+	Results JobResultContext `json:"results"`
+	Gate    GateInputs       `json:"gate"`
+}
+
 type V2WorkflowRunData struct {
 	Workflow     V2Workflow               `json:"workflow"`
 	WorkerModels map[string]V2WorkerModel `json:"worker_models"`

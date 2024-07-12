@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 
+	"github.com/ovh/cds/sdk/glob"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -23,10 +27,87 @@ var (
 		"always":     always,
 		"cancelled":  cancelled,
 		"failure":    failure,
+		"result":     result,
 	}
 )
 
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
+
+func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	log.Debug(ctx, "function: contains with args: %v", inputs)
+	if len(inputs) != 2 {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call contains(type, name)")
+	}
+
+	typ, ok := inputs[0].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: item argument must be a string")
+	}
+
+	name, ok := inputs[1].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: item argument must be a string")
+	}
+
+	glob := glob.New(name)
+
+	btes, _ := json.Marshal(a.contexts)
+	log.Error(context.Background(), "result::context= %s", string(btes))
+
+	jobsMap := findMapStringFromMapAsInterface(a.contexts, "jobs")
+	if jobsMap == nil {
+		log.Error(ctx, "map jobs not found in context")
+	}
+	for jobID, jobContext := range jobsMap { // Iterate over all the jobs
+
+		log.Debug(ctx, "result::trying to find result in job %q", jobID)
+
+		resultsMap := findMapStringFromMapAsInterface(jobContext, "results")
+		for k, v := range resultsMap {
+			if strings.HasPrefix(k, typ+":") {
+				g, err := glob.MatchString(k)
+				if err != nil {
+					return nil, err
+				}
+				if g != nil {
+					return v, nil
+				}
+			}
+		}
+	}
+
+	return nil, errors.Errorf("unable to find result %q", typ+":"+name)
+}
+
+func findMapStringFromMapAsInterface(target interface{}, key string) map[string]interface{} {
+	jobContextValue := reflect.ValueOf(target)
+	if jobContextValue.Kind() == reflect.Map {
+		mapIter := jobContextValue.MapRange()
+		for mapIter.Next() {
+			kValue := mapIter.Key()
+			vValue := mapIter.Value()
+			log.Error(context.Background(), "checking %v", kValue.Interface())
+			if kValue.CanInterface() && kValue.Interface() == key {
+				if vValue.Kind() == reflect.Map && vValue.CanInterface() {
+					vMapKeys := vValue.MapKeys()
+					if len(vMapKeys) > 0 {
+						if vMapKeys[0].CanInterface() && vMapKeys[0].Kind() == reflect.Slice {
+							x, err := cast.ToStringMapE(vValue.Interface())
+							if err != nil {
+								log.ErrorWithStackTrace(context.Background(), err)
+								continue
+							}
+							return x
+						}
+					}
+				}
+			}
+		}
+	} else {
+		log.Error(context.Background(), "is not a Mas. its a %v", jobContextValue.Kind())
+	}
+	return nil
+}
 
 // contains(search, item)
 func contains(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
