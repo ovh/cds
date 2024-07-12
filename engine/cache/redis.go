@@ -47,12 +47,10 @@ func NewRedisStore(redisConf sdk.RedisConf, ttl int) (*RedisStore, error) {
 		sentinelsStr := strings.Split(redisConf.Host, "@")[1]
 		sentinels := strings.Split(sentinelsStr, ",")
 		opts := &redis.FailoverOptions{
-			MasterName:    masterName,
-			SentinelAddrs: sentinels,
-			Password:      redisConf.Password,
-			DB:            redisConf.DbIndex,
-			// IdleCheckFrequency: 10 * time.Second,
-			// IdleTimeout:        10 * time.Second,
+			MasterName:      masterName,
+			SentinelAddrs:   sentinels,
+			Password:        redisConf.Password,
+			DB:              redisConf.DbIndex,
 			PoolSize:        25,
 			MaxRetries:      10,
 			MinRetryBackoff: 30 * time.Millisecond,
@@ -62,10 +60,9 @@ func NewRedisStore(redisConf sdk.RedisConf, ttl int) (*RedisStore, error) {
 		client = redis.NewFailoverClient(opts)
 	} else {
 		client = redis.NewClient(&redis.Options{
-			Addr:     redisConf.Host,
-			Password: redisConf.Password, // no password set
-			DB:       redisConf.DbIndex,
-			// IdleCheckFrequency: 30 * time.Second,
+			Addr:            redisConf.Host,
+			Password:        redisConf.Password, // no password set
+			DB:              redisConf.DbIndex,
 			MaxRetries:      10,
 			MinRetryBackoff: 30 * time.Millisecond,
 			MaxRetryBackoff: 100 * time.Millisecond,
