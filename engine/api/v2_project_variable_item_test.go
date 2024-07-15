@@ -29,6 +29,8 @@ func Test_CrudProjectVariableSetItemText(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleManageItem, proj.Key, "vs-1", *user1)
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleUse, proj.Key, "vs-1", *user1)
 
 	it := sdk.ProjectVariableSetItem{
 		Name:  "MyTextVar",
@@ -123,6 +125,8 @@ func Test_CrudProjectVariableSetItemSecret(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleManageItem, proj.Key, "vs-1", *user1)
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleUse, proj.Key, "vs-1", *user1)
 
 	it := sdk.ProjectVariableSetItem{
 		Name:  "MyTextVar",
@@ -220,6 +224,7 @@ func Test_CrudProjectVariableSetItemWithSameName(t *testing.T) {
 		ProjectKey: proj.Key,
 	}
 	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleManageItem, proj.Key, "vs-1", *user1)
 
 	itSecret := sdk.ProjectVariableSetItem{
 		Name:  "MyTextVar",

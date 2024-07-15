@@ -85,6 +85,23 @@ regions:
 	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
 }
 
+func InsertRBAcVariableSet(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, vsName string, user sdk.AuthentifiedUser) {
+	perm := fmt.Sprintf(`name: perm-%s-variablesets-%s
+variablesets:
+  - role: %s
+    project: %s
+    variablesets: [%s]
+    users: [%s]
+`, role, projKey, role, projKey, vsName, user.Username)
+
+	var rb sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(perm), &rb))
+	rb.VariableSets[0].ProjectKey = projKey
+	rb.VariableSets[0].RBACVariableSetNames = []string{vsName}
+	rb.VariableSets[0].RBACUsersIDs = []string{user.ID}
+	require.NoError(t, rbac.Insert(context.Background(), db, &rb))
+}
+
 func InsertRBAcProject(t *testing.T, db gorpmapper.SqlExecutorWithTx, role string, projKey string, user sdk.AuthentifiedUser) {
 	perm := fmt.Sprintf(`name: perm-%s-project-%s
 projects:

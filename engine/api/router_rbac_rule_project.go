@@ -41,6 +41,12 @@ func (api *API) projectManageNotification(ctx context.Context, auth *sdk.AuthUse
 	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.ProjectRoleManageNotification)
 }
 
+// projectManageVariableSet return nil if the current AuthUserConsumer have the role ProjectRoleManageVariableSet on current project KEY
+func (api *API) projectManageVariableSet(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
+	projectKey := vars["projectKey"]
+	return hasRoleOnProject(ctx, auth, store, db, projectKey, sdk.ProjectRoleManageVariableSet)
+}
+
 // ProjectRead return nil if the current AuthUserConsumer have the ProjectRoleRead on current project KEY
 func (api *API) projectRead(ctx context.Context, auth *sdk.AuthUserConsumer, store cache.Store, db gorp.SqlExecutor, vars map[string]string) error {
 	projectKey := vars["projectKey"]

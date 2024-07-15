@@ -94,6 +94,15 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 			return err
 		}
 	}
+	for i := range rb.VariableSets {
+		dbRbVariableSet := rbacVariableSet{
+			RbacID:          dbRb.ID,
+			RBACVariableSet: rb.VariableSets[i],
+		}
+		if err := insertRBACVariableSet(ctx, db, &dbRbVariableSet); err != nil {
+			return err
+		}
+	}
 
 	*rb = dbRb.RBAC
 	return nil

@@ -184,6 +184,48 @@ func (rro rbacRegionOrganization) Canonical() gorpmapper.CanonicalForms {
 	}
 }
 
+type rbacVariableSet struct {
+	ID     int64  `json:"-" db:"id"`
+	RbacID string `json:"-" db:"rbac_id"`
+	sdk.RBACVariableSet
+	gorpmapper.SignedEntity
+}
+
+func (rp rbacVariableSet) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rp.ID, rp.RbacID, rp.Role, rp.AllUsers}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacID}}{{.Role}}{{.AllUsers}}",
+	}
+}
+
+type rbacVariableSetUser struct {
+	ID                    int64  `json:"-" db:"id"`
+	RbacVariableSetID     int64  `db:"rbac_variableset_id"`
+	RbacVariableSetUserID string `db:"user_id"`
+	gorpmapper.SignedEntity
+}
+
+func (rgu rbacVariableSetUser) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgu.ID, rgu.RbacVariableSetID, rgu.RbacVariableSetUserID}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacVariableSetID}}{{.RbacVariableSetUserID}}",
+	}
+}
+
+type rbacVariableSetGroup struct {
+	ID                     int64 `json:"-" db:"id"`
+	RbacVariableSetID      int64 `db:"rbac_variableset_id"`
+	RbacVariableSetGroupID int64 `db:"group_id"`
+	gorpmapper.SignedEntity
+}
+
+func (rgg rbacVariableSetGroup) Canonical() gorpmapper.CanonicalForms {
+	_ = []interface{}{rgg.ID, rgg.RbacVariableSetID, rgg.RbacVariableSetGroupID}
+	return []gorpmapper.CanonicalForm{
+		"{{.ID}}{{.RbacVariableSetID}}{{.RbacVariableSetGroupID}}",
+	}
+}
+
 type rbacWorkflow struct {
 	ID     int64  `json:"-" db:"id"`
 	RbacID string `json:"-" db:"rbac_id"`
@@ -247,4 +289,9 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(rbacWorkflow{}, "rbac_workflow", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacWorkflowUser{}, "rbac_workflow_users", true, "id"))
 	gorpmapping.Register(gorpmapping.New(rbacWorkflowGroup{}, "rbac_workflow_groups", true, "id"))
+
+	gorpmapping.Register(gorpmapping.New(rbacVariableSet{}, "rbac_variableset", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacVariableSetUser{}, "rbac_variableset_users", true, "id"))
+	gorpmapping.Register(gorpmapping.New(rbacVariableSetGroup{}, "rbac_variableset_groups", true, "id"))
+
 }
