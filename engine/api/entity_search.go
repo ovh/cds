@@ -64,6 +64,9 @@ func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectReposi
 }
 
 func (ef *EntityFinder) unsafeSearchEntityFromLibrary(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (*sdk.EntityFullName, error) {
+	if ef.libraryProject == "" {
+		return nil, nil
+	}
 	var cacheKey = cache.Key("api", "workflowV2", "entityFinder", "library", entityType, name)
 	var e *sdk.EntityFullName
 	found, err := store.Get(cacheKey, e)
