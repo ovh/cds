@@ -1355,7 +1355,7 @@ func (api *API) handleEntitiesFiles(ctx context.Context, filesContent map[string
 
 	entities := make([]sdk.EntityWithObject, 0)
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, repo, vcsServer, u)
+	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, repo, vcsServer, u, api.Config.WorkflowV2.LibraryProjectKey)
 	for _, filePath := range sortedKeys {
 		content := filesContent[filePath]
 		dir, fileName := filepath.Split(filePath)
