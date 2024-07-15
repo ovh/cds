@@ -32,7 +32,7 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 			case sdk.EntityTypeWorkerModel:
 				schema = sdk.GetWorkerModelJsonSchema()
 			case sdk.EntityTypeAction, sdk.EntityTypeWorkflow, sdk.EntityTypeJob, sdk.EntityTypeWorkflowTemplate:
-				actionNames, err := getActionNames(ctx, api.mustDB(), u)
+				actionNames, err := api.getActionNames(ctx, api.mustDB(), u)
 				if err != nil {
 					return err
 				}
@@ -40,7 +40,7 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 				if err != nil {
 					return err
 				}
-				wmNames, err := getWorkerModelNames(ctx, api.mustDB(), u)
+				wmNames, err := api.getWorkerModelNames(ctx, api.mustDB(), u)
 				if err != nil {
 					return err
 				}
@@ -60,7 +60,7 @@ func (api *API) getJsonSchemaHandler() ([]service.RbacChecker, service.Handler) 
 		}
 }
 
-func getWorkerModelNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserConsumer) ([]string, error) {
+func (api *API) getWorkerModelNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserConsumer) ([]string, error) {
 	if u == nil {
 		return nil, nil
 	}
@@ -78,6 +78,9 @@ func getWorkerModelNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUs
 		shortRef := strings.TrimPrefix(strings.TrimPrefix(wm.Ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix)
 		wmNames = append(wmNames, fmt.Sprintf("%s/%s/%s/%s@%s", wm.ProjectKey, wm.VCSName, wm.RepoName, wm.Name, shortRef))
 		wmNames = append(wmNames, fmt.Sprintf("%s/%s/%s/%s", wm.ProjectKey, wm.VCSName, wm.RepoName, wm.Name))
+		if wm.ProjectKey == api.Config.WorkflowV2.LibraryProjectKey {
+			wmNames = append(wmNames, "library/"+wm.Name)
+		}
 	}
 	return wmNames, nil
 }
@@ -105,7 +108,7 @@ func getRegionNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserCon
 	return regNames, nil
 }
 
-func getActionNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserConsumer) ([]string, error) {
+func (api *API) getActionNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserConsumer) ([]string, error) {
 	// Load available action
 	var actionNames []string
 	if u != nil {
@@ -120,6 +123,9 @@ func getActionNames(ctx context.Context, db gorp.SqlExecutor, u *sdk.AuthUserCon
 		for _, an := range actionFullNames {
 			shortRef := strings.TrimPrefix(strings.TrimPrefix(an.Ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix)
 			actionNames = append(actionNames, fmt.Sprintf("%s/%s/%s/%s@%s", an.ProjectKey, an.VCSName, an.RepoName, an.Name, shortRef))
+			if an.ProjectKey == api.Config.WorkflowV2.LibraryProjectKey {
+				actionNames = append(actionNames, "library/"+an.Name)
+			}
 		}
 	}
 	// Load action plugin
