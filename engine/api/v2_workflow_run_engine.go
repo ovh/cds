@@ -202,7 +202,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	runJobs := prepareRunJobs(ctx, *run, wrEnqueue, jobsToQueue, sdk.StatusWaiting, *u)
 
 	// Compute worker model on runJobs if needed
-	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u)
+	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u, api.Config.WorkflowV2.LibraryProjectKey)
 	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
 	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 

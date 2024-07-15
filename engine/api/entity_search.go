@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
 )
@@ -36,9 +37,10 @@ type EntityFinder struct {
 	localTemplatesCache   map[string]sdk.EntityWithObject
 	templatesCache        map[string]sdk.EntityWithObject
 	plugins               map[string]sdk.GRPCPlugin
+	libraryProject        string
 }
 
-func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser) *EntityFinder {
+func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser, libraryProjectKey string) *EntityFinder {
 	return &EntityFinder{
 		currentProject:        pkey,
 		currentUserID:         u.ID,
@@ -57,7 +59,38 @@ func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectReposi
 		vcsServerCache:        make(map[string]sdk.VCSProject),
 		repoDefaultRefCache:   make(map[string]string),
 		plugins:               make(map[string]sdk.GRPCPlugin),
+		libraryProject:        libraryProjectKey,
 	}
+}
+
+func (ef *EntityFinder) unsafeSearchEntityFromLibrary(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (*sdk.EntityFullName, error) {
+	var cacheKey = cache.Key("api", "workflowV2", "entityFinder", "library", entityType, name)
+	var e *sdk.EntityFullName
+	found, err := store.Get(cacheKey, e)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+	}
+
+	if found {
+		return e, nil
+	}
+
+	log.Debug(ctx, "unsafeSearchEntityFromLibrary> searching for %q  on project %q", name, ef.libraryProject)
+
+	entitiesFullPath, err := entity.UnsafeLoadAllByTypeAndProjectKeys(ctx, db, entityType, []string{ef.libraryProject})
+	if err != nil {
+		err := sdk.WrapError(err, "invalid workflow: unable to load library entities")
+		return nil, err
+	}
+
+	for _, entityFullPath := range entitiesFullPath {
+		if entityFullPath.Name == name {
+			_ = store.Set(cacheKey, entityFullPath)
+			return &entityFullPath, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (string, string, error) {
@@ -84,7 +117,22 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store 
 		entityName = entityFullPath
 		embeddedEntity = true
 	case 2:
-		return "", fmt.Sprintf("invalid workflow: unable to get repository from %s", entityFullPath), nil
+		if entityPathSplit[0] == "library" {
+			entity, err := ef.unsafeSearchEntityFromLibrary(ctx, db, store, entityPathSplit[1], entityType)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			if entity == nil {
+				return "", fmt.Sprintf("invalid workflow: unable to find %s", entityFullPath), nil
+			}
+			projKey = entity.ProjectKey
+			vcsName = entity.VCSName
+			repoName = entity.RepoName
+			entityName = entity.Name
+			log.Debug(ctx, "searchEntity> matches %q to %s/%s/%s/%s", name, projKey, vcsName, repoName, entityName)
+		} else {
+			return "", fmt.Sprintf("invalid workflow: unable to get repository from %s", entityFullPath), nil
+		}
 	case 3:
 		repoName = fmt.Sprintf("%s/%s", entityPathSplit[0], entityPathSplit[1])
 		entityName = entityPathSplit[2]
