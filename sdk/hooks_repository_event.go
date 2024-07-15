@@ -110,8 +110,8 @@ func (h *HookRepositoryEvent) IsTerminated() bool {
 
 func (h *HookRepositoryEvent) ToInsightReport(uiURL string) VCSInsight {
 	report := VCSInsight{
-		Title:  "OVH CDS Event",
-		Detail: fmt.Sprintf("Event %s with ID %s: %s", h.EventName, h.UUID, h.Status),
+		Title:  "CDS",
+		Detail: fmt.Sprintf("Event %q (%s): %s", h.EventName, h.UUID, h.Status),
 		Datas:  make([]VCSInsightData, 0),
 	}
 	if h.Status != HookEventStatusDone {
