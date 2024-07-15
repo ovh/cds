@@ -325,31 +325,12 @@ func (a *ActionParser) parseFunctionCallContext(ctx context.Context, exp *parser
 				funcHasbeenCalled = true
 			}
 
-			// Parse next key
-			key, err := a.parseVariablePathContext(ctx, t)
+			var err error
+			result, isFilter, err = a.getItemFromPathContext(ctx, t, result, isFilter)
 			if err != nil {
 				return nil, err
 			}
 
-			switch kType := key.(type) {
-			case string:
-				if key == "*" {
-					if isFilter {
-						return nil, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
-					}
-					isFilter = true
-				} else {
-					result, err = a.getItemValueFromContext(ctx, result, kType, isFilter)
-					if err != nil {
-						return nil, err
-					}
-				}
-			case int:
-				result, err = a.getArrayItemValueFromContext(ctx, result, kType)
-				if err != nil {
-					return nil, err
-				}
-			}
 		default:
 			return nil, NewErrorFrom(ErrInvalidData, "unknown type %T in FunctionCall", t)
 		}
@@ -442,34 +423,44 @@ func (a *ActionParser) parseVariableContextContext(ctx context.Context, exp *par
 			}
 			continue
 		case *parser.VariablePathContext:
-			key, err := a.parseVariablePathContext(ctx, t)
+			var err error
+			selectedValue, isFilter, err = a.getItemFromPathContext(ctx, t, selectedValue, isFilter)
 			if err != nil {
 				return nil, err
 			}
-			switch kType := key.(type) {
-			case string:
-				if key == "*" {
-					if isFilter {
-						return nil, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
-					}
-					isFilter = true
-				} else {
-					selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
-					if err != nil {
-						return nil, err
-					}
-				}
-			case int:
-				selectedValue, err = a.getArrayItemValueFromContext(ctx, selectedValue, kType)
-				if err != nil {
-					return nil, err
-				}
-			}
+
 		default:
 			return false, NewErrorFrom(ErrInvalidData, "unknown type %T in VariableContext", t)
 		}
 	}
 	return selectedValue, nil
+}
+
+func (a *ActionParser) getItemFromPathContext(ctx context.Context, t *parser.VariablePathContext, selectedValue interface{}, isFilter bool) (interface{}, bool, error) {
+	key, err := a.parseVariablePathContext(ctx, t)
+	if err != nil {
+		return nil, isFilter, err
+	}
+	switch kType := key.(type) {
+	case string:
+		if key == "*" {
+			if isFilter {
+				return nil, isFilter, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
+			}
+			isFilter = true
+		} else {
+			selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
+			if err != nil {
+				return nil, isFilter, err
+			}
+		}
+	case int:
+		selectedValue, err = a.getArrayItemValueFromContext(ctx, selectedValue, kType)
+		if err != nil {
+			return nil, isFilter, err
+		}
+	}
+	return selectedValue, isFilter, nil
 }
 
 func (a *ActionParser) parseVariablePathContext(ctx context.Context, exp *parser.VariablePathContext) (interface{}, error) {

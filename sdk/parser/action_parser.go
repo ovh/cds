@@ -5,7 +5,7 @@ package parser // Action
 import (
 	"fmt"
 	"strconv"
-  "sync"
+	"sync"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
@@ -15,125 +15,124 @@ var _ = fmt.Printf
 var _ = strconv.Itoa
 var _ = sync.Once{}
 
-
 type ActionParser struct {
 	*antlr.BaseParser
 }
 
 var actionParserStaticData struct {
-  once                   sync.Once
-  serializedATN          []int32
-  literalNames           []string
-  symbolicNames          []string
-  ruleNames              []string
-  predictionContextCache *antlr.PredictionContextCache
-  atn                    *antlr.ATN
-  decisionToDFA          []*antlr.DFA
+	once                   sync.Once
+	serializedATN          []int32
+	literalNames           []string
+	symbolicNames          []string
+	ruleNames              []string
+	predictionContextCache *antlr.PredictionContextCache
+	atn                    *antlr.ATN
+	decisionToDFA          []*antlr.DFA
 }
 
 func actionParserInit() {
-  staticData := &actionParserStaticData
-  staticData.literalNames = []string{
-    "", "','", "'['", "']'", "", "", "'null'", "'${{'", "'}}'", "", "'=='", 
-    "'!='", "'>'", "'<'", "'>='", "'<='", "", "'('", "')'", "'!'", "'||'", 
-    "'&&'", "'.'", "'*'",
-  }
-  staticData.symbolicNames = []string{
-    "", "", "", "", "STRING_INSIDE_EXPRESSION", "BOOLEAN", "NULL", "EXP_START", 
-    "EXP_END", "NUMBER", "EQ", "NEQ", "GT", "LT", "GTE", "LTE", "ID", "LPAREN", 
-    "RPAREN", "NOT", "OR", "AND", "DOT", "STAR", "WS",
-  }
-  staticData.ruleNames = []string{
-    "start", "expression", "orExpression", "andExpression", "comparisonExpression", 
-    "equalityExpression", "primaryExpression", "variableContext", "variablePath", 
-    "variableIdentifier", "numberExpression", "stringExpression", "termExpression", 
-    "notExpression", "notOperator", "functionCall", "functionName", "functionCallArguments", 
-    "array", "arrayIndex", "andOperator", "orOperator", "comparisonOperator", 
-    "equalityOperator", "booleanExpression", "expressionStart", "expressionEnd", 
-    "filterExpression",
-  }
-  staticData.predictionContextCache = antlr.NewPredictionContextCache()
-  staticData.serializedATN = []int32{
-	4, 1, 24, 180, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7, 
-	4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7, 
-	10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15, 
-	2, 16, 7, 16, 2, 17, 7, 17, 2, 18, 7, 18, 2, 19, 7, 19, 2, 20, 7, 20, 2, 
-	21, 7, 21, 2, 22, 7, 22, 2, 23, 7, 23, 2, 24, 7, 24, 2, 25, 7, 25, 2, 26, 
-	7, 26, 2, 27, 7, 27, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 
-	2, 1, 2, 1, 2, 5, 2, 68, 8, 2, 10, 2, 12, 2, 71, 9, 2, 1, 3, 1, 3, 1, 3, 
-	1, 3, 5, 3, 77, 8, 3, 10, 3, 12, 3, 80, 9, 3, 1, 4, 1, 4, 1, 4, 1, 4, 3, 
-	4, 86, 8, 4, 1, 5, 1, 5, 1, 5, 1, 5, 3, 5, 92, 8, 5, 1, 6, 1, 6, 1, 6, 
-	1, 6, 1, 6, 1, 6, 3, 6, 100, 8, 6, 1, 7, 1, 7, 5, 7, 104, 8, 7, 10, 7, 
-	12, 7, 107, 9, 7, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 114, 8, 8, 1, 9, 
-	1, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 12, 1, 12, 1, 12, 1, 12, 1, 13, 1, 
-	13, 1, 13, 1, 14, 1, 14, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 5, 15, 136, 
-	8, 15, 10, 15, 12, 15, 139, 9, 15, 1, 15, 1, 15, 5, 15, 143, 8, 15, 10, 
-	15, 12, 15, 146, 9, 15, 1, 16, 1, 16, 1, 17, 1, 17, 1, 17, 1, 17, 1, 17, 
-	1, 17, 3, 17, 156, 8, 17, 1, 18, 1, 18, 1, 18, 1, 18, 1, 19, 1, 19, 1, 
-	20, 1, 20, 1, 21, 1, 21, 1, 22, 1, 22, 1, 23, 1, 23, 1, 24, 1, 24, 1, 25, 
-	1, 25, 1, 26, 1, 26, 1, 27, 1, 27, 1, 27, 0, 0, 28, 0, 2, 4, 6, 8, 10, 
-	12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 
-	48, 50, 52, 54, 0, 2, 1, 0, 12, 15, 1, 0, 10, 11, 170, 0, 56, 1, 0, 0, 
-	0, 2, 59, 1, 0, 0, 0, 4, 63, 1, 0, 0, 0, 6, 72, 1, 0, 0, 0, 8, 81, 1, 0, 
-	0, 0, 10, 87, 1, 0, 0, 0, 12, 99, 1, 0, 0, 0, 14, 101, 1, 0, 0, 0, 16, 
-	113, 1, 0, 0, 0, 18, 115, 1, 0, 0, 0, 20, 117, 1, 0, 0, 0, 22, 119, 1, 
-	0, 0, 0, 24, 121, 1, 0, 0, 0, 26, 125, 1, 0, 0, 0, 28, 128, 1, 0, 0, 0, 
-	30, 130, 1, 0, 0, 0, 32, 147, 1, 0, 0, 0, 34, 155, 1, 0, 0, 0, 36, 157, 
-	1, 0, 0, 0, 38, 161, 1, 0, 0, 0, 40, 163, 1, 0, 0, 0, 42, 165, 1, 0, 0, 
-	0, 44, 167, 1, 0, 0, 0, 46, 169, 1, 0, 0, 0, 48, 171, 1, 0, 0, 0, 50, 173, 
-	1, 0, 0, 0, 52, 175, 1, 0, 0, 0, 54, 177, 1, 0, 0, 0, 56, 57, 3, 2, 1, 
-	0, 57, 58, 5, 0, 0, 1, 58, 1, 1, 0, 0, 0, 59, 60, 3, 50, 25, 0, 60, 61, 
-	3, 4, 2, 0, 61, 62, 3, 52, 26, 0, 62, 3, 1, 0, 0, 0, 63, 69, 3, 6, 3, 0, 
-	64, 65, 3, 42, 21, 0, 65, 66, 3, 6, 3, 0, 66, 68, 1, 0, 0, 0, 67, 64, 1, 
-	0, 0, 0, 68, 71, 1, 0, 0, 0, 69, 67, 1, 0, 0, 0, 69, 70, 1, 0, 0, 0, 70, 
-	5, 1, 0, 0, 0, 71, 69, 1, 0, 0, 0, 72, 78, 3, 8, 4, 0, 73, 74, 3, 40, 20, 
-	0, 74, 75, 3, 8, 4, 0, 75, 77, 1, 0, 0, 0, 76, 73, 1, 0, 0, 0, 77, 80, 
-	1, 0, 0, 0, 78, 76, 1, 0, 0, 0, 78, 79, 1, 0, 0, 0, 79, 7, 1, 0, 0, 0, 
-	80, 78, 1, 0, 0, 0, 81, 85, 3, 10, 5, 0, 82, 83, 3, 44, 22, 0, 83, 84, 
-	3, 10, 5, 0, 84, 86, 1, 0, 0, 0, 85, 82, 1, 0, 0, 0, 85, 86, 1, 0, 0, 0, 
-	86, 9, 1, 0, 0, 0, 87, 91, 3, 12, 6, 0, 88, 89, 3, 46, 23, 0, 89, 90, 3, 
-	12, 6, 0, 90, 92, 1, 0, 0, 0, 91, 88, 1, 0, 0, 0, 91, 92, 1, 0, 0, 0, 92, 
-	11, 1, 0, 0, 0, 93, 100, 3, 14, 7, 0, 94, 100, 3, 20, 10, 0, 95, 100, 3, 
-	30, 15, 0, 96, 100, 3, 22, 11, 0, 97, 100, 3, 24, 12, 0, 98, 100, 3, 26, 
-	13, 0, 99, 93, 1, 0, 0, 0, 99, 94, 1, 0, 0, 0, 99, 95, 1, 0, 0, 0, 99, 
-	96, 1, 0, 0, 0, 99, 97, 1, 0, 0, 0, 99, 98, 1, 0, 0, 0, 100, 13, 1, 0, 
-	0, 0, 101, 105, 3, 18, 9, 0, 102, 104, 3, 16, 8, 0, 103, 102, 1, 0, 0, 
-	0, 104, 107, 1, 0, 0, 0, 105, 103, 1, 0, 0, 0, 105, 106, 1, 0, 0, 0, 106, 
-	15, 1, 0, 0, 0, 107, 105, 1, 0, 0, 0, 108, 109, 5, 22, 0, 0, 109, 114, 
-	3, 18, 9, 0, 110, 114, 3, 36, 18, 0, 111, 112, 5, 22, 0, 0, 112, 114, 3, 
-	54, 27, 0, 113, 108, 1, 0, 0, 0, 113, 110, 1, 0, 0, 0, 113, 111, 1, 0, 
-	0, 0, 114, 17, 1, 0, 0, 0, 115, 116, 5, 16, 0, 0, 116, 19, 1, 0, 0, 0, 
-	117, 118, 5, 9, 0, 0, 118, 21, 1, 0, 0, 0, 119, 120, 5, 4, 0, 0, 120, 23, 
-	1, 0, 0, 0, 121, 122, 5, 17, 0, 0, 122, 123, 3, 4, 2, 0, 123, 124, 5, 18, 
-	0, 0, 124, 25, 1, 0, 0, 0, 125, 126, 3, 28, 14, 0, 126, 127, 3, 12, 6, 
-	0, 127, 27, 1, 0, 0, 0, 128, 129, 5, 19, 0, 0, 129, 29, 1, 0, 0, 0, 130, 
-	131, 3, 32, 16, 0, 131, 132, 5, 17, 0, 0, 132, 137, 3, 34, 17, 0, 133, 
-	134, 5, 1, 0, 0, 134, 136, 3, 34, 17, 0, 135, 133, 1, 0, 0, 0, 136, 139, 
-	1, 0, 0, 0, 137, 135, 1, 0, 0, 0, 137, 138, 1, 0, 0, 0, 138, 140, 1, 0, 
-	0, 0, 139, 137, 1, 0, 0, 0, 140, 144, 5, 18, 0, 0, 141, 143, 3, 16, 8, 
-	0, 142, 141, 1, 0, 0, 0, 143, 146, 1, 0, 0, 0, 144, 142, 1, 0, 0, 0, 144, 
-	145, 1, 0, 0, 0, 145, 31, 1, 0, 0, 0, 146, 144, 1, 0, 0, 0, 147, 148, 5, 
-	16, 0, 0, 148, 33, 1, 0, 0, 0, 149, 156, 1, 0, 0, 0, 150, 156, 3, 14, 7, 
-	0, 151, 156, 3, 22, 11, 0, 152, 156, 3, 20, 10, 0, 153, 156, 3, 48, 24, 
-	0, 154, 156, 3, 30, 15, 0, 155, 149, 1, 0, 0, 0, 155, 150, 1, 0, 0, 0, 
-	155, 151, 1, 0, 0, 0, 155, 152, 1, 0, 0, 0, 155, 153, 1, 0, 0, 0, 155, 
-	154, 1, 0, 0, 0, 156, 35, 1, 0, 0, 0, 157, 158, 5, 2, 0, 0, 158, 159, 3, 
-	38, 19, 0, 159, 160, 5, 3, 0, 0, 160, 37, 1, 0, 0, 0, 161, 162, 3, 12, 
-	6, 0, 162, 39, 1, 0, 0, 0, 163, 164, 5, 21, 0, 0, 164, 41, 1, 0, 0, 0, 
-	165, 166, 5, 20, 0, 0, 166, 43, 1, 0, 0, 0, 167, 168, 7, 0, 0, 0, 168, 
-	45, 1, 0, 0, 0, 169, 170, 7, 1, 0, 0, 170, 47, 1, 0, 0, 0, 171, 172, 5, 
-	5, 0, 0, 172, 49, 1, 0, 0, 0, 173, 174, 5, 7, 0, 0, 174, 51, 1, 0, 0, 0, 
-	175, 176, 5, 8, 0, 0, 176, 53, 1, 0, 0, 0, 177, 178, 5, 23, 0, 0, 178, 
-	55, 1, 0, 0, 0, 10, 69, 78, 85, 91, 99, 105, 113, 137, 144, 155,
-}
-  deserializer := antlr.NewATNDeserializer(nil)
-  staticData.atn = deserializer.Deserialize(staticData.serializedATN)
-  atn := staticData.atn
-  staticData.decisionToDFA = make([]*antlr.DFA, len(atn.DecisionToState))
-  decisionToDFA := staticData.decisionToDFA
-  for index, state := range atn.DecisionToState {
-    decisionToDFA[index] = antlr.NewDFA(state, index)
-  }
+	staticData := &actionParserStaticData
+	staticData.literalNames = []string{
+		"", "','", "'['", "']'", "", "", "'null'", "'${{'", "'}}'", "", "'=='",
+		"'!='", "'>'", "'<'", "'>='", "'<='", "", "'('", "')'", "'!'", "'||'",
+		"'&&'", "'.'", "'*'",
+	}
+	staticData.symbolicNames = []string{
+		"", "", "", "", "STRING_INSIDE_EXPRESSION", "BOOLEAN", "NULL", "EXP_START",
+		"EXP_END", "NUMBER", "EQ", "NEQ", "GT", "LT", "GTE", "LTE", "ID", "LPAREN",
+		"RPAREN", "NOT", "OR", "AND", "DOT", "STAR", "WS",
+	}
+	staticData.ruleNames = []string{
+		"start", "expression", "orExpression", "andExpression", "comparisonExpression",
+		"equalityExpression", "primaryExpression", "variableContext", "variablePath",
+		"variableIdentifier", "numberExpression", "stringExpression", "termExpression",
+		"notExpression", "notOperator", "functionCall", "functionName", "functionCallArguments",
+		"array", "arrayIndex", "andOperator", "orOperator", "comparisonOperator",
+		"equalityOperator", "booleanExpression", "expressionStart", "expressionEnd",
+		"filterExpression",
+	}
+	staticData.predictionContextCache = antlr.NewPredictionContextCache()
+	staticData.serializedATN = []int32{
+		4, 1, 24, 180, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
+		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15,
+		2, 16, 7, 16, 2, 17, 7, 17, 2, 18, 7, 18, 2, 19, 7, 19, 2, 20, 7, 20, 2,
+		21, 7, 21, 2, 22, 7, 22, 2, 23, 7, 23, 2, 24, 7, 24, 2, 25, 7, 25, 2, 26,
+		7, 26, 2, 27, 7, 27, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1,
+		2, 1, 2, 1, 2, 5, 2, 68, 8, 2, 10, 2, 12, 2, 71, 9, 2, 1, 3, 1, 3, 1, 3,
+		1, 3, 5, 3, 77, 8, 3, 10, 3, 12, 3, 80, 9, 3, 1, 4, 1, 4, 1, 4, 1, 4, 3,
+		4, 86, 8, 4, 1, 5, 1, 5, 1, 5, 1, 5, 3, 5, 92, 8, 5, 1, 6, 1, 6, 1, 6,
+		1, 6, 1, 6, 1, 6, 3, 6, 100, 8, 6, 1, 7, 1, 7, 5, 7, 104, 8, 7, 10, 7,
+		12, 7, 107, 9, 7, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 114, 8, 8, 1, 9,
+		1, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 12, 1, 12, 1, 12, 1, 12, 1, 13, 1,
+		13, 1, 13, 1, 14, 1, 14, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 5, 15, 136,
+		8, 15, 10, 15, 12, 15, 139, 9, 15, 1, 15, 1, 15, 5, 15, 143, 8, 15, 10,
+		15, 12, 15, 146, 9, 15, 1, 16, 1, 16, 1, 17, 1, 17, 1, 17, 1, 17, 1, 17,
+		1, 17, 3, 17, 156, 8, 17, 1, 18, 1, 18, 1, 18, 1, 18, 1, 19, 1, 19, 1,
+		20, 1, 20, 1, 21, 1, 21, 1, 22, 1, 22, 1, 23, 1, 23, 1, 24, 1, 24, 1, 25,
+		1, 25, 1, 26, 1, 26, 1, 27, 1, 27, 1, 27, 0, 0, 28, 0, 2, 4, 6, 8, 10,
+		12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46,
+		48, 50, 52, 54, 0, 2, 1, 0, 12, 15, 1, 0, 10, 11, 170, 0, 56, 1, 0, 0,
+		0, 2, 59, 1, 0, 0, 0, 4, 63, 1, 0, 0, 0, 6, 72, 1, 0, 0, 0, 8, 81, 1, 0,
+		0, 0, 10, 87, 1, 0, 0, 0, 12, 99, 1, 0, 0, 0, 14, 101, 1, 0, 0, 0, 16,
+		113, 1, 0, 0, 0, 18, 115, 1, 0, 0, 0, 20, 117, 1, 0, 0, 0, 22, 119, 1,
+		0, 0, 0, 24, 121, 1, 0, 0, 0, 26, 125, 1, 0, 0, 0, 28, 128, 1, 0, 0, 0,
+		30, 130, 1, 0, 0, 0, 32, 147, 1, 0, 0, 0, 34, 155, 1, 0, 0, 0, 36, 157,
+		1, 0, 0, 0, 38, 161, 1, 0, 0, 0, 40, 163, 1, 0, 0, 0, 42, 165, 1, 0, 0,
+		0, 44, 167, 1, 0, 0, 0, 46, 169, 1, 0, 0, 0, 48, 171, 1, 0, 0, 0, 50, 173,
+		1, 0, 0, 0, 52, 175, 1, 0, 0, 0, 54, 177, 1, 0, 0, 0, 56, 57, 3, 2, 1,
+		0, 57, 58, 5, 0, 0, 1, 58, 1, 1, 0, 0, 0, 59, 60, 3, 50, 25, 0, 60, 61,
+		3, 4, 2, 0, 61, 62, 3, 52, 26, 0, 62, 3, 1, 0, 0, 0, 63, 69, 3, 6, 3, 0,
+		64, 65, 3, 42, 21, 0, 65, 66, 3, 6, 3, 0, 66, 68, 1, 0, 0, 0, 67, 64, 1,
+		0, 0, 0, 68, 71, 1, 0, 0, 0, 69, 67, 1, 0, 0, 0, 69, 70, 1, 0, 0, 0, 70,
+		5, 1, 0, 0, 0, 71, 69, 1, 0, 0, 0, 72, 78, 3, 8, 4, 0, 73, 74, 3, 40, 20,
+		0, 74, 75, 3, 8, 4, 0, 75, 77, 1, 0, 0, 0, 76, 73, 1, 0, 0, 0, 77, 80,
+		1, 0, 0, 0, 78, 76, 1, 0, 0, 0, 78, 79, 1, 0, 0, 0, 79, 7, 1, 0, 0, 0,
+		80, 78, 1, 0, 0, 0, 81, 85, 3, 10, 5, 0, 82, 83, 3, 44, 22, 0, 83, 84,
+		3, 10, 5, 0, 84, 86, 1, 0, 0, 0, 85, 82, 1, 0, 0, 0, 85, 86, 1, 0, 0, 0,
+		86, 9, 1, 0, 0, 0, 87, 91, 3, 12, 6, 0, 88, 89, 3, 46, 23, 0, 89, 90, 3,
+		12, 6, 0, 90, 92, 1, 0, 0, 0, 91, 88, 1, 0, 0, 0, 91, 92, 1, 0, 0, 0, 92,
+		11, 1, 0, 0, 0, 93, 100, 3, 14, 7, 0, 94, 100, 3, 20, 10, 0, 95, 100, 3,
+		30, 15, 0, 96, 100, 3, 22, 11, 0, 97, 100, 3, 24, 12, 0, 98, 100, 3, 26,
+		13, 0, 99, 93, 1, 0, 0, 0, 99, 94, 1, 0, 0, 0, 99, 95, 1, 0, 0, 0, 99,
+		96, 1, 0, 0, 0, 99, 97, 1, 0, 0, 0, 99, 98, 1, 0, 0, 0, 100, 13, 1, 0,
+		0, 0, 101, 105, 3, 18, 9, 0, 102, 104, 3, 16, 8, 0, 103, 102, 1, 0, 0,
+		0, 104, 107, 1, 0, 0, 0, 105, 103, 1, 0, 0, 0, 105, 106, 1, 0, 0, 0, 106,
+		15, 1, 0, 0, 0, 107, 105, 1, 0, 0, 0, 108, 109, 5, 22, 0, 0, 109, 114,
+		3, 18, 9, 0, 110, 114, 3, 36, 18, 0, 111, 112, 5, 22, 0, 0, 112, 114, 3,
+		54, 27, 0, 113, 108, 1, 0, 0, 0, 113, 110, 1, 0, 0, 0, 113, 111, 1, 0,
+		0, 0, 114, 17, 1, 0, 0, 0, 115, 116, 5, 16, 0, 0, 116, 19, 1, 0, 0, 0,
+		117, 118, 5, 9, 0, 0, 118, 21, 1, 0, 0, 0, 119, 120, 5, 4, 0, 0, 120, 23,
+		1, 0, 0, 0, 121, 122, 5, 17, 0, 0, 122, 123, 3, 4, 2, 0, 123, 124, 5, 18,
+		0, 0, 124, 25, 1, 0, 0, 0, 125, 126, 3, 28, 14, 0, 126, 127, 3, 12, 6,
+		0, 127, 27, 1, 0, 0, 0, 128, 129, 5, 19, 0, 0, 129, 29, 1, 0, 0, 0, 130,
+		131, 3, 32, 16, 0, 131, 132, 5, 17, 0, 0, 132, 137, 3, 34, 17, 0, 133,
+		134, 5, 1, 0, 0, 134, 136, 3, 34, 17, 0, 135, 133, 1, 0, 0, 0, 136, 139,
+		1, 0, 0, 0, 137, 135, 1, 0, 0, 0, 137, 138, 1, 0, 0, 0, 138, 140, 1, 0,
+		0, 0, 139, 137, 1, 0, 0, 0, 140, 144, 5, 18, 0, 0, 141, 143, 3, 16, 8,
+		0, 142, 141, 1, 0, 0, 0, 143, 146, 1, 0, 0, 0, 144, 142, 1, 0, 0, 0, 144,
+		145, 1, 0, 0, 0, 145, 31, 1, 0, 0, 0, 146, 144, 1, 0, 0, 0, 147, 148, 5,
+		16, 0, 0, 148, 33, 1, 0, 0, 0, 149, 156, 1, 0, 0, 0, 150, 156, 3, 14, 7,
+		0, 151, 156, 3, 22, 11, 0, 152, 156, 3, 20, 10, 0, 153, 156, 3, 48, 24,
+		0, 154, 156, 3, 30, 15, 0, 155, 149, 1, 0, 0, 0, 155, 150, 1, 0, 0, 0,
+		155, 151, 1, 0, 0, 0, 155, 152, 1, 0, 0, 0, 155, 153, 1, 0, 0, 0, 155,
+		154, 1, 0, 0, 0, 156, 35, 1, 0, 0, 0, 157, 158, 5, 2, 0, 0, 158, 159, 3,
+		38, 19, 0, 159, 160, 5, 3, 0, 0, 160, 37, 1, 0, 0, 0, 161, 162, 3, 12,
+		6, 0, 162, 39, 1, 0, 0, 0, 163, 164, 5, 21, 0, 0, 164, 41, 1, 0, 0, 0,
+		165, 166, 5, 20, 0, 0, 166, 43, 1, 0, 0, 0, 167, 168, 7, 0, 0, 0, 168,
+		45, 1, 0, 0, 0, 169, 170, 7, 1, 0, 0, 170, 47, 1, 0, 0, 0, 171, 172, 5,
+		5, 0, 0, 172, 49, 1, 0, 0, 0, 173, 174, 5, 7, 0, 0, 174, 51, 1, 0, 0, 0,
+		175, 176, 5, 8, 0, 0, 176, 53, 1, 0, 0, 0, 177, 178, 5, 23, 0, 0, 178,
+		55, 1, 0, 0, 0, 10, 69, 78, 85, 91, 99, 105, 113, 137, 144, 155,
+	}
+	deserializer := antlr.NewATNDeserializer(nil)
+	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
+	atn := staticData.atn
+	staticData.decisionToDFA = make([]*antlr.DFA, len(atn.DecisionToState))
+	decisionToDFA := staticData.decisionToDFA
+	for index, state := range atn.DecisionToState {
+		decisionToDFA[index] = antlr.NewDFA(state, index)
+	}
 }
 
 // ActionParserInit initializes any static state used to implement ActionParser. By default the
@@ -141,8 +140,8 @@ func actionParserInit() {
 // NewActionParser(). You can call this function if you wish to initialize the static state ahead
 // of time.
 func ActionParserInit() {
-  staticData := &actionParserStaticData
-  staticData.once.Do(actionParserInit)
+	staticData := &actionParserStaticData
+	staticData.once.Do(actionParserInit)
 }
 
 // NewActionParser produces a new parser instance for the optional input antlr.TokenStream.
@@ -150,7 +149,7 @@ func NewActionParser(input antlr.TokenStream) *ActionParser {
 	ActionParserInit()
 	this := new(ActionParser)
 	this.BaseParser = antlr.NewBaseParser(input)
-  staticData := &actionParserStaticData
+	staticData := &actionParserStaticData
 	this.Interpreter = antlr.NewParserATNSimulator(this, staticData.atn, staticData.decisionToDFA, staticData.predictionContextCache)
 	this.RuleNames = staticData.ruleNames
 	this.LiteralNames = staticData.literalNames
@@ -160,66 +159,65 @@ func NewActionParser(input antlr.TokenStream) *ActionParser {
 	return this
 }
 
-
 // ActionParser tokens.
 const (
-	ActionParserEOF = antlr.TokenEOF
-	ActionParserT__0 = 1
-	ActionParserT__1 = 2
-	ActionParserT__2 = 3
+	ActionParserEOF                      = antlr.TokenEOF
+	ActionParserT__0                     = 1
+	ActionParserT__1                     = 2
+	ActionParserT__2                     = 3
 	ActionParserSTRING_INSIDE_EXPRESSION = 4
-	ActionParserBOOLEAN = 5
-	ActionParserNULL = 6
-	ActionParserEXP_START = 7
-	ActionParserEXP_END = 8
-	ActionParserNUMBER = 9
-	ActionParserEQ = 10
-	ActionParserNEQ = 11
-	ActionParserGT = 12
-	ActionParserLT = 13
-	ActionParserGTE = 14
-	ActionParserLTE = 15
-	ActionParserID = 16
-	ActionParserLPAREN = 17
-	ActionParserRPAREN = 18
-	ActionParserNOT = 19
-	ActionParserOR = 20
-	ActionParserAND = 21
-	ActionParserDOT = 22
-	ActionParserSTAR = 23
-	ActionParserWS = 24
+	ActionParserBOOLEAN                  = 5
+	ActionParserNULL                     = 6
+	ActionParserEXP_START                = 7
+	ActionParserEXP_END                  = 8
+	ActionParserNUMBER                   = 9
+	ActionParserEQ                       = 10
+	ActionParserNEQ                      = 11
+	ActionParserGT                       = 12
+	ActionParserLT                       = 13
+	ActionParserGTE                      = 14
+	ActionParserLTE                      = 15
+	ActionParserID                       = 16
+	ActionParserLPAREN                   = 17
+	ActionParserRPAREN                   = 18
+	ActionParserNOT                      = 19
+	ActionParserOR                       = 20
+	ActionParserAND                      = 21
+	ActionParserDOT                      = 22
+	ActionParserSTAR                     = 23
+	ActionParserWS                       = 24
 )
 
 // ActionParser rules.
 const (
-	ActionParserRULE_start = 0
-	ActionParserRULE_expression = 1
-	ActionParserRULE_orExpression = 2
-	ActionParserRULE_andExpression = 3
-	ActionParserRULE_comparisonExpression = 4
-	ActionParserRULE_equalityExpression = 5
-	ActionParserRULE_primaryExpression = 6
-	ActionParserRULE_variableContext = 7
-	ActionParserRULE_variablePath = 8
-	ActionParserRULE_variableIdentifier = 9
-	ActionParserRULE_numberExpression = 10
-	ActionParserRULE_stringExpression = 11
-	ActionParserRULE_termExpression = 12
-	ActionParserRULE_notExpression = 13
-	ActionParserRULE_notOperator = 14
-	ActionParserRULE_functionCall = 15
-	ActionParserRULE_functionName = 16
+	ActionParserRULE_start                 = 0
+	ActionParserRULE_expression            = 1
+	ActionParserRULE_orExpression          = 2
+	ActionParserRULE_andExpression         = 3
+	ActionParserRULE_comparisonExpression  = 4
+	ActionParserRULE_equalityExpression    = 5
+	ActionParserRULE_primaryExpression     = 6
+	ActionParserRULE_variableContext       = 7
+	ActionParserRULE_variablePath          = 8
+	ActionParserRULE_variableIdentifier    = 9
+	ActionParserRULE_numberExpression      = 10
+	ActionParserRULE_stringExpression      = 11
+	ActionParserRULE_termExpression        = 12
+	ActionParserRULE_notExpression         = 13
+	ActionParserRULE_notOperator           = 14
+	ActionParserRULE_functionCall          = 15
+	ActionParserRULE_functionName          = 16
 	ActionParserRULE_functionCallArguments = 17
-	ActionParserRULE_array = 18
-	ActionParserRULE_arrayIndex = 19
-	ActionParserRULE_andOperator = 20
-	ActionParserRULE_orOperator = 21
-	ActionParserRULE_comparisonOperator = 22
-	ActionParserRULE_equalityOperator = 23
-	ActionParserRULE_booleanExpression = 24
-	ActionParserRULE_expressionStart = 25
-	ActionParserRULE_expressionEnd = 26
-	ActionParserRULE_filterExpression = 27
+	ActionParserRULE_array                 = 18
+	ActionParserRULE_arrayIndex            = 19
+	ActionParserRULE_andOperator           = 20
+	ActionParserRULE_orOperator            = 21
+	ActionParserRULE_comparisonOperator    = 22
+	ActionParserRULE_equalityOperator      = 23
+	ActionParserRULE_booleanExpression     = 24
+	ActionParserRULE_expressionStart       = 25
+	ActionParserRULE_expressionEnd         = 26
+	ActionParserRULE_filterExpression      = 27
 )
 
 // IStartContext is an interface to support dynamic dispatch.
@@ -265,10 +263,10 @@ func NewStartContext(parser antlr.Parser, parent antlr.ParserRuleContext, invoki
 func (s *StartContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *StartContext) Expression() IExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -292,7 +290,6 @@ func (s *StartContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) 
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *StartContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterStart(s)
@@ -304,9 +301,6 @@ func (s *StartContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitStart(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) Start() (localctx IStartContext) {
 	this := p
@@ -341,11 +335,8 @@ func (p *ActionParser) Start() (localctx IStartContext) {
 		p.Match(ActionParserEOF)
 	}
 
-
-
 	return localctx
 }
-
 
 // IExpressionContext is an interface to support dynamic dispatch.
 type IExpressionContext interface {
@@ -391,10 +382,10 @@ func NewExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext, i
 func (s *ExpressionContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *ExpressionContext) ExpressionStart() IExpressionStartContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IExpressionStartContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -407,10 +398,10 @@ func (s *ExpressionContext) ExpressionStart() IExpressionStartContext {
 }
 
 func (s *ExpressionContext) OrExpression() IOrExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IOrExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -423,10 +414,10 @@ func (s *ExpressionContext) OrExpression() IOrExpressionContext {
 }
 
 func (s *ExpressionContext) ExpressionEnd() IExpressionEndContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IExpressionEndContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -446,7 +437,6 @@ func (s *ExpressionContext) ToStringTree(ruleNames []string, recog antlr.Recogni
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *ExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterExpression(s)
@@ -458,9 +448,6 @@ func (s *ExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) Expression() (localctx IExpressionContext) {
 	this := p
@@ -499,12 +486,8 @@ func (p *ActionParser) Expression() (localctx IExpressionContext) {
 		p.ExpressionEnd()
 	}
 
-
-
-
 	return localctx
 }
-
 
 // IOrExpressionContext is an interface to support dynamic dispatch.
 type IOrExpressionContext interface {
@@ -572,12 +555,12 @@ func (s *OrExpressionContext) AllAndExpression() []IAndExpressionContext {
 }
 
 func (s *OrExpressionContext) AndExpression(i int) IAndExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IAndExpressionContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -613,12 +596,12 @@ func (s *OrExpressionContext) AllOrOperator() []IOrOperatorContext {
 }
 
 func (s *OrExpressionContext) OrOperator(i int) IOrOperatorContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IOrOperatorContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -640,7 +623,6 @@ func (s *OrExpressionContext) ToStringTree(ruleNames []string, recog antlr.Recog
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *OrExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterOrExpression(s)
@@ -653,9 +635,6 @@ func (s *OrExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
-
-
-
 func (p *ActionParser) OrExpression() (localctx IOrExpressionContext) {
 	this := p
 	_ = this
@@ -663,7 +642,6 @@ func (p *ActionParser) OrExpression() (localctx IOrExpressionContext) {
 	localctx = NewOrExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 4, ActionParserRULE_orExpression)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -690,7 +668,6 @@ func (p *ActionParser) OrExpression() (localctx IOrExpressionContext) {
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-
 	for _la == ActionParserOR {
 		{
 			p.SetState(64)
@@ -701,17 +678,13 @@ func (p *ActionParser) OrExpression() (localctx IOrExpressionContext) {
 			p.AndExpression()
 		}
 
-
 		p.SetState(71)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 
-
-
 	return localctx
 }
-
 
 // IAndExpressionContext is an interface to support dynamic dispatch.
 type IAndExpressionContext interface {
@@ -779,12 +752,12 @@ func (s *AndExpressionContext) AllComparisonExpression() []IComparisonExpression
 }
 
 func (s *AndExpressionContext) ComparisonExpression(i int) IComparisonExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IComparisonExpressionContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -820,12 +793,12 @@ func (s *AndExpressionContext) AllAndOperator() []IAndOperatorContext {
 }
 
 func (s *AndExpressionContext) AndOperator(i int) IAndOperatorContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IAndOperatorContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -847,7 +820,6 @@ func (s *AndExpressionContext) ToStringTree(ruleNames []string, recog antlr.Reco
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *AndExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterAndExpression(s)
@@ -860,9 +832,6 @@ func (s *AndExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
-
-
-
 func (p *ActionParser) AndExpression() (localctx IAndExpressionContext) {
 	this := p
 	_ = this
@@ -870,7 +839,6 @@ func (p *ActionParser) AndExpression() (localctx IAndExpressionContext) {
 	localctx = NewAndExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 6, ActionParserRULE_andExpression)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -897,7 +865,6 @@ func (p *ActionParser) AndExpression() (localctx IAndExpressionContext) {
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-
 	for _la == ActionParserAND {
 		{
 			p.SetState(73)
@@ -908,17 +875,13 @@ func (p *ActionParser) AndExpression() (localctx IAndExpressionContext) {
 			p.ComparisonExpression()
 		}
 
-
 		p.SetState(80)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 
-
-
 	return localctx
 }
-
 
 // IComparisonExpressionContext is an interface to support dynamic dispatch.
 type IComparisonExpressionContext interface {
@@ -985,12 +948,12 @@ func (s *ComparisonExpressionContext) AllEqualityExpression() []IEqualityExpress
 }
 
 func (s *ComparisonExpressionContext) EqualityExpression(i int) IEqualityExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IEqualityExpressionContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -1005,10 +968,10 @@ func (s *ComparisonExpressionContext) EqualityExpression(i int) IEqualityExpress
 }
 
 func (s *ComparisonExpressionContext) ComparisonOperator() IComparisonOperatorContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IComparisonOperatorContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1028,7 +991,6 @@ func (s *ComparisonExpressionContext) ToStringTree(ruleNames []string, recog ant
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *ComparisonExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterComparisonExpression(s)
@@ -1041,9 +1003,6 @@ func (s *ComparisonExpressionContext) ExitRule(listener antlr.ParseTreeListener)
 	}
 }
 
-
-
-
 func (p *ActionParser) ComparisonExpression() (localctx IComparisonExpressionContext) {
 	this := p
 	_ = this
@@ -1051,7 +1010,6 @@ func (p *ActionParser) ComparisonExpression() (localctx IComparisonExpressionCon
 	localctx = NewComparisonExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 8, ActionParserRULE_comparisonExpression)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -1078,8 +1036,7 @@ func (p *ActionParser) ComparisonExpression() (localctx IComparisonExpressionCon
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-
-	if ((int64(_la) & ^0x3f) == 0 && ((int64(1) << _la) & 61440) != 0) {
+	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&61440) != 0 {
 		{
 			p.SetState(82)
 			p.ComparisonOperator()
@@ -1091,11 +1048,8 @@ func (p *ActionParser) ComparisonExpression() (localctx IComparisonExpressionCon
 
 	}
 
-
-
 	return localctx
 }
-
 
 // IEqualityExpressionContext is an interface to support dynamic dispatch.
 type IEqualityExpressionContext interface {
@@ -1162,12 +1116,12 @@ func (s *EqualityExpressionContext) AllPrimaryExpression() []IPrimaryExpressionC
 }
 
 func (s *EqualityExpressionContext) PrimaryExpression(i int) IPrimaryExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IPrimaryExpressionContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -1182,10 +1136,10 @@ func (s *EqualityExpressionContext) PrimaryExpression(i int) IPrimaryExpressionC
 }
 
 func (s *EqualityExpressionContext) EqualityOperator() IEqualityOperatorContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IEqualityOperatorContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1205,7 +1159,6 @@ func (s *EqualityExpressionContext) ToStringTree(ruleNames []string, recog antlr
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *EqualityExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterEqualityExpression(s)
@@ -1218,9 +1171,6 @@ func (s *EqualityExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
-
-
-
 func (p *ActionParser) EqualityExpression() (localctx IEqualityExpressionContext) {
 	this := p
 	_ = this
@@ -1228,7 +1178,6 @@ func (p *ActionParser) EqualityExpression() (localctx IEqualityExpressionContext
 	localctx = NewEqualityExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 10, ActionParserRULE_equalityExpression)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -1255,7 +1204,6 @@ func (p *ActionParser) EqualityExpression() (localctx IEqualityExpressionContext
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-
 	if _la == ActionParserEQ || _la == ActionParserNEQ {
 		{
 			p.SetState(88)
@@ -1268,11 +1216,8 @@ func (p *ActionParser) EqualityExpression() (localctx IEqualityExpressionContext
 
 	}
 
-
-
 	return localctx
 }
-
 
 // IPrimaryExpressionContext is an interface to support dynamic dispatch.
 type IPrimaryExpressionContext interface {
@@ -1321,10 +1266,10 @@ func NewPrimaryExpressionContext(parser antlr.Parser, parent antlr.ParserRuleCon
 func (s *PrimaryExpressionContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *PrimaryExpressionContext) VariableContext() IVariableContextContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IVariableContextContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1337,10 +1282,10 @@ func (s *PrimaryExpressionContext) VariableContext() IVariableContextContext {
 }
 
 func (s *PrimaryExpressionContext) NumberExpression() INumberExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(INumberExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1353,10 +1298,10 @@ func (s *PrimaryExpressionContext) NumberExpression() INumberExpressionContext {
 }
 
 func (s *PrimaryExpressionContext) FunctionCall() IFunctionCallContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IFunctionCallContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1369,10 +1314,10 @@ func (s *PrimaryExpressionContext) FunctionCall() IFunctionCallContext {
 }
 
 func (s *PrimaryExpressionContext) StringExpression() IStringExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IStringExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1385,10 +1330,10 @@ func (s *PrimaryExpressionContext) StringExpression() IStringExpressionContext {
 }
 
 func (s *PrimaryExpressionContext) TermExpression() ITermExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(ITermExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1401,10 +1346,10 @@ func (s *PrimaryExpressionContext) TermExpression() ITermExpressionContext {
 }
 
 func (s *PrimaryExpressionContext) NotExpression() INotExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(INotExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1424,7 +1369,6 @@ func (s *PrimaryExpressionContext) ToStringTree(ruleNames []string, recog antlr.
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *PrimaryExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterPrimaryExpression(s)
@@ -1436,9 +1380,6 @@ func (s *PrimaryExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitPrimaryExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) {
 	this := p
@@ -1473,14 +1414,12 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 			p.VariableContext()
 		}
 
-
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
 			p.SetState(94)
 			p.NumberExpression()
 		}
-
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
@@ -1489,7 +1428,6 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 			p.FunctionCall()
 		}
 
-
 	case 4:
 		p.EnterOuterAlt(localctx, 4)
 		{
@@ -1497,14 +1435,12 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 			p.StringExpression()
 		}
 
-
 	case 5:
 		p.EnterOuterAlt(localctx, 5)
 		{
 			p.SetState(97)
 			p.TermExpression()
 		}
-
 
 	case 6:
 		p.EnterOuterAlt(localctx, 6)
@@ -1515,10 +1451,8 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 
 	}
 
-
 	return localctx
 }
-
 
 // IVariableContextContext is an interface to support dynamic dispatch.
 type IVariableContextContext interface {
@@ -1564,10 +1498,10 @@ func NewVariableContextContext(parser antlr.Parser, parent antlr.ParserRuleConte
 func (s *VariableContextContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *VariableContextContext) VariableIdentifier() IVariableIdentifierContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IVariableIdentifierContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1601,12 +1535,12 @@ func (s *VariableContextContext) AllVariablePath() []IVariablePathContext {
 }
 
 func (s *VariableContextContext) VariablePath(i int) IVariablePathContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IVariablePathContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -1628,7 +1562,6 @@ func (s *VariableContextContext) ToStringTree(ruleNames []string, recog antlr.Re
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *VariableContextContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterVariableContext(s)
@@ -1641,9 +1574,6 @@ func (s *VariableContextContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
-
-
-
 func (p *ActionParser) VariableContext() (localctx IVariableContextContext) {
 	this := p
 	_ = this
@@ -1651,7 +1581,6 @@ func (p *ActionParser) VariableContext() (localctx IVariableContextContext) {
 	localctx = NewVariableContextContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 14, ActionParserRULE_variableContext)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -1678,24 +1607,19 @@ func (p *ActionParser) VariableContext() (localctx IVariableContextContext) {
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-
 	for _la == ActionParserT__1 || _la == ActionParserDOT {
 		{
 			p.SetState(102)
 			p.VariablePath()
 		}
 
-
 		p.SetState(107)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 
-
-
 	return localctx
 }
-
 
 // IVariablePathContext is an interface to support dynamic dispatch.
 type IVariablePathContext interface {
@@ -1746,10 +1670,10 @@ func (s *VariablePathContext) DOT() antlr.TerminalNode {
 }
 
 func (s *VariablePathContext) VariableIdentifier() IVariableIdentifierContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IVariableIdentifierContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1762,10 +1686,10 @@ func (s *VariablePathContext) VariableIdentifier() IVariableIdentifierContext {
 }
 
 func (s *VariablePathContext) Array() IArrayContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IArrayContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1778,10 +1702,10 @@ func (s *VariablePathContext) Array() IArrayContext {
 }
 
 func (s *VariablePathContext) FilterExpression() IFilterExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IFilterExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -1801,7 +1725,6 @@ func (s *VariablePathContext) ToStringTree(ruleNames []string, recog antlr.Recog
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *VariablePathContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterVariablePath(s)
@@ -1813,9 +1736,6 @@ func (s *VariablePathContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitVariablePath(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) VariablePath() (localctx IVariablePathContext) {
 	this := p
@@ -1854,13 +1774,11 @@ func (p *ActionParser) VariablePath() (localctx IVariablePathContext) {
 			p.VariableIdentifier()
 		}
 
-
 	case 2:
 		{
 			p.SetState(110)
 			p.Array()
 		}
-
 
 	case 3:
 		{
@@ -1874,11 +1792,8 @@ func (p *ActionParser) VariablePath() (localctx IVariablePathContext) {
 
 	}
 
-
-
 	return localctx
 }
-
 
 // IVariableIdentifierContext is an interface to support dynamic dispatch.
 type IVariableIdentifierContext interface {
@@ -1933,7 +1848,6 @@ func (s *VariableIdentifierContext) ToStringTree(ruleNames []string, recog antlr
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *VariableIdentifierContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterVariableIdentifier(s)
@@ -1945,9 +1859,6 @@ func (s *VariableIdentifierContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitVariableIdentifier(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) VariableIdentifier() (localctx IVariableIdentifierContext) {
 	this := p
@@ -1978,11 +1889,8 @@ func (p *ActionParser) VariableIdentifier() (localctx IVariableIdentifierContext
 		p.Match(ActionParserID)
 	}
 
-
-
 	return localctx
 }
-
 
 // INumberExpressionContext is an interface to support dynamic dispatch.
 type INumberExpressionContext interface {
@@ -2037,7 +1945,6 @@ func (s *NumberExpressionContext) ToStringTree(ruleNames []string, recog antlr.R
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *NumberExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterNumberExpression(s)
@@ -2049,9 +1956,6 @@ func (s *NumberExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitNumberExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) NumberExpression() (localctx INumberExpressionContext) {
 	this := p
@@ -2082,11 +1986,8 @@ func (p *ActionParser) NumberExpression() (localctx INumberExpressionContext) {
 		p.Match(ActionParserNUMBER)
 	}
 
-
-
 	return localctx
 }
-
 
 // IStringExpressionContext is an interface to support dynamic dispatch.
 type IStringExpressionContext interface {
@@ -2141,7 +2042,6 @@ func (s *StringExpressionContext) ToStringTree(ruleNames []string, recog antlr.R
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *StringExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterStringExpression(s)
@@ -2153,9 +2053,6 @@ func (s *StringExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitStringExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) StringExpression() (localctx IStringExpressionContext) {
 	this := p
@@ -2186,11 +2083,8 @@ func (p *ActionParser) StringExpression() (localctx IStringExpressionContext) {
 		p.Match(ActionParserSTRING_INSIDE_EXPRESSION)
 	}
 
-
-
 	return localctx
 }
-
 
 // ITermExpressionContext is an interface to support dynamic dispatch.
 type ITermExpressionContext interface {
@@ -2240,10 +2134,10 @@ func (s *TermExpressionContext) LPAREN() antlr.TerminalNode {
 }
 
 func (s *TermExpressionContext) OrExpression() IOrExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IOrExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -2267,7 +2161,6 @@ func (s *TermExpressionContext) ToStringTree(ruleNames []string, recog antlr.Rec
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *TermExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterTermExpression(s)
@@ -2279,9 +2172,6 @@ func (s *TermExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitTermExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) TermExpression() (localctx ITermExpressionContext) {
 	this := p
@@ -2320,11 +2210,8 @@ func (p *ActionParser) TermExpression() (localctx ITermExpressionContext) {
 		p.Match(ActionParserRPAREN)
 	}
 
-
-
 	return localctx
 }
-
 
 // INotExpressionContext is an interface to support dynamic dispatch.
 type INotExpressionContext interface {
@@ -2369,10 +2256,10 @@ func NewNotExpressionContext(parser antlr.Parser, parent antlr.ParserRuleContext
 func (s *NotExpressionContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *NotExpressionContext) NotOperator() INotOperatorContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(INotOperatorContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -2385,10 +2272,10 @@ func (s *NotExpressionContext) NotOperator() INotOperatorContext {
 }
 
 func (s *NotExpressionContext) PrimaryExpression() IPrimaryExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IPrimaryExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -2408,7 +2295,6 @@ func (s *NotExpressionContext) ToStringTree(ruleNames []string, recog antlr.Reco
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *NotExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterNotExpression(s)
@@ -2420,9 +2306,6 @@ func (s *NotExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitNotExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) NotExpression() (localctx INotExpressionContext) {
 	this := p
@@ -2457,12 +2340,8 @@ func (p *ActionParser) NotExpression() (localctx INotExpressionContext) {
 		p.PrimaryExpression()
 	}
 
-
-
-
 	return localctx
 }
-
 
 // INotOperatorContext is an interface to support dynamic dispatch.
 type INotOperatorContext interface {
@@ -2517,7 +2396,6 @@ func (s *NotOperatorContext) ToStringTree(ruleNames []string, recog antlr.Recogn
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *NotOperatorContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterNotOperator(s)
@@ -2529,9 +2407,6 @@ func (s *NotOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitNotOperator(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) NotOperator() (localctx INotOperatorContext) {
 	this := p
@@ -2562,11 +2437,8 @@ func (p *ActionParser) NotOperator() (localctx INotOperatorContext) {
 		p.Match(ActionParserNOT)
 	}
 
-
-
 	return localctx
 }
-
 
 // IFunctionCallContext is an interface to support dynamic dispatch.
 type IFunctionCallContext interface {
@@ -2616,10 +2488,10 @@ func NewFunctionCallContext(parser antlr.Parser, parent antlr.ParserRuleContext,
 func (s *FunctionCallContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *FunctionCallContext) FunctionName() IFunctionNameContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IFunctionNameContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -2657,12 +2529,12 @@ func (s *FunctionCallContext) AllFunctionCallArguments() []IFunctionCallArgument
 }
 
 func (s *FunctionCallContext) FunctionCallArguments(i int) IFunctionCallArgumentsContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IFunctionCallArgumentsContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -2702,12 +2574,12 @@ func (s *FunctionCallContext) AllVariablePath() []IVariablePathContext {
 }
 
 func (s *FunctionCallContext) VariablePath(i int) IVariablePathContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	j := 0
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IVariablePathContext); ok {
 			if j == i {
-				t = ctx.(antlr.RuleContext);
+				t = ctx.(antlr.RuleContext)
 				break
 			}
 			j++
@@ -2729,7 +2601,6 @@ func (s *FunctionCallContext) ToStringTree(ruleNames []string, recog antlr.Recog
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *FunctionCallContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterFunctionCall(s)
@@ -2742,9 +2613,6 @@ func (s *FunctionCallContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
-
-
-
 func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 	this := p
 	_ = this
@@ -2752,7 +2620,6 @@ func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 	localctx = NewFunctionCallContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 30, ActionParserRULE_functionCall)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -2787,7 +2654,6 @@ func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-
 	for _la == ActionParserT__0 {
 		{
 			p.SetState(133)
@@ -2797,7 +2663,6 @@ func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 			p.SetState(134)
 			p.FunctionCallArguments()
 		}
-
 
 		p.SetState(139)
 		p.GetErrorHandler().Sync(p)
@@ -2811,24 +2676,19 @@ func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-
 	for _la == ActionParserT__1 || _la == ActionParserDOT {
 		{
 			p.SetState(141)
 			p.VariablePath()
 		}
 
-
 		p.SetState(146)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 
-
-
 	return localctx
 }
-
 
 // IFunctionNameContext is an interface to support dynamic dispatch.
 type IFunctionNameContext interface {
@@ -2883,7 +2743,6 @@ func (s *FunctionNameContext) ToStringTree(ruleNames []string, recog antlr.Recog
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *FunctionNameContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterFunctionName(s)
@@ -2895,9 +2754,6 @@ func (s *FunctionNameContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitFunctionName(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) FunctionName() (localctx IFunctionNameContext) {
 	this := p
@@ -2928,11 +2784,8 @@ func (p *ActionParser) FunctionName() (localctx IFunctionNameContext) {
 		p.Match(ActionParserID)
 	}
 
-
-
 	return localctx
 }
-
 
 // IFunctionCallArgumentsContext is an interface to support dynamic dispatch.
 type IFunctionCallArgumentsContext interface {
@@ -2980,10 +2833,10 @@ func NewFunctionCallArgumentsContext(parser antlr.Parser, parent antlr.ParserRul
 func (s *FunctionCallArgumentsContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *FunctionCallArgumentsContext) VariableContext() IVariableContextContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IVariableContextContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -2996,10 +2849,10 @@ func (s *FunctionCallArgumentsContext) VariableContext() IVariableContextContext
 }
 
 func (s *FunctionCallArgumentsContext) StringExpression() IStringExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IStringExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -3012,10 +2865,10 @@ func (s *FunctionCallArgumentsContext) StringExpression() IStringExpressionConte
 }
 
 func (s *FunctionCallArgumentsContext) NumberExpression() INumberExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(INumberExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -3028,10 +2881,10 @@ func (s *FunctionCallArgumentsContext) NumberExpression() INumberExpressionConte
 }
 
 func (s *FunctionCallArgumentsContext) BooleanExpression() IBooleanExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IBooleanExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -3044,10 +2897,10 @@ func (s *FunctionCallArgumentsContext) BooleanExpression() IBooleanExpressionCon
 }
 
 func (s *FunctionCallArgumentsContext) FunctionCall() IFunctionCallContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IFunctionCallContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -3067,7 +2920,6 @@ func (s *FunctionCallArgumentsContext) ToStringTree(ruleNames []string, recog an
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *FunctionCallArgumentsContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterFunctionCallArguments(s)
@@ -3079,9 +2931,6 @@ func (s *FunctionCallArgumentsContext) ExitRule(listener antlr.ParseTreeListener
 		listenerT.ExitFunctionCallArguments(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsContext) {
 	this := p
@@ -3112,14 +2961,12 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 
-
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
 			p.SetState(150)
 			p.VariableContext()
 		}
-
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
@@ -3128,7 +2975,6 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 			p.StringExpression()
 		}
 
-
 	case 4:
 		p.EnterOuterAlt(localctx, 4)
 		{
@@ -3136,14 +2982,12 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 			p.NumberExpression()
 		}
 
-
 	case 5:
 		p.EnterOuterAlt(localctx, 5)
 		{
 			p.SetState(153)
 			p.BooleanExpression()
 		}
-
 
 	case 6:
 		p.EnterOuterAlt(localctx, 6)
@@ -3154,10 +2998,8 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 
 	}
 
-
 	return localctx
 }
-
 
 // IArrayContext is an interface to support dynamic dispatch.
 type IArrayContext interface {
@@ -3201,10 +3043,10 @@ func NewArrayContext(parser antlr.Parser, parent antlr.ParserRuleContext, invoki
 func (s *ArrayContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *ArrayContext) ArrayIndex() IArrayIndexContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IArrayIndexContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -3224,7 +3066,6 @@ func (s *ArrayContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) 
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *ArrayContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterArray(s)
@@ -3236,9 +3077,6 @@ func (s *ArrayContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitArray(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) Array() (localctx IArrayContext) {
 	this := p
@@ -3277,11 +3115,8 @@ func (p *ActionParser) Array() (localctx IArrayContext) {
 		p.Match(ActionParserT__2)
 	}
 
-
-
 	return localctx
 }
-
 
 // IArrayIndexContext is an interface to support dynamic dispatch.
 type IArrayIndexContext interface {
@@ -3325,10 +3160,10 @@ func NewArrayIndexContext(parser antlr.Parser, parent antlr.ParserRuleContext, i
 func (s *ArrayIndexContext) GetParser() antlr.Parser { return s.parser }
 
 func (s *ArrayIndexContext) PrimaryExpression() IPrimaryExpressionContext {
-	var t antlr.RuleContext;
+	var t antlr.RuleContext
 	for _, ctx := range s.GetChildren() {
 		if _, ok := ctx.(IPrimaryExpressionContext); ok {
-			t = ctx.(antlr.RuleContext);
+			t = ctx.(antlr.RuleContext)
 			break
 		}
 	}
@@ -3348,7 +3183,6 @@ func (s *ArrayIndexContext) ToStringTree(ruleNames []string, recog antlr.Recogni
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *ArrayIndexContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterArrayIndex(s)
@@ -3360,9 +3194,6 @@ func (s *ArrayIndexContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitArrayIndex(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) ArrayIndex() (localctx IArrayIndexContext) {
 	this := p
@@ -3393,11 +3224,8 @@ func (p *ActionParser) ArrayIndex() (localctx IArrayIndexContext) {
 		p.PrimaryExpression()
 	}
 
-
-
 	return localctx
 }
-
 
 // IAndOperatorContext is an interface to support dynamic dispatch.
 type IAndOperatorContext interface {
@@ -3452,7 +3280,6 @@ func (s *AndOperatorContext) ToStringTree(ruleNames []string, recog antlr.Recogn
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *AndOperatorContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterAndOperator(s)
@@ -3464,9 +3291,6 @@ func (s *AndOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitAndOperator(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) AndOperator() (localctx IAndOperatorContext) {
 	this := p
@@ -3497,11 +3321,8 @@ func (p *ActionParser) AndOperator() (localctx IAndOperatorContext) {
 		p.Match(ActionParserAND)
 	}
 
-
-
 	return localctx
 }
-
 
 // IOrOperatorContext is an interface to support dynamic dispatch.
 type IOrOperatorContext interface {
@@ -3556,7 +3377,6 @@ func (s *OrOperatorContext) ToStringTree(ruleNames []string, recog antlr.Recogni
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *OrOperatorContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterOrOperator(s)
@@ -3568,9 +3388,6 @@ func (s *OrOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitOrOperator(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) OrOperator() (localctx IOrOperatorContext) {
 	this := p
@@ -3601,11 +3418,8 @@ func (p *ActionParser) OrOperator() (localctx IOrOperatorContext) {
 		p.Match(ActionParserOR)
 	}
 
-
-
 	return localctx
 }
-
 
 // IComparisonOperatorContext is an interface to support dynamic dispatch.
 type IComparisonOperatorContext interface {
@@ -3675,7 +3489,6 @@ func (s *ComparisonOperatorContext) ToStringTree(ruleNames []string, recog antlr
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *ComparisonOperatorContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterComparisonOperator(s)
@@ -3688,9 +3501,6 @@ func (s *ComparisonOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
-
-
-
 func (p *ActionParser) ComparisonOperator() (localctx IComparisonOperatorContext) {
 	this := p
 	_ = this
@@ -3698,7 +3508,6 @@ func (p *ActionParser) ComparisonOperator() (localctx IComparisonOperatorContext
 	localctx = NewComparisonOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 44, ActionParserRULE_comparisonOperator)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -3721,7 +3530,7 @@ func (p *ActionParser) ComparisonOperator() (localctx IComparisonOperatorContext
 		p.SetState(167)
 		_la = p.GetTokenStream().LA(1)
 
-		if !(((int64(_la) & ^0x3f) == 0 && ((int64(1) << _la) & 61440) != 0)) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&61440) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -3729,11 +3538,8 @@ func (p *ActionParser) ComparisonOperator() (localctx IComparisonOperatorContext
 		}
 	}
 
-
-
 	return localctx
 }
-
 
 // IEqualityOperatorContext is an interface to support dynamic dispatch.
 type IEqualityOperatorContext interface {
@@ -3793,7 +3599,6 @@ func (s *EqualityOperatorContext) ToStringTree(ruleNames []string, recog antlr.R
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *EqualityOperatorContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterEqualityOperator(s)
@@ -3806,9 +3611,6 @@ func (s *EqualityOperatorContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
-
-
-
 func (p *ActionParser) EqualityOperator() (localctx IEqualityOperatorContext) {
 	this := p
 	_ = this
@@ -3816,7 +3618,6 @@ func (p *ActionParser) EqualityOperator() (localctx IEqualityOperatorContext) {
 	localctx = NewEqualityOperatorContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 46, ActionParserRULE_equalityOperator)
 	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -3847,11 +3648,8 @@ func (p *ActionParser) EqualityOperator() (localctx IEqualityOperatorContext) {
 		}
 	}
 
-
-
 	return localctx
 }
-
 
 // IBooleanExpressionContext is an interface to support dynamic dispatch.
 type IBooleanExpressionContext interface {
@@ -3906,7 +3704,6 @@ func (s *BooleanExpressionContext) ToStringTree(ruleNames []string, recog antlr.
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *BooleanExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterBooleanExpression(s)
@@ -3918,9 +3715,6 @@ func (s *BooleanExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitBooleanExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) BooleanExpression() (localctx IBooleanExpressionContext) {
 	this := p
@@ -3951,11 +3745,8 @@ func (p *ActionParser) BooleanExpression() (localctx IBooleanExpressionContext) 
 		p.Match(ActionParserBOOLEAN)
 	}
 
-
-
 	return localctx
 }
-
 
 // IExpressionStartContext is an interface to support dynamic dispatch.
 type IExpressionStartContext interface {
@@ -4010,7 +3801,6 @@ func (s *ExpressionStartContext) ToStringTree(ruleNames []string, recog antlr.Re
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *ExpressionStartContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterExpressionStart(s)
@@ -4022,9 +3812,6 @@ func (s *ExpressionStartContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitExpressionStart(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) ExpressionStart() (localctx IExpressionStartContext) {
 	this := p
@@ -4055,11 +3842,8 @@ func (p *ActionParser) ExpressionStart() (localctx IExpressionStartContext) {
 		p.Match(ActionParserEXP_START)
 	}
 
-
-
 	return localctx
 }
-
 
 // IExpressionEndContext is an interface to support dynamic dispatch.
 type IExpressionEndContext interface {
@@ -4114,7 +3898,6 @@ func (s *ExpressionEndContext) ToStringTree(ruleNames []string, recog antlr.Reco
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *ExpressionEndContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterExpressionEnd(s)
@@ -4126,9 +3909,6 @@ func (s *ExpressionEndContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitExpressionEnd(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) ExpressionEnd() (localctx IExpressionEndContext) {
 	this := p
@@ -4159,11 +3939,8 @@ func (p *ActionParser) ExpressionEnd() (localctx IExpressionEndContext) {
 		p.Match(ActionParserEXP_END)
 	}
 
-
-
 	return localctx
 }
-
 
 // IFilterExpressionContext is an interface to support dynamic dispatch.
 type IFilterExpressionContext interface {
@@ -4218,7 +3995,6 @@ func (s *FilterExpressionContext) ToStringTree(ruleNames []string, recog antlr.R
 	return antlr.TreesStringTree(s, ruleNames, recog)
 }
 
-
 func (s *FilterExpressionContext) EnterRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ActionListener); ok {
 		listenerT.EnterFilterExpression(s)
@@ -4230,9 +4006,6 @@ func (s *FilterExpressionContext) ExitRule(listener antlr.ParseTreeListener) {
 		listenerT.ExitFilterExpression(s)
 	}
 }
-
-
-
 
 func (p *ActionParser) FilterExpression() (localctx IFilterExpressionContext) {
 	this := p
@@ -4263,9 +4036,5 @@ func (p *ActionParser) FilterExpression() (localctx IFilterExpressionContext) {
 		p.Match(ActionParserSTAR)
 	}
 
-
-
 	return localctx
 }
-
-
