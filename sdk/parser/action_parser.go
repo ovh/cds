@@ -54,7 +54,7 @@ func actionParserInit() {
   }
   staticData.predictionContextCache = antlr.NewPredictionContextCache()
   staticData.serializedATN = []int32{
-	4, 1, 24, 180, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7, 
+	4, 1, 24, 179, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7, 
 	4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7, 
 	10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15, 
 	2, 16, 7, 16, 2, 17, 7, 17, 2, 18, 7, 18, 2, 19, 7, 19, 2, 20, 7, 20, 2, 
@@ -63,68 +63,68 @@ func actionParserInit() {
 	2, 1, 2, 1, 2, 5, 2, 68, 8, 2, 10, 2, 12, 2, 71, 9, 2, 1, 3, 1, 3, 1, 3, 
 	1, 3, 5, 3, 77, 8, 3, 10, 3, 12, 3, 80, 9, 3, 1, 4, 1, 4, 1, 4, 1, 4, 3, 
 	4, 86, 8, 4, 1, 5, 1, 5, 1, 5, 1, 5, 3, 5, 92, 8, 5, 1, 6, 1, 6, 1, 6, 
-	1, 6, 5, 6, 98, 8, 6, 10, 6, 12, 6, 101, 9, 6, 1, 6, 1, 6, 1, 6, 3, 6, 
-	106, 8, 6, 1, 7, 1, 7, 5, 7, 110, 8, 7, 10, 7, 12, 7, 113, 9, 7, 1, 8, 
-	1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 120, 8, 8, 1, 9, 1, 9, 1, 10, 1, 10, 1, 11, 
-	1, 11, 1, 12, 1, 12, 1, 12, 1, 12, 1, 13, 1, 13, 1, 13, 1, 14, 1, 14, 1, 
-	15, 1, 15, 1, 15, 1, 15, 1, 15, 5, 15, 142, 8, 15, 10, 15, 12, 15, 145, 
-	9, 15, 1, 15, 1, 15, 1, 16, 1, 16, 1, 17, 1, 17, 1, 17, 1, 17, 1, 17, 3, 
-	17, 156, 8, 17, 1, 18, 1, 18, 1, 18, 1, 18, 1, 19, 1, 19, 1, 20, 1, 20, 
-	1, 21, 1, 21, 1, 22, 1, 22, 1, 23, 1, 23, 1, 24, 1, 24, 1, 25, 1, 25, 1, 
-	26, 1, 26, 1, 27, 1, 27, 1, 27, 0, 0, 28, 0, 2, 4, 6, 8, 10, 12, 14, 16, 
-	18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 
-	54, 0, 2, 1, 0, 12, 15, 1, 0, 10, 11, 169, 0, 56, 1, 0, 0, 0, 2, 59, 1, 
-	0, 0, 0, 4, 63, 1, 0, 0, 0, 6, 72, 1, 0, 0, 0, 8, 81, 1, 0, 0, 0, 10, 87, 
-	1, 0, 0, 0, 12, 105, 1, 0, 0, 0, 14, 107, 1, 0, 0, 0, 16, 119, 1, 0, 0, 
-	0, 18, 121, 1, 0, 0, 0, 20, 123, 1, 0, 0, 0, 22, 125, 1, 0, 0, 0, 24, 127, 
-	1, 0, 0, 0, 26, 131, 1, 0, 0, 0, 28, 134, 1, 0, 0, 0, 30, 136, 1, 0, 0, 
-	0, 32, 148, 1, 0, 0, 0, 34, 155, 1, 0, 0, 0, 36, 157, 1, 0, 0, 0, 38, 161, 
-	1, 0, 0, 0, 40, 163, 1, 0, 0, 0, 42, 165, 1, 0, 0, 0, 44, 167, 1, 0, 0, 
-	0, 46, 169, 1, 0, 0, 0, 48, 171, 1, 0, 0, 0, 50, 173, 1, 0, 0, 0, 52, 175, 
-	1, 0, 0, 0, 54, 177, 1, 0, 0, 0, 56, 57, 3, 2, 1, 0, 57, 58, 5, 0, 0, 1, 
-	58, 1, 1, 0, 0, 0, 59, 60, 3, 50, 25, 0, 60, 61, 3, 4, 2, 0, 61, 62, 3, 
-	52, 26, 0, 62, 3, 1, 0, 0, 0, 63, 69, 3, 6, 3, 0, 64, 65, 3, 42, 21, 0, 
-	65, 66, 3, 6, 3, 0, 66, 68, 1, 0, 0, 0, 67, 64, 1, 0, 0, 0, 68, 71, 1, 
-	0, 0, 0, 69, 67, 1, 0, 0, 0, 69, 70, 1, 0, 0, 0, 70, 5, 1, 0, 0, 0, 71, 
-	69, 1, 0, 0, 0, 72, 78, 3, 8, 4, 0, 73, 74, 3, 40, 20, 0, 74, 75, 3, 8, 
-	4, 0, 75, 77, 1, 0, 0, 0, 76, 73, 1, 0, 0, 0, 77, 80, 1, 0, 0, 0, 78, 76, 
-	1, 0, 0, 0, 78, 79, 1, 0, 0, 0, 79, 7, 1, 0, 0, 0, 80, 78, 1, 0, 0, 0, 
-	81, 85, 3, 10, 5, 0, 82, 83, 3, 44, 22, 0, 83, 84, 3, 10, 5, 0, 84, 86, 
-	1, 0, 0, 0, 85, 82, 1, 0, 0, 0, 85, 86, 1, 0, 0, 0, 86, 9, 1, 0, 0, 0, 
-	87, 91, 3, 12, 6, 0, 88, 89, 3, 46, 23, 0, 89, 90, 3, 12, 6, 0, 90, 92, 
-	1, 0, 0, 0, 91, 88, 1, 0, 0, 0, 91, 92, 1, 0, 0, 0, 92, 11, 1, 0, 0, 0, 
-	93, 106, 3, 14, 7, 0, 94, 106, 3, 20, 10, 0, 95, 99, 3, 30, 15, 0, 96, 
-	98, 3, 16, 8, 0, 97, 96, 1, 0, 0, 0, 98, 101, 1, 0, 0, 0, 99, 97, 1, 0, 
-	0, 0, 99, 100, 1, 0, 0, 0, 100, 106, 1, 0, 0, 0, 101, 99, 1, 0, 0, 0, 102, 
-	106, 3, 22, 11, 0, 103, 106, 3, 24, 12, 0, 104, 106, 3, 26, 13, 0, 105, 
-	93, 1, 0, 0, 0, 105, 94, 1, 0, 0, 0, 105, 95, 1, 0, 0, 0, 105, 102, 1, 
-	0, 0, 0, 105, 103, 1, 0, 0, 0, 105, 104, 1, 0, 0, 0, 106, 13, 1, 0, 0, 
-	0, 107, 111, 3, 18, 9, 0, 108, 110, 3, 16, 8, 0, 109, 108, 1, 0, 0, 0, 
-	110, 113, 1, 0, 0, 0, 111, 109, 1, 0, 0, 0, 111, 112, 1, 0, 0, 0, 112, 
-	15, 1, 0, 0, 0, 113, 111, 1, 0, 0, 0, 114, 115, 5, 22, 0, 0, 115, 120, 
-	3, 18, 9, 0, 116, 120, 3, 36, 18, 0, 117, 118, 5, 22, 0, 0, 118, 120, 3, 
-	54, 27, 0, 119, 114, 1, 0, 0, 0, 119, 116, 1, 0, 0, 0, 119, 117, 1, 0, 
-	0, 0, 120, 17, 1, 0, 0, 0, 121, 122, 5, 16, 0, 0, 122, 19, 1, 0, 0, 0, 
-	123, 124, 5, 9, 0, 0, 124, 21, 1, 0, 0, 0, 125, 126, 5, 4, 0, 0, 126, 23, 
-	1, 0, 0, 0, 127, 128, 5, 17, 0, 0, 128, 129, 3, 4, 2, 0, 129, 130, 5, 18, 
-	0, 0, 130, 25, 1, 0, 0, 0, 131, 132, 3, 28, 14, 0, 132, 133, 3, 12, 6, 
-	0, 133, 27, 1, 0, 0, 0, 134, 135, 5, 19, 0, 0, 135, 29, 1, 0, 0, 0, 136, 
-	137, 3, 32, 16, 0, 137, 138, 5, 17, 0, 0, 138, 143, 3, 34, 17, 0, 139, 
-	140, 5, 1, 0, 0, 140, 142, 3, 34, 17, 0, 141, 139, 1, 0, 0, 0, 142, 145, 
-	1, 0, 0, 0, 143, 141, 1, 0, 0, 0, 143, 144, 1, 0, 0, 0, 144, 146, 1, 0, 
-	0, 0, 145, 143, 1, 0, 0, 0, 146, 147, 5, 18, 0, 0, 147, 31, 1, 0, 0, 0, 
-	148, 149, 5, 16, 0, 0, 149, 33, 1, 0, 0, 0, 150, 156, 1, 0, 0, 0, 151, 
-	156, 3, 14, 7, 0, 152, 156, 3, 22, 11, 0, 153, 156, 3, 20, 10, 0, 154, 
-	156, 3, 48, 24, 0, 155, 150, 1, 0, 0, 0, 155, 151, 1, 0, 0, 0, 155, 152, 
-	1, 0, 0, 0, 155, 153, 1, 0, 0, 0, 155, 154, 1, 0, 0, 0, 156, 35, 1, 0, 
-	0, 0, 157, 158, 5, 2, 0, 0, 158, 159, 3, 38, 19, 0, 159, 160, 5, 3, 0, 
-	0, 160, 37, 1, 0, 0, 0, 161, 162, 3, 12, 6, 0, 162, 39, 1, 0, 0, 0, 163, 
-	164, 5, 21, 0, 0, 164, 41, 1, 0, 0, 0, 165, 166, 5, 20, 0, 0, 166, 43, 
-	1, 0, 0, 0, 167, 168, 7, 0, 0, 0, 168, 45, 1, 0, 0, 0, 169, 170, 7, 1, 
-	0, 0, 170, 47, 1, 0, 0, 0, 171, 172, 5, 5, 0, 0, 172, 49, 1, 0, 0, 0, 173, 
-	174, 5, 7, 0, 0, 174, 51, 1, 0, 0, 0, 175, 176, 5, 8, 0, 0, 176, 53, 1, 
-	0, 0, 0, 177, 178, 5, 23, 0, 0, 178, 55, 1, 0, 0, 0, 10, 69, 78, 85, 91, 
-	99, 105, 111, 119, 143, 155,
+	1, 6, 1, 6, 1, 6, 3, 6, 100, 8, 6, 1, 7, 1, 7, 5, 7, 104, 8, 7, 10, 7, 
+	12, 7, 107, 9, 7, 1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 3, 8, 114, 8, 8, 1, 9, 
+	1, 9, 1, 10, 1, 10, 1, 11, 1, 11, 1, 12, 1, 12, 1, 12, 1, 12, 1, 13, 1, 
+	13, 1, 13, 1, 14, 1, 14, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 5, 15, 136, 
+	8, 15, 10, 15, 12, 15, 139, 9, 15, 1, 15, 1, 15, 5, 15, 143, 8, 15, 10, 
+	15, 12, 15, 146, 9, 15, 1, 16, 1, 16, 1, 17, 1, 17, 1, 17, 1, 17, 1, 17, 
+	3, 17, 155, 8, 17, 1, 18, 1, 18, 1, 18, 1, 18, 1, 19, 1, 19, 1, 20, 1, 
+	20, 1, 21, 1, 21, 1, 22, 1, 22, 1, 23, 1, 23, 1, 24, 1, 24, 1, 25, 1, 25, 
+	1, 26, 1, 26, 1, 27, 1, 27, 1, 27, 0, 0, 28, 0, 2, 4, 6, 8, 10, 12, 14, 
+	16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 
+	52, 54, 0, 2, 1, 0, 12, 15, 1, 0, 10, 11, 168, 0, 56, 1, 0, 0, 0, 2, 59, 
+	1, 0, 0, 0, 4, 63, 1, 0, 0, 0, 6, 72, 1, 0, 0, 0, 8, 81, 1, 0, 0, 0, 10, 
+	87, 1, 0, 0, 0, 12, 99, 1, 0, 0, 0, 14, 101, 1, 0, 0, 0, 16, 113, 1, 0, 
+	0, 0, 18, 115, 1, 0, 0, 0, 20, 117, 1, 0, 0, 0, 22, 119, 1, 0, 0, 0, 24, 
+	121, 1, 0, 0, 0, 26, 125, 1, 0, 0, 0, 28, 128, 1, 0, 0, 0, 30, 130, 1, 
+	0, 0, 0, 32, 147, 1, 0, 0, 0, 34, 154, 1, 0, 0, 0, 36, 156, 1, 0, 0, 0, 
+	38, 160, 1, 0, 0, 0, 40, 162, 1, 0, 0, 0, 42, 164, 1, 0, 0, 0, 44, 166, 
+	1, 0, 0, 0, 46, 168, 1, 0, 0, 0, 48, 170, 1, 0, 0, 0, 50, 172, 1, 0, 0, 
+	0, 52, 174, 1, 0, 0, 0, 54, 176, 1, 0, 0, 0, 56, 57, 3, 2, 1, 0, 57, 58, 
+	5, 0, 0, 1, 58, 1, 1, 0, 0, 0, 59, 60, 3, 50, 25, 0, 60, 61, 3, 4, 2, 0, 
+	61, 62, 3, 52, 26, 0, 62, 3, 1, 0, 0, 0, 63, 69, 3, 6, 3, 0, 64, 65, 3, 
+	42, 21, 0, 65, 66, 3, 6, 3, 0, 66, 68, 1, 0, 0, 0, 67, 64, 1, 0, 0, 0, 
+	68, 71, 1, 0, 0, 0, 69, 67, 1, 0, 0, 0, 69, 70, 1, 0, 0, 0, 70, 5, 1, 0, 
+	0, 0, 71, 69, 1, 0, 0, 0, 72, 78, 3, 8, 4, 0, 73, 74, 3, 40, 20, 0, 74, 
+	75, 3, 8, 4, 0, 75, 77, 1, 0, 0, 0, 76, 73, 1, 0, 0, 0, 77, 80, 1, 0, 0, 
+	0, 78, 76, 1, 0, 0, 0, 78, 79, 1, 0, 0, 0, 79, 7, 1, 0, 0, 0, 80, 78, 1, 
+	0, 0, 0, 81, 85, 3, 10, 5, 0, 82, 83, 3, 44, 22, 0, 83, 84, 3, 10, 5, 0, 
+	84, 86, 1, 0, 0, 0, 85, 82, 1, 0, 0, 0, 85, 86, 1, 0, 0, 0, 86, 9, 1, 0, 
+	0, 0, 87, 91, 3, 12, 6, 0, 88, 89, 3, 46, 23, 0, 89, 90, 3, 12, 6, 0, 90, 
+	92, 1, 0, 0, 0, 91, 88, 1, 0, 0, 0, 91, 92, 1, 0, 0, 0, 92, 11, 1, 0, 0, 
+	0, 93, 100, 3, 14, 7, 0, 94, 100, 3, 20, 10, 0, 95, 100, 3, 30, 15, 0, 
+	96, 100, 3, 22, 11, 0, 97, 100, 3, 24, 12, 0, 98, 100, 3, 26, 13, 0, 99, 
+	93, 1, 0, 0, 0, 99, 94, 1, 0, 0, 0, 99, 95, 1, 0, 0, 0, 99, 96, 1, 0, 0, 
+	0, 99, 97, 1, 0, 0, 0, 99, 98, 1, 0, 0, 0, 100, 13, 1, 0, 0, 0, 101, 105, 
+	3, 18, 9, 0, 102, 104, 3, 16, 8, 0, 103, 102, 1, 0, 0, 0, 104, 107, 1, 
+	0, 0, 0, 105, 103, 1, 0, 0, 0, 105, 106, 1, 0, 0, 0, 106, 15, 1, 0, 0, 
+	0, 107, 105, 1, 0, 0, 0, 108, 109, 5, 22, 0, 0, 109, 114, 3, 18, 9, 0, 
+	110, 114, 3, 36, 18, 0, 111, 112, 5, 22, 0, 0, 112, 114, 3, 54, 27, 0, 
+	113, 108, 1, 0, 0, 0, 113, 110, 1, 0, 0, 0, 113, 111, 1, 0, 0, 0, 114, 
+	17, 1, 0, 0, 0, 115, 116, 5, 16, 0, 0, 116, 19, 1, 0, 0, 0, 117, 118, 5, 
+	9, 0, 0, 118, 21, 1, 0, 0, 0, 119, 120, 5, 4, 0, 0, 120, 23, 1, 0, 0, 0, 
+	121, 122, 5, 17, 0, 0, 122, 123, 3, 4, 2, 0, 123, 124, 5, 18, 0, 0, 124, 
+	25, 1, 0, 0, 0, 125, 126, 3, 28, 14, 0, 126, 127, 3, 12, 6, 0, 127, 27, 
+	1, 0, 0, 0, 128, 129, 5, 19, 0, 0, 129, 29, 1, 0, 0, 0, 130, 131, 3, 32, 
+	16, 0, 131, 132, 5, 17, 0, 0, 132, 137, 3, 34, 17, 0, 133, 134, 5, 1, 0, 
+	0, 134, 136, 3, 34, 17, 0, 135, 133, 1, 0, 0, 0, 136, 139, 1, 0, 0, 0, 
+	137, 135, 1, 0, 0, 0, 137, 138, 1, 0, 0, 0, 138, 140, 1, 0, 0, 0, 139, 
+	137, 1, 0, 0, 0, 140, 144, 5, 18, 0, 0, 141, 143, 3, 16, 8, 0, 142, 141, 
+	1, 0, 0, 0, 143, 146, 1, 0, 0, 0, 144, 142, 1, 0, 0, 0, 144, 145, 1, 0, 
+	0, 0, 145, 31, 1, 0, 0, 0, 146, 144, 1, 0, 0, 0, 147, 148, 5, 16, 0, 0, 
+	148, 33, 1, 0, 0, 0, 149, 155, 1, 0, 0, 0, 150, 155, 3, 14, 7, 0, 151, 
+	155, 3, 22, 11, 0, 152, 155, 3, 20, 10, 0, 153, 155, 3, 48, 24, 0, 154, 
+	149, 1, 0, 0, 0, 154, 150, 1, 0, 0, 0, 154, 151, 1, 0, 0, 0, 154, 152, 
+	1, 0, 0, 0, 154, 153, 1, 0, 0, 0, 155, 35, 1, 0, 0, 0, 156, 157, 5, 2, 
+	0, 0, 157, 158, 3, 38, 19, 0, 158, 159, 5, 3, 0, 0, 159, 37, 1, 0, 0, 0, 
+	160, 161, 3, 12, 6, 0, 161, 39, 1, 0, 0, 0, 162, 163, 5, 21, 0, 0, 163, 
+	41, 1, 0, 0, 0, 164, 165, 5, 20, 0, 0, 165, 43, 1, 0, 0, 0, 166, 167, 7, 
+	0, 0, 0, 167, 45, 1, 0, 0, 0, 168, 169, 7, 1, 0, 0, 169, 47, 1, 0, 0, 0, 
+	170, 171, 5, 5, 0, 0, 171, 49, 1, 0, 0, 0, 172, 173, 5, 7, 0, 0, 173, 51, 
+	1, 0, 0, 0, 174, 175, 5, 8, 0, 0, 175, 53, 1, 0, 0, 0, 176, 177, 5, 23, 
+	0, 0, 177, 55, 1, 0, 0, 0, 10, 69, 78, 85, 91, 99, 105, 113, 137, 144, 
+	154,
 }
   deserializer := antlr.NewATNDeserializer(nil)
   staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -1285,8 +1285,6 @@ type IPrimaryExpressionContext interface {
 	VariableContext() IVariableContextContext
 	NumberExpression() INumberExpressionContext
 	FunctionCall() IFunctionCallContext
-	AllVariablePath() []IVariablePathContext
-	VariablePath(i int) IVariablePathContext
 	StringExpression() IStringExpressionContext
 	TermExpression() ITermExpressionContext
 	NotExpression() INotExpressionContext
@@ -1370,47 +1368,6 @@ func (s *PrimaryExpressionContext) FunctionCall() IFunctionCallContext {
 	return t.(IFunctionCallContext)
 }
 
-func (s *PrimaryExpressionContext) AllVariablePath() []IVariablePathContext {
-	children := s.GetChildren()
-	len := 0
-	for _, ctx := range children {
-		if _, ok := ctx.(IVariablePathContext); ok {
-			len++
-		}
-	}
-
-	tst := make([]IVariablePathContext, len)
-	i := 0
-	for _, ctx := range children {
-		if t, ok := ctx.(IVariablePathContext); ok {
-			tst[i] = t.(IVariablePathContext)
-			i++
-		}
-	}
-
-	return tst
-}
-
-func (s *PrimaryExpressionContext) VariablePath(i int) IVariablePathContext {
-	var t antlr.RuleContext;
-	j := 0
-	for _, ctx := range s.GetChildren() {
-		if _, ok := ctx.(IVariablePathContext); ok {
-			if j == i {
-				t = ctx.(antlr.RuleContext);
-				break
-			}
-			j++
-		}
-	}
-
-	if t == nil {
-		return nil
-	}
-
-	return t.(IVariablePathContext)
-}
-
 func (s *PrimaryExpressionContext) StringExpression() IStringExpressionContext {
 	var t antlr.RuleContext;
 	for _, ctx := range s.GetChildren() {
@@ -1489,8 +1446,6 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 
 	localctx = NewPrimaryExpressionContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 12, ActionParserRULE_primaryExpression)
-	var _la int
-
 
 	defer func() {
 		p.ExitRule()
@@ -1508,9 +1463,9 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 		}
 	}()
 
-	p.SetState(105)
+	p.SetState(99)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 5, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 4, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
@@ -1533,28 +1488,12 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 			p.SetState(95)
 			p.FunctionCall()
 		}
-		p.SetState(99)
-		p.GetErrorHandler().Sync(p)
-		_la = p.GetTokenStream().LA(1)
-
-
-		for _la == ActionParserT__1 || _la == ActionParserDOT {
-			{
-				p.SetState(96)
-				p.VariablePath()
-			}
-
-
-			p.SetState(101)
-			p.GetErrorHandler().Sync(p)
-			_la = p.GetTokenStream().LA(1)
-		}
 
 
 	case 4:
 		p.EnterOuterAlt(localctx, 4)
 		{
-			p.SetState(102)
+			p.SetState(96)
 			p.StringExpression()
 		}
 
@@ -1562,7 +1501,7 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 	case 5:
 		p.EnterOuterAlt(localctx, 5)
 		{
-			p.SetState(103)
+			p.SetState(97)
 			p.TermExpression()
 		}
 
@@ -1570,7 +1509,7 @@ func (p *ActionParser) PrimaryExpression() (localctx IPrimaryExpressionContext) 
 	case 6:
 		p.EnterOuterAlt(localctx, 6)
 		{
-			p.SetState(104)
+			p.SetState(98)
 			p.NotExpression()
 		}
 
@@ -1732,22 +1671,22 @@ func (p *ActionParser) VariableContext() (localctx IVariableContextContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(107)
+		p.SetState(101)
 		p.VariableIdentifier()
 	}
-	p.SetState(111)
+	p.SetState(105)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 
 	for _la == ActionParserT__1 || _la == ActionParserDOT {
 		{
-			p.SetState(108)
+			p.SetState(102)
 			p.VariablePath()
 		}
 
 
-		p.SetState(113)
+		p.SetState(107)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -1902,34 +1841,34 @@ func (p *ActionParser) VariablePath() (localctx IVariablePathContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(119)
+	p.SetState(113)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 7, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 6, p.GetParserRuleContext()) {
 	case 1:
 		{
-			p.SetState(114)
+			p.SetState(108)
 			p.Match(ActionParserDOT)
 		}
 		{
-			p.SetState(115)
+			p.SetState(109)
 			p.VariableIdentifier()
 		}
 
 
 	case 2:
 		{
-			p.SetState(116)
+			p.SetState(110)
 			p.Array()
 		}
 
 
 	case 3:
 		{
-			p.SetState(117)
+			p.SetState(111)
 			p.Match(ActionParserDOT)
 		}
 		{
-			p.SetState(118)
+			p.SetState(112)
 			p.FilterExpression()
 		}
 
@@ -2035,7 +1974,7 @@ func (p *ActionParser) VariableIdentifier() (localctx IVariableIdentifierContext
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(121)
+		p.SetState(115)
 		p.Match(ActionParserID)
 	}
 
@@ -2139,7 +2078,7 @@ func (p *ActionParser) NumberExpression() (localctx INumberExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(123)
+		p.SetState(117)
 		p.Match(ActionParserNUMBER)
 	}
 
@@ -2243,7 +2182,7 @@ func (p *ActionParser) StringExpression() (localctx IStringExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(125)
+		p.SetState(119)
 		p.Match(ActionParserSTRING_INSIDE_EXPRESSION)
 	}
 
@@ -2369,15 +2308,15 @@ func (p *ActionParser) TermExpression() (localctx ITermExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(127)
+		p.SetState(121)
 		p.Match(ActionParserLPAREN)
 	}
 	{
-		p.SetState(128)
+		p.SetState(122)
 		p.OrExpression()
 	}
 	{
-		p.SetState(129)
+		p.SetState(123)
 		p.Match(ActionParserRPAREN)
 	}
 
@@ -2510,11 +2449,11 @@ func (p *ActionParser) NotExpression() (localctx INotExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(131)
+		p.SetState(125)
 		p.NotOperator()
 	}
 	{
-		p.SetState(132)
+		p.SetState(126)
 		p.PrimaryExpression()
 	}
 
@@ -2619,7 +2558,7 @@ func (p *ActionParser) NotOperator() (localctx INotOperatorContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(134)
+		p.SetState(128)
 		p.Match(ActionParserNOT)
 	}
 
@@ -2642,6 +2581,8 @@ type IFunctionCallContext interface {
 	AllFunctionCallArguments() []IFunctionCallArgumentsContext
 	FunctionCallArguments(i int) IFunctionCallArgumentsContext
 	RPAREN() antlr.TerminalNode
+	AllVariablePath() []IVariablePathContext
+	VariablePath(i int) IVariablePathContext
 
 	// IsFunctionCallContext differentiates from other interfaces.
 	IsFunctionCallContext()
@@ -2739,6 +2680,47 @@ func (s *FunctionCallContext) RPAREN() antlr.TerminalNode {
 	return s.GetToken(ActionParserRPAREN, 0)
 }
 
+func (s *FunctionCallContext) AllVariablePath() []IVariablePathContext {
+	children := s.GetChildren()
+	len := 0
+	for _, ctx := range children {
+		if _, ok := ctx.(IVariablePathContext); ok {
+			len++
+		}
+	}
+
+	tst := make([]IVariablePathContext, len)
+	i := 0
+	for _, ctx := range children {
+		if t, ok := ctx.(IVariablePathContext); ok {
+			tst[i] = t.(IVariablePathContext)
+			i++
+		}
+	}
+
+	return tst
+}
+
+func (s *FunctionCallContext) VariablePath(i int) IVariablePathContext {
+	var t antlr.RuleContext;
+	j := 0
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IVariablePathContext); ok {
+			if j == i {
+				t = ctx.(antlr.RuleContext);
+				break
+			}
+			j++
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IVariablePathContext)
+}
+
 func (s *FunctionCallContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -2790,40 +2772,56 @@ func (p *ActionParser) FunctionCall() (localctx IFunctionCallContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(136)
+		p.SetState(130)
 		p.FunctionName()
 	}
 	{
-		p.SetState(137)
+		p.SetState(131)
 		p.Match(ActionParserLPAREN)
 	}
 	{
-		p.SetState(138)
+		p.SetState(132)
 		p.FunctionCallArguments()
 	}
-	p.SetState(143)
+	p.SetState(137)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 
 	for _la == ActionParserT__0 {
 		{
-			p.SetState(139)
+			p.SetState(133)
 			p.Match(ActionParserT__0)
 		}
 		{
-			p.SetState(140)
+			p.SetState(134)
 			p.FunctionCallArguments()
 		}
 
 
-		p.SetState(145)
+		p.SetState(139)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
-		p.SetState(146)
+		p.SetState(140)
 		p.Match(ActionParserRPAREN)
+	}
+	p.SetState(144)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+
+	for _la == ActionParserT__1 || _la == ActionParserDOT {
+		{
+			p.SetState(141)
+			p.VariablePath()
+		}
+
+
+		p.SetState(146)
+		p.GetErrorHandler().Sync(p)
+		_la = p.GetTokenStream().LA(1)
 	}
 
 
@@ -2926,7 +2924,7 @@ func (p *ActionParser) FunctionName() (localctx IFunctionNameContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(148)
+		p.SetState(147)
 		p.Match(ActionParserID)
 	}
 
@@ -3091,7 +3089,7 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 		}
 	}()
 
-	p.SetState(155)
+	p.SetState(154)
 	p.GetErrorHandler().Sync(p)
 
 	switch p.GetTokenStream().LA(1) {
@@ -3102,7 +3100,7 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 	case ActionParserID:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(151)
+			p.SetState(150)
 			p.VariableContext()
 		}
 
@@ -3110,7 +3108,7 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 	case ActionParserSTRING_INSIDE_EXPRESSION:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(152)
+			p.SetState(151)
 			p.StringExpression()
 		}
 
@@ -3118,7 +3116,7 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 	case ActionParserNUMBER:
 		p.EnterOuterAlt(localctx, 4)
 		{
-			p.SetState(153)
+			p.SetState(152)
 			p.NumberExpression()
 		}
 
@@ -3126,7 +3124,7 @@ func (p *ActionParser) FunctionCallArguments() (localctx IFunctionCallArgumentsC
 	case ActionParserBOOLEAN:
 		p.EnterOuterAlt(localctx, 5)
 		{
-			p.SetState(154)
+			p.SetState(153)
 			p.BooleanExpression()
 		}
 
@@ -3247,15 +3245,15 @@ func (p *ActionParser) Array() (localctx IArrayContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(157)
+		p.SetState(156)
 		p.Match(ActionParserT__1)
 	}
 	{
-		p.SetState(158)
+		p.SetState(157)
 		p.ArrayIndex()
 	}
 	{
-		p.SetState(159)
+		p.SetState(158)
 		p.Match(ActionParserT__2)
 	}
 
@@ -3371,7 +3369,7 @@ func (p *ActionParser) ArrayIndex() (localctx IArrayIndexContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(161)
+		p.SetState(160)
 		p.PrimaryExpression()
 	}
 
@@ -3475,7 +3473,7 @@ func (p *ActionParser) AndOperator() (localctx IAndOperatorContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(163)
+		p.SetState(162)
 		p.Match(ActionParserAND)
 	}
 
@@ -3579,7 +3577,7 @@ func (p *ActionParser) OrOperator() (localctx IOrOperatorContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(165)
+		p.SetState(164)
 		p.Match(ActionParserOR)
 	}
 
@@ -3700,7 +3698,7 @@ func (p *ActionParser) ComparisonOperator() (localctx IComparisonOperatorContext
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(167)
+		p.SetState(166)
 		_la = p.GetTokenStream().LA(1)
 
 		if !(((int64(_la) & ^0x3f) == 0 && ((int64(1) << _la) & 61440) != 0)) {
@@ -3818,7 +3816,7 @@ func (p *ActionParser) EqualityOperator() (localctx IEqualityOperatorContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(169)
+		p.SetState(168)
 		_la = p.GetTokenStream().LA(1)
 
 		if !(_la == ActionParserEQ || _la == ActionParserNEQ) {
@@ -3929,7 +3927,7 @@ func (p *ActionParser) BooleanExpression() (localctx IBooleanExpressionContext) 
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(171)
+		p.SetState(170)
 		p.Match(ActionParserBOOLEAN)
 	}
 
@@ -4033,7 +4031,7 @@ func (p *ActionParser) ExpressionStart() (localctx IExpressionStartContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(173)
+		p.SetState(172)
 		p.Match(ActionParserEXP_START)
 	}
 
@@ -4137,7 +4135,7 @@ func (p *ActionParser) ExpressionEnd() (localctx IExpressionEndContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(175)
+		p.SetState(174)
 		p.Match(ActionParserEXP_END)
 	}
 
@@ -4241,7 +4239,7 @@ func (p *ActionParser) FilterExpression() (localctx IFilterExpressionContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(177)
+		p.SetState(176)
 		p.Match(ActionParserSTAR)
 	}
 
