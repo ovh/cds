@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/gorhill/cronexpr"
-	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/yaml"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -424,7 +423,7 @@ func (w V2Workflow) Lint() []error {
 	// Check workflow name
 	r := regexp.MustCompile(WorkflowV2NamePattern)
 	if !r.MatchString(w.Name) {
-		errs = append(errs, NewErrorFrom(sdk.ErrInvalidData, "workflow name must respect pattern [%s]", WorkflowV2NamePattern))
+		errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow name must respect pattern [%s]", WorkflowV2NamePattern))
 	}
 
 	errGates := w.CheckGates()
