@@ -5,7 +5,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/gorhill/cronexpr"
@@ -19,8 +18,6 @@ const (
 	WorkflowHookTypeWorkflow    = "WorkflowUpdate"
 	WorkflowHookTypeManual      = "Manual"
 	WorkflowHookTypeScheduler   = "Scheduler"
-
-	WorkflowV2NamePattern = "^[a-zA-Z0-9_-]{1,}$"
 )
 
 type V2Workflow struct {
@@ -419,12 +416,6 @@ func (w V2Workflow) Lint() []error {
 	}
 
 	errs := w.CheckStageAndJobNeeds()
-
-	// Check workflow name
-	r := regexp.MustCompile(WorkflowV2NamePattern)
-	if !r.MatchString(w.Name) {
-		errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow name must respect pattern [%s]", WorkflowV2NamePattern))
-	}
 
 	errGates := w.CheckGates()
 	if len(errGates) > 0 {

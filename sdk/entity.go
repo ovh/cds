@@ -13,7 +13,7 @@ const (
 	EntityTypeWorkflow         = "Workflow"
 	EntityTypeWorkflowTemplate = "WorkflowTemplate"
 	EntityTypeJob              = "Job"
-	EntityNamePattern          = "^[a-zA-Z0-9._-]{1,}$"
+	EntityNamePattern          = "^[a-zA-Z0-9_-]{1,}$"
 )
 
 var EntityTypes = []string{EntityTypeWorkerModel, EntityTypeAction, EntityTypeWorkflow, EntityTypeWorkflowTemplate}
