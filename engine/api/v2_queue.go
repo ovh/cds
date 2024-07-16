@@ -163,7 +163,7 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 			}
 
 			// Check status filter
-			statusFilter := make([]string, 0)
+			statusFilter := make([]sdk.V2WorkflowRunJobStatus, 0)
 			for _, s := range statuses {
 				jobStatus, err := sdk.NewV2WorkflowRunJobStatusFromString(s)
 				if err != nil {
@@ -172,7 +172,10 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 				if jobStatus.IsTerminated() {
 					continue
 				}
-				statusFilter = append(statusFilter, s)
+				statusFilter = append(statusFilter, jobStatus)
+			}
+			if len(statusFilter) == 0 {
+				statusFilter = []sdk.V2WorkflowRunJobStatus{sdk.V2WorkflowRunJobStatusBuilding, sdk.V2WorkflowRunJobStatusWaiting}
 			}
 
 			var err error
@@ -205,18 +208,17 @@ func (api *API) getJobsQueuedHandler() ([]service.RbacChecker, service.Handler) 
 				for _, r := range allowedRegions {
 					regionsFilter = append(regionsFilter, r.Name)
 				}
-
 				if len(regionsFilter) == 0 {
 					w.Header().Set("X-Total-Count", "0")
 					return service.WriteJSON(w, []sdk.V2WorkflowRunJob{}, http.StatusOK)
 				}
-
 			}
 
 			count, err := workflow_v2.CountRunJobsByProjectStatusAndRegions(ctx, api.mustDB(), pKeys, statusFilter, regionsFilter)
 			if err != nil {
 				return err
 			}
+
 			jobs, err := workflow_v2.LoadRunJobsByProjectStatusAndRegions(ctx, api.mustDB(), pKeys, statusFilter, regionsFilter, offset, limit)
 			if err != nil {
 				return err

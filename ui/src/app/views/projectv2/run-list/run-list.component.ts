@@ -51,7 +51,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 	selectedFilter: WorkflowRunFilter = null;
 	textFilters = [];
 	cursorTextFilterPosition: number = 0;
-	index: number = 1;
+	pageIndex: number = 1;
 	panelSize: number | string;
 	searchName: string = '';
 	sort: string = ProjectV2RunListComponent.DEFAULT_SORT;
@@ -77,7 +77,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 					return `${key}:${f}`;
 				}).join(' ');
 			}).join(' ');
-			this.index = values['page'] ?? 1;
+			this.pageIndex = values['page'] ?? 1;
 			this.sort = values['sort'] ?? ProjectV2RunListComponent.DEFAULT_SORT;
 			this.search();
 		});
@@ -157,7 +157,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 
 		let params = {
 			...mFilters,
-			offset: this.index ? (this.index - 1) * 20 : 0,
+			offset: this.pageIndex ? (this.pageIndex - 1) * 20 : 0,
 			limit: 20
 		};
 		if (this.sort !== ProjectV2RunListComponent.DEFAULT_SORT) {
@@ -196,8 +196,8 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		});
 
 		let queryParams = { ...mFilters };
-		if (this.index > 1) {
-			queryParams['page'] = this.index;
+		if (this.pageIndex > 1) {
+			queryParams['page'] = this.pageIndex;
 		}
 		if (this.sort !== ProjectV2RunListComponent.DEFAULT_SORT) {
 			queryParams['sort'] = this.sort;
@@ -215,7 +215,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 	}
 
 	pageIndexChange(index: number): void {
-		this.index = index;
+		this.pageIndex = index;
 		this._cd.markForCheck();
 		this.saveSearchInQueryParams();
 	}

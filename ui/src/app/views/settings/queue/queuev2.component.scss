@@ -1,1 +1,27 @@
 @import '../../../../common.scss';
+
+:host {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+nz-table {
+	margin: 20px;
+}
+
+.footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin: 0 20px;
+
+	button {
+		margin-right: 10px;
+	}
+
+	nz-pagination {
+		margin-left: auto;
+	}
+}
