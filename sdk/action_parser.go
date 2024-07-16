@@ -104,7 +104,7 @@ func (a *ActionParser) Interpolate(ctx context.Context, input string) (interface
 			if err != nil {
 				return nil, NewErrorFrom(ErrInvalidData, "unable to stringify %s: %v", match, err)
 			}
-			interpolatedInput = strings.Replace(interpolatedInput, match, fmt.Sprintf("%s", string(bts)), 1)
+			interpolatedInput = strings.Replace(interpolatedInput, match, string(bts), 1)
 		default:
 			interpolatedInput = strings.Replace(interpolatedInput, match, fmt.Sprintf("%v", result), 1)
 		}
@@ -293,6 +293,9 @@ func (a *ActionParser) parseNotExpression(ctx context.Context, exp *parser.NotEx
 func (a *ActionParser) parseFunctionCallContext(ctx context.Context, exp *parser.FunctionCallContext) (interface{}, error) {
 	log.Debug(ctx, "Function call expression detected: %s", exp.GetText())
 	var funcName string
+	var result interface{}
+	funcHasbeenCalled := false
+	isFilter := false
 	args := make([]interface{}, 0)
 	for i := 0; i < exp.GetChildCount(); i++ {
 		switch t := exp.GetChild(i).(type) {
@@ -311,11 +314,31 @@ func (a *ActionParser) parseFunctionCallContext(ctx context.Context, exp *parser
 			if t.GetText() != "(" && t.GetText() != ")" && t.GetText() != "," {
 				return nil, NewErrorFrom(ErrInvalidData, "unknown string found in functionCall expression: [%s]", t.GetText())
 			}
+		case *parser.VariablePathContext:
+			// Execute function and use result to continue
+			if !funcHasbeenCalled {
+				var err error
+				result, err = a.callFunction(ctx, funcName, args)
+				if err != nil {
+					return nil, NewErrorFrom(ErrInvalidData, "function %s failed: %v", funcName, err)
+				}
+				funcHasbeenCalled = true
+			}
+
+			var err error
+			result, isFilter, err = a.getItemFromPathContext(ctx, t, result, isFilter)
+			if err != nil {
+				return nil, err
+			}
+
 		default:
 			return nil, NewErrorFrom(ErrInvalidData, "unknown type %T in FunctionCall", t)
 		}
 	}
-	return a.callFunction(ctx, funcName, args)
+	if !funcHasbeenCalled {
+		return a.callFunction(ctx, funcName, args)
+	}
+	return result, nil
 }
 
 func (a *ActionParser) parseFunctionCallArgumentsContext(ctx context.Context, exp *parser.FunctionCallArgumentsContext) (interface{}, error) {
@@ -331,6 +354,8 @@ func (a *ActionParser) parseFunctionCallArgumentsContext(ctx context.Context, ex
 			return nil, err
 		}
 		return result, nil
+	case *parser.FunctionCallContext:
+		return a.parseFunctionCallContext(ctx, t)
 	case *parser.StringExpressionContext:
 		return a.trimString(t.GetText()), nil
 	case *parser.NumberExpressionContext:
@@ -398,34 +423,44 @@ func (a *ActionParser) parseVariableContextContext(ctx context.Context, exp *par
 			}
 			continue
 		case *parser.VariablePathContext:
-			key, err := a.parseVariablePathContext(ctx, t)
+			var err error
+			selectedValue, isFilter, err = a.getItemFromPathContext(ctx, t, selectedValue, isFilter)
 			if err != nil {
 				return nil, err
 			}
-			switch kType := key.(type) {
-			case string:
-				if key == "*" {
-					if isFilter {
-						return nil, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
-					}
-					isFilter = true
-				} else {
-					selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
-					if err != nil {
-						return nil, err
-					}
-				}
-			case int:
-				selectedValue, err = a.getArrayItemValueFromContext(ctx, selectedValue, kType)
-				if err != nil {
-					return nil, err
-				}
-			}
+
 		default:
 			return false, NewErrorFrom(ErrInvalidData, "unknown type %T in VariableContext", t)
 		}
 	}
 	return selectedValue, nil
+}
+
+func (a *ActionParser) getItemFromPathContext(ctx context.Context, t *parser.VariablePathContext, selectedValue interface{}, isFilter bool) (interface{}, bool, error) {
+	key, err := a.parseVariablePathContext(ctx, t)
+	if err != nil {
+		return nil, isFilter, err
+	}
+	switch kType := key.(type) {
+	case string:
+		if key == "*" {
+			if isFilter {
+				return nil, isFilter, NewErrorFrom(ErrInvalidData, "unable to filter a filtered object")
+			}
+			isFilter = true
+		} else {
+			selectedValue, err = a.getItemValueFromContext(ctx, selectedValue, kType, isFilter)
+			if err != nil {
+				return nil, isFilter, err
+			}
+		}
+	case int:
+		selectedValue, err = a.getArrayItemValueFromContext(ctx, selectedValue, kType)
+		if err != nil {
+			return nil, isFilter, err
+		}
+	}
+	return selectedValue, isFilter, nil
 }
 
 func (a *ActionParser) parseVariablePathContext(ctx context.Context, exp *parser.VariablePathContext) (interface{}, error) {
@@ -503,16 +538,27 @@ func (a *ActionParser) getArrayItemValueFromContext(_ context.Context, currentCo
 func (a *ActionParser) getItemValueFromContext(ctx context.Context, currentContext interface{}, key string, isFilter bool) (interface{}, error) {
 	if isFilter {
 		varContext, ok := currentContext.([]map[string]interface{})
-		if !ok {
-			return nil, NewErrorFrom(ErrInvalidData, "unable to filter a non array object")
-		}
-		result := make([]interface{}, 0, len(varContext))
-		for _, currentItem := range varContext {
-			result = append(result, currentItem[key])
-		}
+		if ok {
+			result := make([]interface{}, 0, len(varContext))
+			for _, currentItem := range varContext {
+				result = append(result, currentItem[key])
+			}
 
+			return result, nil
+		}
+		slice, ok := currentContext.([]interface{})
+		if !ok {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to filter a non array object: %T", currentContext)
+		}
+		result := make([]interface{}, 0)
+		for _, s := range slice {
+			if item, ok := s.(map[string]interface{}); ok {
+				result = append(result, item[key])
+			}
+		}
 		return result, nil
 	}
+
 	varContext, ok := currentContext.(map[string]interface{})
 	if !ok {
 		log.Debug(ctx, "key [%s] do not exist in current context")

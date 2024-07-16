@@ -141,8 +141,30 @@ func toJSON(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interf
 	return string(bts), nil
 }
 
-func fromJSON(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {
-	return nil, NewErrorFrom(ErrNotImplemented, "fromJSON is not implemented yet")
+func fromJSON(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+	log.Debug(ctx, "function: fromJSON with args: %v", inputs)
+	if len(inputs) != 1 {
+		return nil, NewErrorFrom(ErrInvalidData, "fromJSON: you must have one argument")
+	}
+	if strings.HasPrefix(inputs[0].(string), "[{") {
+		var result []map[string]interface{}
+		if err := json.Unmarshal([]byte(inputs[0].(string)), &result); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "fromJSON: given input is not a valid json")
+		}
+		return result, nil
+	} else if strings.HasPrefix(inputs[0].(string), "[") {
+		var result []interface{}
+		if err := json.Unmarshal([]byte(inputs[0].(string)), &result); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "fromJSON: given input is not a valid json")
+		}
+		return result, nil
+	} else {
+		var result map[string]interface{}
+		if err := json.Unmarshal([]byte(inputs[0].(string)), &result); err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "fromJSON: given input is not a valid json")
+		}
+		return result, nil
+	}
 }
 
 func hashFiles(_ context.Context, _ *ActionParser, _ ...interface{}) (interface{}, error) {

@@ -3,9 +3,10 @@ package sdk
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestParserValidate(t *testing.T) {
@@ -490,6 +491,11 @@ func TestParserFuncContains(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:   "func + filter",
+			input:  "${{ contains( fromJSON('{\"foo\" : [{\"name\": \"John\"}, {\"name\": \"John\"}]}').foo.*.name,'John' ) }}",
+			result: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -928,6 +934,48 @@ func TestParserReturningObject(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.result, fmt.Sprintf("%T", result))
+			}
+		})
+	}
+}
+
+func TestParserFuncFromJSON(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine)
+	tests := []struct {
+		name         string
+		context      map[string]interface{}
+		input        string
+		result       string
+		containError string
+	}{
+		{
+			name:   "fromJSON",
+			input:  "${{ fromJSON('{\"foo\": \"bar\"}').foo }}",
+			result: `bar`,
+		},
+		{
+			name:   "fromJSON - array of string",
+			input:  "${{ fromJSON('[\"foo\", \"bar\"]')[1] }}",
+			result: `bar`,
+		},
+		{
+			name:   "fromJSON - array of object",
+			input:  "${{ fromJSON('{\"foo\": [{\"name\": \"john\"}, {\"name\": \"doe\"}] }').foo[0].name }}",
+			result: `john`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ap := NewActionParser(tt.context, DefaultFuncs)
+			result, err := ap.parse(context.TODO(), tt.input)
+			if tt.containError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.containError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.result, result)
 			}
 		})
 	}
