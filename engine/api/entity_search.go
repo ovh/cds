@@ -23,6 +23,7 @@ type EntityFinder struct {
 	currentProject        string
 	currentUserID         string
 	currentUserName       string
+	isAdminWithMFA        bool
 	currentVCS            sdk.VCSProject
 	currentRepo           sdk.ProjectRepository
 	currentRef            string
@@ -40,11 +41,12 @@ type EntityFinder struct {
 	libraryProject        string
 }
 
-func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser, libraryProjectKey string) *EntityFinder {
+func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser, isAdminWithMFA bool, libraryProjectKey string) *EntityFinder {
 	return &EntityFinder{
 		currentProject:        pkey,
 		currentUserID:         u.ID,
 		currentUserName:       u.Username,
+		isAdminWithMFA:        isAdminWithMFA,
 		currentVCS:            vcsServer,
 		currentRepo:           repo,
 		currentRef:            currentRef,
@@ -158,7 +160,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store 
 	// If no project key in path, get it from workflow run
 	if projKey == "" || projKey == ef.currentProject {
 		projKey = ef.currentProject
-	} else {
+	} else if !ef.isAdminWithMFA {
 		// Verify project read permission
 		can, err := rbac.HasRoleOnProjectAndUserID(ctx, db, sdk.ProjectRoleRead, ef.currentUserID, projKey)
 		if err != nil {

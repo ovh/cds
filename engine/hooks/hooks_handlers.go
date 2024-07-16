@@ -174,6 +174,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		Ref:            runRequest.WorkflowRef,
 		ProjectManual:  runRequest.Project,
 		WorkflowManual: runRequest.Workflow,
+		AdminMFA:       runRequest.AdminMFA,
 	}
 
 	exec := &sdk.HookRepositoryEvent{

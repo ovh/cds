@@ -35,6 +35,7 @@ type V2WorkflowRunHookRequest struct {
 	ChangeSets    []string               `json:"changesets"`
 	Cron          string                 `json:"cron"`
 	CronTimezone  string                 `json:"cron_timezone"`
+	AdminMFA      bool                   `json:"admin_mfa"`
 }
 
 type V2WorkflowRun struct {
@@ -56,6 +57,7 @@ type V2WorkflowRun struct {
 	WorkflowData  V2WorkflowRunData      `json:"workflow_data" db:"workflow_data"`
 	UserID        string                 `json:"user_id" db:"user_id"`
 	Username      string                 `json:"username" db:"username" cli:"username" action_metadata:"username"`
+	AdminMFA      bool                   `json:"admin_mfa" db:"admin_mfa" cli:"admin_mfa"`
 	Contexts      WorkflowRunContext     `json:"contexts" db:"contexts"`
 	RunEvent      V2WorkflowRunEvent     `json:"event" db:"event"`
 	RunJobEvent   V2WorkflowRunJobEvents `json:"job_events" db:"job_event"`
@@ -236,6 +238,7 @@ type V2WorkflowRunJob struct {
 	StepsStatus   JobStepsStatus         `json:"steps_status" db:"steps_status"`
 	UserID        string                 `json:"user_id" db:"user_id"`
 	Username      string                 `json:"username" db:"username" action_metadata:"username"`
+	AdminMFA      bool                   `json:"admin_mfa" db:"admin_mfa"`
 	Region        string                 `json:"region,omitempty" db:"region"`
 	ModelType     string                 `json:"model_type,omitempty" db:"model_type"`
 	Matrix        JobMatrix              `json:"matrix,omitempty" db:"matrix"`
@@ -406,9 +409,10 @@ func (s JobStepsStatus) ToStepContext() StepsContext {
 }
 
 type V2WorkflowRunEnqueue struct {
-	RunID  string                   `json:"run_id"`
-	UserID string                   `json:"user_id"`
-	Gate   V2WorkflowRunEnqueueGate `json:"gate"`
+	RunID          string                   `json:"run_id"`
+	UserID         string                   `json:"user_id"`
+	IsAdminWithMFA bool                     `json:"is_admin_mfa"`
+	Gate           V2WorkflowRunEnqueueGate `json:"gate"`
 }
 
 type V2WorkflowRunEnqueueGate struct {
@@ -1071,4 +1075,5 @@ type HookManualWorkflowRun struct {
 	Workflow       string
 	UserID         string
 	Username       string
+	AdminMFA       bool
 }

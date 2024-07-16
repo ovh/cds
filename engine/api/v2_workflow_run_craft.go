@@ -39,8 +39,8 @@ type WorkflowRunEntityFinder struct {
 	project sdk.Project
 }
 
-func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser, libraryProjectKey string) *WorkflowRunEntityFinder {
-	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, u, libraryProjectKey)
+func NewWorkflowRunEntityFinder(p sdk.Project, run sdk.V2WorkflowRun, repo sdk.ProjectRepository, vcsServer sdk.VCSProject, u sdk.AuthentifiedUser, isAdminWithMFA bool, libraryProjectKey string) *WorkflowRunEntityFinder {
+	ef := NewEntityFinder(p.Key, run.WorkflowRef, run.WorkflowSha, repo, vcsServer, u, isAdminWithMFA, libraryProjectKey)
 	return &WorkflowRunEntityFinder{
 		ef:      ef,
 		run:     run,
@@ -160,7 +160,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		})
 	}
 	run.Contexts = *runContext
-	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, *u, api.Config.WorkflowV2.LibraryProjectKey)
+	wref := NewWorkflowRunEntityFinder(*p, *run, *repo, *vcsServer, *u, run.AdminMFA, api.Config.WorkflowV2.LibraryProjectKey)
 
 	// Resolve workflow template if applicable
 	if run.WorkflowData.Workflow.From != "" {
@@ -339,7 +339,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, *u)
 
-	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber)
+	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber, run.AdminMFA)
 	return nil
 }
 

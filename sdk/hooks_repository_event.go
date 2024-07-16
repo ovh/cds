@@ -152,6 +152,7 @@ type HookRepositoryEventExtractData struct {
 	Ref            string                                  `json:"ref"`
 	ProjectManual  string                                  `json:"manual_project"`
 	WorkflowManual string                                  `json:"manual_workflow"`
+	AdminMFA       bool                                    `json:"admin_mfa"`
 	Scheduler      HookRepositoryEventExtractDataScheduler `json:"scheduler"`
 }
 
@@ -217,6 +218,7 @@ type AnalysisRequest struct {
 	HookEventUUID string `json:"hook_event_uuid"`
 	HookEventKey  string `json:"hook_event_key"`
 	UserID        string `json:"user_id"`
+	AdminMFA      bool   `json:"admin_mfa"`
 }
 
 type AnalysisResponse struct {
