@@ -639,8 +639,9 @@ func TestRunManualJob(t *testing.T) {
 
 	// trigger jobs
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:          wr.ID,
+		UserID:         admin.ID,
+		IsAdminWithMFA: true,
 	}))
 
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
@@ -675,6 +676,7 @@ func TestRunManualJob(t *testing.T) {
 	v, has := rJob2.GateInputs["approve"]
 	require.True(t, has)
 	require.Equal(t, "true", fmt.Sprintf("%v", v))
+	require.True(t, rJob2.AdminMFA)
 }
 
 func TestPutWorkflowRun(t *testing.T) {
