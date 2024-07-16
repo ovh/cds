@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -903,6 +904,12 @@ func (w *CurrentWorker) setupWorkingDirectoryV2(ctx context.Context, jobName str
 		return nil, "", err
 	}
 
+	data := []byte(w.currentJobV2.runJob.JobID)
+	suffix := fmt.Sprintf("%x", md5.Sum(data))
+	if err := os.Setenv("HOME_CDS_PLUGINS", w.cfg.Basedir+"/"+suffix); err != nil {
+		log.Error(ctx, "Error while setting home_plugin %v", err)
+	}
+
 	switch x := w.basedir.(type) {
 	case *afero.BasePathFs:
 		wdAbs, err = x.RealPath(wdFile.Name())
@@ -930,8 +937,8 @@ func setupWorkingDirectoryV2(ctx context.Context, fs afero.Fs, wd string) (afero
 	if err != nil {
 		log.Error(ctx, "Error while getting current user %v", err)
 	} else if u != nil && u.HomeDir != "" {
-		if err := os.Setenv("HOME_CDS_PLUGINS", u.HomeDir); err != nil {
-			log.Error(ctx, "Error while setting home_plugin %v", err)
+		if err := os.Setenv("HOME", u.HomeDir); err != nil {
+			log.Error(ctx, "Error while setting home %v", err)
 		}
 	}
 
