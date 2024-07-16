@@ -95,6 +95,19 @@ type VCSBranch struct {
 	Parents      []string `json:"parents"`
 }
 
+type VCSInsight struct {
+	Title  string           `json:"title"`
+	Detail string           `json:"detail"`
+	Datas  []VCSInsightData `json:"data"`
+}
+
+type VCSInsightData struct {
+	Title string `json:"title"`
+	Type  string `json:"type"`
+	Text  string `json:"text"`
+	Href  string `json:"href"`
+}
+
 // VCSPullRequest represents a pull request
 type VCSPullRequest struct {
 	ID       int          `json:"id"`

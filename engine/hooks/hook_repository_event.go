@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -231,4 +232,17 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 	}
 
 	return repoName, extractedData, nil
+}
+
+func (s *Service) pushInsightReport(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
+	var projKey string
+	if len(hre.Analyses) > 0 {
+		projKey = hre.Analyses[0].ProjectKey
+	} else if len(hre.WorkflowHooks) > 0 {
+		projKey = hre.WorkflowHooks[0].ProjectKey
+	} else {
+		return nil
+	}
+	report := hre.ToInsightReport(s.UIURL)
+	return s.Client.CreateInsightReport(ctx, projKey, hre.VCSServerName, hre.RepositoryName, hre.ExtractData.Commit, "cds-event", report)
 }

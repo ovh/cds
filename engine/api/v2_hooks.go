@@ -24,6 +24,44 @@ import (
 	"github.com/rockbears/log"
 )
 
+func (api *API) postInsightReportHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.isHookService),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pkey := vars["projectKey"]
+			vcsName := vars["vcsServer"]
+			repoName, err := url.PathUnescape(vars["repositoryName"])
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			commit := vars["commit"]
+			insightKey := vars["insightKey"]
+
+			var insight sdk.VCSInsight
+			if err := service.UnmarshalBody(req, &insight); err != nil {
+				return err
+			}
+
+			vcsProject, err := api.getVCSByIdentifier(ctx, pkey, vcsName)
+			if err != nil {
+				return err
+			}
+			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repoName)
+			if err != nil {
+				return err
+			}
+
+			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pkey, vcsProject.Name)
+			if err != nil {
+				return err
+			}
+			if err := vcsClient.CreateInsightReport(ctx, repo.Name, commit, insightKey, insight); err != nil {
+				return err
+			}
+			return nil
+		}
+}
+
 func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.isHookService),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

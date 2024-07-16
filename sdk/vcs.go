@@ -359,6 +359,9 @@ type VCSAuthorizedClientCommon interface {
 	SetStatus(ctx context.Context, buildStatus VCSBuildStatus) error
 	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
+	// Insight
+	CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, report VCSInsight) error
+
 	// Release
 	Release(ctx context.Context, repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
 	UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.Reader, length int) error

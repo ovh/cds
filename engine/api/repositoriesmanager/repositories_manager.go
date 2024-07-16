@@ -511,6 +511,14 @@ func (c *vcsClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, 
 	return forks, nil
 }
 
+func (c *vcsClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, report sdk.VCSInsight) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s/insight/%s", c.name, repo, sha, insightKey)
+	if _, err := c.doJSONRequest(ctx, "POST", path, report, nil); err != nil {
+		return sdk.WithStack(err)
+	}
+	return nil
+}
+
 func (c *vcsClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	statuses := []sdk.VCSCommitStatus{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s/statuses", c.name, repo, ref)

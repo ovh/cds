@@ -449,6 +449,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/hooks/event/signKey/{uuid}", nil, r.GETv2(api.getRetrieveSignKeyOperationHandler))
 	r.Handle("/v2/hooks/event/user", nil, r.POSTv2(api.postRetrieveEventUserHandler))
 	r.Handle("/v2/hooks/repositories/{vcsServer}/{repositoryName}", nil, r.GETv2(api.getHooksRepositoriesHandler))
+	r.Handle("/v2/hooks/{projectKey}/vcs/{vcsServer}/repository/{repositoryName}/insight/{commit}/{insightKey}", nil, r.POSTv2(api.postInsightReportHandler))
 	r.Handle("/v2/hooks/{projectKey}/vcs/{vcsType}/{vcsServer}/repository/{repositoryName}/secret", nil, r.GETv2(api.getRepositoryWebHookSecretHandler))
 	r.Handle("/v2/hooks/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunFromHookV2Handler))
 

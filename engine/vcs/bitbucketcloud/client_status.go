@@ -13,6 +13,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (b *bitbucketcloudClient) CreateInsightReport(ctx context.Context, repo string, sha string, insightKey string, vcsReport sdk.VCSInsight) error {
+	// not implemented
+	return nil
+}
+
 // SetStatus Users with push access can create commit statuses for a given ref:
 func (client *bitbucketcloudClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildStatus) error {
 	if buildStatus.Status == "" {

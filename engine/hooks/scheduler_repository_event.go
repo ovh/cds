@@ -159,6 +159,11 @@ func (s *Service) manageRepositoryEvent(ctx context.Context, eventKey string) er
 func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent) error {
 	ctx, next := telemetry.Span(ctx, "s.executeEvent")
 	defer next()
+	defer func() {
+		if err := s.pushInsightReport(ctx, hre); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}()
 
 	switch hre.Status {
 	// Start processing event

@@ -147,6 +147,8 @@ func CleanURLParameter(u string) string {
 		u = "job-run-id"
 	case "keyName":
 		u = "key-name"
+	case "insightKey":
+		u = "insight-key"
 	}
 	return u
 }

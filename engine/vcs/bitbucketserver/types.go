@@ -189,3 +189,24 @@ type UserPermission struct {
 	User       sdk.BitbucketServerActor `json:"user"`
 	Permission string                   `json:"permission"`
 }
+
+type InsightReport struct {
+	Title    string              `json:"title"`
+	Detail   string              `json:"details,omitempty"`
+	Result   string              `json:"result,omitempty"`
+	Data     []InsightReportData `json:"data,omitempty"`
+	Reporter string              `json:"reporter,omitempty"`
+	Link     string              `json:"link,omitempty"`
+	LogoURL  string              `json:"logoUrl,omitempty"`
+}
+
+type InsightReportData struct {
+	Title string      `json:"title"`
+	Type  string      `json:"type"` // One of: BOOLEAN, DATE, DURATION, LINK, NUMBER, PERCENTAGE, TEXT
+	Value interface{} `json:"value"`
+}
+
+type InsightReportDataLink struct {
+	Text string `json:"linktext"`
+	Href string `json:"href"`
+}
