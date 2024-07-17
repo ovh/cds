@@ -1008,8 +1008,13 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "no job found for given identifier %q", jobIdentifier)
 			}
 
-			allGateInputComputed := make(map[string]interface{})
+			for _, jtr := range jobToRuns {
+				if jtr.Status == sdk.V2WorkflowRunJobStatusSkipped && jtr.Job.Gate == "" {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "unable to start a skipped job without a gate")
+				}
+			}
 
+			allGateInputComputed := make(map[string]interface{})
 			// If all run are skipped, check gate inputs
 			if jobToRuns[0].Job.Gate != "" {
 				var userGateInputs map[string]interface{}
