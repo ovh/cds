@@ -88,7 +88,7 @@ func (wk *CurrentWorker) addRunResultToCurrentJobContext(_ context.Context, newR
 		jobContext = sdk.JobResultContext{}
 	}
 	switch newRunResult.Type {
-	case "V2WorkflowRunResultTestDetail":
+	case sdk.V2WorkflowRunResultTypeVariable, "V2WorkflowRunResultVariableDetail":
 		x, err := newRunResult.GetDetailAsV2WorkflowRunResultVariableDetail()
 		if err != nil {
 			return err

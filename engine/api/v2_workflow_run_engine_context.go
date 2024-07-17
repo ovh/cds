@@ -32,7 +32,7 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 			if rr, has := runResultMap[rj.ID]; has {
 				for _, r := range rr {
 					switch r.Type {
-					case "V2WorkflowRunResultTestDetail":
+					case sdk.V2WorkflowRunResultTypeVariable, "V2WorkflowRunResultVariableDetail":
 						x, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
 						if err != nil {
 							log.ErrorWithStackTrace(ctx, err)
@@ -64,7 +64,7 @@ func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2Workflow
 			if has {
 				for _, r := range rr {
 					switch r.Type {
-					case "V2WorkflowRunResultTestDetail":
+					case sdk.V2WorkflowRunResultTypeVariable, "V2WorkflowRunResultVariableDetail":
 						x, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
 						if err != nil {
 							log.ErrorWithStackTrace(ctx, err)

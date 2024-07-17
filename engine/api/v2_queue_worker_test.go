@@ -321,7 +321,10 @@ hatcheries:
 	require.Equal(t, 200, w.Code)
 
 	var takeJob sdk.V2TakeJobResponse
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &takeJob))
+	btes := w.Body.Bytes()
+	require.NoError(t, json.Unmarshal(btes, &takeJob))
+
+	t.Logf("take job: %s", string(btes))
 
 	require.Equal(t, sdk.V2WorkflowRunJobStatusBuilding, takeJob.RunJob.Status)
 	require.Equal(t, workerName, takeJob.RunJob.WorkerName)

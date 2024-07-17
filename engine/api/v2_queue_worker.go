@@ -267,8 +267,9 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			Outputs: sdk.JobResultOutput{},
 		}
 		for _, r := range runResults {
+			log.Debug(ctx, "computeRunJobContext> processing run result %s %s", r.Type, r.Name())
 			switch r.Type {
-			case "V2WorkflowRunResultTestDetail":
+			case sdk.V2WorkflowRunResultTypeVariable, "V2WorkflowRunResultVariableDetail":
 				x, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
 				if err != nil {
 					log.ErrorWithStackTrace(ctx, err)
