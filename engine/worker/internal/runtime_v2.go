@@ -74,7 +74,35 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 		}
 	}
 
+	if err := wk.addRunResultToCurrentJobContext(ctx, response.RunResult); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return nil, err
+	}
+
 	return &response, nil
+}
+
+func (wk *CurrentWorker) addRunResultToCurrentJobContext(_ context.Context, newRunResult *sdk.V2WorkflowRunResult) error {
+	jobContext, has := wk.currentJobV2.runJobContext.Jobs[wk.currentJobV2.runJob.JobID]
+	if !has {
+		jobContext = sdk.JobResultContext{}
+	}
+	switch newRunResult.Type {
+	case "V2WorkflowRunResultTestDetail":
+		x, err := newRunResult.GetDetailAsV2WorkflowRunResultVariableDetail()
+		if err != nil {
+			return err
+		} else {
+			jobContext.Outputs[x.Name] = x.Value
+		}
+	default:
+		if jobContext.JobRunResults == nil {
+			jobContext.JobRunResults = sdk.JobRunResults{}
+		}
+		jobContext.JobRunResults[newRunResult.Name()], _ = newRunResult.GetDetail()
+	}
+	wk.currentJobV2.runJobContext.Jobs[wk.currentJobV2.runJob.JobID] = jobContext
+	return nil
 }
 
 var _ workerruntime.Runtime = new(CurrentWorker)
@@ -148,6 +176,8 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 			Message: fmt.Sprintf("Job %q %s artifact %q to %s", wk.currentJobV2.runJob.JobID, message, runResult.Name(), latestRelease.ToMaturity),
 		})
 	}
+
+	// TODO: save run-result in the current job to populate context
 
 	return &workerruntime.V2UpdateResultResponse{RunResult: runResult}, nil
 }

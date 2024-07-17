@@ -255,19 +255,6 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 	if err != nil {
 		return nil, nil, err
 	}
-	runResultMap := make(map[string][]sdk.V2WorkflowRunResultVariableDetail)
-	for _, rr := range runResults {
-		if rr.Type != sdk.V2WorkflowRunResultTypeVariable {
-			continue
-		}
-		detail := rr.Detail.Data.(*sdk.V2WorkflowRunResultVariableDetail)
-		jobResults, has := runResultMap[rr.WorkflowRunJobID]
-		if !has {
-			jobResults = make([]sdk.V2WorkflowRunResultVariableDetail, 0)
-		}
-		jobResults = append(jobResults, *detail)
-		runResultMap[rr.WorkflowRunJobID] = jobResults
-	}
 
 	runJobs, err := workflow_v2.LoadRunJobsByRunIDAndStatus(ctx, db, run.ID, []string{sdk.StatusFail, sdk.StatusSkipped, sdk.StatusSuccess, sdk.StatusStopped})
 	if err != nil {
@@ -279,10 +266,20 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 			Result:  rj.Status,
 			Outputs: sdk.JobResultOutput{},
 		}
-		// Set jobs context output
-		if runResults, has := runResultMap[rj.ID]; has {
-			for _, r := range runResults {
-				jobResult.Outputs[r.Name] = r.Value
+		for _, r := range runResults {
+			switch r.Type {
+			case "V2WorkflowRunResultTestDetail":
+				x, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					continue
+				}
+				jobResult.Outputs[x.Name] = x.Value
+			default:
+				if jobResult.JobRunResults == nil {
+					jobResult.JobRunResults = sdk.JobRunResults{}
+				}
+				jobResult.JobRunResults[r.Name()], _ = r.GetDetail()
 			}
 		}
 		contexts.Jobs[rj.JobID] = jobResult
