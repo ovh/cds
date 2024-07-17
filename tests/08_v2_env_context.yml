@@ -45,7 +45,9 @@ testcases:
       vars:
         emailaddress:
           from: result.emailaddress
-
+    - name: Create permission to use variableset
+      script: {{.cdsctl}} -f {{.cdsctl.config}} experimental rbac import ./fixtures/rbac/{{.cds_project}}.yml --force
+      
 - name: Push workflow file
   steps:
     - type: v2_push_cds_files_on_repo

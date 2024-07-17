@@ -1,0 +1,6 @@
+name: itv2envcontext-rule
+variableset:
+  - role: use
+    project: ITV2ENVCONTEXT
+    all_variablesets: true
+    users: [cds.integration.tests.rw]
