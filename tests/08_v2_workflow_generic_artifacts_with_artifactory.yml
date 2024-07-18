@@ -203,4 +203,4 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"
 
   - name: Display logs
-    script: cat *
+    script: ls -al
