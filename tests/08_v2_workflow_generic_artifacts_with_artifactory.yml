@@ -135,9 +135,6 @@ testcases:
               - uses: actions/uploadArtifact
                 with:
                   path: "*.txt"
-              - run: |-
-                  #!/bin/bash
-                  echo "md5 is ${{ result('generic', 'foo.txt').md5  }}"
           Second-Job:
             runs-on: "{{.worker_model}}"
             needs: [First-Job]
@@ -149,11 +146,6 @@ testcases:
                   cat env.txt
                   cat foo.txt
                   grep foobar foo.txt
-              - run: |-
-                  #!/bin/bash
-                  echo "md5 is ${{ result('generic', 'foo.txt').md5  }}"
-        annotations:
-          md5: ${{ result('generic', 'foo.txt').md5 }}
 
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -195,12 +187,3 @@ testcases:
       - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
     retry: 150
     delay: 1
-#     vars:
-#       workflowRunID:
-#         from: result.systemoutjson.systemoutjson0.id
-# 
-#   - name: Download logs
-#     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"
-# 
-#   - name: Display logs
-#     script: ls -al
