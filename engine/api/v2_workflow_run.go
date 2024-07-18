@@ -967,13 +967,18 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 
-			if !wr.Status.IsTerminated() {
-				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start a job on a running workflow")
+			// Load current job and runresult
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				return err
+			}
+			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				return err
 			}
 
-			var userGateInputs map[string]interface{}
-			if err := service.UnmarshalBody(req, &userGateInputs); err != nil {
-				return err
+			if !wr.Status.IsTerminated() {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to start a job on a running workflow")
 			}
 
 			var jobToRuns []sdk.V2WorkflowRunJob
@@ -993,101 +998,95 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "no job found for given identifier %q", jobIdentifier)
 			}
 
-			// Check that job is available to be run manually
-			for _, j := range jobToRuns {
-				if j.Status != sdk.V2WorkflowRunJobStatusSkipped {
-					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to run manually a non skipped job")
+			for _, jtr := range jobToRuns {
+				if jtr.Status == sdk.V2WorkflowRunJobStatusSkipped && jtr.Job.Gate == "" {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "unable to start a skipped job without a gate")
 				}
-				if j.Job.Gate == "" {
-					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "there is no gate on job %s", j.JobID)
-				}
-			}
-
-			// For job matrix, make sure that all job run contains the same gate definition
-			var gateName string
-			for _, j := range jobToRuns {
-				if gateName == "" {
-					gateName = j.Job.Gate
-					continue
-				}
-				if j.Job.Gate != gateName {
-					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid gate condition detected on job matrix")
-				}
-			}
-
-			// Check that gate reviewers condition are valid
-			gate := wr.WorkflowData.Workflow.Gates[gateName]
-			reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
-			if len(gate.Reviewers.Users) > 0 {
-				if sdk.IsInArray(u.GetUsername(), gate.Reviewers.Users) {
-					reviewersChecked = true
-				}
-			}
-			if !reviewersChecked && len(gate.Reviewers.Groups) > 0 {
-			groupLoop:
-				for _, g := range gate.Reviewers.Groups {
-					grp, err := group.LoadByName(ctx, api.mustDBWithCtx(ctx), g, group.LoadOptions.WithMembers)
-					if err != nil {
-						return err
-					}
-					for _, m := range grp.Members {
-						if m.Username == u.GetUsername() {
-							reviewersChecked = true
-							break groupLoop
-						}
-					}
-				}
-			}
-			if !reviewersChecked {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "you are not part of the reviewers")
 			}
 
 			allGateInputComputed := make(map[string]interface{})
-			for k, v := range gate.Inputs {
-				allGateInputComputed[k] = v.Default
-			}
-			// Check Gate inputs
-			for k, v := range userGateInputs {
-				if _, has := allGateInputComputed[k]; has {
-					allGateInputComputed[k] = v
+			// If all run are skipped, check gate inputs
+			if jobToRuns[0].Job.Gate != "" {
+				var userGateInputs map[string]interface{}
+				if err := service.UnmarshalBody(req, &userGateInputs); err != nil {
+					return err
+				}
+
+				// For job matrix, make sure that all job run contains the same gate definition
+				var gateName string
+				for _, j := range jobToRuns {
+					if gateName == "" {
+						gateName = j.Job.Gate
+						continue
+					}
+					if j.Job.Gate != gateName {
+						return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid gate condition detected on job matrix")
+					}
+				}
+
+				// Check that gate reviewers condition are valid
+				gate := wr.WorkflowData.Workflow.Gates[gateName]
+				reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
+				if len(gate.Reviewers.Users) > 0 {
+					if sdk.IsInArray(u.GetUsername(), gate.Reviewers.Users) {
+						reviewersChecked = true
+					}
+				}
+				if !reviewersChecked && len(gate.Reviewers.Groups) > 0 {
+				groupLoop:
+					for _, g := range gate.Reviewers.Groups {
+						grp, err := group.LoadByName(ctx, api.mustDBWithCtx(ctx), g, group.LoadOptions.WithMembers)
+						if err != nil {
+							return err
+						}
+						for _, m := range grp.Members {
+							if m.Username == u.GetUsername() {
+								reviewersChecked = true
+								break groupLoop
+							}
+						}
+					}
+				}
+				if !reviewersChecked {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "you are not part of the reviewers")
+				}
+
+				for k, v := range gate.Inputs {
+					allGateInputComputed[k] = v.Default
+				}
+				// Check Gate inputs
+				for k, v := range userGateInputs {
+					if _, has := allGateInputComputed[k]; has {
+						allGateInputComputed[k] = v
+					}
+				}
+
+				// Check gate condition
+				// retrieve previous jobs context
+				runJobsContexts, _ := computeExistingRunJobContexts(runJobs, runResults)
+				jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRuns[0].JobID)
+				jobContext.Gate = allGateInputComputed
+				bts, err := json.Marshal(jobContext)
+				if err != nil {
+					return sdk.WithStack(err)
+				}
+				var mapContexts map[string]interface{}
+				if err := json.Unmarshal(bts, &mapContexts); err != nil {
+					return sdk.WithStack(err)
+				}
+
+				if !strings.HasPrefix(gate.If, "${{") {
+					gate.If = fmt.Sprintf("${{ %s }}", gate.If)
+				}
+				ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+				booleanResult, err := ap.InterpolateToBool(ctx, gate.If)
+				if err != nil {
+					return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement %s doesn't return a boolean: %v", jobToRuns[0].JobID, gate.If, err)
+				}
+				if !booleanResult {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "gate conditions are not satisfied")
 				}
 			}
-
-			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
-			if err != nil {
-				return err
-			}
-			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
-			if err != nil {
-				return err
-			}
-
-			// Check gate condition
-			// retrieve previous jobs context
-			runJobsContexts, _ := computeExistingRunJobContexts(runJobs, runResults)
-			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRuns[0].JobID)
-			jobContext.Gate = allGateInputComputed
-			bts, err := json.Marshal(jobContext)
-			if err != nil {
-				return sdk.WithStack(err)
-			}
-			var mapContexts map[string]interface{}
-			if err := json.Unmarshal(bts, &mapContexts); err != nil {
-				return sdk.WithStack(err)
-			}
-
-			if !strings.HasPrefix(gate.If, "${{") {
-				gate.If = fmt.Sprintf("${{ %s }}", gate.If)
-			}
-			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-			booleanResult, err := ap.InterpolateToBool(ctx, gate.If)
-			if err != nil {
-				return sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: gate statement %s doesn't return a boolean: %v", jobToRuns[0].JobID, gate.If, err)
-			}
-			if !booleanResult {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "gate conditions are not satisfied")
-			}
-			//////////
 
 			runJobsMap := make(map[string]sdk.V2WorkflowRunJob)
 			for _, rj := range runJobs {
