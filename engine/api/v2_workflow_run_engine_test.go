@@ -249,8 +249,9 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
 
 	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:          wr.ID,
+		UserID:         admin.ID,
+		IsAdminWithMFA: true,
 	}))
 
 	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
@@ -263,6 +264,94 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	require.Equal(t, 1, len(runjobs))
 	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, runjobs[0].Status)
 	require.Equal(t, "job1", runjobs[0].JobID)
+}
+
+func TestWorkflowTrigger1JobAdminNoMFA(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		UserID:       admin.ID,
+		Username:     admin.Username,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Jobs: map[string]sdk.V2Job{
+				"job1": {
+					VariableSets: []string{"var1"},
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
+				},
+				"job2": {
+					VariableSets: []string{"var1"},
+					Needs:        []string{"job1"},
+					Steps: []sdk.ActionStep{
+						{
+							ID: "1",
+						},
+					},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	require.NoError(t, api.workflowRunV2Trigger(context.Background(), sdk.V2WorkflowRunEnqueue{
+		RunID:  wr.ID,
+		UserID: admin.ID,
+	}))
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(runInfos))
+	require.Contains(t, runInfos[0].Message, "does not have enough right on varset var1")
 }
 
 func TestWorkflowTriggerWithCondition(t *testing.T) {

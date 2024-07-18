@@ -54,6 +54,7 @@ type createAnalysisRequest struct {
 	hookEventUUID string
 	hookEventKey  string
 	user          *sdk.AuthentifiedUser
+	adminMFA      bool
 }
 
 func (api *API) cleanRepositoryAnalysis(ctx context.Context, delay time.Duration) {
@@ -245,16 +246,22 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				}
 			}
 
+			isAdminMFA := false
 			var u *sdk.AuthentifiedUser
 			if !isHooks(ctx) {
 				uc := getUserConsumer(ctx)
 				if uc != nil {
 					u = uc.AuthConsumerUser.AuthentifiedUser
 				}
+				isAdminMFA = isAdmin(ctx)
 			} else if isHooks(ctx) && analysis.UserID != "" {
 				u, err = user.LoadByID(ctx, api.mustDB(), analysis.UserID)
 				if err != nil {
 					return err
+				}
+				isAdminMFA = analysis.AdminMFA
+				if isAdminMFA && u.Ring != sdk.UserRingAdmin {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s is not admin", u.Username)
 				}
 			}
 
@@ -267,6 +274,7 @@ func (api *API) postRepositoryAnalysisHandler() ([]service.RbacChecker, service.
 				hookEventUUID: analysis.HookEventUUID,
 				hookEventKey:  analysis.HookEventKey,
 				user:          u,
+				adminMFA:      isAdminMFA,
 			}
 
 			tx, err := api.mustDB().Begin()
@@ -313,6 +321,7 @@ func (api *API) createAnalyze(ctx context.Context, tx gorpmapper.SqlExecutorWith
 	if analysisRequest.user != nil {
 		repoAnalysis.Data.CDSUserID = analysisRequest.user.ID
 		repoAnalysis.Data.CDSUserName = analysisRequest.user.Username
+		repoAnalysis.Data.CDSAdminWithMFA = analysisRequest.adminMFA
 	}
 
 	if err := repository.InsertAnalysis(ctx, tx, &repoAnalysis); err != nil {
@@ -1355,7 +1364,7 @@ func (api *API) handleEntitiesFiles(ctx context.Context, filesContent map[string
 
 	entities := make([]sdk.EntityWithObject, 0)
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, repo, vcsServer, u, api.Config.WorkflowV2.LibraryProjectKey)
+	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, repo, vcsServer, u, analysis.Data.CDSAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
 	for _, filePath := range sortedKeys {
 		content := filesContent[filePath]
 		dir, fileName := filepath.Split(filePath)

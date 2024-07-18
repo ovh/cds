@@ -45,7 +45,7 @@ testcases:
       vars:
         emailaddress:
           from: result.emailaddress
-
+      
 - name: Push workflow file
   steps:
     - type: v2_push_cds_files_on_repo
@@ -116,6 +116,10 @@ testcases:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
 
+    - name: Get run info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"
+    - name: Get job info
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"
     - name: Download and check logs
       script: |-
         #!/bin/bash
@@ -123,6 +127,7 @@ testcases:
         FILE=/tmp/`uuidgen`
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        ls -l
         # Check workflowEnv log content
         cat {{.cds_workflow}}-1-1-init-workflowEnv | grep "barWorkflow"
         # Check jobEnv log content

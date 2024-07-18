@@ -253,7 +253,7 @@ func (api *API) postStopJobHandler() ([]service.RbacChecker, service.Handler) {
 			for i := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, runJobs[i])
 			}
-			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
+			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
 
 			return nil
 		}
@@ -777,6 +777,11 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
+			// Verify if user is admin
+			if runRequest.AdminMFA && u.Ring != sdk.UserRingAdmin {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "user is not an administrator")
+			}
+
 			hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, vcsProject.Name, repo.Name, wk.Name)
 			if err != nil {
 				return err
@@ -793,22 +798,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				}
 			}
 
-			runEvent := sdk.V2WorkflowRunEvent{
-				HookType:      runRequest.HookType,
-				EventName:     runRequest.EventName,
-				Ref:           runRequest.Ref,
-				Sha:           runRequest.Sha,
-				CommitMessage: runRequest.CommitMessage,
-				SemverCurrent: runRequest.SemverCurrent,
-				SemverNext:    runRequest.SemverNext,
-				ChangeSets:    runRequest.ChangeSets,
-				EntityUpdated: runRequest.EntityUpdated,
-				Payload:       runRequest.Payload,
-				Cron:          runRequest.Cron,
-				CronTimezone:  runRequest.CronTimezone,
-			}
-
-			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runEvent, u)
+			wr, err := api.startWorkflowV2(ctx, *proj, *vcsProject, *repo, *workflowEntity, wk, runRequest, u)
 			if err != nil {
 				return err
 			}
@@ -888,7 +878,7 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
-			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
+			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
 			return service.WriteJSON(w, wr, http.StatusOK)
 		}
 }
@@ -1146,7 +1136,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRuns[0].JobID, allGateInputComputed, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
-			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber)
+			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
 			return service.WriteJSON(w, wr, http.StatusOK)
 		}
 }
@@ -1245,6 +1235,7 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				Workflow:       workflowName,
 				UserID:         u.AuthConsumerUser.AuthentifiedUserID,
 				Username:       u.AuthConsumerUser.AuthentifiedUser.Username,
+				AdminMFA:       isAdmin(ctx),
 			}
 
 			// Send start request to hooks
@@ -1267,8 +1258,24 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 		}
 }
 
-func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runEvent sdk.V2WorkflowRunEvent, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
+func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProject sdk.VCSProject, repo sdk.ProjectRepository, wkEntity sdk.Entity, wk sdk.V2Workflow, runRequest sdk.V2WorkflowRunHookRequest, u *sdk.AuthentifiedUser) (*sdk.V2WorkflowRun, error) {
 	log.Debug(ctx, "Start Workflow %s", wkEntity.Name)
+
+	runEvent := sdk.V2WorkflowRunEvent{
+		HookType:      runRequest.HookType,
+		EventName:     runRequest.EventName,
+		Ref:           runRequest.Ref,
+		Sha:           runRequest.Sha,
+		CommitMessage: runRequest.CommitMessage,
+		SemverCurrent: runRequest.SemverCurrent,
+		SemverNext:    runRequest.SemverNext,
+		ChangeSets:    runRequest.ChangeSets,
+		EntityUpdated: runRequest.EntityUpdated,
+		Payload:       runRequest.Payload,
+		Cron:          runRequest.Cron,
+		CronTimezone:  runRequest.CronTimezone,
+	}
+
 	var msg string
 	switch runEvent.HookType {
 	case sdk.WorkflowHookTypeManual:
@@ -1301,6 +1308,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		ToDelete:     false,
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: wk},
 		UserID:       u.ID,
+		AdminMFA:     runRequest.AdminMFA,
 		Username:     u.Username,
 		RunEvent:     runEvent,
 		Contexts:     sdk.WorkflowRunContext{},

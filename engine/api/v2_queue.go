@@ -298,7 +298,7 @@ func (api *API) postJobResultHandler() ([]service.RbacChecker, service.Handler) 
 				return err
 			}
 
-			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.UserID, jobRun.WorkflowName, jobRun.RunNumber)
+			api.EnqueueWorkflowRun(ctx, jobRun.WorkflowRunID, jobRun.UserID, jobRun.WorkflowName, jobRun.RunNumber, jobRun.AdminMFA)
 
 			api.GoRoutines.Exec(ctx, "postJobResultHandler.event", func(ctx context.Context) {
 				run, err := workflow_v2.LoadRunByID(ctx, api.mustDB(), jobRun.WorkflowRunID)

@@ -129,6 +129,7 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 		HookEventUUID: hre.UUID,
 		HookEventKey:  cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hre.VCSServerName, hre.RepositoryName), hre.UUID),
 		UserID:        hre.UserID,
+		AdminMFA:      hre.ExtractData.AdminMFA,
 	}
 	resp, err := s.Client.ProjectRepositoryAnalysis(ctx, analyze)
 	if err != nil {

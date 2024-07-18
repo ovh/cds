@@ -82,6 +82,11 @@ steps:
           all_users: true
           all_workflows: true
           project: {{.input.cds_project}}
+      variablesets:
+        - role: use
+          all_users: true
+          all_variablesets: true
+          project: {{.input.cds_project}}   
       regions:
         - role: execute
           all_users: true
