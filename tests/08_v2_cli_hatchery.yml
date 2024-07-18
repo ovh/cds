@@ -37,4 +37,3 @@ testcases:
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.last_heartbeat ShouldNotContainSubstring "0001-01-01"
-
