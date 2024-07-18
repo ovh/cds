@@ -58,7 +58,7 @@ func (f *CDSFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys [
 
 	for _, k := range keys {
 		v := entry.Data[k]
-		if f.Fields == nil || fieldsInArray(k, f.Fields) {
+		if f.Fields == nil || len(f.Fields) == 0 || fieldsInArray(k, f.Fields) {
 			fmt.Fprintf(b, " %s%s%s=%+v", levelColor, k, ansi.Reset, v)
 		}
 	}
