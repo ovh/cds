@@ -758,8 +758,9 @@ func TestRunManualSuccessJob(t *testing.T) {
 
 	// trigger jobs
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:          wr.ID,
+		UserID:         admin.ID,
+		IsAdminWithMFA: true,
 	}))
 
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
@@ -860,8 +861,9 @@ func TestRunManualFailedJob(t *testing.T) {
 
 	// trigger jobs
 	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{
-		RunID:  wr.ID,
-		UserID: admin.ID,
+		RunID:          wr.ID,
+		UserID:         admin.ID,
+		IsAdminWithMFA: true,
 	}))
 
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
