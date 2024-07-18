@@ -1,4 +1,4 @@
-name: Workflow Template
+name: Worker model templated
 vars:
   cds_project: "ITV2WKMTMPL"
   git_repo: "it_v2_worker_model_templated"

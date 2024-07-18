@@ -333,4 +333,10 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		});
 		drawerRef.afterClose.subscribe(data => { });
 	}
+
+	generateAnnotationQueryParams(annotation: { key: string, value: string }): any {
+		let queryParams = {};
+		queryParams[annotation.key] = annotation.value;
+		return queryParams;
+	}
 }

@@ -62,7 +62,7 @@ testcases:
           value: rt
           type: string
         platform:
-          value: rt
+          value: artifactory
           type: string
         project.key:
           value: rt

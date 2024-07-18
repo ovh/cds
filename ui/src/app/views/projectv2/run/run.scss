@@ -35,6 +35,21 @@
                 background-color: #141414;
             }
 
+            [nzCopyable] {
+                color: inherit;
+
+                ::ng-deep {
+                    .ant-typography-copy {
+                        color: inherit;
+                        margin: 0 2px 0 0;
+                    }
+
+                    &:hover {
+                        color: #177ddc;
+                    }
+                }
+            }
+
             .annotations {
                 display: flex;
                 align-items: center;
@@ -97,16 +112,13 @@
             align-items: center;
 
             button,
-            nz-select {
+            nz-select,
+            .number {
                 margin-left: 5px;
             }
 
-            a {
-                color: inherit;
-
-                &:hover {
-                    color: #177ddc;
-                }
+            .number {
+                margin-right: 5px;
             }
         }
 

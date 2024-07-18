@@ -5,10 +5,14 @@
         <div class="graph">
             <nz-page-header class="title" nzBackIcon (nzBack)="onBack()">
                 <nz-page-header-title>
-                    <a [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.vcs_server, 'repository', workflowRun.repository, 'workflow', workflowRun.workflow_name]"
-                        [queryParams]="{branch: workflowRun.contexts.git.ref_name}">
-                        {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}</a>&nbsp;
-                    #{{workflowRun.run_number}}
+                    <app-searchable [link]="['/project', projectKey, 'run']"
+                        [params]="{workflow: workflowRun.vcs_server+'/'+workflowRun.repository+'/'+workflowRun.workflow_name}"
+                        paramsHandling="merge">
+                        <a [routerLink]="['/project', projectKey, 'explore', 'vcs', workflowRun.vcs_server, 'repository', workflowRun.repository, 'workflow', workflowRun.workflow_name]"
+                            [queryParams]="{branch: workflowRun.contexts.git.ref_name}">
+                            {{workflowRun.vcs_server}}/{{workflowRun.repository}}/{{workflowRun.workflow_name}}</a>
+                    </app-searchable>
+                    <span class="number">#{{workflowRun.run_number}}</span>
                     <nz-select *ngIf="workflowRun.run_attempt > 1 && selectedRunAttempt" [ngModel]="selectedRunAttempt"
                         (ngModelChange)="changeRunAttempt($event)" nzSize="small" title="Select run attempt">
                         <nz-option *ngFor="let item of [].constructor(workflowRun.run_attempt); let i = index"
@@ -24,8 +28,10 @@
                 <nz-page-header-content>
                     <span nz-typography nzType="secondary">
                         Commit <a href="{{workflowRun.contexts.git.commit_web_url}}" target="_blank"
-                            rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a> - <a
-                            href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
+                            rel="noopener noreferrer">{{workflowRun.contexts.git.sha?.substring(0,8)}}</a> - Semver
+                        <span nz-typography nzCopyable nzContent="{{workflowRun.contexts.git.semver_current}}"
+                            [nzCopyTooltips]="null"></span> -
+                        <a href="{{workflowRun.contexts.git.ref_web_url}}" target="_blank"
                             rel="noopener noreferrer">{{workflowRun.contexts.git.ref}}</a> by
                         {{workflowRun.contexts.git.username}}
                         on
@@ -52,19 +58,31 @@
                                     rel="noopener noreferrer">{{workflowRun.contexts.cds.workflow_template_ref}}</a>
                             </ng-template>
                         </span>
-                        <div *ngIf="workflowRun.annotations" class="annotations">
-                            <ng-container *ngFor="let annotation of workflowRun.annotations | keyvalue">
+                    </span>
+                    <div *ngIf="workflowRun.annotations" class="annotations">
+                        <ng-container *ngFor="let annotation of workflowRun.annotations | keyvalue">
+                            <app-searchable [link]="['/project', projectKey, 'run']"
+                                [params]="generateAnnotationQueryParams(annotation)" paramsHandling="merge">
                                 <nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
-                                    title="key; {{annotation.key}} - value: {{annotation.value}}">
+                                    title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+                                    nzPopoverPlacement="bottom" [nzPopoverContent]="contentAnnotationWithValue">
                                     <b>{{annotation.key}}:</b> {{annotation.value}}
+                                    <ng-template #contentAnnotationWithValue>
+                                        key: {{annotation.key}} - value: <span nz-typography nzCopyable
+                                            nzContent="{{annotation.value}}" [nzCopyTooltips]="null"></span>
+                                    </ng-template>
                                 </nz-tag>
                                 <span *ngIf="annotation.value === 'true'" nzColor="default"
-                                    title="key; {{annotation.key}} - value: {{annotation.value}}">
+                                    title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+                                    nzPopoverPlacement="bottom" [nzPopoverContent]="contentAnnotation">
                                     {{annotation.key}}
+                                    <ng-template #contentAnnotation>
+                                        key: {{annotation.key}} - value: {{annotation.value}}
+                                    </ng-template>
                                 </span>
-                            </ng-container>
-                        </div>
-                    </span>
+                            </app-searchable>
+                        </ng-container>
+                    </div>
                 </nz-page-header-content>
             </nz-page-header>
             <div class="controls">

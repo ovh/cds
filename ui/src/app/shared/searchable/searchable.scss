@@ -1,0 +1,43 @@
+:host {
+  max-width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+
+  .search {
+    display: none;
+    padding-left: 5px;
+    color: inherit;
+
+    &:hover {
+      color: #177ddc;
+    }
+  }
+
+  &:hover {
+    .search {
+      display: inline-block;
+    }
+  }
+
+  ::ng-deep {
+
+    nz-tag,
+    span {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      display: inline-block;
+      margin: 0;
+    }
+
+    a {
+      color: inherit;
+
+      &:hover {
+        color: #177ddc;
+      }
+    }
+  }
+}

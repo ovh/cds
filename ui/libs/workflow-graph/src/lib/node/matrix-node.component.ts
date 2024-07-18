@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model'
 import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
-import { Subscription } from 'rxjs';
+import { concatMap, from, interval, Subscription } from 'rxjs';
 import { DurationService } from '../duration/duration.service';
 
 @Component({
@@ -64,6 +64,14 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
             this.status[key] = r.status;
             this.jobRunIDs[key] = r.id;
         });
+        const isRunning = Object.keys(this.status).findIndex(key => this.status[key] === V2WorkflowRunJobStatus.Waiting ||
+            this.status[key] === V2WorkflowRunJobStatus.Scheduling ||
+            this.status[key] === V2WorkflowRunJobStatus.Building) !== -1;
+        if (isRunning) {
+            this.delaySubs = interval(1000)
+                .pipe(concatMap(_ => from(this.refreshDelay())))
+                .subscribe();
+        }
         this.refreshDelay();
     }
 
