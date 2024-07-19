@@ -73,7 +73,9 @@ export class GraphJobNodeComponent implements OnInit, OnDestroy {
             case V2WorkflowRunJobStatus.Fail:
             case V2WorkflowRunJobStatus.Stopped:
             case V2WorkflowRunJobStatus.Success:
-                this.duration = DurationService.duration(this.dates.started, this.dates.ended);
+                if (this.dates.ended) {
+                    this.duration = DurationService.duration(this.dates.started, this.dates.ended);
+                }
                 break;
             default:
                 break;

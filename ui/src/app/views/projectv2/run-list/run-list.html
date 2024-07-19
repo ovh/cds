@@ -53,8 +53,7 @@
 			</nz-form-item>
 		</form>
 		<button nz-button nzType="secondary" nz-popconfirm [nzPopconfirmTitle]="saveSearchTemplate" title="Save search"
-			nzPopconfirmPlacement="bottom" (nzOnConfirm)="confirmSaveSearch()" #saveSearchButton=nzPopconfirm><span nz-icon
-				nzType="save"></span></button>
+			(nzOnConfirm)="confirmSaveSearch()" #saveSearchButton=nzPopconfirm><span nz-icon nzType="save"></span></button>
 		<ng-template #saveSearchTemplate>
 			<form class="save-search-form" nz-form (ngSubmit)="submitSaveSearch()">
 				<nz-form-item>
@@ -83,32 +82,55 @@
 					</div>
 				</ng-template>
 				<ng-template #runTitle>
-					<a [routerLink]="['/project', run.project_key, 'run', run.id]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
-						#{{run.run_number}}</a>
+					<app-searchable [link]="['/project', project.key, 'run']"
+						[params]="{workflow: run.vcs_server+'/'+run.repository+'/'+run.workflow_name}" paramsHandling="merge">
+						<a [routerLink]="['/project', run.project_key, 'run', run.id]">{{run.vcs_server}}/{{run.repository}}/{{run.workflow_name}}
+							#{{run.run_number}}</a>
+					</app-searchable>
 				</ng-template>
 				<ng-template #runDescription>
 					<ng-container *ngIf="run.contexts.git">
-						Commit <a class="repoLink dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
+						Commit <a class="dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
 							rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a> by {{run.contexts.git.username}} on
-						repository <a class="repoLink dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"
-							rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
+						repository
+						<app-searchable [link]="['/project', project.key, 'run']"
+							[params]="{workflow_repository: run.contexts.git.server+'/'+run.contexts.git.repository}"
+							paramsHandling="merge">
+							<a class="dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"
+								rel="noopener noreferrer">{{run.contexts.git.server}}/{{run.contexts.git.repository}}</a>
+						</app-searchable>
 					</ng-container>
 				</ng-template>
 				<div *ngIf="run.annotations" class="annotations">
 					<ng-container *ngFor="let annotation of run.annotations | keyvalue">
-						<nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
-							title="key; {{annotation.key}} - value: {{annotation.value}}">
-							<b>{{annotation.key}}:</b> {{annotation.value}}
-						</nz-tag>
-						<span *ngIf="annotation.value === 'true'" nzColor="default"
-							title="key; {{annotation.key}} - value: {{annotation.value}}">
-							{{annotation.key}}
-						</span>
+						<app-searchable [link]="['/project', project.key, 'run']"
+							[params]="generateAnnotationQueryParams(annotation)" paramsHandling="merge">
+							<nz-tag *ngIf="annotation.value !== 'true'" nzColor="default"
+								title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+								[nzPopoverContent]="contentAnnotationWithValue">
+								<b>{{annotation.key}}:</b> {{annotation.value}}
+								<ng-template #contentAnnotationWithValue>
+									key: {{annotation.key}} - value: <span nz-typography nzCopyable nzContent="{{annotation.value}}"
+										[nzCopyTooltips]="null"></span>
+								</ng-template>
+							</nz-tag>
+							<span *ngIf="annotation.value === 'true'" nzColor="default"
+								title="key: {{annotation.key}} - value: {{annotation.value}}" nz-popover
+								[nzPopoverContent]="contentAnnotation">
+								{{annotation.key}}
+								<ng-template #contentAnnotation>
+									key: {{annotation.key}} - value: {{annotation.value}}
+								</ng-template>
+							</span>
+						</app-searchable>
 					</ng-container>
 				</div>
 				<div *ngIf="run.contexts.git" class="ref">
-					<a class="repoLink" href="{{run.contexts.git.ref_web_url}}" target="_blank" rel="noopener noreferrer"
-						[title]="run.contexts.git.ref">{{run.contexts.git.ref}}</a>
+					<app-searchable [link]="['/project', project.key, 'run']" [params]="{ref:run.contexts.git.ref}"
+						paramsHandling="merge">
+						<a class="ref" href="{{run.contexts.git.ref_web_url}}" target="_blank" rel="noopener noreferrer"
+							[title]="run.contexts.git.ref">{{run.contexts.git.ref}}</a>
+					</app-searchable>
 				</div>
 				<ul nz-list-item-actions>
 					<nz-list-item-action>

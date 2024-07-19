@@ -262,6 +262,7 @@ import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { DateFromNowComponent } from './date-from-now/date-from-now';
 import { NzTreeModule } from 'ng-zorro-antd/tree';
 import { NzResultModule } from 'ng-zorro-antd/result';
+import { SearchableComponent } from './searchable/searchable.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -473,6 +474,7 @@ const icons: IconDefinition[] = [
         ResizablePanelComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
+        SearchableComponent,
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,
@@ -639,6 +641,7 @@ const icons: IconDefinition[] = [
         ResizablePanelComponent,
         SafeHtmlPipe,
         ScrollviewComponent,
+        SearchableComponent,
         SelectorPipe,
         SelectPipe,
         StatusIconComponent,

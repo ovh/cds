@@ -69,12 +69,9 @@
       }
     }
 
-    .repoLink {
+    .dotted {
       color: inherit;
-
-      &.dotted {
-        text-decoration: underline dotted;
-      }
+      text-decoration: underline dotted;
 
       &:hover {
         color: #177ddc;
@@ -116,21 +113,21 @@
 
       &>* {
         margin: 4px;
-        max-width: 100%;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
       }
     }
 
     .ref {
       margin: 0 10px;
       overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      direction: rtl;
-      text-align: left;
       max-width: 250px;
+
+      a {
+        direction: rtl;
+        text-align: left;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        margin: 0;;
+      }
     }
 
     [nz-list-item-actions] {

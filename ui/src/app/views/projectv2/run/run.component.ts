@@ -409,4 +409,11 @@ export class ProjectV2RunComponent implements OnDestroy {
         this.clickExpandPanel();
     }
 
+    generateAnnotationQueryParams(annotation: { key: string, value: string }): any {
+        let queryParams = {
+            'workflow': this.workflowRun.vcs_server + '/' + this.workflowRun.repository + '/' + this.workflowRun.workflow_name
+        };
+        queryParams[annotation.key] = annotation.value;
+        return queryParams;
+    }
 }
