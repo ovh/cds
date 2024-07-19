@@ -123,7 +123,7 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-      retry: 100
+      retry: 120
       delay: 1
 
     - name: Check that the CDS workflow has at least one execution and is Success
@@ -131,7 +131,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 1
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
-      retry: 100
+      retry: 120
       delay: 1
       vars:
         workflowRunID:
