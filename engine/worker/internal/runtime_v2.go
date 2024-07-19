@@ -85,7 +85,10 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 func (wk *CurrentWorker) addRunResultToCurrentJobContext(_ context.Context, newRunResult *sdk.V2WorkflowRunResult) error {
 	jobContext, has := wk.currentJobV2.runJobContext.Jobs[wk.currentJobV2.runJob.JobID]
 	if !has {
-		jobContext = sdk.JobResultContext{}
+		jobContext = sdk.JobResultContext{
+			JobRunResults: sdk.JobRunResults{},
+			Outputs:       sdk.JobResultOutput{},
+		}
 	}
 	switch newRunResult.Type {
 	case sdk.V2WorkflowRunResultTypeVariable, "V2WorkflowRunResultVariableDetail":
