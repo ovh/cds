@@ -20,6 +20,10 @@ testcases:
   steps:
   - script:  {{.cdsctl}} -f {{.cdsctl.config}} workflow push ITSCWRKFLW18 ./fixtures/ITSCWRKFLW18/*.yml --skip-update-files
 
+- name: wait for kafka to be ready
+  steps:
+  - script: sleep 30
+
 - name: check if consumer kafka is started
   steps:
   - script: {{.cdsctl}} -f {{.cdsctl.config}} admin services status --type=hooks|grep 'Hook Kafka Consumers' | grep OK
