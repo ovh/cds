@@ -91,7 +91,7 @@ func (wk *CurrentWorker) addRunResultToCurrentJobContext(_ context.Context, newR
 		}
 	}
 	switch newRunResult.Type {
-	case sdk.V2WorkflowRunResultTypeVariable, "V2WorkflowRunResultVariableDetail":
+	case sdk.V2WorkflowRunResultTypeVariable, sdk.V2WorkflowRunResultVariableDetailType:
 		x, err := newRunResult.GetDetailAsV2WorkflowRunResultVariableDetail()
 		if err != nil {
 			return err
@@ -179,8 +179,6 @@ func (wk *CurrentWorker) V2UpdateRunResult(ctx context.Context, req workerruntim
 			Message: fmt.Sprintf("Job %q %s artifact %q to %s", wk.currentJobV2.runJob.JobID, message, runResult.Name(), latestRelease.ToMaturity),
 		})
 	}
-
-	// TODO: save run-result in the current job to populate context
 
 	return &workerruntime.V2UpdateResultResponse{RunResult: runResult}, nil
 }

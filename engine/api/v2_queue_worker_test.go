@@ -286,7 +286,7 @@ hatcheries:
 		Type:             sdk.V2WorkflowRunResultTypeVariable,
 		RunAttempt:       wr.RunAttempt,
 		Detail: sdk.V2WorkflowRunResultDetail{
-			Type: "V2WorkflowRunResultVariableDetail",
+			Type: sdk.V2WorkflowRunResultVariableDetailType,
 			Data: sdk.V2WorkflowRunResultVariableDetail{
 				Name:  "foo",
 				Value: "bar",

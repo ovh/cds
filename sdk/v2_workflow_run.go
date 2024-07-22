@@ -818,14 +818,14 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		}
 		s.Data = detail
 		return nil
-	case "V2WorkflowRunResultGenericDetail":
+	case `V2WorkflowRunResultGenericDetail`:
 		var detail = new(V2WorkflowRunResultGenericDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultGenericDetail")
 		}
 		s.Data = detail
 		return nil
-	case "V2WorkflowRunResultVariableDetail":
+	case V2WorkflowRunResultVariableDetailType:
 		var detail = new(V2WorkflowRunResultVariableDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultVariableDetail")
@@ -1052,6 +1052,8 @@ type V2WorkflowRunResultHelmDetail struct {
 	AppVersion   string `json:"appVersion" mapstructure:"appVersion"`
 	ChartVersion string `json:"chartVersion" mapstructure:"chartVersion"`
 }
+
+const V2WorkflowRunResultVariableDetailType = "V2WorkflowRunResultVariableDetail"
 
 type V2WorkflowRunResultVariableDetail struct {
 	Name  string `json:"name" mapstructure:"name"`
