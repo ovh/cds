@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/sdk/glob"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 	"github.com/spf13/cast"
 )
@@ -47,30 +47,30 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 	if !ok {
 		return nil, NewErrorFrom(ErrInvalidData, "contains: item argument must be a string")
 	}
-
-	log.Debug(ctx, "init glob for %s", name)
 	glob := glob.New(name)
 
-	btes, _ := json.Marshal(a.contexts)
-	log.Error(context.Background(), "result::context= %s", string(btes))
-
-	jobsMap := findMapStringFromMapAsInterface(a.contexts, "jobs")
+	jobsMap := cast.ToStringMap(a.contexts["jobs"])
 	if jobsMap == nil {
-		log.Error(ctx, "map jobs not found in context")
+		return nil, errors.New("map jobs not found in context")
 	}
 
-	log.Error(ctx, "job map found, searching for results")
-
-	for jobID, jobContext := range jobsMap { // Iterate over all the jobs
-
-		log.Debug(ctx, "result::trying to find result in job %q", jobID)
-
+	for _, jobContextI := range jobsMap { // Iterate over all the jobs
 		var jobRunResultsAsMap map[string]interface{}
 
-		resultsMap := findMapStringFromMapAsInterface(jobContext, "results")
-		if resultsMap != nil {
-			jobRunResults, hasJobRunResults := resultsMap["JobRunResults"]
-			if hasJobRunResults {
+		jobContext := cast.ToStringMap(jobContextI)
+		if jobContext == nil {
+			return nil, errors.New("unable to cast job context to map")
+		}
+
+		resultsMapI := jobContext["results"]
+		if resultsMapI != nil {
+			resultsMap := cast.ToStringMap(resultsMapI)
+			jobRunResultsI := resultsMap["JobRunResults"]
+			if jobRunResultsI != nil {
+				jobRunResults := cast.ToStringMap(jobRunResultsI)
+				if jobRunResults == nil {
+					return nil, errors.New("unable to cast jobRunResults context to map")
+				}
 				var err error
 				jobRunResultsAsMap, err = cast.ToStringMapE(jobRunResults)
 				if err != nil {
@@ -78,14 +78,17 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 				}
 			}
 		} else {
-			jobRunResultsAsMap = findMapStringFromMapAsInterface(jobContext, "JobRunResults")
+			jobRunResultsAsMapI := jobContext["JobRunResults"]
+			if jobRunResultsAsMapI != nil {
+				jobRunResultsAsMap = cast.ToStringMap(jobRunResultsAsMapI)
+				if jobRunResultsAsMap == nil {
+					return nil, errors.New("unable to cast jobRunResultsAsMap context to map")
+				}
+			}
 		}
 
-		log.Debug(ctx, "ici")
 		for k, v := range jobRunResultsAsMap {
-			log.Debug(ctx, "result::checking result %v %v for job %q: %v", k, v, jobID, strings.HasPrefix(k, typ+":"))
 			if strings.HasPrefix(k, typ+":") {
-				log.Debug(ctx, "checking with glob %s", k)
 				g, err := glob.MatchString(strings.TrimPrefix(k, typ+":"))
 				if err != nil {
 					return nil, err
@@ -97,51 +100,7 @@ func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interf
 		}
 	}
 
-	log.Error(ctx, "unable to find result %q", typ+":"+name)
-
 	return nil, nil
-}
-
-func findMapStringFromMapAsInterface(target interface{}, key string) map[string]interface{} {
-	jobContextValue := reflect.ValueOf(target)
-	if jobContextValue.Kind() == reflect.Map {
-		mapIter := jobContextValue.MapRange()
-		for mapIter.Next() {
-			kValue := mapIter.Key()
-			vValue := mapIter.Value()
-			log.Error(context.Background(), "findMapStringFromMapAsInterface > checking %v=%v : %v", kValue.Interface(), key, reflect.DeepEqual(kValue.Interface(), key))
-			if kValue.CanInterface() && reflect.DeepEqual(kValue.Interface(), key) {
-				log.Error(context.Background(), "findMapStringFromMapAsInterface > ==> %v %v %T", vValue.Kind(), vValue.CanInterface(), vValue.Interface())
-				if !vValue.CanInterface() {
-					continue
-				}
-				x, _ := cast.ToStringMapE(vValue.Interface())
-				if x != nil {
-					return x
-				}
-				switch vValue.Kind() {
-				case reflect.Map:
-					log.Error(context.Background(), "findMapStringFromMapAsInterface > ==> %d", len(vValue.MapKeys()))
-					vMapKeys := vValue.MapKeys()
-					if len(vMapKeys) > 0 {
-						if vMapKeys[0].CanInterface() && vMapKeys[0].Kind() == reflect.Slice {
-							x, err := cast.ToStringMapE(vValue.Interface())
-							if err != nil {
-								log.ErrorWithStackTrace(context.Background(), err)
-								continue
-							}
-							return x
-						}
-					}
-				case reflect.Interface:
-
-				}
-			}
-		}
-	} else {
-		log.Error(context.Background(), "is not a Map. its a %v", jobContextValue.Kind())
-	}
-	return nil
 }
 
 // contains(search, item)
