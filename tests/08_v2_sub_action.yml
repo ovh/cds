@@ -151,7 +151,7 @@ testcases:
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
         ls -l
         cat {{.cds_workflow}}-1-1-init-action
-        cat {{.cds_workflow}}-1-1-init-post-action
+        cat {{.cds_workflow}}-1-1-init-Post-action
         # Check log content
         cat {{.cds_workflow}}-1-1-init-action | grep "Welcome in action parent-action on workflow {{.cds_workflow}}"
         # Check log in sub action
@@ -167,7 +167,7 @@ testcases:
         # Check Post Child action
         cat {{.cds_workflow}}-1-1-init-action | grep "Post from child-action"
         # Check Post parent action
-        cat {{.cds_workflow}}-1-1-init-post-action | grep "Post from parent-action"
+        cat {{.cds_workflow}}-1-1-init-Post-action | grep "Post from parent-action"
       retry: 60
       delay: 1
 
