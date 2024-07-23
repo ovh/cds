@@ -497,7 +497,6 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	name := strings.TrimPrefix(step.Uses, "actions/")
 	actionRefSplit := strings.Split(name, "@")
 	actionPath := strings.Split(actionRefSplit[0], "/")
-	stepName := parentStepName + "-" + filepath.Base(actionRefSplit[0])
 
 	actionResult := sdk.V2WorkflowRunJobResult{
 		Status: sdk.V2WorkflowRunJobStatusSuccess,
@@ -552,7 +551,6 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 
 		// Save current step status before running a subaction
 		parentStepStatus := w.GetCurrentStepsStatus()
-		parentStepName := w.GetSubStepName()
 
 		// create new steps status for the child action
 		subStepStatus := sdk.JobStepsStatus{}
@@ -608,7 +606,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 
 			actionPost = &ActionPostJob{
 				Post:     interpolatedPost,
-				StepName: stepName,
+				StepName: parentStepName,
 			}
 		}
 

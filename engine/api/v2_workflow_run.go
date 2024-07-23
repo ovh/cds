@@ -314,7 +314,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 					if stepName == k {
 						stepOrder = i
 						break
-					} else if strings.HasPrefix(k, "Post-"+stepName+"-") {
+					} else if k == "Post-"+stepName {
 						stepOrder = len(runJob.Job.Steps)*2 - 1 - i
 						break
 					}

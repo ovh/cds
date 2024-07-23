@@ -74,6 +74,7 @@ testcases:
                   CHILD: BAR  
               - run: echo "Tag=${{ steps.firststep.outputs.tag }}"
               - run: echo "ChildInParent=${{steps.callchild.outputs.exportedChild}}"
+            post: echo "Post from parent-action"
           outputs:
             parentOutFromChild:
               value: ${{ steps.callchild.outputs.exportedChild}}   
@@ -99,6 +100,7 @@ testcases:
               - id: step3
                 run: worker export childvar2 childvalue2
               - run: echo "ChildVar=${{ steps.step2.outputs.childvar1}}"
+            post: echo "Post from child-action"  
           outputs:
             exportedChild:
               value: ${{ steps.step3.outputs.childvar2 }}      
@@ -147,6 +149,9 @@ testcases:
         FILE=/tmp/`uuidgen`
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+        ls -l
+        cat {{.cds_workflow}}-1-1-init-action
+        cat {{.cds_workflow}}-1-1-init-post-action
         # Check log content
         cat {{.cds_workflow}}-1-1-init-action | grep "Welcome in action parent-action on workflow {{.cds_workflow}}"
         # Check log in sub action
@@ -159,6 +164,10 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-action | grep "Tag=foo"
         # Check Parent tag
         cat {{.cds_workflow}}-1-1-init-action | grep "ChildInParent=childvalue2"
+        # Check Post Child action
+        cat {{.cds_workflow}}-1-1-init-action | grep "Post from child-action"
+        # Check Post parent action
+        cat {{.cds_workflow}}-1-1-init-post-action | grep "Post from parent-action"
       retry: 60
       delay: 1
 
