@@ -85,13 +85,16 @@
                 </nz-page-header-content>
             </nz-page-header>
             <div class="controls">
-                <span nz-icon nzType="play-circle" nzTheme="outline" title="Restart failed jobs"
-                    (click)="clickRestartJobs()"></span>
-                <span nz-icon nzType="stop" nzTheme="outline" title="Stop workflow run" (click)="clickStopRun()"></span>
+                <button *ngIf="hasJobsFailed && !hasJobsNotTerminated" nz-button nzType="secondary" nzSize="large"
+                    title="Restart failed jobs" (click)="clickRestartJobs()">Restart
+                    failed jobs</button>
+                <button *ngIf="hasJobsNotTerminated" nz-button nzType="primary" nzSize="large" nzDanger
+                    title="Stop workflow run" (click)="clickStopRun()">Stop workflow run</button>
             </div>
             <app-stages-graph [workflow]="workflowGraph" [runJobs]="jobs" [workflowRun]="workflowRun"
                 [navigationDisabled]="!!selectedItemType" (onSelectJobGate)="openPanel('gate', $event)"
                 (onSelectJobRun)="navigatePanel('job', $event)" (onSelectHook)="navigatePanel('hook', $event)"
+                (onSelectJobRunRestart)="restartJob($event)" (onSelectJobRunStop)="stopJob($event)"
                 #graph></app-stages-graph>
         </div>
 
@@ -190,8 +193,8 @@
         </div>
         <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun" [jobRun]="selectedJobRun"
             [jobRunInfos]="selectedJobRunInfos"></app-run-job>
-        <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate"
-            [run]="workflowRun"></app-run-gate>
+        <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate" [run]="workflowRun"
+            (onSubmit)="onGateSubmit()"></app-run-gate>
         <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"></app-run-hook>
         <app-run-result *ngIf="selectedItemType === 'result'" [result]="selectedRunResult"></app-run-result>
         <app-run-workflow *ngIf="selectedItemType === 'workflow'" [workflow]="workflowGraph"></app-run-workflow>

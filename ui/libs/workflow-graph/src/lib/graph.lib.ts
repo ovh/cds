@@ -4,7 +4,7 @@ import * as dagreD3 from 'dagre-d3';
 import { GraphNode, GraphNodeType } from './graph.model';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
-import { NodeStatus } from './node/status.model';
+import { NodeStatus } from './node/model';
 
 export type WorkflowNodeComponent =
     GraphForkJoinNodeComponent
@@ -15,11 +15,17 @@ export enum GraphDirection {
     VERTICAL = 'vertical'
 }
 
+export enum NodeMouseEvent {
+    Enter = 'enter',
+    Out = 'out'
+}
+
 export interface WithHighlight {
     getNodes(): Array<GraphNode>;
     setHighlight(active: boolean, options?: any): void;
     selectNode(navigationKey: string): void;
     activateNode(navigationKey: string): void;
+    setRunActive(active: boolean): void;
 }
 
 export type ComponentFactory<T> = (nodes: Array<GraphNode>, type: string) => ComponentRef<T>;
@@ -511,12 +517,12 @@ export class WorkflowV2Graph<T extends WithHighlight> {
         });
     }
 
-    nodeMouseEvent(type: string, key: string, options?: any): void {
+    nodeMouseEvent(type: NodeMouseEvent, key: string, options?: any): void {
         switch (type) {
-            case 'enter':
+            case NodeMouseEvent.Enter:
                 this.highlightNode(true, key, options);
                 break;
-            case 'out':
+            case NodeMouseEvent.Out:
                 this.highlightNode(false, key, options);
                 break;
         }
@@ -528,6 +534,10 @@ export class WorkflowV2Graph<T extends WithHighlight> {
 
     activateNode(navigationKey: string): void {
         this.nodesComponent.forEach(n => n.instance.activateNode(navigationKey));
+    }
+
+    setRunActive(active: boolean): void {
+        this.nodesComponent.forEach(n => n.instance.setRunActive(active));
     }
 
     highlightNode(active: boolean, key: string, options?: any) {

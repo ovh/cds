@@ -56,12 +56,16 @@
         margin-left: 10px;
         cursor: pointer;
 
-        :host-context(.night) & {
-            color: $darkTheme_grey_6;
+        &:hover {
+            color: $polar_grey_0 !important;
         }
 
-        &:hover {
-            color: grey !important;
+        :host-context(.night) & {
+            color: $darkTheme_grey_6;
+
+            &:hover {
+                color: white !important;
+            }
         }
     }
 
@@ -79,7 +83,7 @@
         font-size: 0.8em;
         margin-right: 10px;
     }
-    
+
     .durationTooltip {
         display: flex;
         flex-direction: column;
@@ -113,11 +117,51 @@
     }
 
     &.active {
-        border: 3px solid black;
+        border: 3px solid $polar_grey_0;
         padding: 1px;
     }
 
     &.highlight {
-        border-color: black;
+        border-color: $polar_grey_0;
+    }
+
+    &:hover {
+        .commands {
+            display: flex;
+        }
+    }
+
+    .commands {
+        display: none;
+        flex-direction: row;
+        align-items: center;
+        height: 100%;
+        position: absolute;
+        right: 0;
+        background-color: inherit;
+
+        button {
+            margin: 10px;
+        }
+
+        [nzGhost] {
+            color: $polar_grey_1;
+            border-color: $polar_grey_1;
+
+            &:hover {
+                color: $polar_grey_0 !important;
+                border-color: $polar_grey_0 !important;
+            }
+
+            :host-context(.night) & {
+                color: $darkTheme_grey_6;
+                border-color: $darkTheme_grey_6;
+
+                &:hover {
+                    color: white !important;
+                    border-color: white !important;
+                }
+            }
+        }
     }
 }

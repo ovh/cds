@@ -23,12 +23,16 @@
         margin-left: 2px;
         cursor: pointer;
 
-        :host-context(.night) & {
-            color: $darkTheme_grey_6;
+        &:hover {
+            color: $polar_grey_0 !important;
         }
 
-        &:hover {
-            color: grey !important;
+        :host-context(.night) & {
+            color: $darkTheme_grey_6;
+
+            &:hover {
+                color: white !important;
+            }
         }
     }
 
@@ -68,6 +72,7 @@
         padding: 10px;
 
         .job {
+            position: relative;
             height: 30px;
             width: 100%;
             display: flex;
@@ -98,6 +103,7 @@
             }
 
             .infos {
+                position: relative;
                 display: flex;
                 flex-direction: column;
                 margin-right: 5px;
@@ -117,6 +123,49 @@
                     margin-top: 4px;
                     font-size: 0.5em;
                     line-height: 0.5em;
+                }
+            }
+
+            &:hover {
+                .commands {
+                    display: flex;
+                }
+            }
+
+            .commands {
+                display: none;
+                flex-direction: row;
+                align-items: center;
+                height: 100%;
+                position: absolute;
+                right: 0;
+                background-color: inherit;
+
+                button {
+                    height: 18px;
+                    margin: 0 5px;
+                    line-height: 12px;
+                    font-size: 12px;
+                }
+
+                [nzGhost] {
+                    color: $polar_grey_1;
+                    border-color: $polar_grey_1;
+
+                    &:hover {
+                        color: black !important;
+                        border-color: black !important;
+                    }
+
+                    :host-context(.night) & {
+                        color: $darkTheme_grey_6;
+                        border-color: $darkTheme_grey_6;
+
+                        &:hover {
+                            color: white !important;
+                            border-color: white !important;
+                        }
+                    }
                 }
             }
 
@@ -141,12 +190,12 @@
             }
 
             &.active {
-                border: 3px solid black;
+                border: 3px solid $polar_grey_0;
                 padding: 1px;
             }
 
             &.highlight {
-                border-color: black;
+                border-color: $polar_grey_0;
             }
 
             :host-context(.night) & {

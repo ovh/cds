@@ -18,7 +18,7 @@
     border-radius: 3px;
 
     &.highlight {
-        border-color: black !important;
+        border-color: $polar_grey_0 !important;
     }
 
     .title {
@@ -65,7 +65,7 @@
                     stroke: $polar_grey_3;
 
                     &.highlight {
-                        stroke: black !important;
+                        stroke: $polar_grey_0 !important;
                     }
 
                     :host-context(.night) & {

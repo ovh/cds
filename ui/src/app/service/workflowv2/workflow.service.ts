@@ -59,7 +59,7 @@ export class V2WorkflowRunService {
         return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobRunID}/logs/links`);
     }
 
-    triggerJob(run: V2WorkflowRun, workflowRunID: string, inputs: {}): Observable<V2WorkflowRun> {
-        return this._http.post<V2WorkflowRun>(`/v2/project/${run.project_key}/run/${run.id}/job/${workflowRunID}/run`, inputs);
+    triggerJob(projKey: string, workflowRunID: string, jobRunID: string, data?: any): Observable<V2WorkflowRun> {
+        return this._http.post<V2WorkflowRun>(`/v2/project/${projKey}/run/${workflowRunID}/job/${jobRunID}/run`, data);
     }
 }

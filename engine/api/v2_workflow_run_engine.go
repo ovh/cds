@@ -17,6 +17,7 @@ import (
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/event_v2"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
@@ -935,8 +936,17 @@ func checkJob(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2Workflow
 		}
 	}
 
+	// Retrieve inputs from an event if exists
+	var inputs map[string]interface{}
+	for _, je := range run.RunJobEvent {
+		if je.RunAttempt == run.RunAttempt && je.JobID == jobID {
+			inputs = je.Inputs
+			break
+		}
+	}
+
 	// check job condition
-	canRun, err := checkJobCondition(ctx, run, jobID, jobDef, currentJobContext)
+	canRun, err := checkJobCondition(ctx, db, run, inputs, *jobDef, currentJobContext, u, wrEnqueue.IsAdminWithMFA)
 	if err != nil {
 		runInfos = append(runInfos, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -1020,7 +1030,7 @@ func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) bool {
 	return true
 }
 
-func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string, jobDef *sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext) (bool, error) {
+func checkJobCondition(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, jobInputs map[string]interface{}, jobDef sdk.V2Job, currentJobContext sdk.WorkflowRunJobsContext, u sdk.AuthentifiedUser, isAdminWithMFA bool) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "checkJobCondition")
 	defer next()
 
@@ -1028,10 +1038,32 @@ func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string,
 	var jobCondition string
 
 	if jobDef.Gate != "" {
-		jobCondition = run.WorkflowData.Workflow.Gates[jobDef.Gate].If
+		gate := run.WorkflowData.Workflow.Gates[jobDef.Gate]
+
+		// Check reviewers
+		reviewersChecked := len(gate.Reviewers.Users) == 0 && len(gate.Reviewers.Groups) == 0
+		if len(gate.Reviewers.Users) > 0 {
+			reviewersChecked = sdk.IsInArray(u.GetUsername(), gate.Reviewers.Users)
+		}
+		if !reviewersChecked {
+			for _, g := range gate.Reviewers.Groups {
+				grp, err := group.LoadByName(ctx, db, g, group.LoadOptions.WithMembers)
+				if err != nil {
+					return false, err
+				}
+				reviewersChecked = sdk.IsInArray(u.ID, grp.Members.UserIDs())
+				if reviewersChecked {
+					break
+				}
+			}
+		}
+		if !reviewersChecked && !isAdminWithMFA {
+			return false, nil
+		}
+
 		// Create empty input context to be able to interpolate gate condition.
 		currentJobContext.Gate = make(map[string]interface{})
-		for k, v := range run.WorkflowData.Workflow.Gates[jobDef.Gate].Inputs {
+		for k, v := range gate.Inputs {
 			if v.Default != nil {
 				currentJobContext.Gate[k] = v.Default
 			} else {
@@ -1046,27 +1078,19 @@ func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string,
 			}
 		}
 
-		// Check if there is an event
-		for _, je := range run.RunJobEvent {
-			if je.RunAttempt != run.RunAttempt {
-				continue
-			}
-			if je.JobID != jobID {
-				continue
-			}
+		jobCondition = gate.If
 
-			// Ovveride with value sent by user
-			for k, v := range je.Inputs {
-				if _, has := currentJobContext.Gate[k]; has {
-					currentJobContext.Gate[k] = v
-				}
+		// Override with value sent by user
+		for k, v := range jobInputs {
+			if _, has := currentJobContext.Gate[k]; has {
+				currentJobContext.Gate[k] = v
 			}
 		}
 	} else {
-		if jobDef.If == "" {
-			jobDef.If = "${{success()}}"
-		}
 		jobCondition = jobDef.If
+	}
+	if jobCondition == "" {
+		jobCondition = "${{success()}}"
 	}
 	if !strings.HasPrefix(jobCondition, "${{") {
 		jobCondition = fmt.Sprintf("${{ %s }}", jobCondition)
@@ -1085,7 +1109,7 @@ func checkJobCondition(ctx context.Context, run sdk.V2WorkflowRun, jobID string,
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 	booleanResult, err := ap.InterpolateToBool(ctx, jobCondition)
 	if err != nil {
-		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "job %s: unable to parse if statement %s into a boolean: %v", jobID, jobCondition, err)
+		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to parse if statement %s into a boolean: %v", jobCondition, err)
 	}
 	return booleanResult, nil
 }

@@ -203,6 +203,9 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 	defer r.Body.Close()
+	if len(data) == 0 {
+		return nil
+	}
 	if err := sdk.JSONUnmarshal(data, i); err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}

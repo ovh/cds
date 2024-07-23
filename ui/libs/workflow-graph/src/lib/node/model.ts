@@ -23,7 +23,7 @@ export class NodeStatus {
 
     static isDone(status: string) {
         return status === this.SUCCESS || status === this.STOPPED || status === this.FAIL ||
-            status === this.SKIPPED ;
+            status === this.SKIPPED;
     }
 
     static sum(status: Array<string>): string {
@@ -36,4 +36,13 @@ export class NodeStatus {
         }
         return NodeStatus.priority[sum];
     }
+}
+
+export enum GraphNodeAction {
+    Enter = 'enter',
+    Out = 'out',
+    Click = 'click',
+    ClickGate = 'click-gate',
+    ClickRestart = 'click-restart',
+    ClickStop = 'click-stop',
 }

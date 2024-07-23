@@ -10,7 +10,7 @@ import { from, interval, Subject, Subscription } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { DurationService } from '../../../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
+import { DurationService } from '../../../../../../../../libs/workflow-graph/src/lib/duration.service';
 
 export enum DisplayMode {
     ANSI = 'ansi',

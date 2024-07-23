@@ -8,7 +8,7 @@ import (
 )
 
 // IsInArray checks if the element is in the array
-func IsInArray(elt string, array []string) bool {
+func IsInArray[T comparable](elt T, array []T) bool {
 	for _, item := range array {
 		if item == elt {
 			return true
