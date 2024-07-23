@@ -1,11 +1,13 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -312,6 +314,9 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 					if stepName == k {
 						stepOrder = i
 						break
+					} else if strings.HasPrefix(k, "Post-"+stepName+"-") {
+						stepOrder = len(runJob.Job.Steps)*2 - 1 - i
+						break
 					}
 				}
 
@@ -324,8 +329,12 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				ref.ItemType = sdk.CDNTypeItemJobStepLog
 				refs = append(refs, ref)
 			}
+			slices.SortFunc(refs, func(i, j sdk.CDNLogAPIRefV2) int {
+				return cmp.Compare(i.StepOrder, j.StepOrder)
+			})
 			datas := make([]sdk.CDNLogLinkData, 0, len(refs))
-			for _, r := range refs {
+			for i, r := range refs {
+				r.StepOrder = int64(i)
 				apiRefHashU, err := hashstructure.Hash(r, nil)
 				if err != nil {
 					return sdk.WithStack(err)
@@ -333,7 +342,6 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				apiRefHash := strconv.FormatUint(apiRefHashU, 10)
 				datas = append(datas, sdk.CDNLogLinkData{
 					APIRef:      apiRefHash,
-					StepOrder:   r.StepOrder,
 					StepName:    r.StepName,
 					ServiceName: r.ServiceName,
 					ItemType:    r.ItemType,

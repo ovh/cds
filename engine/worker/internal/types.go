@@ -474,3 +474,8 @@ func (wk *CurrentWorker) SetSecrets(secrets []sdk.Variable) error {
 
 	return nil
 }
+
+type ActionPostJob struct {
+	Post     string
+	StepName string
+}

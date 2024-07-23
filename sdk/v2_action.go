@@ -21,6 +21,7 @@ type V2Action struct {
 
 type ActionRuns struct {
 	Steps []ActionStep `json:"steps" jsonschema_description:"List of sequential steps executed by the action"`
+	Post  string       `json:"post" jsonschema_description:"script that will be executed at the end of the job"`
 }
 
 type ActionInput struct {
