@@ -96,7 +96,7 @@ testcases:
       EOF
 
   - name: Import integration for project
-    script: {{.cdsctl}} -f {{.cdsctl.config}} project integration import {{.cds_project}} /tmp/artifactory-{{.cds_project}}.yaml
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} project integration import {{.cds_project}} /tmp/artifactory-{{.cds_project}}.yaml"
 
   - name: Assert integration is imported on project
     script: '{{.cdsctl}} -f {{.cdsctl.config}} project integration list {{.cds_project}}'
@@ -123,7 +123,7 @@ testcases:
       workflows/workflowA.yaml:
         name: WorkflowA
         on: [push]
-        integrations: [artifactory-{{.rt_project}}]
+        integrations: ["artifactory-{{.rt_project}}"]
         jobs:
           First-Job:
             runs-on: "{{.worker_model}}"
@@ -166,14 +166,14 @@ testcases:
     delay: 1
 
   - name: Get hook event status
-    script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event list my_vcs_server {{.git.user}}/{{.git_repo}} --format json
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event list my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     vars:
       events:
         from: result.systemoutjson
 
   - name: Check all hook events status
     range: "{{.events}}"
-    script: {{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event show my_vcs_server {{.git.user}}/{{.git_repo}} {{.value.uuid}} --format json
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hook repository event show my_vcs_server {{.git.user}}/{{.git_repo}} {{.value.uuid}} --format json"
     info: "hook event {{.value.uuid}} ({{.value.created}} - {{.result.systemoutjson.last_error}}) status is {{.result.systemoutjson.status}}"
     assertions:
     - result.systemoutjson.status ShouldEqual Done

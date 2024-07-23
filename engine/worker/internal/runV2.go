@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -904,9 +903,7 @@ func (w *CurrentWorker) setupWorkingDirectoryV2(ctx context.Context, jobName str
 		return nil, "", err
 	}
 
-	data := []byte(w.currentJobV2.runJob.JobID)
-	suffix := fmt.Sprintf("%x", md5.Sum(data))
-	if err := os.Setenv("HOME_CDS_PLUGINS", w.cfg.Basedir+"/"+suffix); err != nil {
+	if err := os.Setenv("HOME_CDS_PLUGINS", w.cfg.Basedir); err != nil {
 		log.Error(ctx, "Error while setting home_plugin %v", err)
 	}
 

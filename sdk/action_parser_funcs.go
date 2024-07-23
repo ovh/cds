@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ovh/cds/sdk/glob"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
+	"github.com/spf13/cast"
 )
 
 var (
@@ -23,10 +26,82 @@ var (
 		"always":     always,
 		"cancelled":  cancelled,
 		"failure":    failure,
+		"result":     result,
 	}
 )
 
 type ActionFunc func(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error)
+
+func result(ctx context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
+	log.Debug(ctx, "function: contains with args: %v", inputs)
+	if len(inputs) != 2 {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: wrong number of arguments to call contains(type, name)")
+	}
+
+	typ, ok := inputs[0].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: item argument must be a string")
+	}
+
+	name, ok := inputs[1].(string)
+	if !ok {
+		return nil, NewErrorFrom(ErrInvalidData, "contains: item argument must be a string")
+	}
+	glob := glob.New(name)
+
+	jobsMap := cast.ToStringMap(a.contexts["jobs"])
+	if jobsMap == nil {
+		return nil, errors.New("map jobs not found in context")
+	}
+
+	for _, jobContextI := range jobsMap { // Iterate over all the jobs
+		var jobRunResultsAsMap map[string]interface{}
+
+		jobContext := cast.ToStringMap(jobContextI)
+		if jobContext == nil {
+			return nil, errors.New("unable to cast job context to map")
+		}
+
+		resultsMapI := jobContext["results"]
+		if resultsMapI != nil {
+			resultsMap := cast.ToStringMap(resultsMapI)
+			jobRunResultsI := resultsMap["JobRunResults"]
+			if jobRunResultsI != nil {
+				jobRunResults := cast.ToStringMap(jobRunResultsI)
+				if jobRunResults == nil {
+					return nil, errors.New("unable to cast jobRunResults context to map")
+				}
+				var err error
+				jobRunResultsAsMap, err = cast.ToStringMapE(jobRunResults)
+				if err != nil {
+					continue
+				}
+			}
+		} else {
+			jobRunResultsAsMapI := jobContext["JobRunResults"]
+			if jobRunResultsAsMapI != nil {
+				jobRunResultsAsMap = cast.ToStringMap(jobRunResultsAsMapI)
+				if jobRunResultsAsMap == nil {
+					return nil, errors.New("unable to cast jobRunResultsAsMap context to map")
+				}
+			}
+		}
+
+		for k, v := range jobRunResultsAsMap {
+			if strings.HasPrefix(k, typ+":") {
+				g, err := glob.MatchString(strings.TrimPrefix(k, typ+":"))
+				if err != nil {
+					return nil, err
+				}
+				if g != nil {
+					return v, nil
+				}
+			}
+		}
+	}
+
+	return nil, nil
+}
 
 // contains(search, item)
 func contains(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {

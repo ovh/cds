@@ -132,11 +132,14 @@ type JobsResultContext map[string]JobResultContext
 type JobsGateContext map[string]GateInputs
 
 type JobResultContext struct {
+	JobRunResults
 	Result  V2WorkflowRunJobStatus `json:"result"`
 	Outputs JobResultOutput        `json:"outputs"`
 }
 
-type JobResultOutput map[string]string
+type JobResultOutput map[string]any
+
+type JobRunResults map[string]any
 
 func (jro JobResultOutput) Value() (driver.Value, error) {
 	j, err := json.Marshal(jro)

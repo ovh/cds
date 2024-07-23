@@ -115,7 +115,7 @@ testcases:
                     PARENT: FOO
               outputs:
                 fromParent:
-                  value: ${{ steps.action.outputs.parentOutFromChild }}     
+                  value: ${{ steps.action.outputs.parentOutFromChild }}
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"

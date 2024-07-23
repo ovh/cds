@@ -168,7 +168,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
 	}
 
-	runJobsContexts, runGatesContexts := computeExistingRunJobContexts(allRunJobs, runResults)
+	runJobsContexts, runGatesContexts := computeExistingRunJobContexts(ctx, allRunJobs, runResults)
 
 	// Compute annotations
 	if err := api.computeWorkflowRunAnnotations(ctx, run, runJobsContexts, runGatesContexts); err != nil {
@@ -299,27 +299,17 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	return nil
 }
 
-type computeAnnotationsContext struct {
-	sdk.WorkflowRunContext
-	Jobs map[string]computeAnnotationsJobContext `json:"jobs"`
-}
-
-type computeAnnotationsJobContext struct {
-	Results sdk.JobResultContext `json:"results"`
-	Gate    sdk.GateInputs       `json:"gate"`
-}
-
 func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2WorkflowRun, runJobsContexts sdk.JobsResultContext, runGatesContexts sdk.JobsGateContext) error {
 	// Build the context that is available for expression syntax
-	computeAnnotationsJosbCtx := make(map[string]computeAnnotationsJobContext)
+	computeAnnotationsJosbCtx := make(map[string]sdk.ComputeAnnotationsJobContext)
 	for jobID, jobResult := range runJobsContexts {
-		computeAnnotationsJosbCtx[jobID] = computeAnnotationsJobContext{
+		computeAnnotationsJosbCtx[jobID] = sdk.ComputeAnnotationsJobContext{
 			Results: jobResult,
 			Gate:    runGatesContexts[jobID],
 		}
 	}
 
-	computeAnnotationsCtx := computeAnnotationsContext{
+	computeAnnotationsCtx := sdk.ComputeAnnotationsContext{
 		WorkflowRunContext: run.Contexts,
 		Jobs:               computeAnnotationsJosbCtx,
 	}
