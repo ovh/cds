@@ -345,6 +345,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 					StepName:    r.StepName,
 					ServiceName: r.ServiceName,
 					ItemType:    r.ItemType,
+					StepOrder:   r.StepOrder,
 				})
 			}
 
