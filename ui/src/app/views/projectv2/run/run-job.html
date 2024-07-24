@@ -3,36 +3,16 @@
     <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun" (dblclick)="$event.stopPropagation();"
         #runJobLogs></app-run-job-logs>
 </ng-container>
-<div class="problems" *ngIf="selectedTab.key === 'problems' && jobRun" (dblclick)="$event.stopPropagation();">
-    <ul>
-        <ng-container *ngFor="let info of jobRunInfos">
-            <ul>
-                <ng-container *ngIf="info.level === 'error'">
-                    <li>
-                        <span class="error" nz-icon nzType="close-circle" nzTheme="fill"></span>
-                        <div class="content">
-                            {{info.message}}.
-                        </div>
-                    </li>
-                </ng-container>
-                <ng-container *ngIf="info.level === 'warning'">
-                    <li>
-                        <span class="warning" nz-icon nzType="warning" nzTheme="fill"></span>
-                        <div class="content">
-                            {{info.message}}.
-                        </div>
-                    </li>
-                </ng-container>
-            </ul>
-        </ng-container>
-    </ul>
-</div>
 <div class="infos" *ngIf="selectedTab.key === 'infos' && jobRun" (dblclick)="$event.stopPropagation();">
     <ul>
         <ng-container *ngFor="let info of jobRunInfos">
             <ul>
-                <li *ngIf="info.level === 'info'">
-                    <span class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
+                <li>
+                    <span *ngIf="info.level === 'info'" class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
+                    <span *ngIf="info.level === 'warning'" class="warning" nz-icon nzType="warning"
+                        nzTheme="fill"></span>
+                    <span *ngIf="info.level === 'error'" class="error" nz-icon nzType="close-circle"
+                        nzTheme="fill"></span>
                     <div class="content">
                         {{info.message}}.
                     </div>

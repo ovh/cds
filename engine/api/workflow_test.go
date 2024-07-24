@@ -647,14 +647,6 @@ func Test_postWorkflowHandlerWithBadPayloadShouldFail(t *testing.T) {
 func Test_putWorkflowHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	// Init user
-	u, pass := assets.InsertAdminUser(t, db)
-
-	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-
-	repoHookModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModel.Name)
-	assert.NoError(t, err)
-
 	mockVCSservice, _ := assets.InsertService(t, db, "Test_putWorkflowHandler_TypeVCS", sdk.TypeVCS)
 	defer func() {
 		_ = services.Delete(db, mockVCSservice)
@@ -664,7 +656,8 @@ func Test_putWorkflowHandler(t *testing.T) {
 		_ = services.Delete(db, mockHookservice)
 	}()
 
-	updatehookCalled := false
+	var deleteHookCalledTimes int
+	var createHookCalledTimes int
 
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
@@ -674,8 +667,10 @@ func Test_putWorkflowHandler(t *testing.T) {
 			enc := json.NewEncoder(body)
 			w.Body = io.NopCloser(body)
 
-			switch r.URL.String() {
-			case "/vcs/github/repos/foo/bar/branches/?branch=&default=true":
+			serviceURL := r.URL.String()
+			t.Logf("service url: %s", serviceURL)
+
+			if serviceURL == "/vcs/github/repos/foo/bar/branches/?branch=&default=true" && r.Method == http.MethodGet {
 				b := sdk.VCSBranch{
 					DisplayID: "master",
 					Default:   true,
@@ -683,7 +678,13 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(b); err != nil {
 					return writeError(w, err)
 				}
-			case "/task/bulk":
+			} else if serviceURL == "/task/bulk" && r.Method == http.MethodDelete {
+				hooks := map[string]sdk.NodeHook{}
+				if err := service.UnmarshalBody(r, &hooks); err != nil {
+					return nil, sdk.WithStack(err)
+				}
+				require.Len(t, hooks, 1)
+			} else if serviceURL == "/task/bulk" && r.Method == http.MethodPost {
 				hooks := map[string]sdk.NodeHook{}
 				if err := service.UnmarshalBody(r, &hooks); err != nil {
 					return nil, sdk.WithStack(err)
@@ -700,33 +701,40 @@ func Test_putWorkflowHandler(t *testing.T) {
 				if err := enc.Encode(hooks); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/bar/hooks":
-				hook := sdk.VCSHook{}
+			} else if serviceURL == "/vcs/github/repos/foo/bar/hooks" && r.Method == http.MethodPost {
+				var hook sdk.VCSHook
 				if err := service.UnmarshalBody(r, &hook); err != nil {
 					return nil, sdk.WithStack(err)
 				}
-				hook.ID = "666"
-				hook.Events = []string{"push"}
+				if createHookCalledTimes == 0 {
+					require.Len(t, hook.Events, 0)
+					hook.ID = "666"
+				} else {
+					require.Len(t, hook.Events, 2)
+					hook.ID = "777"
+				}
 				if err := enc.Encode(hook); err != nil {
 					return writeError(w, err)
 				}
-			case "/vcs/github/repos/foo/bar/hooks?url=http%3A%2F%2Flolcat.local&id=666":
-				updatehookCalled = true
-				hook := sdk.VCSHook{}
-				if err := service.UnmarshalBody(r, &hook); err != nil {
-					return nil, sdk.WithStack(err)
-				}
-				assert.Equal(t, len(hook.Events), 2)
-				if err := enc.Encode(hook); err != nil {
-					return writeError(w, err)
-				}
-			default:
-				t.Fatalf("unknown route %s", r.URL.String())
+				createHookCalledTimes++
+			} else if serviceURL == "/vcs/github/repos/foo/bar/hooks?url=http%3A%2F%2Flolcat.local&id=666" && r.Method == http.MethodDelete {
+				require.Equal(t, http.MethodDelete, r.Method)
+				deleteHookCalledTimes++
+			} else {
+				t.Fatalf("unknown route %s and method %s", r.URL.String(), r.Method)
 			}
 
 			return w, nil
 		},
 	)
+
+	// Init user
+	u, pass := assets.InsertAdminUser(t, db)
+
+	// Init hook model
+	require.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
+	repoHookModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModel.Name)
+	require.NoError(t, err)
 
 	// Init project
 	key := sdk.RandomString(10)
@@ -736,14 +744,11 @@ func Test_putWorkflowHandler(t *testing.T) {
 		Name:      "github",
 		Type:      sdk.VCSTypeGithub,
 	}
-	assert.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
+	require.NoError(t, vcs.Insert(context.TODO(), db, vcsServer))
 
 	// Init pipeline
-	pip := sdk.Pipeline{
-		Name:      "pipeline1",
-		ProjectID: proj.ID,
-	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
+	pip := sdk.Pipeline{Name: "pipeline1", ProjectID: proj.ID}
+	require.NoError(t, pipeline.InsertPipeline(api.mustDB(), &pip))
 
 	// Create application
 	app := sdk.Application{
@@ -755,14 +760,12 @@ func Test_putWorkflowHandler(t *testing.T) {
 	require.NoError(t, application.Insert(db, *proj, &app))
 	require.NoError(t, repositoriesmanager.InsertForApplication(db, &app))
 
-	//Prepare request
-	vars := map[string]string{
+	// POST workflow
+	uri := router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
 		"permProjectKey": proj.Key,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-
-	var workflow = &sdk.Workflow{
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
 		WorkflowData: sdk.WorkflowData{
@@ -772,40 +775,25 @@ func Test_putWorkflowHandler(t *testing.T) {
 					PipelineID:    pip.ID,
 					ApplicationID: app.ID,
 				},
-				Hooks: []sdk.NodeHook{
-					{
-						Config:        repoHookModel.DefaultConfig,
-						HookModelName: repoHookModel.Name,
-						HookModelID:   repoHookModel.ID,
-					},
-				},
+				Hooks: []sdk.NodeHook{{
+					Config:        repoHookModel.DefaultConfig,
+					HookModelName: repoHookModel.Name,
+					HookModelID:   repoHookModel.ID,
+				}},
 			},
 		},
-	}
-
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &workflow)
-
-	//Do the request
+	})
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
-	assert.False(t, updatehookCalled)
+	require.Equal(t, 201, w.Code)
+	var workflow sdk.Workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
+	require.Equal(t, 1, createHookCalledTimes)
+	require.Equal(t, 0, deleteHookCalledTimes)
 
-	//Prepare request
-	vars = map[string]string{
-		"key":                      proj.Key,
-		"permWorkflowNameAdvanced": "Name",
-	}
-	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-
-	model := sdk.IntegrationModel{
-		Name:  sdk.RandomString(10),
-		Event: true,
-	}
+	// Init project integration
+	model := sdk.IntegrationModel{Name: sdk.RandomString(10), Event: true}
 	require.NoError(t, integration.InsertModel(db, &model))
-
 	projInt := sdk.ProjectIntegration{
 		Config: sdk.IntegrationConfig{
 			"test": sdk.IntegrationConfigValue{
@@ -819,9 +807,21 @@ func Test_putWorkflowHandler(t *testing.T) {
 		Model:              model,
 		IntegrationModelID: model.ID,
 	}
-	test.NoError(t, integration.InsertIntegration(db, &projInt))
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
 
-	var workflow1 = &sdk.Workflow{
+	// PUT workflow
+	hookConfig := repoHookModel.DefaultConfig
+	hookConfig[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
+		Value:        "push;create",
+		Configurable: true,
+		Type:         sdk.HookConfigTypeMultiChoice,
+	}
+	uri = router.GetRoute("PUT", api.putWorkflowHandler, map[string]string{
+		"key":                      proj.Key,
+		"permWorkflowNameAdvanced": "Name",
+	})
+	require.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
 		WorkflowData: sdk.WorkflowData{
@@ -831,44 +831,32 @@ func Test_putWorkflowHandler(t *testing.T) {
 					PipelineID:    pip.ID,
 					ApplicationID: app.ID,
 				},
-				Hooks: []sdk.NodeHook{
-					{
-						Config:        repoHookModel.DefaultConfig,
-						HookModelName: repoHookModel.Name,
-						HookModelID:   repoHookModel.ID,
-					},
-				},
+				Hooks: []sdk.NodeHook{{
+					Config:        hookConfig,
+					HookModelName: repoHookModel.Name,
+					HookModelID:   repoHookModel.ID,
+				}},
 			},
 		},
 		Integrations: []sdk.WorkflowProjectIntegration{{ProjectIntegration: projInt}},
-	}
-	workflow1.WorkflowData.Node.Hooks[0].Config[sdk.HookConfigEventFilter] = sdk.WorkflowNodeHookConfigValue{
-		Value:        "push;create",
-		Configurable: true,
-		Type:         sdk.HookConfigTypeMultiChoice,
-	}
-
-	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, &workflow1)
-
-	//Do the request
+	})
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 200, w.Code)
+	require.Equal(t, 200, w.Code)
+	var workflowUpdated sdk.Workflow
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflowUpdated))
+	require.Equal(t, 2, createHookCalledTimes)
+	require.Equal(t, 1, deleteHookCalledTimes)
+	require.Equal(t, workflow.ID, workflowUpdated.ID)
+	require.Equal(t, "Description 2", workflowUpdated.Description)
 
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow1))
+	require.Equal(t, app.ID, workflowUpdated.WorkflowData.Node.Context.ApplicationID)
+	require.NotNil(t, workflowUpdated.WorkflowData.Node.Context.DefaultPayload)
+	require.NotNil(t, workflowUpdated.Integrations)
 
-	assert.NotEqual(t, 0, workflow1.ID)
-	assert.Equal(t, "Description 2", workflow1.Description)
-
-	assert.NotEqual(t, 0, workflow1.WorkflowData.Node.Context.ApplicationID)
-	assert.NotNil(t, workflow1.WorkflowData.Node.Context.DefaultPayload)
-	assert.NotNil(t, workflow1.Integrations)
-
-	payload, err := workflow1.WorkflowData.Node.Context.DefaultPayloadToMap()
-	test.NoError(t, err)
-	assert.True(t, updatehookCalled)
-
-	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
+	payload, err := workflowUpdated.WorkflowData.Node.Context.DefaultPayloadToMap()
+	require.NoError(t, err)
+	require.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 }
 
 func Test_deleteWorkflowEventIntegrationHandler(t *testing.T) {

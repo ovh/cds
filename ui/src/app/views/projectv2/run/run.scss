@@ -68,6 +68,14 @@
             display: flex;
             flex-direction: row;
             align-items: center;
+
+            button:not([nzDanger]) {
+                background-color: #fff;
+
+                :host-context(.night) & {
+                    background-color: #141414;
+                }
+            }
         }
 
         app-stages-graph {

@@ -61,18 +61,8 @@ export class RunJobComponent implements OnChanges, OnDestroy {
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnChanges(): void {
-        if (this.jobRunInfos && !!this.jobRunInfos.find(i => i.level === 'warning' || i.level === 'error')) {
-            this.tabs = [<Tab>{
-                title: 'Problems',
-                icon: 'warning',
-                iconTheme: 'fill',
-                key: 'problems',
-                default: true,
-            }, ...this.defaultTabs.map(t => Object.assign({}, t))];
-        } else {
-            this.tabs = [...this.defaultTabs.map(t => Object.assign({}, t))];
-            this.tabs[0].default = true;
-        }
+        this.tabs = [...this.defaultTabs.map(t => Object.assign({}, t))];
+        this.tabs[0].default = true;
 
         if (this.jobRun && !PipelineStatus.isDone(this.jobRun.status) && !this.websocketSubscription) {
             this.startStreamingLogsForJob();
