@@ -14,7 +14,7 @@ export class NodeStatus {
     ];
 
     static neverRun(status: string) {
-        return status === this.SKIPPED || status === this.SKIPPED;
+        return status === this.SKIPPED;
     }
 
     static isActive(status: string) {
