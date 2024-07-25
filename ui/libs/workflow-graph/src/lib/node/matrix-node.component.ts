@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy
 import { GraphNode } from '../graph.model'
 import { V2WorkflowRunJobStatus } from '../v2.workflow.run.model';
 import { concatMap, from, interval, Subscription } from 'rxjs';
-import { DurationService } from '../duration/duration.service';
+import { DurationService } from '../duration.service';
+import { GraphNodeAction } from './model';
 
 @Component({
     selector: 'app-matrix-node',
@@ -12,7 +13,7 @@ import { DurationService } from '../duration/duration.service';
 })
 export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
     @Input() node: GraphNode;
-    @Input() mouseCallback: (type: string, node: GraphNode, options?: any) => void;
+    @Input() actionCallback: (type: GraphNodeAction, node: GraphNode, options?: any) => void = () => { };
 
     highlightKey: string;
     selectedKey: string;
@@ -28,8 +29,9 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
         }
     } = {};
     keys: Array<string> = [];
-    status: { [key: string]: string } = {};
+    status: { [key: string]: V2WorkflowRunJobStatus } = {};
     jobRunIDs: { [key: string]: string } = {};
+    runActive: boolean = false;
 
     constructor(
         private _cd: ChangeDetectorRef
@@ -108,30 +110,24 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
     }
 
     onMouseEnter(key: string): void {
-        if (this.mouseCallback) {
-            this.mouseCallback('enter', this.node, {
-                jobRunID: this.jobRunIDs[key] ?? null,
-                jobMatrixKey: key
-            });
-        }
+        this.actionCallback(GraphNodeAction.Enter, this.node, {
+            jobRunID: this.jobRunIDs[key] ?? null,
+            jobMatrixKey: key
+        });
     }
 
     onMouseOut(key: string): void {
-        if (this.mouseCallback) {
-            this.mouseCallback('out', this.node, {
-                jobRunID: this.jobRunIDs[key] ?? null,
-                jobMatrixKey: key
-            });
-        }
+        this.actionCallback(GraphNodeAction.Out, this.node, {
+            jobRunID: this.jobRunIDs[key] ?? null,
+            jobMatrixKey: key
+        });
     }
 
     onMouseClick(key: string): void {
-        if (this.mouseCallback) {
-            this.mouseCallback('click', this.node, {
-                jobRunID: this.jobRunIDs[key] ?? null,
-                jobMatrixKey: key
-            });
-        }
+        this.actionCallback(GraphNodeAction.Click, this.node, {
+            jobRunID: this.jobRunIDs[key] ?? null,
+            jobMatrixKey: key
+        });
     }
 
     setHighlight(active: boolean, options?: any): void {
@@ -157,18 +153,33 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
 
     activateNode(navigationKey: string): void {
         const baseKey = this.node.job.stage ? `${this.node.job.stage}-${this.node.name}` : this.node.name;
-        if (this.mouseCallback && this.selectedKey && `${baseKey}-${this.selectedKey}` === navigationKey) {
-            this.mouseCallback('click', this.node, {
+        if (this.selectedKey && `${baseKey}-${this.selectedKey}` === navigationKey) {
+            this.actionCallback(GraphNodeAction.Click, this.node, {
                 jobRunID: this.jobRunIDs[this.selectedKey] ?? null,
                 jobMatrixKey: this.selectedKey
             });
         }
     }
 
+    setRunActive(active: boolean): void {
+        this.runActive = active;
+        this._cd.markForCheck();
+    }
+
     clickRunGate(event: Event): void {
-        if (this.mouseCallback) {
-            this.mouseCallback('click', this.node, { gateName: this.node.gate });
-        }
+        this.actionCallback(GraphNodeAction.Click, this.node, { gateName: this.node.gate });
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    clickRestart(key: string, event: Event): void {
+        this.actionCallback(GraphNodeAction.ClickRestart, this.node, { jobRunID: this.jobRunIDs[key] });
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    clickStop(key: string, event: Event): void {
+        this.actionCallback(GraphNodeAction.ClickStop, this.node, { jobRunID: this.jobRunIDs[key] });
         event.preventDefault();
         event.stopPropagation();
     }

@@ -163,7 +163,7 @@ func TestSearchAllWorkflow(t *testing.T) {
 func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
-	admin, pwd := assets.InsertAdminUser(t, db)
+	lambda, pwd := assets.InsertLambdaUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
@@ -182,8 +182,8 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
-		UserID:       admin.ID,
-		Username:     admin.Username,
+		UserID:       lambda.ID,
+		Username:     lambda.Username,
 		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Gates: map[string]sdk.V2JobGate{
@@ -311,7 +311,7 @@ func TestRunManualJob_WrongGateReviewer(t *testing.T) {
 		"jobIdentifier": "job2",
 	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, admin, pwd, http.MethodPost, uri, map[string]interface{}{
+	req := assets.NewAuthentifiedRequest(t, lambda, pwd, http.MethodPost, uri, map[string]interface{}{
 		"approve": true,
 	})
 	w := httptest.NewRecorder()

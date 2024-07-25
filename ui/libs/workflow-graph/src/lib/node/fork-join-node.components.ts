@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { GraphNode } from '../graph.model';
-import { NodeStatus } from './status.model';
+import { NodeStatus } from './model';
 
 @Component({
     selector: 'app-fork-join-node',
@@ -11,7 +11,7 @@ import { NodeStatus } from './status.model';
 export class GraphForkJoinNodeComponent implements OnInit {
     @Input() nodes: Array<GraphNode>;
     @Input() type = 'fork';
-    @Input() mouseCallback: (type: string, node: GraphNode) => void;
+    @Input() actionCallback: (type: string, node: GraphNode) => void = () => { };
 
     highlight = false;
     status: string;
@@ -33,19 +33,11 @@ export class GraphForkJoinNodeComponent implements OnInit {
     }
 
     onMouseEnter(): void {
-        if (this.mouseCallback) {
-            this.nodes.forEach(n => {
-                this.mouseCallback('enter', n);
-            });
-        }
+        this.nodes.forEach(n => { this.actionCallback('enter', n); });
     }
 
     onMouseOut(): void {
-        if (this.mouseCallback) {
-            this.nodes.forEach(n => {
-                this.mouseCallback('out', n);
-            });
-        }
+        this.nodes.forEach(n => { this.actionCallback('out', n); });
     }
 
     setHighlight(active: boolean, options?: any): void {
@@ -56,4 +48,6 @@ export class GraphForkJoinNodeComponent implements OnInit {
     selectNode(navigationKey: string): void { }
 
     activateNode(navigationKey: string): void { }
+
+    setRunActive(active: boolean): void {}   
 }

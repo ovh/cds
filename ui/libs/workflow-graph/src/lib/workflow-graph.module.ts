@@ -11,6 +11,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline } from '@ant-design/icons-angular/icons';
 import { IconDefinition } from '@ant-design/icons-angular';
 import { GraphMatrixNodeComponent } from './node/matrix-node.component';
+import { IsJobTerminatedPipe } from './is-job-terminated.pipe';
 
 const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutline, PlayCircleOutline];
 
@@ -19,6 +20,7 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
     GraphForkJoinNodeComponent,
     GraphJobNodeComponent,
     GraphMatrixNodeComponent,
+    IsJobTerminatedPipe,
     WorkflowV2JobsGraphComponent,
     WorkflowV2StagesGraphComponent
   ],
@@ -33,6 +35,7 @@ const icons: IconDefinition[] = [AimOutline, RotateRightOutline, RotateLeftOutli
     GraphForkJoinNodeComponent,
     GraphJobNodeComponent,
     GraphMatrixNodeComponent,
+    IsJobTerminatedPipe,
     WorkflowV2JobsGraphComponent,
     WorkflowV2StagesGraphComponent
   ]

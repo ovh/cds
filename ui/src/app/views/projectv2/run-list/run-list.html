@@ -93,7 +93,7 @@
 						Commit <a class="dotted" href="{{run.contexts.git.commit_web_url}}" target="_blank"
 							rel="noopener noreferrer">{{run.contexts.git.sha?.substring(0,8)}}</a> by {{run.contexts.git.username}} on
 						repository
-						<app-searchable [link]="['/project', project.key, 'run']"
+						<app-searchable [style]="{display:'unset'}" [link]="['/project', project.key, 'run']"
 							[params]="{workflow_repository: run.contexts.git.server+'/'+run.contexts.git.repository}"
 							paramsHandling="merge">
 							<a class="dotted" href="{{run.contexts.git.repository_web_url}}" target="_blank"

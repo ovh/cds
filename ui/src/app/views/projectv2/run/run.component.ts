@@ -14,7 +14,7 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { NavigationState } from "app/store/navigation.state";
 import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
-import { V2WorkflowRun, V2WorkflowRunJob, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunJobStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 import { RouterService } from "app/service/services.module";
 
@@ -46,6 +46,8 @@ export class ProjectV2RunComponent implements OnDestroy {
     results: Array<WorkflowRunResult>;
     tests: Tests;
     projectKey: string;
+    hasJobsNotTerminated: boolean = false;
+    hasJobsFailed: boolean = false;
 
     // Subs
     paramsSub: Subscription;
@@ -125,6 +127,7 @@ export class ProjectV2RunComponent implements OnDestroy {
         delete this.workflowGraph;
         if (this.pollSubs) {
             this.pollSubs.unsubscribe();
+            delete this.pollSubs;
         }
 
         try {
@@ -178,16 +181,18 @@ export class ProjectV2RunComponent implements OnDestroy {
 
         await this.refreshPanel();
 
-        const jobsNotTerminated = this.jobs.filter(j => !PipelineStatus.isDone(j.status)).length > 0;
+        this.hasJobsNotTerminated = this.jobs.filter(j => V2WorkflowRunJobStatusIsActive(j.status)).length > 0;
+        this.hasJobsFailed = this.jobs.filter(j => V2WorkflowRunJobStatusIsFailed(j.status)).length > 0;
 
-        if (jobsNotTerminated && !this.pollSubs) {
+        if (this.hasJobsNotTerminated && !this.pollSubs) {
             this.pollSubs = interval(5000)
                 .pipe(concatMap(_ => from(this.loadJobsAndResults())))
                 .subscribe();
         }
 
-        if (!jobsNotTerminated && this.pollSubs) {
+        if (!this.hasJobsNotTerminated && this.pollSubs) {
             this.pollSubs.unsubscribe();
+            delete this.pollSubs;
         }
 
         this._cd.detectChanges();
@@ -263,15 +268,16 @@ export class ProjectV2RunComponent implements OnDestroy {
             this.selectedJobRunInfos = await lastValueFrom(this._workflowService.getRunJobInfos(this.workflowRun, this.selectedJobRun.id));
         } catch (e) {
             this._messageService.error(`Unable to get run job infos: ${e?.error?.error}`, { nzDuration: 2000 });
+            return;
         }
 
-        if (!PipelineStatus.isDone(this.selectedJobRun.status) && !this.pollRunJobInfosSubs) {
+        if (!V2WorkflowRunJobStatusIsTerminated(this.selectedJobRun.status) && !this.pollRunJobInfosSubs) {
             this.pollRunJobInfosSubs = interval(5000)
                 .pipe(concatMap(_ => from(this.selectJob(runJobID))))
                 .subscribe();
         }
 
-        if (PipelineStatus.isDone(this.selectedJobRun.status) && this.pollRunJobInfosSubs) {
+        if (V2WorkflowRunJobStatusIsTerminated(this.selectedJobRun.status) && this.pollRunJobInfosSubs) {
             this.pollRunJobInfosSubs.unsubscribe();
         }
     }
@@ -415,5 +421,22 @@ export class ProjectV2RunComponent implements OnDestroy {
         };
         queryParams[annotation.key] = annotation.value;
         return queryParams;
+    }
+
+    async restartJob(id: string) {
+        await lastValueFrom(this._workflowService.triggerJob(this.projectKey, this.workflowRun.id, id));
+        this._messageService.success('Workflow run job restarted', { nzDuration: 2000 });
+        await this.load(this.workflowRun.id);
+    }
+
+    async stopJob(id: string) {
+        await lastValueFrom(this._workflowService.stopJob(this.projectKey, this.workflowRun.id, id));
+        this._messageService.success('Workflow run job stop', { nzDuration: 2000 });
+        await this.load(this.workflowRun.id);
+    }
+
+    async onGateSubmit() {
+        this.clickClosePanel();
+        await this.load(this.workflowRun.id);
     }
 }

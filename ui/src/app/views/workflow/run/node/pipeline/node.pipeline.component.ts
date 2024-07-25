@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
 import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workflow-run-job.component';
-import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
+import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration.service';
 
 @Component({
     selector: 'app-node-run-pipeline',

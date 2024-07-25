@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
-import { finalize, first } from "rxjs/operators";
 import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { ToastService } from "app/shared/toast/ToastService";
-import { V2JobGate, V2WorkflowRun, V2WorkflowRunJobEvent } from "../../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2JobGate, V2WorkflowRun } from "../../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { lastValueFrom } from "rxjs";
+import { NzMessageService } from "ng-zorro-antd/message";
 
 @Component({
     selector: 'app-run-gate',
@@ -13,20 +14,19 @@ import { V2JobGate, V2WorkflowRun, V2WorkflowRunJobEvent } from "../../../../../
 })
 @AutoUnsubscribe()
 export class RunGateComponent implements OnInit {
-
     @Input() run: V2WorkflowRun;
     @Input() gateNode: { gate, job };
-    @Output() onClose = new EventEmitter<void>();
+    @Output() onSubmit = new EventEmitter<void>();
 
     currentGate: V2JobGate;
-    jobEvent: V2WorkflowRunJobEvent;
     request: { [key: string]: any };
     loading: boolean;
 
     constructor(
         private _cd: ChangeDetectorRef,
         private _workflowService: V2WorkflowRunService,
-        private _toastService: ToastService
+        private _toastService: ToastService,
+        private _messageService: NzMessageService
     ) { }
 
     ngOnInit(): void {
@@ -47,33 +47,29 @@ export class RunGateComponent implements OnInit {
                         this.request[k] = '';
                 }
             }
-
         });
         if (this.run.job_events) {
-            this.run.job_events.forEach(je => {
-                if (je.job_id === this.gateNode.job) {
-                    this.jobEvent = je;
-                }
-            });
+            const jobEvent = this.run.job_events.find(je => je.job_id === this.gateNode.job && je.run_attempt === this.run.run_attempt);
+            if (jobEvent) {
+                Object.keys(jobEvent.inputs).forEach(k => {
+                    this.request[k] = jobEvent.inputs[k];
+                });
+            }
         }
         this._cd.markForCheck();
     }
 
-    triggerJob(): void {
+    async triggerJob() {
         this.loading = true;
-        this._workflowService.triggerJob(this.run, this.gateNode.job, this.request)
-            .pipe(first(), finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(() => {
-                this._toastService.success('', `job ${this.gateNode.job} started`)
-            });
+        this._cd.markForCheck();
+        try {
+            await lastValueFrom(this._workflowService.triggerJob(this.run.project_key, this.run.id, this.gateNode.job, this.request));
+            this._toastService.success('', `Job ${this.gateNode.job} started`);
+            this.onSubmit.emit();
+        } catch (e) {
+            this._messageService.error(`Unable to get trigger job gate: ${e?.error?.error}`, { nzDuration: 2000 });
+        }
+        this.loading = false;
         this._cd.markForCheck();
     }
-
-    clickClose(): void {
-        this.onClose.emit();
-    }
-
 }

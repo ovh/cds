@@ -153,7 +153,38 @@ export enum V2WorkflowRunJobStatus {
     Stopped = 'Stopped',
     Success = 'Success',
     Scheduling = 'Scheduling',
-    Skipped = 'Skipped'
+    Skipped = 'Skipped',
+    Unknown = 'Unknown'
+}
+
+export function V2WorkflowRunJobStatusIsTerminated(s: V2WorkflowRunJobStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunJobStatus.Unknown:
+        case V2WorkflowRunJobStatus.Building:
+        case V2WorkflowRunJobStatus.Waiting:
+        case V2WorkflowRunJobStatus.Scheduling:
+            return false
+    }
+    return true
+}
+
+export function V2WorkflowRunJobStatusIsActive(s: V2WorkflowRunJobStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunJobStatus.Waiting:
+        case V2WorkflowRunJobStatus.Building:
+        case V2WorkflowRunJobStatus.Scheduling:
+            return true
+    }
+    return false
+}
+
+export function V2WorkflowRunJobStatusIsFailed(s: V2WorkflowRunJobStatus): boolean {
+    switch (s) {
+        case V2WorkflowRunJobStatus.Stopped:
+        case V2WorkflowRunJobStatus.Fail:
+            return true
+    }
+    return false
 }
 
 export class V2Job {

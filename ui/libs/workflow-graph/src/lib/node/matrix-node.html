@@ -1,6 +1,6 @@
 <div *ngIf="node?.name" class="label" title="{{node?.name}}">
-    <span *ngIf="node?.gate && !node.event" class="gate" nz-icon nzType="play-circle" nzTheme="outline"
-        title="Run job gate" (click)="clickRunGate($event)"></span>
+    <span *ngIf="node?.gate && !runActive" class="gate" nz-icon nzType="play-circle" nzTheme="outline" title="Run job gate"
+        (click)="clickRunGate($event)"></span>
     <span class="name">Matrix:&nbsp;<b>{{node?.name}}</b></span>
 </div>
 <div class="node pointing">
@@ -33,6 +33,12 @@
                 <div *ngIf="status[key]" class="status">
                     {{status[key].toLowerCase()}}
                 </div>
+            </div>
+            <div *ngIf="status[key]" class="commands">
+                <button *ngIf="(status[key] | isJobTerminated) && status[key] !== 'Skipped' && !runActive" nz-button
+                    nzGhost nzSize="small" (click)="clickRestart(key, $event)">Restart</button>
+                <button *ngIf="!(status[key] | isJobTerminated)" nz-button nzType="primary" nzDanger nzSize="small"
+                    (click)="clickStop(key, $event)">Stop</button>
             </div>
         </div>
     </div>

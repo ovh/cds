@@ -20,7 +20,7 @@
                 stroke: $polar_grey_3;
 
                 &.highlight {
-                    stroke: black !important;
+                    stroke: $polar_grey_0 !important;
                 }
 
                 :host-context(.night) & {

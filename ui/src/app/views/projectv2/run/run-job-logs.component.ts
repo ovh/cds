@@ -14,7 +14,7 @@ import { V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { WorkflowService } from "app/service/workflow/workflow.service";
 import { lastValueFrom } from "rxjs";
 import { V2WorkflowRun, V2WorkflowRunJob } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
-import { DurationService } from "../../../../../libs/workflow-graph/src/lib/duration/duration.service";
+import { DurationService } from "../../../../../libs/workflow-graph/src/lib/duration.service";
 
 @Component({
     selector: 'app-run-job-logs',

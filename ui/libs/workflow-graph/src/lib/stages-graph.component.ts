@@ -16,10 +16,11 @@ import { WorkflowV2JobsGraphComponent } from './jobs-graph.component';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
 import { GraphNode, GraphNodeType, NavigationGraph } from './graph.model';
-import { GraphDirection, WorkflowV2Graph } from './graph.lib';
+import { GraphDirection, NodeMouseEvent, WorkflowV2Graph } from './graph.lib';
 import { load, LoadOptions } from 'js-yaml';
-import { V2Workflow, V2WorkflowRun, V2WorkflowRunJob } from './v2.workflow.run.model';
+import { V2Workflow, V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive } from './v2.workflow.run.model';
 import { GraphMatrixNodeComponent } from './node/matrix-node.component';
+import { GraphNodeAction } from './node/model';
 
 export type WorkflowV2JobsGraphOrNodeOrMatrixComponent = WorkflowV2JobsGraphComponent | GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
 
@@ -128,6 +129,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     @Output() onSelectJob = new EventEmitter<string>();
     @Output() onSelectJobGate = new EventEmitter<GraphNode>();
     @Output() onSelectJobRun = new EventEmitter<string>();
+    @Output() onSelectJobRunRestart = new EventEmitter<string>();
+    @Output() onSelectJobRunStop = new EventEmitter<string>();
     @Output() onSelectHook = new EventEmitter<string>();
 
     direction: GraphDirection = GraphDirection.HORIZONTAL;
@@ -330,6 +333,9 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             this.graph.selectNode(this.selectedNodeNavigationKey);
         }
 
+        const runActive = (this._runJobs ?? []).filter(j => V2WorkflowRunJobStatusIsActive(j.status)).length > 0;
+        this.graph.setRunActive(runActive);
+
         this._cd.markForCheck();
     }
 
@@ -360,7 +366,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
         const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
         componentRef.instance.node = node;
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -368,7 +374,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
     createJobMatrixComponent(node: GraphNode): ComponentRef<GraphMatrixNodeComponent> {
         const componentRef = this.svgContainer.createComponent(GraphMatrixNodeComponent);
         componentRef.instance.node = node;
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -377,7 +383,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         const componentRef = this.svgContainer.createComponent(GraphForkJoinNodeComponent);
         componentRef.instance.nodes = nodes;
         componentRef.instance.type = type;
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -387,7 +393,7 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         componentRef.instance.graphNode = node;
         componentRef.instance.direction = this.direction;
         componentRef.instance.centerCallback = this.centerNode.bind(this);
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -402,21 +408,35 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             this.svgContainer.element.nativeElement.offsetHeight);
     }
 
-    nodeMouseEvent(type: string, n: GraphNode, options?: any) {
-        if (type === 'click') {
-            this.selectedNodeNavigationKey = n.job.stage ? `${n.job.stage}-${n.name}` : n.name;
-            if (n.type === GraphNodeType.Matrix) { this.selectedNodeNavigationKey += '-' + options.jobMatrixKey; }
-            this.graph.selectNode(this.selectedNodeNavigationKey);
-            if (options && options['jobRunID']) {
-                this.onSelectJobRun.emit(options['jobRunID']);
-            } else if (options && options['gateName']) {
-                this.onSelectJobGate.emit(n);
-            } else {
-                this.onSelectJob.emit(n.name);
-            }
-            this.centerNode(n);
+    onNodeAction(type: GraphNodeAction, n: GraphNode, options?: any) {
+        switch (type) {
+            case GraphNodeAction.Enter:
+                this.graph.nodeMouseEvent(NodeMouseEvent.Enter, n.name, options);
+                break;
+            case GraphNodeAction.Out:
+                this.graph.nodeMouseEvent(NodeMouseEvent.Out, n.name, options);
+                break;
+            case GraphNodeAction.Click:
+            case GraphNodeAction.ClickGate:
+                this.selectedNodeNavigationKey = n.job.stage ? `${n.job.stage}-${n.name}` : n.name;
+                if (n.type === GraphNodeType.Matrix) { this.selectedNodeNavigationKey += '-' + options.jobMatrixKey; }
+                this.graph.selectNode(this.selectedNodeNavigationKey);
+                if (options && options['jobRunID']) {
+                    this.onSelectJobRun.emit(options['jobRunID']);
+                } else if (options && options['gateName']) {
+                    this.onSelectJobGate.emit(n);
+                } else {
+                    this.onSelectJob.emit(n.name);
+                }
+                this.centerNode(n);
+                break;
+            case GraphNodeAction.ClickRestart:
+                this.onSelectJobRunRestart.emit(options['jobRunID']);
+                break;
+            case GraphNodeAction.ClickStop:
+                this.onSelectJobRunStop.emit(options['jobRunID']);
+                break;
         }
-        this.graph.nodeMouseEvent(type, n.name, options);
     }
 
     changeDirection(): void {

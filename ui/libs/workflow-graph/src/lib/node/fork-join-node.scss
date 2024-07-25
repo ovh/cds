@@ -66,11 +66,11 @@
     }
 
     &.active {
-        border: 3px solid black;
+        border: 3px solid $polar_grey_0;
         padding: 1px;
     }
 
     &.highlight {
-        border-color: black;
+        border-color: $polar_grey_0;
     }
 }

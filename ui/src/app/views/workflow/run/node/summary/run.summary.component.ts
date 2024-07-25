@@ -13,7 +13,7 @@ import { WorkflowRunService } from 'app/service/workflow/run/workflow.run.servic
 import { ToastService } from 'app/shared/toast/ToastService';
 import { WorkflowNodeRunParamComponent } from 'app/shared/workflow/node/run/node.run.param.component';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration/duration.service';
+import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration.service';
 
 @Component({
     selector: 'app-workflow-node-run-summary',

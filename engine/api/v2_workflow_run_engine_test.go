@@ -16,6 +16,10 @@ import (
 )
 
 func TestJobConditionSuccess(t *testing.T) {
+	_, db, _ := newTestAPI(t)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
 	jobsContext := sdk.JobsResultContext{
 		"job1": {
 			Result: sdk.V2WorkflowRunJobStatusFail,
@@ -84,12 +88,75 @@ func TestJobConditionSuccess(t *testing.T) {
 			}
 			jobDef := run.WorkflowData.Workflow.Jobs["job4"]
 			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow.Jobs, jobsContext, sdk.WorkflowRunContext{}, "job4")
-			b, err := checkJobCondition(context.TODO(), run, "job4", &jobDef, currentJobContext)
+			b, err := checkJobCondition(context.TODO(), db, run, nil, jobDef, currentJobContext, *admin, true)
 			require.NoError(t, err)
 			require.Equal(t, tt.result, b)
 		})
 	}
+}
 
+func TestJobConditionReviewers(t *testing.T) {
+	_, db, _ := newTestAPI(t)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	lambda, _ := assets.InsertLambdaUser(t, db)
+
+	jobsContext := sdk.JobsResultContext{}
+
+	run := sdk.V2WorkflowRun{
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: sdk.V2Workflow{
+				Gates: map[string]sdk.V2JobGate{
+					"gate1": {
+						Reviewers: sdk.V2JobGateReviewers{
+							Users: []string{lambda.Username},
+						},
+					},
+				},
+				Jobs: map[string]sdk.V2Job{
+					"job1": {
+						Gate: "gate1",
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		u              sdk.AuthentifiedUser
+		isAdminWithMFA bool
+		result         bool
+	}{
+		{
+			name:           "Test reviewers user match",
+			u:              *lambda,
+			isAdminWithMFA: false,
+			result:         true,
+		},
+		{
+			name:           "Test reviewers user not match",
+			u:              *admin,
+			isAdminWithMFA: false,
+			result:         false,
+		},
+		{
+			name:           "Test reviewers user not match but admin with mfa",
+			u:              *admin,
+			isAdminWithMFA: true,
+			result:         true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			jobDef := run.WorkflowData.Workflow.Jobs["job1"]
+			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow.Jobs, jobsContext, sdk.WorkflowRunContext{}, "job1")
+			b, err := checkJobCondition(context.TODO(), db, run, nil, jobDef, currentJobContext, tt.u, tt.isAdminWithMFA)
+			require.NoError(t, err)
+			require.Equal(t, tt.result, b)
+		})
+	}
 }
 
 func TestBuildCurrentJobContext(t *testing.T) {

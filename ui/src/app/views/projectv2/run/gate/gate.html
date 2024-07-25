@@ -1,8 +1,5 @@
 <div class="title">Trigger job&nbsp;<b>{{gateNode.job}}</b></div>
-<div class="close" (click)="clickClose()">
-    <span nz-icon nzType="close" nzTheme="outline"></span>
-</div>
-<div class="content" *ngIf="!jobEvent">
+<div class="content">
     <ng-container *ngFor="let k of request | keys">
         <nz-form-item>
             <nz-form-label [nzSpan]="4">{{k}}</nz-form-label>
@@ -25,12 +22,5 @@
             </ng-container>
         </nz-form-item>
     </ng-container>
-    <button *ngIf="!jobEvent" nz-button nzBlock [nzLoading]="loading" nzType="primary"
-        (click)="triggerJob()">Run</button>
-</div>
-<div class="content" *ngIf="jobEvent">
-    Payload sent by {{jobEvent.username}}:
-    <pre>
-        <p>{{jobEvent.inputs | json}}</p>
-    </pre>
+    <button nz-button nzBlock [nzLoading]="loading" nzType="primary" (click)="triggerJob()">Run</button>
 </div>

@@ -9,10 +9,11 @@ import {
     ViewContainerRef
 } from '@angular/core';
 import { GraphNode, GraphNodeType } from './graph.model';
-import { GraphDirection, WorkflowV2Graph } from './graph.lib';
+import { GraphDirection, NodeMouseEvent, WorkflowV2Graph } from './graph.lib';
 import { GraphForkJoinNodeComponent } from './node/fork-join-node.components';
 import { GraphJobNodeComponent } from './node/job-node.component';
 import { GraphMatrixNodeComponent } from './node/matrix-node.component';
+import { GraphNodeAction } from './node/model';
 
 export type WorkflowV2JobsNodeOrMatrixComponent = GraphForkJoinNodeComponent | GraphJobNodeComponent | GraphMatrixNodeComponent;
 
@@ -37,7 +38,7 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
 
     @Input() direction: GraphDirection;
     @Input() centerCallback: any;
-    @Input() mouseCallback: (type: string, node: GraphNode, options?: any) => void;
+    @Input() actionCallback: (type: string, node: GraphNode, options?: any) => void;
 
     ready: boolean;
     highlight = false;
@@ -55,15 +56,11 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
     }
 
     onMouseEnter(): void {
-        if (this.mouseCallback) {
-            this.mouseCallback('enter', this.node);
-        }
+        this.actionCallback('enter', this.node);
     }
 
     onMouseOut(): void {
-        if (this.mouseCallback) {
-            this.mouseCallback('out', this.node);
-        }
+        this.actionCallback('out', this.node);
     }
 
     setHighlight(active: boolean): void {
@@ -77,6 +74,10 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
 
     activateNode(navigationKey: string): void {
         this.graph.activateNode(navigationKey);
+    }
+
+    setRunActive(active: boolean): void {
+        this.graph.setRunActive(active);
     }
 
     ngAfterViewInit(): void {
@@ -135,7 +136,7 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
     createJobMatrixComponent(node: GraphNode): ComponentRef<GraphMatrixNodeComponent> {
         const componentRef = this.svgContainer.createComponent(GraphMatrixNodeComponent);
         componentRef.instance.node = node;
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -143,7 +144,7 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
     createJobNodeComponent(node: GraphNode): ComponentRef<GraphJobNodeComponent> {
         const componentRef = this.svgContainer.createComponent(GraphJobNodeComponent);
         componentRef.instance.node = node;
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
@@ -152,16 +153,21 @@ export class WorkflowV2JobsGraphComponent implements AfterViewInit {
         const componentRef = this.svgContainer.createComponent(GraphForkJoinNodeComponent);
         componentRef.instance.nodes = nodes;
         componentRef.instance.type = type;
-        componentRef.instance.mouseCallback = this.nodeMouseEvent.bind(this);
+        componentRef.instance.actionCallback = this.onNodeAction.bind(this);
         componentRef.changeDetectorRef.detectChanges();
         return componentRef;
     }
 
-    nodeMouseEvent(type: string, n: GraphNode, options?: any) {
-        if (this.mouseCallback) {
-            this.mouseCallback(type, n, options);
+    onNodeAction(type: GraphNodeAction, n: GraphNode, options?: any) {
+        switch (type) {
+            case GraphNodeAction.Enter:
+                this.graph.nodeMouseEvent(NodeMouseEvent.Enter, `${this.node.name}-${n.name}`, options);
+                break;
+            case GraphNodeAction.Out:
+                this.graph.nodeMouseEvent(NodeMouseEvent.Out, `${this.node.name}-${n.name}`, options);
+                break;
         }
-        this.graph.nodeMouseEvent(type, `${this.node.name}-${n.name}`, options);
+        this.actionCallback(type, n, options);
     }
 
     clickCenter(): void {
