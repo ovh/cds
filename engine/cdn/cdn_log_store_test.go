@@ -131,7 +131,9 @@ func TestStoreLastStepLog(t *testing.T) {
 	s.Units = cdnUnits
 
 	hm := handledMessage{
-		Msg:          graylog.Message{},
+		Msg: graylog.Message{
+			Full: "message",
+		},
 		IsTerminated: sdk.StatusTerminated,
 		Signature: cdn.Signature{
 			ProjectKey:   sdk.RandomString(10),

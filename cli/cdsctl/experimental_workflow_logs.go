@@ -71,7 +71,7 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 		}
 
 		for _, link := range links.Data {
-			fileName := getFileName(rj, rj.Job.Steps[link.StepOrder].ID, link.StepOrder)
+			fileName := getFileName(rj, link.StepName)
 			data, err := client.WorkflowLogDownload(context.Background(), sdk.CDNLogLink{APIRef: link.APIRef, ItemType: link.ItemType})
 			if err != nil {
 				if strings.Contains(err.Error(), "resource not found") {
@@ -89,6 +89,6 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 	return nil
 }
 
-func getFileName(rj sdk.V2WorkflowRunJob, stepID string, stepOrder int64) string {
-	return fmt.Sprintf("%s-%d-%d-%s-%s", rj.WorkflowName, rj.RunNumber, rj.RunAttempt, rj.JobID, sdk.GetJobStepName(stepID, int(stepOrder)))
+func getFileName(rj sdk.V2WorkflowRunJob, stepName string) string {
+	return fmt.Sprintf("%s-%d-%d-%s-%s", rj.WorkflowName, rj.RunNumber, rj.RunAttempt, rj.JobID, stepName)
 }

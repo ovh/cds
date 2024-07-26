@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/rockbears/log"
@@ -85,9 +86,15 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		ms = 0
 	}
 
-	// Build the score from the "countLine" as the interger part and "ms" as floating part
-	if err := bufferUnit.Add(*iu, uint(countLine), uint(ms), content); err != nil {
-		return err
+	if terminated {
+		content = strings.Trim(content, " ")
+	}
+	emptyLastLogLine := (content == "" || content == "\n") && terminated
+	if !emptyLastLogLine {
+		// Build the score from the "countLine" as the interger part and "ms" as floating part
+		if err := bufferUnit.Add(*iu, uint(countLine), uint(ms), content); err != nil {
+			return err
+		}
 	}
 
 	// Send an event in WS broker to refresh streams on current item

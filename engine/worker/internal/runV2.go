@@ -265,6 +265,8 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 	w.currentJobV2.runJob.StepsStatus = sdk.JobStepsStatus{}
 	w.SetCurrentStepsStatus(w.currentJobV2.runJob.StepsStatus)
 
+	postActionsJob := make([]ActionPostJob, 0)
+
 	for jobStepIndex, step := range w.currentJobV2.runJob.Job.Steps {
 		// Reset step log line to 0
 		w.stepLogLine = 0
@@ -282,16 +284,19 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
 			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
 		}
-		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", w.currentJobV2.currentStepNameForLog))
 
 		// Step context = parent context + env set on step
 		currentStepContext, err := w.createStepContext(ctx, step, w.currentJobV2.runJobContext)
 		if err != nil {
 			w.failJob(ctx, err.Error())
 		}
-		stepRes := w.runActionStep(ctx, step, w.currentJobV2.currentStepNameForLog, *currentStepContext)
-		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", w.currentJobV2.currentStepNameForLog))
+		stepRes, pa := w.runActionStep(ctx, step, w.currentJobV2.currentStepNameForLog, *currentStepContext)
+		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, "")
 		w.gelfLogger.hook.Flush()
+
+		if pa != nil {
+			postActionsJob = append(postActionsJob, *pa)
+		}
 
 		w.updateStepResult(&jobResult, stepRes, step, w.currentJobV2.currentStepNameForLog)
 		w.currentJobV2.runJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
@@ -326,12 +331,57 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 
 		response, err := w.V2AddRunResult(ctx, result)
 		if err != nil {
-			w.failJob(ctx, err.Error())
+			return w.failJob(ctx, err.Error())
 		}
 		log.Info(ctx, "run result %s created", response.RunResult.ID)
 	}
 
+	// Execute post actions
+	for i := 0; i < len(postActionsJob); i++ {
+		post := postActionsJob[len(postActionsJob)-1-i]
+		w.stepLogLine = 0
+		w.currentJobV2.currentStepIndexForLog = len(w.currentJobV2.runJob.Job.Steps) + i
+		ctx = workerruntime.SetStepOrder(ctx, w.currentJobV2.currentStepIndexForLog)
+		w.currentJobV2.currentStepNameForLog = "Post-" + post.StepName
+		ctx = workerruntime.SetStepName(ctx, w.currentJobV2.currentStepNameForLog)
+
+		w.createStepStatus(w.currentJobV2.currentStepNameForLog)
+
+		currentStepsStatus := w.GetCurrentStepsStatus()
+		currentStepStatus := currentStepsStatus[w.currentJobV2.currentStepNameForLog]
+		if err := w.runPostAction(ctx, post, w.currentJobV2.runJobContext); err != nil {
+			currentStepStatus.Outcome = sdk.V2WorkflowRunJobStatusFail
+			w.SendLog(ctx, workerruntime.LevelError, err.Error())
+		} else {
+			currentStepStatus.Outcome = sdk.V2WorkflowRunJobStatusSuccess
+		}
+		w.SendTerminatedStepLog(ctx, workerruntime.LevelInfo, "")
+		w.gelfLogger.hook.Flush()
+		currentStepStatus.Ended = time.Now()
+		currentStepStatus.Conclusion = currentStepStatus.Outcome
+		currentStepsStatus[w.currentJobV2.currentStepNameForLog] = currentStepStatus
+		w.currentJobV2.runJobContext.Steps = w.currentJobV2.runJob.StepsStatus.ToStepContext()
+
+		if err := w.ClientV2().V2QueueJobStepUpdate(ctx, w.currentJobV2.runJob.Region, w.currentJobV2.runJob.ID, w.currentJobV2.runJob.StepsStatus); err != nil {
+			return w.failJob(ctx, fmt.Sprintf("unable to update step context: %v", err))
+		}
+	}
+
 	return jobResult
+}
+
+func (w *CurrentWorker) runPostAction(ctx context.Context, postAction ActionPostJob, currentContext sdk.WorkflowRunJobsContext) error {
+	env, err := w.GetEnvVariable(ctx, currentContext)
+	if err != nil {
+		return err
+	}
+	res := w.runPlugin(ctx, "script", map[string]string{
+		"content": postAction.Post,
+	}, env)
+	if res.Status != sdk.StatusSuccess {
+		w.SendLog(ctx, workerruntime.LevelError, res.Error)
+	}
+	return nil
 }
 
 func (w *CurrentWorker) createStepStatus(stepName string) {
@@ -412,14 +462,14 @@ func (w *CurrentWorker) canRunStep(ctx context.Context, stepName string, stepCon
 	return booleanResult, nil
 }
 
-func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, stepName string, currentContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
+func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, stepName string, currentContext sdk.WorkflowRunJobsContext) (sdk.V2WorkflowRunJobResult, *ActionPostJob) {
 	booleanResult, err := w.canRunStep(ctx, stepName, step.If, currentContext)
 	if err != nil {
 		return sdk.V2WorkflowRunJobResult{
 			Status: sdk.V2WorkflowRunJobStatusFail,
 			Time:   time.Now(),
 			Error:  fmt.Sprintf("%v", err),
-		}
+		}, nil
 	}
 
 	if !booleanResult {
@@ -427,31 +477,26 @@ func (w *CurrentWorker) runActionStep(ctx context.Context, step sdk.ActionStep, 
 		return sdk.V2WorkflowRunJobResult{
 			Status: sdk.V2WorkflowRunJobStatusSkipped,
 			Time:   time.Now(),
-		}
+		}, nil
 	}
 
 	var result sdk.V2WorkflowRunJobResult
+	var postActionsJob *ActionPostJob
 	switch {
 	case step.Uses != "":
-		result = w.runJobStepAction(ctx, step, currentContext, stepName, step.With)
+		result, postActionsJob = w.runJobStepAction(ctx, step, currentContext, stepName, step.With)
 	case step.Run != "":
 		result = w.runJobStepScript(ctx, step, currentContext)
 	default:
-		return w.failJob(ctx, "invalid action definition. Missing uses or run keys")
+		return w.failJob(ctx, "invalid action definition. Missing uses or run keys"), nil
 	}
-	return result
+	return result, postActionsJob
 }
 
-func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, currentStepContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]string) sdk.V2WorkflowRunJobResult {
+func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionStep, currentStepContext sdk.WorkflowRunJobsContext, parentStepName string, inputWith map[string]string) (sdk.V2WorkflowRunJobResult, *ActionPostJob) {
 	name := strings.TrimPrefix(step.Uses, "actions/")
 	actionRefSplit := strings.Split(name, "@")
 	actionPath := strings.Split(actionRefSplit[0], "/")
-	stepName := parentStepName + "-" + filepath.Base(name)
-
-	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step \"%s\"", stepName))
-	defer func() {
-		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step \"%s\"", stepName))
-	}()
 
 	actionResult := sdk.V2WorkflowRunJobResult{
 		Status: sdk.V2WorkflowRunJobStatusSuccess,
@@ -465,7 +510,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			var err error
 			p, err = w.PluginGet(actionPath[0])
 			if err != nil {
-				return w.failJob(ctx, fmt.Sprintf("unable to retrieve plugin %s: %v", actionPath[0], err))
+				return w.failJob(ctx, fmt.Sprintf("unable to retrieve plugin %s: %v", actionPath[0], err)), nil
 			}
 			w.SetActionPlugin(p)
 		}
@@ -475,7 +520,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	} else {
 		actionDef, found := w.actions[name]
 		if !found {
-			return w.failJob(ctx, fmt.Sprintf("action %s not found", name))
+			return w.failJob(ctx, fmt.Sprintf("action %s not found", name)), nil
 		}
 		for k, inp := range actionDef.Inputs {
 			inputs[k] = inp.Default
@@ -490,29 +535,31 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	// Compute action/plugin context
 	actionContext, err := w.computeContextForAction(ctx, currentStepContext, inputs)
 	if err != nil {
-		return w.failJob(ctx, fmt.Sprintf("unable to compute context for action %s: %v", name, err))
+		return w.failJob(ctx, fmt.Sprintf("unable to compute context for action %s: %v", name, err)), nil
 	}
 
+	var actionPost *ActionPostJob
 	switch len(actionPath) {
 	case 1:
 		env, err := w.GetEnvVariable(ctx, *actionContext)
 		if err != nil {
-			return w.failJob(ctx, err.Error())
+			return w.failJob(ctx, err.Error()), nil
 		}
-		return w.runPlugin(ctx, actionPath[0], actionContext.Inputs, env)
+		return w.runPlugin(ctx, actionPath[0], actionContext.Inputs, env), nil // TODO Manage POST on plugin
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
 
 		// Save current step status before running a subaction
 		parentStepStatus := w.GetCurrentStepsStatus()
-		parentStepName := w.GetSubStepName()
 
 		// create new steps status for the child action
 		subStepStatus := sdk.JobStepsStatus{}
 		w.SetCurrentStepsStatus(subStepStatus)
 
-		for stepIndex, step := range w.actions[name].Runs.Steps {
+		childPostAction := make([]ActionPostJob, 0)
 
+		var actionError error
+		for stepIndex, step := range w.actions[name].Runs.Steps {
 			// Create dedicated step status for the given action and set it on his context
 			subStepName := sdk.GetJobStepName(step.ID, stepIndex)
 			w.createStepStatus(subStepName)
@@ -521,18 +568,62 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			// Create step context: (parent context + current set env)
 			currentStepContext, err := w.createStepContext(ctx, step, *actionContext)
 			if err != nil {
-				return w.failJob(ctx, err.Error())
+				actionError = err
+				break
 			}
-			stepRes := w.runSubActionStep(ctx, step, stepName, stepIndex, *currentStepContext)
-			if stepRes.Status == sdk.V2WorkflowRunJobStatusFail {
-				return stepRes
+
+			stepRes, childPost := w.runActionStep(ctx, step, subStepName, *currentStepContext)
+			if childPost != nil {
+				childPostAction = append(childPostAction, *childPost)
 			}
 			w.updateStepResult(&actionResult, stepRes, step, subStepName)
 			actionContext.Steps = w.GetCurrentStepsStatus().ToStepContext()
 		}
 
+		if w.actions[name].Runs.Post != "" {
+			jsonContext, _ := json.Marshal(actionContext)
+			// Interpolate post script
+			var mapContexts map[string]interface{}
+			if err := json.Unmarshal(jsonContext, &mapContexts); err != nil {
+				if actionError == nil {
+					return w.failJob(ctx, err.Error()), nil
+				} else {
+					w.SendLog(ctx, workerruntime.LevelError, "unable to prepare post script: "+err.Error())
+					return w.failJob(ctx, actionError.Error()), nil
+				}
+			}
+
+			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+			interpolatedPost, err := ap.InterpolateToString(ctx, w.actions[name].Runs.Post)
+			if err != nil {
+				if actionError == nil {
+					return w.failJob(ctx, err.Error()), nil
+				} else {
+					w.SendLog(ctx, workerruntime.LevelError, "unable to interpolate post script: "+err.Error())
+					return w.failJob(ctx, actionError.Error()), nil
+				}
+			}
+
+			actionPost = &ActionPostJob{
+				Post:     interpolatedPost,
+				StepName: parentStepName,
+			}
+		}
+
+		if actionError != nil {
+			return w.failJob(ctx, actionError.Error()), actionPost
+		}
+
 		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, *actionContext, w.actions[name].Outputs); err != nil {
-			return w.failJob(ctx, err.Error())
+			return w.failJob(ctx, err.Error()), actionPost
+		}
+
+		// Execute child post action
+		for i := 0; i < len(childPostAction); i++ {
+			post := childPostAction[len(childPostAction)-1-i]
+			if err := w.runPostAction(ctx, post, *actionContext); err != nil {
+				w.SendLog(ctx, workerruntime.LevelError, err.Error())
+			}
 		}
 
 		// Set previous current step status with new output
@@ -540,9 +631,10 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		w.SetSubStepName(parentStepName)
 	default:
 	}
+
 	return sdk.V2WorkflowRunJobResult{
 		Status: sdk.V2WorkflowRunJobStatusSuccess,
-	}
+	}, actionPost
 }
 
 func (w *CurrentWorker) updateParentStepStatusWithOutputs(ctx context.Context, parentStepStatus sdk.JobStepsStatus, parentStepName string, actionContext sdk.WorkflowRunJobsContext, outputs map[string]sdk.ActionOutput) error {
@@ -601,15 +693,6 @@ func (w *CurrentWorker) updateStepResult(actionResult *sdk.V2WorkflowRunJobResul
 		currentStepStatus.Conclusion = currentStepStatus.Outcome
 	}
 	currentStepsStatus[stepName] = currentStepStatus
-}
-
-func (w *CurrentWorker) runSubActionStep(ctx context.Context, step sdk.ActionStep, stepName string, stepIndex int, runJobContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {
-	currentStep := stepName + "-" + sdk.GetJobStepName(step.ID, stepIndex)
-	w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("Starting step %q", currentStep))
-	defer func() {
-		w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("End of step %q", currentStep))
-	}()
-	return w.runActionStep(ctx, step, currentStep, runJobContext)
 }
 
 func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionStep, stepContext sdk.WorkflowRunJobsContext) sdk.V2WorkflowRunJobResult {

@@ -96,7 +96,7 @@ func (c *client) Manifest(ctx context.Context) error {
 	default:
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unknown plugin of type: %s", c.pluginType)
 	}
-	c.w.SendLog(ctx, workerruntime.LevelInfo, fmt.Sprintf("# Plugin %s v%s is ready", name, version))
+	log.Debug(ctx, "# Plugin %s v%s is ready", name, version)
 	return nil
 }
 
