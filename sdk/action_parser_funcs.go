@@ -271,7 +271,7 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 			return nil, NewErrorFrom(ErrInvalidData, "unable to find files with pattern %s on directory %s: %v", input, cdsContext.Workspace, err)
 		}
 		for _, f := range filesFound {
-			files = append(files, f.Path)
+			files = append(files, cdsContext.Workspace+"/"+f.Path)
 		}
 	}
 	if len(files) == 0 {
