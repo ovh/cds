@@ -26,6 +26,7 @@ type clientSocket struct {
 type Client interface {
 	Close(ctx context.Context)
 	Run(ctx context.Context, opts map[string]string) *Result
+	GetPostAction() *sdk.PluginPost
 }
 
 type client struct {
@@ -39,6 +40,7 @@ type client struct {
 	pluginName      string
 	grpcPlugin      *sdk.GRPCPlugin
 	inputManagement string
+	postAction      *sdk.PluginPost
 }
 
 type Result struct {

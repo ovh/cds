@@ -375,9 +375,7 @@ func (w *CurrentWorker) runPostAction(ctx context.Context, postAction ActionPost
 	if err != nil {
 		return err
 	}
-	res := w.runPlugin(ctx, "script", map[string]string{
-		"content": postAction.Post,
-	}, env)
+	res, _ := w.runPlugin(ctx, postAction.PluginName, postAction.Inputs, env)
 	if res.Status != sdk.StatusSuccess {
 		w.SendLog(ctx, workerruntime.LevelError, res.Error)
 	}
@@ -545,7 +543,28 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		if err != nil {
 			return w.failJob(ctx, err.Error()), nil
 		}
-		return w.runPlugin(ctx, actionPath[0], actionContext.Inputs, env), nil // TODO Manage POST on plugin
+		var res sdk.V2WorkflowRunJobResult
+		res, actionPost = w.runPlugin(ctx, actionPath[0], actionContext.Inputs, env)
+		if res.Status != sdk.StatusSuccess {
+			return res, nil
+		}
+		if actionPost != nil {
+			jsonContext, _ := json.Marshal(actionContext)
+			// Interpolate post script
+			var mapContexts map[string]interface{}
+			if err := json.Unmarshal(jsonContext, &mapContexts); err != nil {
+				return w.failJob(ctx, err.Error()), nil
+			}
+			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+			for k, v := range actionPost.Inputs {
+				interpolatedValue, err := ap.InterpolateToString(ctx, v)
+				if err != nil {
+					return w.failJob(ctx, err.Error()), nil
+				}
+				actionPost.Inputs[k] = interpolatedValue
+			}
+			actionPost.StepName = parentStepName
+		}
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
 
@@ -605,8 +624,9 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			}
 
 			actionPost = &ActionPostJob{
-				Post:     interpolatedPost,
-				StepName: parentStepName,
+				PluginName: "script",
+				Inputs:     map[string]string{"content": interpolatedPost},
+				StepName:   parentStepName,
 			}
 		}
 
@@ -715,35 +735,44 @@ func (w *CurrentWorker) runJobStepScript(ctx context.Context, step sdk.ActionSte
 	if err != nil {
 		return w.failJob(ctx, fmt.Sprintf("%v", err))
 	}
-	return w.runPlugin(ctx, "script", map[string]string{
+	res, _ := w.runPlugin(ctx, "script", map[string]string{
 		"content": contentString,
 	}, env)
+	return res
 }
 
-func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string, env map[string]string) sdk.V2WorkflowRunJobResult {
+func (w *CurrentWorker) runPlugin(ctx context.Context, pluginName string, opts map[string]string, env map[string]string) (sdk.V2WorkflowRunJobResult, *ActionPostJob) {
 	pluginClient, err := w.pluginFactory.NewClient(ctx, w, plugin.TypeStream, pluginName, plugin.InputManagementStrict, env)
 	if pluginClient != nil {
 		defer pluginClient.Close(ctx)
 	}
 	if err != nil {
-		return w.failJob(ctx, fmt.Sprintf("%v", err))
+		return w.failJob(ctx, fmt.Sprintf("%v", err)), nil
 	}
 
 	pluginResult := pluginClient.Run(ctx, opts)
 
 	if pluginResult.Status == sdk.StatusFail {
-		return w.failJob(ctx, pluginResult.Details)
+		return w.failJob(ctx, pluginResult.Details), nil
 	}
 
 	jobStatus, err := sdk.NewV2WorkflowRunJobStatusFromString(pluginResult.Status)
 	if err != nil {
-		return w.failJob(ctx, fmt.Sprintf("error running plugin %s: %v", pluginName, err))
+		return w.failJob(ctx, fmt.Sprintf("error running plugin %s: %v", pluginName, err)), nil
+	}
+	var actionPost *ActionPostJob
+	pluginPost := pluginClient.GetPostAction()
+	if pluginPost != nil && pluginPost.Plugin != "" {
+		actionPost = &ActionPostJob{
+			PluginName: pluginPost.Plugin,
+			Inputs:     pluginPost.With,
+		}
 	}
 
 	return sdk.V2WorkflowRunJobResult{
 		Status: jobStatus,
 		Error:  pluginResult.Details,
-	}
+	}, actionPost
 }
 
 func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2WorkflowRunJobResult {

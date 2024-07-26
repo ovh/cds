@@ -35,6 +35,9 @@ func NewClient(ctx context.Context, wk workerruntime.Runtime, pluginType string,
 		pluginName:      pluginName,
 		inputManagement: inputManagement,
 	}
+	if currentPlugin.Post.Plugin != "" {
+		c.postAction = &currentPlugin.Post
+	}
 
 	switch pluginType {
 	case TypeAction, TypeStream:
@@ -98,6 +101,10 @@ func (c *client) Manifest(ctx context.Context) error {
 	}
 	log.Debug(ctx, "# Plugin %s v%s is ready", name, version)
 	return nil
+}
+
+func (c *client) GetPostAction() *sdk.PluginPost {
+	return c.postAction
 }
 
 func (c *client) Run(ctx context.Context, opts map[string]string) *Result {

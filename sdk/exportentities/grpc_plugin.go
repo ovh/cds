@@ -10,6 +10,7 @@ type GRPCPlugin struct {
 	Author      string                     `json:"author" yaml:"author" cli:"author"`
 	Description string                     `json:"description" yaml:"description" cli:"description"`
 	Inputs      map[string]sdk.PluginInput `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Post        sdk.PluginPost             `json:"post" yaml:"post"`
 }
 
 // NewGRPCPlugin returns a ready to export action
@@ -20,6 +21,7 @@ func NewGRPCPlugin(p sdk.GRPCPlugin) (plg GRPCPlugin) {
 	plg.Author = p.Author
 	plg.Description = p.Description
 	plg.Inputs = p.Inputs
+	plg.Post = p.Post
 	return plg
 }
 
@@ -32,5 +34,6 @@ func (plg *GRPCPlugin) GRPCPlugin() *sdk.GRPCPlugin {
 	p.Author = plg.Author
 	p.Description = plg.Description
 	p.Inputs = plg.Inputs
+	p.Post = plg.Post
 	return p
 }
