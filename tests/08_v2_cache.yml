@@ -96,10 +96,10 @@ testcases:
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
         - and: 
-        - result.systemoutjson ShouldHaveLength 1
-        - or:
-          - result.systemoutjson.systemoutjson0.status ShouldEqual Success
-          - result.systemoutjson.systemoutjson0.status ShouldEqual Fail
+          - result.systemoutjson ShouldHaveLength 1
+          - or:
+            - result.systemoutjson.systemoutjson0.status ShouldEqual Success
+            - result.systemoutjson.systemoutjson0.status ShouldEqual Fail
       retry: 100
       delay: 1
       vars:
