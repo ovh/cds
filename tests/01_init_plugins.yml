@@ -4,6 +4,9 @@ vars:
   plugins:
     - artifactoryPromote
     - artifactoryRelease
+    - cache
+    - cacheRestore
+    - cacheSave
     - checkout
     - debianPush
     - deployArsenal

@@ -233,7 +233,7 @@ func (p *debianPushPlugin) UploadArtifactoryDebianPackage(ctx context.Context, o
 	}
 
 	var res *grpcplugins.ArtifactoryUploadResult
-	res, d, err = grpcplugins.ArtifactoryItemUpload(ctx, &p.Common, response.RunResult, opts.jobContext.Integrations.ArtifactManager, reader)
+	res, d, err = grpcplugins.ArtifactoryItemUploadRunResult(ctx, &p.Common, response.RunResult, opts.jobContext.Integrations.ArtifactManager, reader)
 	if err != nil {
 		grpcplugins.Error(&p.Common, err.Error())
 		return nil, err

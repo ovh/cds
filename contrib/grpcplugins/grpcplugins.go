@@ -219,6 +219,20 @@ func UpdateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	return &response, nil
 }
 
+func CreateOutput(ctx context.Context, c *actionplugin.Common, out workerruntime.OutputRequest) error {
+	bts, _ := json.Marshal(out)
+	r := bytes.NewReader(bts)
+	req, err := c.NewRequest(ctx, "POST", "/v2/output", r)
+	if err != nil {
+		return sdk.WrapError(err, "unable to prepare request")
+	}
+
+	if _, err := c.DoRequest(req); err != nil {
+		return sdk.WrapError(err, "unable to post output")
+	}
+	return nil
+}
+
 func GetJobRun(ctx context.Context, c *actionplugin.Common) (*sdk.V2WorkflowRunJob, error) {
 	r, err := c.NewRequest(ctx, "GET", "/v2/jobrun", nil)
 	if err != nil {
@@ -514,7 +528,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 		Logf(actplugin, "  Artifactory repository: %s", repository)
 
 		var res *ArtifactoryUploadResult
-		res, d, err = ArtifactoryItemUpload(ctx, actplugin, response.RunResult, integ, reader)
+		res, d, err = ArtifactoryItemUploadRunResult(ctx, actplugin, response.RunResult, integ, reader)
 		if err != nil {
 			Error(actplugin, err.Error())
 			return nil, err
@@ -577,30 +591,40 @@ type ArtifactoryUploadResult struct {
 	URI string `json:"uri"`
 }
 
-func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, runResult *sdk.V2WorkflowRunResult, integ sdk.JobIntegrationsContext, reader io.ReadSeeker) (*ArtifactoryUploadResult, time.Duration, error) {
+func ArtifactoryItemUploadRunResult(ctx context.Context, c *actionplugin.Common, runResult *sdk.V2WorkflowRunResult, integ sdk.JobIntegrationsContext, reader io.ReadSeeker) (*ArtifactoryUploadResult, time.Duration, error) {
+	rtURL := integ.Get(sdk.ArtifactoryConfigURL)
+	repo := runResult.ArtifactManagerMetadata.Get("repository")
+	path := runResult.ArtifactManagerMetadata.Get("path")
+	filename := runResult.ArtifactManagerMetadata.Get("name")
+
+	headers := make(map[string]string)
+	headers["X-Checksum-Sha1"] = runResult.ArtifactManagerMetadata.Get("sha1")
+	headers["X-Checksum-Sha256"] = runResult.ArtifactManagerMetadata.Get("sha256")
+	headers["X-Checksum-MD5"] = runResult.ArtifactManagerMetadata.Get("md5")
+
+	uploadURL := rtURL + filepath.Join(repo, path, filename)
+	return ArtifactoryItemUpload(ctx, c, integ, reader, headers, uploadURL)
+}
+
+func ArtifactoryItemUpload(ctx context.Context, c *actionplugin.Common, integ sdk.JobIntegrationsContext, reader io.ReadSeeker, headers map[string]string, uploadURL string) (*ArtifactoryUploadResult, time.Duration, error) {
 	t0 := time.Now()
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer cancel()
 
-	rtURL := integ.Get(sdk.ArtifactoryConfigURL)
 	rtToken := integ.Get(sdk.ArtifactoryConfigToken)
-
-	repo := runResult.ArtifactManagerMetadata.Get("repository")
-	path := runResult.ArtifactManagerMetadata.Get("path")
-	filename := runResult.ArtifactManagerMetadata.Get("name")
 
 	for i := 0; i < 3; i++ {
 		reader.Seek(0, io.SeekStart)
-		req, err := http.NewRequestWithContext(ctx, "PUT", rtURL+filepath.Join(repo, path, filename), reader)
+		req, err := http.NewRequestWithContext(ctx, "PUT", uploadURL, reader)
 		if err != nil {
 			return nil, time.Since(t0), err
 		}
 
 		req.Header.Set("Authorization", "Bearer "+rtToken)
-		req.Header.Set("X-Checksum-Sha1", runResult.ArtifactManagerMetadata.Get("sha1"))
-		req.Header.Set("X-Checksum-Sha256", runResult.ArtifactManagerMetadata.Get("sha256"))
-		req.Header.Set("X-Checksum-MD5", runResult.ArtifactManagerMetadata.Get("md5"))
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
 
 		resp, err := c.HTTPClient.Do(req)
 		if err != nil {
@@ -795,4 +819,65 @@ func NewIntegrationCache() *IntegrationCache {
 		cacheIntegrations:     make(map[string]sdk.ProjectIntegration),
 		lockCacheIntegrations: new(sync.Mutex),
 	}
+}
+
+func DownloadFromArtifactory(ctx context.Context, c *actionplugin.Common, integration sdk.JobIntegrationsContext, workDirs sdk.WorkerDirectories, path string, name string, mode fs.FileMode, downloadURI string) (string, int64, error) {
+	if downloadURI == "" {
+		return "", 0, sdk.Errorf("no downloadURI specified")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", downloadURI, nil)
+	if err != nil {
+		return "", 0, err
+	}
+
+	rtToken := integration.Get(sdk.ArtifactoryConfigToken)
+	req.Header.Set("Authorization", "Bearer "+rtToken)
+
+	Logf(c, "Downloading file from %s...", downloadURI)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return "", 0, err
+	}
+
+	if resp.StatusCode > 200 {
+		return "", 0, sdk.Errorf("unable to download file (HTTP %d)", resp.StatusCode)
+	}
+
+	return BodyToFile(resp, workDirs, path, name, mode)
+}
+
+func BodyToFile(resp *http.Response, workDirs sdk.WorkerDirectories, path string, name string, mode fs.FileMode) (string, int64, error) {
+
+	var destinationDir string
+	if path != "" && filepath.IsAbs(path) {
+		destinationDir = path
+	} else if path != "" {
+		destinationDir = filepath.Join(workDirs.WorkingDir, path)
+	} else {
+		destinationDir = workDirs.WorkingDir
+	}
+	destinationFile := filepath.Join(destinationDir, name)
+	destinationDir = filepath.Dir(destinationFile)
+	if err := os.MkdirAll(destinationDir, os.FileMode(0750)); err != nil {
+		return "", 0, sdk.Errorf("unable to create directory %q :%v", destinationDir, err.Error())
+	}
+
+	fi, err := os.OpenFile(destinationFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, mode)
+	if err != nil {
+		return "", 0, sdk.Errorf("unable to create file %q: %v", destinationFile, err.Error())
+	}
+
+	n, err := io.Copy(fi, resp.Body)
+	if err != nil {
+		return "", 0, sdk.Errorf("unable to write file %q: %v", destinationFile, err.Error())
+	}
+	_ = resp.Body.Close()
+	return destinationFile, n, nil
+
+}
+
+func BuildCacheURL(integ sdk.JobIntegrationsContext, projKey string, cacheKey string) string {
+	return fmt.Sprintf("%s%s/.cache/%s/%s/cache.tar.gz", integ.Get(sdk.ArtifactoryConfigURL), integ.Get(sdk.ArtifactoryConfigCdsRepository), projKey, cacheKey)
 }

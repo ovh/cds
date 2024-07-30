@@ -1,0 +1,15 @@
+name: cache
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: |
+  Get and save cache
+inputs:
+  path:
+  key:
+  fail-on-cache-miss:
+    default: 'false'
+post:
+  plugin: cacheSave
+  with:
+    path: ${{ inputs.path }}
+    key: ${{ inputs.key }}

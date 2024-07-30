@@ -174,6 +174,33 @@ testcases:
         on: [push]
         integrations: [artifactory-{{.rt_project}}]
         jobs:
+          pluginCache:
+            runs-on: "{{.worker_model}}"
+            steps:
+              - id: generateKey
+                run: worker export ts $(date +%s)
+              - id: cacheGet
+                uses: actions/cache
+                with:
+                  key: ${{ steps.generateKey.outputs.ts }}
+                  path: myfile
+              - id: cacheCheck
+                run: echo ${{ steps.cacheGet.outputs.cache-hit }}    
+              - run: date > myfile
+            outputs:
+              cacheKey:
+                value: ${{ steps.generateKey.outputs.ts }}
+          getCache:
+            runs-on: "{{.worker_model}}"
+            needs: [pluginCache]
+            steps:
+              - uses: actions/cacheRestore
+                id: restore
+                with:
+                  key: ${{ jobs.pluginCache.outputs.cacheKey }}
+                  path: myfile 
+              - id: checkHit
+                run: echo ${{ steps.restore.outputs.cache-hit }} 
           ctx:
             runs-on: "{{.worker_model}}"
             steps:
@@ -310,3 +337,13 @@ testcases:
       - result.systemoutjson ShouldHaveLength 1    
   - name: Check integration context
     script: "cat {{.cds_workflow}}-1-1-ctx-ctxstep && cat {{.cds_workflow}}-1-1-ctx-ctxstep | grep \"{{.rt_project}}/{{.rt_component}}\""  
+
+  - name: Check pluginCache log - cacheCheck
+    script: "cat {{.cds_workflow}}-1-1-pluginCache-cacheCheck && cat {{.cds_workflow}}-1-1-pluginCache-cacheCheck | grep \"false\""
+  - name: Check pluginCache log - cacheCheck
+    script: "cat {{.cds_workflow}}-1-1-pluginCache-Post-cacheGet | grep \"Cache uploaded\""
+
+  - name: Check pluginCache log - cache restore
+    script: "cat {{.cds_workflow}}-1-1-getCache-restore | grep \"Cache was downloaded\""  
+  - name: Check pluginCache log - retore-hit
+    script: "cat {{.cds_workflow}}-1-1-getCache-checkHit | grep \"true\""
