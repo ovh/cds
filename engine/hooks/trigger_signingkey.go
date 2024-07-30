@@ -148,6 +148,7 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 	}
 
 	// Update repository hook status
+	allHooksSkipped := true
 	for i := range hre.WorkflowHooks {
 		wh := &hre.WorkflowHooks[i]
 
@@ -172,8 +173,11 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 		}
 
 		// If we found an unverified commit, skip all hooks
-		if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified && ope.UUID == hre.SigningKeyOperation {
+		if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified && ope.UUID == hre.SigningKeyOperation && !wh.Data.InsecureSkipSignatureVerify {
 			wh.Status = sdk.HookEventWorkflowStatusSkipped
+			continue
+		} else {
+			allHooksSkipped = false
 		}
 
 		// Add gitinfo for repositorywebhook
@@ -202,7 +206,7 @@ func (s *Service) manageRepositoryOperationCallback(ctx context.Context, ope sdk
 			hre.Status = sdk.HookEventStatusError
 		}
 
-		if ope.Status == sdk.OperationStatusDone && !ope.Setup.Checkout.Result.CommitVerified {
+		if allHooksSkipped {
 			hre.Status = sdk.HookEventStatusSkipped
 			hre.LastError = ope.Setup.Checkout.Result.Msg + fmt.Sprintf("(Operation ID: %s)", ope.UUID)
 		}

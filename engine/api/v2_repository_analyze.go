@@ -571,6 +571,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 skipEntity:
 	for i := range entities {
 		e := &entities[i]
+		e.UserID = &userDB.ID
 
 		for entityIndex := range analysis.Data.Entities {
 			analysisEntity := &analysis.Data.Entities[entityIndex]
@@ -724,6 +725,8 @@ skipEntity:
 		if existingHeadEntity != nil {
 			// Copy it for the current commit
 			e.Data = existingHeadEntity.Data
+			// Do not update owner
+			e.UserID = existingHeadEntity.UserID
 			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save skipped entity from head %s of type %s", e.Name, e.Type))
 			}
@@ -737,6 +740,8 @@ skipEntity:
 			if defaultBranchHeadEntity != nil {
 				// Copy it for the current commit
 				e.Data = defaultBranchHeadEntity.Data
+				// Do not update owner
+				e.UserID = defaultBranchHeadEntity.UserID
 				if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save skipped entity %s of type %s", e.Name, e.Type))
 				}
@@ -883,6 +888,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 					PathFilter:      e.Workflow.On.Push.Paths,
 				},
 			}
+			if e.Workflow.Repository != nil {
+				wh.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
+			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
 				return nil, err
 			}
@@ -904,6 +912,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 						BranchFilter:    e.Workflow.On.Push.Branches,
 						TagFilter:       e.Workflow.On.Push.Tags,
 						PathFilter:      e.Workflow.On.Push.Paths,
+					}
+					if e.Workflow.Repository != nil {
+						existingHook.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
 					}
 					existingHook.Ref = e.Ref
 					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
@@ -929,6 +940,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 							TagFilter:       e.Workflow.On.Push.Tags,
 							PathFilter:      e.Workflow.On.Push.Paths,
 						},
+					}
+					if e.Workflow.Repository != nil {
+						newHeadHook.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
 					}
 					if err := workflow_v2.InsertWorkflowHook(ctx, db, &newHeadHook); err != nil {
 						return nil, err
@@ -958,6 +972,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 					TypesFilter:     e.Workflow.On.PullRequest.Types,
 				},
 			}
+			if e.Workflow.Repository != nil {
+				wh.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
+			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
 				return nil, err
 			}
@@ -978,6 +995,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 						BranchFilter:    e.Workflow.On.PullRequest.Branches,
 						PathFilter:      e.Workflow.On.PullRequest.Paths,
 						TypesFilter:     e.Workflow.On.PullRequest.Types,
+					}
+					if e.Workflow.Repository != nil {
+						existingHook.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
 					}
 					existingHook.Ref = e.Ref
 					if err := workflow_v2.UpdateWorkflowHook(ctx, db, existingHook); err != nil {
@@ -1002,6 +1022,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 							PathFilter:      e.Workflow.On.PullRequest.Paths,
 							TypesFilter:     e.Workflow.On.PullRequest.Types,
 						},
+					}
+					if e.Workflow.Repository != nil {
+						newHeadHook.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
 					}
 					if err := workflow_v2.InsertWorkflowHook(ctx, db, &newHeadHook); err != nil {
 						return nil, err
@@ -1030,6 +1053,9 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 					PathFilter:      e.Workflow.On.PullRequest.Paths,
 					TypesFilter:     e.Workflow.On.PullRequest.Types,
 				},
+			}
+			if e.Workflow.Repository != nil {
+				wh.Data.InsecureSkipSignatureVerify = e.Workflow.Repository.InsecureSkipSignatureVerify
 			}
 			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
 				return nil, err
@@ -1430,40 +1456,46 @@ func Lint[T sdk.Lintable](ctx context.Context, api *API, o T, ef *EntityFinder) 
 			}
 		}
 	case sdk.V2Workflow:
-		if x.From == "" {
-			break
-		}
-		var tmpl *sdk.V2WorkflowTemplate
-		if strings.HasPrefix(x.From, ".cds/workflow-templates/") {
-			// Retrieve tmpl from current analysis
-			for _, v := range ef.templatesCache {
-				if v.FilePath == x.From {
-					tmpl = &v.Template
+		switch {
+		case x.From != "":
+			var tmpl *sdk.V2WorkflowTemplate
+			if strings.HasPrefix(x.From, ".cds/workflow-templates/") {
+				// Retrieve tmpl from current analysis
+				for _, v := range ef.templatesCache {
+					if v.FilePath == x.From {
+						tmpl = &v.Template
+						break
+					}
+				}
+			} else {
+				// Retrieve existing template in DB
+				path, msg, errSearch := ef.searchEntity(ctx, api.mustDB(), api.Cache, x.From, sdk.EntityTypeWorkflowTemplate)
+				if errSearch != nil {
+					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to retrieve entity %s of type %s: %v", x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
 					break
 				}
-			}
-		} else {
-			// Retrieve existing template in DB
-			path, msg, errSearch := ef.searchEntity(ctx, api.mustDB(), api.Cache, x.From, sdk.EntityTypeWorkflowTemplate)
-			if errSearch != nil {
-				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to retrieve entity %s of type %s: %v", x.From, sdk.EntityTypeWorkflowTemplate, errSearch))
-				break
-			}
-			if msg != "" {
-				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, msg))
-				break
-			}
-			t := ef.templatesCache[path].Template
-			tmpl = &t
-		}
-		if tmpl == nil || tmpl.Name == "" {
-			err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unknown workflow template %s", x.From))
-		} else {
-			// Check required parameters
-			for _, v := range tmpl.Parameters {
-				if wkfP, has := x.Parameters[v.Key]; (!has || len(wkfP) == 0) && v.Required {
-					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "required template parameter %s is missing or empty", x.From))
+				if msg != "" {
+					err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, msg))
+					break
 				}
+				t := ef.templatesCache[path].Template
+				tmpl = &t
+			}
+			if tmpl == nil || tmpl.Name == "" {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unknown workflow template %s", x.From))
+			} else {
+				// Check required parameters
+				for _, v := range tmpl.Parameters {
+					if wkfP, has := x.Parameters[v.Key]; (!has || len(wkfP) == 0) && v.Required {
+						err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "required template parameter %s is missing or empty", x.From))
+					}
+				}
+			}
+		default:
+			sameVCS := x.Repository == nil || x.Repository.VCSServer == ef.currentVCS.Name || x.Repository.VCSServer == ""
+			sameRepo := x.Repository == nil || x.Repository.Name == ef.currentRepo.Name || x.Repository.Name == ""
+			if sameVCS && sameRepo && x.Repository != nil && x.Repository.InsecureSkipSignatureVerify {
+				err = append(err, sdk.NewErrorFrom(sdk.ErrWrongRequest, "parameter `insecure-skip-signature-verify`is not allowed if the workflow is defined on the same repository as `workfow.repository.name`. "))
 			}
 		}
 	}
@@ -1619,7 +1651,7 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 	}
 
 	filesContent := make(map[string][]byte)
-	contents, err := client.ListContent(ctx, repoName, commit, directory)
+	contents, err := client.ListContent(ctx, repoName, commit, directory, "0", "100")
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
 	}
@@ -1659,6 +1691,14 @@ func (api *API) getCdsArchiveFileOnRepo(ctx context.Context, repo sdk.ProjectRep
 	}
 
 	filesContent := make(map[string][]byte)
+
+	if _, err := client.ListContent(ctx, repo.Name, analysis.Commit, ".cds", "0", "1"); err != nil {
+		if strings.Contains(err.Error(), "resource not found") {
+			return filesContent, nil
+		}
+		return nil, sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", analysis.Commit, ".cds", err)
+	}
+
 	reader, _, err := client.GetArchive(ctx, repo.Name, ".cds", "tar.gz", analysis.Commit)
 	if err != nil {
 		return nil, err

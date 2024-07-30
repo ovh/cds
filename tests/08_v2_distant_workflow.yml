@@ -92,6 +92,7 @@ testcases:
           repository:
             name: "{{.git.user}}/{{.git_repo_src}}"
             vcs: my_vcs_server
+            insecure_skip_signature_verify: true
           jobs:
             init:
               runs-on: 
@@ -142,3 +143,41 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.PushCode.commitCode}}"
       retry: 60
       delay: 1
+- name: PushCodeButNotSignedCommit
+  steps:
+  - name: push new commit without signature
+    script: cd /tmp/repos/ {{.git_repo_src}} && touch foo.bar && git add foo.bar && git commit . -m "add foo.bar file" && git push
+  - name: retrieve commit of workflow
+    script: cd /tmp/repos/{{.git_repo_code}} && git rev-parse HEAD
+    vars:
+      commitCode:
+        from: result.systemout  
+  - name: retrieve commit of code source
+    script: cd /tmp/repos/{{.git_repo_src}} && git rev-parse HEAD
+    vars:
+      commitSrc:
+        from: result.systemout  
+       
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_code}} {{.cds_workflow}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 2
+      - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+    retry: 150
+    delay: 1
+    vars:
+      workflowRunID:
+        from: result.systemoutjson.systemoutjson1.id    
+  - name: Download and check logs
+    script: |-
+      #!/bin/bash
+      set -e
+      FILE=/tmp/`uuidgen`
+      mkdir -p $FILE && cd $FILE
+      {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+      # Check git_sha
+      cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep "GIT_SHA={{.commitSrc}}"
+      # Check workflow_sha
+      cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.commitCode}}"
+    retry: 60
+    delay: 1

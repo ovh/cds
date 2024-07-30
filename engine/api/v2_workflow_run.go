@@ -779,7 +779,16 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			u, err := user.LoadByID(ctx, api.mustDB(), runRequest.UserID)
+			if wk.Repository != nil && wk.Repository.InsecureSkipSignatureVerify {
+				// Use entity owner as user fallback
+				if workflowEntity.UserID == nil {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown workflow owner. Please analyse your repository.")
+				}
+				runRequest.UserID = *workflowEntity.UserID
+			}
+
+			var u *sdk.AuthentifiedUser
+			u, err = user.LoadByID(ctx, api.mustDB(), runRequest.UserID)
 			if err != nil {
 				return err
 			}

@@ -975,6 +975,8 @@ func (s *Service) getListContentsHandler() service.Handler {
 		if err != nil {
 			return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to get filepath: %v", err)
 		}
+		offset := QueryString(r, "offset")
+		limit := QueryString(r, "limit")
 
 		vcsAuth, err := getVCSAuth(ctx)
 		if err != nil {
@@ -991,7 +993,7 @@ func (s *Service) getListContentsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
 		}
 
-		contents, err := client.ListContent(ctx, owner+"/"+repo, commit, filePath)
+		contents, err := client.ListContent(ctx, owner+"/"+repo, commit, filePath, offset, limit)
 		if err != nil {
 			return sdk.WrapError(err, "unable to list content")
 		}

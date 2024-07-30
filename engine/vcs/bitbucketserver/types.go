@@ -210,3 +210,10 @@ type InsightReportDataLink struct {
 	Text string `json:"linktext"`
 	Href string `json:"href"`
 }
+
+type ListContentResponse struct {
+	Values        []string `json:"values"`
+	Size          int      `json:"size"`
+	NextPageStart int      `json:"nextPageStart"`
+	IsLastPage    bool     `json:"isLastPage"`
+}

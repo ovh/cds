@@ -44,6 +44,7 @@ type Entity struct {
 	Ref                 string    `json:"ref" db:"ref"`
 	LastUpdate          time.Time `json:"last_update" db:"last_update"`
 	Data                string    `json:"data" db:"data"`
+	UserID              *string   `json:"user_id" db:"user_id"`
 }
 
 type EntityWithObject struct {

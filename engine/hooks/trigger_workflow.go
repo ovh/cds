@@ -20,7 +20,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	log.Info(ctx, "triggering workflow for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// Check if we know the user that trigger the event
-	if hre.UserID == "" {
+	if hre.UserID == "" && hre.SignKey != "" {
 		r, err := s.Client.RetrieveHookEventUser(ctx, sdk.HookRetrieveUserRequest{
 			ProjectKey:     hre.WorkflowHooks[0].ProjectKey,
 			VCSServerName:  hre.VCSServerName,
@@ -52,138 +52,148 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		return err
 	}
 
-	if hre.UserID != "" {
-		for i := range hre.WorkflowHooks {
-			wh := &hre.WorkflowHooks[i]
-			if wh.Status == sdk.HookEventWorkflowStatusScheduled {
-				// Check path filter
-				canTriggerWithChangeSet := false
-				if len(wh.PathFilters) > 0 {
-				pathLoop:
-					for _, hookPathFilter := range wh.PathFilters {
-						g := glob.New(hookPathFilter)
-						for _, file := range wh.UpdatedFiles {
-							result, err := g.MatchString(file)
-							if err != nil {
-								log.Error(ctx, "unable to check file %s with pattern %s", hookPathFilter)
-								continue
-							}
-							if result == nil {
-								continue
-							}
-							canTriggerWithChangeSet = true
-							break pathLoop
+	for i := range hre.WorkflowHooks {
+		wh := &hre.WorkflowHooks[i]
+		if !wh.Data.InsecureSkipSignatureVerify && hre.UserID == "" {
+			wh.Status = sdk.HookEventWorkflowStatusSkipped
+			wh.Error = "unknown user"
+			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+				return err
+			}
+			continue
+		}
+		if wh.Status == sdk.HookEventWorkflowStatusScheduled {
+			// Check path filter
+			canTriggerWithChangeSet := false
+			if len(wh.PathFilters) > 0 {
+			pathLoop:
+				for _, hookPathFilter := range wh.PathFilters {
+					g := glob.New(hookPathFilter)
+					for _, file := range wh.UpdatedFiles {
+						result, err := g.MatchString(file)
+						if err != nil {
+							log.Error(ctx, "unable to check file %s with pattern %s", hookPathFilter)
+							continue
 						}
+						if result == nil {
+							continue
+						}
+						canTriggerWithChangeSet = true
+						break pathLoop
 					}
-				} else {
-					canTriggerWithChangeSet = true
 				}
+			} else {
+				canTriggerWithChangeSet = true
+			}
 
-				canTriggerWithCommitMessage := false
-				if wh.Data.CommitFilter != "" {
-					g := glob.New(wh.Data.CommitFilter)
-					r, err := g.MatchString(hre.ExtractData.CommitMessage)
-					if err != nil {
-						log.ErrorWithStackTrace(ctx, err)
-						hre.LastError = err.Error()
-					}
-					if r != nil {
-						canTriggerWithCommitMessage = true
-					}
-				} else {
+			canTriggerWithCommitMessage := false
+			if wh.Data.CommitFilter != "" {
+				g := glob.New(wh.Data.CommitFilter)
+				r, err := g.MatchString(hre.ExtractData.CommitMessage)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					hre.LastError = err.Error()
+				}
+				if r != nil {
 					canTriggerWithCommitMessage = true
 				}
+			} else {
+				canTriggerWithCommitMessage = true
+			}
 
-				if !canTriggerWithChangeSet || !canTriggerWithCommitMessage {
-					wh.Status = sdk.HookEventWorkflowStatusSkipped
-				} else {
-					// Query params to select the right workflow version to run
-					mods := make([]cdsclient.RequestModifier, 0, 2)
-					mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
+			if !canTriggerWithChangeSet || !canTriggerWithCommitMessage {
+				wh.Status = sdk.HookEventWorkflowStatusSkipped
+			} else {
+				// Query params to select the right workflow version to run
+				mods := make([]cdsclient.RequestModifier, 0, 2)
+				mods = append(mods, cdsclient.WithQueryParameter("ref", wh.Ref), cdsclient.WithQueryParameter("commit", wh.Commit))
 
-					runRequest := sdk.V2WorkflowRunHookRequest{
-						HookEventID:   hre.UUID,
-						UserID:        hre.UserID,
-						Ref:           hre.ExtractData.Ref,
-						Sha:           hre.ExtractData.Commit,
-						CommitMessage: hre.ExtractData.CommitMessage,
-						Payload:       event,
-						EventName:     hre.EventName,
-						HookType:      wh.Type,
-						SemverCurrent: wh.SemverCurrent,
-						SemverNext:    wh.SemverNext,
-						ChangeSets:    wh.UpdatedFiles,
-						AdminMFA:      hre.ExtractData.AdminMFA,
-					}
+				runRequest := sdk.V2WorkflowRunHookRequest{
+					HookEventID:   hre.UUID,
+					UserID:        hre.UserID,
+					Ref:           hre.ExtractData.Ref,
+					Sha:           hre.ExtractData.Commit,
+					CommitMessage: hre.ExtractData.CommitMessage,
+					Payload:       event,
+					EventName:     hre.EventName,
+					HookType:      wh.Type,
+					SemverCurrent: wh.SemverCurrent,
+					SemverNext:    wh.SemverNext,
+					ChangeSets:    wh.UpdatedFiles,
+					AdminMFA:      hre.ExtractData.AdminMFA,
+				}
 
-					// Override repository ref to clone in the workflow
-					switch wh.Type {
-					case sdk.WorkflowHookTypeManual:
-						if wh.Data.TargetBranch != "" {
-							runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
-						} else {
-							runRequest.Ref = sdk.GitRefTagPrefix + wh.Data.TargetTag
-						}
-						runRequest.Sha = wh.TargetCommit
-					case sdk.WorkflowHookTypeWorkflow:
-						runRequest.EntityUpdated = wh.WorkflowName
+				// Override repository ref to clone in the workflow
+				switch wh.Type {
+				case sdk.WorkflowHookTypeManual:
+					if wh.Data.TargetBranch != "" {
 						runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
-						runRequest.Sha = wh.TargetCommit
-					case sdk.WorkflowHookTypeWorkerModel:
-						runRequest.EntityUpdated = wh.ModelFullName
-						runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
-						runRequest.Sha = wh.TargetCommit
-					case sdk.WorkflowHookTypeScheduler:
-						runRequest.Cron = hre.ExtractData.Scheduler.Cron
-						runRequest.CronTimezone = hre.ExtractData.Scheduler.Timezone
-					}
-
-					wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
-						runRequest, mods...)
-					if err != nil {
-						log.ErrorWithStackTrace(ctx, err)
-						wh.Status = sdk.HookEventWorkflowStatusError
-						wh.Error = fmt.Sprintf("unable to run workflow %s: %v", wh.WorkflowName, err)
 					} else {
-						wh.Status = sdk.HookEventWorkflowStatusDone
-						wh.RunID = wr.ID
-						wh.RunNumber = wr.RunNumber
+						runRequest.Ref = sdk.GitRefTagPrefix + wh.Data.TargetTag
 					}
+					runRequest.Sha = wh.TargetCommit
+				case sdk.WorkflowHookTypeWorkflow:
+					runRequest.EntityUpdated = wh.WorkflowName
+					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
+					runRequest.Sha = wh.TargetCommit
+				case sdk.WorkflowHookTypeWorkerModel:
+					runRequest.EntityUpdated = wh.ModelFullName
+					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
+					runRequest.Sha = wh.TargetCommit
+				case sdk.WorkflowHookTypeScheduler:
+					runRequest.Cron = hre.ExtractData.Scheduler.Cron
+					runRequest.CronTimezone = hre.ExtractData.Scheduler.Timezone
 				}
 
-				if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-					return err
+				wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,
+					runRequest, mods...)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+					wh.Status = sdk.HookEventWorkflowStatusError
+					wh.Error = fmt.Sprintf("unable to run workflow %s: %v", wh.WorkflowName, err)
+				} else {
+					wh.Status = sdk.HookEventWorkflowStatusDone
+					wh.RunID = wr.ID
+					wh.RunNumber = wr.RunNumber
 				}
 			}
-		}
 
-		allFailed := true
-		for i := range hre.WorkflowHooks {
-			wh := &hre.WorkflowHooks[i]
-			if !wh.IsTerminated() {
-				return nil
-			}
-
-			if wh.Status != sdk.HookEventWorkflowStatusError {
-				allFailed = false
-			}
-		}
-
-		if allFailed {
-			hre.Status = sdk.HookEventStatusError
-			hre.LastError = "All workflow hooks failed"
-		} else {
-			hre.Status = sdk.HookEventStatusDone
-		}
-
-		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-			return err
-		}
-		if hre.IsTerminated() {
-			if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 				return err
 			}
 		}
 	}
+
+	allFailed := len(hre.WorkflowHooks) > 0
+	var lastError string
+	for i := range hre.WorkflowHooks {
+		wh := &hre.WorkflowHooks[i]
+		if !wh.IsTerminated() {
+			return nil
+		}
+
+		if wh.Status != sdk.HookEventWorkflowStatusError {
+			allFailed = false
+		} else {
+			lastError = wh.Error
+		}
+	}
+
+	if allFailed {
+		hre.Status = sdk.HookEventStatusError
+		hre.LastError = "All workflow hooks failed: " + lastError
+	} else {
+		hre.Status = sdk.HookEventStatusDone
+	}
+
+	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
+		return err
+	}
+	if hre.IsTerminated() {
+		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, *hre); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

@@ -532,8 +532,8 @@ func (c *vcsClient) GetAccessToken(_ context.Context) string {
 	return ""
 }
 
-func (c *vcsClient) ListContent(ctx context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/contents/%s?commit=%s", c.name, repo, url.PathEscape(dir), commit)
+func (c *vcsClient) ListContent(ctx context.Context, repo string, commit, dir string, offset, limit string) ([]sdk.VCSContent, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/contents/%s?commit=%s&offset=%s&limit=%s", c.name, repo, url.PathEscape(dir), commit, offset, limit)
 	var contents []sdk.VCSContent
 	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &contents); err != nil {
 		return nil, sdk.WithStack(err)

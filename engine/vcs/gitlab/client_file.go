@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *gitlabClient) ListContent(_ context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
+func (c *gitlabClient) ListContent(_ context.Context, repo string, commit, dir string, offset, limit string) ([]sdk.VCSContent, error) {
 	return nil, sdk.WithStack(sdk.ErrNotImplemented)
 }
 
