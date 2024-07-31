@@ -983,8 +983,8 @@ func TestWorkflowMatrixNeeds(t *testing.T) {
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
 					Strategy: &sdk.V2JobStrategy{
-						Matrix: map[string][]string{
-							"foo": {"foo1", "foo2"},
+						Matrix: map[string]interface{}{
+							"foo": []string{"foo1", "foo2"},
 						},
 					},
 				},
@@ -1119,8 +1119,8 @@ func TestWorkflowStageMatrixNeeds(t *testing.T) {
 			Jobs: map[string]sdk.V2Job{
 				"job1": {
 					Strategy: &sdk.V2JobStrategy{
-						Matrix: map[string][]string{
-							"foo": {"foo1", "foo2"},
+						Matrix: map[string]interface{}{
+							"foo": []string{"foo1", "foo2"},
 						},
 					},
 					Stage: "stage1",
