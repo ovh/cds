@@ -1,0 +1,151 @@
+name: Matrix
+vars:
+  cds_project: "ITV2MATRIX"
+  git_repo: "it_v2_matrix"
+  cds_workflow: "WorkflowMatrix"
+testcases:
+- name: Prepare test
+  steps:
+    - name: "Verify cdsctl configuration"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} user me --format json"
+      vars:
+        cdsUser:
+          from: result.systemoutjson.username
+    - name: "Display username"
+      info: "Connected CDS user is {{.cdsUser}}"
+    - type: v2_create_project
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      cds_region: "{{.cds.region}}"
+
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo}}"
+    - name: Create variable set item var1
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 var1 '{\"key\": \"value\"}' string --force"
+    - name: Create variable set item secret one line
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 varSecret myLongSecret secret"
+    - name: Create variable set item secret multiline line
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} X project variableset item add {{.cds_project}} varset1 myMultilineSecret \"secretMultiline1 \n secretMultiline2\" secret" 
+
+    - type: v2_install_gpg_key
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      vars:
+        emailaddress:
+          from: result.emailaddress
+      
+- name: Push workflow file
+  steps:
+    - type: v2_push_cds_files_on_repo
+      git_repo: "{{.git_repo}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        worker-models/debian.yml:
+          name: docker-debian
+          osarch: linux/amd64
+          type: docker
+          spec:
+            image: buildpack-deps:buster
+        workflows/matrix.yaml:
+          name: {{.cds_workflow}}
+          on: [push]
+          env:
+            envMatrix: "[\"fooEnv\", \"barEnv\"]"
+          jobs:
+            root:
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              steps:
+                - id: stepExport
+                  run: worker export exportedMatrixValue '["fooJob", "barJob", "fooBarJob"]'
+              outputs:
+                rootMatrixValue: 
+                  value: ${{steps.stepExport.outputs.exportedMatrixValue}}  
+            fromRoot:
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              needs: [root]
+              strategy:
+                matrix:
+                  os: "${{ fromJSON(jobs.root.outputs.rootMatrixValue) }}"
+                  version: ["1", "2"]
+              steps:
+              - run: echo "${{ matrix.os }} ${{ matrix.version }}"
+            normalMatrix:
+              strategy:
+                matrix:
+                  os: ["toto", "tata", "titi"]
+              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+              steps:
+              - run: echo "${{ matrix.os }}"
+            fromEnv:
+              strategy:
+                matrix:
+                  os: "${{ fromJSON(env.envMatrix)}}"
+                  version: ["1", "2"]
+                runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
+                steps:
+                - run: echo "${{ matrix.os }} ${{ matrix.version }}"  
+
+    - name: Check CDS project analyses status
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
+      assertions:
+        - result.systemoutjson ShouldHaveLength 2
+        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
+        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 100
+      delay: 1
+
+    - name: Check that the CDS workflow has at least one execution and is Success
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
+      assertions:
+      - and: 
+        - result.systemoutjson ShouldHaveLength 1
+        - or:
+          - result.systemoutjson.systemoutjson0.status ShouldEqual Success
+          - result.systemoutjson.systemoutjson0.status ShouldEqual Fail
+      retry: 200
+      delay: 1
+      vars:
+        workflowRunID:
+          from: result.systemoutjson.systemoutjson0.id
+        workflowRunStatus:  
+          from: result.systemoutjson.systemoutjson0.status
+
+    - name: List all run results
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}}"      
+
+    - name: Download logs
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"  
+
+    - name: Display logs
+      script: cat {{.cds_workflow}}-*    
+
+    - name: Get run info
+      script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"     
+
+    - name: Get job info
+      script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"  
+      assertions:
+      - result.systemoutjson ShouldHaveLength 14
+    - name: Display logs
+      script: cat {{.cds_workflow}}-*
+
+    - name: Echo Status
+      script: echo {{.workflowRunStatus}}
+      assertions:
+      - result.systemout ShouldEqual Success   
