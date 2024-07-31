@@ -182,8 +182,3 @@ testcases:
       cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-2-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.commitCode}}"
     retry: 60
     delay: 1
-
-
-
-    Assign 'commitSrc' value '16cdcdd03d73f0249e7fdee48d4980cac797142c'
-    Assign 'commitCode' value '7b0f5d2e8d270852131a0f8f3f9c5272a373b571' -- CODE
