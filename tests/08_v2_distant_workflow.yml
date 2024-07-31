@@ -50,8 +50,6 @@ testcases:
       vars:
         emailaddress:
           from: result.emailaddress
-    - name: Sleep to avoid pushing workflow and then trigger workflow on push event
-      script: sleep 10
             
 - name: PushMyfile
   steps:
@@ -70,6 +68,8 @@ testcases:
       vars:
         commitSrc:
           from: result.systemout      
+    - name: Sleep to avoid pushing workflow and then trigger workflow on push event
+      script: sleep 10      
 
 - name: PushCode
   steps:
