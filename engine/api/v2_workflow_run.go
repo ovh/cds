@@ -768,6 +768,26 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			if err != nil {
 				return err
 			}
+			if commit == "HEAD" {
+				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, vcsProject.Name)
+				if err != nil {
+					return err
+				}
+				switch {
+				case strings.HasPrefix(ref, sdk.GitRefTagPrefix):
+					tag, err := client.Tag(ctx, repo.Name, strings.TrimPrefix(ref, sdk.GitRefTagPrefix))
+					if err != nil {
+						return err
+					}
+					commit = tag.Hash
+				default:
+					branch, err := client.Branch(ctx, repo.Name, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(ref, sdk.GitRefBranchPrefix)})
+					if err != nil {
+						return err
+					}
+					commit = branch.LatestCommit
+				}
+			}
 
 			workflowEntity, err := entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
 			if err != nil {
