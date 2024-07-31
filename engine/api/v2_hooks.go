@@ -46,16 +46,12 @@ func (api *API) postInsightReportHandler() ([]service.RbacChecker, service.Handl
 			if err != nil {
 				return err
 			}
-			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repoName)
-			if err != nil {
-				return err
-			}
 
 			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pkey, vcsProject.Name)
 			if err != nil {
 				return err
 			}
-			if err := vcsClient.CreateInsightReport(ctx, repo.Name, commit, insightKey, insight); err != nil {
+			if err := vcsClient.CreateInsightReport(ctx, repoName, commit, insightKey, insight); err != nil {
 				return err
 			}
 			return nil

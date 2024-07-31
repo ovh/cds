@@ -5,7 +5,6 @@ vars:
   git_repo_code: "it_v2_distant_workflow_code"
   cds_workflow: "WorkflowDistant"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_code}}/docker-debian"
-
 testcases:
 - name: Prepare test
   steps:
@@ -51,7 +50,7 @@ testcases:
       vars:
         emailaddress:
           from: result.emailaddress
-
+            
 - name: PushMyfile
   steps:
     - type: v2_push_cds_files_on_repo
@@ -69,6 +68,8 @@ testcases:
       vars:
         commitSrc:
           from: result.systemout      
+    - name: Sleep to avoid pushing workflow and then trigger workflow on push event
+      script: sleep 10      
 
 - name: PushCode
   steps:
@@ -88,10 +89,11 @@ testcases:
             image: buildpack-deps:buster
         workflows/distant.yaml:
           name: {{.cds_workflow}}
-          on: [workflow-update]
+          on: [workflow-update,push]
           repository:
             name: "{{.git.user}}/{{.git_repo_src}}"
             vcs: my_vcs_server
+            insecure_skip_signature_verify: true
           jobs:
             init:
               runs-on: 
@@ -142,3 +144,42 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-1-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.PushCode.commitCode}}"
       retry: 60
       delay: 1
+- name: PushCodeButNotSignedCommit
+  steps:
+  - name: push new commit without signature
+    script: cd /tmp/repos/{{.git_repo_src}} && touch foo.bar && git add foo.bar && git commit . -m "add foo.bar file" && git push
+  - name: retrieve commit of workflow
+    script: cd /tmp/repos/{{.git_repo_code}} && git rev-parse HEAD
+    vars:
+      commitCode:
+        from: result.systemout  
+  - name: retrieve commit of code source
+    script: cd /tmp/repos/{{.git_repo_src}} && git rev-parse HEAD
+    vars:
+      commitSrc:
+        from: result.systemout  
+       
+  - name: Check that the CDS workflow has at least one execution and is Success
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_code}} {{.cds_workflow}} --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 2
+      - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+    retry: 150
+    delay: 1
+    vars:
+      workflowRunID:
+        from: result.systemoutjson.systemoutjson0.id    
+  - name: Download and check logs
+    script: |-
+      #!/bin/bash
+      set -e
+      FILE=/tmp/`uuidgen`
+      mkdir -p $FILE && cd $FILE
+      {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+      ls -l
+      # Check git_sha
+      cat {{.cds_workflow}}-2-1-init-gitinfo && cat {{.cds_workflow}}-2-1-init-gitinfo | grep "GIT_SHA={{.commitSrc}}"
+      # Check workflow_sha
+      cat {{.cds_workflow}}-2-1-init-gitinfo && cat {{.cds_workflow}}-2-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.commitCode}}"
+    retry: 60
+    delay: 1

@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (g *githubClient) ListContent(ctx context.Context, repo string, commit, dir string) ([]sdk.VCSContent, error) {
+func (g *githubClient) ListContent(ctx context.Context, repo string, commit, dir string, _, _ string) ([]sdk.VCSContent, error) {
 	url := fmt.Sprintf("/repos/%s/contents/%s?ref=%s", repo, dir, commit)
 	status, body, _, err := g.get(ctx, url)
 	if err != nil {

@@ -50,7 +50,7 @@ type ProjectRepositoryData struct {
 	SignKeyID       string                        `json:"sign_key_id"`
 	CDSUserName     string                        `json:"cds_username"`
 	CDSUserID       string                        `json:"cds_username_id"`
-	CDSAdminWithMFA bool                          `json:"cds_admin_mfa`
+	CDSAdminWithMFA bool                          `json:"cds_admin_mfa"`
 	Error           string                        `json:"error"`
 	Entities        []ProjectRepositoryDataEntity `json:"entities"`
 }

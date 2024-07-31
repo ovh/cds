@@ -90,8 +90,9 @@ type WorkflowOnWorkflowUpdate struct {
 }
 
 type WorkflowRepository struct {
-	VCSServer string `json:"vcs,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Server that host the git repository"`
-	Name      string `json:"name,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Name of the git repository: <org>/<name>"`
+	VCSServer                   string `json:"vcs,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Server that host the git repository"`
+	Name                        string `json:"name,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Name of the git repository: <org>/<name>"`
+	InsecureSkipSignatureVerify bool   `json:"insecure_skip_signature_verify" jsonschema_extras:"order=3"  jsonschema_description:"Disable the check of signature from the source repository"`
 }
 
 func (w V2Workflow) MarshalJSON() ([]byte, error) {
@@ -356,19 +357,20 @@ type V2WorkflowScheduleEvent struct {
 }
 
 type V2WorkflowHookData struct {
-	VCSServer       string   `json:"vcs_server,omitempty"`
-	RepositoryName  string   `json:"repository_name,omitempty"`
-	RepositoryEvent string   `json:"repository_event,omitempty"`
-	Model           string   `json:"model,omitempty"`
-	CommitFilter    string   `json:"commit_filter,omitempty"`
-	BranchFilter    []string `json:"branch_filter,omitempty"`
-	TagFilter       []string `json:"tag_filter,omitempty"`
-	PathFilter      []string `json:"path_filter,omitempty"`
-	TypesFilter     []string `json:"types_filter,omitempty"`
-	TargetBranch    string   `json:"target_branch,omitempty"`
-	TargetTag       string   `json:"target_tag,omitempty"`
-	Cron            string   `json:"cron,omitempty"`
-	CronTimeZone    string   `json:"cron_timezone,omitempty"`
+	VCSServer                   string   `json:"vcs_server,omitempty"`
+	RepositoryName              string   `json:"repository_name,omitempty"`
+	RepositoryEvent             string   `json:"repository_event,omitempty"`
+	Model                       string   `json:"model,omitempty"`
+	CommitFilter                string   `json:"commit_filter,omitempty"`
+	BranchFilter                []string `json:"branch_filter,omitempty"`
+	TagFilter                   []string `json:"tag_filter,omitempty"`
+	PathFilter                  []string `json:"path_filter,omitempty"`
+	TypesFilter                 []string `json:"types_filter,omitempty"`
+	TargetBranch                string   `json:"target_branch,omitempty"`
+	TargetTag                   string   `json:"target_tag,omitempty"`
+	Cron                        string   `json:"cron,omitempty"`
+	CronTimeZone                string   `json:"cron_timezone,omitempty"`
+	InsecureSkipSignatureVerify bool     `json:"insecure_skip_signature_verify"`
 }
 
 func (d V2WorkflowHookData) ValidateRef(ctx context.Context, ref string) bool {

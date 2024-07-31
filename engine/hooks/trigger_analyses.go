@@ -42,7 +42,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 
 	// Check analysis status and/or run it
 	allEnded := true
-	allInError := true
+	allInError := len(hre.Analyses) > 0
 	for i := range hre.Analyses {
 		a := &hre.Analyses[i]
 		if a.Status == "" {
@@ -88,7 +88,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 		if len(hre.Analyses) == 1 {
 			hre.LastError = "Repository analysis failed: " + hre.Analyses[0].Error
 		} else {
-			hre.LastError = "All Repository analyses failed"
+			hre.LastError = "All Repository analyses failed: " + hre.Analyses[0].Error
 		}
 		hre.Status = sdk.HookEventStatusError
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
