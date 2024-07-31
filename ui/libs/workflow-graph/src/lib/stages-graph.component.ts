@@ -70,7 +70,6 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                 const jobSpec = workflow.jobs[jobName];
 
                 let node = <GraphNode>{
-                    //type: jobSpec?.strategy?.matrix ? GraphNodeType.Matrix : GraphNodeType.Job,
                     type: GraphNodeType.Job,
                     name: jobName,
                     depends_on: jobSpec?.needs,
