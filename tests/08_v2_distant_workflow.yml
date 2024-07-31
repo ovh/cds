@@ -5,7 +5,6 @@ vars:
   git_repo_code: "it_v2_distant_workflow_code"
   cds_workflow: "WorkflowDistant"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_code}}/docker-debian"
-
 testcases:
 - name: Prepare test
   steps:
@@ -51,7 +50,9 @@ testcases:
       vars:
         emailaddress:
           from: result.emailaddress
-
+    - name: Sleep to avoid pushing workflow and then trigger workflow on push event
+      script: sleep 10
+            
 - name: PushMyfile
   steps:
     - type: v2_push_cds_files_on_repo
