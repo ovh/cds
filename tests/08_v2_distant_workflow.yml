@@ -176,9 +176,10 @@ testcases:
       FILE=/tmp/`uuidgen`
       mkdir -p $FILE && cd $FILE
       {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
+      ls -l
       # Check git_sha
-      cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-2-1-init-gitinfo | grep "GIT_SHA={{.commitSrc}}"
+      cat {{.cds_workflow}}-2-1-init-gitinfo && cat {{.cds_workflow}}-2-1-init-gitinfo | grep "GIT_SHA={{.commitSrc}}"
       # Check workflow_sha
-      cat {{.cds_workflow}}-1-1-init-gitinfo && cat {{.cds_workflow}}-2-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.commitCode}}"
+      cat {{.cds_workflow}}-2-1-init-gitinfo && cat {{.cds_workflow}}-2-1-init-gitinfo | grep "CDS_WORKFLOW_SHA={{.commitCode}}"
     retry: 60
     delay: 1
