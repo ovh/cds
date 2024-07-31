@@ -398,7 +398,7 @@ func (w *V2WorkflowHookData) Scan(src interface{}) error {
 }
 
 type V2JobStrategy struct {
-	Matrix map[string][]string `json:"matrix"`
+	Matrix map[string]interface{} `json:"matrix"`
 }
 
 type V2JobConcurrency struct {

@@ -70,7 +70,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                 const jobSpec = workflow.jobs[jobName];
 
                 let node = <GraphNode>{
-                    type: jobSpec?.strategy?.matrix ? GraphNodeType.Matrix : GraphNodeType.Job,
+                    //type: jobSpec?.strategy?.matrix ? GraphNodeType.Matrix : GraphNodeType.Job,
+                    type: GraphNodeType.Job,
                     name: jobName,
                     depends_on: jobSpec?.needs,
                     job: jobSpec
@@ -255,11 +256,17 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
 
         // Add run job data on nodes
         this._runJobs.forEach(j => {
+            let isMatrix = false;
+            if (j.matrix) {
+                isMatrix = true
+            }
             this.nodes.forEach(n => {
                 if (n.sub_graph) {
                     n.sub_graph.forEach(sub => {
                         if (sub.name === j.job_id) {
-                            if (sub.type === GraphNodeType.Matrix) {
+                            if (isMatrix) {
+                                sub.job.strategy.matrix = j.job.strategy.matrix;
+                                sub.type = GraphNodeType.Matrix;
                                 sub.runs = (sub.runs ?? []).concat(j);
                             } else {
                                 sub.run = j;
@@ -268,7 +275,9 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
                     });
                 } else {
                     if (n.name === j.job_id) {
-                        if (n.type === GraphNodeType.Matrix) {
+                        if (isMatrix) {
+                            n.job.strategy.matrix = j.job.strategy.matrix;
+                            n.type = GraphNodeType.Matrix;
                             n.runs = (n.runs ?? []).concat(j);
                         } else {
                             n.run = j;

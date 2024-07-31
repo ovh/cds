@@ -192,55 +192,13 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		sensitiveDatas = append(sensitiveDatas, buildSensitiveData(vcs.Auth.Token)...)
 	}
 
-	contexts.Vars = make(map[string]interface{})
-	for _, vs := range vss {
-		vsMap := make(map[string]interface{})
-		for _, item := range vs.Items {
-			if strings.HasPrefix(item.Value, "{") && strings.HasSuffix(item.Value, "}") {
-				var jsonValue map[string]interface{}
-				if err := json.Unmarshal([]byte(item.Value), &jsonValue); err != nil {
-					vsMap[item.Name] = item.Value
-					if item.Type == sdk.ProjectVariableTypeSecret {
-						sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
-					}
-				} else {
-					vsMap[item.Name] = jsonValue
-					// also add all value from json
-					if item.Type == sdk.ProjectVariableTypeSecret {
-						datas, err := getAllSensitiveDataFromJson(ctx, jsonValue)
-						if err != nil {
-							return nil, nil, err
-						}
-						sensitiveDatas = append(sensitiveDatas, datas...)
-					}
-
-				}
-			} else if strings.HasPrefix(item.Value, "[") && strings.HasSuffix(item.Value, "]") {
-				var jsonArrayValue []interface{}
-				if err := json.Unmarshal([]byte(item.Value), &jsonArrayValue); err != nil {
-					if item.Type == sdk.ProjectVariableTypeSecret {
-						sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
-					}
-				} else {
-					vsMap[item.Name] = jsonArrayValue
-
-					if item.Type == sdk.ProjectVariableTypeSecret {
-						datas, err := getAllSensitiveDataFromJsonArray(ctx, jsonArrayValue)
-						if err != nil {
-							return nil, nil, err
-						}
-						sensitiveDatas = append(sensitiveDatas, datas...)
-					}
-				}
-			} else {
-				vsMap[item.Name] = item.Value
-			}
-			if item.Type == sdk.ProjectVariableTypeSecret {
-				sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
-			}
-		}
-		contexts.Vars[vs.Name] = vsMap
+	// Build var context
+	varCtx, varSecret, err := buildVarsContext(ctx, vss)
+	if err != nil {
+		return nil, nil, err
 	}
+	contexts.Vars = varCtx
+	sensitiveDatas = append(sensitiveDatas, varSecret...)
 
 	contexts.Env = make(map[string]string)
 	for k, v := range run.Contexts.Env {
@@ -381,6 +339,60 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 
 	sensitiveDatas.Unique()
 	return contexts, sensitiveDatas, nil
+}
+
+func buildVarsContext(ctx context.Context, vss []sdk.ProjectVariableSet) (map[string]interface{}, sdk.StringSlice, error) {
+	varCtx := make(map[string]interface{})
+	sensitiveDatas := sdk.StringSlice{}
+	for _, vs := range vss {
+		vsMap := make(map[string]interface{})
+		for _, item := range vs.Items {
+			if strings.HasPrefix(item.Value, "{") && strings.HasSuffix(item.Value, "}") {
+				var jsonValue map[string]interface{}
+				if err := json.Unmarshal([]byte(item.Value), &jsonValue); err != nil {
+					vsMap[item.Name] = item.Value
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
+					}
+				} else {
+					vsMap[item.Name] = jsonValue
+
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						datas, err := getAllSensitiveDataFromJson(ctx, jsonValue)
+						if err != nil {
+							return nil, nil, err
+						}
+						sensitiveDatas = append(sensitiveDatas, datas...)
+					}
+
+				}
+			} else if strings.HasPrefix(item.Value, "[") && strings.HasSuffix(item.Value, "]") {
+				var jsonArrayValue []interface{}
+				if err := json.Unmarshal([]byte(item.Value), &jsonArrayValue); err != nil {
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
+					}
+				} else {
+					vsMap[item.Name] = jsonArrayValue
+
+					if item.Type == sdk.ProjectVariableTypeSecret {
+						datas, err := getAllSensitiveDataFromJsonArray(ctx, jsonArrayValue)
+						if err != nil {
+							return nil, nil, err
+						}
+						sensitiveDatas = append(sensitiveDatas, datas...)
+					}
+				}
+			} else {
+				vsMap[item.Name] = item.Value
+			}
+			if item.Type == sdk.ProjectVariableTypeSecret {
+				sensitiveDatas = append(sensitiveDatas, buildSensitiveData(item.Value)...)
+			}
+		}
+		varCtx[vs.Name] = vsMap
+	}
+	return varCtx, sensitiveDatas, nil
 }
 
 func getAllSensitiveDataFromJsonArray(ctx context.Context, secretJsonValue []interface{}) ([]string, error) {
