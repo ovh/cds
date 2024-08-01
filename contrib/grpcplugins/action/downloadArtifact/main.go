@@ -3,9 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
-	"io/fs"
-	"net/http"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -105,7 +102,23 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
 		switch {
 		case r.ArtifactManagerIntegrationName == nil: // download from CDN
-			destinationFile, n, err := downloadFromCDN(ctx, &actPlugin.Common, r, response.CDNSignature, *workDirs, path, x.Name, x.Mode)
+
+			cdnApirefhash, has := (*r.ArtifactManagerMetadata)["cdn_api_ref_hash"]
+			if !has {
+				return sdk.Errorf("unable to download artifact %q (caused by: missing cdn_api_ref_hash property", r.Name())
+			}
+
+			cdnType, has := (*r.ArtifactManagerMetadata)["cdn_type"]
+			if !has {
+				return sdk.Errorf("unable to download artifact %q (caused by: missing cdn_type property", r.Name())
+			}
+
+			cdnAddr, has := (*r.ArtifactManagerMetadata)["cdn_http_url"]
+			if !has {
+				return sdk.Errorf("unable to download artifact %q (caused by: missing cdn_http_url property", r.Name())
+			}
+
+			destinationFile, n, err := grpcplugins.DownloadFromCDN(ctx, &actPlugin.Common, response.CDNSignature, *workDirs, cdnApirefhash, cdnType, cdnAddr, path, x.Name, x.Mode)
 			if err != nil {
 				grpcplugins.Errorf(&actPlugin.Common, err.Error())
 				hasError = true
@@ -138,39 +151,4 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 	grpcplugins.Logf(&actPlugin.Common, "There were %d artifacts downloaded", nbSuccess)
 
 	return nil
-}
-
-func downloadFromCDN(ctx context.Context, c *actionplugin.Common, r sdk.V2WorkflowRunResult, CDNSignature string, workDirs sdk.WorkerDirectories, path string, name string, mode fs.FileMode) (string, int64, error) {
-	cdnApirefhash, has := (*r.ArtifactManagerMetadata)["cdn_api_ref_hash"]
-	if !has {
-		return "", 0, sdk.Errorf("unable to download artifact %q (caused by: missing cdn_api_ref_hash property", r.Name())
-	}
-
-	cdnType, has := (*r.ArtifactManagerMetadata)["cdn_type"]
-	if !has {
-		return "", 0, sdk.Errorf("unable to download artifact %q (caused by: missing cdn_type property", r.Name())
-	}
-
-	cdnAddr, has := (*r.ArtifactManagerMetadata)["cdn_http_url"]
-	if !has {
-		return "", 0, sdk.Errorf("unable to download artifact %q (caused by: missing cdn_http_url property", r.Name())
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/item/%s/%s/download", cdnAddr, cdnType, cdnApirefhash), nil)
-	if err != nil {
-		return "", 0, err
-	}
-
-	req.Header.Set("X-CDS-WORKER-SIGNATURE", CDNSignature)
-
-	resp, err := c.HTTPClient.Do(req)
-	if err != nil {
-		return "", 0, err
-	}
-
-	if resp.StatusCode > 200 {
-		return "", 0, sdk.Errorf("unable to download file (HTTP %d)", resp.StatusCode)
-	}
-
-	return grpcplugins.BodyToFile(resp, workDirs, path, name, mode)
 }

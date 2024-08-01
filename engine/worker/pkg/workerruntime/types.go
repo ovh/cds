@@ -117,6 +117,11 @@ type (
 	contextKey int
 )
 
+type CDNSignature struct {
+	Signature  string `json:"signature"`
+	CDNAddress string `json:"cdn_address"`
+}
+
 const (
 	jobID contextKey = iota
 	stepOrder
@@ -161,6 +166,8 @@ type Runtime interface {
 	V2GetRunResult(ctx context.Context, filter V2FilterRunResult) (*V2GetResultResponse, error)
 	V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob
 	V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext
+	V2GetCacheSignature(ctx context.Context, cacheKey string) (*CDNSignature, error)
+	V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error)
 	V2GetProjectKey(ctx context.Context, keyName string, clear bool) (*sdk.ProjectKey, error)
 }
 

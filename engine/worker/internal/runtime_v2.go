@@ -125,6 +125,15 @@ func (wk *CurrentWorker) V2GetProjectKey(ctx context.Context, keyName string, cl
 	return k, err
 }
 
+func (wk *CurrentWorker) V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error) {
+	links, err := wk.clientV2.V2QueueGetCacheLinks(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, cacheKey)
+	return links, err
+}
+
+func (wk *CurrentWorker) V2GetCacheSignature(ctx context.Context, cacheKey string) (*workerruntime.CDNSignature, error) {
+	return wk.WorkerCacheSignatureV2(cacheKey)
+}
+
 func (wk *CurrentWorker) V2GetJobRun(ctx context.Context) *sdk.V2WorkflowRunJob {
 	return wk.currentJobV2.runJob
 }

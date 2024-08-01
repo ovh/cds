@@ -336,6 +336,7 @@ type V2QueueClient interface {
 	V2QueuePushJobInfo(ctx context.Context, regionName string, jobRunID string, msg sdk.V2SendJobRunInfo) error
 	V2QueueWorkerTakeJob(ctx context.Context, region, runJobID string) (*sdk.V2TakeJobResponse, error)
 	V2QueueJobStepUpdate(ctx context.Context, regionName string, id string, stepsStatus sdk.JobStepsStatus) error
+	V2QueueGetCacheLinks(ctx context.Context, regionName string, id string, cacheKey string) (*sdk.CDNItemLinks, error)
 }
 
 // QueueClient exposes queue related functions

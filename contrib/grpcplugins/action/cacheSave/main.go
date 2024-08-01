@@ -88,18 +88,9 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 	if len(itemsToArchive) == 0 {
 		return sdk.Errorf("there is nothing to cache")
 	}
-	// Check if file or directory exist
-	if jobCtx.Integrations != nil && jobCtx.Integrations.ArtifactManager.Name != "" {
-		return p.performFromArtifactory(ctx, jobCtx, cacheKey, workDirs, itemsToArchive)
-	} else {
-		return p.performFromCDN(jobCtx, cacheKey, workDirs, itemsToArchive)
-	}
-}
 
-func (p *cacheSavePlugin) performFromArtifactory(ctx context.Context, jobCtx sdk.WorkflowRunJobsContext, cacheKey string, workDirs *sdk.WorkerDirectories, files []string) error {
-	uploadURL := grpcplugins.BuildCacheURL(jobCtx.Integrations.ArtifactManager, jobCtx.CDS.ProjectKey, cacheKey)
 	archivePath := workDirs.WorkingDir + "/cache.tar.gz"
-	if err := archiver.Archive(files, archivePath); err != nil {
+	if err := archiver.Archive(itemsToArchive, archivePath); err != nil {
 		return fmt.Errorf("unable to create cache archive: %v", err)
 	}
 
@@ -113,6 +104,18 @@ func (p *cacheSavePlugin) performFromArtifactory(ctx context.Context, jobCtx sdk
 		// unable to cast the file
 		return fmt.Errorf("unable to cast reader")
 	}
+
+	// Check if file or directory exist
+	if jobCtx.Integrations != nil && jobCtx.Integrations.ArtifactManager.Name != "" {
+		return p.performFromArtifactory(ctx, jobCtx, cacheKey, reader)
+	} else {
+		return p.performFromCDN(ctx, cacheKey, reader)
+	}
+}
+
+func (p *cacheSavePlugin) performFromArtifactory(ctx context.Context, jobCtx sdk.WorkflowRunJobsContext, cacheKey string, reader io.ReadSeeker) error {
+	uploadURL := grpcplugins.BuildCacheURL(jobCtx.Integrations.ArtifactManager, jobCtx.CDS.ProjectKey, cacheKey)
+
 	_, d, err := grpcplugins.ArtifactoryItemUpload(ctx, &p.Common, jobCtx.Integrations.ArtifactManager, reader, map[string]string{}, uploadURL)
 	if err != nil {
 		return err
@@ -122,8 +125,18 @@ func (p *cacheSavePlugin) performFromArtifactory(ctx context.Context, jobCtx sdk
 	return nil
 }
 
-func (p *cacheSavePlugin) performFromCDN(jobCtx sdk.WorkflowRunJobsContext, cacheKey string, workDirs *sdk.WorkerDirectories, files []string) error {
-	return sdk.ErrNotImplemented
+func (p *cacheSavePlugin) performFromCDN(ctx context.Context, cacheKey string, reader io.ReadSeeker) error {
+	sign, err := grpcplugins.GetV2CacheSignature(ctx, &p.Common, cacheKey)
+	if err != nil {
+		return err
+	}
+
+	_, d, err := grpcplugins.CDNItemUpload(ctx, &p.Common, sign.CDNAddress, sign.Signature, reader)
+	if err != nil {
+		return err
+	}
+	grpcplugins.Successf(&p.Common, "Cache uploaded in %.3fs", d.Seconds())
+	return nil
 }
 
 func (actPlugin *cacheSavePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {

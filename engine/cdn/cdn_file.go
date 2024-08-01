@@ -32,7 +32,12 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	case sig.Worker.FileName != "":
 		itemType = sdk.CDNTypeItemRunResult
 	case sig.Worker.CacheTag != "":
-		itemType = sdk.CDNTypeItemWorkerCache
+		if sig.RunJobID != "" {
+			itemType = sdk.CDNTypeItemWorkerCacheV2
+		} else {
+			itemType = sdk.CDNTypeItemWorkerCache
+		}
+
 	default:
 		return nil, sdk.WrapError(sdk.ErrWrongRequest, "invalid item type")
 	}
@@ -215,7 +220,7 @@ func (s *Service) storeFile(ctx context.Context, sig cdn.Signature, reader io.Re
 	s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
 
 	// For worker cache item clean others with same ref to purge old cached data
-	if itemType == sdk.CDNTypeItemWorkerCache {
+	if itemType == sdk.CDNTypeItemWorkerCache || itemType == sdk.CDNTypeItemWorkerCacheV2 {
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return nil, sdk.WithStack(err)

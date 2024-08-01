@@ -2772,6 +2772,21 @@ func (mr *MockHatcheryServiceClientMockRecorder) V2HatcheryTakeJob(ctx, regionNa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2HatcheryTakeJob", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2HatcheryTakeJob), ctx, regionName, jobRunID)
 }
 
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockHatcheryServiceClient) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockHatcheryServiceClientMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockHatcheryServiceClient)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
+}
+
 // V2QueueGetJobRun mocks base method.
 func (m *MockHatcheryServiceClient) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
 	m.ctrl.T.Helper()
@@ -4191,6 +4206,21 @@ func NewMockV2QueueClient(ctrl *gomock.Controller) *MockV2QueueClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockV2QueueClient) EXPECT() *MockV2QueueClientMockRecorder {
 	return m.recorder
+}
+
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockV2QueueClient) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockV2QueueClientMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockV2QueueClient)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
 }
 
 // V2QueueGetJobRun mocks base method.
@@ -10658,6 +10688,21 @@ func (mr *MockInterfaceMockRecorder) UserUpdate(ctx, username, user interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserUpdate", reflect.TypeOf((*MockInterface)(nil).UserUpdate), ctx, username, user)
 }
 
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockInterface) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockInterfaceMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockInterface)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
+}
+
 // V2QueueGetJobRun mocks base method.
 func (m *MockInterface) V2QueueGetJobRun(ctx context.Context, regionName, id string) (*sdk.V2QueueJobInfo, error) {
 	m.ctrl.T.Helper()
@@ -12298,6 +12343,21 @@ func (m *MockV2WorkerInterface) ProjectIntegrationWorkerHookGet(projectKey, inte
 func (mr *MockV2WorkerInterfaceMockRecorder) ProjectIntegrationWorkerHookGet(projectKey, integrationName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProjectIntegrationWorkerHookGet", reflect.TypeOf((*MockV2WorkerInterface)(nil).ProjectIntegrationWorkerHookGet), projectKey, integrationName)
+}
+
+// V2QueueGetCacheLinks mocks base method.
+func (m *MockV2WorkerInterface) V2QueueGetCacheLinks(ctx context.Context, regionName, id, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2QueueGetCacheLinks", ctx, regionName, id, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2QueueGetCacheLinks indicates an expected call of V2QueueGetCacheLinks.
+func (mr *MockV2WorkerInterfaceMockRecorder) V2QueueGetCacheLinks(ctx, regionName, id, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2QueueGetCacheLinks", reflect.TypeOf((*MockV2WorkerInterface)(nil).V2QueueGetCacheLinks), ctx, regionName, id, cacheKey)
 }
 
 // V2QueueGetJobRun mocks base method.

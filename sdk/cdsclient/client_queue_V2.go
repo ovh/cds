@@ -4,12 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
+
+func (c *client) V2QueueGetCacheLinks(ctx context.Context, regionName string, id string, cacheKey string) (*sdk.CDNItemLinks, error) {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/cache/%s/link", regionName, id, url.PathEscape(cacheKey))
+	var result sdk.CDNItemLinks
+	if _, err := c.GetJSON(ctx, path, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
 
 func (c *client) V2QueueJobStepUpdate(ctx context.Context, regionName string, jobRunID string, stepsStatus sdk.JobStepsStatus) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/step", regionName, jobRunID)

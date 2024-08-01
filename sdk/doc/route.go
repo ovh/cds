@@ -149,6 +149,8 @@ func CleanURLParameter(u string) string {
 		u = "key-name"
 	case "insightKey":
 		u = "insight-key"
+	case "cacheKey":
+		u = "cache-key"
 	}
 	return u
 }
