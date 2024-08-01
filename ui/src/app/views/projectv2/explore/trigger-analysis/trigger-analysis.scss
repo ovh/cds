@@ -1,0 +1,29 @@
+nz-result {
+  .message {
+    width: 100%;
+    text-align: center;
+    [nz-button] {
+      margin-top: 14px;
+      color: inherit;
+    }
+  }
+
+  [nz-result-extra] {
+    text-align: left;
+    dl {
+      display: grid;
+      grid-gap: 4px 16px;
+      grid-template-columns: max-content;
+    }
+    dt {
+      font-weight: bold;
+    }
+    dd {
+      margin: 0;
+      grid-column-start: 2;
+      ul {
+        padding-left: 14px;
+      }
+    }
+  }
+}

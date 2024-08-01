@@ -1,0 +1,92 @@
+<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()" s>
+  <nz-form-item>
+    <nz-form-label [nzSpan]="6" nzFor="repository">Repository</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a repository" formControlName="repository"
+        id="repository" (ngModelChange)="repositoryChange($event)">
+        <ng-container *ngFor="let entry of repositories | keyvalue">
+          <nz-option *ngFor="let repo of entry.value" [nzLabel]="entry.key+'/'+repo.name"
+            [nzValue]="entry.key+'/'+repo.name"></nz-option>
+        </ng-container>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+  <nz-form-item>
+    <nz-form-label [nzSpan]="6" nzFor="branch">Branch</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a branch" formControlName="branch" id="branch">
+        <nz-option *ngFor="let branch of branches" [nzLabel]="branch" [nzValue]="branch"></nz-option>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+  
+  <nz-form-item *ngIf="!response">
+    <nz-form-control [nzSpan]="12" [nzOffset]="6">
+      <button nz-button nzType="primary">Start</button>
+    </nz-form-control>
+  </nz-form-item>
+</form>
+
+<nz-result *ngIf="response && response.status === 'InProgress'" nzTitle="Analysis in progress." [nzSubTitle]="subTitle" [nzIcon]="iconTemplate">
+  <ng-template #iconTemplate>
+    <span nz-icon nzType="loading" nzTheme="outline"></span>
+  </ng-template>
+  <ng-template #subTitle>
+    <div class="message">
+      <b>Analysis ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{response.analysis_id}}"></span><br />
+      <b>Status:</b> {{response?.status}}
+    </div>
+  </ng-template>
+</nz-result>
+
+<nz-result *ngIf="analysis && analysis.status === 'Error'" nzTitle="Analysis failed." [nzSubTitle]="subTitle" nzStatus="error">
+  <ng-template #subTitle>
+    <div class="message">
+      <b>Analysis ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{analysis.id}}"></span><br />
+      <b>Status:</b> {{analysis?.status}}<br />
+      <button nz-button (click)="clearForm()">Clear</button>
+    </div>
+  </ng-template>
+  <div nz-result-extra>
+    <dl>
+      <dt>Error</dt>
+      <dd>{{analysis?.data?.error}}</dd>
+      <dt>Entities</dt>
+      <dd>
+        <ul>
+          <li *ngFor="let entity of analysis.data.entities">
+            {{entity.path}}{{entity.file_name}} - {{entity.status}}
+          </li>
+        </ul>
+      </dd>
+    </dl>
+  </div>
+</nz-result>
+
+<nz-result *ngIf="analysis && analysis.status === 'Success'" nzTitle="Analysis succeed." [nzSubTitle]="subTitle" nzStatus="success">
+  <ng-template #subTitle>
+    <div class="message">
+      <b>Analysis ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{analysis.id}}"></span><br />
+      <b>Status:</b> {{analysis?.status}}<br />
+      <button nz-button (click)="clearForm()">Clear</button>
+    </div>
+  </ng-template>
+  <div nz-result-extra>
+    <dl>
+      <dt>Ref</dt>
+      <dd>{{analysis?.ref}}</dd>
+      <dt>Commit</dt>
+      <dd>{{analysis?.commit}}</dd>
+      <dt>User</dt>
+      <dd>{{analysis?.data?.cds_username}}</dd>
+      <dt>Entities</dt>
+      <dd>
+        <ul>
+          <li *ngFor="let entity of analysis.data.entities">
+            {{entity.path}}{{entity.file_name}} - {{entity.status}}
+          </li>
+        </ul>
+      </dd>
+    </dl>
+  </div>
+</nz-result>

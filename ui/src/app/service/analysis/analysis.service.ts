@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { Analysis, AnalysisRequest, AnalysisResponse } from 'app/model/analysis.model';
 
 export class AnalysisEvent {
     vcsID: string
@@ -32,6 +33,16 @@ export class AnalysisService {
             return;
         }
         this._analysis.next(event);
+    }
+
+    triggerAnalysis(request: AnalysisRequest): Observable<AnalysisResponse> {
+        let encodedRepo = encodeURIComponent(request.repoName);
+        return this._http.post<AnalysisResponse>(`/v2/project/${request.projectKey}/vcs/${request.vcsName}/repository/${encodedRepo}/analysis`, request);
+    }
+
+    getAnalysis(projKey: string, vcsName: string, repoName: string, id: string): Observable<Analysis>  {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<Analysis>(`/v2/project/${projKey}/vcs/${vcsName}/repository/${encodedRepo}/analysis/${id}`);
     }
 
 }
