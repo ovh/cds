@@ -10,6 +10,8 @@ import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
 import { VCSProject } from 'app/model/vcs.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
+import { NzDrawerService } from 'ng-zorro-antd/drawer';
+import { ProjectV2TriggerAnalysisComponent } from './trigger-analysis/trigger-analysis.component';
 
 @Component({
     selector: 'app-projectv2-explore-repository',
@@ -37,7 +39,8 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         private _projectService: ProjectService,
         private _cd: ChangeDetectorRef,
         private _toastService: ToastService,
-        private _router: Router
+        private _router: Router,
+        private _drawerService: NzDrawerService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
@@ -136,5 +139,19 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         delete this.selectedHookEvent;
         delete this.selectedAnalysis;
         delete this.selectedAnalysisEntities;
+    }
+
+    openTriggerAnalysisDrawer(): void {
+        const drawerRef = this._drawerService.create<ProjectV2TriggerAnalysisComponent, { value: string }, string>({
+			nzTitle: 'Trigger repository analysis',
+			nzContent: ProjectV2TriggerAnalysisComponent,
+			nzContentParams: {
+				params: {
+					repository: this.repository.name
+				}
+			},
+			nzSize: 'large'
+		});
+		drawerRef.afterClose.subscribe(data => { });
     }
 }

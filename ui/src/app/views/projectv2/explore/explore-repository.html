@@ -79,6 +79,9 @@
         </div>
         <div class="footer">
             <div class="buttons">
+                <button nz-button nzType="default" [nzLoading]="loading" (click)="openTriggerAnalysisDrawer()">
+                    Trigger analysis
+                </button>
                 <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
                     nzPopconfirmTitle="Are you sure you want to remove this repository ?"
                     (nzOnConfirm)="removeRepositoryFromProject()" nzPopconfirmPlacement="topRight">
