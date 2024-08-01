@@ -117,6 +117,9 @@ func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item s
 	case sdk.CDNTypeItemRunResultV2:
 		artRef, _ := item.GetCDNRunResultApiRefV2()
 		projectKey = artRef.ProjectKey
+	case sdk.CDNTypeItemWorkerCacheV2:
+		artRef, _ := item.GetCDNWorkerCacheApiRef()
+		projectKey = artRef.ProjectKey
 	default:
 		return sdk.WrapError(sdk.ErrInvalidData, "wrong item type %s", item.Type)
 	}
@@ -142,6 +145,19 @@ func (s *Service) itemAccessCheck(ctx context.Context, req *http.Request, item s
 		if err := s.Client.WorkflowAccess(ctx, projectKey, workflowID, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
 		}
+	case sdk.CDNTypeItemWorkerCacheV2:
+		if sessionID != "" {
+			if err := s.Client.ProjectV2Access(ctx, projectKey, sessionID, sdk.CDNTypeItemRunResultV2); err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrNotFound)
+			}
+			return nil
+		} else if signature != nil {
+			// Any worker associated to the current project can get the cache
+			if projectKey == signature.ProjectKey {
+				return nil
+			}
+		}
+		return sdk.WithStack(sdk.ErrNotFound)
 	case sdk.CDNTypeItemWorkerCache:
 		if err := s.Client.ProjectAccess(ctx, projectKey, sessionID, item.Type); err != nil {
 			return sdk.NewErrorWithStack(err, sdk.ErrNotFound)

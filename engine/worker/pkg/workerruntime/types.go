@@ -119,7 +119,7 @@ type (
 
 type CDNSignature struct {
 	Signature  string `json:"signature"`
-	CDNAddress string `json:""cdn_address`
+	CDNAddress string `json:"cdn_address"`
 }
 
 const (

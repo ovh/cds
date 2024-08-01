@@ -156,7 +156,7 @@ func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
 	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
 }
 
-func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, projKey string, cacheTag string) (*sdk.CDNItem, error) {
+func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, cacheType string, projKey string, cacheTag string) (*sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
@@ -166,7 +166,7 @@ func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.
 		AND to_delete = false
     ORDER BY created DESC
     LIMIT 1
-  `).Args(sdk.CDNTypeItemWorkerCache, projKey, cacheTag)
+  `).Args(cacheType, projKey, cacheTag)
 	return getItem(ctx, m, db, query)
 }
 
@@ -198,14 +198,14 @@ func LoadByJobRunID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecut
 
 // LoadByRunJobID load an item by his job id and type
 func LoadByRunJobID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, runJobID string, opts ...gorpmapper.GetOptionFunc) ([]sdk.CDNItem, error) {
-  query := gorpmapper.NewQuery(`
+	query := gorpmapper.NewQuery(`
 		SELECT *
 		FROM item
 		WHERE api_ref->>'run_job_id' = $1
 		AND to_delete = false
 		ORDER BY created DESC
 	`).Args(runJobID)
-  return getItems(ctx, m, db, query, opts...)
+	return getItems(ctx, m, db, query, opts...)
 }
 
 // LoadByAPIRefHashAndType load an item by his job id, step order and type

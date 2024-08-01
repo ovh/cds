@@ -238,8 +238,8 @@ func (s *Service) getItemsHandler() service.Handler {
 		switch itemType {
 		case sdk.CDNTypeItemRunResult:
 			return s.getArtifacts(ctx, r, w)
-		case sdk.CDNTypeItemWorkerCache:
-			return s.getWorkerCache(ctx, r, w)
+		case sdk.CDNTypeItemWorkerCache, sdk.CDNTypeItemWorkerCacheV2:
+			return s.getWorkerCache(ctx, r, w, string(itemType))
 		}
 
 		return sdk.WrapError(sdk.ErrInvalidData, "this type of items cannot be get")
@@ -258,14 +258,14 @@ func (s *Service) getArtifacts(ctx context.Context, r *http.Request, w http.Resp
 	return service.WriteJSON(w, items, http.StatusOK)
 }
 
-func (s *Service) getWorkerCache(ctx context.Context, r *http.Request, w http.ResponseWriter) error {
+func (s *Service) getWorkerCache(ctx context.Context, r *http.Request, w http.ResponseWriter, cacheType string) error {
 	projectKey := r.FormValue("projectkey")
 	cachetag := r.FormValue("cachetag")
 
 	if projectKey == "" || cachetag == "" {
 		return sdk.WrapError(sdk.ErrWrongRequest, "invalid data to get worker cache")
 	}
-	item, err := item.LoadWorkerCacheItemByProjectAndCacheTag(ctx, s.Mapper, s.mustDBWithCtx(ctx), projectKey, cachetag)
+	item, err := item.LoadWorkerCacheItemByProjectAndCacheTag(ctx, s.Mapper, s.mustDBWithCtx(ctx), cacheType, projectKey, cachetag)
 	if err != nil {
 		return err
 	}

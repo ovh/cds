@@ -433,7 +433,7 @@ func (api *API) getCacheLinkHandler() ([]service.RbacChecker, service.Handler) {
 				return err
 			}
 
-			itemsLinks, err := cdn.ListItems(ctx, api.mustDBWithCtx(ctx), sdk.CDNTypeItemWorkerCache, map[string]string{
+			itemsLinks, err := cdn.ListItems(ctx, api.mustDBWithCtx(ctx), sdk.CDNTypeItemWorkerCacheV2, map[string]string{
 				cdn.ParamProjectKey: p.Key,
 				cdn.ParamCacheTag:   cacheKey,
 			})
