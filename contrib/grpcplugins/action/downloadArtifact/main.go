@@ -118,7 +118,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 				return sdk.Errorf("unable to download artifact %q (caused by: missing cdn_http_url property", r.Name())
 			}
 
-			destinationFile, n, err := grpcplugins.DownloadFromCDN(ctx, &actPlugin.Common, r, response.CDNSignature, *workDirs, cdnApirefhash, cdnType, cdnAddr, path, x.Name, x.Mode)
+			destinationFile, n, err := grpcplugins.DownloadFromCDN(ctx, &actPlugin.Common, response.CDNSignature, *workDirs, cdnApirefhash, cdnType, cdnAddr, path, x.Name, x.Mode)
 			if err != nil {
 				grpcplugins.Errorf(&actPlugin.Common, err.Error())
 				hasError = true

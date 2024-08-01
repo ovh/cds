@@ -69,7 +69,7 @@ testcases:
                     key: mycache
                     path: myfile
                 - id: cacheCheck
-                  run: echo ${{ steps.cacheCheck.outputs.cache-hit }}    
+                  run: echo ${{ steps.cacheGet.outputs.cache-hit }}    
                 - run: date > myfile
             getCache:
               runs-on: .cds/worker-models/debian.yml  
