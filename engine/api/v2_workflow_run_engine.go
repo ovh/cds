@@ -199,8 +199,45 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return errRetrieve
 	}
 
+	vss := make([]sdk.ProjectVariableSet, 0, len(run.WorkflowData.Workflow.VariableSets))
+	for _, vs := range run.WorkflowData.Workflow.VariableSets {
+		vsDB, err := project.LoadVariableSetByName(ctx, api.mustDB(), run.ProjectKey, vs)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
+		// If not found stop the run
+		if err != nil {
+			return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{sdk.V2WorkflowRunInfo{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("variable set %s not found on project", vs),
+			}}, u)
+		}
+		vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID)
+		if err != nil {
+			return err
+		}
+		vss = append(vss, *vsDB)
+	}
+	variableSetCtx, _, err := buildVarsContext(ctx, vss)
+	if err != nil {
+		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to compute variableset into job context: %v", err),
+		}}, u)
+	}
+
 	// Enqueue JOB
-	runJobs := prepareRunJobs(ctx, *run, wrEnqueue, jobsToQueue, sdk.StatusWaiting, *u)
+	runJobs, errorMsg, err := prepareRunJobs(ctx, api.mustDB(), *run, variableSetCtx, wrEnqueue, jobsToQueue, sdk.StatusWaiting, runJobsContexts, *u)
+	if err != nil {
+		return err
+	}
+	if errorMsg != nil {
+		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{*errorMsg}, u)
+	}
 
 	// Compute worker model on runJobs if needed
 	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u, wrEnqueue.IsAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
@@ -209,7 +246,16 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	runJobsInfos, runUpdated := computeRunJobsWorkerModel(ctx, api.mustDB(), api.Cache, wref, run, runJobs)
 
-	runJobs = append(runJobs, prepareRunJobs(ctx, *run, wrEnqueue, skippedJobs, sdk.StatusSkipped, *u)...)
+	//
+	js, errorMsg, err := prepareRunJobs(ctx, api.mustDB(), *run, variableSetCtx, wrEnqueue, skippedJobs, sdk.StatusSkipped, runJobsContexts, *u)
+	if err != nil {
+		return err
+	}
+	if errorMsg != nil {
+		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{*errorMsg}, u)
+	}
+
+	runJobs = append(runJobs, js...)
 
 	tx, errTx := api.mustDB().Begin()
 	if errTx != nil {
@@ -298,6 +344,28 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 	return nil
+}
+
+func failRunWithMessage(ctx context.Context, db *gorp.DbMap, cache cache.Store, run *sdk.V2WorkflowRun, msgs []sdk.V2WorkflowRunInfo, u *sdk.AuthentifiedUser) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return sdk.WithStack(err)
+	}
+	defer tx.Rollback()
+	for _, msg := range msgs {
+		if err := workflow_v2.InsertRunInfo(ctx, tx, &msg); err != nil {
+			return err
+		}
+	}
+	run.Status = sdk.V2WorkflowRunStatusFail
+	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return sdk.WithStack(err)
+	}
+	event_v2.PublishRunEvent(ctx, cache, sdk.EventRunEnded, *run, *u)
+	return err
 }
 
 func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2WorkflowRun, runJobsContexts sdk.JobsResultContext, runGatesContexts sdk.JobsGateContext) error {
@@ -700,8 +768,17 @@ func computeRunJobsWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.
 	return runJobInfos, runUpdated
 }
 
-func prepareRunJobs(_ context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, jobStatus sdk.V2WorkflowRunJobStatus, u sdk.AuthentifiedUser) []sdk.V2WorkflowRunJob {
+func prepareRunJobs(ctx context.Context, db gorp.SqlExecutor, run sdk.V2WorkflowRun, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]sdk.V2Job, jobStatus sdk.V2WorkflowRunJobStatus, runJobsContexts sdk.JobsResultContext, u sdk.AuthentifiedUser) ([]sdk.V2WorkflowRunJob, *sdk.V2WorkflowRunInfo, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
+
+	rootJobContext := sdk.WorkflowRunJobsContext{
+		WorkflowRunContext: sdk.WorkflowRunContext{
+			CDS: run.Contexts.CDS,
+			Git: run.Contexts.Git,
+			Env: run.Contexts.Env,
+		},
+		Jobs: runJobsContexts,
+	}
 
 	// Compute Matrix
 	for jobID, jobDef := range jobsToQueue {
@@ -726,15 +803,121 @@ func prepareRunJobs(_ context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2Wo
 
 		// Compute job matrix strategy
 		keys := make([]string, 0)
-		if jobDef.Strategy != nil {
-			for k := range jobDef.Strategy.Matrix {
+		interpolatedMatrix := make(map[string][]string)
+		if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
+			vss := make([]sdk.ProjectVariableSet, 0)
+			for _, vs := range jobDef.VariableSets {
+				if _, has := runVarsetCtx[vs]; !has {
+					vsDB, err := project.LoadVariableSetByName(ctx, db, run.ProjectKey, vs)
+					if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+						return nil, nil, err
+					}
+					// If not found stop the run
+					if err != nil {
+						msg := &sdk.V2WorkflowRunInfo{
+							WorkflowRunID: run.ID,
+							IssuedAt:      time.Now(),
+							Level:         sdk.WorkflowRunInfoLevelError,
+							Message:       fmt.Sprintf("variable set %s not found on project", vs),
+						}
+						return nil, msg, nil
+					}
+					vsDB.Items, err = project.LoadVariableSetAllItem(ctx, db, vsDB.ID)
+					if err != nil {
+						return nil, nil, err
+					}
+					vss = append(vss, *vsDB)
+				}
+			}
+			jobVarsCtx, _, err := buildVarsContext(ctx, vss)
+			if err != nil {
+				return nil, nil, err
+			}
+			for k, v := range runVarsetCtx {
+				jobVarsCtx[k] = v
+			}
+			rootJobContext.Vars = jobVarsCtx
+			bts, _ := json.Marshal(rootJobContext)
+			var mapContexts map[string]interface{}
+			_ = json.Unmarshal(bts, &mapContexts) // error cannot happen here
+
+			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+
+			for k, v := range jobDef.Strategy.Matrix {
 				keys = append(keys, k)
+
+				matrixValues := make([]string, 0)
+				if slice, ok := v.([]interface{}); ok {
+					for _, sliceValue := range slice {
+						valueString, ok := sliceValue.(string)
+						if !ok {
+							msg := &sdk.V2WorkflowRunInfo{
+								WorkflowRunID: run.ID,
+								IssuedAt:      time.Now(),
+								Level:         sdk.WorkflowRunInfoLevelError,
+								Message:       fmt.Sprintf("matrix value %v is not a string", sliceValue),
+							}
+							return nil, msg, nil
+						}
+
+						interpolatedValue, err := ap.InterpolateToString(ctx, valueString)
+						if err != nil {
+							msg := &sdk.V2WorkflowRunInfo{
+								WorkflowRunID: run.ID,
+								IssuedAt:      time.Now(),
+								Level:         sdk.WorkflowRunInfoLevelError,
+								Message:       fmt.Sprintf("unable to interpolate matrix value %s: %v", valueString, err),
+							}
+							return nil, msg, nil
+						}
+						matrixValues = append(matrixValues, interpolatedValue)
+					}
+				} else if valueString, ok := v.(string); ok {
+					interpolatedValue, err := ap.Interpolate(ctx, valueString)
+					if err != nil {
+						msg := &sdk.V2WorkflowRunInfo{
+							WorkflowRunID: run.ID,
+							IssuedAt:      time.Now(),
+							Level:         sdk.WorkflowRunInfoLevelError,
+							Message:       fmt.Sprintf("unable to interpolate %s: %v", valueString, err),
+						}
+						return nil, msg, nil
+					}
+					interpoaltedSlice, ok := interpolatedValue.([]interface{})
+					if !ok {
+						msg := &sdk.V2WorkflowRunInfo{
+							WorkflowRunID: run.ID,
+							IssuedAt:      time.Now(),
+							Level:         sdk.WorkflowRunInfoLevelError,
+							Message:       fmt.Sprintf("interpolated matrix is not a string slice, got %T", interpolatedValue),
+						}
+						return nil, msg, nil
+					}
+					stringsValue := make([]string, 0, len(interpoaltedSlice))
+					for _, vle := range interpoaltedSlice {
+						stringsValue = append(stringsValue, fmt.Sprintf("%v", vle))
+					}
+					matrixValues = stringsValue
+				} else {
+					msg := &sdk.V2WorkflowRunInfo{
+						WorkflowRunID: run.ID,
+						IssuedAt:      time.Now(),
+						Level:         sdk.WorkflowRunInfoLevelError,
+						Message:       fmt.Sprintf("unable to use matrix key %s of type %T", k, v),
+					}
+					return nil, msg, nil
+				}
+				interpolatedMatrix[k] = matrixValues
+
 			}
 		}
 
 		alls := make([]map[string]string, 0)
-		if jobDef.Strategy != nil {
-			generateMatrix(jobDef.Strategy.Matrix, keys, 0, make(map[string]string), &alls)
+		if jobDef.Strategy != nil && len(interpolatedMatrix) > 0 {
+			generateMatrix(interpolatedMatrix, keys, 0, make(map[string]string), &alls)
+			for k := range interpolatedMatrix {
+				jobDef.Strategy.Matrix[k] = interpolatedMatrix[k]
+			}
 		}
 
 		if len(alls) == 0 {
@@ -797,7 +980,7 @@ func prepareRunJobs(_ context.Context, run sdk.V2WorkflowRun, wrEnqueue sdk.V2Wo
 			rj.GateInputs = jobEvent.Inputs
 		}
 	}
-	return runJobs
+	return runJobs, nil, nil
 }
 
 func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, current map[string]string, alls *[]map[string]string) {
