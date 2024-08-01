@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -98,6 +99,62 @@ func GetRunResults(workerHTTPPort int32) ([]sdk.WorkflowRunResult, error) {
 		return nil, fmt.Errorf("unable to unmarshal response: %v", err)
 	}
 	return results, nil
+}
+
+func GetV2CacheLink(ctx context.Context, c *actionplugin.Common, cacheKey string) (*sdk.CDNItemLinks, error) {
+	path := fmt.Sprintf("/v2/cache/signature/%s/link", cacheKey)
+	req, err := c.NewRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.DoRequest(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable toworker cache signature")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read body on get cache signature %s: %v", path, err)
+	}
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot get run result %s: HTTP %d", path, resp.StatusCode)
+	}
+
+	var result sdk.CDNItemLinks
+	if err := sdk.JSONUnmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response: %v", err)
+	}
+	return &result, nil
+}
+
+func GetV2CacheSignature(ctx context.Context, c *actionplugin.Common, cacheKey string) (*workerruntime.CDNSignature, error) {
+	path := "/v2/cache/signature/" + url.PathEscape(cacheKey)
+	req, err := c.NewRequest(ctx, "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.DoRequest(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable toworker cache signature")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read body on get cache signature %s: %v", path, err)
+	}
+
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("cannot get run result %s: HTTP %d", path, resp.StatusCode)
+	}
+
+	var result workerruntime.CDNSignature
+	if err := sdk.JSONUnmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response: %v", err)
+	}
+	return &result, nil
 }
 
 func GetV2RunResults(ctx context.Context, c *actionplugin.Common, filter workerruntime.V2FilterRunResult) (*workerruntime.V2GetResultResponse, error) {
@@ -835,6 +892,26 @@ func DownloadFromArtifactory(ctx context.Context, c *actionplugin.Common, integr
 	req.Header.Set("Authorization", "Bearer "+rtToken)
 
 	Logf(c, "Downloading file from %s...", downloadURI)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return "", 0, err
+	}
+
+	if resp.StatusCode > 200 {
+		return "", 0, sdk.Errorf("unable to download file (HTTP %d)", resp.StatusCode)
+	}
+
+	return BodyToFile(resp, workDirs, path, name, mode)
+}
+
+func DownloadFromCDN(ctx context.Context, c *actionplugin.Common, CDNSignature string, workDirs sdk.WorkerDirectories, apirefHash, cdnType, cdnAdresse, path string, name string, mode fs.FileMode) (string, int64, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/item/%s/%s/download", cdnAdresse, cdnType, apirefHash), nil)
+	if err != nil {
+		return "", 0, err
+	}
+
+	req.Header.Set("X-CDS-WORKER-SIGNATURE", CDNSignature)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {

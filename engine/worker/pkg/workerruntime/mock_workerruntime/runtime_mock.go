@@ -404,6 +404,36 @@ func (mr *MockRuntimeMockRecorder) V2AddRunResult(ctx, req interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2AddRunResult", reflect.TypeOf((*MockRuntime)(nil).V2AddRunResult), ctx, req)
 }
 
+// V2GetCacheLink mocks base method.
+func (m *MockRuntime) V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2GetCacheLink", ctx, cacheKey)
+	ret0, _ := ret[0].(*sdk.CDNItemLinks)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2GetCacheLink indicates an expected call of V2GetCacheLink.
+func (mr *MockRuntimeMockRecorder) V2GetCacheLink(ctx, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetCacheLink", reflect.TypeOf((*MockRuntime)(nil).V2GetCacheLink), ctx, cacheKey)
+}
+
+// V2GetCacheSignature mocks base method.
+func (m *MockRuntime) V2GetCacheSignature(ctx context.Context, cacheKey string) (*workerruntime.CDNSignature, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "V2GetCacheSignature", ctx, cacheKey)
+	ret0, _ := ret[0].(*workerruntime.CDNSignature)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// V2GetCacheSignature indicates an expected call of V2GetCacheSignature.
+func (mr *MockRuntimeMockRecorder) V2GetCacheSignature(ctx, cacheKey interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "V2GetCacheSignature", reflect.TypeOf((*MockRuntime)(nil).V2GetCacheSignature), ctx, cacheKey)
+}
+
 // V2GetJobContext mocks base method.
 func (m *MockRuntime) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
 	m.ctrl.T.Helper()

@@ -193,6 +193,20 @@ func (wk *CurrentWorker) WorkerCacheSignature(tag string) (string, error) {
 	return signature, sdk.WrapError(err, "cannot sign log message")
 }
 
+func (wk *CurrentWorker) WorkerCacheSignatureV2(cacheKey string) (*workerruntime.CDNSignature, error) {
+	sig := cdn.Signature{
+		ProjectKey: wk.currentJobV2.runJob.ProjectKey,
+		RunJobID:   wk.currentJobV2.runJob.ID,
+		Worker: &cdn.SignatureWorker{
+			WorkerID:   wk.id,
+			WorkerName: wk.Name(),
+			CacheTag:   cacheKey,
+		},
+	}
+	signature, err := jws.Sign(wk.signer, sig)
+	return &workerruntime.CDNSignature{Signature: signature, CDNAddress: wk.CDNHttpURL()}, sdk.WrapError(err, "cannot sign worker cache")
+}
+
 func (wk *CurrentWorker) GetActionPlugin(pluginName string) *sdk.GRPCPlugin {
 	return wk.actionPlugin[pluginName]
 }

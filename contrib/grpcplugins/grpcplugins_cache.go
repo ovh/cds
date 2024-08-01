@@ -32,7 +32,7 @@ func PerformGetCache(ctx context.Context, c *actionplugin.Common, jobCtx sdk.Wor
 	if jobCtx.Integrations != nil && jobCtx.Integrations.ArtifactManager.Name != "" {
 		cacheFound, err = performFromArtifactory(ctx, c, jobCtx, cacheKey, workDirs, path, failOnMiss)
 	} else {
-		cacheFound, err = performFromCDN(c, jobCtx, cacheKey, workDirs, absPath)
+		cacheFound, err = performFromCDN(ctx, c, cacheKey, workDirs, absPath)
 	}
 	if err != nil {
 		return err
@@ -65,6 +65,35 @@ func performFromArtifactory(ctx context.Context, c *actionplugin.Common, jobCtx 
 	return true, nil
 }
 
-func performFromCDN(c *actionplugin.Common, jobCtx sdk.WorkflowRunJobsContext, cacheKey string, workDirs *sdk.WorkerDirectories, absPath string) (bool, error) {
-	return false, sdk.ErrNotImplemented
+func performFromCDN(ctx context.Context, c *actionplugin.Common, cacheKey string, workDirs *sdk.WorkerDirectories, absPath string) (bool, error) {
+	t0 := time.Now()
+	items, err := GetV2CacheLink(ctx, c, cacheKey)
+	if err != nil {
+		return false, err
+	}
+	if len(items.Items) == 0 {
+		Warn(c, "no cache found")
+		return false, nil
+	}
+	if len(items.Items) != 1 {
+		return false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to get one cache with key %s. Got %d", cacheKey, len(items.Items))
+	}
+
+	cdnSig, err := GetV2CacheSignature(ctx, c, cacheKey)
+	if err != nil {
+		return false, err
+	}
+
+	destinationTarFile, n, err := DownloadFromCDN(ctx, c, cdnSig.Signature, *workDirs, items.Items[0].APIRefHash, string(items.Items[0].Type), items.CDNHttpURL, absPath, "cache.tar.gz", os.FileMode(0755))
+	if err != nil {
+		return false, err
+	}
+	if err := archiver.Unarchive(destinationTarFile, absPath); err != nil {
+		return false, err
+	}
+	if err := afero.NewOsFs().Remove(destinationTarFile); err != nil {
+		return false, fmt.Errorf("unable to remove archive cache file %v", err)
+	}
+	Successf(c, "Cache was downloaded to %s (%d bytes downloaded in %.3f seconds).", absPath, n, time.Since(t0).Seconds())
+	return true, nil
 }

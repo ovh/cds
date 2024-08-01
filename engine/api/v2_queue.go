@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -11,8 +12,10 @@ import (
 	"github.com/rockbears/log"
 	"go.opencensus.io/trace"
 
+	"github.com/ovh/cds/engine/api/cdn"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -406,6 +409,39 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 			})
 
 			return service.WriteJSON(w, runResult, http.StatusCreated)
+		}
+}
+
+func (api *API) getCacheLinkHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunUpdate),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			runJobID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), runJobID)
+			if err != nil {
+				return err
+			}
+
+			cacheKey, err := url.PathUnescape(vars["cacheKey"])
+			if err != nil {
+				return err
+			}
+
+			p, err := project.Load(ctx, api.mustDBWithCtx(ctx), runJob.ProjectKey)
+			if err != nil {
+				return err
+			}
+
+			itemsLinks, err := cdn.ListItems(ctx, api.mustDBWithCtx(ctx), sdk.CDNTypeItemWorkerCache, map[string]string{
+				cdn.ParamProjectKey: p.Key,
+				cdn.ParamCacheTag:   cacheKey,
+			})
+			if err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, itemsLinks, http.StatusOK)
 		}
 }
 

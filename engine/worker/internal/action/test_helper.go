@@ -35,6 +35,13 @@ func (*TestWorker) V2GetProjectKey(ctx context.Context, keyName string, clear bo
 	panic("unimplemented")
 }
 
+func (*TestWorker) V2GetCacheSignature(ctx context.Context, cacheKey string) (*workerruntime.CDNSignature, error) {
+	panic("unimplemented")
+}
+func (*TestWorker) V2GetCacheLink(ctx context.Context, cacheKey string) (*sdk.CDNItemLinks, error) {
+	panic("unimplemented")
+}
+
 // V2GetJobContext implements workerruntime.Runtime.
 func (*TestWorker) V2GetJobContext(ctx context.Context) *sdk.WorkflowRunJobsContext {
 	panic("unimplemented")

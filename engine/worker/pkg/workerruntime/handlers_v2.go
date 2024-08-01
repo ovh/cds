@@ -5,11 +5,63 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/log"
 )
+
+func V2_cacheLinkHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		cacheKey, err := url.PathUnescape(vars["cacheKey"])
+		if err != nil {
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			cdnLinks, err := wk.V2GetCacheLink(r.Context(), cacheKey)
+			if err != nil && !strings.Contains(err.Error(), "resource not found") {
+				writeError(w, r, err)
+				return
+			} else if err != nil && strings.Contains(err.Error(), "resource not found") {
+				cdnLinks = &sdk.CDNItemLinks{}
+			}
+			writeJSON(w, cdnLinks, http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+
+}
+
+func V2_cacheSignatureHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		cacheKey, err := url.PathUnescape(vars["cacheKey"])
+		if err != nil {
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			sign, err := wk.V2GetCacheSignature(r.Context(), cacheKey)
+			if err != nil {
+				writeError(w, r, err)
+				return
+			}
+			writeJSON(w, sign, http.StatusOK)
+		default:
+			writeError(w, r, sdk.ErrMethodNotAllowed)
+			return
+		}
+	}
+
+}
 
 func V2_outputHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
