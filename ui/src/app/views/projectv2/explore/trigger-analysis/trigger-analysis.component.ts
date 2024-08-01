@@ -94,16 +94,6 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
     };
   }
 
-  splitWorkflow(repo: string): { vcs: string, repo: string, workflow: string } {
-    const splitted = repo.split('/');
-    const workflow = splitted.splice(-1, 1)[0];
-    return {
-      vcs: splitted.splice(0, 1)[0],
-      repo: splitted.join('/'),
-      workflow
-    };
-  }
-
   async submitForm() {
     if (!this.validateForm.valid) {
       Object.values(this.validateForm.controls).forEach(control => {
