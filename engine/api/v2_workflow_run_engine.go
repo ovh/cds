@@ -846,7 +846,6 @@ func prepareRunJobs(ctx context.Context, db gorp.SqlExecutor, run sdk.V2Workflow
 			for k, v := range jobDef.Strategy.Matrix {
 				keys = append(keys, k)
 
-				log.Warn(ctx, ">>>>>BOULB::::: %T", v)
 				matrixValues := make([]string, 0)
 				if slice, ok := v.([]interface{}); ok {
 					for _, sliceValue := range slice {
