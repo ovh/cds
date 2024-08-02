@@ -78,6 +78,12 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 		return sdk.WrapError(err, "unable to retrieve file %s", path)
 	}
 
+	// get file properties
+	fileProps, err := grpcplugins.GetArtifactoryFileProperties(ctx, &p.Common, artiConfig, pathSplit[0], pathSplit[1])
+	if err != nil {
+		return sdk.WrapError(err, "unable to retrieve file properties %s", path)
+	}
+
 	// get repository info
 	repositoryInfo, err := grpcplugins.GetArtifactoryRepositoryInfo(ctx, &p.Common, artiConfig, pathSplit[0])
 	if err != nil {
@@ -143,10 +149,13 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 	case sdk.V2WorkflowRunResultTypeDebian:
 	case sdk.V2WorkflowRunResultTypeArsenalDeployment:
 	case sdk.V2WorkflowRunResultTypeDocker:
-	case sdk.V2WorkflowRunResultTypeHelm:
 	case sdk.V2WorkflowRunResultTypeRelease:
 	case sdk.V2WorkflowRunResultTypeTest:
+	case sdk.V2WorkflowRunResultTypeHelm:
 	case sdk.V2WorkflowRunResultTypePython:
+		if err := performPython(&runResult, fileName, fileProps.Properties); err != nil {
+			return err
+		}
 	case sdk.V2WorkflowRunResultTypeGeneric:
 		if err := performGeneric(&runResult, *fileInfo, fileName); err != nil {
 			return err
@@ -157,6 +166,21 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 	}
 	_, err = grpcplugins.CreateRunResult(ctx, &p.Common, &workerruntime.V2RunResultRequest{RunResult: &runResult})
 	return err
+}
+
+func performPython(runResult *sdk.V2WorkflowRunResult, fileName string, props map[string][]string) error {
+	pypiVersion, ok := props["pypi.version"]
+	if !ok || len(pypiVersion) == 0 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "package doesn't have the pypi.version property")
+	}
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultPythonDetail{
+			Name:      fileName,
+			Version:   pypiVersion[0],
+			Extension: strings.TrimPrefix(filepath.Ext(fileName), "."),
+		},
+	}
+	return nil
 }
 
 func performGeneric(runResult *sdk.V2WorkflowRunResult, fileInfo grpcplugins.ArtifactoryFileInfo, fileName string) error {

@@ -369,6 +369,10 @@ type ArtifactoryConfig struct {
 	ReleaseToken    string
 }
 
+type ArtifactoryFilePropertiesResponse struct {
+	Properties map[string][]string `properties`
+}
+
 type ArtifactoryFileInfo struct {
 	Repo        string    `json:"repo"`
 	Path        string    `json:"path"`
@@ -417,6 +421,41 @@ type ArtifactoryFolderInfo struct {
 		URI    string `json:"uri"`
 		Folder bool   `json:"folder"`
 	} `json:"children"`
+}
+
+func GetArtifactoryFileProperties(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFilePropertiesResponse, error) {
+	if !strings.HasSuffix(config.URL, "/") {
+		config.URL = config.URL + "/"
+	}
+	uri := config.URL + "api/storage/" + filepath.Join(repo, path) + "?properties"
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode > 200 {
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to get Artifactory file info %s: error %d", uri, resp.StatusCode)
+	}
+
+	var res ArtifactoryFilePropertiesResponse
+	if err := json.Unmarshal(btes, &res); err != nil {
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to get Artifactory file info: %v", err)
+	}
+
+	return &res, nil
 }
 
 func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFileInfo, error) {
