@@ -156,13 +156,7 @@ func (p *helmPushPlugin) perform(
 			IssuedAt: time.Now(),
 			Type:     sdk.V2WorkflowRunResultTypeHelm,
 			Status:   sdk.V2WorkflowRunResultStatusPending,
-			Detail: sdk.V2WorkflowRunResultDetail{
-				Data: sdk.V2WorkflowRunResultHelmDetail{
-					Name:         chart.Name(),
-					AppVersion:   chart.AppVersion(),
-					ChartVersion: chart.Metadata.Version,
-				},
-			},
+			Detail:   grpcplugins.ComputeRunResultHelmDetail(chart.Name(), chart.AppVersion(), chart.Metadata.Version),
 		},
 	}
 

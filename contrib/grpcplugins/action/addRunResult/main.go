@@ -152,6 +152,9 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 	case sdk.V2WorkflowRunResultTypeRelease:
 	case sdk.V2WorkflowRunResultTypeTest:
 	case sdk.V2WorkflowRunResultTypeHelm:
+		if err := performHelm(&runResult, fileProps.Properties); err != nil {
+			return err
+		}
 	case sdk.V2WorkflowRunResultTypePython:
 		if err := performPython(&runResult, fileName, fileProps.Properties); err != nil {
 			return err
@@ -168,18 +171,27 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 	return err
 }
 
+func performHelm(runResult *sdk.V2WorkflowRunResult, props map[string][]string) error {
+	chartNames, ok := props["chart.name"]
+	if !ok || len(chartNames) == 0 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "chart doesn't have the chart.name property")
+	}
+
+	chartVerions, ok := props["chart.version"]
+	if !ok || len(chartVerions) == 0 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "chart doesn't have the chart.version property")
+	}
+	runResult.Detail = grpcplugins.ComputeRunResultHelmDetail(chartNames[0], "", chartVerions[0])
+	return nil
+}
+
 func performPython(runResult *sdk.V2WorkflowRunResult, fileName string, props map[string][]string) error {
 	pypiVersion, ok := props["pypi.version"]
 	if !ok || len(pypiVersion) == 0 {
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "package doesn't have the pypi.version property")
 	}
-	runResult.Detail = sdk.V2WorkflowRunResultDetail{
-		Data: sdk.V2WorkflowRunResultPythonDetail{
-			Name:      fileName,
-			Version:   pypiVersion[0],
-			Extension: strings.TrimPrefix(filepath.Ext(fileName), "."),
-		},
-	}
+	runResult.Detail = grpcplugins.ComputeRunResultPythonDetail(fileName, pypiVersion[0], strings.TrimPrefix(filepath.Ext(fileName), "."))
+
 	return nil
 }
 
