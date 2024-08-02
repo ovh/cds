@@ -806,23 +806,24 @@ func checksums(ctx context.Context, c *actionplugin.Common, dir fs.FS, path ...s
 	return result, nil
 }
 
-func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, dirFS fs.FS, filePath string, ifNoFilesFound string) (glob.Results, map[string]int64, map[string]os.FileMode, map[string]fs.File, map[string]ChecksumResult, error) {
-	results, err := glob.Glob(dirFS, ".", filePath)
+func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, cwd, filePath string, ifNoFilesFound string) (glob.Results, map[string]int64, map[string]os.FileMode, map[string]fs.File, map[string]ChecksumResult, error) {
+	results, err := glob.Glob(cwd, filePath)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
+	dirFS := results.DirFS
 
 	var message string
-	switch len(results) {
+	switch len(results.Results) {
 	case 0:
 		message = fmt.Sprintf("No files were found with the provided path: %q. No artifacts will be uploaded.", filePath)
 	case 1:
-		message = fmt.Sprintf("With the provided pattern %q, there will be %d file uploaded.", filePath, len(results))
+		message = fmt.Sprintf("With the provided pattern %q, there will be %d file uploaded.", filePath, len(results.Results))
 	default:
-		message = fmt.Sprintf("With the provided pattern %q, there will be %d files uploaded.", filePath, len(results))
+		message = fmt.Sprintf("With the provided pattern %q, there will be %d files uploaded.", filePath, len(results.Results))
 	}
 
-	if len(results) == 0 {
+	if len(results.Results) == 0 {
 		switch strings.ToUpper(ifNoFilesFound) {
 		case "ERROR":
 			Error(c, message)
@@ -840,7 +841,7 @@ func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, dirFS fs
 	var sizes = map[string]int64{}
 	var permissions = map[string]os.FileMode{}
 	var openFiles = map[string]fs.File{}
-	for _, r := range results {
+	for _, r := range results.Results {
 		files = append(files, r.Path)
 		f, err := dirFS.Open(r.Path)
 		if err != nil {
@@ -863,7 +864,7 @@ func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, dirFS fs
 		return nil, nil, nil, nil, nil, err
 	}
 
-	return results, sizes, permissions, openFiles, checksums, nil
+	return results.Results, sizes, permissions, openFiles, checksums, nil
 }
 
 type IntegrationCache struct {

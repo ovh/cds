@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 
@@ -123,7 +122,7 @@ func Test_perform(t *testing.T) {
 	plugin := new(runActionUploadArtifactPlugin)
 	plugin.Common = actionplugin.Common{HTTPPort: 1, HTTPClient: mockHTTPClient}
 
-	err := plugin.perform(context.TODO(), os.DirFS("."), "*.go !*_test.go", "warn", sdk.V2WorkflowRunResultTypeGeneric)
+	err := plugin.perform(context.TODO(), ".", "*.go !*_test.go", "warn", sdk.V2WorkflowRunResultTypeGeneric)
 	require.NoError(t, err)
 }
 
