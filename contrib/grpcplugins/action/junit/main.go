@@ -48,9 +48,7 @@ func (p *junitPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.Ac
 		return stream.Send(res)
 	}
 
-	var dirFS = os.DirFS(workDirs.WorkingDir)
-
-	if err := p.perform(ctx, dirFS, filePath); err != nil {
+	if err := p.perform(ctx, workDirs.WorkingDir, filePath); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
 		return stream.Send(res)
@@ -64,7 +62,7 @@ func (actPlugin *junitPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 	return nil, sdk.ErrNotImplemented
 }
 
-func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS fs.FS, filePath string) error {
+func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS, filePath string) error {
 	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, dirFS, filePath, "ERROR")
 	if err != nil {
 		return err

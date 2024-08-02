@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/fs"
-	"os"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -62,9 +60,7 @@ func (p *runActionUploadArtifactPlugin) Stream(q *actionplugin.ActionQuery, stre
 		return stream.Send(res)
 	}
 
-	var dirFS = os.DirFS(workDirs.WorkingDir)
-
-	if err := p.perform(ctx, dirFS, path, ifNoFilesFound, runResultType); err != nil {
+	if err := p.perform(ctx, workDirs.WorkingDir, path, ifNoFilesFound, runResultType); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
 	}
@@ -76,13 +72,13 @@ func (actPlugin *runActionUploadArtifactPlugin) Run(ctx context.Context, q *acti
 	return nil, sdk.ErrNotImplemented
 }
 
-func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, dirFS fs.FS, path, ifNoFilesFound string, runResultType sdk.V2WorkflowRunResultType) error {
+func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, cwd, path, ifNoFilesFound string, runResultType sdk.V2WorkflowRunResultType) error {
 	jobContext, err := grpcplugins.GetJobContext(ctx, &actPlugin.Common)
 	if err != nil {
-		return errors.New(fmt.Sprintf("unable to retrieve job context: %v", err))
+		return errors.Errorf("unable to retrieve job context: %v", err)
 	}
 
-	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, dirFS, path, ifNoFilesFound)
+	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, cwd, path, ifNoFilesFound)
 	if err != nil {
 		return err
 	}

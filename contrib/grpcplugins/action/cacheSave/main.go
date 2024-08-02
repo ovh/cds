@@ -63,23 +63,22 @@ func (p *cacheSavePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugi
 	}
 
 	return stream.Send(res)
-
 }
 
 func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJobsContext, cacheKey string, workDirs *sdk.WorkerDirectories, path string) error {
 	itemsToArchive := make([]string, 0)
 	// Check directory
+	dirFS := os.DirFS(workDirs.WorkingDir)
 	fullPath := workDirs.WorkingDir + "/" + path
 	if fileInfo, err := os.Stat(fullPath); err == nil && fileInfo.IsDir() {
 		itemsToArchive = append(itemsToArchive, workDirs.WorkingDir+"/"+path)
 	} else {
 		// Try to manage files
-		var dirFS = os.DirFS(workDirs.WorkingDir)
-		results, err := glob.Glob(dirFS, ".", path)
+		results, err := glob.Glob(workDirs.WorkingDir, path)
 		if err != nil {
 			return err
 		}
-		for _, r := range results {
+		for _, r := range results.Results {
 			itemsToArchive = append(itemsToArchive, r.Path)
 			grpcplugins.Success(&p.Common, r.Path+" will be cached")
 		}
@@ -94,8 +93,7 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 		return fmt.Errorf("unable to create cache archive: %v", err)
 	}
 
-	fs := os.DirFS(workDirs.WorkingDir)
-	f, err := fs.Open("cache.tar.gz")
+	f, err := dirFS.Open("cache.tar.gz")
 	if err != nil {
 		return fmt.Errorf("unable to open cache archive: %v", err)
 	}

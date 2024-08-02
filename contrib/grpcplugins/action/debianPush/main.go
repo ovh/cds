@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -127,9 +126,7 @@ func (p *debianPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		return stream.Send(res)
 	}
 
-	dirFS := os.DirFS(workDirs.WorkingDir)
-
-	if err := p.perform(ctx, dirFS, opts); err != nil {
+	if err := p.perform(ctx, workDirs.WorkingDir, opts); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
 		return stream.Send(res)
@@ -143,7 +140,7 @@ func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery)
 	return nil, sdk.ErrNotImplemented
 }
 
-func (p *debianPushPlugin) perform(ctx context.Context, dirFS fs.FS, opts debianPushOptions) error {
+func (p *debianPushPlugin) perform(ctx context.Context, dirFS string, opts debianPushOptions) error {
 	for _, pattern := range opts.files {
 		results, sizes, _, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &p.Common, dirFS, pattern, "ERROR")
 		if err != nil {

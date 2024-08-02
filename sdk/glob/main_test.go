@@ -1,7 +1,9 @@
 package glob_test
 
 import (
-	"os"
+	"fmt"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/ovh/cds/sdk/glob"
@@ -18,9 +20,29 @@ func TestGlob(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	pattern := "path/to/**/* !path/to/**/*.tmp"
-	result, err := glob.Glob(os.DirFS("tests/"), "fixtures", pattern)
+	result, err := glob.Glob("tests/fixtures", pattern)
 	require.NoError(t, err)
 	require.Equal(t, "path/to/artifacts/bar, path/to/artifacts/foo, path/to/results/foo.bin", result.String())
+}
+
+func TestGlobAbsolute(t *testing.T) {
+	glob.DebugEnabled = true
+	glob.DebugFunc = func(a ...any) (n int, err error) {
+		t.Log(a...)
+		return len(a), nil
+	}
+	log.Factory = log.NewTestingWrapper(t)
+
+	_, filename, _, _ := runtime.Caller(0)
+	t.Logf("Current test filename: %s", filename)
+
+	path := filepath.Dir(filename)
+	fixturePath := filepath.Join(path, "tests", "fixtures")
+
+	pattern := fmt.Sprintf("%s/path/to/**/* !%s/path/to/**/*.tmp", fixturePath, fixturePath)
+	result, err := glob.Glob(fixturePath, pattern)
+	require.NoError(t, err)
+	require.Equal(t, "artifacts/bar, artifacts/foo, results/foo.bin", result.String())
 }
 
 func TestGlobWitDoubleStar0(t *testing.T) {

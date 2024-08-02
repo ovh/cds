@@ -2,10 +2,11 @@ package glob
 
 import (
 	"io/fs"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 )
 
@@ -13,8 +14,11 @@ type Globber struct {
 	patterns []pattern
 }
 
-func New(expression string) *Globber {
-	var expressionItems = splitListExpression(expression)
+func New(expression ...string) *Globber {
+	if len(expression) == 1 {
+		expression = splitListExpression(expression[0])
+	}
+	var expressionItems = expression
 	var g = new(Globber)
 	for _, expression := range expressionItems {
 		expression = strings.TrimSpace(expression)
@@ -36,6 +40,18 @@ func (g *Globber) Len() int {
 }
 
 type Results []Result
+
+type FileResults struct {
+	DirFS   fs.FS
+	Results Results
+}
+
+func (f *FileResults) String() string {
+	if f == nil {
+		return ""
+	}
+	return f.Results.String()
+}
 
 func (results *Results) String() string {
 	var buf strings.Builder
@@ -147,43 +163,27 @@ func splitListExpression(s string) []string {
 	}
 }
 
-func (g *Globber) MatchFiles(_fs fs.FS, root string) (Results, error) {
-	root, err := homedir.Expand(root)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	rootFile, err := _fs.Open(root)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	fi, err := rootFile.Stat()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	if !fi.IsDir() {
-		return g.Match(root)
-	}
-
-	rootFS, err := fs.Sub(_fs, root)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
+func (g *Globber) MatchFiles(_fs fs.FS) (*FileResults, error) {
 	var fileList []string
-	if err := fs.WalkDir(rootFS, ".", g.walkdirFunc(&fileList)); err != nil {
+	if err := fs.WalkDir(_fs, ".", g.walkdirFunc(&fileList)); err != nil {
 		return nil, err
 	}
 
-	return g.Match(fileList...)
+	results, err := g.Match(fileList...)
+	if err != nil {
+		return nil, err
+	}
+	return &FileResults{
+		DirFS:   _fs,
+		Results: results,
+	}, nil
 }
 
 func (g *Globber) walkdirFunc(target *[]string) func(path string, d fs.DirEntry, err error) error {
 	return func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return errors.WithStack(err)
+			Debug(err.Error())
+			return nil
 		}
 		Debug("path: %s name: %s, isDir:%v", path, d.Name(), d.IsDir())
 		if !d.IsDir() {
@@ -193,6 +193,65 @@ func (g *Globber) walkdirFunc(target *[]string) func(path string, d fs.DirEntry,
 	}
 }
 
-func Glob(_fs fs.FS, root string, pattern string) (Results, error) {
-	return New(pattern).MatchFiles(_fs, root)
+func Glob(cwd string, pattern string) (*FileResults, error) {
+	splittedExpression := splitListExpression(pattern)
+	var absoluteExpressions []string
+	var retaliveExpressions []string
+	for i := range splittedExpression {
+		expression := splittedExpression[i]
+		s := strings.TrimPrefix(expression, "!")
+		if filepath.IsAbs(s) {
+			absoluteExpressions = append(absoluteExpressions, s)
+		} else {
+			retaliveExpressions = append(retaliveExpressions, s)
+		}
+	}
+
+	if len(absoluteExpressions) > 0 && len(retaliveExpressions) > 0 {
+		return nil, errors.New("mixing absolute and relative patterns is not supported")
+	}
+
+	if len(absoluteExpressions) > 0 {
+		cwd = LongestCommonPathPrefix(absoluteExpressions)
+		Debug("longest of %v prefix is %s", absoluteExpressions, cwd)
+
+		for i := range splittedExpression {
+			expression := splittedExpression[i]
+			s := strings.TrimPrefix(expression, "!")
+			s = strings.TrimPrefix(s, cwd)
+			if isExcludeExpression(splittedExpression[i]) {
+				s = "!" + s
+			}
+			splittedExpression[i] = s
+		}
+	}
+
+	Debug("cwd is %s", cwd)
+
+	return New(splittedExpression...).MatchFiles(os.DirFS(cwd))
+}
+
+func LongestCommonPathPrefix(strs []string) string {
+	var longestPrefix string
+	var endPrefix bool
+	var lastPath string
+
+	if len(strs) > 0 {
+		sort.Strings(strs)
+		first := string(strs[0])
+		last := string(strs[len(strs)-1])
+
+		for i := 0; i < len(first); i++ {
+			if !endPrefix && string(last[i]) == string(first[i]) {
+				longestPrefix += string(last[i])
+				if _, err := os.ReadDir(longestPrefix); last[i] == '/' && err == nil {
+					lastPath = longestPrefix
+				}
+			} else {
+				endPrefix = true
+			}
+		}
+
+	}
+	return lastPath
 }
