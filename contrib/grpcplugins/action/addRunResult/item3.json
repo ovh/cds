@@ -1,0 +1,1 @@
+items.find({"name" : "date.log", "path" : "/SGU/cargo/70"}).include("repo","path","name","virtual_repos")
