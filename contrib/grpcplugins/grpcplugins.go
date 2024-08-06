@@ -423,7 +423,7 @@ type ArtifactoryFolderInfo struct {
 	} `json:"children"`
 }
 
-func GetArtifactoryFileProperties(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFilePropertiesResponse, error) {
+func GetArtifactoryFileProperties(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (map[string][]string, error) {
 	if !strings.HasSuffix(config.URL, "/") {
 		config.URL = config.URL + "/"
 	}
@@ -445,6 +445,9 @@ func GetArtifactoryFileProperties(ctx context.Context, c *actionplugin.Common, c
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 200 {
+		if resp.StatusCode == 404 {
+			return make(map[string][]string), nil
+		}
 		Error(c, string(btes))
 		return nil, errors.Errorf("unable to get Artifactory file info %s: error %d", uri, resp.StatusCode)
 	}
@@ -455,7 +458,7 @@ func GetArtifactoryFileProperties(ctx context.Context, c *actionplugin.Common, c
 		return nil, errors.Errorf("unable to get Artifactory file info: %v", err)
 	}
 
-	return &res, nil
+	return res.Properties, nil
 }
 
 func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFileInfo, error) {
@@ -480,7 +483,9 @@ func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 200 {
-		Error(c, string(btes))
+		if resp.StatusCode != 404 {
+			Error(c, string(btes))
+		}
 		return nil, errors.Errorf("unable to get Artifactory file info %s: error %d", uri, resp.StatusCode)
 	}
 
