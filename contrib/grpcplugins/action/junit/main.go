@@ -113,7 +113,7 @@ func createRunResult(p *actionplugin.Common, fileContent []byte, filePath string
 		},
 	}
 
-	detail, nbKo, err := grpcplugins.ComputeRunResultTests(p, filePath, fileContent, size, checksum.Md5, checksum.Sha1, checksum.Sha256)
+	detail, nbKo, err := grpcplugins.ComputeRunResultTestsDetail(p, filePath, fileContent, size, checksum.Md5, checksum.Sha1, checksum.Sha256)
 	if err != nil {
 		return nil, 0, err
 	}

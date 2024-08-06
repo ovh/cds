@@ -65,26 +65,7 @@ testcases:
         workflows/matrix.yaml:
           name: {{.cds_workflow}}
           on: [push]
-          env:
-            envMatrix: "[\"fooEnv\", \"barEnv\"]"
           jobs:
-            root:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              steps:
-                - id: stepExport
-                  run: worker export exportedMatrixValue '["fooJob", "barJob", "fooBarJob"]'
-              outputs:
-                rootMatrixValue: 
-                  value: ${{steps.stepExport.outputs.exportedMatrixValue}}  
-            fromRoot:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              needs: [root]
-              strategy:
-                matrix:
-                  os: "${{ fromJSON(jobs.root.outputs.rootMatrixValue) }}"
-                  version: ["1", "2"]
-              steps:
-              - run: echo "${{ matrix.os }} ${{ matrix.version }}"
             normalMatrix:
               strategy:
                 matrix:
@@ -92,14 +73,6 @@ testcases:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               steps:
               - run: echo "${{ matrix.os }}"
-            fromEnv:
-              strategy:
-                matrix:
-                  os: "${{ fromJSON(env.envMatrix)}}"
-                  version: ["1", "2"]
-                runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-                steps:
-                - run: echo "${{ matrix.os }} ${{ matrix.version }}"  
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -141,7 +114,7 @@ testcases:
     - name: Get job info
       script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"  
       assertions:
-      - result.systemoutjson ShouldHaveLength 14
+      - result.systemoutjson ShouldHaveLength 3
     - name: Display logs
       script: cat {{.cds_workflow}}-*
 

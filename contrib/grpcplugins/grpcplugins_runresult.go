@@ -11,7 +11,41 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ComputeRunResultTests(c *actionplugin.Common, filePath string, fileContent []byte, size int64, md5, sha1, sha256 string) (*sdk.V2WorkflowRunResultDetail, int, error) {
+type Img struct {
+	Repository string
+	Tag        string
+	ImageID    string
+	Created    string
+	Size       string
+}
+
+func ComputeRunResultDockerDetail(name string, img Img) sdk.V2WorkflowRunResultDetail {
+	return sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultDockerDetail{
+			Name:         name,
+			ID:           img.ImageID,
+			HumanSize:    img.Size,
+			HumanCreated: img.Created,
+		},
+	}
+}
+
+func ComputeRunResultDebianDetail(name string, size int64, md5, sha1, sha256 string, components, distributions, architectures []string) sdk.V2WorkflowRunResultDetail {
+	return sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultDebianDetail{
+			Name:          name,
+			Size:          size,
+			MD5:           md5,
+			SHA1:          sha1,
+			SHA256:        sha256,
+			Components:    components,
+			Distributions: distributions,
+			Architectures: architectures,
+		},
+	}
+}
+
+func ComputeRunResultTestsDetail(c *actionplugin.Common, filePath string, fileContent []byte, size int64, md5, sha1, sha256 string) (*sdk.V2WorkflowRunResultDetail, int, error) {
 	var ftests sdk.JUnitTestsSuites
 	if err := xml.Unmarshal(fileContent, &ftests); err != nil {
 		// Check if file contains testsuite only (and no testsuites)

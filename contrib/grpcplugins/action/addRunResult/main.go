@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -57,7 +59,7 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 
 }
 
-func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path string) (bool, error) {
+func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPath string) (bool, error) {
 
 	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
 	if err != nil {
@@ -73,27 +75,35 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 		Token: jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigToken),
 	}
 
-	pathSplit := strings.SplitN(path, "/", 2)
-	if len(pathSplit) != 2 {
-		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid path. Must be <reposutory_name>/path/to/file")
+	path := artifactPath
+	if resultType == sdk.V2WorkflowRunResultTypeDocker {
+		path += "/manifest.json"
+	}
+
+	repository := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix)
+	switch resultType {
+	case sdk.V2WorkflowRunResultTypeDocker:
+		repository += "-docker"
+	case sdk.V2WorkflowRunResultTypeDebian:
+		repository += "-debian"
+	case sdk.V2WorkflowRunResultTypeTest, sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric:
+		repository += "-generic"
+	case sdk.V2WorkflowRunResultTypeHelm:
+		repository += "-helm"
+	case sdk.V2WorkflowRunResultTypePython:
+		repository += "-pypi"
 	}
 
 	// get file info
-	fileInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &p.Common, artiConfig, pathSplit[0], pathSplit[1])
+	fileInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &p.Common, artiConfig, repository, path)
 	if err != nil {
 		return true, sdk.WrapError(err, "unable to retrieve file %s", path)
 	}
 
 	// get file properties
-	fileProps, err := grpcplugins.GetArtifactoryFileProperties(ctx, &p.Common, artiConfig, pathSplit[0], pathSplit[1])
+	fileProps, err := grpcplugins.GetArtifactoryFileProperties(ctx, &p.Common, artiConfig, repository, path)
 	if err != nil {
 		return true, sdk.WrapError(err, "unable to retrieve file properties %s", path)
-	}
-
-	// get repository info
-	repositoryInfo, err := grpcplugins.GetArtifactoryRepositoryInfo(ctx, &p.Common, artiConfig, pathSplit[0])
-	if err != nil {
-		return true, sdk.WrapError(err, "unable to retrieve repository %s", pathSplit[0])
 	}
 
 	//search file
@@ -107,37 +117,18 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 	if len(itemSearch.Results) == 0 {
 		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to find artifact %s in path %s", fileName, fileDir)
 	}
-	var localRepo, virtualRepo string
-	if repositoryInfo.Rclass == "virtual" {
-		// retrieve localRepository
-		virtualRepo = pathSplit[0]
-		for _, r := range itemSearch.Results {
-			if strings.HasPrefix(r.Repo, virtualRepo) {
-				localRepo = r.Repo
-				break
-			}
-		}
-	} else {
-		// retrieve virtual
-		localRepo = pathSplit[0]
-		for _, r := range itemSearch.Results {
-			if r.Repo != localRepo {
-				continue
-			}
-			for _, v := range r.VirtualRepos {
-				if strings.HasPrefix(localRepo, v) {
-					virtualRepo = v
-					break
-				}
-			}
+	// retrieve localRepository
+	virtualRepo := repository
+	var localRepo string
+	for _, r := range itemSearch.Results {
+		if strings.HasPrefix(r.Repo, virtualRepo) {
+			localRepo = r.Repo
 			break
 		}
 	}
+
 	if localRepo == "" {
 		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to retrieve local repository for artifact %s", path)
-	}
-	if virtualRepo == "" {
-		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to retrieve virtual repository for artifact %s", path)
 	}
 
 	// compute maturity
@@ -153,12 +144,18 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 
 	mustReturnKO := false
 	switch resultType {
-	case sdk.V2WorkflowRunResultTypeDebian:
-	case sdk.V2WorkflowRunResultTypeArsenalDeployment:
 	case sdk.V2WorkflowRunResultTypeDocker:
-	case sdk.V2WorkflowRunResultTypeRelease:
-	case sdk.V2WorkflowRunResultTypeCoverage:
+		runResult.Type = sdk.V2WorkflowRunResultTypeDocker
+		if err := performDocker(ctx, &p.Common, &runResult, jobCtx.Integrations.ArtifactManager, artifactPath, *fileInfo); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeDebian:
+		runResult.Type = sdk.V2WorkflowRunResultTypeDebian
+		if err := performDebian(&runResult, fileInfo, fileProps.Properties); err != nil {
+			return true, err
+		}
 	case sdk.V2WorkflowRunResultTypeTest:
+		runResult.Type = sdk.V2WorkflowRunResultTypeTest
 		nbKo, err := performTests(ctx, &p.Common, *fileInfo, &runResult, jobCtx.Integrations.ArtifactManager, path)
 		if err != nil {
 			return true, err
@@ -173,15 +170,21 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 			}
 		}
 	case sdk.V2WorkflowRunResultTypeHelm:
+		runResult.Type = sdk.V2WorkflowRunResultTypeHelm
 		if err := performHelm(&runResult, fileProps.Properties); err != nil {
 			return true, err
 		}
 	case sdk.V2WorkflowRunResultTypePython:
+		runResult.Type = sdk.V2WorkflowRunResultTypePython
 		if err := performPython(&runResult, fileName, fileProps.Properties); err != nil {
 			return true, err
 		}
+	case sdk.V2WorkflowRunResultTypeCoverage:
+		if err := performGeneric(&runResult, fileInfo, sdk.V2WorkflowRunResultTypeCoverage, fileName); err != nil {
+			return true, err
+		}
 	case sdk.V2WorkflowRunResultTypeGeneric:
-		if err := performGeneric(&runResult, *fileInfo, fileName); err != nil {
+		if err := performGeneric(&runResult, fileInfo, sdk.V2WorkflowRunResultTypeGeneric, fileName); err != nil {
 			return true, err
 		}
 	default:
@@ -191,12 +194,82 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, path strin
 	return mustReturnKO, err
 }
 
+func performDocker(ctx context.Context, c *actionplugin.Common, runResult *sdk.V2WorkflowRunResult, integ sdk.JobIntegrationsContext, dockerFullImage string, fileinfo grpcplugins.ArtifactoryFileInfo) error {
+	dockerURLSplit := strings.SplitN(dockerFullImage, "/", 2)
+	if len(dockerURLSplit) != 2 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to parse docker images url: %s", dockerFullImage)
+	}
+
+	url, err := url.Parse(integ.Get(sdk.ArtifactoryConfigURL))
+	if err != nil {
+		return err
+	}
+	repository := strings.TrimSuffix(dockerURLSplit[0], "."+url.Host)
+	imageTag := strings.Split(dockerURLSplit[1], ":")
+	var tag string
+	if len(imageTag) == 1 {
+		tag = "latest"
+	} else if len(imageTag) == 2 {
+		tag = imageTag[1]
+	} else {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to retrieve tag from image %s", dockerURLSplit[1])
+	}
+
+	// retrieve image ID
+	downloadURI := fmt.Sprintf("%s%s/%s/manifest.json", integ.Get(sdk.ArtifactoryConfigURL), strings.TrimPrefix(repository, "/"), dockerURLSplit[1])
+	req, err := http.NewRequestWithContext(ctx, "GET", downloadURI, nil)
+	if err != nil {
+		return sdk.WrapError(err, "unable to create request to retrieve file docker manifest")
+	}
+
+	rtToken := integ.Get(sdk.ArtifactoryConfigToken)
+	req.Header.Set("Authorization", "Bearer "+rtToken)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return sdk.WrapError(err, "unable to get docker manifest file")
+	}
+
+	if resp.StatusCode > 200 {
+		return sdk.Errorf("unable to download file (HTTP %d)", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	bts, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	type dockerManifestConfig struct {
+		Digest string `json:"digest"`
+	}
+	type dockerManifest struct {
+		Config dockerManifestConfig `json:"config"`
+	}
+
+	var manifest dockerManifest
+	if err := json.Unmarshal(bts, &manifest); err != nil {
+		return sdk.WrapError(err, "unable to read docker manifest")
+	}
+	imageID := strings.TrimPrefix(manifest.Config.Digest, "sha256:")[0:12]
+	img := grpcplugins.Img{
+		Repository: repository,
+		Tag:        tag,
+		ImageID:    imageID,
+		Created:    fileinfo.Created.String(),
+		Size:       "",
+	}
+	name := dockerFullImage
+	runResult.Detail = grpcplugins.ComputeRunResultDockerDetail(name, img)
+	return nil
+}
+
 func performTests(ctx context.Context, c *actionplugin.Common, fileInfo grpcplugins.ArtifactoryFileInfo, runResult *sdk.V2WorkflowRunResult, jobCtx sdk.JobIntegrationsContext, path string) (int, error) {
 	// download file
 	downloadURI := fmt.Sprintf("%s%s", jobCtx.Get(sdk.ArtifactoryConfigURL), strings.TrimPrefix(path, "/"))
 	req, err := http.NewRequestWithContext(ctx, "GET", downloadURI, nil)
 	if err != nil {
-		return 0, sdk.WrapError(err, "unable to create request to retrieve file: %v")
+		return 0, sdk.WrapError(err, "unable to create request to retrieve file "+path)
 	}
 
 	rtToken := jobCtx.Get(sdk.ArtifactoryConfigToken)
@@ -221,12 +294,22 @@ func performTests(ctx context.Context, c *actionplugin.Common, fileInfo grpcplug
 		return 0, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to read file size [%s]: %v", fileInfo.Size, err)
 	}
 
-	detail, nbKo, err := grpcplugins.ComputeRunResultTests(c, path, bts, size, fileInfo.Checksums.Md5, fileInfo.Checksums.Sha1, fileInfo.Checksums.Sha256)
+	detail, nbKo, err := grpcplugins.ComputeRunResultTestsDetail(c, path, bts, size, fileInfo.Checksums.Md5, fileInfo.Checksums.Sha1, fileInfo.Checksums.Sha256)
 	if err != nil {
 		return 0, err
 	}
 	runResult.Detail = *detail
 	return nbKo, nil
+}
+
+func performDebian(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, props map[string][]string) error {
+	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
+	if err != nil {
+		return err
+	}
+	_, fileName := filepath.Split(fileInfo.Path)
+	runResult.Detail = grpcplugins.ComputeRunResultDebianDetail(fileName, size, fileInfo.Checksums.Md5, fileInfo.Checksums.Sha1, fileInfo.Checksums.Sha256, props["deb.component"], props["deb.distribution"], props["deb.architecture"])
+	return nil
 }
 
 func performHelm(runResult *sdk.V2WorkflowRunResult, props map[string][]string) error {
@@ -253,12 +336,12 @@ func performPython(runResult *sdk.V2WorkflowRunResult, fileName string, props ma
 	return nil
 }
 
-func performGeneric(runResult *sdk.V2WorkflowRunResult, fileInfo grpcplugins.ArtifactoryFileInfo, fileName string) error {
+func performGeneric(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.ArtifactoryFileInfo, resultType sdk.V2WorkflowRunResultType, fileName string) error {
 	size, err := strconv.ParseInt(fileInfo.Size, 10, 64)
 	if err != nil {
 		return err
 	}
-	runResult.Type = sdk.V2WorkflowRunResultTypeGeneric
+	runResult.Type = resultType
 	runResult.Detail = sdk.V2WorkflowRunResultDetail{
 		Data: sdk.V2WorkflowRunResultGenericDetail{
 			Name:   fileName,
