@@ -1,1 +1,1 @@
-items.find({"name" : "date.log", "path" : "/SGU/cargo/70"}).include("repo","path","name","virtual_repos")
+items.find({"name" : "terraform-provider-thebastion_0.4.0_linux_amd64.zip", "path": ""}).include("repo","path","name","virtual_repos")

@@ -93,6 +93,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 		repository += "-helm"
 	case sdk.V2WorkflowRunResultTypePython:
 		repository += "-pypi"
+	case sdk.V2WorkflowRunResultTypeTerraformProvider:
+		repository += "-terraformProvider"
 	}
 
 	// get file info
@@ -115,7 +117,13 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 
 	//search file
 	fileDir, fileName := filepath.Split(fileInfo.Path)
-	aqlSearch := fmt.Sprintf(`items.find({"name" : "%s", "path" : "%s"}).include("repo","path","name","virtual_repos")`, fileName, strings.TrimPrefix(strings.TrimSuffix(fileDir, "/"), "/"))
+	aqlPath := strings.TrimPrefix(strings.TrimSuffix(fileDir, "/"), "/")
+	var aqlSearch string
+	if aqlPath == "" {
+		aqlSearch = fmt.Sprintf(`items.find({"name" : "%s"}).include("repo","path","name","virtual_repos")`, fileName)
+	} else {
+		aqlSearch = fmt.Sprintf(`items.find({"name" : "%s", "path" : "%s"}).include("repo","path","name","virtual_repos")`, fileName, aqlPath)
+	}
 
 	itemSearch, err := grpcplugins.SearchItem(ctx, &p.Common, artiConfig, aqlSearch)
 	if err != nil {
@@ -192,6 +200,11 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 		}
 	case sdk.V2WorkflowRunResultTypeGeneric:
 		if err := performGeneric(&runResult, fileInfo, sdk.V2WorkflowRunResultTypeGeneric, fileName); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeTerraformProvider:
+		runResult.Type = sdk.V2WorkflowRunResultTypeTerraformProvider
+		if err := performTerraformProvider(&runResult, fileProps); err != nil {
 			return true, err
 		}
 	default:
@@ -337,6 +350,40 @@ func performPython(runResult *sdk.V2WorkflowRunResult, fileName string, props ma
 	}
 	runResult.Detail = grpcplugins.ComputeRunResultPythonDetail(fileName, pypiVersion[0], strings.TrimPrefix(filepath.Ext(fileName), "."))
 
+	return nil
+}
+
+func performTerraformProvider(runResult *sdk.V2WorkflowRunResult, props map[string][]string) error {
+	flavorProps, ok := props["terraform.flavor"]
+	if !ok || len(flavorProps) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property terraform.flavor")
+	}
+	nameProps := props["terraform.name"]
+	if !ok || len(nameProps) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property terraform.name")
+	}
+	nsProps := props["terraform.namespace"]
+	if !ok || len(nsProps) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property terraform.namespace")
+	}
+	typeProps := props["terraform.type"]
+	if !ok || len(typeProps) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property terraform.type")
+	}
+	versionProps := props["terraform.version"]
+	if !ok || len(versionProps) != 1 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "invalid property terraform.version")
+	}
+
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: sdk.V2WorkflowRunResultTerraformProviderDetail{
+			Flavor:    flavorProps[0],
+			Name:      nameProps[0],
+			Namespace: nsProps[0],
+			Type:      typeProps[0],
+			Version:   versionProps[0],
+		},
+	}
 	return nil
 }
 
