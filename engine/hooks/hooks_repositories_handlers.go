@@ -41,6 +41,28 @@ func (s *Service) getRepositoryEventHandler() service.Handler {
 	}
 }
 
+func (s *Service) deleteRepositoryEventHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcsServer := vars["vcsServer"]
+		repo, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		events, err := s.Dao.ListRepositoryEvents(ctx, vcsServer, repo)
+		if err != nil {
+			return err
+		}
+		for _, e := range events {
+			if err := s.Dao.DeleteRepositoryEvent(ctx, vcsServer, repo, e.UUID); err != nil {
+				return err
+			}
+		}
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (s *Service) listRepositoryEventHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

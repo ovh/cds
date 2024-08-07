@@ -74,7 +74,7 @@ func (api *API) getProjectRepositoryEventHandler() ([]service.RbacChecker, servi
 			var repositoryEvent sdk.HookRepositoryEvent
 			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvent)
 			if (errHooks != nil || code >= 400) && code != 404 {
-				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
+				return sdk.WrapError(errHooks, "unable to get repository event [HTTP: %d]", code)
 			}
 			return service.WriteJSON(w, repositoryEvent, http.StatusOK)
 		}
@@ -116,7 +116,7 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 			var repositoryEvents []sdk.HookRepositoryEvent
 			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
 			if (errHooks != nil || code >= 400) && code != 404 {
-				return sdk.WrapError(errHooks, "unable to delete hook [HTTP: %d]", code)
+				return sdk.WrapError(errHooks, "unable to list repository event [HTTP: %d]", code)
 			}
 			return service.WriteJSON(w, repositoryEvents, http.StatusOK)
 		}
@@ -292,6 +292,20 @@ func (api *API) postProjectRepositoryHandler() ([]service.RbacChecker, service.H
 
 			if err := tx.Commit(); err != nil {
 				return sdk.WithStack(err)
+			}
+
+			// Clean events
+			srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+			if err != nil {
+				return err
+			}
+			if len(srvs) < 1 {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
+			}
+			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProjectWithSecret.Name, url.PathEscape(repoDB.Name))
+			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodDelete, path, nil, nil)
+			if (errHooks != nil || code >= 400) && code != 404 {
+				return sdk.WrapError(errHooks, "unable to delete repository events [HTTP: %d]", code)
 			}
 
 			event_v2.PublishRepositoryEvent(ctx, api.Cache, sdk.EventRepositoryCreated, pKey, vcsProjectWithSecret.Name, repoDB, *u.AuthConsumerUser.AuthentifiedUser)
