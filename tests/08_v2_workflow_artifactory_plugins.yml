@@ -265,7 +265,7 @@ testcases:
             - uses: actions/addRunResult
               with:
                 path: terraform-linux-amd64.tar.gz
-                type: terraform
+                type: terraformProvider
             - id: uploadPython
               run: curl --fail -X PUT -T  package.py -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-pypi/package.py;pypi.version=0.0.2"
             - uses: actions/addRunResult
