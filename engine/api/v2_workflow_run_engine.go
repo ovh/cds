@@ -618,6 +618,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		})
 		if err != nil {
 			log.ErrorWithStackTrace(ctx, err)
+			return err
 		}
 
 		log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)

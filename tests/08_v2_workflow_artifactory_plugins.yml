@@ -246,31 +246,36 @@ testcases:
             steps:
               - uses: actions/artifactoryPromote
                 with:
-                  artifacts: python:* helm:* debian:*
+                  artifacts: python:* helm:* debian:* terraformProvider:*
               - uses: actions/artifactoryRelease
                 with:
-                  artifacts: python:* helm:* debian:*
+                  artifacts: python:* helm:* debian:* terraformProvider:*
           PushFiles:
             runs-on: "{{.worker_model}}"     
             steps:
-            - run: touch terraform-linux-amd64.tar.gz && touch package-linux-amd64.deb && touch package.py
+            - id: name
+              run: | 
+                worker export DEBNAME package-linux-amd64-$(date +%s).deb
+                worker export TERRANAME terraform-linux-amd64-$(date +%s).tar.gz
+                worker export PYTHONNAME package-$(date +%s).py
+                touch ${DEBNAME} && touch ${TERRANAME} && touch ${PYTHONNAME}
             - id: uploadDeb
-              run: curl --fail -X PUT -T package-linux-amd64.deb -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/package-linux-amd64.deb;deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
+              run: curl --fail -X PUT -T ${{ steps.name.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
             - uses: actions/addRunResult
               with:
-                path: pool/package-linux-amd64.deb
+                path: pool/${{ steps.name.DEBNAME }}
                 type: debian
             - id: uploadTerraform
-              run: curl --fail -X PUT -T terraform-linux-amd64.tar.gz -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraformProvider/terraform-linux-amd64.tar.gz;terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
+              run: curl --fail -X PUT -T ${{ steps.name.TERRANAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraformProvider/${{ steps.name.TERRANAME }};terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
             - uses: actions/addRunResult
               with:
-                path: terraform-linux-amd64.tar.gz
+                path: ${{ steps.name.TERRANAME }}
                 type: terraformProvider
             - id: uploadPython
-              run: curl --fail -X PUT -T  package.py -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-pypi/package.py;pypi.version=0.0.2"
+              run: curl --fail -X PUT -T ${{steps.name.PYTHONNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-pypi/${{steps.name.PYTHONNAME}};pypi.version=0.0.2"
             - uses: actions/addRunResult
               with:
-                path: package.py
+                path: ${{steps.name.PYTHONNAME}}
                 type: python  
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
