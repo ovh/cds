@@ -210,7 +210,10 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 	default:
 		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unsupported result type %s", resultType)
 	}
-	_, err = grpcplugins.CreateRunResult(ctx, &p.Common, &workerruntime.V2RunResultRequest{RunResult: &runResult})
+	if _, err := grpcplugins.CreateRunResult(ctx, &p.Common, &workerruntime.V2RunResultRequest{RunResult: &runResult}); err != nil {
+		return true, err
+	}
+	grpcplugins.Success(&p.Common, fmt.Sprintf("run result %s created", runResult.Name()))
 	return mustReturnKO, err
 }
 
