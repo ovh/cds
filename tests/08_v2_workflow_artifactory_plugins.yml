@@ -250,6 +250,28 @@ testcases:
               - uses: actions/artifactoryRelease
                 with:
                   artifacts: python:* helm:* debian:*
+          PushFiles:
+            runs-on: "{{.worker_model}}"     
+            steps:
+            - run: touch terraform-linux-amd64.tar.gz && touch package-linux-amd64.deb && touch package.py
+            - id: uploadDeb
+              run: curl --fail -X PUT -T package-linux-amd64.deb -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/package-linux-amd64.deb;deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
+            - uses: actions/addRunResult
+              with:
+                path: pool/package-linux-amd64.deb
+                type: debian
+            - id: uploadTerraform
+              run: curl --fail -X PUT -T terraform-linux-amd64.tar.gz -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraform/terraform-linux-amd64.tar.gz;terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
+            - uses: actions/addRunResult
+              with:
+                path: terraform-linux-amd64.tar.gz
+                type: terraform
+            - id: uploadPython
+              run: curl --fail -X PUT -T  package.py -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-pypi/package.py;pypi.version=0.0.2"
+            - uses: actions/addRunResult
+              with:
+                path: package.py
+                type: python  
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
