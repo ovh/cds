@@ -255,10 +255,14 @@ testcases:
             steps:
             - id: name
               run: | 
-                worker export DEBNAME package-linux-amd64-$(date +%s).deb
-                worker export TERRANAME terraform-linux-amd64-$(date +%s).tar.gz
-                worker export PYTHONNAME package-$(date +%s).py
+                debfile=package-linux-amd64-$(date +%s).deb
+                worker export DEBNAME ${debfile}
+                terrafile= terraform-linux-amd64-$(date +%s).tar.gz
+                worker export TERRANAME ${terrafile}
+                pyfile=package-$(date +%s).py
+                worker export PYTHONNAME ${pyfile}
                 touch ${DEBNAME} && touch ${TERRANAME} && touch ${PYTHONNAME}
+                ls -l
             - id: uploadDeb
               run: curl --fail -X PUT -T ${{ steps.name.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
             - uses: actions/addRunResult
@@ -339,7 +343,7 @@ testcases:
     script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"       
 
   - name: Display logs
-    script: cat {{.cds_workflow}}-*
+    script: cat {{.cds_workflow}}-1-1-PushFiles*
 
   - name: Echo Status
     script: echo {{.workflowRunStatus}}
