@@ -48,6 +48,7 @@ func Test_crudRepositoryOnProjectLambdaUserOK(t *testing.T) {
 		services.NewClient = services.NewDefaultClient
 	}()
 
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/v2/repository/event/vcs-github/ovh%2Fcds", gomock.Any(), gomock.Any(), gomock.Any())
 	servicesClients.EXPECT().
 		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/cds", gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(

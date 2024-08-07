@@ -47,7 +47,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/v2/webhook/repository/{vcsServerType}/{vcsServer}", nil, r.POST(s.repositoryWebHookHandler, service.OverrideAuth(s.CheckHmac256Signature("X-Hub-Signature-256"))))
 	r.Handle("/v2/repository", nil, r.GET(s.listRepositoriesHandler))
 	r.Handle("/v2/repository/event/callback", nil, r.POST(s.postRepositoryEventAnalysisCallbackHandler))
-	r.Handle("/v2/repository/event/{vcsServer}/{repoName}", nil, r.GET(s.listRepositoryEventHandler))
+	r.Handle("/v2/repository/event/{vcsServer}/{repoName}", nil, r.GET(s.listRepositoryEventHandler), r.DELETE(s.deleteRepositoryEventHandler))
 	r.Handle("/v2/repository/event/{vcsServer}/{repoName}/{uuid}", nil, r.GET(s.getRepositoryEventHandler))
 	r.Handle("/v2/repository/key/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
 	r.Handle("/v2/workflow/manual", nil, r.POST(s.workflowManualHandler))
