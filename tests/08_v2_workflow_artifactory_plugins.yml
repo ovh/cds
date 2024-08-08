@@ -343,14 +343,14 @@ testcases:
     script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"       
 
   - name: Display logs
-    script: cat {{.cds_workflow}}-1-1-PushFiles*
+    script: cat {{.cds_workflow}}*
 
   - name: Echo Status
     script: echo {{.workflowRunStatus}}
     assertions:
     - result.systemout ShouldEqual Success
 
-  - name: Check that we have 2 run results of type python
+  - name: Check that we have 3 run results of type python
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
     assertions:
       - result.systemoutjson ShouldHaveLength 2
@@ -358,6 +358,10 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"  
     assertions:
       - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type terraformProvider
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=terraformProvider --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1      
   - name: Check that we have 1 run result of type helm
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=helm --format json"  
     assertions:
