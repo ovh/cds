@@ -198,7 +198,7 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 }
 
 type executionContext struct {
-	buildInfo                string
+	buildInfoName            string
 	projectKey               string
 	workflowName             string
 	version                  string
@@ -208,6 +208,8 @@ type executionContext struct {
 type BuildInfoRequest struct {
 	BuildInfoPrefix          string
 	ProjectKey               string
+	VCS                      string
+	Repository               string
 	WorkflowName             string
 	Version                  string
 	AgentName                string
@@ -223,7 +225,13 @@ type BuildInfoRequest struct {
 }
 
 func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactManager, r BuildInfoRequest) (*buildinfo.BuildInfo, error) {
-	buildInfoName := fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
+	var buildInfoName string
+	if r.VCS != "" && r.Repository != "" {
+		buildInfoName = fmt.Sprintf("%s/%s/%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.VCS, r.Repository, r.WorkflowName)
+	} else {
+		buildInfoName = fmt.Sprintf("%s/%s/%s", r.BuildInfoPrefix, r.ProjectKey, r.WorkflowName)
+	}
+
 	ctx, end := telemetry.Span(ctx, "artifactory.PrepareBuildInfo", telemetry.Tag("buildInfoName", buildInfoName))
 	defer end()
 
@@ -257,7 +265,7 @@ func PrepareBuildInfo(ctx context.Context, artiClient artifact_manager.ArtifactM
 	})
 
 	execContext := executionContext{
-		buildInfo:                r.BuildInfoPrefix,
+		buildInfoName:            buildInfoName,
 		defaultLowMaturitySuffix: r.DefaultLowMaturitySuffix,
 		workflowName:             r.WorkflowName,
 		version:                  r.Version,
@@ -286,7 +294,6 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 	defer end()
 	modules := make([]buildinfo.Module, 0)
 
-	runResultDatas := make([]sdk.WorkflowRunResultArtifactManager, 0, len(runResults))
 	for _, r := range runResults {
 		if r.Type != sdk.WorkflowRunResultTypeArtifactManager {
 			continue
@@ -296,7 +303,6 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 		if err != nil {
 			return nil, err
 		}
-		runResultDatas = append(runResultDatas, data)
 
 		mod := buildinfo.Module{
 			Id:           fmt.Sprintf("%s:%s", data.RepoType, data.Name),
@@ -359,7 +365,7 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 			currentMaturity = execContext.defaultLowMaturitySuffix
 		}
 		props := utils.NewProperties()
-		props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
+		props.AddProperty("build.name", execContext.buildInfoName)
 		props.AddProperty("build.number", execContext.version)
 		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
@@ -443,7 +449,7 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 			currentMaturity = execContext.defaultLowMaturitySuffix
 		}
 		props := utils.NewProperties()
-		props.AddProperty("build.name", fmt.Sprintf("%s/%s/%s", execContext.buildInfo, execContext.projectKey, execContext.workflowName))
+		props.AddProperty("build.name", execContext.buildInfoName)
 		props.AddProperty("build.number", execContext.version)
 		props.AddProperty("build.timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 

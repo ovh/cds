@@ -250,7 +250,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	releaseVersion := strings.ReplaceAll(jobContext.Git.SemverCurrent, "+", "-")
 
 	releaseName, releaseVersion, err := createReleaseBundle(ctx, c, distriClient,
-		jobContext.CDS.ProjectKey, jobContext.CDS.Workflow, releaseVersion, integration.Get(sdk.ArtifactoryConfigBuildInfoPrefix),
+		jobContext.CDS.ProjectKey, jobContext.CDS.WorkflowVCSServer, jobContext.CDS.WorkflowRepository, jobContext.CDS.Workflow, releaseVersion, integration.Get(sdk.ArtifactoryConfigBuildInfoPrefix),
 		promotedArtifacts, maturity, releaseNotes)
 	if err != nil {
 		grpcplugins.Error(c, "Unable to create Release Bundle")
@@ -323,10 +323,10 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	return nil
 }
 
-func createReleaseBundle(ctx context.Context, c *actionplugin.Common, distriClient art.DistribClient, projectKey, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
-	buildInfoName := fmt.Sprintf("%s/%s/%s", buildInfo, projectKey, workflowName)
+func createReleaseBundle(ctx context.Context, c *actionplugin.Common, distriClient art.DistribClient, projectKey, vcs, repo, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
+	buildInfoName := fmt.Sprintf("%s/%s/%s/%s/%s", buildInfo, projectKey, vcs, repo, workflowName)
 
-	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
+	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1)[0:120], version)
 	if destMaturity != "" && destMaturity != DefaultHighMaturity {
 		params.Version += "-" + destMaturity
 	}
