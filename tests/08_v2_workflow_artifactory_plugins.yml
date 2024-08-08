@@ -261,7 +261,7 @@ testcases:
                 worker export TERRANAME ${terrafile}
                 pyfile=package-$(date +%s).py
                 worker export PYTHONNAME ${pyfile}
-                touch ${DEBNAME} && touch ${TERRANAME} && touch ${PYTHONNAME}
+                touch ${debfile} && touch ${terrafile} && touch ${pyfile}
                 ls -l
             - id: uploadDeb
               run: curl --fail -X PUT -T ${{ steps.name.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
