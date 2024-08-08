@@ -264,22 +264,22 @@ testcases:
                 touch ${debfile} && touch ${terrafile} && touch ${pyfile}
                 ls -l
             - id: uploadDeb
-              run: curl --fail -X PUT -T ${{ steps.name.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
+              run: curl --fail -X PUT -T ${{ steps.name.outputs.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
             - uses: actions/addRunResult
               with:
-                path: pool/${{ steps.name.DEBNAME }}
+                path: pool/${{ steps.name.outputs.DEBNAME }}
                 type: debian
             - id: uploadTerraform
-              run: curl --fail -X PUT -T ${{ steps.name.TERRANAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraformProvider/${{ steps.name.TERRANAME }};terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
+              run: curl --fail -X PUT -T ${{ steps.name.outputs.TERRANAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraformProvider/${{ steps.name.outputs.TERRANAME }};terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
             - uses: actions/addRunResult
               with:
-                path: ${{ steps.name.TERRANAME }}
+                path: ${{ steps.name.outputs.TERRANAME }}
                 type: terraformProvider
             - id: uploadPython
-              run: curl --fail -X PUT -T ${{steps.name.PYTHONNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-pypi/${{steps.name.PYTHONNAME}};pypi.version=0.0.2"
+              run: curl --fail -X PUT -T ${{steps.name.outputs.PYTHONNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-pypi/${{steps.name.outputs.PYTHONNAME}};pypi.version=0.0.2"
             - uses: actions/addRunResult
               with:
-                path: ${{steps.name.PYTHONNAME}}
+                path: ${{steps.name.outputs.PYTHONNAME}}
                 type: python  
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
