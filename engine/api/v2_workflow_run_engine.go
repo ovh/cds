@@ -605,6 +605,8 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
 			BuildInfoPrefix:          artifactoryIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value,
 			ProjectKey:               run.ProjectKey,
+			VCS:                      run.Contexts.CDS.WorkflowVCSServer,
+			Repository:               run.Contexts.CDS.WorkflowRepository,
 			WorkflowName:             run.WorkflowName,
 			Version:                  run.Contexts.Git.SemverCurrent,
 			AgentName:                "cds-api",
