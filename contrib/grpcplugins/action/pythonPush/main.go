@@ -263,13 +263,7 @@ fi
 					Type:                           sdk.V2WorkflowRunResultTypePython,
 					Status:                         sdk.V2WorkflowRunResultStatusPending,
 					ArtifactManagerIntegrationName: &integ.Name,
-					Detail: sdk.V2WorkflowRunResultDetail{
-						Data: sdk.V2WorkflowRunResultPythonDetail{
-							Name:      strings.TrimPrefix(c.URI, "/"),
-							Version:   opts.version,
-							Extension: strings.TrimPrefix(filepath.Ext(c.URI), "."),
-						},
-					},
+					Detail:                         grpcplugins.ComputeRunResultPythonDetail(strings.TrimPrefix(c.URI, "/"), opts.version, strings.TrimPrefix(filepath.Ext(c.URI), ".")),
 				}
 				grpcplugins.ExtractFileInfoIntoRunResult(runResult, *fi, strings.TrimPrefix(c.URI, "/"), "pypi", localRepository, repository, maturity)
 			}

@@ -369,6 +369,10 @@ type ArtifactoryConfig struct {
 	ReleaseToken    string
 }
 
+type ArtifactoryFilePropertiesResponse struct {
+	Properties map[string][]string `properties`
+}
+
 type ArtifactoryFileInfo struct {
 	Repo        string    `json:"repo"`
 	Path        string    `json:"path"`
@@ -390,6 +394,23 @@ type ArtifactoryFileInfo struct {
 	URI string `json:"uri"`
 }
 
+type SearchResultResponse struct {
+	Results []SearchResult `json:"results"`
+}
+
+type SearchResult struct {
+	Repo         string   `json:"repo"`
+	Path         string   `json:"path"`
+	Name         string   `json:"name"`
+	VirtualRepos []string `json:"virtual_repos"`
+}
+
+type RepositoryInfo struct {
+	Rclass       string   `json:"rclass"`
+	PackageType  string   `json:"packageType"`
+	Repositories []string `json:"repositories"`
+}
+
 type ArtifactoryFolderInfo struct {
 	Repo      string    `json:"repo"`
 	Path      string    `json:"path"`
@@ -400,6 +421,44 @@ type ArtifactoryFolderInfo struct {
 		URI    string `json:"uri"`
 		Folder bool   `json:"folder"`
 	} `json:"children"`
+}
+
+func GetArtifactoryFileProperties(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (map[string][]string, error) {
+	if !strings.HasSuffix(config.URL, "/") {
+		config.URL = config.URL + "/"
+	}
+	uri := config.URL + "api/storage/" + filepath.Join(repo, path) + "?properties"
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode > 200 {
+		if resp.StatusCode == 404 {
+			return make(map[string][]string), nil
+		}
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to get Artifactory file info %s: error %d", uri, resp.StatusCode)
+	}
+
+	var res ArtifactoryFilePropertiesResponse
+	if err := json.Unmarshal(btes, &res); err != nil {
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to get Artifactory file info: %v", err)
+	}
+
+	return res.Properties, nil
 }
 
 func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo, path string) (*ArtifactoryFileInfo, error) {
@@ -424,7 +483,9 @@ func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 200 {
-		Error(c, string(btes))
+		if resp.StatusCode != 404 {
+			Error(c, string(btes))
+		}
 		return nil, errors.Errorf("unable to get Artifactory file info %s: error %d", uri, resp.StatusCode)
 	}
 
@@ -432,6 +493,77 @@ func GetArtifactoryFileInfo(ctx context.Context, c *actionplugin.Common, config 
 	if err := json.Unmarshal(btes, &res); err != nil {
 		Error(c, string(btes))
 		return nil, errors.Errorf("unable to get Artifactory file info: %v", err)
+	}
+
+	return &res, nil
+}
+
+func SearchItem(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, aql string) (*SearchResultResponse, error) {
+	if !strings.HasSuffix(config.URL, "/") {
+		config.URL = config.URL + "/"
+	}
+	reader := bytes.NewReader([]byte(aql))
+	uri := config.URL + "api/search/aql"
+	req, err := http.NewRequestWithContext(ctx, "POST", uri, reader)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode > 200 {
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to search item on artifactory Artifactory: error %d", resp.StatusCode)
+	}
+
+	var res SearchResultResponse
+	if err := json.Unmarshal(btes, &res); err != nil {
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to read search response: %v", err)
+	}
+
+	return &res, nil
+}
+
+func GetArtifactoryRepositoryInfo(ctx context.Context, c *actionplugin.Common, config ArtifactoryConfig, repo string) (*RepositoryInfo, error) {
+	if !strings.HasSuffix(config.URL, "/") {
+		config.URL = config.URL + "/"
+	}
+	uri := config.URL + "api/repositories/" + repo
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+config.Token)
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	btes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode > 200 {
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to get Artifactory folder info %s: error %d", uri, resp.StatusCode)
+	}
+
+	var res RepositoryInfo
+	if err := json.Unmarshal(btes, &res); err != nil {
+		Error(c, string(btes))
+		return nil, errors.Errorf("unable to get Artifactory folder info: %v", err)
 	}
 
 	return &res, nil

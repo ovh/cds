@@ -148,12 +148,15 @@
                                 {{result.type}}
                             </td>
                             <td>
-                                <ng-container *ngIf="result.type === 'deployment'; else nameTmpl">
+                                <ng-container *ngIf="result.type === 'deployment'">
                                     {{result.detail.data.deployment_name}}:{{result.detail.data.version}}
                                 </ng-container>
-                                <ng-template #nameTmpl>
+                                <ng-container *ngIf="result.type === 'terraformProvider'">
+                                    {{result.detail.data.namespace}}_{{result.detail.data.name}}_{{result.detail.data.version}}_{{result.detail.data.flavor}}
+                                </ng-container>
+                                <ng-container *ngIf="result.type !== 'terraformProvider' && result.type !== 'deployment'">
                                     {{result.detail.data.name ?? result.id}}
-                                </ng-template>
+                                </ng-container>
                             </td>
                         </tr>
                     </tbody>

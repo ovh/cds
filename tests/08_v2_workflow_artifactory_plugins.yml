@@ -241,15 +241,46 @@ testcases:
                   version: ${{ steps.packagePython.outputs.pkgVersion }}
                   wheel: "true"
           PromoteAndRelease:
-            needs: [Debian-Job, Python-Job, Helm-Job]
+            needs: [Debian-Job, Python-Job, Helm-Job, PushFiles]
             runs-on: "{{.worker_model}}"
             steps:
               - uses: actions/artifactoryPromote
                 with:
-                  artifacts: python:* helm:* debian:*
+                  artifacts: python:* helm:* debian:* terraformProvider:*
               - uses: actions/artifactoryRelease
                 with:
-                  artifacts: python:* helm:* debian:*
+                  artifacts: python:* helm:* debian:* terraformProvider:*
+          PushFiles:
+            runs-on: "{{.worker_model}}"     
+            steps:
+            - id: name
+              run: | 
+                debfile=package-linux-amd64-$(date +%s).deb
+                worker export DEBNAME ${debfile}
+                terrafile=terraform-linux-amd64-$(date +%s).tar.gz
+                worker export TERRANAME ${terrafile}
+                pyfile=package-$(date +%s).py
+                worker export PYTHONNAME ${pyfile}
+                touch ${debfile} && touch ${terrafile} && touch ${pyfile}
+                ls -l
+            - id: uploadDeb
+              run: curl --fail -X PUT -T ${{ steps.name.outputs.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"  
+            - uses: actions/addRunResult
+              with:
+                path: pool/${{ steps.name.outputs.DEBNAME }}
+                type: debian
+            - id: uploadTerraform
+              run: curl --fail -X PUT -T ${{ steps.name.outputs.TERRANAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraformProvider/${{ steps.name.outputs.TERRANAME }};terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
+            - uses: actions/addRunResult
+              with:
+                path: ${{ steps.name.outputs.TERRANAME }}
+                type: terraformProvider
+            - id: uploadPython
+              run: curl --fail -X PUT -T ${{steps.name.outputs.PYTHONNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-pypi/${{steps.name.outputs.PYTHONNAME}};pypi.version=0.0.2"
+            - uses: actions/addRunResult
+              with:
+                path: ${{steps.name.outputs.PYTHONNAME}}
+                type: python  
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
@@ -291,7 +322,7 @@ testcases:
         - or:
           - result.systemoutjson.systemoutjson0.status ShouldEqual Success
           - result.systemoutjson.systemoutjson0.status ShouldEqual Fail
-    retry: 200
+    retry: 300
     delay: 1
     vars:
       workflowRunID:
@@ -312,21 +343,25 @@ testcases:
     script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"       
 
   - name: Display logs
-    script: cat {{.cds_workflow}}-*
+    script: cat {{.cds_workflow}}*
 
   - name: Echo Status
     script: echo {{.workflowRunStatus}}
     assertions:
     - result.systemout ShouldEqual Success
 
-  - name: Check that we have 2 run results of type python
+  - name: Check that we have 3 run results of type python
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 2
-  - name: Check that we have 1 run result of type debian
+      - result.systemoutjson ShouldHaveLength 3
+  - name: Check that we have 2 run result of type debian
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 1
+      - result.systemoutjson ShouldHaveLength 2
+  - name: Check that we have 1 run result of type terraformProvider
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=terraformProvider --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1      
   - name: Check that we have 1 run result of type helm
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=helm --format json"  
     assertions:
