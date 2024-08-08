@@ -326,7 +326,11 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 func createReleaseBundle(ctx context.Context, c *actionplugin.Common, distriClient art.DistribClient, projectKey, vcs, repo, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s/%s/%s", buildInfo, projectKey, vcs, repo, workflowName)
 
-	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1)[0:120], version)
+	if len(buildInfoName) > 120 {
+		buildInfoName = buildInfoName[0:120]
+	}
+
+	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
 	if destMaturity != "" && destMaturity != DefaultHighMaturity {
 		params.Version += "-" + destMaturity
 	}
