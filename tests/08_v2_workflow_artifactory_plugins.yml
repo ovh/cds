@@ -257,7 +257,7 @@ testcases:
               run: | 
                 debfile=package-linux-amd64-$(date +%s).deb
                 worker export DEBNAME ${debfile}
-                terrafile= terraform-linux-amd64-$(date +%s).tar.gz
+                terrafile=terraform-linux-amd64-$(date +%s).tar.gz
                 worker export TERRANAME ${terrafile}
                 pyfile=package-$(date +%s).py
                 worker export PYTHONNAME ${pyfile}
