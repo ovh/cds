@@ -87,7 +87,6 @@ testcases:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               name: This is my first job
               if: cds.workflow == '{{.cds_workflow}}'
-              continue-on-error: true
               steps:
                 - run: exit 1
             conditionFailure:
@@ -147,4 +146,4 @@ testcases:
       assertions:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "conditionFailure"
-        - result.systemoutjson.status ShouldEqual "Success"
+        - result.systemoutjson.status ShouldEqual "Skipped"
