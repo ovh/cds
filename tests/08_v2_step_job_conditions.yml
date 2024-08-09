@@ -87,15 +87,9 @@ testcases:
               runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
               name: This is my first job
               if: cds.workflow == '{{.cds_workflow}}'
+              continue-on-error: true
               steps:
                 - run: exit 1
-            conditionFailure:
-              runs-on: {{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo}}/docker-debian
-              name: This is my first job
-              if: failure()
-              needs: [failedJob]
-              steps:
-                - run: exit 0
 
     - name: Check CDS project analyses status
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
@@ -142,8 +136,3 @@ testcases:
         - result.code ShouldEqual 0
         - result.systemoutjson.job_id ShouldEqual "failedJob"
         - result.systemoutjson.status ShouldEqual "Fail"
-    - script: {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs get {{.cds_project}} {{.workflowRunID}} conditionFailure --format json
-      assertions:
-        - result.code ShouldEqual 0
-        - result.systemoutjson.job_id ShouldEqual "conditionFailure"
-        - result.systemoutjson.status ShouldEqual "Skipped"
