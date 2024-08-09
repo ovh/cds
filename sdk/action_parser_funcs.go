@@ -377,13 +377,13 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			}
 		}
 		return false, nil
-	} else if jobsContext, has := a.contexts["jobs"]; has && jobsContext != nil {
-		var jobs JobsResultContext
-		jobsCtxBts, _ := json.Marshal(jobsContext)
-		if err := json.Unmarshal(jobsCtxBts, &jobs); err != nil {
+	} else if needsContext, has := a.contexts["needs"]; has && needsContext != nil {
+		var needs NeedsContext
+		jobsCtxBts, _ := json.Marshal(needsContext)
+		if err := json.Unmarshal(jobsCtxBts, &needs); err != nil {
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read jobs context")
 		}
-		for _, v := range jobs {
+		for _, v := range needs {
 			if v.Result == V2WorkflowRunJobStatusFail {
 				return true, nil
 			}
