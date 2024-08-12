@@ -2,6 +2,7 @@ name: plugin initialization
 
 vars:
   plugins:
+    - addRunResult
     - artifactoryPromote
     - artifactoryRelease
     - cache

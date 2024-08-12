@@ -83,14 +83,6 @@ func (actPlugin *dockerPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	return nil, sdk.ErrNotImplemented
 }
 
-type img struct {
-	repository string
-	tag        string
-	imageID    string
-	created    string
-	size       string
-}
-
 func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, tags []string, registry, registryAuth string) error {
 	if image == "" {
 		return sdk.Errorf("wrong usage: <image> parameter should not be empty")
@@ -106,7 +98,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 		return sdk.Errorf("unable to get docker image %q: %v", image, err)
 	}
 
-	images := []img{}
+	images := []grpcplugins.Img{}
 	for _, image := range imageSummaries {
 		repository := "<none>"
 		tag := "<none>"
@@ -119,12 +111,12 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 		}
 		duration := HumanDuration(image.Created)
 		size := HumanSize(image.Size)
-		images = append(images, img{repository: repository, tag: tag, imageID: image.ID[7:19], created: duration, size: size})
+		images = append(images, grpcplugins.Img{Repository: repository, Tag: tag, ImageID: image.ID[7:19], Created: duration, Size: size})
 	}
 
-	var imgFound *img
+	var imgFound *grpcplugins.Img
 	for i := range images {
-		if images[i].repository+":"+images[i].tag == image {
+		if images[i].Repository+":"+images[i].Tag == image {
 			imgFound = &images[i]
 			break
 		}
@@ -135,7 +127,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	}
 
 	if len(tags) == 0 { // If no tag is provided, keep the actual tag
-		tags = []string{imgFound.tag}
+		tags = []string{imgFound.Tag}
 	}
 
 	for _, tag := range tags {
@@ -149,7 +141,7 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	return nil
 }
 
-func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *img, registryURL string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
+func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client.Client, source string, img *grpcplugins.Img, registryURL string, registryAuth string, tag string) (*sdk.V2WorkflowRunResult, time.Duration, error) {
 	var t0 = time.Now()
 	// Create run result at status "pending"
 	var runResultRequest = workerruntime.V2RunResultRequest{
@@ -157,14 +149,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			IssuedAt: time.Now(),
 			Type:     sdk.V2WorkflowRunResultTypeDocker,
 			Status:   sdk.V2WorkflowRunResultStatusPending,
-			Detail: sdk.V2WorkflowRunResultDetail{
-				Data: sdk.V2WorkflowRunResultDockerDetail{
-					Name:         source,
-					ID:           img.imageID,
-					HumanSize:    img.size,
-					HumanCreated: img.created,
-				},
-			},
+			Detail:   grpcplugins.ComputeRunResultDockerDetail(source, *img),
 		},
 	}
 
@@ -199,18 +184,18 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			return nil, time.Since(t0), err
 		}
 
-		destination = repository + "." + rtURL.Host + "/" + img.repository + ":" + tag
+		destination = repository + "." + rtURL.Host + "/" + img.Repository + ":" + tag
 
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
 			Name:         destination,
-			ID:           img.imageID,
-			HumanSize:    img.size,
-			HumanCreated: img.created,
+			ID:           img.ImageID,
+			HumanSize:    img.Size,
+			HumanCreated: img.Created,
 		}
 
 		// Check if we need to tag the image
-		if destination != img.repository+":"+img.tag {
-			if err := cli.ImageTag(ctx, img.imageID, destination); err != nil {
+		if destination != img.Repository+":"+img.Tag {
+			if err := cli.ImageTag(ctx, img.ImageID, destination); err != nil {
 				return nil, time.Since(t0), errors.Errorf("unable to tag %q to %q: %v", source, destination, err)
 			}
 		}
@@ -237,7 +222,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			Token: integration.Get(sdk.ArtifactoryConfigToken),
 		}
 
-		rtFolderPath := img.repository + "/" + tag
+		rtFolderPath := img.Repository + "/" + tag
 		rtFolderPathInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, rtFolderPath)
 		if err != nil {
 			return nil, time.Since(t0), err
@@ -255,7 +240,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 				maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
-				result.ArtifactManagerMetadata.Set("id", img.imageID)
+				result.ArtifactManagerMetadata.Set("id", img.ImageID)
 				break
 			}
 		}
@@ -270,13 +255,13 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			return nil, time.Since(t0), errors.New("wrong usage: <registry> and <registryAuth> parameters should not be both empty")
 		}
 
-		destination = img.repository + ":" + tag
+		destination = img.Repository + ":" + tag
 		if registryURL != "" {
 			destination = registryURL + "/" + destination
 		}
 
-		if tag != img.tag { // if the image already has the right tag, nothing to do
-			if err := cli.ImageTag(ctx, img.imageID, destination); err != nil {
+		if tag != img.Tag { // if the image already has the right tag, nothing to do
+			if err := cli.ImageTag(ctx, img.ImageID, destination); err != nil {
 				return nil, time.Since(t0), errors.Errorf("unable to tag %q to %q: %v", source, destination, err)
 			}
 		}
@@ -293,7 +278,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		result.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 		result.ArtifactManagerMetadata.Set("registry", registryURL)
 		result.ArtifactManagerMetadata.Set("name", destination)
-		result.ArtifactManagerMetadata.Set("id", img.imageID)
+		result.ArtifactManagerMetadata.Set("id", img.ImageID)
 	}
 
 	details, err := result.GetDetailAsV2WorkflowRunResultDockerDetail()

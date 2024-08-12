@@ -566,6 +566,24 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultVariableDetail() (*V
 	return i, nil
 }
 
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTerraformProviderDetail() (*V2WorkflowRunResultTerraformProviderDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultTerraformProviderDetail)
+	if !ok {
+		var ii V2WorkflowRunResultTerraformProviderDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultTerraformProviderDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultTerraformProviderDetail")
+	}
+	return i, nil
+}
+
 func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail() (*V2WorkflowRunResultArsenalDeploymentDetail, error) {
 	if err := r.Detail.castData(); err != nil {
 		return nil, err
@@ -711,6 +729,11 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultReleaseDetail() (*V2
 
 func (r *V2WorkflowRunResult) Name() string {
 	switch r.Type {
+	case V2WorkflowRunResultTypeTerraformProvider:
+		detail, err := r.GetDetailAsV2WorkflowRunResultTerraformProviderDetail()
+		if err == nil {
+			return string(r.Type) + ":" + detail.Namespace + "_" + detail.Name + "_" + detail.Version + "_" + detail.Flavor
+		}
 	case V2WorkflowRunResultTypeTest:
 		detail, err := r.GetDetailAsV2WorkflowRunResultTestDetail()
 		if err == nil {
@@ -811,6 +834,13 @@ type V2WorkflowRunResultDetail struct {
 
 func (s *V2WorkflowRunResultDetail) castData() error {
 	switch s.Type {
+	case "V2WorkflowRunResultTerraformProviderDetail":
+		var detail = new(V2WorkflowRunResultTerraformProviderDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTerraformProviderDetail")
+		}
+		s.Data = detail
+		return nil
 	case "V2WorkflowRunResultTestDetail":
 		var detail = new(V2WorkflowRunResultTestDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
@@ -981,6 +1011,7 @@ const (
 	V2WorkflowRunResultTypePython            = "python"
 	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
 	V2WorkflowRunResultTypeHelm              = "helm"
+	V2WorkflowRunResultTypeTerraformProvider = "terraformProvider"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
@@ -993,6 +1024,14 @@ type V2WorkflowRunResultTestDetail struct {
 	SHA256      string           `json:"sha256" mapstructure:"sha256"`
 	TestsSuites JUnitTestsSuites `json:"tests_suites" mapstructure:"tests_suites"`
 	TestStats   TestsStats       `json:"tests_stats" mapstructure:"tests_stats"`
+}
+
+type V2WorkflowRunResultTerraformProviderDetail struct {
+	Flavor    string `json:"flavor"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Type      string `json:"type"`
+	Version   string `json:"version"`
 }
 
 type V2WorkflowRunResultGenericDetail struct {

@@ -159,18 +159,7 @@ func (p *debianPushPlugin) perform(ctx context.Context, dirFS fs.FS, opts debian
 					IssuedAt: time.Now(),
 					Type:     sdk.V2WorkflowRunResultTypeDebian,
 					Status:   sdk.V2WorkflowRunResultStatusPending,
-					Detail: sdk.V2WorkflowRunResultDetail{
-						Data: sdk.V2WorkflowRunResultDebianDetail{
-							Name:          r.Result,
-							Size:          sizes[r.Path],
-							MD5:           checksums[r.Path].Md5,
-							SHA1:          checksums[r.Path].Sha1,
-							SHA256:        checksums[r.Path].Sha256,
-							Components:    opts.components,
-							Distributions: opts.distributions,
-							Architectures: opts.architectures,
-						},
-					},
+					Detail:   grpcplugins.ComputeRunResultDebianDetail(r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256, opts.components, opts.distributions, opts.architectures),
 				},
 			}
 
