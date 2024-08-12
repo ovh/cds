@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
-	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
@@ -29,7 +28,6 @@ func InsertRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2
 	if err := gorpmapping.Insert(db, &entity); err != nil {
 		return err
 	}
-	log.Info(ctx, "run result %+v inserted", runResult)
 	return nil
 }
 
