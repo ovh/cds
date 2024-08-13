@@ -100,7 +100,7 @@ export class RunJobLogsComponent implements OnDestroy {
                 logBlockStep.link = <CDNLogLinkData>{ api_ref: link.api_ref, item_type: link.item_type };
                 linksSteps.push(link);
                 types.set(link.item_type, linksSteps);
-            } else {
+            } else if (link.item_type === "job-step-log") {
                 // Add Post step dynamically
                 let block = new LogBlock(link.step_name);
                 block.failed = PipelineStatus.FAIL === this._runJob.steps_status[link.step_name].conclusion
