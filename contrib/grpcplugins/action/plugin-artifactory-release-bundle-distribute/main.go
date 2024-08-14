@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/jfrog/jfrog-client-go/utils/distribution"
 	"github.com/jfrog/jfrog-client-go/utils/log"
+	"github.com/ovh/cds/contrib/grpcplugins"
 	art "github.com/ovh/cds/contrib/integrations/artifactory"
 	"github.com/ovh/cds/sdk/artifact_manager/artifactory/edge"
 
@@ -48,22 +49,21 @@ func (p *artifactoryReleaseBundleDistributePlugin) Stream(q *actionplugin.Action
 	return stream.Send(res)
 }
 
-func (actPlugin *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
+func (p *artifactoryReleaseBundleDistributePlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	res := &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess,
 	}
-	if err := actPlugin.perform(ctx, q); err != nil {
+	if err := p.perform(ctx, q); err != nil {
 		res.Status = sdk.StatusFail
 		res.Details = fmt.Sprintf("%v", err)
 	}
 	return res, nil
 }
 
-func (actPlugin *artifactoryReleaseBundleDistributePlugin) perform(ctx context.Context, q *actionplugin.ActionQuery) error {
+func (p *artifactoryReleaseBundleDistributePlugin) perform(ctx context.Context, q *actionplugin.ActionQuery) error {
 	name := q.GetOptions()["name"]
 	version := q.GetOptions()["version"]
 	url := q.GetOptions()["url"]
-
 	token := q.GetOptions()[q.GetOptions()["token_variable"]]
 
 	if url == "" {
@@ -72,6 +72,20 @@ func (actPlugin *artifactoryReleaseBundleDistributePlugin) perform(ctx context.C
 
 		token = q.GetOptions()["cds.integration.artifact_manager.release.token"]
 		url = q.GetOptions()["cds.integration.artifact_manager.distribution.url"]
+
+		jobContext, err := grpcplugins.GetJobContext(ctx, &p.Common)
+		if err != nil {
+			return err
+		}
+		if jobContext.Integrations != nil && jobContext.Integrations.ArtifactManager.Name != "" {
+			integration := jobContext.Integrations.ArtifactManager
+
+			artiURL = integration.Get(sdk.ArtifactoryConfigURL)
+			artiToken = integration.Get(sdk.ArtifactoryConfigToken)
+
+			token = integration.Get(sdk.ArtifactoryConfigReleaseToken)
+			url = integration.Get(sdk.ArtifactoryConfigDistributionURL)
+		}
 
 		if url == "" {
 			url = artiURL
