@@ -259,26 +259,28 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read cds context")
 		}
 	}
+	dirFS := os.DirFS(cdsContext.Workspace)
+
 	files := make([]string, 0)
-	dirFs := os.DirFS(cdsContext.Workspace)
 	for _, i := range inputs {
 		input, ok := i.(string)
 		if !ok {
 			return nil, NewErrorFrom(ErrInvalidData, "%v must be a string", i)
 		}
-		filesFound, err := glob.Glob(dirFs, ".", input)
+		filesFound, err := glob.Glob(cdsContext.Workspace, input)
 		if err != nil {
 			return nil, NewErrorFrom(ErrInvalidData, "unable to find files with pattern %s on directory %s: %v", input, cdsContext.Workspace, err)
 		}
-		for _, f := range filesFound {
-			files = append(files, cdsContext.Workspace+"/"+f.Path)
+		dirFS = filesFound.DirFS
+		for _, f := range filesFound.Results {
+			files = append(files, f.Path)
 		}
 	}
 	if len(files) == 0 {
 		return nil, NewErrorFrom(ErrInvalidData, "find 0 file with filter %v", inputs)
 	}
 	if len(files) == 1 {
-		f, err := os.Open(files[0])
+		f, err := dirFS.Open(files[0])
 		if err != nil {
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read file %s: %v", files[0], err)
 		}
@@ -292,7 +294,7 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 		sort.Strings(files)
 		buf := make([]byte, 0, len(files))
 		for _, file := range files {
-			f, err := os.Open(file)
+			f, err := dirFS.Open(file)
 			if err != nil {
 				return nil, NewErrorFrom(ErrInvalidData, "unable to read file %s: %v", file, err)
 			}

@@ -148,7 +148,7 @@ func TestGlob_Match(t *testing.T) {
 func TestGlob_MatchFiles(t *testing.T) {
 	pattern := "path/to/**/* !path/to/**/*.tmp"
 	g := New(pattern)
-	result, err := g.MatchFiles(os.DirFS("tests/"), "fixtures")
+	result, err := g.MatchFiles(os.DirFS("tests/fixtures"))
 	require.NoError(t, err)
 	t.Logf("%s matches %s", pattern, result.String())
 }
