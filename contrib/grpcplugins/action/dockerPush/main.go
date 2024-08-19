@@ -66,7 +66,7 @@ func (p *dockerPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		tagSlice = strings.Split(tags, ",")
 	}
 
-	if !strings.ContainsRune(image, ':') && len(tagSlice) == 0 { // Latest is the default tag
+	if !strings.ContainsRune(image, ':') { // Latest is the default tag
 		image = image + ":latest"
 	}
 
