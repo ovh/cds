@@ -593,10 +593,8 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 			pathToApplySet := fi.Path
 			// If dir property exist (for artifact manifest.json or list.manifest.json), we'll use it to SetProperties
 			if sdk.MapHasKeys(existingProperties, "dir") {
-				for k, v := range existingProperties {
-					if k == "dir" && len(v) >= 1 {
-						pathToApplySet = v[0]
-					}
+				if len(existingProperties["dir"]) >= 1 {
+					pathToApplySet = existingProperties["dir"][0]
 				}
 			}
 			log.Info(ctx, "artifact %s%s signature: %s", localRepository, pathToApplySet, signature)
