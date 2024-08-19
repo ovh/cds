@@ -239,6 +239,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 				localRepo := fmt.Sprintf("%s-%s", repository, integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
 				maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 
+				rtPathInfo.Path = strings.TrimSuffix(rtPathInfo.Path, "/list.manifest.json")
+				rtPathInfo.Path = strings.TrimSuffix(rtPathInfo.Path, "/manifest.json")
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
 				result.ArtifactManagerMetadata.Set("id", img.ImageID)
 				break
