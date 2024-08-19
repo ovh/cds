@@ -592,11 +592,11 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 
 			pathToApplySet := fi.Path
 			// If dir property exist (for artifact manifest.json or list.manifest.json), we'll use it to SetProperties
-			if sdk.MapHasKeys(existingProperties, "dir") && len(existingProperties["dir"]) >= 1 {
-				pathToApplySet = existingProperties["dir"][0]
+			if result.ArtifactManagerMetadata.Get("dir") != "" {
+				pathToApplySet = result.ArtifactManagerMetadata.Get("dir")
 			}
-			log.Info(ctx, "artifact %s%s signature: %s", localRepository, pathToApplySet, signature)
 
+			log.Info(ctx, "setProperties artifact %s%s signature: %s", localRepository, pathToApplySet, signature)
 			if err := artifactClient.SetProperties(localRepository, pathToApplySet, props); err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
