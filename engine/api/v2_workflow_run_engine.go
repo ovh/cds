@@ -207,12 +207,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 		// If not found stop the run
 		if err != nil {
-			return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				IssuedAt:      time.Now(),
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("variable set %s not found on project", vs),
-			}}, u)
+			return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{
+				{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("variable set %s not found on project", vs),
+				},
+			}, u)
 		}
 		vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID)
 		if err != nil {
@@ -222,12 +224,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 	variableSetCtx, _, err := buildVarsContext(ctx, vss)
 	if err != nil {
-		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{sdk.V2WorkflowRunInfo{
-			WorkflowRunID: run.ID,
-			IssuedAt:      time.Now(),
-			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("unable to compute variableset into job context: %v", err),
-		}}, u)
+		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{
+			{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("unable to compute variableset into job context: %v", err),
+			},
+		}, u)
 	}
 
 	// Enqueue JOB
