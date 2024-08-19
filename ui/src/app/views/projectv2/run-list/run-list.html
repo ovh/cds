@@ -136,6 +136,21 @@
 					<nz-list-item-action>
 						<app-date-from-now [value]="run.started"></app-date-from-now>
 					</nz-list-item-action>
+					<nz-list-item-action>
+						<button nz-button nzType="secondary" title="Run options" nz-dropdown [nzDropdownMenu]="menu"><span nz-icon
+								nzType="more" nzTheme="outline"></span></button>
+						<nz-dropdown-menu #menu="nzDropdownMenu">
+							<ul nz-menu nzSelectable>
+								<li nz-menu-item>
+									<a nz-button nzType="link" nzDanger nz-popconfirm nzPopconfirmTitle="Are you sure?" [nzIcon]="iconTpl"
+										(nzOnConfirm)="clickDeleteRun(run.id)">Delete</a>
+									<ng-template #iconTpl>
+										<span nz-icon nzType="question-circle-o" style="color: red;"></span>
+									</ng-template>
+								</li>
+							</ul>
+						</nz-dropdown-menu>
+					</nz-list-item-action>
 				</ul>
 			</ng-container>
 		</nz-list-item>

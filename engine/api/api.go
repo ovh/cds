@@ -54,7 +54,6 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workermodel"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/database"
 	"github.com/ovh/cds/engine/featureflipping"
@@ -1038,10 +1037,9 @@ func (a *API) Serve(ctx context.Context) error {
 		func(ctx context.Context) {
 			purge.Workflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Metrics.WorkflowRunsMarkToDelete)
 		})
-
-	a.GoRoutines.Run(ctx, "Purge-WorkflowRunV2",
+	a.GoRoutines.Run(ctx, "Purge-Runs-V2",
 		func(ctx context.Context) {
-			workflow_v2.PurgeWorkflowRun(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Config.WorkflowV2.RunRetentionScheduling)
+			purge.WorkflowRunsV2(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper), a.Config.WorkflowV2.RunRetentionScheduling)
 		})
 
 	// Check maintenance on redis

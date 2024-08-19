@@ -478,7 +478,7 @@ func (api *API) getJobRunResultsHandler() ([]service.RbacChecker, service.Handle
 				return err
 			}
 
-			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), runJob.WorkflowRunID, runJob.RunAttempt)
 			if err != nil {
 				return err
 			}

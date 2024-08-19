@@ -536,3 +536,8 @@ func LoadAndLockRunByID(ctx context.Context, db gorp.SqlExecutor, id string, opt
 	query := gorpmapping.NewQuery("SELECT * from v2_workflow_run WHERE id = $1 FOR UPDATE SKIP LOCKED").Args(id)
 	return getRun(ctx, db, query, opts...)
 }
+
+func DeleteRunByID(db gorp.SqlExecutor, id string) error {
+	_, err := db.Exec("DELETE FROM v2_workflow_run WHERE id = $1", id)
+	return sdk.WrapError(err, "unable to delete workflow run v2 with id %s", id)
+}

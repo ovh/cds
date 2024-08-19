@@ -339,4 +339,13 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		queryParams[annotation.key] = annotation.value;
 		return queryParams;
 	}
+
+	async clickDeleteRun(runID: string) {
+		try {
+			await lastValueFrom(this._http.delete(`/v2/project/${this.project.key}/run/${runID}`));
+			this.refresh();
+		} catch (e) {
+			this._messageService.error(`Unable to delete workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
+		}
+	}
 }
