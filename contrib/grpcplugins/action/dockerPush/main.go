@@ -66,7 +66,7 @@ func (p *dockerPushPlugin) Stream(q *actionplugin.ActionQuery, stream actionplug
 		tagSlice = strings.Split(tags, ",")
 	}
 
-	if !strings.ContainsRune(image, ':') { // Latest is the default tag
+	if !strings.ContainsRune(image, ':') && len(tagSlice) == 0 { // Latest is the default tag
 		image = image + ":latest"
 	}
 
@@ -239,8 +239,6 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 				localRepo := fmt.Sprintf("%s-%s", repository, integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
 				maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 
-				rtPathInfo.Path = strings.TrimSuffix(rtPathInfo.Path, "/list.manifest.json")
-				rtPathInfo.Path = strings.TrimSuffix(rtPathInfo.Path, "/manifest.json")
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
 				result.ArtifactManagerMetadata.Set("id", img.ImageID)
 				break

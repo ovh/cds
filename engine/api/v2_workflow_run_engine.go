@@ -588,11 +588,20 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 				log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
 				continue
 			}
-
-			log.Info(ctx, "artifact %s%s signature: %s", localRepository, fi.Path, signature)
-
 			props.AddProperty("cds.signature", signature)
-			if err := artifactClient.SetProperties(localRepository, fi.Path, props); err != nil {
+
+			pathToApplySet := fi.Path
+			// If dir property exist (for artifact manifest.json or list.manifest.json), we'll use it to SetProperties
+			if sdk.MapHasKeys(existingProperties, "dir") {
+				for k, v := range existingProperties {
+					if k == "dir" && len(v) >= 1 {
+						pathToApplySet = v[0]
+					}
+				}
+			}
+			log.Info(ctx, "artifact %s%s signature: %s", localRepository, pathToApplySet, signature)
+
+			if err := artifactClient.SetProperties(localRepository, pathToApplySet, props); err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
 				continue
