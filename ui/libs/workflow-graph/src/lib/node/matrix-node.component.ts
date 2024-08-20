@@ -50,12 +50,12 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
         const alls = GraphNode.generateMatrixOptions(this.node.job.strategy.matrix);
         this.keys = alls.map(option => {
             return Array.from(option.keys()).sort().map(key => {
-                return `${key}:${option.get(key)}`;
+                return `${key}: ${option.get(key)}`;
             }).join(', ');
         });
         (this.node.runs ?? []).forEach(r => {
             const key = Object.keys(r.matrix).sort().map(key => {
-                return `${key}:${r.matrix[key]}`;
+                return `${key}: ${r.matrix[key]}`;
             }).join(', ');
             this.dates[key] = {
                 queued: new Date(r.queued),
@@ -81,7 +81,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
         const now = new Date();
         (this.node.runs ?? []).forEach(r => {
             const key = Object.keys(r.matrix).sort().map(key => {
-                return `${key}:${r.matrix[key]}`;
+                return `${key}: ${r.matrix[key]}`;
             }).join(', ');
             switch (r.status) {
                 case V2WorkflowRunJobStatus.Waiting:

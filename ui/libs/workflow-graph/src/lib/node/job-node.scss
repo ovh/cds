@@ -50,25 +50,6 @@
         }
     }
 
-    .gate {
-        color: $polar_grey_1;
-        font-size: 26px;
-        margin-left: 10px;
-        cursor: pointer;
-
-        &:hover {
-            color: $polar_grey_0 !important;
-        }
-
-        :host-context(.night) & {
-            color: $darkTheme_grey_6;
-
-            &:hover {
-                color: white !important;
-            }
-        }
-    }
-
     .name {
         font-size: 0.9em;
         flex: 1;
@@ -125,23 +106,16 @@
         border-color: $polar_grey_0;
     }
 
-    &:hover {
-        .commands {
-            display: flex;
-        }
-    }
-
     .commands {
-        display: none;
+        display: flex;
         flex-direction: row;
         align-items: center;
         height: 100%;
-        position: absolute;
-        right: 0;
         background-color: inherit;
 
-        button {
+        [nz-button] {
             margin: 10px;
+            border-width: 2px;
         }
 
         [nzGhost] {

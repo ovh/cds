@@ -3,9 +3,35 @@
     [class.inactive]="node?.run?.status === statusEnum.Skipped"
     [class.fail]="node?.run?.status === statusEnum.Fail || node?.run?.status === statusEnum.Stopped"
     [class.building]="node?.run?.status === statusEnum.Building || node?.run?.status === statusEnum.Waiting || node?.run?.status === statusEnum.Scheduling">
-    <span *ngIf="node?.gate && !runActive" class="gate" nz-icon nzType="play-circle" nzTheme="outline"
-        title="Run job gate" (click)="clickRunGate($event)"></span>
-    <div *ngIf="node?.name" class="name">
+    <div class="commands">
+        <button *ngIf="node?.gate && !runActive" nz-button nzGhost nzSize="small" nzShape="circle" title="Run job gate"
+            (click)="clickRunGate($event)">
+            <span nz-icon nzType="caret-right" style="margin-left: 2px;font-size: 16px;" nzTheme="fill"></span>
+        </button>
+        <ng-container *ngIf="node && node.run">
+            <button *ngIf="!(node.run.status | isJobTerminated)" class="stop" nz-button nzDanger nzType="primary"
+                nzSize="small" nzShape="circle" title="Stop the job" (click)="clickStop($event)">
+                <span nz-icon style="font-size: 10px;">
+                    <svg>
+                        <path d="M 960 64 H 64 v 896 h 896 z"></path>
+                    </svg>
+                </span>
+            </button>
+            <button
+                *ngIf="(node.run.status | isJobTerminated) && node.run.status !== 'Skipped' && !runActive && !node?.gate"
+                nz-button nzGhost nzSize="small" nzShape="circle" title="Restart the job"
+                (click)="clickRestart($event)">
+                <span nz-icon style="font-size: 16px;">
+                    <svg>
+                        <path
+                            d="M 758.2 839.1 C 851.8 765.9 912 651.9 912 523.9 C 912 303 733.5 124.3 512.6 124 C 291.4 123.7 112 302.8 112 523.9 c 0 125.2 57.5 236.9 147.6 310.2 c 3.5 2.8 8.6 2.2 11.4 -1.3 l 79 -93.8 c 2.7 -3.4 2.1 -8.3 -1.2 -11.1 c -8.1 -6.6 -15.9 -13.7 -23.4 -21.2 a 318.64 318.64 0 0 1 -68.6 -101.7 C 250 582 247 573 247 520 s 7 -62 23 -101 c 16 -38 35 -60 71 -97 c 47.4 -39.3 91 -64 171.4 -65.3 C 592 258 664 291 694 321 s 56 68 68 102 c 13 31 23 65 23 102 c -1 65 -12 125 -69 189 a 318.64 318.64 0 0 1 -33 26 L 636 680 a 8 8 0 0 0 -14.1 3 l -39.6 162.2 c -7.3 31.8 17.7 64.8 50.7 63.8 l 167 0.8 c 6.7 0 10.5 -7.7 6.3 -12.9 z">
+                        </path>
+                    </svg>
+                </span>
+            </button>
+        </ng-container>
+    </div>
+    <div *ngIf=" node?.name" class="name">
         {{node?.name}}
     </div>
     <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
@@ -21,11 +47,5 @@
     </div>
     <div *ngIf="node?.run?.status" class="status">
         {{node?.run?.status.toLowerCase()}}
-    </div>
-    <div *ngIf="node && node.run" class="commands">
-        <button *ngIf="(node.run.status | isJobTerminated) && node.run.status !== 'Skipped' && !runActive" nz-button
-            nzGhost nzSize="small" (click)="clickRestart($event)">Restart</button>
-        <button *ngIf="!(node.run.status | isJobTerminated)" nz-button nzDanger nzType="primary" nzSize="small"
-            (click)="clickStop($event)">Stop</button>
     </div>
 </div>
