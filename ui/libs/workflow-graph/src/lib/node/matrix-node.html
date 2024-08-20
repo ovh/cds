@@ -24,7 +24,7 @@
                         </svg>
                     </span>
                 </button>
-                <button *ngIf="!(status[key] | isJobTerminated)" nz-button nzType="primary" nzDanger nzSize="small"
+                <button *ngIf="!(status[key] | isJobTerminated)" nz-button nzGhost nzSize="small"
                     (click)="clickStop(key, $event)" nzShape="circle" title="Stop the job">
                     <span nz-icon style="font-size: 8px;">
                         <svg>

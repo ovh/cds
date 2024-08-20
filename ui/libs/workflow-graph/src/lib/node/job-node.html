@@ -9,9 +9,9 @@
             <span nz-icon nzType="caret-right" style="margin-left: 2px;font-size: 16px;" nzTheme="fill"></span>
         </button>
         <ng-container *ngIf="node && node.run">
-            <button *ngIf="!(node.run.status | isJobTerminated)" class="stop" nz-button nzDanger nzType="primary"
-                nzSize="small" nzShape="circle" title="Stop the job" (click)="clickStop($event)">
-                <span nz-icon style="font-size: 10px;">
+            <button *ngIf="!(node.run.status | isJobTerminated)" nz-button nzGhost nzSize="small" nzShape="circle"
+                title="Stop the job" (click)="clickStop($event)">
+                <span nz-icon style="font-size: 8px;">
                     <svg>
                         <path d="M 960 64 H 64 v 896 h 896 z"></path>
                     </svg>

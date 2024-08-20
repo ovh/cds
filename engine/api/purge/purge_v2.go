@@ -116,23 +116,12 @@ func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExec
 		for i := range proj.Integrations {
 			if proj.Integrations[i].Name == integName {
 				integrations = append(integrations, proj.Integrations[i])
-				break
 			}
 		}
 	}
-	if artifactoryIntegration == nil {
-		return nil
-	}
-
-	lowMaturity := artifactoryIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
-
-	props := utils.NewProperties()
-	props.AddProperty("ovh.to_delete", "true")
-	props.AddProperty("ovh.to_delete_timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
 	for i := range integrations {
 		integ := integrations[i]
-
 		if integ.Model.ArtifactManager {
 			rtName := integ.Config[sdk.ArtifactoryConfigPlatform].Value
 			rtURL = integ.Config[sdk.ArtifactoryConfigURL].Value
@@ -146,6 +135,16 @@ func DeleteArtifactsFromRepositoryManagerV2(ctx context.Context, db gorp.SqlExec
 			break
 		}
 	}
+	if artifactoryIntegration == nil {
+		log.Debug(ctx, "no artifactory integration found")
+		return nil
+	}
+
+	lowMaturity := artifactoryIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value
+
+	props := utils.NewProperties()
+	props.AddProperty("ovh.to_delete", "true")
+	props.AddProperty("ovh.to_delete_timestamp", strconv.FormatInt(time.Now().Unix(), 10))
 
 	for i := range runResults {
 		result := &runResults[i]
