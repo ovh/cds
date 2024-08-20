@@ -207,12 +207,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 		// If not found stop the run
 		if err != nil {
-			return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{sdk.V2WorkflowRunInfo{
-				WorkflowRunID: run.ID,
-				IssuedAt:      time.Now(),
-				Level:         sdk.WorkflowRunInfoLevelError,
-				Message:       fmt.Sprintf("variable set %s not found on project", vs),
-			}}, u)
+			return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{
+				{
+					WorkflowRunID: run.ID,
+					IssuedAt:      time.Now(),
+					Level:         sdk.WorkflowRunInfoLevelError,
+					Message:       fmt.Sprintf("variable set %s not found on project", vs),
+				},
+			}, u)
 		}
 		vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID)
 		if err != nil {
@@ -222,12 +224,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 	variableSetCtx, _, err := buildVarsContext(ctx, vss)
 	if err != nil {
-		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{sdk.V2WorkflowRunInfo{
-			WorkflowRunID: run.ID,
-			IssuedAt:      time.Now(),
-			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("unable to compute variableset into job context: %v", err),
-		}}, u)
+		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{
+			{
+				WorkflowRunID: run.ID,
+				IssuedAt:      time.Now(),
+				Level:         sdk.WorkflowRunInfoLevelError,
+				Message:       fmt.Sprintf("unable to compute variableset into job context: %v", err),
+			},
+		}, u)
 	}
 
 	// Enqueue JOB
@@ -588,11 +592,16 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 				log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
 				continue
 			}
-
-			log.Info(ctx, "artifact %s%s signature: %s", localRepository, fi.Path, signature)
-
 			props.AddProperty("cds.signature", signature)
-			if err := artifactClient.SetProperties(localRepository, fi.Path, props); err != nil {
+
+			pathToApplySet := fi.Path
+			// If dir property exist (for artifact manifest.json or list.manifest.json), we'll use it to SetProperties
+			if result.ArtifactManagerMetadata.Get("dir") != "" {
+				pathToApplySet = result.ArtifactManagerMetadata.Get("dir")
+			}
+
+			log.Info(ctx, "setProperties artifact %s%s signature: %s", localRepository, pathToApplySet, signature)
+			if err := artifactClient.SetProperties(localRepository, pathToApplySet, props); err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
 				continue

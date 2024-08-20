@@ -815,8 +815,7 @@ func SyncRunResultArtifactManagerByRunID(ctx context.Context, db gorpmapper.SqlE
 			continue
 		}
 
-		log.Info(ctx, "artifact %s%s signature: %s", localRepository, artifact.Path, signature)
-
+		log.Info(ctx, "setProperties artifact %s%s signature: %s", localRepository, artifact.Path, signature)
 		props.AddProperty("cds.signature", signature)
 		if err := artifactClient.SetProperties(localRepository, artifact.Path, props); err != nil {
 			ctx := log.ContextWithStackTrace(ctx, err)
