@@ -8,31 +8,44 @@
     align-items: flex-start;
 }
 
+[nzGhost] {
+    color: $polar_grey_1;
+    border-color: $polar_grey_1;
+
+    &:hover {
+        color: black !important;
+        border-color: black !important;
+    }
+
+    :host-context(.night) & {
+        color: $darkTheme_grey_6;
+        border-color: $darkTheme_grey_6;
+
+        &:hover {
+            color: white !important;
+            border-color: white !important;
+        }
+    }
+}
+
 .label {
-    height: 30px;
+    height: 34px;
     width: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: row;
     align-items: center;
 
-    .gate {
-        color: $polar_grey_1;
-        font-size: 16px;
-        overflow: hidden;
+    [nz-button] {
+        height: 18px;
+        width: 18px;
+        min-width: unset;
         margin-left: 2px;
-        cursor: pointer;
+        margin-bottom: 4px;
+        border-width: 2px;
 
-        &:hover {
-            color: $polar_grey_0 !important;
-        }
-
-        :host-context(.night) & {
-            color: $darkTheme_grey_6;
-
-            &:hover {
-                color: white !important;
-            }
+        [nz-icon] {
+            font-size: 12px;
         }
     }
 
@@ -41,7 +54,9 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin: 0 2px;
+        margin-left: 5px;
+        margin-bottom: 6px;
+        font-weight: bold;
     }
 }
 
@@ -89,17 +104,11 @@
 
             .name {
                 flex: 1;
-                font-size: 0.9em;
-                font-weight: bold;
+                font-size: 0.8em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 margin: 0 5px;
-
-                .key {
-                    font-size: 0.8em;
-                    font-weight: unset;
-                }
             }
 
             .infos {
@@ -126,46 +135,18 @@
                 }
             }
 
-            &:hover {
-                .commands {
-                    display: flex;
-                }
-            }
-
             .commands {
-                display: none;
+                display: flex;
                 flex-direction: row;
                 align-items: center;
                 height: 100%;
-                position: absolute;
-                right: 0;
                 background-color: inherit;
 
-                button {
+                [nz-button] {
                     height: 18px;
+                    width: 18px;
+                    min-width: unset;
                     margin: 0 5px;
-                    line-height: 12px;
-                    font-size: 12px;
-                }
-
-                [nzGhost] {
-                    color: $polar_grey_1;
-                    border-color: $polar_grey_1;
-
-                    &:hover {
-                        color: black !important;
-                        border-color: black !important;
-                    }
-
-                    :host-context(.night) & {
-                        color: $darkTheme_grey_6;
-                        border-color: $darkTheme_grey_6;
-
-                        &:hover {
-                            color: white !important;
-                            border-color: white !important;
-                        }
-                    }
                 }
             }
 

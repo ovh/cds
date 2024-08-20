@@ -23,7 +23,7 @@
               "src/assets",
               "src/favicon.ico",
               {
-                "glob": "*",
+                "glob": "**/*",
                 "input": "node_modules/@ant-design/icons-angular/src/inline-svg/",
                 "output": "/assets/"
               },
@@ -234,7 +234,7 @@
               "src/assets",
               "src/favicon.ico",
               {
-                "glob": "*",
+                "glob": "**/*",
                 "input": "node_modules/@ant-design/icons-angular/src/inline-svg/",
                 "output": "/assets/"
               },
