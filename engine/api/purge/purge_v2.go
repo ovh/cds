@@ -69,10 +69,6 @@ func WorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
 	ctx = context.WithValue(ctx, cdslog.Project, run.ProjectKey)
 	ctx = context.WithValue(ctx, cdslog.Workflow, run.WorkflowName)
 
-	if err := workflow_v2.DeleteRunByID(tx, run.ID); err != nil {
-		return err
-	}
-
 	if err := DeleteArtifactsFromRepositoryManagerV2(ctx, tx, run); err != nil {
 		return sdk.WithStack(err)
 	}
@@ -80,6 +76,10 @@ func WorkflowRunV2(ctx context.Context, db *gorp.DbMap, id string) error {
 	_, code, err := cdnClient.DoJSONRequest(ctx, http.MethodPost, "/bulk/item/delete", sdk.CDNMarkDelete{RunV2ID: run.ID}, nil)
 	if err != nil || code >= 400 {
 		return sdk.WithStack(err)
+	}
+
+	if err := workflow_v2.DeleteRunByID(tx, run.ID); err != nil {
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
