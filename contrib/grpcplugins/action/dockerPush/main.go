@@ -222,8 +222,16 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 			Token: integration.Get(sdk.ArtifactoryConfigToken),
 		}
 
+		maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 		rtFolderPath := img.Repository + "/" + tag
-		rtFolderPathInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository, rtFolderPath)
+
+		// here, we GetArtifactoryFolderInfo and GetArtifactoryFileInfo below from the repository+"-"+maturity (=generaly ...-docker-snaphot repo)
+		// if a docker image exists on a remote repo, then same name push on local repo, then we want to getFileInfo from the layers pushed only.
+		// Example:
+		// a multi-arch exists on the remote repo with a list.manifest.json
+		// docker push is done on virtual with the same name:tag, pushing manifest.json and not list.manifest.json
+		// the rtFolderPathInfo should not include the list.manifest.json
+		rtFolderPathInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, &actPlugin.Common, rtConfig, repository+"-"+maturity, rtFolderPath)
 		if err != nil {
 			return nil, time.Since(t0), err
 		}
@@ -231,13 +239,12 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		var manifestFound bool
 		for _, child := range rtFolderPathInfo.Children {
 			if strings.HasSuffix(child.URI, "manifest.json") { // Can be manifest.json of list.manifest.json for multi-arch docker image
-				rtPathInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &actPlugin.Common, rtConfig, repository, rtFolderPath+child.URI)
+				rtPathInfo, err := grpcplugins.GetArtifactoryFileInfo(ctx, &actPlugin.Common, rtConfig, repository+"-"+maturity, rtFolderPath+child.URI)
 				if err != nil {
 					return nil, time.Since(t0), err
 				}
 				manifestFound = true
 				localRepo := fmt.Sprintf("%s-%s", repository, integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity))
-				maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 
 				grpcplugins.ExtractFileInfoIntoRunResult(result, *rtPathInfo, destination, "docker", localRepo, repository, maturity)
 				result.ArtifactManagerMetadata.Set("id", img.ImageID)
