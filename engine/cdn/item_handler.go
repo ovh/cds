@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -22,8 +23,8 @@ func (s *Service) bulkDeleteItemsHandler() service.Handler {
 			return err
 		}
 
-		if req.RunID <= 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "missing runID")
+		if req.RunID <= 0 && req.RunV2ID == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "missing run ID")
 		}
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
@@ -31,8 +32,15 @@ func (s *Service) bulkDeleteItemsHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		if err := item.MarkToDeleteByRunIDs(tx, req.RunID); err != nil {
-			return err
+		if req.RunV2ID != "" {
+			if err := item.MarkToDeleteByRunID(tx, req.RunV2ID); err != nil {
+				return err
+			}
+		} else {
+			runIdS := strconv.FormatInt(req.RunID, 10)
+			if err := item.MarkToDeleteByRunID(tx, runIdS); err != nil {
+				return err
+			}
 		}
 
 		return sdk.WrapError(tx.Commit(), "unable to commit transaction")

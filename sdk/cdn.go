@@ -136,7 +136,8 @@ type CDNLogLink struct {
 }
 
 type CDNMarkDelete struct {
-	RunID int64 `json:"run_id,omitempty"`
+	RunID   int64  `json:"run_id,omitempty"`
+	RunV2ID string `json:"run_v2_id,omitempty"`
 }
 
 type CDNApiRef interface {

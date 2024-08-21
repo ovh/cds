@@ -147,13 +147,9 @@ func Update(ctx context.Context, m *gorpmapper.Mapper, db gorpmapper.SqlExecutor
 	return nil
 }
 
-func MarkToDeleteByRunIDs(db gorpmapper.SqlExecutorWithTx, runID int64) error {
-	runIdS := strconv.FormatInt(runID, 10)
-	query := `
-		UPDATE item SET to_delete = true WHERE api_ref->>'run_id' = $1
-	`
-	_, err := db.Exec(query, runIdS)
-	return sdk.WrapError(err, "unable to mark item to delete for run %d", runID)
+func MarkToDeleteByRunID(db gorpmapper.SqlExecutorWithTx, runID string) error {
+	_, err := db.Exec("UPDATE item SET to_delete = true WHERE api_ref->>'run_id' = $1", runID)
+	return sdk.WrapError(err, "unable to mark item to delete for run with id: %s", runID)
 }
 
 func LoadWorkerCacheItemByProjectAndCacheTag(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, cacheType string, projKey string, cacheTag string) (*sdk.CDNItem, error) {

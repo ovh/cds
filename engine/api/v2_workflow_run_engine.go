@@ -159,7 +159,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), run.ID, run.RunAttempt)
+	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), run.ID, run.RunAttempt)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load workflow run results for run %s", wrEnqueue.RunID)
 	}
@@ -445,7 +445,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	}
 
 	// Synchronize workflow runs
-	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, runID, run.RunAttempt)
+	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, db, runID, run.RunAttempt)
 	if err != nil {
 		return err
 	}
@@ -466,6 +466,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		for i := range proj.Integrations {
 			if proj.Integrations[i].Name == integName {
 				integrations = append(integrations, proj.Integrations[i])
+				break
 			}
 		}
 	}

@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/event_v2"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -106,7 +107,7 @@ func (api *API) getWorkflowRunResultsV2Handler() ([]service.RbacChecker, service
 				}
 			}
 
-			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID, attempt)
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, attempt)
 			if err != nil {
 				return err
 			}
@@ -403,6 +404,31 @@ func (api *API) getWorkflowRunV2Handler() ([]service.RbacChecker, service.Handle
 
 			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
 			if err != nil {
+				return err
+			}
+
+			return service.WriteJSON(w, wr, http.StatusOK)
+		}
+}
+
+func (api *API) deleteWorkflowRunV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			workflowRunID := vars["workflowRunID"]
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
+			if err != nil {
+				return err
+			}
+
+			if err := purge.WorkflowRunV2(ctx, api.mustDB(), wr.ID); err != nil {
 				return err
 			}
 
@@ -1008,7 +1034,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 			if err != nil {
 				return err
 			}
-			runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
 			if err != nil {
 				return err
 			}

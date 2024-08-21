@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/services"
@@ -31,7 +32,22 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
 	_, err := db.Exec("DELETE FROM v2_workflow_run")
-	require.NoError(t, err)
+	require.NoError(t, err) // Mock Hook
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_CDN", sdk.TypeCDN)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
 
 	admin, _ := assets.InsertAdminUser(t, db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
@@ -103,7 +119,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 	require.Len(t, ids, 1)
 	require.Equal(t, wr1.ID, ids[0])
 
-	require.NoError(t, workflow_v2.DeleteRun(context.TODO(), db.DbMap, ids[0]))
+	require.NoError(t, purge.WorkflowRunV2(context.TODO(), db.DbMap, ids[0]))
 
 	_, err = workflow_v2.LoadRunByID(context.TODO(), db, ids[0])
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound))

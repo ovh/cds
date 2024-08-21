@@ -209,7 +209,7 @@ func computeRunJobContext(ctx context.Context, db gorpmapper.SqlExecutorWithTx, 
 		contexts.Env[k] = v
 	}
 
-	runResults, err := workflow_v2.LoadRunResultsByRunID(ctx, db, run.ID, run.RunAttempt)
+	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, db, run.ID, run.RunAttempt)
 	if err != nil {
 		return nil, nil, err
 	}
