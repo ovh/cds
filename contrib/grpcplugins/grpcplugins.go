@@ -632,11 +632,15 @@ func ExtractFileInfoIntoRunResult(runResult *sdk.V2WorkflowRunResult, fi Artifac
 	runResult.ArtifactManagerMetadata.Set("md5", fi.Checksums.Md5)
 	runResult.ArtifactManagerMetadata.Set("sha1", fi.Checksums.Sha1)
 	runResult.ArtifactManagerMetadata.Set("sha256", fi.Checksums.Sha256)
-	runResult.ArtifactManagerMetadata.Set("uri", fi.URI)
 	runResult.ArtifactManagerMetadata.Set("mimeType", fi.MimeType)
-	runResult.ArtifactManagerMetadata.Set("downloadURI", fi.DownloadURI)
 	runResult.ArtifactManagerMetadata.Set("createdBy", fi.CreatedBy)
 	runResult.ArtifactManagerMetadata.Set("localRepository", localRepository)
+
+	// we keep only the virtual repo in hostname
+	uri := strings.Replace(fi.URI, repository+"-"+maturity, repository, 1)
+	runResult.ArtifactManagerMetadata.Set("uri", uri)
+	downloadURI := strings.Replace(fi.DownloadURI, repository+"-"+maturity, repository, 1)
+	runResult.ArtifactManagerMetadata.Set("downloadURI", downloadURI)
 }
 
 func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobContext sdk.WorkflowRunJobsContext, runresultReq *workerruntime.V2RunResultRequest, fileName string, f fs.File, size int64, fileChecksum ChecksumResult) (*workerruntime.V2UpdateResultResponse, error) {

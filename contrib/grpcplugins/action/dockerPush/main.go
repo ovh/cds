@@ -225,8 +225,8 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
 		rtFolderPath := img.Repository + "/" + tag
 
-		// here, we GetArtifactoryFolderInfo and GetArtifactoryFileInfo below from the repository+"-"+maturity (=generaly ...-docker-snaphot repo)
-		// if a docker image exists on a remote repo, then same name push on local repo, then we want to getFileInfo from the layers pushed only.
+		// here, we GetArtifactoryFolderInfo from the repository+"-"+maturity (=generaly ...-docker-snaphot repo)
+		// if a docker image exists on a remote repo, with the same name on local repo, then we want to getFileInfo from the layers pushed only.
 		// Example:
 		// a multi-arch exists on the remote repo with a list.manifest.json
 		// docker push is done on virtual with the same name:tag, pushing manifest.json and not list.manifest.json
