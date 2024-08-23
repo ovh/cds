@@ -378,7 +378,7 @@ func computeBuildInfoModules(ctx context.Context, artiClient artifact_manager.Ar
 }
 
 func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.ArtifactManager, execContext executionContext, runResults []sdk.V2WorkflowRunResult) ([]buildinfo.Module, error) {
-	ctx, end := telemetry.Span(ctx, "artifactory.computeBuildInfoModules")
+	ctx, end := telemetry.Span(ctx, "artifactory.computeBuildInfoModulesV2")
 	defer end()
 	modules := make([]buildinfo.Module, 0)
 
@@ -402,6 +402,17 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 			Dependencies: nil,
 		}
 
+		var currentMaturity string
+		if r.DataSync != nil {
+			latestPromotion := r.DataSync.LatestPromotionOrRelease()
+			if latestPromotion != nil {
+				currentMaturity = latestPromotion.ToMaturity
+			}
+		}
+		if currentMaturity == "" {
+			currentMaturity = execContext.defaultLowMaturitySuffix
+		}
+
 		switch repoType {
 		case "docker":
 			mod.Type = buildinfo.Docker
@@ -409,7 +420,9 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 			modProps["docker.image.tag"] = name
 			mod.Properties = modProps
 
-			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName, strings.TrimPrefix(strings.TrimSuffix(dir, "/"), "/"))
+			path = strings.TrimPrefix(strings.TrimSuffix(dir, "/"), "/")
+
+			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName+"-"+currentMaturity, path)
 			searchResults, err := artiClient.Search(ctx, query)
 			if err != nil {
 				return nil, err
@@ -438,16 +451,6 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 		}
 		modules = append(modules, mod)
 
-		var currentMaturity string
-		if r.DataSync != nil {
-			latestPromotion := r.DataSync.LatestPromotionOrRelease()
-			if latestPromotion != nil {
-				currentMaturity = latestPromotion.ToMaturity
-			}
-		}
-		if currentMaturity == "" {
-			currentMaturity = execContext.defaultLowMaturitySuffix
-		}
 		props := utils.NewProperties()
 		props.AddProperty("build.name", execContext.buildInfoName)
 		props.AddProperty("build.number", execContext.version)
