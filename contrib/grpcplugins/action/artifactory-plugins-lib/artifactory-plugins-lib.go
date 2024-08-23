@@ -63,8 +63,30 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 
 	jfroglog.SetLogger(new(logger)) // reset the logger set by artifact_manager.NewClient
 
+	if maturity == "" {
+		maturity = integration.Get(sdk.ArtifactoryConfigPromotionHighMaturity)
+	}
+
+	_, err = promoteRunResult(ctx, c, artifactClient, integration, r, maturity, props, sdk.V2WorkflowRunResultStatusPromoted)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, integration sdk.JobIntegrationsContext, r sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, status string) (string, error) {
+	var (
+		promotedArtifact      string
+		skipExistingArtifacts bool
+	)
+
 	if r.DataSync == nil {
 		r.DataSync = &sdk.WorkflowRunResultSync{}
+	}
+
+	if status == sdk.V2WorkflowRunResultStatusReleased {
+		skipExistingArtifacts = true
 	}
 
 	latestPromotion := r.DataSync.LatestPromotionOrRelease()
@@ -73,50 +95,63 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 		currentMaturity = latestPromotion.ToMaturity
 	}
 
-	if maturity == "" {
-		maturity = integration.Get(sdk.ArtifactoryConfigPromotionHighMaturity)
-	}
-
 	newPromotion := sdk.WorkflowRunResultPromotion{
 		Date:         time.Now(),
 		FromMaturity: currentMaturity,
 		ToMaturity:   maturity,
 	}
 
-	data := art.FileToPromote{
-		RepoType: r.ArtifactManagerMetadata.Get("type"),
-		RepoName: r.ArtifactManagerMetadata.Get("repository"),
-		Name:     r.ArtifactManagerMetadata.Get("name"),
-		Path:     strings.TrimPrefix(r.ArtifactManagerMetadata.Get("path"), "/"), // strip the first "/"
-	}
-
 	switch r.Type {
 	case "docker":
-		// remove "/manifest.json"
-		data.Path = filepath.Dir(r.ArtifactManagerMetadata.Get("path")) // strip the first "/" and remove "/manifest.json"
-		if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
-			return errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
+		data := art.FileToPromote{
+			RepoType: r.ArtifactManagerMetadata.Get("type"),
+			RepoName: r.ArtifactManagerMetadata.Get("repository"),
+			Name:     r.ArtifactManagerMetadata.Get("name"),
+			Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"),
 		}
+		if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts); err != nil {
+			return promotedArtifact, errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
+		}
+
+		promotedArtifact = fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path"))
 	default:
-		if err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, false); err != nil {
-			return errors.Errorf("unable to promote file: %s: %v", data.Name, err)
+		data := art.FileToPromote{
+			RepoType: r.ArtifactManagerMetadata.Get("type"),
+			RepoName: r.ArtifactManagerMetadata.Get("repository"),
+			Name:     r.ArtifactManagerMetadata.Get("name"),
+			Path:     strings.TrimPrefix(r.ArtifactManagerMetadata.Get("path"), "/"),
+		}
+		if err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts); err != nil {
+			return promotedArtifact, errors.Errorf("unable to promote file: %s: %v", data.Name, err)
+		}
+
+		if data.RepoType == "cargo" { // artifactory does not manage virtual cargo repositories
+			repoParts := strings.Split(data.RepoName, "-")
+			promotedArtifact = fmt.Sprintf("%s-%s%s", strings.Join(repoParts[:len(repoParts)-1], "-"), newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path"))
+		} else {
+			promotedArtifact = fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path"))
 		}
 	}
 
 	grpcplugins.Successf(c, "%s Successfully promoted to %s", r.Name(), newPromotion.ToMaturity)
 
-	r.Status = sdk.V2WorkflowRunResultStatusPromoted
-	r.DataSync.Promotions = append(r.DataSync.Promotions, newPromotion)
+	r.Status = status
+	if status == sdk.V2WorkflowRunResultStatusReleased {
+		r.DataSync.Releases = append(r.DataSync.Releases, newPromotion)
+	} else {
+		r.Status = sdk.V2WorkflowRunResultStatusPromoted
+		r.DataSync.Promotions = append(r.DataSync.Promotions, newPromotion)
+	}
 
 	// Update metadata
 	r.ArtifactManagerMetadata.Set("localRepository", r.ArtifactManagerMetadata.Get("repository")+"-"+newPromotion.ToMaturity)
 	r.ArtifactManagerMetadata.Set("maturity", newPromotion.ToMaturity)
 
 	if _, err := grpcplugins.UpdateRunResult(ctx, c, &workerruntime.V2RunResultRequest{RunResult: &r}); err != nil {
-		return err
+		return promotedArtifact, err
 	}
 
-	return nil
+	return promotedArtifact, nil
 }
 
 func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, results []sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, releaseNotes string) error {
@@ -125,9 +160,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 
 	t0 := time.Now()
 
-	var (
-		promotedArtifacts []string
-	)
+	var promotedArtifacts []string
 
 	jobContext, err := grpcplugins.GetJobContext(ctx, c)
 	if err != nil {
@@ -166,66 +199,11 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	}
 
 	for i := range results {
-		r := results[i]
-
-		if r.DataSync == nil {
-			r.DataSync = &sdk.WorkflowRunResultSync{}
-		}
-
-		latestPromotion := r.DataSync.LatestPromotionOrRelease()
-		currentMaturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
-		if latestPromotion != nil {
-			currentMaturity = latestPromotion.ToMaturity
-		}
-
-		newPromotion := sdk.WorkflowRunResultPromotion{
-			Date:         time.Now(),
-			FromMaturity: currentMaturity,
-			ToMaturity:   maturity,
-		}
-
-		switch r.Type {
-		case "docker":
-			data := art.FileToPromote{
-				RepoType: r.ArtifactManagerMetadata.Get("type"),
-				RepoName: r.ArtifactManagerMetadata.Get("repository"),
-				Name:     r.ArtifactManagerMetadata.Get("name"),
-				Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"),
-			}
-			if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, true); err != nil {
-				return errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
-			}
-
-			promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path")))
-		default:
-			data := art.FileToPromote{
-				RepoType: r.ArtifactManagerMetadata.Get("type"),
-				RepoName: r.ArtifactManagerMetadata.Get("repository"),
-				Name:     r.ArtifactManagerMetadata.Get("name"),
-				Path:     strings.TrimPrefix(r.ArtifactManagerMetadata.Get("path"), "/"),
-			}
-			if err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, true); err != nil {
-				return errors.Errorf("unable to promote file: %s: %v", data.Name, err)
-			}
-
-			if data.RepoType == "cargo" { // artifactory does not manage virtual cargo repositories
-				repoParts := strings.Split(data.RepoName, "-")
-				promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s%s", strings.Join(repoParts[:len(repoParts)-1], "-"), newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path")))
-			} else {
-				promotedArtifacts = append(promotedArtifacts, fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path")))
-			}
-		}
-
-		r.Status = sdk.V2WorkflowRunResultStatusReleased
-		r.DataSync.Releases = append(r.DataSync.Releases, newPromotion)
-
-		// Update metadata
-		r.ArtifactManagerMetadata.Set("localRepository", r.ArtifactManagerMetadata.Get("repository")+"-"+newPromotion.ToMaturity)
-		r.ArtifactManagerMetadata.Set("maturity", newPromotion.ToMaturity)
-
-		if _, err := grpcplugins.UpdateRunResult(ctx, c, &workerruntime.V2RunResultRequest{RunResult: &r}); err != nil {
+		promotedArtifact, err := promoteRunResult(ctx, c, artifactClient, integration, results[i], maturity, props, sdk.V2WorkflowRunResultStatusReleased)
+		if err != nil {
 			return err
 		}
+		promotedArtifacts = append(promotedArtifacts, promotedArtifact)
 	}
 
 	distriClient, err := art.CreateDistributionClient(ctx, rtConfig.DistributionURL, rtConfig.ReleaseToken)
