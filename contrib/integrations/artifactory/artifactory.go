@@ -420,7 +420,9 @@ func computeBuildInfoModulesV2(ctx context.Context, artiClient artifact_manager.
 			modProps["docker.image.tag"] = name
 			mod.Properties = modProps
 
-			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName+"-"+currentMaturity, strings.TrimPrefix(strings.TrimSuffix(dir, "/"), "/"))
+			path = strings.TrimPrefix(strings.TrimSuffix(dir, "/"), "/")
+
+			query := fmt.Sprintf(`items.find({"name" : {"$match": "**"}, "repo":"%s", "path":"%s"}).include("repo","path","name","virtual_repos","actual_md5")`, repoName+"-"+currentMaturity, path)
 			searchResults, err := artiClient.Search(ctx, query)
 			if err != nil {
 				return nil, err
