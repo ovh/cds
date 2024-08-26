@@ -433,6 +433,12 @@ func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2Wo
 
 type ArtifactSignature map[string]string
 
+/*
+synchronizeRunResults : for a runID, this func:
+- get the integration ArtifactManager on the workflow if exist
+- for each run results, add properties and signed properties
+- delete build, then create build info.
+*/
 func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, runID string) error {
 	run, err := workflow_v2.LoadRunByID(ctx, db, runID)
 	if err != nil {
@@ -444,7 +450,6 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		return err
 	}
 
-	// Synchronize workflow runs
 	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, db, runID, run.RunAttempt)
 	if err != nil {
 		return err
@@ -489,6 +494,10 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 			artifactoryIntegration = &integ
 			break
 		}
+	}
+
+	if artifactClient == nil || artifactoryIntegration == nil {
+		return nil
 	}
 
 	for i := range runResults {
@@ -547,112 +556,110 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 
 		if sdk.MapHasKeys(existingProperties, "cds.signature") {
 			log.Debug(ctx, "artifact is already signed by cds")
+			continue
+		}
+
+		// Push git properties as artifact properties
+		props := utils.NewProperties()
+		signedProps := make(ArtifactSignature)
+
+		props.AddProperty("cds.project", run.ProjectKey)
+		signedProps["cds.project"] = run.ProjectKey
+		props.AddProperty("cds.workflow", run.WorkflowName)
+		signedProps["cds.workflow"] = run.WorkflowName
+		props.AddProperty("cds.version", run.Contexts.Git.SemverCurrent)
+		signedProps["cds.version"] = run.Contexts.Git.SemverCurrent
+		props.AddProperty("cds.run", strconv.FormatInt(run.RunNumber, 10))
+		signedProps["cds.run"] = strconv.FormatInt(run.RunNumber, 10)
+		props.AddProperty("git.url", run.Contexts.Git.RepositoryURL)
+		signedProps["git.url"] = run.Contexts.Git.RepositoryURL
+		props.AddProperty("git.hash", run.Contexts.Git.Sha)
+		signedProps["git.hash"] = run.Contexts.Git.Sha
+		props.AddProperty("git.ref", run.Contexts.Git.Ref)
+		signedProps["git.ref"] = run.Contexts.Git.Ref
+		props.AddProperty("cds.run_id", runID)
+		signedProps["cds.run_id"] = runID
+		signedProps["cds.region"] = jobRun.Region
+		signedProps["cds.worker"] = jobRun.WorkerName
+		signedProps["cds.hatchery"] = jobRun.HatcheryName
+
+		// Prepare artifact signature
+		signedProps["repository"] = virtualRepository
+		signedProps["type"] = repoDetails.PackageType
+		signedProps["path"] = fi.Path
+		signedProps["name"] = name
+
+		if fi.Checksums == nil {
+			log.Error(ctx, "unable to get checksums for artifact %s %s", name, fi.Path)
 		} else {
-			// Push git properties as artifact properties
-			props := utils.NewProperties()
-			signedProps := make(ArtifactSignature)
+			signedProps["md5"] = fi.Checksums.Md5
+			signedProps["sha1"] = fi.Checksums.Sha1
+			signedProps["sha256"] = fi.Checksums.Sha256
+		}
 
-			props.AddProperty("cds.project", run.ProjectKey)
-			signedProps["cds.project"] = run.ProjectKey
-			props.AddProperty("cds.workflow", run.WorkflowName)
-			signedProps["cds.workflow"] = run.WorkflowName
-			props.AddProperty("cds.version", run.Contexts.Git.SemverCurrent)
-			signedProps["cds.version"] = run.Contexts.Git.SemverCurrent
-			props.AddProperty("cds.run", strconv.FormatInt(run.RunNumber, 10))
-			signedProps["cds.run"] = strconv.FormatInt(run.RunNumber, 10)
-			props.AddProperty("git.url", run.Contexts.Git.RepositoryURL)
-			signedProps["git.url"] = run.Contexts.Git.RepositoryURL
-			props.AddProperty("git.hash", run.Contexts.Git.Sha)
-			signedProps["git.hash"] = run.Contexts.Git.Sha
-			props.AddProperty("git.ref", run.Contexts.Git.Ref)
-			signedProps["git.ref"] = run.Contexts.Git.Ref
-			props.AddProperty("cds.run_id", runID)
-			signedProps["cds.run_id"] = runID
-			signedProps["cds.region"] = jobRun.Region
-			signedProps["cds.worker"] = jobRun.WorkerName
-			signedProps["cds.hatchery"] = jobRun.HatcheryName
+		// Sign the properties with main CDS authentication key pair
+		signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+			continue
+		}
+		props.AddProperty("cds.signature", signature)
 
-			// Prepare artifact signature
-			signedProps["repository"] = virtualRepository
-			signedProps["type"] = repoDetails.PackageType
-			signedProps["path"] = fi.Path
-			signedProps["name"] = name
+		pathToApplySet := fi.Path
+		// If dir property exist (for artifact manifest.json or list.manifest.json), we'll use it to SetProperties
+		if result.ArtifactManagerMetadata.Get("dir") != "" {
+			pathToApplySet = result.ArtifactManagerMetadata.Get("dir")
+		}
 
-			if fi.Checksums == nil {
-				log.Error(ctx, "unable to get checksums for artifact %s %s", name, fi.Path)
-			} else {
-				signedProps["md5"] = fi.Checksums.Md5
-				signedProps["sha1"] = fi.Checksums.Sha1
-				signedProps["sha256"] = fi.Checksums.Sha256
-			}
-
-			// Sign the properties with main CDS authentication key pair
-			signature, err := authentication.SignJWS(signedProps, time.Now(), 0)
-			if err != nil {
-				ctx := log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
-				continue
-			}
-			props.AddProperty("cds.signature", signature)
-
-			pathToApplySet := fi.Path
-			// If dir property exist (for artifact manifest.json or list.manifest.json), we'll use it to SetProperties
-			if result.ArtifactManagerMetadata.Get("dir") != "" {
-				pathToApplySet = result.ArtifactManagerMetadata.Get("dir")
-			}
-
-			log.Info(ctx, "setProperties artifact %s%s signature: %s", localRepository, pathToApplySet, signature)
-			if err := artifactClient.SetProperties(localRepository, pathToApplySet, props); err != nil {
-				ctx := log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
-				continue
-			}
+		log.Info(ctx, "setProperties artifact %s%s signature: %s", localRepository, pathToApplySet, signature)
+		if err := artifactClient.SetProperties(localRepository, pathToApplySet, props); err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to set artifact properties from result %s: %v", result.ID, err)
+			continue
 		}
 	}
 
-	if artifactClient != nil && artifactoryIntegration != nil {
-		// Set the Buildinfo
-		buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
-			BuildInfoPrefix:          artifactoryIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value,
-			ProjectKey:               run.ProjectKey,
-			VCS:                      run.Contexts.CDS.WorkflowVCSServer,
-			Repository:               run.Contexts.CDS.WorkflowRepository,
-			WorkflowName:             run.WorkflowName,
-			Version:                  run.Contexts.Git.SemverCurrent,
-			AgentName:                "cds-api",
-			TokenName:                rtTokenName,
-			RunURL:                   fmt.Sprintf("%s/project/%s/run/%s", api.Config.URL.UI, run.ProjectKey, runID),
-			GitBranch:                run.Contexts.Git.Ref,
-			GitURL:                   run.Contexts.Git.RepositoryURL,
-			GitHash:                  run.Contexts.Git.Sha,
-			RunResultsV2:             runResults,
-			DefaultLowMaturitySuffix: artifactoryIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value,
-		})
-		if err != nil {
+	// Set the Buildinfo
+	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{
+		BuildInfoPrefix:          artifactoryIntegration.Config[sdk.ArtifactoryConfigBuildInfoPrefix].Value,
+		ProjectKey:               run.ProjectKey,
+		VCS:                      run.Contexts.CDS.WorkflowVCSServer,
+		Repository:               run.Contexts.CDS.WorkflowRepository,
+		WorkflowName:             run.WorkflowName,
+		Version:                  run.Contexts.Git.SemverCurrent,
+		AgentName:                "cds-api",
+		TokenName:                rtTokenName,
+		RunURL:                   fmt.Sprintf("%s/project/%s/run/%s", api.Config.URL.UI, run.ProjectKey, runID),
+		GitBranch:                run.Contexts.Git.Ref,
+		GitURL:                   run.Contexts.Git.RepositoryURL,
+		GitHash:                  run.Contexts.Git.Sha,
+		RunResultsV2:             runResults,
+		DefaultLowMaturitySuffix: artifactoryIntegration.Config[sdk.ArtifactoryConfigPromotionLowMaturity].Value,
+	})
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return err
+	}
+
+	log.Info(ctx, "Creating Artifactory Build %s %s on project %s...", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
+
+	if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+	}
+
+	var nbAttempts int
+	for {
+		nbAttempts++
+		err := artifactClient.PublishBuildInfo(artifactoryProjectKey, buildInfoRequest)
+		if err == nil {
+			break
+		} else if nbAttempts >= 3 {
 			log.ErrorWithStackTrace(ctx, err)
-			return err
+			break
+		} else {
+			log.Error(ctx, "error while pushing buildinfo %s %s. Retrying...", buildInfoRequest.Name, buildInfoRequest.Number)
 		}
-
-		log.Info(ctx, "Creating Artifactory Build %s %s on project %s...\n", buildInfoRequest.Name, buildInfoRequest.Number, artifactoryProjectKey)
-
-		if err := artifactClient.DeleteBuild(artifactoryProjectKey, buildInfoRequest.Name, buildInfoRequest.Number); err != nil {
-			log.ErrorWithStackTrace(ctx, err)
-		}
-
-		var nbAttempts int
-		for {
-			nbAttempts++
-			err := artifactClient.PublishBuildInfo(artifactoryProjectKey, buildInfoRequest)
-			if err == nil {
-				break
-			} else if nbAttempts >= 3 {
-				log.ErrorWithStackTrace(ctx, err)
-				break
-			} else {
-				log.Error(ctx, "error while pushing buildinfo %s %s. Retrying...\n", buildInfoRequest.Name, buildInfoRequest.Number)
-			}
-		}
-
 	}
 
 	return nil
