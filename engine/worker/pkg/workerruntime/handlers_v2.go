@@ -182,6 +182,17 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	}
 }
 
+func V2_runResultsSynchronizeHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		if err := wk.V2RunResultsSynchronize(ctx); err != nil {
+			writeError(w, r, err)
+			return
+		}
+		writeJSON(w, "run results synchronized", http.StatusOK)
+	}
+}
+
 func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 	b, _ := json.Marshal(data)
 	w.Header().Add("Content-Type", "application/json")

@@ -206,14 +206,14 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		promotedArtifacts = append(promotedArtifacts, promotedArtifact)
 	}
 
+	// synchronize run result on artifactory. This will create the build infos and set some properties
+	if err = grpcplugins.RunResultsSynchronize(ctx, c); err != nil {
+		return err
+	}
+
 	distriClient, err := art.CreateDistributionClient(ctx, rtConfig.DistributionURL, rtConfig.ReleaseToken)
 	if err != nil {
 		return errors.Errorf("Failed to create distribution client: %v", err)
-	}
-
-	xrayClient, err := xray.NewClient(strings.Replace(rtConfig.URL, "/artifactory/", "/xray", -1), rtConfig.Token)
-	if err != nil {
-		return errors.Errorf("Failed to create xray client: %v", err)
 	}
 
 	if len(promotedArtifacts) == 0 {
@@ -260,6 +260,11 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	grpcplugins.Successf(c, "Release Bundle %s %s successfully distributed on all edges...", releaseName, releaseVersion)
 
 	// Get the SBOM
+	xrayClient, err := xray.NewClient(strings.Replace(rtConfig.URL, "/artifactory/", "/xray", -1), rtConfig.Token)
+	if err != nil {
+		return errors.Errorf("Failed to create xray client: %v", err)
+	}
+
 	grpcplugins.Logf(c, "Getting SBOM...")
 	var sbom json.RawMessage
 	until := time.Now().Add(3 * time.Minute)
