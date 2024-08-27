@@ -47,7 +47,7 @@ func (api *API) jobRunUpdate(ctx context.Context, auth *sdk.AuthUserConsumer, st
 	// Hatchery
 	case hatchConsumer != nil && work == nil:
 		return hatcheryHasRoleOnRegion(ctx, db, hatchConsumer.AuthConsumerHatchery.HatcheryID, vars["regionName"], sdk.HatcheryRoleSpawn)
-		// Worker
+	// Worker
 	case hatchConsumer != nil && work != nil:
 		if work.JobRunID == vars["runJobID"] {
 			return nil

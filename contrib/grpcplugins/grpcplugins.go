@@ -246,6 +246,24 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	return &response, nil
 }
 
+func RunResultsSynchronize(ctx context.Context, c *actionplugin.Common) error {
+	req, err := c.NewRequest(ctx, http.MethodPost, "/v2/result/synchronize", nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.DoRequest(req)
+	if err != nil {
+		return errors.Wrap(err, "unable to synchronize run results")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		return errors.Wrapf(err, "unable to synchronize run result (status code %d)", resp.StatusCode)
+	}
+
+	return nil
+}
+
 func UpdateRunResult(ctx context.Context, c *actionplugin.Common, result *workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
 	btes, err := json.Marshal(result)
 	if err != nil {

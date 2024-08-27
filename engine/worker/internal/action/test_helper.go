@@ -197,6 +197,10 @@ func (w *TestWorker) V2UpdateRunResult(ctx context.Context, req workerruntime.V2
 	return nil, nil
 }
 
+func (w *TestWorker) V2RunResultsSynchronize(ctx context.Context) error {
+	return nil
+}
+
 func (w *TestWorker) AddStepOutput(ctx context.Context, outputName string, outputValue string) {
 	return
 }

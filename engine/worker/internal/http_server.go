@@ -69,6 +69,7 @@ func (w *CurrentWorker) Serve(c context.Context) error {
 	r.HandleFunc("/v2/key/{name}", LogMiddleware(workerruntime.V2_projectKeyHandler(c, w)))
 	r.HandleFunc("/v2/context", LogMiddleware(workerruntime.V2_contextHandler(c, w)))
 	r.HandleFunc("/v2/result", LogMiddleware(workerruntime.V2_runResultHandler(c, w)))
+	r.HandleFunc("/v2/result/synchronize", LogMiddleware(workerruntime.V2_runResultsSynchronizeHandler(c, w)))
 
 	srv := &http.Server{
 		Handler: r,

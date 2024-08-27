@@ -363,6 +363,25 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 		}
 }
 
+func (api *API) putJobRunResultSynchronizeHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.jobRunUpdate, api.isWorker),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			jobRunID := vars["runJobID"]
+
+			runJob, err := workflow_v2.LoadRunJobByID(ctx, api.mustDB(), jobRunID)
+			if err != nil {
+				return err
+			}
+
+			if err := api.synchronizeRunResults(ctx, api.mustDB(), runJob.WorkflowRunID); err != nil {
+				return err
+			}
+
+			return nil
+		}
+}
+
 func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.jobRunUpdate),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {

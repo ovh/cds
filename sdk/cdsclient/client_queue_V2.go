@@ -71,6 +71,14 @@ func (c *client) V2QueueJobRunResultsGet(ctx context.Context, regionName string,
 	return result, nil
 }
 
+func (c *client) V2QueueJobRunResultsSynchronize(ctx context.Context, regionName string, jobRunID string) error {
+	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult/synchronize", regionName, jobRunID)
+	if _, err := c.PutJSON(ctx, path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) V2QueueJobRunResultCreate(ctx context.Context, regionName string, jobRunID string, result *sdk.V2WorkflowRunResult) error {
 	path := fmt.Sprintf("/v2/queue/%s/job/%s/runresult", regionName, jobRunID)
 	if _, err := c.PostJSON(ctx, path, result, result); err != nil {
