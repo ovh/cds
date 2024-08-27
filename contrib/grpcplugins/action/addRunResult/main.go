@@ -95,6 +95,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 		repository += "-pypi"
 	case sdk.V2WorkflowRunResultTypeTerraformProvider:
 		repository += "-terraformProvider"
+	case sdk.V2WorkflowRunResultTypeTerraformModule:
+		repository += "-terraformModule"
 	}
 
 	// get file info

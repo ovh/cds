@@ -1012,6 +1012,7 @@ const (
 	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
 	V2WorkflowRunResultTypeHelm              = "helm"
 	V2WorkflowRunResultTypeTerraformProvider = "terraformProvider"
+	V2WorkflowRunResultTypeTerraformModule   = "terraformModule"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
