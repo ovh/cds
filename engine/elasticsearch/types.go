@@ -32,7 +32,7 @@ type esClient struct {
 
 func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*elastic.IndexResponse, error) {
 	if id == "" {
-		c.client.Index().Index(index).BodyJson(body).Do(ctx)
+		return c.client.Index().Index(index).BodyJson(body).Do(ctx)
 	}
 	return c.client.Index().Index(index).Id(id).BodyJson(body).Do(ctx)
 }
