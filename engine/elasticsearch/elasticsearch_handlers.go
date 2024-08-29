@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
-	"github.com/olivere/elastic/v7"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
@@ -24,18 +25,39 @@ func (s *Service) getEventsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		boolQuery := elastic.NewBoolQuery()
-		boolQuery.Must(elastic.NewQueryStringQuery("type_event:sdk.EventRunWorkflow"))
+		boolQuery := types.Query{
+			Bool: &types.BoolQuery{
+				Must: []types.Query{
+					types.Query{
+						SimpleQueryString: &types.SimpleQueryStringQuery{
+							Query: "type_event:sdk.EventRunWorkflow",
+						},
+					},
+				},
+			},
+		}
+
 		for _, p := range filters.Filter.Projects {
 			for _, w := range p.WorkflowNames {
-				boolQuery.Must(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
+				boolQuery.Bool.Must = append(boolQuery.Bool.Must,
+					types.Query{
+						SimpleQueryString: &types.SimpleQueryStringQuery{
+							Query: "project_key:" + p.Key,
+						},
+					},
+					types.Query{
+						SimpleQueryString: &types.SimpleQueryStringQuery{
+							Query: "workflow_name:" + w,
+						},
+					})
 			}
 		}
+
 		result, err := s.esClient.SearchDoc(ctx,
-			[]string{s.Cfg.ElasticSearch.IndexEvents},
+			s.Cfg.ElasticSearch.IndexEvents,
 			fmt.Sprintf("%T", sdk.Event{}),
-			boolQuery,
-			[]elastic.Sorter{elastic.NewFieldSort("timestamp").Desc()},
+			&boolQuery,
+			[]types.SortCombinations{"timestamp"}, // default is DESC: https://github.com/elastic/elasticsearch-specification/blob/07bf82537a186562d8699685e3704ea338b268ef/specification/_types/sort.ts#L93-L97
 			filters.CurrentItem, 15)
 		if err != nil {
 			if strings.Contains(err.Error(), indexNotFoundException) {
@@ -95,19 +117,44 @@ func (s *Service) getMetricsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read request")
 		}
 
-		stringQuery := fmt.Sprintf("key:%s AND project_key:%s", request.Key, request.ProjectKey)
-		if request.ApplicationID != 0 {
-			stringQuery = fmt.Sprintf("%s AND application_id:%d", stringQuery, request.ApplicationID)
+		query := types.Query{
+			Bool: &types.BoolQuery{
+				Must: []types.Query{
+					types.Query{
+						SimpleQueryString: &types.SimpleQueryStringQuery{
+							Query: "key:" + request.Key,
+						},
+					},
+					types.Query{
+						SimpleQueryString: &types.SimpleQueryStringQuery{
+							Query: "project_key:" + request.ProjectKey,
+						},
+					},
+				},
+			},
 		}
+
+		if request.ApplicationID != 0 {
+			query.Bool.Must = append(query.Bool.Must, types.Query{
+				SimpleQueryString: &types.SimpleQueryStringQuery{
+					Query: "application_id:" + strconv.FormatInt(request.ApplicationID, 10),
+				},
+			})
+		}
+
 		if request.WorkflowID != 0 {
-			stringQuery = fmt.Sprintf("%s AND workflow_id:%d", stringQuery, request.WorkflowID)
+			query.Bool.Must = append(query.Bool.Must, types.Query{
+				SimpleQueryString: &types.SimpleQueryStringQuery{
+					Query: "workflow_id:" + strconv.FormatInt(request.WorkflowID, 10),
+				},
+			})
 		}
 
 		results, err := s.esClient.SearchDoc(ctx,
-			[]string{s.Cfg.ElasticSearch.IndexMetrics},
+			s.Cfg.ElasticSearch.IndexMetrics,
 			fmt.Sprintf("%T", sdk.Metric{}),
-			elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(stringQuery)),
-			[]elastic.Sorter{elastic.NewFieldSort("run").Desc()},
+			&query,
+			[]types.SortCombinations{"run"}, // default is DESC: https://github.com/elastic/elasticsearch-specification/blob/07bf82537a186562d8699685e3704ea338b268ef/specification/_types/sort.ts#L93-L97
 			-1, 10)
 		if err != nil {
 			if strings.Contains(err.Error(), indexNotFoundException) {
@@ -159,13 +206,18 @@ func (s *Service) getStatusHandler() service.Handler {
 
 func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error) {
 	var m sdk.Metric
-	results, err := s.esClient.SearchDoc(ctx, []string{s.Cfg.ElasticSearch.IndexMetrics},
+
+	query := &types.Query{
+		Ids: &types.IdsQuery{
+			Values: []string{ID},
+		},
+	}
+
+	results, err := s.esClient.SearchDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics,
 		fmt.Sprintf("%T", sdk.Metric{}),
-		elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(fmt.Sprintf("_id:%s", ID))),
-		[]elastic.Sorter{
-			elastic.NewFieldSort("_score").Desc(),
-			elastic.NewFieldSort("run").Desc(),
-		}, -1, 10)
+		query,
+		[]types.SortCombinations{"_score", "run"},
+		-1, 10)
 	if err != nil {
 		if strings.Contains(err.Error(), indexNotFoundException) {
 			log.Warn(ctx, "elasticsearch> loadMetric> %v", err.Error())
@@ -178,7 +230,7 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 		return m, nil
 	}
 
-	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source, &m); err != nil {
+	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source_, &m); err != nil {
 		return m, err
 	}
 	return m, nil

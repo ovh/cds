@@ -3,7 +3,11 @@ package elasticsearch
 import (
 	"context"
 
-	"github.com/olivere/elastic/v7"
+	elastic "github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/index"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/searchtype"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -21,31 +25,31 @@ type Service struct {
 }
 
 type ESClient interface {
-	SearchDoc(ctx context.Context, indices []string, docType string, query elastic.Query, sorts []elastic.Sorter, from, size int) (*elastic.SearchResult, error)
-	Ping(ctx context.Context, url string) (*elastic.PingResult, int, error)
-	IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*elastic.IndexResponse, error)
+	SearchDoc(ctx context.Context, index string, docType string, query *types.Query, sorts []types.SortCombinations, from, size int) (*search.Response, error)
+	Ping(ctx context.Context) (bool, error)
+	IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*index.Response, error)
 }
 
 type esClient struct {
-	client *elastic.Client
+	client *elastic.TypedClient
 }
 
-func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*elastic.IndexResponse, error) {
+func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*index.Response, error) {
 	if id == "" {
-		return c.client.Index().Index(index).BodyJson(body).Do(ctx)
+		return c.client.Index(index).Request(body).Do(ctx)
 	}
-	return c.client.Index().Index(index).Id(id).BodyJson(body).Do(ctx)
+	return c.client.Index(index).Id(id).Request(body).Do(ctx)
 }
 
-func (c *esClient) SearchDoc(ctx context.Context, indices []string, docType string, query elastic.Query, sorts []elastic.Sorter, from, size int) (*elastic.SearchResult, error) {
+func (c *esClient) SearchDoc(ctx context.Context, index string, docType string, query *types.Query, sorts []types.SortCombinations, from, size int) (*search.Response, error) {
 	if from > -1 {
-		return c.client.Search().Index(indices...).Type(docType).Query(query).SortBy(sorts...).From(from).Size(10).Do(ctx)
+		return c.client.Search().Index(index).SearchType(searchtype.SearchType{Name: docType}).Query(query).Sort(sorts...).From(from).Size(10).Do(ctx)
 	}
-	return c.client.Search().Index(indices...).Type(docType).Query(query).SortBy(sorts...).Size(10).Do(ctx)
+	return c.client.Search().Index(index).SearchType(searchtype.SearchType{Name: docType}).Query(query).Sort(sorts...).Size(10).Do(ctx)
 }
 
-func (c *esClient) Ping(ctx context.Context, url string) (*elastic.PingResult, int, error) {
-	return c.client.Ping(url).Do(ctx)
+func (c *esClient) Ping(ctx context.Context) (bool, error) {
+	return c.client.Core.Ping().IsSuccess(ctx)
 }
 
 var _ ESClient = new(esClient)

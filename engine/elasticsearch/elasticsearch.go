@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	elastic "github.com/elastic/go-elasticsearch/v8"
 	"github.com/gorilla/mux"
-	"github.com/olivere/elastic/v7"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
@@ -122,11 +122,11 @@ func (s *Service) Serve(c context.Context) error {
 }
 
 func (s *Service) initClient() (ESClient, error) {
-	x, err := elastic.NewClient(
-		elastic.SetURL(s.Cfg.ElasticSearch.URL),
-		elastic.SetBasicAuth(s.Cfg.ElasticSearch.Username, s.Cfg.ElasticSearch.Password),
-		elastic.SetSniff(false),
-	)
+	x, err := elastic.NewTypedClient(elastic.Config{
+		Addresses: []string{s.Cfg.ElasticSearch.URL},
+		Username:  s.Cfg.ElasticSearch.Username,
+		Password:  s.Cfg.ElasticSearch.Password,
+	})
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
