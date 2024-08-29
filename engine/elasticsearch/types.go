@@ -25,7 +25,7 @@ type Service struct {
 }
 
 type ESClient interface {
-	SearchDoc(ctx context.Context, index string, docType string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error)
+	SearchDoc(ctx context.Context, index string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error)
 	Ping(ctx context.Context) error
 	IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error)
 }
@@ -46,14 +46,13 @@ func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, bo
 	})
 }
 
-func (c *esClient) SearchDoc(ctx context.Context, index string, docType string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error) {
+func (c *esClient) SearchDoc(ctx context.Context, index string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error) {
 	var body bytes.Buffer
 	_ = json.NewEncoder(&body).Encode(query.Map())
 
 	params := opensearchapi.SearchParams{
-		SearchType: docType,
-		Sort:       sorts,
-		Size:       &size,
+		Sort: sorts,
+		Size: &size,
 	}
 
 	if from > -1 {

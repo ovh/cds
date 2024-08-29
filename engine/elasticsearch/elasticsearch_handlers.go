@@ -40,7 +40,6 @@ func (s *Service) getEventsHandler() service.Handler {
 		query := osquery.Query(osquery.Bool().Must(conditions...))
 		result, err := s.esClient.SearchDoc(ctx,
 			s.Cfg.ElasticSearch.IndexEvents,
-			fmt.Sprintf("%T", sdk.Event{}),
 			query,
 			[]string{"timestamp:desc"},
 			filters.CurrentItem, 15)
@@ -115,7 +114,6 @@ func (s *Service) getMetricsHandler() service.Handler {
 		query := osquery.Query(osquery.Bool().Must(conditions...))
 		results, err := s.esClient.SearchDoc(ctx,
 			s.Cfg.ElasticSearch.IndexMetrics,
-			fmt.Sprintf("%T", sdk.Metric{}),
 			query,
 			[]string{"run:desc"},
 			-1, 10)
@@ -173,7 +171,6 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 	query := osquery.Query(osquery.IDs(ID))
 
 	results, err := s.esClient.SearchDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics,
-		fmt.Sprintf("%T", sdk.Metric{}),
 		query,
 		[]string{"_score:desc", "run:desc"},
 		-1, 10)
