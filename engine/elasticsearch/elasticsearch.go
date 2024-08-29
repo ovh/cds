@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	elastic "github.com/elastic/go-elasticsearch/v8"
 	"github.com/gorilla/mux"
+	"github.com/opensearch-project/opensearch-go/v4"
+	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
@@ -99,11 +100,9 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Gracefully shutdown the http server
 	go func() {
-		select {
-		case <-ctx.Done():
-			log.Info(ctx, "ElasticSearch> Shutdown HTTP Server")
-			_ = server.Shutdown(ctx)
-		}
+		<-ctx.Done()
+		log.Info(ctx, "ElasticSearch> Shutdown HTTP Server")
+		_ = server.Shutdown(ctx)
 	}()
 
 	if s.Cfg.EventBus.JobSummaryKafka.BrokerAddresses != "" {
@@ -122,11 +121,15 @@ func (s *Service) Serve(c context.Context) error {
 }
 
 func (s *Service) initClient() (ESClient, error) {
-	x, err := elastic.NewTypedClient(elastic.Config{
-		Addresses: []string{s.Cfg.ElasticSearch.URL},
-		Username:  s.Cfg.ElasticSearch.Username,
-		Password:  s.Cfg.ElasticSearch.Password,
-	})
+	x, err := opensearchapi.NewClient(
+		opensearchapi.Config{
+			Client: opensearch.Config{
+				Addresses: []string{s.Cfg.ElasticSearch.URL},
+				Username:  s.Cfg.ElasticSearch.Username,
+				Password:  s.Cfg.ElasticSearch.Password,
+			},
+		},
+	)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}

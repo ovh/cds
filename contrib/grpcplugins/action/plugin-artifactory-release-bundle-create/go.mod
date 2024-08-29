@@ -1,6 +1,8 @@
 module github.com/ovh/cds/contrib/grpcplugins/action/artifactoryreleasebundlecreate
 
-go 1.22
+go 1.22.1
+
+toolchain go1.22.6
 
 replace github.com/ovh/cds => ../../../../
 
@@ -13,7 +15,7 @@ require (
 	github.com/ovh/cds v0.0.0-00010101000000-000000000000
 	github.com/pkg/errors v0.9.1
 	github.com/rockbears/yaml v0.4.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 )
 
 require (

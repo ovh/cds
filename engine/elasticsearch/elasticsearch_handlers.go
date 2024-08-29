@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/defensestation/osquery"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
@@ -25,39 +25,24 @@ func (s *Service) getEventsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		boolQuery := types.Query{
-			Bool: &types.BoolQuery{
-				Must: []types.Query{
-					types.Query{
-						SimpleQueryString: &types.SimpleQueryStringQuery{
-							Query: "type_event:sdk.EventRunWorkflow",
-						},
-					},
-				},
-			},
-		}
+		var conditions []osquery.Mappable
+		conditions = append(conditions, osquery.Term("type_event", "sdk.EventRunWorkflow"))
 
 		for _, p := range filters.Filter.Projects {
 			for _, w := range p.WorkflowNames {
-				boolQuery.Bool.Must = append(boolQuery.Bool.Must,
-					types.Query{
-						SimpleQueryString: &types.SimpleQueryStringQuery{
-							Query: "project_key:" + p.Key,
-						},
-					},
-					types.Query{
-						SimpleQueryString: &types.SimpleQueryStringQuery{
-							Query: "workflow_name:" + w,
-						},
-					})
+				conditions = append(conditions,
+					osquery.Term("project_key:", p.Key),
+					osquery.Term("workflow_name:", w),
+				)
 			}
 		}
 
+		query := osquery.Query(osquery.Bool().Must(conditions...))
 		result, err := s.esClient.SearchDoc(ctx,
 			s.Cfg.ElasticSearch.IndexEvents,
 			fmt.Sprintf("%T", sdk.Event{}),
-			&boolQuery,
-			[]types.SortCombinations{"timestamp"}, // default is DESC: https://github.com/elastic/elasticsearch-specification/blob/07bf82537a186562d8699685e3704ea338b268ef/specification/_types/sort.ts#L93-L97
+			query,
+			[]string{"timestamp:desc"},
 			filters.CurrentItem, 15)
 		if err != nil {
 			if strings.Contains(err.Error(), indexNotFoundException) {
@@ -117,44 +102,22 @@ func (s *Service) getMetricsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read request")
 		}
 
-		query := types.Query{
-			Bool: &types.BoolQuery{
-				Must: []types.Query{
-					types.Query{
-						SimpleQueryString: &types.SimpleQueryStringQuery{
-							Query: "key:" + request.Key,
-						},
-					},
-					types.Query{
-						SimpleQueryString: &types.SimpleQueryStringQuery{
-							Query: "project_key:" + request.ProjectKey,
-						},
-					},
-				},
-			},
-		}
-
+		var conditions []osquery.Mappable
+		conditions = append(conditions, osquery.Term("key", request.Key))
+		conditions = append(conditions, osquery.Term("project_key", request.ProjectKey))
 		if request.ApplicationID != 0 {
-			query.Bool.Must = append(query.Bool.Must, types.Query{
-				SimpleQueryString: &types.SimpleQueryStringQuery{
-					Query: "application_id:" + strconv.FormatInt(request.ApplicationID, 10),
-				},
-			})
+			conditions = append(conditions, osquery.Term("application_id", strconv.FormatInt(request.ApplicationID, 10)))
 		}
-
 		if request.WorkflowID != 0 {
-			query.Bool.Must = append(query.Bool.Must, types.Query{
-				SimpleQueryString: &types.SimpleQueryStringQuery{
-					Query: "workflow_id:" + strconv.FormatInt(request.WorkflowID, 10),
-				},
-			})
+			conditions = append(conditions, osquery.Term("workflow_id", strconv.FormatInt(request.WorkflowID, 10)))
 		}
 
+		query := osquery.Query(osquery.Bool().Must(conditions...))
 		results, err := s.esClient.SearchDoc(ctx,
 			s.Cfg.ElasticSearch.IndexMetrics,
 			fmt.Sprintf("%T", sdk.Metric{}),
-			&query,
-			[]types.SortCombinations{"run"}, // default is DESC: https://github.com/elastic/elasticsearch-specification/blob/07bf82537a186562d8699685e3704ea338b268ef/specification/_types/sort.ts#L93-L97
+			query,
+			[]string{"run:desc"},
 			-1, 10)
 		if err != nil {
 			if strings.Contains(err.Error(), indexNotFoundException) {
@@ -207,16 +170,12 @@ func (s *Service) getStatusHandler() service.Handler {
 func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error) {
 	var m sdk.Metric
 
-	query := &types.Query{
-		Ids: &types.IdsQuery{
-			Values: []string{ID},
-		},
-	}
+	query := osquery.Query(osquery.IDs(ID))
 
 	results, err := s.esClient.SearchDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics,
 		fmt.Sprintf("%T", sdk.Metric{}),
 		query,
-		[]types.SortCombinations{"_score", "run"},
+		[]string{"_score:desc", "run:desc"},
 		-1, 10)
 	if err != nil {
 		if strings.Contains(err.Error(), indexNotFoundException) {
@@ -230,7 +189,7 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 		return m, nil
 	}
 
-	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source_, &m); err != nil {
+	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source, &m); err != nil {
 		return m, err
 	}
 	return m, nil

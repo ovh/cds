@@ -1,16 +1,16 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 
-	elastic "github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/core/index"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/searchtype"
+	"github.com/defensestation/osquery"
+	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/event"
 )
 
@@ -25,31 +25,51 @@ type Service struct {
 }
 
 type ESClient interface {
-	SearchDoc(ctx context.Context, index string, docType string, query *types.Query, sorts []types.SortCombinations, from, size int) (*search.Response, error)
-	Ping(ctx context.Context) (bool, error)
-	IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*index.Response, error)
+	SearchDoc(ctx context.Context, index string, docType string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error)
+	Ping(ctx context.Context) error
+	IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error)
 }
 
 type esClient struct {
-	client *elastic.TypedClient
+	client *opensearchapi.Client
 }
 
-func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*index.Response, error) {
-	if id == "" {
-		return c.client.Index(index).Request(body).Do(ctx)
+func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
+	btes, err := json.Marshal(body)
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to prepare index body")
 	}
-	return c.client.Index(index).Id(id).Request(body).Do(ctx)
+	return c.client.Document.Create(ctx, opensearchapi.DocumentCreateReq{
+		Index:      index,
+		DocumentID: id,
+		Body:       bytes.NewReader(btes),
+	})
 }
 
-func (c *esClient) SearchDoc(ctx context.Context, index string, docType string, query *types.Query, sorts []types.SortCombinations, from, size int) (*search.Response, error) {
+func (c *esClient) SearchDoc(ctx context.Context, index string, docType string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error) {
+	var body bytes.Buffer
+	_ = json.NewEncoder(&body).Encode(query.Map())
+
+	params := opensearchapi.SearchParams{
+		SearchType: docType,
+		Sort:       sorts,
+		Size:       &size,
+	}
+
 	if from > -1 {
-		return c.client.Search().Index(index).SearchType(searchtype.SearchType{Name: docType}).Query(query).Sort(sorts...).From(from).Size(10).Do(ctx)
+		params.From = &from
 	}
-	return c.client.Search().Index(index).SearchType(searchtype.SearchType{Name: docType}).Query(query).Sort(sorts...).Size(10).Do(ctx)
+
+	return c.client.Search(ctx, &opensearchapi.SearchReq{
+		Indices: []string{index},
+		Body:    &body,
+		Params:  params,
+	})
 }
 
-func (c *esClient) Ping(ctx context.Context) (bool, error) {
-	return c.client.Core.Ping().IsSuccess(ctx)
+func (c *esClient) Ping(ctx context.Context) error {
+	_, err := c.client.Ping(ctx, &opensearchapi.PingReq{Params: opensearchapi.PingParams{}})
+	return err
 }
 
 var _ ESClient = new(esClient)

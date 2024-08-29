@@ -8,10 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	esindex "github.com/elastic/go-elasticsearch/v8/typedapi/core/index"
-	search "github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
-	types "github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	osquery "github.com/defensestation/osquery"
 	gomock "github.com/golang/mock/gomock"
+	opensearchapi "github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 )
 
 // MockESClient is a mock of ESClient interface.
@@ -38,10 +37,10 @@ func (m *MockESClient) EXPECT() *MockESClientMockRecorder {
 }
 
 // IndexDocWithoutType mocks base method.
-func (m *MockESClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*esindex.Response, error) {
+func (m *MockESClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IndexDocWithoutType", ctx, index, id, body)
-	ret0, _ := ret[0].(*esindex.Response)
+	ret0, _ := ret[0].(*opensearchapi.DocumentCreateResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -53,12 +52,11 @@ func (mr *MockESClientMockRecorder) IndexDocWithoutType(ctx, index, id, body int
 }
 
 // Ping mocks base method.
-func (m *MockESClient) Ping(ctx context.Context) (bool, error) {
+func (m *MockESClient) Ping(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Ping", ctx)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Ping indicates an expected call of Ping.
@@ -68,10 +66,10 @@ func (mr *MockESClientMockRecorder) Ping(ctx interface{}) *gomock.Call {
 }
 
 // SearchDoc mocks base method.
-func (m *MockESClient) SearchDoc(ctx context.Context, index, docType string, query *types.Query, sorts []types.SortCombinations, from, size int) (*search.Response, error) {
+func (m *MockESClient) SearchDoc(ctx context.Context, index, docType string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchDoc", ctx, index, docType, query, sorts, from, size)
-	ret0, _ := ret[0].(*search.Response)
+	ret0, _ := ret[0].(*opensearchapi.SearchResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
