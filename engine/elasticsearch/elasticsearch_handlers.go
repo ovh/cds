@@ -178,8 +178,8 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 		[]string{"_score:desc", "run:desc"},
 		-1, 10)
 	if err != nil {
+		log.Warn(ctx, "elasticsearch> loadMetric> %v", err.Error())
 		if strings.Contains(err.Error(), indexNotFoundException) {
-			log.Warn(ctx, "elasticsearch> loadMetric> %v", err.Error())
 			return m, nil
 		}
 		return m, sdk.WrapError(err, "unable to get result")
@@ -188,6 +188,8 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 	if len(results.Hits.Hits) == 0 {
 		return m, nil
 	}
+
+	log.Info(ctx, "loadMetric : %v", string(results.Hits.Hits[0].Source))
 
 	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source, &m); err != nil {
 		return m, err
