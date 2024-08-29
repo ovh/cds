@@ -15,13 +15,9 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusWarn
 		value = "disconnected"
 	} else {
-		_, code, err := s.esClient.Ping(ctx, s.Cfg.ElasticSearch.URL)
-		if err != nil {
+		if err := s.esClient.Ping(ctx); err != nil {
 			status = sdk.MonitoringStatusWarn
 			value = fmt.Sprintf("no ping (%v)", err)
-		} else if code >= 400 {
-			status = sdk.MonitoringStatusWarn
-			value = fmt.Sprintf("ping error (code:%d, err: %v)", code, err)
 		} else {
 			status = sdk.MonitoringStatusOK
 		}
