@@ -1,23 +1,99 @@
-<app-tabs [tabs]="tabs" (onSelect)="selectTab($event)" [disableNavigation]="true"></app-tabs>
-<ng-container *ngIf="selectedTab.key === 'logs' && jobRun">
-    <app-run-job-logs [workflowRun]="workflowRun" [runJob]="jobRun" (dblclick)="$event.stopPropagation();"
-        #runJobLogs></app-run-job-logs>
-</ng-container>
-<div class="infos" *ngIf="selectedTab.key === 'infos' && jobRun" (dblclick)="$event.stopPropagation();">
-    <ul>
-        <ng-container *ngFor="let info of jobRunInfos">
-            <ul>
-                <li>
-                    <span *ngIf="info.level === 'info'" class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
-                    <span *ngIf="info.level === 'warning'" class="warning" nz-icon nzType="warning"
-                        nzTheme="fill"></span>
-                    <span *ngIf="info.level === 'error'" class="error" nz-icon nzType="close-circle"
-                        nzTheme="fill"></span>
-                    <div class="content">
-                        {{info.message}}.
-                    </div>
-                </li>
-            </ul>
+<div class="header">
+    <div class="menu left">
+        <ng-container *ngIf="tabs && tabs.length > 0">
+            <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
+                (click)="selectTab(i);$event.stopPropagation();">{{tab.name}}</button>
         </ng-container>
-    </ul>
+    </div>
+    <div class=" menu right">
+        <button [class.active]="mode === displayModes.ANSI"
+            (click)="clickMode(displayModes.ANSI);$event.stopPropagation();">ANSI</button>
+        <button [class.active]="mode === displayModes.HTML"
+            (click)="clickMode(displayModes.HTML);$event.stopPropagation();">HTML</button>
+    </div>
+</div>
+<div *ngIf="jobRun" class="scrollWrapper" (dblclick)="$event.stopPropagation();" #scrollWrapper>
+    <!-- Display job services and steps -->
+    <div class="step"
+        *ngFor="let logBlock of tabs[currentTabIndex].logBlocks; trackBy: trackStepElement; let i = index">
+        <div class="line info" (click)="clickOpen(logBlock)">
+            <div class="number">
+                <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && !logBlock.open" nz-icon
+                    nzType="caret-right" nzTheme="fill"></span>
+                <span *ngIf="logBlock.totalLinesCount > 0 && !logBlock.loading && logBlock.open" nz-icon
+                    nzType="caret-down" nzTheme="fill"></span>
+                <span nz-icon [nzType]="'loading'" *ngIf="logBlock.lines.length === 0 && logBlock.loading"></span>
+                {{logBlock.firstDisplayedLineNumber ? logBlock.firstDisplayedLineNumber : ''}}
+            </div>
+            <div class="value">{{logBlock.name}}</div>
+            <div class="extra">
+                <div *ngIf="logBlock.startDate && !logBlock.duration">
+                    {{logBlock.startDate | date: 'long' }}
+                </div>
+                <div *ngIf="logBlock.duration" title="Step duration">{{logBlock.duration}}</div>
+                <div [class.orange]="logBlock.optional && logBlock.failed" *ngIf="logBlock.optional">Optional</div>
+                <div *ngIf="logBlock.disabled">Disabled</div>
+                <div class="red" *ngIf="logBlock.failed && !logBlock.optional">Failed</div>
+            </div>
+            <div class="action">
+                <a *ngIf="logBlock?.link"
+                    [href]="'./cdscdn/item/' + logBlock.link.item_type + '/' + logBlock.link.api_ref + '/download?refresh=5'"
+                    target="_blank" rel="noopener noreferrer" title="Share/download the step"
+                    (click)="$event.stopPropagation()"><i nz-icon nzType="export" nzTheme="outline"></i></a>
+            </div>
+        </div>
+        <ng-container *ngIf="logBlock.open">
+            <div class="line" *ngFor="let line of logBlock.lines; trackBy: trackLineElement; let j = index">
+                <div class="number">{{logBlock.firstDisplayedLineNumber + j + 1}}</div>
+                <div class="value">
+                    <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+                    <div class="since" *ngIf="line.since" title="Duration since step start">{{line.since |
+                        durationMs}}
+                    </div>
+                </div>
+                <div class="extra" *ngIf="line.extra">
+                    <div *ngFor="let extra of line.extra">{{extra}}</div>
+                </div>
+            </div>
+            <div class="line expand" *ngIf="logBlock.lines.length + logBlock.endLines.length < logBlock.totalLinesCount"
+                (click)="clickExpandStepDown(logBlock.name, $event)">
+                <div class="number">
+                    <i nz-icon nzType="caret-down" nzTheme="fill"></i>
+                    {{logBlock.firstDisplayedLineNumber +
+                    logBlock.lines.length + 1}}
+                </div>
+                <div class="value">…</div>
+            </div>
+            <div class="line expand"
+                *ngIf="logBlock.lines.length + logBlock.endLines.length < (logBlock.totalLinesCount - expandLoadLinesCount) - 1"
+                (click)="clickExpandStepUp(logBlock.name)">
+                <div class="number"><i nz-icon nzType="caret-up" nzTheme="fill"></i>{{(logBlock.firstDisplayedLineNumber
+                    +
+                    logBlock.totalLinesCount) - logBlock.endLines.length}}
+                </div>
+                <div class="value">…</div>
+            </div>
+            <div class="line" *ngFor="let line of logBlock.endLines; trackBy: trackLineElement; let j = index">
+                <div class="number">
+                    {{((logBlock.firstDisplayedLineNumber + logBlock.totalLinesCount) - logBlock.endLines.length) +
+                    j + 1}}
+                </div>
+                <div class="value">
+                    <pre [innerHTML]="line.value | ansi: (this.mode !== displayModes.ANSI) | safeHtml"></pre>
+                    <div class="since" *ngIf="line.since" title="Duration since step start">{{line.since |
+                        durationMs}}</div>
+                </div>
+                <div class="extra" *ngIf="line.extra">
+                    <div *ngFor="let extra of line.extra">{{extra}}</div>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+
+    <div class="footer">
+        <div class="goto" (click)="clickScroll(scrollTargets.BOTTOM)">Bottom<i nz-icon nzType="caret-down"
+                nzTheme="fill"></i></div>
+        <div class="goto" (click)="clickScroll(scrollTargets.TOP)">Top<i nz-icon nzType="caret-up" nzTheme="fill"></i>
+        </div>
+    </div>
 </div>

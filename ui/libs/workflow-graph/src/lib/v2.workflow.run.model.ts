@@ -192,7 +192,7 @@ export class V2Job {
     if: string;
     gate: string;
     inputs: { [key: string]: string };
-    steps: Array<any>;
+    steps: Array<ActionStep>;
     needs: Array<string>;
     stage: string;
     region: string;
@@ -203,6 +203,16 @@ export class V2Job {
     vars: Array<string>;
     env: { [key: string]: string };
     services: { [key: string]: any };
+}
+
+export class ActionStep {
+    id: string;
+    uses: string;
+    run: string;
+    with: { [key: string]: string };
+    if: string;
+    'continue-on-error': boolean;
+    env: { [key: string]: string };
 }
 
 export class V2JobStrategy {

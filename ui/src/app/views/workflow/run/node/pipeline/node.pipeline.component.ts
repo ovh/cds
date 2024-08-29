@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
-import { CDNLine, CDNStreamFilter, PipelineStatus } from 'app/model/pipeline.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import { Stage } from 'app/model/stage.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from 'app/model/workflow.run.model';
@@ -16,6 +16,7 @@ import { delay, retryWhen } from 'rxjs/operators';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { ScrollTarget, WorkflowRunJobComponent } from './workflow-run-job/workflow-run-job.component';
 import { DurationService } from '../../../../../../../libs/workflow-graph/src/lib/duration.service';
+import { CDNLine, CDNStreamFilter } from 'app/model/cdn.model';
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -92,7 +93,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit, OnDestroy {
             this.currentNodeJobRun = cloneDeep(rj);
             // Start websocket if job is not finished
             if (!PipelineStatus.isDone(this.currentNodeJobRun.status)) {
-                this.startStreamingLogsForJob().then(() => {});
+                this.startStreamingLogsForJob().then(() => { });
             }
 
             this._cd.markForCheck();

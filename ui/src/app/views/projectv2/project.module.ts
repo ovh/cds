@@ -5,7 +5,6 @@ import { ProjectV2RunComponent } from "./run/run.component";
 import { ProjectV2ExploreSidebarComponent } from './explore/explore-sidebar.component';
 import { ProjectV2ExploreEntityComponent } from './explore/explore-entity.component';
 import { RunJobComponent } from "./run/run-job.component";
-import { RunJobLogsComponent } from "./run/run-job-logs.component";
 import { RunGateComponent } from "./run/gate/gate.component";
 import { ProjectV2RunListComponent } from './run-list/run-list.component';
 import { WorkflowGraphModule } from '../../../../libs/workflow-graph/src/public-api';
@@ -46,7 +45,6 @@ import { ProjectV2TriggerAnalysisComponent } from './explore/trigger-analysis/tr
         RunGateComponent,
         RunHookComponent,
         RunJobComponent,
-        RunJobLogsComponent,
         RunResultComponent,
         RunTestComponent,
         RunTestsComponent,
