@@ -31,8 +31,8 @@ func (s *Service) getEventsHandler() service.Handler {
 		for _, p := range filters.Filter.Projects {
 			for _, w := range p.WorkflowNames {
 				conditions = append(conditions,
-					osquery.Term("project_key:", p.Key),
-					osquery.Term("workflow_name:", w),
+					osquery.Term("project_key", p.Key),
+					osquery.Term("workflow_name", w),
 				)
 			}
 		}
