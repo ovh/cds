@@ -39,6 +39,9 @@ func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, bo
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to prepare index body")
 	}
+	if id == "" {
+		id = sdk.UUID()
+	}
 	return c.client.Document.Create(ctx, opensearchapi.DocumentCreateReq{
 		Index:      index,
 		DocumentID: id,
