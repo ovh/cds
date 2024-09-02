@@ -1095,8 +1095,23 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				}
 			}
 
+			stages := wr.GetStages()
+			if len(stages) > 0 {
+				for _, rj := range runJobs {
+					stageName := wr.WorkflowData.Workflow.Jobs[rj.JobID].Stage
+					jobInStage := stages[stageName].Jobs[rj.JobID]
+					jobInStage.Status = rj.Status
+					stages[stageName].Jobs[rj.JobID] = jobInStage
+				}
+				stages.ComputeStatus()
+			}
+			// Skip the job in stage that cannot be run
+			if len(stages) > 0 && !stages[jobToRuns[0].Job.Stage].CanBeRun {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "previous stage is not ended")
+			}
+
 			runJobsContexts, _ := computeExistingRunJobContexts(ctx, runJobs, runResults)
-			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow.Jobs, runJobsContexts, wr.Contexts, jobToRuns[0].JobID)
+			jobContext := buildContextForJob(ctx, wr.WorkflowData.Workflow, runJobsContexts, wr.Contexts, stages, jobToRuns[0].JobID)
 			booleanResult, err := checkJobCondition(ctx, api.mustDBWithCtx(ctx), *wr, inputs, jobToRuns[0].Job, jobContext, *u.AuthConsumerUser.AuthentifiedUser, isAdmin(ctx))
 			if err != nil {
 				return err
