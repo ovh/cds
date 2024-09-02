@@ -106,9 +106,10 @@ func (m *WorkflowRunAnnotations) Scan(src interface{}) error {
 }
 
 type WorkflowRunContext struct {
-	CDS CDSContext        `json:"cds,omitempty"`
-	Git GitContext        `json:"git,omitempty"`
-	Env map[string]string `json:"env,omitempty"`
+	CDS  CDSContext        `json:"cds,omitempty"`
+	Git  GitContext        `json:"git,omitempty"`
+	Env  map[string]string `json:"env,omitempty"`
+	Jobs JobsResultContext `json:"jobs,omitempty"`
 }
 
 func (m WorkflowRunContext) Value() (driver.Value, error) {

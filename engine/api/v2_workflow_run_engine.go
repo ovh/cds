@@ -330,7 +330,9 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	})
 
 	if run.Status.IsTerminated() {
-		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
+		copyRun := *run
+		copyRun.Contexts.Jobs = runJobsContexts
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, copyRun, *u)
 	}
 
 	if len(skippedJobs) > 0 || hasNoStepsJobs {
