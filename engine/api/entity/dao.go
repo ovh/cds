@@ -87,7 +87,9 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) e
 func LoadByRepositoryAndRefAndCommit(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, commit string, opts ...gorpmapping.GetOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity
-		WHERE project_repository_id = $1 AND ref = $2 AND commit = $3`).Args(projectRepositoryID, ref, commit)
+		WHERE project_repository_id = $1 AND ref = $2 AND commit = $3
+		ORDER BY name ASC
+	`).Args(projectRepositoryID, ref, commit)
 	return getEntities(ctx, db, query, opts...)
 }
 

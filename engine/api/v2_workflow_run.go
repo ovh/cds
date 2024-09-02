@@ -1017,6 +1017,18 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 		if err := workflow_v2.InsertRunJob(ctx, tx, &duplicatedRJ); err != nil {
 			return err
 		}
+
+		infos, err := workflow_v2.LoadRunJobInfosByRunJobID(ctx, tx, rj.ID)
+		if err != nil {
+			return err
+		}
+		for _, i := range infos {
+			i.WorkflowRunJobID = duplicatedRJ.ID
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &i); err != nil {
+				return err
+			}
+		}
+
 		runResults, err := workflow_v2.LoadRunResultsByRunJobID(ctx, tx, rj.ID)
 		if err != nil {
 			return err

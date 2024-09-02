@@ -87,6 +87,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
             this.stopStreamingLogsForJob();
         }
         if (isInit || jobRunIDChanged) {
+            this.currentTabIndex = 0;
             await this.setInfos();
             this._cd.markForCheck();
             await this.setServices();

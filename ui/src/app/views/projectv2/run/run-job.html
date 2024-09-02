@@ -1,6 +1,6 @@
 <div class="header">
     <div class="menu left">
-        <ng-container *ngIf="tabs && tabs.length > 0">
+        <ng-container *ngIf="tabs && tabs.length > 1">
             <button *ngFor="let tab of tabs; let i = index" [class.active]="i === currentTabIndex"
                 (click)="selectTab(i);$event.stopPropagation();">{{tab.name}}</button>
         </ng-container>
