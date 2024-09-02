@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
-import { CDNLine, CDNStreamFilter } from 'app/model/pipeline.model';
 import { UIArtifact } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/services.module';
 import { WorkflowHelper } from 'app/service/workflow/workflow.helper';
@@ -20,6 +19,7 @@ import { JobRun, WorkflowRunV3 } from '../workflowv3.model';
 import { WorkflowV3RunService } from '../workflowv3.run.service';
 import * as actionPreferences from 'app/store/preferences.action';
 import { PreferencesState } from 'app/store/preferences.state';
+import { CDNLine, CDNStreamFilter } from 'app/model/cdn.model';
 
 @Component({
     selector: 'app-workflowv3-run',

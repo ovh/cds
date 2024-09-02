@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
-import { CDNLogLinks } from "../../model/pipeline.model";
 import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunManualRequest, V2WorkflowRunManualResponse, WorkflowRunInfo, WorkflowRunResult } from "../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { CDNLogLink, CDNLogLinks } from "app/model/cdn.model";
 
 @Injectable()
 export class V2WorkflowRunService {
@@ -57,6 +57,10 @@ export class V2WorkflowRunService {
 
     getAllLogsLinks(run: V2WorkflowRun, jobRunID: string): Observable<CDNLogLinks> {
         return this._http.get<CDNLogLinks>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobRunID}/logs/links`);
+    }
+
+    getRunJobServiceLogsLink(run: V2WorkflowRun, jobRunID: string, serviceName: string): Observable<CDNLogLink> {
+        return this._http.get<CDNLogLink>(`/v2/project/${run.project_key}/run/${run.id}/job/${jobRunID}/service/${serviceName}/link`);
     }
 
     triggerJob(projKey: string, workflowRunID: string, jobRunID: string, data?: any): Observable<V2WorkflowRun> {

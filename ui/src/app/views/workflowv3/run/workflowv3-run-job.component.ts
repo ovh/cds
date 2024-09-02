@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, In
 import { Store } from '@ngxs/store';
 import { EventType } from 'app/model/event.model';
 import { Parameter } from 'app/model/parameter.model';
-import { CDNLine } from 'app/model/pipeline.model';
 import { WorkflowNodeJobRun } from 'app/model/workflow.run.model';
 import { WorkflowRunService } from 'app/service/services.module';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -14,6 +13,7 @@ import {
 import { Subscription, timer } from 'rxjs';
 import { debounce, filter, finalize } from 'rxjs/operators';
 import { JobRun } from '../workflowv3.model';
+import { CDNLine } from 'app/model/cdn.model';
 
 @Component({
     selector: 'app-workflowv3-run-job',
