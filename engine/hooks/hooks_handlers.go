@@ -199,7 +199,6 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
 		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
 	}
-	s.Dao.enqueuedRepositoryEventIncr()
 
 	return exec, nil
 }
@@ -292,7 +291,6 @@ func (s *Service) handleRepositoryEvent(ctx context.Context, vcsServerType strin
 	if err := s.Dao.EnqueueRepositoryEvent(ctx, exec); err != nil {
 		return exec, sdk.WrapError(err, "unable to enqueue repository event %s", exec.GetFullName())
 	}
-	s.Dao.enqueuedRepositoryEventIncr()
 
 	return exec, nil
 }

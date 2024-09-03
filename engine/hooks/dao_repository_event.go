@@ -50,7 +50,11 @@ func (d *dao) EnqueueRepositoryEvent(ctx context.Context, e *sdk.HookRepositoryE
 		return err
 	}
 
-	return d.store.Enqueue(repositoryEventQueue, k)
+	if err := d.store.Enqueue(repositoryEventQueue, k); err != nil {
+		return err
+	}
+	d.enqueuedRepositoryEventIncr()
+	return nil
 }
 
 func (d *dao) getRepositoryEventLockKey(vcsName, repoName, hookEventUUID string) string {
