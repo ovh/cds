@@ -190,9 +190,9 @@ testcases:
         # Check Post parent action
         cat {{.cds_workflow}}-1-1-init-Post-action | grep "Post from parent-action"
         # Check export from second job
-        echo "Checking second job log"
         cat {{.cds_workflow}}-1-1-second-echo
-        cat {{.cds_workflow}}-1-1-second-echo | grep "Hello\nWorld"
+        cat {{.cds_workflow}}-1-1-second-echo | grep "Hello"
+        cat {{.cds_workflow}}-1-1-second-echo | grep "World"
       retry: 60
       delay: 1
 
