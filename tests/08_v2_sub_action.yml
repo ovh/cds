@@ -143,16 +143,24 @@ testcases:
     - name: Check that the CDS workflow has at least one execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} {{.cds_workflow}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 1
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+        - and:
+          - result.systemoutjson ShouldHaveLength 1
+          - or: 
+            - result.systemoutjson.systemoutjson0.status ShouldEqual "Success"
+            - result.systemoutjson.systemoutjson0.status ShouldEqual "Fail"
       retry: 100
       delay: 1
       vars:
         workflowRunID:
           from: result.systemoutjson.systemoutjson0.id
+        workflowRunStatus:
+          from: result.systemoutjson.systemoutjson0.status  
 
     - name: Get Workflow run info
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow info {{.cds_project}} {{.workflowRunID}}"
+
+    - name: Get job info
+      script:  "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"      
         
     - name: Download and check logs
       script: |-
@@ -189,3 +197,8 @@ testcases:
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=variable --format json"  
       assertions:
       - result.systemoutjson ShouldHaveLength 2
+    
+    - name: Echo Status
+      script: echo {{.workflowRunStatus}}
+      assertions:
+      - result.systemout ShouldEqual Success
