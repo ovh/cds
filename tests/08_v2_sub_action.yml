@@ -124,7 +124,7 @@ testcases:
                 fromParent:
                   value: ${{ steps.action.outputs.parentOutFromChild }}
                 fromFile:
-                  value ${{ steps.exportFile.outputs.myfile }}  
+                  value: ${{ steps.exportFile.outputs.myfile }}  
             second:
               runs-on: .cds/worker-models/debian.yml
               steps:
