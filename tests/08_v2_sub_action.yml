@@ -126,6 +126,7 @@ testcases:
                 fromFile:
                   value: ${{ steps.exportFile.outputs.myfile }}  
             second:
+              needs: [init]
               runs-on: .cds/worker-models/debian.yml
               steps:
                - run: echo "${{ jobs.init.outputs.fromFile }}"
