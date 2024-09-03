@@ -138,27 +138,6 @@
         }
     }
 
-    .problems,
-    .infos {
-        padding: 10px;
-
-        .right a {
-            text-decoration: none;
-        }
-
-        .error {
-            color: $darkTheme_red;
-        }
-
-        .warning {
-            color: $darkTheme_orange;
-        }
-
-        .info {
-            color: $darkTheme_blue;
-        }
-    }
-
     .tests {
         [nz-icon] {
             margin-left: 8px;
@@ -185,24 +164,49 @@
         flex-direction: column;
 
         .infos {
+            display: flex;
+            flex-direction: column;
             height: 100%;
             overflow-y: auto;
-            padding-left: 10px;
-            list-style: none;
 
-            .rightFloat {
-                float: right;
+            .line:first-child {
+                margin-top: 2px;
             }
 
-            .content {
-                display: inline;
+            .line {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                padding: 0 5px;
+                min-height: 21px;
+
+                &:hover {
+                    background-color: #177ddc;
+                }
+
+                .content {
+                    flex: 1;
+                    margin: 0 5px;
+                }
+
+                .error {
+                    color: $darkTheme_red;
+                }
+
+                .warning {
+                    color: $darkTheme_orange;
+                }
+
+                .info {
+                    color: $darkTheme_blue;
+                }
             }
         }
     }
+}
 
-    .result {
-        cursor: pointer;
-    }
+.result {
+    cursor: pointer;
 }
 
 app-resizable-panel {

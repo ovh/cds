@@ -2,7 +2,9 @@ module github.com/ovh/cds/contrib/grpcplugins/action/tmpl
 
 replace github.com/ovh/cds => ../../../../
 
-go 1.22
+go 1.22.1
+
+toolchain go1.22.6
 
 require (
 	github.com/golang/protobuf v1.5.3

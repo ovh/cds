@@ -70,8 +70,26 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 			return err
 		}
 
-		for _, link := range links.Data {
-			fileName := getFileName(rj, link.StepName)
+		steps := make([]string, 0)
+
+		// Foreach step create a ref if a step status exists
+		for i, s := range rj.Job.Steps {
+			stepName := sdk.GetJobStepName(s.ID, i)
+			if _, ok := rj.StepsStatus[stepName]; ok {
+				steps = append(steps, stepName)
+			}
+		}
+
+		// Foreach step create a ref if a post step status exists
+		for i := len(rj.Job.Steps) - 1; i >= 0; i-- {
+			stepName := sdk.GetJobStepName(rj.Job.Steps[i].ID, i)
+			if _, ok := rj.StepsStatus["Post-"+stepName]; ok {
+				steps = append(steps, "Post-"+stepName)
+			}
+		}
+
+		for idx, link := range links.Data {
+			fileName := getFileName(rj, steps[idx])
 			data, err := client.WorkflowLogDownload(context.Background(), sdk.CDNLogLink{APIRef: link.APIRef, ItemType: link.ItemType})
 			if err != nil {
 				if strings.Contains(err.Error(), "resource not found") {
@@ -89,6 +107,6 @@ func workflowRunJobLogsDownloadFunc(v cli.Values) error {
 	return nil
 }
 
-func getFileName(rj sdk.V2WorkflowRunJob, stepName string) string {
-	return fmt.Sprintf("%s-%d-%d-%s-%s", rj.WorkflowName, rj.RunNumber, rj.RunAttempt, rj.JobID, stepName)
+func getFileName(rj sdk.V2WorkflowRunJob, name string) string {
+	return fmt.Sprintf("%s-%d-%d-%s-%s", rj.WorkflowName, rj.RunNumber, rj.RunAttempt, rj.JobID, name)
 }

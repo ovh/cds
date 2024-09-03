@@ -104,34 +104,20 @@
 
             <div class="bottom-panel">
                 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
-                <ul *ngIf="selectedTab && selectedTab.key === 'problems'" class="infos">
-                    <ng-container *ngFor="let info of workflowRunInfos">
-                        <li *ngIf="info.level === 'error'">
-                            <span class="error" nz-icon nzType="close-circle" nzTheme="fill"></span>
-                            <div class="content">
-                                {{info.message}}
-                            </div>
-                        </li>
-                    </ng-container>
-                    <ng-container *ngFor="let info of workflowRunInfos">
-                        <li *ngIf="info.level === 'warning'">
-                            <span class="warning" nz-icon nzType="warning" nzTheme="fill"></span>
-                            <div class="content">
-                                {{info.message}}
-                            </div>
-                        </li>
-                    </ng-container>
-                </ul>
-                <ul *ngIf="selectedTab && selectedTab.key === 'infos'" class="infos">
-                    <ng-container *ngFor="let info of workflowRunInfos">
-                        <li *ngIf="info.level==='info'">
-                            <span class="info" nz-icon nzType="info-circle" nzTheme="fill"></span>
-                            <div class="content">
-                                {{info.message}}.
-                            </div>
-                        </li>
-                    </ng-container>
-                </ul>
+                <div *ngIf="selectedTab && selectedTab.key === 'infos'" class="infos">
+                    <div *ngFor="let info of workflowRunInfos" class="line">
+                        <span *ngIf="info.level === 'error'" class="error" nz-icon nzType="close-circle"
+                            nzTheme="fill"></span>
+                        <span *ngIf="info.level === 'warning'" class="warning" nz-icon nzType="warning"
+                            nzTheme="fill"></span>
+                        <span *ngIf="info.level==='info'" class="info" nz-icon nzType="info-circle"
+                            nzTheme="fill"></span>
+                        <div class="content">
+                            {{info.message}}
+                        </div>
+                        <div class="date">{{info.issued_at | date: 'YYYY-MM-dd HH:mm:ss.SSS Z'}}</div>
+                    </div>
+                </div>
                 <nz-table *ngIf="selectedTab && selectedTab.key === 'results'" class="results" [nsAutoHeightTable]="86"
                     nzSize="small" [nzShowPagination]="false" [nzPageSize]="results?.length ?? 0" [nzData]="results"
                     #autoHeightDirective=nsAutoHeightTable #resultsTable>
@@ -199,8 +185,8 @@
                 <span nz-icon nzType="vertical-align-top" nzTheme="outline"></span>
             </div>
         </div>
-        <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun" [jobRun]="selectedJobRun"
-            [jobRunInfos]="selectedJobRunInfos"></app-run-job>
+        <app-run-job *ngIf="selectedItemType === 'job'" [workflowRun]="workflowRun"
+            [jobRun]="selectedJobRun"></app-run-job>
         <app-run-gate *ngIf="selectedItemType === 'gate'" [gateNode]="selectedJobGate" [run]="workflowRun"
             (onSubmit)="onGateSubmit()"></app-run-gate>
         <app-run-hook *ngIf="selectedItemType === 'hook'" [hook]="selectedHookName" [run]="workflowRun"></app-run-hook>

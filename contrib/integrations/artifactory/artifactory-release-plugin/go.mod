@@ -1,6 +1,8 @@
 module github.com/ovh/cds/contrib/integrations/artifactory/artifactory-release-plugin
 
-go 1.22
+go 1.22.1
+
+toolchain go1.22.6
 
 replace github.com/ovh/cds => ../../../../
 

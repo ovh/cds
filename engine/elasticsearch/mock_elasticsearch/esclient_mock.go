@@ -8,8 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
+	osquery "github.com/defensestation/osquery"
 	gomock "github.com/golang/mock/gomock"
-	elastic "github.com/olivere/elastic/v7"
+	opensearchapi "github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 )
 
 // MockESClient is a mock of ESClient interface.
@@ -35,26 +36,11 @@ func (m *MockESClient) EXPECT() *MockESClientMockRecorder {
 	return m.recorder
 }
 
-// IndexDoc mocks base method.
-func (m *MockESClient) IndexDoc(ctx context.Context, index, docType, id string, body interface{}) (*elastic.IndexResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IndexDoc", ctx, index, docType, id, body)
-	ret0, _ := ret[0].(*elastic.IndexResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IndexDoc indicates an expected call of IndexDoc.
-func (mr *MockESClientMockRecorder) IndexDoc(ctx, index, docType, id, body interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexDoc", reflect.TypeOf((*MockESClient)(nil).IndexDoc), ctx, index, docType, id, body)
-}
-
 // IndexDocWithoutType mocks base method.
-func (m *MockESClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*elastic.IndexResponse, error) {
+func (m *MockESClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IndexDocWithoutType", ctx, index, id, body)
-	ret0, _ := ret[0].(*elastic.IndexResponse)
+	ret0, _ := ret[0].(*opensearchapi.DocumentCreateResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -66,32 +52,30 @@ func (mr *MockESClientMockRecorder) IndexDocWithoutType(ctx, index, id, body int
 }
 
 // Ping mocks base method.
-func (m *MockESClient) Ping(ctx context.Context, url string) (*elastic.PingResult, int, error) {
+func (m *MockESClient) Ping(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Ping", ctx, url)
-	ret0, _ := ret[0].(*elastic.PingResult)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "Ping", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Ping indicates an expected call of Ping.
-func (mr *MockESClientMockRecorder) Ping(ctx, url interface{}) *gomock.Call {
+func (mr *MockESClientMockRecorder) Ping(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockESClient)(nil).Ping), ctx, url)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockESClient)(nil).Ping), ctx)
 }
 
 // SearchDoc mocks base method.
-func (m *MockESClient) SearchDoc(ctx context.Context, indices []string, docType string, query elastic.Query, sorts []elastic.Sorter, from, size int) (*elastic.SearchResult, error) {
+func (m *MockESClient) SearchDoc(ctx context.Context, index string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchDoc", ctx, indices, docType, query, sorts, from, size)
-	ret0, _ := ret[0].(*elastic.SearchResult)
+	ret := m.ctrl.Call(m, "SearchDoc", ctx, index, query, sorts, from, size)
+	ret0, _ := ret[0].(*opensearchapi.SearchResp)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SearchDoc indicates an expected call of SearchDoc.
-func (mr *MockESClientMockRecorder) SearchDoc(ctx, indices, docType, query, sorts, from, size interface{}) *gomock.Call {
+func (mr *MockESClientMockRecorder) SearchDoc(ctx, index, query, sorts, from, size interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchDoc", reflect.TypeOf((*MockESClient)(nil).SearchDoc), ctx, indices, docType, query, sorts, from, size)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchDoc", reflect.TypeOf((*MockESClient)(nil).SearchDoc), ctx, index, query, sorts, from, size)
 }

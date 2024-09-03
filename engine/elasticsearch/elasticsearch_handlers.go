@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
-	"github.com/olivere/elastic/v7"
+	"github.com/defensestation/osquery"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/service"
@@ -24,18 +25,23 @@ func (s *Service) getEventsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		boolQuery := elastic.NewBoolQuery()
-		boolQuery.Must(elastic.NewQueryStringQuery("type_event:sdk.EventRunWorkflow"))
+		var conditions []osquery.Mappable
+		conditions = append(conditions, osquery.Term("type_event", "sdk.EventRunWorkflow"))
+
 		for _, p := range filters.Filter.Projects {
 			for _, w := range p.WorkflowNames {
-				boolQuery.Must(elastic.NewQueryStringQuery(fmt.Sprintf("project_key:%s AND workflow_name:%s", p.Key, w)))
+				conditions = append(conditions,
+					osquery.Term("project_key", p.Key),
+					osquery.Term("workflow_name", w),
+				)
 			}
 		}
+
+		query := osquery.Query(osquery.Bool().Must(conditions...))
 		result, err := s.esClient.SearchDoc(ctx,
-			[]string{s.Cfg.ElasticSearch.IndexEvents},
-			fmt.Sprintf("%T", sdk.Event{}),
-			boolQuery,
-			[]elastic.Sorter{elastic.NewFieldSort("timestamp").Desc()},
+			s.Cfg.ElasticSearch.IndexEvents,
+			query,
+			[]string{"timestamp:desc"},
 			filters.CurrentItem, 15)
 		if err != nil {
 			if strings.Contains(err.Error(), indexNotFoundException) {
@@ -95,19 +101,21 @@ func (s *Service) getMetricsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read request")
 		}
 
-		stringQuery := fmt.Sprintf("key:%s AND project_key:%s", request.Key, request.ProjectKey)
+		var conditions []osquery.Mappable
+		conditions = append(conditions, osquery.Term("key", request.Key))
+		conditions = append(conditions, osquery.Term("project_key", request.ProjectKey))
 		if request.ApplicationID != 0 {
-			stringQuery = fmt.Sprintf("%s AND application_id:%d", stringQuery, request.ApplicationID)
+			conditions = append(conditions, osquery.Term("application_id", strconv.FormatInt(request.ApplicationID, 10)))
 		}
 		if request.WorkflowID != 0 {
-			stringQuery = fmt.Sprintf("%s AND workflow_id:%d", stringQuery, request.WorkflowID)
+			conditions = append(conditions, osquery.Term("workflow_id", strconv.FormatInt(request.WorkflowID, 10)))
 		}
 
+		query := osquery.Query(osquery.Bool().Must(conditions...))
 		results, err := s.esClient.SearchDoc(ctx,
-			[]string{s.Cfg.ElasticSearch.IndexMetrics},
-			fmt.Sprintf("%T", sdk.Metric{}),
-			elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(stringQuery)),
-			[]elastic.Sorter{elastic.NewFieldSort("run").Desc()},
+			s.Cfg.ElasticSearch.IndexMetrics,
+			query,
+			[]string{"run:desc"},
 			-1, 10)
 		if err != nil {
 			if strings.Contains(err.Error(), indexNotFoundException) {
@@ -159,16 +167,16 @@ func (s *Service) getStatusHandler() service.Handler {
 
 func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error) {
 	var m sdk.Metric
-	results, err := s.esClient.SearchDoc(ctx, []string{s.Cfg.ElasticSearch.IndexMetrics},
-		fmt.Sprintf("%T", sdk.Metric{}),
-		elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(fmt.Sprintf("_id:%s", ID))),
-		[]elastic.Sorter{
-			elastic.NewFieldSort("_score").Desc(),
-			elastic.NewFieldSort("run").Desc(),
-		}, -1, 10)
+
+	query := osquery.Query(osquery.IDs(ID))
+
+	results, err := s.esClient.SearchDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics,
+		query,
+		[]string{"_score:desc", "run:desc"},
+		-1, 10)
 	if err != nil {
+		log.Warn(ctx, "elasticsearch> loadMetric> %v", err.Error())
 		if strings.Contains(err.Error(), indexNotFoundException) {
-			log.Warn(ctx, "elasticsearch> loadMetric> %v", err.Error())
 			return m, nil
 		}
 		return m, sdk.WrapError(err, "unable to get result")
@@ -177,6 +185,8 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 	if len(results.Hits.Hits) == 0 {
 		return m, nil
 	}
+
+	log.Info(ctx, "loadMetric : %v", string(results.Hits.Hits[0].Source))
 
 	if err := sdk.JSONUnmarshal(results.Hits.Hits[0].Source, &m); err != nil {
 		return m, err

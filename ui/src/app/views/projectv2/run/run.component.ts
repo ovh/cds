@@ -7,14 +7,14 @@ import { PreferencesState } from "app/store/preferences.state";
 import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
 import { Tab } from "app/shared/tabs/tabs.component";
-import { PipelineStatus, TestCase, Tests } from "../../../model/pipeline.model";
+import { TestCase, Tests } from "../../../model/pipeline.model";
 import { concatMap } from "rxjs/operators";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { WorkflowV2StagesGraphComponent } from "../../../../../libs/workflow-graph/src/public-api";
 import { NavigationState } from "app/store/navigation.state";
 import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height-table.directive";
-import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2WorkflowRunJobStatusIsFailed, V2WorkflowRunJobStatusIsTerminated, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
+import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2WorkflowRunJobStatusIsFailed, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 import { RouterService } from "app/service/services.module";
 
@@ -36,7 +36,6 @@ export class ProjectV2RunComponent implements OnDestroy {
     selectedItemType: string;
     selectedJobRun: V2WorkflowRunJob;
     selectedJobGate: { gate: string, job: string };
-    selectedJobRunInfos: Array<WorkflowRunInfo>;
     selectedHookName: string;
     selectedRunResult: WorkflowRunResult;
     selectedTest: TestCase;
@@ -167,12 +166,6 @@ export class ProjectV2RunComponent implements OnDestroy {
         }
         try {
             this.workflowRunInfos = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
-            if (!!this.workflowRunInfos.find(i => i.level === 'warning' || i.level === 'error')) {
-                this.tabs = [<Tab>{
-                    title: 'Problems',
-                    key: 'problems'
-                }, ...this.tabs];
-            }
         } catch (e) {
             this._messageService.error(`Unable to get run infos: ${e?.error?.error}`, { nzDuration: 2000 });
         }
@@ -263,25 +256,6 @@ export class ProjectV2RunComponent implements OnDestroy {
         }
     }
 
-    async selectJob(runJobID: string) {
-        try {
-            this.selectedJobRunInfos = await lastValueFrom(this._workflowService.getRunJobInfos(this.workflowRun, this.selectedJobRun.id));
-        } catch (e) {
-            this._messageService.error(`Unable to get run job infos: ${e?.error?.error}`, { nzDuration: 2000 });
-            return;
-        }
-
-        if (!V2WorkflowRunJobStatusIsTerminated(this.selectedJobRun.status) && !this.pollRunJobInfosSubs) {
-            this.pollRunJobInfosSubs = interval(5000)
-                .pipe(concatMap(_ => from(this.selectJob(runJobID))))
-                .subscribe();
-        }
-
-        if (V2WorkflowRunJobStatusIsTerminated(this.selectedJobRun.status) && this.pollRunJobInfosSubs) {
-            this.pollRunJobInfosSubs.unsubscribe();
-        }
-    }
-
     navigatePanel(type: string, data: string = null): void {
         this._router.navigate(['/project', this.projectKey, 'run', this.workflowRun.id], {
             queryParams: {
@@ -309,7 +283,6 @@ export class ProjectV2RunComponent implements OnDestroy {
                 break;
             case 'job':
                 this.selectedJobRun = this.jobs.find(j => j.id === data);
-                await this.selectJob(data);
                 break;
             case 'test':
                 this.selectedTest = data;
@@ -351,14 +324,10 @@ export class ProjectV2RunComponent implements OnDestroy {
     }
 
     clearPanel(): void {
-        if (this.pollRunJobInfosSubs) {
-            this.pollRunJobInfosSubs.unsubscribe();
-        }
         delete this.selectedItemType;
         delete this.selectedHookName;
         delete this.selectedRunResult;
         delete this.selectedJobGate;
-        delete this.selectedJobRunInfos;
         delete this.selectedJobRun;
         delete this.selectedTest;
     }

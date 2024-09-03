@@ -1,12 +1,10 @@
 package api
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -288,7 +286,7 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				return err
 			}
 
-			refs := make([]sdk.CDNLogAPIRefV2, 0)
+			// Prepare common apiRef data
 			apiRef := sdk.CDNLogAPIRefV2{
 				ProjectKey:   proj.Key,
 				WorkflowName: wr.WorkflowName,
@@ -299,52 +297,43 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 				RunAttempt:   runJob.RunAttempt,
 			}
 
-			for serviceName := range runJob.Job.Services {
-				ref := apiRef
-				ref.ServiceName = serviceName
-				ref.ItemType = sdk.CDNTypeItemServiceLogV2
-				refs = append(refs, ref)
+			refs := make([]sdk.CDNLogAPIRefV2, 0)
+
+			// Foreach step create a ref if a step status exists
+			for i, s := range runJob.Job.Steps {
+				stepName := sdk.GetJobStepName(s.ID, i)
+				if _, ok := runJob.StepsStatus[stepName]; ok {
+					ref := apiRef
+					ref.StepName = stepName
+					ref.StepOrder = int64(i)
+					ref.ItemType = sdk.CDNTypeItemJobStepLog
+					refs = append(refs, ref)
+				}
 			}
 
-			for k := range runJob.StepsStatus {
-				stepOrder := -1
-				for i := range runJob.Job.Steps {
-					stepName := sdk.GetJobStepName(runJob.Job.Steps[i].ID, i)
-					if stepName == k {
-						stepOrder = i
-						break
-					} else if k == "Post-"+stepName {
-						stepOrder = len(runJob.Job.Steps)*2 - 1 - i
-						break
-					}
+			// Foreach step create a ref if a post step status exists
+			for i := len(runJob.Job.Steps) - 1; i >= 0; i-- {
+				stepName := sdk.GetJobStepName(runJob.Job.Steps[i].ID, i)
+				if _, ok := runJob.StepsStatus["Post-"+stepName]; ok {
+					ref := apiRef
+					ref.StepName = "Post-" + stepName
+					ref.StepOrder = int64(len(refs))
+					ref.ItemType = sdk.CDNTypeItemJobStepLog
+					refs = append(refs, ref)
 				}
-
-				if stepOrder == -1 {
-					continue
-				}
-				ref := apiRef
-				ref.StepName = sdk.GetJobStepName(k, stepOrder)
-				ref.StepOrder = int64(stepOrder)
-				ref.ItemType = sdk.CDNTypeItemJobStepLog
-				refs = append(refs, ref)
 			}
-			slices.SortFunc(refs, func(i, j sdk.CDNLogAPIRefV2) int {
-				return cmp.Compare(i.StepOrder, j.StepOrder)
-			})
-			datas := make([]sdk.CDNLogLinkData, 0, len(refs))
-			for i, r := range refs {
-				r.StepOrder = int64(i)
+
+			// Convert refs to link data list
+			datas := make([]sdk.CDNLogLink, 0, len(refs))
+			for _, r := range refs {
 				apiRefHashU, err := hashstructure.Hash(r, nil)
 				if err != nil {
 					return sdk.WithStack(err)
 				}
 				apiRefHash := strconv.FormatUint(apiRefHashU, 10)
-				datas = append(datas, sdk.CDNLogLinkData{
-					APIRef:      apiRefHash,
-					StepName:    r.StepName,
-					ServiceName: r.ServiceName,
-					ItemType:    r.ItemType,
-					StepOrder:   r.StepOrder,
+				datas = append(datas, sdk.CDNLogLink{
+					APIRef:   apiRefHash,
+					ItemType: r.ItemType,
 				})
 			}
 
@@ -356,6 +345,68 @@ func (api *API) getWorkflowRunJobLogsLinksV2Handler() ([]service.RbacChecker, se
 			return service.WriteJSON(w, sdk.CDNLogLinks{
 				CDNURL: httpURL,
 				Data:   datas,
+			}, http.StatusOK)
+		}
+}
+
+func (api *API) getWorkflowRunJobServiceLogsLinkV2Handler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+			workflowRunID := vars["workflowRunID"]
+			jobRunID := vars["jobRunID"]
+			serviceName := vars["serviceName"]
+
+			u := getUserConsumer(ctx)
+			if u == nil {
+				return sdk.WithStack(sdk.ErrForbidden)
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			wr, err := workflow_v2.LoadRunByProjectKeyAndID(ctx, api.mustDB(), proj.Key, workflowRunID)
+			if err != nil {
+				return err
+			}
+
+			runJob, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, api.mustDB(), wr.ID, jobRunID)
+			if err != nil {
+				return err
+			}
+
+			var found bool
+			for name := range runJob.Job.Services {
+				if serviceName == name {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "no service found for job with given name %q", serviceName)
+			}
+
+			apiRefHashU, err := hashstructure.Hash(sdk.CDNLogAPIRefV2{
+				ProjectKey:   proj.Key,
+				WorkflowName: wr.WorkflowName,
+				RunID:        wr.ID,
+				RunJobName:   runJob.JobID,
+				RunJobID:     runJob.ID,
+				RunNumber:    runJob.RunNumber,
+				RunAttempt:   runJob.RunAttempt,
+				ItemType:     sdk.CDNTypeItemServiceLogV2,
+				ServiceName:  serviceName,
+			}, nil)
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+
+			return service.WriteJSON(w, sdk.CDNLogLink{
+				APIRef:   strconv.FormatUint(apiRefHashU, 10),
+				ItemType: sdk.CDNTypeItemServiceLogV2,
 			}, http.StatusOK)
 		}
 }
@@ -966,6 +1017,18 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 		if err := workflow_v2.InsertRunJob(ctx, tx, &duplicatedRJ); err != nil {
 			return err
 		}
+
+		infos, err := workflow_v2.LoadRunJobInfosByRunJobID(ctx, tx, rj.ID)
+		if err != nil {
+			return err
+		}
+		for _, i := range infos {
+			i.WorkflowRunJobID = duplicatedRJ.ID
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &i); err != nil {
+				return err
+			}
+		}
+
 		runResults, err := workflow_v2.LoadRunResultsByRunJobID(ctx, tx, rj.ID)
 		if err != nil {
 			return err
