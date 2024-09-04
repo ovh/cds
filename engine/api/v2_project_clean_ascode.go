@@ -199,7 +199,7 @@ func (c *EntitiesCleaner) cleanNonHeadEntities(ctx context.Context, db *gorp.DbM
 		log.Info(ctx, "Deleting non head entities on %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
 		for _, e := range entitiesByBranch {
 			if e.Commit != "HEAD" && e.Commit != refHeadCommit && time.Since(e.LastUpdate) > c.retention {
-				if err := DeleteEntity(ctx, tx, &e, hookServices); err != nil {
+				if err := DeleteEntity(ctx, tx, &e, hookServices, DeleteEntityOps{WithHooks: false}); err != nil {
 					return err
 				}
 				log.Info(ctx, "entity %s of type %s deleted", e.Name, e.Type)
@@ -230,7 +230,7 @@ func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gor
 
 		log.Info(ctx, "Deleting entities on old branches: %s / %s / %s @%s", c.projKey, c.vcsName, c.repoName, ref)
 		for _, e := range entitiesByBranch {
-			if err := DeleteEntity(ctx, tx, &e, hookServices); err != nil {
+			if err := DeleteEntity(ctx, tx, &e, hookServices, DeleteEntityOps{WithHooks: false}); err != nil {
 				return err
 			}
 			log.Info(ctx, "entity %s of type %s deleted", e.Name, e.Type)
@@ -248,8 +248,12 @@ func (c *EntitiesCleaner) cleanEntitiesByDeletedRef(ctx context.Context, db *gor
 	return nil
 }
 
-func DeleteEntity(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, e *sdk.Entity, srvs []sdk.Service) error {
-	if e.Type == sdk.EntityTypeWorkflow {
+type DeleteEntityOps struct {
+	WithHooks bool
+}
+
+func DeleteEntity(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, e *sdk.Entity, srvs []sdk.Service, opts DeleteEntityOps) error {
+	if e.Type == sdk.EntityTypeWorkflow && opts.WithHooks {
 		whooks, err := workflow_v2.LoadHooksByEntityID(ctx, tx, e.ID)
 		if err != nil {
 			return err

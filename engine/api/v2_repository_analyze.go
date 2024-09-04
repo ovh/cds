@@ -765,6 +765,10 @@ skipEntity:
 		for _, e := range entities {
 			foundEntities[e.Type+"-"+e.Name] = struct{}{}
 		}
+		delOpts := DeleteEntityOps{}
+		if currentAnalysisBranch.Default && currentAnalysisBranch.LatestCommit == analysis.Commit {
+			delOpts.WithHooks = true
+		}
 		for _, e := range existingEntities {
 			// If an existing entities has not been found in the current head commit (deleted or renamed)
 			// => remove the entity
@@ -774,7 +778,7 @@ skipEntity:
 					log.Warn(ctx, "user %s [%s] removed the entity %s [%s] but it has not the right to do it", u.Username, u.ID, e.Name, e.Type)
 					continue
 				}
-				if err := DeleteEntity(ctx, tx, &e, srvs); err != nil {
+				if err := DeleteEntity(ctx, tx, &e, srvs, delOpts); err != nil {
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to delete entity %s [%s] ", e.Name, e.Type)))
 				}
 				eventRemovedEntities = append(eventRemovedEntities, e)
@@ -1183,6 +1187,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 		}
 
 	}
+
 	return hooks, nil
 }
 
