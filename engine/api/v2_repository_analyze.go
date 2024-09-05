@@ -766,7 +766,7 @@ skipEntity:
 			foundEntities[e.Type+"-"+e.Name] = struct{}{}
 		}
 		delOpts := DeleteEntityOps{}
-		if currentAnalysisBranch.Default && currentAnalysisBranch.LatestCommit == analysis.Commit {
+		if currentAnalysisBranch != nil && currentAnalysisBranch.Default && currentAnalysisBranch.LatestCommit == analysis.Commit {
 			delOpts.WithHooks = true
 		}
 		for _, e := range existingEntities {
