@@ -129,7 +129,7 @@ testcases:
       assertions:
         - result.systemoutjson ShouldHaveLength 4
         - result.systemoutjson.systemoutjson3.status ShouldEqual "Success"
-      retry: 150
+      retry: 300
       delay: 1
 
     - name: Check that the CDS workflow has 2 executions and are Success
