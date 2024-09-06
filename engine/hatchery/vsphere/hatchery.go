@@ -357,11 +357,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
 		var bootTime = annot.Created
+		if s.Runtime.BootTime != nil {
+			bootTime = *s.Runtime.BootTime
+		}
 		if !isPoweredOff && !isMarkToDelete {
-			if s.Runtime.BootTime != nil {
-				bootTime = *s.Runtime.BootTime
-			}
-
 			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
 			var expire = bootTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			// Else it's WorkerTTL (default 120 minutes)
@@ -395,7 +394,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		// We also exclude not used provisionned VM from deletion
 		isNotUsedProvisionned := annot.Provisioning && annot.WorkerName == s.Name
 		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !isNotUsedProvisionned) {
-			log.Info(ctx, "deleting machine %q as been created on %q, it has to be deleted - powerState:%s isMarkToDelete:%t isPoweredOff:%t annot.Model:%t annot.RegisterOnly:%t", s.Name, bootTime, s.Summary.Runtime.PowerState, isMarkToDelete, isPoweredOff, annot.Model, annot.RegisterOnly)
+			log.Info(ctx, "deleting machine %q as been created on annot.Created:%q runtime.BootTime:%q, it has to be deleted - powerState:%s isMarkToDelete:%t isPoweredOff:%t annot.Model:%t annot.RegisterOnly:%t", s.Name, annot.Created, s.Runtime.BootTime, s.Summary.Runtime.PowerState, isMarkToDelete, isPoweredOff, annot.Model, annot.RegisterOnly)
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
