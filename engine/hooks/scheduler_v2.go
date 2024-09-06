@@ -210,7 +210,6 @@ func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e s
 	if err := s.Dao.EnqueueRepositoryEvent(ctx, he); err != nil {
 		return sdk.WrapError(err, "unable to enqueue repository event %s", he.GetFullName())
 	}
-	s.Dao.enqueuedRepositoryEventIncr()
 
 	if err := s.createSchedulerNextExecution(ctx, updatedExecution.SchedulerDef); err != nil {
 		return err

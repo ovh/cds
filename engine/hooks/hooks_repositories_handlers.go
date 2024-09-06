@@ -135,7 +135,6 @@ func (s *Service) postRestartRepositoryHookEventHandler() service.Handler {
 		if err := s.Dao.EnqueueRepositoryEvent(ctx, e); err != nil {
 			return sdk.WrapError(err, "unable to enqueue repository event %s", e.GetFullName())
 		}
-		s.Dao.enqueuedRepositoryEventIncr()
 
 		return nil
 	}
