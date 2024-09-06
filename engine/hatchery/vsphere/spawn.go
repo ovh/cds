@@ -114,10 +114,6 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
 			}
 
-			h.cacheProvisioning.mu.Lock()
-			h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
-			h.cacheProvisioning.mu.Unlock()
-
 			// wait for the right IP, probably keep track of the IP address in the server annotations
 			// to avoid having two provisionned VM with the same IP address
 			// so we if to peek a random IP address by considering already provisionned IP addresses
@@ -130,6 +126,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker, &annot.IPAddress); err != nil {
 				h.cacheProvisioning.mu.Lock()
 				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
 				h.cacheProvisioning.mu.Unlock()
 
 				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
@@ -137,11 +134,14 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				return sdk.WrapError(err, "unable to get VM %q IP Address", spawnArgs.WorkerName)
 			}
 
+			errLaunch := h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker)
+
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+			h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
 			h.cacheProvisioning.mu.Unlock()
 
-			return h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker)
+			return errLaunch
 		}
 	}
 
