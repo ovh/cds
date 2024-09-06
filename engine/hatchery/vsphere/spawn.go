@@ -103,6 +103,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
 				h.cacheProvisioning.mu.Lock()
 				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
 				h.cacheProvisioning.mu.Unlock()
 
 				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
