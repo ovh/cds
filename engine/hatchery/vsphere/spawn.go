@@ -95,6 +95,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 			// Before restart it, keep it in the cache for a few minutes to avoid the "killAwolServer" to delete it
 			h.cacheProvisioning.mu.Lock()
+			h.cacheProvisioning.working = sdk.DeleteFromArray(h.cacheProvisioning.working, provisionnedVMWorker.Name())
 			h.cacheProvisioning.restarting = append(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 			h.cacheProvisioning.mu.Unlock()
 
@@ -532,6 +533,16 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Work
 			machine.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn &&
 			powerstate != types.VirtualMachinePowerStatePoweredOn &&
 			expectedModelPath == annot.WorkerModelPath {
+
+			h.cacheProvisioning.mu.Lock()
+			if sdk.IsInArray(machine.Name, h.cacheProvisioning.working) {
+				h.cacheProvisioning.mu.Unlock()
+				continue
+			}
+
+			h.cacheProvisioning.working = append(h.cacheProvisioning.working, machine.Name)
+			h.cacheProvisioning.mu.Unlock()
+
 			return vm, nil
 		}
 	}
