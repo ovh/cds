@@ -134,7 +134,7 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 	}
 
 	// Get workflow definition
-	e, err := s.Client.EntityGet(ctx, hre.ExtractData.ProjectManual, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.WorkflowManual,
+	e, err := s.Client.EntityGet(ctx, hre.ExtractData.Manual.Project, hre.VCSServerName, hre.RepositoryName, sdk.EntityTypeWorkflow, hre.ExtractData.Manual.Workflow,
 		cdsclient.WithQueryParameter("ref", hre.ExtractData.Ref), cdsclient.WithQueryParameter("commit", hre.ExtractData.Commit))
 	if err != nil {
 		return err
@@ -151,10 +151,10 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 	}
 
 	wh := sdk.HookRepositoryEventWorkflow{
-		ProjectKey:           hre.ExtractData.ProjectManual,
+		ProjectKey:           hre.ExtractData.Manual.Project,
 		VCSIdentifier:        hre.VCSServerName,
 		RepositoryIdentifier: hre.RepositoryName,
-		WorkflowName:         hre.ExtractData.WorkflowManual,
+		WorkflowName:         hre.ExtractData.Manual.Workflow,
 		Type:                 sdk.WorkflowHookTypeManual,
 		Status:               sdk.HookEventWorkflowStatusScheduled,
 		Ref:                  hre.ExtractData.Ref,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"path"
 	"strconv"
 	"strings"
@@ -22,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/repository"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/workflow_v2"
@@ -330,7 +332,45 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	})
 
 	if run.Status.IsTerminated() {
+		// Send event
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
+
+		// Send event to hook uservice
+		hookServices, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
+		if err != nil {
+			return err
+		}
+		if len(hookServices) < 1 {
+			return sdk.NewErrorFrom(sdk.ErrUnknownError, "unable to find hook service")
+		}
+		req := sdk.HookWorkflowRunEvent{
+			WorkflowProject:    run.ProjectKey,
+			WorkflowVCSServer:  run.VCSServer,
+			WorkflowRepository: run.Repository,
+			WorkflowName:       run.WorkflowName,
+			WorkflowStatus:     run.Status,
+			WorkflowRunID:      run.ID,
+			WorkflowRef:        run.Contexts.Git.Ref,
+			Request: sdk.HookWorkflowRunEventRequest{
+				CDS:        run.Contexts.CDS,
+				Git:        run.Contexts.Git,
+				UserID:     run.UserID,
+				UserName:   run.Username,
+				Conclusion: string(run.Status),
+				CreatedAt:  run.Started,
+				Jobs:       make(map[string]sdk.HookWorkflowRunEventJob),
+			},
+		}
+		for _, rj := range allRunJobs {
+			req.Request.Jobs[rj.JobID] = sdk.HookWorkflowRunEventJob{
+				Conclusion: string(rj.Status),
+			}
+		}
+		if _, _, err := services.NewClient(hookServices).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/outgoing", req, nil); err != nil {
+			return err
+		}
+		return nil
+
 	}
 
 	if len(skippedJobs) > 0 || hasNoStepsJobs {

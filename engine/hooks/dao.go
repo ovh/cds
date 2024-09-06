@@ -17,13 +17,15 @@ const (
 )
 
 type dao struct {
-	store                            cache.Store
-	enqueuedTaskExecutions           int64
-	dequeuedTaskExecutions           int64
-	enqueuedRepositoryEvents         int64
-	dequeuedRepositoryEvents         int64
-	enqueuedRepositoryEventCallbacks int64
-	dequeuedRepositoryEventCallbacks int64
+	store                             cache.Store
+	enqueuedTaskExecutions            int64
+	dequeuedTaskExecutions            int64
+	enqueuedRepositoryEvents          int64
+	dequeuedRepositoryEvents          int64
+	enqueuedWorkflowRunOutgoingEvents int64
+	dequeuedWorkflowRunOutgoingEvents int64
+	enqueuedRepositoryEventCallbacks  int64
+	dequeuedRepositoryEventCallbacks  int64
 }
 
 func (d *dao) enqueuedIncr() {

@@ -65,3 +65,12 @@ func (c *client) CreateInsightReport(ctx context.Context, projKey string, vcsNam
 	}
 	return nil
 }
+
+func (c *client) HookGetWorkflowHook(ctx context.Context, hookID string) (*sdk.V2WorkflowHook, error) {
+	path := fmt.Sprintf("/v2/hooks/workflows/hook/" + hookID)
+	var h sdk.V2WorkflowHook
+	if _, err := c.GetJSON(ctx, path, &h); err != nil {
+		return nil, err
+	}
+	return &h, nil
+}

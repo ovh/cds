@@ -24,6 +24,14 @@ func (d *dao) dequeuedRepositoryEventIncr() {
 	atomic.AddInt64(&d.dequeuedRepositoryEvents, 1)
 }
 
+func (d *dao) enqueuedWorkflowRunOutgoingEventIncr() {
+	atomic.AddInt64(&d.enqueuedWorkflowRunOutgoingEvents, 1)
+}
+
+func (d *dao) dequeuedWorkflowRunOutgoingEventIncr() {
+	atomic.AddInt64(&d.dequeuedWorkflowRunOutgoingEvents, 1)
+}
+
 func (d *dao) RepositoryEventQueueLen() (int, error) {
 	return d.store.QueueLen(repositoryEventQueue)
 }

@@ -21,6 +21,7 @@ const (
 	WorkflowHookEventModelUpdate    = "model-update"
 	WorkflowHookEventPush           = "push"
 	WorkflowHookManual              = "manual"
+	WorkflowHookEventRun            = "workflow-run"
 
 	WorkflowHookScheduler = "scheduler"
 
@@ -77,6 +78,29 @@ type HookRepository struct {
 	VCSServerName  string `json:"vcs_server_name" cli:"vcs_server_name"`
 	RepositoryName string `json:"repository_name" cli:"repository_name"`
 	Stopped        bool   `json:"stopped" cli:"stopped"`
+}
+
+type HookWorkflowRunOutgoingEvent struct {
+	UUID                string               `json:"uuid"`
+	Created             int64                `json:"created"`
+	ProcessingTimestamp int64                `json:"processing_timestamps"`
+	LastUpdate          int64                `json:"last_update"`
+	Event               HookWorkflowRunEvent `json:"event"`
+	Status              string               `json:"status"`
+	LastError           string               `json:"last_error"`
+	NbErrors            int64                `json:"nb_errors"`
+	HooksToTriggers     []HookWorkflowRunOutgoingEventHooks
+}
+
+type HookWorkflowRunOutgoingEventHooks struct {
+	V2WorkflowHook
+	Status                string `json:"status"`
+	Error                 string `json:"error"`
+	HookRepositoryEventID string `json:"repository_event_id"`
+}
+
+func (h *HookWorkflowRunOutgoingEvent) GetFullName() string {
+	return fmt.Sprintf("%s/%s/%s/%s/%s", h.Event.WorkflowProject, h.Event.WorkflowVCSServer, h.Event.WorkflowRepository, h.Event.WorkflowName, h.UUID)
 }
 
 type HookRepositoryEvent struct {
@@ -216,20 +240,33 @@ func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
 }
 
 type HookRepositoryEventExtractData struct {
-	CDSEventName   string                                  `json:"cds_event_name"`
-	CDSEventType   string                                  `json:"cds_event_type"`
-	Commit         string                                  `json:"commit"`
-	CommitFrom     string                                  `json:"commit_from"`
-	CommitMessage  string                                  `json:"commit_message"`
-	Paths          []string                                `json:"paths"`
-	Ref            string                                  `json:"ref"`
-	ProjectManual  string                                  `json:"manual_project"`
-	WorkflowManual string                                  `json:"manual_workflow"`
-	AdminMFA       bool                                    `json:"admin_mfa"`
-	Scheduler      HookRepositoryEventExtractDataScheduler `json:"scheduler"`
+	CDSEventName  string                                      `json:"cds_event_name"`
+	CDSEventType  string                                      `json:"cds_event_type"`
+	Commit        string                                      `json:"commit"`
+	CommitFrom    string                                      `json:"commit_from"`
+	CommitMessage string                                      `json:"commit_message"`
+	Paths         []string                                    `json:"paths"`
+	Ref           string                                      `json:"ref"`
+	Manual        HookRepositoryEventExtractedDataManual      `json:"manual"`
+	AdminMFA      bool                                        `json:"admin_mfa"`
+	Scheduler     HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`
+	WorkflowRun   HookRepositoryEventExtractedDataWorkflowRun `json:"workflow_run"`
 }
 
-type HookRepositoryEventExtractDataScheduler struct {
+type HookRepositoryEventExtractedDataManual struct {
+	Project  string `json:"project"`
+	Workflow string `json:"workflow"`
+}
+
+type HookRepositoryEventExtractedDataWorkflowRun struct {
+	Project               string `json:"project"`
+	Workflow              string `json:"workflow"`
+	TargetVCS             string `json:"target_vcs"`
+	TargetRepository      string `json:"target_repository"`
+	OutgoingHookEventUUID string `json:"outgoing_hook_event_uuid"`
+}
+
+type HookRepositoryEventExtractedDataScheduler struct {
 	TargetVCS      string `json:"target_vcs"`
 	TargetRepo     string `json:"target_repo"`
 	TargetWorkflow string `json:"target_workflow"`

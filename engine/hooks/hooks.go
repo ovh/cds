@@ -132,6 +132,10 @@ func (s *Service) Serve(c context.Context) error {
 			s.dequeueRepositoryEvent(ctx)
 		})
 
+		s.GoRoutines.RunWithRestart(ctx, "dequeueWorkflowRunOutgoingEvent", func(ctx context.Context) {
+			s.dequeueWorkflowRunOutgoingEvent(ctx)
+		})
+
 		s.GoRoutines.RunWithRestart(ctx, "dequeueRepositoryEventCallback", func(ctx context.Context) {
 			s.dequeueRepositoryEventCallback(ctx)
 		})
@@ -140,6 +144,9 @@ func (s *Service) Serve(c context.Context) error {
 		if !s.Cfg.DisableRepositoryEventRetry {
 			s.GoRoutines.RunWithRestart(ctx, "manageOldRepositoryEvent", func(ctx context.Context) {
 				s.manageOldRepositoryEvent(ctx)
+			})
+			s.GoRoutines.RunWithRestart(ctx, "manageOldOUtgoingEvent", func(ctx context.Context) {
+				s.manageOldWorkflowRunOutgoingEvent(ctx)
 			})
 		}
 

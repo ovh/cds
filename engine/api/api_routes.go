@@ -445,6 +445,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/hatchery/{hatcheryIdentifier}/regen", nil, r.POSTv2(api.postHatcheryRegenTokenHandler))
 
 	r.Handle("/v2/hooks/workflows", nil, r.POSTv2(api.postRetrieveWorkflowToTriggerHandler))
+	r.Handle("/v2/hooks/workflows/hook/{hookID}", nil, r.GETv2(api.getV2WorkflowHookHandler))
 	r.Handle("/v2/hooks/event/signKey", nil, r.POSTv2(api.postHookEventRetrieveSignKeyHandler))
 	r.Handle("/v2/hooks/event/signKey/{uuid}", nil, r.GETv2(api.getRetrieveSignKeyOperationHandler))
 	r.Handle("/v2/hooks/event/user", nil, r.POSTv2(api.postRetrieveEventUserHandler))

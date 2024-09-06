@@ -160,8 +160,10 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 	ctx, next := telemetry.Span(ctx, "s.executeEvent")
 	defer next()
 	defer func() {
-		if err := s.pushInsightReport(ctx, hre); err != nil {
-			log.ErrorWithStackTrace(ctx, err)
+		if hre.EventName != sdk.WorkflowHookEventRun {
+			if err := s.pushInsightReport(ctx, hre); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
 		}
 	}()
 
@@ -173,10 +175,15 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		hre.NbErrors = 0
 		switch hre.EventName {
 		case sdk.RepoEventPush, sdk.WorkflowHookManual:
-			// analyze have to be trigger only on push event
+			// analyze have to be trigger only on push event + manual event
 			hre.Status = sdk.HookEventStatusAnalysis
 			if err := s.triggerAnalyses(ctx, hre); err != nil {
 				return sdk.WrapError(err, "unable to trigger analyses")
+			}
+		case sdk.WorkflowHookEventRun:
+			hre.Status = sdk.HookEventStatusSignKey
+			if err := s.triggerGetSigningKey(ctx, hre); err != nil {
+				return sdk.WrapError(err, "unable to trigger get gitinfo")
 			}
 		default:
 			// Retrieve workflow to trigger

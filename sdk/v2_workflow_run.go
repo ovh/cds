@@ -36,6 +36,7 @@ type V2WorkflowRunHookRequest struct {
 	Cron          string                 `json:"cron"`
 	CronTimezone  string                 `json:"cron_timezone"`
 	AdminMFA      bool                   `json:"admin_mfa"`
+	WorkflowRun   string                 `json:"workflow_run"`
 }
 
 type V2WorkflowRun struct {
@@ -210,6 +211,7 @@ type V2WorkflowRunEvent struct {
 	EntityUpdated string                 `json:"entity_updated,omitempty"`
 	Cron          string                 `json:"cron,omitempty"`
 	CronTimezone  string                 `json:"timezone,omitempty"`
+	WorkflowRun   string                 `json:"workflow_run"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {
@@ -1179,4 +1181,32 @@ type HookManualWorkflowRun struct {
 	UserID         string
 	Username       string
 	AdminMFA       bool
+}
+
+type HookWorkflowRunEvent struct {
+	Request HookWorkflowRunEventRequest
+
+	// Data needed to process hook
+	WorkflowProject    string
+	WorkflowVCSServer  string
+	WorkflowRepository string
+	WorkflowName       string
+	WorkflowRunID      string
+	WorkflowStatus     V2WorkflowRunStatus
+	WorkflowRef        string
+}
+
+// Request that will be sent to sub-workflow
+type HookWorkflowRunEventRequest struct {
+	CDS        CDSContext                         `json:"cds"`
+	Git        GitContext                         `json:"git"`
+	UserID     string                             `json:"user_id"`
+	UserName   string                             `json:"username"`
+	Conclusion string                             `json:"conclusion"`
+	CreatedAt  time.Time                          `json:"created_at"`
+	Jobs       map[string]HookWorkflowRunEventJob `json:"jobs"`
+}
+
+type HookWorkflowRunEventJob struct {
+	Conclusion string `json:"conclusion"`
 }
