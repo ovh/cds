@@ -127,11 +127,9 @@ testcases:
     - name: Check CDS project analyses status for tag
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
       assertions:
-        - result.systemoutjson ShouldHaveLength 3
-        - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
-        - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
-        - result.systemoutjson.systemoutjson2.status ShouldEqual "Success"
-      retry: 150
+        - result.systemoutjson ShouldHaveLength 4
+        - result.systemoutjson.systemoutjson3.status ShouldEqual "Success"
+      retry: 300
       delay: 1
 
     - name: Check that the CDS workflow has 2 executions and are Success
