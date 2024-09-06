@@ -1053,8 +1053,10 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 	stages := run.GetStages()
 	if len(stages) > 0 {
 		for k, j := range allrunJobsMap {
-			jobStage := run.WorkflowData.Workflow.Jobs[k].Stage
-			stages[jobStage].Jobs[k] = j.Status
+			stageName := run.WorkflowData.Workflow.Jobs[k].Stage
+			jobInStage := stages[stageName].Jobs[k]
+			jobInStage.Status = j.Status
+			stages[stageName].Jobs[k] = jobInStage
 		}
 		stages.ComputeStatus()
 	}
@@ -1073,7 +1075,7 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 		}
 
 		// Build job context
-		jobContext := buildContextForJob(ctx, run.WorkflowData.Workflow.Jobs, runJobsContexts, run.Contexts, jobID)
+		jobContext := buildContextForJob(ctx, run.WorkflowData.Workflow, runJobsContexts, run.Contexts, stages, jobID)
 
 		canBeQueued, infos, err := checkJob(ctx, db, wrEnqueue, *u, *run, jobID, &jobDef, jobContext, defaultRegion)
 		runInfos = append(runInfos, infos...)

@@ -134,15 +134,19 @@
                                 {{result.type}}
                             </td>
                             <td>
-                                <ng-container *ngIf="result.type === 'deployment'">
-                                    {{result.detail.data.deployment_name}}:{{result.detail.data.version}}
-                                </ng-container>
-                                <ng-container *ngIf="result.type === 'terraformProvider'">
-                                    {{result.detail.data.namespace}}_{{result.detail.data.name}}_{{result.detail.data.version}}_{{result.detail.data.flavor}}
-                                </ng-container>
-                                <ng-container
-                                    *ngIf="result.type !== 'terraformProvider' && result.type !== 'deployment'">
-                                    {{result.detail.data.name ?? result.id}}
+                                <ng-container [ngSwitch]="result.type">
+                                    <ng-container *ngSwitchCase="'deployment'">
+                                        {{result.detail.data.deployment_name}}:{{result.detail.data.version}}
+                                    </ng-container>
+                                    <ng-container *ngSwitchCase="'terraformProvider'">
+                                        {{result.detail.data.namespace}}_{{result.detail.data.name}}_{{result.detail.data.version}}_{{result.detail.data.flavor}}
+                                    </ng-container>
+                                    <ng-container *ngSwitchCase="'terraformModule'">
+                                        {{result.detail.data.id}}/{{result.detail.data.version}}
+                                    </ng-container>
+                                    <ng-container *ngSwitchDefault>
+                                        {{result.detail.data.name ?? result.id}}
+                                    </ng-container>
                                 </ng-container>
                             </td>
                         </tr>

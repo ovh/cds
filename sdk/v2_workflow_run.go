@@ -479,8 +479,8 @@ func (wrs WorkflowRunStages) ComputeStatus() {
 stageLoop:
 	for name := range wrs {
 		stage := wrs[name]
-		for _, status := range stage.Jobs {
-			if !status.IsTerminated() {
+		for _, j := range stage.Jobs {
+			if !j.Status.IsTerminated() {
 				stage.Ended = false
 				wrs[name] = stage
 				continue stageLoop
@@ -509,20 +509,32 @@ stageLoop:
 type WorkflowRunStage struct {
 	WorkflowStage
 	CanBeRun bool
-	Jobs     map[string]V2WorkflowRunJobStatus
+	Jobs     map[string]WorkflowRunStageJob
 	Ended    bool
+}
+
+type WorkflowRunStageJob struct {
+	Status  V2WorkflowRunJobStatus
+	IsFinal bool
 }
 
 func (w V2WorkflowRun) GetStages() WorkflowRunStages {
 	stages := WorkflowRunStages{}
 	for k, s := range w.WorkflowData.Workflow.Stages {
-		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]V2WorkflowRunJobStatus)}
+		stages[k] = WorkflowRunStage{WorkflowStage: s, Jobs: make(map[string]WorkflowRunStageJob)}
 	}
 	if len(stages) == 0 {
 		return stages
 	}
 	for jobID, job := range w.WorkflowData.Workflow.Jobs {
-		stages[job.Stage].Jobs[jobID] = V2WorkflowRunJobStatusUnknown
+		isFinalJob := true
+		for _, existingJob := range w.WorkflowData.Workflow.Jobs {
+			if job.Stage == existingJob.Stage && IsInArray(jobID, existingJob.Needs) {
+				isFinalJob = false
+				break
+			}
+		}
+		stages[job.Stage].Jobs[jobID] = WorkflowRunStageJob{IsFinal: isFinalJob, Status: V2WorkflowRunJobStatusUnknown}
 	}
 	return stages
 }
@@ -562,6 +574,24 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultVariableDetail() (*V
 	}
 	if !ok {
 		return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
+	}
+	return i, nil
+}
+
+func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTerraformModuleDetail() (*V2WorkflowRunResultTerraformModuleDetail, error) {
+	if err := r.Detail.castData(); err != nil {
+		return nil, err
+	}
+	i, ok := r.Detail.Data.(*V2WorkflowRunResultTerraformModuleDetail)
+	if !ok {
+		var ii V2WorkflowRunResultTerraformModuleDetail
+		ii, ok = r.Detail.Data.(V2WorkflowRunResultTerraformModuleDetail)
+		if ok {
+			i = &ii
+		}
+	}
+	if !ok {
+		return nil, errors.New("unable to cast detail as V2WorkflowRunResultTerraformModuleDetail")
 	}
 	return i, nil
 }
@@ -729,6 +759,11 @@ func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultReleaseDetail() (*V2
 
 func (r *V2WorkflowRunResult) Name() string {
 	switch r.Type {
+	case V2WorkflowRunResultTypeTerraformModule:
+		detail, err := r.GetDetailAsV2WorkflowRunResultTerraformModuleDetail()
+		if err == nil {
+			return string(r.Type) + ":" + detail.ID + "/" + detail.Version
+		}
 	case V2WorkflowRunResultTypeTerraformProvider:
 		detail, err := r.GetDetailAsV2WorkflowRunResultTerraformProviderDetail()
 		if err == nil {
@@ -838,6 +873,13 @@ func (s *V2WorkflowRunResultDetail) castData() error {
 		var detail = new(V2WorkflowRunResultTerraformProviderDetail)
 		if err := mapstructure.Decode(s.Data, &detail); err != nil {
 			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTerraformProviderDetail")
+		}
+		s.Data = detail
+		return nil
+	case "V2WorkflowRunResultTerraformModuleDetail":
+		var detail = new(V2WorkflowRunResultTerraformModuleDetail)
+		if err := mapstructure.Decode(s.Data, &detail); err != nil {
+			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTerraformModuleDetail")
 		}
 		s.Data = detail
 		return nil
@@ -1012,6 +1054,7 @@ const (
 	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
 	V2WorkflowRunResultTypeHelm              = "helm"
 	V2WorkflowRunResultTypeTerraformProvider = "terraformProvider"
+	V2WorkflowRunResultTypeTerraformModule   = "terraformModule"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
@@ -1024,6 +1067,15 @@ type V2WorkflowRunResultTestDetail struct {
 	SHA256      string           `json:"sha256" mapstructure:"sha256"`
 	TestsSuites JUnitTestsSuites `json:"tests_suites" mapstructure:"tests_suites"`
 	TestStats   TestsStats       `json:"tests_stats" mapstructure:"tests_stats"`
+}
+
+type V2WorkflowRunResultTerraformModuleDetail struct {
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	Namespace string `json:"namespace"`
+	Provider  string `json:"provider"`
+	Version   string `json:"version"`
+	ID        string `json:"id"`
 }
 
 type V2WorkflowRunResultTerraformProviderDetail struct {

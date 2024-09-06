@@ -123,23 +123,40 @@ nextjob:
 	return jobsContext, gatesContext
 }
 
-func buildContextForJob(_ context.Context, allJobs map[string]sdk.V2Job, runJobsContexts sdk.JobsResultContext, runContext sdk.WorkflowRunContext, jobID string) sdk.WorkflowRunJobsContext {
+func buildContextForJob(ctx context.Context, workflow sdk.V2Workflow, runJobsContexts sdk.JobsResultContext, runContext sdk.WorkflowRunContext, stages sdk.WorkflowRunStages, jobID string) sdk.WorkflowRunJobsContext {
 	jobsContext := sdk.JobsResultContext{}
-	buildAncestorJobContext(jobID, allJobs, runJobsContexts, jobsContext)
+	buildAncestorJobContext(ctx, jobID, workflow, runJobsContexts, stages, jobsContext)
 
-	jobDef := allJobs[jobID]
+	jobDef := workflow.Jobs[jobID]
 	needsContext := sdk.NeedsContext{}
-	for _, n := range jobDef.Needs {
+
+	var jobNeeds []string
+	if len(jobDef.Needs) > 0 {
+		jobNeeds = jobDef.Needs
+
+	} else if jobDef.Stage != "" {
+		jobNeeds = make([]string, 0)
+		// add all final jobs from parent stages
+		neededStages := workflow.Stages[jobDef.Stage].Needs
+		for _, n := range neededStages {
+			for jobID, jobInStage := range stages[n].Jobs {
+				if jobInStage.IsFinal {
+					jobNeeds = append(jobNeeds, jobID)
+				}
+			}
+		}
+	}
+
+	for _, n := range jobNeeds {
 		if j, has := jobsContext[n]; has {
 			needContext := sdk.NeedContext{
 				Result:  j.Result,
 				Outputs: j.Outputs,
 			}
 			// override result if job has continue-on-error
-			if allJobs[n].ContinueOnError && j.Result == sdk.V2WorkflowRunJobStatusFail {
+			if workflow.Jobs[n].ContinueOnError && j.Result == sdk.V2WorkflowRunJobStatusFail {
 				needContext.Result = sdk.V2WorkflowRunJobStatusSuccess
 			}
-
 			needsContext[n] = needContext
 		}
 	}
@@ -152,14 +169,25 @@ func buildContextForJob(_ context.Context, allJobs map[string]sdk.V2Job, runJobs
 	return currentJobContext
 }
 
-func buildAncestorJobContext(jobID string, jobs map[string]sdk.V2Job, runJobsContext sdk.JobsResultContext, currentJobContext sdk.JobsResultContext) {
-	jobDef := jobs[jobID]
-	if len(jobDef.Needs) == 0 {
-		return
+func buildAncestorJobContext(ctx context.Context, jobID string, workflow sdk.V2Workflow, runJobsContext sdk.JobsResultContext, stages sdk.WorkflowRunStages, currentJobContext sdk.JobsResultContext) {
+	jobDef := workflow.Jobs[jobID]
+	if len(jobDef.Needs) == 0 && jobDef.Stage != "" {
+		// add all final jobs from parent stages
+		neededStages := workflow.Stages[jobDef.Stage].Needs
+		for _, n := range neededStages {
+			for jobID, jobInStage := range stages[n].Jobs {
+				if jobInStage.IsFinal {
+					jobCtx := runJobsContext[jobID]
+					currentJobContext[jobID] = jobCtx
+					buildAncestorJobContext(ctx, jobID, workflow, runJobsContext, stages, currentJobContext)
+				}
+			}
+		}
 	}
+
 	for _, n := range jobDef.Needs {
 		jobCtx := runJobsContext[n]
 		currentJobContext[n] = jobCtx
-		buildAncestorJobContext(n, jobs, runJobsContext, currentJobContext)
+		buildAncestorJobContext(ctx, n, workflow, runJobsContext, stages, currentJobContext)
 	}
 }

@@ -87,7 +87,7 @@ func TestJobConditionSuccess(t *testing.T) {
 				Needs: tt.needs,
 			}
 			jobDef := run.WorkflowData.Workflow.Jobs["job4"]
-			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow.Jobs, jobsContext, sdk.WorkflowRunContext{}, "job4")
+			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow, jobsContext, sdk.WorkflowRunContext{}, nil, "job4")
 			b, err := checkJobCondition(context.TODO(), db, run, nil, jobDef, currentJobContext, *admin, true)
 			require.NoError(t, err)
 			require.Equal(t, tt.result, b)
@@ -151,7 +151,7 @@ func TestJobConditionReviewers(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			jobDef := run.WorkflowData.Workflow.Jobs["job1"]
-			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow.Jobs, jobsContext, sdk.WorkflowRunContext{}, "job1")
+			currentJobContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow, jobsContext, sdk.WorkflowRunContext{}, nil, "job1")
 			b, err := checkJobCondition(context.TODO(), db, run, nil, jobDef, currentJobContext, tt.u, tt.isAdminWithMFA)
 			require.NoError(t, err)
 			require.Equal(t, tt.result, b)
@@ -196,13 +196,109 @@ func TestBuildCurrentJobContext(t *testing.T) {
 			Result: sdk.V2WorkflowRunJobStatusFail,
 		},
 	}
+	wf := sdk.V2Workflow{Jobs: allJobs}
 
 	currentJobContext := sdk.JobsResultContext{}
-	buildAncestorJobContext("job6", allJobs, jobsContext, currentJobContext)
+	buildAncestorJobContext(context.TODO(), "job6", wf, jobsContext, nil, currentJobContext)
 
 	require.Equal(t, 3, len(currentJobContext))
 	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, currentJobContext["job1"].Result)
 	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, currentJobContext["job5"].Result)
+}
+
+func TestBuildCurrentJobContextWithStages(t *testing.T) {
+	wf := sdk.V2Workflow{
+		Stages: map[string]sdk.WorkflowStage{
+			"stage1": {
+				Needs: []string{},
+			},
+			"stage2": {
+				Needs: []string{"stage1"},
+			},
+			"stage3": {
+				Needs: []string{},
+			},
+		},
+		Jobs: map[string]sdk.V2Job{
+			"job1": {
+				ContinueOnError: true,
+				Stage:           "stage1",
+			},
+			"job2": {
+				Stage: "stage1",
+			},
+			"job3": {
+				Needs: []string{"job1"},
+				Stage: "stage1",
+			},
+			"job4": {
+				Needs: []string{"job1"},
+				Stage: "stage1",
+			},
+			"job5": {
+				Needs: []string{"job3"},
+				Stage: "stage1",
+			},
+			"job6": {
+				Stage: "stage2",
+			},
+			"job7": {
+				Stage: "stage3",
+			},
+		},
+	}
+	jobsContext := sdk.JobsResultContext{
+		"job1": {
+			Result: sdk.V2WorkflowRunJobStatusFail,
+		},
+		"job2": {
+			Result: sdk.V2WorkflowRunJobStatusSuccess,
+		},
+		"job3": {
+			Result: sdk.V2WorkflowRunJobStatusSuccess,
+		},
+		"job4": {
+			Result: sdk.V2WorkflowRunJobStatusFail,
+		},
+		"job5": {
+			Result: sdk.V2WorkflowRunJobStatusFail,
+		},
+		"job7": {
+			Result: sdk.V2WorkflowRunJobStatusFail,
+		},
+	}
+
+	run := sdk.V2WorkflowRun{
+		WorkflowData: sdk.V2WorkflowRunData{
+			Workflow: wf,
+		},
+	}
+	stages := run.GetStages()
+	if len(stages) > 0 {
+		for k, j := range jobsContext {
+			stageName := run.WorkflowData.Workflow.Jobs[k].Stage
+			jobInStage := stages[stageName].Jobs[k]
+			jobInStage.Status = j.Result
+			stages[stageName].Jobs[k] = jobInStage
+		}
+		stages.ComputeStatus()
+	}
+
+	currentJobContext := sdk.JobsResultContext{}
+	buildAncestorJobContext(context.TODO(), "job6", wf, jobsContext, stages, currentJobContext)
+
+	require.Equal(t, 5, len(currentJobContext))
+	_, has := currentJobContext["job7"]
+	require.False(t, has)
+
+	fullContext := buildContextForJob(context.TODO(), run.WorkflowData.Workflow, currentJobContext, sdk.WorkflowRunContext{}, stages, "job6")
+	require.Equal(t, 3, len(fullContext.Needs))
+	_, has = fullContext.Needs["job5"]
+	require.True(t, has)
+	_, has = fullContext.Needs["job4"]
+	require.True(t, has)
+	_, has = fullContext.Needs["job2"]
+	require.True(t, has)
 }
 
 func TestGenerateMatrix(t *testing.T) {
