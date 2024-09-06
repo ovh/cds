@@ -56,6 +56,7 @@ type HatcheryVSphere struct {
 		mu         sync.Mutex
 		pending    []string
 		restarting []string
+		using      []string
 	}
 	cacheToDelete struct {
 		mu   sync.Mutex
