@@ -26,6 +26,7 @@ type dao struct {
 	dequeuedWorkflowRunOutgoingEvents int64
 	enqueuedRepositoryEventCallbacks  int64
 	dequeuedRepositoryEventCallbacks  int64
+	outgoingHookEventTTL              int
 }
 
 func (d *dao) enqueuedIncr() {

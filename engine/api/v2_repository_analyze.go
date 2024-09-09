@@ -1204,13 +1204,17 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 		}
 
 		for _, s := range e.Workflow.On.WorkflowRun {
-
-			completePath, msg, err := ef.searchEntity(ctx, db, cache, s.Workflow, sdk.EntityTypeWorkflow)
-			if err != nil {
-				return nil, err
-			}
-			if msg != "" {
-				return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "on.workflow-run.workflow: "+msg)
+			mSplit := strings.Split(s.Workflow, "/")
+			var workflowFullName string
+			switch len(mSplit) {
+			case 1:
+				workflowFullName = fmt.Sprintf("%s/%s/%s/%s", e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, s.Workflow)
+			case 3:
+				workflowFullName = fmt.Sprintf("%s/%s/%s", e.ProjectKey, workflowDefVCSName, s.Workflow)
+			case 4:
+				workflowFullName = fmt.Sprintf("%s/%s", e.ProjectKey, s.Workflow)
+			case 5:
+				workflowFullName = s.Workflow
 			}
 
 			// Add in data desitnation vcs / repo
@@ -1229,7 +1233,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 					RepositoryName: destRepo,
 
 					// Workflow run to react
-					WorkflowRunName:   strings.Split(completePath, "@")[0], // searchEntity return proj/vcs/repo/name@ref, we must remove @ref,
+					WorkflowRunName:   workflowFullName, // searchEntity return proj/vcs/repo/name@ref, we must remove @ref,
 					BranchFilter:      s.Branches,
 					TagFilter:         s.Tags,
 					WorkflowRunStatus: s.Status,

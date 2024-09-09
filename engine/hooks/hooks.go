@@ -69,7 +69,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	if s.Cfg.OldRepositoryEventRetry == 0 {
 		s.Cfg.OldRepositoryEventRetry = 1
 	}
-
+	if s.Cfg.OutgoingEventTTL == 0 {
+		s.Cfg.OutgoingEventTTL = 7
+	}
 	return nil
 }
 
@@ -99,11 +101,13 @@ func (s *Service) Serve(c context.Context) error {
 	var errCache error
 	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis, s.Cfg.Cache.TTL)
 	if errCache != nil {
-		return fmt.Errorf("Cannot connect to redis instance : %v", errCache)
+		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
 	}
 
+	outgoingHookEventTTL := s.Cfg.OutgoingEventTTL * 3600 * 24
+
 	//Init the DAO
-	s.Dao = dao{store: s.Cache}
+	s.Dao = dao{store: s.Cache, outgoingHookEventTTL: outgoingHookEventTTL}
 
 	// Get ui rul
 	config, err := s.Client.ConfigUser()

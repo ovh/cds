@@ -26,7 +26,7 @@ func (d *dao) GetOutgoingMemberKey(projKey, vcsName, repoName, workflowName stri
 func (d *dao) SaveWorkflowRunOutgoingEvent(_ context.Context, e *sdk.HookWorkflowRunOutgoingEvent) error {
 	e.LastUpdate = time.Now().UnixMilli()
 	k := strings.ToLower(cache.Key(workflowRunOutgoingEventRootKey, d.GetOutgoingMemberKey(e.Event.WorkflowProject, e.Event.WorkflowVCSServer, e.Event.WorkflowRepository, e.Event.WorkflowName)))
-	return d.store.SetAdd(k, e.UUID, e)
+	return d.store.SetAddWithTTL(k, e.UUID, e, d.outgoingHookEventTTL)
 }
 
 func (d *dao) EnqueueWorkflowRunOutgoingEvent(ctx context.Context, e *sdk.HookWorkflowRunOutgoingEvent) error {
