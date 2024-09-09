@@ -292,7 +292,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 	}
 	if err != nil {
 		if sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return "", fmt.Sprintf("unable to find workflow dependency: %s %s %s", completePath, ref, ef.currentRef), nil
+			return "", fmt.Sprintf("unable to find workflow dependency: %s", name), nil
 		}
 		return "", "", err
 	}

@@ -112,3 +112,7 @@ func (d *dao) ListWorkflowRunOutgoingEvents(ctx context.Context, proj, vcsServer
 	}
 	return finalEvents, nil
 }
+
+func (d *dao) OutgoingEventCallbackBalance() (int64, int64) {
+	return d.enqueuedWorkflowRunOutgoingEvents, d.dequeuedWorkflowRunOutgoingEvents
+}

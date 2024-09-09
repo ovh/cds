@@ -928,7 +928,14 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	if float64(hookEventCallbackIn) > float64(hookEventCallbackOut) {
 		status = sdk.MonitoringStatusWarn
 	}
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEventCallbackEvent", Value: fmt.Sprintf("%d/%d", hookEventIn, hookEventOut), Status: status})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEventCallbackEvent", Value: fmt.Sprintf("%d/%d", hookEventCallbackIn, hookEventCallbackOut), Status: status})
+
+	hookOutgoingEventIn, hookOutgoingEventOut := s.Dao.OutgoingEventCallbackBalance()
+	status = sdk.MonitoringStatusOK
+	if float64(hookOutgoingEventIn) > float64(hookOutgoingEventOut) {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceOutgoingEvent", Value: fmt.Sprintf("%d/%d", hookOutgoingEventIn, hookOutgoingEventOut), Status: status})
 
 	var nbHooksKafkaTotal int64
 
