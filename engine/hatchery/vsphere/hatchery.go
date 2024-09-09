@@ -353,6 +353,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
+		if sdk.IsInArray(s.Name, h.cacheProvisioning.restarting) {
+			continue
+		}
+
 		var isMarkToDelete = h.isMarkedToDelete(s)
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
@@ -369,10 +373,6 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 					expire = bootTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 					break
 				}
-			}
-
-			if sdk.IsInArray(s.Name, h.cacheProvisioning.restarting) {
-				continue
 			}
 
 			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, bootTime, expire)

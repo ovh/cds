@@ -89,17 +89,18 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		if provisionnedVMWorker != nil {
 			log.Info(ctx, "starting worker %q with provisionned machine %q", spawnArgs.Model.GetName(), provisionnedVMWorker.Name())
 
-			if err := h.vSphereClient.RenameVirtualMachine(ctx, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
-				h.cacheProvisioning.mu.Lock()
-				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
-				h.cacheProvisioning.mu.Unlock()
-				return sdk.WrapError(err, "unable to rename VM %q", provisionnedVMWorker.Name())
-			}
-
 			// Before restart it, keep it in the cache for a few minutes to avoid the "killAwolServer" to delete it
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.restarting = append(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 			h.cacheProvisioning.mu.Unlock()
+
+			if err := h.vSphereClient.RenameVirtualMachine(ctx, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
+				h.cacheProvisioning.mu.Lock()
+				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
+				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
+				h.cacheProvisioning.mu.Unlock()
+				return sdk.WrapError(err, "unable to rename VM %q", provisionnedVMWorker.Name())
+			}
 
 			time.Sleep(2 * time.Second)
 
