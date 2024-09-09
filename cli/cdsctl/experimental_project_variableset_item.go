@@ -26,6 +26,7 @@ func projectVariableSetItem() *cobra.Command {
 		cli.NewCommand(projectVariableSetItemUpdateCmd, projectVariableSetItemUpdateFunc, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectVariableSetItemShowCmd, projectVariableSetItemShowFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableSetItemFromProjectCmd, projectVariableSetItemFromProjectFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableSetItemFromAsCodeCmd, projectVariableSetItemFromAsCodeFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -198,4 +199,32 @@ func projectVariableSetItemUpdateFunc(v cli.Values) error {
 		Value: v.GetString("item-value"),
 	}
 	return client.ProjectVariableSetItemUpdate(context.Background(), v.GetString(_ProjectKey), v.GetString("variableset-name"), &item)
+}
+
+var projectVariableSetItemFromAsCodeCmd = cli.Command{
+	Name:    "from-ascode",
+	Aliases: []string{"fas"},
+	Short:   "Copy an ascode secret to the given variable set",
+	Example: "cdsctl X project variableset item from-project PROJECT_KEY MY-VARIABLESET-NAME MY-VARIABLESET-ITEM --ascode <ASCODE_IDENTIFIER>",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+	},
+	Args: []cli.Arg{
+		{Name: "variableset-name"},
+		{Name: "variableset-item-name"},
+		{Name: "ascode-token"},
+	},
+}
+
+func projectVariableSetItemFromAsCodeFunc(v cli.Values) error {
+	itemName := v.GetString("variableset-item-name")
+	vsName := v.GetString("variableset-name")
+	ascode := v.GetString("ascode-token")
+
+	copyRequest := sdk.CopyAsCodeSecretToVariableSet{
+		VariableSetItemName: itemName,
+		VariableSetName:     vsName,
+		AsCodeIdentifier:    ascode,
+	}
+	return client.ProjectVariableSetItemFromAsCodeSecret(context.Background(), v.GetString(_ProjectKey), copyRequest)
 }

@@ -14,6 +14,51 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func TestPostMigrateFromAsCode(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	user1, pass := assets.InsertLambdaUser(t, db)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManage, proj.Key, *user1)
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *user1)
+
+	token, err := project.EncryptWithBuiltinKey(ctx, db, proj.ID, sdk.RandomString(10), "mysuperpassword")
+	require.NoError(t, err)
+
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       "myvarset",
+	}
+	require.NoError(t, project.InsertVariableSet(ctx, db, &vs))
+
+	copyRe := sdk.CopyAsCodeSecretToVariableSet{
+		VariableSetName:     vs.Name,
+		VariableSetItemName: "mewItem",
+		AsCodeIdentifier:    token,
+	}
+
+	vars := map[string]string{
+		"projectKey": proj.Key,
+	}
+	uri := api.Router.GetRouteV2("POST", api.postMigrateAsCodeVariableToVariableSetItemHandler, vars)
+	require.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, user1, pass, "POST", uri, &copyRe)
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	items, err := project.LoadVariableSetAllItem(ctx, db, vs.ID, gorpmapper.GetOptions.WithDecryption)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(items))
+
+	require.Equal(t, "mysuperpassword", items[0].Value)
+	require.Equal(t, sdk.ProjectVariableTypeSecret, items[0].Type)
+
+}
+
 func TestPostMigrateApplicationVariables(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
