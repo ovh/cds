@@ -2,11 +2,12 @@ name: Hook workflow run
 vars:
   cds_project: "ITV2HOOKWORKFLOWRUNDISTANT"
   git_repo_from: "it_v2_hook_workflow_run_distant_from"
-  git_repo_code: "it_v2_hook_workflow_run_distant_to"
+  git_repo_to: "it_v2_hook_workflow_run_distant_to"
   git_repo_tocheckout: "it_v2_hook_workflow_run_distant_to_checkout"
   cds_workflow_from: "WorkflowFrom"
   cds_workflow_to: "WorkflowTo"
-  worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_to}}/docker-debian"
+  worker_model_from: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_from}}/docker-debian"
+  worker_model_to: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_to}}/docker-debian"
 testcases:
 - name: Prepare test
   steps:
@@ -99,7 +100,7 @@ testcases:
             vcs: my_vcs_server
           jobs:
             init:
-              runs-on: {{.worker_model}}
+              runs-on: {{.worker_model_to}}
               steps:
                 - run: env
     - name: Save repo_to commit
@@ -146,7 +147,7 @@ testcases:
             vcs: my_vcs_server
           jobs:
             init:
-              runs-on: {{.worker_model}}
+              runs-on: {{.worker_model_from}}
               steps:
                 - run: echo Hello      
 
