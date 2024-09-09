@@ -14,6 +14,55 @@ import (
 	"github.com/ovh/cds/sdk/slug"
 )
 
+func (api *API) postMigrateAsCodeVariableToVariableSetItemHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectManage),
+		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
+			vars := mux.Vars(req)
+			pKey := vars["projectKey"]
+
+			var copyRequest sdk.CopyAsCodeSecretToVariableSet
+			if err := service.UnmarshalBody(req, &copyRequest); err != nil {
+				return err
+			}
+
+			vs, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, copyRequest.VariableSetName)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+
+			proj, err := project.Load(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			secretValue, err := project.DecryptWithBuiltinKey(ctx, api.mustDB(), proj.ID, copyRequest.AsCodeIdentifier)
+			if err != nil {
+				return err
+			}
+
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WithStack(err)
+			}
+			defer tx.Rollback() //nolint
+
+			it := &sdk.ProjectVariableSetItem{
+				ProjectVariableSetID: vs.ID,
+				Name:                 slug.Convert(copyRequest.VariableSetItemName),
+				Type:                 sdk.ProjectVariableTypeSecret,
+				Value:                secretValue,
+			}
+			if err := project.InsertVariableSetItemSecret(ctx, tx, it); err != nil {
+				return err
+			}
+
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
+			return service.WriteJSON(w, nil, http.StatusOK)
+		}
+}
+
 func (api *API) postMigrateEnvironmentVariableToVariableSetHandler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.projectManage),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
