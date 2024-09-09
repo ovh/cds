@@ -188,3 +188,19 @@ testcases:
         cat {{.cds_workflow_to}}* | grep "GIT_SHA={{.PushWorkflowWithHook.commitTo}}"
       retry: 60
       delay: 1
+
+- name: Check outgoing hooks from CLI
+  steps:
+    - name: List outgoing hooks
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks out list {{.cds_project}} my_vcs_server {{.git_repo_from}} {{.cds_workflow_from}} --format json"
+      assertions:
+      - result.systemoutjson ShouldHaveLength 1
+      vars:
+        outID:
+          from: result.systemoutjson.systemoutjson0.id
+    - name: get outgoing hook
+      script:  "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks out get {{.cds_project}} my_vcs_server {{.git_repo_from}} {{.cds_workflow_from}} {{.outID}}"   
+      assertions:
+      - result.systemoutjson.status ShouldEqual Done
+      - result.systemoutjson.triggers ShouldHaveLength 1
+      - result.systemoutjson.triggers.triggers0.workflow ShouldEqual {{.cds_workflow_to}}
