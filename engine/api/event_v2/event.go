@@ -232,7 +232,7 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, event sdk.FullEventV
 		return sdk.WrapError(err, "unable to load project %s notifications", event.ProjectKey)
 	}
 	for _, n := range notifications {
-		canSend := false
+		var canSend bool
 		if len(n.Filters) == 0 {
 			canSend = true
 		} else {
@@ -244,7 +244,7 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, event sdk.FullEventV
 						log.ErrorWithStackTrace(ctx, err)
 						continue
 					}
-					if reg.MatchString(event.Type) {
+					if reg.MatchString(string(event.Type)) {
 						canSend = true
 						break filterLoop
 					}
@@ -263,7 +263,6 @@ func pushNotifications(ctx context.Context, db *gorp.DbMap, event sdk.FullEventV
 		}
 		for k, v := range n.Auth.Headers {
 			req.Header.Set(k, v)
-
 		}
 
 		resp, err := httpClient.Do(req)

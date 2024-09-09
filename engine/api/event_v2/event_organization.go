@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishOrganizationEvent(ctx context.Context, store cache.Store, eventType string, org sdk.Organization, u sdk.AuthentifiedUser) {
+func PublishOrganizationEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, org sdk.Organization, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(org)
 	e := sdk.OrganizationEvent{
 		GlobalEventV2: sdk.GlobalEventV2{

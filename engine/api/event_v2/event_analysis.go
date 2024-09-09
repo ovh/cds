@@ -12,12 +12,14 @@ import (
 func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis) {
 	bts, _ := json.Marshal(a)
 	e := sdk.AnalysisEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      sdk.EventAnalysisStart,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       sdk.EventAnalysisStart,
-			Payload:    bts,
 			ProjectKey: a.ProjectKey,
-			Timestamp:  time.Now(),
 		},
 		VCSName:    vcsName,
 		Repository: repoName,
@@ -29,12 +31,14 @@ func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoN
 func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(a)
 	e := sdk.AnalysisEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      sdk.EventAnalysisStart,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       sdk.EventAnalysisStart,
-			Payload:    bts,
 			ProjectKey: a.ProjectKey,
-			Timestamp:  time.Now(),
 		},
 		VCSName:    vcsName,
 		Repository: repoName,

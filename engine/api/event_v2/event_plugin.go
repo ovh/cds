@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishPluginEvent(ctx context.Context, store cache.Store, typeEvent string, p sdk.GRPCPlugin, u sdk.AuthentifiedUser) {
+func PublishPluginEvent(ctx context.Context, store cache.Store, typeEvent sdk.EventType, p sdk.GRPCPlugin, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(p)
 	e := sdk.PluginEvent{
 		GlobalEventV2: sdk.GlobalEventV2{

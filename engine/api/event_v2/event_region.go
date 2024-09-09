@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishRegionEvent(ctx context.Context, store cache.Store, typeEvent string, reg sdk.Region, u sdk.AuthentifiedUser) {
+func PublishRegionEvent(ctx context.Context, store cache.Store, typeEvent sdk.EventType, reg sdk.Region, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(reg)
 	e := sdk.RegionEvent{
 		GlobalEventV2: sdk.GlobalEventV2{

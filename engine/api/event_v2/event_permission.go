@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishPermissionEvent(ctx context.Context, store cache.Store, eventType string, perm sdk.RBAC, u sdk.AuthentifiedUser) {
+func PublishPermissionEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, perm sdk.RBAC, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(perm)
 	e := sdk.PermissionEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
