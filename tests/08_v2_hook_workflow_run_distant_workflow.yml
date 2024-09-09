@@ -3,6 +3,7 @@ vars:
   cds_project: "ITV2HOOKWORKFLOWRUN"
   git_repo_from: "it_v2_hook_workflow_run_from"
   git_repo_code: "it_v2_hook_workflow_run_to"
+  git_repo_tocheckout: "it_v2_hook_workflow_run_to_checkout"
   cds_workflow_from: "WorkflowFrom"
   cds_workflow_to: "WorkflowTo"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_to}}/docker-debian"
@@ -52,6 +53,24 @@ testcases:
         emailaddress:
           from: result.emailaddress
 
+- name: PushFilesOnRepoToCheckout
+  steps:
+    - type: v2_push_non_cds_files_on_repo
+      git_repo: "{{.git_repo_tocheckout}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_email: "{{.Prepare-test.emailaddress}}"
+      git_password: "{{.git.password}}"
+      gpg_key_id: "{{.gpg.key_id}}"
+      files:
+        README.md: |
+          Hello
+    - name: Save repo_to commit
+      script: cd /tmp/repos/{{.git_repo_tocheckout}} && git rev-parse HEAD
+      vars:
+        commitToCheckout:
+          from: result.systemout
+
 - name: PushWorkflowWithHook
   steps:
     - type: v2_push_cds_files_on_repo
@@ -75,6 +94,9 @@ testcases:
             - workflow: "{{.git_repo_to}}/{{.cds_workflow_from}}"
               status: [Success]
               branches: [master,main]
+          repository:
+            name: "{{.git.user}}/{{.git_repo_tocheckout}}"
+            vcs: my_vcs_server
           jobs:
             init:
               runs-on: {{.worker_model}}
@@ -84,7 +106,7 @@ testcases:
       script: cd /tmp/repos/{{.git_repo_to}} && git rev-parse HEAD
       vars:
         commitTo:
-          from: result.systemout       
+          from: result.systemout 
 
 - name: Check analysis repo_to
   steps:
@@ -185,6 +207,6 @@ testcases:
         cat {{.cds_workflow_to}}* 
         echo "Check logs"
         # Check git_sha
-        cat {{.cds_workflow_to}}* | grep "GIT_SHA={{.PushWorkflowWithHook.commitTo}}"
+        cat {{.cds_workflow_to}}* | grep "GIT_SHA={{.PushFilesOnRepoToCheckout.commitToCheckout}}"
       retry: 60
       delay: 1
