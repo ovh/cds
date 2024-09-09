@@ -1,9 +1,9 @@
 name: Hook workflow run
 vars:
-  cds_project: "ITV2HOOKWORKFLOWRUN"
-  git_repo_from: "it_v2_hook_workflow_run_from"
-  git_repo_code: "it_v2_hook_workflow_run_to"
-  git_repo_tocheckout: "it_v2_hook_workflow_run_to_checkout"
+  cds_project: "ITV2HOOKWORKFLOWRUNDISTANT"
+  git_repo_from: "it_v2_hook_workflow_run_distant_from"
+  git_repo_code: "it_v2_hook_workflow_run_distant_to"
+  git_repo_tocheckout: "it_v2_hook_workflow_run_distant_to_checkout"
   cds_workflow_from: "WorkflowFrom"
   cds_workflow_to: "WorkflowTo"
   worker_model: "{{.cds_project}}/my_vcs_server/{{.git.user}}/{{.git_repo_to}}/docker-debian"
