@@ -464,7 +464,7 @@ func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, work
 		return err
 	}
 
-	log.Info(ctx, "provisioning %q by cloning %q", workerName, vmTemplate.Name())
+	log.Info(ctx, "provisoning %q by cloning %q", workerName, vmTemplate.Name())
 
 	cloneRef, err := h.vSphereClient.CloneVirtualMachine(ctx, vmTemplate, folder, workerName, cloneSpec)
 	if err != nil {
@@ -527,7 +527,10 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Work
 		h.cacheToDelete.mu.Unlock()
 
 		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, machine.Name)
-		if err != nil {
+		if err != nil && strings.Contains(err.Error(), "not found") {
+			log.Debug(ctx, "provision %q already used by another worker starter - skip it", machine.Name)
+			continue
+		} else if err != nil {
 			return nil, sdk.WrapError(err, "unable to load vm %q", machine.Name)
 		}
 
