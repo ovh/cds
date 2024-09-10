@@ -44,6 +44,15 @@ testcases:
       git_password: "{{.git.password}}"
       git_repo: "{{.git_repo_to}}"  
 
+    - type: v2_add_git_repo
+      cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
+      cds_project: "{{.cds_project}}"
+      cds_hook_url: "{{.gitea.hook.url}}"
+      git_host: "{{.git.host}}"
+      git_user: "{{.git.user}}"
+      git_password: "{{.git.password}}"
+      git_repo: "{{.git_repo_tocheckout}}"  
+
     - type: v2_install_gpg_key
       cdsctl_command: "{{.cdsctl}} -f {{.cdsctl.config}}"
       gpg_key_id: "{{.gpg.key_id}}"
@@ -92,7 +101,7 @@ testcases:
           name: {{.cds_workflow_to}}
           on:
             workflow-run:
-            - workflow: "{{.git_repo_to}}/{{.cds_workflow_from}}"
+            - workflow: "{{.git.user}}/{{.git_repo_from}}/{{.cds_workflow_from}}"
               status: [Success]
               branches: [master,main]
           repository:
@@ -117,6 +126,8 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 100
+      delay: 1    
 
     - name: Check that the CDS workflow has 0 execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_to}} {{.cds_workflow_to}} --format json"
@@ -201,7 +212,7 @@ testcases:
       script: |-
         #!/bin/bash
         set -e
-        FILE=/tmp/`uuidgen`
+        FILE=/tmp/logs3
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
         echo "Display logs"
@@ -209,5 +220,7 @@ testcases:
         echo "Check logs"
         # Check git_sha
         cat {{.cds_workflow_to}}* | grep "GIT_SHA={{.PushFilesOnRepoToCheckout.commitToCheckout}}"
+        cat {{.cds_workflow_to}}* | grep "GIT_REPOSITORY={{.git.user}}/{{.git_repo_tocheckout}}"
+        cat {{.cds_workflow_to}}* | grep "CDS_WORKFLOW_REPOSITORY={{.git.user}}/{{.git_repo_to}}"
       retry: 60
       delay: 1
