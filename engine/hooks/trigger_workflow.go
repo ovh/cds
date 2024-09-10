@@ -147,6 +147,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					runRequest.CronTimezone = hre.ExtractData.Scheduler.Timezone
 				case sdk.WorkflowHookTypeWorkflowRun:
 					runRequest.WorkflowRun = hre.ExtractData.WorkflowRun.Workflow
+					runRequest.WorkflowRunID = hre.ExtractData.WorkflowRun.WorkflowRunID
 					mods = make([]cdsclient.RequestModifier, 0) // Do not send query param. Let the CDS api get default branch
 
 					// Let CDS API choose the git context for the workflow execution

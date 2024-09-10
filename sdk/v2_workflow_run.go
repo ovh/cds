@@ -37,6 +37,7 @@ type V2WorkflowRunHookRequest struct {
 	CronTimezone  string                 `json:"cron_timezone"`
 	AdminMFA      bool                   `json:"admin_mfa"`
 	WorkflowRun   string                 `json:"workflow_run"`
+	WorkflowRunID string                 `json:"workflow_run_id"`
 }
 
 type V2WorkflowRun struct {
@@ -212,6 +213,7 @@ type V2WorkflowRunEvent struct {
 	Cron          string                 `json:"cron,omitempty"`
 	CronTimezone  string                 `json:"timezone,omitempty"`
 	WorkflowRun   string                 `json:"workflow_run"`
+	WorkflowRunID string                 `json:"workflow_run_id"`
 }
 
 func (w V2WorkflowRunEvent) Value() (driver.Value, error) {

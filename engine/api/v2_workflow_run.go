@@ -1369,6 +1369,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		Cron:          runRequest.Cron,
 		CronTimezone:  runRequest.CronTimezone,
 		WorkflowRun:   runRequest.WorkflowRun,
+		WorkflowRunID: runRequest.WorkflowRunID,
 	}
 
 	var msg string
@@ -1448,6 +1449,18 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 	runInfo.Message = msg
 	if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
 		return nil, err
+	}
+
+	if runEvent.HookType == sdk.WorkflowHookTypeWorkflowRun {
+		runInfo := sdk.V2WorkflowRunInfo{
+			WorkflowRunID: runEvent.WorkflowRunID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelInfo,
+			Message:       fmt.Sprintf("The workflow %s/%s/%s/%s has been triggered", proj.Key, vcsProject.Name, repo.Name, wk.Name),
+		}
+		if err := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

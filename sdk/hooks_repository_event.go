@@ -261,6 +261,7 @@ type HookRepositoryEventExtractedDataManual struct {
 type HookRepositoryEventExtractedDataWorkflowRun struct {
 	Project               string `json:"project"`
 	Workflow              string `json:"workflow"`
+	WorkflowRunID         string `json:"workflow_run_id"`
 	TargetVCS             string `json:"target_vcs"`
 	TargetRepository      string `json:"target_repository"`
 	OutgoingHookEventUUID string `json:"outgoing_hook_event_uuid"`

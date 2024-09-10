@@ -206,6 +206,7 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 					TargetVCS:             wh.Data.VCSServer,
 					TargetRepository:      wh.Data.RepositoryName,
 					Workflow:              wh.WorkflowName,
+					WorkflowRunID:         outgoingEvent.Event.WorkflowRunID,
 					OutgoingHookEventUUID: outgoingEvent.UUID,
 				},
 			},
