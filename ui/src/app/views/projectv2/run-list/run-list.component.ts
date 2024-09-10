@@ -18,6 +18,7 @@ import { WebsocketV2Filter, WebsocketV2FilterType } from "app/model/websocket-v2
 import { EventV2State } from "app/store/event-v2.state";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { EventV2Type } from "app/model/event-v2.model";
+import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 
 export class WorkflowRunFilter {
 	key: string;
@@ -34,6 +35,22 @@ export class WorkflowRunFilterValue {
 	selector: 'app-projectv2-run-list',
 	templateUrl: './run-list.html',
 	styleUrls: ['./run-list.scss'],
+	animations: [
+		trigger('appendToList', [
+			state('active', style({
+				opacity: 1
+			})),
+			state('append', style({
+				opacity: 1
+			})),
+			transition('append => active', animate('0ms')),
+			transition('active => append', animate('1000ms', keyframes([
+				style({ opacity: 1 }),
+				style({ opacity: 0.5 }),
+				style({ opacity: 1 })
+			])))
+		])
+	],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
@@ -62,6 +79,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 	searchName: string = '';
 	sort: string = ProjectV2RunListComponent.DEFAULT_SORT;
 	eventV2Subscription: Subscription;
+	animatedRuns: { [key: string]: boolean } = {};
 
 	constructor(
 		private _http: HttpClient,
@@ -94,13 +112,17 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
 			if (!event || [EventV2Type.EventRunCrafted, EventV2Type.EventRunBuilding, EventV2Type.EventRunEnded, EventV2Type.EventRunRestart].indexOf(event.type) === -1) { return; }
 			const idx = this.runs.findIndex(run => run.id === event.workflow_run_id);
+			this.animatedRuns = {};
+			this._cd.detectChanges();
 			if (idx !== -1) {
 				this.runs[idx] = event.payload;
 			} else {
 				this.runs = [event.payload].concat(...this.runs);
 				this.runs.pop();
-				this._cd.markForCheck();
 			}
+			this.animatedRuns = {};
+			this.animatedRuns[event.payload.id] = true;
+			this._cd.markForCheck();
 		});
 	}
 
@@ -376,5 +398,9 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		} catch (e) {
 			this._messageService.error(`Unable to delete workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
 		}
+	}
+
+	trackRunElement(index: number, run: V2WorkflowRun): any {
+		return run.id;
 	}
 }
