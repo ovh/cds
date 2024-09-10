@@ -1198,6 +1198,10 @@ type HookWorkflowRunEvent struct {
 
 // Request that will be sent to sub-workflow
 type HookWorkflowRunEventRequest struct {
+	WorkflowRun HookWorkflowRunEventRequestWorkflowRun `json:"workflow_run"`
+}
+
+type HookWorkflowRunEventRequestWorkflowRun struct {
 	CDS        CDSContext                         `json:"cds"`
 	Git        GitContext                         `json:"git"`
 	UserID     string                             `json:"user_id"`

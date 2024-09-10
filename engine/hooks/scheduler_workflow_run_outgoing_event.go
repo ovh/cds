@@ -142,10 +142,10 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 		// Retrieve hooks from API
 		request := sdk.HookListWorkflowRequest{
 			HookEventUUID:       outgoingEvent.UUID,
-			Ref:                 outgoingEvent.Event.Request.Git.Ref, // ref of workflow.repository ( target )
+			Ref:                 outgoingEvent.Event.Request.WorkflowRun.Git.Ref, // ref of workflow.repository ( target )
 			RepositoryEventName: sdk.WorkflowHookEventRun,
-			VCSName:             outgoingEvent.Event.Request.Git.Server,
-			RepositoryName:      outgoingEvent.Event.Request.Git.Repository,
+			VCSName:             outgoingEvent.Event.Request.WorkflowRun.Git.Server,
+			RepositoryName:      outgoingEvent.Event.Request.WorkflowRun.Git.Repository,
 			Workflows: []sdk.EntityFullName{{
 				ProjectKey: outgoingEvent.Event.WorkflowProject,
 				VCSName:    outgoingEvent.Event.WorkflowVCSServer,

@@ -72,14 +72,16 @@ testcases:
           name: {{.cds_workflow_to}}
           on:
             workflow-run:
-            - workflow: "{{.git_repo_to}}/{{.cds_workflow_from}}"
+            - workflow: "{{.git.user}}/{{.git_repo_from}}/{{.cds_workflow_from}}"
               status: [Success]
               branches: [master,main]
           jobs:
             init:
               runs-on: {{.worker_model}}
               steps:
-                - run: env
+                - run: | 
+                    env
+                    echo "Parent: ${{cds.event.workflow_run.git.repository}}"
     - name: Save repo_to commit
       script: cd /tmp/repos/{{.git_repo_to}} && git rev-parse HEAD
       vars:
@@ -94,13 +96,13 @@ testcases:
         - result.systemoutjson ShouldHaveLength 2
         - result.systemoutjson.systemoutjson0.status ShouldEqual "Skipped"
         - result.systemoutjson.systemoutjson1.status ShouldEqual "Success"
+      retry: 100
+      delay: 1    
 
     - name: Check that the CDS workflow has 0 execution and is Success
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow history {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_to}} {{.cds_workflow_to}} --format json"
       assertions:
         - result.systemoutjson ShouldHaveLength 0
-      retry: 100
-      delay: 1  
         
 - name: PushFromWorkflow
   steps:
@@ -180,7 +182,7 @@ testcases:
       script: |-
         #!/bin/bash
         set -e
-        FILE=/tmp/`uuidgen`
+        FILE=/tmp/logs2
         mkdir -p $FILE && cd $FILE
         {{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}
         echo "Display logs"
@@ -188,20 +190,22 @@ testcases:
         echo "Check logs"
         # Check git_sha
         cat {{.cds_workflow_to}}* | grep "GIT_SHA={{.PushWorkflowWithHook.commitTo}}"
+        cat {{.cds_workflow_to}}* | grep "GIT_REPOSITORY={{.git.user}}/{{.git_repo_to}}"
+        cat {{.cds_workflow_to}}* | grep "Parent: {{.git.user}}/{{.git_repo_from}}"
       retry: 60
       delay: 1
 
 - name: Check outgoing hooks from CLI
   steps:
     - name: List outgoing hooks
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks out list {{.cds_project}} my_vcs_server {{.git_repo_from}} {{.cds_workflow_from}} --format json"
+      script: "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks out list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_from}} {{.cds_workflow_from}} --format json"
       assertions:
       - result.systemoutjson ShouldHaveLength 1
       vars:
         outID:
           from: result.systemoutjson.systemoutjson0.id
     - name: get outgoing hook
-      script:  "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks out get {{.cds_project}} my_vcs_server {{.git_repo_from}} {{.cds_workflow_from}} {{.outID}}"   
+      script:  "{{.cdsctl}} -f {{.cdsctl.config}} admin hooks out get {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo_from}} {{.cds_workflow_from}} {{.outID}}"   
       assertions:
       - result.systemoutjson.status ShouldEqual Done
       - result.systemoutjson.triggers ShouldHaveLength 1

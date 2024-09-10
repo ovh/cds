@@ -352,17 +352,19 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 			WorkflowRunID:      run.ID,
 			WorkflowRef:        run.Contexts.Git.Ref,
 			Request: sdk.HookWorkflowRunEventRequest{
-				CDS:        run.Contexts.CDS,
-				Git:        run.Contexts.Git,
-				UserID:     run.UserID,
-				UserName:   run.Username,
-				Conclusion: string(run.Status),
-				CreatedAt:  run.Started,
-				Jobs:       make(map[string]sdk.HookWorkflowRunEventJob),
+				WorkflowRun: sdk.HookWorkflowRunEventRequestWorkflowRun{
+					CDS:        run.Contexts.CDS,
+					Git:        run.Contexts.Git,
+					UserID:     run.UserID,
+					UserName:   run.Username,
+					Conclusion: string(run.Status),
+					CreatedAt:  run.Started,
+					Jobs:       make(map[string]sdk.HookWorkflowRunEventJob),
+				},
 			},
 		}
 		for _, rj := range allRunJobs {
-			req.Request.Jobs[rj.JobID] = sdk.HookWorkflowRunEventJob{
+			req.Request.WorkflowRun.Jobs[rj.JobID] = sdk.HookWorkflowRunEventJob{
 				Conclusion: string(rj.Status),
 			}
 		}
