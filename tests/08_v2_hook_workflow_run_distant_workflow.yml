@@ -205,9 +205,6 @@ testcases:
     - name: Display job info
       script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow jobs status {{.cds_project}} {{.workflowRunID}}"
 
-    - name: Download logs
-      script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow logs download {{.cds_project}} {{.workflowRunID}}"
-
     - name: Download and check logs
       script: |-
         #!/bin/bash
