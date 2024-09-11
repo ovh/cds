@@ -222,6 +222,9 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		} else if strings.HasPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix) {
 			run.Contexts.CDS.WorkflowTemplateRefWebURL = fmt.Sprintf(vcsRepo.URLBranchFormat, strings.TrimPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix))
 		}
+
+		// Update after applying template
+		wref.run = *run
 	}
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
