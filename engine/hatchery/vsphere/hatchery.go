@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/ovh/cds/sdk/telemetry"
+	"github.com/patrickmn/go-cache"
 )
 
 // New instanciates a new Hatchery vsphere
@@ -47,6 +48,9 @@ func (h *HatcheryVSphere) Init(config interface{}) (cdsclient.ServiceConfig, err
 	cfg.TokenV2 = sConfig.API.TokenV2
 	cfg.InsecureSkipVerifyTLS = sConfig.API.HTTP.Insecure
 	cfg.RequestSecondsTimeout = sConfig.API.RequestTimeout
+
+	h.cacheProvisioning.starting = cache.New(12*time.Hour, 60*time.Minute)
+
 	return cfg, nil
 }
 
@@ -357,7 +361,13 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
 		bootTime, exists := h.cacheProvisioning.starting.Get(s.Name)
-		if exists && !isPoweredOff && !isMarkToDelete {
+
+		if !exists {
+			// bootTime can't be here if the hatchery restarted
+			bootTime = time.Now().Add(-time.Duration(h.Config.WorkerTTL) * time.Minute)
+		}
+
+		if !isPoweredOff && !isMarkToDelete {
 			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
 			var expire = bootTime.(time.Time).Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			// Else it's WorkerTTL (default 120 minutes)

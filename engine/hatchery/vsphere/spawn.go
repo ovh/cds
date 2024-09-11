@@ -84,6 +84,8 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		// Before restart it, keep it in the cache for a few minutes to avoid the "killAwolServer" to delete it
 		h.cacheProvisioning.starting.Add(spawnArgs.WorkerName, time.Now(), time.Duration(h.Config.WorkerRegistrationTTL)*time.Minute)
 	} else if !spawnArgs.RegisterOnly {
+		h.cacheProvisioning.starting.Add(spawnArgs.WorkerName, time.Now(), time.Duration(h.Config.WorkerTTL)*time.Minute)
+
 		provisionnedVMWorker, err := h.FindProvisionnedWorker(ctx, spawnArgs.Model)
 		if err != nil {
 			return err
