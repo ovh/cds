@@ -166,7 +166,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		// ie. virtual machine with name "<model>-tmp" or "register-<model>"
 
 		for _, vm := range h.getVirtualMachines(ctx) {
-			var vmAnnotation = getVirtualMachineCDSAnnotation(ctx, vm)
+			var vmAnnotation = getVirtualMachineCDSAnnotation(vm)
 			if vmAnnotation == nil {
 				continue
 			}
@@ -190,7 +190,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 
 	// Check if there is a pending virtual machine with the same jobId in annotation - we want to avoid duplicates
 	for _, vm := range h.getVirtualMachines(ctx) {
-		var annot = getVirtualMachineCDSAnnotation(ctx, vm)
+		var annot = getVirtualMachineCDSAnnotation(vm)
 		if annot == nil {
 			continue
 		}
@@ -244,7 +244,7 @@ func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
 
-func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) *annotation {
+func getVirtualMachineCDSAnnotation(srv mo.VirtualMachine) *annotation {
 	if srv.Config == nil {
 		return nil
 	}
@@ -267,7 +267,7 @@ func (h *HatcheryVSphere) NeedRegistration(ctx context.Context, m *sdk.Model) bo
 		return true
 	}
 
-	var annot = getVirtualMachineCDSAnnotation(ctx, model)
+	var annot = getVirtualMachineCDSAnnotation(model)
 	if annot == nil {
 		return true
 	}
@@ -345,7 +345,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {
-		var annot = getVirtualMachineCDSAnnotation(ctx, s)
+		var annot = getVirtualMachineCDSAnnotation(s)
 		if annot == nil {
 			continue
 		}
@@ -353,24 +353,17 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
-		if sdk.IsInArray(s.Name, h.cacheProvisioning.restarting) {
-			continue
-		}
-
 		var isMarkToDelete = h.isMarkedToDelete(s)
 		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
 
-		var bootTime = annot.Created
-		if s.Runtime.BootTime != nil {
-			bootTime = *s.Runtime.BootTime
-		}
-		if !isPoweredOff && !isMarkToDelete {
+		bootTime, exists := h.cacheProvisioning.starting.Get(s.Name)
+		if exists && !isPoweredOff && !isMarkToDelete {
 			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
-			var expire = bootTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+			var expire = bootTime.(time.Time).Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			// Else it's WorkerTTL (default 120 minutes)
 			for _, w := range allWorkers {
 				if w.Name() == s.Name {
-					expire = bootTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+					expire = bootTime.(time.Time).Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 					break
 				}
 			}
@@ -387,6 +380,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 				}
 				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted - expire %q", s.Name, bootTime, expire)
 				h.markToDelete(ctx, vm)
+				isMarkToDelete = true
 			}
 		}
 
@@ -394,7 +388,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		// We also exclude not used provisionned VM from deletion
 		isNotUsedProvisionned := annot.Provisioning && annot.WorkerName == s.Name
 		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !isNotUsedProvisionned) {
-			log.Info(ctx, "deleting machine %q as been created on annot.Created:%q runtime.BootTime:%q, it has to be deleted - powerState:%s isMarkToDelete:%t isPoweredOff:%t annot.Model:%t annot.RegisterOnly:%t", s.Name, annot.Created, s.Runtime.BootTime, s.Summary.Runtime.PowerState, isMarkToDelete, isPoweredOff, annot.Model, annot.RegisterOnly)
+			log.Info(ctx, "deleting machine %q as been created - it has to be deleted - powerState:%s isMarkToDelete:%t isPoweredOff:%t annot.Model:%t annot.RegisterOnly:%t", s.Name, s.Summary.Runtime.PowerState, isMarkToDelete, isPoweredOff, annot.Model, annot.RegisterOnly)
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
@@ -413,7 +407,7 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		if !strings.HasPrefix(machine.Name, "provision-") {
 			continue
 		}
-		annot := getVirtualMachineCDSAnnotation(ctx, machine)
+		annot := getVirtualMachineCDSAnnotation(machine)
 		if annot == nil {
 			continue
 		}

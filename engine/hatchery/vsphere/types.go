@@ -5,6 +5,7 @@ import (
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
+	"github.com/patrickmn/go-cache"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -53,10 +54,10 @@ type HatcheryVSphere struct {
 		list []string
 	}
 	cacheProvisioning struct {
-		mu         sync.Mutex
-		pending    []string
-		restarting []string
-		using      []string
+		mu       sync.Mutex
+		pending  []string
+		starting *cache.Cache
+		using    []string
 	}
 	cacheToDelete struct {
 		mu   sync.Mutex

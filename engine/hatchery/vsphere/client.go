@@ -66,7 +66,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplates(ctx context.Context) []mo.V
 			log.Warn(ctx, "getModels> config or annotation are empty for server %s", srv.Name)
 			continue
 		}
-		var annot = getVirtualMachineCDSAnnotation(ctx, srv)
+		var annot = getVirtualMachineCDSAnnotation(srv)
 		if annot != nil {
 			if annot.Model {
 				models = append(models, srv)
@@ -98,7 +98,7 @@ func (h *HatcheryVSphere) getVirtualMachineByName(ctx context.Context, name stri
 		return nil, sdk.WrapError(err, "unable to get virtual machine")
 	}
 
-	var annot = getVirtualMachineCDSAnnotation(ctx, *vmRef)
+	var annot = getVirtualMachineCDSAnnotation(*vmRef)
 	if annot == nil {
 		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", name))
 		return nil, sdk.WrapError(err, "unable to get virtual machine")
@@ -121,7 +121,7 @@ func (h *HatcheryVSphere) getVirtualMachineTemplateByName(ctx context.Context, n
 			continue
 		}
 
-		var annot = getVirtualMachineCDSAnnotation(ctx, m)
+		var annot = getVirtualMachineCDSAnnotation(m)
 		if annot == nil {
 			continue
 		}
@@ -142,7 +142,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 		return err
 	}
 
-	var annot = getVirtualMachineCDSAnnotation(ctx, s)
+	var annot = getVirtualMachineCDSAnnotation(s)
 	if annot == nil {
 		return nil
 	}
