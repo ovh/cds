@@ -9,6 +9,7 @@ import (
 	"time"
 
 	sdkhatchery "github.com/ovh/cds/sdk/hatchery"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/hatchery"
@@ -266,6 +267,12 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 		},
 	}
 
+	h.cacheProvisioning.starting = cache.New(12*time.Hour, 60*time.Minute)
+	h.cacheProvisioning.starting.Set("worker0", time.Now(), time.Minute)
+
+	h.Config.WorkerTTL = 5
+	h.Config.WorkerRegistrationTTL = 5
+
 	cdsclient.EXPECT().WorkerList(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]sdk.Worker, error) {
 			var un int64 = 1
@@ -295,7 +302,7 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 						},
 					},
 					Config: &types.VirtualMachineConfigInfo{
-						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "someting"}`,
+						Annotation: `{"model": false, "to_delete": false, "worker_model_path": "something"}`,
 					},
 				},
 				{
@@ -339,19 +346,11 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 				},
 			}, nil
 		},
-	).Times(2)
+	).Times(1)
 
-	var vm0 = object.VirtualMachine{
-		Common: object.Common{
-			InventoryPath: "worker0",
-		},
-	}
 	var vm1 = object.VirtualMachine{Common: object.Common{}}
 	var vm3 = object.VirtualMachine{Common: object.Common{}}
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker0").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm0, nil },
-	)
 	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
 		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm1, nil },
 	)

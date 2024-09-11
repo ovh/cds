@@ -398,7 +398,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		// We also exclude not used provisionned VM from deletion
 		isNotUsedProvisionned := annot.Provisioning && annot.WorkerName == s.Name
 		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !isNotUsedProvisionned) {
-			log.Info(ctx, "deleting machine %q as been created - it has to be deleted - powerState:%s isMarkToDelete:%t isPoweredOff:%t annot.Model:%t annot.RegisterOnly:%t", s.Name, s.Summary.Runtime.PowerState, isMarkToDelete, isPoweredOff, annot.Model, annot.RegisterOnly)
+			log.Info(ctx, "deleting machine %q - powerState:%s isMarkToDelete:%t isPoweredOff:%t annot.Model:%t annot.RegisterOnly:%t", s.Name, s.Summary.Runtime.PowerState, isMarkToDelete, isPoweredOff, annot.Model, annot.RegisterOnly)
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)

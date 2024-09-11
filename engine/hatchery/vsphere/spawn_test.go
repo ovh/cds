@@ -11,6 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -283,6 +284,8 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
 
+	h.cacheProvisioning.starting = cache.New(12*time.Hour, 60*time.Minute)
+
 	var ctx = context.Background()
 
 	var validModel = sdk.Model{
@@ -464,6 +467,7 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 	h.availableIPAddresses = []string{"192.168.0.1", "192.168.0.2", "192.168.0.3"}
 	h.Config.Gateway = "192.168.0.254"
 	h.Config.DNS = "192.168.0.253"
+	h.cacheProvisioning.starting = cache.New(12*time.Hour, 60*time.Minute)
 
 	var ctx = context.Background()
 
