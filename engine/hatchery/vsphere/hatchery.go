@@ -358,7 +358,21 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		var isMarkToDelete = h.isMarkedToDelete(s)
-		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
+
+		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
+		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to load vm %s: %v", s.Name, err)
+			continue
+		}
+
+		powerstate, err := h.vSphereClient.GetVirtualMachinePowerState(ctx, vm)
+		if err != nil {
+			log.Error(ctx, "unable to GetVirtualMachinePowerState vm %s: %v", s.Name, err)
+			continue
+		}
+
+		var isPoweredOff = powerstate != types.VirtualMachinePowerStatePoweredOn
 
 		bootTime, exists := h.cacheProvisioning.starting.Get(s.Name)
 
@@ -382,12 +396,6 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			// If the VM is older that the WorkerTTL config, let's mark it as delete
 
 			if time.Now().After(expire) {
-				vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
-				if err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "unable to load vm %s: %v", s.Name, err)
-					continue
-				}
 				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted - expire %q", s.Name, bootTime, expire)
 				h.markToDelete(ctx, vm)
 				isMarkToDelete = true
