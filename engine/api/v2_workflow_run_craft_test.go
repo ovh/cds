@@ -11,6 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/services"
@@ -225,11 +226,37 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	reg := sdk.Region{Name: "build"}
 	require.NoError(t, region.Insert(ctx, db, &reg))
 
+	reg1 := sdk.Region{Name: "myregion"}
+	require.NoError(t, region.Insert(ctx, db, &reg1))
+
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	admin, _ := assets.InsertAdminUser(t, db)
 
 	vcsProject := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProject.ID, "my/repo")
+
+	model := sdk.IntegrationModel{Name: sdk.RandomString(10), Event: true, DefaultConfig: sdk.IntegrationConfig{
+		"myparam": {
+			Value: "myregion",
+			Type:  sdk.IntegrationConfigTypeRegion,
+		},
+	}}
+	require.NoError(t, integration.InsertModel(db, &model))
+	projInt := sdk.ProjectIntegration{
+		Config: sdk.IntegrationConfig{
+			"test": sdk.IntegrationConfigValue{
+				Description: "here is a test",
+				Type:        sdk.IntegrationConfigTypeString,
+				Value:       "test",
+			},
+			"myparam": model.DefaultConfig["myparam"],
+		},
+		Name:               sdk.RandomString(10),
+		ProjectID:          proj.ID,
+		Model:              model,
+		IntegrationModelID: model.ID,
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInt))
 
 	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
 	ctrl := gomock.NewController(t)
@@ -269,12 +296,12 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 				Name: wkName,
 				Jobs: map[string]sdk.V2Job{
 					"job1": {
-						Name:   "My super job",
-						If:     "cds.workflow == 'toto'",
-						Region: "build",
+						Name: "My super job",
+						If:   "cds.workflow == 'toto'",
 						RunsOn: sdk.V2JobRunsOn{
 							Model: "myworker-model",
 						},
+						Integrations: []string{projInt.Name},
 						Steps: []sdk.ActionStep{
 							{
 								ID:   "myfirstStep",
@@ -337,7 +364,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 		Name: sdk.RandomString(10),
 		Hatcheries: []sdk.RBACHatchery{
 			{
-				RegionID:   reg.ID,
+				RegionID:   reg1.ID,
 				HatcheryID: hatch.ID,
 				Role:       sdk.HatcheryRoleSpawn,
 			},
@@ -349,6 +376,11 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 
 	wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
 	require.NoError(t, err)
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
+	require.NoError(t, err)
+	t.Logf("%+v", runInfos)
+
 	t.Logf("%+v", wrDB.WorkflowData.Actions)
 	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status)
 	wrInfos, err := workflow_v2.LoadRunInfosByRunID(ctx, db, wr.ID)
@@ -356,6 +388,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	require.Equal(t, 0, len(wrInfos))
 
 	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].RunsOn.Model, "myworker-model@refs/heads/master")
+	require.Contains(t, wrDB.WorkflowData.Workflow.Jobs["job1"].Region, "myregion")
 }
 
 func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
