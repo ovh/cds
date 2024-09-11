@@ -136,7 +136,7 @@ export class ProjectV2RunComponent implements OnDestroy {
             this._messageService.error(`Unable to get workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
         }
 
-        this.workflowGraph = dump(this.workflowRun.workflow_data.workflow);
+        this.workflowGraph = dump(this.workflowRun.workflow_data.workflow, { lineWidth: -1 });
 
         this._cd.markForCheck();
 
@@ -357,8 +357,15 @@ export class ProjectV2RunComponent implements OnDestroy {
 
         this._cd.detectChanges(); // force rendering to compute graph container size
         if (this.graph) {
-            this.graph.clickOrigin();
+            this.graph.unSelect();
         }
+
+        this._router.navigate(['/project', this.projectKey, 'run', this.workflowRun.id], {
+            queryParams: {
+                panel: null
+            },
+            queryParamsHandling: "merge"
+        });
     }
 
     clickExpandPanel(): void {

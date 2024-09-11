@@ -112,7 +112,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
 			if (!event || [EventV2Type.EventRunCrafted, EventV2Type.EventRunBuilding, EventV2Type.EventRunEnded, EventV2Type.EventRunRestart].indexOf(event.type) === -1) { return; }
 			const idx = this.runs.findIndex(run => run.id === event.workflow_run_id);
-			this.animatedRuns = {};
+			delete (this.animatedRuns[event.payload.id]);
 			this._cd.detectChanges();
 			if (idx !== -1) {
 				this.runs[idx] = event.payload;
@@ -120,7 +120,6 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 				this.runs = [event.payload].concat(...this.runs);
 				this.runs.pop();
 			}
-			this.animatedRuns = {};
 			this.animatedRuns[event.payload.id] = true;
 			this._cd.markForCheck();
 		});
@@ -402,5 +401,10 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 
 	trackRunElement(index: number, run: V2WorkflowRun): any {
 		return run.id;
+	}
+
+	onMouseEnterRun(id: string): void {
+		delete this.animatedRuns[id];
+		this._cd.markForCheck();
 	}
 }
