@@ -81,7 +81,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 	// we had 3+time.Minute, to let killAwolWorker running (each 2min), and using boottime from h.cacheProvisioning.starting
 	add := 3 * time.Minute
-	h.cacheProvisioning.starting.Add(spawnArgs.WorkerName, time.Now(), time.Duration(h.Config.WorkerTTL)*time.Minute+add)
+	h.cacheProvisioning.starting.Add(spawnArgs.WorkerName, time.Now(), add+time.Duration(h.Config.WorkerTTL)*time.Minute)
 
 	// Try to find a provisionned worker
 	if !spawnArgs.RegisterOnly {
