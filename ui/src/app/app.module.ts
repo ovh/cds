@@ -15,6 +15,7 @@ import { SharedModule } from './shared/shared.module';
 import { NavbarModule } from './views/navbar/navbar.module';
 import { NgxsStoragePluginModule, StorageEngine, STORAGE_ENGINE } from '@ngxs/storage-plugin';
 import { PreferencesState } from './store/preferences.state';
+import { EventV2Service } from './event-v2.service';
 
 export let errorFactory = () => {
     if ((<any>window).cds_sentry_url) {
@@ -77,6 +78,7 @@ export class CDSStorageEngine implements StorageEngine {
     providers: [
         AppService,
         EventService,
+        EventV2Service,
         { provide: ErrorHandler, useFactory: errorFactory },
         { provide: LOCALE_ID, useValue: 'en' },
         { provide: STORAGE_ENGINE, useClass: CDSStorageEngine }

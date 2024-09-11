@@ -67,7 +67,8 @@
 	</div>
 
 	<nz-list class="run-list" [nzLoading]="loading" nzSize="small" nzNoResult="test">
-		<nz-list-item *ngFor="let run of runs">
+		<nz-list-item *ngFor="let run of runs; let i = index; trackBy: trackRunElement"
+			[@appendToList]="animatedRuns[run.id] ? 'append' : 'active'">
 			<ng-container>
 				<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
 				</nz-list-item-meta>

@@ -595,43 +595,54 @@ func (api *API) getWorkflowRunsFiltersV2Handler() ([]service.RbacChecker, servic
 		}
 }
 
+func parseWorkflowRunsSearchV2Query(query url.Values) (workflow_v2.SearchsRunsFilters, uint, uint, string) {
+	var filters workflow_v2.SearchsRunsFilters
+	var offset, limit uint
+	var sort string
+
+	for k, v := range query {
+		switch k {
+		case "workflow":
+			filters.Workflows = v
+		case "actor":
+			filters.Actors = v
+		case "status":
+			filters.Status = v
+		case "ref":
+			filters.Refs = v
+		case "workflow_ref":
+			filters.WorkflowRefs = v
+		case "repository":
+			filters.Repositories = v
+		case "workflow_repository":
+			filters.WorkflowRepositories = v
+		case "commit":
+			filters.Commits = v
+		case "template":
+			filters.Templates = v
+		case "offset":
+			value, _ := strconv.ParseUint(v[0], 10, 0)
+			offset = uint(value)
+		case "limit":
+			value, _ := strconv.ParseUint(v[0], 10, 0)
+			limit = uint(value)
+		case "sort":
+			sort = v[0]
+		default:
+			filters.AnnotationKeys = append(filters.AnnotationKeys, k)
+			filters.AnnotationValues = append(filters.AnnotationValues, v...)
+		}
+	}
+
+	filters.Lower()
+
+	return filters, offset, limit, sort
+}
+
 func (api *API) getWorkflowRunsSearchAllProjectV2Handler() ([]service.RbacChecker, service.Handler) {
 	return service.RBAC(api.isAdmin),
 		func(ctx context.Context, w http.ResponseWriter, req *http.Request) error {
-			offset := service.FormUInt(req, "offset")
-			limit := service.FormUInt(req, "limit")
-			sort := req.FormValue("sort")
-
-			filters := workflow_v2.SearchsRunsFilters{}
-
-			for k, v := range req.URL.Query() {
-				switch k {
-				case "workflow":
-					filters.Workflows = v
-				case "actor":
-					filters.Actors = v
-				case "status":
-					filters.Status = v
-				case "ref":
-					filters.Refs = v
-				case "workflow_ref":
-					filters.WorkflowRefs = v
-				case "repository":
-					filters.Repositories = v
-				case "workflow_repository":
-					filters.WorkflowRepositories = v
-				case "commit":
-					filters.Commits = v
-				case "template":
-					filters.Templates = v
-				case "offset", "limit", "sort":
-				default:
-					filters.AnnotationKeys = append(filters.AnnotationKeys, k)
-					filters.AnnotationValues = append(filters.AnnotationValues, v...)
-				}
-			}
-
-			filters.Lower()
+			filters, offset, limit, sort := parseWorkflowRunsSearchV2Query(req.URL.Query())
 
 			count, err := workflow_v2.CountAllRuns(ctx, api.mustDB(), filters)
 			if err != nil {
@@ -658,38 +669,7 @@ func (api *API) getWorkflowRunsSearchV2Handler() ([]service.RbacChecker, service
 			vars := mux.Vars(req)
 			pKey := vars["projectKey"]
 
-			offset := service.FormUInt(req, "offset")
-			limit := service.FormUInt(req, "limit")
-			sort := req.FormValue("sort")
-
-			filters := workflow_v2.SearchsRunsFilters{}
-
-			for k, v := range req.URL.Query() {
-				switch k {
-				case "workflow":
-					filters.Workflows = v
-				case "actor":
-					filters.Actors = v
-				case "status":
-					filters.Status = v
-				case "ref":
-					filters.Refs = v
-				case "workflow_ref":
-					filters.WorkflowRefs = v
-				case "repository":
-					filters.Repositories = v
-				case "workflow_repository":
-					filters.WorkflowRepositories = v
-				case "commit":
-					filters.Commits = v
-				case "template":
-					filters.Templates = v
-				case "offset", "limit", "sort":
-				default:
-					filters.AnnotationKeys = append(filters.AnnotationKeys, k)
-					filters.AnnotationValues = append(filters.AnnotationValues, v...)
-				}
-			}
+			filters, offset, limit, sort := parseWorkflowRunsSearchV2Query(req.URL.Query())
 
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
@@ -988,7 +968,7 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestartFailedJob, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
@@ -1066,6 +1046,7 @@ func (api *API) restartWorkflowRun(ctx context.Context, tx gorpmapper.SqlExecuto
 	if err := workflow_v2.UpdateRun(ctx, tx, wr); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -1227,6 +1208,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, *u.AuthConsumerUser.AuthentifiedUser)
 			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRuns[0].JobID, inputs, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow

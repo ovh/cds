@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishUserEvent(ctx context.Context, store cache.Store, typeEvent string, u sdk.AuthentifiedUser) {
+func PublishUserEvent(ctx context.Context, store cache.Store, typeEvent sdk.EventType, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(u)
 	e := sdk.UserEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
@@ -24,7 +24,7 @@ func PublishUserEvent(ctx context.Context, store cache.Store, typeEvent string, 
 	publish(ctx, store, e)
 }
 
-func PublishUserGPGEvent(ctx context.Context, store cache.Store, typeEvent string, g sdk.UserGPGKey, u sdk.AuthentifiedUser) {
+func PublishUserGPGEvent(ctx context.Context, store cache.Store, typeEvent sdk.EventType, g sdk.UserGPGKey, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(g)
 	e := sdk.UserGPGEvent{
 		GlobalEventV2: sdk.GlobalEventV2{

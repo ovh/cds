@@ -42,11 +42,19 @@ func InitRouterMetrics(ctx context.Context, s service.NamedService) error {
 			stats.UnitDimensionless)
 		WebSocketClients = stats.Int64(
 			"cds/websocket_clients",
-			"number of  websocket clients",
+			"number of websocket clients",
+			stats.UnitDimensionless)
+		WebSocketV2Clients = stats.Int64(
+			"cds/websocket_v2_clients",
+			"number of websocket v2 clients",
 			stats.UnitDimensionless)
 		WebSocketEvents = stats.Int64(
 			"cds/websocket_events",
 			"number of websocket events",
+			stats.UnitDimensionless)
+		WebSocketV2Events = stats.Int64(
+			"cds/websocket_v2_events",
+			"number of websocket v2 events",
 			stats.UnitDimensionless)
 		ServerRequestCount = stats.Int64(
 			"cds/http/server/request_count",
@@ -120,7 +128,9 @@ func InitRouterMetrics(ctx context.Context, s service.NamedService) error {
 			telemetry.NewViewCount("cds/http/router/router_errors", Errors, []tag.Key{tagServiceType, tagServiceName}),
 			telemetry.NewViewCount("cds/http/router/router_hits", Hits, []tag.Key{tagServiceType, tagServiceName}),
 			telemetry.NewViewLast("cds/http/router/websocket_clients", WebSocketClients, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewLast("cds/http/router/websocket_v2_clients", WebSocketV2Clients, []tag.Key{tagServiceType, tagServiceName}),
 			telemetry.NewViewCount("cds/http/router/websocket_events", WebSocketEvents, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewCount("cds/http/router/websocket_v2_events", WebSocketV2Events, []tag.Key{tagServiceType, tagServiceName}),
 			ServerRequestCountView,
 			ServerRequestBytesView,
 			ServerResponseBytesView,

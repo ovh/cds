@@ -37,6 +37,7 @@ import { NavbarModule } from './views/navbar/navbar.module';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { ConfigService } from 'app/service/services.module';
 import { AnalysisService } from "./service/analysis/analysis.service";
+import { EventV2Service } from './event-v2.service';
 
 describe('App: CDS', () => {
 
@@ -55,6 +56,7 @@ describe('App: CDS', () => {
                 HelpService,
                 MonitoringService,
                 EventService,
+                EventV2Service,
                 ProjectStore,
                 EnvironmentService,
                 AuthenticationService,

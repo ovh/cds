@@ -541,6 +541,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/user/{user}/gpgkey", nil, r.GETv2(api.getUserGPGKeysHandler), r.POSTv2(api.postUserGPGGKeyHandler))
 	r.Handle("/v2/user/{user}/gpgkey/{gpgKeyID}", nil, r.DELETEv2(api.deleteUserGPGKey))
 
+	r.Handle("/v2/ws", ScopeNone(), r.GET(api.getWebsocketV2Handler))
+
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 

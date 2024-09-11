@@ -10,13 +10,16 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType, vcsName, repoName string, rj sdk.V2WorkflowRunJob, rr sdk.V2WorkflowRunResult) {
+func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType sdk.EventType, vcsName, repoName string, rj sdk.V2WorkflowRunJob, rr sdk.V2WorkflowRunResult) {
 	bts, _ := json.Marshal(rr)
 	e := sdk.WorkflowRunJobRunResultEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: rj.ProjectKey,
 		},
 		VCSName:       vcsName,
@@ -38,13 +41,16 @@ func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType, v
 	publish(ctx, store, e)
 }
 
-func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, jobID string, gateInputs map[string]interface{}, u sdk.AuthentifiedUser) {
+func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobID string, gateInputs map[string]interface{}, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(gateInputs)
 	e := sdk.WorkflowRunJobManualEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: wr.ProjectKey,
 		},
 		VCSName:       wr.Contexts.Git.Server,
@@ -61,15 +67,17 @@ func PublishRunJobManualEvent(ctx context.Context, store cache.Store, eventType 
 	publish(ctx, store, e)
 }
 
-func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, rj sdk.V2WorkflowRunJob) {
+func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, rj sdk.V2WorkflowRunJob) {
 	bts, _ := json.Marshal(rj)
 	e := sdk.WorkflowRunJobEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: rj.ProjectKey,
-			Timestamp:  time.Now(),
 		},
 		VCSName:       wr.Contexts.Git.Server,
 		Repository:    wr.Contexts.Git.Repository,
@@ -92,15 +100,17 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType string
 	event.PublishEventJobSummary(ctx, ev, nil)
 }
 
-func PublishRunEvent(ctx context.Context, store cache.Store, eventType string, wr sdk.V2WorkflowRun, u sdk.AuthentifiedUser) {
+func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(wr)
 	e := sdk.WorkflowRunEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: wr.ProjectKey,
-			Timestamp:  time.Now(),
 		},
 		VCSName:       wr.Contexts.Git.Server,
 		Repository:    wr.Contexts.Git.Repository,

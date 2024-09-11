@@ -310,7 +310,9 @@ type API struct {
 	StartupTime         time.Time
 	Maintenance         bool
 	WSBroker            *websocket.Broker
+	WSV2Broker          *websocket.Broker
 	WSServer            *websocketServer
+	WSV2Server          *websocketV2Server
 	WSHatcheryBroker    *websocket.Broker
 	WSHatcheryServer    *websocketHatcheryServer
 	Cache               cache.Store
@@ -739,6 +741,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
+		return err
+	}
+	if err := a.initWebsocketV2(event_v2.EventUIWS); err != nil {
 		return err
 	}
 	if err := a.initHatcheryWebsocket(event_v2.EventHatcheryWS); err != nil {

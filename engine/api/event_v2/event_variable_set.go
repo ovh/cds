@@ -9,15 +9,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishProjectVariableSetEvent(ctx context.Context, store cache.Store, eventType string, projectKey string, vs sdk.ProjectVariableSet, u sdk.AuthentifiedUser) {
+func PublishProjectVariableSetEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, projectKey string, vs sdk.ProjectVariableSet, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(vs)
 	e := sdk.ProjectVariableSetEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: projectKey,
-			Timestamp:  time.Now(),
 		},
 		VariableSet: vs.Name,
 		UserID:      u.ID,
@@ -26,15 +28,17 @@ func PublishProjectVariableSetEvent(ctx context.Context, store cache.Store, even
 	publish(ctx, store, e)
 }
 
-func PublishProjectVariableSetItemEvent(ctx context.Context, store cache.Store, eventType string, projectKey string, vsName string, item sdk.ProjectVariableSetItem, u sdk.AuthentifiedUser) {
+func PublishProjectVariableSetItemEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, projectKey string, vsName string, item sdk.ProjectVariableSetItem, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(item)
 	e := sdk.ProjectVariableSetItemEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: projectKey,
-			Timestamp:  time.Now(),
 		},
 		VariableSet: vsName,
 		Item:        item.Name,

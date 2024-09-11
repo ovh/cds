@@ -9,15 +9,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishEntityEvent(ctx context.Context, store cache.Store, eventType string, vcsName, repoName string, ent sdk.Entity, u *sdk.AuthentifiedUser) {
+func PublishEntityEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, vcsName, repoName string, ent sdk.Entity, u *sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(ent)
 	e := sdk.EntityEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: ent.ProjectKey,
-			Timestamp:  time.Now(),
 		},
 		VCSName:    vcsName,
 		Repository: repoName,

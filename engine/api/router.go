@@ -37,8 +37,10 @@ var (
 	Errors                   *stats.Int64Measure
 	Hits                     *stats.Int64Measure
 	WebSocketClients         *stats.Int64Measure
+	WebSocketV2Clients       *stats.Int64Measure
 	WebSocketHatcheryClients *stats.Int64Measure
 	WebSocketEvents          *stats.Int64Measure
+	WebSocketV2Events        *stats.Int64Measure
 	ServerRequestCount       *stats.Int64Measure
 	ServerRequestBytes       *stats.Int64Measure
 	ServerResponseBytes      *stats.Int64Measure

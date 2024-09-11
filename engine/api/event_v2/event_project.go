@@ -9,15 +9,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func PublishProjectEvent(ctx context.Context, store cache.Store, eventType string, p sdk.Project, u sdk.AuthentifiedUser) {
+func PublishProjectEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, p sdk.Project, u sdk.AuthentifiedUser) {
 	bts, _ := json.Marshal(p)
 	e := sdk.ProjectEvent{
+		GlobalEventV2: sdk.GlobalEventV2{
+			ID:        sdk.UUID(),
+			Type:      eventType,
+			Payload:   bts,
+			Timestamp: time.Now(),
+		},
 		ProjectEventV2: sdk.ProjectEventV2{
-			ID:         sdk.UUID(),
-			Type:       eventType,
-			Payload:    bts,
 			ProjectKey: p.Key,
-			Timestamp:  time.Now(),
 		},
 		UserID:   u.ID,
 		Username: u.Username,
