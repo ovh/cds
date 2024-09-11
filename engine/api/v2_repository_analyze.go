@@ -561,7 +561,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
 			}
-			userRoles[t] = b
+			userRoles[t] = analysis.Data.CDSAdminWithMFA || b
 			log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, t, b)
 		}
 	}
