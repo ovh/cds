@@ -39,12 +39,12 @@
   </ng-template>
 </nz-result>
 
-<nz-result *ngIf="response && response.status === 'Skipped'" nzTitle="Analysis skipped." [nzSubTitle]="subTitle" [nzIcon]="iconTemplate">
+<nz-result *ngIf="response && response.status === 'Skipped'" nzTitle="Analysis skipped." [nzSubTitle]="subTitle">
   <ng-template #subTitle>
     <div class="message">
       <b>Analysis ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{response.analysis_id}}"></span><br />
       <b>Status:</b> {{response?.status}}
-      <b>Info:</b> {{response?.error}}
+      <b>Info:</b> {{response?.data?.error}}
     </div>
   </ng-template>
 </nz-result>
