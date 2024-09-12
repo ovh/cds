@@ -349,6 +349,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {
+		if strings.HasPrefix(s.Name, "provision-") {
+			continue
+		}
+
 		var annot = getVirtualMachineCDSAnnotation(s)
 		if annot == nil {
 			continue

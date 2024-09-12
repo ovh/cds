@@ -348,20 +348,41 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 		},
 	).Times(1)
 
+	var vm0 = object.VirtualMachine{
+		Common: object.Common{
+			InventoryPath: "worker0",
+		},
+	}
 	var vm1 = object.VirtualMachine{Common: object.Common{}}
 	var vm3 = object.VirtualMachine{Common: object.Common{}}
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm1, nil },
-	)
+	c.EXPECT().GetVirtualMachinePowerState(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
+			if vm.Name() == "worker0" {
+				return types.VirtualMachinePowerStatePoweredOn, nil
+			}
+			return types.VirtualMachinePowerStatePoweredOff, nil
+		},
+	).Times(3)
+
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
+			switch name {
+			case "worker0":
+				return &vm0, nil // 1 time
+			case "worker1":
+				return &vm1, nil // 2 times: 1 to get power status, 1 from deleteServer
+			default:
+				return &vm3, nil // 2 times: 1 to get power status, 1 from deleteServer
+			}
+		},
+	).Times(5)
+
 	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
 	)
 	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker3").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm3, nil },
 	)
 	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm3).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
