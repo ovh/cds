@@ -7,6 +7,7 @@ import (
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/event"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/guest"
 	"github.com/vmware/govmomi/object"
@@ -41,6 +42,7 @@ type VSphereClient interface {
 	LoadDatastore(ctx context.Context, name string) (*object.Datastore, error)
 	ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error)
 	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error)
+	LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine) ([]types.BaseEvent, error)
 }
 
 func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
@@ -104,6 +106,20 @@ func (c *vSphereClient) LoadVirtualMachine(ctx context.Context, name string) (*o
 	}
 
 	return vm, nil
+}
+
+func (c *vSphereClient) LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine) ([]types.BaseEvent, error) {
+	m := event.NewManager(c.vclient.Client)
+	objs := []types.ManagedObjectReference{vm.Reference()}
+
+	var res []types.BaseEvent
+	m.Events(ctx, objs, 10, false, false, func(ref types.ManagedObjectReference, events []types.BaseEvent) error {
+		event.Sort(events)
+		res = events
+		return nil
+	})
+
+	return res, nil
 }
 
 func (c *vSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {

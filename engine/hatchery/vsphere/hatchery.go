@@ -353,6 +353,20 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
+		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
+		if err != nil {
+			log.Error(ctx, "unable to load vm: %v", err)
+			return
+		}
+
+		events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm)
+		if err != nil {
+			log.Error(ctx, "unable to load vm events: %v", err)
+			return
+		}
+
+		log.Debug(ctx, "killAwolServers> events length", len(events))
+
 		if sdk.IsInArray(s.Name, h.cacheProvisioning.restarting) {
 			continue
 		}
