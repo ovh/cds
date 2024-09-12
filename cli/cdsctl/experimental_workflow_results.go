@@ -90,7 +90,10 @@ func workflowV2RunResultDownloadFunc(v cli.Values) error {
 			fmt.Printf("Run result %s of type %s cannot be downloaded\n", r.Name(), r.Type)
 			return nil
 		default:
-			cdnHTTPUrl = r.ArtifactManagerMetadata.Get("cdn_http_url")
+			cdnHTTPUrl, err = client.CDNURL()
+			if err != nil {
+				return err
+			}
 			cdnAPIRefHash = r.ArtifactManagerMetadata.Get("cdn_api_ref_hash")
 			artifactManagerPath = r.ArtifactManagerMetadata.Get("path")
 			artifactManagerRepo = r.ArtifactManagerMetadata.Get("repository")
