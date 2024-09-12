@@ -77,7 +77,7 @@ export class AppComponent implements OnInit, OnDestroy {
         private _monitoringService: MonitoringService,
         private _nzNotificationService: NzNotificationService,
         private _configService: NzConfigService,
-        private _eventV2Service : EventV2Service
+        private _eventV2Service: EventV2Service
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this._translate.addLangs(['en']);
@@ -118,7 +118,6 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.hideNavBar = e.url.startsWith('/auth');
             }
         });
-
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -191,7 +190,6 @@ export class AppComponent implements OnInit, OnDestroy {
                     this._eventV2Service.subscribeAutoFromUrl(e.url);
                     return;
                 }
-
             }))
             .pipe(map(() => this._activatedRoute))
             .pipe(map((route) => {

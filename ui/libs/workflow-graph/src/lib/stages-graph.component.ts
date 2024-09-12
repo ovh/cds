@@ -204,6 +204,11 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
         }
     }
 
+    unSelect() {
+        this.graph.selectNode(null);
+        this.clickOrigin();
+    }
+
     onResize() {
         this.resize();
     }
@@ -295,8 +300,8 @@ export class WorkflowV2StagesGraphComponent implements AfterViewInit, OnDestroy 
             this.graph = new WorkflowV2Graph(this.createForkJoinNodeComponent.bind(this), this.direction,
                 WorkflowV2StagesGraphComponent.minScale,
                 WorkflowV2StagesGraphComponent.maxScale);
-            this.navigationGraph = new NavigationGraph(this.nodes, this.direction);
         }
+        this.navigationGraph = new NavigationGraph(this.nodes, this.direction);
 
         this.nodes.forEach(n => {
             let component: ComponentRef<WorkflowV2JobsGraphOrNodeOrMatrixComponent>;

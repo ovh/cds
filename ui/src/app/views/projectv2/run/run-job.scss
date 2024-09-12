@@ -3,7 +3,8 @@
     color: #f1f1f1;
     overflow: hidden;
     height: 100%;
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 .header {
@@ -63,7 +64,7 @@
 }
 
 .scrollWrapper {
-    height: 100%;
+    flex: 1;
     overflow-y: auto;
     position: relative;
     padding-bottom: 19px;

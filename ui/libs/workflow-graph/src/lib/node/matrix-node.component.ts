@@ -94,9 +94,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
                 case V2WorkflowRunJobStatus.Fail:
                 case V2WorkflowRunJobStatus.Stopped:
                 case V2WorkflowRunJobStatus.Success:
-                    if (this.dates[key].started) {
-                        this.durations[key] = DurationService.duration(this.dates[key].started, this.dates[key].ended);
-                    }
+                    this.durations[key] = DurationService.duration(this.dates[key].started ?? this.dates[key].queued, this.dates[key].ended);
                     break;
                 default:
                     break;

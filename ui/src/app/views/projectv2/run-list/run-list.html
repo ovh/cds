@@ -68,7 +68,8 @@
 
 	<nz-list class="run-list" [nzLoading]="loading" nzSize="small" nzNoResult="test">
 		<nz-list-item *ngFor="let run of runs; let i = index; trackBy: trackRunElement"
-			[@appendToList]="animatedRuns[run.id] ? 'append' : 'active'">
+			[class.append]="!!animatedRuns[run.id]" [@appendToList]="animatedRuns[run.id] ? 'append' : 'active'"
+			(mouseenter)="onMouseEnterRun(run.id)">
 			<ng-container>
 				<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
 				</nz-list-item-meta>

@@ -61,6 +61,17 @@
     flex: 1;
     overflow-y: auto;
 
+
+    nz-list-item {
+      &.append {
+        background-color: #f5f5f5;
+
+        :host-context(.night) & {
+          background-color: rgba(255, 255, 255, 0.08);
+        }
+      }
+    }
+
     nz-list-item-meta {
       ::ng-deep {
         .ant-list-item-meta-content {

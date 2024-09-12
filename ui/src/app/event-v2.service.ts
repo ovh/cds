@@ -6,6 +6,7 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { WebsocketV2Event, WebsocketV2Filter, WebsocketV2FilterType } from './model/websocket-v2';
 import { Store } from '@ngxs/store';
 import { AddEventV2 } from './store/event-v2.action';
+import { FeatureNames, FeatureService } from './service/feature/feature.service';
 
 @Injectable()
 export class EventV2Service {
@@ -17,7 +18,8 @@ export class EventV2Service {
     constructor(
         private _router: Router,
         private _toastService: ToastService,
-        private _store: Store
+        private _store: Store,
+        private _featureService: FeatureService
     ) { }
 
     stopWebsocket() {
@@ -74,11 +76,18 @@ export class EventV2Service {
                 if (urlSplitted.length === 1) { // Ignore project creation page
                     break;
                 }
+
                 let projectKey = urlSplitted[1].split('?')[0];
-                fs.push(<WebsocketV2Filter>{
-                    type: WebsocketV2FilterType.PROJECT,
-                    project_key: projectKey
+
+                this._featureService.isEnabled(FeatureNames.AllAsCode, { project_key: projectKey }).subscribe(f => {
+                    if (f.enabled) {
+                        fs.push(<WebsocketV2Filter>{
+                            type: WebsocketV2FilterType.PROJECT,
+                            project_key: projectKey
+                        });
+                    }
                 });
+
                 break;
         }
         this.updateFilters(fs);

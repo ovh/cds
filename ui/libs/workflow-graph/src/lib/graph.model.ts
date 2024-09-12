@@ -62,7 +62,6 @@ export class NavigationGraph {
     constructor(nodes: Array<GraphNode>, direction: GraphDirection) {
         // Create root join
         this.nodes['root'] = new NavigationGraphNode(NavigationGraphNodeType.Join);
-
         // Create each node
         nodes.forEach(n => {
             this.nodes[`in-${n.name}`] = new NavigationGraphNode(NavigationGraphNodeType.Join);
@@ -99,7 +98,7 @@ export class NavigationGraph {
                         switch (sub.type) {
                             case GraphNodeType.Matrix:
                                 const alls = GraphNode.generateMatrixOptions(sub.job.strategy.matrix);
-                                const keys = alls.map(option => Array.from(option.keys()).sort().map(key => `${key}:${option.get(key)}`).join(', '));
+                                const keys = alls.map(option => Array.from(option.keys()).sort().map(key => `${key}: ${option.get(key)}`).join(', '));
                                 keys.forEach((k, i) => {
                                     this.nodes[`${n.name}-${sub.name}-${k}`] = new NavigationGraphNode(NavigationGraphNodeType.Job);
                                     if (direction === GraphDirection.HORIZONTAL) {
@@ -136,7 +135,7 @@ export class NavigationGraph {
                     break;
                 case GraphNodeType.Matrix:
                     const alls = GraphNode.generateMatrixOptions(n.job.strategy.matrix);
-                    const keys = alls.map(option => Array.from(option.keys()).sort().map(key => `${key}:${option.get(key)}`).join(', '));
+                    const keys = alls.map(option => Array.from(option.keys()).sort().map(key => `${key}: ${option.get(key)}`).join(', '));
                     keys.forEach((k, i) => {
                         this.nodes[`${n.name}-${k}`] = new NavigationGraphNode(NavigationGraphNodeType.Job);
                         if (direction === GraphDirection.HORIZONTAL) {
@@ -296,7 +295,7 @@ export class NavigationGraph {
 
     getEntryNode(): string {
         const key = Object.keys(this.nodes).find(n => this.links.findIndex(l => l.out === n) === -1);
-        if(this.nodes[key].type === NavigationGraphNodeType.Job) {
+        if (this.nodes[key].type === NavigationGraphNodeType.Job) {
             return key
         }
         return this.getNext(key);
