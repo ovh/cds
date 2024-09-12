@@ -38,6 +38,7 @@ import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { ConfigService } from 'app/service/services.module';
 import { AnalysisService } from "./service/analysis/analysis.service";
 import { EventV2Service } from './event-v2.service';
+import { FeatureService } from './service/feature/feature.service';
 
 describe('App: CDS', () => {
 
@@ -47,24 +48,25 @@ describe('App: CDS', () => {
                 AppComponent
             ],
             providers: [
-                Store,
                 AnalysisService,
-                WorkflowService,
-                WorkflowRunService,
-                UserService,
-                NavbarService,
-                HelpService,
-                MonitoringService,
-                EventService,
-                EventV2Service,
-                ProjectStore,
-                EnvironmentService,
+                AppService,
                 AuthenticationService,
                 ConfigService,
+                EnvironmentService,
+                EventService,
+                EventV2Service,
+                FeatureService,
+                HelpService,
+                MonitoringService,
+                NavbarService,
                 NotificationService,
-                AppService,
+                ProjectStore,
                 RouterService,
+                Store,
                 ToastService,
+                UserService,
+                WorkflowRunService,
+                WorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes },
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService },
