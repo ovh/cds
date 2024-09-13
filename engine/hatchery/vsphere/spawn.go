@@ -169,7 +169,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return err
 	}
 
-	vmWorker, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef)
+	vmWorker, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, spawnArgs.WorkerName)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 		return nil, err
 	}
 
-	clonedVM, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef)
+	clonedVM, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, workerName)
 	if err != nil {
 		return nil, err
 	}
@@ -460,7 +460,7 @@ func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, work
 		return err
 	}
 
-	clonedVM, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef)
+	clonedVM, err := h.vSphereClient.NewVirtualMachine(ctx, cloneSpec, cloneRef, workerName)
 	if err != nil {
 		return err
 	}

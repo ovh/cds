@@ -222,18 +222,18 @@ func (mr *MockVSphereClientMockRecorder) MarkVirtualMachineAsTemplate(ctx, vm in
 }
 
 // NewVirtualMachine mocks base method.
-func (m *MockVSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+func (m *MockVSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewVirtualMachine", ctx, cloneSpec, ref)
+	ret := m.ctrl.Call(m, "NewVirtualMachine", ctx, cloneSpec, ref, vmName)
 	ret0, _ := ret[0].(*object.VirtualMachine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // NewVirtualMachine indicates an expected call of NewVirtualMachine.
-func (mr *MockVSphereClientMockRecorder) NewVirtualMachine(ctx, cloneSpec, ref interface{}) *gomock.Call {
+func (mr *MockVSphereClientMockRecorder) NewVirtualMachine(ctx, cloneSpec, ref, vmName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).NewVirtualMachine), ctx, cloneSpec, ref)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewVirtualMachine", reflect.TypeOf((*MockVSphereClient)(nil).NewVirtualMachine), ctx, cloneSpec, ref, vmName)
 }
 
 // ProcessManager mocks base method.
