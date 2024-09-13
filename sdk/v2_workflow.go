@@ -28,7 +28,7 @@ type V2Workflow struct {
 	On           *WorkflowOn              `json:"-" yaml:"-"`
 	Stages       map[string]WorkflowStage `json:"stages,omitempty"`
 	Gates        map[string]V2JobGate     `json:"gates,omitempty"`
-	Jobs         map[string]V2Job         `json:"jobs"`
+	Jobs         map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs"`
 	Env          map[string]string        `json:"env,omitempty"`
 	Integrations []string                 `json:"integrations,omitempty"`
 	VariableSets []string                 `json:"vars,omitempty"`
@@ -36,8 +36,8 @@ type V2Workflow struct {
 	Annotations  map[string]string        `json:"annotations,omitempty"`
 
 	// Template fields
-	From       string            `json:"from,omitempty"`
-	Parameters map[string]string `json:"parameters,omitempty"`
+	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`
+	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from"`
 }
 
 type CommitStatus struct {

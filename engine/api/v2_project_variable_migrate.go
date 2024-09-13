@@ -25,11 +25,6 @@ func (api *API) postMigrateAsCodeVariableToVariableSetItemHandler() ([]service.R
 				return err
 			}
 
-			vs, err := project.LoadVariableSetByName(ctx, api.mustDB(), pKey, copyRequest.VariableSetName)
-			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-				return err
-			}
-
 			proj, err := project.Load(ctx, api.mustDB(), pKey)
 			if err != nil {
 				return err
@@ -45,6 +40,21 @@ func (api *API) postMigrateAsCodeVariableToVariableSetItemHandler() ([]service.R
 				return sdk.WithStack(err)
 			}
 			defer tx.Rollback() //nolint
+
+			vs, err := project.LoadVariableSetByName(ctx, tx, pKey, copyRequest.VariableSetName)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				return err
+			}
+
+			if sdk.ErrorIs(err, sdk.ErrNotFound) {
+				vs = &sdk.ProjectVariableSet{
+					Name:       copyRequest.VariableSetName,
+					ProjectKey: pKey,
+				}
+				if err := project.InsertVariableSet(ctx, tx, vs); err != nil {
+					return err
+				}
+			}
 
 			it := &sdk.ProjectVariableSetItem{
 				ProjectVariableSetID: vs.ID,
