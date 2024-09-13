@@ -110,57 +110,57 @@ func (s *Service) processCheckout(ctx context.Context, op *sdk.Operation) error 
 		if gpgKeyID == "" {
 			op.Setup.Checkout.Result.CommitVerified = false
 			op.Setup.Checkout.Result.Msg = "commit not signed"
-			return nil
-		}
-		ctx = context.WithValue(ctx, cdslog.GpgKey, gpgKeyID)
-		op.Setup.Checkout.Result.SignKeyID = gpgKeyID
+		} else {
+			ctx = context.WithValue(ctx, cdslog.GpgKey, gpgKeyID)
+			op.Setup.Checkout.Result.SignKeyID = gpgKeyID
 
-		// Search for public key on vcsserver
-		var publicKey string
-		vcsKeys, has := vcsPublicKeys[op.VCSServer]
-		if has {
-			for _, k := range vcsKeys {
-				if k.KeyID == gpgKeyID {
-					publicKey = k.Public
-					break
+			// Search for public key on vcsserver
+			var publicKey string
+			vcsKeys, has := vcsPublicKeys[op.VCSServer]
+			if has {
+				for _, k := range vcsKeys {
+					if k.KeyID == gpgKeyID {
+						publicKey = k.Public
+						break
+					}
 				}
 			}
-		}
 
-		// If not key found, try to get it from a user
-		if publicKey == "" {
-			// Retrieve gpg public key
-			userKey, err := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
+			// If not key found, try to get it from a user
+			if publicKey == "" {
+				// Retrieve gpg public key
+				userKey, err := s.Client.UserGpgKeyGet(ctx, gpgKeyID)
+				if err != nil {
+					op.Setup.Checkout.Result.CommitVerified = false
+					op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
+					return nil
+				}
+				publicKey = userKey.PublicKey
+			}
+
+			// Import gpg public key
+			fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, publicKey)
 			if err != nil {
-				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS: %v", gpgKeyID, err)
-				return nil
+				return err
 			}
-			publicKey = userKey.PublicKey
-		}
+			log.Debug(ctx, "key: %s, fileName: %s imported", gpgKeyID, fileName)
 
-		// Import gpg public key
-		fileName, _, err := sdk.ImportGPGKey(os.TempDir(), gpgKeyID, publicKey)
-		if err != nil {
-			return err
-		}
-		log.Debug(ctx, "key: %s, fileName: %s imported", gpgKeyID, fileName)
-
-		// Check commit signature
-		if op.Setup.Checkout.Tag != "" {
-			if _, err := gitRepo.VerifyTag(ctx, op.Setup.Checkout.Tag); err != nil {
-				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
-				return nil
+			// Check commit signature
+			if op.Setup.Checkout.Tag != "" {
+				if _, err := gitRepo.VerifyTag(ctx, op.Setup.Checkout.Tag); err != nil {
+					op.Setup.Checkout.Result.CommitVerified = false
+					op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
+					return nil
+				}
+			} else {
+				if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
+					op.Setup.Checkout.Result.CommitVerified = false
+					op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
+					return nil
+				}
 			}
-		} else {
-			if err := gitRepo.VerifyCommit(ctx, op.Setup.Checkout.Commit); err != nil {
-				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("%v", err)
-				return nil
-			}
+			op.Setup.Checkout.Result.CommitVerified = true
 		}
-		op.Setup.Checkout.Result.CommitVerified = true
 	}
 
 	if op.Setup.Checkout.GetChangeSet {

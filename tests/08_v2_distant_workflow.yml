@@ -89,7 +89,11 @@ testcases:
             image: buildpack-deps:buster
         workflows/distant.yaml:
           name: {{.cds_workflow}}
-          on: [workflow-update,push]
+          on: 
+            workflow-update:
+              target_branch: master
+            push:
+              paths: [foo.*]
           repository:
             name: "{{.git.user}}/{{.git_repo_src}}"
             vcs: my_vcs_server
