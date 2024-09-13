@@ -265,6 +265,8 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 			},
 		},
 	}
+	h.Config.WorkerTTL = 5
+	h.Config.WorkerRegistrationTTL = 5
 
 	cdsclient.EXPECT().WorkerList(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]sdk.Worker, error) {
@@ -278,6 +280,45 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 			}, nil
 		},
 	)
+
+	c.EXPECT().GetVirtualMachinePowerState(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
+			switch vm.Name() {
+			case "worker0":
+				return types.VirtualMachinePowerStatePoweredOn, nil
+			default:
+				return types.VirtualMachinePowerStatePoweredOff, nil
+			}
+		},
+	).AnyTimes()
+
+	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
+			t.Logf("LoadVirtualMachineEvents for %s", vm.Name())
+			switch vm.Name() {
+			case "worker0":
+				return []types.BaseEvent{
+					&types.VmStartingEvent{
+						VmEvent: types.VmEvent{
+							Event: types.Event{
+								CreatedTime: time.Now(),
+							},
+						},
+					},
+				}, nil
+			default:
+				return []types.BaseEvent{
+					&types.VmStartingEvent{
+						VmEvent: types.VmEvent{
+							Event: types.Event{
+								CreatedTime: time.Now().Add(-10 * time.Minute),
+							},
+						},
+					},
+				}, nil
+			}
+		},
+	).Times(3)
 
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]mo.VirtualMachine, error) {
@@ -339,30 +380,36 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 				},
 			}, nil
 		},
-	).Times(2)
+	).Times(1)
 
 	var vm0 = object.VirtualMachine{
 		Common: object.Common{
 			InventoryPath: "worker0",
 		},
 	}
-	var vm1 = object.VirtualMachine{Common: object.Common{}}
-	var vm3 = object.VirtualMachine{Common: object.Common{}}
+	var vm1 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker1"}}
+	var vm3 = object.VirtualMachine{Common: object.Common{InventoryPath: "worker3"}}
 
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker0").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm0, nil },
-	)
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm1, nil },
-	)
+	c.EXPECT().LoadVirtualMachine(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vmname string) (*object.VirtualMachine, error) {
+			t.Logf("calling LoadVirtualMachine: %s", vmname)
+			switch vmname {
+			case "worker0":
+				return &vm0, nil
+			case "worker1":
+				return &vm1, nil
+			case "worker3":
+				return &vm3, nil
+			}
+			return nil, fmt.Errorf("not expected: %s", vmname)
+		},
+	).Times(5)
+
 	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
 	)
 	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm1).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },
-	)
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker3").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) { return &vm3, nil },
 	)
 	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm3).DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine) error { return nil },

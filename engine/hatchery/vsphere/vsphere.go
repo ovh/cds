@@ -42,7 +42,7 @@ type VSphereClient interface {
 	LoadDatastore(ctx context.Context, name string) (*object.Datastore, error)
 	ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error)
 	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error)
-	LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine) ([]types.BaseEvent, error)
+	LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error)
 }
 
 func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
@@ -108,7 +108,17 @@ func (c *vSphereClient) LoadVirtualMachine(ctx context.Context, name string) (*o
 	return vm, nil
 }
 
-func (c *vSphereClient) LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine) ([]types.BaseEvent, error) {
+// eventTypes could be:
+/*
+EventEx
+TaskEvent
+VmPoweredOffEvent
+VmPoweredOnEvent
+VmReconfiguredEvent
+VmStartingEvent
+...
+*/
+func (c *vSphereClient) LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
 	m := event.NewManager(c.vclient.Client)
 	objs := []types.ManagedObjectReference{vm.Reference()}
 
@@ -117,7 +127,7 @@ func (c *vSphereClient) LoadVirtualMachineEvents(ctx context.Context, vm *object
 		event.Sort(events)
 		res = events
 		return nil
-	})
+	}, eventTypes...)
 
 	return res, nil
 }

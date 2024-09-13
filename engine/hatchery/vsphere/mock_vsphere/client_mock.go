@@ -187,6 +187,26 @@ func (mr *MockVSphereClientMockRecorder) LoadVirtualMachineDevices(ctx, vm inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadVirtualMachineDevices", reflect.TypeOf((*MockVSphereClient)(nil).LoadVirtualMachineDevices), ctx, vm)
 }
 
+// LoadVirtualMachineEvents mocks base method.
+func (m *MockVSphereClient) LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, vm}
+	for _, a := range eventTypes {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "LoadVirtualMachineEvents", varargs...)
+	ret0, _ := ret[0].([]types.BaseEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadVirtualMachineEvents indicates an expected call of LoadVirtualMachineEvents.
+func (mr *MockVSphereClientMockRecorder) LoadVirtualMachineEvents(ctx, vm interface{}, eventTypes ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, vm}, eventTypes...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadVirtualMachineEvents", reflect.TypeOf((*MockVSphereClient)(nil).LoadVirtualMachineEvents), varargs...)
+}
+
 // MarkVirtualMachineAsTemplate mocks base method.
 func (m *MockVSphereClient) MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error {
 	m.ctrl.T.Helper()

@@ -353,65 +353,78 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
+		// skipping vm starting with provision-
+		if strings.HasPrefix(s.Name, "provision-") {
+			continue
+		}
+
+		if h.isMarkedToDelete(s) {
+			log.Info(ctx, "deleting machine %q as it's already marked to be deleted", s.Name)
+			if err := h.deleteServer(ctx, s); err != nil {
+				ctx = sdk.ContextWithStacktrace(ctx, err)
+				log.Error(ctx, "killAwolServers> cannot delete server (markedToDelete) %s", s.Name)
+			}
+			continue
+		}
+
+		// reload virtual machine to have fresh data from vsphere
 		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
 		if err != nil {
 			log.Error(ctx, "unable to load vm: %v", err)
 			return
 		}
 
-		events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm)
+		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
+		eventVmStartingEvent, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent")
 		if err != nil {
-			log.Error(ctx, "unable to load vm events: %v", err)
+			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
 			return
 		}
 
-		log.Debug(ctx, "killAwolServers> events length", len(events))
-
-		if sdk.IsInArray(s.Name, h.cacheProvisioning.restarting) {
+		// if we don't have a types.VmStartingEvent, we skip this vm
+		if len(eventVmStartingEvent) == 0 {
+			log.Debug(ctx, "killAwolServers> no VmStartingEvent found - we keep this vm")
 			continue
 		}
 
-		var isMarkToDelete = h.isMarkedToDelete(s)
-		var isPoweredOff = s.Summary.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn
-
-		var bootTime = annot.Created
-		if s.Runtime.BootTime != nil {
-			bootTime = *s.Runtime.BootTime
+		powerstate, err := h.vSphereClient.GetVirtualMachinePowerState(ctx, vm)
+		if err != nil {
+			log.Error(ctx, "unable to get vm %q powerstate: %v", s.Name, err)
+			continue
 		}
-		if !isPoweredOff && !isMarkToDelete {
+
+		if powerstate == types.VirtualMachinePowerStatePoweredOn {
+			var vmStartedTime = eventVmStartingEvent[0].GetEvent().CreatedTime
+
 			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
-			var expire = bootTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+			var expire = vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			// Else it's WorkerTTL (default 120 minutes)
 			for _, w := range allWorkers {
 				if w.Name() == s.Name {
-					expire = bootTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+					expire = vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 					break
 				}
 			}
 
-			log.Debug(ctx, "checking if %v is outdated. Created on :%v. Expires on %v", s.Name, bootTime, expire)
+			log.Debug(ctx, "checking if %v is outdated. vmStartedTime: %v. expires:%v", s.Name, vmStartedTime, expire)
 			// If the VM is older that the WorkerTTL config, let's mark it as delete
 
 			if time.Now().After(expire) {
-				vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
-				if err != nil {
+				log.Info(ctx, "deleting machine %q - expired. vmStartedTime:%s expire:%s", s.Name, vmStartedTime, expire)
+				if err := h.deleteServer(ctx, s); err != nil {
 					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "unable to load vm %s: %v", s.Name, err)
-					continue
+					log.Error(ctx, "killAwolServers> cannot delete server (expire) %s", s.Name)
 				}
-				log.Info(ctx, "virtual machine %q as been created on %q, it has to be deleted - expire %q", s.Name, bootTime, expire)
-				h.markToDelete(ctx, vm)
+				continue
+			} else {
+				log.Debug(ctx, "We keep %v as not expired", s.Name)
 			}
-		}
-
-		// If the VM is mark as delete or is OFF and is not a model or a register-only VM, let's delete it
-		// We also exclude not used provisionned VM from deletion
-		isNotUsedProvisionned := annot.Provisioning && annot.WorkerName == s.Name
-		if isMarkToDelete || (isPoweredOff && (!annot.Model || annot.RegisterOnly) && !isNotUsedProvisionned) {
-			log.Info(ctx, "deleting machine %q as been created on annot.Created:%q runtime.BootTime:%q, it has to be deleted - powerState:%s isMarkToDelete:%t isPoweredOff:%t annot.Model:%t annot.RegisterOnly:%t", s.Name, annot.Created, s.Runtime.BootTime, s.Summary.Runtime.PowerState, isMarkToDelete, isPoweredOff, annot.Model, annot.RegisterOnly)
+		} else if annot.RegisterOnly || !annot.Model { // powerOff here
+			// if VM is OFF and is not a model or a register-only VM, let's delete it
+			log.Info(ctx, "deleting machine %q - poweredOff", s.Name)
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "killAwolServers> cannot delete server %s", s.Name)
+				log.Error(ctx, "killAwolServers> cannot delete server (poweredOff) %s", s.Name)
 			}
 		}
 	}

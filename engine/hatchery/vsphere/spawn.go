@@ -89,15 +89,9 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		if provisionnedVMWorker != nil {
 			log.Info(ctx, "starting worker %q with provisionned machine %q", spawnArgs.Model.GetName(), provisionnedVMWorker.Name())
 
-			// Before restart it, keep it in the cache for a few minutes to avoid the "killAwolServer" to delete it
-			h.cacheProvisioning.mu.Lock()
-			h.cacheProvisioning.restarting = append(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
-			h.cacheProvisioning.mu.Unlock()
-
 			if err := h.vSphereClient.RenameVirtualMachine(ctx, provisionnedVMWorker, spawnArgs.WorkerName); err != nil {
 				h.cacheProvisioning.mu.Lock()
 				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
-				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 				h.cacheProvisioning.mu.Unlock()
 				return sdk.WrapError(err, "unable to rename VM %q", provisionnedVMWorker.Name())
 			}
@@ -106,7 +100,6 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 			if err := h.vSphereClient.StartVirtualMachine(ctx, provisionnedVMWorker); err != nil {
 				h.cacheProvisioning.mu.Lock()
-				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
 				h.cacheProvisioning.mu.Unlock()
 
@@ -126,7 +119,6 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 
 			if err := h.vSphereClient.WaitForVirtualMachineIP(ctx, provisionnedVMWorker, &annot.IPAddress); err != nil {
 				h.cacheProvisioning.mu.Lock()
-				h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 				h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
 				h.cacheProvisioning.mu.Unlock()
 
@@ -138,7 +130,6 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 			errLaunch := h.launchScriptWorker(ctx, spawnArgs, provisionnedVMWorker)
 
 			h.cacheProvisioning.mu.Lock()
-			h.cacheProvisioning.restarting = sdk.DeleteFromArray(h.cacheProvisioning.restarting, spawnArgs.WorkerName)
 			h.cacheProvisioning.using = sdk.DeleteFromArray(h.cacheProvisioning.using, provisionnedVMWorker.Name())
 			h.cacheProvisioning.mu.Unlock()
 
@@ -436,8 +427,6 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMa
 	h.cacheToDelete.list = append(h.cacheToDelete.list, vmRef.Name)
 }
 
-const maxLength = 63
-
 func (h *HatcheryVSphere) ProvisionWorker(ctx context.Context, m sdk.Model, workerName string) (err error) {
 	vmTemplate, err := h.vSphereClient.LoadVirtualMachine(ctx, m.Name)
 	if err != nil {
@@ -508,11 +497,6 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, m sdk.Work
 
 		h.cacheProvisioning.mu.Lock()
 		if sdk.IsInArray(machine.Name, h.cacheProvisioning.pending) {
-			h.cacheProvisioning.mu.Unlock()
-			continue
-		}
-
-		if sdk.IsInArray(machine.Name, h.cacheProvisioning.restarting) {
 			h.cacheProvisioning.mu.Unlock()
 			continue
 		}
