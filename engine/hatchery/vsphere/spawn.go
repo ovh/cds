@@ -104,7 +104,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				h.cacheProvisioning.mu.Unlock()
 
 				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
-				h.markToDelete(ctx, provisionnedVMWorker)
+				h.markToDelete(ctx, provisionnedVMWorker.Name())
 				return sdk.WrapError(err, "unable to start VM %q", spawnArgs.WorkerName)
 			}
 
@@ -123,7 +123,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 				h.cacheProvisioning.mu.Unlock()
 
 				_ = h.vSphereClient.ShutdownVirtualMachine(ctx, provisionnedVMWorker)
-				h.markToDelete(ctx, provisionnedVMWorker)
+				h.markToDelete(ctx, provisionnedVMWorker.Name())
 				return sdk.WrapError(err, "unable to get VM %q IP Address", spawnArgs.WorkerName)
 			}
 
@@ -247,7 +247,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.GetName(), err)
 		}
-		h.markToDelete(ctx, clonedVM)
+		h.markToDelete(ctx, clonedVM.Name())
 		return nil, err
 	}
 
@@ -258,7 +258,7 @@ func (h *HatcheryVSphere) createVirtualMachineTemplate(ctx context.Context, mode
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", model.GetName(), err)
 		}
-		h.markToDelete(ctx, clonedVM)
+		h.markToDelete(ctx, clonedVM.Name())
 		return nil, err
 	}
 
@@ -367,7 +367,7 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.GetPath(), err)
 		}
-		h.markToDelete(ctx, vm)
+		h.markToDelete(ctx, vm.Name())
 		return err
 	}
 
@@ -386,14 +386,14 @@ func (h *HatcheryVSphere) launchScriptWorker(ctx context.Context, spawnArgs hatc
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "createVMModel> unable to shutdown vm %q: %v", spawnArgs.Model.GetName(), err)
 		}
-		h.markToDelete(ctx, vm)
+		h.markToDelete(ctx, vm.Name())
 		return err
 	}
 
 	return nil
 }
 
-func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMachine) {
+func (h *HatcheryVSphere) markToDelete(ctx context.Context, vmName string) {
 	h.cacheToDelete.mu.Lock()
 	defer h.cacheToDelete.mu.Unlock()
 
@@ -406,14 +406,14 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vm *object.VirtualMa
 
 	var vmRef *mo.VirtualMachine
 	for i := range allVMRef {
-		if allVMRef[i].Name == vm.Name() {
+		if allVMRef[i].Name == vmName {
 			vmRef = &allVMRef[i]
 			break
 		}
 	}
 
 	if vmRef == nil {
-		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", vm.Name()))
+		err := sdk.WithStack(fmt.Errorf("virtual machine ref %q not found", vmName))
 		ctx = sdk.ContextWithStacktrace(ctx, err)
 		log.Error(ctx, "unable to get virtual machines: %v", err)
 		return

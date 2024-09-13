@@ -222,29 +222,9 @@ func TestHatcheryVSphere_killDisabledWorkers(t *testing.T) {
 		},
 	).AnyTimes()
 
-	var vm = object.VirtualMachine{
-		Common: object.Common{},
-	}
-
-	c.EXPECT().LoadVirtualMachine(gomock.Any(), "worker1").DoAndReturn(
-		func(ctx context.Context, name string) (*object.VirtualMachine, error) {
-			return &vm, nil
-		},
-	)
-
-	c.EXPECT().ShutdownVirtualMachine(gomock.Any(), &vm).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
-			return nil
-		},
-	)
-
-	c.EXPECT().DestroyVirtualMachine(gomock.Any(), &vm).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) error {
-			return nil
-		},
-	)
-
 	h.killDisabledWorkers(context.Background())
+
+	assert.Equal(t, 1, len(h.cacheToDelete.list))
 }
 
 func TestHatcheryVSphere_killAwolServers(t *testing.T) {

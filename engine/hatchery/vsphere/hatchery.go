@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -318,8 +319,8 @@ func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 	for _, w := range workerPoolDisabled {
 		for _, s := range srvs {
 			if s.Name == w.Name {
-				log.Info(ctx, " killDisabledWorkers %v", s.Name)
-				_ = h.deleteServer(ctx, s)
+				log.Info(ctx, " killDisabledWorkers markToDelete %v", s.Name)
+				h.markToDelete(ctx, s.Name)
 				break
 			}
 		}
@@ -345,6 +346,8 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 	srvs := h.getVirtualMachines(ctx)
 
 	for _, s := range srvs {
+		ctx = context.WithValue(ctx, cdslog.AuthWorkerName, s.Name)
+
 		var annot = getVirtualMachineCDSAnnotation(ctx, s)
 		if annot == nil {
 			continue
@@ -353,11 +356,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
-		// skipping vm starting with provision-
-		if strings.HasPrefix(s.Name, "provision-") {
-			continue
-		}
-
+		// if VM is marked to be deleted by the spawn goroutine (could be provision- or real worker), then delete it now.
 		if h.isMarkedToDelete(s) {
 			log.Info(ctx, "deleting machine %q as it's already marked to be deleted", s.Name)
 			if err := h.deleteServer(ctx, s); err != nil {
@@ -367,9 +366,15 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
+		// skipping vm starting with provision-
+		if strings.HasPrefix(s.Name, "provision-") {
+			continue
+		}
+
 		// reload virtual machine to have fresh data from vsphere
 		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
 		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to load vm: %v", err)
 			return
 		}
@@ -377,6 +382,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
 		eventVmStartingEvent, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent")
 		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
 			return
 		}
@@ -389,7 +395,12 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
 		powerstate, err := h.vSphereClient.GetVirtualMachinePowerState(ctx, vm)
 		if err != nil {
-			log.Error(ctx, "unable to get vm %q powerstate: %v", s.Name, err)
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			if !strings.Contains(err.Error(), "has already been deleted or has not been completely created") {
+				log.Error(ctx, "unable to get vm %q powerstate: %v", s.Name, err)
+			} else {
+				log.Info(ctx, "vm %s already deleted", s.Name)
+			}
 			continue
 		}
 
@@ -397,9 +408,15 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			var vmStartedTime = eventVmStartingEvent[0].GetEvent().CreatedTime
 
 			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
+			// The registration duration, is the time between the createTime of the VM and the start time of the worker from cds api point of view
 			var expire = vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+
 			// Else it's WorkerTTL (default 120 minutes)
 			for _, w := range allWorkers {
+				// if the worker is knowned by CDS Api, the worker TTL is used:
+				// if the CDS session is set to 24 h, and the worker TTL to 2h,
+				// then, the worker will be removed even if he is working on a job
+				// it should be the same duration as the CDS session.
 				if w.Name() == s.Name {
 					expire = vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
 					break
