@@ -298,7 +298,7 @@ func TestHatcheryVSphere_killAwolServers(t *testing.T) {
 				}, nil
 			}
 		},
-	).Times(3)
+	).Times(5)
 
 	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
 		func(ctx context.Context) ([]mo.VirtualMachine, error) {
