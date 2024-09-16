@@ -446,7 +446,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 					log.Error(ctx, "event machine %q - can't load LoadVirtualMachineEvents", s.Name, err)
 				}
 				for _, e := range events {
-					log.Debug(ctx, "event machine %q - event: %+v", s.Name, e)
+					log.Debug(ctx, "event machine %q - event: %T details:%+v", s.Name, e, e)
 				}
 			}
 
