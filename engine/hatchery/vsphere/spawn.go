@@ -19,16 +19,18 @@ import (
 )
 
 type annotation struct {
-	HatcheryName            string    `json:"hatchery_name,omitempty"`
-	WorkerName              string    `json:"worker_name,omitempty"`
-	RegisterOnly            bool      `json:"register_only,omitempty"`
-	Provisioning            bool      `json:"provisioning,omitempty"`
-	WorkerModelPath         string    `json:"worker_model_path,omitempty"`
-	WorkerModelLastModified string    `json:"worker_model_last_modified,omitempty"`
-	Model                   bool      `json:"model,omitempty"`
-	Created                 time.Time `json:"created,omitempty"`
-	JobID                   string    `json:"job_id,omitempty"`
-	IPAddress               string    `json:"ip_address,omitempty"`
+	HatcheryName            string `json:"hatchery_name,omitempty"`
+	WorkerName              string `json:"worker_name,omitempty"`
+	RegisterOnly            bool   `json:"register_only,omitempty"`
+	Provisioning            bool   `json:"provisioning,omitempty"`
+	WorkerModelPath         string `json:"worker_model_path,omitempty"`
+	WorkerModelLastModified string `json:"worker_model_last_modified,omitempty"`
+	// Model is true for VM template used by provision / new worker without provision
+	// we don't want to destroy (with killawolServer for exemple) a vm with model = true
+	Model     bool      `json:"model,omitempty"`
+	Created   time.Time `json:"created,omitempty"`
+	JobID     string    `json:"job_id,omitempty"`
+	IPAddress string    `json:"ip_address,omitempty"`
 }
 
 // SpawnWorker creates a new vm instance
