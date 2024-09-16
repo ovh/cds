@@ -312,7 +312,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetric(ctx, api.Metrics.nbGroups, "SELECT COUNT(1) FROM \"group\"")
 				api.countMetric(ctx, api.Metrics.nbPipelines, "SELECT COUNT(1) FROM pipeline")
 				api.countMetric(ctx, api.Metrics.nbWorkflows, "SELECT COUNT(1) FROM workflow")
-				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct entity.project_key || '/' || vcs_project.name || '/' || project_repository.name  || '/' || entity.name)  from entity join project_repository on project_repository.id = entity.project_repository_id join vcs_project on vcs_project.id = project_repository.vcs_project_id  where entity.type = 'Workflow'")
+				api.countMetric(ctx, api.Metrics.nbWorkflowsAsCodeV2, "select count(distinct(project_repository_id,name)) from entity where type = 'Workflow'")
 				api.countMetric(ctx, api.Metrics.nbArtifacts, "SELECT COUNT(1) FROM workflow_node_run_artifacts")
 				api.countMetric(ctx, api.Metrics.nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
 				api.countMetric(ctx, api.Metrics.nbWorkflowRuns, "SELECT COUNT(1) FROM workflow_run")
