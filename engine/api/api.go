@@ -326,6 +326,7 @@ type API struct {
 		nbGroups                   *stats.Int64Measure
 		nbPipelines                *stats.Int64Measure
 		nbWorkflows                *stats.Int64Measure
+		nbWorkflowsAsCodeV2        *stats.Int64Measure
 		nbArtifacts                *stats.Int64Measure
 		nbWorkerModels             *stats.Int64Measure
 		nbWorkflowRuns             *stats.Int64Measure
