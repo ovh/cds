@@ -438,7 +438,15 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			}
 		} else if annot.RegisterOnly || !annot.Model { // powerOff here
 			// if VM is OFF and is not a model or a register-only VM, let's delete it
-			log.Info(ctx, "deleting machine %q - poweredOff", s.Name)
+			log.Info(ctx, "deleting machine %q - poweredOff - annot.RegisterOnly:%t annot.Model:%t", s.Name, annot.RegisterOnly, annot.Model)
+
+			events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
+			if err != nil {
+				for _, e := range events {
+					log.Debug(ctx, "event machine %q - event: %+v", e)
+				}
+			}
+
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
 				log.Error(ctx, "killAwolServers> cannot delete server (poweredOff) %s", s.Name)
