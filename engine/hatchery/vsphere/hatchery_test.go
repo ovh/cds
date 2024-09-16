@@ -676,8 +676,8 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 
 	var workerVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
