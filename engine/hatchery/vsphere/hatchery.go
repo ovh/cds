@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi/vim25/mo"
-	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
@@ -196,7 +195,7 @@ func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 			continue
 		}
 		if annot.JobID == jobID {
-			log.Info(ctx, "can't span worker for job %d because there is a registering worker %q for the same job", jobID, vm.Name)
+			log.Info(ctx, "can't span worker for job %s because there is a registering worker %q for the same job", jobID, vm.Name)
 			return false
 		}
 	}
@@ -371,6 +370,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
+		if annot.Model {
+			continue
+		}
+
 		// reload virtual machine to have fresh data from vsphere
 		vm, err := h.vSphereClient.LoadVirtualMachine(ctx, s.Name)
 		if err != nil {
@@ -393,53 +396,30 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
-		powerstate, err := h.vSphereClient.GetVirtualMachinePowerState(ctx, vm)
-		if err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			if !strings.Contains(err.Error(), "has already been deleted or has not been completely created") {
-				log.Error(ctx, "unable to get vm %q powerstate: %v", s.Name, err)
-			} else {
-				log.Info(ctx, "vm %s already deleted", s.Name)
+		var vmStartedTime = eventVmStartingEvent[0].GetEvent().CreatedTime
+
+		// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
+		// The registration duration, is the time between the createTime of the VM and the start time of the worker from cds api point of view
+		var expire = vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+
+		// Else it's WorkerTTL (default 120 minutes)
+		for _, w := range allWorkers {
+			// if the worker is knowned by CDS Api, the worker TTL is used:
+			// if the CDS session is set to 24 h, and the worker TTL to 2h,
+			// then, the worker will be removed even if he is working on a job
+			// it should be the same duration as the CDS session.
+			if w.Name() == s.Name {
+				expire = vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+				break
 			}
-			continue
 		}
 
-		if powerstate == types.VirtualMachinePowerStatePoweredOn {
-			var vmStartedTime = eventVmStartingEvent[0].GetEvent().CreatedTime
+		log.Debug(ctx, "checking if %v is outdated. vmStartedTime: %v. expires:%v", s.Name, vmStartedTime, expire)
+		// If the VM is older that the WorkerTTL config, let's mark it as delete
+		if time.Now().After(expire) {
+			log.Info(ctx, "deleting machine %q - expired. vmStartedTime:%s expire:%s", s.Name, vmStartedTime, expire)
 
-			// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
-			// The registration duration, is the time between the createTime of the VM and the start time of the worker from cds api point of view
-			var expire = vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
-
-			// Else it's WorkerTTL (default 120 minutes)
-			for _, w := range allWorkers {
-				// if the worker is knowned by CDS Api, the worker TTL is used:
-				// if the CDS session is set to 24 h, and the worker TTL to 2h,
-				// then, the worker will be removed even if he is working on a job
-				// it should be the same duration as the CDS session.
-				if w.Name() == s.Name {
-					expire = vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
-					break
-				}
-			}
-
-			log.Debug(ctx, "checking if %v is outdated. vmStartedTime: %v. expires:%v", s.Name, vmStartedTime, expire)
-			// If the VM is older that the WorkerTTL config, let's mark it as delete
-
-			if time.Now().After(expire) {
-				log.Info(ctx, "deleting machine %q - expired. vmStartedTime:%s expire:%s", s.Name, vmStartedTime, expire)
-				if err := h.deleteServer(ctx, s); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, "killAwolServers> cannot delete server (expire) %s", s.Name)
-				}
-				continue
-			} else {
-				log.Debug(ctx, "We keep %v as not expired", s.Name)
-			}
-		} else if annot.RegisterOnly || !annot.Model { // powerOff here
-			// if VM is OFF and is not a model or a register-only VM, let's delete it
-			log.Info(ctx, "deleting machine %q - powerstate:%s - annot.RegisterOnly:%t annot.Model:%t", s.Name, powerstate, annot.RegisterOnly, annot.Model)
-
+			// debug with event if necessary
 			if log.Factory().GetLevel() == log.LevelDebug {
 				events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
 				if err != nil {
@@ -452,8 +432,10 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "killAwolServers> cannot delete server (poweredOff) %s", s.Name)
+				log.Error(ctx, "killAwolServers> cannot delete server (expire) %s", s.Name)
 			}
+		} else {
+			log.Debug(ctx, "We keep %v as not expired", s.Name)
 		}
 	}
 }
