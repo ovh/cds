@@ -229,7 +229,7 @@ type Configuration struct {
 	Help struct {
 		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
-	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
+	} `toml:"help" comment:"######################\n 'Help' information \n######################" json:"help"`
 	Workflow struct {
 		MaxRuns                         int64            `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
 		DefaultRetentionPolicy          string           `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
