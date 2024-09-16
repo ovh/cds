@@ -92,7 +92,7 @@ type WorkflowOnWorkflowUpdate struct {
 type WorkflowRepository struct {
 	VCSServer                   string `json:"vcs,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Server that host the git repository"`
 	Name                        string `json:"name,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Name of the git repository: <org>/<name>"`
-	InsecureSkipSignatureVerify bool   `json:"insecure_skip_signature_verify" jsonschema_extras:"order=3"  jsonschema_description:"Disable the check of signature from the source repository"`
+	InsecureSkipSignatureVerify bool   `json:"insecure_skip_signature_verify,omitempty" jsonschema_extras:"order=3"  jsonschema_description:"Disable the check of signature from the source repository"`
 }
 
 func (w V2Workflow) MarshalJSON() ([]byte, error) {
