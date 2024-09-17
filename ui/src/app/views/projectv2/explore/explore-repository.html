@@ -21,13 +21,14 @@
             <h3>Repository events <i (click)="loadHookEvents()" nz-icon nzType="sync" [nzSpin]="loadingHooks"
                     nzTheme="outline" class="pointing"></i> </h3>
             <nz-table [nsAutoHeightTable]="85" [nzLoading]="loadingHooks" [nzData]="hookEvents"
-                [nzFrontPagination]="false" [nzTotal]="hookEvents?.length" nzSize="small" #hooksTable>
+                [nzFrontPagination]="false" nzSize="small" #hooksTable>
                 <thead>
                     <tr>
                         <th>Status</th>
                         <th [nzSortFn]="sortHookByDate" nzSortOrder="descend">Date</th>
                         <th>ID</th>
-                        <th [nzFilterMultiple]="true" [nzFilters]="eventFilterList">Event</th>
+                        <th [nzFilterMultiple]="true" [nzFilters]="eventFilterList" [nzFilterFn]="eventFilterFunc">Event
+                        </th>
                         <th>Ref</th>
                         <th>CDS User</th>
                         <th>Analysis</th>
@@ -101,7 +102,8 @@
                 nzTitle="Error">{{selectedHookEvent.last_error}}</nz-descriptions-item>
             <nz-descriptions-item
                 nzTitle="Event">{{selectedHookEvent.extracted_data.cds_event_name}}</nz-descriptions-item>
-            <nz-descriptions-item nzTitle="Event type" *ngIf="selectedHookEvent.extracted_data.cds_event_type">{{selectedHookEvent.extracted_data.cds_event_type}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Event type"
+                *ngIf="selectedHookEvent.extracted_data.cds_event_type">{{selectedHookEvent.extracted_data.cds_event_type}}</nz-descriptions-item>
             <nz-descriptions-item nzTitle="Ref">{{selectedHookEvent.extracted_data.ref}}</nz-descriptions-item>
             <nz-descriptions-item nzTitle="Commit">{{selectedHookEvent.extracted_data.commit}}</nz-descriptions-item>
             <nz-descriptions-item nzTitle="Username">{{selectedHookEvent.username}}</nz-descriptions-item>

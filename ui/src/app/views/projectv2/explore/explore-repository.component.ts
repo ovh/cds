@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
+import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent, WorkflowHookEventName } from 'app/model/project.model';
 import { ProjectState } from 'app/store/project.state';
 import { Store } from '@ngxs/store';
 import { forkJoin, lastValueFrom, Subscription } from 'rxjs';
@@ -32,7 +32,15 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
     selectedHookEvent: RepositoryHookEvent
     selectedAnalysis: RepositoryAnalysis;
     selectedAnalysisEntities: { [key: string]: { success: { nb: number, files: string[] }, skipped: { nb: number, files: string[] } } };
-    eventFilterList: NzTableFilterList = [];
+    eventFilterList: NzTableFilterList = [
+        { text: WorkflowHookEventName.WorkflowHookEventNameManual, value: WorkflowHookEventName.WorkflowHookEventNameManual },
+        { text: WorkflowHookEventName.WorkflowHookEventNameModelUpdate, value: WorkflowHookEventName.WorkflowHookEventNameModelUpdate },
+        { text: WorkflowHookEventName.WorkflowHookEventNamePullRequest, value: WorkflowHookEventName.WorkflowHookEventNamePullRequest },
+        { text: WorkflowHookEventName.WorkflowHookEventNamePullRequestComment, value: WorkflowHookEventName.WorkflowHookEventNamePullRequestComment },
+        { text: WorkflowHookEventName.WorkflowHookEventNamePush, value: WorkflowHookEventName.WorkflowHookEventNamePush },
+        { text: WorkflowHookEventName.WorkflowHookEventNameScheduler, value: WorkflowHookEventName.WorkflowHookEventNameScheduler },
+        { text: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate, value: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate }
+    ];
 
     constructor(
         private _store: Store,
@@ -125,7 +133,7 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
                 this.selectedAnalysisEntities[type].skipped.files.push(e.file_name);
             }
         });
-        
+
         this._cd.markForCheck();
     }
 
@@ -152,5 +160,9 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
 
     sortHookByDate(a: RepositoryHookEvent, b: RepositoryHookEvent): number {
         return a.created < b.created ? -1 : 1;
+    }
+
+    eventFilterFunc(eventNames: WorkflowHookEventName[], hookEvent: RepositoryHookEvent): boolean {
+        return eventNames.indexOf(hookEvent.event_name) !== -1;
     }
 }
