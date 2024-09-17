@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"os/user"
 	"strings"
 
@@ -59,6 +60,13 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 			return stream.Send(res)
 		}
 		authOption = repo.WithSSHAuth([]byte(key.Private))
+	}
+
+	// Create directory
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			return err
+		}
 	}
 
 	grpcplugins.Logf(&p.Common, "Start cloning %s\n", gitURL)
