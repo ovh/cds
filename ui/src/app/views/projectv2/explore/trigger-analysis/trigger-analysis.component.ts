@@ -112,7 +112,7 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
       projectKey: this.project.key,
       vcsName: splitted.vcs,
       repoName: splitted.repo,
-      ref: this.validateForm.value.branch,
+      ref: 'refs/heads/' + this.validateForm.value.branch,
     };
 
     this.response = await lastValueFrom(this._analysisService.triggerAnalysis(req));

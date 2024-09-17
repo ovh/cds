@@ -2,9 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
 import { ProjectState } from 'app/store/project.state';
-import { finalize } from 'rxjs/operators';
 import { Store } from '@ngxs/store';
-import { forkJoin, Subscription } from 'rxjs';
+import { forkJoin, lastValueFrom, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
 import { ToastService } from 'app/shared/toast/ToastService';
@@ -12,6 +11,8 @@ import { VCSProject } from 'app/model/vcs.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { ProjectV2TriggerAnalysisComponent } from './trigger-analysis/trigger-analysis.component';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzTableFilterList } from 'ng-zorro-antd/table';
 
 @Component({
     selector: 'app-projectv2-explore-repository',
@@ -21,7 +22,6 @@ import { ProjectV2TriggerAnalysisComponent } from './trigger-analysis/trigger-an
 })
 @AutoUnsubscribe()
 export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
-
     loading: boolean;
     loadingHooks: boolean;
     projectSubscriber: Subscription;
@@ -31,7 +31,8 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
     hookEvents: Array<RepositoryHookEvent>;
     selectedHookEvent: RepositoryHookEvent
     selectedAnalysis: RepositoryAnalysis;
-    selectedAnalysisEntities: { [key: string]: { success: { nb: number, files: string[] }, skipped: { nb: number, files: string[] } } }
+    selectedAnalysisEntities: { [key: string]: { success: { nb: number, files: string[] }, skipped: { nb: number, files: string[] } } };
+    eventFilterList: NzTableFilterList = [];
 
     constructor(
         private _store: Store,
@@ -40,7 +41,8 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         private _cd: ChangeDetectorRef,
         private _toastService: ToastService,
         private _router: Router,
-        private _drawerService: NzDrawerService
+        private _drawerService: NzDrawerService,
+        private _messageService: NzMessageService
     ) {
         this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
         this._routeActivated.params.subscribe(p => {
@@ -53,105 +55,102 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
             ]).subscribe(result => {
                 this.repository = result[0];
                 this.vcsProject = result[1];
-                this.loadHookEvents();
                 this._cd.markForCheck();
+                this.loadHookEvents();
             });
         });
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
-    loadHookEvents(): void {
+    async loadHookEvents() {
         this.loadingHooks = true;
         this._cd.markForCheck();
-        this._projectService.listRepositoryEvents(this.project.key, this.vcsProject.name, this.repository.name)
-            .pipe(finalize(() => {
-                this.loadingHooks = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(hooks => {
-                this.hookEvents = hooks.reverse();
-                if (this.hookEvents) {
-                    this.hookEvents.forEach(he => {
-                        if (he.workflows) {
-                            let workflowInProject = he.workflows.filter(w => w.project_key === this.project.key);
-                            he.nbFailed = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Error).length;
-                            he.nbDone = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Done).length;
-                            he.nbSkipped = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Skipped).length;
-                            he.nbScheduled = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Scheduled).length;
-                        }
-                    })
-                }
-                this._cd.markForCheck();
-            })
+
+        this.hookEvents = await lastValueFrom(this._projectService.listRepositoryEvents(this.project.key, this.vcsProject.name, this.repository.name));
+        (this.hookEvents ?? []).forEach(he => {
+            he.created_string = new Date(he.created / 1000000).toJSON();
+            if (he.workflows) {
+                const workflowInProject = he.workflows.filter(w => w.project_key === this.project.key);
+                he.nbFailed = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Error).length;
+                he.nbDone = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Done).length;
+                he.nbSkipped = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Skipped).length;
+                he.nbScheduled = workflowInProject.filter(w => w.status === HookEventWorkflowStatus.Scheduled).length;
+            }
+        });
+
+        this.loadingHooks = false;
+        this._cd.markForCheck();
     }
 
-    removeRepositoryFromProject(): void {
+    async removeRepositoryFromProject() {
         this.loading = true;
         this._cd.markForCheck();
-        this._projectService.deleteVCSRepository(this.project.key, this.vcsProject.name, this.repository.name)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this._cd.markForCheck();
-            }))
-            .subscribe(() => {
-                this._toastService.success('Repository has been removed', '');
-                this._router.navigate(['/', 'project', this.project.key]);
-            });
+
+        try {
+            await lastValueFrom(this._projectService.deleteVCSRepository(this.project.key, this.vcsProject.name, this.repository.name));
+            this._toastService.success('Repository has been removed', '');
+            this._router.navigate(['/', 'project', this.project.key]);
+        } catch (e) {
+            this._messageService.error(`Unable to remove repository: ${e?.error?.error}`, { nzDuration: 2000 });
+        }
+
+        this.loading = false;
+        this._cd.markForCheck();
     }
 
-    displayDetail(h: RepositoryHookEvent): void {
-        let a = h?.analyses?.filter(a => a.project_key === this.project.key);
-        if (a?.length === 1) {
-            this._projectService.getAnalysis(this.project.key, h.vcs_server_name, h.repository_name, a[0].analyze_id)
-                .pipe(finalize(() => {
-                    this.selectedHookEvent = h;
-                    this._cd.markForCheck();
-                }))
-                .subscribe(a => {
-                    this.selectedAnalysis = <RepositoryAnalysis>a;
-                    this.selectedAnalysisEntities = {};
-                    if (this.selectedAnalysis.data?.entities) {
-                        this.selectedAnalysis.data?.entities.forEach(e => {
-                            let type = e.path.replace('.cds/', '').replace('/', '');
-                            type = type.charAt(0).toUpperCase() + type.slice(1);
-                            if (!this.selectedAnalysisEntities[type]) {
-                                this.selectedAnalysisEntities[type] = { skipped: { nb: 0, files: [] }, success: { nb: 0, files: [] } };
-                            }
-                            if (e.status == 'Success') {
-                                this.selectedAnalysisEntities[type].success.nb++;
-                                this.selectedAnalysisEntities[type].success.files.push(e.file_name);
-                            } else {
-                                this.selectedAnalysisEntities[type].skipped.nb++;
-                                this.selectedAnalysisEntities[type].skipped.files.push(e.file_name);
-                            }
-                        });
-                    }
-                });
+    async displayDetail(h: RepositoryHookEvent) {
+        this.selectedHookEvent = h;
 
-        } else {
-            this.selectedHookEvent = h;
+        const a = (h?.analyses ?? []).filter(a => a.project_key === this.project.key);
+        if (a.length !== 1) {
             this._cd.markForCheck();
+            return;
         }
+
+        this.selectedAnalysis = await lastValueFrom(this._projectService.getAnalysis(this.project.key, h.vcs_server_name, h.repository_name, a[0].analyze_id));
+
+        (this.selectedAnalysis.data?.entities ?? []).forEach(e => {
+            let type = e.path.replace('.cds/', '').replace('/', '');
+            type = type.charAt(0).toUpperCase() + type.slice(1);
+            if (!this.selectedAnalysisEntities) { this.selectedAnalysisEntities = {}; }
+            if (!this.selectedAnalysisEntities[type]) {
+                this.selectedAnalysisEntities[type] = { skipped: { nb: 0, files: [] }, success: { nb: 0, files: [] } };
+            }
+            if (e.status == 'Success') {
+                this.selectedAnalysisEntities[type].success.nb++;
+                this.selectedAnalysisEntities[type].success.files.push(e.file_name);
+            } else {
+                this.selectedAnalysisEntities[type].skipped.nb++;
+                this.selectedAnalysisEntities[type].skipped.files.push(e.file_name);
+            }
+        });
+        
+        this._cd.markForCheck();
     }
 
     closeModal(): void {
         delete this.selectedHookEvent;
         delete this.selectedAnalysis;
         delete this.selectedAnalysisEntities;
+        this._cd.markForCheck();
     }
 
     openTriggerAnalysisDrawer(): void {
         const drawerRef = this._drawerService.create<ProjectV2TriggerAnalysisComponent, { value: string }, string>({
-			nzTitle: 'Trigger repository analysis',
-			nzContent: ProjectV2TriggerAnalysisComponent,
-			nzContentParams: {
-				params: {
-					repository: this.repository.name
-				}
-			},
-			nzSize: 'large'
-		});
-		drawerRef.afterClose.subscribe(data => { });
+            nzTitle: 'Trigger repository analysis',
+            nzContent: ProjectV2TriggerAnalysisComponent,
+            nzContentParams: {
+                params: {
+                    repository: this.repository.name
+                }
+            },
+            nzSize: 'large'
+        });
+        drawerRef.afterClose.subscribe(data => { });
+    }
+
+    sortHookByDate(a: RepositoryHookEvent, b: RepositoryHookEvent): number {
+        return a.created < b.created ? -1 : 1;
     }
 }

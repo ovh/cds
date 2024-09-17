@@ -83,6 +83,7 @@ export class RepositoryHookEvent {
   created: number;
   status: string;
   event_name: string;
+  event_type: string;
   extracted_data: RepositoryHookEventExtractedData;
   username: string;
   last_error: string;
@@ -97,6 +98,7 @@ export class RepositoryHookEvent {
   nbFailed: number;
   nbScheduled: number;
   nbSkipped: number;
+  created_string: string;
 }
 
 export class RepositoryHookEventAnalysis {
@@ -112,12 +114,11 @@ export enum HookEventWorkflowStatus {
   Done = "Done"
 }
 
-
-
 export class RepositoryHookEventExtractedData {
   ref: string;
   commit: string;
   cds_event_name: string;
+  cds_event_type: string;
 }
 
 export class RepositoryHookWorkflow {

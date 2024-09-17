@@ -94,7 +94,7 @@ func TestCraftWorkflowRunNoHatchery(t *testing.T) {
 			Payload:   nil,
 			Ref:       "main",
 			Sha:       "123456",
-			EventName: "push",
+			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -184,7 +184,7 @@ func TestCraftWorkflowRunDepsNotFound(t *testing.T) {
 			Payload:   nil,
 			Ref:       "main",
 			Sha:       "123456",
-			EventName: "push",
+			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -325,7 +325,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 			Payload:   nil,
 			Ref:       "refs/heads/main",
 			Sha:       "123456",
-			EventName: "push",
+			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
@@ -456,7 +456,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 			Payload:   nil,
 			Ref:       "refs/heads/main",
 			Sha:       "123456",
-			EventName: "push",
+			EventName: sdk.WorkflowHookEventNamePush,
 		},
 	}
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))

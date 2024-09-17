@@ -20,7 +20,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 	log.Info(ctx, "triggering get git signing key for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// If operation not started and not manual hook => run repository operation to get signinkey
-	if hre.EventName != sdk.WorkflowHookManual && hre.SigningKeyOperation == "" {
+	if hre.EventName != sdk.WorkflowHookEventNameManual && hre.SigningKeyOperation == "" {
 		changesets := false
 		semver := false
 		signinkey := true
@@ -47,7 +47,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		repo := hre.RepositoryName
 
 		// For scheduler we need to take target repository information
-		if hre.EventName == sdk.WorkflowHookTypeScheduler {
+		if hre.EventName == sdk.WorkflowHookEventNameScheduler {
 			vcs = hre.ExtractData.Scheduler.TargetVCS
 			repo = hre.ExtractData.Scheduler.TargetRepo
 		}
@@ -90,7 +90,7 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 		// Return and wait callback
 		return nil
 
-	} else if hre.EventName != sdk.WorkflowHookManual && hre.SigningKeyOperation != "" {
+	} else if hre.EventName != sdk.WorkflowHookEventNameManual && hre.SigningKeyOperation != "" {
 		// If operation status has not been updated through signkey callback
 		if hre.SigningKeyOperationStatus != sdk.OperationStatusDone && hre.SigningKeyOperationStatus != sdk.OperationStatusError {
 			if time.Now().UnixMilli()-hre.LastUpdate > RetryDelayMilli {

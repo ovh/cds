@@ -42,7 +42,7 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 
 	switch eventName {
 	case "push":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPush
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePush
 		extractedData.CDSEventType = "" // nothing here
 		extractedData.Ref = request.Ref
 		extractedData.Commit = request.After
@@ -50,23 +50,23 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 			extractedData.CommitFrom = request.Before
 		}
 	case "pull_request":
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
 		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.Commit = request.PullRequest.Head.Sha
 		extractedData.CommitFrom = request.PullRequest.Base.Sha
-		switch request.Action {
-		case "opened":
-			extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-			extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeOpened
-		}
-	case "pull_request_comment":
-		// Not managed. Should needs to get the pull-request detail to get the ref / sha from the pull-request
-		// with a comment event, gitea does not send these details
+	default:
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
 
 	for _, c := range request.Commits {
 		extractedData.Paths = append(extractedData.Paths, c.Added...)
 		extractedData.Paths = append(extractedData.Paths, c.Modified...)
 		extractedData.Paths = append(extractedData.Paths, c.Removed...)
+	}
+
+	if !extractedData.CDSEventType.IsValidForEventName(extractedData.CDSEventName) {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
 	}
 
 	return repoName, extractedData, nil
@@ -98,15 +98,22 @@ func (s *Service) extractDataFromGitlabRequest(body []byte, eventName string) (s
 
 	switch eventName {
 	case "Push Hook":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPush
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePush
 		extractedData.CDSEventType = "" // nothing here
 	case "Merge Request Hook":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = "" // nothing here
 	case "Note Hook":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = "" // nothing here
+	default:
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
+
+	if !extractedData.CDSEventType.IsValidForEventName(extractedData.CDSEventName) {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
+	}
+
 	return repoName, extractedData, nil
 }
 
@@ -137,11 +144,11 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 
 	switch eventName {
 	case "push":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPush
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePush
 		extractedData.CDSEventType = "" // nothing here
 	case "pull_request":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-		extractedData.CDSEventType = request.Action
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
 		if request.Head != nil {
 			extractedData.Commit = request.Head.Sha
 			extractedData.Ref = sdk.GitRefBranchPrefix + request.Head.Ref
@@ -150,8 +157,8 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 			extractedData.CommitFrom = request.Base.Sha
 		}
 	case "pull_request_comment":
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
-		extractedData.CDSEventType = request.Action
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
+		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
 		if request.Head != nil {
 			extractedData.Commit = request.Head.Sha
 			extractedData.Ref = sdk.GitRefBranchPrefix + request.Head.Ref
@@ -159,7 +166,14 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 		if request.Base != nil {
 			extractedData.CommitFrom = request.Base.Sha
 		}
+	default:
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
+
+	if !extractedData.CDSEventType.IsValidForEventName(extractedData.CDSEventName) {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
+	}
+
 	return repoName, extractedData, nil
 }
 
@@ -180,55 +194,60 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		if request.Changes[0].FromHash != NoCommit {
 			extractedData.CommitFrom = request.Changes[0].FromHash
 		}
-		extractedData.CDSEventName = sdk.WorkflowHookEventPush
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePush
 		extractedData.CDSEventType = "" // no type here
 	case "pr:opened":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeOpened
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestOpened
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:reopened":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeReopened
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestReopened
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:declined":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeClosed
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestClosed
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:from_ref_updated":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequest
-		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestTypeEdited
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestEdited
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:added":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
-		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestCommentTypeCreated
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentCreated
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:edited":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
-		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestCommentTypeEdited
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentEdited
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:deleted":
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
-		extractedData.CDSEventName = sdk.WorkflowHookEventPullRequestComment
-		extractedData.CDSEventType = sdk.WorkflowHookEventPullRequestCommentTypeDeleted
+		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
+		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentDeleted
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
+	default:
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", request.EventKey)
 	}
 
 	if extractedData.Ref == "" {
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrInvalidData, "repoName: %v unable to extract data %s", repoName, string(body))
+	}
+
+	if !extractedData.CDSEventType.IsValidForEventName(extractedData.CDSEventName) {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
 	}
 
 	return repoName, extractedData, nil

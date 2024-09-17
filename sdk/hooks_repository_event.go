@@ -11,29 +11,51 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+type WorkflowHookEventName string
+
+type WorkflowHookEventType string
+
+func (t WorkflowHookEventType) IsValidForEventName(n WorkflowHookEventName) bool {
+	switch n {
+	case WorkflowHookEventNamePullRequest:
+		switch t {
+		case WorkflowHookEventTypePullRequestOpened, WorkflowHookEventTypePullRequestReopened, WorkflowHookEventTypePullRequestClosed, WorkflowHookEventTypePullRequestEdited:
+			return true
+		}
+	case WorkflowHookEventNamePullRequestComment:
+		switch t {
+		case WorkflowHookEventTypePullRequestCommentCreated, WorkflowHookEventTypePullRequestCommentDeleted, WorkflowHookEventTypePullRequestCommentEdited:
+			return true
+		}
+	default:
+		return t == ""
+	}
+	return false
+}
+
 const (
 	SignHeaderVCSName   = "X-Cds-Hooks-Vcs-Name"
 	SignHeaderRepoName  = "X-Cds-Hooks-Repo-Name"
 	SignHeaderVCSType   = "X-Cds-Hooks-Vcs-Type"
 	SignHeaderEventName = "X-Cds-Hooks-Event-Name"
 
-	WorkflowHookEventWorkflowUpdate = "workflow-update"
-	WorkflowHookEventModelUpdate    = "model-update"
-	WorkflowHookEventPush           = "push"
-	WorkflowHookManual              = "manual"
+	WorkflowHookEventNameWorkflowUpdate WorkflowHookEventName = "workflow-update"
+	WorkflowHookEventNameModelUpdate    WorkflowHookEventName = "model-update"
+	WorkflowHookEventNamePush           WorkflowHookEventName = "push"
+	WorkflowHookEventNameManual         WorkflowHookEventName = "manual"
 
-	WorkflowHookScheduler = "scheduler"
+	WorkflowHookEventNameScheduler WorkflowHookEventName = "scheduler"
 
-	WorkflowHookEventPullRequest             = "pull-request"
-	WorkflowHookEventPullRequestTypeOpened   = "opened"
-	WorkflowHookEventPullRequestTypeReopened = "reopened"
-	WorkflowHookEventPullRequestTypeClosed   = "closed"
-	WorkflowHookEventPullRequestTypeEdited   = "edited"
+	WorkflowHookEventNamePullRequest         WorkflowHookEventName = "pull-request"
+	WorkflowHookEventTypePullRequestOpened   WorkflowHookEventType = "opened"
+	WorkflowHookEventTypePullRequestReopened WorkflowHookEventType = "reopened"
+	WorkflowHookEventTypePullRequestClosed   WorkflowHookEventType = "closed"
+	WorkflowHookEventTypePullRequestEdited   WorkflowHookEventType = "edited"
 
-	WorkflowHookEventPullRequestComment            = "pull-request-comment"
-	WorkflowHookEventPullRequestCommentTypeCreated = "created"
-	WorkflowHookEventPullRequestCommentTypeDeleted = "deleted"
-	WorkflowHookEventPullRequestCommentTypeEdited  = "edited"
+	WorkflowHookEventNamePullRequestComment        WorkflowHookEventName = "pull-request-comment"
+	WorkflowHookEventTypePullRequestCommentCreated WorkflowHookEventType = "created"
+	WorkflowHookEventTypePullRequestCommentDeleted WorkflowHookEventType = "deleted"
+	WorkflowHookEventTypePullRequestCommentEdited  WorkflowHookEventType = "edited"
 
 	RepoEventPush = "push"
 
@@ -82,8 +104,8 @@ type HookRepository struct {
 type HookRepositoryEvent struct {
 	UUID                      string                         `json:"uuid"`
 	Created                   int64                          `json:"created"`
-	EventName                 string                         `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
-	EventType                 string                         `json:"event_type"` // created, deleted, edited, opened
+	EventName                 WorkflowHookEventName          `json:"event_name"` // WorkflowHookEventPush, sdk.WorkflowHookEventPullRequest
+	EventType                 WorkflowHookEventType          `json:"event_type"` // created, deleted, edited, opened
 	VCSServerName             string                         `json:"vcs_server_name"`
 	RepositoryName            string                         `json:"repository_name"`
 	Body                      []byte                         `json:"body"`
@@ -216,8 +238,8 @@ func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
 }
 
 type HookRepositoryEventExtractData struct {
-	CDSEventName   string                                  `json:"cds_event_name"`
-	CDSEventType   string                                  `json:"cds_event_type"`
+	CDSEventName   WorkflowHookEventName                   `json:"cds_event_name"`
+	CDSEventType   WorkflowHookEventType                   `json:"cds_event_type"`
 	Commit         string                                  `json:"commit"`
 	CommitFrom     string                                  `json:"commit_from"`
 	CommitMessage  string                                  `json:"commit_message"`

@@ -300,9 +300,7 @@ func LoadWorkflowHooksWithModelUpdate(ctx context.Context, db gorp.SqlExecutor, 
 	if err != nil {
 		return nil, err
 	}
-	for _, h := range entitiesHooks {
-		filteredWorkflowHooks = append(filteredWorkflowHooks, h)
-	}
+	filteredWorkflowHooks = append(filteredWorkflowHooks, entitiesHooks...)
 	return filteredWorkflowHooks, nil
 }
 
@@ -350,12 +348,12 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 
 		// Check configuration : branch filter + path filter
 		switch hookRequest.RepositoryEventName {
-		case sdk.WorkflowHookEventPush:
+		case sdk.WorkflowHookEventNamePush:
 			if w.Data.ValidateRef(ctx, hookRequest.Ref) {
 				filteredWorkflowHooks = append(filteredWorkflowHooks, w)
 			}
 			continue
-		case sdk.WorkflowHookEventPullRequest, sdk.WorkflowHookEventPullRequestComment:
+		case sdk.WorkflowHookEventNamePullRequest, sdk.WorkflowHookEventNamePullRequestComment:
 			validType := true
 			if len(w.Data.TypesFilter) > 0 {
 				validType = sdk.IsInArray(hookRequest.RepositoryEventType, w.Data.TypesFilter)

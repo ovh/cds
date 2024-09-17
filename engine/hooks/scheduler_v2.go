@@ -178,7 +178,7 @@ func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e s
 	he := &sdk.HookRepositoryEvent{
 		UUID:           sdk.UUID(),
 		Created:        time.Now().UnixNano(),
-		EventName:      sdk.WorkflowHookScheduler,
+		EventName:      sdk.WorkflowHookEventNameScheduler,
 		VCSServerName:  updatedExecution.SchedulerDef.VCSName,
 		RepositoryName: updatedExecution.SchedulerDef.RepositoryName,
 		Body:           bts,
