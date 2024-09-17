@@ -326,7 +326,7 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		Spec: &guestspec,
 	}
 
-	log.Debug(ctx, "starting program %+v in guest...", guestspec)
+	log.Debug(ctx, "starting program in guest. ProgramPath:%v Arguments:%v", guestspec.ProgramPath, guestspec.Arguments)
 
 	_, err = h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
 	return err
