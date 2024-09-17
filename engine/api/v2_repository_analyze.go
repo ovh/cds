@@ -1539,7 +1539,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 			},
 		}
 		if !namePattern.MatchString(o.GetName()) {
-			return nil, []error{sdk.WrapError(sdk.ErrInvalidData, "name %s doesn't match %s", o.GetName(), sdk.EntityNamePattern)}
+			return nil, []error{sdk.NewErrorFrom(sdk.ErrInvalidData, "name %s doesn't match %s", o.GetName(), sdk.EntityNamePattern)}
 		}
 		switch t {
 		case sdk.EntityTypeWorkerModel:

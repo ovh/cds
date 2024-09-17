@@ -66,7 +66,7 @@ func (a V2Action) Lint() []error {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to validate action")}
+		return []error{NewErrorFrom(ErrInvalidData, "unable to validate action:"+err.Error())}
 	}
 	if result.Valid() {
 		return nil
