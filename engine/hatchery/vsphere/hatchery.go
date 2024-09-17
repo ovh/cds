@@ -383,7 +383,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
-		eventVmStartingEvent, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent")
+		eventVmStartingEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent")
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
@@ -391,17 +391,22 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// if we don't have a types.VmStartingEvent, we skip this vm
-		if len(eventVmStartingEvent) == 0 {
+		if len(eventVmStartingEvents) == 0 {
 			log.Debug(ctx, "killAwolServers> no VmStartingEvent found - we keep this vm")
+			continue
+		}
+		if len(eventVmStartingEvents) > 1 {
+			log.Debug(ctx, "killAwolServers> many eventVmStartingEvents found: %+v", eventVmStartingEvents)
 			continue
 		}
 
 		var vmStartedTime time.Time
 		var found bool
-		for _, event := range eventVmStartingEvent {
+		for _, event := range eventVmStartingEvents {
 			// events on the vm can contain event from the provision.
 			// Skipping this event if it's a provision's event
 			if strings.Contains(event.GetEvent().FullFormattedMessage, "provision-") {
+				log.Debug(ctx, "killAwolServers> skipping event %+v with provision text", event)
 				continue
 			}
 			// first event found, take it
@@ -417,11 +422,11 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		if !found {
-			log.Debug(ctx, "killAwolServers> no vmStartedTime found for %v - events analyzed:%d", s.Name, len(eventVmStartingEvent))
+			log.Debug(ctx, "killAwolServers> vmStartedTime NOT found for %v - events analyzed:%d", s.Name, len(eventVmStartingEvents))
 			continue
 		}
 
-		log.Debug(ctx, "killAwolServers> vmStartedTime %v found: %s events analyzed:%d", s.Name, vmStartedTime, len(eventVmStartingEvent))
+		log.Debug(ctx, "killAwolServers> vmStartedTime %v found: %s events analyzed:%d", s.Name, vmStartedTime, len(eventVmStartingEvents))
 
 		// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
 		// The registration duration, is the time between the createTime of the VM and the start time of the worker from cds api point of view
