@@ -397,7 +397,6 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 		if len(eventVmStartingEvents) > 1 {
 			log.Debug(ctx, "killAwolServers> many eventVmStartingEvents found: %+v", eventVmStartingEvents)
-			continue
 		}
 
 		var vmStartedTime time.Time
