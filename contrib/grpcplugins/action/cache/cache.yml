@@ -4,12 +4,13 @@ author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
 description: |
   Get and save cache
 inputs:
-  path:
+  download-path:
+  content:
   key:
   fail-on-cache-miss:
     default: 'false'
 post:
   plugin: cacheSave
   with:
-    path: ${{ inputs.path }}
+    path: ${{ inputs.content }}
     key: ${{ inputs.key }}
