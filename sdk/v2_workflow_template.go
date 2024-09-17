@@ -14,6 +14,13 @@ import (
 
 var _ Lintable = V2WorkflowTemplate{}
 
+type V2WorkflowTemplateParamType string
+
+const (
+	V2WorkflowTemplateParamTypeString V2WorkflowTemplateParamType = "string"
+	V2WorkflowTemplateParamTypeJson   V2WorkflowTemplateParamType = "json"
+)
+
 type V2WorkflowTemplate struct {
 	Name        string                        `json:"name" jsonschema_extras:"order=1" jsonschema_description:"Name of the workflow templates"`
 	Description string                        `json:"description,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Description of the workflow template"`
@@ -22,8 +29,9 @@ type V2WorkflowTemplate struct {
 }
 
 type V2WorkflowTemplateParameter struct {
-	Key      string `json:"key" jsonschema_extras:"order=1" jsonschema_description:"Name of the parameter"`
-	Required bool   `json:"required" jsonschema_extras:"order=2" jsonschema_description:"Indicate if the parameter is mandatory"`
+	Key      string                      `json:"key" jsonschema_extras:"order=1" jsonschema_description:"Name of the parameter"`
+	Type     V2WorkflowTemplateParamType `json:"type" jsonschema_extras:"order=2" jsonschema_description:"Type of the parameter"`
+	Required bool                        `json:"required" jsonschema_extras:"order=3" jsonschema_description:"Indicate if the parameter is mandatory"`
 }
 
 type V2WorkflowTemplateGenerateRequest struct {
@@ -83,9 +91,31 @@ func (wt V2WorkflowTemplate) Resolve(ctx context.Context, w *V2Workflow) (string
 		return "", errors.New("uninitiliazed workflow spec")
 	}
 
+	paramsDef := make(map[string]V2WorkflowTemplateParamType)
+	for _, v := range wt.Parameters {
+		paramsDef[v.Key] = v.Type
+	}
+
+	params := make(map[string]interface{})
+	for k, v := range w.Parameters {
+		paramType, has := paramsDef[k]
+		if has {
+			switch paramType {
+			case V2WorkflowTemplateParamTypeJson:
+				var value interface{}
+				if err := json.Unmarshal([]byte(v), &value); err != nil {
+					return "", NewErrorFrom(ErrWrongRequest, "unable to unmarshal %s", v)
+				}
+				params[k] = value
+			default:
+				params[k] = v
+			}
+		}
+	}
+
 	var buf bytes.Buffer
-	if err := wt.Spec.tpl.Execute(&buf, map[string]map[string]string{
-		"params": w.Parameters,
+	if err := wt.Spec.tpl.Execute(&buf, map[string]map[string]interface{}{
+		"params": params,
 	}); err != nil {
 		return "", err
 	}
