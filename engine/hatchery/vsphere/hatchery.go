@@ -396,7 +396,32 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			continue
 		}
 
-		var vmStartedTime = eventVmStartingEvent[0].GetEvent().CreatedTime
+		var vmStartedTime time.Time
+		var found bool
+		for _, event := range eventVmStartingEvent {
+			// events on the vm can contain event from the provision.
+			// Skipping this event if it's a provision's event
+			if strings.Contains(event.GetEvent().FullFormattedMessage, "provision-") {
+				continue
+			}
+			// first event found, take it
+			if !found {
+				vmStartedTime = event.GetEvent().CreatedTime
+				found = true
+				continue
+			}
+			// if current event is youngest than previous, take it
+			if event.GetEvent().CreatedTime.After(vmStartedTime) {
+				vmStartedTime = event.GetEvent().CreatedTime
+			}
+		}
+
+		if !found {
+			log.Debug(ctx, "killAwolServers> no vmStartedTime found for %v - events analyzed:%d", s.Name, len(eventVmStartingEvent))
+			continue
+		}
+
+		log.Debug(ctx, "killAwolServers> vmStartedTime %v found: %s events analyzed:%d", s.Name, vmStartedTime, len(eventVmStartingEvent))
 
 		// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
 		// The registration duration, is the time between the createTime of the VM and the start time of the worker from cds api point of view
