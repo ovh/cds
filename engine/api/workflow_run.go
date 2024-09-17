@@ -266,9 +266,6 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowNameAdvanced"]
-		if name == "" {
-			name = vars["permWorkflowName"] // Useful for workflowv3 routes
-		}
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err

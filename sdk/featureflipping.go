@@ -7,7 +7,6 @@ const (
 	FeaturePurgeName    FeatureName = "workflow-retention-policy"
 	FeaturePurgeMaxRuns FeatureName = "workflow-retention-maxruns"
 	FeatureTracing      FeatureName = "tracing"
-	FeatureWorkflowV3   FeatureName = "workflow-v3"
 	FeatureRegion       FeatureName = "region"
 	FeatureCDSAsCode    FeatureName = "all-as-code"
 )

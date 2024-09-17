@@ -491,10 +491,6 @@ type WorkflowClient interface {
 	WorkflowTransformAsCode(projectKey, workflowName, branch, message string) (*sdk.Operation, error)
 }
 
-type WorkflowV3Client interface {
-	WorkflowV3Get(projectKey string, workflowName string, opts ...RequestModifier) ([]byte, error)
-}
-
 // MonitoringClient exposes monitoring functions
 type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
@@ -552,7 +548,6 @@ type Interface interface {
 	WorkerClient
 	WorkflowClient
 	WorkflowV2Client
-	WorkflowV3Client
 	MonitoringClient
 	HookClient
 	Version() (*sdk.Version, error)

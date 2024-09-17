@@ -219,9 +219,6 @@ func (api *API) getWorkflowHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowNameAdvanced"]
-		if name == "" {
-			name = vars["permWorkflowName"] // Useful for workflowv3 routes
-		}
 		withUsage := service.FormBool(r, "withUsage")
 		withAudits := service.FormBool(r, "withAudits")
 		withLabels := service.FormBool(r, "withLabels")
