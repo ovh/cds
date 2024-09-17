@@ -102,16 +102,19 @@ func (actPlugin *dockerPushPlugin) perform(ctx context.Context, image string, ta
 	for _, image := range imageSummaries {
 		repository := "<none>"
 		tag := "<none>"
-		if len(image.RepoTags) > 0 {
-			splitted := strings.Split(image.RepoTags[0], ":")
-			repository = splitted[0]
-			tag = splitted[1]
-		} else if len(image.RepoDigests) > 0 {
-			repository = strings.Split(image.RepoDigests[0], "@")[0]
-		}
 		duration := HumanDuration(image.Created)
 		size := HumanSize(image.Size)
-		images = append(images, grpcplugins.Img{Repository: repository, Tag: tag, ImageID: image.ID[7:19], Created: duration, Size: size})
+		if len(image.RepoTags) > 0 {
+			for _, rt := range image.RepoTags {
+				splitted := strings.Split(rt, ":")
+				repository = splitted[0]
+				tag = splitted[1]
+				images = append(images, grpcplugins.Img{Repository: repository, Tag: tag, ImageID: image.ID[7:19], Created: duration, Size: size})
+			}
+		} else if len(image.RepoDigests) > 0 {
+			repository = strings.Split(image.RepoDigests[0], "@")[0]
+			images = append(images, grpcplugins.Img{Repository: repository, Tag: tag, ImageID: image.ID[7:19], Created: duration, Size: size})
+		}
 	}
 
 	var imgFound *grpcplugins.Img

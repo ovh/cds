@@ -60,7 +60,7 @@ func (wt V2WorkflowTemplate) Lint() (errs []error) {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to validate workflow template")}
+		return []error{NewErrorFrom(ErrInvalidData, "unable to validate workflow template: "+err.Error())}
 	}
 
 	for _, e := range result.Errors() {

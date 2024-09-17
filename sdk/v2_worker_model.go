@@ -57,7 +57,7 @@ func (wm V2WorkerModel) Lint() []error {
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return []error{NewErrorFrom(err, "unable to validate worker model")}
+		return []error{NewErrorFrom(ErrInvalidData, "unable to validate worker model: "+err.Error())}
 	}
 	if result.Valid() {
 		return nil
