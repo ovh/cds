@@ -143,7 +143,7 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 		request := sdk.HookListWorkflowRequest{
 			HookEventUUID:       outgoingEvent.UUID,
 			Ref:                 outgoingEvent.Event.Request.WorkflowRun.Git.Ref, // ref of workflow.repository ( target )
-			RepositoryEventName: sdk.WorkflowHookEventRun,
+			RepositoryEventName: sdk.WorkflowHookEventNameWorkflowRun,
 			VCSName:             outgoingEvent.Event.Request.WorkflowRun.Git.Server,
 			RepositoryName:      outgoingEvent.Event.Request.WorkflowRun.Git.Repository,
 			Workflows: []sdk.EntityFullName{{
@@ -195,7 +195,7 @@ func (s *Service) executeOutgoingEvent(ctx context.Context, outgoingEvent *sdk.H
 		hre := &sdk.HookRepositoryEvent{
 			UUID:           sdk.UUID(),
 			Created:        time.Now().UnixNano(),
-			EventName:      sdk.WorkflowHookEventRun,
+			EventName:      sdk.WorkflowHookEventNameWorkflowRun,
 			VCSServerName:  wh.V2WorkflowHook.VCSName,
 			RepositoryName: wh.V2WorkflowHook.RepositoryName,
 			Body:           eventBody,

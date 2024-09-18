@@ -240,7 +240,7 @@ func (api *API) postRetrieveWorkflowToTriggerHandler() ([]service.RbacChecker, s
 			db := api.mustDB()
 
 			switch hookRequest.RepositoryEventName {
-			case sdk.WorkflowHookEventRun:
+			case sdk.WorkflowHookEventNameWorkflowRun:
 				hooks, err := LoadWorkflowHooksWithWorkflowRun(ctx, db, api.Cache, hookRequest)
 				if err != nil {
 					return err
