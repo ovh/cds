@@ -23,7 +23,7 @@ const (
 type V2WorkflowRunHookRequest struct {
 	HookEventID   string                 `json:"hook_event_id"`
 	UserID        string                 `json:"user_id"`
-	EventName     string                 `json:"event_name"`
+	EventName     WorkflowHookEventName  `json:"event_name"`
 	Ref           string                 `json:"ref,omitempty"`
 	Sha           string                 `json:"sha,omitempty"`
 	CommitMessage string                 `json:"commit_message,omitempty"`
@@ -201,7 +201,7 @@ func (w *V2WorkflowRunJobEvents) Scan(src interface{}) error {
 
 type V2WorkflowRunEvent struct {
 	HookType      string                 `json:"hook_type"`
-	EventName     string                 `json:"event_name"`
+	EventName     WorkflowHookEventName  `json:"event_name"`
 	Ref           string                 `json:"ref"`
 	Sha           string                 `json:"sha"`
 	CommitMessage string                 `json:"commit_message"`

@@ -229,7 +229,7 @@ type Configuration struct {
 	Help struct {
 		Content string `toml:"content" comment:"Help Content. Warning: this message could be view by anonymous user. Markdown accepted." json:"content" default:""`
 		Error   string `toml:"error" comment:"Help displayed to user on each error. Warning: this message could be view by anonymous user. Markdown accepted." json:"error" default:""`
-	} `toml:"help" comment:"######################\n 'Help' informations \n######################" json:"help"`
+	} `toml:"help" comment:"######################\n 'Help' information \n######################" json:"help"`
 	Workflow struct {
 		MaxRuns                         int64            `toml:"maxRuns" comment:"Maximum of runs by workflow" json:"maxRuns" default:"255"`
 		DefaultRetentionPolicy          string           `toml:"defaultRetentionPolicy" comment:"Default rule for workflow run retention policy, this rule can be overridden on each workflow.\n Example: 'return run_days_before < 365' keeps runs for one year." json:"defaultRetentionPolicy" default:"return run_days_before < 365"`
@@ -310,7 +310,9 @@ type API struct {
 	StartupTime         time.Time
 	Maintenance         bool
 	WSBroker            *websocket.Broker
+	WSV2Broker          *websocket.Broker
 	WSServer            *websocketServer
+	WSV2Server          *websocketV2Server
 	WSHatcheryBroker    *websocket.Broker
 	WSHatcheryServer    *websocketHatcheryServer
 	Cache               cache.Store
@@ -324,6 +326,7 @@ type API struct {
 		nbGroups                   *stats.Int64Measure
 		nbPipelines                *stats.Int64Measure
 		nbWorkflows                *stats.Int64Measure
+		nbWorkflowsAsCodeV2        *stats.Int64Measure
 		nbArtifacts                *stats.Int64Measure
 		nbWorkerModels             *stats.Int64Measure
 		nbWorkflowRuns             *stats.Int64Measure
@@ -739,6 +742,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 	if err := a.initWebsocket(event.DefaultPubSubKey); err != nil {
+		return err
+	}
+	if err := a.initWebsocketV2(event_v2.EventUIWS); err != nil {
 		return err
 	}
 	if err := a.initHatcheryWebsocket(event_v2.EventHatcheryWS); err != nil {

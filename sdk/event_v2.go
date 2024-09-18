@@ -5,86 +5,88 @@ import (
 	"time"
 )
 
+type EventType string
+
 const (
-	EventAnalysisStart = "AnalysisStart"
-	EventAnalysisDone  = "AnalysisDone"
+	EventAnalysisStart EventType = "AnalysisStart"
+	EventAnalysisDone  EventType = "AnalysisDone"
 
-	EventRunJobEnqueued         = "RunJobEnqueued"
-	EventRunJobScheduled        = "RunJobScheduled"
-	EventRunJobBuilding         = "RunJobBuilding"
-	EventRunJobManualTriggered  = "RunJobManualTriggered"
-	EventRunJobRunResultAdded   = "RunJobRunResultAdded"
-	EventRunJobRunResultUpdated = "RunJobRunResultUpdated"
-	EventRunJobEnded            = "RunJobEnded"
+	EventRunJobEnqueued         EventType = "RunJobEnqueued"
+	EventRunJobScheduled        EventType = "RunJobScheduled"
+	EventRunJobBuilding         EventType = "RunJobBuilding"
+	EventRunJobManualTriggered  EventType = "RunJobManualTriggered"
+	EventRunJobRunResultAdded   EventType = "RunJobRunResultAdded"
+	EventRunJobRunResultUpdated EventType = "RunJobRunResultUpdated"
+	EventRunJobEnded            EventType = "RunJobEnded"
 
-	EventRunCrafted          = "RunCrafted"
-	EventRunBuilding         = "RunBuilding"
-	EventRunEnded            = "RunEnded"
-	EventRunRestartFailedJob = "RunRestartFailedJob"
+	EventRunCrafted  EventType = "RunCrafted"
+	EventRunBuilding EventType = "RunBuilding"
+	EventRunEnded    EventType = "RunEnded"
+	EventRunRestart  EventType = "RunRestart"
 
-	EventEntityCreated = "EntityCreated"
-	EventEntityUpdated = "EntityUpdated"
-	EventEntityDeleted = "EntityDeleted"
+	EventEntityCreated EventType = "EntityCreated"
+	EventEntityUpdated EventType = "EntityUpdated"
+	EventEntityDeleted EventType = "EntityDeleted"
 
-	EventVCSCreated = "VCSCreated"
-	EventVCSUpdated = "VCSUpdated"
-	EventVCSDeleted = "VCSDeleted"
+	EventVCSCreated EventType = "VCSCreated"
+	EventVCSUpdated EventType = "VCSUpdated"
+	EventVCSDeleted EventType = "VCSDeleted"
 
-	EventHatcheryCreated    = "HatcheryCreated"
-	EventHatcheryUpdated    = "HatcheryUpdated"
-	EventHatcheryTokenRegen = "HatcheryTokenRegen"
-	EventHatcheryDeleted    = "HatcheryDeleted"
+	EventHatcheryCreated    EventType = "HatcheryCreated"
+	EventHatcheryUpdated    EventType = "HatcheryUpdated"
+	EventHatcheryTokenRegen EventType = "HatcheryTokenRegen"
+	EventHatcheryDeleted    EventType = "HatcheryDeleted"
 
-	EventRepositoryCreated = "RepositoryCreated"
-	EventRepositoryDeleted = "RepositoryDeleted"
+	EventRepositoryCreated EventType = "RepositoryCreated"
+	EventRepositoryDeleted EventType = "RepositoryDeleted"
 
-	EventOrganizationCreated = "OrganizationCreated"
-	EventOrganizationDeleted = "OrganizationDeleted"
+	EventOrganizationCreated EventType = "OrganizationCreated"
+	EventOrganizationDeleted EventType = "OrganizationDeleted"
 
-	EventRegionCreated = "RegionCreated"
-	EventRegionDeleted = "RegionDeleted"
+	EventRegionCreated EventType = "RegionCreated"
+	EventRegionDeleted EventType = "RegionDeleted"
 
-	EventPermissionCreated = "PermissionCreated"
-	EventPermissionUpdated = "PermissionUpdated"
-	EventPermissionDeleted = "PermissionDeleted"
+	EventPermissionCreated EventType = "PermissionCreated"
+	EventPermissionUpdated EventType = "PermissionUpdated"
+	EventPermissionDeleted EventType = "PermissionDeleted"
 
-	EventUserCreated       = "UserCreated"
-	EventUserUpdated       = "UserUpdated"
-	EventUserDeleted       = "UserDeleted"
-	EventUserGPGKeyCreated = "UserGPGKeyCreated"
-	EventUserGPGKeyDeleted = "UserGPGKeyDeleted"
+	EventUserCreated       EventType = "UserCreated"
+	EventUserUpdated       EventType = "UserUpdated"
+	EventUserDeleted       EventType = "UserDeleted"
+	EventUserGPGKeyCreated EventType = "UserGPGKeyCreated"
+	EventUserGPGKeyDeleted EventType = "UserGPGKeyDeleted"
 
-	EventPluginCreated = "PluginCreated"
-	EventPluginUpdated = "PluginUpdated"
-	EventPluginDeleted = "PluginDeleted"
+	EventPluginCreated EventType = "PluginCreated"
+	EventPluginUpdated EventType = "PluginUpdated"
+	EventPluginDeleted EventType = "PluginDeleted"
 
-	EventIntegrationModelCreated = "IntegrationModelCreated"
-	EventIntegrationModelUpdated = "IntegrationModelUpdated"
-	EventIntegrationModelDeleted = "IntegrationModelDeleted"
+	EventIntegrationModelCreated EventType = "IntegrationModelCreated"
+	EventIntegrationModelUpdated EventType = "IntegrationModelUpdated"
+	EventIntegrationModelDeleted EventType = "IntegrationModelDeleted"
 
-	EventIntegrationCreated = "IntegrationCreated"
-	EventIntegrationUpdated = "IntegrationUpdated"
-	EventIntegrationDeleted = "IntegrationDeleted"
+	EventIntegrationCreated EventType = "IntegrationCreated"
+	EventIntegrationUpdated EventType = "IntegrationUpdated"
+	EventIntegrationDeleted EventType = "IntegrationDeleted"
 
-	EventProjectCreated = "ProjectCreated"
-	EventProjectUpdated = "ProjectUpdated"
-	EventProjectDeleted = "ProjectDeleted"
+	EventProjectCreated EventType = "ProjectCreated"
+	EventProjectUpdated EventType = "ProjectUpdated"
+	EventProjectDeleted EventType = "ProjectDeleted"
 
-	EventNotificationCreated = "NotificationCreated"
-	EventNotificationUpdated = "NotificationUpdated"
-	EventNotificationDeleted = "NotificationDeleted"
+	EventNotificationCreated EventType = "NotificationCreated"
+	EventNotificationUpdated EventType = "NotificationUpdated"
+	EventNotificationDeleted EventType = "NotificationDeleted"
 
-	EventVariableSetCreated     = "VariableSetCreated"
-	EventVariableSetDeleted     = "VariableSetDeleted"
-	EventVariableSetItemCreated = "VariableSetItemCreated"
-	EventVariableSetItemUpdated = "VariableSetItemUpdated"
-	EventVariableSetItemDeleted = "VariableSetItemDeleted"
+	EventVariableSetCreated     EventType = "VariableSetCreated"
+	EventVariableSetDeleted     EventType = "VariableSetDeleted"
+	EventVariableSetItemCreated EventType = "VariableSetItemCreated"
+	EventVariableSetItemUpdated EventType = "VariableSetItemUpdated"
+	EventVariableSetItemDeleted EventType = "VariableSetItemDeleted"
 )
 
 // FullEventV2 uses to process event
 type FullEventV2 struct {
 	ID               string          `json:"id"`
-	Type             string          `json:"type"`
+	Type             EventType       `json:"type"`
 	Payload          json.RawMessage `json:"payload"`
 	ProjectKey       string          `json:"project_key,omitempty"`
 	VCSName          string          `json:"vcs_name,omitempty"`
@@ -120,20 +122,17 @@ type FullEventV2 struct {
 
 type GlobalEventV2 struct {
 	ID        string          `json:"id"`
-	Type      string          `json:"type"`
+	Type      EventType       `json:"type"`
 	Payload   json.RawMessage `json:"payload"`
 	Timestamp time.Time       `json:"timestamp"`
 }
 
 type ProjectEventV2 struct {
-	ID         string          `json:"id"`
-	Type       string          `json:"type"`
-	ProjectKey string          `json:"project_key"`
-	Payload    json.RawMessage `json:"payload"`
-	Timestamp  time.Time       `json:"timestamp"`
+	ProjectKey string `json:"project_key"`
 }
 
 type AnalysisEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName    string `json:"vcs_name"`
 	Repository string `json:"repository"`
@@ -143,6 +142,7 @@ type AnalysisEvent struct {
 }
 
 type EntityEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName    string `json:"vcs_name"`
 	Repository string `json:"repository"`
@@ -187,6 +187,7 @@ type RegionEvent struct {
 }
 
 type RepositoryEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName    string `json:"vcs_name"`
 	Repository string `json:"repository"`
@@ -195,6 +196,7 @@ type RepositoryEvent struct {
 }
 
 type VCSEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName  string `json:"vcs_name"`
 	UserID   string `json:"user_id"`
@@ -202,6 +204,7 @@ type VCSEvent struct {
 }
 
 type KeyEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	KeyName  string `json:"key_name"`
 	KeyType  string `json:"key_type"`
@@ -210,6 +213,7 @@ type KeyEvent struct {
 }
 
 type VariableEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	Variable string `json:"variable"`
 	UserID   string `json:"user_id"`
@@ -224,6 +228,7 @@ type IntegrationModelEvent struct {
 }
 
 type ProjectIntegrationEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	Integration      string `json:"integration"`
 	IntegrationModel string `json:"integration_model"`
@@ -232,6 +237,7 @@ type ProjectIntegrationEvent struct {
 }
 
 type NotificationEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	Notification string `json:"notification"`
 	UserID       string `json:"user_id"`
@@ -239,6 +245,7 @@ type NotificationEvent struct {
 }
 
 type ProjectVariableSetEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VariableSet string `json:"variable_set"`
 	UserID      string `json:"user_id"`
@@ -246,6 +253,7 @@ type ProjectVariableSetEvent struct {
 }
 
 type ProjectVariableSetItemEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VariableSet string `json:"variable_set"`
 	Item        string `json:"item"`
@@ -267,6 +275,7 @@ type UserGPGEvent struct {
 }
 
 type WorkflowRunEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName       string              `json:"vcs_name"`
 	Repository    string              `json:"repository"`
@@ -280,6 +289,7 @@ type WorkflowRunEvent struct {
 }
 
 type WorkflowRunJobEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName       string                 `json:"vcs_name"`
 	Repository    string                 `json:"repository"`
@@ -298,6 +308,7 @@ type WorkflowRunJobEvent struct {
 }
 
 type WorkflowRunJobManualEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName       string              `json:"vcs_name"`
 	Repository    string              `json:"repository"`
@@ -312,6 +323,7 @@ type WorkflowRunJobManualEvent struct {
 }
 
 type WorkflowRunJobRunResultEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	VCSName       string `json:"vcs_name"`
 	Repository    string `json:"repository"`
@@ -331,6 +343,7 @@ type WorkflowRunJobRunResultEvent struct {
 }
 
 type ProjectEvent struct {
+	GlobalEventV2
 	ProjectEventV2
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`

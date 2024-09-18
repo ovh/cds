@@ -81,3 +81,11 @@ func (c *client) ProjectVariableSetCreateFromEnvironment(ctx context.Context, pK
 	}
 	return nil
 }
+
+func (c *client) ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...RequestModifier) error {
+	path := fmt.Sprintf("/v2/migrate/project/%s/variableset/ascode", pKey)
+	if _, err := c.PostJSON(ctx, path, &req, nil); err != nil {
+		return err
+	}
+	return nil
+}

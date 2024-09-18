@@ -67,7 +67,9 @@
 	</div>
 
 	<nz-list class="run-list" [nzLoading]="loading" nzSize="small" nzNoResult="test">
-		<nz-list-item *ngFor="let run of runs">
+		<nz-list-item *ngFor="let run of runs; let i = index; trackBy: trackRunElement"
+			[class.append]="!!animatedRuns[run.id]" [@appendToList]="animatedRuns[run.id] ? 'append' : 'active'"
+			(mouseenter)="onMouseEnterRun(run.id)">
 			<ng-container>
 				<nz-list-item-meta [nzTitle]="runTitle" [nzAvatar]="runAvatar" [nzDescription]="runDescription">
 				</nz-list-item-meta>
@@ -167,7 +169,7 @@
 			<nz-option nzValue="started:desc" nzLabel="started desc"></nz-option>
 			<nz-option nzValue="started:asc" nzLabel="started asc"></nz-option>
 		</nz-select>
-		<nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="20" [nzTotal]="totalCount"
+		<nz-pagination [nzPageIndex]="pageIndex" [nzPageSize]="20" [nzTotal]="totalCount" nzSize="small"
 			(nzPageIndexChange)="pageIndexChange($event)"></nz-pagination>
 	</div>
 </div>

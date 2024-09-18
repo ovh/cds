@@ -18,7 +18,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 	// If first time
 	if len(hre.Analyses) == 0 {
 		log.Info(ctx, "triggering analysis for event [%s] %s", hre.EventName, hre.GetFullName())
-		if hre.EventName == sdk.WorkflowHookManual {
+		if hre.EventName == sdk.WorkflowHookEventNameManual {
 			hre.Analyses = []sdk.HookRepositoryEventAnalysis{{
 				ProjectKey: hre.ExtractData.Manual.Project,
 			}}

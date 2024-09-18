@@ -259,6 +259,7 @@ type ProjectClientV2 interface {
 	ProjectVariableSetItemDelete(ctx context.Context, pKey string, vsName string, itemName string) error
 	ProjectVariableSetItemGet(ctx context.Context, pKey string, vsName string, itemName string) (*sdk.ProjectVariableSetItem, error)
 	ProjectVariableSetItemFromProjectVariable(ctx context.Context, pKey string, req sdk.CopyProjectVariableToVariableSet, mods ...RequestModifier) error
+	ProjectVariableSetItemFromAsCodeSecret(ctx context.Context, pKey string, req sdk.CopyAsCodeSecretToVariableSet, mods ...RequestModifier) error
 
 	ProjectV2Access(ctx context.Context, projectKey, sessionID string, itemType sdk.CDNItemType) error
 }

@@ -9,6 +9,7 @@ import { lastValueFrom } from "rxjs";
 import { RouterService } from "app/service/services.module";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { ProjectRepository } from "app/model/project.model";
+import { load } from "js-yaml";
 
 @Component({
 	selector: 'app-projectv2-explore-entity',
@@ -26,6 +27,7 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 	repository: ProjectRepository;
 	entity: Entity;
 	jsonSchema: Schema;
+	isWorkflowFromTemplate: boolean;
 
 	constructor(
 		private _cd: ChangeDetectorRef,
@@ -84,6 +86,13 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 			this.repository = results[1];
 			this.jsonSchema = results[2];
 			this.entity = await lastValueFrom(this._projectService.getRepoEntity(this.projectKey, this.vcs.name, this.repository.name, entityType, entityName, this.currentBranch));
+			this.isWorkflowFromTemplate = false;
+			if (this.entity.type === EntityType.Workflow) {
+				const wkf = load(this.entity.data);
+				if (wkf['from']) {
+					this.isWorkflowFromTemplate = true;
+				}
+			}
 		} catch (e: any) {
 			this._messageService.error(`Unable to entity: ${e?.error?.error}`, { nzDuration: 2000 });
 		}

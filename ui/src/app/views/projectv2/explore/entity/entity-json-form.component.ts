@@ -134,7 +134,7 @@ export class EntityJSONFormComponent implements OnInit, OnChanges {
         this.model = value;
         this._cd.markForCheck();
         const cleanModel = this.cleanModel(this.parentType, this.model);
-        this.dataChange.emit(dump(cleanModel, <DumpOptions>{ lineWidth: 120 }));
+        this.dataChange.emit(dump(cleanModel, <DumpOptions>{ lineWidth: -1 }));
     }
 
     // For given data remove useless fields and empty values

@@ -222,6 +222,9 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		} else if strings.HasPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix) {
 			run.Contexts.CDS.WorkflowTemplateRefWebURL = fmt.Sprintf(vcsRepo.URLBranchFormat, strings.TrimPrefix(e.Entity.Ref, sdk.GitRefBranchPrefix))
 		}
+
+		// Update after applying template
+		wref.run = *run
 	}
 
 	plugins, err := plugin.LoadAllByType(ctx, api.mustDB(), sdk.GRPCPluginAction)
@@ -237,11 +240,42 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return err
 	}
 
+	integrations, infos, err := wref.checkIntegrations(ctx, api.mustDB())
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
+		})
+	}
+	if len(infos) > 0 {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
+	}
+
 	// Retrieve all deps
 	for jobID := range run.WorkflowData.Workflow.Jobs {
 		j := run.WorkflowData.Workflow.Jobs[jobID]
 		if len(j.Steps) == 0 {
 			continue
+		}
+
+		// Check integration region
+		if len(j.Integrations) > 0 && j.Region == "" {
+		regionLoop:
+			for _, jobInt := range j.Integrations {
+				for _, integ := range integrations {
+					if integ.Name != jobInt {
+						continue
+					}
+					for _, v := range integ.Config {
+						if v.Type == sdk.IntegrationConfigTypeRegion {
+							j.Region = v.Value
+							break regionLoop
+						}
+					}
+				}
+			}
 		}
 
 		// Get actions and sub actions
@@ -307,19 +341,6 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	for _, v := range wref.ef.localWorkerModelCache {
 		completeName := fmt.Sprintf("%s/%s/%s/%s@%s", wref.run.ProjectKey, wref.ef.currentVCS.Name, wref.ef.currentRepo.Name, v.Model.Name, wref.run.WorkflowRef)
 		run.WorkflowData.WorkerModels[completeName] = v.Model
-	}
-
-	_, infos, err := wref.checkIntegrations(ctx, api.mustDB())
-	if err != nil {
-		log.ErrorWithStackTrace(ctx, err)
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
-			WorkflowRunID: run.ID,
-			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("unable to trigger workflow: %v", err),
-		})
-	}
-	if len(infos) > 0 {
-		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, infos...)
 	}
 
 	tx, err := api.mustDB().Begin()

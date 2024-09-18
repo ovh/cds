@@ -32,6 +32,12 @@ type CopyProjectVariableToVariableSet struct {
 	NewName         string `json:"new_name,omitempty"`
 }
 
+type CopyAsCodeSecretToVariableSet struct {
+	VariableSetItemName string `json:"variable_set_item_name"`
+	VariableSetName     string `json:"variable_set_name"`
+	AsCodeIdentifier    string `json:"ascode_id"`
+}
+
 type CopyApplicationVariableToVariableSet struct {
 	ApplicationName string `json:"application_name"`
 	VariableSetName string `json:"variable_set_name"`

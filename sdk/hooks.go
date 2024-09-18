@@ -13,17 +13,17 @@ import (
 )
 
 type HookListWorkflowRequest struct {
-	HookEventUUID       string           `json:"hook_event_uuid"`
-	VCSName             string           `json:"vcs_name"`
-	RepositoryName      string           `json:"repository_name"`
-	Ref                 string           `json:"ref"`
-	Sha                 string           `json:"sha"`
-	Paths               []string         `json:"paths"`
-	RepositoryEventName string           `json:"repository_event"`
-	RepositoryEventType string           `json:"repository_event_type"`
-	AnayzedProjectKeys  StringSlice      `json:"project_keys"`
-	Models              []EntityFullName `json:"models"`
-	Workflows           []EntityFullName `json:"workflows"`
+	HookEventUUID       string                `json:"hook_event_uuid"`
+	VCSName             string                `json:"vcs_name"`
+	RepositoryName      string                `json:"repository_name"`
+	Ref                 string                `json:"ref"`
+	Sha                 string                `json:"sha"`
+	Paths               []string              `json:"paths"`
+	RepositoryEventName WorkflowHookEventName `json:"repository_event"`
+	RepositoryEventType WorkflowHookEventType `json:"repository_event_type"`
+	AnayzedProjectKeys  StringSlice           `json:"project_keys"`
+	Models              []EntityFullName      `json:"models"`
+	Workflows           []EntityFullName      `json:"workflows"`
 }
 
 func IsValidHookPath(ctx context.Context, configuredPaths []string, paths []string) bool {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/rockbears/log"
 	"github.com/vmware/govmomi"
+	"github.com/vmware/govmomi/event"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/guest"
 	"github.com/vmware/govmomi/object"
@@ -29,7 +30,7 @@ type VSphereClient interface {
 	DestroyVirtualMachine(ctx context.Context, vm *object.VirtualMachine) error
 	CloneVirtualMachine(ctx context.Context, vm *object.VirtualMachine, folder *object.Folder, name string, config *types.VirtualMachineCloneSpec) (*types.ManagedObjectReference, error)
 	GetVirtualMachinePowerState(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error)
-	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error)
+	NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error)
 	RenameVirtualMachine(ctx context.Context, vm *object.VirtualMachine, newName string) error
 	MarkVirtualMachineAsTemplate(ctx context.Context, vm *object.VirtualMachine) error
 	WaitForVirtualMachineShutdown(ctx context.Context, vm *object.VirtualMachine) error
@@ -41,6 +42,7 @@ type VSphereClient interface {
 	LoadDatastore(ctx context.Context, name string) (*object.Datastore, error)
 	ProcessManager(ctx context.Context, vm *object.VirtualMachine) (*guest.ProcessManager, error)
 	StartProgramInGuest(ctx context.Context, procman *guest.ProcessManager, req *types.StartProgramInGuest) (*types.StartProgramInGuestResponse, error)
+	LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error)
 }
 
 func NewVSphereClient(vclient *govmomi.Client, datacenter string) VSphereClient {
@@ -104,6 +106,30 @@ func (c *vSphereClient) LoadVirtualMachine(ctx context.Context, name string) (*o
 	}
 
 	return vm, nil
+}
+
+// eventTypes could be:
+/*
+EventEx
+TaskEvent
+VmPoweredOffEvent
+VmPoweredOnEvent
+VmReconfiguredEvent
+VmStartingEvent
+...
+*/
+func (c *vSphereClient) LoadVirtualMachineEvents(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
+	m := event.NewManager(c.vclient.Client)
+	objs := []types.ManagedObjectReference{vm.Reference()}
+
+	var res []types.BaseEvent
+	m.Events(ctx, objs, 10, false, false, func(ref types.ManagedObjectReference, events []types.BaseEvent) error {
+		event.Sort(events)
+		res = events
+		return nil
+	}, eventTypes...)
+
+	return res, nil
 }
 
 func (c *vSphereClient) LoadVirtualMachineDevices(ctx context.Context, vm *object.VirtualMachine) (object.VirtualDeviceList, error) {
@@ -289,10 +315,11 @@ func (c *vSphereClient) StartProgramInGuest(ctx context.Context, procman *guest.
 	return res, sdk.WrapError(err, "unable to start program in guest")
 }
 
-func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmName string) (*object.VirtualMachine, error) {
 	vm := object.NewVirtualMachine(c.vclient.Client, *ref)
+	// vm.Name() is empty here
 
-	log.Debug(ctx, "new virtual machine %q is nearly ready...", vm.Name())
+	log.Debug(ctx, "new virtual machine %q is nearly ready...", vmName)
 
 	ctxReady, cancelReady := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancelReady()
@@ -300,12 +327,12 @@ func (c *vSphereClient) NewVirtualMachine(ctx context.Context, cloneSpec *types.
 	var isGuestReady bool
 	for !isGuestReady {
 		if ctxReady.Err() != nil {
-			return nil, sdk.WithStack(fmt.Errorf("vm %q guest operation is not ready: %v", vm.Name(), ctxReady.Err()))
+			return nil, sdk.WithStack(fmt.Errorf("vm %q guest operation is not ready: %v", vmName, ctxReady.Err()))
 		}
 
 		var o mo.VirtualMachine
 		if err := vm.Properties(ctx, *ref, properties, &o); err != nil {
-			return nil, sdk.WrapError(err, "unable to get vm %q properties", vm.Name())
+			return nil, sdk.WrapError(err, "unable to get vm %q properties", vmName)
 		}
 
 		var operationReady = o.Guest.GuestOperationsReady

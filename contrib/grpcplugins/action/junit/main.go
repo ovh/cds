@@ -80,7 +80,7 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS, filePath strin
 			return errors.New(fmt.Sprintf("Unable to read file %q: %v.", r.Path, err))
 		}
 
-		runResultRequest, nbFailed, err := createRunResult(&actPlugin.Common, bts, filePath, sizes[r.Path], checksums[r.Path], permissions[r.Path])
+		runResultRequest, nbFailed, err := createRunResult(&actPlugin.Common, bts, r.Path, sizes[r.Path], checksums[r.Path], permissions[r.Path])
 		if err != nil {
 			_ = openFiles[r.Path].Close()
 			return err

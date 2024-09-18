@@ -171,7 +171,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 
 	request, _ := json.Marshal(runRequest.UserRequest)
 	extractedData := sdk.HookRepositoryEventExtractData{
-		CDSEventName: sdk.WorkflowHookManual,
+		CDSEventName: sdk.WorkflowHookEventNameManual,
 		Commit:       runRequest.WorkflowCommit,
 		Ref:          runRequest.WorkflowRef,
 		Manual: sdk.HookRepositoryEventExtractedDataManual{
@@ -185,7 +185,7 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 		UUID:           sdk.UUID(),
 		UserID:         runRequest.UserID,
 		Username:       runRequest.Username,
-		EventName:      sdk.WorkflowHookManual,
+		EventName:      sdk.WorkflowHookEventNameManual,
 		VCSServerName:  runRequest.VCSServer,
 		RepositoryName: runRequest.Repository,
 		Body:           request,

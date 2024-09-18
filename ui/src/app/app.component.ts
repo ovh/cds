@@ -25,6 +25,7 @@ import { CodeEditorConfig } from "ng-zorro-antd/core/config/config";
 import { PreferencesState } from './store/preferences.state';
 import { Editor } from './model/editor.model';
 import { WebSocketSubject } from 'rxjs/webSocket';
+import { EventV2Service } from './event-v2.service';
 
 declare const monaco: any;
 
@@ -76,6 +77,7 @@ export class AppComponent implements OnInit, OnDestroy {
         private _monitoringService: MonitoringService,
         private _nzNotificationService: NzNotificationService,
         private _configService: NzConfigService,
+        private _eventV2Service: EventV2Service
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this._translate.addLangs(['en']);
@@ -116,7 +118,6 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.hideNavBar = e.url.startsWith('/auth');
             }
         });
-
     }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -164,6 +165,7 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.isConnected = true;
                 localStorage.setItem('CDS-USER', this.currentAuthSummary.user.username);
                 this._eventService.startWebsocket();
+                this._eventV2Service.startWebsocket();
             }
         });
         this.startVersionWorker();
@@ -185,9 +187,9 @@ export class AppComponent implements OnInit, OnDestroy {
                 if ((!this.previousURL || this.previousURL.split('?')[0] !== e.url.split('?')[0])) {
                     this.previousURL = e.url;
                     this._eventService.subscribeAutoFromUrl(e.url);
+                    this._eventV2Service.subscribeAutoFromUrl(e.url);
                     return;
                 }
-
             }))
             .pipe(map(() => this._activatedRoute))
             .pipe(map((route) => {

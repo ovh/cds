@@ -29,7 +29,7 @@ type V2Workflow struct {
 	On           *WorkflowOn              `json:"-" yaml:"-"`
 	Stages       map[string]WorkflowStage `json:"stages,omitempty"`
 	Gates        map[string]V2JobGate     `json:"gates,omitempty"`
-	Jobs         map[string]V2Job         `json:"jobs"`
+	Jobs         map[string]V2Job         `json:"jobs,omitempty" jsonschema:"oneof_required=jobs"`
 	Env          map[string]string        `json:"env,omitempty"`
 	Integrations []string                 `json:"integrations,omitempty"`
 	VariableSets []string                 `json:"vars,omitempty"`
@@ -37,8 +37,8 @@ type V2Workflow struct {
 	Annotations  map[string]string        `json:"annotations,omitempty"`
 
 	// Template fields
-	From       string            `json:"from,omitempty"`
-	Parameters map[string]string `json:"parameters,omitempty"`
+	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`
+	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from"`
 }
 
 type CommitStatus struct {
@@ -76,10 +76,10 @@ type WorkflowOnPush struct {
 }
 
 type WorkflowOnPullRequest struct {
-	Branches []string `json:"branches,omitempty"`
-	Comment  string   `json:"comment,omitempty"`
-	Paths    []string `json:"paths,omitempty"`
-	Types    []string `json:"types,omitempty"`
+	Branches []string                `json:"branches,omitempty"`
+	Comment  string                  `json:"comment,omitempty"`
+	Paths    []string                `json:"paths,omitempty"`
+	Types    []WorkflowHookEventType `json:"types,omitempty"`
 }
 
 type WorkflowOnPullRequestComment struct {
@@ -101,7 +101,7 @@ type WorkflowOnWorkflowUpdate struct {
 type WorkflowRepository struct {
 	VCSServer                   string `json:"vcs,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Server that host the git repository"`
 	Name                        string `json:"name,omitempty" jsonschema_extras:"order=2" jsonschema_description:"Name of the git repository: <org>/<name>"`
-	InsecureSkipSignatureVerify bool   `json:"insecure_skip_signature_verify" jsonschema_extras:"order=3"  jsonschema_description:"Disable the check of signature from the source repository"`
+	InsecureSkipSignatureVerify bool   `json:"insecure_skip_signature_verify,omitempty" jsonschema_extras:"order=3"  jsonschema_description:"Disable the check of signature from the source repository"`
 }
 
 func (w V2Workflow) MarshalJSON() ([]byte, error) {
@@ -126,34 +126,34 @@ func (w V2Workflow) MarshalJSON() ([]byte, error) {
 	return bts, err
 }
 
-func IsDefaultHooks(on *WorkflowOn) []string {
-	hookKeys := make([]string, 0)
+func IsDefaultHooks(on *WorkflowOn) []WorkflowHookEventName {
+	hookKeys := make([]WorkflowHookEventName, 0)
 	if on.Push != nil {
-		hookKeys = append(hookKeys, WorkflowHookEventPush)
+		hookKeys = append(hookKeys, WorkflowHookEventNamePush)
 		if len(on.Push.Paths) > 0 || len(on.Push.Branches) > 0 || len(on.Push.Tags) > 0 {
 			return nil
 		}
 	}
 	if on.PullRequest != nil {
-		hookKeys = append(hookKeys, WorkflowHookEventPullRequest)
+		hookKeys = append(hookKeys, WorkflowHookEventNamePullRequest)
 		if len(on.PullRequest.Paths) > 0 || len(on.PullRequest.Branches) > 0 || on.PullRequest.Comment != "" {
 			return nil
 		}
 	}
 	if on.PullRequestComment != nil {
-		hookKeys = append(hookKeys, WorkflowHookEventPullRequestComment)
+		hookKeys = append(hookKeys, WorkflowHookEventNamePullRequestComment)
 		if len(on.PullRequestComment.Paths) > 0 || len(on.PullRequestComment.Branches) > 0 || on.PullRequestComment.Comment != "" {
 			return nil
 		}
 	}
 	if on.WorkflowUpdate != nil {
-		hookKeys = append(hookKeys, WorkflowHookEventWorkflowUpdate)
+		hookKeys = append(hookKeys, WorkflowHookEventNameWorkflowUpdate)
 		if on.WorkflowUpdate.TargetBranch != "" {
 			return nil
 		}
 	}
 	if on.ModelUpdate != nil {
-		hookKeys = append(hookKeys, WorkflowHookEventModelUpdate)
+		hookKeys = append(hookKeys, WorkflowHookEventNameModelUpdate)
 		if on.ModelUpdate.TargetBranch != "" || len(on.ModelUpdate.Models) > 0 {
 			return nil
 		}
@@ -173,51 +173,56 @@ func (w *V2Workflow) UnmarshalJSON(data []byte) error {
 	if err := JSONUnmarshal(data, &workflowAlias); err != nil {
 		return err
 	}
-	if workflowAlias.OnRaw != nil {
-		bts, _ := json.Marshal(workflowAlias.OnRaw)
-		var on WorkflowOn
-		if err := JSONUnmarshal(bts, &on); err != nil {
-			var onSlice []string
-			if err := JSONUnmarshal(bts, &onSlice); err != nil {
-				return err
-			}
-			if len(onSlice) > 0 {
-				workflowAlias.On = &WorkflowOn{}
-				for _, s := range onSlice {
-					switch s {
-					case WorkflowHookEventWorkflowUpdate:
-						workflowAlias.On.WorkflowUpdate = &WorkflowOnWorkflowUpdate{
-							TargetBranch: "", // empty for default branch
-						}
-					case WorkflowHookEventModelUpdate:
-						workflowAlias.On.ModelUpdate = &WorkflowOnModelUpdate{
-							TargetBranch: "",         // empty for default branch
-							Models:       []string{}, // empty for all model used on the workflow
-						}
-					case WorkflowHookEventPush:
-						workflowAlias.On.Push = &WorkflowOnPush{
-							Branches: []string{}, // trigger for all pushed branches
-							Paths:    []string{},
-							Tags:     []string{},
-						}
-					case WorkflowHookEventPullRequest:
-						workflowAlias.On.PullRequest = &WorkflowOnPullRequest{
-							Branches: []string{},
-							Paths:    []string{},
-						}
-					case WorkflowHookEventPullRequestComment:
-						workflowAlias.On.PullRequestComment = &WorkflowOnPullRequestComment{
-							Branches: []string{},
-							Paths:    []string{},
-						}
-					}
+	defer func() { *w = V2Workflow(workflowAlias) }()
+	if workflowAlias.OnRaw == nil {
+		return nil
+	}
+
+	bts, _ := json.Marshal(workflowAlias.OnRaw)
+
+	var on WorkflowOn
+	if err := JSONUnmarshal(bts, &on); err == nil {
+		workflowAlias.On = &on
+		return nil
+	}
+
+	var onSlice []WorkflowHookEventName
+	if err := JSONUnmarshal(bts, &onSlice); err != nil {
+		return err
+	}
+	if len(onSlice) > 0 {
+		workflowAlias.On = &WorkflowOn{}
+		for _, s := range onSlice {
+			switch s {
+			case WorkflowHookEventNameWorkflowUpdate:
+				workflowAlias.On.WorkflowUpdate = &WorkflowOnWorkflowUpdate{
+					TargetBranch: "", // empty for default branch
+				}
+			case WorkflowHookEventNameModelUpdate:
+				workflowAlias.On.ModelUpdate = &WorkflowOnModelUpdate{
+					TargetBranch: "",         // empty for default branch
+					Models:       []string{}, // empty for all model used on the workflow
+				}
+			case WorkflowHookEventNamePush:
+				workflowAlias.On.Push = &WorkflowOnPush{
+					Branches: []string{}, // trigger for all pushed branches
+					Paths:    []string{},
+					Tags:     []string{},
+				}
+			case WorkflowHookEventNamePullRequest:
+				workflowAlias.On.PullRequest = &WorkflowOnPullRequest{
+					Branches: []string{},
+					Paths:    []string{},
+				}
+			case WorkflowHookEventNamePullRequestComment:
+				workflowAlias.On.PullRequestComment = &WorkflowOnPullRequestComment{
+					Branches: []string{},
+					Paths:    []string{},
 				}
 			}
-		} else {
-			workflowAlias.On = &on
 		}
 	}
-	*w = V2Workflow(workflowAlias)
+
 	return nil
 }
 
@@ -372,29 +377,22 @@ type V2WorkflowScheduleEvent struct {
 }
 
 type V2WorkflowHookData struct {
-	VCSServer       string   `json:"vcs_server,omitempty"`
-	RepositoryName  string   `json:"repository_name,omitempty"`
-	RepositoryEvent string   `json:"repository_event,omitempty"`
-	CommitFilter    string   `json:"commit_filter,omitempty"`
-	BranchFilter    []string `json:"branch_filter,omitempty"`
-	TagFilter       []string `json:"tag_filter,omitempty"`
-	PathFilter      []string `json:"path_filter,omitempty"`
-	TypesFilter     []string `json:"types_filter,omitempty"`
-	TargetBranch    string   `json:"target_branch,omitempty"`
-	TargetTag       string   `json:"target_tag,omitempty"`
-
-	// worker-model-update
-	Model string `json:"model,omitempty"`
-
-	// Scheduler
-	Cron         string `json:"cron,omitempty"`
-	CronTimeZone string `json:"cron_timezone,omitempty"`
-
-	// Workflow-run
-	WorkflowRunName   string   `json:"workflow_run_name"`
-	WorkflowRunStatus []string `json:"workflow_run_status"`
-
-	InsecureSkipSignatureVerify bool `json:"insecure_skip_signature_verify"`
+	VCSServer                   string                  `json:"vcs_server,omitempty"`
+	RepositoryName              string                  `json:"repository_name,omitempty"`
+	RepositoryEvent             WorkflowHookEventName   `json:"repository_event,omitempty"`
+	Model                       string                  `json:"model,omitempty"`
+	CommitFilter                string                  `json:"commit_filter,omitempty"`
+	BranchFilter                []string                `json:"branch_filter,omitempty"`
+	TagFilter                   []string                `json:"tag_filter,omitempty"`
+	PathFilter                  []string                `json:"path_filter,omitempty"`
+	TypesFilter                 []WorkflowHookEventType `json:"types_filter,omitempty"`
+	TargetBranch                string                  `json:"target_branch,omitempty"`
+	TargetTag                   string                  `json:"target_tag,omitempty"`
+	Cron                        string                  `json:"cron,omitempty"`
+	CronTimeZone                string                  `json:"cron_timezone,omitempty"`
+	WorkflowRunName             string                  `json:"workflow_run_name"`
+	WorkflowRunStatus           []string                `json:"workflow_run_status"`
+	InsecureSkipSignatureVerify bool                    `json:"insecure_skip_signature_verify"`
 }
 
 func (d V2WorkflowHookData) ValidateRef(ctx context.Context, ref string) bool {

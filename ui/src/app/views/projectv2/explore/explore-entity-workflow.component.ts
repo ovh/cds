@@ -167,7 +167,7 @@ export class ProjectV2ExploreEntityWorkflowComponent implements OnInit, OnChange
             console.error("Invalid workflow:", this.dataGraph)
         }
         if (workflowForm && workflowForm['jobs'] && workflowForm['jobs'][this.selectedJob]) {
-            this.jobForm = dump(workflowForm['jobs'][this.selectedJob]);
+            this.jobForm = dump(workflowForm['jobs'][this.selectedJob], { lineWidth: -1 });
         }
     }
 

@@ -18,11 +18,11 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 	log.Info(ctx, "triggering workflow hooks for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	switch hre.EventName {
-	case sdk.WorkflowHookManual:
+	case sdk.WorkflowHookEventNameManual:
 		if err := s.handleManualHook(ctx, hre); err != nil {
 			return err
 		}
-	case sdk.WorkflowHookScheduler:
+	case sdk.WorkflowHookEventNameScheduler:
 		if err := s.handleScheduler(ctx, hre); err != nil {
 			return err
 		}

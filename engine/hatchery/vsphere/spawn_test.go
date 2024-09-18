@@ -134,8 +134,8 @@ func TestHatcheryVSphere_createVirtualMachineTemplate(t *testing.T) {
 
 	var clonedVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &clonedRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &clonedRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
@@ -379,8 +379,8 @@ func TestHatcheryVSphere_SpawnWorker(t *testing.T) {
 
 	var workerVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation
@@ -749,8 +749,8 @@ func TestHatcheryVSphere_ProvisionWorker(t *testing.T) {
 
 	var workerVM object.VirtualMachine
 
-	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef).DoAndReturn(
-		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference) (*object.VirtualMachine, error) {
+	c.EXPECT().NewVirtualMachine(gomock.Any(), gomock.Any(), &workerRef, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, cloneSpec *types.VirtualMachineCloneSpec, ref *types.ManagedObjectReference, vmname string) (*object.VirtualMachine, error) {
 			assert.False(t, cloneSpec.Template)
 			assert.True(t, cloneSpec.PowerOn)
 			var givenAnnotation annotation

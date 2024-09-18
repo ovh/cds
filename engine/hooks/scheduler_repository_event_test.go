@@ -33,7 +33,7 @@ func TestManageAnalysisCallback(t *testing.T) {
 		VCSServerName:  "private-github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusAnalysis,
-		EventName:      "push",
+		EventName:      sdk.WorkflowHookEventNamePush,
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
 		Analyses: []sdk.HookRepositoryEventAnalysis{
@@ -91,7 +91,7 @@ func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 		VCSServerName:  "private-github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusScheduled,
-		EventName:      "push",
+		EventName:      sdk.WorkflowHookEventNamePush,
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
 		ExtractData: sdk.HookRepositoryEventExtractData{
@@ -138,7 +138,7 @@ func TestManageRepositoryEvent_NonPushEventWorkflowToTrigger(t *testing.T) {
 		VCSServerName:  "private-github",
 		RepositoryName: "ovh/cds",
 		Status:         sdk.HookEventStatusScheduled,
-		EventName:      "pull_request",
+		EventName:      sdk.WorkflowHookEventNamePullRequest,
 		Created:        time.Now().UnixNano(),
 		Body:           bts,
 		SignKey:        "AZERTY",

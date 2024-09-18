@@ -1,7 +1,7 @@
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from "@angular/core";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { NzMessageService } from "ng-zorro-antd/message";
-import { lastValueFrom, map } from "rxjs";
+import { lastValueFrom, map, Subscription } from "rxjs";
 import { Project } from "app/model/project.model";
 import { Store } from "@ngxs/store";
 import { ProjectState } from "app/store/project.state";
@@ -13,6 +13,12 @@ import { NzPopconfirmDirective } from "ng-zorro-antd/popconfirm";
 import { V2WorkflowRun } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { NzDrawerService } from "ng-zorro-antd/drawer";
 import { ProjectV2RunStartComponent } from "../run-start/run-start.component";
+import { EventV2Service } from "app/event-v2.service";
+import { WebsocketV2Filter, WebsocketV2FilterType } from "app/model/websocket-v2";
+import { EventV2State } from "app/store/event-v2.state";
+import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
+import { EventV2Type } from "app/model/event-v2.model";
+import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
 
 export class WorkflowRunFilter {
 	key: string;
@@ -29,9 +35,26 @@ export class WorkflowRunFilterValue {
 	selector: 'app-projectv2-run-list',
 	templateUrl: './run-list.html',
 	styleUrls: ['./run-list.scss'],
+	animations: [
+		trigger('appendToList', [
+			state('active', style({
+				opacity: 1
+			})),
+			state('append', style({
+				opacity: 1
+			})),
+			transition('append => active', animate('0ms')),
+			transition('active => append', animate('1000ms', keyframes([
+				style({ opacity: 1 }),
+				style({ opacity: 0.5 }),
+				style({ opacity: 1 })
+			])))
+		])
+	],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
+@AutoUnsubscribe()
+export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestroy {
 	static PANEL_KEY = 'project-v2-run-list-sidebar';
 	static DEFAULT_SORT = 'started:desc';
 
@@ -55,6 +78,8 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 	panelSize: number | string;
 	searchName: string = '';
 	sort: string = ProjectV2RunListComponent.DEFAULT_SORT;
+	eventV2Subscription: Subscription;
+	animatedRuns: { [key: string]: boolean } = {};
 
 	constructor(
 		private _http: HttpClient,
@@ -63,10 +88,13 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		private _store: Store,
 		private _router: Router,
 		private _activatedRoute: ActivatedRoute,
-		private _drawerService: NzDrawerService
+		private _drawerService: NzDrawerService,
+		private _eventV2Service: EventV2Service
 	) {
 		this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
 	}
+
+	ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
 	ngOnInit(): void {
 		this.panelSize = this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RunListComponent.PANEL_KEY));
@@ -80,6 +108,20 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 			this.pageIndex = values['page'] ?? 1;
 			this.sort = values['sort'] ?? ProjectV2RunListComponent.DEFAULT_SORT;
 			this.search();
+		});
+		this.eventV2Subscription = this._store.select(EventV2State.last).subscribe((event) => {
+			if (!event || [EventV2Type.EventRunCrafted, EventV2Type.EventRunBuilding, EventV2Type.EventRunEnded, EventV2Type.EventRunRestart].indexOf(event.type) === -1) { return; }
+			const idx = this.runs.findIndex(run => run.id === event.workflow_run_id);
+			delete (this.animatedRuns[event.payload.id]);
+			this._cd.detectChanges();
+			if (idx !== -1) {
+				this.runs[idx] = event.payload;
+			} else {
+				this.runs = [event.payload].concat(...this.runs);
+				this.runs.pop();
+			}
+			this.animatedRuns[event.payload.id] = true;
+			this._cd.markForCheck();
 		});
 	}
 
@@ -155,14 +197,22 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 			}
 		});
 
-		let params = {
+
+		let params = new HttpParams();
+		params = params.appendAll({
 			...mFilters,
 			offset: this.pageIndex ? (this.pageIndex - 1) * 20 : 0,
 			limit: 20
-		};
+		});
 		if (this.sort !== ProjectV2RunListComponent.DEFAULT_SORT) {
-			params['sort'] = this.sort;
+			params = params.append('sort', this.sort);
 		}
+
+		this._eventV2Service.updateFilter(<WebsocketV2Filter>{
+			type: WebsocketV2FilterType.PROJECT_RUNS,
+			project_key: this.project.key,
+			project_runs_params: params.toString()
+		});
 
 		try {
 			const res = await lastValueFrom(this._http.get(`/v2/project/${this.project.key}/run`, { params, observe: 'response' })
@@ -347,5 +397,14 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit {
 		} catch (e) {
 			this._messageService.error(`Unable to delete workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
 		}
+	}
+
+	trackRunElement(index: number, run: V2WorkflowRun): any {
+		return run.id;
+	}
+
+	onMouseEnterRun(id: string): void {
+		delete this.animatedRuns[id];
+		this._cd.markForCheck();
 	}
 }

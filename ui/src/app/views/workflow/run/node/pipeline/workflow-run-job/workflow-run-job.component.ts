@@ -152,7 +152,7 @@ export class WorkflowRunJobComponent implements OnInit, OnDestroy {
         }
 
         if (!this.steps) {
-            this.steps = [new LogBlock('Informations')];
+            this.steps = [new LogBlock('Information')];
         }
         let steps = (this.nodeJobRun.job.action.actions ? this.nodeJobRun.job.action.actions : []);
         steps.forEach((a, i) => {

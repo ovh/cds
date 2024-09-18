@@ -90,7 +90,7 @@ func V2StartWorker(ctx context.Context, w *CurrentWorker, runJobID string, regio
 	//Take the job
 	log.Debug(ctx, "checkQueue> Try take the job %d", runJobID)
 	if err := w.V2Take(ctx, region, runJobID); err != nil {
-		log.Info(ctx, "Unable to run this job  %s. Take info: %v", runJobID, err)
+		log.Info(ctx, "Unable to run this job %s: %v", runJobID, err)
 		errsChan <- err
 	}
 

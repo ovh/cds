@@ -563,7 +563,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check user permission"))
 			}
-			userRoles[t] = b
+			userRoles[t] = analysis.Data.CDSAdminWithMFA || b
 			log.Info(ctx, "role: [%s] entity: [%s] has role: [%v]", roleName, t, b)
 		}
 	}
@@ -885,7 +885,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 				VCSName:        workflowDefVCSName,
 				RepositoryName: workflowDefRepositoryName,
 				Data: sdk.V2WorkflowHookData{
-					RepositoryEvent: sdk.WorkflowHookEventPush,
+					RepositoryEvent: sdk.WorkflowHookEventNamePush,
 					VCSServer:       targetVCS,
 					RepositoryName:  targetRepository,
 					CommitFilter:    e.Workflow.On.Push.Commit,
@@ -904,14 +904,14 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 
 			if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
 				// Load existing head hook
-				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPush, defaultBranch.ID)
+				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventNamePush, defaultBranch.ID)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, err
 				}
 				if existingHook != nil {
 					// Update data and ref
 					existingHook.Data = sdk.V2WorkflowHookData{
-						RepositoryEvent: sdk.WorkflowHookEventPush,
+						RepositoryEvent: sdk.WorkflowHookEventNamePush,
 						VCSServer:       targetVCS,
 						RepositoryName:  targetRepository,
 						CommitFilter:    e.Workflow.On.Push.Commit,
@@ -938,7 +938,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 						VCSName:        workflowDefVCSName,
 						RepositoryName: workflowDefRepositoryName,
 						Data: sdk.V2WorkflowHookData{
-							RepositoryEvent: sdk.WorkflowHookEventPush,
+							RepositoryEvent: sdk.WorkflowHookEventNamePush,
 							VCSServer:       targetVCS,
 							RepositoryName:  targetRepository,
 							CommitFilter:    e.Workflow.On.Push.Commit,
@@ -970,7 +970,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 				VCSName:        workflowDefVCSName,
 				RepositoryName: workflowDefRepositoryName,
 				Data: sdk.V2WorkflowHookData{
-					RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+					RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
 					VCSServer:       targetVCS,
 					RepositoryName:  targetRepository,
 					BranchFilter:    e.Workflow.On.PullRequest.Branches,
@@ -988,14 +988,14 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 
 			if e.Commit == defaultBranch.LatestCommit {
 				// Load existing head hook
-				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPullRequest, defaultBranch.ID)
+				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventNamePullRequest, defaultBranch.ID)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, err
 				}
 				if existingHook != nil {
 					// Update data and ref
 					existingHook.Data = sdk.V2WorkflowHookData{
-						RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+						RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
 						VCSServer:       targetVCS,
 						RepositoryName:  targetRepository,
 						BranchFilter:    e.Workflow.On.PullRequest.Branches,
@@ -1021,7 +1021,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 						VCSName:        workflowDefVCSName,
 						RepositoryName: workflowDefRepositoryName,
 						Data: sdk.V2WorkflowHookData{
-							RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+							RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
 							VCSServer:       targetVCS,
 							RepositoryName:  targetRepository,
 							BranchFilter:    e.Workflow.On.PullRequest.Branches,
@@ -1052,7 +1052,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, c
 				VCSName:        workflowDefVCSName,
 				RepositoryName: workflowDefRepositoryName,
 				Data: sdk.V2WorkflowHookData{
-					RepositoryEvent: sdk.WorkflowHookEventPullRequestComment,
+					RepositoryEvent: sdk.WorkflowHookEventNamePullRequestComment,
 					VCSServer:       targetVCS,
 					RepositoryName:  targetRepository,
 					BranchFilter:    e.Workflow.On.PullRequest.Branches,
@@ -1596,7 +1596,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 			},
 		}
 		if !namePattern.MatchString(o.GetName()) {
-			return nil, []error{sdk.WrapError(sdk.ErrInvalidData, "name %s doesn't match %s", o.GetName(), sdk.EntityNamePattern)}
+			return nil, []error{sdk.NewErrorFrom(sdk.ErrInvalidData, "name %s doesn't match %s", o.GetName(), sdk.EntityNamePattern)}
 		}
 		switch t {
 		case sdk.EntityTypeWorkerModel:

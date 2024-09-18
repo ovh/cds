@@ -30,6 +30,7 @@ func V2_cacheLinkHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			} else if err != nil && strings.Contains(err.Error(), "resource not found") {
 				cdnLinks = &sdk.CDNItemLinks{}
 			}
+			cdnLinks.CDNHttpURL = wk.CDNHttpURL()
 			writeJSON(w, cdnLinks, http.StatusOK)
 		default:
 			writeError(w, r, sdk.ErrMethodNotAllowed)

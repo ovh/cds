@@ -156,7 +156,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
 			VCSServer:       vcs.Name,
-			RepositoryEvent: sdk.WorkflowHookEventPush,
+			RepositoryEvent: sdk.WorkflowHookEventNamePush,
 		},
 	}
 	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &wh1))
@@ -164,7 +164,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 	r := sdk.HookListWorkflowRequest{
 		RepositoryName:      repo.Name,
 		VCSName:             vcs.Name,
-		RepositoryEventName: sdk.WorkflowHookEventPush,
+		RepositoryEventName: sdk.WorkflowHookEventNamePush,
 		AnayzedProjectKeys:  []string{p.Key},
 		Ref:                 "refs/heads/master",
 		Sha:                 "123456",
@@ -217,8 +217,8 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequest(t *t
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
 			VCSServer:       vcs.Name,
-			RepositoryEvent: sdk.WorkflowHookEventPullRequest,
-			TypesFilter:     []string{"pr:opened"},
+			RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
+			TypesFilter:     []sdk.WorkflowHookEventType{sdk.WorkflowHookEventTypePullRequestOpened},
 		},
 	}
 	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &wh1))
@@ -226,8 +226,8 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequest(t *t
 	r := sdk.HookListWorkflowRequest{
 		RepositoryName:      repo.Name,
 		VCSName:             vcs.Name,
-		RepositoryEventName: sdk.WorkflowHookEventPullRequest,
-		RepositoryEventType: "pr:opened",
+		RepositoryEventName: sdk.WorkflowHookEventNamePullRequest,
+		RepositoryEventType: sdk.WorkflowHookEventTypePullRequestOpened,
 		Ref:                 "refs/heads/master",
 		Sha:                 "123456",
 		AnayzedProjectKeys:  []string{p.Key},
@@ -279,8 +279,8 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestFilte
 		Data: sdk.V2WorkflowHookData{
 			RepositoryName:  repo.Name,
 			VCSServer:       vcs.Name,
-			RepositoryEvent: sdk.WorkflowHookEventPullRequest,
-			TypesFilter:     []string{"pr:opened"},
+			RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
+			TypesFilter:     []sdk.WorkflowHookEventType{sdk.WorkflowHookEventTypePullRequestOpened},
 		},
 	}
 	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &wh1))
@@ -288,8 +288,8 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestFilte
 	r := sdk.HookListWorkflowRequest{
 		RepositoryName:      repo.Name,
 		VCSName:             vcs.Name,
-		RepositoryEventName: sdk.WorkflowHookEventPullRequest,
-		RepositoryEventType: "pr:foo",
+		RepositoryEventName: sdk.WorkflowHookEventNamePullRequest,
+		RepositoryEventType: sdk.WorkflowHookEventTypePullRequestOpened,
 		AnayzedProjectKeys:  []string{p.Key},
 	}
 
@@ -346,7 +346,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 		VCSName:             vcs.Name,
 		Ref:                 "refs/heads/master",
 		Sha:                 "123456",
-		RepositoryEventName: sdk.WorkflowHookEventPush,
+		RepositoryEventName: sdk.WorkflowHookEventNamePush,
 		AnayzedProjectKeys:  []string{p.Key},
 		Models: []sdk.EntityFullName{
 			{

@@ -294,7 +294,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 			msg := sdk.V2SendJobRunInfo{
 				Time:    time.Now(),
 				Level:   sdk.WorkflowRunInfoLevelError,
-				Message: fmt.Sprintf("Error while Hatchery %s spawns worker with model %s after %s, err: %s", h.Name(), j.model.GetName(), sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()),
+				Message: fmt.Sprintf("Error while Hatchery %s spawns worker %s with model %s after %s, err: %s", h.Name(), arg.WorkerName, j.model.GetName(), sdk.Round(time.Since(start), time.Second).String(), sdk.ExtractHTTPError(errSpawn).Error()),
 			}
 			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, j.region, arg.JobID, msg); err != nil {
 				log.ErrorWithStackTrace(ctx, err)

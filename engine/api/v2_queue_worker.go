@@ -118,8 +118,23 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		}
 		defer tx.Rollback() // nolint
 
+		now := time.Now()
+
 		contexts, sensitiveDatas, err := computeRunJobContext(ctx, tx, projWithSecrets, vcsWithSecrets, vss, *run, *jobRun)
 		if err != nil {
+			info := sdk.V2WorkflowRunJobInfo{
+				Level:            sdk.WorkflowRunInfoLevelError,
+				IssuedAt:         now,
+				WorkflowRunJobID: jobRun.ID,
+				WorkflowRunID:    jobRun.WorkflowRunID,
+				Message:          fmt.Sprintf("Worker %q is unable to take job %q: %v", wk.Name, jobRun.JobID, err.Error()),
+			}
+			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WithStack(err)
+			}
 			return err
 		}
 
@@ -128,8 +143,6 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		if err := worker_v2.Update(ctx, tx, wrkWithSecret); err != nil {
 			return err
 		}
-
-		now := time.Now()
 
 		jobRun.Status = sdk.V2WorkflowRunJobStatusBuilding
 		jobRun.Started = &now

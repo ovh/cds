@@ -48,7 +48,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
     @Input() jobRun: V2WorkflowRunJob;
 
     mode = DisplayMode.ANSI;
-    tabs: Array<Tab> = [{ name: 'Job', logBlocks: [new LogBlock('Informations')] }];
+    tabs: Array<Tab> = [{ name: 'Job', logBlocks: [new LogBlock('Information')] }];
     currentTabIndex = 0;
     pollRunJobInfosSubs: Subscription;
     websocket: WebSocketSubject<any>;
@@ -82,7 +82,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         const jobRunIDChanged = jobRunChanged && changes.jobRun.previousValue && changes.jobRun.previousValue.id !== changes.jobRun.currentValue.id;
         if (jobRunIDChanged) {
             // Reset view
-            this.tabs = [{ name: 'Job', logBlocks: [new LogBlock('Informations')] }];
+            this.tabs = [{ name: 'Job', logBlocks: [new LogBlock('Information')] }];
             if (this.pollRunJobInfosSubs) { this.pollRunJobInfosSubs.unsubscribe(); }
             this.stopStreamingLogsForJob();
         }
