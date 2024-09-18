@@ -33,7 +33,7 @@ func (p *cachePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.Ac
 	}
 
 	cacheKey := q.GetOptions()["key"]
-	path := q.GetOptions()["path"]
+	path := q.GetOptions()["download-path"]
 	failOnMiss := q.GetOptions()["fail-on-cache-miss"]
 
 	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)

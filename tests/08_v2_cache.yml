@@ -67,7 +67,8 @@ testcases:
                   uses: actions/cache
                   with:
                     key: mycache
-                    path: myfile
+                    download-path: ${{ cds.workspace }}
+                    content: myfile
                 - id: cacheCheck
                   run: echo ${{ steps.cacheGet.outputs.cache-hit }}    
                 - run: date > myfile
