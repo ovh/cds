@@ -63,7 +63,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
     selectedNodeID: number;
     selectedNodeRef: string;
     selectecHookRef: string;
-    workflowV3Enabled: boolean;
     asCodeTagColor: string = '';
     templateTagColor: string = '';
     previewV3TagColor: string = '';
@@ -114,9 +113,6 @@ export class WorkflowComponent implements OnInit, OnDestroy {
                         exists: f.exists
                     }
                 }));
-            });
-            this._featureService.isEnabled(FeatureNames.WorkflowV3, data).subscribe(f => {
-                this.workflowV3Enabled = f.enabled;
             });
         });
 

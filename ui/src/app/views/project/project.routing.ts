@@ -56,12 +56,6 @@ const projectRoutes: Routes = [
                             () => import('app/views/pipeline/pipeline.module').then(m => m.PipelineModule)
                     },
                     {
-                        path: ':key/workflowv3', loadChildren:
-                            () => import('app/views/workflowv3/workflowv3.module').then(m => m.WorkflowV3Module),
-                        canActivate: [FeatureGuard],
-                        data: { feature: FeatureNames.WorkflowV3 }
-                    },
-                    {
                         path: 'explore',
                         canActivate: [FeatureGuard],
                         data: { feature: FeatureNames.AllAsCode },

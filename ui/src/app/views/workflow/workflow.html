@@ -1,10 +1,5 @@
 <div class="workflow-page">
     <app-workflow-breadcrumb [project]="project" [workflow]="workflow">
-        <nz-tag *ngIf="project && workflow && workflowV3Enabled" class="labelFeature preview" nzColor="blue"
-            [title]="'workflow_from_template_btn' | translate"
-            [routerLink]="runNumber ? ['/project', project.key, 'workflowv3', workflow.name, 'run', runNumber] : ['/project', project.key, 'workflowv3', workflow.name]">
-            Preview Workflow v3
-        </nz-tag>
         <nz-tag class="labelFeature" [title]="'workflow_from_template_btn' | translate"
             [nzColor]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : ''"
             nz-popover nzPopoverTrigger="click" [nzPopoverContent]="popupFromTemplate"
