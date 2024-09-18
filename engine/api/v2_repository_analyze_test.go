@@ -1514,7 +1514,7 @@ func TestManageWorkflowHooksAllSameRepo(t *testing.T) {
 	})
 	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "DELETE", "/v2/workflow/scheduler/github/sgu%2Fmydefrepo/"+e.Name, gomock.Any(), gomock.Any()).Times(1)
 
-	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/master", LatestCommit: "123456"}, srvs)
+	_, err = manageWorkflowHooks(context.TODO(), db, api.Cache, nil, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/master", LatestCommit: "123456"}, srvs)
 	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, repoDef.Name, "push")
@@ -1583,7 +1583,7 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 	srvs, err := services.LoadAllByType(context.TODO(), api.mustDB(), sdk.TypeHooks)
 	require.NoError(t, err)
 
-	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main", LatestCommit: "123456"}, srvs)
+	_, err = manageWorkflowHooks(context.TODO(), db, api.Cache, nil, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main", LatestCommit: "123456"}, srvs)
 	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
@@ -1655,7 +1655,7 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
+	_, err = manageWorkflowHooks(context.TODO(), db, api.Cache, nil, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
 	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
@@ -1709,7 +1709,7 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
+	_, err = manageWorkflowHooks(context.TODO(), db, api.Cache, nil, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
 	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")
@@ -1768,7 +1768,7 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 		},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e.Entity))
-	_, err = manageWorkflowHooks(context.TODO(), db, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
+	_, err = manageWorkflowHooks(context.TODO(), db, api.Cache, nil, e, "github", "sgu/mydefrepo", &sdk.VCSBranch{ID: "refs/heads/main"}, nil)
 	require.NoError(t, err)
 
 	repoWebHooks, err := workflow_v2.LoadHooksByRepositoryEvent(context.TODO(), db, vcsServer.Name, "sgu/myapp", "push")

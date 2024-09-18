@@ -21,6 +21,7 @@ func adminHooks() *cobra.Command {
 	return cli.NewCommand(adminHooksCmd, nil, []*cobra.Command{
 		adminHooksRepositories(),
 		adminHooksSchedulers(),
+		adminHooksOutgoingEvents(),
 		cli.NewListCommand(adminHooksTaskListCmd, adminHooksTaskListRun, nil),
 		cli.NewListCommand(adminHooksTaskExecutionListCmd, adminHooksTaskExecutionListRun, nil),
 		cli.NewCommand(adminHooksTaskExecutionStartCmd, adminHooksTaskExecutionStartRun, nil),

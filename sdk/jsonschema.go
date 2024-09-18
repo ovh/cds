@@ -141,6 +141,7 @@ func GetWorkflowJsonSchema(publicActionNames, regionNames, workerModelNames []st
 	workflowSchema.Definitions["WorkflowOnModelUpdate"] = workflowOn.Definitions["WorkflowOnModelUpdate"]
 	workflowSchema.Definitions["WorkflowOnWorkflowUpdate"] = workflowOn.Definitions["WorkflowOnWorkflowUpdate"]
 	workflowSchema.Definitions["WorkflowOnSchedule"] = workflowOn.Definitions["WorkflowOnSchedule"]
+	workflowSchema.Definitions["WorkflowOnRun"] = workflowOn.Definitions["WorkflowOnRun"]
 
 	// Prop On
 	propsOn := &jsonschema.Schema{

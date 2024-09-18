@@ -10,12 +10,14 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -169,12 +171,14 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 
 	request, _ := json.Marshal(runRequest.UserRequest)
 	extractedData := sdk.HookRepositoryEventExtractData{
-		CDSEventName:   sdk.WorkflowHookEventNameManual,
-		Commit:         runRequest.WorkflowCommit,
-		Ref:            runRequest.WorkflowRef,
-		ProjectManual:  runRequest.Project,
-		WorkflowManual: runRequest.Workflow,
-		AdminMFA:       runRequest.AdminMFA,
+		CDSEventName: sdk.WorkflowHookEventNameManual,
+		Commit:       runRequest.WorkflowCommit,
+		Ref:          runRequest.WorkflowRef,
+		Manual: sdk.HookRepositoryEventExtractedDataManual{
+			Project:  runRequest.Project,
+			Workflow: runRequest.Workflow,
+		},
+		AdminMFA: runRequest.AdminMFA,
 	}
 
 	exec := &sdk.HookRepositoryEvent{
@@ -201,6 +205,87 @@ func (s *Service) handleManualWorkflowEvent(ctx context.Context, runRequest sdk.
 	}
 
 	return exec, nil
+}
+
+func (s *Service) getOutgoingHooksExecutionsByWorkflowHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		proj := vars["projectKey"]
+		vcs := vars["vcsServer"]
+		workflow := vars["workflowName"]
+		repo, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		events, err := s.Dao.ListWorkflowRunOutgoingEvents(ctx, proj, vcs, repo, workflow)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, events, http.StatusOK)
+	}
+}
+
+func (s *Service) getOutgoingHookExecutionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		vcs := vars["vcsServer"]
+		proj := vars["projectKey"]
+		workflow := vars["workflowName"]
+		hookID := vars["hookID"]
+
+		repo, err := url.PathUnescape(vars["repoName"])
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		k := strings.ToLower(cache.Key(workflowRunOutgoingEventRootKey, s.Dao.GetOutgoingMemberKey(proj, vcs, repo, workflow), hookID))
+
+		var e sdk.HookWorkflowRunOutgoingEvent
+		find, err := s.Cache.Get(k, &e)
+		if err != nil {
+			return err
+		}
+		if !find {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find outgoing event")
+		}
+		return service.WriteJSON(w, e, http.StatusOK)
+	}
+}
+
+func (s *Service) workflowRunOutgoingEventHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var runRequest sdk.HookWorkflowRunEvent
+		if err := service.UnmarshalBody(r, &runRequest); err != nil {
+			return sdk.WithStack(err)
+		}
+		exec, err := s.handleWorkflowRunOutgoingEvent(ctx, runRequest)
+		if err != nil {
+			return err
+		}
+		return service.WriteJSON(w, exec, http.StatusAccepted)
+	}
+}
+
+func (s *Service) handleWorkflowRunOutgoingEvent(ctx context.Context, runRequest sdk.HookWorkflowRunEvent) (*sdk.HookWorkflowRunOutgoingEvent, error) {
+	event := &sdk.HookWorkflowRunOutgoingEvent{
+		UUID:    sdk.UUID(),
+		Created: time.Now().UnixNano(),
+		Status:  sdk.HookEventStatusScheduled,
+		Event:   runRequest,
+	}
+
+	// Save event
+	if err := s.Dao.SaveWorkflowRunOutgoingEvent(ctx, event); err != nil {
+		return nil, sdk.WrapError(err, "unable to create repository event %s", event.GetFullName())
+	}
+
+	// Enqueue event
+	if err := s.Dao.EnqueueWorkflowRunOutgoingEvent(ctx, event); err != nil {
+		return event, sdk.WrapError(err, "unable to enqueue repository event %s", event.GetFullName())
+	}
+
+	return event, nil
 }
 
 func (s *Service) repositoryHooksHandler() service.Handler {
@@ -843,7 +928,14 @@ func (s *Service) Status(ctx context.Context) *sdk.MonitoringStatus {
 	if float64(hookEventCallbackIn) > float64(hookEventCallbackOut) {
 		status = sdk.MonitoringStatusWarn
 	}
-	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEventCallbackEvent", Value: fmt.Sprintf("%d/%d", hookEventIn, hookEventOut), Status: status})
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceRepositoryEventCallbackEvent", Value: fmt.Sprintf("%d/%d", hookEventCallbackIn, hookEventCallbackOut), Status: status})
+
+	hookOutgoingEventIn, hookOutgoingEventOut := s.Dao.OutgoingEventCallbackBalance()
+	status = sdk.MonitoringStatusOK
+	if float64(hookOutgoingEventIn) > float64(hookOutgoingEventOut) {
+		status = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "BalanceOutgoingEvent", Value: fmt.Sprintf("%d/%d", hookOutgoingEventIn, hookOutgoingEventOut), Status: status})
 
 	var nbHooksKafkaTotal int64
 

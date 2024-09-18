@@ -37,6 +37,8 @@ type EntityFinder struct {
 	workerModelCache      map[string]sdk.EntityWithObject
 	localTemplatesCache   map[string]sdk.EntityWithObject
 	templatesCache        map[string]sdk.EntityWithObject
+	localWorkflowCache    map[string]sdk.V2Workflow
+	workflowCache         map[string]sdk.V2Workflow
 	plugins               map[string]sdk.GRPCPlugin
 	libraryProject        string
 }
@@ -58,6 +60,8 @@ func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectReposi
 		templatesCache:        make(map[string]sdk.EntityWithObject),
 		localTemplatesCache:   make(map[string]sdk.EntityWithObject),
 		repoCache:             make(map[string]sdk.ProjectRepository),
+		localWorkflowCache:    make(map[string]sdk.V2Workflow),
+		workflowCache:         make(map[string]sdk.V2Workflow),
 		vcsServerCache:        make(map[string]sdk.VCSProject),
 		repoDefaultRefCache:   make(map[string]string),
 		plugins:               make(map[string]sdk.GRPCPlugin),
@@ -65,7 +69,7 @@ func NewEntityFinder(pkey, currentRef, currentSha string, repo sdk.ProjectReposi
 	}
 }
 
-func (ef *EntityFinder) unsafeSearchEntityFromLibrary(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (*sdk.EntityFullName, error) {
+func (ef *EntityFinder) unsafeSearchEntityFromLibrary(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string, entityType string) (*sdk.EntityFullName, error) {
 	if ef.libraryProject == "" {
 		return nil, nil
 	}
@@ -98,7 +102,7 @@ func (ef *EntityFinder) unsafeSearchEntityFromLibrary(ctx context.Context, db *g
 	return nil, nil
 }
 
-func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store cache.Store, name string, entityType string) (string, string, error) {
+func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, store cache.Store, name string, entityType string) (string, string, error) {
 	ctx, end := telemetry.Span(ctx, "EntityFinder.searchEntity", trace.StringAttribute("entity-type", entityType), trace.StringAttribute("entity-name", name))
 	defer end()
 
@@ -318,6 +322,13 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db *gorp.DbMap, store 
 			Entity:   *entityDB,
 			Template: wt,
 		}
+	case sdk.EntityTypeWorkflow:
+		var w sdk.V2Workflow
+		if err := yaml.Unmarshal([]byte(entityDB.Data), &w); err != nil {
+			return "", "", err
+		}
+		ef.workflowCache[completePath] = w
+
 	default:
 		return "", "", sdk.NewErrorFrom(sdk.ErrNotImplemented, "entity %s not implemented", entityType)
 	}

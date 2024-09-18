@@ -51,6 +51,10 @@ func (s *Service) triggerGetSigningKey(ctx context.Context, hre *sdk.HookReposit
 			vcs = hre.ExtractData.Scheduler.TargetVCS
 			repo = hre.ExtractData.Scheduler.TargetRepo
 		}
+		if hre.EventName == sdk.WorkflowHookEventNameWorkflowRun {
+			vcs = hre.ExtractData.WorkflowRun.TargetVCS
+			repo = hre.ExtractData.WorkflowRun.TargetRepository
+		}
 
 		req := sdk.HookRetrieveSignKeyRequest{
 			HookEventUUID:    hre.UUID,

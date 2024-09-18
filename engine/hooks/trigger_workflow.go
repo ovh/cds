@@ -136,13 +136,23 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					runRequest.EntityUpdated = wh.WorkflowName
 					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
 					runRequest.Sha = wh.TargetCommit
+					runRequest.EventName = "workflow-update"
 				case sdk.WorkflowHookTypeWorkerModel:
 					runRequest.EntityUpdated = wh.ModelFullName
 					runRequest.Ref = sdk.GitRefBranchPrefix + wh.Data.TargetBranch
 					runRequest.Sha = wh.TargetCommit
+					runRequest.EventName = "model-update"
 				case sdk.WorkflowHookTypeScheduler:
 					runRequest.Cron = hre.ExtractData.Scheduler.Cron
 					runRequest.CronTimezone = hre.ExtractData.Scheduler.Timezone
+				case sdk.WorkflowHookTypeWorkflowRun:
+					runRequest.WorkflowRun = hre.ExtractData.WorkflowRun.Workflow
+					runRequest.WorkflowRunID = hre.ExtractData.WorkflowRun.WorkflowRunID
+					mods = make([]cdsclient.RequestModifier, 0) // Do not send query param. Let the CDS api get default branch
+
+					// Let CDS API choose the git context for the workflow execution
+					runRequest.Ref = ""
+					runRequest.Sha = ""
 				}
 
 				wr, err := s.Client.WorkflowV2RunFromHook(ctx, wh.ProjectKey, wh.VCSIdentifier, wh.RepositoryIdentifier, wh.WorkflowName,

@@ -18,6 +18,7 @@ const (
 	WorkflowHookTypeWorkflow    = "WorkflowUpdate"
 	WorkflowHookTypeManual      = "Manual"
 	WorkflowHookTypeScheduler   = "Scheduler"
+	WorkflowHookTypeWorkflowRun = "WorkflowRun"
 )
 
 type V2Workflow struct {
@@ -52,6 +53,14 @@ type WorkflowOn struct {
 	ModelUpdate        *WorkflowOnModelUpdate        `json:"model-update,omitempty"`
 	WorkflowUpdate     *WorkflowOnWorkflowUpdate     `json:"workflow-update,omitempty"`
 	Schedule           []WorkflowOnSchedule          `json:"schedule,omitempty"`
+	WorkflowRun        []WorkflowOnRun               `json:"workflow-run,omitempty"`
+}
+
+type WorkflowOnRun struct {
+	Workflow string   `json:"workflow"`
+	Status   []string `json:"status,omitempty"`
+	Branches []string `json:"branches,omitempty"`
+	Tags     []string `json:"tags,omitempty"`
 }
 
 type WorkflowOnSchedule struct {
@@ -148,6 +157,12 @@ func IsDefaultHooks(on *WorkflowOn) []WorkflowHookEventName {
 		if on.ModelUpdate.TargetBranch != "" || len(on.ModelUpdate.Models) > 0 {
 			return nil
 		}
+	}
+	if len(on.Schedule) > 0 {
+		return nil
+	}
+	if len(on.WorkflowRun) > 0 {
+		return nil
 	}
 	return hookKeys
 }
@@ -364,7 +379,7 @@ type V2WorkflowScheduleEvent struct {
 type V2WorkflowHookData struct {
 	VCSServer                   string                  `json:"vcs_server,omitempty"`
 	RepositoryName              string                  `json:"repository_name,omitempty"`
-	RepositoryEvent             WorkflowHookEventName  `json:"repository_event,omitempty"`
+	RepositoryEvent             WorkflowHookEventName   `json:"repository_event,omitempty"`
 	Model                       string                  `json:"model,omitempty"`
 	CommitFilter                string                  `json:"commit_filter,omitempty"`
 	BranchFilter                []string                `json:"branch_filter,omitempty"`
@@ -375,15 +390,21 @@ type V2WorkflowHookData struct {
 	TargetTag                   string                  `json:"target_tag,omitempty"`
 	Cron                        string                  `json:"cron,omitempty"`
 	CronTimeZone                string                  `json:"cron_timezone,omitempty"`
+	WorkflowRunName             string                  `json:"workflow_run_name"`
+	WorkflowRunStatus           []string                `json:"workflow_run_status"`
 	InsecureSkipSignatureVerify bool                    `json:"insecure_skip_signature_verify"`
 }
 
 func (d V2WorkflowHookData) ValidateRef(ctx context.Context, ref string) bool {
 	valid := false
 	if strings.HasPrefix(ref, GitRefBranchPrefix) {
-		valid = IsValidHookRefs(ctx, d.BranchFilter, strings.TrimPrefix(ref, GitRefBranchPrefix))
+		if len(d.BranchFilter) > 0 || len(d.TagFilter) == 0 {
+			valid = IsValidHookRefs(ctx, d.BranchFilter, strings.TrimPrefix(ref, GitRefBranchPrefix))
+		}
 	} else {
-		valid = IsValidHookRefs(ctx, d.TagFilter, strings.TrimPrefix(ref, GitRefTagPrefix))
+		if len(d.BranchFilter) == 0 || len(d.TagFilter) > 0 {
+			valid = IsValidHookRefs(ctx, d.TagFilter, strings.TrimPrefix(ref, GitRefTagPrefix))
+		}
 	}
 	return valid
 }

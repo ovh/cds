@@ -20,7 +20,7 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 		log.Info(ctx, "triggering analysis for event [%s] %s", hre.EventName, hre.GetFullName())
 		if hre.EventName == sdk.WorkflowHookEventNameManual {
 			hre.Analyses = []sdk.HookRepositoryEventAnalysis{{
-				ProjectKey: hre.ExtractData.ProjectManual,
+				ProjectKey: hre.ExtractData.Manual.Project,
 			}}
 		} else {
 			repos, err := s.Client.HookRepositoriesList(ctx, hre.VCSServerName, hre.RepositoryName)

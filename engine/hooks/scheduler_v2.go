@@ -173,6 +173,18 @@ func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e s
 		return s.Dao.RemoveSchedulerExecution(ctx, updatedExecution.SchedulerDef.ID)
 	}
 
+	// Check if definition exists on api side
+	if _, err := s.Client.HookGetWorkflowHook(ctx, existingDef.ID); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			// Remove scheduler execution + definition
+			if err := s.Dao.RemoveScheduler(ctx, existingDef.VCSName, existingDef.RepositoryName, existingDef.WorkflowName, existingDef.ID); err != nil {
+				log.ContextWithStackTrace(ctx, err)
+			}
+			return nil
+		}
+		return err
+	}
+
 	// Create HookRepositoryEvent
 	bts, _ := json.Marshal(sdk.V2WorkflowScheduleEvent{Schedule: updatedExecution.SchedulerDef.Data.Cron})
 	he := &sdk.HookRepositoryEvent{
@@ -186,7 +198,7 @@ func (s *Service) enqueueSchedulerAsHookRepositoryEvent(ctx context.Context, e s
 			Commit:       updatedExecution.SchedulerDef.Commit,
 			Ref:          updatedExecution.SchedulerDef.Ref,
 			CDSEventName: sdk.WorkflowHookTypeScheduler,
-			Scheduler: sdk.HookRepositoryEventExtractDataScheduler{
+			Scheduler: sdk.HookRepositoryEventExtractedDataScheduler{
 				TargetVCS:      updatedExecution.SchedulerDef.Data.VCSServer,
 				TargetRepo:     updatedExecution.SchedulerDef.Data.RepositoryName,
 				TargetWorkflow: updatedExecution.SchedulerDef.WorkflowName,

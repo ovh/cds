@@ -59,6 +59,7 @@ type QueueStore interface {
 
 type SetStore interface {
 	SetAdd(rootKey string, memberKey string, member interface{}) error
+	SetAddWithTTL(rootKey string, memberKey string, member interface{}, ttl int) error
 	SetRemove(rootKey string, memberKey string, member interface{}) error
 	SetCard(key string) (int, error)
 	SetScan(ctx context.Context, key string, members ...interface{}) error

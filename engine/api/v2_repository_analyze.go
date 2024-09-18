@@ -534,8 +534,10 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		return sdk.WithStack(tx.Commit())
 	}
 
+	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, *repo, *vcsProjectWithSecret, *u, analysis.Data.CDSAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
+
 	// Transform file content into entities
-	entities, multiErr := api.handleEntitiesFiles(ctx, filesContent, analysis, *proj, *vcsProjectWithSecret, *repo, *u)
+	entities, multiErr := api.handleEntitiesFiles(ctx, ef, filesContent, analysis)
 	if multiErr != nil {
 		return api.stopAnalysis(ctx, analysis, multiErr...)
 	}
@@ -697,7 +699,7 @@ skipEntity:
 
 		// Insert workflow hook
 		if e.Type == sdk.EntityTypeWorkflow {
-			hooks, err := manageWorkflowHooks(ctx, tx, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
+			hooks, err := manageWorkflowHooks(ctx, tx, api.Cache, ef, *e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
@@ -751,7 +753,7 @@ skipEntity:
 
 		// Insert workflow hook
 		if entityInserted && e.Type == sdk.EntityTypeWorkflow {
-			hooks, err := manageWorkflowHooks(ctx, tx, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
+			hooks, err := manageWorkflowHooks(ctx, tx, api.Cache, ef, e, vcsProjectWithSecret.Name, repo.Name, defaultBranch, srvs)
 			if err != nil {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, fmt.Sprintf("unable to create workflow hooks for %s", e.Name)))
 			}
@@ -834,7 +836,7 @@ skipEntity:
 	return nil
 }
 
-func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch, hookSrvs []sdk.Service) ([]sdk.V2WorkflowHook, error) {
+func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, cache cache.Store, ef *EntityFinder, e sdk.EntityWithObject, workflowDefVCSName, workflowDefRepositoryName string, defaultBranch *sdk.VCSBranch, hookSrvs []sdk.Service) ([]sdk.V2WorkflowHook, error) {
 	ctx, next := telemetry.Span(ctx, "manageWorkflowHooks")
 	defer next()
 
@@ -1188,6 +1190,62 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 
 	}
 
+	// Manage workflow-run
+	// * On default branch, latest commit:
+	//   1. remove old definition of the scheduler in DB
+	//   2. insert new definition
+	if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit && e.Workflow.On != nil {
+
+		destVCS := workflowDefVCSName
+		destRepo := workflowDefRepositoryName
+		if e.Workflow.Repository != nil {
+			destVCS = e.Workflow.Repository.VCSServer
+			destRepo = e.Workflow.Repository.Name
+		}
+
+		for _, s := range e.Workflow.On.WorkflowRun {
+			mSplit := strings.Split(s.Workflow, "/")
+			var workflowFullName string
+			switch len(mSplit) {
+			case 1:
+				workflowFullName = fmt.Sprintf("%s/%s/%s/%s", e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, s.Workflow)
+			case 3:
+				workflowFullName = fmt.Sprintf("%s/%s/%s", e.ProjectKey, workflowDefVCSName, s.Workflow)
+			case 4:
+				workflowFullName = fmt.Sprintf("%s/%s", e.ProjectKey, s.Workflow)
+			case 5:
+				workflowFullName = s.Workflow
+			}
+
+			// Add in data desitnation vcs / repo
+			wh := sdk.V2WorkflowHook{
+				VCSName:        workflowDefVCSName,
+				EntityID:       e.ID,
+				ProjectKey:     e.ProjectKey,
+				Type:           sdk.WorkflowHookTypeWorkflowRun,
+				Ref:            e.Ref,
+				Commit:         e.Commit,
+				WorkflowName:   e.Name,
+				RepositoryName: workflowDefRepositoryName,
+				Data: sdk.V2WorkflowHookData{
+					// Destination repository
+					VCSServer:      destVCS,
+					RepositoryName: destRepo,
+
+					// Workflow run to react
+					WorkflowRunName:   workflowFullName, // searchEntity return proj/vcs/repo/name@ref, we must remove @ref,
+					BranchFilter:      s.Branches,
+					TagFilter:         s.Tags,
+					WorkflowRunStatus: s.Status,
+				},
+			}
+			if err := workflow_v2.InsertWorkflowHook(ctx, db, &wh); err != nil {
+				return nil, err
+			}
+			hooks = append(hooks, wh)
+		}
+
+	}
 	return hooks, nil
 }
 
@@ -1390,12 +1448,11 @@ func sortEntitiesFiles(filesContent map[string][]byte) []string {
 	return keys
 }
 
-func (api *API) handleEntitiesFiles(ctx context.Context, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis, proj sdk.Project, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) ([]sdk.EntityWithObject, []error) {
+func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, filesContent map[string][]byte, analysis *sdk.ProjectRepositoryAnalysis) ([]sdk.EntityWithObject, []error) {
 	sortedKeys := sortEntitiesFiles(filesContent)
 
 	entities := make([]sdk.EntityWithObject, 0)
 	analysis.Data.Entities = make([]sdk.ProjectRepositoryDataEntity, 0)
-	ef := NewEntityFinder(proj.Key, analysis.Ref, analysis.Commit, repo, vcsServer, u, analysis.Data.CDSAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
 	for _, filePath := range sortedKeys {
 		content := filesContent[filePath]
 		dir, fileName := filepath.Split(filePath)

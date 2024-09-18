@@ -37,6 +37,8 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/admin/scheduler", nil, r.GET(s.getAllSchedulersHandler))
 	r.Handle("/admin/scheduler/{vcsServer}/{repoName}/{workflowName}", nil, r.GET(s.getWorkflowSchedulersHandler))
 	r.Handle("/admin/scheduler/execution/{hookID}", nil, r.GET(s.geSchedulerExecutionHandler), r.DELETE(s.deleteSchedulerHandler))
+	r.Handle("/admin/outgoing/{projectKey}/{vcsServer}/{repoName}/{workflowName}", nil, r.GET(s.getOutgoingHooksExecutionsByWorkflowHandler))
+	r.Handle("/admin/outgoing/{projectKey}/{vcsServer}/{repoName}/{workflowName}/{hookID}", nil, r.GET(s.getOutgoingHookExecutionHandler))
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/status", nil, r.GET(s.statusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
@@ -51,6 +53,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/v2/repository/event/{vcsServer}/{repoName}/{uuid}", nil, r.GET(s.getRepositoryEventHandler))
 	r.Handle("/v2/repository/key/{vcsServer}/{repoName}", nil, r.GET(s.getGenerateRepositoryWebHookSecretHandler))
 	r.Handle("/v2/workflow/manual", nil, r.POST(s.workflowManualHandler))
+	r.Handle("/v2/workflow/outgoing", nil, r.POST(s.workflowRunOutgoingEventHandler))
 
 	r.Handle("/v2/workflow/scheduler", nil, r.POST(s.postInstantiateSchedulerHandler))
 	r.Handle("/v2/workflow/scheduler/{vcsServer}/{repoName}/{workflowName}", nil, r.DELETE(s.deleteSchedulerByWorkflowHandler))
