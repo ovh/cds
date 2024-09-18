@@ -5,8 +5,11 @@ description: |
   Get and save cache
 inputs:
   download-path:
+    default: ${{ cds.workspace }}
   content:
+    required: true
   key:
+    required: true
   fail-on-cache-miss:
     default: 'false'
 post:
