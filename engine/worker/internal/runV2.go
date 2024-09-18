@@ -638,6 +638,14 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			return w.failJob(ctx, err.Error()), actionPost
 		}
 
+		// Check action result
+		if actionResult.Status == sdk.V2WorkflowRunJobStatusFail {
+			return sdk.V2WorkflowRunJobResult{
+				Status: actionResult.Status,
+				Error:  actionResult.Error,
+			}, actionPost
+		}
+
 		// Execute child post action
 		for i := 0; i < len(childPostAction); i++ {
 			post := childPostAction[len(childPostAction)-1-i]
@@ -649,6 +657,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		// Set previous current step status with new output
 		w.SetCurrentStepsStatus(parentStepStatus)
 		w.SetSubStepName(parentStepName)
+
 	default:
 	}
 
