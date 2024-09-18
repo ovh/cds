@@ -1,286 +1,170 @@
-<div class="repoShow">
-    <ng-container *ngIf="repository">
-        <h3>Repository {{repository.name}}</h3>
-        <div class="repoShow-container" *ngIf="repository && vcsProject">
-            <nz-alert nzType="info" [nzDescription]="infoMsg" nzShowIcon></nz-alert>
+<nz-spin *ngIf="!repository" nzTip="Loading repository"></nz-spin>
+
+<ng-container *ngIf="repository && vcsProject">
+    <div class="content">
+
+        <nz-alert nzType="info" [nzDescription]="infoMsg" nzShowIcon>
             <ng-template #infoMsg>
-                Make sure that user "{{vcsProject.auth.username}}" can read the target repository.
+                Make sure that user <b>{{vcsProject.auth.username}}</b> can read the target repository.
             </ng-template>
-            <form nz-form>
-                <nz-form-item>
-                    <nz-form-label nzSpan="3">ID</nz-form-label>
-                    <nz-form-control>{{repository.id}}</nz-form-control>
-                </nz-form-item>
-                <nz-form-item>
-                    <nz-form-label nzSpan="3">Clone URL</nz-form-label>
-                    <nz-form-control>{{repository.clone_url}}</nz-form-control>
-                </nz-form-item>
-                <nz-form-item>
-                    <nz-form-label nzSpan="3">Added</nz-form-label>
-                    <nz-form-control>{{repository.created}} by {{repository.created_by}}</nz-form-control>
-                </nz-form-item>
-            </form>
-            <div class="repoEvent">
-                <h3>Repository events <i (click)="loadHookEvents()" nz-icon nzType="sync" [nzSpin]="loadingHooks"
-                        nzTheme="outline" class="pointing"></i> </h3>
-                <nz-table [nzLoading]="loadingHooks" [nzData]="hookEvents" [nzPageSize]="10" nzSize="small" #hooksTable>
-                    <thead>
+        </nz-alert>
+
+        <nz-descriptions nzTitle="Repository info" [nzColumn]="2">
+            <nz-descriptions-item nzTitle="ID">{{repository.id}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Name">{{repository.name}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Clone URL">{{repository.clone_url}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Added">{{repository.created}} by
+                {{repository.created_by}}</nz-descriptions-item>
+        </nz-descriptions>
+
+        <div class="events">
+            <h3>Repository events <i (click)="loadHookEvents()" nz-icon nzType="sync" [nzSpin]="loadingHooks"
+                    nzTheme="outline" class="pointing"></i> </h3>
+            <nz-table [nsAutoHeightTable]="85" [nzLoading]="loadingHooks" [nzData]="hookEvents"
+                [nzFrontPagination]="false" nzSize="small" #hooksTable>
+                <thead>
+                    <tr>
                         <th>Status</th>
-                        <th>Date</th>
+                        <th [nzSortFn]="sortHookByDate" nzSortOrder="descend">Date</th>
                         <th>ID</th>
-                        <th>Event</th>
+                        <th [nzFilterMultiple]="true" [nzFilters]="eventFilterList" [nzFilterFn]="eventFilterFunc">Event
+                        </th>
                         <th>Ref</th>
                         <th>CDS User</th>
                         <th>Analysis</th>
                         <th>Triggered Workflows</th>
                         <th>Error</th>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let h of hooksTable.data" (click)="displayDetail(h)" class="pointing">
-                            <td>
-                                <app-status-icon [status]="h.status" nz-tooltip="{{h.last_error}}"></app-status-icon>
-                            </td>
-                            <td><span nz-tooltip="{{h.created/1000000}}">{{h.created/1000000 | amTimeAgo}}</span></td>
-                            <td>{{h.uuid}}</td>
-                            <td>{{h.event_name}}</td>
-                            <td>{{h?.extracted_data?.ref}}</td>
-                            <td>{{h.username}}</td>
-                            <td>
-                                <ng-container *ngFor="let a of h?.analyses">
-                                    <ng-container *ngIf="a.project_key === project.key">
-                                        <app-status-icon [status]="a.status"></app-status-icon>
-                                    </ng-container>
-                                </ng-container>
-                            </td>
-                            <td>
-                                <ng-container
-                                    [ngSwitch]="h.nbFailed > 0? 'fail': (h.nbScheduled > 0? 'scheduled': (h.nbDone >0? 'success': 'skipped'))">
-                                    <ng-container *ngSwitchCase="'fail'">
-                                        <app-status-icon [status]="'Error'"></app-status-icon>
-                                    </ng-container>
-                                    <ng-container *ngSwitchCase="'success'">
-                                        <app-status-icon [status]="'Success'"></app-status-icon>
-                                    </ng-container>
-                                    <ng-container *ngSwitchCase="'scheduled'">
-                                        <app-status-icon [status]="'Scheduled'"></app-status-icon>
-                                    </ng-container>
-                                    <ng-container *ngSwitchCase="'skipped'">
-                                        <app-status-icon [status]="'Skipped'"></app-status-icon>
-                                    </ng-container>
-                                </ng-container>
-                            </td>
-                            <td>
-                                {{h.last_error}}
-                            </td>
-                        </tr>
-                    </tbody>
-                </nz-table>
-            </div>
-        </div>
-        <div class="footer">
-            <div class="buttons">
-                <button nz-button nzType="default" [nzLoading]="loading" (click)="openTriggerAnalysisDrawer()">
-                    Trigger analysis
-                </button>
-                <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
-                    nzPopconfirmTitle="Are you sure you want to remove this repository ?"
-                    (nzOnConfirm)="removeRepositoryFromProject()" nzPopconfirmPlacement="topRight">
-                    Remove
-                </button>
-            </div>
-        </div>
-    </ng-container>
-    <ng-container *ngIf="!repository">
-        <nz-spin nzTip="Loading repository"></nz-spin>
-    </ng-container>
-</div>
-<nz-modal [(nzVisible)]="selectedHookEvent" nzTitle="Event {{selectedHookEvent?.uuid}}" nzWidth="1200px"
-    (nzOnCancel)="closeModal()">
-    <ng-container *nzModalContent>
-        <div class="modalContent" *ngIf="selectedHookEvent">
-            <div class="section">
-                <h3>Event</h3>
-                <nz-row>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Status:</div>
-                            {{selectedHookEvent.status}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <ng-container *ngIf="selectedHookEvent.last_error">
-                                <div class="label">Error: </div>
-                                {{selectedHookEvent.last_error}}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let h of hooksTable.data" (click)="displayDetail(h)" class="pointing">
+                        <td>
+                            <app-status-icon [status]="h.status" nz-tooltip="{{h.last_error}}"></app-status-icon>
+                        </td>
+                        <td><app-date-from-now [value]="h.created_string"></app-date-from-now></td>
+                        <td>{{h.uuid}}</td>
+                        <td>{{h.event_name}}{{h.event_type ? ' (' + h.event_type + ')' : ''}}</td>
+                        <td>{{h?.extracted_data?.ref}}</td>
+                        <td>{{h.username}}</td>
+                        <td>
+                            <ng-container *ngFor="let a of h?.analyses">
+                                <app-status-icon *ngIf="a.project_key === project.key"
+                                    [status]="a.status"></app-status-icon>
                             </ng-container>
-                        </div>
-
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Event: </div>
-                            {{selectedHookEvent.extracted_data.cds_event_name}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Ref:</div>
-                            {{selectedHookEvent.extracted_data.ref}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Commit:</div>
-                            {{selectedHookEvent.extracted_data.commit}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Username:</div>
-                            {{selectedHookEvent.username}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">PGP Key:</div>
-                            {{selectedHookEvent.sign_key}}
-                        </div>
-                    </nz-col>
-                </nz-row>
-            </div>
-            <div class="section">
-                <h3>Analysis</h3>
-                <nz-row *ngIf="!selectedAnalysis">
-                    <nz-col nzSpan="24">
-                        <nz-alert [nzMessage]="'No analysis'" nzType="info"></nz-alert>
-                    </nz-col>
-                </nz-row>
-                <nz-row *ngIf="selectedAnalysis">
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Status:</div>
-                            {{selectedAnalysis.status}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <ng-container *ngIf="selectedAnalysis.data.error">
-                                <div class="label">Error:</div> {{selectedAnalysis.data.error}}
+                        </td>
+                        <td>
+                            <ng-container
+                                [ngSwitch]="h.nbFailed > 0? 'fail': (h.nbScheduled > 0? 'scheduled': (h.nbDone >0? 'success': 'skipped'))">
+                                <ng-container *ngSwitchCase="'fail'">
+                                    <app-status-icon [status]="'Error'"></app-status-icon>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'success'">
+                                    <app-status-icon [status]="'Success'"></app-status-icon>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'scheduled'">
+                                    <app-status-icon [status]="'Scheduled'"></app-status-icon>
+                                </ng-container>
+                                <ng-container *ngSwitchCase="'skipped'">
+                                    <app-status-icon [status]="'Skipped'"></app-status-icon>
+                                </ng-container>
                             </ng-container>
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">ID:</div>
-                            {{selectedAnalysis.id}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">
-                                OperationID:</div>
-                            {{selectedAnalysis.data.operation_uuid}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">User:</div>
-                            {{selectedAnalysis.data.cds_username}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Date:</div>
-                            {{selectedAnalysis.last_modified}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">Commit check: </div>
-                            {{selectedAnalysis.data.commit_check}}
-                        </div>
-                    </nz-col>
-                    <nz-col nzSpan="12">
-                        <div class="field">
-                            <div class="label">PGP Key:</div>
-                            {{selectedAnalysis.data.sign_key_id}}
-                        </div>
-                    </nz-col>
-                </nz-row>
-            </div>
-            <div class="section">
-                <h3>Entities found</h3>
-                <nz-row>
-                    <ng-container *ngFor="let entry of selectedAnalysisEntities | keyvalue">
-                        <nz-col nzSpan="6">
-                            <div class="field">
-                                <div class="label">{{entry.key + ': '}}</div>
-                                <ng-container *ngIf="entry.value.success.nb !== 0">
-                                    <span class="entities" nz-popover [nzPopoverContent]="successTmpl">
-                                        {{entry.value.success.nb}} updated</span>
-                                    <ng-template #successTmpl>
-                                        <ul class="nopoint">
-                                            <li *ngFor="let f of entry.value.success.files">
-                                                <div class="container">
-                                                    <div class="label">{{f}}</div>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </ng-template>
-                                </ng-container>
-
-                                <ng-container *ngIf="entry.value.skipped.nb !== 0">
-                                    <span class="entities" nz-popover [nzPopoverContent]="skippedTmpl">
-                                        {{entry.value.skipped.nb}} skipped</span>
-                                    <ng-template #skippedTmpl>
-                                        <ul class="nopoint">
-                                            <li *ngFor="let f of entry.value.skipped.files">
-                                                <div class="container">
-                                                    <div class="label">{{f}}</div>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </ng-template>
-                                </ng-container>
-                            </div>
-                        </nz-col>
-                    </ng-container>
-                </nz-row>
-            </div>
-            <div class="section">
-                <h3>Workflows</h3>
-                <nz-row>
-                    <ng-container *ngIf="!selectedHookEvent.workflows || selectedHookEvent.workflows.length === 0">
-                        <nz-col nzSpan="24">
-                            <nz-alert nzType="info" nzMessage="No workflow has been triggered"></nz-alert>
-                        </nz-col>
-                    </ng-container>
-                    <nz-col class="colWorkflow" nzSpan="6" *ngFor="let w of selectedHookEvent.workflows">
-                        <ng-container *ngIf="w.status === 'Done'">
-                            <app-status-icon [status]="'Success'"></app-status-icon>
-                            <div class="toto">
-                                <a
-                                    [routerLink]="['/project', w.project_key, 'run', w.run_id]">{{w.project_key}}/{{w.workflow_name}}#{{w.run_number}}</a>
-                            </div>
-                        </ng-container>
-                        <ng-container *ngIf="w.status === 'Error'">
-                            <span nz-popover="{{w.error}}">
-                                <app-status-icon [status]="w.status"></app-status-icon>
-                                {{w.project_key}}/{{w.workflow_name}}
-                            </span>
-                        </ng-container>
-                        <ng-container *ngIf="w.status === 'Scheduled' || w.status === 'Skipped'">
-                            <span nz-popover="{{w.status}}">
-                                <app-status-icon [status]="w.status"></app-status-icon>
-                                {{w.project_key}}/{{w.workflow_name}}
-                            </span>
-                        </ng-container>
-                    </nz-col>
-                </nz-row>
-            </div>
+                        </td>
+                        <td>
+                            {{h.last_error}}
+                        </td>
+                    </tr>
+                </tbody>
+            </nz-table>
         </div>
-    </ng-container>
-    <ng-container *nzModalFooter>
-        <button nz-button nzType="primary" (click)="closeModal()">Close</button>
-    </ng-container>
+    </div>
+    <div class="footer">
+        <div class="buttons">
+            <button nz-button nzType="default" [nzLoading]="loading" (click)="openTriggerAnalysisDrawer()">
+                Trigger analysis
+            </button>
+            <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
+                nzPopconfirmTitle="Are you sure you want to remove this repository ?"
+                (nzOnConfirm)="removeRepositoryFromProject()" nzPopconfirmPlacement="topRight">
+                Remove
+            </button>
+        </div>
+    </div>
+</ng-container>
+
+<nz-modal *ngIf="selectedHookEvent" nzVisible nzTitle="Event details" nzCentered nzWidth="1200px"
+    (nzOnCancel)="closeModal()" [nzFooter]="null">
+    <div class="modal-content" *nzModalContent>
+        <nz-descriptions nzTitle="Event" [nzColumn]="2" nzBordered>
+            <nz-descriptions-item nzTitle="ID"><span nz-typography
+                    nzCopyable>{{selectedHookEvent.uuid}}</span></nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Status">{{selectedHookEvent.status}}</nz-descriptions-item>
+            <nz-descriptions-item *ngIf="selectedHookEvent.last_error"
+                nzTitle="Error">{{selectedHookEvent.last_error}}</nz-descriptions-item>
+            <nz-descriptions-item
+                nzTitle="Event">{{selectedHookEvent.extracted_data.cds_event_name}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Event type"
+                *ngIf="selectedHookEvent.extracted_data.cds_event_type">{{selectedHookEvent.extracted_data.cds_event_type}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Ref">{{selectedHookEvent.extracted_data.ref}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Commit">{{selectedHookEvent.extracted_data.commit}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Username">{{selectedHookEvent.username}}</nz-descriptions-item>
+            <nz-descriptions-item *ngIf="selectedHookEvent.sign_key"
+                nzTitle="PGP Key">{{selectedHookEvent.sign_key}}</nz-descriptions-item>
+        </nz-descriptions>
+
+        <nz-descriptions nzTitle="Analysis" [nzColumn]="2" [nzBordered]="selectedAnalysis">
+            <ng-container *ngIf="selectedAnalysis">
+                <nz-descriptions-item nzTitle="ID"><span nz-typography
+                        nzCopyable>{{selectedAnalysis.id}}</span></nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Date">{{selectedAnalysis.last_modified}}</nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Status">{{selectedAnalysis.status}}</nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Username">{{selectedAnalysis.data.cds_username}}</nz-descriptions-item>
+                <nz-descriptions-item *ngIf="selectedAnalysis.data.error"
+                    nzTitle="Error">{{selectedAnalysis.data.error}}</nz-descriptions-item>
+                <nz-descriptions-item *ngIf="selectedAnalysis.data.operation_uuid" nzTitle="Operation ID"><span
+                        nz-typography nzCopyable>{{selectedAnalysis.data.operation_uuid}}</span></nz-descriptions-item>
+                <nz-descriptions-item *ngIf="selectedAnalysis.data.sign_key_id"
+                    nzTitle="PGP Key">{{selectedAnalysis.data.sign_key_id}}</nz-descriptions-item>
+            </ng-container>
+        </nz-descriptions>
+        <ng-container *ngIf="!selectedAnalysis">
+            <nz-alert [nzMessage]="'No analysis'" nzType="info"></nz-alert>
+        </ng-container>
+
+        <nz-descriptions nzTitle="Entities" [nzColumn]="2" [nzBordered]="selectedAnalysisEntities">
+            <ng-container *ngFor="let entry of selectedAnalysisEntities | keyvalue">
+                <nz-descriptions-item *ngIf="entry.value.success.nb > 0"
+                    [nzTitle]="entry.key + ' updated (' + entry.value.success.nb + ')'">
+                    <span *ngFor="let f of entry.value.success.files">{{f}}<br /></span>
+                </nz-descriptions-item>
+                <nz-descriptions-item *ngIf="entry.value.skipped.nb > 0"
+                    [nzTitle]="entry.key + ' skipped (' + entry.value.skipped.nb + ')'">
+                    <span *ngFor="let f of entry.value.skipped.files">{{f}}<br /></span>
+                </nz-descriptions-item>
+            </ng-container>
+        </nz-descriptions>
+        <ng-container *ngIf="!selectedAnalysisEntities">
+            <nz-alert nzMessage="No entities found" nzType="info"></nz-alert>
+        </ng-container>
+
+        <div class="workflows">
+            <h3>Workflows</h3>
+            <nz-list nzBordered nzSize="small"
+                [nzBordered]="selectedHookEvent.workflows && selectedHookEvent.workflows.length > 0">
+                <nz-list-item *ngFor="let w of selectedHookEvent.workflows">
+                    <ng-container *ngIf="w.status === 'Done'">
+                        <app-status-icon [status]="'Success'" title="Done"></app-status-icon>
+                        <a
+                            [routerLink]="['/project', w.project_key, 'run', w.run_id]">{{w.project_key}}/{{w.workflow_name}}#{{w.run_number}}</a>
+                    </ng-container>
+                    <ng-container *ngIf="w.status !== 'Done'">
+                        <app-status-icon [status]="w.status" [title]="w.status"></app-status-icon>
+                        <span>{{w.project_key}}/{{w.workflow_name}}{{w.error ? ' - Error: ' + w.error : ''}}</span>
+                    </ng-container>
+                </nz-list-item>
+            </nz-list>
+        </div>
+        <ng-container *ngIf="!selectedHookEvent.workflows || selectedHookEvent.workflows.length === 0">
+            <nz-alert [nzMessage]="'No workflow has been triggered'" nzType="info"></nz-alert>
+        </ng-container>
+    </div>
 </nz-modal>

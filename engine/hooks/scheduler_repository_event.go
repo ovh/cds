@@ -172,7 +172,7 @@ func (s *Service) executeEvent(ctx context.Context, hre *sdk.HookRepositoryEvent
 		hre.LastError = ""
 		hre.NbErrors = 0
 		switch hre.EventName {
-		case sdk.RepoEventPush, sdk.WorkflowHookManual:
+		case sdk.WorkflowHookEventNamePush, sdk.WorkflowHookEventNameManual:
 			// analyze have to be trigger only on push event
 			hre.Status = sdk.HookEventStatusAnalysis
 			if err := s.triggerAnalyses(ctx, hre); err != nil {

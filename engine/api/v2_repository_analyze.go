@@ -883,7 +883,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				VCSName:        workflowDefVCSName,
 				RepositoryName: workflowDefRepositoryName,
 				Data: sdk.V2WorkflowHookData{
-					RepositoryEvent: sdk.WorkflowHookEventPush,
+					RepositoryEvent: sdk.WorkflowHookEventNamePush,
 					VCSServer:       targetVCS,
 					RepositoryName:  targetRepository,
 					CommitFilter:    e.Workflow.On.Push.Commit,
@@ -902,14 +902,14 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 
 			if e.Ref == defaultBranch.ID && e.Commit == defaultBranch.LatestCommit {
 				// Load existing head hook
-				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPush, defaultBranch.ID)
+				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventNamePush, defaultBranch.ID)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, err
 				}
 				if existingHook != nil {
 					// Update data and ref
 					existingHook.Data = sdk.V2WorkflowHookData{
-						RepositoryEvent: sdk.WorkflowHookEventPush,
+						RepositoryEvent: sdk.WorkflowHookEventNamePush,
 						VCSServer:       targetVCS,
 						RepositoryName:  targetRepository,
 						CommitFilter:    e.Workflow.On.Push.Commit,
@@ -936,7 +936,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 						VCSName:        workflowDefVCSName,
 						RepositoryName: workflowDefRepositoryName,
 						Data: sdk.V2WorkflowHookData{
-							RepositoryEvent: sdk.WorkflowHookEventPush,
+							RepositoryEvent: sdk.WorkflowHookEventNamePush,
 							VCSServer:       targetVCS,
 							RepositoryName:  targetRepository,
 							CommitFilter:    e.Workflow.On.Push.Commit,
@@ -968,7 +968,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				VCSName:        workflowDefVCSName,
 				RepositoryName: workflowDefRepositoryName,
 				Data: sdk.V2WorkflowHookData{
-					RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+					RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
 					VCSServer:       targetVCS,
 					RepositoryName:  targetRepository,
 					BranchFilter:    e.Workflow.On.PullRequest.Branches,
@@ -986,14 +986,14 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 
 			if e.Commit == defaultBranch.LatestCommit {
 				// Load existing head hook
-				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventPullRequest, defaultBranch.ID)
+				existingHook, err := workflow_v2.LoadHookHeadRepositoryWebHookByWorkflowAndEvent(ctx, db, e.ProjectKey, workflowDefVCSName, workflowDefRepositoryName, e.Name, sdk.WorkflowHookEventNamePullRequest, defaultBranch.ID)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, err
 				}
 				if existingHook != nil {
 					// Update data and ref
 					existingHook.Data = sdk.V2WorkflowHookData{
-						RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+						RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
 						VCSServer:       targetVCS,
 						RepositoryName:  targetRepository,
 						BranchFilter:    e.Workflow.On.PullRequest.Branches,
@@ -1019,7 +1019,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 						VCSName:        workflowDefVCSName,
 						RepositoryName: workflowDefRepositoryName,
 						Data: sdk.V2WorkflowHookData{
-							RepositoryEvent: sdk.WorkflowHookEventPullRequest,
+							RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
 							VCSServer:       targetVCS,
 							RepositoryName:  targetRepository,
 							BranchFilter:    e.Workflow.On.PullRequest.Branches,
@@ -1050,7 +1050,7 @@ func manageWorkflowHooks(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e
 				VCSName:        workflowDefVCSName,
 				RepositoryName: workflowDefRepositoryName,
 				Data: sdk.V2WorkflowHookData{
-					RepositoryEvent: sdk.WorkflowHookEventPullRequestComment,
+					RepositoryEvent: sdk.WorkflowHookEventNamePullRequestComment,
 					VCSServer:       targetVCS,
 					RepositoryName:  targetRepository,
 					BranchFilter:    e.Workflow.On.PullRequest.Branches,

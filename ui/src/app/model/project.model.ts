@@ -78,11 +78,22 @@ export class ProjectRepository {
   created_by: string;
 }
 
+export enum WorkflowHookEventName {
+  WorkflowHookEventNameWorkflowUpdate = "workflow-update",
+  WorkflowHookEventNameModelUpdate = "model-update",
+  WorkflowHookEventNamePush = "push",
+  WorkflowHookEventNameManual = "manual",
+  WorkflowHookEventNameScheduler = "scheduler",
+  WorkflowHookEventNamePullRequest = "pull-request",
+  WorkflowHookEventNamePullRequestComment = "pull-request-comment"
+}
+
 export class RepositoryHookEvent {
   uuid: string;
   created: number;
   status: string;
-  event_name: string;
+  event_name: WorkflowHookEventName;
+  event_type: string;
   extracted_data: RepositoryHookEventExtractedData;
   username: string;
   last_error: string;
@@ -97,6 +108,7 @@ export class RepositoryHookEvent {
   nbFailed: number;
   nbScheduled: number;
   nbSkipped: number;
+  created_string: string;
 }
 
 export class RepositoryHookEventAnalysis {
@@ -112,12 +124,11 @@ export enum HookEventWorkflowStatus {
   Done = "Done"
 }
 
-
-
 export class RepositoryHookEventExtractedData {
   ref: string;
   commit: string;
-  cds_event_name: string;
+  cds_event_name: WorkflowHookEventName;
+  cds_event_type: string;
 }
 
 export class RepositoryHookWorkflow {

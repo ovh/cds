@@ -1,110 +1,88 @@
 @import '../../../../common.scss';
 
-.repoShow {
+:host {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+}
 
-  h3 {
-    padding: 10px 30px;
+.content {
+  flex: 1;
+  display:flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden;
+
+  nz-alert {
+    margin-bottom: 30px;
   }
 
-  .repoShow-container {
+  .events {
     flex: 1;
-    overflow-y: auto;
-    padding: 10px 30px;
+    overflow: hidden;
+    margin-top: 10px;
 
-    form {
-      margin-top: 20px;
-      padding: 0;
+    h3 {
+      margin-bottom: 20px;
 
-      nz-form-label {
-        font-weight: bold;
-      }
-    }
-
-    .repoEvent {
-      h3 {
-        margin-left: -30px;
-
-        i {
-          margin-left: 10px;
-        }
-      }
-
-      padding-top: 20px;
-    }
-  }
-
-  .footer {
-    display: flex;
-    height: 46px;
-    border-top: 1px solid #d9d9d9;
-    padding: 7px 30px;
-
-    :host-context(.night) & {
-      border-top: 1px solid #434343;
-    }
-
-    .buttons {
-      margin-left: auto;
-
-      button {
+      i {
         margin-left: 10px;
       }
     }
   }
 }
 
-ul.nopoint {
-  list-style-type: none;
-  padding: 0;
-  max-height: 500px;
-  overflow-y: auto;
+.footer {
+  display: flex;
+  height: 50px;
+  border-top: 1px solid #d9d9d9;
+  padding: 0 20px;
+  flex-direction: row;
+  align-items: center;
 
-  .container {
-    display: flex;
+  :host-context(.night) & {
+    border-top: 1px solid #434343;
+  }
 
-    .label {
-      align-self: center;
+  .buttons {
+    margin-left: auto;
+
+    button {
+      margin-left: 10px;
     }
   }
 }
-
-.green {
-  color: $cds_color_green;
-}
-
 
 nz-spin {
   margin-top: 50px;
 }
 
-.modalContent {
-  min-height: 400px;
-  max-height: 900px;
+.modal-content {
+  max-height: 80%;
+  overflow: hidden;
 
-  .section {
-    margin-bottom: 20px;
+  nz-descriptions:not(:first-child) {
+    margin-top: 20px;
   }
 
-  .entities {
-    cursor: pointer;
-  }
-
-  .field {
-    display: flex;
-
-    .label {
-      width: 105px;
+  .workflows {
+    h3 {
+      margin: 20px 0;
     }
-  }
 
+    nz-list-item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
 
-  .colWorkflow {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
+      app-status-icon {
+        margin-right: 10px;
+      }
+
+      &>*:not(app-status-icon) {
+        flex: 1;
+      }
+    }
   }
 }

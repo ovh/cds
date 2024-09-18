@@ -22,6 +22,7 @@ export class V2WorkflowRun {
     job_events: V2WorkflowRunJobEvent[];
     annotations: { [key: string]: string };
 }
+
 export enum V2WorkflowRunStatus {
     Crafting = "Crafting",
     Building = "Building",
@@ -30,6 +31,7 @@ export enum V2WorkflowRunStatus {
     Success = "Success",
     Skipped = "Skipped"
 }
+
 export class WorkflowRunData {
     workflow: V2Workflow;
     worker_models: { [key: string]: {} };

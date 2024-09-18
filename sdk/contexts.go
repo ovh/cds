@@ -57,7 +57,7 @@ type ActionContext struct {
 
 type CDSContext struct {
 	// Workflow
-	EventName          string                 `json:"event_name,omitempty"`
+	EventName          WorkflowHookEventName  `json:"event_name,omitempty"`
 	Event              map[string]interface{} `json:"event,omitempty"`
 	ProjectKey         string                 `json:"project_key,omitempty"`
 	RunID              string                 `json:"run_id,omitempty"`
