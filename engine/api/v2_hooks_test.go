@@ -453,7 +453,7 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkflowRun(t *testing.T) {
 	r := sdk.HookListWorkflowRequest{
 		RepositoryName:      repo.Name,
 		VCSName:             vcs.Name,
-		RepositoryEventName: sdk.WorkflowHookEventRun,
+		RepositoryEventName: sdk.WorkflowHookEventNameWorkflowRun,
 		Workflows: []sdk.EntityFullName{
 			{
 				ProjectKey: "PROJ",
