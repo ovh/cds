@@ -89,6 +89,13 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 	}
 
 	archivePath := workDirs.WorkingDir + "/cache.tar.gz"
+
+	// Check if a file cache.tar.gz already exist and remove it
+	if _, err := os.Stat(archivePath); err == nil {
+		if err := os.Remove(archivePath); err != nil {
+			return sdk.Errorf("unable to remove previous cache: %s: %v", archivePath, err)
+		}
+	}
 	if err := archiver.Archive(itemsToArchive, archivePath); err != nil {
 		return fmt.Errorf("unable to create cache archive: %v", err)
 	}
