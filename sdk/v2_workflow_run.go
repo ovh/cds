@@ -1,16 +1,16 @@
 package sdk
 
 import (
+	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 )
 
@@ -557,269 +557,226 @@ type V2WorkflowRunResult struct {
 	Status                         string                                      `json:"status" db:"status"`
 }
 
-func (r *V2WorkflowRunResult) GetDetail() (any, error) {
-	if err := r.Detail.castData(); err != nil {
+func (r *V2WorkflowRunResult) GetDetail() (V2WorkflowRunResultDetailInterface, error) {
+	/*if err := r.Detail.castData(); err != nil {
 		return nil, err
 	}
-	return r.Detail.Data, nil
+	return r.Detail.Data, nil*/
+
+	if err := r.CastDetail(); err != nil {
+		return nil, err
+	}
+
+	return r.Detail.Data.(V2WorkflowRunResultDetailInterface), nil
 }
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultVariableDetail() (*V2WorkflowRunResultVariableDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultVariableDetail)
-	if !ok {
-		var ii V2WorkflowRunResultVariableDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultVariableDetail)
-		if ok {
-			i = &ii
+/*
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultVariableDetail() (*V2WorkflowRunResultVariableDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultVariableDetail)
+		if !ok {
+			var ii V2WorkflowRunResultVariableDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultVariableDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
+		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
-	}
-	return i, nil
-}
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTerraformModuleDetail() (*V2WorkflowRunResultTerraformModuleDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultTerraformModuleDetail)
-	if !ok {
-		var ii V2WorkflowRunResultTerraformModuleDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultTerraformModuleDetail)
-		if ok {
-			i = &ii
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTerraformModuleDetail() (*V2WorkflowRunResultTerraformModuleDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultTerraformModuleDetail)
+		if !ok {
+			var ii V2WorkflowRunResultTerraformModuleDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultTerraformModuleDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultTerraformModuleDetail")
+		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultTerraformModuleDetail")
-	}
-	return i, nil
-}
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTerraformProviderDetail() (*V2WorkflowRunResultTerraformProviderDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultTerraformProviderDetail)
-	if !ok {
-		var ii V2WorkflowRunResultTerraformProviderDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultTerraformProviderDetail)
-		if ok {
-			i = &ii
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTerraformProviderDetail() (*V2WorkflowRunResultTerraformProviderDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultTerraformProviderDetail)
+		if !ok {
+			var ii V2WorkflowRunResultTerraformProviderDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultTerraformProviderDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultTerraformProviderDetail")
+		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultTerraformProviderDetail")
-	}
-	return i, nil
-}
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail() (*V2WorkflowRunResultArsenalDeploymentDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultArsenalDeploymentDetail)
-	if !ok {
-		var ii V2WorkflowRunResultArsenalDeploymentDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultArsenalDeploymentDetail)
-		if ok {
-			i = &ii
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail() (*V2WorkflowRunResultArsenalDeploymentDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultArsenalDeploymentDetail)
+		if !ok {
+			var ii V2WorkflowRunResultArsenalDeploymentDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultArsenalDeploymentDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
+		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultArsenalDeploymentDetail")
-	}
-	return i, nil
-}
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultPythonDetail() (*V2WorkflowRunResultPythonDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultPythonDetail)
-	if !ok {
-		var ii V2WorkflowRunResultPythonDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultPythonDetail)
-		if ok {
-			i = &ii
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultPythonDetail() (*V2WorkflowRunResultPythonDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultPythonDetail)
+		if !ok {
+			var ii V2WorkflowRunResultPythonDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultPythonDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultPythonDetail")
+		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultPythonDetail")
-	}
-	return i, nil
-}
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDebianDetail() (*V2WorkflowRunResultDebianDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultDebianDetail)
-	if !ok {
-		var ii V2WorkflowRunResultDebianDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultDebianDetail)
-		if ok {
-			i = &ii
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDebianDetail() (*V2WorkflowRunResultDebianDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultDebianDetail)
+		if !ok {
+			var ii V2WorkflowRunResultDebianDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultDebianDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultDebianDetail")
+		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultDebianDetail")
-	}
-	return i, nil
-}
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultHelmDetail() (*V2WorkflowRunResultHelmDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
-	if !ok {
-		var ii V2WorkflowRunResultHelmDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultHelmDetail)
-		if ok {
-			i = &ii
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultHelmDetail() (*V2WorkflowRunResultHelmDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultHelmDetail")
-	}
-	return i, nil
-}
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDockerDetail() (*V2WorkflowRunResultDockerDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultDockerDetail)
-	if !ok {
-		var ii V2WorkflowRunResultDockerDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultDockerDetail)
-		if ok {
-			i = &ii
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultHelmDetail)
+		if !ok {
+			var ii V2WorkflowRunResultHelmDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultHelmDetail)
+			if ok {
+				i = &ii
+			}
 		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultHelmDetail")
+		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultDockerDetail")
-	}
-	return i, nil
-}
 
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTestDetail() (*V2WorkflowRunResultTestDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultTestDetail)
-	if !ok {
-		var ii V2WorkflowRunResultTestDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultTestDetail)
-		if ok {
-			i = &ii
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultDockerDetail() (*V2WorkflowRunResultDockerDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
 		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultTestDetail")
-	}
-	return i, nil
-}
-
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2WorkflowRunResultGenericDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultGenericDetail)
-	if !ok {
-		var ii V2WorkflowRunResultGenericDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultGenericDetail)
-		if ok {
-			i = &ii
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultDockerDetail)
+		if !ok {
+			var ii V2WorkflowRunResultDockerDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultDockerDetail)
+			if ok {
+				i = &ii
+			}
 		}
-	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultGenericDetail")
-	}
-	return i, nil
-}
-
-func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultReleaseDetail() (*V2WorkflowRunResultReleaseDetail, error) {
-	if err := r.Detail.castData(); err != nil {
-		return nil, err
-	}
-	i, ok := r.Detail.Data.(*V2WorkflowRunResultReleaseDetail)
-	if !ok {
-		var ii V2WorkflowRunResultReleaseDetail
-		ii, ok = r.Detail.Data.(V2WorkflowRunResultReleaseDetail)
-		if ok {
-			i = &ii
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultDockerDetail")
 		}
+		return i, nil
 	}
-	if !ok {
-		return nil, errors.New("unable to cast detail as V2WorkflowRunResultReleaseDetail")
-	}
-	return i, nil
-}
 
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultTestDetail() (*V2WorkflowRunResultTestDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
+		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultTestDetail)
+		if !ok {
+			var ii V2WorkflowRunResultTestDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultTestDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultTestDetail")
+		}
+		return i, nil
+	}
+
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultGenericDetail() (*V2WorkflowRunResultGenericDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
+		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultGenericDetail)
+		if !ok {
+			var ii V2WorkflowRunResultGenericDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultGenericDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultGenericDetail")
+		}
+		return i, nil
+	}
+
+	func (r *V2WorkflowRunResult) GetDetailAsV2WorkflowRunResultReleaseDetail() (*V2WorkflowRunResultReleaseDetail, error) {
+		if err := r.Detail.castData(); err != nil {
+			return nil, err
+		}
+		i, ok := r.Detail.Data.(*V2WorkflowRunResultReleaseDetail)
+		if !ok {
+			var ii V2WorkflowRunResultReleaseDetail
+			ii, ok = r.Detail.Data.(V2WorkflowRunResultReleaseDetail)
+			if ok {
+				i = &ii
+			}
+		}
+		if !ok {
+			return nil, errors.New("unable to cast detail as V2WorkflowRunResultReleaseDetail")
+		}
+		return i, nil
+	}
+*/
 func (r *V2WorkflowRunResult) Name() string {
-	switch r.Type {
-	case V2WorkflowRunResultTypeTerraformModule:
-		detail, err := r.GetDetailAsV2WorkflowRunResultTerraformModuleDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.ID + "/" + detail.Version
-		}
-	case V2WorkflowRunResultTypeTerraformProvider:
-		detail, err := r.GetDetailAsV2WorkflowRunResultTerraformProviderDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Namespace + "_" + detail.Name + "_" + detail.Version + "_" + detail.Flavor
-		}
-	case V2WorkflowRunResultTypeTest:
-		detail, err := r.GetDetailAsV2WorkflowRunResultTestDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeGeneric, V2WorkflowRunResultTypeCoverage:
-		detail, err := r.GetDetailAsV2WorkflowRunResultGenericDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypePython:
-		detail, err := r.GetDetailAsV2WorkflowRunResultPythonDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name + ":" + detail.Version
-		}
-	case V2WorkflowRunResultTypeDebian:
-		detail, err := r.GetDetailAsV2WorkflowRunResultDebianDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeDocker:
-		detail, err := r.GetDetailAsV2WorkflowRunResultDockerDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeVariable:
-		detail, err := r.GetDetailAsV2WorkflowRunResultVariableDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name
-		}
-	case V2WorkflowRunResultTypeArsenalDeployment:
-		detail, err := r.GetDetailAsV2WorkflowRunResultArsenalDeploymentDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.DeploymentName
-		}
-	case V2WorkflowRunResultTypeHelm:
-		detail, err := r.GetDetailAsV2WorkflowRunResultHelmDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name + ":" + detail.ChartVersion
-		}
-	case V2WorkflowRunResultTypeRelease:
-		detail, err := r.GetDetailAsV2WorkflowRunResultReleaseDetail()
-		if err == nil {
-			return string(r.Type) + ":" + detail.Name + ":" + detail.Version
-		}
+
+	detailData, err := r.GetDetail()
+	if err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
 	}
-	return string(r.Type) + ":" + r.ID
+
+	return string(r.Type) + ":" + detailData.GetName()
 }
 
 func (r *V2WorkflowRunResult) Typ() string {
@@ -864,301 +821,6 @@ func (x *V2WorkflowRunResultArtifactManagerMetadata) Scan(src interface{}) error
 		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
 	}
 	return WrapError(JSONUnmarshal([]byte(source), x), "cannot unmarshal V2WorkflowRunResultArtifactManagerMetadata")
-}
-
-type V2WorkflowRunResultDetail struct {
-	Data interface{} `json:"data"`
-	Type string      `json:"type"`
-}
-
-func (s *V2WorkflowRunResultDetail) castData() error {
-	switch s.Type {
-	case "V2WorkflowRunResultTerraformProviderDetail":
-		var detail = new(V2WorkflowRunResultTerraformProviderDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTerraformProviderDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultTerraformModuleDetail":
-		var detail = new(V2WorkflowRunResultTerraformModuleDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTerraformModuleDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultTestDetail":
-		var detail = new(V2WorkflowRunResultTestDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultTestDetail")
-		}
-		s.Data = detail
-		return nil
-	case `V2WorkflowRunResultGenericDetail`:
-		var detail = new(V2WorkflowRunResultGenericDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultGenericDetail")
-		}
-		s.Data = detail
-		return nil
-	case V2WorkflowRunResultVariableDetailType:
-		var detail = new(V2WorkflowRunResultVariableDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultVariableDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultDebianDetail":
-		var detail = new(V2WorkflowRunResultDebianDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultDebianDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultDockerDetail":
-		var detail = new(V2WorkflowRunResultDockerDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultDockerDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultHelmDetail":
-		var detail = new(V2WorkflowRunResultHelmDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultHelmDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultPythonDetail":
-		var detail = new(V2WorkflowRunResultPythonDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultPythonDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultArsenalDeploymentDetail":
-		var detail = new(V2WorkflowRunResultArsenalDeploymentDetail)
-		if err := mapstructure.Decode(s.Data, &detail); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultArsenalDeploymentDetail")
-		}
-		s.Data = detail
-		return nil
-	case "V2WorkflowRunResultReleaseDetail":
-		var detail = new(V2WorkflowRunResultReleaseDetail)
-		decoderConfig := &mapstructure.DecoderConfig{
-			Metadata: nil,
-			Result:   &detail,
-		}
-		// Here is the trick to transform the map to a json.RawMessage for the SBOM itself
-		decoderConfig.DecodeHook = mapstructure.ComposeDecodeHookFunc(
-			func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-				if f.Kind() != reflect.Map {
-					return data, nil
-				}
-				result := reflect.New(t).Interface()
-				_, ok := result.(*json.RawMessage)
-				if !ok {
-					return data, nil
-				}
-				btes, err := json.Marshal(data)
-				if err != nil {
-					return nil, err
-				}
-				return json.RawMessage(btes), nil
-			},
-		)
-		decoder, err := mapstructure.NewDecoder(decoderConfig)
-		if err != nil {
-			panic(err)
-		}
-		if err := decoder.Decode(s.Data); err != nil {
-			return WrapError(err, "cannot unmarshal V2WorkflowRunResultReleaseDetail")
-		}
-		s.Data = *detail
-		return nil
-	default:
-		return errors.Errorf("unsupported type %q", s.Type)
-	}
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (s *V2WorkflowRunResultDetail) UnmarshalJSON(source []byte) error {
-	var content = struct {
-		Data interface{}
-		Type string
-	}{}
-	if err := JSONUnmarshal(source, &content); err != nil {
-		return WrapError(err, "cannot unmarshal V2WorkflowRunResultDetail")
-	}
-	s.Data = content.Data
-	s.Type = content.Type
-
-	if err := s.castData(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// MarshalJSON implements json.Marshaler.
-func (s *V2WorkflowRunResultDetail) MarshalJSON() ([]byte, error) {
-	if s.Type == "" {
-		s.Type = reflect.TypeOf(s.Data).Name()
-	}
-
-	var content = struct {
-		Data interface{} `json:"data"`
-		Type string      `json:"type"`
-	}{
-		Data: s.Data,
-		Type: s.Type,
-	}
-
-	btes, _ := json.Marshal(content)
-	return btes, nil
-}
-
-var (
-	_ json.Marshaler   = new(V2WorkflowRunResultDetail)
-	_ json.Unmarshaler = new(V2WorkflowRunResultDetail)
-)
-
-// Value returns driver.Value from V2WorkflowRunResultDetail
-func (s V2WorkflowRunResultDetail) Value() (driver.Value, error) {
-	j, err := json.Marshal(s)
-	return j, WrapError(err, "cannot marshal V2WorkflowRunResultDetail")
-}
-
-// Scan V2WorkflowRunResultDetail
-func (s *V2WorkflowRunResultDetail) Scan(src interface{}) error {
-	if src == nil {
-		return nil
-	}
-	source, ok := src.([]byte)
-	if !ok {
-		return WithStack(fmt.Errorf("type assertion .([]byte) failed (%T)", src))
-	}
-	if err := JSONUnmarshal(source, s); err != nil {
-		return WrapError(err, "cannot unmarshal V2WorkflowRunResultDetail")
-	}
-	return nil
-}
-
-type V2WorkflowRunResultType string
-
-const (
-	V2WorkflowRunResultTypeCoverage          = "coverage"
-	V2WorkflowRunResultTypeTest              = "tests"
-	V2WorkflowRunResultTypeRelease           = "release"
-	V2WorkflowRunResultTypeGeneric           = "generic"
-	V2WorkflowRunResultTypeVariable          = "variable"
-	V2WorkflowRunResultTypeDocker            = "docker"
-	V2WorkflowRunResultTypeDebian            = "debian"
-	V2WorkflowRunResultTypePython            = "python"
-	V2WorkflowRunResultTypeArsenalDeployment = "deployment"
-	V2WorkflowRunResultTypeHelm              = "helm"
-	V2WorkflowRunResultTypeTerraformProvider = "terraformProvider"
-	V2WorkflowRunResultTypeTerraformModule   = "terraformModule"
-	// Other values may be instantiated from Artifactory Manager repository type
-)
-
-type V2WorkflowRunResultTestDetail struct {
-	Name        string           `json:"name" mapstructure:"name"`
-	Size        int64            `json:"size" mapstructure:"size"`
-	Mode        os.FileMode      `json:"mode" mapstructure:"mode"`
-	MD5         string           `json:"md5" mapstructure:"md5"`
-	SHA1        string           `json:"sha1" mapstructure:"sha1"`
-	SHA256      string           `json:"sha256" mapstructure:"sha256"`
-	TestsSuites JUnitTestsSuites `json:"tests_suites" mapstructure:"tests_suites"`
-	TestStats   TestsStats       `json:"tests_stats" mapstructure:"tests_stats"`
-}
-
-type V2WorkflowRunResultTerraformModuleDetail struct {
-	Name      string `json:"name"`
-	Type      string `json:"type"`
-	Namespace string `json:"namespace"`
-	Provider  string `json:"provider"`
-	Version   string `json:"version"`
-	ID        string `json:"id"`
-}
-
-type V2WorkflowRunResultTerraformProviderDetail struct {
-	Flavor    string `json:"flavor"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Type      string `json:"type"`
-	Version   string `json:"version"`
-}
-
-type V2WorkflowRunResultGenericDetail struct {
-	Name   string      `json:"name" mapstructure:"name"`
-	Size   int64       `json:"size" mapstructure:"size"`
-	Mode   os.FileMode `json:"mode" mapstructure:"mode"`
-	MD5    string      `json:"md5" mapstructure:"md5"`
-	SHA1   string      `json:"sha1" mapstructure:"sha1"`
-	SHA256 string      `json:"sha256" mapstructure:"sha256"`
-}
-
-type V2WorkflowRunResultArsenalDeploymentDetail struct {
-	IntegrationName string                              `json:"integration_name" mapstructure:"integration_name"`
-	DeploymentID    string                              `json:"deployment_id" mapstructure:"deployment_id"`
-	DeploymentName  string                              `json:"deployment_name" mapstructure:"deployment_name"`
-	StackID         string                              `json:"stack_id" mapstructure:"stack_id"`
-	StackName       string                              `json:"stack_name" mapstructure:"stack_name"`
-	StackPlatform   string                              `json:"stack_platform" mapstructure:"stack_platform"`
-	Namespace       string                              `json:"namespace" mapstructure:"namespace"`
-	Version         string                              `json:"version" mapstructure:"version"`
-	Alternative     *ArsenalDeploymentDetailAlternative `json:"alternative" mapstructure:"alternative"`
-}
-
-type ArsenalDeploymentDetailAlternative struct {
-	Name    string                 `json:"name" mapstructure:"name"`
-	From    string                 `json:"from,omitempty" mapstructure:"from"`
-	Config  map[string]interface{} `json:"config" mapstructure:"config"`
-	Options map[string]interface{} `json:"options,omitempty" mapstructure:"options"`
-}
-
-type V2WorkflowRunResultDockerDetail struct {
-	Name         string `json:"name" mapstructure:"name"`
-	ID           string `json:"id" mapstructure:"id"`
-	HumanSize    string `json:"human_size" mapstructure:"human_size"`
-	HumanCreated string `json:"human_created" mapstructure:"human_created"`
-}
-
-type V2WorkflowRunResultDebianDetail struct {
-	Name          string   `json:"name" mapstructure:"name"`
-	Size          int64    `json:"size" mapstructure:"size"`
-	MD5           string   `json:"md5" mapstructure:"md5"`
-	SHA1          string   `json:"sha1" mapstructure:"sha1"`
-	SHA256        string   `json:"sha256" mapstructure:"sha256"`
-	Components    []string `json:"components" mapstructure:"components"`
-	Distributions []string `json:"distributions" mapstructure:"distributions"`
-	Architectures []string `json:"architectures" mapstructure:"architectures"`
-}
-
-type V2WorkflowRunResultPythonDetail struct {
-	Name      string `json:"name" mapstructure:"name"`
-	Version   string `json:"version" mapstructure:"version"`
-	Extension string `json:"extension" mapstructure:"extension"`
-}
-
-type V2WorkflowRunResultHelmDetail struct {
-	Name         string `json:"name" mapstructure:"name"`
-	AppVersion   string `json:"appVersion" mapstructure:"appVersion"`
-	ChartVersion string `json:"chartVersion" mapstructure:"chartVersion"`
-}
-
-const V2WorkflowRunResultVariableDetailType = "V2WorkflowRunResultVariableDetail"
-
-type V2WorkflowRunResultVariableDetail struct {
-	Name  string `json:"name" mapstructure:"name"`
-	Value string `json:"value" mapstructure:"value"`
-}
-
-type V2WorkflowRunResultReleaseDetail struct {
-	Name    string          `json:"name" mapstructure:"name"`
-	Version string          `json:"version" mapstructure:"version"`
-	SBOM    json.RawMessage `json:"sbom" mapstructure:"sbom"`
 }
 
 type V2WorkflowRunSearchFilter struct {

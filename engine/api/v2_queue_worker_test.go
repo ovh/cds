@@ -397,7 +397,7 @@ hatcheries:
 	require.Len(t, rrDBs, 1)
 	require.Equal(t, sdk.V2WorkflowRunResultType(sdk.V2WorkflowRunResultTypeTest), rrDBs[0].Type)
 
-	details, err := rrDBs[0].GetDetailAsV2WorkflowRunResultTestDetail()
+	details, err := sdk.GetConcreteDetail[sdk.V2WorkflowRunResultTestDetail](&rrDBs[0])
 	require.NoError(t, err)
 	require.Equal(t, 3, details.TestStats.Total)
 	require.Equal(t, 1, details.TestStats.TotalOK)

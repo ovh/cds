@@ -99,7 +99,7 @@ func (actPlugin *runActionDownloadArtifactlugin) perform(ctx context.Context, na
 		if r.Detail.Type != "V2WorkflowRunResultGenericDetail" {
 			return sdk.Errorf("unsupported run result")
 		}
-		x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+		x, _ := sdk.GetConcreteDetail[sdk.V2WorkflowRunResultGenericDetail](&r)
 		switch {
 		case r.ArtifactManagerIntegrationName == nil: // download from CDN
 

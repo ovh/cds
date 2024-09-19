@@ -92,7 +92,7 @@ func (wk *CurrentWorker) addRunResultToCurrentJobContext(_ context.Context, newR
 	}
 	switch newRunResult.Type {
 	case sdk.V2WorkflowRunResultTypeVariable, sdk.V2WorkflowRunResultVariableDetailType:
-		x, err := newRunResult.GetDetailAsV2WorkflowRunResultVariableDetail()
+		x, err := sdk.GetConcreteDetail[sdk.V2WorkflowRunResultVariableDetail](newRunResult)
 		if err != nil {
 			return err
 		} else {
@@ -228,7 +228,7 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 		case "V2WorkflowRunResultGenericDetail":
 			var res *glob.Result
 			if r.Type == sdk.V2WorkflowRunResultTypeCoverage || r.Type == sdk.V2WorkflowRunResultTypeGeneric { // If the filter is set to "V2WorkflowRunResultGenericDetail" we can directly check the artifact name. This is the usecase of plugin "downloadArtifact"
-				x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+				x, _ := sdk.GetConcreteDetail[sdk.V2WorkflowRunResultVariableDetail](&r)
 				res, err = pattern.MatchString(x.Name)
 			} else {
 				res, err = pattern.MatchString(r.Name())

@@ -102,7 +102,7 @@ func workflowV2RunResultDownloadFunc(v cli.Values) error {
 				fileName = r.ArtifactManagerMetadata.Get("name")
 				md5 = r.ArtifactManagerMetadata.Get("md5")
 			} else {
-				detail, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+				detail, _ := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultGenericDetail](&r)
 				if detail != nil {
 					perm = detail.Mode
 					if fileName == "" {
