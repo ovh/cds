@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	registeredV2WorkflowRunResultDetail     map[string]V2WorkflowRunResultDetailInterface
+	registeredV2WorkflowRunResultDetail     map[string]V2WorkflowRunResultDetailInterface = map[string]V2WorkflowRunResultDetailInterface{}
 	registeredV2WorkflowRunResultDetailLock sync.Mutex
 )
 
