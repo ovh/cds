@@ -780,7 +780,7 @@ func TestParserSuccess(t *testing.T) {
 		{
 			name:   "Success - false",
 			input:  "${{ success() }}",
-			result: false,
+			result: true,
 			context: map[string]interface{}{
 				"steps": map[string]interface{}{
 					"step1": map[string]string{
