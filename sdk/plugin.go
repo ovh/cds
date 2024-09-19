@@ -58,8 +58,9 @@ type PluginInput struct {
 }
 
 type PluginPost struct {
-	Plugin string         `json:"plugin,omitempty"`
-	With   PluginPostWith `json:"with,omitempty"`
+	ContinueOnError bool           `json:"continue-on-error,omitempty"`
+	Plugin          string         `json:"plugin,omitempty"`
+	With            PluginPostWith `json:"with,omitempty"`
 }
 
 type PluginPostWith map[string]string
