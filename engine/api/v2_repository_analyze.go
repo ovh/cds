@@ -662,14 +662,21 @@ skipEntity:
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on git ref %s", e.Name, e.Type, e.Ref))
 		}
 		if existingEntity != nil {
-			continue
+			if existingEntity.Data == e.Entity.Data {
+				continue
+			} else {
+				e.Entity.ID = existingEntity.ID
+				if err := entity.Update(ctx, tx, &e.Entity); err != nil {
+					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to update %s of type %s for ref %s and commit %s", e.Name, e.Type, e.Ref, e.Commit))
+				}
+			}
+		} else {
+			// Insert new entity for current branch and commit
+			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s for ref %s and commit %s", e.Name, e.Type, e.Ref, e.Commit))
+			}
+			eventInsertedEntities = append(eventInsertedEntities, e.Entity)
 		}
-
-		// Insert new entity for current branch and commit
-		if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
-			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save %s of type %s for ref %s and commit %s", e.Name, e.Type, e.Ref, e.Commit))
-		}
-		eventInsertedEntities = append(eventInsertedEntities, e.Entity)
 
 		// If it's an update, add it to the list of entity updated (for hooks)
 		if entityUpdated {
