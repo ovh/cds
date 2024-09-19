@@ -39,6 +39,17 @@
   </ng-template>
 </nz-result>
 
+<nz-result *ngIf="analysis && analysis.status === 'Skipped'" nzTitle="Analysis skipped." [nzSubTitle]="subTitle">
+  <ng-template #subTitle>
+    <div class="message">
+      <b>Analysis ID:</b><span nz-typography nzCopyable [nzCopyTooltips]="null" nzContent="{{analysis.id}}"></span><br />
+      <b>Status:</b> {{analysis?.status}}
+      <b>Info:</b> {{analysis?.data?.error}}
+      <button nz-button (click)="clearForm()">Clear</button>
+    </div>
+  </ng-template>
+</nz-result>
+
 <nz-result *ngIf="analysis && analysis.status === 'Error'" nzTitle="Analysis failed." [nzSubTitle]="subTitle" nzStatus="error">
   <ng-template #subTitle>
     <div class="message">
