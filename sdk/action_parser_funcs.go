@@ -327,7 +327,7 @@ func success(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read step context")
 		}
 		for _, v := range steps {
-			if v.Conclusion != V2WorkflowRunJobStatusSuccess {
+			if v.Conclusion != V2WorkflowRunJobStatusSuccess && v.Conclusion != V2WorkflowRunJobStatusSkipped {
 				return false, nil
 			}
 		}
