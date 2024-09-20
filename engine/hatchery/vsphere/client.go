@@ -311,7 +311,7 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 			}
 		}
 	} else {
-		// For model v2, we search the credentials from the CDS Worker model name
+		// For model v1, we search the credentials from the CDS Worker model name
 		for i := range h.Config.GuestCredentials {
 			if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
 				auth.Username = h.Config.GuestCredentials[i].Username
