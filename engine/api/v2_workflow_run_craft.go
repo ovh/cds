@@ -151,7 +151,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// Build run context
-	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u)
+	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u, api.Config.URL.UI)
 	if err != nil {
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
@@ -490,7 +490,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 	return nil
 }
 
-func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser) (*sdk.WorkflowRunContext, error) {
+func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser, uiURL string) (*sdk.WorkflowRunContext, error) {
 	var runContext sdk.WorkflowRunContext
 
 	cdsContext := sdk.CDSContext{
@@ -498,6 +498,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		RunID:              wr.ID,
 		RunNumber:          wr.RunNumber,
 		RunAttempt:         1,
+		RunURL:             fmt.Sprintf("%s/project/%s/run/%s", uiURL, wr.ProjectKey, wr.ID),
 		Workflow:           wr.WorkflowName,
 		WorkflowRef:        wr.WorkflowRef,
 		WorkflowSha:        wr.WorkflowSha,

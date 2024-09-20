@@ -63,6 +63,7 @@ type CDSContext struct {
 	RunID              string                 `json:"run_id,omitempty"`
 	RunNumber          int64                  `json:"run_number,omitempty"`
 	RunAttempt         int64                  `json:"run_attempt,omitempty"`
+	RunURL             string                 `json:"run_url,omitempty"`
 	Workflow           string                 `json:"workflow,omitempty"`
 	WorkflowRef        string                 `json:"workflow_ref,omitempty"`
 	WorkflowSha        string                 `json:"workflow_sha,omitempty"`
