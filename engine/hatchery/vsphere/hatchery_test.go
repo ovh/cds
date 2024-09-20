@@ -22,7 +22,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-func TestHatcheryVSphere_CanSpawn(t *testing.T) {
+func TestHatcheryVSphere_CanSpawnv1(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	c := NewVSphereClientTest(t)
@@ -129,6 +129,15 @@ func TestHatcheryVSphere_NeedRegistration(t *testing.T) {
 	c := NewVSphereClientTest(t)
 	h := HatcheryVSphere{
 		vSphereClient: c,
+		Config: HatcheryConfiguration{
+			GuestCredentials: []GuestCredential{
+				{
+					ModelPath: "model",
+					Username:  "user",
+					Password:  "password",
+				},
+			},
+		},
 	}
 
 	var ctx = context.Background()
@@ -455,7 +464,7 @@ func TestHatcheryVSphere_Status(t *testing.T) {
 	assert.NotNil(t, s)
 }
 
-func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
+func TestHatcheryVSphere_provisioning_v1_do_nothing(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	var validModel = sdk.Model{
@@ -513,7 +522,7 @@ func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 					},
 				}, {
 					ManagedEntity: mo.ManagedEntity{
-						Name: "provision-worker",
+						Name: "provision-v1-worker",
 					},
 					Summary: types.VirtualMachineSummary{
 						Config: types.VirtualMachineConfigSummary{
@@ -537,10 +546,62 @@ func TestHatcheryVSphere_provisioning_do_nothing(t *testing.T) {
 		},
 	)
 
-	h.provisioning(context.Background())
+	h.provisioningV1(context.Background())
 }
 
-func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
+func TestHatcheryVSphere_provisioning_v2_do_nothing(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	cdsclient := mock_cdsclient.NewMockInterface(ctrl)
+
+	c := NewVSphereClientTest(t)
+	h := HatcheryVSphere{
+		vSphereClient: c,
+		Common: hatchery.Common{
+			Common: service.Common{
+				GoRoutines: sdk.NewGoRoutines(context.Background()),
+				Client:     cdsclient,
+			},
+		},
+		Config: HatcheryConfiguration{
+			WorkerProvisioning: []WorkerProvisioningConfig{
+				{
+					ModelVMWare: "the-model",
+					Number:      1,
+				},
+			},
+		},
+	}
+
+	c.EXPECT().ListVirtualMachines(gomock.Any()).DoAndReturn(
+		func(ctx context.Context) ([]mo.VirtualMachine, error) {
+			return []mo.VirtualMachine{
+				{
+					ManagedEntity: mo.ManagedEntity{
+						Name: "provision-v2-worker",
+					},
+					Summary: types.VirtualMachineSummary{
+						Config: types.VirtualMachineConfigSummary{
+							Template: false,
+						},
+					},
+					Config: &types.VirtualMachineConfigInfo{
+						Annotation: `{"model": false, "vmware_model_path": "the-model", "provisioning": true}`,
+					},
+					Runtime: types.VirtualMachineRuntimeInfo{
+						PowerState: types.VirtualMachinePowerStatePoweredOff,
+					},
+				},
+			}, nil
+		},
+	)
+
+	h.provisioningV2(context.Background())
+}
+
+func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 
 	var validModel = sdk.Model{
@@ -689,8 +750,8 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any()).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine, _ *string) error {
+	c.EXPECT().WaitForVirtualMachineIP(gomock.Any(), &workerVM, gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, _ *string, _ string) error {
 			return nil
 		},
 	)
@@ -701,5 +762,5 @@ func TestHatcheryVSphere_provisioning_start_one(t *testing.T) {
 		},
 	)
 
-	h.provisioning(context.Background())
+	h.provisioningV1(context.Background())
 }

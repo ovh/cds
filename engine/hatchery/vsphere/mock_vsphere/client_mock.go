@@ -323,17 +323,17 @@ func (mr *MockVSphereClientMockRecorder) StartVirtualMachine(ctx, vm interface{}
 }
 
 // WaitForVirtualMachineIP mocks base method.
-func (m *MockVSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string) error {
+func (m *MockVSphereClient) WaitForVirtualMachineIP(ctx context.Context, vm *object.VirtualMachine, IPAddress *string, vmName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WaitForVirtualMachineIP", ctx, vm, IPAddress)
+	ret := m.ctrl.Call(m, "WaitForVirtualMachineIP", ctx, vm, IPAddress, vmName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // WaitForVirtualMachineIP indicates an expected call of WaitForVirtualMachineIP.
-func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineIP(ctx, vm, IPAddress interface{}) *gomock.Call {
+func (mr *MockVSphereClientMockRecorder) WaitForVirtualMachineIP(ctx, vm, IPAddress, vmName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineIP", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineIP), ctx, vm, IPAddress)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForVirtualMachineIP", reflect.TypeOf((*MockVSphereClient)(nil).WaitForVirtualMachineIP), ctx, vm, IPAddress, vmName)
 }
 
 // WaitForVirtualMachineShutdown mocks base method.
