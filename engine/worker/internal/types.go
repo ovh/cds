@@ -490,7 +490,8 @@ func (wk *CurrentWorker) SetSecrets(secrets []sdk.Variable) error {
 }
 
 type ActionPostJob struct {
-	PluginName string
-	Inputs     map[string]string
-	StepName   string
+	ContinueOnError bool
+	PluginName      string
+	Inputs          map[string]string
+	StepName        string
 }
