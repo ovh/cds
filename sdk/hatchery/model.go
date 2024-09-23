@@ -17,7 +17,7 @@ func ModelInterpolateSecrets(hWithModels InterfaceWithModels, model *sdk.Model) 
 	// Test ascode model : can't be interpolate
 	// group is Name: projKey + "/" + vcsName + "/" + repoName on model v2
 	groupName := strings.Split(model.Group.Name, "/")
-	if model.Type == sdk.VSphere && model.Type != sdk.VSphere && len(groupName) >= 3 {
+	if model.Type == sdk.VSphere && len(groupName) >= 3 {
 		return nil
 	}
 
