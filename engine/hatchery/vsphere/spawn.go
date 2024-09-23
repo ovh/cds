@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"reflect"
 	"strings"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/rockbears/yaml"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
-	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -578,23 +578,35 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			return nil, sdk.WrapError(err, "unable to load vm %q", machine.Name)
 		}
 
-		powerstate, err := h.vSphereClient.GetVirtualMachinePowerState(ctx, vm)
-		if err != nil {
-			return nil, sdk.WrapError(err, "unable to get vm %q powerstate", machine.Name)
-		}
-
-		log.Debug(ctx, "checking provision %q annot.Provisioning:%v runtime.PowerState:%v powerstate:%v", expectedModelPath, annot.Provisioning, machine.Runtime.PowerState, powerstate)
+		log.Debug(ctx, "checking provision %q annot.Provisioning:%v", expectedModelPath, annot.Provisioning)
 
 		// Provisionned machines contains provisioning flag to true
 		if !annot.Provisioning {
 			continue
 		}
 
-		// Provisionned machines are powered off
-		if machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmPoweredOffEvent")
+		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
 			continue
 		}
-		if powerstate == types.VirtualMachinePowerStatePoweredOn {
+
+		if len(vmEvents) == 0 {
+			log.Debug(ctx, "no VmPoweredOffEvent found - we keep this vm")
+			continue
+		}
+		var foundPoweredOff bool
+	loopEvent:
+		for _, event := range vmEvents {
+			switch reflect.TypeOf(event).Elem().Name() {
+			case "VmPoweredOffEvent":
+				foundPoweredOff = true
+				break loopEvent
+			}
+		}
+
+		if !foundPoweredOff {
 			continue
 		}
 
