@@ -21,7 +21,7 @@ func (h *HatcheryVSphere) InitHatchery(ctx context.Context) error {
 	// Connect and login to ESX or vCenter
 	c, err := h.newGovmomiClient(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to vsphere.newClient: %v", err)
+		return fmt.Errorf("unable to vsphere.newClient: %v", err)
 	}
 
 	log.Info(ctx, "connecting datacenter %s...", h.Config.VSphereDatacenterString)

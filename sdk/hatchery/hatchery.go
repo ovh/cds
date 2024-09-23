@@ -64,8 +64,8 @@ func Create(ctx context.Context, h Interface) error {
 	var chanRegister, chanGetModels <-chan time.Time
 	var modelType string
 
-	hWithModels, isWithModels := h.(InterfaceWithModels)
-	if isWithModels {
+	hWithModels, hatcheryIsWithModels := h.(InterfaceWithModels)
+	if hatcheryIsWithModels {
 		// Call WorkerModel Enabled first
 		var errwm error
 		models, errwm = hWithModels.WorkerModelsEnabled()
@@ -269,7 +269,7 @@ func Create(ctx context.Context, h Interface) error {
 				if !containsRegionRequirement && h.Configuration().Provision.IgnoreJobWithNoRegion {
 					log.Debug(currentCtx, "cannot launch this job because it does not contains a region prerequisite and IgnoreJobWithNoRegion=true in hatchery configuration")
 					canTakeJob = false
-				} else if isWithModels {
+				} else if hatcheryIsWithModels {
 					// Test ascode model
 					modelPath := strings.Split(jobModel, "/")
 					if len(modelPath) >= 5 {
@@ -284,7 +284,9 @@ func Create(ctx context.Context, h Interface) error {
 							continue
 						}
 					} else {
+						// for all models v1
 						for i := range models {
+							// find the first model matching with the pre-requisite
 							if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
 								chosenModel = &models[i]
 								break
@@ -423,8 +425,8 @@ func handleJobV2(_ context.Context, h Interface, jobInfo sdk.V2QueueJobInfo, cac
 	}
 
 	// Check at least one worker model can match
-	hWithModels, isWithModels := h.(InterfaceWithModels)
-	if isWithModels && jobInfo.RunJob.Job.RunsOn.Model == "" {
+	hWithModels, hatcheryIsWithModels := h.(InterfaceWithModels)
+	if hatcheryIsWithModels && jobInfo.RunJob.Job.RunsOn.Model == "" {
 		endTrace("no model", jobInfo.RunJob.ID)
 		return nil
 	}
