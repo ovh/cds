@@ -123,7 +123,7 @@ func (c *vSphereClient) LoadVirtualMachineEvents(ctx context.Context, vm *object
 	objs := []types.ManagedObjectReference{vm.Reference()}
 
 	var res []types.BaseEvent
-	m.Events(ctx, objs, 10, false, false, func(ref types.ManagedObjectReference, events []types.BaseEvent) error {
+	m.Events(ctx, objs, 50, false, false, func(ref types.ManagedObjectReference, events []types.BaseEvent) error {
 		event.Sort(events)
 		res = events
 		return nil

@@ -384,7 +384,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
-		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
+		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent", "VmPoweredOffEvent")
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
