@@ -30,14 +30,25 @@ type HatcheryConfiguration struct {
 }
 
 type WorkerProvisioningConfig struct {
+	// ModelPath is the CDS worker model name, not the model from the VMWare point of view. It's used only by CDS Worker Model v1
 	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"modelPath"`
-	Number    int    `mapstructure:"number" commented:"true" toml:"number" json:"number"`
+
+	// ModelVMWare is the model from the VMWare point of view. It's used only by CDS Worker Model v2
+	ModelVMWare string `mapstructure:"modelVMWare" default:"debian12" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
+
+	// Number of VM to provision for the current model
+	Number int `mapstructure:"number" commented:"true" toml:"number" json:"number"`
 }
 
 type GuestCredential struct {
+	// ModelPath is the CDS worker model name, it's used only by CDS Worker Model v1
 	ModelPath string `mapstructure:"modelPath" default:"my/model" commented:"true" toml:"modelPath" json:"-"`
-	Username  string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
-	Password  string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
+
+	// ModelVMWare is the model from the VMWare point of view. It's used only by CDS Worker Model v2
+	ModelVMWare string `mapstructure:"modelVMWare" default:"debian12" commented:"true" toml:"modelVMWare" json:"-"`
+
+	Username string `mapstructure:"username" commented:"true" toml:"username" json:"-"`
+	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
 }
 
 // HatcheryVSphere spawns vm

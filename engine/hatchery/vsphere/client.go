@@ -176,7 +176,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 }
 
 // prepareCloneSpec create a basic configuration in order to create a vm
-func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation, workerName string) (*types.VirtualMachineCloneSpec, error) {
+func (h *HatcheryVSphere) prepareCloneSpec(ctx context.Context, vm *object.VirtualMachine, annot *annotation) (*types.VirtualMachineCloneSpec, error) {
 	devices, err := h.vSphereClient.LoadVirtualMachineDevices(ctx, vm)
 	if err != nil {
 		return nil, err
@@ -300,16 +300,32 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 	}
 
 	var auth types.NamePasswordAuthentication
-	if model.GetVSphereUsername() != "" {
-		auth.Username = model.GetVSphereUsername()
-		auth.Password = model.GetVSpherePassword()
+
+	if model.ModelV2 != nil {
+		// For model v2, we search the credentials from the VM Model name
+		for i := range h.Config.GuestCredentials {
+			if h.Config.GuestCredentials[i].ModelVMWare == model.GetVSphereImage() {
+				auth.Username = h.Config.GuestCredentials[i].Username
+				auth.Password = h.Config.GuestCredentials[i].Password
+				break
+			}
+		}
+	} else {
+		// For model v1, we search the credentials from the CDS Worker model name
+		for i := range h.Config.GuestCredentials {
+			if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
+				auth.Username = h.Config.GuestCredentials[i].Username
+				auth.Password = h.Config.GuestCredentials[i].Password
+				break
+			}
+		}
 	}
 
-	for i := range h.Config.GuestCredentials {
-		if h.Config.GuestCredentials[i].ModelPath == model.GetFullPath() {
-			auth.Username = h.Config.GuestCredentials[i].Username
-			auth.Password = h.Config.GuestCredentials[i].Password
-			break
+	if auth.Username == "" || auth.Password == "" {
+		if model.ModelV2 != nil {
+			return sdk.WithStack(fmt.Errorf("username and/or password not well configured for GetVSphereImage:%q", model.GetVSphereImage()))
+		} else {
+			return sdk.WithStack(fmt.Errorf("username and/or password not well configured for modelFullPath:%q", model.GetFullPath()))
 		}
 	}
 
@@ -326,7 +342,7 @@ func (h *HatcheryVSphere) launchClientOp(ctx context.Context, vm *object.Virtual
 		Spec: &guestspec,
 	}
 
-	log.Debug(ctx, "starting program in guest. ProgramPath:%v Arguments:%v", guestspec.ProgramPath, guestspec.Arguments)
+	log.Debug(ctx, "starting program in guest. username:%v ProgramPath:%v Arguments:%v", auth.Username, guestspec.ProgramPath, guestspec.Arguments)
 
 	_, err = h.vSphereClient.StartProgramInGuest(ctx, procman, &req)
 	return err

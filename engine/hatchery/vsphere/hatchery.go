@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -244,7 +245,7 @@ func (h *HatcheryVSphere) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
 
-func getVirtualMachineCDSAnnotation(ctx context.Context, srv mo.VirtualMachine) *annotation {
+func getVirtualMachineCDSAnnotation(_ context.Context, srv mo.VirtualMachine) *annotation {
 	if srv.Config == nil {
 		return nil
 	}
@@ -287,7 +288,7 @@ func (h *HatcheryVSphere) WorkerModelSecretList(m sdk.Model) (sdk.WorkerModelSec
 }
 
 // WorkersStarted returns the list of workers started but
-// not necessarily register on CDS yet
+// not necessarily registered on CDS yet
 func (h *HatcheryVSphere) WorkersStarted(ctx context.Context) ([]string, error) {
 	srvs := h.getVirtualMachines(ctx)
 	res := make([]string, 0, len(srvs))
@@ -383,7 +384,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
-		eventVmStartingEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent")
+		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
@@ -391,92 +392,205 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// if we don't have a types.VmStartingEvent, we skip this vm
-		if len(eventVmStartingEvents) == 0 {
+		if len(vmEvents) == 0 {
 			log.Debug(ctx, "killAwolServers> no VmStartingEvent found - we keep this vm")
 			continue
 		}
-		if len(eventVmStartingEvents) > 1 {
-			log.Debug(ctx, "killAwolServers> many eventVmStartingEvents found: %+v", eventVmStartingEvents)
-		}
+		// we can have many VmStartingEvent: one for the provision, another with the worker from on the provision
 
-		var vmStartedTime time.Time
-		var found bool
-		for _, event := range eventVmStartingEvents {
+		var vmStartedTime, vmPoweredOffTime time.Time
+		var foundStarted, foundPoweredOff bool
+		for _, event := range vmEvents {
 			// events on the vm can contain event from the provision.
 			// Skipping this event if it's a provision's event
 			if strings.Contains(event.GetEvent().FullFormattedMessage, "provision-") {
 				log.Debug(ctx, "killAwolServers> skipping event %+v with provision text", event)
 				continue
 			}
-			// first event found, take it
-			if !found {
-				vmStartedTime = event.GetEvent().CreatedTime
-				found = true
-				continue
-			}
-			// if current event is youngest than previous, take it
-			if event.GetEvent().CreatedTime.After(vmStartedTime) {
-				vmStartedTime = event.GetEvent().CreatedTime
+
+			// take most recent VmStartingEvent and vmPoweredOffTime
+			switch reflect.TypeOf(event).Elem().Name() {
+			case "VmStartingEvent":
+				// first event found, take it
+				if !foundStarted {
+					vmStartedTime = event.GetEvent().CreatedTime
+					foundStarted = true
+					continue
+				}
+				// if current event is youngest than previous, take it
+				if event.GetEvent().CreatedTime.After(vmStartedTime) {
+					vmStartedTime = event.GetEvent().CreatedTime
+				}
+			case "VmPoweredOffEvent":
+				if !foundPoweredOff {
+					vmPoweredOffTime = event.GetEvent().CreatedTime
+					foundPoweredOff = true
+					continue
+				}
+				if event.GetEvent().CreatedTime.After(vmPoweredOffTime) {
+					vmPoweredOffTime = event.GetEvent().CreatedTime
+				}
 			}
 		}
 
-		if !found {
-			log.Debug(ctx, "killAwolServers> vmStartedTime NOT found for %v - events analyzed:%d", s.Name, len(eventVmStartingEvents))
+		if !foundStarted {
+			log.Debug(ctx, "killAwolServers> vmStartedTime NOT found for %v - events analyzed:%d", s.Name, len(vmEvents))
 			continue
 		}
+		if foundPoweredOff {
+			// this should not happen, but we check if the powerOff Time is AFTER the started time
+			if vmPoweredOffTime.Before(vmStartedTime) {
+				foundPoweredOff = false
+			}
+		}
 
-		log.Debug(ctx, "killAwolServers> vmStartedTime %v found: %s events analyzed:%d", s.Name, vmStartedTime, len(eventVmStartingEvents))
+		log.Debug(ctx, "killAwolServers> vmStartedTime %v found: %s events analyzed:%d", s.Name, vmStartedTime, len(vmEvents))
 
-		// If the worker is not registered on CDS API the TTL is WorkerRegistrationTTL (default 10 minutes)
-		// The registration duration, is the time between the createTime of the VM and the start time of the worker from cds api point of view
-		var expire = vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
-
-		// Else it's WorkerTTL (default 120 minutes)
+		var existsOnAPISide bool
 		for _, w := range allWorkers {
-			// if the worker is knowned by CDS Api, the worker TTL is used:
-			// if the CDS session is set to 24 h, and the worker TTL to 2h,
-			// then, the worker will be removed even if he is working on a job
-			// it should be the same duration as the CDS session.
 			if w.Name() == s.Name {
-				expire = vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+				existsOnAPISide = true
 				break
 			}
 		}
 
-		log.Debug(ctx, "checking if %v is outdated. vmStartedTime: %v. expires:%v", s.Name, vmStartedTime, expire)
-		// If the VM is older that the WorkerTTL config, let's mark it as delete
-		if time.Now().After(expire) {
-			log.Info(ctx, "deleting machine %q - expired. vmStartedTime:%s expire:%s", s.Name, vmStartedTime, expire)
+		var toDelete bool
 
-			// debug with event if necessary
-			if log.Factory().GetLevel() == log.LevelDebug {
-				events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
-				if err != nil {
-					log.Error(ctx, "event machine %q - can't load LoadVirtualMachineEvents", s.Name, err)
-				}
-				for _, e := range events {
-					log.Debug(ctx, "event machine %q - event: %T details:%+v", s.Name, e, e)
-				}
-			}
+		log.Debug(ctx, "checking if %v is outdated. vmStartedTime: %v. existsOnAPISide:%t foundPoweredOff:%t vmPoweredOffTime:%v", s.Name, vmStartedTime, existsOnAPISide, foundPoweredOff, vmPoweredOffTime)
 
-			if err := h.deleteServer(ctx, s); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "killAwolServers> cannot delete server (expire) %s", s.Name)
+		if existsOnAPISide {
+			expire := vmStartedTime.Add(time.Duration(h.Config.WorkerTTL) * time.Minute)
+			if time.Now().After(expire) {
+				toDelete = true
 			}
 		} else {
+			// not currently visible on API. Can be:
+			// - worker starting, not yet visible on api
+			// - worker ended (job finished), removed on api
+
+			// if we found a foundPoweredOff event, it's a worker used, and terminated. We can delete it
+			if foundPoweredOff {
+				// poweredOff found, we can delete this vm
+				toDelete = true
+			} else { // worker starting
+				// not poweredOff found, check the WorkerRegistrationTTL
+				expire := vmStartedTime.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+				if time.Now().After(expire) {
+					toDelete = true
+				}
+			}
+		}
+
+		if !toDelete {
 			log.Debug(ctx, "We keep %v as not expired", s.Name)
+			continue
+		}
+
+		// debug with event if necessary
+		if log.Factory().GetLevel() == log.LevelDebug {
+			events, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "")
+			if err != nil {
+				log.Error(ctx, "event machine %q - can't load LoadVirtualMachineEvents", s.Name, err)
+			}
+			for _, e := range events {
+				log.Debug(ctx, "event machine %q - event: %T time:%v msg:%+v", s.Name, e, e.GetEvent().CreatedTime, e.GetEvent().FullFormattedMessage)
+			}
+		}
+
+		log.Info(ctx, "deleting machine %q - expired. vmStartedTime: %v. existsOnAPISide:%t foundPoweredOff:%t", s.Name, vmStartedTime, existsOnAPISide, foundPoweredOff)
+
+		if err := h.deleteServer(ctx, s); err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "killAwolServers> cannot delete server (expire) %s", s.Name)
 		}
 	}
 }
 
-func (h *HatcheryVSphere) provisioning(ctx context.Context) {
+func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
+	h.cacheProvisioning.mu.Lock()
+
+	// Count exiting provisionned machine for each vmware model
+	var mapAlreadyProvisionned = make(map[string]int)
+	machines := h.getVirtualMachines(ctx)
+	for _, machine := range machines {
+		if !strings.HasPrefix(machine.Name, "provision-v2") {
+			continue
+		}
+		annot := getVirtualMachineCDSAnnotation(ctx, machine)
+		if annot == nil {
+			continue
+		}
+		if annot.HatcheryName != h.Name() {
+			continue
+		}
+		if annot.Provisioning {
+			mapAlreadyProvisionned[annot.VMwareModelPath] = mapAlreadyProvisionned[annot.VMwareModelPath] + 1
+		}
+	}
+	h.cacheProvisioning.mu.Unlock()
+
+	var toProvisionVMWareModelNames []string
+	for i := range h.Config.WorkerProvisioning {
+		modelVMware := h.Config.WorkerProvisioning[i].ModelVMWare
+		number := h.Config.WorkerProvisioning[i].Number
+		if modelVMware == "" || number == 0 {
+			continue
+		}
+
+		log.Info(ctx, "model vmware %q provisioning: %d/%d", modelVMware, mapAlreadyProvisionned[modelVMware], number)
+
+		nbToProvision := int(number) - mapAlreadyProvisionned[modelVMware]
+		if nbToProvision == 0 {
+			continue
+		}
+		for i = 1; i <= nbToProvision; i++ {
+			toProvisionVMWareModelNames = append(toProvisionVMWareModelNames, modelVMware)
+		}
+	}
+
+	if len(toProvisionVMWareModelNames) == 0 {
+		return
+	}
+
+	poolSize := h.Config.WorkerProvisioningPoolSize
+	if poolSize == 0 {
+		poolSize = 1
+	}
+
+	// Provision workers
+	wg := new(sync.WaitGroup)
+	for i := 0; i < len(toProvisionVMWareModelNames) && i < poolSize; i++ {
+		wg.Add(1)
+		go func(modelVMware string) {
+			defer wg.Done()
+
+			workerName := namesgenerator.GenerateWorkerName("provision-v2")
+
+			h.cacheProvisioning.mu.Lock()
+			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
+			h.cacheProvisioning.mu.Unlock()
+
+			if err := h.ProvisionWorkerV2(ctx, modelVMware, workerName); err != nil {
+				ctx = log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to provision vmware model %q: %v", modelVMware, err)
+			}
+
+			h.cacheProvisioning.mu.Lock()
+			h.cacheProvisioning.pending = sdk.DeleteFromArray(h.cacheProvisioning.pending, workerName)
+			h.cacheProvisioning.mu.Unlock()
+		}(toProvisionVMWareModelNames[i])
+	}
+	wg.Wait()
+}
+
+func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 	h.cacheProvisioning.mu.Lock()
 
 	// Count exiting provisionned machine for each model
 	var mapAlreadyProvisionned = make(map[string]int)
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
-		if !strings.HasPrefix(machine.Name, "provision-") {
+		if !strings.HasPrefix(machine.Name, "provision-v1") {
 			continue
 		}
 		annot := getVirtualMachineCDSAnnotation(ctx, machine)
@@ -563,13 +677,13 @@ func (h *HatcheryVSphere) provisioning(ctx context.Context) {
 		go func() {
 			defer wg.Done()
 
-			workerName := namesgenerator.GenerateWorkerName("provision")
+			workerName := namesgenerator.GenerateWorkerName("provision-v1")
 
 			h.cacheProvisioning.mu.Lock()
 			h.cacheProvisioning.pending = append(h.cacheProvisioning.pending, workerName)
 			h.cacheProvisioning.mu.Unlock()
 
-			if err := h.ProvisionWorker(ctx, mapModels[modelPath], workerName); err != nil {
+			if err := h.ProvisionWorkerV1(ctx, mapModels[modelPath], workerName); err != nil {
 				ctx = log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
 			}
