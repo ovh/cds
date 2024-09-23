@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"reflect"
 	"strings"
 	"time"
 
@@ -575,10 +574,12 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			log.Debug(ctx, "provision %q already used by another worker starter - skip it", machine.Name)
 			continue
 		} else if err != nil {
-			return nil, sdk.WrapError(err, "unable to load vm %q", machine.Name)
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to load vm provision %q", machine.Name)
+			continue
 		}
 
-		log.Debug(ctx, "checking provision %q annot.Provisioning:%v", expectedModelPath, annot.Provisioning)
+		log.Debug(ctx, "checking provision %q expectedModelPath:%v annot.Provisioning:%v", machine.Name, expectedModelPath, annot.Provisioning)
 
 		// Provisionned machines contains provisioning flag to true
 		if !annot.Provisioning {
@@ -593,20 +594,7 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 		}
 
 		if len(vmEvents) == 0 {
-			log.Debug(ctx, "no VmPoweredOffEvent found - we keep this vm")
-			continue
-		}
-		var foundPoweredOff bool
-	loopEvent:
-		for _, event := range vmEvents {
-			switch reflect.TypeOf(event).Elem().Name() {
-			case "VmPoweredOffEvent":
-				foundPoweredOff = true
-				break loopEvent
-			}
-		}
-
-		if !foundPoweredOff {
+			log.Debug(ctx, "no VmPoweredOffEvent found - we skip this provision")
 			continue
 		}
 
@@ -619,18 +607,23 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			annotModelPath = annot.WorkerModelPath
 		}
 
-		if expectedModelPath == annotModelPath {
-			h.cacheProvisioning.mu.Lock()
-			if sdk.IsInArray(machine.Name, h.cacheProvisioning.using) {
-				h.cacheProvisioning.mu.Unlock()
-				continue
-			}
-
-			h.cacheProvisioning.using = append(h.cacheProvisioning.using, machine.Name)
-			h.cacheProvisioning.mu.Unlock()
-
-			return vm, nil
+		if expectedModelPath != annotModelPath {
+			log.Debug(ctx, "we skip this provision %q - expectedModelPath:%s annotModelPath:%s", machine.Name, expectedModelPath, annotModelPath)
+			continue
 		}
+
+		h.cacheProvisioning.mu.Lock()
+		if sdk.IsInArray(machine.Name, h.cacheProvisioning.using) {
+			log.Debug(ctx, "provision %q already used - skipping", machine.Name)
+			h.cacheProvisioning.mu.Unlock()
+			continue
+		}
+
+		h.cacheProvisioning.using = append(h.cacheProvisioning.using, machine.Name)
+		h.cacheProvisioning.mu.Unlock()
+
+		log.Debug(ctx, "we use this provision %q", machine.Name)
+		return vm, nil
 	}
 
 	log.Debug(ctx, "unable to find provisionned VM for model %q", expectedModelPath)
