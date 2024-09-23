@@ -15,8 +15,8 @@ func ModelInterpolateSecrets(hWithModels InterfaceWithModels, model *sdk.Model) 
 	}
 
 	// Test ascode model : can't be interpolate
-	modelName := strings.Split(model.Name, "/")
-	if model.Type == sdk.VSphere && len(modelName) >= 5 {
+	modelPath := strings.Split(model.Path(), "/")
+	if model.Type == sdk.VSphere && len(modelPath) >= 5 {
 		return nil
 	}
 
