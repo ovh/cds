@@ -23,6 +23,7 @@ import { CDNLine, CDNStreamFilter } from "app/model/cdn.model";
 import { CDNService } from "app/service/cdn.service";
 import { webSocket, WebSocketSubject } from "rxjs/webSocket";
 import { Router } from "@angular/router";
+import { ErrorUtils } from "app/shared/error.utils";
 
 export class Tab {
     name: string;
@@ -138,7 +139,7 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         try {
             this.jobRunInfos = await lastValueFrom(this._workflowRunService.getRunJobInfos(this.workflowRun, this.jobRun.id));
         } catch (e) {
-            this._messageService.error(`Unable to get run job infos: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to get run job infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
             return;
         }
 

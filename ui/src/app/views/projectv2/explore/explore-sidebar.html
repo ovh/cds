@@ -34,18 +34,12 @@
                         nzTheme="fill"></span>
                     <a class="name"
                         [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
-                        routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)">{{repo.name}}</a>
-                    <nz-select *ngIf="treeExpandState[vcs.name+'/'+repo.name]" nzShowSearch nzSize="small"
-                        [nzCustomTemplate]="selectLabelTmpl" [ngModel]="branchSelectState[vcs.name+'/'+repo.name]"
-                        [nzDropdownMatchSelectWidth]="false" (ngModelChange)="selectRepositoryBranch(vcs, repo, $event)"
-                        (click)="$event.stopPropagation()">
-                        <nz-option *ngFor="let opt of branches[vcs.name+'/'+repo.name]" [nzValue]="opt.display_id"
-                            [nzLabel]="opt.display_id"></nz-option>
-                    </nz-select>
-                    <ng-template #selectLabelTmpl let-selected>
-                        <span nz-icon nzType="branches" nzTheme="outline"></span>
-                        {{ selected.nzLabel }}
-                    </ng-template>
+                        routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)"
+                        [title]="repo.name">{{repo.name}}</a>
+                    <app-repository-ref-select *ngIf="treeExpandState[vcs.name+'/'+repo.name]" [size]="'small'"
+                        [branches]="branches[vcs.name+'/'+repo.name]" [tags]="tags[vcs.name+'/'+repo.name]"
+                        [ngModel]="refSelectState[vcs.name+'/'+repo.name]"
+                        (ngModelChange)="selectRepositoryRef(vcs, repo, $event)"></app-repository-ref-select>
                 </div>
                 <div class="tree-node-content large" *ngIf="treeExpandState[vcs.name+'/'+repo.name]">
                     <nz-alert *ngIf="!entities[vcs.name+'/'+repo.name] && !loadingEntities[vcs.name+'/'+repo.name]"
@@ -63,18 +57,18 @@
                                 <div class="tree-node-header">
                                     <a class="name"
                                         [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, v.type.toLowerCase(), v.name]"
-                                        [queryParams]="{branch: branchSelectState[vcs.name+'/'+repo.name]}"
-                                        routerLinkActive="active" [title]="'Open entity '+v.name">
+                                        [queryParams]="{ref: refSelectState[vcs.name+'/'+repo.name]}"
+                                        routerLinkActive="active" [title]="v.name">
                                         <span nz-icon nzType="file"></span>{{v.name}}
                                     </a>
                                     <button *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
-                                        (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, 'refs/heads/'+branchSelectState[vcs.name+'/'+repo.name])"
+                                        (click)="openRunStartDrawer(vcs.name+'/'+repo.name+'/'+v.name, refSelectState[vcs.name+'/'+repo.name])"
                                         title="Start workflow">
                                         <span nz-icon nzType="caret-right" nzTheme="fill"></span>
                                     </button>
                                     <a *ngIf="v.type === 'Workflow'" nz-button nzType="text" nzSize="small"
                                         [routerLink]="['/', 'project', project.key, 'run']"
-                                        [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name, workflow_ref: 'refs/heads/'+branchSelectState[vcs.name+'/'+repo.name]}"
+                                        [queryParams]="{ workflow: vcs.name+'/'+repo.name+'/'+v.name, workflow_ref: refSelectState[vcs.name+'/'+repo.name]}"
                                         (click)="$event.stopPropagation();" title="Display workflow runs">
                                         <span nz-icon nzType="unordered-list" nzTheme="outline"></span>
                                     </a>

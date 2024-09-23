@@ -10,6 +10,7 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { Analysis, AnalysisRequest, AnalysisResponse, StatusAnalyzeError, StatusAnalyzeSkipped, StatusAnalyzeSucceed } from "app/model/analysis.model";
 import { AnalysisService } from "app/service/analysis/analysis.service";
+import { Branch, Tag } from "app/model/repositories.model";
 
 export class ProjectV2TriggerAnalysisComponentParams {
   repository: string;
@@ -27,12 +28,12 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
   project: Project;
   vcss: Array<VCSProject> = [];
   repositories: { [vcs: string]: Array<ProjectRepository> } = {};
-  branches: Array<string> = [];
-  sourceBranches: Array<string> = [];
+  branches: Array<Branch> = [];
+  tags: Array<Tag> = [];
   workflows: Array<string> = [];
   validateForm: FormGroup<{
     repository: FormControl<string | null>;
-    branch: FormControl<string | null>;
+    ref: FormControl<string | null>;
   }>;
   response: AnalysisResponse;
   analysis: Analysis;
@@ -49,7 +50,7 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
     this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
     this.validateForm = this._fb.group({
       repository: this._fb.control<string | null>(null, Validators.required),
-      branch: this._fb.control<string | null>(null, Validators.required),
+      ref: this._fb.control<string | null>(null, Validators.required),
     });
   }
 
@@ -76,9 +77,9 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
 
   async repositoryChange(value: string) {
     const splitted = this.splitRepository(value);
-    const branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, splitted.vcs, splitted.repo, 50));
-    this.branches = branches.map(b => b.display_id);
-    this.validateForm.controls.branch.setValue(branches.find(b => b.default).display_id);
+    this.branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, splitted.vcs, splitted.repo, 50));
+    this.tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, splitted.vcs, splitted.repo));
+    this.validateForm.controls.ref.setValue('refs/heads/' + this.branches.find(b => b.default).display_id);
     this._cd.markForCheck();
   }
 
@@ -112,7 +113,7 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
       projectKey: this.project.key,
       vcsName: splitted.vcs,
       repoName: splitted.repo,
-      ref: 'refs/heads/' + this.validateForm.value.branch,
+      ref: this.validateForm.value.ref,
     };
 
     this.response = await lastValueFrom(this._analysisService.triggerAnalysis(req));
@@ -125,7 +126,6 @@ export class ProjectV2TriggerAnalysisComponent implements OnInit {
       try {
         this.analysis = await lastValueFrom(this._analysisService.getAnalysis(this.project.key, splitted.vcs, splitted.repo, this.response.analysis_id));
         if (this.analysis.status === StatusAnalyzeSucceed || this.analysis.status === StatusAnalyzeError || this.analysis.status === StatusAnalyzeSkipped) {
-          this.response = null;
           this._cd.markForCheck();
           break;
         }

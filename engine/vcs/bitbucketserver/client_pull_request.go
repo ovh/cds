@@ -128,7 +128,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 		Open:   true,
 		Closed: false,
 		FromRef: sdk.BitbucketServerRef{
-			ID: fmt.Sprintf("refs/heads/%s", pr.Head.Branch.DisplayID),
+			ID: sdk.GitRefBranchPrefix + pr.Head.Branch.DisplayID,
 			Repository: sdk.BitbucketServerRepository{
 				Slug: slug,
 				Project: sdk.BitbucketServerProject{
@@ -137,7 +137,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 			},
 		},
 		ToRef: sdk.BitbucketServerRef{
-			ID: fmt.Sprintf("refs/heads/%s", pr.Base.Branch.DisplayID),
+			ID: sdk.GitRefBranchPrefix + pr.Base.Branch.DisplayID,
 			Repository: sdk.BitbucketServerRepository{
 				Slug: slug,
 				Project: sdk.BitbucketServerProject{
@@ -167,14 +167,14 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 		Merged: pullRequest.State == "MERGED",
 		Base: sdk.VCSPushEvent{
 			Branch: sdk.VCSBranch{
-				ID:           strings.Replace(pullRequest.ToRef.ID, "refs/heads/", "", 1),
+				ID:           strings.Replace(pullRequest.ToRef.ID, sdk.GitRefBranchPrefix, "", 1),
 				DisplayID:    pullRequest.ToRef.DisplayID,
 				LatestCommit: pullRequest.ToRef.LatestCommit,
 			},
 		},
 		Head: sdk.VCSPushEvent{
 			Branch: sdk.VCSBranch{
-				ID:           strings.Replace(pullRequest.FromRef.ID, "refs/heads/", "", 1),
+				ID:           strings.Replace(pullRequest.FromRef.ID, sdk.GitRefBranchPrefix, "", 1),
 				DisplayID:    pullRequest.FromRef.DisplayID,
 				LatestCommit: pullRequest.FromRef.LatestCommit,
 			},

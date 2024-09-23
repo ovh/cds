@@ -12,6 +12,7 @@ import { V2Workflow, V2WorkflowRunManualRequest } from "../../../../../libs/work
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { LoadOptions, load } from "js-yaml";
+import { Branch, Tag } from "app/model/repositories.model";
 
 export class ProjectV2RunStartComponentParams {
   workflow_repository: string;
@@ -33,15 +34,17 @@ export class ProjectV2RunStartComponent implements OnInit {
   project: Project;
   vcss: Array<VCSProject> = [];
   repositories: { [vcs: string]: Array<ProjectRepository> } = {};
-  branches: Array<string> = [];
-  sourceBranches: Array<string> = [];
+  branches: Array<Branch> = [];
+  tags: Array<Tag> = [];
+  sourceBranches: Array<Branch> = [];
+  sourceTags: Array<Tag> = [];
   workflows: Array<string> = [];
   validateForm: FormGroup<{
     repository: FormControl<string | null>;
-    branch: FormControl<string | null>;
+    ref: FormControl<string | null>;
     workflow: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
-    sourceBranch: FormControl<string | null>;
+    sourceRef: FormControl<string | null>;
   }>;
   event: RepositoryHookEvent;
 
@@ -57,10 +60,10 @@ export class ProjectV2RunStartComponent implements OnInit {
     this.project = this._store.selectSnapshot(ProjectState.projectSnapshot);
     this.validateForm = this._fb.group({
       repository: this._fb.control<string | null>(null, Validators.required),
-      branch: this._fb.control<string | null>(null, Validators.required),
+      ref: this._fb.control<string | null>(null, Validators.required),
       workflow: this._fb.control<string | null>(null, Validators.required),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
-      sourceBranch: this._fb.control<string | null>(null),
+      sourceRef: this._fb.control<string | null>(null),
     });
   }
 
@@ -91,18 +94,18 @@ export class ProjectV2RunStartComponent implements OnInit {
 
   async repositoryChange(value: string) {
     const splitted = this.splitRepository(value);
-    const branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, splitted.vcs, splitted.repo, 50));
-    this.branches = branches.map(b => b.display_id);
-    const selectedBranch = this.params.workflow_ref ?? (this.params.ref ?? null);
-    if (selectedBranch && branches.findIndex(b => `refs/heads/${b.display_id}` === selectedBranch) !== -1) {
-      this.validateForm.controls.branch.setValue(selectedBranch.replace('refs/heads/', ''));
+    this.branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, splitted.vcs, splitted.repo, 50));
+    this.tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, splitted.vcs, splitted.repo));
+    const selectedRef = this.params.workflow_ref ?? (this.params.ref ?? null);
+    if (selectedRef && (this.branches.findIndex(b => `refs/heads/${b.display_id}` === selectedRef) !== -1 || this.tags.findIndex(t => `refs/tags/${t.tag}` === selectedRef) !== -1)) {
+      this.validateForm.controls.ref.setValue(selectedRef);
     } else {
-      this.validateForm.controls.branch.setValue(branches.find(b => b.default).display_id);
+      this.validateForm.controls.ref.setValue('refs/heads/' + this.branches.find(b => b.default).display_id);
     }
     this._cd.markForCheck();
   }
 
-  async branchChange(branch: string) {
+  async refChange(branch: string) {
     const splitted = this.splitRepository(this.validateForm.controls.repository.value);
     const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, splitted.vcs, splitted.repo, branch));
     this.workflows = resp.filter(e => e.type === EntityType.Workflow).map(e => e.name);
@@ -120,7 +123,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     }
     const form = this.validateForm.controls;
     const splitted = this.splitRepository(form.repository.value);
-    const entity = await lastValueFrom(this._projectService.getRepoEntity(this.project.key, splitted.vcs, splitted.repo, EntityType.Workflow, form.workflow.value, form.branch.value));
+    const entity = await lastValueFrom(this._projectService.getRepoEntity(this.project.key, splitted.vcs, splitted.repo, EntityType.Workflow, form.workflow.value, form.ref.value));
     let wkf: V2Workflow;
     try {
       wkf = load(entity.data && entity.data !== '' ? entity.data : '{}', <LoadOptions>{
@@ -131,21 +134,21 @@ export class ProjectV2RunStartComponent implements OnInit {
     }
     if (wkf.repository) {
       this.validateForm.controls.sourceRepository.setValidators([Validators.required]);
-      this.validateForm.controls.sourceBranch.setValidators([Validators.required]);
+      this.validateForm.controls.sourceRef.setValidators([Validators.required]);
       this.validateForm.controls.sourceRepository.setValue(wkf.repository.vcs + '/' + wkf.repository.name);
-      const branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, wkf.repository.vcs, wkf.repository.name, 50));
-      this.sourceBranches = branches.map(b => b.display_id);
-      const selectedSourceBranch = this.params.ref ?? null;
-      if (selectedSourceBranch && branches.findIndex(b => `refs/heads/${b.display_id}` === selectedSourceBranch) !== -1) {
-        this.validateForm.controls.sourceBranch.setValue(selectedSourceBranch.replace('refs/heads/', ''));
+      this.sourceBranches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, wkf.repository.vcs, wkf.repository.name, 50));
+      this.sourceTags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, wkf.repository.vcs, wkf.repository.name));
+      const selectedSourceRef = this.params.ref ?? null;
+      if (selectedSourceRef && (this.sourceBranches.findIndex(b => `refs/heads/${b.display_id}` === selectedSourceRef) !== -1 || this.sourceTags.findIndex(t => `refs/tags/${t.tag}` === selectedSourceRef) !== -1)) {
+        this.validateForm.controls.sourceRef.setValue(selectedSourceRef);
       } else {
-        this.validateForm.controls.sourceBranch.setValue(branches.find(b => b.default).display_id);
+        this.validateForm.controls.sourceRef.setValue('refs/heads/' + this.sourceBranches.find(b => b.default).display_id);
       }
     } else {
       this.validateForm.controls.sourceRepository.reset();
-      this.validateForm.controls.sourceBranch.reset();
+      this.validateForm.controls.sourceRef.reset();
       this.validateForm.controls.sourceRepository.clearValidators();
-      this.validateForm.controls.sourceBranch.clearValidators();
+      this.validateForm.controls.sourceRef.clearValidators();
     }
     this._cd.markForCheck();
   }
@@ -186,10 +189,21 @@ export class ProjectV2RunStartComponent implements OnInit {
     this._cd.markForCheck();
 
     const splitted = this.splitRepository(this.validateForm.controls.repository.value);
-    let req = <V2WorkflowRunManualRequest>{
-      branch: this.validateForm.value.sourceBranch ?? this.validateForm.value.branch,
-    };
-    if (this.validateForm.value.sourceBranch) { req.workflow_branch = this.validateForm.value.branch; }
+    const ref = this.validateForm.value.sourceRef ?? this.validateForm.value.ref;
+    let req = <V2WorkflowRunManualRequest>{};
+    if (ref.startsWith('refs/tags/')) {
+      req.tag = ref.replace('refs/tags/', '');
+    } else {
+      req.branch = ref.replace('refs/heads/', '');
+    }
+    if (this.validateForm.value.sourceRef) {
+      const ref = this.validateForm.value.ref;
+      if (ref.startsWith('refs/tags/')) {
+        req.workflow_tag = ref.replace('refs/tags/', '');
+      } else {
+        req.workflow_branch = ref.replace('refs/heads/', '');
+      }
+    }
     const resp = await lastValueFrom(this._workflowRunService.start(this.project.key, splitted.vcs, splitted.repo, this.validateForm.value.workflow, req));
     this._messageService.success('Workflow run started', { nzDuration: 2000 });
 

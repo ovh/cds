@@ -7,6 +7,7 @@ import { PathItem } from "app/shared/breadcrumb/breadcrumb.component";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzTableFilterList, NzTableQueryParams } from "ng-zorro-antd/table";
 import { NzMessageService } from "ng-zorro-antd/message";
+import { ErrorUtils } from "app/shared/error.utils";
 
 @Component({
     selector: 'app-queue-v2',
@@ -69,7 +70,7 @@ export class QueueV2Component implements OnDestroy {
             this.totalCount = parseInt(resp.headers.get('X-Total-Count'), 10);
             this.jobs = resp.body;
         } catch (e) {
-            this._messageService.error(`Unable to list workflow run jobs: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to list workflow run jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
 
         this.loading = false;
@@ -81,7 +82,7 @@ export class QueueV2Component implements OnDestroy {
             await lastValueFrom(this._workflowService.stopJob(job.project_key, job.workflow_run_id, job.id));
             await this.loadQueue();
         } catch (e) {
-            this._messageService.error(`Unable to stop workflow run job: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to stop workflow run job: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
     }
 
