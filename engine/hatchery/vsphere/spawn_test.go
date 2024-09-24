@@ -846,11 +846,20 @@ func TestHatcheryVSphere_SpawnWorkerFromProvisioning(t *testing.T) {
 		},
 	)
 
-	c.EXPECT().GetVirtualMachinePowerState(gomock.Any(), &vmProvisionned).DoAndReturn(
-		func(ctx context.Context, vm *object.VirtualMachine) (types.VirtualMachinePowerState, error) {
-			return types.VirtualMachinePowerStateSuspended, nil
+	c.EXPECT().LoadVirtualMachineEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, vm *object.VirtualMachine, eventTypes ...string) ([]types.BaseEvent, error) {
+			t.Logf("LoadVirtualMachineEvents for %s", vm.Name())
+			return []types.BaseEvent{
+				&types.VmPoweredOffEvent{
+					VmEvent: types.VmEvent{
+						Event: types.Event{
+							CreatedTime: time.Now().Add(-10 * time.Minute),
+						},
+					},
+				},
+			}, nil
 		},
-	)
+	).Times(1)
 
 	c.EXPECT().RenameVirtualMachine(gomock.Any(), &vmProvisionned, "worker-name").DoAndReturn(
 		func(ctx context.Context, vm *object.VirtualMachine, s string) error {

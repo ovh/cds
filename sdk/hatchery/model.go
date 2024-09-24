@@ -1,6 +1,8 @@
 package hatchery
 
 import (
+	"strings"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 )
@@ -9,6 +11,12 @@ import (
 func ModelInterpolateSecrets(hWithModels InterfaceWithModels, model *sdk.Model) error {
 	// For now only docker registry password can be interpolate
 	if model.Type != sdk.VSphere && (model.Type != sdk.Docker || !model.ModelDocker.Private) {
+		return nil
+	}
+
+	// Test ascode model : can't be interpolate
+	modelPath := strings.Split(model.Path(), "/")
+	if model.Type == sdk.VSphere && len(modelPath) >= 5 {
 		return nil
 	}
 

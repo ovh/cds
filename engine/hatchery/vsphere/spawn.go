@@ -12,7 +12,6 @@ import (
 	"github.com/rockbears/yaml"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
-	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -575,26 +574,27 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			log.Debug(ctx, "provision %q already used by another worker starter - skip it", machine.Name)
 			continue
 		} else if err != nil {
-			return nil, sdk.WrapError(err, "unable to load vm %q", machine.Name)
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to load vm provision %q", machine.Name)
+			continue
 		}
 
-		powerstate, err := h.vSphereClient.GetVirtualMachinePowerState(ctx, vm)
-		if err != nil {
-			return nil, sdk.WrapError(err, "unable to get vm %q powerstate", machine.Name)
-		}
-
-		log.Debug(ctx, "checking provision %q annot.Provisioning:%v runtime.PowerState:%v powerstate:%v", expectedModelPath, annot.Provisioning, machine.Runtime.PowerState, powerstate)
+		log.Debug(ctx, "checking provision %q expectedModelPath:%v annot.Provisioning:%v", machine.Name, expectedModelPath, annot.Provisioning)
 
 		// Provisionned machines contains provisioning flag to true
 		if !annot.Provisioning {
 			continue
 		}
 
-		// Provisionned machines are powered off
-		if machine.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmPoweredOffEvent")
+		if err != nil {
+			ctx = sdk.ContextWithStacktrace(ctx, err)
+			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
 			continue
 		}
-		if powerstate == types.VirtualMachinePowerStatePoweredOn {
+
+		if len(vmEvents) == 0 {
+			log.Debug(ctx, "no VmPoweredOffEvent found - we skip this provision")
 			continue
 		}
 
@@ -607,18 +607,23 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			annotModelPath = annot.WorkerModelPath
 		}
 
-		if expectedModelPath == annotModelPath {
-			h.cacheProvisioning.mu.Lock()
-			if sdk.IsInArray(machine.Name, h.cacheProvisioning.using) {
-				h.cacheProvisioning.mu.Unlock()
-				continue
-			}
-
-			h.cacheProvisioning.using = append(h.cacheProvisioning.using, machine.Name)
-			h.cacheProvisioning.mu.Unlock()
-
-			return vm, nil
+		if expectedModelPath != annotModelPath {
+			log.Debug(ctx, "we skip this provision %q - expectedModelPath:%s annotModelPath:%s", machine.Name, expectedModelPath, annotModelPath)
+			continue
 		}
+
+		h.cacheProvisioning.mu.Lock()
+		if sdk.IsInArray(machine.Name, h.cacheProvisioning.using) {
+			log.Debug(ctx, "provision %q already used - skipping", machine.Name)
+			h.cacheProvisioning.mu.Unlock()
+			continue
+		}
+
+		h.cacheProvisioning.using = append(h.cacheProvisioning.using, machine.Name)
+		h.cacheProvisioning.mu.Unlock()
+
+		log.Debug(ctx, "we use this provision %q", machine.Name)
+		return vm, nil
 	}
 
 	log.Debug(ctx, "unable to find provisionned VM for model %q", expectedModelPath)
