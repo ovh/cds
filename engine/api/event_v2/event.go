@@ -203,7 +203,6 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 }
 
 func sendVCSPullRequestComment(ctx context.Context, db *gorp.DbMap, vcsClient sdk.VCSAuthorizedClientService, run sdk.EventWorkflowRunPayload, comment string) error {
-	//Check if this branch and this commit is a pullrequest
 	pr, err := vcsClient.PullRequest(ctx, run.Contexts.Git.Repository, fmt.Sprintf("%d", run.Contexts.Git.PullRequestID))
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
@@ -268,7 +267,7 @@ func sendVCSPullRequestComment(ctx context.Context, db *gorp.DbMap, vcsClient sd
 			WorkflowRunID: run.ID,
 			IssuedAt:      time.Now(),
 			Level:         sdk.WorkflowRunInfoLevelError,
-			Message:       fmt.Sprintf("unable to parse pullrequest comment: %v", err),
+			Message:       fmt.Sprintf("unable to execute template on pullrequest comment: %v", err),
 		}
 
 		tx, errT := db.Begin()
