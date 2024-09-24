@@ -450,8 +450,6 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			}
 		}
 
-		// In some condition (restart hatchery for exemple),
-		// we can see some vm renamed, but not started. Deleting them if the renamed is too old
 		if !foundStarted && foundRenamedEvent {
 			expire := vmRenamedEvent.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
 			if time.Now().After(expire) {
