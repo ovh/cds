@@ -291,7 +291,7 @@ func (actPlugin *dockerPushPlugin) performImage(ctx context.Context, cli *client
 		result.ArtifactManagerMetadata.Set("id", img.ImageID)
 	}
 
-	details, err := sdk.GetConcreteDetail[sdk.V2WorkflowRunResultDockerDetail](result)
+	details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](result)
 	if err != nil {
 		return nil, time.Since(t0), err
 	}

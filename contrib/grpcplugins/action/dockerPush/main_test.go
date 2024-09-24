@@ -165,7 +165,7 @@ func Test_dockerPushPlugin_perform(t *testing.T) {
 
 	mockWorker.EXPECT().V2UpdateRunResult(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2UpdateResultResponse, error) {
-			details, err := sdk.GetConcreteDetail[sdk.V2WorkflowRunResultDockerDetail](req.RunResult)
+			details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](req.RunResult)
 			require.NoError(t, err)
 			require.Equal(t, artifactoryRepoPrefix+"-docker."+rtHost+"/alpine:test-1", details.Name)
 			t.Logf("details:s %+v", details)

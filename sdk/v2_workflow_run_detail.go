@@ -84,10 +84,10 @@ func GetConcreteDetail[T any](s *V2WorkflowRunResult) (t T, err error) {
 	if err != nil {
 		return t, err
 	}
-
 	x, ok := i.(T)
 	if !ok {
-		return t, errors.Errorf("unable to get concrete detail for type %q", s.Detail.Type)
+		var tt T
+		return t, errors.Errorf("unable to get concrete detail for type %q (expected: %T, actual: %T)", s.Detail.Type, tt, i)
 	}
 
 	return x, nil
