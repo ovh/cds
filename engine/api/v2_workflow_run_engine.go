@@ -245,7 +245,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{*errorMsg}, u)
 	}
 
-	// Compute worker model / memory on runJobs if needed
+	// Compute worker model / region on runJobs if needed
 	wref := NewWorkflowRunEntityFinder(*proj, *run, *repo, *vcsServer, *u, wrEnqueue.IsAdminWithMFA, api.Config.WorkflowV2.LibraryProjectKey)
 	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
 	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
