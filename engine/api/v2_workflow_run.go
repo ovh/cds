@@ -778,7 +778,16 @@ func (api *API) postStopWorkflowRunHandler() ([]service.RbacChecker, service.Han
 			for _, rj := range runJobs {
 				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnded, *wr, rj)
 			}
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+
+			jobMaps := make(map[string]sdk.V2WorkflowRunJob)
+			for _, rj := range runJobs {
+				jobMaps[rj.JobID] = rj
+			}
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *wr, jobMaps, runResults, *u.AuthConsumerUser.AuthentifiedUser)
 
 			return nil
 		}
@@ -968,7 +977,12 @@ func (api *API) postRestartWorkflowRunHandler() ([]service.RbacChecker, service.
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+			runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, api.mustDB(), wr.ID, wr.RunAttempt)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+			}
+
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
 			api.EnqueueWorkflowRun(ctx, wr.ID, u.AuthConsumerUser.AuthentifiedUserID, wr.WorkflowName, wr.RunNumber, isAdmin(ctx))
@@ -1208,7 +1222,7 @@ func (api *API) postRunJobHandler() ([]service.RbacChecker, service.Handler) {
 				return sdk.WithStack(err)
 			}
 
-			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, *u.AuthConsumerUser.AuthentifiedUser)
+			event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunRestart, *wr, runJobsMap, runResults, *u.AuthConsumerUser.AuthentifiedUser)
 			event_v2.PublishRunJobManualEvent(ctx, api.Cache, sdk.EventRunJobManualTriggered, *wr, jobToRuns[0].JobID, inputs, *u.AuthConsumerUser.AuthentifiedUser)
 
 			// Then continue the workflow
@@ -1342,6 +1356,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		EventName:     runRequest.EventName,
 		Ref:           runRequest.Ref,
 		Sha:           runRequest.Sha,
+		PullRequestID: runRequest.PullrequestID,
 		CommitMessage: runRequest.CommitMessage,
 		SemverCurrent: runRequest.SemverCurrent,
 		SemverNext:    runRequest.SemverNext,
@@ -1449,7 +1464,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, sdk.WithStack(err)
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, *u)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunCrafted, wr, nil, nil, *u)
 
 	select {
 	case api.workflowRunCraftChan <- wr.ID:
