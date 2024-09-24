@@ -44,24 +44,31 @@ nz-tabset {
     }
   }
 
-  .option {
-    line-height: 14px;
-    padding: 8px 10px;
-    cursor: pointer;
+  .options {
+    display: flex;
+    flex-direction: column;
+    max-height: 500px;
+    overflow-y: auto;
 
-    &:hover {
-      background-color: #f5f5f5;
+    .option {
+      line-height: 14px;
+      padding: 8px 10px;
+      cursor: pointer;
 
-      .night & {
-        background-color: rgba(255, 255, 255, 0.08);
+      &:hover {
+        background-color: #f5f5f5;
+
+        .night & {
+          background-color: rgba(255, 255, 255, 0.08);
+        }
       }
-    }
 
-    &.active {
-      background-color: #bae7ff;
+      &.active {
+        background-color: #bae7ff;
 
-      .night & {
-        background-color: #11263c;
+        .night & {
+          background-color: #11263c;
+        }
       }
     }
   }

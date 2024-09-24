@@ -21,9 +21,11 @@
 						<span nz-icon nzType="branches" nzTheme="outline"></span>
 						Branches
 					</ng-template>
-					<div class="option" [title]="opt.display_id" *ngFor="let opt of filteredBranches"
-						[class.active]="selectedRef === 'refs/heads/' + opt.display_id"
-						(click)="clickOption('refs/heads/' + opt.display_id)">{{opt.display_id}}</div>
+					<div class="options">
+						<div class="option" [title]="opt.display_id" *ngFor="let opt of filteredBranches"
+							[class.active]="selectedRef === 'refs/heads/' + opt.display_id"
+							(click)="clickOption('refs/heads/' + opt.display_id)">{{opt.display_id}}</div>
+					</div>
 					<nz-empty *ngIf="!filteredBranches || filteredBranches.length === 0" nzNotFoundImage="simple"></nz-empty>
 				</nz-tab>
 				<nz-tab [nzTitle]="tagsTitle">
@@ -31,9 +33,11 @@
 						<span nz-icon nzType="tags" nzTheme="outline"></span>
 						Tags
 					</ng-template>
-					<div class="option" [title]="opt.tag" *ngFor="let opt of filteredTags"
-						[class.active]="selectedRef === 'refs/tags/' + opt.tag" (click)="clickOption('refs/tags/' + opt.tag)">
-						{{opt.tag}}</div>
+					<div class="options">
+						<div class="option" [title]="opt.tag" *ngFor="let opt of filteredTags"
+							[class.active]="selectedRef === 'refs/tags/' + opt.tag" (click)="clickOption('refs/tags/' + opt.tag)">
+							{{opt.tag}}</div>
+					</div>
 					<nz-empty *ngIf="!filteredTags || filteredTags.length === 0" nzNotFoundImage="simple"></nz-empty>
 				</nz-tab>
 			</nz-tabset>
