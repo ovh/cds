@@ -5,6 +5,7 @@ import { ToastService } from "app/shared/toast/ToastService";
 import { V2JobGate, V2WorkflowRun } from "../../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { lastValueFrom } from "rxjs";
 import { NzMessageService } from "ng-zorro-antd/message";
+import { ErrorUtils } from "app/shared/error.utils";
 
 @Component({
     selector: 'app-run-gate',
@@ -67,7 +68,7 @@ export class RunGateComponent implements OnInit {
             this._toastService.success('', `Job ${this.gateNode.job} started`);
             this.onSubmit.emit();
         } catch (e) {
-            this._messageService.error(`Unable to get trigger job gate: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to get trigger job gate: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
         this.loading = false;
         this._cd.markForCheck();

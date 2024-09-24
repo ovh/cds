@@ -17,6 +17,7 @@ import { NsAutoHeightTableDirective } from "app/shared/directives/ns-auto-height
 import { V2WorkflowRun, V2WorkflowRunJob, V2WorkflowRunJobStatusIsActive, V2WorkflowRunJobStatusIsFailed, WorkflowRunInfo, WorkflowRunResult, WorkflowRunResultType } from "../../../../../libs/workflow-graph/src/lib/v2.workflow.run.model";
 import { GraphNode } from "../../../../../libs/workflow-graph/src/lib/graph.model";
 import { RouterService } from "app/service/services.module";
+import { ErrorUtils } from "app/shared/error.utils";
 
 @Component({
     selector: 'app-projectv2-run',
@@ -133,7 +134,7 @@ export class ProjectV2RunComponent implements OnDestroy {
             this.workflowRun = await lastValueFrom(this._workflowService.getRun(this.projectKey, workflowRunID));
             this.selectedRunAttempt = this.workflowRun.run_attempt;
         } catch (e) {
-            this._messageService.error(`Unable to get workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to get workflow run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
 
         this.workflowGraph = dump(this.workflowRun.workflow_data.workflow, { lineWidth: -1 });
@@ -149,7 +150,7 @@ export class ProjectV2RunComponent implements OnDestroy {
         try {
             this.jobs = await lastValueFrom(this._workflowService.getJobs(this.workflowRun, this.selectedRunAttempt));
         } catch (e) {
-            this._messageService.error(`Unable to get jobs: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to get jobs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
         try {
             this.results = await lastValueFrom(this._workflowService.getResults(this.workflowRun, this.selectedRunAttempt));
@@ -162,12 +163,12 @@ export class ProjectV2RunComponent implements OnDestroy {
                 });
             }
         } catch (e) {
-            this._messageService.error(`Unable to get results: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to get results: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
         try {
             this.workflowRunInfos = await lastValueFrom(this._workflowService.getRunInfos(this.workflowRun));
         } catch (e) {
-            this._messageService.error(`Unable to get run infos: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to get run infos: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
 
         this.tabs[0].default = true;

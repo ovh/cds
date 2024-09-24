@@ -23,8 +23,8 @@ export class SaveProjectTreeExpandState {
     constructor(public payload: { projectKey: string, state: { [key: string]: boolean } }) { }
 }
 
-export class SaveProjectBranchSelectState {
-    static readonly type = '[Preferences] Save project\'s explore branch select state';
+export class SaveProjectRefSelectState {
+    static readonly type = '[Preferences] Save project\'s explore ref select state';
     constructor(public payload: { projectKey: string, state: { [key: string]: string } }) { }
 }
 

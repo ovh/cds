@@ -15,7 +15,7 @@ import { AnalysisService } from "app/service/analysis/analysis.service";
 import { Entity, EntityType, EntityTypeUtil } from "app/model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { Branch } from 'app/model/repositories.model';
+import { Branch, Tag } from 'app/model/repositories.model';
 import { Store } from '@ngxs/store';
 import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
@@ -23,6 +23,7 @@ import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { RouterService } from 'app/service/services.module';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../run-start/run-start.component';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
+import { ErrorUtils } from 'app/shared/error.utils';
 
 @Component({
     selector: 'app-projectv2-explore-sidebar',
@@ -41,7 +42,8 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     entities: { [repositoryPath: string]: { [entityType: string]: Array<Entity> } } = {};
     treeExpandState: { [key: string]: boolean } = {};
     branches: { [repositoryPath: string]: Array<Branch> } = {};
-    branchSelectState: { [repositoryPath: string]: string } = {};
+    tags: { [repositoryPath: string]: Array<Tag> } = {};
+    refSelectState: { [repositoryPath: string]: string } = {};
     analysisServiceSub: Subscription;
     routerSub: Subscription;
 
@@ -61,7 +63,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
 
     ngOnInit(): void {
         this.treeExpandState = this._store.selectSnapshot(PreferencesState.selectProjectTreeExpandState(this.project.key));
-        this.branchSelectState = this._store.selectSnapshot(PreferencesState.selectProjectBranchSelectState(this.project.key));
+        this.refSelectState = this._store.selectSnapshot(PreferencesState.selectProjectRefSelectState(this.project.key));
         this.load();
         this.routerSub = this._router.events.pipe(
             filter(e => e instanceof NavigationEnd),
@@ -94,7 +96,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
             const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
             await this.expandTreeToSelectedRoute(params);
         } catch (e: any) {
-            this._messageService.error(`Unable to load vcs and repositories: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to load vcs and repositories: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
 
         this.loading = false;
@@ -123,12 +125,17 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         try {
             const branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, vcs.name, repo.name, 50));
             this.branches[vcs.name + '/' + repo.name] = branches;
-            if (!this.branchSelectState[vcs.name + '/' + repo.name] || !branches.find(b => b.display_id === this.branchSelectState[vcs.name + '/' + repo.name])) {
-                this.branchSelectState[vcs.name + '/' + repo.name] = branches.find(b => b.default).display_id;
+            const tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, vcs.name, repo.name));
+            this.tags[vcs.name + '/' + repo.name] = tags;
+            if (!this.refSelectState[vcs.name + '/' + repo.name] || (
+                !branches.find(b => 'refs/heads/' + b.display_id === this.refSelectState[vcs.name + '/' + repo.name])
+                && !tags.find(t => 'refs/tags/' + t.tag === this.refSelectState[vcs.name + '/' + repo.name])
+            )) {
+                this.refSelectState[vcs.name + '/' + repo.name] = 'refs/heads/' + branches.find(b => b.default).display_id;
             }
             await this.loadEntities(vcs, repo);
         } catch (e: any) {
-            this._messageService.error(`Unable to load repository: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to load repository: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
     }
 
@@ -171,7 +178,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     }
 
     async loadEntities(vcs: VCSProject, repo: ProjectRepository) {
-        const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, vcs.name, repo.name, this.branchSelectState[vcs.name + '/' + repo.name]));
+        const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, vcs.name, repo.name, this.refSelectState[vcs.name + '/' + repo.name]));
         if (resp.length === 0) {
             this.entities[vcs.name + '/' + repo.name] = null;
             return
@@ -196,24 +203,24 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         this._cd.markForCheck();
     }
 
-    async selectRepositoryBranch(vcs: VCSProject, repo: ProjectRepository, branch: string) {
-        this.branchSelectState[vcs.name + '/' + repo.name] = branch;
-        this.saveBranchSelectState();
+    async selectRepositoryRef(vcs: VCSProject, repo: ProjectRepository, ref: string) {
+        this.refSelectState[vcs.name + '/' + repo.name] = ref;
+        this.saveRefSelectState();
 
         try {
             await this.loadEntities(vcs, repo);
         } catch (e: any) {
-            this._messageService.error(`Unable to load repository: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to load repository: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
 
         const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
         if (params['vcsName'] === vcs.name && params['repoName'] === repo.name) {
-            let entityType = EntityTypeUtil.fromURLParam(params['entityType']);
-            let entityName = params['entityName'];
-            if (entityType && entityName) {
+            if (params['entityType'] && params['entityName']) {
+                let entityType = EntityTypeUtil.fromURLParam(params['entityType']);
+                let entityName = params['entityName'];
                 this._router.navigate(['/project', this.project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, EntityTypeUtil.toURLParam(entityType), entityName], {
                     queryParams: {
-                        branch: this.branchSelectState[vcs.name + '/' + repo.name]
+                        ref: this.refSelectState[vcs.name + '/' + repo.name]
                     }
                 });
             }
@@ -265,9 +272,9 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
             this.treeExpandState[vcs.name + '/' + repo.name] = true;
             loadRepo = true;
         }
-        const branch = this._activatedRoute.snapshot.queryParams['branch'];
-        if (branch && this.branchSelectState[vcs.name + '/' + repo.name] !== branch) {
-            this.branchSelectState[vcs.name + '/' + repo.name] = branch;
+        const ref = this._activatedRoute.snapshot.queryParams['ref'];
+        if (ref && this.refSelectState[vcs.name + '/' + repo.name] !== ref) {
+            this.refSelectState[vcs.name + '/' + repo.name] = ref;
             loadRepo = true;
         }
         if (loadRepo) {
@@ -286,22 +293,22 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         }
     }
 
-    saveBranchSelectState(): void {
+    saveRefSelectState(): void {
         let state: { [key: string]: string } = {};
         this.vcss.forEach(vcs => {
-            // Persist selected branch only when different from default one
+            // Persist selected ref only when different from default branch
             (this.repositories[vcs.name] ?? []).forEach(repo => {
                 if (!this.branches[vcs.name + '/' + repo.name]) {
                     return;
                 }
                 const defaultBranch = this.branches[vcs.name + '/' + repo.name].find(b => b.default).display_id;
-                if (this.branchSelectState[vcs.name + '/' + repo.name] === defaultBranch) {
+                if (this.refSelectState[vcs.name + '/' + repo.name] === 'refs/heads/' + defaultBranch) {
                     return;
                 }
-                state[vcs.name + '/' + repo.name] = this.branchSelectState[vcs.name + '/' + repo.name];
+                state[vcs.name + '/' + repo.name] = this.refSelectState[vcs.name + '/' + repo.name];
             });
         });
-        this._store.dispatch(new actionPreferences.SaveProjectBranchSelectState({ projectKey: this.project.key, state }));
+        this._store.dispatch(new actionPreferences.SaveProjectRefSelectState({ projectKey: this.project.key, state }));
     }
 
     openRunStartDrawer(workflow: string, ref: string): void {

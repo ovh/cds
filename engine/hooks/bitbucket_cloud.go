@@ -42,10 +42,10 @@ func (s *Service) generatePayloadFromBitbucketCloudRequest(ctx context.Context, 
 
 func getVariableFromBitbucketCloudChange(ctx context.Context, payload map[string]interface{}, change BitbucketCloudChange) {
 	if change.New.Type == "branch" {
-		branch := strings.TrimPrefix(change.New.Name, "refs/heads/")
+		branch := strings.TrimPrefix(change.New.Name, sdk.GitRefBranchPrefix)
 		payload[GIT_BRANCH] = branch
 	} else if change.New.Type == "tag" {
-		payload[GIT_TAG] = strings.TrimPrefix(change.New.Name, "refs/tags/")
+		payload[GIT_TAG] = strings.TrimPrefix(change.New.Name, sdk.GitRefTagPrefix)
 	} else {
 		log.Warn(ctx, "unknown push type: %s", change.New.Type)
 		return

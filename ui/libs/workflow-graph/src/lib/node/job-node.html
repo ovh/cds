@@ -31,7 +31,7 @@
             </button>
         </ng-container>
     </div>
-    <div *ngIf=" node?.name" class="name">
+    <div *ngIf="node?.name" class="name" title="{{node?.name}}">
         {{node?.name}}
     </div>
     <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">

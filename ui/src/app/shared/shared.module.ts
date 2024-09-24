@@ -264,6 +264,7 @@ import { NzTreeModule } from 'ng-zorro-antd/tree';
 import { NzResultModule } from 'ng-zorro-antd/result';
 import { SearchableComponent } from './searchable/searchable.component';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
+import { RepositoryRefSelectComponent } from './repository-ref-selector/repository-ref-select.component';
 
 const ngZorroConfig: NzConfig = {
     notification: {
@@ -470,6 +471,7 @@ const icons: IconDefinition[] = [
         PermissionListComponent,
         ProjectBreadcrumbComponent,
         RepoManagerFormComponent,
+        RepositoryRefSelectComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
         RequirementsValueComponent,
@@ -638,6 +640,7 @@ const icons: IconDefinition[] = [
         ProjectBreadcrumbComponent,
         ReactiveFormsModule,
         RepoManagerFormComponent,
+        RepositoryRefSelectComponent,
         RequirementsFormComponent,
         RequirementsListComponent,
         RequirementsValueComponent,

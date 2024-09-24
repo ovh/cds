@@ -19,6 +19,7 @@ import { EventV2State } from "app/store/event-v2.state";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { EventV2Type } from "app/model/event-v2.model";
 import { animate, keyframes, state, style, transition, trigger } from "@angular/animations";
+import { ErrorUtils } from "app/shared/error.utils";
 
 export class WorkflowRunFilter {
 	key: string;
@@ -173,7 +174,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 			this.filters = await lastValueFrom(this._http.get<Array<WorkflowRunFilter>>(`/v2/project/${this.project.key}/run/filter`));
 			this.computeAvailableFilters(this.filterText);
 		} catch (e) {
-			this._messageService.error(`Unable to list workflow runs filters: ${e?.error?.error}`, { nzDuration: 2000 });
+			this._messageService.error(`Unable to list workflow runs filters: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 		}
 
 		this.loading = false;
@@ -226,7 +227,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 			this.totalCount = res.totalCount;
 			this.runs = res.runs;
 		} catch (e) {
-			this._messageService.error(`Unable to list workflow runs: ${e?.error?.error}`, { nzDuration: 2000 });
+			this._messageService.error(`Unable to list workflow runs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 		}
 
 		this.loading = false;
@@ -395,7 +396,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 			await lastValueFrom(this._http.delete(`/v2/project/${this.project.key}/run/${runID}`));
 			this.refresh();
 		} catch (e) {
-			this._messageService.error(`Unable to delete workflow run: ${e?.error?.error}`, { nzDuration: 2000 });
+			this._messageService.error(`Unable to delete workflow run: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
 		}
 	}
 

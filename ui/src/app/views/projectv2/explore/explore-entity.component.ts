@@ -10,6 +10,7 @@ import { RouterService } from "app/service/services.module";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { ProjectRepository } from "app/model/project.model";
 import { load } from "js-yaml";
+import { ErrorUtils } from "app/shared/error.utils";
 
 @Component({
 	selector: 'app-projectv2-explore-entity',
@@ -21,7 +22,7 @@ import { load } from "js-yaml";
 export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 	loading: boolean;
 	error: string;
-	currentBranch: string;
+	currentRef: string;
 	projectKey: string;
 	vcs: VCSProject;
 	repository: ProjectRepository;
@@ -43,7 +44,6 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this._activatedRoute.params.subscribe(_ => {
 			const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
-
 			const vcsName = params['vcsName'];
 			const repoName = params['repoName'];
 			const entityType = EntityTypeUtil.fromURLParam(params['entityType']);
@@ -52,16 +52,16 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 				return;
 			}
 			this.projectKey = params['key'];
-			this.currentBranch = this._activatedRoute.snapshot.queryParams['branch'] ?? null;
+			this.currentRef = this._activatedRoute.snapshot.queryParams['ref'] ?? null;
 
 			this.load(vcsName, repoName, entityType, entityName);
 		});
 
 		this._activatedRoute.queryParams.subscribe(q => {
-			if (this.currentBranch === q['branch']) {
+			if (this.currentRef === q['ref']) {
 				return;
 			}
-			this.currentBranch = q['branch'];
+			this.currentRef = q['ref'];
 
 			const params = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root);
 			const vcsName = params['vcsName'];
@@ -85,7 +85,7 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 			this.vcs = results[0];
 			this.repository = results[1];
 			this.jsonSchema = results[2];
-			this.entity = await lastValueFrom(this._projectService.getRepoEntity(this.projectKey, this.vcs.name, this.repository.name, entityType, entityName, this.currentBranch));
+			this.entity = await lastValueFrom(this._projectService.getRepoEntity(this.projectKey, this.vcs.name, this.repository.name, entityType, entityName, this.currentRef));
 			this.isWorkflowFromTemplate = false;
 			if (this.entity.type === EntityType.Workflow) {
 				const wkf = load(this.entity.data);
@@ -94,7 +94,8 @@ export class ProjectV2ExploreEntityComponent implements OnInit, OnDestroy {
 				}
 			}
 		} catch (e: any) {
-			this._messageService.error(`Unable to entity: ${e?.error?.error}`, { nzDuration: 2000 });
+			this._messageService.error(`Unable to entity: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+			this._router.navigate(['/project', this.projectKey, 'explore', 'vcs', vcsName, 'repository', repoName]);
 		}
 
 		this.loading = false;
