@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/mitchellh/mapstructure"
@@ -17,11 +18,15 @@ var (
 	registeredV2WorkflowRunResultDetailLock sync.Mutex
 )
 
-func registerV2WorkflowRunResultDetail(i ...V2WorkflowRunResultDetailInterface) {
+func registerV2WorkflowRunResultDetail(datas ...V2WorkflowRunResultDetailInterface) {
 	registeredV2WorkflowRunResultDetailLock.Lock()
 	defer registeredV2WorkflowRunResultDetailLock.Unlock()
-	for _, x := range i {
-		registeredV2WorkflowRunResultDetail[reflect.TypeOf(i).Name()] = x
+	for _, x := range datas {
+		if !IsPointer(x) {
+			panic(fmt.Sprintf("%T is not a pointer", x))
+		}
+		name := strings.TrimLeft(fmt.Sprintf("%T", x), "*.sdk")
+		registeredV2WorkflowRunResultDetail[name] = x
 	}
 }
 
@@ -58,9 +63,17 @@ func (s *V2WorkflowRunResult) CastDetail() error {
 func (s *V2WorkflowRunResultDetail) castDetail() error {
 	for k, v := range registeredV2WorkflowRunResultDetail {
 		if k == s.Type {
-			// instanciate a new V
-			x := reflect.New(reflect.TypeOf(v)).Interface().(V2WorkflowRunResultDetailInterface)
-			return x.Cast(s.Data)
+			typeOfV := reflect.TypeOf(v)
+			x := reflect.New(typeOfV.Elem())
+			xi, ok := x.Interface().(V2WorkflowRunResultDetailInterface)
+			if !ok {
+				return errors.Errorf("unknow type %q (%T): unable to cast to V2WorkflowRunResultDetailInterface", s.Type, x)
+			}
+			if err := xi.Cast(s.Data); err != nil {
+				return err
+			}
+			s.Data = xi
+			return nil
 		}
 	}
 	return errors.Errorf("unknow type %q", s.Type)
@@ -113,8 +126,8 @@ func (s *V2WorkflowRunResultDetail) MarshalJSON() ([]byte, error) {
 		Type: s.Type,
 	}
 
-	btes, _ := json.Marshal(content)
-	return btes, nil
+	btes, err := json.Marshal(content)
+	return btes, err
 }
 
 var (
@@ -230,7 +243,10 @@ type V2WorkflowRunResultGenericDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultGenericDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	if err := castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -380,6 +396,7 @@ func (x *V2WorkflowRunResultReleaseDetail) Cast(i any) error {
 	if err != nil {
 		panic(err)
 	}
+
 	if err := decoder.Decode(i); err != nil {
 		return WrapError(err, "cannot unmarshal V2WorkflowRunResultReleaseDetail")
 	}

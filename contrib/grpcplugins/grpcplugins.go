@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 	"github.com/srerickson/checksum"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -217,6 +218,8 @@ func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.Wor
 }
 
 func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
+	log.Info(ctx, "creating run result...")
+
 	btes, err := json.Marshal(result)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -225,7 +228,7 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	if err != nil {
 		return nil, err
 	}
-
+	log.Debug(ctx, "URL:%s", req.URL.Path)
 	resp, err := c.DoRequest(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create run result")

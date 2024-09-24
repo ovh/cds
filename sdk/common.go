@@ -350,11 +350,13 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 }
 
 func IsPointer(i any) bool {
-	t := reflect.TypeOf(i)
-	if t.Kind() != reflect.Ptr {
+	val := reflect.ValueOf(i)
+	if val.Kind() != reflect.Ptr {
 		return false
 	}
-	return true
+
+	val = val.Elem()
+	return val.CanAddr()
 }
 
 type KeyValues struct {
