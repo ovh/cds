@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/pkg/errors"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -155,7 +156,15 @@ func (actPlugin *pythonPushPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	return nil, sdk.ErrNotImplemented
 }
 
-func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceDir string, opts pythonOpts, integ *sdk.JobIntegrationsContext) error {
+func (actPlugin *pythonPushPlugin) perform(ctx context.Context, workerWorkspaceDir string, opts pythonOpts, integ *sdk.JobIntegrationsContext) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from panic:", r)
+			fmt.Println(string(debug.Stack()))
+			err = errors.Errorf("Internal server error: panic")
+		}
+	}()
+
 	grpcplugins.Logf(&actPlugin.Common, "Pushing %s on version %s", opts.packageName, opts.version)
 
 	var runResultRequest = workerruntime.V2RunResultRequest{

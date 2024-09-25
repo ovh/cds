@@ -218,14 +218,15 @@ func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.Wor
 }
 
 func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
-	log.Info(ctx, "creating run result...")
 
 	btes, err := json.Marshal(result)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return nil, errors.WithStack(err)
 	}
 	req, err := c.NewRequest(ctx, http.MethodPost, "/v2/result", bytes.NewReader(btes))
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return nil, err
 	}
 	log.Debug(ctx, "URL:%s", req.URL.Path)
@@ -236,6 +237,7 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return nil, errors.WithStack(err)
 	}
 	if resp.StatusCode >= 300 {

@@ -61,6 +61,24 @@ func (s *V2WorkflowRunResult) CastDetail() error {
 }
 
 func (s *V2WorkflowRunResultDetail) castDetail() error {
+	data := s.Data
+
+	if IsPointer(data) {
+		data = reflect.ValueOf(data).Elem().Interface()
+	}
+
+	typeOfData := reflect.TypeOf(data)
+	if typeOfData.Kind() == reflect.Struct {
+		for k := range registeredV2WorkflowRunResultDetail {
+			if k == typeOfData.Name() {
+				if s.Type == "" {
+					s.Type = typeOfData.Name()
+				}
+				return nil
+			}
+		}
+	}
+
 	for k, v := range registeredV2WorkflowRunResultDetail {
 		if k == s.Type {
 			typeOfV := reflect.TypeOf(v)
@@ -76,7 +94,7 @@ func (s *V2WorkflowRunResultDetail) castDetail() error {
 			return nil
 		}
 	}
-	return errors.Errorf("unknow type %q", s.Type)
+	return errors.Errorf("unknow type %q (%s)", s.Type, typeOfData.Name())
 }
 
 func GetConcreteDetail[T any](s *V2WorkflowRunResult) (t T, err error) {

@@ -561,11 +561,17 @@ func (r *V2WorkflowRunResult) GetDetail() (V2WorkflowRunResultDetailInterface, e
 	if err := r.CastDetail(); err != nil {
 		return nil, err
 	}
-	return r.Detail.Data.(V2WorkflowRunResultDetailInterface), nil
+	if x, ok := r.Detail.Data.(V2WorkflowRunResultDetailInterface); ok {
+		return x, nil
+	} else { // Manage interface conversion of s.Detail.Data
+		value := reflect.ValueOf(r.Detail.Data)
+		t := reflect.New(value.Type())
+		t.Elem().Set(value)
+		return t.Interface().(V2WorkflowRunResultDetailInterface), nil
+	}
 }
 
 func (r *V2WorkflowRunResult) Name() string {
-
 	detailData, err := r.GetDetail()
 	if err != nil {
 		log.ErrorWithStackTrace(context.Background(), err)

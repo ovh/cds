@@ -131,6 +131,7 @@ func V2_contextHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 
 func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Info(ctx, "V2_runResultHandler (%s)", r.Method)
 		btes, err := io.ReadAll(r.Body)
 		if err != nil {
 			writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
