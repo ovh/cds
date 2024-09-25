@@ -207,7 +207,7 @@ type V2WorkflowRunResultTestDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultTestDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -226,7 +226,7 @@ type V2WorkflowRunResultTerraformModuleDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultTerraformModuleDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -244,7 +244,7 @@ type V2WorkflowRunResultTerraformProviderDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultTerraformProviderDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -263,7 +263,7 @@ type V2WorkflowRunResultGenericDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultGenericDetail) Cast(i any) error {
-	if err := castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v); err != nil {
+	if err := castV2WorkflowRunResultDetailWithMapStructure(i, v); err != nil {
 		return err
 	}
 	return nil
@@ -288,7 +288,7 @@ type V2WorkflowRunResultArsenalDeploymentDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultArsenalDeploymentDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -323,7 +323,7 @@ type V2WorkflowRunResultDebianDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultDebianDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -339,7 +339,7 @@ type V2WorkflowRunResultPythonDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultPythonDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -355,7 +355,7 @@ type V2WorkflowRunResultHelmDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultHelmDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -372,7 +372,7 @@ type V2WorkflowRunResultVariableDetail struct {
 
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultVariableDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, v)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
 }
 
 // GetName implements V2WorkflowRunResultDetailInterface.
@@ -428,19 +428,21 @@ func (x *V2WorkflowRunResultReleaseDetail) GetName() string {
 }
 
 func (x *V2WorkflowRunResultDockerDetail) Cast(i any) error {
-	return castV2WorkflowRunResultReleaseDetailWithMapStructure(i, x)
+	return castV2WorkflowRunResultDetailWithMapStructure(i, x)
 }
 
 func (x *V2WorkflowRunResultDockerDetail) GetName() string {
 	return x.Name
 }
 
-func castV2WorkflowRunResultReleaseDetailWithMapStructure[T any](input any, output T) error {
+func castV2WorkflowRunResultDetailWithMapStructure[T any](input any, output T) error {
 	if !IsPointer(output) {
 		return errors.New("unable to cast a non pointer")
 	}
+	ttI := reflect.TypeOf(input)
+	ttO := reflect.TypeOf(output)
 	if err := mapstructure.Decode(input, output); err != nil {
-		return WrapError(err, "cannot unmarshal V2WorkflowRunResultVariableDetail")
+		return WrapError(err, "cannot unmarshal %s to %s", ttI.Name(), ttO.Name())
 	}
 	return nil
 }
