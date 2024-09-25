@@ -31,6 +31,7 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 	if err := wk.clientV2.V2QueueJobRunResultCreate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
 		return nil, sdk.NewError(sdk.ErrUnknownError, err)
 	}
+	log.Info(ctx, "run result %s created", runResult.Name())
 
 	response := workerruntime.V2AddResultResponse{
 		RunResult: runResult,
@@ -77,6 +78,19 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 	if err := wk.addRunResultToCurrentJobContext(ctx, response.RunResult); err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return nil, err
+	}
+
+	if response.RunResult.Status == sdk.V2WorkflowRunResultStatusCompleted {
+		wk.clientV2.V2QueuePushJobInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q issued a new result %q", wk.currentJobV2.runJob.JobID, response.RunResult.Name()),
+			Time:    time.Now(),
+		})
+
+		wk.clientV2.V2QueuePushRunInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2WorkflowRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q issued a new result %q", wk.currentJobV2.runJob.JobID, response.RunResult.Name()),
+		})
 	}
 
 	return &response, nil

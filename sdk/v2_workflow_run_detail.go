@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 )
 
 var (
@@ -385,9 +387,6 @@ type V2WorkflowRunResultReleaseDetail struct {
 }
 
 func (x *V2WorkflowRunResultReleaseDetail) Cast(i any) error {
-	if !IsPointer(i) {
-		return errors.New("unable to cast a non pointer")
-	}
 	decoderConfig := &mapstructure.DecoderConfig{
 		Metadata: nil,
 		Result:   x,
@@ -412,10 +411,13 @@ func (x *V2WorkflowRunResultReleaseDetail) Cast(i any) error {
 	)
 	decoder, err := mapstructure.NewDecoder(decoderConfig)
 	if err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
 		panic(err)
 	}
 
 	if err := decoder.Decode(i); err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
+
 		return WrapError(err, "cannot unmarshal V2WorkflowRunResultReleaseDetail")
 	}
 	return nil

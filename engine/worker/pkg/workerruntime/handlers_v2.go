@@ -3,13 +3,16 @@ package workerruntime
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
+	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 )
 
@@ -131,6 +134,14 @@ func V2_contextHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 
 func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if _r := recover(); _r != nil {
+				fmt.Println("Recovered from panic:", _r)
+				fmt.Println(string(debug.Stack()))
+				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, errors.Errorf("Internal server error: panic")))
+			}
+		}()
+
 		log.Info(ctx, "V2_runResultHandler (%s)", r.Method)
 		btes, err := io.ReadAll(r.Body)
 		if err != nil {
