@@ -58,7 +58,9 @@ func getRunJob(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 func InsertRunJob(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wrj *sdk.V2WorkflowRunJob) error {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRunJob", trace.StringAttribute(telemetry.TagJob, wrj.JobID))
 	defer next()
-	wrj.ID = sdk.UUID()
+	if wrj.ID == "" {
+		wrj.ID = sdk.UUID()
+	}
 	if wrj.Queued.IsZero() {
 		wrj.Queued = time.Now()
 	}
