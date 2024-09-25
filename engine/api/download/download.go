@@ -98,7 +98,13 @@ func ensureWorkerBinary(ctx context.Context, conf Conf) error {
 
 // CheckBinary checks if binary exist and download it if needed
 func CheckBinary(ctx context.Context, conf Conf, name, osName, arch, variant string) error {
-	filename := sdk.BinaryFilename(name, osName, arch, variant)
+	var filename string
+	if sdk.Assets.Contains(name) {
+		filename = name
+	} else {
+		filename = sdk.BinaryFilename(name, osName, arch, variant)
+	}
+
 	if sdk.IsDownloadedBinary(conf.Directory, filename) {
 		return nil
 	}
