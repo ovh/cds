@@ -533,9 +533,11 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 
 	var expectedModelPath string
 
+	var isModelV2 bool
 	if model.ModelV2 != nil {
 		// worker model v2, it's the vmWare model name
 		expectedModelPath = model.GetVSphereImage()
+		isModelV2 = true
 	} else {
 		// worker model v1, it's the cds worker model name
 		expectedModelPath = model.GetFullPath()
@@ -545,7 +547,12 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 
 	machines := h.getVirtualMachines(ctx)
 	for _, machine := range machines {
-		if !strings.HasPrefix(machine.Name, "provision-") {
+		// if modelV2, check provision v2 only
+		if isModelV2 && !strings.HasPrefix(machine.Name, "provision-v2") {
+			continue
+		}
+		// if modelV1, check provision v1 only
+		if !isModelV2 && !strings.HasPrefix(machine.Name, "provision-v1") {
 			continue
 		}
 
@@ -554,9 +561,31 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			continue
 		}
 
+		log.Debug(ctx, "checking provision %q expectedModelPath:%v annot.Provisioning:%v", machine.Name, expectedModelPath, annot.Provisioning)
+
+		// Provisionned machines contains provisioning flag to true
+		if !annot.Provisioning {
+			continue
+		}
+
+		var annotModelPath string
+		if model.ModelV2 != nil {
+			// Worker model v2
+			annotModelPath = annot.VMwareModelPath
+		} else {
+			// Worker model v1
+			annotModelPath = annot.WorkerModelPath
+		}
+
+		if expectedModelPath != annotModelPath {
+			log.Debug(ctx, "provision %q - expectedModelPath:%s annotModelPath:%s - skip it", machine.Name, expectedModelPath, annotModelPath)
+			continue
+		}
+
 		h.cacheProvisioning.mu.Lock()
 		if sdk.IsInArray(machine.Name, h.cacheProvisioning.pending) {
 			h.cacheProvisioning.mu.Unlock()
+			log.Debug(ctx, "provision %q is in pending provisioning - skip it", machine.Name)
 			continue
 		}
 
@@ -565,6 +594,7 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 		h.cacheToDelete.mu.Lock()
 		if sdk.IsInArray(machine.Name, h.cacheToDelete.list) {
 			h.cacheToDelete.mu.Unlock()
+			log.Debug(ctx, "provision %q already mark to be deleted - skip it", machine.Name)
 			continue
 		}
 		h.cacheToDelete.mu.Unlock()
@@ -579,13 +609,6 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 			continue
 		}
 
-		log.Debug(ctx, "checking provision %q expectedModelPath:%v annot.Provisioning:%v", machine.Name, expectedModelPath, annot.Provisioning)
-
-		// Provisionned machines contains provisioning flag to true
-		if !annot.Provisioning {
-			continue
-		}
-
 		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmPoweredOffEvent")
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
@@ -595,20 +618,6 @@ func (h *HatcheryVSphere) FindProvisionnedWorker(ctx context.Context, model sdk.
 
 		if len(vmEvents) == 0 {
 			log.Debug(ctx, "no VmPoweredOffEvent found - we skip this provision")
-			continue
-		}
-
-		var annotModelPath string
-		if model.ModelV2 != nil {
-			// Worker model v2
-			annotModelPath = annot.VMwareModelPath
-		} else {
-			// Worker model v1
-			annotModelPath = annot.WorkerModelPath
-		}
-
-		if expectedModelPath != annotModelPath {
-			log.Debug(ctx, "we skip this provision %q - expectedModelPath:%s annotModelPath:%s", machine.Name, expectedModelPath, annotModelPath)
 			continue
 		}
 

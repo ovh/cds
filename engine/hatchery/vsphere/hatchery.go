@@ -144,13 +144,20 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 }
 
 // CanSpawn return wether or not hatchery can spawn model
-// requirements are not supported
+// some requirements are not supported
+// This func is called with job v1 and job v2.
 func (h *HatcheryVSphere) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "vsphere.CanSpawn")
 	defer end()
-	if (model.ModelV1 != nil && model.ModelV1.Type != sdk.VSphere) || (model.ModelV2 != nil && model.ModelV2.Type != sdk.WorkerModelTypeVSphere) {
+
+	if model.ModelV2 != nil && model.ModelV2.Type != sdk.WorkerModelTypeVSphere {
 		return false
 	}
+
+	if model.ModelV1 != nil && model.ModelV1.Type != sdk.VSphere {
+		return false
+	}
+
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement ||
 			r.Type == sdk.MemoryRequirement ||
@@ -384,7 +391,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 
 		// gettings events for this vm, we have to check if we have a types.VmStartingEvent
-		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent", "VmPoweredOffEvent")
+		vmEvents, err := h.vSphereClient.LoadVirtualMachineEvents(ctx, vm, "VmStartingEvent", "VmPoweredOffEvent", "VmRenamedEvent")
 		if err != nil {
 			ctx = sdk.ContextWithStacktrace(ctx, err)
 			log.Error(ctx, "unable to load VmStartingEvent events: %v", err)
@@ -398,8 +405,8 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 		}
 		// we can have many VmStartingEvent: one for the provision, another with the worker from on the provision
 
-		var vmStartedTime, vmPoweredOffTime time.Time
-		var foundStarted, foundPoweredOff bool
+		var vmStartedTime, vmPoweredOffTime, vmRenamedEvent time.Time
+		var foundStarted, foundPoweredOff, foundRenamedEvent bool
 		for _, event := range vmEvents {
 			// events on the vm can contain event from the provision.
 			// Skipping this event if it's a provision's event
@@ -421,6 +428,16 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 				if event.GetEvent().CreatedTime.After(vmStartedTime) {
 					vmStartedTime = event.GetEvent().CreatedTime
 				}
+			case "VmRenamedEvent":
+				if !foundRenamedEvent {
+					vmRenamedEvent = event.GetEvent().CreatedTime
+					foundRenamedEvent = true
+					continue
+				}
+				// if current event is youngest than previous, take it
+				if event.GetEvent().CreatedTime.After(vmRenamedEvent) {
+					vmRenamedEvent = event.GetEvent().CreatedTime
+				}
 			case "VmPoweredOffEvent":
 				if !foundPoweredOff {
 					vmPoweredOffTime = event.GetEvent().CreatedTime
@@ -430,6 +447,21 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 				if event.GetEvent().CreatedTime.After(vmPoweredOffTime) {
 					vmPoweredOffTime = event.GetEvent().CreatedTime
 				}
+			}
+		}
+
+		// In some condition (restart hatchery for exemple),
+		// we can see some vm renamed, but not started. Deleting them if the renamed is too old
+		if !foundStarted && foundRenamedEvent {
+			expire := vmRenamedEvent.Add(time.Duration(h.Config.WorkerRegistrationTTL) * time.Minute)
+			if time.Now().After(expire) {
+				log.Debug(ctx, "deleting machine %q started not found and vmRenamedEvent found but it's too old: %v expire:%v", s.Name, vmRenamedEvent, expire)
+				if err := h.deleteServer(ctx, s); err != nil {
+					ctx = sdk.ContextWithStacktrace(ctx, err)
+					log.Error(ctx, "killAwolServers> cannot delete server (renamed but not started) %s", s.Name)
+				}
+				// next vm
+				continue
 			}
 		}
 
