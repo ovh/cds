@@ -31,6 +31,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
     keys: Array<string> = [];
     status: { [key: string]: V2WorkflowRunJobStatus } = {};
     jobRunIDs: { [key: string]: string } = {};
+    displayNames:  { [key: string]: string } = {};
     runActive: boolean = false;
 
     constructor(
@@ -65,6 +66,7 @@ export class GraphMatrixNodeComponent implements OnInit, OnDestroy {
             };
             this.status[key] = r.status;
             this.jobRunIDs[key] = r.id;
+            this.displayNames[key] = r.job.name && r.job.name.indexOf('$\{{') !== 0? r.job.name: key;
         });
         const isRunning = Object.keys(this.status).findIndex(key => this.status[key] === V2WorkflowRunJobStatus.Waiting ||
             this.status[key] === V2WorkflowRunJobStatus.Scheduling ||

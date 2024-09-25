@@ -250,7 +250,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	wref.ef.repoCache[vcsServer.Name+"/"+repo.Name] = *repo
 	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 
-	runJobsInfos, runUpdated := computeRunJobsWorkerModelAndRegion(ctx, api.mustDB(), api.Cache, wref, run, runJobs, api.Config.Workflow.JobDefaultRegion)
+	runJobsInfos, runUpdated := computeRunJobsInterpolation(ctx, api.mustDB(), api.Cache, wref, run, runJobs, api.Config.Workflow.JobDefaultRegion)
 
 	//
 	js, errorMsg, err := prepareRunJobs(ctx, api.mustDB(), *run, variableSetCtx, wrEnqueue, skippedJobs, sdk.StatusSkipped, runJobsContexts, *u)
@@ -274,6 +274,10 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		rj := &runJobs[i]
 		if len(rj.Job.Steps) == 0 {
 			hasNoStepsJobs = true
+		}
+		if rj.Status.IsTerminated() && time.Now().IsZero() {
+			now := time.Now()
+			rj.Ended = &now
 		}
 		if err := workflow_v2.InsertRunJob(ctx, tx, rj); err != nil {
 			return err
@@ -707,7 +711,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	return nil
 }
 
-func computeRunJobsWorkerModelAndRegion(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob, defaultRegion string) (map[string]sdk.V2WorkflowRunJobInfo, bool) {
+func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob, defaultRegion string) (map[string]sdk.V2WorkflowRunJobInfo, bool) {
 	runJobInfos := make(map[string]sdk.V2WorkflowRunJobInfo)
 	runUpdated := false
 	for i := range runJobs {
@@ -715,7 +719,7 @@ func computeRunJobsWorkerModelAndRegion(ctx context.Context, db *gorp.DbMap, sto
 			continue
 		}
 		rj := &runJobs[i]
-		if !strings.HasPrefix(rj.Job.Region, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Model, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Flavor, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Memory, "${{") {
+		if !strings.HasPrefix(rj.Job.Name, "${{") && !strings.HasPrefix(rj.Job.Region, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Model, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Flavor, "${{") && !strings.HasPrefix(rj.Job.RunsOn.Memory, "${{") {
 			continue
 		}
 		computeModelCtx := sdk.WorkflowRunJobsContext{
@@ -737,6 +741,22 @@ func computeRunJobsWorkerModelAndRegion(ctx context.Context, db *gorp.DbMap, sto
 		}
 
 		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+
+		if strings.HasPrefix(rj.Job.Name, "${{") {
+			jobName, err := ap.InterpolateToString(ctx, rj.Job.Name)
+			if err != nil {
+				rj.Status = sdk.V2WorkflowRunJobStatusFail
+				runJobInfos[rj.JobID] = sdk.V2WorkflowRunJobInfo{
+					WorkflowRunID:    run.ID,
+					Level:            sdk.WorkflowRunInfoLevelError,
+					WorkflowRunJobID: rj.ID,
+					IssuedAt:         time.Now(),
+					Message:          fmt.Sprintf("Job %s: unable to interpolate %s into a string: %v", rj.JobID, rj.Job.Name, err),
+				}
+				continue
+			}
+			rj.Job.Name = jobName
+		}
 
 		if strings.HasPrefix(rj.Job.Region, "${{") {
 			reg, err := ap.InterpolateToString(ctx, rj.Job.Region)
