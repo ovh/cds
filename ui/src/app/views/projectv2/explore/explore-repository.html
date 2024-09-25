@@ -95,8 +95,8 @@
     (nzOnCancel)="closeModal()" [nzFooter]="null">
     <div class="modal-content" *nzModalContent>
         <nz-descriptions nzTitle="Event" [nzColumn]="2" nzBordered>
-            <nz-descriptions-item nzTitle="ID"><span nz-typography
-                    nzCopyable>{{selectedHookEvent.uuid}}</span></nz-descriptions-item>
+            <nz-descriptions-item nzTitle="ID"><span nz-typography nzCopyable
+                    [nzContent]="selectedHookEvent.uuid"></span></nz-descriptions-item>
             <nz-descriptions-item nzTitle="Status">{{selectedHookEvent.status}}</nz-descriptions-item>
             <nz-descriptions-item *ngIf="selectedHookEvent.last_error"
                 nzTitle="Error">{{selectedHookEvent.last_error}}</nz-descriptions-item>
@@ -105,7 +105,8 @@
             <nz-descriptions-item nzTitle="Event type"
                 *ngIf="selectedHookEvent.extracted_data.cds_event_type">{{selectedHookEvent.extracted_data.cds_event_type}}</nz-descriptions-item>
             <nz-descriptions-item nzTitle="Ref">{{selectedHookEvent.extracted_data.ref}}</nz-descriptions-item>
-            <nz-descriptions-item nzTitle="Commit">{{selectedHookEvent.extracted_data.commit}}</nz-descriptions-item>
+            <nz-descriptions-item nzTitle="Commit"><span nz-typography nzCopyable
+                    [nzContent]="selectedHookEvent.extracted_data.commit"></span></nz-descriptions-item>
             <nz-descriptions-item nzTitle="Username">{{selectedHookEvent.username}}</nz-descriptions-item>
             <nz-descriptions-item *ngIf="selectedHookEvent.sign_key"
                 nzTitle="PGP Key">{{selectedHookEvent.sign_key}}</nz-descriptions-item>
@@ -113,15 +114,16 @@
 
         <nz-descriptions nzTitle="Analysis" [nzColumn]="2" [nzBordered]="selectedAnalysis">
             <ng-container *ngIf="selectedAnalysis">
-                <nz-descriptions-item nzTitle="ID"><span nz-typography
-                        nzCopyable>{{selectedAnalysis.id}}</span></nz-descriptions-item>
+                <nz-descriptions-item nzTitle="ID"><span nz-typography nzCopyable
+                        [nzContent]="selectedAnalysis.id"></span></nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Date">{{selectedAnalysis.last_modified}}</nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Status">{{selectedAnalysis.status}}</nz-descriptions-item>
                 <nz-descriptions-item nzTitle="Username">{{selectedAnalysis.data.cds_username}}</nz-descriptions-item>
                 <nz-descriptions-item *ngIf="selectedAnalysis.data.error"
                     nzTitle="Error">{{selectedAnalysis.data.error}}</nz-descriptions-item>
                 <nz-descriptions-item *ngIf="selectedAnalysis.data.operation_uuid" nzTitle="Operation ID"><span
-                        nz-typography nzCopyable>{{selectedAnalysis.data.operation_uuid}}</span></nz-descriptions-item>
+                        nz-typography nzCopyable
+                        [nzContent]="selectedAnalysis.data.operation_uuid"></span></nz-descriptions-item>
                 <nz-descriptions-item *ngIf="selectedAnalysis.data.sign_key_id"
                     nzTitle="PGP Key">{{selectedAnalysis.data.sign_key_id}}</nz-descriptions-item>
             </ng-container>
