@@ -33,9 +33,12 @@
                     </span>
                 </button>
             </div>
-            <div *ngIf="node?.name" class="name" title="{{node?.name}} - {{key}}">
-                {{key}}
+
+           
+            <div *ngIf="displayNames[key]" class="name" title="{{displayNames[key]}} - {{key}}">
+                {{displayNames[key]}}
             </div>
+
             <div class="infos">
                 <div *ngIf="durations[key]" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
                     {{durations[key]}}

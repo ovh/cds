@@ -40,7 +40,8 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         { text: WorkflowHookEventName.WorkflowHookEventNamePullRequestComment, value: WorkflowHookEventName.WorkflowHookEventNamePullRequestComment },
         { text: WorkflowHookEventName.WorkflowHookEventNamePush, value: WorkflowHookEventName.WorkflowHookEventNamePush },
         { text: WorkflowHookEventName.WorkflowHookEventNameScheduler, value: WorkflowHookEventName.WorkflowHookEventNameScheduler },
-        { text: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate, value: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate }
+        { text: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate, value: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate },
+        { text: WorkflowHookEventName.WorkflowHookEventNamePullWorkflowRun, value: WorkflowHookEventName.WorkflowHookEventNamePullWorkflowRun }
     ];
 
     constructor(
