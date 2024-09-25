@@ -262,7 +262,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		if len(rj.Job.Steps) == 0 {
 			hasNoStepsJobs = true
 		}
-		if rj.Status.IsTerminated() && time.Now().IsZero() {
+		if rj.Status.IsTerminated() && (rj.Ended == nil || rj.Ended.IsZero()) {
 			now := time.Now()
 			rj.Ended = &now
 		}
@@ -1070,6 +1070,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 		} else {
 			for _, m := range alls {
 				runJob := sdk.V2WorkflowRunJob{
+					ID:            sdk.UUID(),
 					WorkflowRunID: run.ID,
 					Status:        jobToTrigger.Status,
 					JobID:         jobID,
@@ -1115,7 +1116,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 			rj.GateInputs = jobEvent.Inputs
 		}
 	}
-	return runJobs, nil, nil, hasToUpdateRun, nil
+	return runJobs, runJobsInfo, nil, hasToUpdateRun, nil
 }
 
 func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, current map[string]string, alls *[]map[string]string) {
