@@ -879,14 +879,13 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			// Verify if user is admin
-			if runRequest.AdminMFA && u.Ring != sdk.UserRingAdmin {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "user is not an administrator")
-			}
-
 			hasRole, err := rbac.HasRoleOnWorkflowAndUserID(ctx, api.mustDB(), sdk.WorkflowRoleTrigger, u.ID, proj.Key, vcsProject.Name, repo.Name, wk.Name)
 			if err != nil {
 				return err
+			}
+			if !hasRole && runRequest.AdminMFA && u.Ring == sdk.UserRingAdmin {
+				hasRole = true
+				trackSudo(ctx, w)
 			}
 			if !hasRole {
 				return sdk.WithStack(sdk.ErrForbidden)
