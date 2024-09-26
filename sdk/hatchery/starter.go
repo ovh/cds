@@ -39,20 +39,20 @@ func startWorkerStarters(ctx context.Context, h Interface) chan<- workerStarterR
 	for workerNum := 0; workerNum < maxProv; workerNum++ {
 		workerNumStr := fmt.Sprintf("%d", workerNum)
 		h.GetGoRoutines().Run(ctx, "workerStarter-"+workerNumStr, func(ctx context.Context) {
-			workerStarter(ctx, h, workerNumStr, jobs)
+			workerStarter(ctx, h, jobs)
 		})
 	}
 	return jobs
 }
 
-func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-chan workerStarterRequest) {
+func workerStarter(ctx context.Context, h Interface, jobs <-chan workerStarterRequest) {
 	for j := range jobs {
 		telemetry.Record(ctx, GetMetrics().ChanWorkerStarterPop, 1)
-		workerStarterRunning(ctx, h, workerNum, j)
+		workerStarterRunning(ctx, h, j)
 	}
 }
 
-func workerStarterRunning(ctx context.Context, h Interface, workerNum string, j workerStarterRequest) {
+func workerStarterRunning(ctx context.Context, h Interface, j workerStarterRequest) {
 	m := j.registerWorkerModel
 	if m == nil { // Start a worker for a job
 		telemetry.Record(ctx, GetMetrics().SpawningWorkers, 1)
@@ -152,6 +152,7 @@ func spawnWorkerForJob(ctx context.Context, h Interface, j workerStarterRequest)
 	} else if j.model.ModelV2 != nil {
 		modelName = j.model.GetName()
 	}
+
 	ctx = context.WithValue(ctx, LogFieldModel, modelName)
 	arg := SpawnArguments{
 		WorkerName:   namesgenerator.GenerateWorkerName(""),
