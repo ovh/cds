@@ -79,5 +79,7 @@ func TestGetRunResult(t *testing.T) {
 	}
 	result, err := w.V2GetRunResult(ctx, filter)
 	require.NoError(t, err)
+	t.Logf("%+v", result)
+
 	require.Equal(t, 3, len(result.RunResults))
 }

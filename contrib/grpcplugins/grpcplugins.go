@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rockbears/log"
 	"github.com/srerickson/checksum"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -217,15 +218,18 @@ func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.Wor
 }
 
 func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
+
 	btes, err := json.Marshal(result)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return nil, errors.WithStack(err)
 	}
 	req, err := c.NewRequest(ctx, http.MethodPost, "/v2/result", bytes.NewReader(btes))
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return nil, err
 	}
-
+	log.Debug(ctx, "URL:%s", req.URL.Path)
 	resp, err := c.DoRequest(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create run result")
@@ -233,6 +237,7 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return nil, errors.WithStack(err)
 	}
 	if resp.StatusCode >= 300 {

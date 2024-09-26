@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/rockbears/log"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
@@ -25,6 +26,7 @@ import (
 
 func Test_perform(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine, log.FieldStackTrace)
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
 	mockHTTPClient := mock_cdsclient.NewMockHTTPClient(ctrl)
@@ -51,8 +53,13 @@ func Test_perform(t *testing.T) {
 		func(req *http.Request) (*http.Response, error) {
 			var rrRequest workerruntime.V2RunResultRequest
 			btes, err := io.ReadAll(req.Body)
-			require.NoError(t, err)
-			require.NoError(t, sdk.JSONUnmarshal(btes, &rrRequest))
+			assert.NoError(t, err)
+			log.Debug(context.TODO(), "modk read content: %s", string(btes))
+			err = sdk.JSONUnmarshal(btes, &rrRequest)
+			if err != nil {
+				log.Debug(context.TODO(), "sdk.JSONUnmarshal error: %s", err.Error())
+			}
+
 			require.Equal(t, "main.go", rrRequest.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultGenericDetail).Name)
 
 			h := workerruntime.V2_runResultHandler(context.TODO(), mockWorker)
@@ -102,6 +109,7 @@ func Test_perform(t *testing.T) {
 
 	mockWorker.EXPECT().V2AddRunResult(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, req workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
+			log.Debug(ctx, "V2AddRunResult")
 			require.Equal(t, "main.go", req.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultGenericDetail).Name)
 			return &workerruntime.V2AddResultResponse{
 				RunResult:  req.RunResult,
@@ -142,4 +150,22 @@ func (m reqMatcher) Matches(x interface{}) bool {
 
 func (m reqMatcher) String() string {
 	return fmt.Sprintf("Method is %q, URL Path is %q", m.method, m.urlPath)
+}
+
+func TestUnMarshalRunResulRequest(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	log.UnregisterField(log.FieldCaller, log.FieldSourceFile, log.FieldSourceLine, log.FieldStackTrace)
+
+	btes := []byte(`{"RunResult":{"id":"","workflow_run_id":"","workflow_run_job_id":"","run_attempt":0,"issued_at":"2024-09-24T07:13:30.606970365Z","type":"generic","artifact_manager_integration_name":null,"artifact_manager_metadata":null,"detail":{"data":{"name":"main.go","size":3868,"mode":420,"md5":"dcdcb00178f065cd3d728091578b92db","sha1":"cf2c4760aae1fc78f5fc16f301389e3966c85403","sha256":"79d1855a45e7dd816b46364fd2da931af33ebcca756d5c145db89af80d47121b"},"type":"V2WorkflowRunResultGenericDetail"},"sync":null,"status":"PENDING"},"CDNItemLink":{"cdn_http_url":"","item":{"id":"","created":"0001-01-01T00:00:00Z","last_modified":"0001-01-01T00:00:00Z","hash":"","api_ref":null,"api_ref_hash":"","status":"","type":"","size":0,"md5":"","to_delete":false}}}`)
+	var rrRequest workerruntime.V2RunResultRequest
+	require.NoError(t, sdk.JSONUnmarshal(btes, &rrRequest))
+
+	t.Logf("--> %T", rrRequest.RunResult.Detail.Data)
+
+	var err error
+	btes, err = json.Marshal(rrRequest)
+	require.NoError(t, err)
+	t.Log(string(btes))
+
+	require.Equal(t, "main.go", rrRequest.RunResult.Detail.Data.(*sdk.V2WorkflowRunResultGenericDetail).Name)
 }
