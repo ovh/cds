@@ -268,6 +268,7 @@ type HookRepositoryEventExtractData struct {
 	CommitMessage string                                      `json:"commit_message"`
 	Paths         []string                                    `json:"paths"`
 	Ref           string                                      `json:"ref"`
+	PullRequestID int64                                       `json:"pullrequest_id"`
 	Manual        HookRepositoryEventExtractedDataManual      `json:"manual"`
 	AdminMFA      bool                                        `json:"admin_mfa"`
 	Scheduler     HookRepositoryEventExtractedDataScheduler   `json:"scheduler"`

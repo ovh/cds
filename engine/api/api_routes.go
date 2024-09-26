@@ -116,8 +116,7 @@ func (api *API) InitRouter() {
 	r.Handle("/download", ScopeNone(), r.GET(api.downloadsHandler))
 	r.Handle("/download/plugin/{name}/binary/{os}/{arch}", ScopeNone(), r.GET(api.getGRPCluginBinaryHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/download/plugin/{name}/binary/{os}/{arch}/infos", ScopeNone(), r.GET(api.getGRPCluginBinaryInfosHandler))
-
-	r.Handle("/download/{name}/{os}/{arch}", ScopeNone(), r.GET(api.downloadHandler, service.OverrideAuth(service.NoAuthMiddleware)))
+	r.HandlePrefix("/download/", ScopeNone(), r.GET(api.downloadHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 
 	// feature
 	r.Handle("/feature/enabled/{name}", ScopeNone(), r.POST(api.isFeatureEnabledHandler))

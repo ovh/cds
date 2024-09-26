@@ -358,7 +358,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		return sdk.WithStack(tx.Commit())
 	}
 
-	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, *u)
+	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil, *u)
 
 	api.EnqueueWorkflowRun(ctx, run.ID, run.UserID, run.WorkflowName, run.RunNumber, run.AdminMFA)
 	return nil
@@ -485,7 +485,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 		return sdk.WithStack(err)
 	}
 
-	event_v2.PublishRunEvent(ctx, store, sdk.EventRunEnded, *run, u)
+	event_v2.PublishRunEvent(ctx, store, sdk.EventRunEnded, *run, nil, nil, u)
 
 	return nil
 }
@@ -575,6 +575,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		SemverCurrent: semverCurrent,
 		SemverNext:    semverNext,
 		ChangeSets:    wr.RunEvent.ChangeSets,
+		PullRequestID: wr.RunEvent.PullRequestID,
 	}
 
 	if gitContext.SSHKey != "" {

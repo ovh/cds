@@ -349,6 +349,16 @@ func JSONUnmarshal(btes []byte, i interface{}) error {
 	return nil
 }
 
+func IsPointer(i any) bool {
+	val := reflect.ValueOf(i)
+	if val.Kind() != reflect.Ptr {
+		return false
+	}
+
+	val = val.Elem()
+	return val.CanAddr()
+}
+
 type KeyValues struct {
 	Key    string
 	Values []string

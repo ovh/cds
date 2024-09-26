@@ -55,6 +55,7 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 		extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		extractedData.Commit = request.PullRequest.Head.Sha
 		extractedData.CommitFrom = request.PullRequest.Base.Sha
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
 	}
@@ -149,22 +150,24 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 	case "pull_request":
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
-		if request.Head != nil {
-			extractedData.Commit = request.Head.Sha
-			extractedData.Ref = sdk.GitRefBranchPrefix + request.Head.Ref
+		if request.PullRequest != nil {
+			extractedData.PullRequestID = request.PullRequest.ID
+			extractedData.Commit = request.PullRequest.Head.Sha
+			extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		}
-		if request.Base != nil {
-			extractedData.CommitFrom = request.Base.Sha
+		if request.PullRequest != nil {
+			extractedData.CommitFrom = request.PullRequest.Base.Sha
 		}
 	case "pull_request_comment":
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventType(request.Action)
-		if request.Head != nil {
-			extractedData.Commit = request.Head.Sha
-			extractedData.Ref = sdk.GitRefBranchPrefix + request.Head.Ref
+		if request.PullRequest != nil {
+			extractedData.PullRequestID = request.PullRequest.ID
+			extractedData.Commit = request.PullRequest.Head.Sha
+			extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 		}
-		if request.Base != nil {
-			extractedData.CommitFrom = request.Base.Sha
+		if request.PullRequest != nil {
+			extractedData.CommitFrom = request.PullRequest.Base.Sha
 		}
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown event %q", eventName)
@@ -197,42 +200,49 @@ func (s *Service) extractDataFromBitbucketRequest(body []byte) (string, sdk.Hook
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePush
 		extractedData.CDSEventType = "" // no type here
 	case "pr:opened":
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestOpened
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:reopened":
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestReopened
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:declined":
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestClosed
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:from_ref_updated":
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequest
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestEdited
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:added":
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentCreated
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:edited":
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment
 		extractedData.CDSEventType = sdk.WorkflowHookEventTypePullRequestCommentEdited
 		extractedData.CommitFrom = request.PullRequest.ToRef.LatestCommit
 	case "pr:comment:deleted":
+		extractedData.PullRequestID = int64(request.PullRequest.ID)
 		extractedData.Ref = request.PullRequest.FromRef.ID
 		extractedData.Commit = request.PullRequest.FromRef.LatestCommit
 		extractedData.CDSEventName = sdk.WorkflowHookEventNamePullRequestComment

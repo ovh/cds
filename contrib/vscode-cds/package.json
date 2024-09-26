@@ -1,10 +1,11 @@
 {
   "name": "vscode-cds",
+  "publisher": "OVHcloud",
   "displayName": "CDS",
   "description": "CDS VSCode Extension",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "1.93.1"
   },
   "repository": {
     "url": "https://github.com/ovh/cds"
@@ -98,20 +99,20 @@
     "vsce": "vsce"
   },
   "dependencies": {
-    "vscode-uri": "^3.0.3",
-    "vscode-messenger": "^0.4.5",
-    "vscode-messenger-common": "~0.4.5"
+    "vscode-uri": "3.0.8",
+    "vscode-messenger": "0.4.5",
+    "vscode-messenger-common": "0.4.5"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "^1.85.0",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
-    "@vscode/test-cli": "^0.0.4",
-    "@vscode/test-electron": "^2.3.8",
-    "@vscode/vsce": "^2.23.0",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3"
+    "@types/mocha": "10.0.8",
+    "@types/node": "22.x",
+    "@types/vscode": "1.93.0",
+    "@typescript-eslint/eslint-plugin": "8.7.0",
+    "@typescript-eslint/parser": "8.7.0",
+    "@vscode/test-cli": "0.0.10",
+    "@vscode/test-electron": "2.4.1",
+    "@vscode/vsce": "3.1.0",
+    "eslint": "9.11.1",
+    "typescript": "5.6.2"
   }
 }

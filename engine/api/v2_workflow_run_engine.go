@@ -170,6 +170,14 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	if err != nil {
 		return sdk.WrapError(err, "unable to load workflow run jobs for run %s", wrEnqueue.RunID)
 	}
+	allrunJobsMap := make(map[string]sdk.V2WorkflowRunJob)
+	for _, rj := range allRunJobs {
+		// addition check for matrix job, only keep not terminated one if present
+		runjob, has := allrunJobsMap[rj.JobID]
+		if !has || runjob.Status.IsTerminated() {
+			allrunJobsMap[rj.JobID] = rj
+		}
+	}
 
 	runJobsContexts, runGatesContexts := computeExistingRunJobContexts(ctx, allRunJobs, runResults)
 
@@ -178,7 +186,8 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	jobsToQueue, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), wrEnqueue, run, allRunJobs, runJobsContexts, u, api.Config.Workflow.JobDefaultRegion)
+	jobsToQueue, runMsgs, errRetrieve := retrieveJobToQueue(ctx, api.mustDB(), wrEnqueue, run, allRunJobs, allrunJobsMap, runJobsContexts, u, api.Config.Workflow.JobDefaultRegion)
+
 	if errRetrieve != nil {
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -197,7 +206,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
-		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, *u)
 		return errRetrieve
 	}
 
@@ -216,7 +225,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 					Level:         sdk.WorkflowRunInfoLevelError,
 					Message:       fmt.Sprintf("variable set %s not found on project", vs),
 				},
-			}, u)
+			}, allrunJobsMap, runResults, u)
 		}
 		vsDB.Items, err = project.LoadVariableSetAllItem(ctx, api.mustDB(), vsDB.ID)
 		if err != nil {
@@ -233,7 +242,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 				Level:         sdk.WorkflowRunInfoLevelError,
 				Message:       fmt.Sprintf("unable to compute variableset into job context: %v", err),
 			},
-		}, u)
+		}, allrunJobsMap, runResults, u)
 	}
 
 	// Compute worker model / region on runJobs if needed
@@ -247,7 +256,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 	if errorMsg != nil {
-		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{*errorMsg}, u)
+		return failRunWithMessage(ctx, api.mustDB(), api.Cache, run, []sdk.V2WorkflowRunInfo{*errorMsg}, allrunJobsMap, runResults, u)
 	}
 
 	tx, errTx := api.mustDB().Begin()
@@ -331,7 +340,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 
 	if run.Status.IsTerminated() {
 		// Send event
-		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, *u)
+		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunEnded, *run, allrunJobsMap, runResults, *u)
 
 		// Send event to hook uservice
 		hookServices, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeHooks)
@@ -389,7 +398,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	return nil
 }
 
-func failRunWithMessage(ctx context.Context, db *gorp.DbMap, cache cache.Store, run *sdk.V2WorkflowRun, msgs []sdk.V2WorkflowRunInfo, u *sdk.AuthentifiedUser) error {
+func failRunWithMessage(ctx context.Context, db *gorp.DbMap, cache cache.Store, run *sdk.V2WorkflowRun, msgs []sdk.V2WorkflowRunInfo, jobRunMap map[string]sdk.V2WorkflowRunJob, runResult []sdk.V2WorkflowRunResult, u *sdk.AuthentifiedUser) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return sdk.WithStack(err)
@@ -407,7 +416,7 @@ func failRunWithMessage(ctx context.Context, db *gorp.DbMap, cache cache.Store, 
 	if err := tx.Commit(); err != nil {
 		return sdk.WithStack(err)
 	}
-	event_v2.PublishRunEvent(ctx, cache, sdk.EventRunEnded, *run, *u)
+	event_v2.PublishRunEvent(ctx, cache, sdk.EventRunEnded, *run, jobRunMap, runResult, *u)
 	return err
 }
 
@@ -1182,21 +1191,11 @@ type JobToTrigger struct {
 }
 
 // Return jobToQueue, skippedJob, runInfos, error
-func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2WorkflowRunEnqueue, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob, runJobsContexts sdk.JobsResultContext, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]JobToTrigger, []sdk.V2WorkflowRunInfo, error) {
+func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2WorkflowRunEnqueue, run *sdk.V2WorkflowRun, runJobs []sdk.V2WorkflowRunJob, allrunJobsMap map[string]sdk.V2WorkflowRunJob, runJobsContexts sdk.JobsResultContext, u *sdk.AuthentifiedUser, defaultRegion string) (map[string]JobToTrigger, []sdk.V2WorkflowRunInfo, error) {
 	ctx, next := telemetry.Span(ctx, "retrieveJobToQueue")
 	defer next()
 	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	jobToQueue := make(map[string]JobToTrigger)
-
-	// temp map of run jobs
-	allrunJobsMap := make(map[string]sdk.V2WorkflowRunJob)
-	for _, rj := range runJobs {
-		// addition check for matrix job, only keep not terminated one if present
-		runjob, has := allrunJobsMap[rj.JobID]
-		if !has || runjob.Status.IsTerminated() {
-			allrunJobsMap[rj.JobID] = rj
-		}
-	}
 
 	// Select jobs to check ( all workflow or list of jobs from enqueue request )
 	jobsToCheck := make(map[string]sdk.V2Job)

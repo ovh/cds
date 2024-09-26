@@ -12,7 +12,7 @@ type dbWorkflowRun struct {
 }
 
 func (r dbWorkflowRun) Canonical() gorpmapper.CanonicalForms {
-	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSServerID, r.RepositoryID, r.WorkflowName, r.WorkflowData, r.UserID, r.Contexts}
+	var _ = []interface{}{r.ID, r.ProjectKey, r.VCSServerID, r.VCSServer, r.RepositoryID, r.Repository, r.WorkflowData, r.UserID}
 	return gorpmapper.CanonicalForms{
 		"{{.ID}}{{.ProjectKey}}{{.VCSServerID}}{{.VCSServer}}{{.RepositoryID}}{{.Repository}}{{md5sum .WorkflowData}}{{.UserID}}",
 		// TODO add context

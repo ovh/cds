@@ -348,3 +348,94 @@ type ProjectEvent struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
 }
+
+func NewEventWorkflowRunPayload(wr V2WorkflowRun, rjs map[string]V2WorkflowRunJob, runResults []V2WorkflowRunResult) (*EventWorkflowRunPayload, error) {
+	p := EventWorkflowRunPayload{
+		ID:           wr.ID,
+		ProjectKey:   wr.ProjectKey,
+		VCSServer:    wr.VCSServer,
+		Repository:   wr.Repository,
+		WorkflowName: wr.WorkflowName,
+		WorkflowSha:  wr.WorkflowSha,
+		WorkflowRef:  wr.WorkflowRef,
+		Status:       wr.Status,
+		RunNumber:    wr.RunNumber,
+		RunAttempt:   wr.RunAttempt,
+		Started:      wr.Started,
+		LastModified: wr.LastModified,
+
+		WorkflowData: wr.WorkflowData,
+		UserID:       wr.UserID,
+		Username:     wr.Username,
+		AdminMFA:     wr.AdminMFA,
+		RunEvent:     wr.RunEvent,
+		RunJobEvent:  wr.RunJobEvent,
+		Annotations:  wr.Annotations,
+		Contexts: EventWorkflowRunPayloadContexts{
+			CDS: wr.Contexts.CDS,
+			Git: wr.Contexts.Git,
+			Env: wr.Contexts.Env,
+		},
+	}
+	p.Contexts.Jobs = JobsResultContext{}
+	for _, rj := range rjs {
+		jobResult := JobResultContext{
+			Result:  rj.Status,
+			Outputs: JobResultOutput{},
+		}
+		for _, r := range runResults {
+			switch r.Type {
+			case V2WorkflowRunResultTypeVariable, V2WorkflowRunResultVariableDetailType:
+				x, err := GetConcreteDetail[*V2WorkflowRunResultVariableDetail](&r)
+				if err != nil {
+					return nil, err
+				}
+				jobResult.Outputs[x.Name] = x.Value
+			default:
+				if jobResult.JobRunResults == nil {
+					jobResult.JobRunResults = JobRunResults{}
+				}
+				jobResult.JobRunResults[r.Name()], _ = r.GetDetail()
+			}
+		}
+		p.Contexts.Jobs[rj.JobID] = jobResult
+	}
+	return &p, nil
+}
+
+type EventWorkflowRunPayload struct {
+	ID           string                 `json:"id"`
+	ProjectKey   string                 `json:"project_key"`
+	VCSServer    string                 `json:"vcs_server"`
+	Repository   string                 `json:"repository"`
+	WorkflowName string                 `json:"workflow_name"`
+	WorkflowSha  string                 `json:"workflow_sha"`
+	WorkflowRef  string                 `json:"workflow_ref"`
+	Status       V2WorkflowRunStatus    `json:"status"`
+	RunNumber    int64                  `json:"run_number"`
+	RunAttempt   int64                  `json:"run_attempt"`
+	Started      time.Time              `json:"started"`
+	LastModified time.Time              `json:"last_modified"`
+	ToDelete     bool                   `json:"to_delete"`
+	WorkflowData V2WorkflowRunData      `json:"workflow_data"`
+	UserID       string                 `json:"user_id"`
+	Username     string                 `json:"username"`
+	AdminMFA     bool                   `json:"admin_mfa"`
+	RunEvent     V2WorkflowRunEvent     `json:"event,omitempty"`
+	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events,omitempty"`
+	Annotations  WorkflowRunAnnotations `json:"annotations,omitempty"`
+
+	Contexts EventWorkflowRunPayloadContexts `json:"contexts" db:"contexts"`
+}
+
+type EventWorkflowRunPayloadContexts struct {
+	CDS  CDSContext        `json:"cds,omitempty"`
+	Git  GitContext        `json:"git,omitempty"`
+	Env  map[string]string `json:"env,omitempty"`
+	Jobs JobsResultContext `json:"jobs,omitempty"`
+}
+
+type EventWorkflowRunPayloadContextEvent struct {
+	Status   string `json:"status,omitempty"`
+	AdminMFA bool   `json:"admin_mfa"`
+}

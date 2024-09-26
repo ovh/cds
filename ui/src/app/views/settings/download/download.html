@@ -5,7 +5,7 @@
         <ul>
             <li *ngFor="let resource of resources">
                 <strong>{{resource.name}}</strong> {{resource.os}} {{resource.arch}} <em>{{resource.variant}}</em>
-                <a href="cdsapi/download/{{resource.name}}/{{resource.os}}/{{resource.arch}}?variant={{resource.variant}}">
+                <a href="cdsapi/download/{{resource.name}}{{resource.os ? '/' + resource.os : ''}}{{resource.arch ? '/' + resource.arch : ''}}{{resource.variant ? '?variant=' + resource.variant : ''}}">
                     ({{resource.filename}})
                 </a>
             </li>

@@ -10,7 +10,7 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^16.2.12",
+    "@angular/animations": "16.2.12",
     "@angular/common": "16.2.12",
     "@angular/compiler": "16.2.12",
     "@angular/core": "16.2.12",
@@ -22,13 +22,13 @@
     "d3-zoom": "3.0.0",
     "dagre-d3": "0.6.4",
     "js-yaml": "3.13.1",
-    "normalize.css": "^8.0.1",
-    "rxjs": "~7.5.0",
-    "tslib": "^2.3.0",
-    "vscode-messenger-common": "~0.4.5",
-    "vscode-messenger-webview": "~0.4.5",
+    "normalize.css": "8.0.1",
+    "rxjs": "7.5.0",
+    "tslib": "2.3.0",
+    "vscode-messenger-common": "0.4.5",
+    "vscode-messenger-webview": "0.4.5",
     "workflow-graph": "file:/../../../../ui/dist/workflow-graph/workflow-graph-1.0.0.tgz",
-    "zone.js": "~0.13.3"
+    "zone.js": "0.13.3"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "16.2.11",
@@ -38,16 +38,16 @@
     "@types/dagre": "0.7.52",
     "@types/dagre-d3": "0.6.6",
     "@types/graphlib": "2.1.11",
-    "@types/jasmine": "~3.10.0",
-    "@types/js-yaml": "^4.0.9",
-    "@types/node": "^12.11.1",
-    "@types/vscode-webview": "^1.57.0",
-    "jasmine-core": "~4.0.0",
-    "karma": "~6.3.0",
-    "karma-chrome-launcher": "~3.1.0",
-    "karma-coverage": "~2.1.0",
-    "karma-jasmine": "~4.0.0",
-    "karma-jasmine-html-reporter": "~1.7.0",
-    "typescript": "~4.9.5"
+    "@types/jasmine": "3.10.0",
+    "@types/js-yaml": "4.0.9",
+    "@types/node": "12.11.1",
+    "@types/vscode-webview": "1.57.0",
+    "jasmine-core": "4.0.0",
+    "karma": "6.3.0",
+    "karma-chrome-launcher": "3.1.0",
+    "karma-coverage": "2.1.0",
+    "karma-jasmine": "4.0.0",
+    "karma-jasmine-html-reporter": "1.7.0",
+    "typescript": "4.9.5"
   }
 }
