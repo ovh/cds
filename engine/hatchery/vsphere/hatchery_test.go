@@ -8,15 +8,15 @@ import (
 	"testing"
 	"time"
 
-	sdkhatchery "github.com/ovh/cds/sdk/hatchery"
-
 	"github.com/golang/mock/gomock"
 	"github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
+	sdkhatchery "github.com/ovh/cds/sdk/hatchery"
 	"github.com/rockbears/log"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -763,4 +763,33 @@ func TestHatcheryVSphere_provisioning_v1_start_one(t *testing.T) {
 	)
 
 	h.provisioningV1(context.Background())
+}
+
+func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
+	h := HatcheryVSphere{
+		Config: HatcheryConfiguration{
+			DefaultWorkerModelsV2: []DefaultWorkerModelsV2{
+				{
+					WorkerModelV2: "the-model-v2",
+					Binaries:      []string{"docker"},
+				},
+			},
+		},
+	}
+
+	requirements := []sdk.Requirement{
+		{
+			Name:  "binary",
+			Value: "docker",
+			Type:  sdk.BinaryRequirement,
+		},
+	}
+	got := h.GetDetaultModelV2Name(context.TODO(), requirements)
+	require.Equal(t, "the-model-v2", got)
+
+	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{})
+	require.Equal(t, "the-model-v2", got)
+
+	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{{Name: "foo", Value: "bar", Type: sdk.BinaryRequirement}})
+	require.Equal(t, "", got)
 }

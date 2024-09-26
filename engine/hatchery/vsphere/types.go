@@ -27,7 +27,7 @@ type HatcheryConfiguration struct {
 	WorkerProvisioningPoolSize          int                        `mapstructure:"workerProvisioningPoolSize" toml:"workerProvisioningPoolSize" commented:"true" comment:"Worker Provisioning pool size" json:"workerProvisioningPoolSize"`
 	WorkerProvisioning                  []WorkerProvisioningConfig `mapstructure:"workerProvisioning" toml:"workerProvisioning" commented:"true" comment:"Worker Provisioning per model name" json:"workerProvisioning"`
 	GuestCredentials                    []GuestCredential          `mapstructure:"guestCredentials" toml:"guestCredentials" commented:"true" comment:"List of Guest credentials" json:"-"`
-	DefaultImages                       []DefaultImages            `mapstructure:"defaultImages" toml:"defaultImages" commented:"true" comment:"List of default images for declared binaries" json:"-"`
+	DefaultWorkerModelsV2               []DefaultWorkerModelsV2    `mapstructure:"defaultWorkerModelsV2" toml:"defaultWorkerModelsV2" commented:"true" comment:"List of default worker models v2 for declared binaries - used by workflow v1" json:"-"`
 }
 
 type WorkerProvisioningConfig struct {
@@ -52,9 +52,10 @@ type GuestCredential struct {
 	Password string `mapstructure:"password" commented:"true" toml:"password" json:"-"`
 }
 
-type DefaultImages struct {
-	ModelVMWare string   `mapstructure:"modelVMWare" default:"debian12" commented:"true" toml:"modelVMWare" json:"modelVMWare"`
-	Binaries    []string `mapstructure:"binaries" toml:"binaries" default:"" commented:"true" comment:"If one binary is matching this list, the default model associated is used." json:"binaries"`
+// this is used to run worker model v2 in a job v1
+type DefaultWorkerModelsV2 struct {
+	WorkerModelV2 string   `mapstructure:"workerModelV2" default:"" commented:"true" toml:"workerModelV2" json:"workerModelV2"`
+	Binaries      []string `mapstructure:"binaries" toml:"binaries" default:"" commented:"true" comment:"If one binary is matching this list, the default model associated is used." json:"binaries"`
 }
 
 // HatcheryVSphere spawns vm

@@ -285,14 +285,25 @@ func Create(ctx context.Context, h Interface) error {
 							continue
 						}
 					} else {
-						// for all models v1
-						for i := range models {
-							// find the first model matching with the pre-requisite
-							if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
-								chosenModel = &models[i]
-								break
+						if jobModel == "" {
+							// Here, we found a modelv1. Check if we can use a model v2
+							workerStarterModelWithModelv2, err = checkDefaultModelV2(ctx, hWithModels, workerRequest, jobModel)
+							if err != nil {
+								log.Error(currentCtx, "%v", err)
 							}
 						}
+
+						// if we didn't find a model v2 that can run the job v1, search a model v1
+						if workerStarterModelWithModelv2 == nil {
+							for i := range models {
+								// find the first model matching with the pre-requisite
+								if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
+									chosenModel = &models[i]
+									break
+								}
+							}
+						}
+
 					}
 
 					// No model has been found, let's send a failing result
@@ -698,6 +709,31 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 	workerStarterModel.Memory = mem
 	workerStarterModel.Flavor = jobInf.RunJob.Job.RunsOn.Flavor
 	return workerStarterModel, nil
+}
+
+// only used by vshpere hatchery
+func checkDefaultModelV2(ctx context.Context, h InterfaceWithModels, workerRequest workerStarterRequest, modelInPrerequisite string) (*sdk.WorkerStarterWorkerModel, error) {
+	if h.ModelType() != sdk.VSphere {
+		return nil, nil
+	}
+	if modelInPrerequisite != "" {
+		return nil, nil
+	}
+
+	hWithDefault, hatcheryIsWithDefault := h.(InterfaceWithDetaultWorkerModelV2)
+	if !hatcheryIsWithDefault {
+		return nil, nil
+	}
+	workerModelV2 := hWithDefault.GetDetaultModelV2Name(ctx, workerRequest.requirements)
+
+	if workerModelV2 == "" {
+		return nil, nil
+	}
+
+	_, workerStarterModelWithModelv2, err := canRunJobWithModelV2(ctx, h, workerRequest, workerModelV2)
+
+	return workerStarterModelWithModelv2, err
+
 }
 
 func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
