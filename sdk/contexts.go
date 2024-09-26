@@ -113,6 +113,7 @@ type GitContext struct {
 	SemverCurrent    string   `json:"semver_current,omitempty"`
 	SemverNext       string   `json:"semver_next,omitempty"`
 	ChangeSets       []string `json:"changesets,omitempty"`
+	PullRequestID    int64    `json:"pullrequest_id,omitempty"`
 }
 
 type JobContext struct {

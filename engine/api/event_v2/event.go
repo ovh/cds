@@ -9,16 +9,19 @@ import (
 	"net/http"
 	"regexp"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/notification_v2"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/gorpmapper"
 )
@@ -92,6 +95,11 @@ func Dequeue(ctx context.Context, db *gorp.DbMap, store cache.Store, goroutines 
 		wg.Add(1)
 		goroutines.Exec(ctx, "event.workflow.notifications", func(ctx context.Context) {
 			defer wg.Done()
+			ctx = context.WithValue(ctx, cdslog.Project, event.ProjectKey)
+			ctx = context.WithValue(ctx, cdslog.VCSServer, event.VCSName)
+			ctx = context.WithValue(ctx, cdslog.Repository, event.Repository)
+			ctx = context.WithValue(ctx, cdslog.Workflow, event.Workflow)
+			ctx = context.WithValue(ctx, cdslog.WorkflowRunID, event.WorkflowRunID)
 			if err := workflowNotifications(ctx, db, store, event, cdsUIURL); err != nil {
 				ctx := log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "EventV2.workflowNotifications: %v", err)
@@ -128,8 +136,8 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		return nil
 	}
 
-	//event.Payload contains a V2WorkflowRun
-	var run sdk.V2WorkflowRun
+	//event.Payload contains a EventWorkflowRunPayload
+	var run sdk.EventWorkflowRunPayload
 	if err := json.Unmarshal(event.Payload, &run); err != nil {
 		return sdk.WrapError(err, "cannot read payload for type %q", event.Type)
 	}
@@ -173,9 +181,9 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	}
 
 	if run.WorkflowData.Workflow.On.PullRequest != nil {
-		if run.WorkflowData.Workflow.On.PullRequest.Comment != "" {
+		if run.WorkflowData.Workflow.On.PullRequest.Comment != "" && run.Contexts.Git.PullRequestID != 0 {
 
-			err := sendVCSPullRequestComment(ctx, vcsClient, run, run.WorkflowData.Workflow.On.PullRequest.Comment)
+			err := sendVCSPullRequestComment(ctx, db, vcsClient, run, run.WorkflowData.Workflow.On.PullRequest.Comment)
 			if err != nil {
 				return sdk.WrapError(err, "can't send the pull-request comment for %v/%v", event.ProjectKey, event.VCSName)
 			}
@@ -183,8 +191,8 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	}
 
 	if run.WorkflowData.Workflow.On.PullRequestComment != nil {
-		if run.WorkflowData.Workflow.On.PullRequestComment.Comment != "" {
-			err := sendVCSPullRequestComment(ctx, vcsClient, run, run.WorkflowData.Workflow.On.PullRequestComment.Comment)
+		if run.WorkflowData.Workflow.On.PullRequestComment.Comment != "" && run.Contexts.Git.PullRequestID != 0 {
+			err := sendVCSPullRequestComment(ctx, db, vcsClient, run, run.WorkflowData.Workflow.On.PullRequestComment.Comment)
 			if err != nil {
 				return sdk.WrapError(err, "can't send the pull-request comment for %v/%v", event.ProjectKey, event.VCSName)
 			}
@@ -194,32 +202,104 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	return nil
 }
 
-func sendVCSPullRequestComment(ctx context.Context, vcsClient sdk.VCSAuthorizedClientService, run sdk.V2WorkflowRun, comment string) error {
-	prComment := sdk.VCSPullRequestCommentRequest{
-		Revision: run.Contexts.Git.Ref,
-		Message:  comment,
-	}
-
-	//Check if this branch and this commit is a pullrequest
-	prs, err := vcsClient.PullRequests(ctx, run.Contexts.Git.Repository)
+func sendVCSPullRequestComment(ctx context.Context, db *gorp.DbMap, vcsClient sdk.VCSAuthorizedClientService, run sdk.EventWorkflowRunPayload, comment string) error {
+	pr, err := vcsClient.PullRequest(ctx, run.Contexts.Git.Repository, fmt.Sprintf("%d", run.Contexts.Git.PullRequestID))
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
 		return err
 	}
 
-	// Send comment on pull request
-	for _, pr := range prs {
-		if pr.Head.Branch.DisplayID == run.Contexts.Git.RefName && sdk.VCSIsSameCommit(pr.Head.Branch.LatestCommit, run.Contexts.Git.Sha) && !pr.Merged && !pr.Closed {
-			prComment.ID = pr.ID
-			log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", prComment.Revision, prComment.ID, run.Contexts.Git.Repository)
-			if err := vcsClient.PullRequestComment(ctx, run.Contexts.Git.Repository, prComment); err != nil {
-				return err
-			}
-			break
-		} else {
-			log.Info(ctx, "nothing to do on pr %+v for ref %s", pr, run.Contexts.Git.Ref)
-		}
+	if pr.Merged || pr.Closed {
+		log.Info(ctx, "nothing to do on pr %d", pr, run.Contexts.Git.PullRequestID)
+		return nil
 	}
+
+	bts, _ := json.Marshal(run.Contexts)
+	var runContext map[string]interface{}
+	_ = json.Unmarshal(bts, &runContext)
+
+	tmplParams := make(map[string]interface{})
+	for k, v := range runContext {
+		tmplParams[k] = v
+	}
+	eventCtx := sdk.EventWorkflowRunPayloadContextEvent{
+		Status:   string(run.Status),
+		AdminMFA: run.AdminMFA,
+	}
+	btsEvent, _ := json.Marshal(eventCtx)
+	var eventContext map[string]interface{}
+	_ = json.Unmarshal(btsEvent, &eventContext)
+	tmplParams["event"] = eventContext
+
+	// Templating
+	tmpl, err := template.New("workflow_template").Delims("[[", "]]").Parse(comment)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		runInfo := sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to parse pullrequest comment: %v", err),
+		}
+
+		tx, errT := db.Begin()
+		if errT != nil {
+			log.ErrorWithStackTrace(ctx, errT)
+			// Return original error
+			return err
+		}
+		if errT := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); errT != nil {
+			log.ErrorWithStackTrace(ctx, errT)
+			// Return original error
+			return err
+		}
+		if errT := tx.Commit(); errT != nil {
+			log.ErrorWithStackTrace(ctx, errT)
+			// Return original error
+			return err
+		}
+		return err
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, tmplParams); err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		runInfo := sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("unable to execute template on pullrequest comment: %v", err),
+		}
+
+		tx, errT := db.Begin()
+		if errT != nil {
+			log.ErrorWithStackTrace(ctx, errT)
+			// Return original error
+			return err
+		}
+		if errT := workflow_v2.InsertRunInfo(ctx, tx, &runInfo); errT != nil {
+			log.ErrorWithStackTrace(ctx, errT)
+			// Return original error
+			return err
+		}
+		if errT := tx.Commit(); errT != nil {
+			log.ErrorWithStackTrace(ctx, errT)
+			// Return original error
+			return err
+		}
+		return err
+	}
+
+	prComment := sdk.VCSPullRequestCommentRequest{
+		Revision: run.Contexts.Git.Ref,
+		Message:  buf.String(),
+		ID:       int(run.Contexts.Git.PullRequestID),
+	}
+
+	log.Info(ctx, "send comment (revision: %v pr: %v) on repo %s", prComment.Revision, prComment.ID, run.Contexts.Git.Repository)
+	if err := vcsClient.PullRequestComment(ctx, run.Contexts.Git.Repository, prComment); err != nil {
+		return err
+	}
+
 	return nil
 }
 

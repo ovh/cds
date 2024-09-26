@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/rockbears/log"
 )
 
 func PublishRunJobRunResult(ctx context.Context, store cache.Store, eventType sdk.EventType, vcsName, repoName string, rj sdk.V2WorkflowRunJob, rr sdk.V2WorkflowRunResult) {
@@ -100,8 +101,14 @@ func PublishRunJobEvent(ctx context.Context, store cache.Store, eventType sdk.Ev
 	event.PublishEventJobSummary(ctx, ev, nil)
 }
 
-func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, u sdk.AuthentifiedUser) {
-	bts, _ := json.Marshal(wr)
+func PublishRunEvent(ctx context.Context, store cache.Store, eventType sdk.EventType, wr sdk.V2WorkflowRun, jobs map[string]sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult, u sdk.AuthentifiedUser) {
+	eventPayload, err := sdk.NewEventWorkflowRunPayload(wr, jobs, runResults)
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
+		return
+	}
+
+	bts, _ := json.Marshal(eventPayload)
 	e := sdk.WorkflowRunEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
 			ID:        sdk.UUID(),
