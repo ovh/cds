@@ -790,6 +790,9 @@ func TestHatcheryVSphere_GetDetaultModelV2Name(t *testing.T) {
 	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{})
 	require.Equal(t, "the-model-v2", got)
 
+	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{{Name: "foo", Value: "bar", Type: sdk.BinaryRequirement}, {Name: "foo", Value: "docker", Type: sdk.BinaryRequirement}})
+	require.Equal(t, "the-model-v2", got)
+
 	got = h.GetDetaultModelV2Name(context.TODO(), []sdk.Requirement{{Name: "foo", Value: "bar", Type: sdk.BinaryRequirement}})
 	require.Equal(t, "", got)
 }

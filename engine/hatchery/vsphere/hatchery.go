@@ -328,22 +328,18 @@ func (h *HatcheryVSphere) GetDetaultModelV2Name(ctx context.Context, requirement
 
 	// no binary in job v1, take the first default model configured
 	if len(binaries) == 0 {
-		log.Debug(ctx, "GetDetaultModelV2Name choose default model v2:%v", h.Config.DefaultWorkerModelsV2[0].WorkerModelV2)
+		log.Debug(ctx, "GetDetaultModelVx2Name choose default model v2:%v", h.Config.DefaultWorkerModelsV2[0].WorkerModelV2)
 		return h.Config.DefaultWorkerModelsV2[0].WorkerModelV2
 	}
 
 	// here, we have to search a worker model v2, matching all binaries existing in the job pre-requisite
-next:
 	for _, modelV2 := range h.Config.DefaultWorkerModelsV2 {
 		for _, binary := range binaries {
-			if !sdk.IsInArray(binary, modelV2.Binaries) {
-				continue next // testing the next worker model v2
+			if sdk.IsInArray(binary, modelV2.Binaries) {
+				log.Debug(ctx, "GetDetaultModelV2Name choose default model v2 %v matching binaries %v", modelV2.WorkerModelV2, binaries)
+				return modelV2.WorkerModelV2
 			}
 		}
-
-		// here, all binaries in the job pre-requisite are found in the current worker model v2
-		log.Debug(ctx, "GetDetaultModelV2Name choose default model v2 %v matching binaries %v", modelV2.WorkerModelV2, binaries)
-		return modelV2.WorkerModelV2
 	}
 	// No default worker model v2 found
 	return ""
