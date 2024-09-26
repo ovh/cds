@@ -888,7 +888,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			if err != nil {
 				return err
 			}
-			if !hasRole {
+			if !hasRole && u.Ring != sdk.UserRingAdmin {
 				return sdk.WithStack(sdk.ErrForbidden)
 			}
 
