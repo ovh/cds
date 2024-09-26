@@ -8,7 +8,7 @@ import { LoadOpts, Project, ProjectRepository, RepositoryHookEvent } from 'app/m
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RepositoryAnalysis } from "../../model/analysis.model";
-import { Branch } from "../../model/repositories.model";
+import { Branch, Tag } from "../../model/repositories.model";
 import { Entity, EntityType } from "../../model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
 import { VariableSet, VariableSetItem } from 'app/model/variablesets.model';
@@ -136,6 +136,11 @@ export class ProjectService {
         return this._http.get<Array<Branch>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/branches`);
     }
 
+    getVCSRepositoryTags(key: string, vcsName: string, repoName: string): Observable<Array<Tag>> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<Array<Tag>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/tags`);
+    }
+
     getVCSRepositories(key: string, vcsName: string): Observable<Array<ProjectRepository>> {
         return this._http.get<Array<ProjectRepository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
     }
@@ -169,20 +174,20 @@ export class ProjectService {
         return this._http.delete(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}`);
     }
 
-    getRepoEntities(key: string, vcsName: string, repo: string, branch?: string): Observable<Array<Entity>> {
+    getRepoEntities(key: string, vcsName: string, repo: string, ref?: string): Observable<Array<Entity>> {
         let encodedRepo = encodeURIComponent(repo);
         let params = new HttpParams();
-        if (branch) {
-            params = params.append('branch', branch);
+        if (ref) {
+            params = params.append('ref', ref);
         }
         return this._http.get<Array<Entity>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities`, { params });
     }
 
-    getRepoEntity(key: string, vcsName: string, repoName: string, entityType: EntityType, entityName: string, branch?: string): Observable<Entity> {
+    getRepoEntity(key: string, vcsName: string, repoName: string, entityType: EntityType, entityName: string, ref?: string): Observable<Entity> {
         let encodedRepo = encodeURIComponent(repoName);
         let params = new HttpParams();
-        if (branch) {
-            params = params.append('branch', branch);
+        if (ref) {
+            params = params.append('ref', ref);
         }
         return this._http.get<Entity>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/entities/${entityType}/${entityName}`, { params });
     }

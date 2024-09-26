@@ -13,6 +13,7 @@ import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { ProjectV2TriggerAnalysisComponent } from './trigger-analysis/trigger-analysis.component';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzTableFilterList } from 'ng-zorro-antd/table';
+import { ErrorUtils } from 'app/shared/error.utils';
 
 @Component({
     selector: 'app-projectv2-explore-repository',
@@ -39,7 +40,8 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
         { text: WorkflowHookEventName.WorkflowHookEventNamePullRequestComment, value: WorkflowHookEventName.WorkflowHookEventNamePullRequestComment },
         { text: WorkflowHookEventName.WorkflowHookEventNamePush, value: WorkflowHookEventName.WorkflowHookEventNamePush },
         { text: WorkflowHookEventName.WorkflowHookEventNameScheduler, value: WorkflowHookEventName.WorkflowHookEventNameScheduler },
-        { text: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate, value: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate }
+        { text: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate, value: WorkflowHookEventName.WorkflowHookEventNameWorkflowUpdate },
+        { text: WorkflowHookEventName.WorkflowHookEventNamePullWorkflowRun, value: WorkflowHookEventName.WorkflowHookEventNamePullWorkflowRun }
     ];
 
     constructor(
@@ -100,7 +102,7 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
             this._toastService.success('Repository has been removed', '');
             this._router.navigate(['/', 'project', this.project.key]);
         } catch (e) {
-            this._messageService.error(`Unable to remove repository: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to remove repository: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
 
         this.loading = false;

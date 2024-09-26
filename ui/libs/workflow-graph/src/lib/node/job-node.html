@@ -31,9 +31,15 @@
             </button>
         </ng-container>
     </div>
-    <div *ngIf=" node?.name" class="name">
-        {{node?.name}}
+    <div *ngIf="node?.job?.name && node.job.name.indexOf('$\{{') !== 0; else jobID" class="name"  title="{{node?.job?.name}}">
+        {{node?.job?.name}}
     </div>
+    <ng-template #jobID>
+        <div *ngIf="node?.name" class="name" title="{{node?.name}}">
+            {{node?.name}}
+        </div>
+    </ng-template>
+    
     <div *ngIf="duration" class="duration" nz-tooltip [nzTooltipTitle]="durationTooltip">
         {{duration}}
         <ng-template #durationTooltip>

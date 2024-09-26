@@ -31,6 +31,7 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 	if err := wk.clientV2.V2QueueJobRunResultCreate(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, runResult); err != nil {
 		return nil, sdk.NewError(sdk.ErrUnknownError, err)
 	}
+	log.Info(ctx, "run result %s created", runResult.Name())
 
 	response := workerruntime.V2AddResultResponse{
 		RunResult: runResult,
@@ -79,6 +80,19 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 		return nil, err
 	}
 
+	if response.RunResult.Status == sdk.V2WorkflowRunResultStatusCompleted {
+		wk.clientV2.V2QueuePushJobInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q issued a new result %q", wk.currentJobV2.runJob.JobID, response.RunResult.Name()),
+			Time:    time.Now(),
+		})
+
+		wk.clientV2.V2QueuePushRunInfo(ctx, wk.currentJobV2.runJob.Region, wk.currentJobV2.runJob.ID, sdk.V2WorkflowRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Message: fmt.Sprintf("Job %q issued a new result %q", wk.currentJobV2.runJob.JobID, response.RunResult.Name()),
+		})
+	}
+
 	return &response, nil
 }
 
@@ -92,7 +106,7 @@ func (wk *CurrentWorker) addRunResultToCurrentJobContext(_ context.Context, newR
 	}
 	switch newRunResult.Type {
 	case sdk.V2WorkflowRunResultTypeVariable, sdk.V2WorkflowRunResultVariableDetailType:
-		x, err := newRunResult.GetDetailAsV2WorkflowRunResultVariableDetail()
+		x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultVariableDetail](newRunResult)
 		if err != nil {
 			return err
 		} else {
@@ -215,6 +229,8 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 		return nil, err
 	}
 
+	log.Debug(ctx, "%+v", resp)
+
 	var result workerruntime.V2GetResultResponse
 	if strings.TrimSpace(filter.Pattern) == "" {
 		filter.Pattern = "**/*"
@@ -228,7 +244,10 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 		case "V2WorkflowRunResultGenericDetail":
 			var res *glob.Result
 			if r.Type == sdk.V2WorkflowRunResultTypeCoverage || r.Type == sdk.V2WorkflowRunResultTypeGeneric { // If the filter is set to "V2WorkflowRunResultGenericDetail" we can directly check the artifact name. This is the usecase of plugin "downloadArtifact"
-				x, _ := r.GetDetailAsV2WorkflowRunResultGenericDetail()
+				x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultGenericDetail](&r)
+				if err != nil {
+					log.ErrorWithStackTrace(ctx, err)
+				}
 				res, err = pattern.MatchString(x.Name)
 			} else {
 				res, err = pattern.MatchString(r.Name())

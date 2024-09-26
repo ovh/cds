@@ -198,6 +198,8 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		return errors.Errorf("Failed to create artifactory client: %v", err)
 	}
 
+	jfroglog.SetLogger(new(logger)) // reset the logger set by artifact_manager.NewClient
+
 	for i := range results {
 		promotedArtifact, err := promoteRunResult(ctx, c, artifactClient, integration, results[i], maturity, props, sdk.V2WorkflowRunResultStatusReleased)
 		if err != nil {
@@ -220,10 +222,13 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 		return errors.Errorf("There is no artifact to release.")
 	}
 
-	grpcplugins.Success(c, "Promoted artifacts: ")
+	var promotionOutput = new(strings.Builder)
+	promotionOutput.WriteString("\nPromoted artifacts:\n")
 	for _, s := range promotedArtifacts {
-		grpcplugins.Successf(c, "  * %s", s)
+		promotionOutput.WriteString(fmt.Sprintf("  * %s\n", s))
 	}
+
+	grpcplugins.Success(c, promotionOutput.String())
 
 	releaseVersion := strings.ReplaceAll(jobContext.Git.SemverCurrent, "+", "-")
 

@@ -85,7 +85,9 @@ export enum WorkflowHookEventName {
   WorkflowHookEventNameManual = "manual",
   WorkflowHookEventNameScheduler = "scheduler",
   WorkflowHookEventNamePullRequest = "pull-request",
-  WorkflowHookEventNamePullRequestComment = "pull-request-comment"
+  WorkflowHookEventNamePullRequestComment = "pull-request-comment",
+  WorkflowHookEventNamePullWorkflowRun = "workflow-run"
+
 }
 
 export class RepositoryHookEvent {

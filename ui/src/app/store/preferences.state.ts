@@ -18,7 +18,7 @@ export class PreferencesStateModel {
     projectTreeExpandState: {
         [projectKey: string]: { [key: string]: boolean };
     };
-    projectBranchSelectState: {
+    projectRefSelectState: {
         [projectKey: string]: { [key: string]: string };
     };
     messages: { [projectKey: string]: boolean };
@@ -34,7 +34,7 @@ export class PreferencesStateModel {
         theme: 'light',
         projectRunFilters: {},
         projectTreeExpandState: {},
-        projectBranchSelectState: {},
+        projectRefSelectState: {},
         messages: {}
     }
 })
@@ -88,11 +88,11 @@ export class PreferencesState {
         );
     }
 
-    static selectProjectBranchSelectState(projectKey: string) {
+    static selectProjectRefSelectState(projectKey: string) {
         return createSelector(
             [PreferencesState],
             (state: PreferencesStateModel) => {
-                return Object.assign({}, state.projectBranchSelectState ? state.projectBranchSelectState[projectKey] : {});
+                return Object.assign({}, state.projectRefSelectState ? state.projectRefSelectState[projectKey] : {});
             }
         );
     }
@@ -152,14 +152,14 @@ export class PreferencesState {
         });
     }
 
-    @Action(actionPreferences.SaveProjectBranchSelectState)
-    saveProjectBranchSelectState(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveProjectBranchSelectState) {
+    @Action(actionPreferences.SaveProjectRefSelectState)
+    saveProjectRefSelectState(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveProjectRefSelectState) {
         const state = ctx.getState();
-        let projects = { ...state.projectBranchSelectState };
+        let projects = { ...state.projectRefSelectState };
         projects[action.payload.projectKey] = action.payload.state;
         ctx.setState({
             ...state,
-            projectBranchSelectState: projects
+            projectRefSelectState: projects
         });
     }
 

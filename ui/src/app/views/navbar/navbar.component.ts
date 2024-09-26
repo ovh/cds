@@ -22,6 +22,7 @@ import { filter } from 'rxjs/operators';
 import * as actionPreferences from 'app/store/preferences.action';
 import { ProjectService } from 'app/service/project/project.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { ErrorUtils } from 'app/shared/error.utils';
 
 @Component({
     selector: 'app-navbar',
@@ -316,7 +317,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         try {
             this.projects = await lastValueFrom(this._projectService.getProjects());
         } catch (e) {
-            this._messageService.error(`Unable to list projects: ${e?.error?.error}`, { nzDuration: 2000 });
+            this._messageService.error(`Unable to list projects: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
         }
     }
 

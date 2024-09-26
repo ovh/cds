@@ -73,7 +73,7 @@ func (b *bitbucketClient) Tags(ctx context.Context, fullname string) ([]sdk.VCST
 	tags := make([]sdk.VCSTag, len(bitbucketTags))
 	for i, tag := range bitbucketTags {
 		tags[i] = sdk.VCSTag{
-			Tag:  strings.Replace(tag.ID, "refs/tags/", "", 1),
+			Tag:  strings.Replace(tag.ID, sdk.GitRefTagPrefix, "", 1),
 			Hash: tag.LatestCommit,
 			Sha:  tag.Hash,
 		}
