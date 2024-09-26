@@ -242,7 +242,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 
 	// Enqueue JOB
-	runJobs, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, wref, run, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, *u, api.Config.Workflow.JobDefaultRegion)
+	runJobs, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, *u, api.Config.Workflow.JobDefaultRegion)
 	if err != nil {
 		return err
 	}
@@ -296,15 +296,15 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	hasSkippedJob := false
+	hasSkippedOrFailedJob := false
 	for _, rj := range runJobs {
-		if rj.Status == sdk.V2WorkflowRunJobStatusSkipped {
-			hasSkippedJob = true
+		if rj.Status == sdk.V2WorkflowRunJobStatusSkipped || rj.Status == sdk.V2WorkflowRunJobStatusFail {
+			hasSkippedOrFailedJob = true
 		}
 	}
 
 	// End workflow if there is no more job to handle,  no running jobs and current status is not terminated
-	if runUpdated || (len(jobsToQueue) == 0 && !hasSkippedJob && !run.Status.IsTerminated()) {
+	if runUpdated || (len(jobsToQueue) == 0 && !hasSkippedOrFailedJob && !run.Status.IsTerminated()) {
 		finalStatus, err := computeRunStatusFromJobsStatus(ctx, tx, run.ID, run.RunAttempt)
 		if err != nil {
 			return err
@@ -372,7 +372,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return nil
 	}
 
-	if hasSkippedJob || hasNoStepsJobs {
+	if hasSkippedOrFailedJob || hasNoStepsJobs {
 		// Re enqueue workflow to trigger job after
 		api.EnqueueWorkflowRun(ctx, run.ID, wrEnqueue.UserID, run.WorkflowName, run.RunNumber, wrEnqueue.IsAdminWithMFA)
 	}
@@ -880,7 +880,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 	return nil, runUpdated
 }
 
-func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, u sdk.AuthentifiedUser, defaultRegion string) ([]sdk.V2WorkflowRunJob, map[string]sdk.V2WorkflowRunJobInfo, *sdk.V2WorkflowRunInfo, bool, error) {
+func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, existingRunJobs []sdk.V2WorkflowRunJob, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, u sdk.AuthentifiedUser, defaultRegion string) ([]sdk.V2WorkflowRunJob, map[string]sdk.V2WorkflowRunJobInfo, *sdk.V2WorkflowRunInfo, bool, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	runJobsInfo := make(map[string]sdk.V2WorkflowRunJobInfo)
 	hasToUpdateRun := false
@@ -1068,7 +1068,9 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 
 			runJobs = append(runJobs, runJob)
 		} else {
-			for _, m := range alls {
+			// Check permutation to trigger
+			permutations := searchPermutationToTrigger(ctx, alls, existingRunJobs, jobID)
+			for _, m := range permutations {
 				runJob := sdk.V2WorkflowRunJob{
 					ID:            sdk.UUID(),
 					WorkflowRunID: run.ID,
@@ -1119,6 +1121,42 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 	return runJobs, runJobsInfo, nil, hasToUpdateRun, nil
 }
 
+func searchPermutationToTrigger(ctx context.Context, permutations []map[string]string, runJobs []sdk.V2WorkflowRunJob, jobID string) []map[string]string {
+	runJobsForJobID := make([]sdk.V2WorkflowRunJob, 0)
+
+	for _, rj := range runJobs {
+		if rj.JobID == jobID {
+			runJobsForJobID = append(runJobsForJobID, rj)
+		}
+	}
+
+	if len(runJobsForJobID) == 0 {
+		return permutations
+	}
+
+	permutationToTrigger := make([]map[string]string, 0)
+	// Browse all permutation
+	for _, perm := range permutations {
+		runJobFound := false
+		// Search if it has been already trigger
+	runJobLoop:
+		for _, rj := range runJobsForJobID {
+			for k, v := range perm {
+				// If not the same permutation, check next run job
+				if rj.Matrix[k] != v {
+					continue runJobLoop
+				}
+			}
+			runJobFound = true
+			break
+		}
+		if !runJobFound {
+			permutationToTrigger = append(permutationToTrigger, perm)
+		}
+	}
+	return permutationToTrigger
+}
+
 func generateMatrix(matrix map[string][]string, keys []string, keyIndex int, current map[string]string, alls *[]map[string]string) {
 	if len(current) == len(keys) {
 		combinationCopy := make(map[string]string)
@@ -1165,8 +1203,31 @@ func retrieveJobToQueue(ctx context.Context, db *gorp.DbMap, wrEnqueue sdk.V2Wor
 
 	for jobID, jobDef := range run.WorkflowData.Workflow.Jobs {
 		// Do not enqueue jobs that have already a run
-		if _, has := allrunJobsMap[jobID]; !has {
+		runJobMapItem, has := allrunJobsMap[jobID]
+		if !has {
 			jobsToCheck[jobID] = jobDef
+		} else {
+			// If job with matrix, check if we have to rerun a permmutation
+			if runJobMapItem.Job.Strategy != nil && len(runJobMapItem.Job.Strategy.Matrix) > 0 {
+				nbPermutations := 1
+				for _, v := range runJobMapItem.Job.Strategy.Matrix {
+					if vString, ok := v.([]string); ok {
+						nbPermutations *= len(vString)
+					} else if vInterface, ok := v.([]interface{}); ok {
+						nbPermutations *= len(vInterface)
+					}
+				}
+				runPermutations := 0
+				for _, rj := range runJobs {
+					if rj.JobID == runJobMapItem.JobID {
+						runPermutations++
+					}
+				}
+				if nbPermutations != runPermutations {
+					jobsToCheck[jobID] = jobDef
+				}
+			}
+
 		}
 	}
 
