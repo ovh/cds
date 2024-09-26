@@ -242,7 +242,7 @@ type Configuration struct {
 	} `toml:"workflow" comment:"######################\n 'Workflow' global configuration \n######################" json:"workflow"`
 	WorkflowV2 struct {
 		JobSchedulingTimeout   int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
-		RunRetentionScheduling int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"RunRetentionScheduling" default:"15"`
+		RunRetentionScheduling int64  `toml:"runRetentionScheduling" comment:"Time in minute between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"15"`
 		WorkflowRunRetention   int64  `toml:"workflowRunRetention" comment:"Workflow run retention in days" json:"workflowRunRetention" default:"90"`
 		LibraryProjectKey      string `toml:"libraryProjectKey" comment:"Library project key" json:"libraryProjectKey" commented:"true"`
 	} `toml:"workflowv2" comment:"######################\n 'Workflow V2' global configuration \n######################" json:"workflowv2"`
