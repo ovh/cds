@@ -535,7 +535,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		return w.failJob(ctx, fmt.Sprintf("unable to compute context for action %s: %v", name, err)), nil
 	}
 
-	var actionPost *ActionPostJob
+	var stepPostAction *ActionPostJob
 	switch len(actionPath) {
 	case 1:
 		env, err := w.GetEnvVariable(ctx, *actionContext)
@@ -543,11 +543,16 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			return w.failJob(ctx, err.Error()), nil
 		}
 		var res sdk.V2WorkflowRunJobResult
-		res, actionPost = w.runPlugin(ctx, actionPath[0], actionContext.Inputs, env)
+		res, postActionDefinition := w.runPlugin(ctx, actionPath[0], actionContext.Inputs, env)
 		if res.Status != sdk.StatusSuccess {
 			return res, nil
 		}
-		if actionPost != nil {
+		if postActionDefinition != nil {
+			stepPostAction = &ActionPostJob{
+				ContinueOnError: postActionDefinition.ContinueOnError,
+				PluginName:      postActionDefinition.PluginName,
+				Inputs:          make(map[string]string),
+			}
 			jsonContext, _ := json.Marshal(actionContext)
 			// Interpolate post script
 			var mapContexts map[string]interface{}
@@ -555,14 +560,14 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 				return w.failJob(ctx, err.Error()), nil
 			}
 			ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-			for k, v := range actionPost.Inputs {
+			for k, v := range postActionDefinition.Inputs {
 				interpolatedValue, err := ap.InterpolateToString(ctx, v)
 				if err != nil {
 					return w.failJob(ctx, err.Error()), nil
 				}
-				actionPost.Inputs[k] = interpolatedValue
+				stepPostAction.Inputs[k] = interpolatedValue
 			}
-			actionPost.StepName = parentStepName
+			stepPostAction.StepName = parentStepName
 		}
 	case 5:
 		// <project_key> / vcs / my / repo / actionName
@@ -626,7 +631,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 				}
 			}
 
-			actionPost = &ActionPostJob{
+			stepPostAction = &ActionPostJob{
 				PluginName: "script",
 				Inputs:     map[string]string{"content": interpolatedPost},
 				StepName:   parentStepName,
@@ -634,11 +639,11 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 		}
 
 		if actionError != nil {
-			return w.failJob(ctx, actionError.Error()), actionPost
+			return w.failJob(ctx, actionError.Error()), stepPostAction
 		}
 
 		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, *actionContext, w.actions[name].Outputs); err != nil {
-			return w.failJob(ctx, err.Error()), actionPost
+			return w.failJob(ctx, err.Error()), stepPostAction
 		}
 
 		// Execute child post action
@@ -654,7 +659,7 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	default:
 	}
 
-	return actionResult, actionPost
+	return actionResult, stepPostAction
 }
 
 func (w *CurrentWorker) updateParentStepStatusWithOutputs(ctx context.Context, parentStepStatus sdk.JobStepsStatus, parentStepName string, actionContext sdk.WorkflowRunJobsContext, outputs map[string]sdk.ActionOutput) error {
