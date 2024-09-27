@@ -168,6 +168,10 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 		}
 	}
 
+	h.cacheToDelete.mu.Lock()
+	h.cacheToDelete.list = sdk.DeleteFromArray(h.cacheToDelete.list, s.Name)
+	h.cacheToDelete.mu.Unlock()
+
 	if err := h.vSphereClient.DestroyVirtualMachine(ctx, vm); err != nil {
 		return err
 	}

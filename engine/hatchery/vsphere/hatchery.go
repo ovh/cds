@@ -637,6 +637,7 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 			if err := h.ProvisionWorkerV2(ctx, modelVMware, workerName); err != nil {
 				ctx = log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to provision vmware model %q: %v", modelVMware, err)
+				h.markToDelete(ctx, workerName)
 			}
 
 			h.cacheProvisioning.mu.Lock()
@@ -750,6 +751,7 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 			if err := h.ProvisionWorkerV1(ctx, mapModels[modelPath], workerName); err != nil {
 				ctx = log.ContextWithStackTrace(ctx, err)
 				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
+				h.markToDelete(ctx, workerName)
 			}
 
 			h.cacheProvisioning.mu.Lock()
