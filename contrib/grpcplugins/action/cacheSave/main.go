@@ -56,7 +56,7 @@ func (p *cacheSavePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugi
 	}
 
 	if err := p.perform(ctx, *jobCtx, cacheKey, workDirs, path); err != nil {
-		err := fmt.Errorf("unable to retrieve cache: %v", err)
+		err := fmt.Errorf("unable to save cache: %v", err)
 		res.Status = sdk.StatusFail
 		res.Details = err.Error()
 		return stream.Send(res)
