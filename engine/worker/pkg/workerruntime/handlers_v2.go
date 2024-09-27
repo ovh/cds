@@ -159,6 +159,7 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 			}
 			response, err := wk.V2GetRunResult(ctx, filter)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				writeError(w, r, err)
 				return
 			}
@@ -166,11 +167,13 @@ func V2_runResultHandler(ctx context.Context, wk Runtime) http.HandlerFunc {
 		case http.MethodPost:
 			var runResultRequest V2RunResultRequest
 			if err := sdk.JSONUnmarshal(btes, &runResultRequest); err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				writeError(w, r, sdk.NewError(sdk.ErrWrongRequest, err))
 				return
 			}
 			response, err := wk.V2AddRunResult(ctx, runResultRequest)
 			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
 				writeError(w, r, err)
 				return
 			}

@@ -109,7 +109,7 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 	case sdk.V2WorkflowRunResultTypeTerraformModule:
 		repository += "-terraformModule"
 	case sdk.V2WorkflowRunResultTypeStaticFiles:
-		return true, performStaticFiles(ctx, &p.Common, path, detail)
+		return false, performStaticFiles(ctx, &p.Common, path, detail)
 	}
 
 	// get file info
@@ -239,9 +239,6 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 }
 
 func performStaticFiles(ctx context.Context, c *actionplugin.Common, destinationPath string, detail sdk.V2WorkflowRunResultDetail) error {
-
-	grpcplugins.Logf(c, "Creating run result for static files %q with payload %+v", destinationPath, detail)
-
 	jobCtx, err := grpcplugins.GetJobContext(ctx, c)
 	if err != nil {
 		return err
@@ -280,6 +277,7 @@ func performStaticFiles(ctx context.Context, c *actionplugin.Common, destination
 		grpcplugins.Errorf(c, "unable to parse detail for staticFiles run result %q. Please check the documentation.", destinationPath)
 		return err
 	}
+	runResult.Detail.Data = staticFilesDetail
 
 	runResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
 	runResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
@@ -290,14 +288,13 @@ func performStaticFiles(ctx context.Context, c *actionplugin.Common, destination
 	runResult.ArtifactManagerMetadata.Set("localRepository", repository)
 	runResult.ArtifactManagerMetadata.Set("uri", folderInfo.URI)
 
-	runResult.Detail = sdk.V2WorkflowRunResultDetail{
-		Data: staticFilesDetail,
-	}
-
-	if _, err := grpcplugins.CreateRunResult(ctx, c, &workerruntime.V2RunResultRequest{RunResult: &runResult}); err != nil {
+	var runResultRequest = workerruntime.V2RunResultRequest{RunResult: &runResult}
+	runResultResponse, err := grpcplugins.CreateRunResult(ctx, c, &runResultRequest)
+	if err != nil {
+		grpcplugins.Errorf(c, "unable to create run result: %v", err.Error())
 		return err
 	}
-	grpcplugins.Success(c, fmt.Sprintf("run result %s created", runResult.Name()))
+	grpcplugins.Success(c, fmt.Sprintf("run result %s created", runResultResponse.RunResult.Name()))
 
 	return nil
 }

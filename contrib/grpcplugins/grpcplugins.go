@@ -218,7 +218,6 @@ func GetWorkerDirectories(ctx context.Context, c *actionplugin.Common) (*sdk.Wor
 }
 
 func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *workerruntime.V2RunResultRequest) (*workerruntime.V2AddResultResponse, error) {
-
 	btes, err := json.Marshal(result)
 	if err != nil {
 		log.ErrorWithStackTrace(ctx, err)
@@ -229,7 +228,6 @@ func CreateRunResult(ctx context.Context, c *actionplugin.Common, result *worker
 		log.ErrorWithStackTrace(ctx, err)
 		return nil, err
 	}
-	log.Debug(ctx, "URL:%s", req.URL.Path)
 	resp, err := c.DoRequest(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create run result")
