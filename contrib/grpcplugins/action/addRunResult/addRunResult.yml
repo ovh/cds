@@ -8,4 +8,6 @@ inputs:
     required: true
   type:
     required: true  
+  payload:
+    required: false
 

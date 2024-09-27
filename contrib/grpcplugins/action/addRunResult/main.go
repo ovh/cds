@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 
@@ -43,8 +44,19 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 
 	resultType := q.GetOptions()["type"]
 	path := q.GetOptions()["path"]
+	payload := q.GetOptions()["payload"]
 
-	ko, err := p.perform(ctx, resultType, path)
+	var detail sdk.V2WorkflowRunResultDetail
+	if payload != "" {
+		if err := sdk.JSONUnmarshal([]byte(payload), &detail); err != nil {
+			err := fmt.Errorf("unable to parse payload: %v", err)
+			res.Status = sdk.StatusFail
+			res.Details = err.Error()
+			return stream.Send(res)
+		}
+	}
+
+	ko, err := p.perform(ctx, resultType, path, detail)
 	if err != nil {
 		err := fmt.Errorf("unable to create run result: %v", err)
 		res.Status = sdk.StatusFail
@@ -59,8 +71,7 @@ func (p *addRunResultPlugin) Stream(q *actionplugin.ActionQuery, stream actionpl
 
 }
 
-func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPath string) (bool, error) {
-
+func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPath string, detail sdk.V2WorkflowRunResultDetail) (bool, error) {
 	jobCtx, err := grpcplugins.GetJobContext(ctx, &p.Common)
 	if err != nil {
 		return true, err
@@ -97,6 +108,8 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 		repository += "-terraformProvider"
 	case sdk.V2WorkflowRunResultTypeTerraformModule:
 		repository += "-terraformModule"
+	case sdk.V2WorkflowRunResultTypeStaticFiles:
+		return true, performStaticFiles(ctx, &p.Common, path, detail)
 	}
 
 	// get file info
@@ -223,6 +236,70 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType, artifactPa
 	}
 	grpcplugins.Success(&p.Common, fmt.Sprintf("run result %s created", runResult.Name()))
 	return mustReturnKO, err
+}
+
+func performStaticFiles(ctx context.Context, c *actionplugin.Common, destinationPath string, detail sdk.V2WorkflowRunResultDetail) error {
+
+	grpcplugins.Logf(c, "Creating run result for static files %q with payload %+v", destinationPath, detail)
+
+	jobCtx, err := grpcplugins.GetJobContext(ctx, c)
+	if err != nil {
+		return err
+	}
+	if jobCtx.Integrations == nil || jobCtx.Integrations.ArtifactManager.Name == "" {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "you must have an artifact manager integration on your job")
+	}
+
+	// Get artifact information
+	artiConfig := grpcplugins.ArtifactoryConfig{
+		URL:   jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigURL),
+		Token: jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigToken),
+	}
+
+	repository := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-static"
+
+	// get folder info
+	folderInfo, err := grpcplugins.GetArtifactoryFolderInfo(ctx, c, artiConfig, repository, destinationPath)
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return err
+		}
+	}
+
+	detail.Type = "V2WorkflowRunResultStaticFilesDetail"
+	runResult := sdk.V2WorkflowRunResult{
+		IssuedAt:                       time.Now(),
+		Status:                         sdk.V2WorkflowRunResultStatusCompleted,
+		ArtifactManagerIntegrationName: &jobCtx.Integrations.ArtifactManager.Name,
+		Type:                           sdk.V2WorkflowRunResultTypeStaticFiles,
+		Detail:                         detail,
+	}
+
+	staticFilesDetail, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultStaticFilesDetail](&runResult)
+	if err != nil {
+		grpcplugins.Errorf(c, "unable to parse detail for staticFiles run result %q. Please check the documentation.", destinationPath)
+		return err
+	}
+
+	runResult.ArtifactManagerMetadata = &sdk.V2WorkflowRunResultArtifactManagerMetadata{}
+	runResult.ArtifactManagerMetadata.Set("repository", repository) // This is the virtual repository
+	runResult.ArtifactManagerMetadata.Set("name", destinationPath)
+	runResult.ArtifactManagerMetadata.Set("type", "folder")
+	runResult.ArtifactManagerMetadata.Set("path", folderInfo.Path)
+	runResult.ArtifactManagerMetadata.Set("createdBy", folderInfo.CreatedBy)
+	runResult.ArtifactManagerMetadata.Set("localRepository", repository)
+	runResult.ArtifactManagerMetadata.Set("uri", folderInfo.URI)
+
+	runResult.Detail = sdk.V2WorkflowRunResultDetail{
+		Data: staticFilesDetail,
+	}
+
+	if _, err := grpcplugins.CreateRunResult(ctx, c, &workerruntime.V2RunResultRequest{RunResult: &runResult}); err != nil {
+		return err
+	}
+	grpcplugins.Success(c, fmt.Sprintf("run result %s created", runResult.Name()))
+
+	return nil
 }
 
 func performDocker(ctx context.Context, c *actionplugin.Common, runResult *sdk.V2WorkflowRunResult, integ sdk.JobIntegrationsContext, dockerImageName string, manifestPath string, fileinfo grpcplugins.ArtifactoryFileInfo) error {
