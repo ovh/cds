@@ -1,11 +1,11 @@
 import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { NzMessageService } from "ng-zorro-antd/message";
 import { lastValueFrom, map, Subscription } from "rxjs";
 import { Project } from "app/model/project.model";
 import { Store } from "@ngxs/store";
 import { ProjectState } from "app/store/project.state";
-import { NzAutocompleteTriggerDirective } from "ng-zorro-antd/auto-complete";
+import { NzAutocompleteOptionComponent, NzAutocompleteTriggerDirective } from "ng-zorro-antd/auto-complete";
 import { ActivatedRoute, Router } from "@angular/router";
 import * as actionPreferences from 'app/store/preferences.action';
 import { PreferencesState } from "app/store/preferences.state";
@@ -55,13 +55,14 @@ export class WorkflowRunFilterValue {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestroy, AfterViewChecked {
 	static PANEL_KEY = 'project-v2-run-list-sidebar';
 	static DEFAULT_SORT = 'started:desc';
 
 	@ViewChild('filterInput') filterInput: ElementRef;
 	@ViewChild('filterInputDirective') filterInputDirective: NzAutocompleteTriggerDirective;
 	@ViewChild('saveSearchButton') saveSearchButton: NzPopconfirmDirective;
+	@ViewChildren(NzAutocompleteOptionComponent) fromDataSourceOptions: QueryList<NzAutocompleteOptionComponent>;
 
 	loading = false;
 	totalCount: number = 0;
@@ -153,6 +154,18 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 			}
 			callback(event);
 		};
+	}
+
+	ngAfterViewChecked(): void {
+		this.fromDataSourceOptions.forEach(o => {
+			o.selectViaInteraction = () => {
+				this.onFilterTextChange(o.nzValue);
+				if (!o.nzValue.endsWith(':')) {
+					this.submitForm();
+					this.filterInputDirective.closePanel();
+				}
+			}
+		});
 	}
 
 	submitForm(): void {
@@ -297,7 +310,7 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 			// Search for existing filter key to show options
 			this.selectedFilter = Object.assign({}, this.filters.find(f => f.key === splitted[0]));
 			if (this.selectedFilter) {
-				this.selectedFilter.options = this.selectedFilter.options.filter(o => splitted[1] === '' || o.toLowerCase().indexOf(splitted[1].toLowerCase()) !== -1);
+				this.selectedFilter.options = (this.selectedFilter.options ?? []).filter(o => splitted[1] === '' || o.toLowerCase().indexOf(splitted[1].toLowerCase()) !== -1);
 			}
 			this.availableFilters = [];
 		} else {
