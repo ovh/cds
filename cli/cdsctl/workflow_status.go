@@ -225,7 +225,6 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 		for k, kv := range pl {
 			payload = append(payload, fmt.Sprintf("%s:%s", k, kv))
 		}
-		payload = append(payload)
 	}
 	wt := &wtags{*run, strings.Join(payload, " "), strings.Join(tags, " ")}
 	return *wt, nil
