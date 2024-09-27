@@ -822,7 +822,7 @@ func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentConte
 		for k, e := range inputs {
 			interpolatedValue, err := ap.InterpolateToString(ctx, e)
 			if err != nil {
-				return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate env variabke %s: %v", k, err)
+				return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate inputs %s: %s: %v", k, e, err)
 			}
 			actionContext.Inputs[k] = interpolatedValue
 		}
