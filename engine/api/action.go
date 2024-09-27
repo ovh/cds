@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -115,6 +116,7 @@ func (api *API) postActionHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
+		data.Name = strings.TrimSpace(data.Name)
 		if err := data.IsValidDefault(); err != nil {
 			return err
 		}
