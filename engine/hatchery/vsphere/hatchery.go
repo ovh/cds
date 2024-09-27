@@ -313,6 +313,38 @@ func (*HatcheryVSphere) ModelType() string {
 	return sdk.VSphere
 }
 
+func (h *HatcheryVSphere) GetDetaultModelV2Name(ctx context.Context, requirements []sdk.Requirement) string {
+	if len(h.Config.DefaultWorkerModelsV2) == 0 {
+		return ""
+	}
+
+	var binaries []string
+
+	for _, req := range requirements {
+		if req.Type == sdk.BinaryRequirement {
+			binaries = append(binaries, req.Value)
+		}
+	}
+
+	// no binary in job v1, take the first default model configured
+	if len(binaries) == 0 {
+		log.Debug(ctx, "GetDetaultModelVx2Name choose default model v2:%v", h.Config.DefaultWorkerModelsV2[0].WorkerModelV2)
+		return h.Config.DefaultWorkerModelsV2[0].WorkerModelV2
+	}
+
+	// here, we have to search a worker model v2, matching all binaries existing in the job pre-requisite
+	for _, modelV2 := range h.Config.DefaultWorkerModelsV2 {
+		for _, binary := range binaries {
+			if sdk.IsInArray(binary, modelV2.Binaries) {
+				log.Debug(ctx, "GetDetaultModelV2Name choose default model v2 %v matching binaries %v", modelV2.WorkerModelV2, binaries)
+				return modelV2.WorkerModelV2
+			}
+		}
+	}
+	// No default worker model v2 found
+	return ""
+}
+
 // killDisabledWorkers kill workers which are disabled
 func (h *HatcheryVSphere) killDisabledWorkers(ctx context.Context) {
 	workerPoolDisabled, err := hatchery.WorkerPool(ctx, h, sdk.StatusDisabled)

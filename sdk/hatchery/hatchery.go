@@ -253,6 +253,7 @@ func Create(ctx context.Context, h Interface) error {
 
 				// Check at least one worker model can match
 				var chosenModel *sdk.Model
+				var workerStarterModelWithModelv2 *sdk.WorkerStarterWorkerModel
 				var canTakeJob bool
 
 				var containsRegionRequirement bool
@@ -277,25 +278,36 @@ func Create(ctx context.Context, h Interface) error {
 							endTrace("no clientv2", strconv.FormatInt(j.ID, 10))
 							continue
 						}
-						chosenModel, err = canRunJobWithModelV2(currentCtx, hWithModels, workerRequest, jobModel)
+						chosenModel, workerStarterModelWithModelv2, err = canRunJobWithModelV2(currentCtx, hWithModels, workerRequest, jobModel)
 						if err != nil {
 							log.Error(currentCtx, "%v", err)
 							endTrace("err on chosenModel", strconv.FormatInt(j.ID, 10))
 							continue
 						}
 					} else {
-						// for all models v1
-						for i := range models {
-							// find the first model matching with the pre-requisite
-							if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
-								chosenModel = &models[i]
-								break
+						if jobModel == "" {
+							// Here, we found a modelv1. Check if we can use a model v2
+							workerStarterModelWithModelv2, err = checkDefaultModelV2(ctx, hWithModels, workerRequest, jobModel)
+							if err != nil {
+								log.Error(currentCtx, "%v", err)
 							}
 						}
+
+						// if we didn't find a model v2 that can run the job v1, search a model v1
+						if workerStarterModelWithModelv2 == nil {
+							for i := range models {
+								// find the first model matching with the pre-requisite
+								if canRunJobWithModel(currentCtx, hWithModels, workerRequest, &models[i]) {
+									chosenModel = &models[i]
+									break
+								}
+							}
+						}
+
 					}
 
 					// No model has been found, let's send a failing result
-					if chosenModel == nil {
+					if chosenModel == nil && workerStarterModelWithModelv2 == nil {
 						log.Debug(currentCtx, "hatchery> no model")
 						endTrace("no model", strconv.FormatInt(j.ID, 10))
 						continue
@@ -314,7 +326,9 @@ func Create(ctx context.Context, h Interface) error {
 					continue
 				}
 
-				if chosenModel != nil {
+				if workerStarterModelWithModelv2 != nil {
+					workerRequest.model = *workerStarterModelWithModelv2
+				} else if chosenModel != nil {
 					// We got a model, let's start a worker
 					workerRequest.model.ModelV1 = chosenModel
 
@@ -503,7 +517,7 @@ func canRunJob(ctx context.Context, h Interface, j workerStarterRequest) bool {
 // a docker container for register a worker model. 128 Mo
 const MemoryRegisterContainer int64 = 128
 
-func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, workerModelV2 string) (*sdk.Model, error) {
+func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, workerModelV2 string) (*sdk.Model, *sdk.WorkerStarterWorkerModel, error) {
 	ctx, end := telemetry.Span(ctx, "hatchery.canRunJobWithModelV2", telemetry.Tag(telemetry.TagWorker, workerModelV2))
 	defer end()
 
@@ -511,7 +525,7 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 
 	modelPath := strings.Split(branchSplit[0], "/")
 	if len(modelPath) < 4 {
-		return nil, sdk.WrapError(sdk.ErrInvalidData, "wrong model value %v", modelPath)
+		return nil, nil, sdk.WrapError(sdk.ErrInvalidData, "wrong model value %v", modelPath)
 	}
 	projKey := modelPath[0]
 	vcsName := modelPath[1]
@@ -524,10 +538,10 @@ func canRunJobWithModelV2(ctx context.Context, h InterfaceWithModels, j workerSt
 
 	model, err := h.CDSClientV2().GetWorkerModel(ctx, projKey, vcsName, repoName, modelName, cdsclient.WithQueryParameter("branch", branch))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if model.Type != h.ModelType() {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	oldModel := sdk.Model{
@@ -561,7 +575,7 @@ fi`
 	case sdk.WorkerModelTypeDocker:
 		var dockerSpec sdk.V2WorkerModelDockerSpec
 		if err := yaml.Unmarshal(model.Spec, &dockerSpec); err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, nil, sdk.WithStack(err)
 		}
 		oldModel.ModelDocker = sdk.ModelDocker{
 			Image:    dockerSpec.Image,
@@ -578,29 +592,31 @@ fi`
 		}
 		oldModel.ModelDocker.Image, err = ap.InterpolateToString(ctx, oldModel.ModelDocker.Image)
 		if err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, nil, sdk.WithStack(err)
 		}
 	case sdk.WorkerModelTypeVSphere:
 		var vsphereSpec sdk.V2WorkerModelVSphereSpec
 		if err := yaml.Unmarshal(model.Spec, &vsphereSpec); err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, nil, sdk.WithStack(err)
 		}
-		oldModel.ModelVirtualMachine = sdk.ModelVirtualMachine{
-			Cmd:      "./worker",
-			PreCmd:   preCmd,
-			PostCmd:  "sudo shutdown -h now",
-			User:     vsphereSpec.Username,
-			Password: vsphereSpec.Password,
-			Image:    vsphereSpec.Image,
+
+		workerStarterModelWithModelv2 := sdk.WorkerStarterWorkerModel{
+			Cmd:         "PATH=$PATH ./worker",
+			PreCmd:      preCmd,
+			PostCmd:     "sudo shutdown -h now",
+			ModelV2:     model,
+			VSphereSpec: vsphereSpec,
 		}
-		oldModel.ModelVirtualMachine.Image, err = ap.InterpolateToString(ctx, oldModel.ModelVirtualMachine.Image)
-		if err != nil {
-			return nil, sdk.WithStack(err)
+
+		if !h.CanSpawn(ctx, workerStarterModelWithModelv2, j.id, j.requirements) {
+			return nil, nil, nil
 		}
+		return nil, &workerStarterModelWithModelv2, nil
+
 	case sdk.WorkerModelTypeOpenstack:
 		var openstackSpec sdk.V2WorkerModelOpenstackSpec
 		if err := yaml.Unmarshal(model.Spec, &openstackSpec); err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, nil, sdk.WithStack(err)
 		}
 		oldModel.ModelVirtualMachine = sdk.ModelVirtualMachine{
 			Cmd:     "./worker",
@@ -616,14 +632,14 @@ fi`
 		}
 		oldModel.ModelVirtualMachine.Image, err = ap.InterpolateToString(ctx, oldModel.ModelVirtualMachine.Image)
 		if err != nil {
-			return nil, sdk.WithStack(err)
+			return nil, nil, sdk.WithStack(err)
 		}
 	}
 
 	if !h.CanSpawn(ctx, sdk.WorkerStarterWorkerModel{ModelV1: &oldModel}, j.id, j.requirements) {
-		return nil, nil
+		return nil, nil, nil
 	}
-	return &oldModel, nil
+	return &oldModel, nil, nil
 }
 
 func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2QueueJobInfo) (*sdk.WorkerStarterWorkerModel, error) {
@@ -693,6 +709,31 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 	workerStarterModel.Memory = mem
 	workerStarterModel.Flavor = jobInf.RunJob.Job.RunsOn.Flavor
 	return workerStarterModel, nil
+}
+
+// only used by vshpere hatchery
+func checkDefaultModelV2(ctx context.Context, h InterfaceWithModels, workerRequest workerStarterRequest, modelInPrerequisite string) (*sdk.WorkerStarterWorkerModel, error) {
+	if h.ModelType() != sdk.VSphere {
+		return nil, nil
+	}
+	if modelInPrerequisite != "" {
+		return nil, nil
+	}
+
+	hWithDefault, hatcheryIsWithDefault := h.(InterfaceWithDetaultWorkerModelV2)
+	if !hatcheryIsWithDefault {
+		return nil, nil
+	}
+	workerModelV2 := hWithDefault.GetDetaultModelV2Name(ctx, workerRequest.requirements)
+
+	if workerModelV2 == "" {
+		return nil, nil
+	}
+
+	_, workerStarterModelWithModelv2, err := canRunJobWithModelV2(ctx, h, workerRequest, workerModelV2)
+
+	return workerStarterModelWithModelv2, err
+
 }
 
 func canRunJobWithModel(ctx context.Context, h InterfaceWithModels, j workerStarterRequest, model *sdk.Model) bool {
