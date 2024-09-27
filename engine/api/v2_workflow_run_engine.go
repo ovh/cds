@@ -309,6 +309,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	for _, rj := range runJobs {
 		if rj.Status == sdk.V2WorkflowRunJobStatusSkipped || rj.Status == sdk.V2WorkflowRunJobStatusFail {
 			hasSkippedOrFailedJob = true
+			break
 		}
 	}
 
