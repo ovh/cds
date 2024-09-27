@@ -30,6 +30,7 @@ func experimentalWorkerModel() *cobra.Command {
 var wmMigrateCmd = cli.Command{
 	Name:    "migrate",
 	Example: "cdsctl worker-model migrate <group_name> <model_name>",
+	Short:   "Display the v2 worker model yaml file from an existing v1 worker model ",
 	Ctx:     []cli.Arg{},
 	Args: []cli.Arg{
 		{Name: "group"},
