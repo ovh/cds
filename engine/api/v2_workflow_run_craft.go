@@ -743,7 +743,7 @@ func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *g
 		WorkflowRunID: wref.run.ID,
 		Level:         sdk.WorkflowRunInfoLevelError,
 		IssuedAt:      time.Now(),
-		Message:       fmt.Sprintf("wrong configuration on job %q. No hatchery can run it", jobName),
+		Message:       fmt.Sprintf("wrong configuration on job %q. No hatchery can run it with model [%s]", jobName, modelCompleteName),
 	}, nil
 }
 
