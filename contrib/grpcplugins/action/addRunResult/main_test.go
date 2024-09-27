@@ -9,7 +9,7 @@ import (
 
 func TestXxx(t *testing.T) {
 	payload := `{
-		"type": "V2WorkflowRunResultTypeStaticFiles",
+		"type": "V2WorkflowRunResultStaticFilesDetail",
 		"data": {
 		  "name": "hello",
 		  "artifactory_url": "fsamin-default-static/test-static-files/",
