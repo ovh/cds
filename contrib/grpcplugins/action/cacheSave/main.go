@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mholt/archiver/v3"
@@ -66,21 +67,29 @@ func (p *cacheSavePlugin) Stream(q *actionplugin.ActionQuery, stream actionplugi
 }
 
 func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJobsContext, cacheKey string, workDirs *sdk.WorkerDirectories, path string) error {
+	fullPath := path
+	if !sdk.PathIsAbs(path) {
+		var err error
+		fullPath, err = filepath.Abs(filepath.Join(workDirs.WorkingDir, path))
+		if err != nil {
+			return fmt.Errorf("unable to compute absolute path: %v", err)
+		}
+	}
+
 	itemsToArchive := make([]string, 0)
 	// Check directory
-	dirFS := os.DirFS(workDirs.WorkingDir)
-	fullPath := workDirs.WorkingDir + "/" + path
 	if fileInfo, err := os.Stat(fullPath); err == nil && fileInfo.IsDir() {
-		itemsToArchive = append(itemsToArchive, workDirs.WorkingDir+"/"+path)
+		itemsToArchive = append(itemsToArchive, fullPath)
 	} else {
 		// Try to manage files
-		results, err := glob.Glob(workDirs.WorkingDir, path)
+		results, err := glob.Glob(workDirs.WorkingDir, fullPath)
 		if err != nil {
 			return err
 		}
 		for _, r := range results.Results {
-			itemsToArchive = append(itemsToArchive, r.Path)
-			grpcplugins.Success(&p.Common, r.Path+" will be cached")
+			resultPath := fmt.Sprintf("%s%s", results.DirFS, r.Path)
+			itemsToArchive = append(itemsToArchive, resultPath)
+			grpcplugins.Success(&p.Common, resultPath+" will be cached")
 		}
 	}
 
@@ -100,6 +109,7 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 		return fmt.Errorf("unable to create cache archive: %v", err)
 	}
 
+	dirFS := os.DirFS(workDirs.WorkingDir)
 	f, err := dirFS.Open("cache.tar.gz")
 	if err != nil {
 		return fmt.Errorf("unable to open cache archive: %v", err)
