@@ -7,8 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"sort"
+	"io/fs"
 	"strings"
 
 	"github.com/ovh/cds/sdk/glob"
@@ -259,9 +258,12 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 			return nil, NewErrorFrom(ErrInvalidData, "unable to read cds context")
 		}
 	}
-	dirFS := os.DirFS(cdsContext.Workspace)
 
-	files := make([]string, 0)
+	type inputFile struct {
+		dirFS fs.FS
+		files []string
+	}
+	files := make([]inputFile, 0)
 	for _, i := range inputs {
 		input, ok := i.(string)
 		if !ok {
@@ -271,30 +273,23 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 		if err != nil {
 			return nil, NewErrorFrom(ErrInvalidData, "unable to find files with pattern %s on directory %s: %v", input, cdsContext.Workspace, err)
 		}
-		dirFS = filesFound.DirFS
-		for _, f := range filesFound.Results {
-			files = append(files, f.Path)
+		ifiles := inputFile{
+			dirFS: filesFound.DirFS,
+			files: make([]string, 0, len(filesFound.Results)),
 		}
+		for _, f := range filesFound.Results {
+			ifiles.files = append(ifiles.files, f.Path)
+		}
+		files = append(files, ifiles)
 	}
 	if len(files) == 0 {
 		return nil, NewErrorFrom(ErrInvalidData, "find 0 file with filter %v", inputs)
 	}
-	if len(files) == 1 {
-		f, err := dirFS.Open(files[0])
-		if err != nil {
-			return nil, NewErrorFrom(ErrInvalidData, "unable to read file %s: %v", files[0], err)
-		}
-		defer f.Close()
-		hasher := sha256.New()
-		if _, err := io.Copy(hasher, f); err != nil {
-			return nil, NewErrorFrom(ErrInvalidData, "unable to compute sha256 for file %s: %v", files[0], err)
-		}
-		return hex.EncodeToString(hasher.Sum(nil)), nil
-	} else {
-		sort.Strings(files)
-		buf := make([]byte, 0, len(files))
-		for _, file := range files {
-			f, err := dirFS.Open(file)
+
+	buf := make([]byte, 0)
+	for _, inputFile := range files {
+		for _, file := range inputFile.files {
+			f, err := inputFile.dirFS.Open(file)
 			if err != nil {
 				return nil, NewErrorFrom(ErrInvalidData, "unable to read file %s: %v", file, err)
 			}
@@ -306,13 +301,13 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 			_ = f.Close()
 			buf = append(buf, []byte(hex.EncodeToString(hasher.Sum(nil)))...)
 		}
-		hasher := sha256.New()
-		_, err := hasher.Write(buf)
-		if err != nil {
-			return nil, NewErrorFrom(ErrInvalidData, "unable to compute global sha256: %v", err)
-		}
-		return hex.EncodeToString(hasher.Sum(nil)), nil
 	}
+	hasher := sha256.New()
+	_, err := hasher.Write(buf)
+	if err != nil {
+		return nil, NewErrorFrom(ErrInvalidData, "unable to compute global sha256: %v", err)
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 func success(_ context.Context, a *ActionParser, inputs ...interface{}) (interface{}, error) {
