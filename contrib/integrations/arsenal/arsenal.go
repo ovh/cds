@@ -108,7 +108,7 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) 
 		}
 		if statusCode == http.StatusMethodNotAllowed {
 			lastErr = &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
-			time.Sleep(100 * time.Second)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		if statusCode == http.StatusBadRequest {
