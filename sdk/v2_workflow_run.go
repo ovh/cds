@@ -571,7 +571,7 @@ func (r *V2WorkflowRunResult) ComputedFields() {
 	}
 	r.Identifier = r.Name()
 	r.Label = r.GetLabel()
-	r.Metadata = r.GetMetdata()
+	r.Metadata = r.GetMetadata()
 	r.URL = r.GetURL()
 }
 
@@ -584,7 +584,7 @@ func (r *V2WorkflowRunResult) GetLabel() string {
 	return detail.GetLabel()
 }
 
-func (r *V2WorkflowRunResult) GetMetdata() map[string]V2WorkflowRunResultDetailMetadata {
+func (r *V2WorkflowRunResult) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
 	detail, err := r.GetDetail()
 	if err != nil {
 		log.ErrorWithStackTrace(context.Background(), err)
@@ -595,7 +595,15 @@ func (r *V2WorkflowRunResult) GetMetdata() map[string]V2WorkflowRunResultDetailM
 
 func (r *V2WorkflowRunResult) GetURL() string {
 	var u string
-	if r.ArtifactManagerMetadata != nil {
+	metadata := r.GetMetadata()
+	urlData, has := metadata["URL"]
+	if !has {
+		urlData, has = metadata["url"]
+	}
+	if has && urlData.Type == V2WorkflowRunResultDetailMetadataTypeURL {
+		u = urlData.Value
+	}
+	if u == "" && r.ArtifactManagerMetadata != nil {
 		u = r.ArtifactManagerMetadata.Get("downloadURI")
 		if u == "" {
 			u = r.ArtifactManagerMetadata.Get("uri")

@@ -658,6 +658,20 @@ type V2WorkflowRunResultStaticFilesDetail struct {
 	PublicURL      string `json:"public_url" mapstructure:"public_url"`
 }
 
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultStaticFilesDetail) GetLabel() string {
+	return v.Name
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultStaticFilesDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Name":            {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"URL":             {Type: V2WorkflowRunResultDetailMetadataTypeURL, Value: v.PublicURL},
+		"Artifactory URL": {Type: V2WorkflowRunResultDetailMetadataTypeURL, Value: v.ArtifactoryURL},
+	}
+}
+
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultStaticFilesDetail) Cast(i any) error {
 	if err := castV2WorkflowRunResultDetailWithMapStructure(i, v); err != nil {
