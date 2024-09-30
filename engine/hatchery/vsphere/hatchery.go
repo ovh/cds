@@ -400,7 +400,7 @@ func (h *HatcheryVSphere) killAwolServers(ctx context.Context) {
 			log.Info(ctx, "deleting machine %q as it's already marked to be deleted", s.Name)
 			if err := h.deleteServer(ctx, s); err != nil {
 				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "killAwolServers> cannot delete server (markedToDelete) %s", s.Name)
+				log.Error(ctx, "killAwolServers> cannot delete server (markedToDelete) %s: %v", s.Name, err)
 			}
 			continue
 		}
@@ -636,7 +636,7 @@ func (h *HatcheryVSphere) provisioningV2(ctx context.Context) {
 
 			if err := h.ProvisionWorkerV2(ctx, modelVMware, workerName); err != nil {
 				ctx = log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to provision vmware model %q: %v", modelVMware, err)
+				log.Error(ctx, "unable to provision vmware worker v2 %q model %q: %v", workerName, modelVMware, err)
 				h.markToDelete(ctx, workerName)
 			}
 
@@ -750,7 +750,7 @@ func (h *HatcheryVSphere) provisioningV1(ctx context.Context) {
 
 			if err := h.ProvisionWorkerV1(ctx, mapModels[modelPath], workerName); err != nil {
 				ctx = log.ContextWithStackTrace(ctx, err)
-				log.Error(ctx, "unable to provision model %q: %v", modelPath, err)
+				log.Error(ctx, "unable to provision vmware worker v1 %q model %q: %v", workerName, mapModels[modelPath], err)
 				h.markToDelete(ctx, workerName)
 			}
 

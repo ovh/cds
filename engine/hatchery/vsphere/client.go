@@ -155,7 +155,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 			log.Error(ctx, "failed check worker model register: %v", err)
 			tuple := strings.SplitN(annot.WorkerModelPath, "/", 2)
 			if err := h.CDSClient().WorkerModelSpawnError(tuple[0], tuple[1], spawnErr); err != nil {
-				log.Error(ctx, "CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
+				log.Error(ctx, "deleteServer> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelPath, err)
 			}
 		}
 	}
@@ -164,7 +164,9 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 
 	if isPoweredOn {
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
-			return err
+			log.Error(ctx, "deleteServer> error on call vSphereClient.ShutdownVirtualMachine %q - err:%v", s.Name, err)
+			// do not return here, the err could be :
+			// err: The attempted operation cannot be performed in the current state (Powered off).
 		}
 	}
 
