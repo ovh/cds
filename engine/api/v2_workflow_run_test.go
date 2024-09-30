@@ -539,6 +539,9 @@ func TestRunManualSkippedJob(t *testing.T) {
 					Gate:   "preprod",
 					Region: "build-test",
 					Needs:  []string{"job1"},
+					Steps: []sdk.ActionStep{{
+						Run: "echo hello",
+					}},
 				},
 				"job3": {
 					Needs: []string{"job1"},
