@@ -1067,6 +1067,15 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 			if jobDef.RunsOn.Model != "" {
 				runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
 			}
+			for _, jobEvent := range run.RunJobEvent {
+				if jobEvent.RunAttempt != run.RunAttempt {
+					continue
+				}
+				if jobEvent.JobID != runJob.JobID {
+					continue
+				}
+				runJob.GateInputs = jobEvent.Inputs
+			}
 			runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, wrEnqueue, u)
 			if runJobInfo != nil {
 				runJobsInfo[runJob.ID] = *runJobInfo
@@ -1103,6 +1112,15 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 				if jobDef.RunsOn.Model != "" {
 					runJob.ModelType = run.WorkflowData.WorkerModels[jobDef.RunsOn.Model].Type
 				}
+				for _, jobEvent := range run.RunJobEvent {
+					if jobEvent.RunAttempt != run.RunAttempt {
+						continue
+					}
+					if jobEvent.JobID != runJob.JobID {
+						continue
+					}
+					runJob.GateInputs = jobEvent.Inputs
+				}
 				runJobInfo, runUpdated := computeRunJobsInterpolation(ctx, db, store, wref, run, &runJob, defaultRegion, regionPermCache, wrEnqueue, u)
 				if runJobInfo != nil {
 					runJobsInfo[runJob.ID] = *runJobInfo
@@ -1115,19 +1133,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 		}
 	}
 
-	// Set gate inputs
-	for i := range runJobs {
-		rj := &runJobs[i]
-		for _, jobEvent := range run.RunJobEvent {
-			if jobEvent.RunAttempt != run.RunAttempt {
-				continue
-			}
-			if jobEvent.JobID != rj.JobID {
-				continue
-			}
-			rj.GateInputs = jobEvent.Inputs
-		}
-	}
 	return runJobs, runJobsInfo, nil, hasToUpdateRun, nil
 }
 
