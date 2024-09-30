@@ -45,6 +45,7 @@ func init() {
 		&V2WorkflowRunResultTerraformProviderDetail{},
 		&V2WorkflowRunResultTestDetail{},
 		&V2WorkflowRunResultVariableDetail{},
+		&V2WorkflowRunResultStaticFilesDetail{},
 	)
 }
 
@@ -191,6 +192,7 @@ const (
 	V2WorkflowRunResultTypeHelm              = "helm"
 	V2WorkflowRunResultTypeTerraformProvider = "terraformProvider"
 	V2WorkflowRunResultTypeTerraformModule   = "terraformModule"
+	V2WorkflowRunResultTypeStaticFiles       = "staticFiles"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 
@@ -445,4 +447,23 @@ func castV2WorkflowRunResultDetailWithMapStructure[T any](input any, output T) e
 		return WrapError(err, "cannot unmarshal %s to %s", ttI.Name(), ttO.Name())
 	}
 	return nil
+}
+
+type V2WorkflowRunResultStaticFilesDetail struct {
+	Name           string `json:"name" mapstructure:"name"`
+	ArtifactoryURL string `json:"artifactory_url" mapstructure:"artifactory_url"`
+	PublicURL      string `json:"public_url" mapstructure:"public_url"`
+}
+
+// Cast implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultStaticFilesDetail) Cast(i any) error {
+	if err := castV2WorkflowRunResultDetailWithMapStructure(i, v); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetName implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultStaticFilesDetail) GetName() string {
+	return v.Name
 }
