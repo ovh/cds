@@ -93,18 +93,18 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) 
 	req.Header.Add(arsenalDeploymentTokenHeader, ac.deploymentToken)
 
 	var (
-		deployResult *DeployResponse
+		deployResult DeployResponse
 		nbRetry      int
 		lastErr      error
 	)
 	for ; nbRetry < 5; nbRetry++ {
 		lastErr = nil
-		statusCode, rawBody, err := ac.doRequest(req, deployResult)
+		statusCode, rawBody, err := ac.doRequest(req, &deployResult)
 		if err != nil {
 			return nil, err
 		}
 		if statusCode == http.StatusOK {
-			return deployResult, lastErr
+			return &deployResult, lastErr
 		}
 		if statusCode == http.StatusMethodNotAllowed {
 			lastErr = &RequestError{fmt.Sprintf("deploy request failed (HTTP status %d): %s", statusCode, rawBody)}
@@ -120,7 +120,7 @@ func (ac *Client) Deploy(deployRequest *DeployRequest) (*DeployResponse, error) 
 		return nil, fmt.Errorf("cannot reach Arsenal service (HTTP status %d)", statusCode)
 	}
 
-	return deployResult, lastErr
+	return &deployResult, lastErr
 }
 
 // Follow makes a followup request with a followup token.
