@@ -17,8 +17,10 @@ func getAllRunResults(ctx context.Context, db gorp.SqlExecutor, query gorpmappin
 		return nil, err
 	}
 	jobResults := make([]sdk.V2WorkflowRunResult, 0, len(dbWkfRunResults))
-	for _, rr := range dbWkfRunResults {
-		jobResults = append(jobResults, rr.V2WorkflowRunResult)
+	for i := range dbWkfRunResults {
+		rr := &dbWkfRunResults[i].V2WorkflowRunResult
+		rr.ComputedFields()
+		jobResults = append(jobResults, *rr)
 	}
 	return jobResults, nil
 }
@@ -28,11 +30,13 @@ func InsertRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2
 	if err := gorpmapping.Insert(db, &entity); err != nil {
 		return err
 	}
+	runResult.ComputedFields()
 	return nil
 }
 
 func UpdateRunResult(ctx context.Context, db gorp.SqlExecutor, runResult *sdk.V2WorkflowRunResult) error {
 	entity := dbV2WorkflowRunResult{*runResult}
+	runResult.ComputedFields()
 	return gorpmapping.Update(db, &entity)
 }
 
@@ -85,7 +89,9 @@ func LoadRunResult(ctx context.Context, db gorp.SqlExecutor, runID string, id st
 	if !found {
 		return nil, sdk.WrapError(sdk.ErrNotFound, "unable to run load result id=%s workflow_run_id=%s", id, runID)
 	}
-	return &result.V2WorkflowRunResult, nil
+	r := &result.V2WorkflowRunResult
+	r.ComputedFields()
+	return r, nil
 }
 
 func LoadAndLockRunResultByID(ctx context.Context, db gorp.SqlExecutor, id string) (*sdk.V2WorkflowRunResult, error) {
@@ -98,7 +104,9 @@ func LoadAndLockRunResultByID(ctx context.Context, db gorp.SqlExecutor, id strin
 	if !found {
 		return nil, nil
 	}
-	return &result.V2WorkflowRunResult, nil
+	r := &result.V2WorkflowRunResult
+	r.ComputedFields()
+	return r, nil
 }
 
 func LoadRunResultsByRunJobID(ctx context.Context, db gorp.SqlExecutor, runJobID string) ([]sdk.V2WorkflowRunResult, error) {
