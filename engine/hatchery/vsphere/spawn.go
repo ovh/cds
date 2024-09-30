@@ -425,6 +425,8 @@ func (h *HatcheryVSphere) markToDelete(ctx context.Context, vmName string) {
 	h.cacheToDelete.mu.Lock()
 	defer h.cacheToDelete.mu.Unlock()
 
+	log.Debug(ctx, "markToDelete %q", vmName)
+
 	// Reload the vm ref to get the annotation
 	allVMRef, err := h.vSphereClient.ListVirtualMachines(ctx)
 	if err != nil {
