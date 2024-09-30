@@ -26,6 +26,7 @@ require (
 	github.com/docker/docker v25.0.6+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/docker/go-units v0.5.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/eapache/go-resiliency v1.3.0
 	github.com/fatih/color v1.16.0
 	github.com/fsamin/go-dump v1.0.9

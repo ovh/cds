@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/dustin/go-humanize"
 	"github.com/mitchellh/mapstructure"
+	"github.com/ovh/cds/sdk/artifact_manager/artifactory/xray"
 	"github.com/pkg/errors"
 	"github.com/rockbears/log"
 )
@@ -52,6 +55,21 @@ func init() {
 type V2WorkflowRunResultDetailInterface interface {
 	Cast(i any) error
 	GetName() string
+	GetLabel() string
+	GetMetadata() map[string]V2WorkflowRunResultDetailMetadata
+}
+
+type V2WorkflowRunResultDetailMetadataType string
+
+const (
+	V2WorkflowRunResultDetailMetadataTypeText   = "TEXT"
+	V2WorkflowRunResultDetailMetadataTypeNUMBER = "NUMBER"
+	V2WorkflowRunResultDetailMetadataTypeURL    = "URL"
+)
+
+type V2WorkflowRunResultDetailMetadata struct {
+	Type  V2WorkflowRunResultDetailMetadataType `json:"type"` // number, text, url
+	Value string                                `json:"value"`
 }
 
 type V2WorkflowRunResultDetail struct {
@@ -207,6 +225,22 @@ type V2WorkflowRunResultTestDetail struct {
 	TestStats   TestsStats       `json:"tests_stats" mapstructure:"tests_stats"`
 }
 
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultTestDetail) GetLabel() string {
+	return fmt.Sprintf("Filename: %s", v.Name)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultTestDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Filename":      {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Total":         {Type: V2WorkflowRunResultDetailMetadataTypeNUMBER, Value: strconv.Itoa(v.TestStats.Total)},
+		"Total passed":  {Type: V2WorkflowRunResultDetailMetadataTypeNUMBER, Value: strconv.Itoa(v.TestStats.TotalOK)},
+		"Total failed":  {Type: V2WorkflowRunResultDetailMetadataTypeNUMBER, Value: strconv.Itoa(v.TestStats.TotalKO)},
+		"Total skipped": {Type: V2WorkflowRunResultDetailMetadataTypeNUMBER, Value: strconv.Itoa(v.TestStats.TotalSkipped)},
+	}
+}
+
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultTestDetail) Cast(i any) error {
 	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
@@ -224,6 +258,21 @@ type V2WorkflowRunResultTerraformModuleDetail struct {
 	Provider  string `json:"provider"`
 	Version   string `json:"version"`
 	ID        string `json:"id"`
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultTerraformModuleDetail) GetLabel() string {
+	return fmt.Sprintf("Name: %s - Version: %s - Provider: %s - Namespace: %s", v.Name, v.Version, v.Provider, v.Namespace)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultTerraformModuleDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Name":      {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Version":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+		"Provider":  {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Provider},
+		"Namespace": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Namespace},
+	}
 }
 
 // Cast implements V2WorkflowRunResultDetailInterface.
@@ -244,6 +293,21 @@ type V2WorkflowRunResultTerraformProviderDetail struct {
 	Version   string `json:"version"`
 }
 
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultTerraformProviderDetail) GetLabel() string {
+	return fmt.Sprintf("Name: %s - Version: %s - Namespace: %s - Flavor: %s", v.Name, v.Version, v.Namespace, v.Flavor)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultTerraformProviderDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Name":      {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Version":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+		"Namespace": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Namespace},
+		"Flavor":    {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Flavor},
+	}
+}
+
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultTerraformProviderDetail) Cast(i any) error {
 	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
@@ -261,6 +325,22 @@ type V2WorkflowRunResultGenericDetail struct {
 	MD5    string      `json:"md5" mapstructure:"md5"`
 	SHA1   string      `json:"sha1" mapstructure:"sha1"`
 	SHA256 string      `json:"sha256" mapstructure:"sha256"`
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultGenericDetail) GetLabel() string {
+	return fmt.Sprintf("Filename: %s - Size: %s", v.Name, humanize.Bytes(uint64(v.Size)))
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultGenericDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Filename":     {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Size (bytes)": {Type: V2WorkflowRunResultDetailMetadataTypeNUMBER, Value: strconv.FormatInt(v.Size, 10)},
+		"MD5":          {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.MD5},
+		"SHA1":         {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.SHA1},
+		"SHA256":       {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.SHA256},
+	}
 }
 
 // Cast implements V2WorkflowRunResultDetailInterface.
@@ -288,6 +368,28 @@ type V2WorkflowRunResultArsenalDeploymentDetail struct {
 	Alternative     *ArsenalDeploymentDetailAlternative `json:"alternative" mapstructure:"alternative"`
 }
 
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultArsenalDeploymentDetail) GetLabel() string {
+	return fmt.Sprintf("Name: %s - %s - version: %s", v.DeploymentName, v.IntegrationName, v.Version)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultArsenalDeploymentDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	x := map[string]V2WorkflowRunResultDetailMetadata{
+		"Deployment name": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.DeploymentName},
+		"Deployment ID":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.DeploymentID},
+		"Version":         {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+		"Stack name":      {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.StackName},
+		"Stack ID":        {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.StackID},
+		"Stack platform":  {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.StackPlatform},
+		"Namespace":       {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Namespace},
+	}
+	if v.Alternative != nil {
+		x["Alternative"] = V2WorkflowRunResultDetailMetadata{Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Alternative.Name}
+	}
+	return x
+}
+
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultArsenalDeploymentDetail) Cast(i any) error {
 	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
@@ -312,6 +414,19 @@ type V2WorkflowRunResultDockerDetail struct {
 	HumanCreated string `json:"human_created" mapstructure:"human_created"`
 }
 
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (x *V2WorkflowRunResultDockerDetail) GetLabel() string {
+	return fmt.Sprintf("Image: %s", x.Name)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (x *V2WorkflowRunResultDockerDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Image": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.Name},
+		"ID":    {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.ID},
+	}
+}
+
 type V2WorkflowRunResultDebianDetail struct {
 	Name          string   `json:"name" mapstructure:"name"`
 	Size          int64    `json:"size" mapstructure:"size"`
@@ -321,6 +436,25 @@ type V2WorkflowRunResultDebianDetail struct {
 	Components    []string `json:"components" mapstructure:"components"`
 	Distributions []string `json:"distributions" mapstructure:"distributions"`
 	Architectures []string `json:"architectures" mapstructure:"architectures"`
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultDebianDetail) GetLabel() string {
+	return fmt.Sprintf("Package: %s - Size: %s", v.Name, humanize.Bytes(uint64(v.Size)))
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultDebianDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Package":       {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Size (bytes)":  {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: strconv.FormatInt(v.Size, 10)},
+		"MD5":           {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.MD5},
+		"SHA1":          {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.SHA1},
+		"SHA256":        {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.SHA256},
+		"Components":    {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: strings.Join(v.Components, " ")},
+		"Architectures": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: strings.Join(v.Architectures, " ")},
+		"Distributions": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: strings.Join(v.Distributions, " ")},
+	}
 }
 
 // Cast implements V2WorkflowRunResultDetailInterface.
@@ -339,6 +473,20 @@ type V2WorkflowRunResultPythonDetail struct {
 	Extension string `json:"extension" mapstructure:"extension"`
 }
 
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultPythonDetail) GetLabel() string {
+	return fmt.Sprintf("Package: %s - Version: %s", v.Name, v.Extension)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultPythonDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Package":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Version":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Version},
+		"Extension": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Extension},
+	}
+}
+
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultPythonDetail) Cast(i any) error {
 	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
@@ -353,6 +501,20 @@ type V2WorkflowRunResultHelmDetail struct {
 	Name         string `json:"name" mapstructure:"name"`
 	AppVersion   string `json:"appVersion" mapstructure:"appVersion"`
 	ChartVersion string `json:"chartVersion" mapstructure:"chartVersion"`
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultHelmDetail) GetLabel() string {
+	return fmt.Sprintf("Chart: %s - Version: %s", v.Name, v.ChartVersion)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultHelmDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Chart":        {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"AppVersion":   {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.AppVersion},
+		"ChartVersion": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.ChartVersion},
+	}
 }
 
 // Cast implements V2WorkflowRunResultDetailInterface.
@@ -372,6 +534,19 @@ type V2WorkflowRunResultVariableDetail struct {
 	Value string `json:"value" mapstructure:"value"`
 }
 
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultVariableDetail) GetLabel() string {
+	return fmt.Sprintf("Name: %q - Value: %q", v.Name, v.Value)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (v *V2WorkflowRunResultVariableDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	return map[string]V2WorkflowRunResultDetailMetadata{
+		"Name":  {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Name},
+		"Value": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: v.Value},
+	}
+}
+
 // Cast implements V2WorkflowRunResultDetailInterface.
 func (v *V2WorkflowRunResultVariableDetail) Cast(i any) error {
 	return castV2WorkflowRunResultDetailWithMapStructure(i, v)
@@ -386,6 +561,34 @@ type V2WorkflowRunResultReleaseDetail struct {
 	Name    string          `json:"name" mapstructure:"name"`
 	Version string          `json:"version" mapstructure:"version"`
 	SBOM    json.RawMessage `json:"sbom" mapstructure:"sbom"`
+}
+
+// GetLabel implements V2WorkflowRunResultDetailInterface.
+func (x *V2WorkflowRunResultReleaseDetail) GetLabel() string {
+	return fmt.Sprintf("Name: %q - Version: %q", x.Name, x.Version)
+}
+
+// GetMetadata implements V2WorkflowRunResultDetailInterface.
+func (x *V2WorkflowRunResultReleaseDetail) GetMetadata() map[string]V2WorkflowRunResultDetailMetadata {
+	var sbom xray.CycloneDXReport
+	if err := json.Unmarshal(x.SBOM, &sbom); err != nil {
+		log.Error(context.Background(), "unable to parse sbom as CycloneDXReport: %v", err)
+		return map[string]V2WorkflowRunResultDetailMetadata{
+			"Name":    {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.Name},
+			"Version": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.Version},
+		}
+	}
+
+	results := map[string]V2WorkflowRunResultDetailMetadata{
+		"Name":    {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.Name},
+		"Version": {Type: V2WorkflowRunResultDetailMetadataTypeText, Value: x.Version},
+	}
+
+	for i, c := range sbom.Components {
+		results[fmt.Sprintf("Component[%d]", i)] = V2WorkflowRunResultDetailMetadata{Type: V2WorkflowRunResultDetailMetadataTypeText, Value: fmt.Sprintf("[%s] %s %s", c.Type, c.Name, c.Version)}
+	}
+
+	return results
 }
 
 func (x *V2WorkflowRunResultReleaseDetail) Cast(i any) error {

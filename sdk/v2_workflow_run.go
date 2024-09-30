@@ -557,6 +557,55 @@ type V2WorkflowRunResult struct {
 	Detail                         V2WorkflowRunResultDetail                   `json:"detail" db:"artifact_manager_detail"`
 	DataSync                       *WorkflowRunResultSync                      `json:"sync" db:"sync"`
 	Status                         string                                      `json:"status" db:"status"`
+	// Below are computed fields and displayed on the UI
+	Label      string                                       `json:"label,omitempty" db:"-"`
+	Identifier string                                       `json:"identifier,omitempty" db:"-"`
+	Metadata   map[string]V2WorkflowRunResultDetailMetadata `json:"metadata,omitempty" db:"-"`
+	URL        string                                       `json:"url,omitempty" db:"-"`
+}
+
+func (r *V2WorkflowRunResult) ComputedFields() {
+	if err := r.CastDetail(); err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
+		return
+	}
+	r.Identifier = r.Name()
+	r.Label = r.GetLabel()
+	r.Metadata = r.GetMetdata()
+	r.URL = r.GetURL()
+}
+
+func (r *V2WorkflowRunResult) GetLabel() string {
+	detail, err := r.GetDetail()
+	if err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
+		return "-"
+	}
+	return detail.GetLabel()
+}
+
+func (r *V2WorkflowRunResult) GetMetdata() map[string]V2WorkflowRunResultDetailMetadata {
+	detail, err := r.GetDetail()
+	if err != nil {
+		log.ErrorWithStackTrace(context.Background(), err)
+		return nil
+	}
+	return detail.GetMetadata()
+}
+
+func (r *V2WorkflowRunResult) GetURL() string {
+	var u string
+	if r.ArtifactManagerMetadata != nil {
+		u = r.ArtifactManagerMetadata.Get("downloadURI")
+		if u == "" {
+			u = r.ArtifactManagerMetadata.Get("uri")
+		}
+		if u == "" {
+			u = r.ArtifactManagerMetadata.Get("cdn_http_url")
+		}
+	}
+
+	return u
 }
 
 func (r *V2WorkflowRunResult) GetDetail() (V2WorkflowRunResultDetailInterface, error) {
