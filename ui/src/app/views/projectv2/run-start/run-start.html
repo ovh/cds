@@ -1,4 +1,4 @@
-<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()" s>
+<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
   <nz-form-item>
     <nz-form-label [nzSpan]="6" nzFor="repository">Repository</nz-form-label>
     <nz-form-control [nzSpan]="14">
@@ -42,7 +42,7 @@
   </nz-form-item>
   <nz-form-item *ngIf="!event">
     <nz-form-control [nzSpan]="12" [nzOffset]="6">
-      <button nz-button nzType="primary">Start</button>
+      <button nz-button nzType="primary" [nzLoading]="loading">Start</button>
     </nz-form-control>
   </nz-form-item>
 </form>

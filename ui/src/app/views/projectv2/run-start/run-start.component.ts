@@ -13,6 +13,7 @@ import { NzMessageService } from "ng-zorro-antd/message";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { LoadOptions, load } from "js-yaml";
 import { Branch, Tag } from "app/model/repositories.model";
+import { ErrorUtils } from "app/shared/error.utils";
 
 export class ProjectV2RunStartComponentParams {
   workflow_repository: string;
@@ -47,6 +48,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     sourceRef: FormControl<string | null>;
   }>;
   event: RepositoryHookEvent;
+  loading: boolean;
 
   constructor(
     private _drawerRef: NzDrawerRef<string>,
@@ -72,12 +74,21 @@ export class ProjectV2RunStartComponent implements OnInit {
   }
 
   async load() {
-    this.vcss = await lastValueFrom(this._projectService.listVCSProject(this.project.key));
-    const resp = await Promise.all(this.vcss.map(vcs => lastValueFrom(this._projectService.getVCSRepositories(this.project.key, vcs.name))));
-    this.repositories = {};
-    this.vcss.forEach((vcs, i) => {
-      this.repositories[vcs.name] = resp[i];
-    });
+    this.loading = true;
+    this._cd.markForCheck();
+    try {
+      this.vcss = await lastValueFrom(this._projectService.listVCSProject(this.project.key));
+      const resp = await Promise.all(this.vcss.map(vcs => lastValueFrom(this._projectService.getVCSRepositories(this.project.key, vcs.name))));
+      this.repositories = {};
+      this.vcss.forEach((vcs, i) => {
+        this.repositories[vcs.name] = resp[i];
+      });
+    } catch (e) {
+      this._messageService.error(`Unable to list repositories: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+      this.loading = false;
+      this._cd.markForCheck();
+      return
+    }
     let selectedRepository = this.params.workflow_repository ?? (this.params.repository ?? null);
     if (!selectedRepository && this.params.workflow) {
       const splitted = this.splitWorkflow(this.params.workflow);
@@ -89,31 +100,52 @@ export class ProjectV2RunStartComponent implements OnInit {
         this.validateForm.controls.repository.setValue(selectedRepository);
       }
     }
+    this.loading = false;
     this._cd.markForCheck();
   }
 
   async repositoryChange(value: string) {
+    this.loading = true;
+    this._cd.markForCheck();
     const splitted = this.splitRepository(value);
-    this.branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, splitted.vcs, splitted.repo, 50));
-    this.tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, splitted.vcs, splitted.repo));
+    try {
+      this.branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, splitted.vcs, splitted.repo, 50));
+      this.tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, splitted.vcs, splitted.repo));
+    } catch (e) {
+      this._messageService.error(`Unable to get repository refs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+      this.loading = false;
+      this._cd.markForCheck();
+      return
+    }
     const selectedRef = this.params.workflow_ref ?? (this.params.ref ?? null);
     if (selectedRef && (this.branches.findIndex(b => `refs/heads/${b.display_id}` === selectedRef) !== -1 || this.tags.findIndex(t => `refs/tags/${t.tag}` === selectedRef) !== -1)) {
       this.validateForm.controls.ref.setValue(selectedRef);
     } else {
       this.validateForm.controls.ref.setValue('refs/heads/' + this.branches.find(b => b.default).display_id);
     }
+    this.loading = false;
     this._cd.markForCheck();
   }
 
   async refChange(branch: string) {
+    this.loading = true;
+    this._cd.markForCheck();
     const splitted = this.splitRepository(this.validateForm.controls.repository.value);
-    const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, splitted.vcs, splitted.repo, branch));
-    this.workflows = resp.filter(e => e.type === EntityType.Workflow).map(e => e.name);
+    try {
+      const resp = await lastValueFrom(this._projectService.getRepoEntities(this.project.key, splitted.vcs, splitted.repo, branch));
+      this.workflows = resp.filter(e => e.type === EntityType.Workflow).map(e => e.name);
+    } catch (e) {
+      this._messageService.error(`Unable to get repo entities: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+      this.loading = false;
+      this._cd.markForCheck();
+      return
+    }
     if (this.params.workflow && this.workflows.findIndex(w => `${splitted.vcs}/${splitted.repo}/${w}` === this.params.workflow) !== -1) {
       this.validateForm.controls.workflow.setValue(this.params.workflow.replace(`${splitted.vcs}/${splitted.repo}/`, ''));
     } else {
       this.validateForm.controls.workflow.reset();
     }
+    this.loading = false;
     this._cd.markForCheck();
   }
 
@@ -121,16 +153,21 @@ export class ProjectV2RunStartComponent implements OnInit {
     if (!workflow) {
       return;
     }
+    this.loading = true;
+    this._cd.markForCheck();
     const form = this.validateForm.controls;
     const splitted = this.splitRepository(form.repository.value);
-    const entity = await lastValueFrom(this._projectService.getRepoEntity(this.project.key, splitted.vcs, splitted.repo, EntityType.Workflow, form.workflow.value, form.ref.value));
     let wkf: V2Workflow;
     try {
+      const entity = await lastValueFrom(this._projectService.getRepoEntity(this.project.key, splitted.vcs, splitted.repo, EntityType.Workflow, form.workflow.value, form.ref.value));
       wkf = load(entity.data && entity.data !== '' ? entity.data : '{}', <LoadOptions>{
         onWarning: (e) => { }
       });
     } catch (e) {
-      console.error("Invalid workflow:", entity.data, e)
+      this._messageService.error(`Unable to get workflow entity from repo: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+      this.loading = false;
+      this._cd.markForCheck();
+      return
     }
     if (wkf.repository) {
       this.validateForm.controls.sourceRepository.setValidators([Validators.required]);
@@ -150,6 +187,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       this.validateForm.controls.sourceRepository.clearValidators();
       this.validateForm.controls.sourceRef.clearValidators();
     }
+    this.loading = false;
     this._cd.markForCheck();
   }
 
@@ -204,19 +242,30 @@ export class ProjectV2RunStartComponent implements OnInit {
         req.workflow_branch = ref.replace('refs/heads/', '');
       }
     }
-    const resp = await lastValueFrom(this._workflowRunService.start(this.project.key, splitted.vcs, splitted.repo, this.validateForm.value.workflow, req));
-    this._messageService.success('Workflow run started', { nzDuration: 2000 });
+
+    let hookEventUUID: string;
+    try {
+      const resp = await lastValueFrom(this._workflowRunService.start(this.project.key, splitted.vcs, splitted.repo, this.validateForm.value.workflow, req));
+      this._messageService.success('Workflow run started', { nzDuration: 2000 });
+      hookEventUUID = resp.hook_event_uuid;
+    } catch (e) {
+      this._messageService.error(`Unable to start the workflow: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+      this.clearForm();
+      return
+    }
 
     // Wait for workflow run to start
     let retry = 0
     while (retry < 90) {
       try {
-        this.event = await lastValueFrom(this._projectService.getRepositoryEvent(this.project.key, splitted.vcs, splitted.repo, resp.hook_event_uuid));
+        this.event = await lastValueFrom(this._projectService.getRepositoryEvent(this.project.key, splitted.vcs, splitted.repo, hookEventUUID));
         this._cd.markForCheck();
         if (this.event.status === HookEventWorkflowStatus.Done || this.event.status === HookEventWorkflowStatus.Error || this.event.status === HookEventWorkflowStatus.Skipped) {
           break;
         }
-      } catch (e) { }
+      } catch (e) {
+        this._messageService.error(`Unable to get repository event: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+      }
       await (new Promise(resolve => setTimeout(resolve, 1000)));
       retry++;
     }
