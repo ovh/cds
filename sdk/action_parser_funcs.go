@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
+	"sort"
 	"strings"
 
 	"github.com/ovh/cds/sdk/glob"
@@ -286,22 +288,30 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 		return nil, NewErrorFrom(ErrInvalidData, "find 0 file with filter %v", inputs)
 	}
 
-	buf := make([]byte, 0)
+	allFiles := make([]string, 0)
 	for _, inputFile := range files {
-		for _, file := range inputFile.files {
-			f, err := inputFile.dirFS.Open(file)
-			if err != nil {
-				return nil, NewErrorFrom(ErrInvalidData, "unable to read file %s: %v", file, err)
-			}
-			hasher := sha256.New()
-			if _, err := io.Copy(hasher, f); err != nil {
-				_ = f.Close()
-				return nil, NewErrorFrom(ErrInvalidData, "unable to compute sha256 for file %s: %v", file, err)
-			}
-			_ = f.Close()
-			buf = append(buf, []byte(hex.EncodeToString(hasher.Sum(nil)))...)
+		for _, f := range inputFile.files {
+			allFiles = append(allFiles, strings.TrimSuffix(fmt.Sprintf("%s", inputFile.dirFS), "/")+"/"+f)
 		}
 	}
+	sort.Strings(allFiles)
+
+	buf := make([]byte, 0)
+
+	for _, file := range allFiles {
+		f, err := os.Open(file)
+		if err != nil {
+			return nil, NewErrorFrom(ErrInvalidData, "unable to read file %s: %v", file, err)
+		}
+		hasher := sha256.New()
+		if _, err := io.Copy(hasher, f); err != nil {
+			_ = f.Close()
+			return nil, NewErrorFrom(ErrInvalidData, "unable to compute sha256 for file %s: %v", file, err)
+		}
+		_ = f.Close()
+		buf = append(buf, []byte(hex.EncodeToString(hasher.Sum(nil)))...)
+	}
+
 	hasher := sha256.New()
 	_, err := hasher.Write(buf)
 	if err != nil {
