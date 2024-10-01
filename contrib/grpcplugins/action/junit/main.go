@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -61,8 +62,8 @@ func (actPlugin *junitPlugin) Run(ctx context.Context, q *actionplugin.ActionQue
 	return nil, sdk.ErrNotImplemented
 }
 
-func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS, filePath string) error {
-	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, dirFS, filePath, "ERROR")
+func (actPlugin *junitPlugin) perform(ctx context.Context, workingDir, filePath string) error {
+	fileResult, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, workingDir, filePath, "ERROR")
 	if err != nil {
 		return err
 	}
@@ -73,8 +74,9 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, dirFS, filePath strin
 	}
 
 	testFailed := 0
-	for _, r := range results {
-		bts, err := os.ReadFile(r.Path)
+	for _, r := range fileResult.Results {
+
+		bts, err := os.ReadFile(strings.TrimSuffix(fmt.Sprintf("%s", fileResult.DirFS), "/") + "/" + r.Path)
 		if err != nil {
 			_ = openFiles[r.Path].Close()
 			return errors.New(fmt.Sprintf("Unable to read file %q: %v.", r.Path, err))

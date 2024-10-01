@@ -963,7 +963,7 @@ func checksums(ctx context.Context, c *actionplugin.Common, dir fs.FS, path ...s
 	return result, nil
 }
 
-func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, cwd, filePath string, ifNoFilesFound string) (glob.Results, map[string]int64, map[string]os.FileMode, map[string]fs.File, map[string]ChecksumResult, error) {
+func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, cwd, filePath string, ifNoFilesFound string) (*glob.FileResults, map[string]int64, map[string]os.FileMode, map[string]fs.File, map[string]ChecksumResult, error) {
 	results, err := glob.Glob(cwd, filePath)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
@@ -1021,7 +1021,7 @@ func RetrieveFilesToUpload(ctx context.Context, c *actionplugin.Common, cwd, fil
 		return nil, nil, nil, nil, nil, err
 	}
 
-	return results.Results, sizes, permissions, openFiles, checksums, nil
+	return results, sizes, permissions, openFiles, checksums, nil
 }
 
 type IntegrationCache struct {

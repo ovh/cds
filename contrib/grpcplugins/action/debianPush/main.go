@@ -142,11 +142,11 @@ func (p *debianPushPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery)
 
 func (p *debianPushPlugin) perform(ctx context.Context, dirFS string, opts debianPushOptions) error {
 	for _, pattern := range opts.files {
-		results, sizes, _, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &p.Common, dirFS, pattern, "ERROR")
+		fileResults, sizes, _, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &p.Common, dirFS, pattern, "ERROR")
 		if err != nil {
 			return err
 		}
-		for _, r := range results {
+		for _, r := range fileResults.Results {
 			message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256)
 			grpcplugins.Log(&p.Common, message)
 
