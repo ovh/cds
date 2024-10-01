@@ -78,12 +78,12 @@ func (actPlugin *runActionUploadArtifactPlugin) perform(ctx context.Context, cwd
 		return errors.Errorf("unable to retrieve job context: %v", err)
 	}
 
-	results, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, cwd, path, ifNoFilesFound)
+	fileResults, sizes, permissions, openFiles, checksums, err := grpcplugins.RetrieveFilesToUpload(ctx, &actPlugin.Common, cwd, path, ifNoFilesFound)
 	if err != nil {
 		return err
 	}
 
-	for _, r := range results {
+	for _, r := range fileResults.Results {
 		message := fmt.Sprintf("\nStarting upload of file %q as %q \n  Size: %d, MD5: %s, sha1: %s, SHA256: %s, Mode: %v", r.Path, r.Result, sizes[r.Path], checksums[r.Path].Md5, checksums[r.Path].Sha1, checksums[r.Path].Sha256, permissions[r.Path])
 		grpcplugins.Log(&actPlugin.Common, message)
 
