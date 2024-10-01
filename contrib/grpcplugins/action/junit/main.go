@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"strings"
+	"path/filepath"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -76,7 +76,7 @@ func (actPlugin *junitPlugin) perform(ctx context.Context, workingDir, filePath 
 	testFailed := 0
 	for _, r := range fileResult.Results {
 
-		bts, err := os.ReadFile(strings.TrimSuffix(fmt.Sprintf("%s", fileResult.DirFS), "/") + "/" + r.Path)
+		bts, err := os.ReadFile(filepath.Join(fmt.Sprintf("%s", fileResult.DirFS), r.Path))
 		if err != nil {
 			_ = openFiles[r.Path].Close()
 			return errors.New(fmt.Sprintf("Unable to read file %q: %v.", r.Path, err))

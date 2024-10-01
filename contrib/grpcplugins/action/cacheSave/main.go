@@ -87,7 +87,7 @@ func (p *cacheSavePlugin) perform(ctx context.Context, jobCtx sdk.WorkflowRunJob
 			return err
 		}
 		for _, r := range results.Results {
-			resultPath := fmt.Sprintf("%s%s", results.DirFS, r.Path)
+			resultPath := filepath.Join(fmt.Sprintf("%s", results.DirFS), r.Path)
 			itemsToArchive = append(itemsToArchive, resultPath)
 			grpcplugins.Success(&p.Common, resultPath+" will be cached")
 		}
