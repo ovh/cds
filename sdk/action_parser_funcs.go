@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -291,7 +292,7 @@ func hashFiles(_ context.Context, a *ActionParser, inputs ...interface{}) (inter
 	allFiles := make([]string, 0)
 	for _, inputFile := range files {
 		for _, f := range inputFile.files {
-			allFiles = append(allFiles, strings.TrimSuffix(fmt.Sprintf("%s", inputFile.dirFS), "/")+"/"+f)
+			allFiles = append(allFiles, filepath.Join(fmt.Sprintf("%s", inputFile.dirFS), f))
 		}
 	}
 	sort.Strings(allFiles)
