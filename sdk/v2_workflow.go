@@ -397,6 +397,12 @@ type V2WorkflowHookData struct {
 
 func (d V2WorkflowHookData) ValidateRef(ctx context.Context, ref string) bool {
 	valid := false
+
+	// If no filter set, hook is ok
+	if len(d.BranchFilter) == 0 && len(d.TagFilter) == 0 {
+		return true
+	}
+
 	if strings.HasPrefix(ref, GitRefBranchPrefix) {
 		if len(d.BranchFilter) > 0 || len(d.TagFilter) == 0 {
 			valid = IsValidHookRefs(ctx, d.BranchFilter, strings.TrimPrefix(ref, GitRefBranchPrefix))
