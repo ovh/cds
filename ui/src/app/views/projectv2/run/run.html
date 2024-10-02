@@ -124,7 +124,8 @@
                     <thead>
                         <tr>
                             <th nzWidth="100px">Type</th>
-                            <th>Name</th>
+                            <th>Label</th>
+                            <th>Identifier</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -134,20 +135,10 @@
                                 {{result.type}}
                             </td>
                             <td>
-                                <ng-container [ngSwitch]="result.type">
-                                    <ng-container *ngSwitchCase="'deployment'">
-                                        {{result.detail.data.deployment_name}}:{{result.detail.data.version}}
-                                    </ng-container>
-                                    <ng-container *ngSwitchCase="'terraformProvider'">
-                                        {{result.detail.data.namespace}}_{{result.detail.data.name}}_{{result.detail.data.version}}_{{result.detail.data.flavor}}
-                                    </ng-container>
-                                    <ng-container *ngSwitchCase="'terraformModule'">
-                                        {{result.detail.data.id}}/{{result.detail.data.version}}
-                                    </ng-container>
-                                    <ng-container *ngSwitchDefault>
-                                        {{result.detail.data.name ?? result.id}}
-                                    </ng-container>
-                                </ng-container>
+                                {{result.label}}
+                            </td>
+                            <td>
+                                {{result.identifier}}
                             </td>
                         </tr>
                     </tbody>
