@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from "@angular/core";
-import { ControlContainer, FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
+import { FormBuilder, FormControl, FormGroup, Validators } from "@angular/forms";
 import { Store } from "@ngxs/store";
 import { EntityType } from "app/model/entity.model";
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent } from "app/model/project.model";
@@ -48,7 +48,17 @@ export class ProjectV2RunStartComponent implements OnInit {
     sourceRef: FormControl<string | null>;
   }>;
   event: RepositoryHookEvent;
-  loading: boolean;
+  loaders: {
+    global: boolean,
+    repository: boolean,
+    ref: boolean,
+    workflow: boolean
+  } = {
+    global: false,
+    repository: false,
+    ref: false,
+    workflow: false
+  };
 
   constructor(
     private _drawerRef: NzDrawerRef<string>,
@@ -74,7 +84,7 @@ export class ProjectV2RunStartComponent implements OnInit {
   }
 
   async load() {
-    this.loading = true;
+    this.loaders.global = true;
     this._cd.markForCheck();
     try {
       this.vcss = await lastValueFrom(this._projectService.listVCSProject(this.project.key));
@@ -85,7 +95,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       });
     } catch (e) {
       this._messageService.error(`Unable to list repositories: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-      this.loading = false;
+      this.loaders.global = false;
       this._cd.markForCheck();
       return
     }
@@ -100,12 +110,12 @@ export class ProjectV2RunStartComponent implements OnInit {
         this.validateForm.controls.repository.setValue(selectedRepository);
       }
     }
-    this.loading = false;
+    this.loaders.global = false;
     this._cd.markForCheck();
   }
 
   async repositoryChange(value: string) {
-    this.loading = true;
+    this.loaders.repository = true;
     this._cd.markForCheck();
     const splitted = this.splitRepository(value);
     try {
@@ -113,7 +123,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       this.tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, splitted.vcs, splitted.repo));
     } catch (e) {
       this._messageService.error(`Unable to get repository refs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-      this.loading = false;
+      this.loaders.repository = false;
       this._cd.markForCheck();
       return
     }
@@ -123,12 +133,12 @@ export class ProjectV2RunStartComponent implements OnInit {
     } else {
       this.validateForm.controls.ref.setValue('refs/heads/' + this.branches.find(b => b.default).display_id);
     }
-    this.loading = false;
+    this.loaders.repository = false;
     this._cd.markForCheck();
   }
 
   async refChange(branch: string) {
-    this.loading = true;
+    this.loaders.ref = true;
     this._cd.markForCheck();
     const splitted = this.splitRepository(this.validateForm.controls.repository.value);
     try {
@@ -136,7 +146,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       this.workflows = resp.filter(e => e.type === EntityType.Workflow).map(e => e.name);
     } catch (e) {
       this._messageService.error(`Unable to get repo entities: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-      this.loading = false;
+      this.loaders.ref = false;
       this._cd.markForCheck();
       return
     }
@@ -145,7 +155,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     } else {
       this.validateForm.controls.workflow.reset();
     }
-    this.loading = false;
+    this.loaders.ref = false;
     this._cd.markForCheck();
   }
 
@@ -153,7 +163,7 @@ export class ProjectV2RunStartComponent implements OnInit {
     if (!workflow) {
       return;
     }
-    this.loading = true;
+    this.loaders.workflow = true;
     this._cd.markForCheck();
     const form = this.validateForm.controls;
     const splitted = this.splitRepository(form.repository.value);
@@ -165,7 +175,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       });
     } catch (e) {
       this._messageService.error(`Unable to get workflow entity from repo: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
-      this.loading = false;
+      this.loaders.workflow = false;
       this._cd.markForCheck();
       return
     }
@@ -187,7 +197,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       this.validateForm.controls.sourceRepository.clearValidators();
       this.validateForm.controls.sourceRef.clearValidators();
     }
-    this.loading = false;
+    this.loaders.workflow = false;
     this._cd.markForCheck();
   }
 
@@ -275,5 +285,9 @@ export class ProjectV2RunStartComponent implements OnInit {
     this.event = null;
     this.validateForm.enable();
     this._cd.markForCheck();
+  }
+
+  isLoading(): boolean {
+    return Object.keys(this.loaders).map(k => this.loaders[k]).reduce((p, c) => { return p || c });
   }
 }

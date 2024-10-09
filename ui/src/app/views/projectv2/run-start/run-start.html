@@ -42,7 +42,7 @@
   </nz-form-item>
   <nz-form-item *ngIf="!event">
     <nz-form-control [nzSpan]="12" [nzOffset]="6">
-      <button nz-button nzType="primary" [nzLoading]="loading">Start</button>
+      <button nz-button nzType="primary" [nzLoading]="isLoading()">Start</button>
     </nz-form-control>
   </nz-form-item>
 </form>

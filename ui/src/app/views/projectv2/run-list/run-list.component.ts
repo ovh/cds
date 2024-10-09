@@ -58,6 +58,7 @@ export class WorkflowRunFilterValue {
 export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestroy, AfterViewChecked {
 	static PANEL_KEY = 'project-v2-run-list-sidebar';
 	static DEFAULT_SORT = 'started:desc';
+	static DEFAULT_PAGESIZE = 20;
 
 	@ViewChild('filterInput') filterInput: ElementRef;
 	@ViewChild('filterInputDirective') filterInputDirective: NzAutocompleteTriggerDirective;
@@ -120,7 +121,9 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 				this.runs[idx] = event.payload;
 			} else {
 				this.runs = [event.payload].concat(...this.runs);
-				this.runs.pop();
+				if (this.runs.length > ProjectV2RunListComponent.DEFAULT_PAGESIZE) {
+					this.runs.pop();
+				}
 			}
 			this.animatedRuns[event.payload.id] = true;
 			this._cd.markForCheck();
@@ -215,8 +218,8 @@ export class ProjectV2RunListComponent implements OnInit, AfterViewInit, OnDestr
 		let params = new HttpParams();
 		params = params.appendAll({
 			...mFilters,
-			offset: this.pageIndex ? (this.pageIndex - 1) * 20 : 0,
-			limit: 20
+			offset: this.pageIndex ? (this.pageIndex - 1) * ProjectV2RunListComponent.DEFAULT_PAGESIZE : 0,
+			limit: ProjectV2RunListComponent.DEFAULT_PAGESIZE
 		});
 		if (this.sort !== ProjectV2RunListComponent.DEFAULT_SORT) {
 			params = params.append('sort', this.sort);
