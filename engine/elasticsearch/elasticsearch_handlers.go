@@ -170,10 +170,7 @@ func (s *Service) loadMetric(ctx context.Context, ID string) (sdk.Metric, error)
 
 	query := osquery.Query(osquery.IDs(ID))
 
-	results, err := s.esClient.SearchDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics,
-		query,
-		[]string{"_score:desc", "run:desc"},
-		-1, 10)
+	results, err := s.esClient.SearchDoc(ctx, s.Cfg.ElasticSearch.IndexMetrics, query, []string{"_score:desc", "run:desc"}, -1, 10)
 	if err != nil {
 		log.Warn(ctx, "elasticsearch> loadMetric> %v", err.Error())
 		if strings.Contains(err.Error(), indexNotFoundException) {

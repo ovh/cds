@@ -164,7 +164,7 @@ func (h *HatcheryVSphere) deleteServer(ctx context.Context, s mo.VirtualMachine)
 
 	if isPoweredOn {
 		if err := h.vSphereClient.ShutdownVirtualMachine(ctx, vm); err != nil {
-			log.Error(ctx, "deleteServer> error on call vSphereClient.ShutdownVirtualMachine %q - err:%v", s.Name, err)
+			log.Warn(ctx, "deleteServer> can't shutdown %q because err:%v", s.Name, err)
 			// do not return here, the err could be :
 			// err: The attempted operation cannot be performed in the current state (Powered off).
 		}

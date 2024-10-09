@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"net/http"
+	"strings"
 
 	"github.com/defensestation/osquery"
+	"github.com/opensearch-project/opensearch-go/v4"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 
 	"github.com/ovh/cds/engine/api"
@@ -42,11 +46,70 @@ func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, bo
 	if id == "" {
 		id = sdk.UUID()
 	}
-	return c.client.Document.Create(ctx, opensearchapi.DocumentCreateReq{
+
+	r := opensearchapi.DocumentCreateReq{
 		Index:      index,
 		DocumentID: id,
 		Body:       bytes.NewReader(btes),
-	})
+	}
+
+	var path strings.Builder
+	// https://opensearch.org/docs/latest/api-reference/document-apis/index-document/#path-and-http-methods
+	path.Grow(10 + len(r.Index) + len(r.DocumentID))
+	path.WriteString("/")
+	path.WriteString(r.Index)
+	path.WriteString("/_doc/")
+	path.WriteString(r.DocumentID)
+	br, err := opensearch.BuildRequest(
+		"PUT",
+		path.String(),
+		r.Body,
+		map[string]string{},
+		r.Header,
+	)
+	if err != nil {
+		return nil, sdk.WrapError(err, "error on BuildRequest")
+	}
+
+	documentResp := opensearchapi.DocumentCreateResp{}
+
+	resp, err := c.Do(ctx, br, &documentResp)
+	if err != nil {
+		return nil, err
+	}
+	if resp != nil && resp.StatusCode > 400 {
+		return nil, sdk.WrapError(err, "error on create or update document")
+	}
+	return &documentResp, nil
+}
+
+func (c *esClient) Do(ctx context.Context, httpReq *http.Request, dataPointer interface{}) (*opensearch.Response, error) {
+	httpReq = httpReq.WithContext(ctx)
+	resp, err := c.client.Client.Perform(httpReq)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &opensearch.Response{
+		StatusCode: resp.StatusCode,
+		Body:       resp.Body,
+		Header:     resp.Header,
+	}
+
+	if dataPointer != nil && resp.Body != nil && !response.IsError() {
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return response, sdk.WrapError(err, "error on read body")
+		}
+
+		response.Body = io.NopCloser(bytes.NewReader(data))
+
+		if err := json.Unmarshal(data, dataPointer); err != nil {
+			return response, sdk.WrapError(err, "error on json unmarshal data: %v", data)
+		}
+	}
+
+	return response, nil
 }
 
 func (c *esClient) SearchDoc(ctx context.Context, index string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error) {
