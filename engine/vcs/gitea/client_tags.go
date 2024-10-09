@@ -20,7 +20,7 @@ func (c *giteaClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, 
 		return nil, err
 	}
 
-	var ret []sdk.VCSTag
+	ret := make([]sdk.VCSTag, 0, len(tags))
 	for _, tag := range tags {
 		ret = append(ret, sdk.VCSTag{
 			Tag: tag.Name,
