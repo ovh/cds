@@ -1,6 +1,6 @@
 <nz-select [nzSize]="size" [ngModel]="selectedRef" [nzDropdownMatchSelectWidth]="false"
 	(click)="$event.stopPropagation()" [nzDropdownRender]="selectTemplate" [nzOptionHeightPx]="0"
-	[nzCustomTemplate]="selectLabelTmpl" [nzDisabled]="disabled" #select>
+	[nzCustomTemplate]="selectLabelTmpl" [nzDisabled]="disabled" [nzPlaceHolder]="placeHolder" #select>
 
 	<nz-option *ngFor="let opt of branches" [nzValue]="'refs/heads/' + opt.display_id"
 		[nzLabel]="opt.display_id"></nz-option>

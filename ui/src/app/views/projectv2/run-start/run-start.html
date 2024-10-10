@@ -15,7 +15,7 @@
     <nz-form-label [nzSpan]="6" nzFor="ref">Ref</nz-form-label>
     <nz-form-control [nzSpan]="14">
       <app-repository-ref-select [branches]="branches" [tags]="tags" formControlName="ref" id="ref"
-        (ngModelChange)="refChange($event)"></app-repository-ref-select>
+        placeHolder="Select a ref" (ngModelChange)="refChange($event)"></app-repository-ref-select>
     </nz-form-control>
   </nz-form-item>
   <nz-form-item>
@@ -37,7 +37,7 @@
     <nz-form-label [nzSpan]="6" nzFor="sourceRef">Source ref</nz-form-label>
     <nz-form-control [nzSpan]="14">
       <app-repository-ref-select [branches]="sourceBranches" [tags]="sourceTags" formControlName="sourceRef"
-        id="sourceRef"></app-repository-ref-select>
+        placeHolder="Select a ref" id="sourceRef"></app-repository-ref-select>
     </nz-form-control>
   </nz-form-item>
   <nz-form-item *ngIf="!event">
