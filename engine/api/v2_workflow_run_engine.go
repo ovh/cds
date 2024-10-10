@@ -739,7 +739,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
 
-	if strings.HasPrefix(rj.Job.Name, "${{") {
+	if strings.Contains(rj.Job.Name, "${{") {
 		jobName, err := ap.InterpolateToString(ctx, rj.Job.Name)
 		if err != nil {
 			rj.Status = sdk.V2WorkflowRunJobStatusFail
