@@ -28,6 +28,7 @@ export class RepositoryRefSelectComponent implements OnInit, OnChanges, ControlV
 	@Input() size: string = '';
 	@Input() branches: Array<Branch>;
 	@Input() tags: Array<Tag>;
+	@Input() placeHolder: string = '';
 
 	filteredBranches: Array<Branch>;
 	filteredTags: Array<Tag>;
