@@ -152,12 +152,12 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 		releaseValues, has := props["release.name"]
 		if has && len(releaseValues) > 0 {
 			if releaseValues[0] != futureReleaseName {
-				return promotedArtifact, errors.Errorf("run result %s is already part of another release: %s ", promotedArtifact, releaseValues[0])
+				return promotedArtifact, errors.Errorf("Run result %s is already part of another release: %s ", promotedArtifact, releaseValues[0])
 			}
 			releaseVersion, has := props["release.version"]
 			if has && len(releaseVersion) > 0 {
 				if releaseVersion[0] != futureReleaseVersion {
-					return promotedArtifact, errors.Errorf("run result %s has already been release in version %s", promotedArtifact, releaseVersion[0])
+					return promotedArtifact, errors.Errorf("Run result %s has already been release in version %s", promotedArtifact, releaseVersion[0])
 				}
 			}
 		}
