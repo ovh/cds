@@ -804,7 +804,7 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		}, false
 	}
 
-	if strings.HasPrefix(rj.Job.RunsOn.Model, "${{") {
+	if strings.Contains(rj.Job.RunsOn.Model, "${{") {
 		model, err := ap.InterpolateToString(ctx, rj.Job.RunsOn.Model)
 		if err != nil {
 			rj.Status = sdk.V2WorkflowRunJobStatusFail

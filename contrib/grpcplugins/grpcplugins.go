@@ -699,6 +699,7 @@ func UploadRunResult(ctx context.Context, actplugin *actionplugin.Common, jobCon
 			"cdn_id":           i.Item.ID,
 			"cdn_type":         string(i.Item.Type),
 			"cdn_api_ref_hash": i.Item.APIRefHash,
+			"downloadURI":      fmt.Sprintf("%s/item/%s/%s/download", i.CDNHttpURL, string(i.Item.Type), i.Item.APIRefHash),
 		}
 		Logf(actplugin, "  CDN API Ref Hash: %s", i.Item.APIRefHash)
 		Logf(actplugin, "  CDN HTTP URL: %s", i.CDNHttpURL)
