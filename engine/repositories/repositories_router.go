@@ -17,7 +17,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.DefaultAuthMiddleware = service.CheckRequestSignatureMiddleware(s.ParsedAPIPublicKey)
 	r.PostMiddlewares = append(r.PostMiddlewares, service.TracingPostMiddleware)
 
-	r.Handle("/admin/cache", nil, r.GET(service.GetLocalCacheHandler), r.DELETE(service.ClearLocalCacheHandler))
+	r.Handle("/admin/cache", nil, r.GET(s.GetLocalCacheHandler), r.DELETE(s.ClearLocalCacheHandler))
 
 	r.Handle("/mon/version", nil, r.GET(service.VersionHandler, service.OverrideAuth(service.NoAuthMiddleware)))
 	r.Handle("/mon/status", nil, r.GET(s.getStatusHandler, service.OverrideAuth(service.NoAuthMiddleware)))
