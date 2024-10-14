@@ -67,7 +67,9 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 		maturity = integration.Get(sdk.ArtifactoryConfigPromotionHighMaturity)
 	}
 
-	_, err = promoteRunResult(ctx, c, artifactClient, integration, r, maturity, props, sdk.V2WorkflowRunResultStatusPromoted)
+	_, futureReleaseName := getBuildInfoAndReleaseName(integration.Get(sdk.ArtifactoryConfigBuildInfoPrefix), jobContext.CDS.ProjectKey, jobContext.CDS.WorkflowVCSServer, jobContext.CDS.WorkflowRepository, jobContext.CDS.Workflow)
+	releaseVersion := getReleaseVersion(jobContext)
+	_, err = promoteRunResult(ctx, c, artifactClient, integration, r, maturity, props, sdk.V2WorkflowRunResultStatusPromoted, futureReleaseName, releaseVersion)
 	if err != nil {
 		return err
 	}
@@ -75,7 +77,7 @@ func PromoteArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, jo
 	return nil
 }
 
-func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, integration sdk.JobIntegrationsContext, r sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, status string) (string, error) {
+func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClient artifact_manager.ArtifactManager, integration sdk.JobIntegrationsContext, r sdk.V2WorkflowRunResult, maturity string, props *utils.Properties, status string, futureReleaseName, futureReleaseVersion string) (string, error) {
 	var (
 		promotedArtifact      string
 		skipExistingArtifacts bool
@@ -101,6 +103,8 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 		ToMaturity:   maturity,
 	}
 
+	hasBeenPromoted := false
+
 	switch r.Type {
 	case "docker":
 		data := art.FileToPromote{
@@ -109,10 +113,11 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 			Name:     r.ArtifactManagerMetadata.Get("name"),
 			Path:     strings.TrimPrefix(filepath.Dir(r.ArtifactManagerMetadata.Get("path")), "/"),
 		}
-		if err := art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts); err != nil {
+		var err error
+		hasBeenPromoted, err = art.PromoteDockerImage(ctx, artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts)
+		if err != nil {
 			return promotedArtifact, errors.Errorf("unable to promote docker image: %s to %s: %v", data.Name, newPromotion.ToMaturity, err)
 		}
-
 		promotedArtifact = fmt.Sprintf("%s-%s%s", data.RepoName, newPromotion.ToMaturity, r.ArtifactManagerMetadata.Get("path"))
 	default:
 		data := art.FileToPromote{
@@ -121,7 +126,9 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 			Name:     r.ArtifactManagerMetadata.Get("name"),
 			Path:     strings.TrimPrefix(r.ArtifactManagerMetadata.Get("path"), "/"),
 		}
-		if err := art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts); err != nil {
+		var err error
+		hasBeenPromoted, err = art.PromoteFile(artifactClient, data, newPromotion.FromMaturity, newPromotion.ToMaturity, props, skipExistingArtifacts)
+		if err != nil {
 			return promotedArtifact, errors.Errorf("unable to promote file: %s: %v", data.Name, err)
 		}
 
@@ -133,7 +140,28 @@ func promoteRunResult(ctx context.Context, c *actionplugin.Common, artifactClien
 		}
 	}
 
-	grpcplugins.Successf(c, "%s Successfully promoted to %s", r.Name(), newPromotion.ToMaturity)
+	if hasBeenPromoted {
+		grpcplugins.Successf(c, "%s Successfully promoted to %s", r.Name(), newPromotion.ToMaturity)
+	} else {
+		// Check existing release  on artifact
+		artifactFullPathSplit := strings.Split(promotedArtifact, r.ArtifactManagerMetadata.Get("path"))
+		props, err := artifactClient.GetProperties(artifactFullPathSplit[0], r.ArtifactManagerMetadata.Get("path"))
+		if err != nil {
+			return promotedArtifact, errors.Errorf("unable to check file properties %s: %v", promotedArtifact, err)
+		}
+		releaseValues, has := props["release.name"]
+		if has && len(releaseValues) > 0 {
+			if releaseValues[0] != futureReleaseName {
+				return promotedArtifact, errors.Errorf("Run result %s is already part of another release: %s ", promotedArtifact, releaseValues[0])
+			}
+			releaseVersion, has := props["release.version"]
+			if has && len(releaseVersion) > 0 {
+				if releaseVersion[0] != futureReleaseVersion {
+					return promotedArtifact, errors.Errorf("Run result %s has already been release in version %s", promotedArtifact, releaseVersion[0])
+				}
+			}
+		}
+	}
 
 	r.Status = status
 	if status == sdk.V2WorkflowRunResultStatusReleased {
@@ -199,9 +227,10 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	}
 
 	jfroglog.SetLogger(new(logger)) // reset the logger set by artifact_manager.NewClient
-
+	_, futureReleaseName := getBuildInfoAndReleaseName(integration.Get(sdk.ArtifactoryConfigBuildInfoPrefix), jobContext.CDS.ProjectKey, jobContext.CDS.WorkflowVCSServer, jobContext.CDS.WorkflowRepository, jobContext.CDS.Workflow)
+	releaseVersion := getReleaseVersion(*jobContext)
 	for i := range results {
-		promotedArtifact, err := promoteRunResult(ctx, c, artifactClient, integration, results[i], maturity, props, sdk.V2WorkflowRunResultStatusReleased)
+		promotedArtifact, err := promoteRunResult(ctx, c, artifactClient, integration, results[i], maturity, props, sdk.V2WorkflowRunResultStatusReleased, futureReleaseName, releaseVersion)
 		if err != nil {
 			return err
 		}
@@ -229,8 +258,6 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	}
 
 	grpcplugins.Success(c, promotionOutput.String())
-
-	releaseVersion := strings.ReplaceAll(jobContext.Git.SemverCurrent, "+", "-")
 
 	releaseName, releaseVersion, err := createReleaseBundle(ctx, c, distriClient,
 		jobContext.CDS.ProjectKey, jobContext.CDS.WorkflowVCSServer, jobContext.CDS.WorkflowRepository, jobContext.CDS.Workflow, releaseVersion, integration.Get(sdk.ArtifactoryConfigBuildInfoPrefix),
@@ -311,14 +338,23 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 	return nil
 }
 
-func createReleaseBundle(ctx context.Context, c *actionplugin.Common, distriClient art.DistribClient, projectKey, vcs, repo, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
+func getReleaseVersion(jobContext sdk.WorkflowRunJobsContext) string {
+	return strings.ReplaceAll(jobContext.Git.SemverCurrent, "+", "-")
+}
+
+func getBuildInfoAndReleaseName(buildInfo, projectKey, vcs, repo, workflowName string) (string, string) {
 	buildInfoName := fmt.Sprintf("%s/%s/%s/%s/%s", buildInfo, projectKey, vcs, repo, workflowName)
 
 	if len(buildInfoName) > 120 {
 		buildInfoName = buildInfoName[0:120]
 	}
+	return buildInfoName, strings.Replace(buildInfoName, "/", "-", -1)
+}
 
-	params := services.NewCreateReleaseBundleParams(strings.Replace(buildInfoName, "/", "-", -1), version)
+func createReleaseBundle(ctx context.Context, c *actionplugin.Common, distriClient art.DistribClient, projectKey, vcs, repo, workflowName, version, buildInfo string, artifactPromoted []string, destMaturity, releaseNote string) (string, string, error) {
+	buildInfoName, releaseName := getBuildInfoAndReleaseName(buildInfo, projectKey, vcs, repo, workflowName)
+
+	params := services.NewCreateReleaseBundleParams(releaseName, version)
 	if destMaturity != "" && destMaturity != DefaultHighMaturity {
 		params.Version += "-" + destMaturity
 	}

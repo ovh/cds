@@ -259,6 +259,11 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 		return
 	}
 
+	switch level {
+	case workerruntime.LevelError:
+		msg.Value = ErrColor + msg.Value + NoColor
+	}
+
 	wk.gelfLogger.logger.
 		WithField(cdslog.ExtraFieldSignature, sign).
 		WithField(cdslog.ExtraFieldLine, wk.stepLogLine).

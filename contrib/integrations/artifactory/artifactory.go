@@ -78,7 +78,8 @@ type FileToPromote struct {
 	Path     string
 }
 
-func PromoteFile(artiClient artifact_manager.ArtifactManager, data FileToPromote, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
+func PromoteFile(artiClient artifact_manager.ArtifactManager, data FileToPromote, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) (bool, error) {
+	hasBeenPromoted := false
 	// artifactory does not manage virtual cargo repositories
 	var srcRepo, targetRepo string
 	switch data.RepoType {
@@ -104,7 +105,7 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data FileToPromote
 		if skipExistingArtifacts {
 			exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
 			if err != nil {
-				return err
+				return hasBeenPromoted, err
 			}
 			skipArtifact = exist
 		}
@@ -113,44 +114,46 @@ func PromoteFile(artiClient artifact_manager.ArtifactManager, data FileToPromote
 			// Get the properties of the source reposiytory
 			maturity, err := artiClient.GetRepositoryMaturity(srcRepo)
 			if err != nil {
-				return fmt.Errorf("unable to get repository maturity: %v", err)
+				return hasBeenPromoted, fmt.Errorf("unable to get repository maturity: %v", err)
 			}
 
 			if maturity == "release" {
 				fmt.Printf("Copying file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
 				nbSuccess, nbFailed, err := artiClient.Copy(params)
 				if err != nil {
-					return err
+					return hasBeenPromoted, err
 				}
 				if nbFailed > 0 || nbSuccess == 0 {
-					return fmt.Errorf("%s: copy failed with no reason", data.Name)
+					return hasBeenPromoted, fmt.Errorf("%s: copy failed with no reason", data.Name)
 				}
 			} else {
 				fmt.Printf("Promoting file %s from %s to %s\n", data.Name, srcRepo, targetRepo)
 				nbSuccess, nbFailed, err := artiClient.Move(params)
 				if err != nil {
-					return err
+					return hasBeenPromoted, err
 				}
 				if nbFailed > 0 || nbSuccess == 0 {
-					return fmt.Errorf("%s: copy failed with no reason", data.Name)
+					return hasBeenPromoted, fmt.Errorf("%s: copy failed with no reason", data.Name)
 				}
+				hasBeenPromoted = true
 			}
 		} else {
 			fmt.Printf("%s already exists on destination repository\n", data.Name)
 		}
 	}
 
-	if props != nil {
+	if props != nil && hasBeenPromoted {
 		fmt.Printf("Set properties %+v on file %s at %s\n", props, data.Name, targetRepo)
 		if err := artiClient.SetProperties(targetRepo, data.Path, props); err != nil {
-			return err
+			return hasBeenPromoted, err
 		}
 	}
 
-	return nil
+	return hasBeenPromoted, nil
 }
 
-func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.ArtifactManager, data FileToPromote, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) error {
+func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.ArtifactManager, data FileToPromote, lowMaturity, highMaturity string, props *utils.Properties, skipExistingArtifacts bool) (bool, error) {
+	hasBeenPromoted := false
 	sourceRepo := fmt.Sprintf("%s-%s", data.RepoName, lowMaturity)
 	targetRepo := fmt.Sprintf("%s-%s", data.RepoName, highMaturity)
 	params := services.NewDockerPromoteParams(data.Path, sourceRepo, targetRepo)
@@ -163,7 +166,7 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 		if skipExistingArtifacts {
 			exist, err := artiClient.CheckArtifactExists(targetRepo, data.Path)
 			if err != nil {
-				return err
+				return hasBeenPromoted, err
 			}
 			skipArtifact = exist
 		}
@@ -181,8 +184,9 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 				params.Copy = false
 			}
 			if err := artiClient.PromoteDocker(params); err != nil {
-				return err
+				return hasBeenPromoted, err
 			}
+			hasBeenPromoted = true
 		} else {
 			fmt.Printf("%s already exists on destination repository\n", data.Name)
 		}
@@ -190,11 +194,11 @@ func PromoteDockerImage(ctx context.Context, artiClient artifact_manager.Artifac
 
 	if props != nil {
 		if err := SetPropertiesRecursive(ctx, artiClient, data.RepoType, data.RepoName, highMaturity, data.Path, props); err != nil {
-			return err
+			return hasBeenPromoted, err
 		}
 	}
 
-	return nil
+	return hasBeenPromoted, nil
 }
 
 type executionContext struct {

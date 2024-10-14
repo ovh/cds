@@ -26,6 +26,11 @@ import (
 	"github.com/ovh/cds/sdk/slug"
 )
 
+const (
+	ErrColor = "\033[1;31m"
+	NoColor  = "\033[0m"
+)
+
 func (w *CurrentWorker) V2ProcessJob() (res sdk.V2WorkflowRunJobResult) {
 	ctx := w.currentJobV2.context
 	t0 := time.Now()
