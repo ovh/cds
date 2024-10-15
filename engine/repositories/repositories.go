@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api"
@@ -50,6 +51,10 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("invalid Repositories configuration")
 	}
 
+	if s.Cfg.MaxWorkers == 0 {
+		s.Cfg.MaxWorkers = 10
+	}
+
 	s.ServiceName = s.Cfg.Name
 	s.ServiceType = sdk.TypeRepositories
 	s.HTTPURL = s.Cfg.URL
@@ -87,6 +92,8 @@ func (s *Service) Serve(c context.Context) error {
 	if errCache != nil {
 		return fmt.Errorf("cannot connect to redis instance : %v", errCache)
 	}
+
+	s.localCache = gocache.New(10*time.Minute, 10*time.Minute)
 
 	// Retrieve vcs public keys
 	keys, err := s.Client.ConfigVCSGPGKeys()

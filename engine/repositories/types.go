@@ -4,6 +4,8 @@ package repositories
 import (
 	"path/filepath"
 
+	gocache "github.com/patrickmn/go-cache"
+
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/engine/service"
@@ -13,11 +15,12 @@ import (
 // Service is the repostories service
 type Service struct {
 	service.Common
-	Cfg       Configuration
-	Router    *api.Router
-	Cache     cache.Store
-	dao       dao
-	cacheSize int64
+	Cfg        Configuration
+	Router     *api.Router
+	Cache      cache.Store
+	dao        dao
+	cacheSize  int64
+	localCache *gocache.Cache
 }
 
 // Configuration is the vcs configuration structure
@@ -33,6 +36,7 @@ type Configuration struct {
 		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
 		Redis sdk.RedisConf `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Repositories Cache Settings \n######################" json:"cache"`
+	MaxWorkers int `toml:"maxWorkers" comment:"Maximum of operations that can be done in parallel" default:"10" json:"maxWorkers"`
 }
 
 // Repo retiens a sdk.OperationRepo from an sdk.Operation
