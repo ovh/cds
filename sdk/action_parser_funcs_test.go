@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/rockbears/log"
@@ -87,4 +88,37 @@ func TestHashFiles(t *testing.T) {
 	t.Logf("%s", hashSum2)
 
 	require.Equal(t, fmt.Sprintf("%s", hashSum1), fmt.Sprintf("%s", hashSum2))
+}
+
+func Test_newStringActionFunc(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		actionFn stringActionFunc
+	}{
+		{"toLower", strings.ToLower},
+		{"toUpper", strings.ToUpper},
+		{"toTitle", strings.ToTitle},
+		{"title", strings.Title},
+	} {
+		fn, ok := DefaultFuncs[tt.name]
+		if !ok {
+			t.Errorf("func %s not found", tt.name)
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			const arg = "foo bar"
+
+			v, err := fn(context.TODO(), nil, arg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			s, ok := v.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", v)
+			}
+			if want := tt.actionFn(arg); s != want {
+				t.Errorf("got %q, want %q", s, want)
+			}
+			t.Logf(s)
+		})
+	}
 }
