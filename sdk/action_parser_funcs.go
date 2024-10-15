@@ -34,6 +34,10 @@ var (
 		"cancelled":  cancelled,
 		"failure":    failure,
 		"result":     result,
+		"toLower":    newStringActionFunc("toLower", strings.ToLower),
+		"toUpper":    newStringActionFunc("toUpper", strings.ToUpper),
+		"toTitle":    newStringActionFunc("toTitle", strings.ToTitle),
+		"title":      newStringActionFunc("title", strings.Title),
 	}
 )
 
@@ -399,4 +403,21 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 		return false, nil
 	}
 	return nil, NewErrorFrom(ErrInvalidData, "missing step and jobs contexts")
+}
+
+type stringActionFunc func(string) string
+
+func newStringActionFunc(name string, fn stringActionFunc) ActionFunc {
+	return func(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+		log.Debug(ctx, "function: %s with args: %v", name, inputs)
+
+		if len(inputs) != 1 {
+			return nil, NewErrorFrom(ErrInvalidData, "%s: requires one argument", name)
+		}
+		s, ok := inputs[0].(string)
+		if !ok {
+			return nil, NewErrorFrom(ErrInvalidData, "%s: item argument must be a string", name)
+		}
+		return fn(s), nil
+	}
 }
