@@ -67,12 +67,7 @@ func (api *API) getRBACHandler() ([]service.RbacChecker, service.Handler) {
 			vars := mux.Vars(req)
 			rbacIdentifier := vars["rbacIdentifier"]
 			perm, err := api.getRBACByIdentifier(ctx, rbacIdentifier,
-				rbac.LoadOptions.LoadRBACGlobal,
-				rbac.LoadOptions.LoadRBACProject,
-				rbac.LoadOptions.LoadRBACWorkflow,
-				rbac.LoadOptions.LoadRBACHatchery,
-				rbac.LoadOptions.LoadRBACVariableSet,
-				rbac.LoadOptions.LoadRBACRegion)
+				rbac.LoadOptions.All)
 			if err != nil {
 				return err
 			}
@@ -214,6 +209,13 @@ func (rl *RBACLoader) FillRBACWithNames(ctx context.Context, r *sdk.RBAC) error 
 			return err
 		}
 	}
+	for rpID := range r.RegionProjects {
+		rp := &r.RegionProjects[rpID]
+		if err := rl.fillRBACRegionProjectWithNames(ctx, rp); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -265,6 +267,12 @@ func (rl *RBACLoader) FillRBACWithIDs(ctx context.Context, r *sdk.RBAC) error {
 			return err
 		}
 	}
+	for rpID := range r.RegionProjects {
+		rp := &r.RegionProjects[rpID]
+		if err := rl.fillRBACRegionProjectWithID(ctx, rp); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -295,6 +303,25 @@ func (rl *RBACLoader) fillRBACHatcheryWithID(ctx context.Context, rbacHatchery *
 		return err
 	}
 	rbacHatchery.RegionID = reg.ID
+	return nil
+}
+
+func (rl *RBACLoader) fillRBACRegionProjectWithNames(ctx context.Context, rbacRegionProject *sdk.RBACRegionProject) error {
+	rg, err := region.LoadRegionByID(ctx, rl.db, rbacRegionProject.RegionID)
+	if err != nil {
+		return err
+	}
+	rbacRegionProject.RegionName = rg.Name
+	return nil
+}
+
+func (rl *RBACLoader) fillRBACRegionProjectWithID(ctx context.Context, rbacRegionProject *sdk.RBACRegionProject) error {
+	rg, err := region.LoadRegionByName(ctx, rl.db, rbacRegionProject.RegionName)
+	if err != nil {
+		return err
+	}
+	rbacRegionProject.RegionID = rg.ID
+
 	return nil
 }
 
