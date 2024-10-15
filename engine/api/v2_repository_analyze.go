@@ -716,46 +716,57 @@ skipEntity:
 
 	// For skipped entities (user has no right to manage them), retrieve definition on head or default branch
 	for _, e := range skippedEntities {
-		// If entity already exist, ignore it.
+		// Get definition for the current commit
 		existingEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, e.Commit)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to check if %s of type %s already exist on git ref %s", e.Name, e.Type, e.Ref))
 		}
-		if existingEntity != nil {
-			continue
-		}
 
-		// Check if head entity exist
+		// Get definition for HEAD commit
 		existingHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, e.Ref, e.Type, e.Name, "HEAD")
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve HEAD entity with same name on same branch"))
 		}
+
+		// If both exist, skip
+		if existingEntity != nil && existingHeadEntity != nil {
+			continue
+		}
+
 		entityInserted := false
-		if existingHeadEntity != nil {
-			// Copy it for the current commit
-			e.Data = existingHeadEntity.Data
-			// Do not update owner
-			e.UserID = existingHeadEntity.UserID
-			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
-				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save skipped entity from head %s of type %s", e.Name, e.Type))
-			}
-			entityInserted = true
-		} else {
-			// If head entity do not exist, check default branch
+
+		// Create definition for commit HEAD from default branch
+		if existingHeadEntity == nil {
 			defaultBranchHeadEntity, err := entity.LoadByRefTypeNameCommit(ctx, tx, e.ProjectRepositoryID, defaultBranch.ID, e.Type, e.Name, "HEAD")
 			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to retrieve latest entity on default branch with same name"))
 			}
 			if defaultBranchHeadEntity != nil {
-				// Copy it for the current commit
-				e.Data = defaultBranchHeadEntity.Data
-				// Do not update owner
-				e.UserID = defaultBranchHeadEntity.UserID
-				if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
+				existingHeadEntity = &sdk.Entity{
+					ProjectKey:          e.ProjectKey,
+					ProjectRepositoryID: e.ProjectRepositoryID,
+					Type:                e.Type,
+					FilePath:            e.FilePath,
+					Name:                e.Name,
+					Commit:              "HEAD",
+					Ref:                 e.Ref,
+					Data:                defaultBranchHeadEntity.Data,
+					UserID:              defaultBranchHeadEntity.UserID,
+				}
+				if err := entity.Insert(ctx, tx, existingHeadEntity); err != nil {
 					return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save skipped entity %s of type %s", e.Name, e.Type))
 				}
-				entityInserted = true
 			}
+		}
+
+		// Create definition for the current sha
+		if existingEntity == nil && existingHeadEntity != nil {
+			e.Data = existingHeadEntity.Data
+			e.UserID = existingHeadEntity.UserID
+			if err := entity.Insert(ctx, tx, &e.Entity); err != nil {
+				return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(err, "unable to save skipped entity from head %s of type %s", e.Name, e.Type))
+			}
+			entityInserted = true
 		}
 
 		// Insert workflow hook
