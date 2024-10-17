@@ -33,9 +33,9 @@ func (rg rbacGlobal) Canonical() gorpmapper.CanonicalForms {
 }
 
 type rbacGlobalUser struct {
-	ID               int64  `db:"id"`
-	RbacGlobalID     int64  `db:"rbac_global_id"`
-	RbacGlobalUserID string `db:"user_id"`
+	ID               int64  `json:"-" db:"id"`
+	RbacGlobalID     int64  `json:"-" db:"rbac_global_id"`
+	RbacGlobalUserID string `json:"-" db:"user_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -48,8 +48,8 @@ func (rgu rbacGlobalUser) Canonical() gorpmapper.CanonicalForms {
 
 type rbacGlobalGroup struct {
 	ID                int64 `json:"-" db:"id"`
-	RbacGlobalID      int64 `db:"rbac_global_id"`
-	RbacGlobalGroupID int64 `db:"group_id"`
+	RbacGlobalID      int64 `json:"-" db:"rbac_global_id"`
+	RbacGlobalGroupID int64 `json:"-" db:"group_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -146,7 +146,7 @@ func (rr rbacRegionProject) Canonical() gorpmapper.CanonicalForms {
 
 type rbacRegionProjectKey struct {
 	ID                  int64  `json:"-" db:"id"`
-	RbacRegionProjectID int64  `db:"rbac_region_project_id"`
+	RbacRegionProjectID int64  `json:"-" db:"rbac_region_project_id"`
 	ProjectKey          string `json:"-" db:"project_key"`
 	gorpmapper.SignedEntity
 }
@@ -172,8 +172,8 @@ func (rr rbacRegion) Canonical() gorpmapper.CanonicalForms {
 
 type rbacRegionUser struct {
 	ID           int64  `json:"-" db:"id"`
-	RbacRegionID int64  `db:"rbac_region_id"`
-	RbacUserID   string `db:"user_id"`
+	RbacRegionID int64  `json:"-" db:"rbac_region_id"`
+	RbacUserID   string `json:"-" db:"user_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -186,8 +186,8 @@ func (rru rbacRegionUser) Canonical() gorpmapper.CanonicalForms {
 
 type rbacRegionGroup struct {
 	ID           int64 `json:"-" db:"id"`
-	RbacRegionID int64 `db:"rbac_region_id"`
-	RbacGroupID  int64 `db:"group_id"`
+	RbacRegionID int64 `json:"-" db:"rbac_region_id"`
+	RbacGroupID  int64 `json:"-" db:"group_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -200,8 +200,8 @@ func (rrg rbacRegionGroup) Canonical() gorpmapper.CanonicalForms {
 
 type rbacRegionOrganization struct {
 	ID                 int64  `json:"-" db:"id"`
-	RbacRegionID       int64  `db:"rbac_region_id"`
-	RbacOrganizationID string `db:"organization_id"`
+	RbacRegionID       int64  `json:"-" db:"rbac_region_id"`
+	RbacOrganizationID string ` json:"-" db:"organization_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -228,8 +228,8 @@ func (rp rbacVariableSet) Canonical() gorpmapper.CanonicalForms {
 
 type rbacVariableSetUser struct {
 	ID                    int64  `json:"-" db:"id"`
-	RbacVariableSetID     int64  `db:"rbac_variableset_id"`
-	RbacVariableSetUserID string `db:"user_id"`
+	RbacVariableSetID     int64  `json:"-" db:"rbac_variableset_id"`
+	RbacVariableSetUserID string `json:"-" db:"user_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -242,8 +242,8 @@ func (rgu rbacVariableSetUser) Canonical() gorpmapper.CanonicalForms {
 
 type rbacVariableSetGroup struct {
 	ID                     int64 `json:"-" db:"id"`
-	RbacVariableSetID      int64 `db:"rbac_variableset_id"`
-	RbacVariableSetGroupID int64 `db:"group_id"`
+	RbacVariableSetID      int64 `json:"-" db:"rbac_variableset_id"`
+	RbacVariableSetGroupID int64 ` json:"-" db:"group_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -270,8 +270,8 @@ func (rp rbacWorkflow) Canonical() gorpmapper.CanonicalForms {
 
 type rbacWorkflowUser struct {
 	ID                 int64  `json:"-" db:"id"`
-	RbacWorkflowID     int64  `db:"rbac_workflow_id"`
-	RbacWorkflowUserID string `db:"user_id"`
+	RbacWorkflowID     int64  `json:"-" db:"rbac_workflow_id"`
+	RbacWorkflowUserID string ` json:"-" db:"user_id"`
 	gorpmapper.SignedEntity
 }
 
@@ -284,8 +284,8 @@ func (rgu rbacWorkflowUser) Canonical() gorpmapper.CanonicalForms {
 
 type rbacWorkflowGroup struct {
 	ID                  int64 `json:"-" db:"id"`
-	RbacWorkflowID      int64 `db:"rbac_workflow_id"`
-	RbacWorkflowGroupID int64 `db:"group_id"`
+	RbacWorkflowID      int64 `json:"-" db:"rbac_workflow_id"`
+	RbacWorkflowGroupID int64 `json:"-" db:"group_id"`
 	gorpmapper.SignedEntity
 }
 
