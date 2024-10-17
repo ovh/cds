@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -26,6 +27,14 @@ func Test_crudRbacHandler(t *testing.T) {
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	u, pass := assets.InsertAdminUser(t, db)
 	g := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	reg := sdk.Region{
+		Name: sdk.RandomString(10),
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	t.Cleanup(func() {
+		db.Exec("DELETE FROM region WHERE id = $1", reg.ID)
+	})
 
 	vars := map[string]string{}
 	uri := api.Router.GetRouteV2("POST", api.postImportRBACHandler, vars)
@@ -52,7 +61,11 @@ variablesets:
     all_users: true
     all_variablesets: true
     project: %s	
-`, p.Key, u.Username, g.Name, u.Username, g.Name, p.Key, p.Key)
+region_projects:
+  - role: execute
+    projects: [%s]
+    region: %s	
+`, p.Key, u.Username, g.Name, u.Username, g.Name, p.Key, p.Key, p.Key, reg.Name)
 
 	// Here, we insert the vcs server as a CDS administrator
 	req.Body = io.NopCloser(strings.NewReader(body))
@@ -91,6 +104,9 @@ variablesets:
 	require.Equal(t, 1, len(rbacGET.Workflows))
 
 	require.Equal(t, 1, len(rbacGET.VariableSets))
+
+	require.Equal(t, 1, len(rbacGET.RegionProjects))
+	require.Equal(t, reg.Name, rbacGET.RegionProjects[0].RegionName)
 
 	// Delete
 	varsDelete := map[string]string{"rbacIdentifier": rbacGET.ID}

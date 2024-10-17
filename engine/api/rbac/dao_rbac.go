@@ -103,6 +103,15 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rb *sdk.RBAC) 
 			return err
 		}
 	}
+	for i := range rb.RegionProjects {
+		dbRbRegionProject := rbacRegionProject{
+			RbacID:            dbRb.ID,
+			RBACRegionProject: rb.RegionProjects[i],
+		}
+		if err := insertRBACRegionProject(ctx, db, &dbRbRegionProject); err != nil {
+			return err
+		}
+	}
 
 	*rb = dbRb.RBAC
 	return nil
