@@ -29,9 +29,17 @@ type ActionInput struct {
 	Default     string `json:"default,omitempty" jsonschema_extras:"order=1" jsonschema_description:"Default input value used if the caller do not specified anything"`
 }
 
+type ActionOutputType string
+
+const (
+	ActionOutputTypeDefault ActionOutputType = ""
+	ActionOutputTypePath                     = "path"
+)
+
 type ActionOutput struct {
-	Description string `json:"description,omitempty" jsonschema_extras:"order=2"`
-	Value       string `json:"value" jsonschema_extras:"order=1"`
+	Description string           `json:"description,omitempty" jsonschema_extras:"order=2"`
+	Value       string           `json:"value" jsonschema_extras:"order=1"`
+	Type        ActionOutputType `json:"type,omitempty" jsonschema_extras:"order=3"`
 }
 
 type ActionStep struct {
