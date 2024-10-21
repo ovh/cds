@@ -367,9 +367,9 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 		},
 		RegionProjects: []sdk.RBACRegionProject{
 			{
-				Role:            sdk.RegionRoleExecute,
-				RBACProjectKeys: []string{proj.Key},
-				RegionID:        reg.ID,
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
 			},
 		},
 	}

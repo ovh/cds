@@ -32,6 +32,26 @@ func getAllRBACRegionProject(ctx context.Context, db gorp.SqlExecutor, q gorpmap
 	return rbacRegionProjectsFiltered, nil
 }
 
+func getRBACRegionProject(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) (*rbacRegionProject, error) {
+	var dbRbacRegionProject rbacRegionProject
+	found, err := gorpmapping.Get(ctx, db, q, &dbRbacRegionProject)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(dbRbacRegionProject, dbRbacRegionProject.Signature)
+	if err != nil {
+		return nil, sdk.WrapError(err, "error when checking signature for rbac_region_project %d", dbRbacRegionProject.ID)
+	}
+	if !isValid {
+		log.Error(ctx, "rbac.getAllRBACRegionProjectKeys> rbac_region_project %d data corrupted", dbRbacRegionProject.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &dbRbacRegionProject, nil
+}
+
 func insertRBACRegionProject(ctx context.Context, db gorpmapper.SqlExecutorWithTx, rbacRegionProject *rbacRegionProject) error {
 	if err := gorpmapping.InsertAndSign(ctx, db, rbacRegionProject); err != nil {
 		return err
@@ -46,9 +66,24 @@ func insertRBACRegionProject(ctx context.Context, db gorpmapper.SqlExecutorWithT
 	return nil
 }
 
+func loadRBACRegionProjectByRegionAndAllProjects(ctx context.Context, db gorp.SqlExecutor, regionID string) (*rbacRegionProject, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_region_project WHERE region_id = $1 AND all_projects=true LIMIT 1").Args(regionID)
+	return getRBACRegionProject(ctx, db, q)
+}
+
 func HasRoleOnRegionProject(ctx context.Context, db gorp.SqlExecutor, role string, regionID string, projectKey string) (bool, error) {
 	ctx, next := telemetry.Span(ctx, "rbac.HasRoleOnRegionProject")
 	defer next()
+
+	// Check permission with flag all_projects
+	rbacRegionProject, err := loadRBACRegionProjectByRegionAndAllProjects(ctx, db, regionID)
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return false, err
+	}
+
+	if rbacRegionProject != nil {
+		return true, nil
+	}
 
 	rbacRegionProjectKeyProject, err := loadRBACRegionProjectByProjectKey(ctx, db, projectKey)
 	if err != nil {
