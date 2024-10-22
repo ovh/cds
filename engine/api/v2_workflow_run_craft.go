@@ -2,13 +2,16 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-gorp/gorp"
+	"github.com/pelletier/go-toml"
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
@@ -29,6 +32,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/glob"
 	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 )
@@ -151,8 +155,9 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	}
 
 	// Build run context
-	runContext, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u, api.Config.URL.UI)
+	runContext, mustSaveVersion, err := buildRunContext(ctx, api.mustDB(), api.Cache, *run, *vcsServer, *repo, *u, api.Config.URL.UI)
 	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 		return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 			WorkflowRunID: run.ID,
 			Level:         sdk.WorkflowRunInfoLevelError,
@@ -173,6 +178,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 
 		if _, err := e.Template.Resolve(ctx, &run.WorkflowData.Workflow); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -183,6 +189,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		// Build context for workflow
 		repo, err := repository.LoadRepositoryByID(ctx, api.mustDB(), e.Entity.ProjectRepositoryID)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -192,6 +199,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 		vcsProj, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), repo.ProjectKey, repo.VCSProjectID)
 		if err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				Level:         sdk.WorkflowRunInfoLevelError,
@@ -310,6 +318,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 		// Check variable set
 		if err := checkWorkflowVariableSets(*run, j, allVariableSets); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
 			return stopRun(ctx, api.mustDB(), api.Cache, run, *u, sdk.V2WorkflowRunInfo{
 				WorkflowRunID: run.ID,
 				IssuedAt:      time.Now(),
@@ -352,6 +361,26 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 	run.Status = sdk.V2WorkflowRunStatusBuilding
 	if err := workflow_v2.UpdateRun(ctx, tx, run); err != nil {
 		return err
+	}
+
+	if mustSaveVersion {
+		wkfVersion := sdk.V2WorkflowVersion{
+			Version:       run.Contexts.CDS.Version,
+			ProjectKey:    run.Contexts.CDS.ProjectKey,
+			VCSServer:     run.Contexts.Git.Server,
+			Repository:    run.Contexts.Git.Repository,
+			WorkflowName:  run.Contexts.CDS.Workflow,
+			WorkflowRunID: run.ID,
+			Sha:           run.Contexts.Git.Sha,
+			Ref:           run.Contexts.Git.Ref,
+			Type:          string(run.WorkflowData.Workflow.Semver.From),
+			File:          run.WorkflowData.Workflow.Semver.Path,
+			Username:      run.Username,
+			UserID:        run.UserID,
+		}
+		if err := workflow_v2.InsertWorkflowVersion(ctx, tx, &wkfVersion); err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -490,7 +519,7 @@ func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2
 	return nil
 }
 
-func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser, uiURL string) (*sdk.WorkflowRunContext, error) {
+func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr sdk.V2WorkflowRun, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, u sdk.AuthentifiedUser, uiURL string) (*sdk.WorkflowRunContext, bool, error) {
 	var runContext sdk.WorkflowRunContext
 
 	cdsContext := sdk.CDSContext{
@@ -559,7 +588,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	}
 	vcsTmp, err := vcs.LoadVCSByProject(ctx, db, wr.ProjectKey, vcsName, gorpmapping.GetOptions.WithDecryption)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	workflowVCSServer := *vcsTmp
 
@@ -592,11 +621,11 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 
 	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, wr.ProjectKey, workflowVCSServer.Name)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	vcsRepo, err := vcsClient.RepoByFullname(ctx, gitContext.Repository)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	gitContext.RepositoryWebURL = vcsRepo.URL
 
@@ -609,7 +638,7 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	if gitContext.Ref == "" {
 		defaultBranch, err := vcsClient.Branch(ctx, gitContext.Repository, sdk.VCSBranchFilters{Default: true})
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		gitContext.Ref = defaultBranch.ID
 		gitContext.RefName = defaultBranch.DisplayID
@@ -624,13 +653,13 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 		case strings.HasPrefix(gitContext.Ref, sdk.GitRefBranchPrefix):
 			b, err := vcsClient.Branch(ctx, gitContext.Repository, sdk.VCSBranchFilters{BranchName: strings.TrimPrefix(gitContext.Ref, sdk.GitRefBranchPrefix)})
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			gitContext.Sha = b.LatestCommit
 		case strings.HasPrefix(gitContext.Ref, sdk.GitRefTagPrefix):
 			t, err := vcsClient.Tag(ctx, gitContext.Repository, strings.TrimPrefix(gitContext.Ref, sdk.GitRefTagPrefix))
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			gitContext.Sha = t.Hash
 		}
@@ -653,7 +682,133 @@ func buildRunContext(ctx context.Context, db *gorp.DbMap, store cache.Store, wr 
 	runContext.CDS = cdsContext
 	runContext.Git = gitContext
 	runContext.Env = envs
-	return &runContext, nil
+
+	mustSaveVersion := false
+	if wr.WorkflowData.Workflow.Semver != nil {
+		var cdsVersion *semver.Version
+		cdsVersion, mustSaveVersion, err = getCDSversion(ctx, db, vcsClient, runContext, wr.WorkflowData.Workflow)
+		if err != nil {
+			return nil, false, err
+		}
+		runContext.CDS.Version = cdsVersion.String()
+		runContext.CDS.VersionNext = cdsVersion.IncMinor().String()
+	} else {
+		runContext.CDS.Version = gitContext.SemverCurrent
+		runContext.CDS.VersionNext = gitContext.SemverNext
+	}
+
+	return &runContext, mustSaveVersion, nil
+}
+
+func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAuthorizedClientService, runContext sdk.WorkflowRunContext, workflowDef sdk.V2Workflow) (*semver.Version, bool, error) {
+	filePath := strings.TrimPrefix(filepath.Clean(workflowDef.Semver.Path), "/")
+	content, err := vcsClient.GetContent(ctx, runContext.Git.Repository, runContext.Git.Sha, filePath)
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "file %s doesn't not exist on commit %s", filePath, runContext.Git.Sha)
+		}
+		return nil, false, err
+	}
+	if !content.IsFile {
+		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute cds version: file not found wih path "+workflowDef.Semver.Path)
+	}
+
+	// Retrieve version from file
+	var fileVersion string
+	switch workflowDef.Semver.From {
+	case sdk.SemverTypeHelm:
+		var file sdk.SemverHelmChart
+		if err := yaml.Unmarshal([]byte(content.Content), &file); err != nil {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read helm chart file: %v", err)
+		}
+		fileVersion = file.Version
+	case sdk.SemverTypeCargo:
+		var file sdk.SemverCargoFile
+		if err := toml.Unmarshal([]byte(content.Content), &file); err != nil {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read cargo file: %v", err)
+		}
+		fileVersion = file.Package.Version
+	default:
+		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the semver type %s not managed", workflowDef.Semver.From)
+	}
+
+	if fileVersion == "" {
+		fileVersion = "0.1.0"
+	}
+
+	// Check defaultBranch
+	isDefaultBranch := false
+	if runContext.Git.RefType == "branch" {
+		setupRef := workflowDef.Semver.ReleaseBranch
+		if setupRef == "" {
+			defaultBranch, err := vcsClient.Branch(ctx, runContext.Git.Repository, sdk.VCSBranchFilters{Default: true})
+			if err != nil {
+				return nil, false, err
+			}
+			setupRef = defaultBranch.ID
+		}
+		isDefaultBranch = setupRef == runContext.Git.Ref
+	}
+
+	mustSaveVersion := false
+	var cdsVersion string
+	if isDefaultBranch {
+		// Check if the release exists
+		_, err := workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.Git.Server, runContext.Git.Repository, runContext.CDS.Workflow, fileVersion)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, false, err
+		}
+		if err != nil && sdk.ErrorIs(err, sdk.ErrNotFound) {
+			cdsVersion = fileVersion
+			mustSaveVersion = true
+		}
+	}
+
+	// If not default branch OR release version already exists
+	// Compute cds version from a pattern
+	if cdsVersion == "" {
+		// Retrieve version pattern
+		pattern := fmt.Sprintf(sdk.DefaultVersionPattern, workflowDef.Semver.From)
+		if workflowDef.Semver.Schema != nil {
+			for k, v := range workflowDef.Semver.Schema {
+				g := glob.New(k)
+				result, err := g.MatchString(runContext.Git.Ref)
+				if err != nil {
+					return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to check branch with pattern %s: %v", k, err)
+				}
+				if result != nil {
+					pattern = v
+					break
+				}
+			}
+		}
+
+		// Compute new dev version
+		bts, err := json.Marshal(runContext)
+		if err != nil {
+			return nil, false, sdk.WithStack(err)
+		}
+		var mapContexts map[string]interface{}
+		if err := json.Unmarshal(bts, &mapContexts); err != nil {
+			return nil, false, sdk.WithStack(err)
+		}
+		versionContext := map[string]interface{}{
+			"version": fileVersion,
+		}
+		mapContexts[string(workflowDef.Semver.From)] = versionContext
+		ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
+		cdsVersion, err = ap.InterpolateToString(ctx, pattern)
+		if err != nil {
+			return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to compute version from pattern %s: %v", pattern, err)
+		}
+	}
+
+	// Check semver
+	semverVersion, err := semver.NewVersion(cdsVersion)
+	if err != nil {
+		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the computed version %s is not semver compatible: %v", cdsVersion, err)
+	}
+	return semverVersion, mustSaveVersion, nil
 }
 
 func (wref *WorkflowRunEntityFinder) checkWorkerModel(ctx context.Context, db *gorp.DbMap, store cache.Store, jobName, workerModel, reg, defaultRegion string) (string, *sdk.V2WorkflowRunInfo, error) {

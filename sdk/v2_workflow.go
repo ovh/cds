@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gorhill/cronexpr"
 	"github.com/rockbears/yaml"
@@ -19,6 +20,15 @@ const (
 	WorkflowHookTypeManual      = "Manual"
 	WorkflowHookTypeScheduler   = "Scheduler"
 	WorkflowHookTypeWorkflowRun = "WorkflowRun"
+)
+
+type WorkflowSemverType string
+
+const (
+	SemverTypeHelm  WorkflowSemverType = "helm"
+	SemverTypeCargo WorkflowSemverType = "cargo"
+
+	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}-sha-${{git.sha}}"
 )
 
 type V2Workflow struct {
@@ -35,10 +45,37 @@ type V2Workflow struct {
 	VariableSets []string                 `json:"vars,omitempty"`
 	Retention    int64                    `json:"retention,omitempty"`
 	Annotations  map[string]string        `json:"annotations,omitempty"`
+	Semver       *WorkflowSemver          `json:"semver,omitempty"`
 
 	// Template fields
 	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`
 	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from"`
+}
+
+type WorkflowSemver struct {
+	From          WorkflowSemverType `json:"from"`
+	Path          string             `json:"path"`
+	ReleaseBranch string             `json:"release_branch,omitempty"`
+	Schema        map[string]string  `json:"schema,omitempty"`
+}
+
+type WorkfowSemverSchema map[string]string
+
+type V2WorkflowVersion struct {
+	ID            string    `json:"id" db:"id"`
+	Version       string    `json:"version" db:"version"`
+	ProjectKey    string    `json:"project_key" db:"project_key"`
+	VCSServer     string    `json:"vcs_server" db:"vcs_server"`
+	Repository    string    `json:"repository" db:"repository"`
+	WorkflowName  string    `json:"workflow_name" db:"workflow_name"`
+	WorkflowRunID string    `json:"workflow_run_id" db:"workflow_run_id"`
+	Username      string    `json:"username" db:"username"`
+	UserID        string    `json:"user_id" db:"user_id"`
+	Sha           string    `json:"sha" db:"sha"`
+	Ref           string    `json:"ref" db:"ref"`
+	Type          string    `json:"type" db:"type"`
+	File          string    `json:"file" db:"file"`
+	Created       time.Time `json:"created" db:"created"`
 }
 
 type CommitStatus struct {

@@ -70,6 +70,8 @@ type CDSContext struct {
 	WorkflowVCSServer  string                 `json:"workflow_vcs_server,omitempty"`
 	WorkflowRepository string                 `json:"workflow_repository,omitempty"`
 	TriggeringActor    string                 `json:"triggering_actor,omitempty"`
+	Version            string                 `json:"version,omitempty"`
+	VersionNext        string                 `json:"version_next,omitempty"`
 
 	// Workflow Template
 	WorkflowTemplate                 string            `json:"workflow_template,omitempty"`
