@@ -353,6 +353,8 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 	require.NoError(t, region.Insert(context.TODO(), db, &reg))
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
 		Regions: []sdk.RBACRegion{
@@ -363,10 +365,16 @@ func TestWorkflowTrigger1Job(t *testing.T) {
 				Role:                sdk.RegionRoleExecute,
 			},
 		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
+			},
+		},
 	}
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
@@ -826,6 +834,8 @@ func TestWorkflowTriggerStage(t *testing.T) {
 	require.NoError(t, region.Insert(context.TODO(), db, &reg))
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
 		Regions: []sdk.RBACRegion{
@@ -836,10 +846,16 @@ func TestWorkflowTriggerStage(t *testing.T) {
 				Role:                sdk.RegionRoleExecute,
 			},
 		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:            sdk.RegionRoleExecute,
+				RBACProjectKeys: []string{proj.Key},
+				RegionID:        reg.ID,
+			},
+		},
 	}
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
@@ -925,6 +941,8 @@ func TestWorkflowStageNeeds(t *testing.T) {
 	require.NoError(t, region.Insert(context.TODO(), db, &reg))
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
 		Regions: []sdk.RBACRegion{
@@ -935,10 +953,16 @@ func TestWorkflowStageNeeds(t *testing.T) {
 				Role:                sdk.RegionRoleExecute,
 			},
 		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:            sdk.RegionRoleExecute,
+				RBACProjectKeys: []string{proj.Key},
+				RegionID:        reg.ID,
+			},
+		},
 	}
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
@@ -1307,6 +1331,8 @@ func TestWorkflowSkippedJob(t *testing.T) {
 	require.NoError(t, region.Insert(context.TODO(), db, &reg))
 	api.Config.Workflow.JobDefaultRegion = reg.Name
 
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
 	rb := sdk.RBAC{
 		Name: sdk.RandomString(10),
 		Regions: []sdk.RBACRegion{
@@ -1317,10 +1343,16 @@ func TestWorkflowSkippedJob(t *testing.T) {
 				Role:                sdk.RegionRoleExecute,
 			},
 		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				RegionID:        reg.ID,
+				RBACProjectKeys: []string{proj.Key},
+				Role:            sdk.RegionRoleExecute,
+			},
+		},
 	}
 	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
 
-	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 

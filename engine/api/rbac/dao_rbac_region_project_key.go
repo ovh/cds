@@ -53,3 +53,8 @@ func loadRBACRegionProjectKeys(ctx context.Context, db gorp.SqlExecutor, rbacReg
 	}
 	return nil
 }
+
+func loadRBACRegionProjectByProjectKey(ctx context.Context, db gorp.SqlExecutor, key string) ([]rbacRegionProjectKey, error) {
+	q := gorpmapping.NewQuery("SELECT * FROM rbac_region_project_keys_project WHERE project_key = $1").Args(key)
+	return getAllRBACRegionProjectKeys(ctx, db, q)
+}

@@ -92,6 +92,10 @@ steps:
           all_users: true
           organizations: [default]
           region: {{.input.cds_region}}
+      region_projects:
+        - role: execute
+          region: {{.input.cds_region}}
+          projects: [{{.input.cds_project}}]
       globals:
         - role: manage-permission
           users: [{{.cds_user.username}}]

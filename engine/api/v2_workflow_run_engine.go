@@ -714,7 +714,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	return nil
 }
 
-func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, rj *sdk.V2WorkflowRunJob, defaultRegion string, regionPermCache map[string]bool, wrEnqueue sdk.V2WorkflowRunEnqueue, u sdk.AuthentifiedUser) (*sdk.V2WorkflowRunJobInfo, bool) {
+func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, rj *sdk.V2WorkflowRunJob, defaultRegion string, regionPermCache map[string]*sdk.V2WorkflowRunJobInfo, wrEnqueue sdk.V2WorkflowRunEnqueue, u sdk.AuthentifiedUser) (*sdk.V2WorkflowRunJobInfo, bool) {
 	runUpdated := false
 	if rj.Status.IsTerminated() {
 		return nil, false
@@ -770,16 +770,15 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 		rj.Job.Region = reg
 	}
 
-	// Check Region permission
 	// Check user region right.
 	if rj.Region == "" {
 		rj.Job.Region = defaultRegion
 		rj.Region = defaultRegion
 	}
-	hasRight, has := regionPermCache[rj.Region]
+	jobInfoMsg, has := regionPermCache[rj.Region]
 	if !has {
 		var err error
-		hasRight, err = checkUserRegionRight(ctx, db, wrEnqueue, rj.Region, u)
+		jobInfoMsg, err = checkUserRegionRight(ctx, db, rj, wrEnqueue, rj.Region, u)
 		if err != nil {
 			rj.Status = sdk.V2WorkflowRunJobStatusFail
 			return &sdk.V2WorkflowRunJobInfo{
@@ -790,18 +789,12 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 				Message:          fmt.Sprintf("job %s: unable to check right for user %s: %v", rj.JobID, u.Username, err),
 			}, false
 		}
-		regionPermCache[rj.Region] = hasRight
+		regionPermCache[rj.Region] = jobInfoMsg
 	}
 
-	if !hasRight {
+	if jobInfoMsg != nil {
 		rj.Status = sdk.V2WorkflowRunJobStatusSkipped
-		return &sdk.V2WorkflowRunJobInfo{
-			WorkflowRunID:    run.ID,
-			Level:            sdk.WorkflowRunInfoLevelError,
-			WorkflowRunJobID: rj.ID,
-			IssuedAt:         time.Now(),
-			Message:          fmt.Sprintf("job %s: user %s does not have enough right on region %q", rj.JobID, u.Username, rj.Region),
-		}, false
+		return jobInfoMsg, false
 	}
 
 	if strings.Contains(rj.Job.RunsOn.Model, "${{") {
@@ -895,7 +888,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, wref
 	runJobsInfo := make(map[string]sdk.V2WorkflowRunJobInfo)
 	hasToUpdateRun := false
 
-	regionPermCache := make(map[string]bool)
+	regionPermCache := make(map[string]*sdk.V2WorkflowRunJobInfo)
 
 	rootJobContext := sdk.WorkflowRunJobsContext{
 		WorkflowRunContext: sdk.WorkflowRunContext{
@@ -1369,32 +1362,53 @@ func computeRunStatusFromJobsStatus(ctx context.Context, db gorp.SqlExecutor, ru
 }
 
 // Check and set default region on job
-func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, wrEnqueue sdk.V2WorkflowRunEnqueue, regionName string, u sdk.AuthentifiedUser) (bool, error) {
+func checkUserRegionRight(ctx context.Context, db gorp.SqlExecutor, rj *sdk.V2WorkflowRunJob, wrEnqueue sdk.V2WorkflowRunEnqueue, regionName string, u sdk.AuthentifiedUser) (*sdk.V2WorkflowRunJobInfo, error) {
 	ctx, next := telemetry.Span(ctx, "checkUserRegionRight")
 	defer next()
 
-	if !wrEnqueue.IsAdminWithMFA {
-		wantedRegion, err := region.LoadRegionByName(ctx, db, regionName)
-		if err != nil {
-			return false, err
-		}
+	wantedRegion, err := region.LoadRegionByName(ctx, db, regionName)
+	if err != nil {
+		return nil, err
+	}
 
+	// Check if project has the right to execute job on region
+	projectHasPerm, err := rbac.HasRoleOnRegionProject(ctx, db, sdk.RegionRoleExecute, wantedRegion.ID, rj.ProjectKey)
+	if err != nil {
+		return nil, err
+	}
+	if !projectHasPerm {
+		return &sdk.V2WorkflowRunJobInfo{
+			WorkflowRunID:    rj.WorkflowRunID,
+			Level:            sdk.WorkflowRunInfoLevelError,
+			WorkflowRunJobID: rj.ID,
+			IssuedAt:         time.Now(),
+			Message:          fmt.Sprintf("job %s: project %s is not allowed to start job on region %q", rj.JobID, rj.ProjectKey, rj.Region),
+		}, nil
+	}
+
+	if !wrEnqueue.IsAdminWithMFA {
 		allowedRegions, err := rbac.LoadRegionIDsByRoleAndUserID(ctx, db, sdk.RegionRoleExecute, u.ID)
 		if err != nil {
 			next()
-			return false, err
+			return nil, err
 		}
 		next()
 		for _, r := range allowedRegions {
 			if r.RegionID == wantedRegion.ID {
-				return true, nil
+				return nil, nil
 			}
 		}
 	} else {
-		return true, nil
+		return nil, nil
 	}
 
-	return false, nil
+	return &sdk.V2WorkflowRunJobInfo{
+		WorkflowRunID:    rj.WorkflowRunID,
+		Level:            sdk.WorkflowRunInfoLevelError,
+		WorkflowRunJobID: rj.ID,
+		IssuedAt:         time.Now(),
+		Message:          fmt.Sprintf("job %s: user %s does not have enough right on region %q", rj.JobID, u.Username, rj.Region),
+	}, nil
 }
 
 func checkJobNeeds(jobsContext sdk.JobsResultContext, jobDef sdk.V2Job) bool {
