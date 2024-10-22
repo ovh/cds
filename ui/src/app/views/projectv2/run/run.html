@@ -101,7 +101,6 @@
         <!--  BOTTOM PANELS -->
         <app-resizable-panel [direction]="'vertical'" minSize="200" [initialSize]="infoPanelSize"
             (onGrabbingStart)="panelStartResize()" (onGrabbingEnd)="infoPanelEndResize($event)">
-
             <div class="bottom-panel">
                 <app-tabs [tabs]="tabs" (onSelect)="selectTab($event)"></app-tabs>
                 <div *ngIf="selectedTab && selectedTab.key === 'infos'" class="infos">
@@ -118,31 +117,8 @@
                         <div class="date">{{info.issued_at | date: 'YYYY-MM-dd HH:mm:ss.SSS Z'}}</div>
                     </div>
                 </div>
-                <nz-table *ngIf="selectedTab && selectedTab.key === 'results'" class="results" [nsAutoHeightTable]="86"
-                    nzSize="small" [nzShowPagination]="false" [nzPageSize]="results?.length ?? 0" [nzData]="results"
-                    #autoHeightDirective=nsAutoHeightTable #resultsTable>
-                    <thead>
-                        <tr>
-                            <th nzWidth="100px">Type</th>
-                            <th>Label</th>
-                            <th>Identifier</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="result" *ngFor="let result of resultsTable.data"
-                            (click)="navigatePanel('result', result.id)">
-                            <td>
-                                {{result.type}}
-                            </td>
-                            <td>
-                                {{result.label}}
-                            </td>
-                            <td>
-                                {{result.identifier}}
-                            </td>
-                        </tr>
-                    </tbody>
-                </nz-table>
+                <app-run-results *ngIf="selectedTab && selectedTab.key === 'results'" [results]="results"
+                    (onSelectResult)="openPanel('result', $event)"></app-run-results>
                 <app-run-tests *ngIf="selectedTab && selectedTab.key === 'tests'" [tests]="tests"
                     (onSelectTest)="openPanel('test', $event)"></app-run-tests>
                 <ng-template #tabTestsTemplate>

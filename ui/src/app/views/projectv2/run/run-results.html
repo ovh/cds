@@ -1,0 +1,21 @@
+<div class="form">
+	<nz-input-group [nzSuffix]="suffixIcon">
+		<input type="text" nz-input placeholder="Search" [ngModel]="searchValue" (ngModelChange)="updateSearch($event)" />
+	</nz-input-group>
+	<ng-template #suffixIcon>
+		<span nz-icon nzType="search"></span>
+	</ng-template>
+	<button [class.active]="filtered" nz-button nzType="default" nz-popover [nzPopoverContent]="contentFilter"
+		nzPopoverTrigger="bottomRight" nzPopoverTrigger="click">
+		<span nz-icon nzType="filter" nzTheme="outline"></span>
+	</button>
+	<ng-template #contentFilter>
+		<nz-checkbox-group [ngModel]="filterOptions" (ngModelChange)="updateFilters($event)"></nz-checkbox-group>
+	</ng-template>
+</div>
+<nz-list nzSize="small">
+	<nz-list-item *ngFor="let result of filteredResults" (click)="clickResult(result)">
+		{{result.identifier}}
+		<span class="label">{{result.label}}</span>
+	</nz-list-item>
+</nz-list>

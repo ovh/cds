@@ -3,3 +3,21 @@
 	<nz-code-editor #editor [ngModel]="resultRaw" [nzEditorOption]="editorOption"
 		(nzEditorInitialized)="onEditorInit($event)" (dblclick)="$event.stopPropagation();"></nz-code-editor>
 </ng-container>
+<div *ngIf="selectedTab && selectedTab.key === 'description'" (dblclick)="$event.stopPropagation();">
+	<nz-descriptions nzBordered [nzColumn]="1" nzSize="small">
+		<nz-descriptions-item nzTitle="Type">{{result.type}}</nz-descriptions-item>
+		<nz-descriptions-item nzTitle="Label">{{result.label}}</nz-descriptions-item>
+		<nz-descriptions-item nzTitle="Identifier">
+			<span nz-typography nzCopyable [nzContent]="result.identifier"></span>
+		</nz-descriptions-item>
+		<nz-descriptions-item nzTitle="URL">{{result.url}}</nz-descriptions-item>
+	</nz-descriptions>
+	<nz-descriptions nzTitle="Metadata" nzBordered [nzColumn]="1" nzSize="small">
+		<nz-descriptions-item *ngFor="let item of result.metadata | keyvalue" [nzTitle]="item.key">
+			<ng-container [ngSwitch]="item.value.type">
+				<span *ngSwitchCase="'TEXT'" nz-typography nzCopyable [nzContent]="item.value.value"></span>
+				<span *ngSwitchDefault>{{item.value.value}}</span>
+			</ng-container>
+		</nz-descriptions-item>
+	</nz-descriptions>
+</div>
