@@ -365,18 +365,22 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 
 	if mustSaveVersion {
 		wkfVersion := sdk.V2WorkflowVersion{
-			Version:       run.Contexts.CDS.Version,
-			ProjectKey:    run.Contexts.CDS.ProjectKey,
-			VCSServer:     run.Contexts.Git.Server,
-			Repository:    run.Contexts.Git.Repository,
-			WorkflowName:  run.Contexts.CDS.Workflow,
-			WorkflowRunID: run.ID,
-			Sha:           run.Contexts.Git.Sha,
-			Ref:           run.Contexts.Git.Ref,
-			Type:          string(run.WorkflowData.Workflow.Semver.From),
-			File:          run.WorkflowData.Workflow.Semver.Path,
-			Username:      run.Username,
-			UserID:        run.UserID,
+			Version:            run.Contexts.CDS.Version,
+			ProjectKey:         run.Contexts.CDS.ProjectKey,
+			WorkflowVCS:        run.Contexts.CDS.WorkflowVCSServer,
+			WorkflowRepository: run.Contexts.CDS.WorkflowRepository,
+			WorkflowRef:        run.Contexts.CDS.WorkflowRef,
+			WorkflowSha:        run.Contexts.CDS.WorkflowSha,
+			VCSServer:          run.Contexts.Git.Server,
+			Repository:         run.Contexts.Git.Repository,
+			WorkflowName:       run.Contexts.CDS.Workflow,
+			WorkflowRunID:      run.ID,
+			Sha:                run.Contexts.Git.Sha,
+			Ref:                run.Contexts.Git.Ref,
+			Type:               string(run.WorkflowData.Workflow.Semver.From),
+			File:               run.WorkflowData.Workflow.Semver.Path,
+			Username:           run.Username,
+			UserID:             run.UserID,
 		}
 		if err := workflow_v2.InsertWorkflowVersion(ctx, tx, &wkfVersion); err != nil {
 			return err
@@ -754,7 +758,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 	var cdsVersion string
 	if isDefaultBranch {
 		// Check if the release exists
-		_, err := workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.Git.Server, runContext.Git.Repository, runContext.CDS.Workflow, fileVersion)
+		_, err := workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.CDS.WorkflowVCSServer, runContext.CDS.WorkflowRepository, runContext.CDS.Workflow, fileVersion)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, false, err
 		}

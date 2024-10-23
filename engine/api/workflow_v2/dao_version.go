@@ -12,6 +12,18 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 )
 
+func getAllWorkflowVersions(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetOptionFunc) ([]sdk.V2WorkflowVersion, error) {
+	var dbWkfVersion []dbV2WorkflowVersion
+	if err := gorpmapping.GetAll(ctx, db, query, &dbWkfVersion, opts...); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	wkfVersions := make([]sdk.V2WorkflowVersion, 0, len(dbWkfVersion))
+	for _, wv := range dbWkfVersion {
+		wkfVersions = append(wkfVersions, wv.V2WorkflowVersion)
+	}
+	return wkfVersions, nil
+}
+
 func getWorkflowVersion(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query, opts ...gorpmapper.GetOptionFunc) (*sdk.V2WorkflowVersion, error) {
 	var dbWkfVersion dbV2WorkflowVersion
 	found, err := gorpmapping.Get(ctx, db, query, &dbWkfVersion, opts...)
@@ -38,8 +50,22 @@ func InsertWorkflowVersion(ctx context.Context, db gorpmapper.SqlExecutorWithTx,
 	return nil
 }
 
+func DeleteWorkflowVersion(ctx context.Context, db gorpmapper.SqlExecutorWithTx, v *sdk.V2WorkflowVersion) error {
+	dbWkfVersion := &dbV2WorkflowVersion{V2WorkflowVersion: *v}
+	if err := gorpmapping.Delete(db, dbWkfVersion); err != nil {
+		return err
+	}
+	return nil
+}
+
 func LoadWorkflowVersion(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repository, wkf, version string) (*sdk.V2WorkflowVersion, error) {
-	query := gorpmapping.NewQuery("SELECT * from v2_workflow_version WHERE project_key = $1 AND vcs_server = $2 AND repository = $3 AND workflow_name = $4 AND version = $5").
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_version WHERE project_key = $1 AND workflow_vcs = $2 AND workflow_repository = $3 AND workflow_name = $4 AND version = $5").
 		Args(projKey, vcs, repository, wkf, version)
 	return getWorkflowVersion(ctx, db, query)
+}
+
+func LoadAllVerionsByWorkflow(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repository, wkf string) ([]sdk.V2WorkflowVersion, error) {
+	query := gorpmapping.NewQuery("SELECT * from v2_workflow_version WHERE project_key = $1 AND workflow_vcs = $2 AND workflow_repository = $3 AND workflow_name = $4").
+		Args(projKey, vcs, repository, wkf)
+	return getAllWorkflowVersions(ctx, db, query)
 }

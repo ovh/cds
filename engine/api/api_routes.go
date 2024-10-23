@@ -491,6 +491,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", nil, r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", nil, r.GETv2(api.getWorkerModelV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", nil, r.POSTv2(api.postWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version", nil, r.GETv2(api.getWorkflowVersionsHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version/{version}", nil, r.GETv2(api.getWorkflowVersionHandler), r.DELETEv2(api.deleteWorkflowVersionHandler))
 	r.Handle("/v2/project/{projectKey}/run", nil, r.GETv2(api.getWorkflowRunsSearchV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/filter", nil, r.GETv2(api.getWorkflowRunsFiltersV2Handler))
 	r.Handle("/v2/project/{projectKey}/run/{workflowRunID}", nil, r.GETv2(api.getWorkflowRunV2Handler), r.DELETEv2(api.deleteWorkflowRunV2Handler))

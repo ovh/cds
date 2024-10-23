@@ -162,3 +162,29 @@ func (c *client) WorkflowV2RunJobInfoList(ctx context.Context, projKey, workflow
 	}
 	return infos, nil
 }
+
+func (c *client) WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error) {
+	var versions []sdk.V2WorkflowVersion
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/version", projKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName)
+	if _, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &versions); err != nil {
+		return nil, err
+	}
+	return versions, nil
+}
+
+func (c *client) WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error) {
+	var workflowVersion sdk.V2WorkflowVersion
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/version/%s", projKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName, version)
+	if _, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &workflowVersion); err != nil {
+		return nil, err
+	}
+	return &workflowVersion, nil
+}
+
+func (c *client) WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error {
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/version/%s", projKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName, version)
+	if _, _, _, err := c.RequestJSON(ctx, "DELETE", path, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
