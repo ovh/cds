@@ -53,10 +53,10 @@ type V2Workflow struct {
 }
 
 type WorkflowSemver struct {
-	From          WorkflowSemverType `json:"from"`
-	Path          string             `json:"path"`
-	ReleaseBranch string             `json:"release_branch,omitempty"`
-	Schema        map[string]string  `json:"schema,omitempty"`
+	From        WorkflowSemverType `json:"from"`
+	Path        string             `json:"path"`
+	ReleaseRefs []string           `json:"release_refs,omitempty"`
+	Schema      map[string]string  `json:"schema,omitempty"`
 }
 
 type WorkfowSemverSchema map[string]string

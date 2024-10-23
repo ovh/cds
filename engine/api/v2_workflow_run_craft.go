@@ -736,27 +736,31 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the semver type %s not managed", workflowDef.Semver.From)
 	}
 
-	if fileVersion == "" {
-		fileVersion = "0.1.0"
-	}
-
 	// Check defaultBranch
-	isDefaultBranch := false
-	if runContext.Git.RefType == "branch" {
-		setupRef := workflowDef.Semver.ReleaseBranch
-		if setupRef == "" {
-			defaultBranch, err := vcsClient.Branch(ctx, runContext.Git.Repository, sdk.VCSBranchFilters{Default: true})
-			if err != nil {
-				return nil, false, err
-			}
-			setupRef = defaultBranch.ID
+	isReleaseRef := false
+	if len(workflowDef.Semver.ReleaseRefs) == 0 {
+		defaultBranch, err := vcsClient.Branch(ctx, runContext.Git.Repository, sdk.VCSBranchFilters{Default: true})
+		if err != nil {
+			return nil, false, err
 		}
-		isDefaultBranch = setupRef == runContext.Git.Ref
+		isReleaseRef = defaultBranch.ID == runContext.Git.Ref
+	} else {
+		for _, r := range workflowDef.Semver.ReleaseRefs {
+			g := glob.New(r)
+			result, err := g.MatchString(runContext.Git.Ref)
+			if err != nil {
+				return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to check release ref with pattern %s: %v", r, err)
+			}
+			if result == nil {
+				continue
+			}
+			isReleaseRef = true
+		}
 	}
 
 	mustSaveVersion := false
 	var cdsVersion string
-	if isDefaultBranch {
+	if isReleaseRef {
 		// Check if the release exists
 		_, err := workflow_v2.LoadWorkflowVersion(ctx, db, runContext.CDS.ProjectKey, runContext.CDS.WorkflowVCSServer, runContext.CDS.WorkflowRepository, runContext.CDS.Workflow, fileVersion)
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {

@@ -763,8 +763,9 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 			Workflow: sdk.V2Workflow{
 				Name: wkName,
 				Semver: &sdk.WorkflowSemver{
-					From: "helm",
-					Path: "Chart.yaml",
+					From:        "helm",
+					Path:        "Chart.yaml",
+					ReleaseRefs: []string{"refs/heads/mai*"},
 				},
 				Jobs: map[string]sdk.V2Job{
 					"job1": {
@@ -832,18 +833,6 @@ kubeVersion: 1.19.0
 description: A single-sentence description of this project`,
 			}
 			*(out.(*sdk.VCSContent)) = *b
-			return nil, 200, nil
-		}).Times(2)
-
-	servicesClients.EXPECT().
-		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/my/repo/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
-			b := &sdk.VCSBranch{
-				DisplayID: "main",
-				ID:        "refs/heads/main",
-				Default:   true,
-			}
-			*(out.(*sdk.VCSBranch)) = *b
 			return nil, 200, nil
 		}).Times(2)
 
