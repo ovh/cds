@@ -3,6 +3,8 @@ package sdk
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base32"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -34,10 +36,14 @@ var (
 		"cancelled":  cancelled,
 		"failure":    failure,
 		"result":     result,
-		"toLower":    newStringActionFunc("toLower", strings.ToLower),
-		"toUpper":    newStringActionFunc("toUpper", strings.ToUpper),
-		"toTitle":    newStringActionFunc("toTitle", strings.ToTitle),
-		"title":      newStringActionFunc("title", strings.Title),
+		"toLower":    newStringActionFunc("toLower", nilerr(strings.ToLower)),
+		"toUpper":    newStringActionFunc("toUpper", nilerr(strings.ToUpper)),
+		"toTitle":    newStringActionFunc("toTitle", nilerr(strings.ToTitle)),
+		"title":      newStringActionFunc("title", nilerr(strings.Title)),
+		"b64enc":     newStringActionFunc("b64enc", nilerr(base64encode)),
+		"b64dec":     newStringActionFunc("b64dec", base64decode),
+		"b32enc":     newStringActionFunc("b32enc", nilerr(base32encode)),
+		"b32dec":     newStringActionFunc("b32dec", base32decode),
 	}
 )
 
@@ -405,7 +411,7 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 	return nil, NewErrorFrom(ErrInvalidData, "missing step and jobs contexts")
 }
 
-type stringActionFunc func(string) string
+type stringActionFunc func(string) (string, error)
 
 func newStringActionFunc(name string, fn stringActionFunc) ActionFunc {
 	return func(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
@@ -418,6 +424,36 @@ func newStringActionFunc(name string, fn stringActionFunc) ActionFunc {
 		if !ok {
 			return nil, NewErrorFrom(ErrInvalidData, "%s: item argument must be a string", name)
 		}
+		return fn(s)
+	}
+}
+
+func base64encode(v string) string {
+	return base64.StdEncoding.EncodeToString([]byte(v))
+}
+
+func base64decode(v string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(v)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func base32encode(v string) string {
+	return base32.StdEncoding.EncodeToString([]byte(v))
+}
+
+func base32decode(v string) (string, error) {
+	data, err := base32.StdEncoding.DecodeString(v)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+func nilerr(fn func(string) string) stringActionFunc {
+	return func(s string) (string, error) {
 		return fn(s), nil
 	}
 }
