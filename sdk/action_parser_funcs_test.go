@@ -94,31 +94,75 @@ func Test_newStringActionFunc(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		actionFn stringActionFunc
+		arg      string
+		output   string
 	}{
-		{"toLower", strings.ToLower},
-		{"toUpper", strings.ToUpper},
-		{"toTitle", strings.ToTitle},
-		{"title", strings.Title},
+		{
+			"toLower",
+			nilerr(strings.ToLower),
+			"FoOBaR",
+			"foobar",
+		},
+		{
+			"toUpper",
+			nilerr(strings.ToUpper),
+			"fooBaR",
+			"FOOBAR",
+		},
+		{
+			"toTitle",
+			nilerr(strings.ToTitle),
+			"хлеб",
+			"ХЛЕБ",
+		},
+		{
+			"title",
+			nilerr(strings.Title),
+			"foo bar",
+			"Foo Bar",
+		},
+		{
+			"b64enc",
+			nilerr(base64encode),
+			"foo bar baz",
+			"Zm9vIGJhciBiYXo=",
+		},
+		{
+			"b64dec",
+			base64decode,
+			"Zm9vIGJhciBiYXo=",
+			"foo bar baz",
+		},
+		{
+			"b32enc",
+			nilerr(base32encode),
+			"foo bar baz",
+			"MZXW6IDCMFZCAYTBPI======",
+		},
+		{
+			"b32dec",
+			base32decode,
+			"MZXW6IDCMFZCAYTBPI======",
+			"foo bar baz",
+		},
 	} {
 		fn, ok := DefaultFuncs[tt.name]
 		if !ok {
 			t.Errorf("func %s not found", tt.name)
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			const arg = "foo bar"
-
-			v, err := fn(context.TODO(), nil, arg)
+			v, err := fn(context.TODO(), nil, tt.arg)
 			if err != nil {
 				t.Fatal(err)
 			}
-			s, ok := v.(string)
+			got, ok := v.(string)
 			if !ok {
 				t.Fatalf("expected string, got %T", v)
 			}
-			if want := tt.actionFn(arg); s != want {
-				t.Errorf("got %q, want %q", s, want)
+			if tt.output != got {
+				t.Errorf("got %q, want %q", got, tt.output)
 			}
-			t.Logf(s)
+			t.Logf(got)
 		})
 	}
 }
