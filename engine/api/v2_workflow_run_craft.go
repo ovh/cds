@@ -772,7 +772,7 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 		}
 	}
 
-	// If not default branch OR release version already exists
+	// If not a release ref OR release version already exists
 	// Compute cds version from a pattern
 	if cdsVersion == "" {
 		// Retrieve version pattern
