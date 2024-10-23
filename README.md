@@ -11,6 +11,7 @@ CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform writ
 
 **[Documentation](https://ovh.github.io/cds/)**
 
+You can also [Ask CDS Guru](https://gurubase.io/g/cds), it is a CDS-focused AI to answer your questions.
 
 ## Intuitive UI
 CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
