@@ -92,6 +92,7 @@ type CurrentWorker struct {
 	client   cdsclient.WorkerInterface
 	blur     *sdk.Blur
 	hooks    []workerHook
+	paths    []string
 }
 
 type workerHook struct {
@@ -398,7 +399,7 @@ func (wk *CurrentWorker) Environ() []string {
 		newEnv = append(newEnv, e)
 	}
 
-	newEnv = append(newEnv, "CDS_KEY=********") //We have to let it here for some legacy reason
+	newEnv = append(newEnv, "CDS_KEY=********") // We have to let it here for some legacy reason
 	newEnv = append(newEnv, fmt.Sprintf("%s=%d", WorkerServerPort, wk.HTTPPort()))
 	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSApiUrl, wk.cfg.APIEndpoint))
 	newEnv = append(newEnv, fmt.Sprintf("%s=%s", CDSCDNUrl, wk.cfg.CDNEndpoint))
@@ -427,7 +428,7 @@ func (wk *CurrentWorker) Environ() []string {
 			newEnv = append(newEnv, "BASEDIR="+wk.cfg.Basedir)
 		}
 
-		//set up environment variables from pipeline build job parameters
+		// set up environment variables from pipeline build job parameters
 		for _, p := range wk.currentJob.params {
 			// avoid put private key in environment var as it's a binary value
 			if strings.HasPrefix(p.Name, "cds.key.") && strings.HasSuffix(p.Name, ".priv") {
@@ -449,7 +450,7 @@ func (wk *CurrentWorker) Environ() []string {
 			newEnv = append(newEnv, fmt.Sprintf("%s=%s", envName, sdk.OneLineValue(p.Value)))
 		}
 
-		//Set env variables from hooks
+		// Set env variables from hooks
 		for k, v := range wk.currentJob.envFromHooks {
 			newEnv = append(newEnv, k+"="+sdk.OneLineValue(v))
 		}

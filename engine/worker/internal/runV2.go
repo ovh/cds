@@ -649,7 +649,16 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 			return w.failJob(ctx, actionError.Error()), stepPostAction
 		}
 
-		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, *actionContext, w.actions[name].Outputs); err != nil {
+		outputs := w.actions[name].Outputs
+		resolvedOutputs, err := w.computeOutputs(ctx, *actionContext, outputs)
+		if err != nil {
+			return w.failJob(ctx, err.Error()), stepPostAction
+		}
+
+		if err := w.collectActionOutputs(outputs, resolvedOutputs); err != nil {
+			return w.failJob(ctx, err.Error()), stepPostAction
+		}
+		if err := w.updateParentStepStatusWithOutputs(ctx, parentStepStatus, parentStepName, *actionContext, resolvedOutputs); err != nil {
 			return w.failJob(ctx, err.Error()), stepPostAction
 		}
 
@@ -669,21 +678,31 @@ func (w *CurrentWorker) runJobStepAction(ctx context.Context, step sdk.ActionSte
 	return actionResult, stepPostAction
 }
 
-func (w *CurrentWorker) updateParentStepStatusWithOutputs(ctx context.Context, parentStepStatus sdk.JobStepsStatus, parentStepName string, actionContext sdk.WorkflowRunJobsContext, outputs map[string]sdk.ActionOutput) error {
+func (w *CurrentWorker) collectActionOutputs(outputs map[string]sdk.ActionOutput, resolvedOutputs map[string]string) error {
+	for k, output := range outputs {
+		switch output.Type {
+		case sdk.ActionOutputTypePath:
+			if v, ok := resolvedOutputs[k]; ok {
+				w.paths = append(w.paths, v)
+			}
+		default:
+			// noop
+		}
+	}
+	return nil
+}
+
+func (w *CurrentWorker) updateParentStepStatusWithOutputs(ctx context.Context, parentStepStatus sdk.JobStepsStatus, parentStepName string, actionContext sdk.WorkflowRunJobsContext, outputs map[string]string) error {
 	parentStep := parentStepStatus[parentStepName]
 	parentStep.Outputs = sdk.JobResultOutput{}
 
-	resolvedOutpus, err := w.computeOutputs(ctx, actionContext, outputs)
-	if err != nil {
-		return err
-	}
-
-	for name, value := range resolvedOutpus {
+	for name, value := range outputs {
 		parentStep.Outputs[name] = value
 	}
 	parentStepStatus[parentStepName] = parentStep
 	return nil
 }
+
 func (w *CurrentWorker) computeOutputs(ctx context.Context, actionContext sdk.WorkflowRunJobsContext, outputs map[string]sdk.ActionOutput) (map[string]string, error) {
 	resolvedOutput := make(map[string]string)
 
@@ -798,7 +817,7 @@ func (w *CurrentWorker) failJob(ctx context.Context, reason string) sdk.V2Workfl
 	return res
 }
 
-// For actions, only pass CDS/GIT/ENV/Integration context from parrent
+// For actions, only pass CDS/GIT/ENV/Integration context from parent
 func (w *CurrentWorker) computeContextForAction(ctx context.Context, parentContext sdk.WorkflowRunJobsContext, inputs map[string]string) (*sdk.WorkflowRunJobsContext, error) {
 	actionContext := sdk.WorkflowRunJobsContext{
 		WorkflowRunContext: sdk.WorkflowRunContext{
@@ -894,8 +913,35 @@ func (w *CurrentWorker) GetEnvVariable(ctx context.Context, contexts sdk.Workflo
 			newEnvVar[k] = v
 		}
 	}
+	if len(w.paths) != 0 {
+		// Inject paths from the previous steps outputs.
+		pathList := filepath.SplitList(os.Getenv("PATH"))
+		if len(pathList) == 0 {
+			pathList = []string{""}
+		}
+		// Add current worker paths to the path list.
+		pathList = append(pathList, w.paths...)
 
+		// Remove duplicate paths.
+		pathList = removeDuplicate(pathList)
+
+		// Inject supercharged PATH environ variable.
+		newEnvVar["PATH"] = strings.Join(pathList, string(filepath.ListSeparator))
+	}
 	return newEnvVar, nil
+}
+
+func removeDuplicate[T comparable](s []T) []T {
+	all := make(map[T]bool)
+
+	var list []T
+	for _, item := range s {
+		if _, ok := all[item]; !ok {
+			all[item] = true
+			list = append(list, item)
+		}
+	}
+	return list
 }
 
 func computeIntegrationConfigToEnvVar(integ sdk.JobIntegrationsContext, prefix string) map[string]string {
