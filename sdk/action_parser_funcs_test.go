@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/rockbears/log"
@@ -92,56 +91,47 @@ func TestHashFiles(t *testing.T) {
 
 func Test_newStringActionFunc(t *testing.T) {
 	for _, tt := range []struct {
-		name     string
-		actionFn stringActionFunc
-		arg      string
-		output   string
+		name   string
+		arg    string
+		output string
 	}{
 		{
 			"toLower",
-			nilerr(strings.ToLower),
 			"FoOBaR",
 			"foobar",
 		},
 		{
 			"toUpper",
-			nilerr(strings.ToUpper),
 			"fooBaR",
 			"FOOBAR",
 		},
 		{
 			"toTitle",
-			nilerr(strings.ToTitle),
 			"хлеб",
 			"ХЛЕБ",
 		},
 		{
 			"title",
-			nilerr(strings.Title),
 			"foo bar",
 			"Foo Bar",
 		},
 		{
 			"b64enc",
-			nilerr(base64encode),
 			"foo bar baz",
 			"Zm9vIGJhciBiYXo=",
 		},
 		{
 			"b64dec",
-			base64decode,
 			"Zm9vIGJhciBiYXo=",
 			"foo bar baz",
 		},
 		{
 			"b32enc",
-			nilerr(base32encode),
 			"foo bar baz",
 			"MZXW6IDCMFZCAYTBPI======",
 		},
 		{
 			"b32dec",
-			base32decode,
 			"MZXW6IDCMFZCAYTBPI======",
 			"foo bar baz",
 		},
@@ -152,6 +142,53 @@ func Test_newStringActionFunc(t *testing.T) {
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			v, err := fn(context.TODO(), nil, tt.arg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, ok := v.(string)
+			if !ok {
+				t.Fatalf("expected string, got %T", v)
+			}
+			if tt.output != got {
+				t.Errorf("got %q, want %q", got, tt.output)
+			}
+			t.Logf(got)
+		})
+	}
+}
+
+func Test_newStringStringActionFunc(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		argA   string
+		argB   string
+		output string
+	}{
+		{
+			"trimAll",
+			"$",
+			"$foobar$",
+			"foobar",
+		},
+		{
+			"trimPrefix",
+			"v",
+			"v6.6.6-evil",
+			"6.6.6-evil",
+		},
+		{
+			"trimSuffix",
+			".deb",
+			"myFile.deb",
+			"myFile",
+		},
+	} {
+		fn, ok := DefaultFuncs[tt.name]
+		if !ok {
+			t.Errorf("func %s not found", tt.name)
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			v, err := fn(context.TODO(), nil, tt.argA, tt.argB)
 			if err != nil {
 				t.Fatal(err)
 			}

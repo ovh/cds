@@ -44,6 +44,9 @@ var (
 		"b64dec":     newStringActionFunc("b64dec", base64decode),
 		"b32enc":     newStringActionFunc("b32enc", nilerr(base32encode)),
 		"b32dec":     newStringActionFunc("b32dec", base32decode),
+		"trimAll":    newStringStringActionFunc("trimAll", strings.Trim),
+		"trimPrefix": newStringStringActionFunc("trimPrefix", strings.TrimPrefix),
+		"trimSuffix": newStringStringActionFunc("trimSuffix", strings.TrimSuffix),
 	}
 )
 
@@ -411,7 +414,10 @@ func failure(_ context.Context, a *ActionParser, inputs ...interface{}) (interfa
 	return nil, NewErrorFrom(ErrInvalidData, "missing step and jobs contexts")
 }
 
-type stringActionFunc func(string) (string, error)
+type (
+	stringActionFunc       func(string) (string, error)
+	stringStringActionFunc func(string, string) string
+)
 
 func newStringActionFunc(name string, fn stringActionFunc) ActionFunc {
 	return func(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
@@ -422,9 +428,28 @@ func newStringActionFunc(name string, fn stringActionFunc) ActionFunc {
 		}
 		s, ok := inputs[0].(string)
 		if !ok {
-			return nil, NewErrorFrom(ErrInvalidData, "%s: item argument must be a string", name)
+			return nil, NewErrorFrom(ErrInvalidData, "%s: argument must be a string", name)
 		}
 		return fn(s)
+	}
+}
+
+func newStringStringActionFunc(name string, fn stringStringActionFunc) ActionFunc {
+	return func(ctx context.Context, _ *ActionParser, inputs ...interface{}) (interface{}, error) {
+		log.Debug(ctx, "function: %s with args: %v", name, inputs)
+
+		if len(inputs) != 2 {
+			return nil, NewErrorFrom(ErrInvalidData, "%s: requires two argument", name)
+		}
+		a, ok := inputs[0].(string)
+		if !ok {
+			return nil, NewErrorFrom(ErrInvalidData, "%s: first argument must be a string", name)
+		}
+		b, ok := inputs[1].(string)
+		if !ok {
+			return nil, NewErrorFrom(ErrInvalidData, "%s: second argument must be a string", name)
+		}
+		return fn(b, a), nil
 	}
 }
 
