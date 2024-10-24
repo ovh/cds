@@ -10,7 +10,6 @@
 		<nz-descriptions-item nzTitle="Identifier">
 			<span nz-typography nzCopyable [nzContent]="result.identifier"></span>
 		</nz-descriptions-item>
-		<nz-descriptions-item nzTitle="URL">{{result.url}}</nz-descriptions-item>
 	</nz-descriptions>
 	<nz-descriptions nzTitle="Metadata" nzBordered [nzColumn]="1" nzSize="small">
 		<nz-descriptions-item *ngFor="let item of result.metadata | keyvalue" [nzTitle]="item.key">

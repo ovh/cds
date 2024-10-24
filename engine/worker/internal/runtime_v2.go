@@ -66,7 +66,6 @@ func (wk *CurrentWorker) V2AddRunResult(ctx context.Context, req workerruntime.V
 		}
 		// Returns the signature and CDN info
 		response.CDNSignature = signature
-		response.CDNAddress = wk.CDNHttpURL()
 	} else {
 		if response.RunResult.Type != sdk.V2WorkflowRunResultTypeArsenalDeployment &&
 			response.RunResult.Type != sdk.V2WorkflowRunResultTypeRelease && response.RunResult.Type != sdk.V2WorkflowRunResultTypeVariable {
@@ -244,9 +243,9 @@ func (wk *CurrentWorker) V2GetRunResult(ctx context.Context, filter workerruntim
 		case "V2WorkflowRunResultGenericDetail":
 			var res *glob.Result
 			if r.Type == sdk.V2WorkflowRunResultTypeCoverage || r.Type == sdk.V2WorkflowRunResultTypeGeneric { // If the filter is set to "V2WorkflowRunResultGenericDetail" we can directly check the artifact name. This is the usecase of plugin "downloadArtifact"
-				x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultGenericDetail](&r)
-				if err != nil {
-					log.ErrorWithStackTrace(ctx, err)
+				x, errGetDetail := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultGenericDetail](&r)
+				if errGetDetail != nil {
+					log.ErrorWithStackTrace(ctx, errGetDetail)
 				}
 				res, err = pattern.MatchString(x.Name)
 			} else {

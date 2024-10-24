@@ -561,7 +561,6 @@ type V2WorkflowRunResult struct {
 	Label      string                                       `json:"label,omitempty" db:"-"`
 	Identifier string                                       `json:"identifier,omitempty" db:"-"`
 	Metadata   map[string]V2WorkflowRunResultDetailMetadata `json:"metadata,omitempty" db:"-"`
-	URL        string                                       `json:"url,omitempty" db:"-"`
 }
 
 func (r *V2WorkflowRunResult) ComputedFields() {
@@ -572,7 +571,6 @@ func (r *V2WorkflowRunResult) ComputedFields() {
 	r.Identifier = r.Name()
 	r.Label = r.GetLabel()
 	r.Metadata = r.GetMetadata()
-	r.URL = r.GetURL()
 }
 
 func (r *V2WorkflowRunResult) GetLabel() string {
@@ -591,29 +589,6 @@ func (r *V2WorkflowRunResult) GetMetadata() map[string]V2WorkflowRunResultDetail
 		return nil
 	}
 	return detail.GetMetadata()
-}
-
-func (r *V2WorkflowRunResult) GetURL() string {
-	var u string
-	metadata := r.GetMetadata()
-	urlData, has := metadata["URL"]
-	if !has {
-		urlData, has = metadata["url"]
-	}
-	if has && urlData.Type == V2WorkflowRunResultDetailMetadataTypeURL {
-		u = urlData.Value
-	}
-	if u == "" && r.ArtifactManagerMetadata != nil {
-		u = r.ArtifactManagerMetadata.Get("downloadURI")
-		if u == "" {
-			u = r.ArtifactManagerMetadata.Get("uri")
-		}
-		if u == "" {
-			u = r.ArtifactManagerMetadata.Get("cdn_http_url")
-		}
-	}
-
-	return u
 }
 
 func (r *V2WorkflowRunResult) GetDetail() (V2WorkflowRunResultDetailInterface, error) {

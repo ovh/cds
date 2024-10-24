@@ -245,6 +245,7 @@ export class WorkflowRunResult {
     url: string;
     label: string;
     identifier: string;
+    artifact_manager_metadata: any;
 }
 
 export enum WorkflowRunResultMetadataType {

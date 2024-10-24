@@ -41,7 +41,12 @@ nz-list {
     flex-direction: row;
     cursor: pointer;
 
+    .identifier {
+      flex: 1;
+    }
+
     .label {
+      margin-left: 20px;
       color: rgba(0, 0, 0, .45);
 
       :host-context(.night) & {
@@ -54,6 +59,16 @@ nz-list {
 
       :host-context(.night) & {
         background-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    a {
+      margin-left: 20px;
+      color: inherit;
+      text-decoration: underline dotted;
+
+      &:hover {
+        color: #177ddc;
       }
     }
   }
