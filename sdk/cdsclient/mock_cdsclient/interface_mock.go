@@ -5926,6 +5926,50 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2StopJob(ctx, projKey, work
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2StopJob", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2StopJob), ctx, projKey, workflowRunID, jobIdentifier)
 }
 
+// WorkflowV2VersionDelete mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionDelete", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2VersionDelete indicates an expected call of WorkflowV2VersionDelete.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2VersionDelete(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionDelete", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2VersionDelete), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionGet mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(*sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionGet indicates an expected call of WorkflowV2VersionGet.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2VersionGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionGet", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2VersionGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionList mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionList", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].([]sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionList indicates an expected call of WorkflowV2VersionList.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2VersionList(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionList", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2VersionList), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+}
+
 // MockWorkflowClient is a mock of WorkflowClient interface.
 type MockWorkflowClient struct {
 	ctrl     *gomock.Controller
@@ -12208,6 +12252,50 @@ func (m *MockInterface) WorkflowV2StopJob(ctx context.Context, projKey, workflow
 func (mr *MockInterfaceMockRecorder) WorkflowV2StopJob(ctx, projKey, workflowRunID, jobIdentifier interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2StopJob", reflect.TypeOf((*MockInterface)(nil).WorkflowV2StopJob), ctx, projKey, workflowRunID, jobIdentifier)
+}
+
+// WorkflowV2VersionDelete mocks base method.
+func (m *MockInterface) WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionDelete", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2VersionDelete indicates an expected call of WorkflowV2VersionDelete.
+func (mr *MockInterfaceMockRecorder) WorkflowV2VersionDelete(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionDelete", reflect.TypeOf((*MockInterface)(nil).WorkflowV2VersionDelete), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionGet mocks base method.
+func (m *MockInterface) WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+	ret0, _ := ret[0].(*sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionGet indicates an expected call of WorkflowV2VersionGet.
+func (mr *MockInterfaceMockRecorder) WorkflowV2VersionGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionGet", reflect.TypeOf((*MockInterface)(nil).WorkflowV2VersionGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, version)
+}
+
+// WorkflowV2VersionList mocks base method.
+func (m *MockInterface) WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2VersionList", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].([]sdk.V2WorkflowVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2VersionList indicates an expected call of WorkflowV2VersionList.
+func (mr *MockInterfaceMockRecorder) WorkflowV2VersionList(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2VersionList", reflect.TypeOf((*MockInterface)(nil).WorkflowV2VersionList), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
 }
 
 // MockV2WorkerInterface is a mock of V2WorkerInterface interface.

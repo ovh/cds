@@ -217,3 +217,11 @@ type ListContentResponse struct {
 	NextPageStart int      `json:"nextPageStart"`
 	IsLastPage    bool     `json:"isLastPage"`
 }
+
+type FileContentResponse struct {
+	Lines      []FileContentResponseLine `json:"lines"`
+	IsLastPage bool                      `json:"isLastPage"`
+}
+type FileContentResponseLine struct {
+	Text string `json:"text"`
+}

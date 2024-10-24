@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gorhill/cronexpr"
 	"github.com/rockbears/yaml"
@@ -19,6 +20,15 @@ const (
 	WorkflowHookTypeManual      = "Manual"
 	WorkflowHookTypeScheduler   = "Scheduler"
 	WorkflowHookTypeWorkflowRun = "WorkflowRun"
+)
+
+type WorkflowSemverType string
+
+const (
+	SemverTypeHelm  WorkflowSemverType = "helm"
+	SemverTypeCargo WorkflowSemverType = "cargo"
+
+	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}-sha-${{git.sha}}"
 )
 
 type V2Workflow struct {
@@ -35,10 +45,41 @@ type V2Workflow struct {
 	VariableSets []string                 `json:"vars,omitempty"`
 	Retention    int64                    `json:"retention,omitempty"`
 	Annotations  map[string]string        `json:"annotations,omitempty"`
+	Semver       *WorkflowSemver          `json:"semver,omitempty"`
 
 	// Template fields
 	From       string            `json:"from,omitempty" jsonschema:"oneof_required=from"`
 	Parameters map[string]string `json:"parameters,omitempty" jsonschema:"oneof_required=from"`
+}
+
+type WorkflowSemver struct {
+	From        WorkflowSemverType `json:"from"`
+	Path        string             `json:"path"`
+	ReleaseRefs []string           `json:"release_refs,omitempty"`
+	Schema      map[string]string  `json:"schema,omitempty"`
+}
+
+type WorkfowSemverSchema map[string]string
+
+type V2WorkflowVersion struct {
+	ID                 string    `json:"id" db:"id" cli:"id"`
+	Version            string    `json:"version" db:"version" cli:"version"`
+	ProjectKey         string    `json:"project_key" db:"project_key"`
+	WorkflowVCS        string    `json:"workflow_vcs" db:"workflow_vcs"`
+	WorkflowRepository string    `json:"workflow_repository" db:"workflow_repository"`
+	WorkflowRef        string    `json:"workflow_ref" db:"workflow_ref"`
+	WorkflowSha        string    `json:"workflow_sha" db:"workflow_sha"`
+	VCSServer          string    `json:"vcs_server" db:"vcs_server" cli:"vcs_server"`
+	Repository         string    `json:"repository" db:"repository" cli:"repository"`
+	WorkflowName       string    `json:"workflow_name" db:"workflow_name"`
+	WorkflowRunID      string    `json:"workflow_run_id" db:"workflow_run_id" cli:"workflow_run_id"`
+	Username           string    `json:"username" db:"username" cli:"username"`
+	UserID             string    `json:"user_id" db:"user_id"`
+	Sha                string    `json:"sha" db:"sha" cli:"sha"`
+	Ref                string    `json:"ref" db:"ref" cli:"ref"`
+	Type               string    `json:"type" db:"type" cli:"type"`
+	File               string    `json:"file" db:"file" cli:"file"`
+	Created            time.Time `json:"created" db:"created" cli:"created"`
 }
 
 type CommitStatus struct {
