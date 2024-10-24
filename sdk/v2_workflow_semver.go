@@ -1,8 +1,7 @@
 package sdk
 
 type SemverHelmChart struct {
-	Version    string `yaml:"version"`
-	AppVersion string `yaml:"appVersion"`
+	Version string `yaml:"version"`
 }
 
 type SemverCargoFile struct {
