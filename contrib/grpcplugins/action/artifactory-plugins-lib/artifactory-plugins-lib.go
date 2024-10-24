@@ -339,7 +339,7 @@ func ReleaseArtifactoryRunResult(ctx context.Context, c *actionplugin.Common, re
 }
 
 func getReleaseVersion(jobContext sdk.WorkflowRunJobsContext) string {
-	return strings.ReplaceAll(jobContext.Git.SemverCurrent, "+", "-")
+	return strings.ReplaceAll(jobContext.CDS.Version, "+", "-")
 }
 
 func getBuildInfoAndReleaseName(buildInfo, projectKey, vcs, repo, workflowName string) (string, string) {

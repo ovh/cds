@@ -15,7 +15,7 @@ inputs:
     type: string
     description: Properties to add on the promoted artifacts
   releaseNotes:
-    default: Release ${{git.semver.current}}
+    default: Release ${{cds.version}}
     type: string
     description: Notes associated to your Release.
     required: true

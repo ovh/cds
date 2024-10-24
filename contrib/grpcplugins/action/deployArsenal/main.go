@@ -43,7 +43,7 @@ const deployData = `{
 		"CDS_GIT_BRANCH": "${{git.ref_name}}",
 		"CDS_WORKFLOW": "${{cds.workflow}}",
 		"CDS_PROJECT": "${{cds.project_key}}",
-		"CDS_VERSION": "${{git.semver_current}}",
+		"CDS_VERSION": "${{cds.version}}",
 		"CDS_GIT_REPOSITORY": "${{git.repository}}",
 		"CDS_GIT_HASH": "${{git.Sha}}"
 	}

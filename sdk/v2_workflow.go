@@ -24,9 +24,17 @@ const (
 
 type WorkflowSemverType string
 
+var AvailableSemverType = []WorkflowSemverType{SemverTypeGit, SemverTypeHelm, SemverTypeCargo}
+
 const (
-	SemverTypeHelm  WorkflowSemverType = "helm"
-	SemverTypeCargo WorkflowSemverType = "cargo"
+	SemverTypeGit    WorkflowSemverType = "git"
+	SemverTypeHelm   WorkflowSemverType = "helm"
+	SemverTypeCargo  WorkflowSemverType = "cargo"
+	SemverTypeNpm    WorkflowSemverType = "npm"
+	SemverTypeYarn   WorkflowSemverType = "yarn"
+	SemverTypeFile   WorkflowSemverType = "file"
+	SemverTypeDebian WorkflowSemverType = "debian"
+	SemverTypePoetry WorkflowSemverType = "poetry"
 
 	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}-sha-${{git.sha}}"
 )
@@ -492,6 +500,10 @@ func (w V2Workflow) Lint() []error {
 
 	errs := w.CheckStageAndJobNeeds()
 
+	if err := w.CheckSemver(); err != nil {
+		errs = append(errs, err)
+	}
+
 	errGates := w.CheckGates()
 	if len(errGates) > 0 {
 		errs = append(errs, errGates...)
@@ -552,6 +564,33 @@ func (w V2Workflow) CheckGates() []error {
 		}
 	}
 	return errs
+}
+
+func (w V2Workflow) CheckSemver() error {
+	if w.Semver == nil {
+		return nil
+	}
+	found := false
+	for _, a := range AvailableSemverType {
+		if a == w.Semver.From {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return NewErrorFrom(ErrInvalidData, "semver from %s not implemented", w.Semver.From)
+	}
+
+	if w.Semver.From == SemverTypeGit && w.Semver.Path != "" {
+		return NewErrorFrom(ErrInvalidData, "emver.path is not allowed for semver from git")
+	}
+	if w.Semver.From != SemverTypeGit && w.Semver.Path == "" {
+		return NewErrorFrom(ErrInvalidData, "missing required field semver.path")
+	}
+	if w.Semver.From == SemverTypeGit && len(w.Semver.ReleaseRefs) > 0 {
+		return NewErrorFrom(ErrInvalidData, " semver.release_refs is not allowed for semver from git")
+	}
+	return nil
 }
 
 func (w V2Workflow) CheckStageAndJobNeeds() []error {
