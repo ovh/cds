@@ -24,7 +24,7 @@ const (
 
 type WorkflowSemverType string
 
-var AvailableSemverType = []WorkflowSemverType{SemverTypeGit, SemverTypeHelm, SemverTypeCargo}
+var AvailableSemverType = []WorkflowSemverType{SemverTypeGit, SemverTypeHelm, SemverTypeCargo, SemverTypeNpm, SemverTypeYarn, SemverTypeFile, SemverTypePoetry}
 
 const (
 	SemverTypeGit    WorkflowSemverType = "git"
@@ -33,7 +33,6 @@ const (
 	SemverTypeNpm    WorkflowSemverType = "npm"
 	SemverTypeYarn   WorkflowSemverType = "yarn"
 	SemverTypeFile   WorkflowSemverType = "file"
-	SemverTypeDebian WorkflowSemverType = "debian"
 	SemverTypePoetry WorkflowSemverType = "poetry"
 
 	DefaultVersionPattern = "${{%s.version}}-${{cds.run_number}}-sha-${{git.sha}}"

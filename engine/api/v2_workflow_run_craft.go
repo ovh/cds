@@ -761,8 +761,6 @@ func getCDSversion(ctx context.Context, db gorp.SqlExecutor, vcsClient sdk.VCSAu
 			return nil, false, sdk.NewErrorFrom(sdk.ErrWrongRequest, "unable to read poetry file: %v", err)
 		}
 		fileVersion = file.Tool.Poetry.Version
-	case sdk.SemverTypeDebian:
-
 	default:
 		return nil, false, sdk.NewErrorFrom(sdk.ErrInvalidData, "the semver type %s not managed", workflowDef.Semver.From)
 	}
